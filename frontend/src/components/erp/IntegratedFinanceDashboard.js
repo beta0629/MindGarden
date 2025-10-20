@@ -334,35 +334,38 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
         {/* Main Content */}
         <div className="mg-dashboard-content">
-          {/* 탭 메뉴 */}
-      <div className="integrated-finance-tabs">
-        {[
-          { key: 'overview', label: '개요' },
-          { key: 'balance-sheet', label: '대차대조표' },
-          { key: 'income-statement', label: '손익계산서' },
-          { key: 'daily', label: '일간 리포트' },
-          { key: 'monthly', label: '월간 리포트' },
-          { key: 'yearly', label: '년간 리포트' }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`integrated-finance-tab-btn ${activeTab === tab.key ? 'active' : ''}`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+          <div className="mg-card">
+            {/* 탭 메뉴 */}
+            <div className="integrated-finance-tabs">
+              {[
+                { key: 'overview', label: '개요' },
+                { key: 'balance-sheet', label: '대차대조표' },
+                { key: 'income-statement', label: '손익계산서' },
+                { key: 'daily', label: '일간 리포트' },
+                { key: 'monthly', label: '월간 리포트' },
+                { key: 'yearly', label: '년간 리포트' }
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`integrated-finance-tab-btn ${activeTab === tab.key ? 'active' : ''}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-      {/* 콘텐츠 영역 */}
-      <div className="integrated-finance-content">
-        {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
-        {activeTab === 'balance-sheet' && <BalanceSheetTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
-        {activeTab === 'income-statement' && <IncomeStatementTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
-        {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
-        {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
-        {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
-      </div>
+            {/* 콘텐츠 영역 */}
+            <div className="integrated-finance-content">
+              {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
+              {activeTab === 'balance-sheet' && <BalanceSheetTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
+              {activeTab === 'income-statement' && <IncomeStatementTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
+              {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
+              {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
+              {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
+            </div>
+          </div>
+        </div>
 
       {/* 모달 컴포넌트들 */}
       {showTransactionForm && (
@@ -384,7 +387,6 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           }}
         />
       )}
-        </div>
       </div>
     </SimpleLayout>
   );

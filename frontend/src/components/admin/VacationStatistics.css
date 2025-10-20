@@ -255,9 +255,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-xs);
+    gap: var(--spacing-sm);
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
+    min-height: calc(var(--spacing-md) * 2);
+}
+
+.last-vacation .clock-icon {
+    flex-shrink: 0;
+    width: var(--icon-size-sm);
+    height: var(--icon-size-sm);
+    margin-right: var(--spacing-xs);
+}
+
+.last-vacation span {
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ==================== 차트 영역 ==================== */
@@ -397,7 +413,25 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: var(--spacing-xs);
+        gap: var(--spacing-sm);
+        min-height: calc(var(--spacing-md) * 2);
+        flex-direction: row;
+    }
+    
+    .last-vacation .clock-icon {
+        flex-shrink: 0;
+        width: var(--icon-size-sm);
+        height: var(--icon-size-sm);
+        margin-right: var(--spacing-xs);
+    }
+    
+    .last-vacation span {
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: var(--font-size-xs);
     }
 }
 
@@ -468,6 +502,25 @@
     .last-vacation {
         margin-top: var(--spacing-sm);
         padding: var(--spacing-xs);
+        font-size: var(--font-size-xs);
+        min-height: calc(var(--spacing-md) * 1.5);
+        gap: var(--spacing-xs);
+        flex-direction: row;
+    }
+    
+    .last-vacation .clock-icon {
+        width: var(--icon-size-xs);
+        height: var(--icon-size-xs);
+        margin-right: var(--spacing-xs);
+        flex-shrink: 0;
+    }
+    
+    .last-vacation span {
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         font-size: var(--font-size-xs);
     }
     

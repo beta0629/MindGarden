@@ -287,7 +287,7 @@ const ConsultantMessages = () => {
                         </span>
                       </div>
                       
-                      <h4 className="mg-h5 mg-mb-sm">
+                      <h4 className="mg-h5 mg-mb-sm mg-text-center">
                         {message.title}
                       </h4>
                       

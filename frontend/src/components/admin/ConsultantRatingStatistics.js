@@ -92,7 +92,7 @@ const ConsultantRatingStatistics = () => {
                         <Star size={24} />
                     </div>
                     <div className="rating-stat-content">
-                        <div className="rating-stat-value">{statistics.averageScore.toFixed(1)}</div>
+                        <div className="rating-stat-value">{statistics.averageScore ? statistics.averageScore.toFixed(1) : '0.0'}</div>
                         <div className="rating-stat-label">평균 점수</div>
                     </div>
                 </div>
@@ -102,7 +102,7 @@ const ConsultantRatingStatistics = () => {
                         <TrendingUp size={24} />
                     </div>
                     <div className="rating-stat-content">
-                        <div className="rating-stat-value">{statistics.recentTrends.length}</div>
+                        <div className="rating-stat-value">{statistics.recentTrends ? statistics.recentTrends.length : 0}</div>
                         <div className="rating-stat-label">최근 평가</div>
                     </div>
                 </div>
@@ -112,14 +112,14 @@ const ConsultantRatingStatistics = () => {
                         <Award size={24} />
                     </div>
                     <div className="rating-stat-content">
-                        <div className="rating-stat-value">{statistics.topConsultants.length}</div>
+                        <div className="rating-stat-value">{statistics.topConsultants ? statistics.topConsultants.length : 0}</div>
                         <div className="rating-stat-label">우수 상담사</div>
                     </div>
                 </div>
             </div>
 
             {/* 상담사 랭킹 */}
-            {statistics.topConsultants.length > 0 && (
+            {statistics.topConsultants && statistics.topConsultants.length > 0 && (
                 <div className="rating-section">
                     <h4 className="section-title">
                         <Award className="section-icon" />
@@ -135,7 +135,7 @@ const ConsultantRatingStatistics = () => {
                                     <div className="consultant-name">{consultant.name}</div>
                                     <div className="consultant-details">
                                         <span className="consultant-score">
-                                            ⭐ {consultant.averageRating.toFixed(1)}
+                                            ⭐ {consultant.averageRating ? consultant.averageRating.toFixed(1) : '0.0'}
                                         </span>
                                         <span className="consultant-count">
                                             ({consultant.ratingCount}개 평가)
@@ -152,7 +152,7 @@ const ConsultantRatingStatistics = () => {
             )}
 
             {/* 최근 평가 동향 */}
-            {statistics.recentTrends.length > 0 && (
+            {statistics.recentTrends && statistics.recentTrends.length > 0 && (
                 <div className="rating-section">
                     <h4 className="section-title">
                         <TrendingUp className="section-icon" />

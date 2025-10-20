@@ -1,383 +1,191 @@
-/* 세금 관리 컴포넌트 스타일 */
-.tax-management {
-    padding: 24px;
-    background-color: #f8f9fa;
-    min-height: 100vh;
-}
+/* TaxManagement 컴포넌트 스타일 - MindGarden 디자인 시스템 완전 적용 */
 
-.tax-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    padding: 20px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.tax-header h2 {
-    margin: 0;
-    color: #2c3e50;
-    font-size: var(--font-size-xxl);
-    font-weight: 600;
-}
-
-.header-actions {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-.period-select, .tax-type-select {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: var(--font-size-sm);
-    background: white;
-    min-width: 150px;
-}
-
-.tax-tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 24px;
-    background: white;
-    padding: 4px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.tab-button {
-    flex: 1;
-    padding: 12px 20px;
-    border: none;
-    background: transparent;
-    border-radius: 6px;
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: #6c757d;
-}
-
-.tab-button:hover {
-    background-color: #f8f9fa;
-    color: #495057;
-}
-
-.tab-button.active {
-    background-color: #dc3545;
-    color: white;
-    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 16px 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.section-header h3 {
-    margin: 0;
-    color: #2c3e50;
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-}
-
-.calculation-controls {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
-
-/* 통계 섹션 */
-.statistics-grid {
+/* ==================== 세금 유형별 내역 그리드 ==================== */
+.tax-breakdown-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-md);
 }
 
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
-.stat-card h4 {
-    margin: 0 0 12px 0;
-    color: #6c757d;
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    text-transform: uppercase;
-}
-
-.stat-value {
-    font-size: var(--font-size-xxl);
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-.tax-type-breakdown {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.tax-type-breakdown h4 {
-    margin: 0 0 16px 0;
-    color: #2c3e50;
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-}
-
-.breakdown-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
-}
-
-.breakdown-item {
+.tax-breakdown-item {
     display: flex;
     align-items: center;
-    padding: 12px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    transition: transform 0.2s ease;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    transition: all var(--transition-duration, 0.2s) ease;
 }
 
-.breakdown-item:hover {
+.tax-breakdown-item:hover {
     transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-.type-color {
+.tax-type-indicator {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    margin-right: 12px;
+    flex-shrink: 0;
 }
 
-.type-info {
+.tax-type-info {
     display: flex;
     flex-direction: column;
+    gap: var(--spacing-xs);
     flex: 1;
 }
 
-.type-name {
+.tax-type-name {
+    font-weight: var(--font-weight-semibold);
+    color: var(--dark-gray);
     font-size: var(--font-size-sm);
-    font-weight: 500;
-    color: #2c3e50;
-    margin-bottom: 4px;
 }
 
-.type-amount {
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    color: #28a745;
+.tax-type-amount {
+    font-weight: var(--font-weight-bold);
+    color: var(--olive-green);
+    font-size: var(--font-size-lg);
 }
 
-/* 계산 내역 섹션 */
-.calculations-list {
+/* ==================== 세금 내역 그리드 ==================== */
+.tax-calculations-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--spacing-lg);
 }
 
-.calculation-card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+.tax-calculation-card {
+    padding: var(--spacing-lg);
+    transition: all var(--transition-duration, 0.2s) ease;
 }
 
-.calculation-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+.tax-calculation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
 }
 
-.calculation-header {
+.tax-calculation-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #e9ecef;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--light-beige);
 }
 
-.calculation-header h4 {
+.tax-calculation-title {
     margin: 0;
-    color: #2c3e50;
-    font-size: var(--font-size-base);
-    font-weight: 600;
+    color: var(--olive-green);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
 }
 
 .tax-type-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
     font-size: var(--font-size-xs);
-    font-weight: 500;
+    font-weight: var(--font-weight-semibold);
     color: white;
     text-transform: uppercase;
 }
 
-.calculation-details {
-    margin-bottom: 16px;
+.tax-calculation-details {
+    margin-bottom: var(--spacing-md);
 }
 
-.detail-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid #f8f9fa;
+.tax-calculation-description {
+    padding: var(--spacing-md);
+    background: var(--light-beige);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--mint-green);
 }
 
-.detail-row:last-child {
-    border-bottom: none;
-}
-
-.detail-row.total {
-    font-weight: 600;
-    color: #2c3e50;
-    border-top: 2px solid #e9ecef;
-    margin-top: 8px;
-    padding-top: 12px;
-}
-
-.calculation-description {
-    margin-top: 12px;
-    padding: 12px;
-    background: #f8f9fa;
-    border-radius: 6px;
-}
-
-.calculation-description p {
+.tax-calculation-description p {
     margin: 0;
+    color: var(--medium-gray);
     font-size: var(--font-size-sm);
-    color: #6c757d;
-    font-style: italic;
+    line-height: 1.5;
 }
 
-/* 추가 세금 섹션 */
-.additional-form {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* ==================== 추가 세금 폼 ==================== */
+.tax-additional-form {
     max-width: 600px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
 }
 
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #2c3e50;
-}
-
-.form-input, .form-select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: var(--font-size-sm);
-    transition: border-color 0.2s ease;
-}
-
-.form-input:focus, .form-select:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-/* 버튼 스타일 */
-.btn-primary {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.btn-primary:hover {
-    background-color: #c82333;
-}
-
-.btn-primary:disabled {
-    background-color: #6c757d;
-    cursor: not-allowed;
-}
-
-/* 로딩 오버레이 */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+.tax-additional-form .mg-form {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+    flex-direction: column;
+    gap: var(--spacing-lg);
 }
 
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #dc3545;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+.tax-additional-form .mg-form-group {
+    margin-bottom: 0;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.tax-additional-form .mg-button {
+    margin-top: var(--spacing-md);
 }
 
-/* 반응형 디자인 */
+/* ==================== 반응형 디자인 ==================== */
 @media (max-width: 768px) {
-    .tax-management {
-        padding: 16px;
-    }
-    
-    .tax-header {
-        flex-direction: column;
-        gap: 16px;
-        align-items: stretch;
-    }
-    
-    .statistics-grid,
-    .calculations-list,
-    .breakdown-grid {
+    .tax-breakdown-grid {
         grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
     }
     
-    .calculation-header {
+    .tax-calculations-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .tax-breakdown-item {
+        padding: var(--spacing-sm);
+    }
+    
+    .tax-calculation-card {
+        padding: var(--spacing-md);
+    }
+    
+    .tax-calculation-header {
         flex-direction: column;
-        gap: 8px;
         align-items: flex-start;
+        gap: var(--spacing-sm);
     }
     
-    .additional-form {
-        max-width: 100%;
+    .tax-additional-form {
+        padding: var(--spacing-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .tax-breakdown-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .tax-type-indicator {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .tax-calculation-header {
+        text-align: center;
+    }
+    
+    .tax-calculation-title {
+        font-size: var(--font-size-md);
+    }
+}
+
+/* ==================== 다크 모드 지원 ==================== */
+@media (prefers-color-scheme: dark) {
+    .tax-calculation-description {
+        background: var(--dark-gray);
+        border-left-color: var(--mint-green);
+    }
+    
+    .tax-calculation-description p {
+        color: var(--light-gray);
     }
 }

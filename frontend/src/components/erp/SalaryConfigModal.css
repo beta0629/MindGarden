@@ -1,4 +1,8 @@
-/* 급여 기산일 설정 모달 스타일 */
+/* ============================================
+   급여 기산일 설정 모달 - MindGarden 디자인 시스템 v2.0
+   ============================================ */
+
+/* ==================== 모달 오버레이 ==================== */
 .salary-config-modal-overlay {
   position: fixed;
   top: 0;
@@ -9,26 +13,24 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
-  /* 드롭다운이 백그라운드에 포함되지 않도록 */
+  z-index: var(--z-index-modal);
+  backdrop-filter: blur(4px);
   isolation: isolate;
 }
 
+/* ==================== 모달 콘텐츠 ==================== */
 .salary-config-modal {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
   width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
+  max-width: var(--schedule-modal-max-width, 1400px);
+  max-height: var(--schedule-modal-max-height, 95vh);
   overflow-y: auto;
-  animation: modalSlideIn 0.3s ease-out;
+  animation: modalSlideIn var(--transition-duration, 0.3s) ease-out;
   position: relative;
-  z-index: 10000;
-  /* 드롭다운을 모달 내부로 완전히 격리 */
+  z-index: calc(var(--z-index-modal) + 1);
   isolation: isolate;
-  /* 드롭다운이 모달 밖으로 나가지 않도록 */
-  contain: layout style paint;
 }
 
 @keyframes modalSlideIn {
@@ -42,58 +44,66 @@
   }
 }
 
+/* ==================== 모달 헤더 ==================== */
 .salary-config-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 12px 12px 0 0;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid var(--light-beige);
+  background: var(--mint-green);
+  color: var(--dark-gray);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .salary-config-modal-header h3 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .close-button {
   background: none;
   border: none;
-  font-size: var(--font-size-xxl);
-  color: white;
+  font-size: var(--font-size-xxl, 2rem);
+  color: var(--dark-gray);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-duration, 0.2s) ease;
 }
 
 .close-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background: var(--olive-green);
+  color: white;
 }
 
+/* ==================== 모달 바디 ==================== */
 .salary-config-modal-body {
-  padding: 24px;
+  padding: var(--spacing-xl);
 }
 
+/* ==================== 설정 섹션 ==================== */
 .config-section {
-  margin-bottom: var(--spacing-xxl);
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: var(--light-cream);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--light-beige);
 }
 
 .config-section h4 {
-  margin: 0 0 16px 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #374151;
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--dark-gray);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .config-item {
@@ -108,59 +118,58 @@
   display: block;
   margin-bottom: var(--spacing-xs);
   font-weight: 500;
-  color: #374151;
-  font-size: 0.9rem;
+  color: var(--dark-gray);
+  font-size: var(--font-size-sm);
 }
 
 .config-item select {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  background-color: white;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--light-beige);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  background: white;
+  color: var(--dark-gray);
+  transition: all var(--transition-duration, 0.2s) ease;
   position: relative;
   z-index: 1;
-  /* 드롭다운을 모달 내부로 완전히 격리 */
-  transform: translateZ(0);
-  will-change: transform;
-  /* 드롭다운이 모달 밖으로 나가지 않도록 */
-  contain: layout style paint;
-  /* 드롭다운 옵션들이 모달 내부에만 표시되도록 */
-  overflow: visible;
+}
+
+.config-item select:hover {
+  border-color: var(--mint-green);
 }
 
 .config-item select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--mint-green);
+  box-shadow: 0 0 0 3px rgba(152, 251, 152, 0.2);
+  background: var(--light-cream);
   position: relative;
   z-index: 9999;
-  transform: none;
 }
 
+/* ==================== 설정 미리보기 ==================== */
 .config-preview {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 1px solid #0ea5e9;
-  border-radius: 8px;
-  padding: 20px;
+  background: var(--light-cream);
+  border: 2px solid var(--mint-green);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
   margin-top: var(--spacing-xl);
 }
 
 .config-preview h4 {
-  margin: 0 0 16px 0;
-  color: #0369a1;
-  font-size: 1.1rem;
-  font-weight: 600;
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--olive-green);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .preview-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #bae6fd;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--light-beige);
 }
 
 .preview-item:last-child {
@@ -169,70 +178,75 @@
 
 .preview-item span:first-child {
   font-weight: 500;
-  color: #0369a1;
+  color: var(--dark-gray);
 }
 
 .preview-item span:last-child {
-  font-weight: 600;
-  color: #0c4a6e;
-  background: #e0f2fe;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--olive-green);
+  background: var(--mint-green);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
 }
 
+/* ==================== 에러 메시지 ==================== */
 .error-message {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-  padding: 12px 16px;
-  border-radius: 6px;
-  margin-bottom: var(--spacing-base);
-  font-size: 0.9rem;
+  background: var(--light-beige);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
 }
 
+/* ==================== 모달 푸터 ==================== */
 .salary-config-modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 24px;
-  border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
-  border-radius: 0 0 12px 12px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-top: 1px solid var(--light-beige);
+  background: var(--light-cream);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 .cancel-button,
 .save-button {
-  padding: 10px 20px;
-  border-radius: 6px;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-md);
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: var(--font-size-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-duration, 0.2s) ease;
   border: none;
 }
 
 .cancel-button {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: var(--light-beige);
+  color: var(--dark-gray);
+  border: 1px solid var(--light-beige);
 }
 
 .cancel-button:hover:not(:disabled) {
-  background: #e5e7eb;
-  border-color: #9ca3af;
+  background: var(--medium-gray);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .save-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: 1px solid #667eea;
+  background: var(--mint-green);
+  color: var(--dark-gray);
+  border: 1px solid var(--mint-green);
 }
 
 .save-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  background: var(--olive-green);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .cancel-button:disabled,
@@ -242,32 +256,71 @@
   transform: none;
 }
 
-/* 반응형 디자인 */
-@media (max-width: 768px) {
+/* ==================== 반응형 디자인 ==================== */
+
+/* 태블릿 (768px ~ 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
   .salary-config-modal {
     width: 95%;
-    margin: var(--spacing-base);
+    max-width: var(--schedule-modal-max-width-tablet, 98vw);
+  }
+}
+
+/* 모바일 (< 768px) */
+@media (max-width: 767px) {
+  .salary-config-modal {
+    width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
   }
   
   .salary-config-modal-header {
-    padding: 16px 20px;
+    padding: var(--spacing-md);
+    border-radius: 0;
+  }
+  
+  .salary-config-modal-header h3 {
+    font-size: var(--font-size-lg);
   }
   
   .salary-config-modal-body {
-    padding: 20px;
+    padding: var(--spacing-md);
   }
   
   .config-section {
-    padding: 16px;
+    padding: var(--spacing-md);
   }
   
   .salary-config-modal-footer {
-    padding: 16px 20px;
+    padding: var(--spacing-md);
     flex-direction: column;
   }
   
   .cancel-button,
   .save-button {
     width: 100%;
+  }
+}
+
+/* 작은 모바일 (< 480px) */
+@media (max-width: 480px) {
+  .salary-config-modal-header,
+  .salary-config-modal-body,
+  .salary-config-modal-footer {
+    padding: var(--spacing-sm);
+  }
+  
+  .config-section {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* ==================== 접근성 개선 ==================== */
+@media (prefers-reduced-motion: reduce) {
+  .salary-config-modal,
+  .cancel-button,
+  .save-button,
+  .config-item select {
+    transition: none;
   }
 }

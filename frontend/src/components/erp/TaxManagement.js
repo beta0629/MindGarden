@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
+import { Calculator, Receipt, Plus, TrendingUp, FileText, Settings } from 'lucide-react';
 import './TaxManagement.css';
 
 const TaxManagement = () => {
@@ -94,230 +95,284 @@ const TaxManagement = () => {
 
     return (
         <SimpleLayout>
-            <div className="tax-management">
-            <div className="tax-header">
-                <h2>세금 관리</h2>
-                <div className="header-actions">
-                    <select 
-                        value={selectedPeriod} 
-                        onChange={(e) => setSelectedPeriod(e.target.value)}
-                        className="period-select"
-                    >
-                        <option value="">기간 선택</option>
-                        <option value="2025-01">2025년 1월</option>
-                        <option value="2025-02">2025년 2월</option>
-                        <option value="2025-03">2025년 3월</option>
-                    </select>
-                </div>
-            </div>
-
-            <div className="tax-tabs">
-                <button 
-                    className={`tab-button ${activeTab === 'statistics' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('statistics')}
-                >
-                    세금 통계
-                </button>
-                <button 
-                    className={`tab-button ${activeTab === 'calculations' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('calculations')}
-                >
-                    세금 내역
-                </button>
-                <button 
-                    className={`tab-button ${activeTab === 'additional' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('additional')}
-                >
-                    추가 세금
-                </button>
-            </div>
-
-            {activeTab === 'statistics' && (
-                <div className="statistics-section">
-                    <div className="section-header">
-                        <h3>세금 통계</h3>
-                        <button 
-                            className="btn-primary"
-                            onClick={() => loadTaxStatistics(selectedPeriod)}
-                            disabled={!selectedPeriod}
-                        >
-                            통계 조회
-                        </button>
+            <div className="mg-dashboard-layout">
+                {/* Dashboard Header */}
+                <div className="mg-dashboard-header">
+                    <div className="mg-dashboard-header-content">
+                        <div className="mg-dashboard-header-left">
+                            <Calculator className="mg-dashboard-icon" size={28} />
+                            <div>
+                                <h1 className="mg-dashboard-title">세무 관리</h1>
+                                <p className="mg-dashboard-subtitle">세금 계산, 신고, 납부를 체계적으로 관리할 수 있습니다</p>
+                            </div>
+                        </div>
+                        <div className="mg-dashboard-header-right">
+                            <select 
+                                value={selectedPeriod} 
+                                onChange={(e) => setSelectedPeriod(e.target.value)}
+                                className="mg-select"
+                            >
+                                <option key="tax-period-default" value="">기간 선택</option>
+                                <option key="2025-01" value="2025-01">2025년 1월</option>
+                                <option key="2025-02" value="2025-02">2025년 2월</option>
+                                <option key="2025-03" value="2025-03">2025년 3월</option>
+                            </select>
+                        </div>
                     </div>
-                    
-                    {taxStatistics && (
-                        <div className="statistics-grid">
-                            <div className="stat-card">
-                                <h4>총 세금액</h4>
-                                <div className="stat-value">
+                </div>
+
+                {/* 통계 카드 그리드 */}
+                {taxStatistics && (
+                    <div className="mg-dashboard-stats">
+                        <div className="mg-dashboard-stat-card">
+                            <div className="mg-dashboard-stat-icon">
+                                <Calculator size={20} />
+                            </div>
+                            <div className="mg-dashboard-stat-content">
+                                <div className="mg-dashboard-stat-value">
                                     {formatCurrency(taxStatistics.totalTaxAmount || 0)}
                                 </div>
+                                <div className="mg-dashboard-stat-label">총 세금액</div>
                             </div>
-                            <div className="stat-card">
-                                <h4>세금 건수</h4>
-                                <div className="stat-value">
+                        </div>
+                        <div className="mg-dashboard-stat-card">
+                            <div className="mg-dashboard-stat-icon">
+                                <Receipt size={20} />
+                            </div>
+                            <div className="mg-dashboard-stat-content">
+                                <div className="mg-dashboard-stat-value">
                                     {taxStatistics.taxCount || 0}건
                                 </div>
+                                <div className="mg-dashboard-stat-label">세금 건수</div>
                             </div>
-                            <div className="stat-card">
-                                <h4>기간</h4>
-                                <div className="stat-value">
+                        </div>
+                        <div className="mg-dashboard-stat-card">
+                            <div className="mg-dashboard-stat-icon">
+                                <Settings size={20} />
+                            </div>
+                            <div className="mg-dashboard-stat-content">
+                                <div className="mg-dashboard-stat-value">
                                     {taxStatistics.period || 'N/A'}
                                 </div>
+                                <div className="mg-dashboard-stat-label">기간</div>
                             </div>
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {taxStatistics && taxStatistics.taxByType && (
-                        <div className="tax-type-breakdown">
-                            <h4>세금 유형별 내역</h4>
-                            <div className="breakdown-grid">
-                                {Object.entries(taxStatistics.taxByType).map(([type, amount]) => {
-                                    const taxTypeInfo = taxTypes.find(t => t.value === type);
-                                    return (
-                                        <div key={type} className="breakdown-item">
-                                            <div 
-                                                className="type-color" 
-                                                data-color={taxTypeInfo?.color || '#6c757d'}
-                                            ></div>
-                                            <div className="type-info">
-                                                <span className="type-name">
-                                                    {taxTypeInfo?.label || type}
-                                                </span>
-                                                <span className="type-amount">
-                                                    {formatCurrency(amount)}
-                                                </span>
+                {/* 콘텐츠 그리드 */}
+                <div className="mg-dashboard-content">
+                    {/* 메인 콘텐츠 */}
+                    <div className="mg-dashboard-main">
+                        {/* 탭 네비게이션 */}
+                        <div className="mg-tabs">
+                            <button 
+                                className={`mg-tab ${activeTab === 'statistics' ? 'mg-tab-active' : ''}`}
+                                onClick={() => setActiveTab('statistics')}
+                            >
+                                <TrendingUp size={18} />
+                                세금 통계
+                            </button>
+                            <button 
+                                className={`mg-tab ${activeTab === 'calculations' ? 'mg-tab-active' : ''}`}
+                                onClick={() => setActiveTab('calculations')}
+                            >
+                                <Receipt size={18} />
+                                세금 내역
+                            </button>
+                            <button 
+                                className={`mg-tab ${activeTab === 'additional' ? 'mg-tab-active' : ''}`}
+                                onClick={() => setActiveTab('additional')}
+                            >
+                                <Plus size={18} />
+                                추가 세금
+                            </button>
+                        </div>
+
+                        {/* 탭 콘텐츠 영역 */}
+                        <div className="mg-dashboard-section">
+
+                            {/* 세금 통계 탭 */}
+                            {activeTab === 'statistics' && (
+                                <>
+                                    <div className="mg-dashboard-section-header">
+                                        <h3 className="mg-dashboard-section-title">세금 유형별 내역</h3>
+                                        <button 
+                                            className="mg-button mg-button-primary"
+                                            onClick={() => loadTaxStatistics(selectedPeriod)}
+                                            disabled={!selectedPeriod}
+                                        >
+                                            <FileText size={16} />
+                                            통계 조회
+                                        </button>
+                                    </div>
+                                    
+                                    {taxStatistics && taxStatistics.taxByType && (
+                                        <div className="mg-dashboard-section-content">
+                                            <div className="tax-breakdown-grid">
+                                                {Object.entries(taxStatistics.taxByType).map(([type, amount]) => {
+                                                    const taxTypeInfo = taxTypes.find(t => t.value === type);
+                                                    return (
+                                                        <div key={type} className="mg-card tax-breakdown-item">
+                                                            <div 
+                                                                className="tax-type-indicator" 
+                                                                style={{ backgroundColor: taxTypeInfo?.color || '#6c757d' }}
+                                                            ></div>
+                                                            <div className="tax-type-info">
+                                                                <span className="tax-type-name">
+                                                                    {taxTypeInfo?.label || type}
+                                                                </span>
+                                                                <span className="tax-type-amount">
+                                                                    {formatCurrency(amount)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
+                                    )}
+                                </>
+                            )}
 
-            {activeTab === 'calculations' && (
-                <div className="calculations-section">
-                    <div className="section-header">
-                        <h3>세금 내역</h3>
-                        <div className="calculation-controls">
-                            <select 
-                                value={selectedTaxType} 
-                                onChange={(e) => {
-                                    setSelectedTaxType(e.target.value);
-                                    if (e.target.value) {
-                                        loadTaxCalculationsByType(e.target.value);
-                                    }
-                                }}
-                                className="tax-type-select"
-                            >
-                                <option value="">세금 유형 선택</option>
-                                {taxTypes.map(type => (
-                                    <option key={type.value} value={type.value}>
-                                        {type.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div className="calculations-list">
-                        {taxCalculations.map(calculation => (
-                            <div key={calculation.id} className="calculation-card">
-                                <div className="calculation-header">
-                                    <h4>{calculation.taxName}</h4>
-                                    <span 
-                                        className="tax-type-badge" 
-                                        data-badge-bg={taxTypes.find(t => t.value === calculation.taxType)?.color || '#6c757d'}
-                                    >
-                                        {calculation.taxType}
-                                    </span>
+                            {/* 세금 내역 탭 */}
+                            {activeTab === 'calculations' && (
+                                <>
+                                    <div className="mg-dashboard-section-header">
+                                        <h3 className="mg-dashboard-section-title">세금 내역</h3>
+                                        <select 
+                                            value={selectedTaxType} 
+                                            onChange={(e) => {
+                                                setSelectedTaxType(e.target.value);
+                                                if (e.target.value) {
+                                                    loadTaxCalculationsByType(e.target.value);
+                                                }
+                                            }}
+                                            className="mg-select"
+                                        >
+                                            <option key="tax-type-default-1" value="">세금 유형 선택</option>
+                                            {taxTypes.map(type => (
+                                                <option key={type.value} value={type.value}>
+                                                    {type.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    
+                                    <div className="mg-dashboard-section-content">
+                                        <div className="tax-calculations-grid">
+                                            {taxCalculations.map(calculation => (
+                                                <div key={calculation.id} className="mg-card tax-calculation-card">
+                                                    <div className="tax-calculation-header">
+                                                        <h4 className="tax-calculation-title">{calculation.taxName}</h4>
+                                                        <span 
+                                                            className="mg-badge tax-type-badge" 
+                                                            style={{ backgroundColor: taxTypes.find(t => t.value === calculation.taxType)?.color || '#6c757d' }}
+                                                        >
+                                                            {taxTypes.find(t => t.value === calculation.taxType)?.label || calculation.taxType}
+                                                        </span>
+                                                    </div>
+                                                    <div className="tax-calculation-details">
+                                                        <div className="mg-info-row">
+                                                            <div className="mg-info-item">
+                                                                <span className="mg-info-label">세율</span>
+                                                                <span className="mg-info-value">{(calculation.taxRate * 100).toFixed(2)}%</span>
+                                                            </div>
+                                                            <div className="mg-info-item">
+                                                                <span className="mg-info-label">과세표준</span>
+                                                                <span className="mg-info-value">{formatCurrency(calculation.taxableAmount)}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="mg-info-row mg-info-row-highlight">
+                                                            <div className="mg-info-item">
+                                                                <span className="mg-info-label">세금액</span>
+                                                                <span className="mg-info-value mg-info-value--highlight">{formatCurrency(calculation.taxAmount)}</span>
+                                                            </div>
+                                                            <div className="mg-info-item">
+                                                                <span className="mg-info-label">계산일</span>
+                                                                <span className="mg-info-value">{formatDate(calculation.createdAt)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {calculation.taxDescription && (
+                                                        <div className="tax-calculation-description">
+                                                            <p>{calculation.taxDescription}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* 추가 세금 탭 */}
+                            {activeTab === 'additional' && (
+                                <>
+                                    <div className="mg-dashboard-section-header">
+                                        <h3 className="mg-dashboard-section-title">추가 세금 계산</h3>
+                                    </div>
+                                    
+                                    <div className="mg-dashboard-section-content">
+                                        <div className="mg-card tax-additional-form">
+                                            <div className="mg-form">
+                                                <div className="mg-form-group">
+                                                    <label className="mg-label">급여 계산 ID</label>
+                                                    <input 
+                                                        type="number" 
+                                                        className="mg-input"
+                                                        placeholder="급여 계산 ID를 입력하세요"
+                                                    />
+                                                </div>
+                                                <div className="mg-form-group">
+                                                    <label className="mg-label">총 급여액</label>
+                                                    <input 
+                                                        type="number" 
+                                                        className="mg-input"
+                                                        placeholder="총 급여액을 입력하세요"
+                                                    />
+                                                </div>
+                                                <div className="mg-form-group">
+                                                    <label className="mg-label">세금 유형</label>
+                                                    <select className="mg-select">
+                                                        <option key="tax-type-default-2" value="">세금 유형 선택</option>
+                                                        {taxTypes.map(type => (
+                                                            <option key={type.value} value={type.value}>
+                                                                {type.label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="mg-form-group">
+                                                    <label className="mg-label">세율 (%)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        step="0.01"
+                                                        className="mg-input"
+                                                        placeholder="세율을 입력하세요 (예: 3.3)"
+                                                    />
+                                                </div>
+                                                <div className="mg-form-group">
+                                                    <button className="mg-button mg-button-primary mg-button-full">
+                                                        <Calculator size={16} />
+                                                        세금 계산
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {loading && (
+                                <div className="mg-loading-container">
+                                    <div className="mg-spinner"></div>
+                                    <p>데이터를 불러오는 중...</p>
                                 </div>
-                                <div className="calculation-details">
-                                    <div className="detail-row">
-                                        <span>세율:</span>
-                                        <span>{(calculation.taxRate * 100).toFixed(2)}%</span>
-                                    </div>
-                                    <div className="detail-row">
-                                        <span>과세표준:</span>
-                                        <span>{formatCurrency(calculation.taxableAmount)}</span>
-                                    </div>
-                                    <div className="detail-row total">
-                                        <span>세금액:</span>
-                                        <span>{formatCurrency(calculation.taxAmount)}</span>
-                                    </div>
-                                    <div className="detail-row">
-                                        <span>계산일:</span>
-                                        <span>{formatDate(calculation.createdAt)}</span>
-                                    </div>
-                                </div>
-                                {calculation.taxDescription && (
-                                    <div className="calculation-description">
-                                        <p>{calculation.taxDescription}</p>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                            )}
+                        </div>
                     </div>
                 </div>
-            )}
-
-            {activeTab === 'additional' && (
-                <div className="additional-section">
-                    <div className="section-header">
-                        <h3>추가 세금 계산</h3>
-                    </div>
-                    
-                    <div className="additional-form">
-                        <div className="form-group">
-                            <label>급여 계산 ID</label>
-                            <input 
-                                type="number" 
-                                className="form-input"
-                                placeholder="급여 계산 ID를 입력하세요"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>총 급여액</label>
-                            <input 
-                                type="number" 
-                                className="form-input"
-                                placeholder="총 급여액을 입력하세요"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>세금 유형</label>
-                            <select className="form-select">
-                                <option value="">세금 유형 선택</option>
-                                {taxTypes.map(type => (
-                                    <option key={type.value} value={type.value}>
-                                        {type.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label>세율 (%)</label>
-                            <input 
-                                type="number" 
-                                step="0.01"
-                                className="form-input"
-                                placeholder="세율을 입력하세요 (예: 3.3)"
-                            />
-                        </div>
-                        <button className="btn-primary">
-                            세금 계산
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {loading && (
-                <div className="loading-overlay">
-                    <div className="loading-spinner"></div>
-                </div>
-            )}
             </div>
         </SimpleLayout>
     );

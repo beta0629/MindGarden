@@ -1,66 +1,82 @@
-/* SalaryProfileFormModal 스타일 - ConsultantProfileModal 스타일 재사용 및 확장 */
+/* ============================================
+   급여 프로필 생성 모달 - MindGarden 디자인 시스템 v2.0
+   ============================================ */
+
+/* ConsultantProfileModal 스타일 재사용 */
 @import './ConsultantProfileModal.css';
 
-/* 추가적인 SalaryProfileFormModal 전용 스타일 */
-
+/* ==================== 모달 콘텐츠 확장 ==================== */
 .salary-profile-modal-content {
-  max-width: 1000px;
-  max-height: 95vh;
+  max-width: var(--schedule-modal-max-width, 1400px);
+  max-height: var(--schedule-modal-max-height, 95vh);
 }
 
+/* ==================== 상담사 정보 섹션 ==================== */
 .consultant-info-section {
   margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-md);
-  background-color: var(--ios-bg-secondary);
-  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  background: var(--light-cream);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--light-beige);
 }
 
 .consultant-info-title {
-  margin: 0 0 var(--spacing-sm) 0;
-  color: var(--ios-text-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--dark-gray);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .consultant-info-item {
-  margin: var(--spacing-xs) 0;
-  color: var(--ios-text-secondary);
-  font-size: var(--font-size-sm);
+  margin: var(--spacing-sm) 0;
+  color: var(--medium-gray);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
 }
 
 .consultant-info-item strong {
-  color: var(--ios-text-primary);
-  font-weight: var(--font-weight-semibold);
+  color: var(--dark-gray);
+  font-weight: var(--font-weight-semibold, 600);
 }
 
+/* ==================== 등급 테이블 ==================== */
 .grade-table-container {
-  background-color: var(--ios-bg-secondary);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-md);
-  border: 1px solid var(--ios-border-light);
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--light-beige);
+  box-shadow: var(--shadow-sm);
 }
 
 .grade-table-header {
   display: grid;
-  grid-template-columns: 140px 100px 100px 100px 100px;
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-sm);
-  font-weight: var(--font-weight-semibold);
+  grid-template-columns: minmax(140px, 1fr) repeat(4, minmax(100px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  font-weight: var(--font-weight-semibold, 600);
   font-size: var(--font-size-sm);
-  color: var(--ios-text-primary);
-  border-bottom: 2px solid var(--ios-border-light);
-  padding-bottom: var(--spacing-xs);
+  color: var(--dark-gray);
+  border-bottom: 3px solid var(--mint-green);
+  padding-bottom: var(--spacing-sm);
 }
 
 .grade-table-row {
   display: grid;
-  grid-template-columns: 140px 100px 100px 100px 100px;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) 0;
-  border-bottom: 1px solid var(--ios-border-light);
+  grid-template-columns: minmax(140px, 1fr) repeat(4, minmax(100px, 1fr));
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) 0;
+  border-bottom: 1px solid var(--light-beige);
   font-size: var(--font-size-sm);
-  color: var(--ios-text-secondary);
+  color: var(--medium-gray);
   align-items: center;
+  transition: all var(--transition-duration, 0.2s) ease;
+}
+
+.grade-table-row:hover {
+  background: var(--light-cream);
+  padding-left: var(--spacing-sm);
+  padding-right: var(--spacing-sm);
+  border-radius: var(--radius-md);
 }
 
 .grade-table-row:last-child {
@@ -74,8 +90,8 @@
 }
 
 .grade-table-cell--name {
-  font-weight: var(--font-weight-medium);
-  color: var(--ios-text-primary);
+  font-weight: 500;
+  color: var(--dark-gray);
 }
 
 .grade-table-cell--right {
@@ -84,40 +100,51 @@
 }
 
 .grade-table-cell--highlight {
-  color: var(--ios-green);
-  font-weight: var(--font-weight-medium);
+  color: var(--olive-green);
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .grade-selected-badge {
   font-size: var(--font-size-xs);
-  background-color: var(--ios-blue);
-  color: var(--ios-text-primary-light);
-  padding: 2px var(--spacing-xs);
-  border-radius: var(--border-radius-full);
+  background: var(--mint-green);
+  color: var(--dark-gray);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .grade-table-notice {
-  margin-top: var(--spacing-sm);
-  padding: var(--spacing-xs);
-  background-color: var(--ios-blue-light);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-xs);
-  color: var(--ios-blue-dark);
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--light-beige);
+  border-radius: var(--radius-md);
+  border-left: var(--spacing-xs) solid var(--mint-green);
+  font-size: var(--font-size-sm);
+  color: var(--dark-gray);
   line-height: 1.6;
 }
 
 .grade-table-notice strong {
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--olive-green);
 }
 
+/* ==================== 옵션 항목 ==================== */
 .option-item {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   align-items: center;
-  margin-bottom: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  background-color: var(--ios-bg-secondary);
-  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--light-cream);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--light-beige);
+  transition: all var(--transition-duration, 0.2s) ease;
+}
+
+.option-item:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--mint-green);
 }
 
 .option-item-field {
@@ -125,148 +152,157 @@
 }
 
 .option-remove-btn {
-  background-color: var(--ios-red);
-  color: var(--ios-text-primary-light);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-xs);
+  background: var(--color-danger);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-sm);
   min-width: auto;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-duration, 0.2s) ease;
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .option-remove-btn:hover {
-  background-color: var(--ios-red-dark);
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .option-add-btn {
-  background-color: var(--ios-green);
-  color: var(--ios-text-primary-light);
-  margin-bottom: var(--spacing-md);
+  background: var(--olive-green);
+  color: white;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-duration, 0.2s) ease;
+  font-weight: var(--font-weight-semibold, 600);
+  font-size: var(--font-size-md);
 }
 
 .option-add-btn:hover {
-  background-color: var(--ios-green-dark);
+  background: var(--mint-green);
+  color: var(--dark-gray);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .option-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
 }
 
 .option-description {
-  font-size: var(--font-size-xs);
-  color: var(--ios-text-secondary);
-  margin: 0 0 var(--spacing-md) 0;
-}
-
-.tax-info-text {
-  font-size: var(--font-size-xs);
-  color: var(--ios-text-secondary);
-  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--medium-gray);
+  margin: 0 0 var(--spacing-lg) 0;
   line-height: 1.6;
 }
 
-/* 모바일 반응형 디자인 */
-@media (max-width: 767px) {
+.tax-info-text {
+  font-size: var(--font-size-sm);
+  color: var(--medium-gray);
+  margin-top: var(--spacing-sm);
+  line-height: 1.6;
+  padding: var(--spacing-sm);
+  background: var(--light-beige);
+  border-radius: var(--radius-sm);
+}
+
+/* ==================== 반응형 디자인 ==================== */
+
+/* 태블릿 (768px ~ 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
   .salary-profile-modal-content {
-    max-width: 100%;
-    max-height: 90vh;
+    max-width: var(--schedule-modal-max-width-tablet, 98vw);
   }
   
   .grade-table-header,
   .grade-table-row {
-    grid-template-columns: 100px 80px 80px 80px 80px;
+    grid-template-columns: minmax(120px, 1fr) repeat(4, minmax(90px, 1fr));
+  }
+}
+
+/* 모바일 (< 768px) */
+@media (max-width: 767px) {
+  .salary-profile-modal-content {
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .consultant-info-section {
+    padding: var(--spacing-md);
+  }
+  
+  .grade-table-container {
+    padding: var(--spacing-md);
+    overflow-x: auto;
+  }
+  
+  .grade-table-header,
+  .grade-table-row {
+    grid-template-columns: minmax(100px, 1fr) repeat(4, minmax(80px, 1fr));
     font-size: var(--font-size-xs);
     gap: var(--spacing-xs);
   }
   
-  .grade-table-container {
-    overflow-x: auto;
+  .grade-table-row {
+    padding: var(--spacing-sm) 0;
   }
   
   .option-item {
     flex-direction: column;
-    gap: var(--spacing-xs);
+    gap: var(--spacing-sm);
   }
   
   .option-item-field {
     width: 100%;
   }
   
-  .option-remove-btn {
+  .option-remove-btn,
+  .option-add-btn {
     width: 100%;
   }
 }
 
-/* 태블릿 반응형 디자인 */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .salary-profile-modal-content {
-    max-width: 800px;
+/* 작은 모바일 (< 480px) */
+@media (max-width: 480px) {
+  .consultant-info-section,
+  .grade-table-container {
+    padding: var(--spacing-sm);
   }
   
   .grade-table-header,
   .grade-table-row {
-    grid-template-columns: 120px 90px 90px 90px 90px;
+    grid-template-columns: minmax(80px, 1fr) repeat(4, minmax(60px, 1fr));
   }
 }
 
-/* 다크 모드 지원 */
-@media (prefers-color-scheme: dark) {
-  .consultant-info-section {
-    background-color: var(--ios-bg-secondary-dark);
-  }
-  
-  .consultant-info-title {
-    color: var(--ios-text-primary-dark);
-  }
-  
-  .consultant-info-item {
-    color: var(--ios-text-secondary-dark);
-  }
-  
-  .consultant-info-item strong {
-    color: var(--ios-text-primary-dark);
-  }
-  
-  .grade-table-container {
-    background-color: var(--ios-bg-secondary-dark);
-    border-color: var(--ios-border-light-dark);
-  }
-  
-  .grade-table-header {
-    color: var(--ios-text-primary-dark);
-    border-bottom-color: var(--ios-border-light-dark);
-  }
-  
-  .grade-table-row {
-    color: var(--ios-text-secondary-dark);
-    border-bottom-color: var(--ios-border-light-dark);
-  }
-  
-  .grade-table-cell--name {
-    color: var(--ios-text-primary-dark);
-  }
-  
-  .option-item {
-    background-color: var(--ios-bg-secondary-dark);
-  }
-}
-
-/* 접근성 개선 */
+/* ==================== 접근성 개선 ==================== */
 @media (prefers-reduced-motion: reduce) {
   .option-remove-btn,
-  .option-add-btn {
+  .option-add-btn,
+  .option-item,
+  .grade-table-row {
     transition: none;
   }
 }
 
-/* 고대비 모드 지원 */
+/* ==================== 고대비 모드 지원 ==================== */
 @media (prefers-contrast: high) {
-  .grade-table-container {
+  .grade-table-container,
+  .consultant-info-section,
+  .option-item {
     border-width: 2px;
   }
   
   .grade-selected-badge {
-    border: 2px solid var(--ios-blue-dark);
+    border: 2px solid var(--dark-gray);
   }
 }

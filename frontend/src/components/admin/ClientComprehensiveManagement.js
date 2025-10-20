@@ -983,126 +983,40 @@ const ClientComprehensiveManagement = () => {
                     </div>
 
                     {/* 필터 UI */}
-                    <div style={{
-                        background: 'white',
-                        padding: '20px',
-                        borderRadius: '12px',
-                        marginBottom: '20px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            gap: '15px',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            marginBottom: '15px'
-                        }}>
-                            {/* 검색 입력 */}
-                            <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
-                                <input
-                                    type="text"
-                                    placeholder="이름, 이메일, 전화번호로 검색..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px 40px 10px 12px',
-                                        border: '2px solid #e1e5e9',
-                                        borderRadius: '8px',
-                                        fontSize: 'var(--font-size-sm)',
-                                        outline: 'none',
-                                        transition: 'border-color 0.2s ease',
-                                        backgroundColor: '#f8f9fa'
-                                    }}
-                                    onFocus={(e) => e.target.style.borderColor = '#007bff'}
-                                    onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
-                                />
-                                <i className="bi bi-search" style={{
-                                    position: 'absolute',
-                                    right: '12px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    color: '#6c757d',
-                                    fontSize: 'var(--font-size-base)'
-                                }}></i>
-                            </div>
-                            
-                            {/* 상태 필터 */}
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                style={{
-                                    padding: '10px 12px',
-                                    border: '2px solid #e1e5e9',
-                                    borderRadius: '8px',
-                                    fontSize: 'var(--font-size-sm)',
-                                    backgroundColor: '#f8f9fa',
-                                    minWidth: '150px',
-                                    outline: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'border-color 0.2s ease'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#007bff'}
-                                onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
-                            >
-                                <option value="all">전체 상태</option>
-                                <option value="ACTIVE">활성</option>
-                                <option value="INACTIVE">비활성</option>
-                                <option value="SUSPENDED">일시정지</option>
-                                <option value="COMPLETED">완료</option>
-                                <option value="PENDING">대기중</option>
-                            </select>
-                            
-                            {/* 필터 초기화 */}
-                            {(searchTerm || filterStatus !== 'all') && (
-                                <button
-                                    onClick={() => {
-                                        setSearchTerm('');
-                                        setFilterStatus('all');
-                                    }}
-                                    style={{
-                                        padding: '10px 16px',
-                                        backgroundColor: '#6c757d',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        fontSize: 'var(--font-size-sm)',
-                                        cursor: 'pointer',
-                                        transition: 'background-color 0.2s ease',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px'
-                                    }}
-                                    onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
-                                    onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
-                                >
-                                    <i className="bi bi-x-circle"></i>
-                                    초기화
-                                </button>
-                            )}
-                        </div>
+                    <div className="client-comp-filters">
+                        <input
+                            type="text"
+                            className="client-comp-search-input"
+                            placeholder="이름, 이메일, 전화번호로 검색..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                         
-                        {/* 필터 상태 표시 */}
-                        <div style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: '#6c757d',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px'
-                        }}>
-                            <i className="bi bi-info-circle"></i>
-                            {searchTerm || filterStatus !== 'all' ? (
-                                <span>
-                                    검색 결과: <strong>{getFilteredClients().length}명</strong>
-                                    {searchTerm && ` (검색어: "${searchTerm}")`}
-                                    {filterStatus !== 'all' && ` (상태: ${getStatusTextSync(filterStatus)})`}
-                                </span>
-                            ) : (
-                                <span>
-                                    최신 <strong>10명</strong> 표시 중 (전체 {clients.length}명)
-                                </span>
-                            )}
-                        </div>
+                        <select
+                            className="client-comp-filter-select"
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                        >
+                            <option value="all">전체 상태</option>
+                            <option value="ACTIVE">활성</option>
+                            <option value="INACTIVE">비활성</option>
+                            <option value="SUSPENDED">일시정지</option>
+                            <option value="COMPLETED">완료</option>
+                            <option value="PENDING">대기중</option>
+                        </select>
+                        
+                        {(searchTerm || filterStatus !== 'all') && (
+                            <button
+                                className="client-comp-container btn btn-secondary btn-sm"
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setFilterStatus('all');
+                                }}
+                            >
+                                <i className="bi bi-x-circle"></i>
+                                초기화
+                            </button>
+                        )}
                     </div>
 
                     <div className="client-comp-client-grid">

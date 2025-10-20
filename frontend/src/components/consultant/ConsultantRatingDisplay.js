@@ -104,27 +104,30 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             {/* 카드 바디 */}
             <div className="mg-card-body">
                 {/* 평가 통계 그리드 */}
-                <div className="mg-stats-grid mg-mb-lg">
+                <div className="mg-dashboard-stats mg-mb-lg">
                     {/* 평균 점수 */}
-                    <div className="mg-stat-card">
-                        <div className="mg-stat-value mg-text-primary-blue">
-                            {ratingStats.averageHeartScore}
+                    <div className="mg-dashboard-stat-card">
+                        <div className="mg-dashboard-stat-icon" style={{ background: 'var(--olive-green)' }}>
+                            💖
                         </div>
-                        <div className="mg-stat-label">
-                            평균 하트 점수
-                        </div>
-                        <div className="mg-text-center mg-mt-sm">
-                            {renderHeartScore(Math.round(ratingStats.averageHeartScore))}
+                        <div className="mg-dashboard-stat-content">
+                            <div className="mg-dashboard-stat-value">
+                                {ratingStats.averageHeartScore}
+                            </div>
+                            <div className="mg-dashboard-stat-label">평균 하트 점수</div>
                         </div>
                     </div>
 
                     {/* 총 평가 수 */}
-                    <div className="mg-stat-card">
-                        <div className="mg-stat-value">
-                            {ratingStats.totalRatingCount}
+                    <div className="mg-dashboard-stat-card">
+                        <div className="mg-dashboard-stat-icon" style={{ background: 'var(--mint-green)' }}>
+                            📊
                         </div>
-                        <div className="mg-stat-label">
-                            총 평가 수
+                        <div className="mg-dashboard-stat-content">
+                            <div className="mg-dashboard-stat-value">
+                                {ratingStats.totalRatingCount}
+                            </div>
+                            <div className="mg-dashboard-stat-label">총 평가 수</div>
                         </div>
                     </div>
                 </div>

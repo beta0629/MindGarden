@@ -7587,19 +7587,6 @@ body {
     .rating-distribution-grid .mg-font-semibold {
         font-size: var(--font-size-sm);
     }
-    
-    /* 평가 통계 카드 모바일 크기 조정 */
-    .mg-stats-grid .mg-stat-card {
-        padding: var(--spacing-md);
-    }
-    
-    .mg-stats-grid .mg-stat-value {
-        font-size: 1.5rem;
-    }
-    
-    .mg-stats-grid .mg-stat-label {
-        font-size: var(--font-size-xs);
-    }
 }
 
 .recent-ratings-container {

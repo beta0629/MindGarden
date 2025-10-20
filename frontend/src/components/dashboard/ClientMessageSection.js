@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { Mail, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
-import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
-import './ClientMessageSection.css';
 
 /**
  * 내담자 메시지 확인 섹션
@@ -15,14 +15,14 @@ const ClientMessageSection = ({ userId }) => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // 메시지 타입별 아이콘과 색상
+  // 메시지 타입별 정보
   const getMessageTypeInfo = (messageType) => {
     const typeMap = {
-      'GENERAL': { icon: '💬', label: '일반', color: '#6c757d' },
-      'FOLLOW_UP': { icon: '📋', label: '후속 조치', color: '#007bff' },
-      'HOMEWORK': { icon: '📝', label: '과제 안내', color: '#28a745' },
-      'APPOINTMENT': { icon: '📅', label: '약속 안내', color: '#ffc107' },
-      'EMERGENCY': { icon: '⚠️', label: '긴급 안내', color: '#dc3545' }
+      'GENERAL': { icon: <Mail size={16} />, label: '일반', colorClass: 'secondary' },
+      'FOLLOW_UP': { icon: <CheckCircle size={16} />, label: '후속 조치', colorClass: 'primary' },
+      'HOMEWORK': { icon: <Clock size={16} />, label: '과제 안내', colorClass: 'success' },
+      'APPOINTMENT': { icon: <Clock size={16} />, label: '약속 안내', colorClass: 'warning' },
+      'EMERGENCY': { icon: <AlertCircle size={16} />, label: '긴급 안내', colorClass: 'danger' }
     };
     return typeMap[messageType] || typeMap['GENERAL'];
   };
@@ -106,107 +106,113 @@ const ClientMessageSection = ({ userId }) => {
     }
   }, [userId]);
 
-  if (loading) {
-    return (
-      <div className="client-message-section">
-        <div className="message-header">
-          <h3>📨 상담사 메시지</h3>
-        </div>
-        <div className="message-loading">
-          <UnifiedLoading variant="dots" size="small" text="메시지를 불러오는 중..." type="inline" />
+  return (
+    <div className="mg-card">
+      <div className="mg-card-header">
+        <div className="mg-flex mg-justify-between mg-align-center">
+          <h3 className="mg-h4 mg-mb-0 mg-flex mg-align-center mg-gap-sm">
+            <Mail size={20} />
+            상담사 메시지
+            {unreadCount > 0 && (
+              <span className="mg-badge mg-badge-danger">{unreadCount}</span>
+            )}
+          </h3>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="client-message-section">
-      <div className="message-header">
-        <h3>📨 상담사 메시지</h3>
-        {unreadCount > 0 && (
-          <span className="unread-badge">{unreadCount}</span>
+      <div className="mg-card-body">
+        {loading ? (
+          <div className="mg-loading-container">
+            <div className="mg-spinner"></div>
+            <p>메시지를 불러오는 중...</p>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="mg-empty-state">
+            <div className="mg-empty-state__icon">📭</div>
+            <p className="mg-empty-state__text">받은 메시지가 없습니다.</p>
+          </div>
+        ) : (
+          <div className="mg-space-y-sm">
+            {messages.map((message) => {
+              const typeInfo = getMessageTypeInfo(message.messageType);
+              return (
+                <div
+                  key={message.id}
+                  className={`rating-schedule-item ${!message.isRead ? 'message-unread' : ''}`}
+                  onClick={() => handleMessageClick(message)}
+                >
+                  <div className="mg-flex mg-align-start mg-gap-md">
+                    <div className={`mg-dashboard-stat-icon mg-flex-shrink-0`} style={{ background: `var(--color-${typeInfo.colorClass})` }}>
+                      {typeInfo.icon}
+                    </div>
+                    <div className="mg-flex-1">
+                      <div className="mg-flex mg-align-center mg-gap-sm mg-mb-xs">
+                        <h5 className="mg-h5 mg-mb-0">{message.title}</h5>
+                        {message.isImportant && (
+                          <span className="mg-badge mg-badge-warning mg-text-xs">중요</span>
+                        )}
+                        {message.isUrgent && (
+                          <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
+                        )}
+                      </div>
+                      <p className="mg-text-sm mg-color-text-secondary mg-mb-xs">
+                        {message.content?.substring(0, 50)}
+                        {message.content?.length > 50 && '...'}
+                      </p>
+                      <div className="mg-flex mg-align-center mg-gap-sm mg-text-xs mg-color-text-secondary">
+                        <span className={`mg-badge mg-badge-${typeInfo.colorClass}`}>{typeInfo.label}</span>
+                        <span>{formatDate(message.sentAt || message.createdAt)}</span>
+                      </div>
+                    </div>
+                    {!message.isRead && (
+                      <div className="message-unread-indicator"></div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
-      {messages.length === 0 ? (
-        <div className="no-messages">
-          <div className="no-messages-icon">📭</div>
-          <p>받은 메시지가 없습니다.</p>
-        </div>
-      ) : (
-        <div className="message-list">
-          {messages.map((message) => {
-            const typeInfo = getMessageTypeInfo(message.messageType);
-            return (
-              <div
-                key={message.id}
-                className={`message-item ${!message.isRead ? 'unread' : ''}`}
-                onClick={() => handleMessageClick(message)}
-              >
-                <div className="message-type-icon" data-message-color={typeInfo.color}>
-                  {typeInfo.icon}
-                </div>
-                <div className="message-content">
-                  <div className="message-title">
-                    {message.title}
-                    {message.isImportant && <span className="important-badge">중요</span>}
-                    {message.isUrgent && <span className="urgent-badge">긴급</span>}
-                  </div>
-                  <div className="message-preview">
-                    {message.content?.substring(0, 50)}
-                    {message.content?.length > 50 && '...'}
-                  </div>
-                  <div className="message-meta">
-                    <span className="message-type">{typeInfo.label}</span>
-                    <span className="message-date">{formatDate(message.sentAt || message.createdAt)}</span>
-                  </div>
-                </div>
-                {!message.isRead && <div className="unread-dot"></div>}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* 메시지 상세 모달 */}
-      {isDetailModalOpen && selectedMessage && (
-        <div className="message-detail-modal-overlay" onClick={() => setIsDetailModalOpen(false)}>
-          <div className="message-detail-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>{selectedMessage.title}</h4>
+      {isDetailModalOpen && selectedMessage && ReactDOM.createPortal(
+        <div className="mg-modal-overlay" onClick={() => setIsDetailModalOpen(false)}>
+          <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="mg-modal-header">
+              <h4 className="mg-h4 mg-mb-0">{selectedMessage.title}</h4>
               <button 
-                className="close-btn"
+                className="mg-modal-close"
                 onClick={() => setIsDetailModalOpen(false)}
               >
                 ✕
               </button>
             </div>
-            <div className="modal-content">
-              <div className="message-meta-info">
-                <span 
-                  className="message-type-badge" 
-                  data-badge-bg={getMessageTypeInfo(selectedMessage.messageType).color}
-                >
-                  {getMessageTypeInfo(selectedMessage.messageType).icon} {getMessageTypeInfo(selectedMessage.messageType).label}
+            <div className="mg-modal-body">
+              <div className="mg-flex mg-align-center mg-gap-md mg-mb-md mg-pb-md mg-border-bottom">
+                <span className={`mg-badge mg-badge-${getMessageTypeInfo(selectedMessage.messageType).colorClass} mg-flex mg-align-center mg-gap-xs`}>
+                  {getMessageTypeInfo(selectedMessage.messageType).icon}
+                  {getMessageTypeInfo(selectedMessage.messageType).label}
                 </span>
-                <span className="message-date">
+                <span className="mg-text-sm mg-color-text-secondary">
                   {new Date(selectedMessage.sentAt || selectedMessage.createdAt).toLocaleString('ko-KR')}
                 </span>
               </div>
-              <div className="message-content-full">
+              <div className="mg-text-base" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
                 {selectedMessage.content}
               </div>
             </div>
-            <div className="modal-footer">
+            <div className="mg-modal-footer">
               <button 
-                className="close-button"
+                className="mg-button mg-button-secondary"
                 onClick={() => setIsDetailModalOpen(false)}
               >
                 닫기
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

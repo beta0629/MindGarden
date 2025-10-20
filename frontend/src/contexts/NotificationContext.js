@@ -24,11 +24,14 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       const userType = user.role === 'ROLE_CONSULTANT' ? 'CONSULTANT' : 'CLIENT';
-      const endpoint = `/api/consultation-messages/unread-count?userId=${user.id}&userType=${userType}`;
+      // 캐싱 방지를 위한 타임스탬프 추가
+      const timestamp = new Date().getTime();
+      const endpoint = `/api/consultation-messages/unread-count?userId=${user.id}&userType=${userType}&_t=${timestamp}`;
 
       const response = await apiGet(endpoint);
       
       if (response.success) {
+        console.log('📊 읽지 않은 메시지 개수 업데이트:', response.unreadCount);
         setUnreadCount(response.unreadCount || 0);
       }
     } catch (error) {
@@ -70,16 +73,20 @@ export const NotificationProvider = ({ children }) => {
   // 메시지 읽음 처리
   const markMessageAsRead = async (messageId) => {
     try {
+      console.log('📨 메시지 읽음 처리 시작:', messageId);
       const response = await apiGet(`/api/consultation-messages/${messageId}/read`);
       
       if (response.success) {
+        console.log('✅ 메시지 읽음 처리 성공:', messageId);
         // 로컬 상태 업데이트
         setNotifications(prev => prev.filter(n => n.id !== messageId));
         // 서버에서 최신 카운트 다시 로드
         await loadUnreadCount();
+      } else {
+        console.error('❌ 메시지 읽음 처리 실패:', response.message);
       }
     } catch (error) {
-      console.error('메시지 읽음 처리 오류:', error);
+      console.error('❌ 메시지 읽음 처리 오류:', error);
     }
   };
 

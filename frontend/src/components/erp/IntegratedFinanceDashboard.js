@@ -266,70 +266,75 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <SimpleLayout title="📊 통합 회계 관리 시스템">
-      <div className="integrated-finance-container">
-        {/* 헤더 */}
-      <div className="integrated-finance-header">
-        <div className="header-content">
-          <h1 className="header-title">
-            📊 통합 회계 관리 시스템
-          </h1>
-          <p className="header-subtitle">
-            {isHQUser 
-              ? `${selectedBranch ? (selectedBranch === 'HQ' ? '전체 지점 통합' : `${selectedBranch} 지점`) : '지점을 선택하세요'} - 수입/지출 관리`
-              : `${user?.branchCode || ''} 지점 - 수입/지출 관리`
-            }
-          </p>
+    <SimpleLayout>
+      <div className="mg-dashboard-layout">
+        {/* Dashboard Header */}
+        <div className="mg-dashboard-header">
+          <div className="mg-dashboard-header-content">
+            <div className="mg-dashboard-header-left">
+              <BarChart3 className="mg-dashboard-icon" size={32} />
+              <div>
+                <h1 className="mg-dashboard-title">통합 회계 관리 시스템</h1>
+                <p className="mg-dashboard-subtitle">
+                  {isHQUser 
+                    ? `${selectedBranch ? (selectedBranch === 'HQ' ? '전체 지점 통합' : `${selectedBranch} 지점`) : '지점을 선택하세요'} - 수입/지출 관리`
+                    : `${user?.branchCode || ''} 지점 - 수입/지출 관리`
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="mg-dashboard-header-right">
+              {isHQUser && (
+                <select
+                  value={selectedBranch}
+                  onChange={(e) => setSelectedBranch(e.target.value)}
+                  className="mg-select"
+                >
+                  <option value="">지점 선택</option>
+                  {branches.map(branch => (
+                    <option key={branch.codeValue} value={branch.codeValue}>
+                      {branch.codeLabel}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <select
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="mg-select"
+              >
+                <option value="daily">일간</option>
+                <option value="monthly">월간</option>
+                <option value="yearly">년간</option>
+              </select>
+              <button
+                onClick={() => setShowQuickExpenseForm(true)}
+                className="mg-button mg-button-danger mg-button-sm"
+              >
+                <TrendingDown size={16} />
+                빠른 지출
+              </button>
+              <button
+                onClick={() => setShowTransactionForm(true)}
+                className="mg-button mg-button-success mg-button-sm"
+              >
+                <DollarSign size={16} />
+                거래 등록
+              </button>
+              <button
+                onClick={() => window.location.href = '/erp/financial'}
+                className="mg-button mg-button-primary mg-button-sm"
+              >
+                <FileText size={16} />
+                상세 내역 보기
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="integrated-finance-dropdown-container">
-          {isHQUser && (
-            <select
-              value={selectedBranch}
-              onChange={(e) => setSelectedBranch(e.target.value)}
-              className="integrated-finance-select integrated-finance-select--branch"
-            >
-              <option value="">지점 선택</option>
-              {branches.map(branch => (
-                <option key={branch.codeValue} value={branch.codeValue}>
-                  {branch.codeLabel}
-                </option>
-              ))}
-            </select>
-          )}
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="integrated-finance-select integrated-finance-select--period"
-          >
-            <option value="daily">일간</option>
-            <option value="monthly">월간</option>
-            <option value="yearly">년간</option>
-          </select>
-          <button
-            onClick={() => setShowQuickExpenseForm(true)}
-            className="mg-btn mg-btn--danger mg-btn--sm"
-          >
-            <TrendingDown size={16} style={{ display: 'inline-block', marginRight: '4px', verticalAlign: 'middle' }} />
-            빠른 지출
-          </button>
-          <button
-            onClick={() => setShowTransactionForm(true)}
-            className="mg-btn mg-btn--success mg-btn--sm"
-          >
-            <DollarSign size={16} style={{ display: 'inline-block', marginRight: '4px', verticalAlign: 'middle' }} />
-            거래 등록
-          </button>
-          <button
-            onClick={() => window.location.href = '/erp/financial'}
-            className="mg-btn mg-btn--primary mg-btn--sm"
-          >
-            <FileText size={16} style={{ display: 'inline-block', marginRight: '4px', verticalAlign: 'middle' }} />
-            상세 내역 보기
-          </button>
-        </div>
-      </div>
 
-      {/* 탭 메뉴 */}
+        {/* Main Content */}
+        <div className="mg-dashboard-content">
+          {/* 탭 메뉴 */}
       <div className="integrated-finance-tabs">
         {[
           { key: 'overview', label: '개요' },
@@ -379,6 +384,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           }}
         />
       )}
+        </div>
       </div>
     </SimpleLayout>
   );

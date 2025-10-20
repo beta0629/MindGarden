@@ -1,11 +1,9 @@
-/* IntegratedFinanceDashboard 스타일 - 완전히 새로운 클래스, CSS Variables 사용 */
+/* IntegratedFinanceDashboard 스타일 - MindGarden 디자인 시스템 */
 
-/* 컨테이너 */
-.finance-dashboard-container {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--spacing-lg);
+/* 대시보드 아이콘 */
+.mg-dashboard-icon {
+  font-size: 2rem;
+  color: var(--mint-green);
 }
 
 /* 에러 상태 */
@@ -20,49 +18,6 @@
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   text-align: center;
-}
-
-/* 헤더 */
-.finance-header {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.finance-header-content {
-  margin-bottom: var(--spacing-md);
-}
-
-.finance-header-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--dark-gray);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.finance-header-subtitle {
-  font-size: var(--font-size-sm);
-  color: var(--medium-gray);
-  margin: 0;
-}
-
-.finance-dropdown-container {
-  margin-top: var(--spacing-md);
-}
-
-.finance-select {
-  width: 100%;
-  max-width: 300px;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--dark-gray);
-  font-size: var(--font-size-sm);
 }
 
 /* 탭 네비게이션 */

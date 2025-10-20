@@ -388,10 +388,10 @@ const ConsultantMessageScreen = () => {
   if (!client || !consultation) {
     return (
       <SimpleLayout title="메시지 전송">
-        <div style={styles.container}>
-          <div style={styles.header}>
-            <h1 style={styles.headerTitle}>메시지 전송</h1>
-            <p style={styles.headerSubtitle}>상담 정보를 불러올 수 없습니다.</p>
+        <div className="mg-dashboard-layout">
+          <div className="mg-dashboard-header">
+            <h1 className="mg-dashboard-title">메시지 전송</h1>
+            <p className="mg-dashboard-subtitle">상담 정보를 불러올 수 없습니다.</p>
           </div>
         </div>
       </SimpleLayout>
@@ -400,52 +400,52 @@ const ConsultantMessageScreen = () => {
 
   return (
     <SimpleLayout title="메시지 전송">
-      <div style={styles.container}>
+      <div className="mg-dashboard-layout">
       {/* 헤더 */}
-      <div style={styles.header}>
-        <h1 style={styles.headerTitle}>
+      <div className="mg-dashboard-header">
+        <h1 className="mg-dashboard-title">
           💬 내담자에게 메시지 전송
         </h1>
-        <p style={styles.headerSubtitle}>
+        <p className="mg-dashboard-subtitle">
           상담일지 작성이 완료되었습니다. 내담자에게 메시지를 전송하거나 건너뛸 수 있습니다.
         </p>
       </div>
 
       {/* 내담자 정보 카드 */}
-      <div style={styles.clientInfoCard}>
-        <h2 style={styles.clientInfoTitle}>
+      <div className="mg-card mg-mb-lg">
+        <h2 className="mg-h3 mg-mb-md mg-flex mg-align-center mg-gap-sm">
           👤 내담자 정보
         </h2>
-        <div style={styles.clientInfoGrid}>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>이름</span>
-            <span style={styles.clientInfoValue}>{client.name}</span>
+        <div className="mg-grid mg-grid-cols-2 mg-gap-md">
+          <div className="mg-flex mg-flex-col">
+            <span className="mg-label mg-text-sm mg-color-text-secondary">이름</span>
+            <span className="mg-text-base mg-font-medium">{client.name}</span>
           </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>이메일</span>
-            <span style={styles.clientInfoValue}>{client.email || '정보 없음'}</span>
+          <div className="mg-flex mg-flex-col">
+            <span className="mg-label mg-text-sm mg-color-text-secondary">이메일</span>
+            <span className="mg-text-base mg-font-medium">{client.email || '정보 없음'}</span>
           </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>전화번호</span>
-            <span style={styles.clientInfoValue}>{client.phone || '정보 없음'}</span>
+          <div className="mg-flex mg-flex-col">
+            <span className="mg-label mg-text-sm mg-color-text-secondary">전화번호</span>
+            <span className="mg-text-base mg-font-medium">{client.phone || '정보 없음'}</span>
           </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>주소</span>
-            <span style={styles.clientInfoValue}>{client.address || '정보 없음'}</span>
+          <div className="mg-flex mg-flex-col">
+            <span className="mg-label mg-text-sm mg-color-text-secondary">주소</span>
+            <span className="mg-text-base mg-font-medium">{client.address || '정보 없음'}</span>
           </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>상담일</span>
-            <span style={styles.clientInfoValue}>{consultation.startTime?.split('T')[0]}</span>
+          <div className="mg-flex mg-flex-col">
+            <span className="mg-label mg-text-sm mg-color-text-secondary">상담일</span>
+            <span className="mg-text-base mg-font-medium">{consultation.startTime?.split('T')[0]}</span>
           </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>상담시간</span>
-            <span style={styles.clientInfoValue}>
+          <div className="mg-flex mg-flex-col">
+            <span className="mg-label mg-text-sm mg-color-text-secondary">상담시간</span>
+            <span className="mg-text-base mg-font-medium">
               {consultation.startTime?.split('T')[1]?.slice(0,5)} - {consultation.endTime?.split('T')[1]?.slice(0,5)}
             </span>
           </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>상담사</span>
-            <span style={styles.clientInfoValue}>{user.name}</span>
+          <div className="mg-flex mg-flex-col">
+            <span className="mg-label mg-text-sm mg-color-text-secondary">상담사</span>
+            <span className="mg-text-base mg-font-medium">{user.name}</span>
           </div>
         </div>
       </div>

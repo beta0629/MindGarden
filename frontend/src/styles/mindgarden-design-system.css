@@ -1050,6 +1050,26 @@ body {
 }
 
 /* ============================================
+   Consultant Message Screen Classes
+   ============================================ */
+
+.mg-grid {
+    display: grid;
+}
+
+.mg-grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.mg-text-base {
+    font-size: var(--font-size-base);
+}
+
+.mg-font-medium {
+    font-weight: var(--font-weight-medium);
+}
+
+/* ============================================
    Additional Utility Classes for Consultant Components
    ============================================ */
 

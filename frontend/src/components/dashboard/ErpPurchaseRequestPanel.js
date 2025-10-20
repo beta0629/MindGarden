@@ -143,7 +143,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
               </button>
               <button 
                 className="mg-button mg-button-ghost"
-                onClick={() => window.location.href = '/erp/dashboard'}
+                onClick={() => window.location.href = '/erp/purchase-management'}
               >
                 요청 내역
               </button>

@@ -918,229 +918,68 @@ const ClientComprehensiveManagement = () => {
 
     return (
         <SimpleLayout>
-            <div className="client-comprehensive-management-container">
-            <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '24px',
-                marginBottom: '20px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-                <h2 style={{
-                    margin: '0 0 8px 0',
-                    fontSize: 'var(--font-size-xxl)',
-                    fontWeight: '600',
-                    color: '#2c3e50'
-                }}>👥 내담자 관리</h2>
-                <p style={{
-                    margin: '0 0 20px 0',
-                    color: '#6c757d',
-                    fontSize: 'var(--font-size-sm)'
-                }}>내담자의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다.</p>
-                
-                {/* 메인 탭 메뉴 */}
-                <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    marginBottom: '20px'
-                }}>
-                    <button
-                        style={{
-                            padding: '10px 20px',
-                            border: 'none',
-                            borderRadius: '8px',
-                            backgroundColor: mainTab === 'comprehensive' ? '#007bff' : '#e9ecef',
-                            color: mainTab === 'comprehensive' ? 'white' : '#495057',
-                            cursor: 'pointer',
-                            fontSize: 'var(--font-size-sm)',
-                            fontWeight: '500',
-                            transition: 'all 0.2s ease'
-                        }}
-                        onClick={() => setMainTab('comprehensive')}
-                    >
-                        📊 내담자 종합관리
-                    </button>
-                    <button
-                        style={{
-                            padding: '10px 20px',
-                            border: 'none',
-                            borderRadius: '8px',
-                            backgroundColor: mainTab === 'basic' ? '#007bff' : '#e9ecef',
-                            color: mainTab === 'basic' ? 'white' : '#495057',
-                            cursor: 'pointer',
-                            fontSize: 'var(--font-size-sm)',
-                            fontWeight: '500',
-                            transition: 'all 0.2s ease'
-                        }}
-                        onClick={() => setMainTab('basic')}
-                    >
-                        👤 내담자 기본관리
-                    </button>
+            <div className="client-comp-container">
+                <div className="client-comp-header">
+                    <h2>👥 내담자 관리</h2>
+                    <p>내담자의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다.</p>
+                    
+                    {/* 메인 탭 메뉴 */}
+                    <div className="client-comp-main-tab-buttons">
+                        <button
+                            className={`client-comp-main-tab-btn ${mainTab === 'comprehensive' ? 'active' : ''}`}
+                            onClick={() => setMainTab('comprehensive')}
+                        >
+                            📊 내담자 종합관리
+                        </button>
+                        <button
+                            className={`client-comp-main-tab-btn ${mainTab === 'basic' ? 'active' : ''}`}
+                            onClick={() => setMainTab('basic')}
+                        >
+                            👤 내담자 기본관리
+                        </button>
+                    </div>
                 </div>
-            </div>
 
             {/* 메인 탭 내용 */}
             {mainTab === 'comprehensive' ? (
                 <>
-                                        {/* 전체 통계 */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                        gap: '16px',
-                        marginBottom: '24px'
-                    }}>
-                <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px'
-                }}>
-                    <div style={{
-                        fontSize: 'var(--font-size-xxxl)',
-                        width: '48px',
-                        height: '48px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#e3f2fd',
-                        borderRadius: '12px'
-                    }}>👥</div>
-                    <div>
-                        <div style={{
-                            fontSize: 'var(--font-size-xxl)',
-                            fontWeight: '700',
-                            color: '#2c3e50',
-                            marginBottom: '4px'
-                        }}>{stats.totalClients}</div>
-                        <div style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: '#6c757d'
-                        }}>총 내담자</div>
-                    </div>
-                </div>
-                <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px'
-                }}>
-                    <div style={{
-                        fontSize: 'var(--font-size-xxxl)',
-                        width: '48px',
-                        height: '48px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#f3e5f5',
-                        borderRadius: '12px'
-                    }}>🔗</div>
-                    <div>
-                        <div style={{
-                            fontSize: 'var(--font-size-xxl)',
-                            fontWeight: '700',
-                            color: '#2c3e50',
-                            marginBottom: '4px'
-                        }}>{stats.activeMappings}</div>
-                        <div style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: '#6c757d'
-                        }}>활성 매칭</div>
-                    </div>
-                </div>
-                <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px'
-                }}>
-                    <div style={{
-                        fontSize: 'var(--font-size-xxxl)',
-                        width: '48px',
-                        height: '48px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#e8f5e8',
-                        borderRadius: '12px'
-                    }}>💬</div>
-                    <div>
-                        <div style={{
-                            fontSize: 'var(--font-size-xxl)',
-                            fontWeight: '700',
-                            color: '#2c3e50',
-                            marginBottom: '4px'
-                        }}>{stats.totalConsultations}</div>
-                        <div style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: '#6c757d'
-                        }}>총 상담</div>
-                    </div>
-                </div>
-                <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px'
-                }}>
-                    <div style={{
-                        fontSize: 'var(--font-size-xxxl)',
-                        width: '48px',
-                        height: '48px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#fff3e0',
-                        borderRadius: '12px'
-                    }}>✅</div>
-                    <div>
-                        <div style={{
-                            fontSize: 'var(--font-size-xxl)',
-                            fontWeight: '700',
-                            color: '#2c3e50',
-                            marginBottom: '4px'
-                        }}>{stats.completionRate}%</div>
-                        <div style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: '#6c757d'
-                        }}>완료율</div>
-                    </div>
-                </div>
+                    {/* 전체 통계 */}
+                    <div className="client-comp-stats-overview">
+                        <div className="client-comp-stat-card">
+                            <div className="client-comp-stat-icon">👥</div>
+                            <div className="client-comp-stat-content">
+                                <div className="client-comp-stat-number">{stats.totalClients}</div>
+                                <div className="client-comp-stat-label">총 내담자</div>
+                            </div>
+                        </div>
+                        <div className="client-comp-stat-card">
+                            <div className="client-comp-stat-icon">🔗</div>
+                            <div className="client-comp-stat-content">
+                                <div className="client-comp-stat-number">{stats.activeMappings}</div>
+                                <div className="client-comp-stat-label">활성 매칭</div>
+                            </div>
+                        </div>
+                        <div className="client-comp-stat-card">
+                            <div className="client-comp-stat-icon">💬</div>
+                            <div className="client-comp-stat-content">
+                                <div className="client-comp-stat-number">{stats.totalConsultations}</div>
+                                <div className="client-comp-stat-label">총 상담</div>
+                            </div>
+                        </div>
+                        <div className="client-comp-stat-card">
+                            <div className="client-comp-stat-icon">✅</div>
+                            <div className="client-comp-stat-content">
+                                <div className="client-comp-stat-number">{stats.completionRate}%</div>
+                                <div className="client-comp-stat-label">완료율</div>
+                            </div>
+                        </div>
                     </div>
 
-            <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '24px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
+            <div className="client-comp-client-list-section">
                 {/* 내담자 목록 */}
                 <div>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '20px',
-                        flexWrap: 'wrap',
-                        gap: '16px'
-                    }}>
-                        <h3 style={{
-                            margin: '0',
-                            fontSize: 'var(--font-size-xl)',
-                            fontWeight: '600',
-                            color: '#2c3e50'
-                        }}>내담자 목록</h3>
+                    <div className="client-comp-section-header">
+                        <h3>내담자 목록</h3>
                     </div>
 
                     {/* 필터 UI */}

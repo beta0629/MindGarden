@@ -108,6 +108,11 @@
 /* ==================== 섹션 ==================== */
 .rating-section {
     margin-bottom: var(--spacing-xl);
+    background: var(--color-background);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
 }
 
 .section-title {
@@ -118,6 +123,10 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+    background: var(--color-background-secondary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
 }
 
 .section-icon {
@@ -141,11 +150,13 @@
     align-items: center;
     gap: var(--spacing-md);
     transition: var(--transition-normal);
+    margin-bottom: var(--spacing-sm);
 }
 
 .consultant-rank-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
 }
 
 .rank-number {
@@ -211,10 +222,14 @@
     justify-content: space-between;
     align-items: center;
     transition: var(--transition-normal);
+    margin-bottom: var(--spacing-sm);
 }
 
 .trend-item:hover {
     background: var(--color-background-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--color-primary);
 }
 
 .trend-date {
@@ -277,22 +292,44 @@
     .consultant-rank-card {
         padding: var(--spacing-md);
         gap: var(--spacing-sm);
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .consultant-info {
+        order: 2;
     }
     
     .rank-number {
+        order: 1;
         width: var(--icon-size-md);
         height: var(--icon-size-md);
         font-size: var(--font-size-md);
+    }
+    
+    .rank-badge {
+        order: 3;
     }
     
     .trend-item {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--spacing-xs);
+        padding: var(--spacing-sm);
     }
     
     .trend-content {
         align-items: flex-start;
+        width: 100%;
+    }
+    
+    .section-title {
+        padding: var(--spacing-sm);
+        font-size: var(--font-size-md);
+    }
+    
+    .rating-section {
+        padding: var(--spacing-md);
     }
 }
 

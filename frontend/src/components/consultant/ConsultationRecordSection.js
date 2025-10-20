@@ -138,13 +138,13 @@ const ConsultationRecordSection = ({ consultantId }) => {
               <h4 className="mg-h5 mg-mb-md">최근 상담일지</h4>
               <div className="mg-space-y-sm">
                 {recordStats.recentRecords.map((record, index) => (
-                  <div key={record.id || index} className="mg-card mg-card-hover">
-                    <div className="mg-flex mg-justify-between mg-align-center">
+                  <div key={record.id || index} className="mg-card mg-card-hover record-card">
+                    <div className="mg-flex mg-justify-between mg-align-center record-card-content">
                       <div className="mg-flex-1">
                         <div className="mg-text-base mg-font-semibold mg-color-text-primary mg-mb-xs">
                           {record.clientName || '내담자'} - {record.sessionDate}
                         </div>
-                        <div className="mg-flex mg-align-center mg-gap-sm">
+                        <div className="mg-flex mg-align-center mg-gap-sm record-meta">
                           <span className={`mg-badge ${record.isCompleted ? 'mg-badge-success' : 'mg-badge-warning'}`}>
                             {record.isCompleted ? '완료' : '미완료'}
                           </span>
@@ -154,7 +154,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
                         </div>
                       </div>
                       <button 
-                        className="mg-button mg-button-outline mg-button-small"
+                        className="mg-button mg-button-outline mg-button-small record-view-btn"
                         onClick={() => navigate(`/consultant/consultation-record-view/${record.id}`)}
                       >
                         보기
@@ -183,21 +183,21 @@ const ConsultationRecordSection = ({ consultantId }) => {
           )}
 
           {/* 빠른 액션 */}
-          <div className="mg-flex mg-gap-sm mg-mt-lg mg-pt-lg mg-border-top">
+          <div className="quick-actions-grid mg-mt-lg mg-pt-lg mg-border-top">
             <button 
-              className="mg-button mg-button-primary mg-flex-1"
+              className="mg-button mg-button-primary"
               onClick={handleCreateRecord}
             >
               새 일지 작성
             </button>
             <button 
-              className="mg-button mg-button-outline mg-flex-1"
+              className="mg-button mg-button-outline"
               onClick={handleViewAllRecords}
             >
               전체 목록
             </button>
             <button 
-              className="mg-button mg-button-outline mg-flex-1"
+              className="mg-button mg-button-outline"
               onClick={() => navigate('/consultant/consultation-records/statistics')}
             >
               통계 보기

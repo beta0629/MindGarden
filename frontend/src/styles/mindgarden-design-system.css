@@ -867,20 +867,19 @@ body {
 }
 
 .mg-stat-card {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: var(--light-cream);
+  border: 1px solid var(--light-beige);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   transition: all 0.3s ease;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-sm);
 }
 
 .mg-stat-card:hover {
-  transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+  background: var(--cream);
+  box-shadow: var(--shadow-md);
+  border-color: var(--olive-green);
 }
 
 .mg-stat-icon {
@@ -4917,6 +4916,36 @@ body {
   box-shadow: var(--shadow-lg); 
   transform: translateY(-2px);
   border-color: var(--olive-green);
+}
+
+/* Quick Actions Grid */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+@media (max-width: 768px) {
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Record Card Responsive */
+@media (max-width: 768px) {
+  .record-card-content {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: var(--spacing-sm);
+  }
+  
+  .record-view-btn {
+    width: 100%;
+  }
+  
+  .record-meta {
+    flex-wrap: wrap;
+  }
 }
 
 

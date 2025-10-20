@@ -132,13 +132,13 @@ const ClientMessageSection = ({ userId }) => {
             <p className="mg-empty-state__text">받은 메시지가 없습니다.</p>
           </div>
         ) : (
-          <div className="mg-space-y-sm">
+          <div className="message-list-container">
             {messages.map((message) => {
               const typeInfo = getMessageTypeInfo(message.messageType);
               return (
                 <div
                   key={message.id}
-                  className={`rating-schedule-item ${!message.isRead ? 'message-unread' : ''}`}
+                  className={`message-card ${!message.isRead ? 'message-unread' : ''}`}
                   onClick={() => handleMessageClick(message)}
                 >
                   <div className="mg-flex mg-align-start mg-gap-md">

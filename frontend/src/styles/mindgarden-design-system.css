@@ -7853,33 +7853,8 @@ body {
    CLIENT MESSAGE SECTION STYLES
    ============================================ */
 
-/* 메시지 리스트 컨테이너 */
-.message-list-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-}
-
-/* 메시지 카드 기본 스타일 */
-.message-card {
-    padding: var(--spacing-md);
-    background: var(--light-cream);
-    border: 1px solid var(--light-beige);
-    border-radius: var(--radius-md);
-    transition: all var(--transition-normal);
-    cursor: pointer;
-    box-shadow: var(--shadow-sm);
-}
-
-.message-card:hover {
-    background: var(--cream);
-    border-color: var(--olive-green);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-/* 메시지 아이콘 */
-.message-icon {
+/* 메시지 타입 아이콘 */
+.message-type-icon {
     width: calc(var(--spacing-xl) * 2.5);
     height: calc(var(--spacing-xl) * 2.5);
     border-radius: var(--radius-md);
@@ -7890,38 +7865,33 @@ body {
     flex-shrink: 0;
 }
 
-.message-icon-primary {
+.message-type-icon-primary {
     background: var(--color-primary);
 }
 
-.message-icon-secondary {
+.message-type-icon-secondary {
     background: var(--color-text-secondary);
 }
 
-.message-icon-success {
+.message-type-icon-success {
     background: var(--olive-green);
 }
 
-.message-icon-warning {
+.message-type-icon-warning {
     background: var(--color-warning);
 }
 
-.message-icon-danger {
+.message-type-icon-danger {
     background: var(--color-danger);
 }
 
 /* 읽지 않은 메시지 표시 */
-.message-unread {
+.message-item-unread {
     border-left: calc(var(--spacing-xs) / 2) solid var(--color-primary) !important;
-    background: var(--color-primary-light) !important;
+    background: rgba(59, 130, 246, 0.05) !important;
 }
 
-.message-unread:hover {
-    background: var(--color-primary-light) !important;
-    border-color: var(--color-primary) !important;
-}
-
-.message-unread-indicator {
+.message-item-unread-dot {
     width: var(--spacing-sm);
     height: var(--spacing-sm);
     background: var(--color-primary);
@@ -7939,22 +7909,14 @@ body {
     word-break: break-word;
 }
 
-/* 반응형 메시지 카드 */
+/* 반응형 메시지 */
 @media (max-width: 768px) {
-    .message-list-container {
-        gap: calc(var(--spacing-xs) * 1.5);
-    }
-    
-    .message-card {
-        padding: var(--spacing-sm);
-    }
-    
-    .message-icon {
+    .message-type-icon {
         width: calc(var(--spacing-xl) * 2);
         height: calc(var(--spacing-xl) * 2);
     }
     
-    .message-unread-indicator {
+    .message-item-unread-dot {
         width: calc(var(--spacing-xs) * 1.5);
         height: calc(var(--spacing-xs) * 1.5);
     }

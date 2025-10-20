@@ -132,17 +132,17 @@ const ClientMessageSection = ({ userId }) => {
             <p className="mg-empty-state__text">받은 메시지가 없습니다.</p>
           </div>
         ) : (
-          <div className="message-list-container">
+          <div className="mg-space-y-sm">
             {messages.map((message) => {
               const typeInfo = getMessageTypeInfo(message.messageType);
               return (
                 <div
                   key={message.id}
-                  className={`message-card ${!message.isRead ? 'message-unread' : ''}`}
+                  className={`mg-card mg-cursor-pointer ${!message.isRead ? 'message-item-unread' : ''}`}
                   onClick={() => handleMessageClick(message)}
                 >
                   <div className="mg-flex mg-align-start mg-gap-md">
-                    <div className={`message-icon message-icon-${typeInfo.colorClass} mg-flex-shrink-0`}>
+                    <div className={`message-type-icon message-type-icon-${typeInfo.colorClass}`}>
                       {typeInfo.icon}
                     </div>
                     <div className="mg-flex-1">
@@ -155,7 +155,7 @@ const ClientMessageSection = ({ userId }) => {
                           <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
                         )}
                       </div>
-                      <p className="mg-text-sm mg-color-text-secondary mg-mb-xs mg-line-clamp-2">
+                      <p className="mg-text-sm mg-color-text-secondary mg-mb-xs">
                         {message.content?.substring(0, 50)}
                         {message.content?.length > 50 && '...'}
                       </p>
@@ -165,7 +165,7 @@ const ClientMessageSection = ({ userId }) => {
                       </div>
                     </div>
                     {!message.isRead && (
-                      <div className="message-unread-indicator"></div>
+                      <div className="message-item-unread-dot"></div>
                     )}
                   </div>
                 </div>

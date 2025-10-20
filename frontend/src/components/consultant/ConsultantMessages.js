@@ -105,6 +105,36 @@ const ConsultantMessages = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // 내담자별로 메시지 그룹화
+  const groupedMessages = filteredMessages.reduce((groups, message) => {
+    const clientId = message.clientId || 'unknown';
+    const clientName = message.clientName || '알 수 없음';
+    
+    if (!groups[clientId]) {
+      groups[clientId] = {
+        clientId,
+        clientName,
+        messages: [],
+        unreadCount: 0
+      };
+    }
+    
+    groups[clientId].messages.push(message);
+    if (!message.isRead) {
+      groups[clientId].unreadCount += 1;
+    }
+    
+    return groups;
+  }, {});
+
+  // 객체를 배열로 변환하고 읽지 않은 메시지가 많은 순으로 정렬
+  const clientGroups = Object.values(groupedMessages).sort((a, b) => {
+    if (b.unreadCount !== a.unreadCount) {
+      return b.unreadCount - a.unreadCount; // 읽지 않은 메시지 많은 순
+    }
+    return a.clientName.localeCompare(b.clientName, 'ko-KR'); // 이름 가나다순
+  });
+
   // 메시지 전송
   const handleSendMessage = async () => {
     try {

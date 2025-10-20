@@ -15,11 +15,14 @@ export const useNotification = () => {
 export const NotificationProvider = ({ children }) => {
   const { user, isLoggedIn } = useSession();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [unreadSystemCount, setUnreadSystemCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
+  const [systemNotifications, setSystemNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // 읽지 않은 메시지 개수 로드
-  const loadUnreadCount = async () => {
+  const loadUnreadMessageCount = async () => {
     if (!isLoggedIn || !user?.id) return;
 
     try {
@@ -32,14 +35,41 @@ export const NotificationProvider = ({ children }) => {
       
       if (response.success) {
         console.log('📊 읽지 않은 메시지 개수 업데이트:', response.unreadCount);
-        setUnreadCount(response.unreadCount || 0);
+        setUnreadMessageCount(response.unreadCount || 0);
       }
     } catch (error) {
-      console.error('알림 개수 로드 오류:', error);
+      console.error('메시지 개수 로드 오류:', error);
     }
   };
 
-  // 알림 목록 로드
+  // 읽지 않은 시스템 공지 개수 로드
+  const loadUnreadSystemCount = async () => {
+    if (!isLoggedIn || !user?.id) return;
+
+    try {
+      const timestamp = new Date().getTime();
+      const endpoint = `/api/system-notifications/unread-count?_t=${timestamp}`;
+
+      const response = await apiGet(endpoint);
+      
+      if (response.success) {
+        console.log('📢 읽지 않은 공지 개수 업데이트:', response.unreadCount);
+        setUnreadSystemCount(response.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error('공지 개수 로드 오류:', error);
+    }
+  };
+
+  // 통합 읽지 않은 개수 로드
+  const loadUnreadCount = async () => {
+    await Promise.all([
+      loadUnreadMessageCount(),
+      loadUnreadSystemCount()
+    ]);
+  };
+
+  // 메시지 목록 로드
   const loadNotifications = async () => {
     if (!isLoggedIn || !user?.id) return;
 
@@ -59,9 +89,24 @@ export const NotificationProvider = ({ children }) => {
         setNotifications(unreadMessages);
       }
     } catch (error) {
-      console.error('알림 목록 로드 오류:', error);
+      console.error('메시지 목록 로드 오류:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 시스템 공지 목록 로드
+  const loadSystemNotifications = async () => {
+    if (!isLoggedIn || !user?.id) return;
+
+    try {
+      const response = await apiGet('/api/system-notifications?page=0&size=5');
+      
+      if (response.success) {
+        setSystemNotifications(response.data || []);
+      }
+    } catch (error) {
+      console.error('공지 목록 로드 오류:', error);
     }
   };
 
@@ -81,7 +126,7 @@ export const NotificationProvider = ({ children }) => {
         // 로컬 상태 업데이트
         setNotifications(prev => prev.filter(n => n.id !== messageId));
         // 서버에서 최신 카운트 다시 로드
-        await loadUnreadCount();
+        await loadUnreadMessageCount();
       } else {
         console.error('❌ 메시지 읽음 처리 실패:', response.message);
       }
@@ -90,10 +135,31 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
+  // 시스템 공지 읽음 처리
+  const markSystemNotificationAsRead = async (notificationId) => {
+    try {
+      console.log('📢 공지 읽음 처리 시작:', notificationId);
+      const response = await apiGet(`/api/system-notifications/${notificationId}/read`);
+      
+      if (response.success) {
+        console.log('✅ 공지 읽음 처리 성공:', notificationId);
+        // 로컬 상태 업데이트
+        setSystemNotifications(prev => prev.filter(n => n.id !== notificationId));
+        // 서버에서 최신 카운트 다시 로드
+        await loadUnreadSystemCount();
+      } else {
+        console.error('❌ 공지 읽음 처리 실패:', response.message);
+      }
+    } catch (error) {
+      console.error('❌ 공지 읽음 처리 오류:', error);
+    }
+  };
+
   // 알림 새로고침
   const refreshNotifications = () => {
     loadUnreadCount();
     loadNotifications();
+    loadSystemNotifications();
   };
 
   // 사용자 로그인 시 알림 로드
@@ -101,6 +167,7 @@ export const NotificationProvider = ({ children }) => {
     if (isLoggedIn && user?.id) {
       loadUnreadCount();
       loadNotifications();
+      loadSystemNotifications();
 
       // 30초마다 자동 갱신
       const interval = setInterval(() => {
@@ -111,14 +178,26 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [isLoggedIn, user?.id]);
 
+  // 통합 unreadCount 계산
+  useEffect(() => {
+    setUnreadCount(unreadMessageCount + unreadSystemCount);
+  }, [unreadMessageCount, unreadSystemCount]);
+
   const value = {
     unreadCount,
+    unreadMessageCount,
+    unreadSystemCount,
     notifications,
+    systemNotifications,
     loading,
     loadUnreadCount,
+    loadUnreadMessageCount,
+    loadUnreadSystemCount,
     loadNotifications,
+    loadSystemNotifications,
     decrementUnreadCount,
     markMessageAsRead,
+    markSystemNotificationAsRead,
     refreshNotifications
   };
 

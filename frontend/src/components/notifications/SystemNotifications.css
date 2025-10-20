@@ -1,0 +1,49 @@
+.system-notifications-container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+
+.notification-card {
+  transition: all var(--transition-normal);
+}
+
+.notification-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--olive-green);
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--spacing-xl) * 3);
+  height: calc(var(--spacing-xl) * 3);
+  border-radius: var(--radius-full);
+  background: var(--light-cream);
+}
+
+.notification-content {
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+
+.notification-content p {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .system-notifications-container {
+    padding: var(--spacing-md);
+  }
+  
+  .notification-icon {
+    width: calc(var(--spacing-xl) * 2);
+    height: calc(var(--spacing-xl) * 2);
+  }
+}
+

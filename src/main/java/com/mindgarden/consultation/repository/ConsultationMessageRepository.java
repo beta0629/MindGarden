@@ -35,9 +35,9 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
         Pageable pageable);
     
     /**
-     * 내담자 메시지 목록 조회
+     * 내담자 메시지 목록 조회 (수신자가 내담자인 메시지만 조회 - 프라이버시 보호)
      */
-    @Query("SELECT m FROM ConsultationMessage m WHERE m.clientId = :clientId " +
+    @Query("SELECT m FROM ConsultationMessage m WHERE m.receiverId = :clientId " +
            "AND (:consultantId IS NULL OR m.consultantId = :consultantId) " +
            "AND (:status IS NULL OR m.status = :status) " +
            "AND (:isRead IS NULL OR m.isRead = :isRead) " +
@@ -62,11 +62,18 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
     Long countByConsultantIdAndIsReadFalse(@Param("consultantId") Long consultantId);
     
     /**
-     * 내담자 읽지 않은 메시지 수 조회
+     * 내담자 읽지 않은 메시지 수 조회 (수신자 기준 - 프라이버시 보호)
      */
-    @Query("SELECT COUNT(m) FROM ConsultationMessage m WHERE m.clientId = :clientId " +
+    @Query("SELECT COUNT(m) FROM ConsultationMessage m WHERE m.receiverId = :clientId " +
            "AND m.isRead = false AND m.isDeleted = false")
     Long countByClientIdAndIsReadFalse(@Param("clientId") Long clientId);
+    
+    /**
+     * 수신자 기준 읽지 않은 메시지 수 조회
+     */
+    @Query("SELECT COUNT(m) FROM ConsultationMessage m WHERE m.receiverId = :receiverId " +
+           "AND m.isRead = false AND m.isDeleted = false")
+    Long countByReceiverIdAndIsReadFalse(@Param("receiverId") Long receiverId);
     
     /**
      * 상담사-내담자 간 대화 목록 조회
@@ -97,9 +104,9 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
         Pageable pageable);
     
     /**
-     * 내담자 메시지 검색
+     * 내담자 메시지 검색 (수신자 기준 - 프라이버시 보호)
      */
-    @Query("SELECT m FROM ConsultationMessage m WHERE m.clientId = :clientId " +
+    @Query("SELECT m FROM ConsultationMessage m WHERE m.receiverId = :clientId " +
            "AND (m.title LIKE %:keyword% OR m.content LIKE %:keyword%) " +
            "AND (:messageType IS NULL OR m.messageType = :messageType) " +
            "AND (:isImportant IS NULL OR m.isImportant = :isImportant) " +
@@ -130,9 +137,9 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
     List<ConsultationMessage> findImportantMessagesByConsultantId(@Param("consultantId") Long consultantId);
     
     /**
-     * 중요 메시지 목록 조회 (내담자용)
+     * 중요 메시지 목록 조회 (내담자용 - 수신자 기준, 프라이버시 보호)
      */
-    @Query("SELECT m FROM ConsultationMessage m WHERE m.clientId = :clientId " +
+    @Query("SELECT m FROM ConsultationMessage m WHERE m.receiverId = :clientId " +
            "AND m.isImportant = true AND m.isDeleted = false " +
            "ORDER BY m.createdAt DESC")
     List<ConsultationMessage> findImportantMessagesByClientId(@Param("clientId") Long clientId);
@@ -146,9 +153,9 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
     List<ConsultationMessage> findUrgentMessagesByConsultantId(@Param("consultantId") Long consultantId);
     
     /**
-     * 긴급 메시지 목록 조회 (내담자용)
+     * 긴급 메시지 목록 조회 (내담자용 - 수신자 기준, 프라이버시 보호)
      */
-    @Query("SELECT m FROM ConsultationMessage m WHERE m.clientId = :clientId " +
+    @Query("SELECT m FROM ConsultationMessage m WHERE m.receiverId = :clientId " +
            "AND m.isUrgent = true AND m.isDeleted = false " +
            "ORDER BY m.createdAt DESC")
     List<ConsultationMessage> findUrgentMessagesByClientId(@Param("clientId") Long clientId);

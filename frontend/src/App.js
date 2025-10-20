@@ -93,6 +93,8 @@ import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
 import IOSCardSample from './pages/IOSCardSample';
 import CounselingCenterLanding from './pages/CounselingCenterLanding';
+import SystemNotifications from './components/notifications/SystemNotifications';
+import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -362,6 +364,10 @@ function AppContent() {
             <Route path="/consultant/reports" element={<ConsultantRecords />} />
             <Route path="/consultant/messages" element={<ConsultantMessages />} />
             
+            {/* 시스템 공지 라우트 (모든 사용자) */}
+            <Route path="/notifications" element={<SystemNotifications />} />
+            <Route path="/system-notifications" element={<SystemNotifications />} />
+            
             {/* 내담자 전용 라우트 */}
             <Route path="/client/messages" element={<ClientMessageScreen />} />
             <Route path="/client/schedule" element={<ClientSchedule />} />
@@ -406,6 +412,7 @@ function AppContent() {
             <Route path="/admin/sessions" element={<SessionManagement />} />
             <Route path="/admin/accounts" element={<AccountManagement />} />
             <Route path="/admin/user-management" element={<UserManagement />} />
+            <Route path="/admin/system-notifications" element={<SystemNotificationManagement />} />
             <Route path="/hq/branch-management" element={<BranchManagement />} />
             <Route path="/hq/branches" element={<BranchManagement />} />
             <Route path="/hq/dashboard" element={<HQDashboard />} />

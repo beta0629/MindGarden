@@ -176,11 +176,12 @@ public class ConsultationMessageServiceImpl extends BaseServiceImpl<Consultation
     public Long getUnreadCount(Long userId, String userType) {
         log.info("📨 읽지 않은 메시지 수 조회 - 사용자 ID: {}, 유형: {}", userId, userType);
         
-        if ("CONSULTANT".equals(userType)) {
-            return consultationMessageRepository.countByConsultantIdAndIsReadFalse(userId);
-        } else {
-            return consultationMessageRepository.countByClientIdAndIsReadFalse(userId);
-        }
+        // receiverId로 조회 (실제 수신자 기준)
+        Long count = consultationMessageRepository.countByReceiverIdAndIsReadFalse(userId);
+        
+        log.info("📊 읽지 않은 메시지 수: {} (수신자 ID: {})", count, userId);
+        
+        return count;
     }
 
     @Override

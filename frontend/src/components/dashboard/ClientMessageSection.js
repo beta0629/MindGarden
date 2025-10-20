@@ -17,6 +17,17 @@ const ClientMessageSection = ({ userId }) => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // 메시지 타입별 정보
+  const getMessageTypeInfo = (type) => {
+    const types = {
+      GENERAL: { icon: '💬', label: '일반', colorClass: 'secondary' },
+      FOLLOW_UP: { icon: '📋', label: '후속 조치', colorClass: 'primary' },
+      HOMEWORK: { icon: '📝', label: '과제 안내', colorClass: 'success' },
+      REMINDER: { icon: '🔔', label: '알림', colorClass: 'warning' },
+      URGENT: { icon: '⚠️', label: '긴급', colorClass: 'danger' }
+    };
+    return types[type] || types.GENERAL;
+  };
 
   // 메시지 목록 로드
   const loadMessages = async () => {

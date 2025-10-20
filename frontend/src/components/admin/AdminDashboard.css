@@ -1,130 +1,104 @@
-/* 관리자 대시보드 스타일 - 새로운 디자인 시스템 적용 */
-/* CSS 변수는 main.css에서 관리되므로 여기서는 제거 */
-
-/* 전환 효과 변수 */
-    --admin-transition-fast: 0.2s ease;
-    --admin-transition-normal: 0.3s ease;
-    --admin-transition-slow: 0.5s ease;
-    
-    /* 파스텔톤 단색 변수 (그라데이션 제거) */
-    --admin-color-primary: #E8E0FF;
-    --admin-color-consultants: #E8E0FF;
-    --admin-color-clients: #FFE0DB;
-    --admin-color-user-management: #F0F8FF;
-    --admin-color-mappings: #E3F2FD;
-    --admin-color-active: #D4F1E0;
-    --admin-color-schedule: #FFE8D1;
-    --admin-color-sessions: #E1F5FE;
-    --admin-color-consultant-mgmt: #F3E5F5;
-    --admin-color-client-mgmt: #E8F5E8;
-    
-    /* 재무 관리 단색 변수 */
-    --admin-color-finance: #f39c12;
-    --admin-color-revenue: #27ae60;
-    --admin-color-expense: #e74c3c;
-    --admin-color-payment: #9b59b6;
-    --admin-color-report: #34495e;
-    --admin-color-settings: #95a5a6;
-}
+/* ===== AdminDashboard 스타일 - MindGarden 디자인 시스템 적용 ===== */
+/* 모든 하드코딩된 색상과 크기를 CSS 변수로 변경 */
 
 .admin-dashboard-content {
-    padding: var(--admin-spacing-xxl);
-    background-color: var(--admin-bg-color);
+    padding: var(--spacing-xl);
+    background-color: var(--color-background);
     min-height: 100vh;
 }
 
 /* 섹션 제목 */
 .dashboard-section {
-    margin-bottom: var(--admin-spacing-xxxl);
+    margin-bottom: var(--spacing-xxl);
 }
 
 .section-title {
-    font-size: var(--admin-font-xxxl);
-    font-weight: var(--admin-font-weight-semibold);
-    color: var(--admin-text-primary);
-    margin-bottom: var(--admin-spacing-xl);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-xl);
     display: flex;
     align-items: center;
-    gap: var(--admin-spacing-md);
-    padding-bottom: var(--admin-spacing-md);
-    border-bottom: 2px solid var(--admin-border-color);
+    gap: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--color-border);
 }
 
 .section-title i {
-    color: #667eea;
-    font-size: var(--admin-font-xxl);
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
 }
 
 /* 시스템 개요 카드 */
 .overview-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--admin-spacing-xl);
-    margin-bottom: var(--admin-spacing-xxl);
+    grid-template-columns: repeat(auto-fit, minmax(var(--spacing-xxxl), 1fr));
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xxl);
 }
 
 .overview-card {
-    background: var(--admin-white);
-    border-radius: var(--admin-radius-xl);
-    padding: var(--admin-spacing-xxl);
-    box-shadow: var(--admin-shadow-lg);
-    border: 1px solid var(--admin-border-color);
-    transition: var(--admin-transition-normal);
+    background: var(--color-background);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+    transition: var(--transition-normal);
     display: flex;
     align-items: center;
-    gap: var(--admin-spacing-xl);
+    gap: var(--spacing-lg);
 }
 
 .overview-card:hover {
     transform: translateY(-4px);
-    box-shadow: var(--admin-shadow-xl);
+    box-shadow: var(--shadow-md);
 }
 
 .card-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: var(--admin-radius-xl);
+    width: var(--icon-size-xl);
+    height: var(--icon-size-xl);
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--admin-font-xxxl);
-    color: var(--admin-white);
+    font-size: var(--font-size-xl);
+    color: var(--color-white);
     flex-shrink: 0;
 }
 
 .card-icon.consultants {
-    background: var(--admin-color-consultants);
+    background: var(--color-primary);
 }
 
 .card-icon.clients {
-    background: var(--admin-color-clients);
+    background: var(--color-success);
 }
 
 .card-icon.mappings {
-    background: var(--admin-color-mappings);
+    background: var(--color-info);
 }
 
 .card-icon.active {
-    background: var(--admin-color-active);
+    background: var(--color-warning);
 }
 
 .card-content h3 {
-    font-size: var(--admin-font-lg);
-    font-weight: var(--admin-font-weight-semibold);
-    color: var(--admin-text-primary);
-    margin: 0 0 var(--admin-spacing-sm) 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
 }
 
 .card-value {
-    font-size: var(--admin-font-giant);
-    font-weight: var(--admin-font-weight-bold);
-    color: var(--admin-text-primary);
-    margin: 0 0 var(--admin-spacing-xs) 0;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-xs) 0;
 }
 
 .card-description {
-    font-size: var(--admin-font-sm);
-    color: var(--admin-text-secondary);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
     margin: 0;
 }
 
@@ -177,7 +151,7 @@
 }
 
 .management-icon.mappings {
-    background: #af52de;
+    background: var(--color-purple);
 }
 
 /* 재무 관리 아이콘 스타일 */
@@ -206,7 +180,7 @@
 }
 
 .management-icon.recurring-expense {
-    background: #28a745;
+    background: var(--color-success);
 }
 
 
@@ -244,8 +218,8 @@
 .tool-buttons .btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--admin-shadow-md);
-    border-color: #667eea;
-    color: #667eea;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
 }
 
 .tool-buttons .btn:disabled {
@@ -272,18 +246,18 @@
 }
 
 .toast-success {
-    background: #d4edda;
-    color: #155724;
+    background: var(--color-success-light);
+    color: var(--color-success-dark);
 }
 
 .toast-danger {
-    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-    color: #721c24;
+    background: var(--color-danger-light);
+    color: var(--color-danger-dark);
 }
 
 .toast-info {
-    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
-    color: #0c5460;
+    background: var(--color-info-light);
+    color: var(--color-info-dark);
 }
 
 /* 반응형 디자인 */

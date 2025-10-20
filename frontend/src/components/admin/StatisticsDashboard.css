@@ -1,54 +1,55 @@
-/* ===== StatisticsDashboard 스타일 - 내담자 관리 페이지 스타일 ===== */
+/* ===== StatisticsDashboard 스타일 - MindGarden 디자인 시스템 적용 ===== */
 
 .statistics-dashboard {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(var(--spacing-xxxl), 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
 }
 
 .stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e5e7eb;
+    background: var(--color-background);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
     display: flex;
     align-items: center;
-    gap: 16px;
-    transition: all 0.3s ease;
+    gap: var(--spacing-md);
+    transition: var(--transition-normal);
 }
 
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
 }
 
 .stat-card__icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: var(--icon-size-lg);
+    height: var(--icon-size-lg);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
-    color: white;
+    font-size: var(--font-size-lg);
+    color: var(--color-white);
+    flex-shrink: 0;
 }
 
 .stat-card--primary .stat-card__icon {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: var(--color-primary);
 }
 
 .stat-card--success .stat-card__icon {
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: var(--color-success);
 }
 
 .stat-card--info .stat-card__icon {
-    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    background: var(--color-info);
 }
 
 .stat-card--warning .stat-card__icon {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    background: var(--color-warning);
 }
 
 .stat-card__content {
@@ -56,43 +57,73 @@
 }
 
 .stat-card__value {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1f2937;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
     line-height: 1;
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-xs);
 }
 
 .stat-card__label {
-    font-size: 14px;
-    color: #6b7280;
-    font-weight: 500;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
 }
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .statistics-dashboard {
         grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-        margin-bottom: 24px;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
     }
     
     .stat-card {
-        padding: 20px;
-        gap: 12px;
+        padding: var(--spacing-lg);
+        gap: var(--spacing-sm);
     }
     
     .stat-card__icon {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
+        width: var(--icon-size-md);
+        height: var(--icon-size-md);
+        font-size: var(--font-size-md);
     }
     
     .stat-card__value {
-        font-size: 24px;
+        font-size: var(--font-size-xl);
     }
     
     .stat-card__label {
-        font-size: 13px;
+        font-size: var(--font-size-xs);
+    }
+}
+
+@media (max-width: 480px) {
+    .statistics-dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        padding: var(--spacing-md);
+    }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .stat-card {
+        background: var(--color-background-dark);
+        border-color: var(--color-border-dark);
+    }
+    
+    .stat-card:hover {
+        box-shadow: var(--shadow-md-dark);
+    }
+    
+    .stat-card__value {
+        color: var(--color-text-primary-dark);
+    }
+    
+    .stat-card__label {
+        color: var(--color-text-secondary-dark);
     }
 }

@@ -4,25 +4,25 @@ import UnifiedLoading from "../common/UnifiedLoading";
 import './VacationStatistics.css';
 
 /**
- * 상담사별 색상 반환 함수
+ * 상담사별 색상 반환 함수 - CSS 변수 사용
  */
 const getConsultantColor = (consultantId) => {
-    const colors = [
-        '#3b82f6', // 파란색
-        '#10b981', // 녹색
-        '#f59e0b', // 주황색
-        '#ef4444', // 빨간색
-        '#8b5cf6', // 보라색
-        '#06b6d4', // 청록색
-        '#84cc16', // 라임색
-        '#f97316', // 오렌지색
-        '#ec4899', // 핑크색
-        '#6366f1'  // 인디고색
+    const colorClasses = [
+        'consultant-color-1', // 파란색
+        'consultant-color-2', // 녹색
+        'consultant-color-3', // 주황색
+        'consultant-color-4', // 빨간색
+        'consultant-color-5', // 보라색
+        'consultant-color-6', // 청록색
+        'consultant-color-7', // 라임색
+        'consultant-color-8', // 오렌지색
+        'consultant-color-9', // 핑크색
+        'consultant-color-10' // 인디고색
     ];
     
     // 상담사 ID를 기반으로 일관된 색상 할당
-    const colorIndex = consultantId % colors.length;
-    return colors[colorIndex];
+    const colorIndex = consultantId % colorClasses.length;
+    return colorClasses[colorIndex];
 };
 
 /**
@@ -315,29 +315,18 @@ const VacationStatistics = ({ className = "" }) => {
                             return (
                                 <div 
                                     key={consultant.consultantId} 
-                                    className="consultant-item" 
-                                    data-consultant-color={consultantColor}
+                                    className="consultant-card" 
                                 >
-                                    <div className="consultant-info">
-                                        <div 
-                                            className="consultant-avatar" 
-                                            style={{ backgroundColor: consultantColor }}
-                                        >
+                                    <div className={`consultant-avatar ${consultantColor}`}>
                                             {getAvatarInitial(consultant.consultantName)}
                                         </div>
-                                        <div className="consultant-details">
-                                            <div className="consultant-name">{consultant.consultantName}</div>
-                                            <div className="consultant-email">{consultant.consultantEmail}</div>
-                                        </div>
+                                        <div className="consultant-name">{consultant.consultantName}</div>
+                                        <div className="consultant-vacation-info">{consultant.consultantEmail}</div>
                                     </div>
-                                    <div className="vacation-info">
-                                        <div className="vacation-days" data-text-color={consultantColor}>
-                                            <span className="days-count">
-                                                {typeof consultant.vacationDays === 'number' 
-                                                    ? consultant.vacationDays.toFixed(1)
-                                                    : consultant.vacationDays}
-                                            </span>
-                                            <span className="days-label">일</span>
+                                        <div className="consultant-vacation-count">
+                                            {typeof consultant.vacationDays === 'number' 
+                                                ? consultant.vacationDays.toFixed(1)
+                                                : consultant.vacationDays}일
                                         </div>
                                         <div className="vacation-types">
                                             {consultant.vacationDaysByType && Object.entries(consultant.vacationDaysByType).map(([type, days]) => (

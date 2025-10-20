@@ -1,4 +1,5 @@
 import React from "react";
+import { Users, Link, MessageCircle, CheckCircle } from "lucide-react";
 import "./StatisticsDashboard.css";
 
 const StatisticsDashboard = ({ 
@@ -9,25 +10,25 @@ const StatisticsDashboard = ({
 }) => {
     const stats = [
         {
-            icon: "bi-people",
+            icon: <Users size={24} />,
             value: totalClients,
             label: "총 내담자",
             color: "primary"
         },
         {
-            icon: "bi-diagram-3",
+            icon: <Link size={24} />,
             value: activeMappings,
             label: "활성 매칭",
             color: "success"
         },
         {
-            icon: "bi-chat-dots",
+            icon: <MessageCircle size={24} />,
             value: totalSessions,
             label: "총 상담",
             color: "info"
         },
         {
-            icon: "bi-check-circle",
+            icon: <CheckCircle size={24} />,
             value: `${completionRate}%`,
             label: "완료율",
             color: "warning"
@@ -39,8 +40,8 @@ const StatisticsDashboard = ({
             {stats.map((stat, index) => (
                 <div key={`stat-${index}`} className={`stat-card stat-card--${stat.color}`}>
                     <div className="stat-card__icon">
-                        <i className={`bi ${stat.icon}`}></i>
-        </div>
+                        {stat.icon}
+                    </div>
                     <div className="stat-card__content">
                         <div className="stat-card__value">{stat.value}</div>
                         <div className="stat-card__label">{stat.label}</div>

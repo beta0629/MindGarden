@@ -43,6 +43,7 @@ const UnifiedHeader = ({
   className = '',
   onLogoClick,
   extraActions = null,
+  notificationAction = null, // 알림 액션
   ...props
 }) => {
   const navigate = useNavigate();
@@ -158,6 +159,9 @@ const UnifiedHeader = ({
 
     return (
       <div className="mg-header__user-menu">
+        {/* 알림 아이콘 */}
+        {notificationAction}
+        
         <div className="mg-header__user-info">
           {/* 프로필 사진 - 클릭 가능 */}
           <div 

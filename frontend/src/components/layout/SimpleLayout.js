@@ -34,7 +34,7 @@ const SimpleLayout = ({
     }
   };
 
-  // 알림 아이콘을 extraActions에 추가
+  // 알림 아이콘 컴포넌트
   const notificationAction = user && (
     <div className="notification-wrapper">
       <button 
@@ -52,13 +52,6 @@ const SimpleLayout = ({
     </div>
   );
 
-  const combinedActions = (
-    <>
-      {notificationAction}
-      {extraActions}
-    </>
-  );
-
   return (
     <div className="simple-layout">
       <UnifiedHeader 
@@ -68,7 +61,8 @@ const SimpleLayout = ({
         showHamburger={true}
         variant="default"
         sticky={true}
-        extraActions={combinedActions}
+        extraActions={extraActions}
+        notificationAction={notificationAction}
       />
       
       <main className="simple-main">

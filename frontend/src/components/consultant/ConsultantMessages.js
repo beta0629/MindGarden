@@ -333,9 +333,9 @@ const ConsultantMessages = () => {
                     value={newMessage.clientId}
                     onChange={(e) => setNewMessage({ ...newMessage, clientId: e.target.value })}
                   >
-                    <option value="">내담자를 선택하세요</option>
-                    {clients.map(client => (
-                      <option key={client.id} value={client.id}>
+                    <option key="default-client" value="">내담자를 선택하세요</option>
+                    {clients.map((client, index) => (
+                      <option key={`client-${client.id || index}`} value={client.id}>
                         {client.name} ({client.email})
                       </option>
                     ))}
@@ -349,8 +349,8 @@ const ConsultantMessages = () => {
                     value={newMessage.messageType}
                     onChange={(e) => setNewMessage({ ...newMessage, messageType: e.target.value })}
                   >
-                    {messageTypes.map(type => (
-                      <option key={type.value} value={type.value}>
+                    {messageTypes.map((type, index) => (
+                      <option key={`message-type-${type.value}-${index}`} value={type.value}>
                         {type.icon} {type.label}
                       </option>
                     ))}

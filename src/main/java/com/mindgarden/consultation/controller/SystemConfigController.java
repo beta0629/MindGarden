@@ -1,14 +1,21 @@
 package com.mindgarden.consultation.controller;
 
-import com.mindgarden.consultation.service.SystemConfigService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.service.SystemConfigService;
+import com.mindgarden.consultation.utils.SessionUtils;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 시스템 설정 관리 컨트롤러
@@ -27,10 +34,42 @@ public class SystemConfigController {
     private final SystemConfigService systemConfigService;
     
     /**
+     * 권한 체크: BRANCH_ADMIN 이상
+     */
+    private boolean hasAdminPermission(HttpSession session) {
+        User user = SessionUtils.getCurrentUser(session);
+        if (user == null) {
+            return false;
+        }
+        try {
+            String role = user.getRole().name();
+            return role != null && (
+                role.equals("ADMIN") ||
+                role.equals("BRANCH_ADMIN") ||
+                role.equals("BRANCH_MANAGER") ||
+                role.equals("BRANCH_SUPER_ADMIN") ||
+                role.equals("HQ_ADMIN") ||
+                role.equals("SUPER_HQ_ADMIN") ||
+                role.equals("HQ_MASTER")
+            );
+        } catch (Exception e) {
+            log.error("권한 체크 중 오류 발생", e);
+            return false;
+        }
+    }
+    
+    /**
      * 설정 값 조회
      */
     @GetMapping("/{configKey}")
-    public ResponseEntity<Map<String, Object>> getConfig(@PathVariable String configKey) {
+    public ResponseEntity<Map<String, Object>> getConfig(@PathVariable String configKey, HttpSession session) {
+        if (!hasAdminPermission(session)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
+        }
+        
         try {
             String value = systemConfigService.getConfigValue(configKey, "");
             Map<String, Object> response = new HashMap<>();
@@ -53,7 +92,14 @@ public class SystemConfigController {
     @PostMapping("/{configKey}")
     public ResponseEntity<Map<String, Object>> setConfig(
             @PathVariable String configKey,
-            @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, String> request,
+            HttpSession session) {
+        if (!hasAdminPermission(session)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
+        }
         try {
             String configValue = request.get("configValue");
             String description = request.get("description");
@@ -85,7 +131,13 @@ public class SystemConfigController {
      * 카테고리별 설정 조회
      */
     @GetMapping("/category/{category}")
-    public ResponseEntity<Map<String, Object>> getConfigsByCategory(@PathVariable String category) {
+    public ResponseEntity<Map<String, Object>> getConfigsByCategory(@PathVariable String category, HttpSession session) {
+        if (!hasAdminPermission(session)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
+        }
         try {
             List<String> configs = systemConfigService.getConfigsByCategory(category);
             Map<String, Object> response = new HashMap<>();
@@ -106,7 +158,13 @@ public class SystemConfigController {
      * OpenAI 설정 조회
      */
     @GetMapping("/openai")
-    public ResponseEntity<Map<String, Object>> getOpenAIConfig() {
+    public ResponseEntity<Map<String, Object>> getOpenAIConfig(HttpSession session) {
+        if (!hasAdminPermission(session)) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
+        }
         try {
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

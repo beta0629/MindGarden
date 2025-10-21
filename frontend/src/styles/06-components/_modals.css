@@ -28,22 +28,21 @@
 
 /* 모달 컨텐츠 - 강화된 글래스모피즘 */
 .mg-modal {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--blur-lg));
+  -webkit-backdrop-filter: blur(var(--blur-lg));
   border-radius: var(--border-radius-xxl);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 
-    0 25px 50px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: var(--border-width-thin) solid var(--glass-border-medium);
+  box-shadow: var(--shadow-xl);
   max-width: 90vw;
-  max-height: calc(100vh - 120px); /* 공통헤더(64px) + 여백(56px) 고려 */
-  overflow: auto;
+  max-height: calc(100vh - var(--header-height) - var(--spacing-xxxl)); /* 공통헤더 + 여백 고려 */
+  overflow: hidden; /* 모달 자체는 overflow hidden, body만 스크롤 */
   z-index: var(--z-modal);
-  transform: scale(0.9) translateY(20px);
-  transition: transform 0.3s ease;
-  margin-top: 60px; /* 공통헤더 아래로 위치 조정 */
+  transform: scale(0.9) translateY(var(--spacing-lg));
+  transition: transform var(--transition-normal) ease;
+  margin-top: var(--header-height); /* 공통헤더 아래로 위치 조정 */
 }
 
 .mg-modal-overlay--visible .mg-modal {
@@ -52,16 +51,16 @@
 
 /* 모달 크기 */
 .mg-modal--small {
-  width: 400px;
+  width: var(--modal-width-sm);
 }
 
 .mg-modal--medium {
-  width: 600px;
+  width: var(--modal-width-md);
 }
 
 .mg-modal--large {
-  width: 800px;
-  max-height: calc(100vh - 80px); /* 공통 헤더(64px) + 여백(16px) 고려 */
+  width: var(--modal-width-lg);
+  max-height: calc(100vh - var(--header-height) - var(--spacing-xl)); /* 공통 헤더 + 여백 고려 */
 }
 
 .mg-modal--fullscreen {
@@ -79,11 +78,12 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-lg);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  border-bottom: var(--border-width-thin) solid var(--glass-border-light);
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--blur-md));
+  -webkit-backdrop-filter: blur(var(--blur-md));
   border-radius: var(--border-radius-xxl) var(--border-radius-xxl) 0 0;
+  flex-shrink: 0; /* 헤더 영역이 줄어들지 않도록 고정 */
 }
 
 .mg-modal__title {
@@ -94,8 +94,8 @@
 }
 
 .mg-modal__close {
-  width: 32px;
-  height: 32px;
+  width: var(--size-icon-lg);
+  height: var(--size-icon-lg);
   border-radius: var(--border-radius-full);
   border: none;
   background: var(--glass-bg-medium);
@@ -104,9 +104,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  font-size: 18px;
-  font-weight: bold;
+  transition: all var(--transition-fast) ease;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
 }
 
 .mg-modal__close:hover {
@@ -120,7 +120,7 @@
   padding: var(--spacing-lg);
   flex: 1;
   overflow-y: auto;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--glass-bg-strong);
 }
 
 /* 모달 액션 */
@@ -128,10 +128,11 @@
   display: flex;
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.9);
+  border-top: var(--border-width-thin) solid var(--color-border-light);
+  background: var(--glass-bg-strong);
   border-radius: 0 0 var(--border-radius-xxl) var(--border-radius-xxl);
   justify-content: flex-end;
+  flex-shrink: 0; /* 액션 영역이 줄어들지 않도록 고정 */
 }
 
 /* 모달 타입별 스타일 */
@@ -222,7 +223,7 @@
 
 /* 모달 내부 스크롤 최적화 */
 .mg-modal__body::-webkit-scrollbar {
-  width: 6px;
+  width: var(--scrollbar-width);
 }
 
 .mg-modal__body::-webkit-scrollbar-track {
@@ -245,6 +246,36 @@
 .mg-modal__header-content {
   flex: 1;
   min-width: 0; /* 텍스트 오버플로우 방지 */
+}
+
+/* 모달 내 체크박스 그룹 */
+.mg-modal .mg-checkbox-group {
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.mg-modal .mg-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  user-select: none;
+}
+
+.mg-modal .mg-checkbox-input {
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+  cursor: pointer;
+  accent-color: var(--color-primary);
+  margin: 0;
+}
+
+.mg-modal .mg-checkbox-text {
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
 }
 
 /* 로딩 오버레이 */

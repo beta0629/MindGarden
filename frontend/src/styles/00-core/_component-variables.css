@@ -68,6 +68,25 @@
   --modal-body-padding: var(--spacing-lg);
   --modal-footer-padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
 
+  /* 모달 크기 */
+  --modal-width-sm: 400px;
+  --modal-width-md: 600px;
+  --modal-width-lg: 800px;
+  
+  /* 아이콘 크기 */
+  --size-icon-sm: 16px;
+  --size-icon-md: 24px;
+  --size-icon-lg: 32px;
+  --size-icon-xl: 48px;
+  
+  /* 스크롤바 */
+  --scrollbar-width: 6px;
+  
+  /* Blur 효과 */
+  --blur-sm: 10px;
+  --blur-md: 20px;
+  --blur-lg: 30px;
+
   /* ===== 드롭다운 컴포넌트 ===== */
   --dropdown-padding: var(--spacing-sm) var(--spacing-md);
   --dropdown-border-radius: var(--border-radius-md);

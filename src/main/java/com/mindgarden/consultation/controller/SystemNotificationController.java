@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.entity.SystemNotification;
+import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.SystemNotificationService;
-import jakarta.servlet.http.HttpSession;
+import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -36,23 +39,21 @@ public class SystemNotificationController {
     @Autowired
     private SystemNotificationService systemNotificationService;
     
+    @Autowired
+    private DynamicPermissionService dynamicPermissionService;
+    
     /**
-     * 권한 체크: 지점 관리자 이상인지 확인
+     * 권한 체크: SYSTEM_NOTIFICATION_MANAGE 권한 확인
      */
     private boolean hasAdminPermission(HttpSession session) {
-        String userRole = (String) session.getAttribute("role");
+        User currentUser = SessionUtils.getCurrentUser(session);
         
-        if (userRole == null) {
+        if (currentUser == null) {
             return false;
         }
         
-        // BRANCH_ADMIN, MAIN_ADMIN, SUPER_ADMIN만 허용
-        return "BRANCH_ADMIN".equals(userRole) || 
-               "MAIN_ADMIN".equals(userRole) || 
-               "SUPER_ADMIN".equals(userRole) ||
-               "ROLE_BRANCH_ADMIN".equals(userRole) || 
-               "ROLE_MAIN_ADMIN".equals(userRole) || 
-               "ROLE_SUPER_ADMIN".equals(userRole);
+        // DynamicPermissionService를 사용하여 권한 체크
+        return dynamicPermissionService.hasPermission(currentUser, "SYSTEM_NOTIFICATION_MANAGE");
     }
     
     /**
@@ -64,15 +65,17 @@ public class SystemNotificationController {
             @RequestParam(defaultValue = "20") int size,
             HttpSession session) {
         try {
-            Long userId = (Long) session.getAttribute("userId");
-            String userRole = (String) session.getAttribute("role");
+            User currentUser = SessionUtils.getCurrentUser(session);
             
-            if (userId == null) {
+            if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다."
                 ));
             }
+            
+            Long userId = currentUser.getId();
+            String userRole = currentUser.getRole().name();
             
             log.info("📢 사용자 공지 목록 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
             
@@ -123,15 +126,17 @@ public class SystemNotificationController {
     @GetMapping("/unread-count")
     public ResponseEntity<?> getUnreadCount(HttpSession session) {
         try {
-            Long userId = (Long) session.getAttribute("userId");
-            String userRole = (String) session.getAttribute("role");
+            User currentUser = SessionUtils.getCurrentUser(session);
             
-            if (userId == null) {
+            if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다."
                 ));
             }
+            
+            Long userId = currentUser.getId();
+            String userRole = currentUser.getRole().name();
             
             log.info("📢 읽지 않은 공지 수 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
             
@@ -160,14 +165,16 @@ public class SystemNotificationController {
             @PathVariable Long notificationId,
             HttpSession session) {
         try {
-            Long userId = (Long) session.getAttribute("userId");
+            User currentUser = SessionUtils.getCurrentUser(session);
             
-            if (userId == null) {
+            if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다."
                 ));
             }
+            
+            Long userId = currentUser.getId();
             
             log.info("📢 공지 상세 조회 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
             
@@ -211,14 +218,16 @@ public class SystemNotificationController {
             @PathVariable Long notificationId,
             HttpSession session) {
         try {
-            Long userId = (Long) session.getAttribute("userId");
+            User currentUser = SessionUtils.getCurrentUser(session);
             
-            if (userId == null) {
+            if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다."
                 ));
             }
+            
+            Long userId = currentUser.getId();
             
             log.info("📢 공지 읽음 처리 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
             
@@ -244,15 +253,17 @@ public class SystemNotificationController {
     @GetMapping("/urgent")
     public ResponseEntity<?> getUrgentNotifications(HttpSession session) {
         try {
-            Long userId = (Long) session.getAttribute("userId");
-            String userRole = (String) session.getAttribute("role");
+            User currentUser = SessionUtils.getCurrentUser(session);
             
-            if (userId == null) {
+            if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다."
                 ));
             }
+            
+            Long userId = currentUser.getId();
+            String userRole = currentUser.getRole().name();
             
             log.info("📢 긴급 공지 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
             
@@ -362,8 +373,9 @@ public class SystemNotificationController {
                 ));
             }
             
-            Long userId = (Long) session.getAttribute("userId");
-            String userName = (String) session.getAttribute("name");
+            User currentUser = SessionUtils.getCurrentUser(session);
+            Long userId = currentUser.getId();
+            String userName = currentUser.getName();
             
             log.info("📢 공지 생성 - 작성자 ID: {}, 이름: {}", userId, userName);
             
@@ -378,8 +390,12 @@ public class SystemNotificationController {
             notification.setAuthorName(userName);
             
             // 게시 종료 일시 설정
-            if (request.get("expiresAt") != null) {
-                notification.setExpiresAt(LocalDateTime.parse((String) request.get("expiresAt")));
+            if (request.get("expiresAt") != null && !((String) request.get("expiresAt")).trim().isEmpty()) {
+                try {
+                    notification.setExpiresAt(LocalDateTime.parse((String) request.get("expiresAt")));
+                } catch (Exception e) {
+                    log.warn("⚠️ 게시 종료일 파싱 실패, null로 설정: {}", e.getMessage());
+                }
             }
             
             SystemNotification created = systemNotificationService.createNotification(notification);
@@ -426,8 +442,12 @@ public class SystemNotificationController {
             notification.setIsImportant((Boolean) request.getOrDefault("isImportant", false));
             notification.setIsUrgent((Boolean) request.getOrDefault("isUrgent", false));
             
-            if (request.get("expiresAt") != null) {
-                notification.setExpiresAt(LocalDateTime.parse((String) request.get("expiresAt")));
+            if (request.get("expiresAt") != null && !((String) request.get("expiresAt")).trim().isEmpty()) {
+                try {
+                    notification.setExpiresAt(LocalDateTime.parse((String) request.get("expiresAt")));
+                } catch (Exception e) {
+                    log.warn("⚠️ 게시 종료일 파싱 실패, null로 설정: {}", e.getMessage());
+                }
             }
             
             SystemNotification updated = systemNotificationService.updateNotification(notificationId, notification);

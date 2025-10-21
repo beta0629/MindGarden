@@ -4,6 +4,10 @@ import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { Bell, Plus, Edit, Trash2, Send, Archive } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import UnifiedLoading from '../common/UnifiedLoading';
+import { fetchUserPermissions, hasPermission as checkPermission } from '../../utils/permissionUtils';
+import '../../styles/mindgarden-design-system.css';
 
 /**
  * 시스템 공지 관리 (관리자 전용 - 지점 관리자 이상)
@@ -16,6 +20,7 @@ const SystemNotificationManagement = () => {
   const [editingNotification, setEditingNotification] = useState(null);
   const [filterTarget, setFilterTarget] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [userPermissions, setUserPermissions] = useState([]);
 
   // 폼 데이터
   const [formData, setFormData] = useState({
@@ -29,11 +34,16 @@ const SystemNotificationManagement = () => {
   });
 
   // 권한 체크
-  const hasPermission = () => {
-    const role = user?.role;
-    return role === 'BRANCH_ADMIN' || role === 'MAIN_ADMIN' || role === 'SUPER_ADMIN' ||
-           role === 'ROLE_BRANCH_ADMIN' || role === 'ROLE_MAIN_ADMIN' || role === 'ROLE_SUPER_ADMIN';
+  const hasManagePermission = () => {
+    return checkPermission(userPermissions, 'SYSTEM_NOTIFICATION_MANAGE');
   };
+
+  // 권한 로드
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchUserPermissions(setUserPermissions);
+    }
+  }, [isLoggedIn]);
 
   // 공지 목록 로드
   const loadNotifications = async () => {
@@ -123,7 +133,10 @@ const SystemNotificationManagement = () => {
 
   // 공지 게시
   const handlePublish = async (id) => {
-    if (!window.confirm('이 공지를 게시하시겠습니까?')) return;
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm('이 공지를 게시하시겠습니까?', resolve);
+    });
+    if (!confirmed) return;
 
     try {
       const response = await apiPost(`/api/system-notifications/admin/${id}/publish`, {});
@@ -142,7 +155,10 @@ const SystemNotificationManagement = () => {
 
   // 공지 보관
   const handleArchive = async (id) => {
-    if (!window.confirm('이 공지를 보관하시겠습니까?')) return;
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm('이 공지를 보관하시겠습니까?', resolve);
+    });
+    if (!confirmed) return;
 
     try {
       const response = await apiPost(`/api/system-notifications/admin/${id}/archive`, {});
@@ -161,7 +177,10 @@ const SystemNotificationManagement = () => {
 
   // 공지 삭제
   const handleDelete = async (id) => {
-    if (!window.confirm('이 공지를 삭제하시겠습니까?')) return;
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm('이 공지를 삭제하시겠습니까?', resolve);
+    });
+    if (!confirmed) return;
 
     try {
       const response = await apiDelete(`/api/system-notifications/admin/${id}`);
@@ -179,18 +198,39 @@ const SystemNotificationManagement = () => {
   };
 
   useEffect(() => {
-    if (isLoggedIn && hasPermission()) {
+    if (isLoggedIn && userPermissions.length > 0 && hasManagePermission()) {
       loadNotifications();
     }
-  }, [isLoggedIn, filterTarget, filterStatus]);
+  }, [isLoggedIn, userPermissions, filterTarget, filterStatus]);
 
-  if (!isLoggedIn || !hasPermission()) {
+  // 로그인 체크
+  if (!isLoggedIn) {
+    return (
+      <SimpleLayout title="시스템 공지 관리">
+        <div className="mg-card mg-text-center mg-p-xl">
+          <h3>로그인이 필요합니다.</h3>
+        </div>
+      </SimpleLayout>
+    );
+  }
+
+  // 권한 로딩 중
+  if (userPermissions.length === 0) {
+    return (
+      <SimpleLayout title="시스템 공지 관리">
+        <UnifiedLoading message="권한 확인 중..." />
+      </SimpleLayout>
+    );
+  }
+
+  // 권한 체크
+  if (!hasManagePermission()) {
     return (
       <SimpleLayout title="시스템 공지 관리">
         <div className="mg-card mg-text-center mg-p-xl">
           <h3>접근 권한이 없습니다.</h3>
           <p className="mg-text-sm mg-color-text-secondary">
-            지점 관리자 이상의 권한이 필요합니다.
+            시스템 공지 관리 권한이 필요합니다.
           </p>
         </div>
       </SimpleLayout>
@@ -214,7 +254,7 @@ const SystemNotificationManagement = () => {
           </div>
 
           {/* 필터 */}
-          <div className="mg-flex mg-gap-md">
+          <div className="mg-flex mg-gap-md mg-flex-wrap">
             <select
               value={filterTarget}
               onChange={(e) => setFilterTarget(e.target.value)}
@@ -239,12 +279,7 @@ const SystemNotificationManagement = () => {
         </div>
 
         {/* 로딩 */}
-        {loading && (
-          <div className="mg-loading-container">
-            <div className="mg-spinner"></div>
-            <p>공지 목록을 불러오는 중...</p>
-          </div>
-        )}
+        {loading && <UnifiedLoading message="공지 목록을 불러오는 중..." />}
 
         {/* 공지 목록 */}
         {!loading && (
@@ -262,9 +297,9 @@ const SystemNotificationManagement = () => {
             ) : (
               notifications.map((notification) => (
                 <div key={notification.id} className="mg-card">
-                  <div className="mg-flex mg-justify-between mg-align-start">
+                  <div className="mg-flex mg-justify-between mg-align-start mg-gap-md">
                     <div className="mg-flex-1">
-                      <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm">
+                      <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm mg-flex-wrap">
                         <h4 className="mg-h5 mg-mb-0">{notification.title}</h4>
                         <span className={`mg-badge ${
                           notification.status === 'PUBLISHED' ? 'mg-badge-success' :
@@ -296,7 +331,7 @@ const SystemNotificationManagement = () => {
                         {notification.viewCount > 0 && ` · 조회수: ${notification.viewCount}`}
                       </div>
                     </div>
-                    <div className="mg-flex mg-gap-sm">
+                    <div className="mg-flex mg-gap-sm mg-flex-wrap">
                       {notification.status === 'DRAFT' && (
                         <button
                           onClick={() => handlePublish(notification.id)}
@@ -338,120 +373,116 @@ const SystemNotificationManagement = () => {
         )}
 
         {/* 작성/수정 모달 */}
-        {showModal && (
-          <div className="mg-modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
-              <div className="mg-modal-header">
-                <h3 className="mg-h3 mg-mb-0">
-                  {editingNotification ? '공지 수정' : '새 공지 작성'}
-                </h3>
-                <button onClick={() => setShowModal(false)} className="mg-modal-close">
-                  ×
-                </button>
-              </div>
-              <div className="mg-modal-body">
-                <div className="mg-space-y-md">
-                  {/* 대상 선택 */}
-                  <div className="mg-form-group">
-                    <label className="mg-label">대상</label>
-                    <select
-                      value={formData.targetType}
-                      onChange={(e) => setFormData({ ...formData, targetType: e.target.value })}
-                      className="mg-select"
-                    >
-                      <option value="ALL">전체 사용자</option>
-                      <option value="CONSULTANT">상담사만</option>
-                      <option value="CLIENT">내담자만</option>
-                    </select>
-                  </div>
+        <UnifiedModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          title={editingNotification ? '공지 수정' : '새 공지 작성'}
+          size="large"
+          actions={
+            <>
+              <button onClick={() => setShowModal(false)} className="mg-button mg-button-outline">
+                취소
+              </button>
+              <button onClick={handleSave} className="mg-button mg-button-primary">
+                {editingNotification ? '수정' : '작성'}
+              </button>
+            </>
+          }
+        >
+          <div className="mg-space-y-md">
+            {/* 대상 선택 */}
+            <div className="mg-form-group">
+              <label className="mg-label">대상</label>
+              <select
+                value={formData.targetType}
+                onChange={(e) => setFormData({ ...formData, targetType: e.target.value })}
+                className="mg-select"
+              >
+                <option value="ALL">전체 사용자</option>
+                <option value="CONSULTANT">상담사만</option>
+                <option value="CLIENT">내담자만</option>
+              </select>
+            </div>
 
-                  {/* 제목 */}
-                  <div className="mg-form-group">
-                    <label className="mg-label">제목</label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="mg-input"
-                      placeholder="공지 제목을 입력하세요"
-                    />
-                  </div>
+            {/* 제목 */}
+            <div className="mg-form-group">
+              <label className="mg-label">제목</label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="mg-input"
+                placeholder="공지 제목을 입력하세요"
+              />
+            </div>
 
-                  {/* 내용 */}
-                  <div className="mg-form-group">
-                    <label className="mg-label">내용</label>
-                    <textarea
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      className="mg-textarea"
-                      rows="10"
-                      placeholder="공지 내용을 입력하세요"
-                    />
-                  </div>
+            {/* 내용 */}
+            <div className="mg-form-group">
+              <label className="mg-label">내용</label>
+              <textarea
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                className="mg-textarea"
+                rows="10"
+                placeholder="공지 내용을 입력하세요"
+              />
+            </div>
 
-                  {/* 타입 */}
-                  <div className="mg-form-group">
-                    <label className="mg-label">공지 타입</label>
-                    <select
-                      value={formData.notificationType}
-                      onChange={(e) => setFormData({ ...formData, notificationType: e.target.value })}
-                      className="mg-select"
-                    >
-                      <option value="GENERAL">일반</option>
-                      <option value="IMPORTANT">중요</option>
-                      <option value="URGENT">긴급</option>
-                      <option value="MAINTENANCE">시스템 점검</option>
-                      <option value="UPDATE">업데이트 안내</option>
-                    </select>
-                  </div>
+            {/* 타입 */}
+            <div className="mg-form-group">
+              <label className="mg-label">공지 타입</label>
+              <select
+                value={formData.notificationType}
+                onChange={(e) => setFormData({ ...formData, notificationType: e.target.value })}
+                className="mg-select"
+              >
+                <option value="GENERAL">일반</option>
+                <option value="IMPORTANT">중요</option>
+                <option value="URGENT">긴급</option>
+                <option value="MAINTENANCE">시스템 점검</option>
+                <option value="UPDATE">업데이트 안내</option>
+              </select>
+            </div>
 
-                  {/* 체크박스 */}
-                  <div className="mg-flex mg-gap-lg">
-                    <label className="mg-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={formData.isImportant}
-                        onChange={(e) => setFormData({ ...formData, isImportant: e.target.checked })}
-                      />
-                      중요 공지
-                    </label>
-                    <label className="mg-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={formData.isUrgent}
-                        onChange={(e) => setFormData({ ...formData, isUrgent: e.target.checked })}
-                      />
-                      긴급 공지
-                    </label>
-                  </div>
-
-                  {/* 만료일 */}
-                  <div className="mg-form-group">
-                    <label className="mg-label">게시 종료일 (선택)</label>
-                    <input
-                      type="datetime-local"
-                      value={formData.expiresAt}
-                      onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                      className="mg-input"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="mg-modal-footer">
-                <button onClick={() => setShowModal(false)} className="mg-button mg-button-outline">
-                  취소
-                </button>
-                <button onClick={handleSave} className="mg-button mg-button-primary">
-                  {editingNotification ? '수정' : '작성'}
-                </button>
+            {/* 체크박스 */}
+            <div className="mg-form-group">
+              <div className="mg-checkbox-group">
+                <label className="mg-checkbox-label">
+                  <input
+                    type="checkbox"
+                    className="mg-checkbox-input"
+                    checked={formData.isImportant}
+                    onChange={(e) => setFormData({ ...formData, isImportant: e.target.checked })}
+                  />
+                  <span className="mg-checkbox-text">중요 공지</span>
+                </label>
+                <label className="mg-checkbox-label">
+                  <input
+                    type="checkbox"
+                    className="mg-checkbox-input"
+                    checked={formData.isUrgent}
+                    onChange={(e) => setFormData({ ...formData, isUrgent: e.target.checked })}
+                  />
+                  <span className="mg-checkbox-text">긴급 공지</span>
+                </label>
               </div>
             </div>
+
+            {/* 만료일 */}
+            <div className="mg-form-group">
+              <label className="mg-label">게시 종료일 (선택)</label>
+              <input
+                type="datetime-local"
+                value={formData.expiresAt}
+                onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                className="mg-input"
+              />
+            </div>
           </div>
-        )}
+        </UnifiedModal>
       </div>
     </SimpleLayout>
   );
 };
 
 export default SystemNotificationManagement;
-

@@ -1,443 +1,170 @@
+/* MyPage.css - 마이페이지 디자인 시스템 적용 */
+
+/* ===== 컨테이너 ===== */
 .mypage-container {
   max-width: var(--mypage-container-max-width);
   margin: 0 auto;
   padding: var(--mypage-container-padding);
-  background: var(--color-bg-primary);
-  min-height: 100vh;
-  font-family: var(--font-family-ios);
-  position: relative;
-  z-index: var(--z-content); /* 콘텐츠 레이어 */
+  background: linear-gradient(135deg, var(--color-light-pink), var(--color-soft-mint), var(--color-light-peach));
+  min-height: calc(100vh - var(--header-height) - var(--footer-height));
+  font-family: var(--font-family-base);
 }
 
-/* 소셜 아이콘 색상 */
-.social-icon--kakao {
-  color: #FEE500;
-}
-
-.social-icon--naver {
-  color: #03C75A;
-}
-
-.social-icon--google {
-  color: #4285F4;
-}
-
-/* MyPage 전용 - 입력 요소만 테두리 제거 */
-.mypage-container input,
-.mypage-container select,
-.mypage-container textarea {
-  border: none;
-  box-shadow: none;
-}
-
-.mypage-container input:focus,
-.mypage-container select:focus,
-.mypage-container textarea:focus {
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-}
-
-/* MyPage 상수 변수 */
-:root {
-  --mypage-container-max-width: 1200px;
-  --mypage-container-padding: var(--spacing-lg);
-  --mypage-container-bg: #f8f9fa;
-  --mypage-header-padding: var(--spacing-xxl) 0;
-  --mypage-header-bg: white;
-  --mypage-header-radius: 12px;
-  --mypage-header-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --mypage-title-color: #333;
-  --mypage-title-size: 2.5rem;
-  --mypage-subtitle-color: #666;
-  --mypage-subtitle-size: 1.1rem;
-  --mypage-content-gap: 20px;
-  --mypage-nav-bg: white;
-  --mypage-nav-radius: 12px;
-  --mypage-nav-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --mypage-nav-border: 1px solid #e9ecef;
-  --mypage-nav-item-padding: var(--spacing-lg) var(--spacing-xxl);
-  --mypage-nav-item-min-width: 120px;
-  --mypage-nav-item-color: #555;
-  --mypage-nav-item-hover-bg: #f8f9fa;
-  --mypage-nav-item-hover-color: #333;
-  --mypage-nav-item-active-bg: #f8f9fa;
-  --mypage-nav-item-active-color: #667eea;
-  --mypage-nav-item-active-border: #667eea;
-  --mypage-main-bg: white;
-  --mypage-main-radius: 12px;
-  --mypage-main-padding: var(--spacing-xxl);
-  --mypage-main-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --mypage-section-margin: var(--spacing-xl);
-  --mypage-section-header-border: 2px solid #f0f2f5;
-  --mypage-section-title-color: #333;
-  --mypage-section-title-size: 1.8rem;
-  --mypage-edit-btn-bg: #667eea;
-  --mypage-edit-btn-color: white;
-  --mypage-edit-btn-padding: var(--spacing-sm) var(--spacing-lg);
-  --mypage-edit-btn-radius: 6px;
-  --mypage-edit-btn-hover-bg: #5a6fd8;
-  --mypage-form-gap: 25px;
-  --mypage-profile-image-size: 200px;
-  --mypage-profile-image-border: 4px solid #f0f2f5;
-  --mypage-profile-image-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --mypage-upload-btn-size: 35px;
-  --mypage-upload-btn-bg: #667eea;
-  --mypage-upload-btn-color: white;
-  --mypage-upload-btn-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --mypage-upload-btn-hover-bg: #5a6fd8;
-  --mypage-input-padding: var(--spacing-sm) var(--spacing-md);
-  --mypage-input-radius: 8px;
-  --mypage-input-bg: #fafbfc;
-  --mypage-input-focus-bg: white;
-  --mypage-input-focus-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-  --mypage-input-disabled-bg: #f5f5f5;
-  --mypage-input-disabled-color: #666;
-  --mypage-actions-gap: 15px;
-  --mypage-actions-border: 1px solid #f0f2f5;
-  --mypage-save-btn-bg: #28a745;
-  --mypage-save-btn-color: white;
-  --mypage-save-btn-padding: var(--spacing-sm) var(--spacing-xxl);
-  --mypage-save-btn-radius: 8px;
-  --mypage-save-btn-hover-bg: #218838;
-  --mypage-list-gap: 20px;
-  --mypage-item-bg: #f8f9fa;
-  --mypage-item-radius: 10px;
-  --mypage-item-border: 1px solid #e9ecef;
-  --mypage-item-padding: var(--spacing-lg);
-  --mypage-item-title-color: #333;
-  --mypage-item-title-size: 1.1rem;
-  --mypage-item-text-color: #666;
-  --mypage-item-text-size: 0.9rem;
-  --mypage-item-btn-bg: #667eea;
-  --mypage-item-btn-color: white;
-  --mypage-item-btn-padding: var(--spacing-sm) var(--spacing-lg);
-  --mypage-item-btn-radius: 6px;
-  --mypage-item-btn-hover-bg: #5a6fd8;
-  --mypage-loading-height: 200px;
-  --mypage-loading-font-size: 1.1rem;
-  --mypage-loading-color: #666;
-  --mypage-login-min-height: 400px;
-  --mypage-login-padding: var(--spacing-xxxl);
-  --mypage-login-message-bg: white;
-  --mypage-login-message-radius: 12px;
-  --mypage-login-message-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --mypage-login-message-max-width: 500px;
-  --mypage-login-title-color: #333;
-  --mypage-login-title-size: 24px;
-  --mypage-login-title-margin: var(--spacing-md);
-  --mypage-login-text-color: #666;
-  --mypage-login-text-size: 16px;
-  --mypage-login-text-margin: var(--spacing-xl);
-  --mypage-login-actions-gap: 16px;
-  --mypage-login-btn-padding: var(--spacing-sm) var(--spacing-xl);
-  --mypage-login-btn-radius: 6px;
-  --mypage-login-btn-size: 16px;
-  --mypage-login-btn-bg: #007bff;
-  --mypage-login-btn-color: white;
-  --mypage-login-btn-hover-bg: #0056b3;
-  --mypage-register-btn-bg: #28a745;
-  --mypage-register-btn-color: white;
-  --mypage-register-btn-hover-bg: #1e7e34;
-  --mypage-social-icon-size: 2rem;
-  --mypage-social-icon-width: 50px;
-  --mypage-social-icon-height: 50px;
-  --mypage-social-icon-bg: white;
-  --mypage-social-icon-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --mypage-social-profile-size: 40px;
-  --mypage-social-profile-border: 2px solid #e9ecef;
-  --mypage-unlink-btn-bg: #dc3545;
-  --mypage-unlink-btn-color: white;
-  --mypage-unlink-btn-padding: var(--spacing-sm) var(--spacing-md);
-  --mypage-unlink-btn-radius: 6px;
-  --mypage-unlink-btn-hover-bg: #c82333;
-  --mypage-no-accounts-padding: var(--spacing-xxxl) var(--spacing-lg);
-  --mypage-no-accounts-color: #666;
-  --mypage-link-bg: #f8f9fa;
-  --mypage-link-radius: 10px;
-  --mypage-link-border: 1px solid #e9ecef;
-  --mypage-link-title-color: #333;
-  --mypage-link-title-size: 1.2rem;
-  --mypage-link-title-margin: var(--spacing-base);
-  --mypage-link-options-gap: 15px;
-  --mypage-link-btn-padding: var(--spacing-sm) var(--spacing-lg);
-  --mypage-link-btn-radius: 8px;
-  --mypage-link-btn-size: 1rem;
-  --mypage-link-btn-gap: 10px;
-  --mypage-kakao-bg: #FEE500;
-  --mypage-kakao-color: #000;
-  --mypage-kakao-hover-bg: #FDD835;
-  --mypage-naver-bg: #03C75A;
-  --mypage-naver-color: white;
-  --mypage-naver-hover-bg: #02B351;
-  --mypage-link-icon-size: 1.2rem;
-}
-
+/* ===== 페이지 헤더 ===== */
 .mypage-header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding: var(--mypage-header-padding);
-  background: var(--mypage-header-bg);
-  border-radius: var(--mypage-header-radius);
-  box-shadow: var(--mypage-header-shadow);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--blur-lg));
+  border: var(--border-width-thin) solid var(--glass-border-light);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
-.mypage-header h1 {
-  color: var(--mypage-title-color);
-  margin-bottom: 10px;
-  font-size: var(--mypage-title-size);
-  font-weight: 600;
+.mypage-header__icon {
+  width: var(--mypage-header-icon-size);
+  height: var(--mypage-header-icon-size);
+  border-radius: var(--border-radius-md);
+  background: var(--gradient-sky);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sky);
 }
 
-.mypage-header p {
-  color: var(--mypage-subtitle-color);
-  font-size: var(--mypage-subtitle-size);
+.mypage-header__icon svg {
+  color: var(--color-white);
+}
+
+.mypage-header__content {
+  flex: 1;
+}
+
+.mypage-header__title {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.mypage-header__subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
+/* ===== 콘텐츠 영역 ===== */
 .mypage-content {
   display: flex;
   flex-direction: column;
-  gap: var(--mypage-content-gap);
+  gap: var(--spacing-xl);
 }
 
+/* ===== 탭 네비게이션 ===== */
 .mypage-top-nav {
-  background: var(--ios-bg-primary);
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--blur-lg));
+  border: var(--border-width-thin) solid var(--glass-border-light);
   border-radius: var(--border-radius-lg);
   padding: 0;
-  box-shadow: var(--shadow-glass);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  position: relative;
-  z-index: var(--z-page); /* 페이지 레이어 */
 }
 
 .mypage-nav {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid var(--ios-border-light);
+  border-bottom: var(--border-width-thin) solid var(--color-border-light);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.mypage-nav::-webkit-scrollbar {
+  height: var(--mypage-nav-scrollbar-height);
+}
+
+.mypage-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mypage-nav::-webkit-scrollbar-thumb {
+  background: var(--color-border-medium);
+  border-radius: var(--border-radius-full);
 }
 
 .nav-item {
-  padding: var(--spacing-lg) var(--spacing-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--mypage-nav-item-padding);
   border: none;
   background: transparent;
-  border-radius: 0;
   text-align: center;
   font-size: var(--font-size-base);
-  cursor: pointer;
-  transition: var(--transition-normal);
-  color: var(--color-text-secondary);
-  border-bottom: 3px solid transparent;
-  min-width: 120px;
   font-weight: var(--font-weight-medium);
-  font-family: var(--font-family-ios);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border-bottom: var(--mypage-nav-border-bottom-width) solid transparent;
+  min-width: var(--mypage-nav-item-min-width);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav-item svg {
+  flex-shrink: 0;
 }
 
 .nav-item:hover {
-  background: rgba(102, 126, 234, 0.05);
+  background: var(--glass-bg-medium);
   color: var(--color-text-primary);
-  border-bottom-color: var(--color-border-light);
+  border-bottom-color: var(--color-border-medium);
 }
 
 .nav-item.active {
-  background: rgba(102, 126, 234, 0.1);
+  background: var(--glass-bg-strong);
   color: var(--color-primary);
   font-weight: var(--font-weight-semibold);
   border-bottom-color: var(--color-primary);
 }
 
+/* ===== 메인 콘텐츠 ===== */
 .mypage-main-content {
-  background: var(--ios-bg-primary);
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--blur-lg));
+  border: var(--border-width-thin) solid var(--glass-border-light);
   border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xxl);
-  box-shadow: var(--shadow-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-family: var(--font-family-ios);
-  position: relative;
-  z-index: var(--z-content); /* 콘텐츠 레이어 */
+  padding: var(--mypage-main-padding);
+  box-shadow: var(--shadow-md);
 }
 
 .mypage-section {
-  margin-bottom: var(--mypage-section-margin);
+  margin-bottom: var(--mypage-section-margin-bottom);
 }
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: var(--mypage-section-header-border);
+.mypage-section:last-child {
+  margin-bottom: 0;
 }
 
-.section-header h2 {
-  color: var(--mypage-section-title-color);
-  margin: 0;
-  font-size: var(--mypage-section-title-size);
-  font-weight: 600;
+.mypage-section h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  padding-bottom: var(--mypage-section-title-padding-bottom);
+  border-bottom: var(--mypage-section-title-border-width) solid var(--color-border-light);
 }
 
-.edit-btn {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  font-family: var(--font-family-ios);
-  transition: var(--transition-normal);
-  box-shadow: var(--shadow-glass);
-}
-
-.edit-btn:hover {
-  background: var(--color-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-glass-strong);
-}
-
-.profile-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mypage-form-gap);
-}
-
-.profile-image-section {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.profile-image {
-  position: relative;
-  text-align: center;
-}
-
-.profile-image img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: var(--mypage-profile-image-border);
-  box-shadow: var(--mypage-profile-image-shadow);
-}
-
-.image-upload {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: var(--mypage-upload-btn-size);
-  height: var(--mypage-upload-btn-size);
-  border-radius: 50%;
-  background: var(--mypage-upload-btn-bg);
-  color: var(--mypage-upload-btn-color);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  box-shadow: var(--mypage-upload-btn-shadow);
-}
-
-.image-upload:hover {
-  background: var(--mypage-upload-btn-hover-bg);
-}
-
-.mypage .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.mypage .form-group label {
-  font-weight: 500;
-  color: #333;
-  font-size: 0.95rem;
-}
-
-/* 읽기 전용 모드 (기본 상태) */
-.mypage.readonly .form-group input {
-  padding: var(--mypage-input-padding);
-  border: 1px solid #ddd;
-  border-radius: var(--mypage-input-radius);
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: #f8f9fa;
-  color: #666;
-  cursor: not-allowed;
-}
-
-/* 수정 모드 */
-.mypage.editing .form-group input {
-  padding: var(--mypage-input-padding);
-  border: 1px solid #ddd;
-  border-radius: var(--mypage-input-radius);
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: #fff;
-  color: #333;
-  cursor: text;
-}
-
-/* 수정 모드에서만 focus 효과 적용 */
-.mypage.editing .form-group input:focus {
-  outline: none;
-  background: var(--mypage-input-focus-bg);
-  box-shadow: var(--mypage-input-focus-shadow);
-}
-
-/* 읽기 전용 모드에서는 focus 효과 없음 */
-.mypage.readonly .form-group input:focus {
-  outline: none;
-  background: #f8f9fa;
-  box-shadow: none;
-}
-
-.mypage .form-group input:disabled {
-  background: var(--mypage-input-disabled-bg);
-  color: #666;
-  cursor: not-allowed;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--mypage-actions-gap);
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: var(--mypage-actions-border);
-}
-
-.save-btn {
-  padding: var(--spacing-sm) var(--spacing-xl);
-  background: var(--color-success);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  font-family: var(--font-family-ios);
-  transition: var(--transition-normal);
-  box-shadow: var(--shadow-glass);
-}
-
-.save-btn:hover {
-  background: var(--color-success-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-glass-strong);
-}
-
+/* ===== 설정/보안 리스트 ===== */
 .settings-list,
 .security-list {
   display: flex;
   flex-direction: column;
-  gap: var(--mypage-list-gap);
+  gap: var(--mypage-item-gap);
 }
 
 .setting-item,
@@ -446,170 +173,66 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--mypage-item-padding);
-  background: var(--mypage-item-bg);
-  border-radius: var(--mypage-item-radius);
-  border: var(--mypage-item-border);
+  background: var(--color-bg-primary);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.setting-item:hover,
+.security-item:hover {
+  transform: translateY(var(--mypage-item-hover-translate));
+  box-shadow: var(--shadow-md);
+}
+
+.setting-info,
+.security-info {
+  flex: 1;
 }
 
 .setting-info h3,
 .security-info h3 {
-  margin: 0 0 5px 0;
-  color: var(--mypage-item-title-color);
-  font-size: var(--mypage-item-title-size);
-  font-weight: 600;
+  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
 }
 
 .setting-info p,
 .security-info p {
   margin: 0;
-  color: var(--mypage-item-text-color);
-  font-size: var(--mypage-item-text-size);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .setting-btn,
 .security-btn {
-  padding: var(--mypage-item-btn-padding);
-  background: var(--mypage-item-btn-bg);
-  color: var(--mypage-item-btn-color);
+  padding: var(--mypage-btn-padding);
+  background: var(--gradient-sky);
+  color: var(--color-white);
   border: none;
-  border-radius: var(--mypage-item-btn-radius);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s ease;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sky);
+  flex-shrink: 0;
 }
 
 .setting-btn:hover,
 .security-btn:hover {
-  background: var(--mypage-item-btn-hover-bg);
+  transform: translateY(var(--mypage-item-hover-translate));
+  box-shadow: var(--shadow-md);
+  opacity: 0.9;
 }
 
-.mypage-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: var(--mypage-loading-height);
-  font-size: var(--mypage-loading-font-size);
-  color: var(--mypage-loading-color);
-}
-
-.login-required {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: var(--mypage-login-min-height);
-  padding: var(--mypage-login-padding);
-}
-
-.login-message {
-  text-align: center;
-  background: var(--mypage-login-message-bg);
-  padding: var(--mypage-login-padding);
-  border-radius: var(--mypage-login-message-radius);
-  box-shadow: var(--mypage-login-message-shadow);
-  max-width: var(--mypage-login-message-max-width);
-}
-
-.login-message h2 {
-  color: var(--mypage-login-title-color);
-  margin-bottom: var(--mypage-login-title-margin);
-  font-size: var(--mypage-login-title-size);
-}
-
-.login-message p {
-  color: var(--mypage-login-text-color);
-  margin-bottom: var(--mypage-login-text-margin);
-  font-size: var(--mypage-login-text-size);
-  line-height: 1.5;
-}
-
-.login-actions {
-  display: flex;
-  gap: var(--mypage-login-actions-gap);
-  justify-content: center;
-}
-
-.login-btn, .register-btn {
-  padding: var(--mypage-login-btn-padding);
-  border: none;
-  border-radius: var(--mypage-login-btn-radius);
-  font-size: var(--mypage-login-btn-size);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.login-btn {
-  background: var(--mypage-login-btn-bg);
-  color: var(--mypage-login-btn-color);
-}
-
-.login-btn:hover {
-  background: var(--mypage-login-btn-hover-bg);
-}
-
-.register-btn {
-  background: var(--mypage-register-btn-bg);
-  color: var(--mypage-register-btn-color);
-}
-
-.register-btn:hover {
-  background: var(--mypage-register-btn-hover-bg);
-}
-
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-  .mypage-content {
-    flex-direction: column;
-  }
-  
-  .mypage-sidebar {
-    position: static;
-    margin-bottom: 20px;
-  }
-  
-  .mypage-nav {
-    flex-direction: row;
-    overflow-x: auto;
-    padding-bottom: 10px;
-  }
-  
-  .nav-item {
-    white-space: nowrap;
-    min-width: 120px;
-  }
-  
-  .mypage-container {
-    padding: var(--spacing-md);
-  }
-  
-  .mypage-main {
-    padding: var(--spacing-lg);
-  }
-  
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  
-  .setting-item,
-  .security-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  
-  .setting-btn,
-  .security-btn {
-    align-self: flex-end;
-  }
-}
-
-/* 소셜 계정 관리 스타일 */
+/* ===== 소셜 계정 관리 ===== */
 .social-accounts-list {
   display: flex;
   flex-direction: column;
-  gap: var(--mypage-list-gap);
+  gap: var(--spacing-lg);
 }
 
 .social-account-item {
@@ -617,107 +240,138 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--mypage-item-padding);
-  background: var(--mypage-item-bg);
-  border-radius: var(--mypage-item-radius);
-  border: var(--mypage-item-border);
+  background: var(--color-bg-primary);
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.social-account-item:hover {
+  transform: translateY(var(--mypage-item-hover-translate));
+  box-shadow: var(--shadow-md);
 }
 
 .social-account-info {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--spacing-lg);
+  flex: 1;
 }
 
 .social-provider-icon {
-  font-size: var(--mypage-social-icon-size);
-  width: var(--mypage-social-icon-width);
-  height: var(--mypage-social-icon-height);
+  width: var(--mypage-social-icon-size);
+  height: var(--mypage-social-icon-size);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: var(--mypage-social-icon-bg);
-  box-shadow: var(--mypage-social-icon-shadow);
+  border-radius: var(--border-radius-full);
+  background: var(--color-white);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.social-icon--kakao {
+  color: var(--mypage-kakao-bg);
+}
+
+.social-icon--naver {
+  color: var(--mypage-naver-bg);
+}
+
+.social-icon--google {
+  color: var(--mypage-google-color);
+}
+
+.social-account-details {
+  flex: 1;
 }
 
 .social-account-details h3 {
-  margin: 0 0 5px 0;
-  color: var(--mypage-item-title-color);
-  font-size: var(--mypage-item-title-size);
-  font-weight: 600;
+  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
 }
 
 .social-account-details p {
   margin: 0;
-  color: var(--mypage-item-text-color);
-  font-size: var(--mypage-item-text-size);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .social-profile-image {
-  margin-top: 10px;
+  margin-top: var(--spacing-sm);
 }
 
 .social-profile-image img {
   width: var(--mypage-social-profile-size);
   height: var(--mypage-social-profile-size);
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   object-fit: cover;
-  border: var(--mypage-social-profile-border);
+  border: var(--mypage-social-profile-border-width) solid var(--color-border-light);
 }
 
 .unlink-btn {
-  padding: var(--mypage-unlink-btn-padding);
-  background: var(--mypage-unlink-btn-bg);
-  color: var(--mypage-unlink-btn-color);
+  padding: var(--mypage-btn-padding-small);
+  background: var(--color-danger);
+  color: var(--color-white);
   border: none;
-  border-radius: var(--mypage-unlink-btn-radius);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s ease;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
 }
 
 .unlink-btn:hover {
-  background: var(--mypage-unlink-btn-hover-bg);
+  background: var(--color-danger-hover);
+  transform: translateY(var(--mypage-item-hover-translate));
+  box-shadow: var(--shadow-md);
 }
 
 .no-social-accounts {
   text-align: center;
-  padding: var(--mypage-no-accounts-padding);
-  color: var(--mypage-no-accounts-color);
+  padding: var(--spacing-xxxl) var(--spacing-lg);
+  color: var(--color-text-secondary);
 }
 
 .link-new-account {
-  margin-top: 30px;
-  padding: var(--mypage-item-padding);
-  background: var(--mypage-link-bg);
-  border-radius: var(--mypage-link-radius);
-  border: var(--mypage-link-border);
+  margin-top: var(--mypage-link-section-margin-top);
+  padding: var(--mypage-link-section-padding);
+  background: var(--bg-gradient-cool);
+  border: var(--border-width-thin) solid var(--border-pink-light);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .link-new-account h3 {
-  margin: 0 0 var(--mypage-link-title-margin) 0;
-  color: var(--mypage-link-title-color);
-  font-size: var(--mypage-link-title-size);
-  font-weight: 600;
+  margin: 0 0 var(--mypage-link-title-margin-bottom) 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
 }
 
 .link-options {
   display: flex;
-  gap: var(--mypage-link-options-gap);
+  gap: var(--mypage-item-gap);
   flex-wrap: wrap;
 }
 
 .link-btn {
   display: flex;
   align-items: center;
-  gap: var(--mypage-link-btn-gap);
-  padding: var(--mypage-link-btn-padding);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
   border: none;
-  border-radius: var(--mypage-link-btn-radius);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  font-size: var(--mypage-link-btn-size);
-  font-weight: 500;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
 }
 
 .link-btn.kakao {
@@ -726,8 +380,9 @@
 }
 
 .link-btn.kakao:hover {
-  background: var(--mypage-kakao-hover-bg);
-  transform: translateY(-2px);
+  background: var(--mypage-kakao-bg-hover);
+  transform: translateY(var(--mypage-item-hover-translate));
+  box-shadow: var(--shadow-md);
 }
 
 .link-btn.naver {
@@ -736,59 +391,142 @@
 }
 
 .link-btn.naver:hover {
-  background: var(--mypage-naver-hover-bg);
-  transform: translateY(-2px);
+  background: var(--mypage-naver-bg-hover);
+  transform: translateY(var(--mypage-item-hover-translate));
+  box-shadow: var(--shadow-md);
 }
 
-.link-btn i {
-  font-size: var(--mypage-link-icon-size);
+/* ===== 폼 스타일 ===== */
+.mypage-container input,
+.mypage-container select,
+.mypage-container textarea {
+  border: var(--border-width-thin) solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-normal);
+  background: var(--color-bg-primary);
 }
 
-/* 반응형 디자인 */
+.mypage-container input:focus,
+.mypage-container select:focus,
+.mypage-container textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-alpha);
+}
+
+/* ===== 반응형 디자인 ===== */
 @media (max-width: 768px) {
   .mypage-container {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-lg) var(--spacing-md);
   }
-  
+
   .mypage-header {
-    padding: var(--spacing-lg) 0;
-  }
-  
-  .mypage-header h1 {
-    font-size: 2rem;
-  }
-  
-  .mypage-nav {
-    flex-wrap: wrap;
-  }
-  
-  .nav-item {
-    padding: var(--spacing-md) var(--spacing-lg);
-    min-width: auto;
-    flex: 1;
-    font-size: 0.9rem;
-  }
-  
-  .mypage-main-content {
+    flex-direction: column;
+    align-items: flex-start;
     padding: var(--spacing-lg);
+    gap: var(--spacing-md);
   }
-  
-  .section-header h2 {
-    font-size: 1.5rem;
+
+  .mypage-header__icon {
+    width: var(--mypage-header-icon-size-mobile);
+    height: var(--mypage-header-icon-size-mobile);
+  }
+
+  .mypage-header__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .mypage-header__subtitle {
+    font-size: var(--font-size-sm);
+  }
+
+  .mypage-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-item {
+    padding: var(--mypage-nav-item-padding-mobile);
+    min-width: var(--mypage-nav-item-min-width-mobile);
+    font-size: var(--font-size-sm);
+  }
+
+  .mypage-main-content {
+    padding: var(--mypage-main-padding-mobile);
+  }
+
+  .mypage-section h2 {
+    font-size: var(--font-size-lg);
+  }
+
+  .setting-item,
+  .security-item,
+  .social-account-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--mypage-item-gap);
+  }
+
+  .setting-btn,
+  .security-btn,
+  .unlink-btn {
+    align-self: stretch;
+    justify-content: center;
+  }
+
+  .social-account-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .link-options {
+    flex-direction: column;
+  }
+
+  .link-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
 @media (max-width: 480px) {
+  .mypage-container {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+
+  .mypage-header {
+    padding: var(--spacing-md);
+  }
+
+  .mypage-header__icon {
+    width: var(--mypage-header-icon-size-small);
+    height: var(--mypage-header-icon-size-small);
+  }
+
+  .mypage-header__title {
+    font-size: var(--font-size-lg);
+  }
+
   .mypage-nav {
     flex-direction: column;
   }
-  
+
   .nav-item {
-    border-bottom: 1px solid #e9ecef;
-    border-right: none;
+    width: 100%;
+    border-bottom: var(--border-width-thin) solid var(--color-border-light);
+    border-left: var(--mypage-nav-border-bottom-width) solid transparent;
+    padding: var(--spacing-md);
+    min-width: unset;
   }
-  
+
   .nav-item.active {
-    border-bottom-color: #667eea;
+    border-bottom-color: transparent;
+    border-left-color: var(--color-primary);
+  }
+
+  .mypage-main-content {
+    padding: var(--mypage-main-padding-small);
   }
 }

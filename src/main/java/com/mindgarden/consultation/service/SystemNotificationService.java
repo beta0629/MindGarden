@@ -26,6 +26,11 @@ public interface SystemNotificationService {
     void markAsRead(Long notificationId, Long userId);
     
     /**
+     * 공지 읽음 여부 확인
+     */
+    boolean isNotificationRead(Long notificationId, Long userId);
+    
+    /**
      * 사용자의 읽지 않은 공지 수 조회
      */
     Long getUnreadCount(Long userId, String userRole);

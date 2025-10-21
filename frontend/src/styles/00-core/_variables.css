@@ -143,6 +143,57 @@
   --will-change-opacity: opacity;
   --will-change-scroll: scroll-position;
 
+  /* ===== 화사한 그라데이션 색상 ===== */
+  /* 골드 그라데이션 */
+  --gradient-gold-start: #FFD700;
+  --gradient-gold-end: #FFA500;
+  --gradient-gold: linear-gradient(135deg, var(--gradient-gold-start), var(--gradient-gold-end));
+  
+  /* 스카이블루 그라데이션 */
+  --gradient-sky-start: #87CEEB;
+  --gradient-sky-end: #B0E0E6;
+  --gradient-sky: linear-gradient(135deg, var(--gradient-sky-start), var(--gradient-sky-end));
+  
+  /* 민트 그라데이션 */
+  --gradient-mint-start: #98D8C8;
+  --gradient-mint-end: #B4E7CE;
+  --gradient-mint: linear-gradient(135deg, var(--gradient-mint-start), var(--gradient-mint-end));
+  
+  /* 핑크 그라데이션 */
+  --gradient-pink-start: #FFB6C1;
+  --gradient-pink-end: #FFC0CB;
+  --gradient-pink: linear-gradient(135deg, var(--gradient-pink-start), var(--gradient-pink-end));
+  
+  /* 피치 그라데이션 */
+  --gradient-peach-start: #FF6B9D;
+  --gradient-peach-end: #FFA5C0;
+  --gradient-peach: linear-gradient(135deg, var(--gradient-peach-start), var(--gradient-peach-end));
+  
+  /* 그레이 그라데이션 */
+  --gradient-gray-start: #B8B8D0;
+  --gradient-gray-end: #D0D0E8;
+  --gradient-gray: linear-gradient(135deg, var(--gradient-gray-start), var(--gradient-gray-end));
+  
+  /* 배경 그라데이션 (화사한 색상) */
+  --bg-gradient-warm: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
+  --bg-gradient-warm-light: linear-gradient(135deg, rgba(255, 250, 240, 0.5), rgba(255, 255, 250, 0.5));
+  --bg-gradient-warm-subtle: linear-gradient(135deg, rgba(255, 250, 240, 0.3), rgba(255, 255, 250, 0.3));
+  --bg-gradient-cool: linear-gradient(135deg, rgba(230, 245, 255, 0.5), rgba(240, 250, 255, 0.5));
+  
+  /* 테두리 색상 (화사한 색상) */
+  --border-pink-light: rgba(255, 182, 193, 0.2);
+  --border-pink-medium: rgba(255, 182, 193, 0.4);
+  --border-sky-light: rgba(135, 206, 235, 0.2);
+  
+  /* 그림자 색상 (화사한 색상) */
+  --shadow-gold: 0 4px 12px rgba(255, 215, 0, 0.3);
+  --shadow-gold-sm: 0 2px 8px rgba(255, 215, 0, 0.3);
+  --shadow-sky: 0 4px 12px rgba(135, 206, 235, 0.3);
+  --shadow-sky-sm: 0 2px 8px rgba(135, 206, 235, 0.3);
+  --shadow-mint-sm: 0 2px 8px rgba(152, 216, 200, 0.3);
+  --shadow-pink-sm: 0 2px 8px rgba(255, 182, 193, 0.3);
+  --shadow-peach: 0 4px 16px rgba(255, 107, 157, 0.3);
+
   /* ===== Phase 1: 테마 변수 확장 ===== */
   
   /* 상담 상태별 색상 */

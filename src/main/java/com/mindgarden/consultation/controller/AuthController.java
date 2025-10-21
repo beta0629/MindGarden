@@ -15,6 +15,7 @@ import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AuthService;
 import com.mindgarden.consultation.service.BranchService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.UserSessionService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
@@ -44,6 +45,7 @@ public class AuthController {
     private final AuthService authService;
     private final BranchService branchService;
     private final UserSessionService userSessionService;
+    private final DynamicPermissionService dynamicPermissionService;
     
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
@@ -449,6 +451,14 @@ public class AuthController {
                 if (sessionUser.getBranchCode() != null) {
                     session.setAttribute("branchCode", sessionUser.getBranchCode());
                     log.info("🔧 세션에 브랜치 코드 저장: {}", sessionUser.getBranchCode());
+                }
+                
+                // 권한 캐시 클리어 (로그인 시 최신 권한 정보 로드)
+                try {
+                    dynamicPermissionService.clearUserPermissionCache(sessionUser.getRole().name());
+                    log.info("🔄 권한 캐시 클리어 완료: role={}", sessionUser.getRole().name());
+                } catch (Exception e) {
+                    log.warn("⚠️ 권한 캐시 클리어 실패 (무시): {}", e.getMessage());
                 }
                 
                 log.info("✅ 로그인 성공: {}", request.getEmail());

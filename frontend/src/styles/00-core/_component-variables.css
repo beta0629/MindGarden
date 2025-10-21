@@ -226,4 +226,200 @@
 
   --pagination-transition: all var(--transition-fast);
   --pagination-font-size: var(--font-size-sm);
+
+  /* ===== 마이페이지 컴포넌트 ===== */
+  /* 컨테이너 */
+  --mypage-container-max-width: 1200px;
+  --mypage-container-padding: var(--spacing-xl) var(--spacing-lg);
+  
+  /* 헤더 */
+  --mypage-header-icon-size: 64px;
+  --mypage-header-icon-size-mobile: 48px;
+  --mypage-header-icon-size-small: 40px;
+  
+  /* 탭 네비게이션 */
+  --mypage-nav-item-padding: var(--spacing-lg) var(--spacing-xl);
+  --mypage-nav-item-padding-mobile: var(--spacing-md) var(--spacing-lg);
+  --mypage-nav-item-min-width: 140px;
+  --mypage-nav-item-min-width-mobile: 120px;
+  --mypage-nav-border-bottom-width: 3px;
+  --mypage-nav-scrollbar-height: 4px;
+  
+  /* 메인 콘텐츠 */
+  --mypage-main-padding: var(--spacing-xxl);
+  --mypage-main-padding-mobile: var(--spacing-lg);
+  --mypage-main-padding-small: var(--spacing-md);
+  
+  /* 섹션 */
+  --mypage-section-margin-bottom: var(--spacing-xl);
+  --mypage-section-title-padding-bottom: var(--spacing-md);
+  --mypage-section-title-border-width: var(--border-width-medium);
+  
+  /* 리스트 아이템 */
+  --mypage-item-padding: var(--spacing-lg);
+  --mypage-item-gap: var(--spacing-md);
+  --mypage-item-hover-translate: -2px;
+  
+  /* 소셜 아이콘 */
+  --mypage-social-icon-size: 50px;
+  --mypage-social-profile-size: 40px;
+  --mypage-social-profile-border-width: var(--border-width-medium);
+  
+  /* 버튼 */
+  --mypage-btn-padding: var(--spacing-sm) var(--spacing-lg);
+  --mypage-btn-padding-small: var(--spacing-sm) var(--spacing-md);
+  
+  /* 링크 섹션 */
+  --mypage-link-section-padding: var(--spacing-xl);
+  --mypage-link-section-margin-top: var(--spacing-xl);
+  --mypage-link-title-margin-bottom: var(--spacing-lg);
+  
+  /* 소셜 브랜드 색상 */
+  --mypage-kakao-bg: #FEE500;
+  --mypage-kakao-bg-hover: #FDD835;
+  --mypage-kakao-color: #000000;
+  --mypage-naver-bg: #03C75A;
+  --mypage-naver-bg-hover: #02B351;
+  --mypage-naver-color: var(--color-white);
+  --mypage-google-color: #4285F4;
+
+  /* ===== 알림(Notification) 컴포넌트 ===== */
+  /* 컨테이너 */
+  --notification-container-top: var(--spacing-lg);
+  --notification-container-right: var(--spacing-lg);
+  --notification-container-bottom: var(--spacing-lg);
+  --notification-container-left: var(--spacing-lg);
+  --notification-container-top-mobile: var(--spacing-sm);
+  --notification-container-right-mobile: var(--spacing-sm);
+  --notification-container-bottom-mobile: var(--spacing-sm);
+  --notification-container-left-mobile: var(--spacing-sm);
+  
+  /* 토스트 알림 */
+  --notification-toast-max-width: 400px;
+  --notification-toast-min-width: 300px;
+  --notification-toast-max-width-mobile: 100%;
+  --notification-toast-min-width-mobile: auto;
+  --notification-toast-margin-bottom: var(--spacing-md);
+  --notification-toast-margin-bottom-mobile: var(--spacing-sm);
+  --notification-toast-padding: var(--spacing-md);
+  --notification-toast-padding-mobile: var(--spacing-sm) var(--spacing-md);
+  --notification-toast-border-radius: var(--border-radius-lg);
+  --notification-toast-border-width: 1px;
+  --notification-toast-bg: rgba(255, 255, 255, 0.95);
+  --notification-toast-border-color: rgba(255, 255, 255, 0.3);
+  --notification-toast-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --notification-toast-shadow-hover: 0 15px 35px rgba(0, 0, 0, 0.15);
+  
+  /* 아이콘 */
+  --notification-icon-size: 24px;
+  --notification-icon-size-mobile: 20px;
+  --notification-icon-size-large: 48px;
+  --notification-icon-size-large-mobile: 40px;
+  --notification-icon-font-size: 16px;
+  --notification-icon-font-size-mobile: 14px;
+  --notification-icon-font-size-large: 24px;
+  --notification-icon-font-size-large-mobile: 20px;
+  
+  /* 메시지 */
+  --notification-message-font-size: var(--font-size-sm);
+  --notification-message-font-size-mobile: 13px;
+  --notification-message-line-height: 1.5;
+  --notification-message-line-height-mobile: 1.4;
+  
+  /* 닫기 버튼 */
+  --notification-close-size: 24px;
+  --notification-close-font-size: 18px;
+  --notification-close-border-radius: var(--border-radius-sm);
+  
+  /* 진행바 */
+  --notification-progress-height: 3px;
+  --notification-progress-bg: rgba(0, 0, 0, 0.1);
+  
+  /* 모달 알림 */
+  --notification-modal-max-width: 480px;
+  --notification-modal-max-width-mobile: 100%;
+  --notification-modal-max-height: 90vh;
+  --notification-modal-border-radius: var(--border-radius-xxl);
+  --notification-modal-border-radius-mobile: var(--border-radius-lg);
+  --notification-modal-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  --notification-modal-bg: rgba(255, 255, 255, 0.95);
+  --notification-modal-border-color: rgba(255, 255, 255, 0.3);
+  --notification-modal-border-width: 1px;
+  
+  /* 모달 헤더 */
+  --notification-header-padding: var(--spacing-lg);
+  --notification-header-padding-mobile: var(--spacing-md);
+  --notification-header-border-width: 1px;
+  --notification-header-border-color: rgba(0, 0, 0, 0.08);
+  --notification-header-bg: rgba(255, 255, 255, 0.9);
+  
+  /* 모달 타이틀 */
+  --notification-title-font-size: var(--font-size-xl);
+  --notification-title-font-size-mobile: var(--font-size-base);
+  --notification-title-font-weight: var(--font-weight-bold);
+  
+  /* 모달 바디 */
+  --notification-body-padding: var(--spacing-lg);
+  --notification-body-padding-mobile: var(--spacing-md);
+  
+  /* 모달 액션 */
+  --notification-actions-padding: var(--spacing-lg);
+  --notification-actions-padding-mobile: var(--spacing-md);
+  --notification-actions-gap: var(--spacing-md);
+  --notification-actions-gap-mobile: var(--spacing-xs);
+  --notification-actions-border-width: 1px;
+  --notification-actions-border-color: rgba(0, 0, 0, 0.08);
+  --notification-actions-bg: rgba(255, 255, 255, 0.9);
+  
+  /* 배너 알림 */
+  --notification-banner-padding: var(--spacing-md) var(--spacing-lg);
+  --notification-banner-padding-mobile: var(--spacing-sm) var(--spacing-md);
+  --notification-banner-border-width: 1px;
+  --notification-banner-border-color: rgba(255, 255, 255, 0.3);
+  
+  /* 카운트다운 */
+  --notification-countdown-padding: var(--spacing-sm);
+  --notification-countdown-margin-top: var(--spacing-md);
+  --notification-countdown-border-radius: var(--border-radius-md);
+  --notification-countdown-font-size: var(--font-size-sm);
+  
+  /* 타입별 색상 */
+  --notification-success-border-color: var(--color-success);
+  --notification-success-gradient-start: var(--color-success);
+  --notification-success-gradient-end: #10b981;
+  --notification-success-icon-bg-start: #d1fae5;
+  --notification-success-icon-bg-end: #a7f3d0;
+  --notification-success-icon-color: #059669;
+  
+  --notification-error-border-color: var(--color-danger);
+  --notification-error-gradient-start: var(--color-danger);
+  --notification-error-gradient-end: #ef4444;
+  --notification-error-icon-bg-start: #fecaca;
+  --notification-error-icon-bg-end: #fca5a5;
+  --notification-error-icon-color: #dc2626;
+  
+  --notification-warning-border-color: var(--color-warning);
+  --notification-warning-gradient-start: var(--color-warning);
+  --notification-warning-gradient-end: #f59e0b;
+  --notification-warning-icon-bg-start: #fef3c7;
+  --notification-warning-icon-bg-end: #fde68a;
+  --notification-warning-icon-color: #f59e0b;
+  
+  --notification-info-border-color: var(--color-info);
+  --notification-info-gradient-start: var(--color-info);
+  --notification-info-gradient-end: #3b82f6;
+  --notification-info-icon-bg-start: #dbeafe;
+  --notification-info-icon-bg-end: #bfdbfe;
+  --notification-info-icon-color: #2563eb;
+  
+  /* 배너 타입별 배경 */
+  --notification-banner-success-bg: rgba(34, 197, 94, 0.1);
+  --notification-banner-error-bg: rgba(239, 68, 68, 0.1);
+  --notification-banner-warning-bg: rgba(245, 158, 11, 0.1);
+  --notification-banner-info-bg: rgba(59, 130, 246, 0.1);
+  
+  /* 애니메이션 */
+  --notification-animation-duration: 0.3s;
+  --notification-animation-timing: ease-out;
+  --notification-transition: all var(--transition-fast);
 }

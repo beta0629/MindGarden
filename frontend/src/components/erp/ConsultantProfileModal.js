@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 import './ConsultantProfileModal.css';
+import notificationManager from '../../utils/notification';
 
 const ConsultantProfileModal = ({ 
     isOpen, 
@@ -181,19 +182,19 @@ const ConsultantProfileModal = ({
             // 사업자 등록 시 필수 필드 검사
             if (salaryFormData.isBusinessRegistered) {
                 if (!salaryFormData.businessRegistrationNumber) {
-                    alert('사업자 등록번호를 입력해주세요.');
+                    notificationManager.show('사업자 등록번호를 입력해주세요.', 'info');
                     setLoading(false);
                     return;
                 }
                 
                 if (!validateBusinessRegistrationNumber(salaryFormData.businessRegistrationNumber)) {
-                    alert('사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)');
+                    notificationManager.show('사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)', 'info');
                     setLoading(false);
                     return;
                 }
                 
                 if (!salaryFormData.businessName) {
-                    alert('사업자명을 입력해주세요.');
+                    notificationManager.show('사업자명을 입력해주세요.', 'info');
                     setLoading(false);
                     return;
                 }
@@ -217,15 +218,15 @@ const ConsultantProfileModal = ({
             const response = await apiPost('/api/admin/salary/profiles', profileData);
             
             if (response.success) {
-                alert('급여 프로필이 성공적으로 저장되었습니다.');
+                notificationManager.show('급여 프로필이 성공적으로 저장되었습니다.', 'info');
                 setShowSalaryForm(false);
                 loadSalaryProfile(); // 프로필 다시 조회
             } else {
-                alert('급여 프로필 저장에 실패했습니다: ' + response.message);
+                notificationManager.show('급여 프로필 저장에 실패했습니다: ' + response.message, 'error');
             }
         } catch (error) {
             console.error('급여 프로필 저장 실패:', error);
-            alert('급여 프로필 저장 중 오류가 발생했습니다.');
+            notificationManager.show('급여 프로필 저장 중 오류가 발생했습니다.', 'info');
         } finally {
             setLoading(false);
         }

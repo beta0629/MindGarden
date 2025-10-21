@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import notificationManager from '../../utils/notification';
 
 const TabletRegister = () => {
   const navigate = useNavigate();
@@ -153,15 +154,15 @@ const TabletRegister = () => {
 
       if (response.ok) {
         const result = await response.json();
-        alert('회원가입이 완료되었습니다!');
+        notificationManager.show('회원가입이 완료되었습니다!', 'info');
         navigate('/login');
       } else {
         const error = await response.json();
-        alert(error.message || '회원가입에 실패했습니다.');
+        notificationManager.show(error.message || '회원가입에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('회원가입 오류:', error);
-      alert('회원가입 중 오류가 발생했습니다.');
+      notificationManager.show('회원가입 중 오류가 발생했습니다.', 'info');
     } finally {
       setIsLoading(false);
     }
@@ -169,7 +170,7 @@ const TabletRegister = () => {
 
   const kakaoLogin = () => {
     if (!oauth2Config?.kakao?.clientId) {
-      alert('카카오 OAuth2 설정이 없습니다.');
+      notificationManager.show('카카오 OAuth2 설정이 없습니다.', 'info');
       return;
     }
 
@@ -183,7 +184,7 @@ const TabletRegister = () => {
 
   const naverLogin = () => {
     if (!oauth2Config?.naver?.clientId) {
-      alert('네이버 OAuth2 설정이 없습니다.');
+      notificationManager.show('네이버 OAuth2 설정이 없습니다.', 'info');
       return;
     }
 

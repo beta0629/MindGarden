@@ -150,6 +150,31 @@ class NotificationManager {
         this.success(message);
         return message;
     }
+
+    /**
+     * 확인 다이얼로그 (Promise 기반)
+     * @param {string} message - 확인 메시지
+     * @param {function} callback - 콜백 함수 (true/false 전달)
+     */
+    confirm(message, callback) {
+        const result = window.confirm(message);
+        if (callback) {
+            callback(result);
+        }
+        return result;
+    }
+
+    /**
+     * 알림 다이얼로그
+     * @param {string} message - 알림 메시지
+     * @param {function} callback - 콜백 함수
+     */
+    alert(message, callback) {
+        window.alert(message);
+        if (callback) {
+            callback();
+        }
+    }
 }
 
 // 싱글톤 인스턴스

@@ -3,6 +3,7 @@ import { apiPut, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import ConsultationLogModal from '../consultant/ConsultationLogModal';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
 
 /**
@@ -21,6 +22,7 @@ const ScheduleDetailModal = ({
     scheduleData, 
     onScheduleUpdated 
 }) => {
+    const { user } = useSession();
     const [loading, setLoading] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -28,6 +30,9 @@ const ScheduleDetailModal = ({
     const [adminNote, setAdminNote] = useState('');
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
+    
+    // 내담자인지 확인
+    const isClient = user?.role === 'CLIENT';
     
 
     // 일정 상태 코드 로드
@@ -436,8 +441,8 @@ const ScheduleDetailModal = ({
                                 해당 시간대에는 상담이 불가능합니다.
                             </p>
                         </div>
-                    ) : (
-                        // 일반 스케줄인 경우 - 통합 버튼 스타일 적용
+                    ) : !isClient ? (
+                        // 일반 스케줄인 경우 - 통합 버튼 스타일 적용 (내담자 제외)
                         <>
                             {(scheduleData.status === 'BOOKED' || scheduleData.status === '예약됨') && (
                                 <>
@@ -519,6 +524,23 @@ const ScheduleDetailModal = ({
                                 </button>
                             )}
                         </>
+                    ) : (
+                        // 내담자인 경우 - 조회만 가능 메시지 표시
+                        <div className="schedule-detail-client-notice" style={{
+                            padding: 'var(--spacing-lg)',
+                            background: 'var(--bg-gradient-cool)',
+                            border: 'var(--border-width-thin) solid var(--border-pink-light)',
+                            borderRadius: 'var(--border-radius-md)',
+                            textAlign: 'center',
+                            color: 'var(--color-text-secondary)'
+                        }}>
+                            <p style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>
+                                📅 예약 정보를 확인하실 수 있습니다.
+                            </p>
+                            <p style={{ margin: 'var(--spacing-xs) 0 0 0', fontSize: 'var(--font-size-sm)' }}>
+                                예약 변경이 필요하신 경우 상담사에게 문의해주세요.
+                            </p>
+                        </div>
                     )}
                 </div>
             </UnifiedModal>

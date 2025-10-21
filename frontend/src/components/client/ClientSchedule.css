@@ -1,81 +1,220 @@
-/* ClientSchedule 스타일 - 새로운 디자인 시스템 적용 */
-
-.client-schedule-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 400px;
-}
-
-.client-schedule-error {
-  text-align: center;
-  padding: var(--spacing-xxl);
-}
-
-.client-schedule-error-icon {
-  font-size: var(--font-size-xxxl);
-  color: var(--ios-red);
-  margin-bottom: var(--spacing-md);
-  display: block;
-}
-
-.client-schedule-error-title {
-  color: var(--ios-red);
-  margin-bottom: var(--spacing-md);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-}
-
-.client-schedule-error-message {
-  color: var(--ios-text-secondary);
-  margin-bottom: var(--spacing-xl);
-  font-size: var(--font-size-base);
-}
+/* ClientSchedule.css - 내담자 일정 페이지 스타일 */
 
 .client-schedule-container {
+  max-width: 1400px;
+  margin: 0 auto;
   padding: var(--spacing-xl);
-  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
 }
 
-/* 모바일 반응형 디자인 */
-@media (max-width: 767px) {
+/* 헤더 */
+.client-schedule-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, rgba(255, 250, 240, 0.6), rgba(255, 255, 250, 0.6));
+  border: var(--border-width-thin) solid rgba(255, 182, 193, 0.2);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.client-schedule-header__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--border-radius-md);
+  background: linear-gradient(135deg, #87CEEB, #B0E0E6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(135, 206, 235, 0.3);
+}
+
+.client-schedule-header__icon svg {
+  color: var(--color-white);
+}
+
+.client-schedule-header__content {
+  flex: 1;
+}
+
+.client-schedule-header__title {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+  line-height: 1.2;
+}
+
+.client-schedule-header__subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* 캘린더 래퍼 */
+.client-schedule-calendar-wrapper {
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* 로딩 상태 */
+.client-schedule-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: var(--spacing-xxxl);
+}
+
+/* 에러 상태 */
+.client-schedule-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xxxl);
+  text-align: center;
+  min-height: 400px;
+}
+
+.client-schedule-error__icon {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--border-radius-full);
+  background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(255, 107, 157, 0.3);
+}
+
+.client-schedule-error__icon svg {
+  color: var(--color-white);
+}
+
+.client-schedule-error__title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.client-schedule-error__message {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin: 0;
+  max-width: 500px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
   .client-schedule-container {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-md);
+    max-width: 100%;
+  }
+
+  .client-schedule-header {
+    flex-direction: row;
+    align-items: center;
     padding: var(--spacing-md);
+    gap: var(--spacing-sm);
   }
-  
+
+  .client-schedule-header__icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+
+  .client-schedule-header__icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .client-schedule-header__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .client-schedule-header__title {
+    font-size: var(--font-size-lg);
+    line-height: 1.3;
+  }
+
+  .client-schedule-header__subtitle {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .client-schedule-calendar-wrapper {
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-md);
+  }
+
   .client-schedule-error {
-    padding: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    min-height: 300px;
   }
-  
-  .client-schedule-error-icon {
-    font-size: var(--font-size-xxl);
+
+  .client-schedule-error__icon {
+    width: 56px;
+    height: 56px;
   }
-  
-  .client-schedule-error-title {
+
+  .client-schedule-error__icon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .client-schedule-error__title {
     font-size: var(--font-size-lg);
   }
-  
-  .client-schedule-error-message {
+
+  .client-schedule-error__message {
     font-size: var(--font-size-sm);
   }
 }
 
-/* 다크 모드 지원 */
-@media (prefers-color-scheme: dark) {
+@media (min-width: 769px) and (max-width: 1024px) {
   .client-schedule-container {
-    background: linear-gradient(135deg, #1a1d2e 0%, #16213e 100%);
+    padding: var(--spacing-lg);
   }
-  
-  .client-schedule-error-icon {
-    color: var(--ios-red-dark);
+
+  .client-schedule-header {
+    padding: var(--spacing-xl);
   }
-  
-  .client-schedule-error-title {
-    color: var(--ios-red-dark);
+}
+
+/* 애니메이션 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  .client-schedule-error-message {
-    color: var(--ios-text-secondary-dark);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
+
+.client-schedule-header,
+.client-schedule-calendar-wrapper {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.client-schedule-header {
+  animation-delay: 0s;
+}
+
+.client-schedule-calendar-wrapper {
+  animation-delay: 0.1s;
 }

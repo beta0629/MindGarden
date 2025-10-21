@@ -74,4 +74,9 @@ public interface ConsultationMessageService extends BaseService<ConsultationMess
      * 메시지 ID로 조회
      */
     ConsultationMessage getById(Long id);
+    
+    /**
+     * 모든 메시지 조회 (관리자 전용)
+     */
+    List<ConsultationMessage> getAllMessages();
 }

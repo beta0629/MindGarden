@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import './AccountManagement.css';
 import AccountForm from './components/AccountForm';
@@ -84,14 +85,14 @@ const AccountManagement = () => {
       if (response.ok) {
         await loadAccounts();
         resetForm();
-        alert(editingAccount ? ACCOUNT_MESSAGES.SUCCESS.UPDATED : ACCOUNT_MESSAGES.SUCCESS.CREATED);
+        notificationManager.show(editingAccount ? ACCOUNT_MESSAGES.SUCCESS.UPDATED : ACCOUNT_MESSAGES.SUCCESS.CREATED, 'success');
       } else {
         const error = await response.json();
-        alert(`오류: ${error.message || ACCOUNT_MESSAGES.ERROR.CREATE_FAILED}`);
+        notificationManager.show(`오류: ${error.message || ACCOUNT_MESSAGES.ERROR.CREATE_FAILED}`, 'info');
       }
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.CREATE_FAILED, error);
-      alert(ACCOUNT_MESSAGES.ERROR.CREATE_FAILED);
+      notificationManager.show(ACCOUNT_MESSAGES.ERROR.CREATE_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -113,7 +114,10 @@ const AccountManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm(ACCOUNT_MESSAGES.CONFIRM.DELETE)) return;
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(ACCOUNT_MESSAGES.CONFIRM.DELETE, resolve);
+    });
+    if (!confirmed) return;
     
     try {
       setLoading(true);
@@ -124,13 +128,13 @@ const AccountManagement = () => {
 
       if (response.ok) {
         await loadAccounts();
-        alert(ACCOUNT_MESSAGES.SUCCESS.DELETED);
+        notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.DELETED, 'success');
       } else {
-        alert(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED);
+        notificationManager.show(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED, 'error');
       }
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED, error);
-      alert(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED);
+      notificationManager.show(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -146,13 +150,13 @@ const AccountManagement = () => {
 
       if (response.ok) {
         await loadAccounts();
-        alert(ACCOUNT_MESSAGES.SUCCESS.STATUS_CHANGED);
+        notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.STATUS_CHANGED, 'success');
       } else {
-        alert(ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED);
+        notificationManager.show(ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED, 'error');
       }
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED, error);
-      alert(ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED);
+      notificationManager.show(ACCOUNT_MESSAGES.ERROR.STATUS_CHANGE_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -168,13 +172,13 @@ const AccountManagement = () => {
 
       if (response.ok) {
         await loadAccounts();
-        alert(ACCOUNT_MESSAGES.SUCCESS.PRIMARY_SET);
+        notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.PRIMARY_SET, 'success');
       } else {
-        alert(ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED);
+        notificationManager.show(ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED, 'error');
       }
     } catch (error) {
       console.error(ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED, error);
-      alert(ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED);
+      notificationManager.show(ACCOUNT_MESSAGES.ERROR.PRIMARY_SET_FAILED, 'error');
     } finally {
       setLoading(false);
     }

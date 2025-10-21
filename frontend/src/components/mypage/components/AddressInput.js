@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../../utils/ajax';
 import './AddressInput.css';
+import notificationManager from '../../../utils/notification';
 
 const AddressInput = ({ 
   postalCode, 
@@ -116,7 +117,7 @@ const AddressInput = ({
         }
       }).open();
     } else {
-      alert('주소 검색 서비스를 불러올 수 없습니다.');
+      notificationManager.show('주소 검색 서비스를 불러올 수 없습니다.', 'info');
     }
   };
 

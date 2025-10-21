@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport } from 'react-icons/fa';
-import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt } from 'lucide-react';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell } from 'react-icons/fa';
+import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SystemStatus from './system/SystemStatus';
@@ -11,6 +12,7 @@ import { API_BASE_URL } from '../../constants/api';
 import SystemTools from './system/SystemTools';
 import PermissionManagement from './PermissionManagement';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
+import SystemNotificationSection from '../dashboard/SystemNotificationSection';
 // 새로 추가된 모달 컴포넌트들
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS } from '../../constants/css-variables';
@@ -22,6 +24,34 @@ import '../../styles/mindgarden-design-system.css';
 import './AdminDashboard.new.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
+
+// 라우트 경로 상수
+const ADMIN_ROUTES = {
+    SCHEDULES: '/admin/schedules',
+    SESSIONS: '/admin/sessions',
+    USERS: '/admin/users',
+    USER_MANAGEMENT: '/admin/user-management',
+    CONSULTANTS: '/admin/consultants',
+    CONSULTANT_COMPREHENSIVE: '/admin/consultant-comprehensive',
+    CLIENTS: '/admin/clients',
+    CLIENT_COMPREHENSIVE: '/admin/client-comprehensive',
+    MAPPINGS: '/admin/mappings',
+    MAPPING_MANAGEMENT: '/admin/mapping-management',
+    BRANCHES: '/admin/branches',
+    BRANCH_CREATE: '/admin/branch-create',
+    BRANCH_HIERARCHY: '/admin/branch-hierarchy',
+    BRANCH_MANAGERS: '/admin/branch-managers',
+    BRANCH_STATUS: '/admin/branch-status',
+    BRANCH_CONSULTANTS: '/admin/branch-consultants',
+    COMMON_CODES: '/admin/common-codes',
+    SYSTEM_NOTIFICATIONS: '/admin/system-notifications',
+    MESSAGES: '/admin/messages',
+    STATISTICS: '/admin/statistics',
+    COMPLIANCE: '/admin/compliance',
+    COMPLIANCE_DASHBOARD: '/admin/compliance/dashboard',
+    COMPLIANCE_DESTRUCTION: '/admin/compliance/destruction',
+    ERP_FINANCIAL: '/admin/erp/financial'
+};
 
 const AdminDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
@@ -407,9 +437,12 @@ const AdminDashboard = ({ user: propUser }) => {
             
             // 사용자 확인
             const confirmMessage = `중복된 매칭이 ${checkResult.count}개 발견되었습니다. 통합하시겠습니까?`;
-            if (!window.confirm(confirmMessage)) {
-                return;
-            }
+            const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(confirmMessage, resolve);
+    });
+    if (!confirmed) {
+        return;
+    }
             
             // 중복 매칭 통합 실행
             const response = await csrfTokenManager.post('/api/admin/merge-duplicate-mappings');
@@ -678,7 +711,7 @@ const AdminDashboard = ({ user: propUser }) => {
                                 icon={<Settings />}
                                 value="처리하기"
                                 label="입금 확인 처리"
-                                onClick={() => navigate('/admin/mapping-management')}
+                                onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
                             />
                         </div>
                     </DashboardSection>
@@ -870,7 +903,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 icon={<Settings />}
             >
                 <div className="mg-management-grid">
-                    <div className="mg-management-card" onClick={() => navigate('/admin/schedules')}>
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SCHEDULES)}>
                         <div className="mg-management-icon">
                             <FaCalendarAlt />
                         </div>
@@ -878,7 +911,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         <p className="mg-management-description">상담 일정을 관리하고 조정합니다</p>
                     </div>
                     
-                    <div className="mg-management-card" onClick={() => navigate('/admin/sessions')}>
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SESSIONS)}>
                         <div className="mg-management-icon">
                             <FaCalendarCheck />
                         </div>
@@ -903,7 +936,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                     
                     
-                    <div className="mg-management-card" onClick={() => navigate('/admin/consultant-comprehensive')}>
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}>
                         <div className="mg-management-icon">
                             <FaUserTie />
                         </div>
@@ -912,7 +945,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                     
                     {PermissionChecks.canManageClients(userPermissions) && (
-                        <div className="mg-management-card" onClick={() => navigate('/admin/client-comprehensive')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}>
                             <div className="mg-management-icon">
                                 <FaUsers />
                             </div>
@@ -922,7 +955,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     )}
                     
                     {PermissionChecks.canManageUsers(userPermissions) && (
-                        <div className="mg-management-card" onClick={() => navigate('/admin/user-management')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.USER_MANAGEMENT)}>
                             <div className="mg-management-icon">
                                 <FaUserCog />
                             </div>
@@ -932,7 +965,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     )}
                     
                     {PermissionChecks.canViewMappings(userPermissions) && (
-                        <div className="mg-management-card" onClick={() => navigate('/admin/mapping-management')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}>
                             <div className="mg-management-icon">
                                 <FaLink />
                             </div>
@@ -941,12 +974,36 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     )}
                     
-                    <div className="mg-management-card" onClick={() => navigate('/admin/common-codes')}>
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMMON_CODES)}>
                         <div className="mg-management-icon">
                             <FaCog />
                         </div>
                         <h3>공통코드 관리</h3>
                         <p className="mg-management-description">시스템 공통코드를 관리합니다</p>
+                    </div>
+                    
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SYSTEM_NOTIFICATIONS)}>
+                        <div className="mg-management-icon">
+                            <FaBell />
+                        </div>
+                        <h3>시스템 공지 관리</h3>
+                        <p className="mg-management-description">전체/상담사/내담자 공지를 관리합니다</p>
+                    </div>
+                    
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}>
+                        <div className="mg-management-icon">
+                            <MessageSquare />
+                        </div>
+                        <h3>메시지 관리</h3>
+                        <p className="mg-management-description">상담사-내담자 메시지를 관리합니다</p>
+                    </div>
+                    
+                    <div className="mg-management-card" onClick={() => navigate('/admin/wellness')}>
+                        <div className="mg-management-icon">
+                            <Sparkles />
+                        </div>
+                        <h3>웰니스 알림 관리</h3>
+                        <p className="mg-management-description">AI 기반 웰니스 컨텐츠 생성 및 비용 관리</p>
                     </div>
                     
                     <div className="mg-management-card" onClick={handleMergeDuplicateMappings}>
@@ -995,7 +1052,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     icon={<Shield />}
                 >
                     <div className="mg-management-grid">
-                        <div className="mg-management-card" onClick={() => navigate('/admin/compliance')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE)}>
                             <div className="mg-management-icon">
                                 <i className="bi bi-shield-check"></i>
                             </div>
@@ -1003,7 +1060,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">개인정보보호법 준수 현황을 모니터링합니다</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/admin/compliance/dashboard')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE_DASHBOARD)}>
                             <div className="mg-management-icon">
                                 <i className="bi bi-graph-up"></i>
                             </div>
@@ -1011,7 +1068,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">개인정보 처리 현황 및 통계를 관리합니다</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/admin/compliance/destruction')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.COMPLIANCE_DESTRUCTION)}>
                             <div className="mg-management-icon">
                                 <i className="bi bi-trash"></i>
                             </div>
@@ -1096,7 +1153,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
-                            <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial')}>
+                            <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.ERP_FINANCIAL)}>
                                 <div className="mg-management-icon">
                                     <FaDollarSign />
                                 </div>
@@ -1124,7 +1181,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">지점 등록, 수정, 통계를 통합 관리합니다</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/admin/branch-create')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCH_CREATE)}>
                             <div className="mg-management-icon">
                                 <FaMapMarkerAlt />
                             </div>
@@ -1132,7 +1189,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">새로운 지점을 등록합니다</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/admin/branch-hierarchy')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCH_HIERARCHY)}>
                             <div className="mg-management-icon">
                                 <FaCogs />
                             </div>
@@ -1140,7 +1197,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">지점 간 계층 관계를 관리합니다</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/admin/branch-managers')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCH_MANAGERS)}>
                             <div className="mg-management-icon">
                                 <FaUserCog />
                             </div>
@@ -1148,7 +1205,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">지점장을 지정하고 관리합니다</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/admin/branch-status')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCH_STATUS)}>
                             <div className="mg-management-icon">
                                 <FaToggleOn />
                             </div>
@@ -1156,7 +1213,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">지점 활성화/비활성화를 관리합니다</p>
                         </div>
                         
-                        <div className="mg-management-card" onClick={() => navigate('/admin/branch-consultants')}>
+                        <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.BRANCH_CONSULTANTS)}>
                             <div className="mg-management-icon">
                                 <FaUserTie />
                             </div>

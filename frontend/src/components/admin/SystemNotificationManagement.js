@@ -21,6 +21,7 @@ const SystemNotificationManagement = () => {
   const [filterTarget, setFilterTarget] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [userPermissions, setUserPermissions] = useState([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
 
   // 폼 데이터
   const [formData, setFormData] = useState({
@@ -35,14 +36,31 @@ const SystemNotificationManagement = () => {
 
   // 권한 체크
   const hasManagePermission = () => {
+    console.log('🔍 시스템 공지 관리 권한 체크:', {
+      userPermissions,
+      hasPermission: checkPermission(userPermissions, 'SYSTEM_NOTIFICATION_MANAGE'),
+      user: user?.role
+    });
     return checkPermission(userPermissions, 'SYSTEM_NOTIFICATION_MANAGE');
   };
 
   // 권한 로드
   useEffect(() => {
-    if (isLoggedIn) {
-      fetchUserPermissions(setUserPermissions);
-    }
+    const loadPermissions = async () => {
+      if (isLoggedIn) {
+        setPermissionsLoading(true);
+        try {
+          await fetchUserPermissions(setUserPermissions);
+        } catch (error) {
+          console.error('권한 로드 오류:', error);
+        } finally {
+          setPermissionsLoading(false);
+        }
+      } else {
+        setPermissionsLoading(false);
+      }
+    };
+    loadPermissions();
   }, [isLoggedIn]);
 
   // 공지 목록 로드
@@ -198,10 +216,10 @@ const SystemNotificationManagement = () => {
   };
 
   useEffect(() => {
-    if (isLoggedIn && userPermissions.length > 0 && hasManagePermission()) {
+    if (isLoggedIn && !permissionsLoading && hasManagePermission()) {
       loadNotifications();
     }
-  }, [isLoggedIn, userPermissions, filterTarget, filterStatus]);
+  }, [isLoggedIn, permissionsLoading, userPermissions, filterTarget, filterStatus]);
 
   // 로그인 체크
   if (!isLoggedIn) {
@@ -215,7 +233,7 @@ const SystemNotificationManagement = () => {
   }
 
   // 권한 로딩 중
-  if (userPermissions.length === 0) {
+  if (permissionsLoading) {
     return (
       <SimpleLayout title="시스템 공지 관리">
         <UnifiedLoading message="권한 확인 중..." />
@@ -331,7 +349,7 @@ const SystemNotificationManagement = () => {
                         {notification.viewCount > 0 && ` · 조회수: ${notification.viewCount}`}
                       </div>
                     </div>
-                    <div className="mg-flex mg-gap-sm mg-flex-wrap">
+                    <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap', alignItems: 'center' }}>
                       {notification.status === 'DRAFT' && (
                         <button
                           onClick={() => handlePublish(notification.id)}

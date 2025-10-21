@@ -602,6 +602,22 @@ const UnifiedScheduleComponent = ({
         
         const isPastDate = clickedDate < today;
         
+        // 내담자인 경우 - 스케줄이 있는 날짜만 조회 가능
+        if (userRole === 'CLIENT' || userRole === 'ROLE_CLIENT') {
+            const dayEvents = events.filter(event => {
+                const eventDate = new Date(event.start);
+                eventDate.setHours(0, 0, 0, 0);
+                return eventDate.getTime() === clickedDate.getTime();
+            });
+            
+            if (dayEvents.length === 0) {
+                // 스케줄이 없는 날짜
+                notificationManager.show('해당 날짜에 예약된 스케줄이 없습니다.', 'info');
+            }
+            // 데스크탑에서는 이벤트를 직접 클릭하도록 유도 (아무 동작 안함)
+            return;
+        }
+        
         // 상담사는 휴가 등록만 가능
         if (userRole === 'CONSULTANT') {
             if (isPastDate) {
@@ -625,8 +641,6 @@ const UnifiedScheduleComponent = ({
             setSelectedInfo(info);
             console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');
             setIsDateActionModalOpen(true);
-        } else {
-            notificationManager.show('error', '스케줄 생성 권한이 없습니다.');
         }
     };
 
@@ -679,6 +693,14 @@ const UnifiedScheduleComponent = ({
     const showDetailModal = (event) => {
         try {
             console.log('📋 showDetailModal 시작:', event);
+            
+            // 이벤트 데이터 유효성 검사
+            if (!event || !event.extendedProps) {
+                console.error('❌ 유효하지 않은 이벤트 데이터:', event);
+                notificationManager.show('스케줄 정보를 불러올 수 없습니다.', 'error');
+                return;
+            }
+            
             console.log('📋 event.extendedProps:', event.extendedProps);
             
             // 휴가 이벤트인지 확인

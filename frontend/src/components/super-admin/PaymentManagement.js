@@ -3,6 +3,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
+import notificationManager from '../../utils/notification';
 
 /**
  * 수퍼어드민 결제 관리 컴포넌트
@@ -310,28 +311,31 @@ const PaymentManagement = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      alert('결제 데이터가 성공적으로 내보내졌습니다.');
+      notificationManager.show('결제 데이터가 성공적으로 내보내졌습니다.', 'info');
       
     } catch (error) {
       console.error('데이터 내보내기 실패:', error);
-      alert(`데이터 내보내기 실패: ${error.message}`);
+      notificationManager.show(`데이터 내보내기 실패: ${error.message}`, 'info');
     }
   };
 
   const showPaymentAnalytics = () => {
     // 결제 분석 모달 또는 페이지로 이동
-    alert('결제 분석 기능은 개발 중입니다.');
+    notificationManager.show('결제 분석 기능은 개발 중입니다.', 'info');
   };
 
   const handleBulkAction = async (action, selectedPayments) => {
     if (!selectedPayments || selectedPayments.length === 0) {
-      alert('선택된 결제가 없습니다.');
+      notificationManager.show('선택된 결제가 없습니다.', 'info');
       return;
     }
 
-    const confirmed = window.confirm(
-      `선택된 ${selectedPayments.length}건의 결제를 ${action === 'approve' ? '승인' : action === 'refund' ? '환불' : '취소'}하시겠습니까?`
-    );
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(
+        `선택된 ${selectedPayments.length}건의 결제를 ${action === 'approve' ? '승인' : action === 'refund' ? '환불' : '취소'}하시겠습니까?`,
+        resolve
+      );
+    });
 
     if (!confirmed) return;
 
@@ -359,9 +363,9 @@ const PaymentManagement = () => {
       const failedCount = responses.filter(r => !r.ok).length;
       
       if (failedCount === 0) {
-        alert('모든 작업이 성공적으로 완료되었습니다.');
+        notificationManager.show('모든 작업이 성공적으로 완료되었습니다.', 'info');
       } else {
-        alert(`${responses.length - failedCount}건 성공, ${failedCount}건 실패`);
+        notificationManager.show(`${responses.length - failedCount}건 성공, ${failedCount}건 실패`, 'info');
       }
       
       loadPayments();
@@ -369,7 +373,7 @@ const PaymentManagement = () => {
       
     } catch (error) {
       console.error('일괄 작업 실패:', error);
-      alert(`일괄 작업 실패: ${error.message}`);
+      notificationManager.show(`일괄 작업 실패: ${error.message}`, 'info');
     }
   };
 

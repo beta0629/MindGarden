@@ -6,6 +6,7 @@ import './ConsultantClientList.css';
 import SimpleLayout from '../layout/SimpleLayout';
 import ClientDetailModal from './ClientDetailModal';
 import UnifiedLoading from '../common/UnifiedLoading';
+import notificationManager from '../../utils/notification';
 
 const ConsultantClientList = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -278,11 +279,11 @@ const ConsultantClientList = () => {
         handleCloseModal();
       } else {
         console.error('❌ 내담자 정보 저장 실패:', response?.message || '알 수 없는 오류');
-        alert('내담자 정보 저장에 실패했습니다: ' + (response?.message || '알 수 없는 오류'));
+        notificationManager.show('내담자 정보 저장에 실패했습니다: ' + (response?.message || '알 수 없는 오류'), 'error');
       }
     } catch (err) {
       console.error('❌ 내담자 정보 저장 실패:', err);
-      alert('내담자 정보 저장 중 오류가 발생했습니다: ' + err.message);
+      notificationManager.show('내담자 정보 저장 중 오류가 발생했습니다: ' + err.message, 'error');
     }
   };
 

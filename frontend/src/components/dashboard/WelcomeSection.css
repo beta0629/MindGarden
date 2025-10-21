@@ -240,9 +240,49 @@
   box-shadow: 0 2px 8px rgba(128, 128, 0, 0.2);
 }
 
+.info-icon--progress {
+  background: linear-gradient(135deg, #87CEEB, #B0E0E6);
+  box-shadow: 0 2px 8px rgba(135, 206, 235, 0.3);
+}
+
+.info-icon--mindfulness {
+  background: linear-gradient(135deg, #FF6B9D, #FFA5C0);
+  box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
+}
+
 .info-icon--tip {
   background: var(--cocoa);
   box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
+}
+
+/* 클릭 가능한 카드 */
+.welcome-info-card--clickable {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.welcome-info-card--clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* 액션 영역 */
+.info-action {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.info-action-text {
+  font-size: var(--font-size-xs);
+  color: var(--olive-green);
+  font-weight: var(--font-weight-medium);
+}
+
+.info-action .bi-arrow-right {
+  font-size: var(--font-size-xs);
+  color: var(--olive-green);
 }
 
 /* 정보 콘텐츠 */

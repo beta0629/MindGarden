@@ -472,9 +472,12 @@ const MappingManagement = () => {
         }
 
         const confirmMessage = `${refundMapping.clientName}과의 매칭을 환불 처리하시겠습니까?\n\n환불 회기: ${refundMapping.remainingSessions}회\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
-        if (!window.confirm(confirmMessage)) {
-            return;
-        }
+        const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(confirmMessage, resolve);
+    });
+    if (!confirmed) {
+        return;
+    }
 
         try {
             setLoading(true);
@@ -526,9 +529,12 @@ const MappingManagement = () => {
     // 매칭 삭제 핸들러
     const handleDeleteMapping = async (mapping) => {
         const confirmMessage = `${mapping.clientName}과의 매칭을 취소하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`;
-        if (!window.confirm(confirmMessage)) {
-            return;
-        }
+        const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(confirmMessage, resolve);
+    });
+    if (!confirmed) {
+        return;
+    }
 
         try {
             setLoading(true);

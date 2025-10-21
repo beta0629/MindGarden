@@ -547,7 +547,7 @@ const TabletLogin = () => {
         navigate(dashboardPath, { replace: true });
       } else {
         console.log('❌ 간편 회원가입 - 세션 설정 실패');
-        alert('세션 설정에 실패했습니다.');
+        notificationManager.show('세션 설정에 실패했습니다.', 'info');
       }
     } else {
       // 사용자 정보가 없으면 새로고침

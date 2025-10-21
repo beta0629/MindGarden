@@ -1,0 +1,461 @@
+/* ============================================
+   내담자 대시보드 - 화사하고 산뜻한 디자인
+   ============================================ */
+
+.client-dashboard {
+  --client-primary: #FFB6C1;      /* 연한 핑크 */
+  --client-secondary: #B6E5D8;    /* 민트 */
+  --client-success: #98E4D8;      /* 연한 청록 */
+  --client-info: #A8D8EA;         /* 연한 하늘색 */
+  --client-warning: #FFE5B4;      /* 연한 피치 */
+  --client-gradient-1: linear-gradient(135deg, #FFE5E5 0%, #FFF8E1 100%);
+  --client-gradient-2: linear-gradient(135deg, #E8F5E9 0%, #E1F5FE 100%);
+  --client-gradient-3: linear-gradient(135deg, #FFF3E0 0%, #FCE4EC 100%);
+  --client-shadow: 0 4px 20px rgba(255, 182, 193, 0.15);
+  --client-shadow-hover: 0 8px 30px rgba(255, 182, 193, 0.25);
+}
+
+/* ============================================
+   웰컴 헤더
+   ============================================ */
+
+.client-dashboard__welcome {
+  background: var(--client-gradient-1);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-xxl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--client-shadow);
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.client-dashboard__welcome-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.client-dashboard__welcome-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border-radius: var(--border-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.client-dashboard__welcome-text {
+  flex: 1;
+  min-width: 250px;
+}
+
+.client-dashboard__greeting {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1.2;
+}
+
+.client-dashboard__name {
+  color: #FF69B4;
+  background: linear-gradient(135deg, #FF69B4, #FFB6C1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.client-dashboard__subtitle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.client-dashboard__time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ============================================
+   통계 카드
+   ============================================ */
+
+.client-dashboard__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.client-dashboard__stat-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  box-shadow: var(--client-shadow);
+  transition: all var(--transition-normal) ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.client-dashboard__stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: var(--border-radius-full);
+  opacity: 0.1;
+  transform: translate(30%, -30%);
+}
+
+.client-dashboard__stat-card--primary::before {
+  background: var(--client-primary);
+}
+
+.client-dashboard__stat-card--success::before {
+  background: var(--client-success);
+}
+
+.client-dashboard__stat-card--info::before {
+  background: var(--client-info);
+}
+
+.client-dashboard__stat-card--warning::before {
+  background: var(--client-warning);
+}
+
+.client-dashboard__stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--client-shadow-hover);
+}
+
+.client-dashboard__stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.client-dashboard__stat-card--primary .client-dashboard__stat-icon {
+  background: linear-gradient(135deg, #FFB6C1, #FF69B4);
+}
+
+.client-dashboard__stat-card--success .client-dashboard__stat-icon {
+  background: linear-gradient(135deg, #98E4D8, #4DD0E1);
+}
+
+.client-dashboard__stat-card--info .client-dashboard__stat-icon {
+  background: linear-gradient(135deg, #A8D8EA, #64B5F6);
+}
+
+.client-dashboard__stat-card--warning .client-dashboard__stat-icon {
+  background: linear-gradient(135deg, #FFE5B4, #FFD54F);
+}
+
+.client-dashboard__stat-content {
+  flex: 1;
+}
+
+.client-dashboard__stat-value {
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: 1;
+  margin-bottom: var(--spacing-xs);
+}
+
+.client-dashboard__stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ============================================
+   섹션
+   ============================================ */
+
+.client-dashboard__section {
+  background: white;
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--client-shadow);
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.client-dashboard__section-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.client-dashboard__section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.client-dashboard__section-title svg {
+  color: #FF69B4;
+}
+
+/* ============================================
+   스케줄 리스트
+   ============================================ */
+
+.client-dashboard__schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.client-dashboard__schedule-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: var(--client-gradient-2);
+  border-radius: var(--border-radius-lg);
+  transition: all var(--transition-normal) ease;
+}
+
+.client-dashboard__schedule-item:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+.client-dashboard__schedule-date {
+  width: 60px;
+  height: 60px;
+  background: white;
+  border-radius: var(--border-radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.client-dashboard__schedule-day {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: #FF69B4;
+  line-height: 1;
+}
+
+.client-dashboard__schedule-month {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.client-dashboard__schedule-info {
+  flex: 1;
+}
+
+.client-dashboard__schedule-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.client-dashboard__schedule-time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.client-dashboard__schedule-status {
+  flex-shrink: 0;
+}
+
+/* ============================================
+   빠른 액션
+   ============================================ */
+
+.client-dashboard__quick-actions {
+  background: var(--client-gradient-3);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--client-shadow);
+}
+
+.client-dashboard__action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.client-dashboard__action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl);
+  background: white;
+  border: none;
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all var(--transition-normal) ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.client-dashboard__action-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--client-shadow-hover);
+}
+
+.client-dashboard__action-btn svg {
+  transition: all var(--transition-normal) ease;
+}
+
+.client-dashboard__action-btn--primary:hover svg {
+  color: #FF69B4;
+}
+
+.client-dashboard__action-btn--success:hover svg {
+  color: #4DD0E1;
+}
+
+.client-dashboard__action-btn--info:hover svg {
+  color: #64B5F6;
+}
+
+.client-dashboard__action-btn--warning:hover svg {
+  color: #FFD54F;
+}
+
+/* ============================================
+   애니메이션
+   ============================================ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* ============================================
+   반응형 디자인
+   ============================================ */
+
+@media (max-width: 768px) {
+  .client-dashboard__welcome {
+    padding: var(--spacing-lg);
+  }
+
+  .client-dashboard__welcome-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .client-dashboard__welcome-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .client-dashboard__greeting {
+    font-size: var(--font-size-xl);
+  }
+
+  .client-dashboard__time {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .client-dashboard__stats {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .client-dashboard__stat-card {
+    padding: var(--spacing-lg);
+  }
+
+  .client-dashboard__stat-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .client-dashboard__stat-value {
+    font-size: var(--font-size-xxl);
+  }
+
+  .client-dashboard__section {
+    padding: var(--spacing-lg);
+  }
+
+  .client-dashboard__schedule-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .client-dashboard__schedule-date {
+    width: 50px;
+    height: 50px;
+  }
+
+  .client-dashboard__action-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .client-dashboard__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .client-dashboard__action-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+

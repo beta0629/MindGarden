@@ -56,14 +56,8 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         Page<SystemNotification> notifications = systemNotificationRepository
             .findValidNotificationsByTargetTypes(targetTypes, now, pageable);
         
-        // 각 공지에 대해 읽음 여부 체크
-        notifications.forEach(notification -> {
-            Optional<SystemNotificationRead> readStatus = 
-                systemNotificationReadRepository.findByNotificationIdAndUserId(notification.getId(), userId);
-            
-            // 읽음 여부를 임시로 저장 (엔티티에 transient 필드 추가 필요)
-            // 현재는 클라이언트에서 별도로 조회
-        });
+        // 각 공지에 대해 읽음 여부 체크 (현재는 클라이언트에서 별도로 조회)
+        // TODO: 엔티티에 transient 필드 추가하여 읽음 여부를 직접 포함하도록 개선
         
         log.info("✅ 사용자 공지 조회 완료 - 총 {}개", notifications.getTotalElements());
         
@@ -81,13 +75,25 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         
         SystemNotification notification = notificationOpt.get();
         
-        // 조회수 증가
-        notification.incrementViewCount();
-        systemNotificationRepository.save(notification);
+        // 조회수 증가는 별도 메서드로 처리 (버전 충돌 방지)
+        incrementViewCount(notificationId);
         
         log.info("✅ 공지 상세 조회 완료 - 공지 ID: {}", notificationId);
         
         return notification;
+    }
+    
+    /**
+     * 조회수 증가 (버전 충돌 방지를 위해 별도 처리)
+     */
+    @Transactional
+    public void incrementViewCount(Long notificationId) {
+        try {
+            systemNotificationRepository.incrementViewCount(notificationId);
+            log.debug("📊 조회수 증가 완료 - 공지 ID: {}", notificationId);
+        } catch (Exception e) {
+            log.warn("⚠️ 조회수 증가 실패 (무시): 공지 ID: {}, 오류: {}", notificationId, e.getMessage());
+        }
     }
     
     @Override
@@ -113,6 +119,14 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
             systemNotificationReadRepository.save(readStatus);
             log.info("✅ 새 읽음 상태 생성 완료");
         }
+    }
+    
+    @Override
+    public boolean isNotificationRead(Long notificationId, Long userId) {
+        Optional<SystemNotificationRead> readStatus = 
+            systemNotificationReadRepository.findByNotificationIdAndUserId(notificationId, userId);
+        
+        return readStatus.isPresent() && readStatus.get().getIsRead();
     }
     
     @Override

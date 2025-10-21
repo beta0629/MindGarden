@@ -5,9 +5,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.entity.ConsultationMessage;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.ConsultationMessageService;
+import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +37,66 @@ import lombok.extern.slf4j.Slf4j;
 public class ConsultationMessageController {
 
     private final ConsultationMessageService consultationMessageService;
+
+    /**
+     * 권한 체크: 관리자 권한 확인
+     */
+    private boolean isAdmin(User user) {
+        if (user == null) return false;
+        String role = user.getRole().name();
+        return role.contains("ADMIN") || role.contains("SUPER");
+    }
+
+    /**
+     * 모든 메시지 조회 (관리자 전용)
+     * GET /api/consultation-messages/all
+     */
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllMessages(HttpSession session) {
+        try {
+            log.info("📨 전체 메시지 목록 조회 (관리자)");
+            
+            // 세션에서 사용자 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                log.warn("⚠️ 인증되지 않은 사용자");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(
+                        "success", false,
+                        "message", "로그인이 필요합니다."
+                    ));
+            }
+            
+            // 관리자 권한 체크
+            if (!isAdmin(currentUser)) {
+                log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}", currentUser.getId(), currentUser.getRole());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of(
+                        "success", false,
+                        "message", "관리자 권한이 필요합니다."
+                    ));
+            }
+            
+            // 모든 메시지 조회
+            List<ConsultationMessage> messages = consultationMessageService.getAllMessages();
+            
+            log.info("✅ 전체 메시지 조회 성공 - 총 {}개", messages.size());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", messages,
+                "message", "메시지 목록을 성공적으로 조회했습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 전체 메시지 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                    "success", false,
+                    "message", "메시지 목록 조회 중 오류가 발생했습니다: " + e.getMessage()
+                ));
+        }
+    }
 
     /**
      * 메시지 목록 조회 (상담사용)
@@ -164,6 +228,18 @@ public class ConsultationMessageController {
             ConsultationMessage message = consultationMessageService.getById(messageId);
             if (message == null) {
                 return ResponseEntity.notFound().build();
+            }
+            
+            // 자동 읽음 처리 (읽지 않은 메시지만)
+            if (!message.getIsRead()) {
+                try {
+                    consultationMessageService.markAsRead(messageId);
+                    log.info("✅ 메시지 자동 읽음 처리 완료 - 메시지 ID: {}", messageId);
+                    // 최신 메시지 정보 다시 조회
+                    message = consultationMessageService.getById(messageId);
+                } catch (Exception e) {
+                    log.warn("⚠️ 메시지 자동 읽음 처리 실패 (무시): {}", e.getMessage());
+                }
             }
             
             Map<String, Object> messageData = new HashMap<>();

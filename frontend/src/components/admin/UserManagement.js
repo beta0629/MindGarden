@@ -119,13 +119,15 @@ const UserManagement = ({ onUpdate }) => {
         
         // 내담자→상담사 변경 시 확인 메시지
         if (selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT') {
-            const confirmed = window.confirm(
+            const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(
                 `${selectedUser.name}님을 상담사로 변경하시겠습니까?\n\n` +
                 '이 변경으로 인해:\n' +
                 '• 상담사 메뉴와 기능에 접근 가능\n' +
                 '• 내담자 관리, 스케줄 관리 권한 부여\n' +
                 '• 필요시 다시 내담자로 되돌릴 수 있음'
-            );
+            , resolve);
+    });
             if (!confirmed) return;
         }
         

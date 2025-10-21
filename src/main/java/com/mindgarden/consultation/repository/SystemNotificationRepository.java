@@ -5,9 +5,11 @@ import java.util.List;
 import com.mindgarden.consultation.entity.SystemNotification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 시스템 공지 리포지토리
@@ -68,5 +70,13 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
     List<SystemNotification> findImportantNotificationsByTargetTypes(
         @Param("targetTypes") List<String> targetTypes,
         @Param("now") LocalDateTime now);
+    
+    /**
+     * 조회수 증가 (버전 충돌 방지를 위해 직접 업데이트)
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE SystemNotification n SET n.viewCount = n.viewCount + 1 WHERE n.id = :notificationId")
+    int incrementViewCount(@Param("notificationId") Long notificationId);
 }
 

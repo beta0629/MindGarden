@@ -11,6 +11,7 @@ import RefundReasonStats from './refund/RefundReasonStats';
 import ErpSyncStatus from './refund/ErpSyncStatus';
 import RefundAccountingStatus from './refund/RefundAccountingStatus';
 import { FaArrowLeft } from 'react-icons/fa';
+import notificationManager from '../../utils/notification';
 
 /**
  * ERP 환불 관리 컴포넌트
@@ -82,7 +83,7 @@ const RefundManagement = () => {
 
     const handleExportExcel = () => {
         // 엑셀 다운로드 기능 (추후 구현)
-        alert('엑셀 다운로드 기능은 추후 구현 예정입니다.');
+        notificationManager.show('엑셀 다운로드 기능은 추후 구현 예정입니다.', 'info');
     };
 
     return (

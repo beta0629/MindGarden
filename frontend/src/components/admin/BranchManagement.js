@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../constants/api';
 import { COLORS } from '../../constants/css';
@@ -195,9 +196,12 @@ const BranchManagement = () => {
      * 지점 삭제
      */
     const deleteBranch = async (branchId) => {
-        if (!window.confirm('정말로 이 지점을 삭제하시겠습니까?')) {
-            return;
-        }
+        const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm('정말로 이 지점을 삭제하시겠습니까?', resolve);
+    });
+    if (!confirmed) {
+        return;
+    }
 
         try {
             setLoading(true);

@@ -164,16 +164,16 @@ logging:
     # 기타 로그는 INFO 레벨로 (정상 로그 계속 남기기)
     root: INFO
   
-  # 로그 파일 설정
-  file:
-    name: logs/mindgarden.log
-    max-size: 100MB
-    max-history: 30
+  # 로그 파일 설정은 logback-spring.xml에서 관리
+  # file:
+  #   name: logs/mindgarden.log
+  #   max-size: 100MB
+  #   max-history: 30
   
-  # 로그 패턴 설정
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  # 로그 패턴 설정은 logback-spring.xml에서 관리
+  # pattern:
+  #   console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  #   file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   
   # SQL/데이터베이스 오류 로그 별도 파일
   config: classpath:logback-spring.xml
@@ -227,3 +227,10 @@ sms:
     sender-number: ${SMS_SENDER_NUMBER:}
     test-mode: ${SMS_TEST_MODE:true}  # 테스트 모드 (실제 SMS 발송 안함)
     mock-verification-code: ${SMS_MOCK_CODE:123456}  # 테스트용 고정 인증번호
+
+# OpenAI API 설정 (웰니스 컨텐츠 자동 생성)
+openai:
+  api:
+    key: ${OPENAI_API_KEY:}  # 환경 변수로 설정 필수
+    url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
+  model: ${OPENAI_MODEL:gpt-3.5-turbo}  # gpt-3.5-turbo 또는 gpt-4

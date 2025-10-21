@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentUser, clearSession, getCurrentUserDashboardPath } from '../../utils/session';
 import { authAPI } from '../../utils/ajax';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import notificationManager from '../../utils/notification';
 
 const ProfileEdit = () => {
   const navigate = useNavigate();
@@ -104,7 +105,10 @@ const ProfileEdit = () => {
   };
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm('정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+    const confirmed = await new Promise((resolve) => { 
+      notificationManager.confirm('정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.', resolve); 
+    });
+    if (!confirmed) {
       return;
     }
 

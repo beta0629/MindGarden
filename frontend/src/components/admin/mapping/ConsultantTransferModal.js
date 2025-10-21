@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ConsultantTransferModal.css';
+import notificationManager from '../../../utils/notification';
 
 /**
  * 상담사 변경 모달 컴포넌트
@@ -147,15 +148,15 @@ const ConsultantTransferModal = ({
       const result = await response.json();
       
       if (result.success) {
-        alert('상담사가 성공적으로 변경되었습니다.');
+        notificationManager.show('상담사가 성공적으로 변경되었습니다.', 'info');
         onTransfer(result.data);
         onClose();
       } else {
-        alert(`상담사 변경에 실패했습니다: ${result.message}`);
+        notificationManager.show(`상담사 변경에 실패했습니다: ${result.message}`, 'info');
       }
     } catch (error) {
       console.error('상담사 변경 실패:', error);
-      alert('상담사 변경 중 오류가 발생했습니다.');
+      notificationManager.show('상담사 변경 중 오류가 발생했습니다.', 'info');
     } finally {
       setLoading(false);
     }

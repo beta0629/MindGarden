@@ -1,10 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import { 
+  Heart, 
+  UserPlus, 
+  Clock, 
+  CalendarCheck, 
+  ArrowRightCircle,
+  CreditCard,
+  Lightbulb,
+  Users,
+  Activity,
+  HeartPulse,
+  Book,
+  ArrowRight,
+  ClockIcon
+} from 'lucide-react';
 import WeatherCard from './WeatherCard';
 import ConsultantListModal from '../common/ConsultantListModal';
 import ConsultationGuideModal from '../common/ConsultationGuideModal';
-import '../../styles/main.css';
+import notificationManager from '../../utils/notification';
+import '../../styles/mindgarden-design-system.css';
 import './ClientPersonalizedMessages.css';
 
 /**
@@ -17,86 +32,90 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
   const [isConsultationGuideModalOpen, setIsConsultationGuideModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
+  // 아이콘 매핑
+  const iconMap = {
+    'heart': Heart,
+    'user-plus': UserPlus,
+    'clock': Clock,
+    'calendar-check': CalendarCheck,
+    'arrow-right-circle': ArrowRightCircle,
+    'credit-card': CreditCard,
+    'lightbulb': Lightbulb,
+    'users': Users,
+    'activity': Activity,
+    'heart-pulse': HeartPulse,
+    'book': Book
+  };
+
   // 카드 클릭 핸들러
   const handleCardClick = (action) => {
-    // 로딩 중이면 클릭 무시
-    if (isLoading) {
-      console.log('로딩 중 - 클릭 무시');
-      return;
-    }
+    if (isLoading) return;
     
-    // 로딩 시작
     setIsLoading(true);
     switch (action) {
       case 'schedule':
-        // 상담 일정은 상담사가 관리하므로 메시지로 안내
-        alert('상담 일정은 상담사가 관리합니다. 문의사항이 있으시면 메시지를 보내주세요.');
+        notificationManager.show('상담 일정은 상담사가 관리합니다. 문의사항이 있으시면 메시지를 보내주세요.', 'info');
         setIsLoading(false);
         break;
       case 'mapping':
         navigate('/client/consultant-mapping');
-        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
+        setTimeout(() => setIsLoading(false), 100);
         break;
       case 'payment':
         navigate('/client/payment');
-        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
+        setTimeout(() => setIsLoading(false), 100);
         break;
       case 'consultants':
         setIsConsultantModalOpen(true);
         setIsLoading(false);
         break;
       case 'activity':
-        // 최근 활동 상세 페이지로 이동
-        console.log('최근 활동 상세 페이지로 이동');
         navigate('/client/activity-history');
-        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
+        setTimeout(() => setIsLoading(false), 100);
         break;
       case 'welcome':
         navigate('/client/profile');
-        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
+        setTimeout(() => setIsLoading(false), 100);
         break;
       case 'pending':
-        // 대기 상태에서는 아무것도 하지 않음
         setIsLoading(false);
         break;
       case 'continue':
-        // 상담 일정은 상담사가 관리하므로 메시지로 안내
-        alert('상담 일정은 상담사가 관리합니다. 문의사항이 있으시면 메시지를 보내주세요.');
+        notificationManager.show('상담 일정은 상담사가 관리합니다. 문의사항이 있으시면 메시지를 보내주세요.', 'info');
         setIsLoading(false);
         break;
       case 'general':
         navigate('/client/profile');
-        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
+        setTimeout(() => setIsLoading(false), 100);
         break;
       case 'tip':
-        // 팁은 클릭해도 아무것도 하지 않음
         setIsLoading(false);
         break;
       case 'wellness':
         navigate('/client/wellness');
-        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
+        setTimeout(() => setIsLoading(false), 100);
+        break;
+      case 'mindfulness-guide':
+        navigate('/client/mindfulness-guide');
+        setTimeout(() => setIsLoading(false), 100);
         break;
       case 'messages':
         navigate('/client/messages');
-        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
+        setTimeout(() => setIsLoading(false), 100);
         break;
       case 'session-status':
-        // 회기 관리 상세 페이지로 이동
         navigate('/client/session-management');
-        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
+        setTimeout(() => setIsLoading(false), 100);
         break;
       case 'payment-history':
-        // 결제 내역 상세 페이지로 이동
         navigate('/client/payment-history');
-        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
+        setTimeout(() => setIsLoading(false), 100);
         break;
       case 'consultation-guide':
-        // 상담 가이드 모달 열기
         setIsConsultationGuideModalOpen(true);
         setIsLoading(false);
         break;
       default:
-        console.log('Unknown action:', action);
         setIsLoading(false);
     }
   };
@@ -114,14 +133,12 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       mappingStatus: 'NONE'
     };
 
-    // 매핑 상태 확인
     if (clientStatus?.mappingStatus) {
       status.hasMapping = true;
       status.mappingStatus = clientStatus.mappingStatus;
       status.hasActiveMapping = clientStatus.mappingStatus === 'ACTIVE';
     }
 
-    // 상담 일정 확인
     if (consultationData?.upcomingConsultations?.length > 0) {
       status.hasUpcomingConsultations = true;
     }
@@ -130,12 +147,10 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       status.hasCompletedConsultations = true;
     }
 
-    // 결제 상태 확인 (클라이언트 상태에서)
     if (clientStatus?.paymentStatus === 'PENDING') {
       status.hasPendingPayments = true;
     }
 
-    // 신규 내담자 확인 (가입일 기준)
     if (user?.createdAt) {
       const joinDate = new Date(user.createdAt);
       const now = new Date();
@@ -143,7 +158,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       status.isNewClient = daysSinceJoin <= 7;
     }
 
-    // 최근 활동 확인
     if (consultationData?.recentActivities?.length > 0) {
       status.hasRecentActivity = true;
     }
@@ -155,69 +169,69 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
   const generatePersonalizedMessages = (status) => {
     const messages = [];
 
-    // 1. 상태별 주요 메시지 (1개만 선택)
+    // 1. 상태별 주요 메시지
     if (status.isNewClient) {
       messages.push({
         id: 'welcome',
-        icon: 'bi-heart',
+        icon: 'heart',
         title: '환영합니다!',
         subtitle: '마인드가든에 오신 것을 환영합니다. 첫 상담을 시작해보세요',
-        color: '#e91e63',
+        colorClass: 'primary',
         action: 'welcome'
       });
     } else if (!status.hasMapping) {
       messages.push({
         id: 'no-mapping',
-        icon: 'bi-person-plus',
-        title: '상담사 연결',
-        subtitle: '상담사를 연결하여 상담을 시작해보세요',
-        color: '#ff9800',
-        action: 'mapping'
+        icon: 'heart',
+        title: '마음 건강 가이드',
+        subtitle: '마음챙김과 명상으로 일상을 더 건강하게 만들어보세요',
+        colorClass: 'primary',
+        action: 'mindfulness-guide'
       });
     } else if (status.mappingStatus === 'PENDING') {
       messages.push({
         id: 'pending-mapping',
-        icon: 'bi-clock',
-        title: '연결 대기중',
-        subtitle: '상담사 연결이 승인 대기 중입니다. 곧 연락드릴게요',
-        color: '#ffc107',
+        icon: 'clock',
+        title: '상담 준비 중',
+        subtitle: '상담사 배정이 진행 중입니다. 곧 연락드릴게요',
+        colorClass: 'info',
         action: 'pending'
       });
     } else if (status.hasUpcomingConsultations) {
       const nextConsultation = consultationData.upcomingConsultations[0];
       messages.push({
         id: 'upcoming-consultation',
-        icon: 'bi-calendar-check',
+        icon: 'calendar-check',
         title: '다가오는 상담',
         subtitle: `${nextConsultation.consultantName} 상담사와 ${new Date(nextConsultation.date).toLocaleDateString('ko-KR')} ${nextConsultation.startTime} 예정`,
-        color: '#28a745',
+        colorClass: 'success',
         action: 'session-status'
       });
     } else if (status.hasActiveMapping && !status.hasUpcomingConsultations) {
       messages.push({
         id: 'session-management',
-        icon: 'bi-clock-history',
+        icon: 'clock',
         title: '회기 관리',
         subtitle: '남은 회기와 사용 내역을 확인하세요',
-        color: '#28a745',
+        colorClass: 'success',
         action: 'session-status'
       });
     } else if (status.hasCompletedConsultations) {
       messages.push({
         id: 'continue-journey',
-        icon: 'bi-arrow-right-circle',
+        icon: 'arrow-right-circle',
         title: '계속해서 성장해요',
         subtitle: '상담을 통해 더 나은 내일을 만들어가세요',
-        color: '#9c27b0',
+        colorClass: 'primary',
         action: 'continue'
       });
     } else {
       messages.push({
         id: 'healthy-mind',
-        icon: 'bi-heart',
+        icon: 'heart',
         title: '건강한 마음',
         subtitle: '상담을 통해 더 나은 내일을 만들어가세요',
-        color: '#4caf50',
+        colorClass: 'success',
         action: null
       });
     }
@@ -226,110 +240,106 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
     if (status.hasPendingPayments) {
       messages.push({
         id: 'payment-pending',
-        icon: 'bi-credit-card',
+        icon: 'credit-card',
         title: '결제 확인',
         subtitle: '결제 승인을 기다리고 있습니다',
-        color: '#ff5722',
+        colorClass: 'danger',
         action: 'payment'
       });
     } else {
       messages.push({
         id: 'today-tip',
-        icon: 'bi-lightbulb',
+        icon: 'lightbulb',
         title: '오늘의 팁',
         subtitle: getDailyTip(),
-        color: '#607d8b',
+        colorClass: 'secondary',
         action: 'tip'
       });
     }
 
     // 3. 상담사 목록 또는 활동 메시지
-    // 환경별 우선순위 조정 (운영 환경과 동일하게 맞추기)
     const isProduction = process.env.NODE_ENV === 'production' || window.location.hostname === 'm-garden.co.kr';
     
     if (isProduction) {
-      // 운영 환경: 최근 활동 우선 표시
       if (status.hasRecentActivity) {
         messages.push({
           id: 'recent-activity',
-          icon: 'bi-activity',
+          icon: 'activity',
           title: '최근 활동',
           subtitle: '새로운 활동이 있습니다',
-          color: '#00bcd4',
+          colorClass: 'info',
           action: 'activity'
         });
       } else if (consultationData?.consultantList?.length > 0) {
         messages.push({
           id: 'consultant-list',
-          icon: 'bi-people',
+          icon: 'users',
           title: '상담사 목록',
           subtitle: `${consultationData.consultantList.length}명의 상담사가 있습니다`,
-          color: '#3f51b5',
+          colorClass: 'primary',
           action: 'consultants'
         });
       } else {
         messages.push({
           id: 'wellness-reminder',
-          icon: 'bi-heart-pulse',
+          icon: 'heart-pulse',
           title: '웰니스 알림',
           subtitle: '마음의 건강도 챙겨주세요',
-          color: '#ff9800',
+          colorClass: 'warning',
           action: 'wellness'
         });
       }
     } else {
-      // 로컬 환경: 기존 로직 유지
       if (consultationData?.consultantList?.length > 0) {
         messages.push({
           id: 'consultant-list',
-          icon: 'bi-people',
+          icon: 'users',
           title: '상담사 목록',
           subtitle: `${consultationData.consultantList.length}명의 상담사가 있습니다`,
-          color: '#3f51b5',
+          colorClass: 'primary',
           action: 'consultants'
         });
       } else if (status.hasRecentActivity) {
         messages.push({
           id: 'recent-activity',
-          icon: 'bi-activity',
+          icon: 'activity',
           title: '최근 활동',
           subtitle: '새로운 활동이 있습니다',
-          color: '#00bcd4',
+          colorClass: 'info',
           action: 'activity'
         });
       } else {
         messages.push({
           id: 'wellness-reminder',
-          icon: 'bi-heart-pulse',
+          icon: 'heart-pulse',
           title: '웰니스 알림',
           subtitle: '마음의 건강도 챙겨주세요',
-          color: '#ff9800',
+          colorClass: 'warning',
           action: 'wellness'
         });
       }
     }
 
-    // 4. 내담자 전용 유용한 카드들 추가
-
+    // 4. 추가 유용한 카드들
     messages.push({
       id: 'payment-history',
-      icon: 'bi-credit-card',
+      icon: 'credit-card',
       title: '결제 내역',
       subtitle: '결제 내역과 패키지 정보를 확인하세요',
-      color: '#6f42c1',
+      colorClass: 'secondary',
       action: 'payment-history'
     });
 
     messages.push({
       id: 'consultation-guide',
-      icon: 'bi-book',
+      icon: 'book',
       title: '상담 가이드',
       subtitle: '상담 전 알아두면 좋은 정보들',
-      color: '#17a2b8',
+      colorClass: 'info',
       action: 'consultation-guide'
     });
 
-    // 4. 날씨 정보는 별도 컴포넌트로 추가
+    // 5. 날씨 정보
     messages.push({
       id: 'weather',
       isWeatherCard: true,
@@ -355,7 +365,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
     return tips[today % tips.length];
   };
 
-  // 상태 분석 및 메시지 생성
   const clientStatusAnalysis = analyzeClientStatus();
   const personalizedMessages = generatePersonalizedMessages(clientStatusAnalysis);
 
@@ -371,25 +380,27 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
           );
         }
 
-        // 일반 메시지 카드 렌더링
+        const IconComponent = iconMap[message.icon];
+        const isClickable = message.action && message.action !== 'tip' && message.action !== 'pending';
+
         return (
           <div
             key={message.id}
-            className={`personalized-message-card ${message.action && message.action !== 'tip' && message.action !== 'pending' ? 'clickable' : ''} ${isLoading ? 'loading' : ''}`}
+            className={`
+              personalized-message-card 
+              ${isClickable ? 'personalized-message-card--clickable' : ''} 
+              ${isLoading ? 'personalized-message-card--loading' : ''}
+              personalized-message-card--${message.colorClass}
+            `}
             onClick={() => {
-              if (message.action && message.action !== 'tip' && message.action !== 'pending' && !isLoading) {
+              if (isClickable && !isLoading) {
                 handleCardClick(message.action);
               }
             }}
-            style={{
-              opacity: isLoading ? 0.6 : 1,
-              cursor: isLoading ? 'not-allowed' : (message.action && message.action !== 'tip' && message.action !== 'pending' ? 'pointer' : 'default'),
-              pointerEvents: isLoading ? 'none' : 'auto'
-            }}
           >
             <div className="message-card-content">
-              <div className="message-card-icon" data-message-color={message.color}>
-                <i className={`bi ${message.icon}`}></i>
+              <div className={`message-card-icon message-card-icon--${message.colorClass}`}>
+                {IconComponent && <IconComponent size={24} />}
               </div>
               
               <div className="message-card-text">
@@ -401,8 +412,8 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
                   {message.subtitle}
                 </p>
                 
-                {message.action && message.action !== 'tip' && message.action !== 'pending' && (
-                  <div className="message-card-action" data-message-color={message.color}>
+                {isClickable && (
+                  <div className={`message-card-action message-card-action--${message.colorClass}`}>
                     {isLoading ? (
                       <span className="message-card-action-text">
                         처리 중...
@@ -412,7 +423,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
                         <span className="message-card-action-text">
                           자세히 보기
                         </span>
-                        <i className="bi bi-arrow-right message-card-action-icon"></i>
+                        <ArrowRight size={14} className="message-card-action-icon" />
                       </>
                     )}
                   </div>

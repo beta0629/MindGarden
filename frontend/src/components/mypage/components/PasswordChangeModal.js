@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
 import './PasswordChangeModal.css';
+import notificationManager from '../../../utils/notification';
 
 /**
  * 비밀번호 변경 모달 컴포넌트
@@ -165,15 +166,15 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
       const result = await response.json();
       
       if (result.success) {
-        alert('비밀번호가 성공적으로 변경되었습니다.');
+        notificationManager.show('비밀번호가 성공적으로 변경되었습니다.', 'info');
         onSuccess && onSuccess();
         onClose();
       } else {
-        alert(result.message || '비밀번호 변경에 실패했습니다.');
+        notificationManager.show(result.message || '비밀번호 변경에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('비밀번호 변경 오류:', error);
-      alert('비밀번호 변경 중 오류가 발생했습니다.');
+      notificationManager.show('비밀번호 변경 중 오류가 발생했습니다.', 'info');
     } finally {
       setIsLoading(false);
     }

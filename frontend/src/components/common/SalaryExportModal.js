@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
+import notificationManager from '../../utils/notification';
 import { 
   SALARY_CSS_CLASSES, 
   SALARY_MESSAGES, 
@@ -85,9 +86,9 @@ const SalaryExportModal = ({
         
         // 이메일 발송 성공 메시지
         if (sendEmail && emailAddress) {
-          alert(`${SALARY_MESSAGES.EMAIL_SENT_SUCCESS}\n수신자: ${emailAddress}`);
+          notificationManager.show(`${SALARY_MESSAGES.EMAIL_SENT_SUCCESS}\n수신자: ${emailAddress}`, 'info');
         } else {
-          alert(SALARY_MESSAGES.EXPORT_SUCCESS);
+          notificationManager.show(SALARY_MESSAGES.EXPORT_SUCCESS, 'success');
         }
         
         onClose();

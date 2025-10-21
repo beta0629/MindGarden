@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import notificationManager from '../../utils/notification';
 import { X, Calendar, Clock, User, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
@@ -324,9 +325,12 @@ const VacationManagementModal = ({
      * 휴가 삭제
      */
     const handleDeleteVacation = async (vacationId, date) => {
-        if (!window.confirm('정말로 이 휴가를 삭제하시겠습니까?')) {
-            return;
-        }
+        const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm('정말로 이 휴가를 삭제하시겠습니까?', resolve);
+    });
+    if (!confirmed) {
+        return;
+    }
 
         setLoading(true);
         try {

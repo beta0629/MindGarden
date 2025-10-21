@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
 import PrivacyConsentModal from '../../common/PrivacyConsentModal';
 import './PrivacyConsentSection.css';
+import notificationManager from '../../../utils/notification';
 
 /**
  * 개인정보 동의 관리 섹션 컴포넌트
@@ -70,16 +71,16 @@ const PrivacyConsentSection = () => {
         if (result.success) {
           // 동의 상태 다시 로드
           await loadConsentStatus();
-          alert('개인정보 동의 상태가 업데이트되었습니다.');
+          notificationManager.show('개인정보 동의 상태가 업데이트되었습니다.', 'info');
         } else {
-          alert('개인정보 동의 상태 업데이트에 실패했습니다: ' + result.message);
+          notificationManager.show('개인정보 동의 상태 업데이트에 실패했습니다: ' + result.message, 'error');
         }
       } else {
-        alert('개인정보 동의 상태 업데이트에 실패했습니다.');
+        notificationManager.show('개인정보 동의 상태 업데이트에 실패했습니다.', 'info');
       }
     } catch (error) {
       console.error('개인정보 동의 상태 업데이트 오류:', error);
-      alert('개인정보 동의 상태 업데이트 중 오류가 발생했습니다.');
+      notificationManager.show('개인정보 동의 상태 업데이트 중 오류가 발생했습니다.', 'info');
     } finally {
       setUpdating(false);
     }

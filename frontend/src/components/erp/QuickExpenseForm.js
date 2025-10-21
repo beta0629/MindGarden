@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
 import './QuickExpenseForm.css';
+import notificationManager from '../../utils/notification';
 
 /**
  * 빠른 지출 등록 컴포넌트 (공통 코드 사용)
@@ -116,7 +117,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           successMessage += `\n금액: ${parseFloat(amount).toLocaleString()}원 + 부가세: ${vatAmount.toLocaleString()}원 = 총 ${totalAmount.toLocaleString()}원`;
         }
         
-        alert(successMessage);
+        notificationManager.show(successMessage, 'info');
         onSuccess && onSuccess(response.data.data);
         onClose && onClose();
       } else {

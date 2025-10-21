@@ -217,4 +217,9 @@ public class ConsultationMessageServiceImpl extends BaseServiceImpl<Consultation
     public ConsultationMessage getById(Long id) {
         return consultationMessageRepository.findById(id).orElse(null);
     }
+    
+    @Override
+    public List<ConsultationMessage> getAllMessages() {
+        return consultationMessageRepository.findAll();
+    }
 }

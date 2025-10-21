@@ -204,7 +204,7 @@ export const googleLogin = () => {
     window.location.href = `${config.authUrl}?${params.toString()}`;
   } catch (error) {
     console.error('구글 로그인 오류:', error);
-    alert('구글 로그인을 시작할 수 없습니다.');
+    notificationManager.show('구글 로그인을 시작할 수 없습니다.', 'info');
   }
 };
 
@@ -231,7 +231,7 @@ export const facebookLogin = () => {
     window.location.href = `${config.authUrl}?${params.toString()}`;
   } catch (error) {
     console.error('페이스북 로그인 오류:', error);
-    alert('페이스북 로그인을 시작할 수 없습니다.');
+    notificationManager.show('페이스북 로그인을 시작할 수 없습니다.', 'info');
   }
 };
 

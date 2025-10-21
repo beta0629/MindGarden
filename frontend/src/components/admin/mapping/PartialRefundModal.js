@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { apiPost } from '../../../utils/ajax';
 import { showNotification } from '../../../utils/notification';
+import notificationManager from '../../../utils/notification';
 
 /**
  * 부분 환불 모달 컴포넌트
@@ -76,8 +77,11 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
       `⚠️ 가장 최근 추가된 패키지만 환불됩니다.\n` +
       `이 작업은 되돌릴 수 없습니다.`;
 
-    if (!window.confirm(confirmMessage)) {
-      return;
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(confirmMessage, resolve);
+    });
+    if (!confirmed) {
+        return;
     }
 
     try {

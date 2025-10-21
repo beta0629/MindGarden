@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ProfileImageUpload.css';
+import notificationManager from '../../../utils/notification';
 
 const ProfileImageUpload = ({ 
   profileImage, 
@@ -100,7 +101,7 @@ const ProfileImageUpload = ({
         };
         reader.readAsDataURL(file);
       } else {
-        alert('이미지 파일만 업로드 가능합니다.');
+        notificationManager.show('이미지 파일만 업로드 가능합니다.', 'info');
       }
     }
   };

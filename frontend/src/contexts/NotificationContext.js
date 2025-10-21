@@ -29,7 +29,17 @@ export const NotificationProvider = ({ children }) => {
     }
 
     try {
-      const userType = user.role === 'ROLE_CONSULTANT' ? 'CONSULTANT' : 'CLIENT';
+      // 역할에 따라 userType 결정
+      let userType = 'CLIENT'; // 기본값
+      if (user.role === 'CONSULTANT' || user.role === 'ROLE_CONSULTANT') {
+        userType = 'CONSULTANT';
+      } else if (user.role === 'CLIENT' || user.role === 'ROLE_CLIENT') {
+        userType = 'CLIENT';
+      } else if (user.role && (user.role.includes('ADMIN') || user.role.includes('SUPER'))) {
+        // 관리자는 자신이 수신자인 메시지만 카운트
+        userType = 'ADMIN';
+      }
+      
       // 캐싱 방지를 위한 타임스탬프 추가
       const timestamp = new Date().getTime();
       const endpoint = `/api/consultation-messages/unread-count?userId=${user.id}&userType=${userType}&_t=${timestamp}`;
@@ -212,7 +222,25 @@ export const NotificationProvider = ({ children }) => {
         loadUnreadCount();
       }, 30000);
 
-      return () => clearInterval(interval);
+      // 커스텀 이벤트 리스너 등록 (메시지 읽음 처리 시 카운트 갱신)
+      const handleMessageRead = () => {
+        console.log('📨 메시지 읽음 이벤트 감지 - 카운트 갱신');
+        loadUnreadMessageCount();
+      };
+
+      const handleNotificationRead = () => {
+        console.log('📢 공지 읽음 이벤트 감지 - 카운트 갱신');
+        loadUnreadSystemCount();
+      };
+
+      window.addEventListener('message-read', handleMessageRead);
+      window.addEventListener('notification-read', handleNotificationRead);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('message-read', handleMessageRead);
+        window.removeEventListener('notification-read', handleNotificationRead);
+      };
     }
   }, [isLoggedIn, user?.id]);
 

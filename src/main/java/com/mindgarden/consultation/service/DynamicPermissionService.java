@@ -132,4 +132,10 @@ public interface DynamicPermissionService {
      * @return 성공 여부
      */
     boolean setRolePermissions(String roleName, List<String> permissionCodes);
+    
+    /**
+     * 사용자 권한 캐시 클리어
+     * @param roleName 역할명
+     */
+    void clearUserPermissionCache(String roleName);
 }

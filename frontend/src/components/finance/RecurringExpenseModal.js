@@ -202,9 +202,12 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      * 반복 지출 삭제
      */
     const handleDeleteExpense = async (expenseId) => {
-        if (!window.confirm('정말로 이 반복 지출을 삭제하시겠습니까?')) {
-            return;
-        }
+        const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm('정말로 이 반복 지출을 삭제하시겠습니까?', resolve);
+    });
+    if (!confirmed) {
+        return;
+    }
 
         try {
             setLoading(true);

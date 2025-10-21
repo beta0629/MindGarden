@@ -529,4 +529,10 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
             return false;
         }
     }
+    
+    @Override
+    @CacheEvict(value = {"userPermissions", "userPermissionsList", "rolePermissions"}, allEntries = true)
+    public void clearUserPermissionCache(String roleName) {
+        log.info("🔄 권한 캐시 클리어: 역할={}", roleName);
+    }
 }

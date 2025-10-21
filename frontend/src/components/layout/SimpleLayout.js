@@ -8,6 +8,17 @@ import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
 import './SimpleLayout.css';
 
+// 역할별 알림 페이지 경로 상수
+const NOTIFICATION_ROUTES = {
+  CONSULTANT: '/notifications',
+  CLIENT: '/notifications',
+  ADMIN: '/admin/messages',
+  BRANCH_ADMIN: '/admin/messages',
+  BRANCH_SUPER_ADMIN: '/admin/messages',
+  HQ_ADMIN: '/admin/messages',
+  SUPER_ADMIN: '/admin/messages'
+};
+
 /**
  * 간단한 레이아웃 컴포넌트
  * 복잡한 로직 없이 기본적인 레이아웃만 제공
@@ -27,10 +38,13 @@ const SimpleLayout = ({
 
   // 알림 아이콘 클릭 핸들러
   const handleNotificationClick = () => {
-    if (user?.role === 'CONSULTANT') {
-      navigate('/consultant/messages');
-    } else if (user?.role === 'CLIENT') {
-      navigate('/client/dashboard');
+    if (!user?.role) return;
+    
+    const route = NOTIFICATION_ROUTES[user.role];
+    if (route) {
+      navigate(route);
+    } else {
+      console.warn(`알림 경로가 정의되지 않은 역할: ${user.role}`);
     }
   };
 
@@ -45,7 +59,7 @@ const SimpleLayout = ({
         <Bell size={20} />
         {unreadCount > 0 && (
           <span className="notification-badge">
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>

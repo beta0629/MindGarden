@@ -1,17 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  CreditCard, 
+  DollarSign, 
+  CalendarCheck, 
+  CheckCircle, 
+  Clock,
+  AlertTriangle,
+  Package,
+  User,
+  Calendar,
+  FileText,
+  Phone
+} from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import UnifiedLoading from '../common/UnifiedLoading';
+import notificationManager from '../../utils/notification';
+import '../../styles/mindgarden-design-system.css';
 import './ClientPaymentHistory.css';
 
+/**
+ * 내담자 결제 내역 페이지
+ * 디자인 시스템 적용 버전
+ */
 const ClientPaymentHistory = () => {
   const navigate = useNavigate();
   const [paymentData, setPaymentData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     loadPaymentData();
@@ -52,71 +70,33 @@ const ClientPaymentHistory = () => {
     }
   };
 
-  const handleMenuAction = (action) => {
-    setIsMenuOpen(false);
-    switch (action) {
-      case 'dashboard':
-        navigate('/dashboard');
-        break;
-      case 'session-management':
-        navigate('/client/session-management');
-        break;
-      case 'payment-history':
-        navigate('/client/payment-history');
-        break;
-      case 'consultation-guide':
-        alert('상담 가이드 페이지는 준비 중입니다.');
-        break;
-      default:
-        break;
-    }
-  };
-
-  const handleHamburgerClick = (isOpen) => {
-    setIsMenuOpen(isOpen);
-  };
-
   const getStatusText = (status) => {
-    switch (status) {
-      case 'CONFIRMED':
-        return '결제완료';
-      case 'PENDING':
-        return '결제대기';
-      case 'REJECTED':
-        return '결제실패';
-      case 'REFUNDED':
-        return '환불완료';
-      default:
-        return '미결제';
-    }
+    const statusMap = {
+      'CONFIRMED': '결제완료',
+      'PENDING': '결제대기',
+      'REJECTED': '결제실패',
+      'REFUNDED': '환불완료'
+    };
+    return statusMap[status] || '미결제';
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'CONFIRMED':
-        return '#28a745';
-      case 'PENDING':
-        return '#ffc107';
-      case 'REJECTED':
-        return '#dc3545';
-      case 'REFUNDED':
-        return '#6c757d';
-      default:
-        return '#6c757d';
-    }
+  const getStatusClass = (status) => {
+    const classMap = {
+      'CONFIRMED': 'success',
+      'PENDING': 'warning',
+      'REJECTED': 'danger',
+      'REFUNDED': 'secondary'
+    };
+    return classMap[status] || 'secondary';
   };
 
   const getMethodText = (method) => {
-    switch (method) {
-      case 'CARD':
-        return '카드';
-      case 'CASH':
-        return '현금';
-      case 'BANK_TRANSFER':
-        return '계좌이체';
-      default:
-        return '미지정';
-    }
+    const methodMap = {
+      'CARD': '카드',
+      'CASH': '현금',
+      'BANK_TRANSFER': '계좌이체'
+    };
+    return methodMap[method] || '미지정';
   };
 
   const formatCurrency = (amount) => {
@@ -138,19 +118,17 @@ const ClientPaymentHistory = () => {
 
   const filteredMappings = paymentData?.mappings?.filter(mapping => {
     if (filter === 'all') return true;
-    return mapping.paymentStatus === filter.toUpperCase();
+    if (filter === 'completed') return mapping.paymentStatus === 'CONFIRMED';
+    if (filter === 'pending') return mapping.paymentStatus === 'PENDING';
+    if (filter === 'refunded') return mapping.paymentStatus === 'REFUNDED';
+    return true;
   }) || [];
 
   if (isLoading) {
     return (
-      <SimpleLayout title="결제 내역">
+      <SimpleLayout>
         <div className="client-payment-history">
-          <div className="loading-container">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">로딩 중...</span>
-            </div>
-            <p>결제 데이터를 불러오는 중...</p>
-          </div>
+          <UnifiedLoading text="결제 데이터를 불러오는 중..." />
         </div>
       </SimpleLayout>
     );
@@ -158,16 +136,16 @@ const ClientPaymentHistory = () => {
 
   if (error) {
     return (
-      <SimpleLayout title="결제 내역">
+      <SimpleLayout>
         <div className="client-payment-history">
-          <div className="error-container">
-            <div className="error-icon">
-              <i className="bi bi-exclamation-triangle"></i>
+          <div className="payment-error">
+            <div className="payment-error__icon">
+              <AlertTriangle size={48} />
             </div>
-            <h3>오류가 발생했습니다</h3>
-            <p>{error}</p>
+            <h3 className="payment-error__title">오류가 발생했습니다</h3>
+            <p className="payment-error__message">{error}</p>
             <button 
-              className="btn btn-primary"
+              className="mg-button mg-button-primary"
               onClick={loadPaymentData}
             >
               다시 시도
@@ -180,16 +158,16 @@ const ClientPaymentHistory = () => {
 
   if (!paymentData || paymentData.mappings.length === 0) {
     return (
-      <SimpleLayout title="결제 내역">
+      <SimpleLayout>
         <div className="client-payment-history">
-          <div className="no-data-container">
-            <div className="no-data-icon">
-              <i className="bi bi-credit-card"></i>
+          <div className="payment-empty">
+            <div className="payment-empty__icon">
+              <CreditCard size={48} />
             </div>
-            <h3>결제 내역이 없습니다</h3>
-            <p>아직 결제한 패키지가 없습니다.</p>
+            <h3 className="payment-empty__title">결제 내역이 없습니다</h3>
+            <p className="payment-empty__text">아직 결제한 패키지가 없습니다.</p>
             <button 
-              className="btn btn-primary"
+              className="mg-button mg-button-primary"
               onClick={() => navigate('/dashboard')}
             >
               대시보드로 이동
@@ -201,125 +179,88 @@ const ClientPaymentHistory = () => {
   }
 
   return (
-    <SimpleLayout title="결제 내역">
+    <SimpleLayout>
       <div className="client-payment-history">
-        {/* 페이지 헤드라인 */}
-        <div className="client-payment-header">
-          <h1 className="client-payment-title">
-            <i className="bi bi-credit-card client-payment-title-icon"></i>
-            결제 내역
-          </h1>
-          <p className="client-payment-subtitle">
-            결제 내역과 패키지 정보를 확인하세요
-          </p>
-        </div>
-
-        {/* 햄버거 메뉴 드롭다운 */}
-        {isMenuOpen && (
-          <div className="client-payment-menu-dropdown">
-            <div className="client-payment-menu">
-              <button 
-                className="client-payment-menu-item"
-                onClick={() => handleMenuAction('dashboard')}
-              >
-                <i className="bi bi-house"></i>
-                대시보드
-              </button>
-              <button 
-                className="client-payment-menu-item"
-                onClick={() => handleMenuAction('session-management')}
-              >
-                <i className="bi bi-clock-history"></i>
-                회기 관리
-              </button>
-              <button 
-                className="client-payment-menu-item"
-                onClick={() => handleMenuAction('payment-history')}
-              >
-                <i className="bi bi-credit-card"></i>
-                결제 내역
-              </button>
-              <button 
-                className="client-payment-menu-item client-payment-menu-item--last"
-                onClick={() => handleMenuAction('consultation-guide')}
-              >
-                <i className="bi bi-book"></i>
-                상담 가이드
-              </button>
-            </div>
+        {/* 페이지 헤더 */}
+        <div className="payment-header">
+          <div className="payment-header__icon">
+            <CreditCard size={32} />
           </div>
-        )}
+          <div className="payment-header__content">
+            <h1 className="payment-header__title">결제 내역</h1>
+            <p className="payment-header__subtitle">
+              결제 내역과 패키지 정보를 확인하세요
+            </p>
+          </div>
+        </div>
 
         {/* 통계 카드 */}
-        <div className="stats-grid">
-          <div className="stat-card total">
-            <div className="stat-icon">
-              <i className="bi bi-currency-dollar"></i>
+        <div className="payment-stats">
+          <div className="payment-stat-card payment-stat-card--total">
+            <div className="payment-stat-icon">
+              <DollarSign size={20} />
             </div>
-            <div className="stat-content">
-              <h3>총 결제금액</h3>
-              <p className="stat-number">{formatCurrency(paymentData.totalAmount)}</p>
-            </div>
-          </div>
-
-          <div className="stat-card sessions">
-            <div className="stat-icon">
-              <i className="bi bi-calendar-check"></i>
-            </div>
-            <div className="stat-content">
-              <h3>총 회기</h3>
-              <p className="stat-number">{paymentData.totalSessions}</p>
-              <span className="stat-unit">회</span>
+            <div className="payment-stat-content">
+              <div className="payment-stat-label">총 결제금액</div>
+              <div className="payment-stat-value">{formatCurrency(paymentData.totalAmount)}</div>
             </div>
           </div>
 
-          <div className="stat-card completed">
-            <div className="stat-icon">
-              <i className="bi bi-check-circle"></i>
+          <div className="payment-stat-card payment-stat-card--sessions">
+            <div className="payment-stat-icon">
+              <CalendarCheck size={20} />
             </div>
-            <div className="stat-content">
-              <h3>결제완료</h3>
-              <p className="stat-number">{paymentData.completedPayments}</p>
-              <span className="stat-unit">건</span>
+            <div className="payment-stat-content">
+              <div className="payment-stat-label">총 회기</div>
+              <div className="payment-stat-value">{paymentData.totalSessions}회</div>
             </div>
           </div>
 
-          <div className="stat-card pending">
-            <div className="stat-icon">
-              <i className="bi bi-clock"></i>
+          <div className="payment-stat-card payment-stat-card--completed">
+            <div className="payment-stat-icon">
+              <CheckCircle size={20} />
             </div>
-            <div className="stat-content">
-              <h3>결제대기</h3>
-              <p className="stat-number">{paymentData.pendingPayments}</p>
-              <span className="stat-unit">건</span>
+            <div className="payment-stat-content">
+              <div className="payment-stat-label">결제완료</div>
+              <div className="payment-stat-value">{paymentData.completedPayments}건</div>
+            </div>
+          </div>
+
+          <div className="payment-stat-card payment-stat-card--pending">
+            <div className="payment-stat-icon">
+              <Clock size={20} />
+            </div>
+            <div className="payment-stat-content">
+              <div className="payment-stat-label">결제대기</div>
+              <div className="payment-stat-value">{paymentData.pendingPayments}건</div>
             </div>
           </div>
         </div>
 
-        {/* 필터 버튼 */}
-        <div className="filter-section">
-          <h3>결제 내역</h3>
-          <div className="filter-buttons">
+        {/* 필터 섹션 */}
+        <div className="payment-filter">
+          <h3 className="payment-filter__title">결제 내역</h3>
+          <div className="payment-filter__buttons">
             <button 
-              className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+              className={`payment-filter__button ${filter === 'all' ? 'active' : ''}`}
               onClick={() => setFilter('all')}
             >
               전체
             </button>
             <button 
-              className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
+              className={`payment-filter__button ${filter === 'completed' ? 'active' : ''}`}
               onClick={() => setFilter('completed')}
             >
               결제완료
             </button>
             <button 
-              className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
+              className={`payment-filter__button ${filter === 'pending' ? 'active' : ''}`}
               onClick={() => setFilter('pending')}
             >
               결제대기
             </button>
             <button 
-              className={`filter-btn ${filter === 'refunded' ? 'active' : ''}`}
+              className={`payment-filter__button ${filter === 'refunded' ? 'active' : ''}`}
               onClick={() => setFilter('refunded')}
             >
               환불완료
@@ -331,61 +272,75 @@ const ClientPaymentHistory = () => {
         <div className="payment-list">
           {filteredMappings.map((mapping, index) => (
             <div key={mapping.id || index} className="payment-item">
-              <div className="payment-header">
-                <div className="payment-title">
+              <div className="payment-item__header">
+                <div className="payment-item__title">
+                  <Package size={20} />
                   <h4>{mapping.packageName || '상담 패키지'}</h4>
-                  <span className="payment-amount">{formatCurrency(mapping.packagePrice || 0)}</span>
                 </div>
-                <div 
-                  className="payment-status"
-                  data-status-color={getStatusColor(mapping.paymentStatus)}
-                >
-                  {getStatusText(mapping.paymentStatus)}
+                <div className="payment-item__amount">
+                  {formatCurrency(mapping.packagePrice || 0)}
                 </div>
               </div>
 
-              <div className="payment-details">
-                <div className="detail-row">
-                  <span className="detail-label">회기 수:</span>
-                  <span className="detail-value">{mapping.totalSessions || 0}회</span>
+              <div className="payment-item__body">
+                <div className="payment-item__detail">
+                  <CalendarCheck size={16} />
+                  <span className="payment-item__detail-label">회기 수:</span>
+                  <span className="payment-item__detail-value">{mapping.totalSessions || 0}회</span>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">상담사:</span>
-                  <span className="detail-value">{mapping.consultant?.consultantName || '미지정'}</span>
+                <div className="payment-item__detail">
+                  <User size={16} />
+                  <span className="payment-item__detail-label">상담사:</span>
+                  <span className="payment-item__detail-value">{mapping.consultant?.consultantName || '미지정'}</span>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">결제일:</span>
-                  <span className="detail-value">{formatDate(mapping.paymentDate)}</span>
+                <div className="payment-item__detail">
+                  <Calendar size={16} />
+                  <span className="payment-item__detail-label">결제일:</span>
+                  <span className="payment-item__detail-value">{formatDate(mapping.paymentDate)}</span>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">결제방법:</span>
-                  <span className="detail-value">{getMethodText(mapping.paymentMethod)}</span>
+                <div className="payment-item__detail">
+                  <CreditCard size={16} />
+                  <span className="payment-item__detail-label">결제방법:</span>
+                  <span className="payment-item__detail-value">{getMethodText(mapping.paymentMethod)}</span>
                 </div>
                 {mapping.paymentReference && (
-                  <div className="detail-row">
-                    <span className="detail-label">참조번호:</span>
-                    <span className="detail-value">{mapping.paymentReference}</span>
+                  <div className="payment-item__detail">
+                    <FileText size={16} />
+                    <span className="payment-item__detail-label">참조번호:</span>
+                    <span className="payment-item__detail-value">{mapping.paymentReference}</span>
                   </div>
                 )}
+              </div>
+
+              <div className="payment-item__footer">
+                <span className={`mg-badge mg-badge-${getStatusClass(mapping.paymentStatus)}`}>
+                  {getStatusText(mapping.paymentStatus)}
+                </span>
               </div>
             </div>
           ))}
         </div>
 
         {/* 환불 정책 */}
-        <div className="refund-policy">
-          <h3>환불 정책</h3>
-          <div className="policy-list">
-            <div className="policy-item">
-              <i className="bi bi-check-circle"></i>
+        <div className="payment-policy">
+          <h3 className="payment-policy__title">환불 정책</h3>
+          <div className="payment-policy__list">
+            <div className="payment-policy__item">
+              <div className="payment-policy__icon">
+                <CheckCircle size={20} />
+              </div>
               <span>사용하지 않은 회기는 100% 환불 가능합니다.</span>
             </div>
-            <div className="policy-item">
-              <i className="bi bi-clock"></i>
+            <div className="payment-policy__item">
+              <div className="payment-policy__icon">
+                <Clock size={20} />
+              </div>
               <span>환불 신청은 결제일로부터 7일 이내에 가능합니다.</span>
             </div>
-            <div className="policy-item">
-              <i className="bi bi-phone"></i>
+            <div className="payment-policy__item">
+              <div className="payment-policy__icon">
+                <Phone size={20} />
+              </div>
               <span>환불 문의는 고객센터로 연락해주세요.</span>
             </div>
           </div>

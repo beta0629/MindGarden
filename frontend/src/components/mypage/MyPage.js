@@ -1,9 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  User, 
+  Settings, 
+  Shield, 
+  Link as LinkIcon,
+  FileText,
+  MessageCircle,
+  Hash
+} from 'lucide-react';
 import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../common/UnifiedLoading';
 import ProfileSection from './components/ProfileSection';
 import SettingsSection from './components/SettingsSection';
 import SecuritySection from './components/SecuritySection';
@@ -11,6 +21,7 @@ import SocialAccountsSection from './components/SocialAccountsSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
 import PasswordResetModal from './components/PasswordResetModal';
 import PasswordChangeModal from './components/PasswordChangeModal';
+import '../../styles/mindgarden-design-system.css';
 import './MyPage.css';
 
 const MyPage = () => {
@@ -404,8 +415,11 @@ const MyPage = () => {
   };
 
   const handleUnlinkSocialAccount = async (provider, accountId) => {
-    if (!window.confirm(`${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동을 해제하시겠습니까?`)) {
-      return;
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(`${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동을 해제하시겠습니까?`, resolve);
+    });
+    if (!confirmed) {
+        return;
     }
 
     try {
@@ -424,22 +438,29 @@ const MyPage = () => {
   // displayUser가 null이면 로딩 상태로 처리
   if (!displayUser) {
     return (
-      <SimpleLayout title="마이페이지">
+      <SimpleLayout>
         <div className="mypage-container">
-          <div className="mypage-content">
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p>사용자 정보를 불러오는 중...</p>
-            </div>
-          </div>
+          <UnifiedLoading text="사용자 정보를 불러오는 중..." />
         </div>
       </SimpleLayout>
     );
   }
 
   return (
-    <SimpleLayout title="마이페이지">
+    <SimpleLayout>
       <div className={`mypage-container mypage ${isProfileEditing ? 'editing' : 'readonly'}`}>
+        {/* 페이지 헤더 */}
+        <div className="mypage-header">
+          <div className="mypage-header__icon">
+            <User size={32} />
+          </div>
+          <div className="mypage-header__content">
+            <h1 className="mypage-header__title">마이페이지</h1>
+            <p className="mypage-header__subtitle">
+              내 정보를 관리하고 설정을 변경할 수 있습니다
+            </p>
+          </div>
+        </div>
 
       <div className="mypage-content">
         <div className="mypage-top-nav">
@@ -448,30 +469,35 @@ const MyPage = () => {
               className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
               onClick={() => setActiveTab('profile')}
             >
+              <User size={18} />
               프로필 정보
             </button>
             <button
               className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
               onClick={() => setActiveTab('settings')}
             >
+              <Settings size={18} />
               설정
             </button>
             <button
               className={`nav-item ${activeTab === 'security' ? 'active' : ''}`}
               onClick={() => setActiveTab('security')}
             >
+              <Shield size={18} />
               보안
             </button>
             <button
               className={`nav-item ${activeTab === 'social' ? 'active' : ''}`}
               onClick={() => setActiveTab('social')}
             >
+              <LinkIcon size={18} />
               소셜 계정
             </button>
             <button
               className={`nav-item ${activeTab === 'privacy' ? 'active' : ''}`}
               onClick={() => setActiveTab('privacy')}
             >
+              <FileText size={18} />
               개인정보 동의
             </button>
           </div>
@@ -580,11 +606,11 @@ const MyPage = () => {
                       <div className="social-account-info">
                         <div className="social-provider-icon">
                           {account.provider === 'KAKAO' ? (
-                            <i className="bi bi-chat-dots-fill social-icon social-icon--kakao"></i>
+                            <MessageCircle className="social-icon social-icon--kakao" size={24} />
                           ) : account.provider === 'NAVER' ? (
-                            <i className="bi bi-n-circle-fill social-icon social-icon--naver"></i>
+                            <Hash className="social-icon social-icon--naver" size={24} />
                           ) : (
-                            <i className="bi bi-person-circle"></i>
+                            <User size={24} />
                           )}
                         </div>
                         <div className="social-account-details">
@@ -626,14 +652,14 @@ const MyPage = () => {
                       className="link-btn kakao"
                       onClick={() => handleLinkSocialAccount('KAKAO')}
                     >
-                      <i className="bi bi-chat-dots-fill"></i>
+                      <MessageCircle size={20} />
                       카카오 계정 연동
                     </button>
                     <button 
                       className="link-btn naver"
                       onClick={() => handleLinkSocialAccount('NAVER')}
                     >
-                      <i className="bi bi-n-circle-fill"></i>
+                      <Hash size={20} />
                       네이버 계정 연동
                     </button>
                   </div>

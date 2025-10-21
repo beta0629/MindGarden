@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import notificationManager from '../../utils/notification';
 
 /**
  * 상담사 하트 평가 모달 컴포넌트
@@ -50,7 +51,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
 
     const handleSubmit = async () => {
         if (heartScore === 0) {
-            alert('하트 점수를 선택해주세요.');
+            notificationManager.show('하트 점수를 선택해주세요.', 'info');
             return;
         }
 
@@ -68,16 +69,16 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
             const result = await response.json();
 
             if (result.success) {
-                alert('상담사 평가가 완료되었습니다. 감사합니다!');
+                notificationManager.show('상담사 평가가 완료되었습니다. 감사합니다!', 'info');
                 onRatingComplete && onRatingComplete(result.data);
                 onClose();
             } else {
-                alert(result.message || '평가 등록에 실패했습니다.');
+                notificationManager.show(result.message || '평가 등록에 실패했습니다.', 'error');
             }
 
         } catch (error) {
             console.error('평가 등록 오류:', error);
-            alert('평가 등록 중 오류가 발생했습니다.');
+            notificationManager.show('평가 등록 중 오류가 발생했습니다.', 'info');
         } finally {
             setIsSubmitting(false);
         }

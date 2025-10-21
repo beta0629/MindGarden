@@ -215,7 +215,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.log('📅 스케줄 로드 시작:', { currentUserId, currentUserRole, selectedConsultantId });
             
             // API URL 결정
-            let url = `/api/schedules?currentUserId=${currentUserId}&currentUserRole=${currentUserRole}`;
+            let url = `/api/schedules?userId=${currentUserId}&userRole=${currentUserRole}`;
             
             // 어드민인 경우 상담사 필터링 지원
             if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN' || currentUserRole === 'HQ_MASTER' || currentUserRole === 'SUPER_HQ_ADMIN') {
@@ -370,7 +370,15 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             const isMobileUserAgent = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
             // 강제 모바일 모드가 활성화되어 있거나, 실제 모바일 환경인 경우
-            setIsMobile(forceMobileMode || (isSmallScreen && (isTouchDevice || isMobileUserAgent)));
+            const newIsMobile = forceMobileMode || (isSmallScreen && (isTouchDevice || isMobileUserAgent));
+            console.log('📱 모바일 모드 체크:', {
+                forceMobileMode,
+                isSmallScreen,
+                isTouchDevice,
+                isMobileUserAgent,
+                newIsMobile
+            });
+            setIsMobile(newIsMobile);
         };
         
         checkIsMobile();
@@ -598,6 +606,25 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         
         const isPastDate = clickedDate < today;
         
+        // 내담자인 경우 - 스케줄이 있는 날짜만 조회 가능
+        if (currentUserRole === 'CLIENT' || currentUserRole === 'ROLE_CLIENT') {
+            const dayEvents = events.filter(event => {
+                const eventDate = new Date(event.start);
+                eventDate.setHours(0, 0, 0, 0);
+                return eventDate.getTime() === clickedDate.getTime();
+            });
+            
+            if (dayEvents.length === 0) {
+                // 스케줄이 없는 날짜
+                notificationManager.show('해당 날짜에 예약된 스케줄이 없습니다.', 'info');
+            } else if (isMobile) {
+                // 모바일에서는 확대 모달로 스케줄 보여줌
+                openMobileZoom(clickedDate, dayEvents);
+            }
+            // 데스크탑에서는 이벤트를 직접 클릭하도록 유도 (아무 동작 안함)
+            return;
+        }
+        
         // 관리자 또는 상담사만 스케줄 생성 가능
         if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN' || currentUserRole === 'CONSULTANT') {
             // 과거 날짜인 경우 새로운 스케줄 등록 불가 알림
@@ -633,8 +660,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');
                 setIsDateActionModalOpen(true);
             }
-        } else {
-            notificationManager.show('error', '스케줄 생성 권한이 없습니다.');
         }
     };
 
@@ -676,6 +701,12 @@ const ScheduleCalendar = ({ userRole, userId }) => {
      * 상세 모달 표시 함수
      */
     const showDetailModal = (event) => {
+        // 이벤트 데이터 유효성 검사
+        if (!event || !event.extendedProps) {
+            console.error('❌ 유효하지 않은 이벤트 데이터:', event);
+            notificationManager.show('스케줄 정보를 불러올 수 없습니다.', 'error');
+            return;
+        }
         
         // 휴가 이벤트인지 확인
         if (event.extendedProps.type === 'vacation') {

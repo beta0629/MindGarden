@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { API_BASE_URL } from '../../constants/api';
+import notificationManager from '../../utils/notification';
 import '../../styles/main.css';
 import './TimeSlotGrid.css';
 import { 
@@ -583,7 +584,7 @@ const TimeSlotGrid = ({
     const handleSlotClick = (slot) => {
         if (slot.past) {
             // 지난 시간 클릭 시 알림
-            alert(`⏰ 해당 시간은 이미 지났습니다.\n현재 시간 이후의 시간을 선택해주세요.`);
+            notificationManager.show(`⏰ 해당 시간은 이미 지났습니다.\n현재 시간 이후의 시간을 선택해주세요.`, 'info');
             return;
         }
         
@@ -601,7 +602,7 @@ const TimeSlotGrid = ({
             };
             
             const typeName = vacationTypeNames[vacationType] || '휴가';
-            alert(`🏖️ 해당 시간대는 상담사의 ${typeName} 휴가 시간입니다.\n다른 시간을 선택해주세요.`);
+            notificationManager.show(`🏖️ 해당 시간대는 상담사의 ${typeName} 휴가 시간입니다.\n다른 시간을 선택해주세요.`, 'info');
             return;
         }
         

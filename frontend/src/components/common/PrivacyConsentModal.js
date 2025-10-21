@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import './PrivacyConsentModal.css';
+import notificationManager from '../../utils/notification';
 
 /**
  * 개인정보 수집 및 이용 동의 모달 컴포넌트
@@ -34,7 +35,7 @@ const PrivacyConsentModal = ({
 
   const handleSubmit = () => {
     if (!consents.privacy || !consents.terms) {
-      alert('필수 동의 항목에 모두 동의해주세요.');
+      notificationManager.show('필수 동의 항목에 모두 동의해주세요.', 'info');
       return;
     }
 

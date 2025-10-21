@@ -7,6 +7,7 @@ import './ItemManagement.css';
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import notificationManager from '../../utils/notification';
 
 /**
  * 아이템 관리 컴포넌트 (관리자/수퍼어드민 전용)
@@ -190,7 +191,10 @@ const ItemManagement = () => {
   };
 
   const handleDeleteItem = async (item) => {
-    if (!window.confirm(`"${item.name}" 아이템을 삭제하시겠습니까?`)) {
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(`"${item.name}" 아이템을 삭제하시겠습니까?`, resolve);
+    });
+    if (!confirmed) {
       return;
     }
 

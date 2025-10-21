@@ -1,0 +1,549 @@
+/* MindGarden 마음건강 가이드 - 디자인 시스템 v2.0 적용 */
+.mindfulness-guide {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0;
+  font-family: var(--mg-font-family);
+}
+
+.mindfulness-guide-header {
+  margin-bottom: var(--spacing-lg);
+  background: var(--light-cream);
+}
+
+.mindfulness-guide-header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.mindfulness-guide-icon-wrapper {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--mint-green), var(--soft-mint));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.mindfulness-guide-icon {
+  font-size: 2rem;
+}
+
+.mindfulness-guide-header-text {
+  flex: 1;
+}
+
+.mindfulness-guide-title {
+  font-size: 1.75rem;
+  font-weight: var(--mg-font-weight-bold);
+  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--dark-gray);
+}
+
+.mindfulness-guide-subtitle {
+  font-size: var(--mg-body-large-size);
+  margin: 0;
+  color: var(--medium-gray);
+  line-height: var(--mg-line-height-normal);
+}
+
+.mindfulness-guide-content {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--spacing-lg);
+}
+
+.mindfulness-guide-sidebar {
+  height: fit-content;
+  position: sticky;
+  top: 80px;
+}
+
+.mindfulness-guide-sidebar .mg-card {
+  padding: var(--spacing-md);
+}
+
+.mindfulness-guide-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mindfulness-guide-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius-md);
+  color: var(--color-text-primary);
+  font-size: var(--mg-body-size);
+  font-weight: var(--mg-font-weight-medium);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  text-align: left;
+}
+
+.mindfulness-guide-nav-item:hover {
+  background: var(--glass-bg);
+  transform: translateX(5px);
+}
+
+.mindfulness-guide-nav-item.active {
+  background: linear-gradient(135deg, var(--mint-green), var(--soft-mint));
+  color: var(--dark-gray);
+  box-shadow: var(--shadow-sm);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.nav-icon {
+  font-size: var(--icon-size-md);
+  min-width: var(--icon-size-md);
+}
+
+.nav-title {
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+.mindfulness-guide-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.mindfulness-section-header.mg-card {
+  background: linear-gradient(135deg, var(--light-beige), var(--light-cream));
+  border-bottom: 3px solid var(--soft-mint);
+}
+
+.mindfulness-section-title {
+  font-size: 1.5rem;
+  font-weight: var(--mg-font-weight-bold);
+  color: var(--dark-gray);
+  margin: 0 0 var(--spacing-sm) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.mindfulness-section-title .section-icon {
+  font-size: 1.75rem;
+}
+
+.mindfulness-section-description {
+  font-size: var(--mg-body-size);
+  color: var(--medium-gray);
+  line-height: var(--mg-line-height-relaxed);
+  margin: 0;
+}
+
+.mindfulness-techniques {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.mindfulness-technique.mg-card {
+  border-left: 4px solid var(--mint-green);
+  transition: all 0.3s ease;
+}
+
+.mindfulness-technique.mg-card:hover {
+  border-left-color: var(--olive-green);
+}
+
+.technique-header {
+  margin-bottom: var(--spacing-md);
+}
+
+.technique-name {
+  font-size: var(--mg-h3-size);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--dark-gray);
+  margin-bottom: var(--spacing-xs);
+}
+
+.technique-description {
+  font-size: var(--mg-body-size);
+  color: var(--medium-gray);
+  font-style: italic;
+  line-height: var(--mg-line-height-normal);
+}
+
+.technique-steps {
+  background: var(--light-beige);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  border: 1px solid rgba(152, 216, 200, 0.2);
+  margin-top: var(--spacing-md);
+}
+
+.steps-title {
+  font-size: var(--mg-h4-size);
+  font-weight: var(--mg-font-weight-semibold);
+  color: var(--dark-gray);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.steps-title::before {
+  content: "📋";
+  font-size: var(--mg-body-large-size);
+}
+
+.steps-list {
+  list-style: none;
+  counter-reset: step-counter;
+  padding: 0;
+  margin: 0;
+}
+
+.step-item {
+  counter-increment: step-counter;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid rgba(152, 216, 200, 0.15);
+  position: relative;
+  padding-left: 2.5rem;
+  line-height: var(--mg-line-height-normal);
+  color: var(--medium-gray);
+  font-size: var(--mg-body-size);
+}
+
+.step-item:last-child {
+  border-bottom: none;
+}
+
+.step-item::before {
+  content: counter(step-counter);
+  position: absolute;
+  left: 0;
+  top: var(--spacing-sm);
+  background: var(--color-success);
+  color: var(--light-cream);
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--mg-caption-size);
+  font-weight: var(--mg-font-weight-semibold);
+}
+
+/* 태블릿 반응형 */
+@media (max-width: 1024px) {
+  .mindfulness-guide-content {
+    grid-template-columns: 240px 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .mindfulness-guide-sidebar {
+    top: 70px;
+  }
+  
+  .mindfulness-guide-header-content {
+    gap: var(--spacing-sm);
+  }
+  
+  .mindfulness-guide-icon-wrapper {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .mindfulness-guide-icon {
+    font-size: 1.5rem;
+  }
+  
+  .mindfulness-guide-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .mindfulness-guide {
+    padding: 0;
+  }
+  
+  .mindfulness-guide-header {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .mindfulness-guide-content {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .mindfulness-guide-sidebar {
+    position: static;
+    order: 1;
+  }
+  
+  .mindfulness-guide-sidebar .mg-card {
+    padding: var(--spacing-xs);
+  }
+  
+  .mindfulness-guide-main {
+    order: 2;
+  }
+  
+  .mindfulness-guide-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .mindfulness-guide-nav::-webkit-scrollbar {
+    height: 3px;
+  }
+  
+  .mindfulness-guide-nav::-webkit-scrollbar-thumb {
+    background: var(--soft-mint);
+    border-radius: 2px;
+  }
+  
+  .mindfulness-guide-nav-item {
+    white-space: nowrap;
+    min-width: fit-content;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.8rem;
+    gap: var(--spacing-xxs);
+  }
+  
+  .nav-icon {
+    font-size: 1rem;
+    min-width: 1rem;
+  }
+  
+  .mindfulness-guide-header-content {
+    flex-direction: row;
+    text-align: left;
+    gap: var(--spacing-sm);
+  }
+  
+  .mindfulness-guide-icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .mindfulness-guide-icon {
+    font-size: 1.25rem;
+  }
+  
+  .mindfulness-guide-title {
+    font-size: 1.1rem;
+  }
+  
+  .mindfulness-guide-subtitle {
+    font-size: 0.85rem;
+  }
+  
+  .mindfulness-section-header.mg-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .mindfulness-section-title {
+    font-size: 1.1rem;
+    gap: var(--spacing-xs);
+  }
+  
+  .mindfulness-section-title .section-icon {
+    font-size: 1.25rem;
+  }
+  
+  .mindfulness-section-description {
+    font-size: 0.85rem;
+  }
+  
+  .mindfulness-techniques {
+    gap: var(--spacing-sm);
+  }
+  
+  .mindfulness-technique.mg-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .technique-header {
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .technique-name {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-xxs);
+  }
+  
+  .technique-description {
+    font-size: 0.8rem;
+  }
+  
+  .technique-steps {
+    padding: var(--spacing-xs);
+    margin-top: var(--spacing-xs);
+  }
+  
+  .steps-title {
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .step-item {
+    font-size: 0.85rem;
+    padding: var(--spacing-xs) 0;
+    padding-left: 2rem;
+  }
+}
+
+/* 초소형 모바일 (480px 이하) */
+@media (max-width: 480px) {
+  .mindfulness-guide-header {
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .mindfulness-guide-header-content {
+    gap: var(--spacing-xs);
+  }
+  
+  .mindfulness-guide-icon-wrapper {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .mindfulness-guide-icon {
+    font-size: 1rem;
+  }
+  
+  .mindfulness-guide-title {
+    font-size: 1rem;
+  }
+  
+  .mindfulness-guide-subtitle {
+    font-size: 0.75rem;
+  }
+  
+  .mindfulness-guide-nav {
+    padding: var(--spacing-xxs);
+    gap: var(--spacing-xxs);
+  }
+  
+  .mindfulness-guide-nav-item {
+    font-size: 0.7rem;
+    padding: 6px 10px;
+  }
+  
+  .nav-icon {
+    font-size: 0.9rem;
+    min-width: 0.9rem;
+  }
+  
+  .mindfulness-section-header.mg-card {
+    padding: var(--spacing-xs);
+  }
+  
+  .mindfulness-section-title {
+    font-size: 1rem;
+  }
+  
+  .mindfulness-section-title .section-icon {
+    font-size: 1.1rem;
+  }
+  
+  .mindfulness-section-description {
+    font-size: 0.75rem;
+  }
+  
+  .mindfulness-technique.mg-card {
+    padding: var(--spacing-xs);
+  }
+  
+  .technique-name {
+    font-size: 0.95rem;
+  }
+  
+  .technique-description {
+    font-size: 0.75rem;
+  }
+  
+  .technique-steps {
+    padding: var(--spacing-xxs) var(--spacing-xs);
+  }
+  
+  .steps-title {
+    font-size: 0.85rem;
+  }
+  
+  .step-item {
+    font-size: 0.8rem;
+    padding: 6px 0;
+    padding-left: 1.8rem;
+  }
+  
+  .step-item::before {
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.65rem;
+    top: 6px;
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .mindfulness-guide-main {
+    background: var(--mg-dark-bg);
+    color: var(--mg-dark-text);
+  }
+  
+  .mindfulness-section-title {
+    color: var(--mg-dark-text);
+  }
+  
+  .technique-name {
+    color: var(--mg-dark-text);
+  }
+  
+  .technique-steps {
+    background: var(--mg-dark-card-bg);
+    border-color: rgba(152, 216, 200, 0.1);
+  }
+  
+  .steps-title {
+    color: var(--mg-dark-text);
+  }
+  
+  .step-item {
+    color: var(--mg-dark-text-secondary);
+    border-bottom-color: rgba(152, 216, 200, 0.08);
+  }
+}
+
+/* 애니메이션 */
+@keyframes mg-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mindfulness-technique {
+  animation: mg-fade-in-up 0.6s ease-out;
+}
+
+.mindfulness-technique:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.mindfulness-technique:nth-child(3) {
+  animation-delay: 0.2s;
+}

@@ -4,6 +4,7 @@ import { apiGet } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './ClientSessionManagement.css';
+import notificationManager from '../../utils/notification';
 
 const ClientSessionManagement = () => {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ const ClientSessionManagement = () => {
         navigate('/client/payment-history');
         break;
       case 'consultation-guide':
-        alert('상담 가이드 페이지는 준비 중입니다.');
+        notificationManager.show('상담 가이드 페이지는 준비 중입니다.', 'info');
         break;
       default:
         break;
@@ -144,9 +145,9 @@ const ClientSessionManagement = () => {
             <p>아직 상담사와 연결된 패키지가 없습니다.</p>
             <button 
               className="btn btn-primary"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/client/wellness')}
             >
-              상담사 연결하기
+              웰니스 가이드 보기
             </button>
           </div>
         </div>

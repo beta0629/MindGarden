@@ -4,6 +4,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from "../common/UnifiedLoading";
 import './ErpCommon.css';
+import notificationManager from '../../utils/notification';
 
 /**
  * ERP 예산 관리 페이지
@@ -203,7 +204,10 @@ const BudgetManagement = () => {
   };
 
   const handleDeleteBudget = async (budgetId) => {
-    if (!window.confirm('정말로 이 예산을 삭제하시겠습니까?')) {
+    const confirmed = await new Promise((resolve) => { 
+      notificationManager.confirm('정말로 이 예산을 삭제하시겠습니까?', resolve); 
+    });
+    if (!confirmed) {
       return;
     }
 

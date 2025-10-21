@@ -41,7 +41,7 @@ const StatisticsDashboard = ({
                 <div key={`stat-${index}`} className={`stat-card stat-card--${stat.color}`}>
                     <div className="stat-card__icon">
                         {stat.icon}
-                    </div>
+        </div>
                     <div className="stat-card__content">
                         <div className="stat-card__value">{stat.value}</div>
                         <div className="stat-card__label">{stat.label}</div>

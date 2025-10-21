@@ -13,6 +13,7 @@ import BranchLogin from './components/auth/BranchLogin';
 import BranchSpecificLogin from './components/auth/BranchSpecificLogin';
 import HeadquartersLogin from './components/auth/HeadquartersLogin';
 import CommonDashboard from './components/dashboard/CommonDashboard';
+import ClientDashboard from './components/client/ClientDashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import MyPage from './components/mypage/MyPage';
 import ConsultantSchedule from './components/consultant/ConsultantSchedule';
@@ -79,6 +80,10 @@ import ClientSessionManagement from './components/client/ClientSessionManagement
 import ClientPaymentHistory from './components/client/ClientPaymentHistory';
 import HelpPage from './components/common/HelpPage';
 import ClientSettings from './components/client/ClientSettings';
+import WellnessNotificationList from './components/wellness/WellnessNotificationList';
+import WellnessNotificationDetail from './components/wellness/WellnessNotificationDetail';
+import WellnessManagement from './components/admin/WellnessManagement';
+import MindfulnessGuide from './components/wellness/MindfulnessGuide';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -94,7 +99,9 @@ import TermsOfService from './components/common/TermsOfService';
 import IOSCardSample from './pages/IOSCardSample';
 import CounselingCenterLanding from './pages/CounselingCenterLanding';
 import SystemNotifications from './components/notifications/SystemNotifications';
+import UnifiedNotifications from './components/notifications/UnifiedNotifications';
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
+import AdminMessages from './components/admin/AdminMessages';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -327,7 +334,7 @@ function AppContent() {
             <Route path="/dashboard" element={<CommonDashboard user={user} />} />
             
             {/* 역할별 대시보드 라우트 */}
-            <Route path="/client/dashboard" element={<CommonDashboard user={user} />} />
+            <Route path="/client/dashboard" element={<ClientDashboard />} />
             <Route path="/consultant/dashboard" element={<CommonDashboard user={user} />} />
             <Route path="/admin/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/super_admin/dashboard" element={<AdminDashboard user={user} />} />
@@ -365,7 +372,7 @@ function AppContent() {
             <Route path="/consultant/messages" element={<ConsultantMessages />} />
             
             {/* 시스템 공지 라우트 (모든 사용자) */}
-            <Route path="/notifications" element={<SystemNotifications />} />
+            <Route path="/notifications" element={<UnifiedNotifications />} />
             <Route path="/system-notifications" element={<SystemNotifications />} />
             
             {/* 내담자 전용 라우트 */}
@@ -375,6 +382,12 @@ function AppContent() {
             <Route path="/client/payment-history" element={<ClientPaymentHistory />} />
             <Route path="/client/settings" element={<ClientSettings />} />
             <Route path="/client/activity-history" element={<ActivityHistory />} />
+            <Route path="/client/wellness" element={<WellnessNotificationList />} />
+            <Route path="/client/wellness/:id" element={<WellnessNotificationDetail />} />
+            <Route path="/client/mindfulness-guide" element={<MindfulnessGuide />} />
+            
+            {/* 관리자 - 웰니스 관리 */}
+            <Route path="/admin/wellness" element={<WellnessManagement />} />
             
             {/* 개인정보 및 약관 관련 라우트 */}
             <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -413,6 +426,7 @@ function AppContent() {
             <Route path="/admin/accounts" element={<AccountManagement />} />
             <Route path="/admin/user-management" element={<UserManagement />} />
             <Route path="/admin/system-notifications" element={<SystemNotificationManagement />} />
+            <Route path="/admin/messages" element={<AdminMessages />} />
             <Route path="/hq/branch-management" element={<BranchManagement />} />
             <Route path="/hq/branches" element={<BranchManagement />} />
             <Route path="/hq/dashboard" element={<HQDashboard />} />

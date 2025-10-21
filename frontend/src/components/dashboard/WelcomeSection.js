@@ -77,12 +77,17 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
 
   // 카드 클릭 핸들러
   const handleCardClick = (action) => {
+    console.log('🎯 카드 클릭:', action);
     switch (action) {
       case 'schedule':
         navigate('/consultant/schedule');
         break;
-      case 'consultants':
-        navigate('/consultant/consultant-list');
+      case 'session-progress':
+        navigate('/client/session-management');
+        break;
+      case 'mindfulness-guide':
+        console.log('🧘 마음건강 가이드 클릭 - /client/mindfulness-guide로 이동');
+        navigate('/client/mindfulness-guide');
         break;
       default:
         console.log('Unknown action:', action);
@@ -236,37 +241,43 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
           </div>
 
 
-          {/* 상담사 목록 */}
-          {consultationData?.consultantList?.length > 0 && (
+          {/* 나의 상담 진행률 */}
+          {consultationData?.totalSessions > 0 && (
             <div 
-              className="welcome-info-card"
-              onClick={() => handleCardClick('consultants')}
-              style={{ cursor: 'pointer' }}
+              className="welcome-info-card welcome-info-card--clickable"
+              onClick={() => handleCardClick('session-progress')}
             >
-              <div className="info-icon info-icon--consultation">
-                <i className="bi bi-people"></i>
+              <div className="info-icon info-icon--progress">
+                <i className="bi bi-graph-up-arrow"></i>
               </div>
               <div className="info-content">
-                <h3 className="info-title">상담사 목록</h3>
+                <h3 className="info-title">나의 상담 진행률</h3>
                 <p className="info-value">
-                  {consultationData.consultantList.length}명의 상담사가 있습니다
+                  {consultationData.completedSessions || 0}회 / {consultationData.totalSessions}회 완료
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                  <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--olive-green)', fontWeight: '500' }}>자세히 보기</span>
-                  <i className="bi bi-arrow-right" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--olive-green)' }}></i>
+                <div className="info-action">
+                  <span className="info-action-text">자세히 보기</span>
+                  <i className="bi bi-arrow-right"></i>
                 </div>
               </div>
             </div>
           )}
           
-          {/* 오늘의 팁 */}
-          <div className="welcome-info-card">
-            <div className="info-icon info-icon--tip">
-              <i className="bi bi-lightbulb"></i>
+          {/* 마음챙김 가이드 */}
+          <div 
+            className="welcome-info-card welcome-info-card--clickable"
+            onClick={() => handleCardClick('mindfulness-guide')}
+          >
+            <div className="info-icon info-icon--mindfulness">
+              <i className="bi bi-heart-pulse"></i>
             </div>
             <div className="info-content">
-              <h3 className="info-title">오늘의 팁</h3>
-              <p className="info-value">작은 변화가 큰 변화를 만듭니다</p>
+              <h3 className="info-title">마음건강 가이드</h3>
+              <p className="info-value">호흡법과 명상으로 마음을 돌봐요</p>
+              <div className="info-action">
+                <span className="info-action-text">가이드 보기</span>
+                <i className="bi bi-arrow-right"></i>
+              </div>
             </div>
           </div>
 

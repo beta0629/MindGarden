@@ -448,9 +448,12 @@ const CommonCodeManagement = () => {
 
     // 코드 삭제
     const handleDeleteCode = async (codeId) => {
-        if (!window.confirm('정말로 이 코드를 삭제하시겠습니까?')) {
-            return;
-        }
+        const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm('정말로 이 코드를 삭제하시겠습니까?', resolve);
+    });
+    if (!confirmed) {
+        return;
+    }
 
         try {
             setLoading(true);

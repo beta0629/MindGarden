@@ -99,6 +99,11 @@ public class SystemNotificationController {
                 data.put("expiresAt", notification.getExpiresAt());
                 data.put("viewCount", notification.getViewCount());
                 data.put("createdAt", notification.getCreatedAt());
+                
+                // 읽음 여부 확인
+                boolean isRead = systemNotificationService.isNotificationRead(notification.getId(), userId);
+                data.put("isRead", isRead);
+                
                 notificationList.add(data);
             }
             
@@ -116,6 +121,89 @@ public class SystemNotificationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "success", false,
                 "message", "공지 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 활성 공지 목록 조회 (게시 중인 공지만)
+     * - 로그인 필요
+     * - 사용자 역할에 맞는 공지만 반환
+     */
+    @GetMapping("/active")
+    public ResponseEntity<?> getActiveNotifications(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            Long userId = currentUser.getId();
+            String userRole = currentUser.getRole().name();
+            
+            log.info("📢 활성 공지 목록 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
+            
+            // 게시 중인 공지만 조회 (페이징 없이 전체)
+            Pageable pageable = PageRequest.of(0, 100); // 최대 100개
+            Page<SystemNotification> notifications = systemNotificationService.getNotificationsForUser(userId, userRole, pageable);
+            
+            // 응답 데이터 변환
+            List<Map<String, Object>> notificationList = new ArrayList<>();
+            for (SystemNotification notification : notifications.getContent()) {
+                // PUBLISHED 상태이고 만료되지 않은 공지만 포함
+                if ("PUBLISHED".equals(notification.getStatus())) {
+                    LocalDateTime now = LocalDateTime.now();
+                    if (notification.getExpiresAt() == null || notification.getExpiresAt().isAfter(now)) {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("id", notification.getId());
+                        data.put("targetType", notification.getTargetType());
+                        
+                        // targetType을 기반으로 targetRoles 생성
+                        List<String> targetRoles = new ArrayList<>();
+                        if ("ALL".equals(notification.getTargetType())) {
+                            targetRoles.add("ALL");
+                        } else if ("CONSULTANT".equals(notification.getTargetType())) {
+                            targetRoles.add("CONSULTANT");
+                        } else if ("CLIENT".equals(notification.getTargetType())) {
+                            targetRoles.add("CLIENT");
+                        }
+                        data.put("targetRoles", targetRoles);
+                        
+                        data.put("title", notification.getTitle());
+                        data.put("content", notification.getContent());
+                        data.put("notificationType", notification.getNotificationType());
+                        data.put("isImportant", notification.getIsImportant());
+                        data.put("isUrgent", notification.getIsUrgent());
+                        data.put("status", notification.getStatus());
+                        data.put("authorName", notification.getAuthorName());
+                        data.put("publishedAt", notification.getPublishedAt());
+                        data.put("expiresAt", notification.getExpiresAt());
+                        data.put("createdAt", notification.getCreatedAt());
+                        
+                        // 읽음 여부 확인
+                        boolean isRead = systemNotificationService.isNotificationRead(notification.getId(), userId);
+                        data.put("isRead", isRead);
+                        
+                        notificationList.add(data);
+                    }
+                }
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", notificationList,
+                "message", "활성 공지 목록을 성공적으로 조회했습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 활성 공지 목록 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "활성 공지 목록 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }
@@ -179,6 +267,14 @@ public class SystemNotificationController {
             log.info("📢 공지 상세 조회 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
             
             SystemNotification notification = systemNotificationService.getNotificationDetail(notificationId, userId);
+            
+            // 자동 읽음 처리
+            try {
+                systemNotificationService.markAsRead(notificationId, userId);
+                log.info("✅ 공지 자동 읽음 처리 완료 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
+            } catch (Exception e) {
+                log.warn("⚠️ 공지 자동 읽음 처리 실패 (무시): {}", e.getMessage());
+            }
             
             Map<String, Object> data = new HashMap<>();
             data.put("id", notification.getId());

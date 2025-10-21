@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import { Calendar, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
-import { apiGet } from '../../utils/ajax';
-import { DASHBOARD_API } from '../../constants/api';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from "../common/UnifiedLoading";
+import UnifiedLoading from '../common/UnifiedLoading';
 import ScheduleCalendar from '../schedule/ScheduleCalendar';
+import '../../styles/mindgarden-design-system.css';
 import './ClientSchedule.css';
 
+/**
+ * 내담자 일정 페이지
+ * 디자인 시스템 적용 버전
+ */
 const ClientSchedule = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -30,7 +33,7 @@ const ClientSchedule = () => {
     return (
       <SimpleLayout>
         <div className="client-schedule-loading">
-          <UnifiedLoading type="inline" />
+          <UnifiedLoading text="일정을 불러오는 중..." />
         </div>
       </SimpleLayout>
     );
@@ -40,11 +43,13 @@ const ClientSchedule = () => {
     return (
       <SimpleLayout>
         <div className="client-schedule-error">
-          <i className="bi bi-exclamation-triangle client-schedule-error-icon"></i>
-          <h3 className="client-schedule-error-title">오류가 발생했습니다</h3>
-          <p className="client-schedule-error-message">{error}</p>
+          <div className="client-schedule-error__icon">
+            <AlertTriangle size={48} />
+          </div>
+          <h3 className="client-schedule-error__title">오류가 발생했습니다</h3>
+          <p className="client-schedule-error__message">{error}</p>
           <button 
-            className="mg-btn mg-btn--primary"
+            className="mg-button mg-button-primary"
             onClick={() => window.location.reload()}
           >
             다시 시도
@@ -55,30 +60,18 @@ const ClientSchedule = () => {
   }
 
   return (
-    <SimpleLayout title="내 일정">
+    <SimpleLayout>
       <div className="client-schedule-container">
-        <div className="client-schedule-empty-state">
-          <h2 style={{
-            fontSize: 'var(--font-size-xxl)',
-            fontWeight: '700',
-            color: '#2c3e50',
-            marginBottom: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px'
-          }}>
-            <i className="bi bi-calendar3" style={{ color: '#3498db', fontSize: 'var(--font-size-xxxl)' }}></i>
-            내 일정
-          </h2>
-          <p style={{
-            fontSize: 'var(--font-size-base)',
-            color: '#6c757d',
-            margin: '0',
-            lineHeight: '1.6'
-          }}>
-            예약된 상담 일정을 확인하고 관리할 수 있습니다.
-          </p>
+        <div className="client-schedule-header">
+          <div className="client-schedule-header__icon">
+            <Calendar size={32} />
+          </div>
+          <div className="client-schedule-header__content">
+            <h1 className="client-schedule-header__title">내 일정</h1>
+            <p className="client-schedule-header__subtitle">
+              예약된 상담 일정을 확인하고 관리할 수 있습니다.
+            </p>
+          </div>
         </div>
         
         <div className="client-schedule-calendar-wrapper">

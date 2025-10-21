@@ -618,7 +618,10 @@ const ClientComprehensiveManagement = () => {
             if (deletionStatus.canDeleteDirectly) {
                 // 직접 삭제 가능한 경우
                 const confirmMessage = `${client.name} 내담자를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`;
-                if (window.confirm(confirmMessage)) {
+                const confirmed = await new Promise((resolve) => {
+                    notificationManager.confirm(confirmMessage, resolve);
+                });
+                if (confirmed) {
                     await deleteClientDirect(client.id);
                 }
             } else {
@@ -652,7 +655,9 @@ const ClientComprehensiveManagement = () => {
                 if (details.remainingSessionCount > 0) {
                     warningMessage += '\n\n환불 처리를 원하시면 "환불 처리" 버튼을 클릭해주세요.';
                     
-                    const shouldShowRefundOptions = window.confirm(warningMessage + '\n\n환불 처리를 진행하시겠습니까?');
+                    const shouldShowRefundOptions = await new Promise((resolve) => {
+                        notificationManager.confirm(warningMessage + '\n\n환불 처리를 진행하시겠습니까?', resolve);
+                    });
                     if (shouldShowRefundOptions) {
                         handleShowRefundModal(client, details.sessionMappings);
                         return;
@@ -746,7 +751,10 @@ const ClientComprehensiveManagement = () => {
 
         // 최종 확인
         const confirmMessage = `다음 ${selectedMappings.length}개의 매칭을 환불 처리하시겠습니까?\n\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
-        if (!window.confirm(confirmMessage)) {
+        const confirmed = await new Promise((resolve) => {
+            notificationManager.confirm(confirmMessage, resolve);
+        });
+        if (!confirmed) {
             return;
         }
 

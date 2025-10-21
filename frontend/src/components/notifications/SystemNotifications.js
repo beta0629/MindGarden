@@ -11,7 +11,7 @@ import './SystemNotifications.css';
  */
 const SystemNotifications = () => {
   const { user, isLoggedIn } = useSession();
-  const { markSystemNotificationAsRead, loadUnreadSystemCount } = useNotification();
+  // const { loadUnreadSystemCount } = useNotification(); // 이벤트 기반으로 카운트 갱신
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNotification, setSelectedNotification] = useState(null);
@@ -62,19 +62,31 @@ const SystemNotifications = () => {
 
   // 공지 상세 보기
   const handleNotificationClick = async (notification) => {
-    setSelectedNotification(notification);
-    
-    // 읽음 처리
-    await markSystemNotificationAsRead(notification.id);
-    
-    // 목록 새로고침
-    await loadNotifications(currentPage);
-    await loadUnreadSystemCount();
+    try {
+      // 상세 조회 API 호출 (자동 읽음 처리)
+      const response = await apiGet(`/api/system-notifications/${notification.id}`);
+      
+      if (response.success) {
+        setSelectedNotification(response.data);
+      } else {
+        // 실패 시 기존 데이터 사용
+        setSelectedNotification(notification);
+      }
+    } catch (error) {
+      console.error('공지 상세 조회 오류:', error);
+      // 오류 시 기존 데이터 사용
+      setSelectedNotification(notification);
+    }
   };
 
   // 모달 닫기
-  const closeModal = () => {
+  const closeModal = async () => {
     setSelectedNotification(null);
+    
+    // 목록 새로고침 (읽음 상태 반영)
+    await loadNotifications(currentPage);
+    // 공지 읽음 이벤트 발생 (NotificationContext가 카운트 갱신)
+    window.dispatchEvent(new Event('notification-read'));
   };
 
   // 날짜 포맷팅

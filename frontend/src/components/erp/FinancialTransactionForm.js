@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ErpModal from './common/ErpModal';
 import './FinancialTransactionForm.css';
+import notificationManager from '../../utils/notification';
 
 /**
  * 수입/지출 거래 등록 폼 컴포넌트 (공통 코드 사용)
@@ -70,7 +71,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
       const response = await axios.post('/api/erp/finance/transactions', formData);
       
       if (response.data.success) {
-        alert('거래가 성공적으로 등록되었습니다.');
+        notificationManager.show('거래가 성공적으로 등록되었습니다.', 'info');
         onSuccess && onSuccess(response.data.data);
         onClose && onClose();
       } else {

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.entity.OpenAIUsageLog;
 import com.mindgarden.consultation.repository.OpenAIUsageLogRepository;
-import org.springframework.beans.factory.annotation.Value;
+import com.mindgarden.consultation.service.SystemConfigService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -29,16 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 public class OpenAIWellnessService {
     
     private final OpenAIUsageLogRepository usageLogRepository;
+    private final SystemConfigService systemConfigService;
     private final RestTemplate restTemplate = new RestTemplate();
-    
-    @Value("${openai.api.key:}")
-    private String apiKey;
-    
-    @Value("${openai.api.url:https://api.openai.com/v1/chat/completions}")
-    private String apiUrl;
-    
-    @Value("${openai.model:gpt-3.5-turbo}")
-    private String model;
     
     /**
      * 웰니스 컨텐츠 생성
@@ -56,9 +48,10 @@ public class OpenAIWellnessService {
      * 웰니스 컨텐츠 생성 (사용자 추적)
      */
     public WellnessContent generateWellnessContent(Integer dayOfWeek, String season, String category, String requestedBy) {
+        String apiKey = systemConfigService.getOpenAIApiKey();
         if (apiKey == null || apiKey.isEmpty()) {
             log.warn("⚠️ OpenAI API 키가 설정되지 않았습니다. 기본 컨텐츠를 반환합니다.");
-            logUsage("wellness", false, "API 키 미설정", 0, 0, 0, 0L, requestedBy);
+            logUsage("wellness", "unknown", false, "API 키 미설정", 0, 0, 0, 0L, requestedBy);
             return getDefaultContent();
         }
         
@@ -76,7 +69,7 @@ public class OpenAIWellnessService {
         } catch (Exception e) {
             long responseTime = System.currentTimeMillis() - startTime;
             log.error("❌ OpenAI API 호출 실패 ({}ms)", responseTime, e);
-            logUsage("wellness", false, e.getMessage(), 0, 0, 0, responseTime, requestedBy);
+            logUsage("wellness", "unknown", false, e.getMessage(), 0, 0, 0, responseTime, requestedBy);
             return getDefaultContent();
         }
     }
@@ -115,6 +108,10 @@ public class OpenAIWellnessService {
      */
     private WellnessContent callOpenAIWithLogging(String prompt, String requestedBy) {
         long startTime = System.currentTimeMillis();
+        
+        String apiKey = systemConfigService.getOpenAIApiKey();
+        String apiUrl = systemConfigService.getOpenAIApiUrl();
+        String model = systemConfigService.getOpenAIModel();
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -173,7 +170,7 @@ public class OpenAIWellnessService {
                 String content = (String) message.get("content");
                 
                 // 로깅
-                logUsage("wellness", true, null, promptTokens, completionTokens, totalTokens, responseTime, requestedBy);
+                logUsage("wellness", model, true, null, promptTokens, completionTokens, totalTokens, responseTime, requestedBy);
                 
                 // 파싱
                 return parseResponse(content);
@@ -186,7 +183,7 @@ public class OpenAIWellnessService {
     /**
      * API 사용 로그 저장
      */
-    private void logUsage(String requestType, boolean isSuccess, String errorMessage, 
+    private void logUsage(String requestType, String model, boolean isSuccess, String errorMessage, 
                          int promptTokens, int completionTokens, int totalTokens, 
                          long responseTimeMs, String requestedBy) {
         try {

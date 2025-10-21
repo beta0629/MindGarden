@@ -13,6 +13,7 @@ import com.mindgarden.consultation.entity.WellnessTemplate;
 import com.mindgarden.consultation.repository.OpenAIUsageLogRepository;
 import com.mindgarden.consultation.scheduler.WellnessNotificationScheduler;
 import com.mindgarden.consultation.service.WellnessTemplateService;
+import com.mindgarden.consultation.service.OpenAIWellnessService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -242,6 +243,36 @@ public class WellnessAdminController {
             log.error("❌ 템플릿 비활성화 실패", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("success", false, "message", "템플릿 비활성화 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 웰니스 컨텐츠 테스트 생성
+     */
+    @PostMapping("/test")
+    public ResponseEntity<Map<String, Object>> testWellnessContent(@RequestBody Map<String, Object> request) {
+        try {
+            Integer dayOfWeek = (Integer) request.getOrDefault("dayOfWeek", 1);
+            String season = (String) request.getOrDefault("season", "SPRING");
+            String category = (String) request.getOrDefault("category", "MENTAL");
+            
+            OpenAIWellnessService.WellnessContent content = wellnessTemplateService.generateWellnessContent(dayOfWeek, season, category, "ADMIN_TEST");
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", content);
+            response.put("message", "테스트 컨텐츠 생성 성공");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("웰니스 컨텐츠 테스트 실패", e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "테스트 실패: " + e.getMessage());
+            
+            return ResponseEntity.badRequest().body(response);
         }
     }
 }

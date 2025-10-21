@@ -102,6 +102,7 @@ import SystemNotifications from './components/notifications/SystemNotifications'
 import UnifiedNotifications from './components/notifications/UnifiedNotifications';
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
 import AdminMessages from './components/admin/AdminMessages';
+import SystemConfigManagement from './components/admin/SystemConfigManagement';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -426,6 +427,7 @@ function AppContent() {
             <Route path="/admin/accounts" element={<AccountManagement />} />
             <Route path="/admin/user-management" element={<UserManagement />} />
             <Route path="/admin/system-notifications" element={<SystemNotificationManagement />} />
+            <Route path="/admin/system-config" element={<SystemConfigManagement />} />
             <Route path="/admin/messages" element={<AdminMessages />} />
             <Route path="/hq/branch-management" element={<BranchManagement />} />
             <Route path="/hq/branches" element={<BranchManagement />} />

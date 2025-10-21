@@ -45,6 +45,7 @@ const ADMIN_ROUTES = {
     BRANCH_CONSULTANTS: '/admin/branch-consultants',
     COMMON_CODES: '/admin/common-codes',
     SYSTEM_NOTIFICATIONS: '/admin/system-notifications',
+    SYSTEM_CONFIG: '/admin/system-config',
     MESSAGES: '/admin/messages',
     STATISTICS: '/admin/statistics',
     COMPLIANCE: '/admin/compliance',
@@ -988,6 +989,14 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         <h3>시스템 공지 관리</h3>
                         <p className="mg-management-description">전체/상담사/내담자 공지를 관리합니다</p>
+                    </div>
+                    
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SYSTEM_CONFIG)}>
+                        <div className="mg-management-icon">
+                            <Settings />
+                        </div>
+                        <h3>시스템 설정</h3>
+                        <p className="mg-management-description">OpenAI API 키 및 시스템 설정을 관리합니다</p>
                     </div>
                     
                     <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}>

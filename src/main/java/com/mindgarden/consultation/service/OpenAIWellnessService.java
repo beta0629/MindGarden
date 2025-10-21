@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.entity.OpenAIUsageLog;
 import com.mindgarden.consultation.repository.OpenAIUsageLogRepository;
-import com.mindgarden.consultation.service.SystemConfigService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;

@@ -1,12 +1,9 @@
 package com.mindgarden.consultation.util;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.Base64;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * 암호화/복호화 유틸리티
@@ -20,7 +17,7 @@ public class EncryptionUtil {
     
     private static final String ALGORITHM = "AES";
     private static final String TRANSFORMATION = "AES/ECB/PKCS5Padding";
-    private static final String SECRET_KEY = "MindGarden2025SecretKeyForEncryption123456789012"; // 32자리 고정 키
+    private static final String SECRET_KEY = "MindGarden2025SecretKeyForEncr12"; // 32자리 고정 키
     
     /**
      * 문자열 암호화

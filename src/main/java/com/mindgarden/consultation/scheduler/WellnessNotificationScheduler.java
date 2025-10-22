@@ -4,9 +4,15 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.util.List;
 import com.mindgarden.consultation.entity.SystemNotification;
+import com.mindgarden.consultation.entity.SystemNotificationRead;
+import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.WellnessTemplate;
 import com.mindgarden.consultation.repository.SystemNotificationRepository;
+import com.mindgarden.consultation.repository.SystemNotificationReadRepository;
+import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.WellnessTemplateService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -29,6 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 public class WellnessNotificationScheduler {
     
     private final SystemNotificationRepository systemNotificationRepository;
+    private final SystemNotificationReadRepository systemNotificationReadRepository;
+    private final UserRepository userRepository;
     private final WellnessTemplateService wellnessTemplateService;
     
     /**
@@ -69,6 +77,9 @@ public class WellnessNotificationScheduler {
             // 저장
             SystemNotification savedNotification = systemNotificationRepository.save(notification);
             
+            // 모든 CLIENT 사용자에 대해 읽음 상태 생성 (읽지 않은 상태로)
+            createReadStatusForAllClients(savedNotification.getId());
+            
             log.info("✅ 웰니스 알림 자동 발송 완료!");
             log.info("   📝 제목: {}", template.getTitle());
             log.info("   🆔 알림 ID: {}", savedNotification.getId());
@@ -84,6 +95,38 @@ public class WellnessNotificationScheduler {
             
         } catch (Exception e) {
             log.error("❌ 웰니스 알림 자동 발송 중 오류 발생", e);
+        }
+    }
+    
+    /**
+     * 모든 CLIENT 사용자에 대해 읽음 상태 생성 (읽지 않은 상태로)
+     */
+    private void createReadStatusForAllClients(Long notificationId) {
+        try {
+            // 모든 CLIENT 사용자 조회
+            List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(UserRole.CLIENT);
+            
+            log.info("👥 CLIENT 사용자 수: {}", clientUsers.size());
+            
+            int createdCount = 0;
+            for (User user : clientUsers) {
+                // 이미 읽음 상태가 있는지 확인
+                if (!systemNotificationReadRepository.findByNotificationIdAndUserId(notificationId, user.getId()).isPresent()) {
+                    SystemNotificationRead readStatus = new SystemNotificationRead();
+                    readStatus.setNotificationId(notificationId);
+                    readStatus.setUserId(user.getId());
+                    readStatus.setIsRead(false); // 읽지 않은 상태로 생성
+                    readStatus.setReadAt(null);
+                    
+                    systemNotificationReadRepository.save(readStatus);
+                    createdCount++;
+                }
+            }
+            
+            log.info("✅ 읽음 상태 생성 완료: {}개 사용자", createdCount);
+            
+        } catch (Exception e) {
+            log.error("❌ 읽음 상태 생성 중 오류 발생", e);
         }
     }
     

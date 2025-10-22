@@ -20,6 +20,7 @@ import ClientPersonalizedMessages from '../dashboard/ClientPersonalizedMessages'
 import ClientPaymentSessionsSection from '../dashboard/ClientPaymentSessionsSection';
 import RatableConsultationsSection from './RatableConsultationsSection';
 import ClientMessageSection from '../dashboard/ClientMessageSection';
+import HealingCard from '../common/HealingCard';
 import '../../styles/mindgarden-design-system.css';
 import './ClientDashboard.css';
 
@@ -292,6 +293,9 @@ const ClientDashboard = () => {
 
         {/* 상담사 평가 */}
         <RatableConsultationsSection />
+
+        {/* 오늘의 힐링 카드 */}
+        <HealingCard userRole="CLIENT" />
 
         {/* 빠른 액션 버튼 */}
         <div className="client-dashboard__quick-actions">

@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.mindgarden.consultation.entity.OpenAIUsageLog;
+import com.mindgarden.consultation.entity.DailyHealingContent;
 import com.mindgarden.consultation.repository.OpenAIUsageLogRepository;
+import com.mindgarden.consultation.repository.DailyHealingContentRepository;
 import com.mindgarden.consultation.service.HealingContentService;
 import com.mindgarden.consultation.service.OpenAIWellnessService.HealingContent;
 import com.mindgarden.consultation.service.SystemConfigService;
@@ -35,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class HealingContentServiceImpl implements HealingContentService {
 
     private final OpenAIUsageLogRepository usageLogRepository;
+    private final DailyHealingContentRepository dailyHealingContentRepository;
     private final SystemConfigService systemConfigService;
     private final RestTemplate restTemplate;
     
@@ -43,20 +46,39 @@ public class HealingContentServiceImpl implements HealingContentService {
     
     @Override
     public HealingContent getHealingContent(String userRole, String category) {
-        String cacheKey = generateCacheKey(userRole, category);
+        log.info("🔍 힐링 컨텐츠 요청 - 역할: {}, 카테고리: {}", userRole, category);
         
-        log.info("🔍 힐링 컨텐츠 요청 - 역할: {}, 카테고리: {}, 캐시키: {}", userRole, category, cacheKey);
-        
-        // 캐시에서 조회
-        HealingContent cachedContent = contentCache.get(cacheKey);
-        if (cachedContent != null) {
-            log.info("💚 캐시된 힐링 컨텐츠 반환 - 역할: {}, 카테고리: {}", userRole, category);
-            return cachedContent;
+        try {
+            // DB에서 오늘의 힐링 컨텐츠 조회
+            LocalDate today = LocalDate.now();
+            String categoryToSearch = category != null ? category : "GENERAL";
+            
+            var dailyContent = dailyHealingContentRepository.findByDateAndUserRoleAndCategory(
+                today, userRole, categoryToSearch
+            );
+            
+            if (dailyContent.isPresent()) {
+                DailyHealingContent content = dailyContent.get();
+                log.info("💚 DB에서 힐링 컨텐츠 조회 성공 - 역할: {}, 카테고리: {}, 제목: {}", 
+                    userRole, category, content.getTitle());
+                
+                return new HealingContent(
+                    content.getTitle(),
+                    content.getContent(),
+                    content.getCategory(),
+                    content.getEmoji()
+                );
+            }
+            
+            log.info("🆕 DB에 오늘의 힐링 컨텐츠 없음 - 새로 생성 시작 - 역할: {}, 카테고리: {}", userRole, category);
+            // DB에 없으면 새로 생성 (fallback)
+            return generateNewHealingContent(userRole, category);
+            
+        } catch (Exception e) {
+            log.error("❌ 힐링 컨텐츠 조회 실패 - 역할: {}, 카테고리: {}", userRole, category, e);
+            // 오류 시 새로 생성
+            return generateNewHealingContent(userRole, category);
         }
-        
-        log.info("🆕 캐시에 없음 - 새로 생성 시작 - 역할: {}, 카테고리: {}", userRole, category);
-        // 캐시에 없으면 새로 생성
-        return generateNewHealingContent(userRole, category);
     }
     
     @Override

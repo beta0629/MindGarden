@@ -37,9 +37,12 @@ const WellnessManagement = () => {
     // 통계 데이터
     const [stats, setStats] = useState({
         totalCost: 0,
+        totalCostDisplay: '',
         totalTokens: 0,
         totalRequests: 0,
-        recentLogs: []
+        recentLogs: [],
+        exchangeRate: 1300.0,
+        exchangeRateDisplay: ''
     });
     
     // 템플릿 데이터
@@ -63,7 +66,8 @@ const WellnessManagement = () => {
             setLoading(true);
             await Promise.all([
                 loadUsageStats(),
-                loadTemplates()
+                loadTemplates(),
+                loadExchangeRate()
             ]);
         } catch (error) {
             console.error('❌ 데이터 로드 실패:', error);
@@ -109,6 +113,26 @@ const WellnessManagement = () => {
     };
 
     /**
+     * 환율 정보 로드
+     */
+    const loadExchangeRate = async () => {
+        try {
+            const response = await apiGet('/api/admin/wellness/exchange-rate');
+            
+            if (response.success) {
+                setStats(prev => ({
+                    ...prev,
+                    exchangeRate: response.data.exchangeRate || 1300.0,
+                    exchangeRateDisplay: response.data.exchangeRateDisplay || ''
+                }));
+            }
+        } catch (error) {
+            console.error('❌ 환율 정보 로드 실패:', error);
+            // 환율 로드 실패는 치명적이지 않으므로 에러를 던지지 않음
+        }
+    };
+
+    /**
      * 테스트 발송
      */
     const handleTestSend = async () => {
@@ -145,6 +169,28 @@ const WellnessManagement = () => {
             notificationManager.show('데이터를 새로고침했습니다.', 'success');
         } catch (error) {
             notificationManager.show('새로고침에 실패했습니다.', 'error');
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
+    /**
+     * 환율 새로고침
+     */
+    const handleExchangeRateRefresh = async () => {
+        try {
+            setRefreshing(true);
+            const response = await apiPost('/api/admin/wellness/exchange-rate/refresh');
+            
+            if (response.success) {
+                notificationManager.show('환율을 새로고침했습니다.', 'success');
+                await loadExchangeRate();
+            } else {
+                notificationManager.show(response.message || '환율 새로고침에 실패했습니다.', 'error');
+            }
+        } catch (error) {
+            console.error('❌ 환율 새로고침 실패:', error);
+            notificationManager.show('환율 새로고침 중 오류가 발생했습니다.', 'error');
         } finally {
             setRefreshing(false);
         }
@@ -232,6 +278,15 @@ const WellnessManagement = () => {
                     <div className="wellness-header-actions">
                         <button 
                             className="wellness-btn wellness-btn--secondary"
+                            onClick={handleExchangeRateRefresh}
+                            disabled={refreshing}
+                            title="환율 새로고침"
+                        >
+                            <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
+                            <span>환율 새로고침</span>
+                        </button>
+                        <button 
+                            className="wellness-btn wellness-btn--secondary"
                             onClick={handleRefresh}
                             disabled={refreshing}
                         >
@@ -258,10 +313,15 @@ const WellnessManagement = () => {
                         <div className="wellness-stat-content">
                             <p className="wellness-stat-label">이번 달 비용</p>
                             <p className="wellness-stat-value">
-                                ${(stats.totalCost || 0).toFixed(4)}
+                                {stats.totalCostDisplay || `$${(stats.totalCost || 0).toFixed(4)}`}
                             </p>
                             <p className="wellness-stat-description">
                                 {selectedMonth.year}년 {selectedMonth.month}월
+                                {stats.exchangeRateDisplay && (
+                                    <span className="wellness-exchange-rate">
+                                        (환율: {stats.exchangeRateDisplay})
+                                    </span>
+                                )}
                             </p>
                         </div>
                     </div>
@@ -362,7 +422,7 @@ const WellnessManagement = () => {
                                                 {log.totalTokens?.toLocaleString()} 토큰
                                             </span>
                                             <span className="wellness-log-cost">
-                                                ${log.estimatedCost?.toFixed(6)}
+                                                {log.estimatedCostDisplay || `$${log.estimatedCost?.toFixed(6)}`}
                                             </span>
                                             <span className="wellness-log-time">
                                                 {log.responseTimeMs}ms

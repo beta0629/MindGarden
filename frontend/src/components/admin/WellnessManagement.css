@@ -179,9 +179,16 @@
 }
 
 .wellness-stat-description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.wellness-exchange-rate {
+    display: block;
     font-size: var(--font-size-xs);
     color: var(--color-text-tertiary);
-    margin: 0;
+    margin-top: var(--spacing-xs);
 }
 
 /* 월 선택 */

@@ -142,7 +142,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "VIEW_CONSULTATION_STATISTICS"
         );
         
-        // HQ_MASTER 권한 (모든 권한)
+        // HQ_MASTER 권한 (모든 권한) - 동적으로 관리되는 권한들은 제외
         List<String> hqMasterPermissions = List.of(
             "ACCESS_ERP_DASHBOARD", "ACCESS_INTEGRATED_FINANCE", "ACCESS_SALARY_MANAGEMENT",
             "ACCESS_TAX_MANAGEMENT", "ACCESS_REFUND_MANAGEMENT", "ACCESS_PURCHASE_REQUESTS",
@@ -232,14 +232,33 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
      */
     private void createRolePermissions(String roleName, List<String> permissionCodes) {
         int createdCount = 0;
+        int skippedCount = 0;
+        
         for (String permissionCode : permissionCodes) {
-            if (!rolePermissionRepository.existsByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode)) {
+            // 권한이 존재하는지 확인 (is_active 상태와 관계없이)
+            boolean exists = rolePermissionRepository.existsByRoleNameAndPermissionCode(roleName, permissionCode);
+            
+            if (!exists) {
+                // 권한이 없으면 새로 생성
                 RolePermission rolePermission = RolePermission.grant(roleName, permissionCode, "SYSTEM");
                 rolePermissionRepository.save(rolePermission);
                 createdCount++;
                 log.debug("역할권한 생성: {} - {}", roleName, permissionCode);
+            } else {
+                // 권한이 있으면 활성화 상태로 업데이트 (비활성화된 권한을 활성화)
+                var existingPermission = rolePermissionRepository.findByRoleNameAndPermissionCode(roleName, permissionCode);
+                if (existingPermission.isPresent() && !existingPermission.get().getIsActive()) {
+                    existingPermission.get().setIsActive(true);
+                    existingPermission.get().setUpdatedAt(java.time.LocalDateTime.now());
+                    rolePermissionRepository.save(existingPermission.get());
+                    createdCount++;
+                    log.debug("역할권한 활성화: {} - {}", roleName, permissionCode);
+                } else {
+                    skippedCount++;
+                    log.debug("역할권한 이미 존재: {} - {}", roleName, permissionCode);
+                }
             }
         }
-        log.info("{} 권한 매핑 완료: {}개 생성", roleName, createdCount);
+        log.info("{} 권한 매핑 완료: {}개 생성/활성화, {}개 스킵", roleName, createdCount, skippedCount);
     }
 }

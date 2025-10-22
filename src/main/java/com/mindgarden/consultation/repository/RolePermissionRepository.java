@@ -68,4 +68,19 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
      * 특정 역할의 모든 권한 매칭 삭제
      */
     void deleteByRoleName(String roleName);
+    
+    /**
+     * 역할명과 권한 코드로 매칭 존재 여부 확인 (is_active 상태와 관계없이)
+     */
+    @Query("SELECT CASE WHEN COUNT(rp) > 0 THEN true ELSE false END FROM RolePermission rp " +
+           "WHERE rp.roleName = :roleName AND rp.permissionCode = :permissionCode")
+    boolean existsByRoleNameAndPermissionCode(@Param("roleName") String roleName, 
+                                            @Param("permissionCode") String permissionCode);
+    
+    /**
+     * 역할명과 권한 코드로 매칭 조회 (is_active 상태와 관계없이)
+     */
+    @Query("SELECT rp FROM RolePermission rp WHERE rp.roleName = :roleName AND rp.permissionCode = :permissionCode")
+    Optional<RolePermission> findByRoleNameAndPermissionCode(@Param("roleName") String roleName, 
+                                                           @Param("permissionCode") String permissionCode);
 }

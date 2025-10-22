@@ -1,16 +1,15 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.util.List;
+import java.util.Optional;
 import com.mindgarden.consultation.entity.SystemConfig;
 import com.mindgarden.consultation.repository.SystemConfigRepository;
 import com.mindgarden.consultation.service.SystemConfigService;
 import com.mindgarden.consultation.util.EncryptionUtil;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 시스템 설정 서비스 구현체
@@ -117,5 +116,21 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     @Override
     public String getOpenAIModel() {
         return getConfigValue("OPENAI_MODEL", "gpt-3.5-turbo");
+    }
+    
+    @Override
+    public Double getUsdToKrwRate() {
+        String rateStr = getConfigValue("USD_TO_KRW_RATE", "1300.0");
+        try {
+            return Double.parseDouble(rateStr);
+        } catch (NumberFormatException e) {
+            log.warn("환율 설정이 올바르지 않습니다: {}, 기본값 1300.0 사용", rateStr);
+            return 1300.0;
+        }
+    }
+    
+    @Override
+    public void setUsdToKrwRate(Double rate) {
+        setConfigValue("USD_TO_KRW_RATE", rate.toString(), "USD-KRW 환율", "EXCHANGE_RATE", false);
     }
 }

@@ -46,4 +46,14 @@ public interface SystemConfigService {
      * OpenAI 모델명 조회
      */
     String getOpenAIModel();
+    
+    /**
+     * USD-KRW 환율 조회
+     */
+    Double getUsdToKrwRate();
+    
+    /**
+     * 환율 설정 저장
+     */
+    void setUsdToKrwRate(Double rate);
 }

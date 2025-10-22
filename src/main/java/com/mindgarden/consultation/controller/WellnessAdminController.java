@@ -13,6 +13,8 @@ import com.mindgarden.consultation.repository.OpenAIUsageLogRepository;
 import com.mindgarden.consultation.scheduler.WellnessNotificationScheduler;
 import com.mindgarden.consultation.service.OpenAIWellnessService;
 import com.mindgarden.consultation.service.WellnessTemplateService;
+import com.mindgarden.consultation.service.SystemConfigService;
+import com.mindgarden.consultation.service.ExchangeRateService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +48,8 @@ public class WellnessAdminController {
     private final WellnessTemplateService wellnessTemplateService;
     private final WellnessNotificationScheduler wellnessNotificationScheduler;
     private final OpenAIUsageLogRepository usageLogRepository;
+    private final SystemConfigService systemConfigService;
+    private final ExchangeRateService exchangeRateService;
     
     /**
      * 권한 체크: BRANCH_ADMIN 이상
@@ -189,9 +193,13 @@ public class WellnessAdminController {
             Long totalTokens = usageLogRepository.calculateMonthlyTokens(startDate, endDate);
             Long totalRequests = usageLogRepository.countMonthlyRequests(startDate, endDate);
             
-            // USD를 한화로 변환 (1 USD = 1,350 KRW 기준)
-            final double USD_TO_KRW_RATE = 1350.0;
+            // 실시간 환율 조회
+            Double USD_TO_KRW_RATE = exchangeRateService.getUsdToKrwRate();
             Double totalCostKRW = totalCostUSD != null ? totalCostUSD * USD_TO_KRW_RATE : 0.0;
+            
+            // 소수점 2자리까지 표시 (원 단위)
+            Double totalCostKRWRounded = totalCostKRW != null ? 
+                Math.round(totalCostKRW * 100.0) / 100.0 : 0.0;
             
             // 최근 로그
             List<OpenAIUsageLog> recentLogs = usageLogRepository.findTop10ByOrderByCreatedAtDesc();
@@ -204,7 +212,10 @@ public class WellnessAdminController {
                 data.put("totalTokens", log.getTotalTokens());
                 data.put("estimatedCostUSD", log.getEstimatedCost());
                 data.put("estimatedCostKRW", log.getEstimatedCost() != null ? 
-                    Math.round(log.getEstimatedCost() * USD_TO_KRW_RATE) : 0);
+                    Math.round(log.getEstimatedCost() * USD_TO_KRW_RATE * 100.0) / 100.0 : 0.0);
+                data.put("costDisplay", log.getEstimatedCost() != null ? 
+                    String.format("$%.6f (₩%.2f)", log.getEstimatedCost(), 
+                        Math.round(log.getEstimatedCost() * USD_TO_KRW_RATE * 100.0) / 100.0) : "$0.000000 (₩0.00)");
                 data.put("isSuccess", log.getIsSuccess());
                 data.put("responseTimeMs", log.getResponseTimeMs());
                 data.put("requestedBy", log.getRequestedBy());
@@ -216,7 +227,11 @@ public class WellnessAdminController {
             stats.put("year", targetMonth.getYear());
             stats.put("month", targetMonth.getMonthValue());
             stats.put("totalCostUSD", totalCostUSD);
-            stats.put("totalCostKRW", Math.round(totalCostKRW));
+            stats.put("totalCostKRW", totalCostKRWRounded);
+            stats.put("totalCostDisplay", String.format("$%.6f (₩%.2f)", 
+                totalCostUSD != null ? totalCostUSD : 0.0, totalCostKRWRounded));
+            stats.put("exchangeRate", USD_TO_KRW_RATE);
+            stats.put("exchangeRateDisplay", String.format("1 USD = %.2f KRW", USD_TO_KRW_RATE));
             stats.put("totalTokens", totalTokens);
             stats.put("totalRequests", totalRequests);
             stats.put("recentLogs", logList);
@@ -230,6 +245,112 @@ public class WellnessAdminController {
             log.error("❌ API 사용 통계 조회 실패", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("success", false, "message", "통계 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 환율 설정 조회
+     */
+    @GetMapping("/exchange-rate")
+    public ResponseEntity<?> getExchangeRate(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (!hasAdminPermission(currentUser)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "권한이 없습니다."));
+            }
+            
+            Double exchangeRate = exchangeRateService.getUsdToKrwRate();
+            String lastUpdateTime = exchangeRateService.getLastUpdateTime();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", Map.of(
+                    "exchangeRate", exchangeRate,
+                    "exchangeRateDisplay", String.format("1 USD = %.2f KRW", exchangeRate),
+                    "lastUpdateTime", lastUpdateTime
+                )
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 환율 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "환율 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 환율 설정 변경
+     */
+    @PostMapping("/exchange-rate")
+    public ResponseEntity<?> setExchangeRate(
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (!hasAdminPermission(currentUser)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "권한이 없습니다."));
+            }
+            
+            Double newRate = Double.parseDouble(request.get("exchangeRate").toString());
+            if (newRate <= 0) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "환율은 0보다 커야 합니다."));
+            }
+            
+            systemConfigService.setUsdToKrwRate(newRate);
+            
+            log.info("환율 설정 변경: {} -> {} (사용자: {})", 
+                systemConfigService.getUsdToKrwRate(), newRate, currentUser.getName());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "환율이 성공적으로 변경되었습니다.",
+                "data", Map.of(
+                    "exchangeRate", newRate,
+                    "exchangeRateDisplay", String.format("1 USD = %.2f KRW", newRate)
+                )
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 환율 설정 변경 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "환율 설정 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 환율 새로고침
+     */
+    @PostMapping("/exchange-rate/refresh")
+    public ResponseEntity<?> refreshExchangeRate(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (!hasAdminPermission(currentUser)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "권한이 없습니다."));
+            }
+            
+            Double newRate = exchangeRateService.refreshExchangeRate();
+            String lastUpdateTime = exchangeRateService.getLastUpdateTime();
+            
+            log.info("환율 새로고침 완료: {} (사용자: {})", newRate, currentUser.getName());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "환율이 성공적으로 새로고침되었습니다.",
+                "data", Map.of(
+                    "exchangeRate", newRate,
+                    "exchangeRateDisplay", String.format("1 USD = %.2f KRW", newRate),
+                    "lastUpdateTime", lastUpdateTime
+                )
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 환율 새로고침 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "환율 새로고침 중 오류가 발생했습니다."));
         }
     }
     

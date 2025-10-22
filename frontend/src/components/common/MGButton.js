@@ -1,71 +1,138 @@
+import React, { useState, useCallback } from 'react';
+import UnifiedLoading from './UnifiedLoading';
+import './MGButton.css';
+
 /**
  * MindGarden 공통 버튼 컴포넌트
- * v0.dev 디자인 시스템 기반의 새로운 버튼 디자인
+ * - 중복 클릭 방지
+ * - 로딩 상태 표시
+ * - 다양한 스타일 지원
+ * - 접근성 고려
+ * 
+ * @param {Object} props - 컴포넌트 props
+ * @param {string} props.variant - 버튼 스타일 (primary, secondary, success, danger, warning, info, outline)
+ * @param {string} props.size - 버튼 크기 (small, medium, large)
+ * @param {boolean} props.disabled - 비활성화 상태
+ * @param {boolean} props.loading - 로딩 상태
+ * @param {string} props.loadingText - 로딩 중 표시 텍스트
+ * @param {boolean} props.preventDoubleClick - 중복 클릭 방지 여부
+ * @param {number} props.clickDelay - 클릭 후 대기 시간 (ms)
+ * @param {Function} props.onClick - 클릭 핸들러
+ * @param {string} props.className - 추가 CSS 클래스
+ * @param {string} props.type - 버튼 타입 (button, submit, reset)
+ * @param {React.ReactNode} props.children - 버튼 내용
+ * @param {Object} props.style - 인라인 스타일
+ * @param {string} props.title - 툴팁 텍스트
+ * @param {boolean} props.fullWidth - 전체 너비 사용 여부
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2025-01-22
  */
-
-import React from 'react';
-
 const MGButton = ({
-  children,
   variant = 'primary',
   size = 'medium',
   disabled = false,
   loading = false,
-  icon = null,
+  loadingText = '처리 중...',
+  preventDoubleClick = true,
+  clickDelay = 1000, // 1초 대기
   onClick,
   className = '',
   type = 'button',
+  children,
+  style = {},
+  title = '',
+  fullWidth = false,
   ...props
 }) => {
-  // 베이지/크림/올리브 그린 색상 시스템
-  const variantClasses = {
-    primary: "bg-[#D2B48C] text-white hover:bg-[#C19A6B] active:scale-[0.98]",
-    secondary: "bg-transparent border-2 border-[#D2B48C] text-[#D2B48C] hover:bg-[#D2B48C]/10 active:scale-[0.98]",
-    success: "bg-[#9CAF88] text-white hover:bg-[#8B9E77] active:scale-[0.98]",
-    danger: "bg-[#CD5C5C] text-white hover:bg-[#B84C4C] active:scale-[0.98]",
-    warning: "bg-[#6B7C32] text-white hover:bg-[#5A6B2A] active:scale-[0.98]",
-    ghost: "bg-transparent text-[#8B8680] hover:bg-[#8B8680]/10 active:scale-[0.98]",
-  };
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const sizeClasses = {
-    small: "h-8 px-3 text-xs",
-    medium: "h-10 px-4 text-sm",
-    large: "h-12 px-6 text-base",
-  };
+  const handleClick = useCallback(async (e) => {
+    // 이미 처리 중이거나 비활성화된 경우 무시
+    if (isProcessing || disabled || loading) {
+      e.preventDefault();
+      return;
+    }
 
-  const baseClasses = "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#D2B48C] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
-  
-  const allClasses = [
-    baseClasses,
-    variantClasses[variant] || variantClasses.primary,
-    sizeClasses[size] || sizeClasses.medium,
+    // 중복 클릭 방지 활성화
+    if (preventDoubleClick) {
+      setIsProcessing(true);
+    }
+
+    try {
+      // onClick 핸들러 실행
+      if (onClick) {
+        await onClick(e);
+      }
+    } catch (error) {
+      console.error('Button click handler error:', error);
+    } finally {
+      // 클릭 후 대기 시간 적용
+      if (preventDoubleClick) {
+        setTimeout(() => {
+          setIsProcessing(false);
+        }, clickDelay);
+      }
+    }
+  }, [isProcessing, disabled, loading, preventDoubleClick, clickDelay, onClick]);
+
+  // 버튼 클래스 구성
+  const buttonClasses = [
+    'mg-button',
+    `mg-button--${variant}`,
+    `mg-button--${size}`,
+    disabled || loading || isProcessing ? 'mg-button--disabled' : '',
+    fullWidth ? 'mg-button--full-width' : '',
     className
   ].filter(Boolean).join(' ');
+
+  // 버튼 상태 확인
+  const isDisabled = disabled || loading || isProcessing;
 
   return (
     <button
       type={type}
-      className={allClasses}
-      disabled={disabled || loading}
-      onClick={onClick}
+      className={buttonClasses}
+      disabled={isDisabled}
+      onClick={handleClick}
+      style={style}
+      title={title || (isProcessing ? '처리 중입니다...' : '')}
+      aria-disabled={isDisabled}
       {...props}
     >
-      {loading && (
-        <span className="animate-spin" aria-hidden="true">
-          ⟳
+      <span className="mg-button__content">
+        {/* 로딩 상태 표시 */}
+        {loading && (
+          <span className="mg-button__loading">
+            <UnifiedLoading 
+              variant="spinner" 
+              size="small" 
+              showText={false}
+              type="inline"
+            />
+          </span>
+        )}
+        
+        {/* 버튼 텍스트/내용 */}
+        <span className={`mg-button__text ${loading ? 'mg-button__text--loading' : ''}`}>
+          {loading ? loadingText : children}
+        </span>
+      </span>
+      
+      {/* 처리 중 오버레이 */}
+      {isProcessing && !loading && (
+        <span className="mg-button__processing-overlay">
+          <UnifiedLoading 
+            variant="pulse" 
+            size="small" 
+            showText={false}
+            type="inline"
+          />
         </span>
       )}
-      {icon && !loading && (
-        <span className="mg-button__icon" aria-hidden="true">
-          {icon}
-        </span>
-      )}
-      {children}
     </button>
   );
 };
 
 export default MGButton;
-
-
-

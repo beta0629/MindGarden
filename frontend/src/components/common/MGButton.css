@@ -1,46 +1,44 @@
-/**
- * MindGarden 고급 버튼 스타일
- * 디테일하고 세련된 버튼 디자인
- */
+/* MindGarden 공통 버튼 컴포넌트 스타일 */
 
-/* ===== 기본 버튼 스타일 ===== */
 .mg-button {
-  /* 기본 레이아웃 */
+  /* 기본 스타일 */
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-sm);
-  
-  /* 폰트 */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: -0.01em;
+  border: none;
+  border-radius: var(--border-radius-md);
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-medium);
   text-decoration: none;
-  white-space: nowrap;
-  
-  /* 테두리 */
-  border: 1px solid transparent;
-  border-radius: 12px;
-  
-  /* 전환 효과 */
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  
-  /* 포커스 스타일 */
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  user-select: none;
   outline: none;
-  position: relative;
+  box-sizing: border-box;
+  min-width: fit-content;
   overflow: hidden;
   
-  /* 미세한 그림자와 깊이감 */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  /* 포커스 스타일 */
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+  
+  /* 비활성화 상태 */
+  &--disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  
+  /* 전체 너비 */
+  &--full-width {
+    width: 100%;
+  }
 }
 
-.mg-button:focus-visible {
-  box-shadow: 0 0 0 2px var(--border-focus);
-}
-
-/* ===== 버튼 크기 ===== */
+/* 버튼 크기 */
 .mg-button--small {
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: var(--font-size-sm);
@@ -59,148 +57,160 @@
   min-height: 48px;
 }
 
-/* ===== 버튼 변형 ===== */
+/* 버튼 스타일 변형 */
 .mg-button--primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
-  border-color: transparent;
-  position: relative;
+  background: var(--color-primary);
+  color: var(--color-white);
+  
+  &:hover:not(.mg-button--disabled) {
+    background: var(--color-primary-dark);
+    box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), 0.2);
+  }
+  
+  &:active:not(.mg-button--disabled) {
+    background: var(--color-primary-dark);
+    box-shadow: 0 1px 4px rgba(var(--color-primary-rgb), 0.2);
+  }
 }
 
-.mg-button--primary::before {
-  content: '';
+.mg-button--secondary {
+  background: var(--color-secondary);
+  color: var(--color-white);
+  
+  &:hover:not(.mg-button--disabled) {
+    background: var(--color-secondary-dark);
+    box-shadow: 0 2px 8px rgba(var(--color-secondary-rgb), 0.2);
+  }
+}
+
+.mg-button--success {
+  background: var(--status-success);
+  color: var(--color-white);
+  
+  &:hover:not(.mg-button--disabled) {
+    background: var(--status-success-dark);
+    box-shadow: 0 2px 8px rgba(var(--status-success-rgb), 0.2);
+  }
+}
+
+.mg-button--danger {
+  background: var(--status-error);
+  color: var(--color-white);
+  
+  &:hover:not(.mg-button--disabled) {
+    background: var(--status-error-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--status-error-rgb), 0.3);
+  }
+}
+
+.mg-button--warning {
+  background: var(--status-pending);
+  color: var(--color-white);
+  
+  &:hover:not(.mg-button--disabled) {
+    background: var(--status-pending-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--status-pending-rgb), 0.3);
+  }
+}
+
+.mg-button--info {
+  background: var(--status-info);
+  color: var(--color-white);
+  
+  &:hover:not(.mg-button--disabled) {
+    background: var(--status-info-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--status-info-rgb), 0.3);
+  }
+}
+
+.mg-button--outline {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  
+  &:hover:not(.mg-button--disabled) {
+    background: var(--color-primary);
+    color: var(--color-white);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
+  }
+}
+
+/* 버튼 내용 */
+.mg-button__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+  height: 100%;
+}
+
+.mg-button__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-button__text {
+  white-space: nowrap;
+  
+  &--loading {
+    opacity: 0.7;
+  }
+}
+
+/* 처리 중 오버레이 */
+.mg-button__processing-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
   border-radius: inherit;
+  backdrop-filter: blur(2px);
 }
 
-.mg-button--primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4), 0 3px 10px rgba(0, 0, 0, 0.1);
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .mg-button--outline {
+    color: var(--color-primary-light);
+    border-color: var(--color-primary-light);
+    
+    &:hover:not(.mg-button--disabled) {
+      background: var(--color-primary-light);
+      color: var(--color-dark);
+    }
+  }
+  
+  .mg-button__processing-overlay {
+    background: rgba(0, 0, 0, 0.8);
+  }
 }
 
-.mg-button--primary:hover:not(:disabled)::before {
-  opacity: 1;
-}
-
-.mg-button--primary:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.mg-button--secondary {
-  background: rgba(255, 255, 255, 0.9);
-  color: #4a5568;
-  border: 2px solid rgba(226, 232, 240, 0.8);
-  backdrop-filter: blur(10px);
-}
-
-.mg-button--secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 1);
-  border-color: #667eea;
-  color: #667eea;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15), 0 3px 10px rgba(0, 0, 0, 0.05);
-}
-
-.mg-button--success {
-  background: var(--success-color);
-  color: var(--text-inverse);
-  border-color: var(--success-color);
-}
-
-.mg-button--success:hover:not(:disabled) {
-  background: #059669;
-  border-color: #059669;
-  box-shadow: var(--shadow-md);
-}
-
-.mg-button--warning {
-  background: var(--warning-color);
-  color: var(--text-inverse);
-  border-color: var(--warning-color);
-}
-
-.mg-button--warning:hover:not(:disabled) {
-  background: #D97706;
-  border-color: #D97706;
-  box-shadow: var(--shadow-md);
-}
-
-.mg-button--danger {
-  background: var(--error-color);
-  color: var(--text-inverse);
-  border-color: var(--error-color);
-}
-
-.mg-button--danger:hover:not(:disabled) {
-  background: #DC2626;
-  border-color: #DC2626;
-  box-shadow: var(--shadow-md);
-}
-
-.mg-button--ghost {
-  background: transparent;
-  color: var(--text-primary);
-  border-color: var(--border-color);
-}
-
-.mg-button--ghost:hover:not(:disabled) {
-  background: var(--bg-secondary);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-/* ===== 상태 ===== */
-.mg-button--disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.mg-button--disabled:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-.mg-button--loading {
-  cursor: wait;
-}
-
-/* ===== 로딩 스피너 ===== */
-.mg-button__spinner {
-  animation: spin 1s linear infinite;
-  font-size: 1.2em;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* ===== 아이콘 ===== */
-.mg-button__icon {
-  display: flex;
-  align-items: center;
-  font-size: 1.1em;
-}
-
-/* ===== 텍스트 ===== */
-.mg-button__text {
-  display: flex;
-  align-items: center;
-}
-
-/* ===== 반응형 ===== */
+/* 반응형 디자인 */
 @media (max-width: 768px) {
+  .mg-button--small {
+    padding: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    min-height: 28px;
+  }
+  
+  .mg-button--medium {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    min-height: 36px;
+  }
+  
   .mg-button--large {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-md);
     font-size: var(--font-size-base);
     min-height: 44px;
   }

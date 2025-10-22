@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { FaUser, FaEdit, FaTrash, FaPlus, FaEye, FaUsers, FaLink, FaCalendarAlt, FaClipboardList } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { getUserStatusColor, getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { getCurrentUser } from '../../utils/session';
@@ -925,7 +925,7 @@ const ConsultantComprehensiveManagement = () => {
             </div>
             )}
 
-            {loading && <LoadingSpinner />}
+            {loading && <UnifiedLoading text="데이터를 불러오는 중..." type="inline" />}
             
             {/* 삭제 확인 모달 */}
             <MGConfirmModal

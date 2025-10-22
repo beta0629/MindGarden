@@ -12,6 +12,7 @@
 
 // Button
 export { default as Button } from './Button';
+export { default as MGButton } from '../common/MGButton';
 
 // Card
 export { default as Card, GlassCard, StatCard } from './Card';

@@ -8,7 +8,8 @@ import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
 import ClientCard from './ClientCard';
 import MappingCard from './MappingCard';
-import LoadingSpinner from '../common/LoadingSpinner';
+import MGButton from '../common/MGButton';
+import UnifiedLoading from '../common/UnifiedLoading';
 import SessionExtensionModal from './mapping/SessionExtensionModal';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate } from '../../utils/codeHelper';
 import '../../styles/mindgarden-design-system.css';
@@ -54,6 +55,10 @@ const SessionManagement = () => {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('CASH');
     const [paymentReference, setPaymentReference] = useState('');
+    
+    // 버튼 로딩 상태
+    const [confirmingPayment, setConfirmingPayment] = useState(false);
+    const [rejectingRequest, setRejectingRequest] = useState(false);
 
     // 데이터 로드
     const loadData = useCallback(async () => {
@@ -201,7 +206,7 @@ const SessionManagement = () => {
     // 입금 확인 처리
     const handlePaymentConfirm = async (requestId) => {
         try {
-            setLoading(true);
+            setConfirmingPayment(true);
             await apiPost(`/api/admin/session-extensions/requests/${requestId}/confirm-payment`, {
                 paymentMethod: 'CASH',
                 paymentReference: null
@@ -219,14 +224,14 @@ const SessionManagement = () => {
             console.error('입금 확인 실패:', error);
             notificationManager.error('입금 확인에 실패했습니다.');
         } finally {
-            setLoading(false);
+            setConfirmingPayment(false);
         }
     };
 
     // 관리자 승인 처리
     const handleAdminApprove = async (requestId) => {
         try {
-            setLoading(true);
+            setConfirmingPayment(true); // 재사용
             await apiPost(`/api/admin/session-extensions/requests/${requestId}/approve`, {
                 adminId: 1, // TODO: 실제 관리자 ID
                 comment: '관리자 승인'
@@ -237,14 +242,14 @@ const SessionManagement = () => {
             console.error('관리자 승인 실패:', error);
             notificationManager.error('관리자 승인에 실패했습니다.');
         } finally {
-            setLoading(false);
+            setConfirmingPayment(false);
         }
     };
 
     // 요청 거부 처리
     const handleRejectRequest = async (requestId) => {
         try {
-            setLoading(true);
+            setRejectingRequest(true);
             await apiPost(`/api/admin/session-extensions/requests/${requestId}/reject`, {
                 adminId: 1, // TODO: 실제 관리자 ID
                 reason: '요청 거부'
@@ -255,7 +260,7 @@ const SessionManagement = () => {
             console.error('요청 거부 실패:', error);
             notificationManager.error('요청 거부에 실패했습니다.');
         } finally {
-            setLoading(false);
+            setRejectingRequest(false);
         }
     };
 
@@ -280,7 +285,7 @@ const SessionManagement = () => {
     }, [loadData, loadMappingStatusCodes]);
 
     if (loading && mappings.length === 0) {
-        return <LoadingSpinner />;
+        return <UnifiedLoading text="데이터를 불러오는 중..." type="page" />;
     }
 
     return (
@@ -460,10 +465,19 @@ const SessionManagement = () => {
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
-                                    <button className="mg-button mg-button-primary">
+                                    <MGButton 
+                                        variant="primary" 
+                                        size="medium"
+                                        onClick={() => {
+                                            // 검색 로직
+                                            console.log('검색 실행');
+                                        }}
+                                        preventDoubleClick={true}
+                                        clickDelay={500}
+                                    >
                                         <Users size={16} />
                                         검색
-                                    </button>
+                                    </MGButton>
                                 </div>
                                 
                                 <div className="mg-search-results">
@@ -618,35 +632,55 @@ const SessionManagement = () => {
                                     
                                     {request.status === 'PENDING' && (
                                         <div className="mg-request-actions">
-                                            <button 
-                                                className="mg-button mg-button-success mg-button-sm"
+                                            <MGButton 
+                                                variant="success"
+                                                size="small"
+                                                loading={confirmingPayment}
+                                                loadingText="확인 중..."
                                                 onClick={() => handlePaymentConfirm(request.id)}
+                                                preventDoubleClick={true}
+                                                clickDelay={2000}
                                             >
                                                 입금 확인
-                                            </button>
-                                            <button 
-                                                className="mg-button mg-button-danger mg-button-sm"
+                                            </MGButton>
+                                            <MGButton 
+                                                variant="danger"
+                                                size="small"
+                                                loading={rejectingRequest}
+                                                loadingText="거부 중..."
                                                 onClick={() => handleRejectRequest(request.id)}
+                                                preventDoubleClick={true}
+                                                clickDelay={1000}
                                             >
                                                 거부
-                                            </button>
+                                            </MGButton>
                                         </div>
                                     )}
                                     
                                     {request.status === 'PAYMENT_CONFIRMED' && (
                                         <div className="mg-request-actions">
-                                            <button 
-                                                className="mg-button mg-button-primary mg-button-sm"
+                                            <MGButton 
+                                                variant="primary"
+                                                size="small"
+                                                loading={confirmingPayment}
+                                                loadingText="승인 중..."
                                                 onClick={() => handleAdminApprove(request.id)}
+                                                preventDoubleClick={true}
+                                                clickDelay={2000}
                                             >
                                                 관리자 승인
-                                            </button>
-                                            <button 
-                                                className="mg-button mg-button-danger mg-button-sm"
+                                            </MGButton>
+                                            <MGButton 
+                                                variant="danger"
+                                                size="small"
+                                                loading={rejectingRequest}
+                                                loadingText="거부 중..."
                                                 onClick={() => handleRejectRequest(request.id)}
+                                                preventDoubleClick={true}
+                                                clickDelay={1000}
                                             >
                                                 거부
-                                            </button>
+                                            </MGButton>
                                         </div>
                                     )}
                                 </div>

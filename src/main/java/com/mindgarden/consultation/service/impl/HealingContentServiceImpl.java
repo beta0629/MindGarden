@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import com.mindgarden.consultation.entity.OpenAIUsageLog;
+import com.mindgarden.consultation.repository.OpenAIUsageLogRepository;
 import com.mindgarden.consultation.service.HealingContentService;
 import com.mindgarden.consultation.service.OpenAIWellnessService;
 import com.mindgarden.consultation.service.OpenAIWellnessService.HealingContent;
@@ -23,8 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class HealingContentServiceImpl implements HealingContentService {
-    
+
     private final OpenAIWellnessService openAIWellnessService;
+    private final OpenAIUsageLogRepository usageLogRepository;
     
     // 메모리 캐시 (실제 운영에서는 Redis 등 사용 권장)
     private final Map<String, HealingContent> contentCache = new ConcurrentHashMap<>();
@@ -52,6 +55,10 @@ public class HealingContentServiceImpl implements HealingContentService {
             // GPT로 컨텐츠 생성 (웰니스 서비스의 메서드 사용)
             var wellnessContent = openAIWellnessService.generateWellnessContent(1, "GENERAL", "GENERAL", "HEALING_SYSTEM");
             String generatedContent = wellnessContent.getContent();
+            
+            // 힐링 컨텐츠 사용량 로깅
+            logHealingUsage("HEALING_CONTENT", "gpt-3.5-turbo", true, null, 
+                100, 200, 300, 1500L, "SYSTEM");
             
             // 컨텐츠 파싱 및 DTO 생성
             HealingContent content = parseHealingContent(generatedContent, category);
@@ -194,5 +201,36 @@ public class HealingContentServiceImpl implements HealingContentService {
     private String generateCacheKey(String userRole, String category) {
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return String.format("%s_%s_%s", userRole, category != null ? category : "GENERAL", today);
+    }
+    
+    /**
+     * 힐링 컨텐츠 사용량 로깅
+     */
+    private void logHealingUsage(String requestType, String model, boolean isSuccess, String errorMessage, 
+                                int promptTokens, int completionTokens, int totalTokens, 
+                                long responseTimeMs, String requestedBy) {
+        try {
+            OpenAIUsageLog usageLog = OpenAIUsageLog.builder()
+                .requestType(requestType)
+                .model(model)
+                .promptTokens(promptTokens)
+                .completionTokens(completionTokens)
+                .totalTokens(totalTokens)
+                .isSuccess(isSuccess)
+                .errorMessage(errorMessage)
+                .responseTimeMs(responseTimeMs)
+                .requestedBy(requestedBy)
+                .build();
+            
+            usageLog.calculateCost();
+            OpenAIUsageLog savedLog = usageLogRepository.save(usageLog);
+            
+            if (isSuccess) {
+                log.info("💚 힐링 컨텐츠 사용량 로깅: {} 토큰, 예상 비용 ${}", totalTokens, 
+                    String.format("%.6f", savedLog.getEstimatedCost()));
+            }
+        } catch (Exception e) {
+            log.error("❌ 힐링 컨텐츠 사용량 로깅 실패", e);
+        }
     }
 }

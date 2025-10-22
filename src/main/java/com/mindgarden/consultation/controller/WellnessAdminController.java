@@ -185,9 +185,13 @@ public class WellnessAdminController {
             LocalDateTime endDate = targetMonth.atEndOfMonth().atTime(23, 59, 59);
             
             // 월별 통계 계산
-            Double totalCost = usageLogRepository.calculateMonthlyCost(startDate, endDate);
+            Double totalCostUSD = usageLogRepository.calculateMonthlyCost(startDate, endDate);
             Long totalTokens = usageLogRepository.calculateMonthlyTokens(startDate, endDate);
             Long totalRequests = usageLogRepository.countMonthlyRequests(startDate, endDate);
+            
+            // USD를 한화로 변환 (1 USD = 1,350 KRW 기준)
+            final double USD_TO_KRW_RATE = 1350.0;
+            Double totalCostKRW = totalCostUSD != null ? totalCostUSD * USD_TO_KRW_RATE : 0.0;
             
             // 최근 로그
             List<OpenAIUsageLog> recentLogs = usageLogRepository.findTop10ByOrderByCreatedAtDesc();
@@ -198,7 +202,9 @@ public class WellnessAdminController {
                 data.put("requestType", log.getRequestType());
                 data.put("model", log.getModel());
                 data.put("totalTokens", log.getTotalTokens());
-                data.put("estimatedCost", log.getEstimatedCost());
+                data.put("estimatedCostUSD", log.getEstimatedCost());
+                data.put("estimatedCostKRW", log.getEstimatedCost() != null ? 
+                    Math.round(log.getEstimatedCost() * USD_TO_KRW_RATE) : 0);
                 data.put("isSuccess", log.getIsSuccess());
                 data.put("responseTimeMs", log.getResponseTimeMs());
                 data.put("requestedBy", log.getRequestedBy());
@@ -209,7 +215,8 @@ public class WellnessAdminController {
             Map<String, Object> stats = new HashMap<>();
             stats.put("year", targetMonth.getYear());
             stats.put("month", targetMonth.getMonthValue());
-            stats.put("totalCost", totalCost);
+            stats.put("totalCostUSD", totalCostUSD);
+            stats.put("totalCostKRW", Math.round(totalCostKRW));
             stats.put("totalTokens", totalTokens);
             stats.put("totalRequests", totalRequests);
             stats.put("recentLogs", logList);

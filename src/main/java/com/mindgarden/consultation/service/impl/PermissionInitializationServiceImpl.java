@@ -191,19 +191,21 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     @Override
     @Transactional
     public void initializePermissionSystem() {
-        log.info("🚀 권한 시스템 전체 초기화 시작");
+        log.info("🚀 권한 시스템 초기화 시작");
         
         try {
-            // 기존 권한 데이터 삭제 (개발 환경에서만)
-            log.info("🗑️ 기존 권한 데이터 정리 중...");
-            rolePermissionRepository.deleteAll();
-            permissionRepository.deleteAll();
-            log.info("✅ 기존 권한 데이터 정리 완료");
+            // 이미 초기화되어 있으면 건너뛰기
+            if (isPermissionSystemInitialized()) {
+                log.info("✅ 권한 시스템이 이미 초기화되어 있음 - 건너뛰기");
+                return;
+            }
+            
+            log.info("🔄 권한 시스템 초기화 필요 - 기본 권한 생성 중...");
             
             initializeDefaultPermissions();
             initializeDefaultRolePermissions();
             
-            log.info("✅ 권한 시스템 전체 초기화 완료");
+            log.info("✅ 권한 시스템 초기화 완료");
         } catch (Exception e) {
             log.error("❌ 권한 시스템 초기화 실패", e);
             throw e;

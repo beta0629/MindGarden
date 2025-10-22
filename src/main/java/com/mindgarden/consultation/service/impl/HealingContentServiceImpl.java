@@ -4,11 +4,19 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
+import java.util.List;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import com.mindgarden.consultation.entity.OpenAIUsageLog;
 import com.mindgarden.consultation.repository.OpenAIUsageLogRepository;
 import com.mindgarden.consultation.service.HealingContentService;
-import com.mindgarden.consultation.service.OpenAIWellnessService;
 import com.mindgarden.consultation.service.OpenAIWellnessService.HealingContent;
+import com.mindgarden.consultation.service.SystemConfigService;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class HealingContentServiceImpl implements HealingContentService {
 
-    private final OpenAIWellnessService openAIWellnessService;
     private final OpenAIUsageLogRepository usageLogRepository;
+    private final SystemConfigService systemConfigService;
+    private final RestTemplate restTemplate;
     
     // 메모리 캐시 (실제 운영에서는 Redis 등 사용 권장)
     private final Map<String, HealingContent> contentCache = new ConcurrentHashMap<>();
@@ -52,13 +61,8 @@ public class HealingContentServiceImpl implements HealingContentService {
         try {
             log.info("🎨 새로운 힐링 컨텐츠 생성 시작 - 역할: {}, 카테고리: {}", userRole, category);
             
-            // GPT로 컨텐츠 생성 (웰니스 서비스의 메서드 사용)
-            var wellnessContent = openAIWellnessService.generateWellnessContent(1, "GENERAL", "GENERAL", "HEALING_SYSTEM");
-            String generatedContent = wellnessContent.getContent();
-            
-            // 힐링 컨텐츠 사용량 로깅
-            logHealingUsage("HEALING_CONTENT", "gpt-3.5-turbo", true, null, 
-                100, 200, 300, 1500L, "SYSTEM");
+            // 힐링 컨텐츠 전용 GPT API 호출
+            String generatedContent = callHealingContentAPI(userRole, category);
             
             // 컨텐츠 파싱 및 DTO 생성
             HealingContent content = parseHealingContent(generatedContent, category);
@@ -201,6 +205,131 @@ public class HealingContentServiceImpl implements HealingContentService {
     private String generateCacheKey(String userRole, String category) {
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         return String.format("%s_%s_%s", userRole, category != null ? category : "GENERAL", today);
+    }
+    
+    /**
+     * 힐링 컨텐츠 전용 GPT API 호출
+     */
+    private String callHealingContentAPI(String userRole, String category) {
+        String apiKey = systemConfigService.getOpenAIApiKey();
+        if (apiKey == null || apiKey.isEmpty()) {
+            log.warn("⚠️ OpenAI API 키가 설정되지 않았습니다. 기본 컨텐츠를 반환합니다.");
+            logHealingUsage("HEALING_CONTENT", "unknown", false, "API 키 미설정", 0, 0, 0, 0L, "SYSTEM");
+            return "마음의 평화를 찾는 하루가 되시길 바랍니다. 💚";
+        }
+        
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            String prompt = buildHealingPrompt(userRole, category);
+            String apiUrl = systemConfigService.getOpenAIApiUrl();
+            String model = systemConfigService.getOpenAIModel();
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiKey);
+            
+            Map<String, Object> message1 = new HashMap<>();
+            message1.put("role", "system");
+            message1.put("content", "당신은 마음 건강 전문가이며, 내담자와 상담사를 위한 따뜻하고 실용적인 힐링 컨텐츠를 작성합니다.");
+            
+            Map<String, Object> message2 = new HashMap<>();
+            message2.put("role", "user");
+            message2.put("content", prompt);
+            
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", model);
+            requestBody.put("messages", List.of(message1, message2));
+            requestBody.put("max_tokens", 500);
+            requestBody.put("temperature", 0.8);
+            
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+            
+            @SuppressWarnings("rawtypes")
+            ResponseEntity<Map> response = restTemplate.exchange(
+                apiUrl,
+                HttpMethod.POST,
+                request,
+                Map.class
+            );
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> responseBody = response.getBody();
+            
+            if (responseBody != null && responseBody.containsKey("choices")) {
+                // 토큰 사용량 추출
+                int promptTokens = 0;
+                int completionTokens = 0;
+                int totalTokens = 0;
+                
+                if (responseBody.containsKey("usage")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> usage = (Map<String, Object>) responseBody.get("usage");
+                    promptTokens = (Integer) usage.getOrDefault("prompt_tokens", 0);
+                    completionTokens = (Integer) usage.getOrDefault("completion_tokens", 0);
+                    totalTokens = (Integer) usage.getOrDefault("total_tokens", 0);
+                }
+                
+                long responseTime = System.currentTimeMillis() - startTime;
+                
+                // 응답 파싱
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+                if (!choices.isEmpty()) {
+                    Map<String, Object> choice = choices.get(0);
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> message = (Map<String, Object>) choice.get("message");
+                    String content = (String) message.get("content");
+                    
+                    // 로깅
+                    logHealingUsage("HEALING_CONTENT", model, true, null, promptTokens, completionTokens, totalTokens, responseTime, "SYSTEM");
+                    
+                    return content;
+                }
+            }
+            
+            throw new RuntimeException("OpenAI API 응답 파싱 실패");
+            
+        } catch (Exception e) {
+            long responseTime = System.currentTimeMillis() - startTime;
+            log.error("❌ 힐링 컨텐츠 GPT API 호출 실패 ({}ms)", responseTime, e);
+            logHealingUsage("HEALING_CONTENT", "unknown", false, e.getMessage(), 0, 0, 0, responseTime, "SYSTEM");
+            throw e;
+        }
+    }
+    
+    /**
+     * 힐링 컨텐츠 전용 프롬프트 생성
+     */
+    private String buildHealingPrompt(String userRole, String category) {
+        String roleText = "CLIENT".equals(userRole) ? "내담자" : "상담사";
+        String categoryText = getCategoryText(category);
+        
+        return String.format(
+            "다음 조건에 맞는 힐링 컨텐츠를 작성해주세요:\n\n" +
+            "- 대상: %s\n" +
+            "- 카테고리: %s\n" +
+            "- 형식: HTML 형식으로 작성 (h3, p, ul, li 태그 사용)\n" +
+            "- 내용: 마음의 평화와 힐링을 주는 따뜻한 메시지\n" +
+            "- 길이: 200-300자 내외\n\n" +
+            "HTML 태그를 포함하여 작성해주세요.",
+            roleText, categoryText
+        );
+    }
+    
+    /**
+     * 카테고리 텍스트 변환
+     */
+    private String getCategoryText(String category) {
+        if (category == null) return "일반 힐링";
+        
+        switch (category) {
+            case "HUMOR": return "유머";
+            case "WARM_WORDS": return "따뜻한 말";
+            case "MEDITATION": return "명상";
+            case "MOTIVATION": return "격려";
+            default: return "일반 힐링";
+        }
     }
     
     /**

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -28,6 +29,9 @@ public class SystemToolsController {
 
     @Autowired
     private DataSource dataSource;
+    
+    @Autowired
+    private DynamicPermissionService dynamicPermissionService;
 
     @GetMapping("/logs/recent")
     public ResponseEntity<Map<String, Object>> getRecentLogs() {
@@ -85,6 +89,23 @@ public class SystemToolsController {
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "캐시 초기화 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    @PostMapping("/permission-cache/clear")
+    public ResponseEntity<Map<String, Object>> clearPermissionCache() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            dynamicPermissionService.clearPermissionCache();
+            
+            response.put("success", true);
+            response.put("message", "권한 캐시가 성공적으로 초기화되었습니다");
+            response.put("timestamp", System.currentTimeMillis());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "권한 캐시 초기화 중 오류 발생: " + e.getMessage());
             return ResponseEntity.status(500).body(response);
         }
     }

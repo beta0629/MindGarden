@@ -311,5 +311,27 @@ public class OpenAIWellnessService {
         public String getTitle() { return title; }
         public String getContent() { return content; }
     }
+    
+    /**
+     * 힐링 컨텐츠 DTO
+     */
+    public static class HealingContent {
+        private final String title;
+        private final String content;
+        private final String category;
+        private final String emoji;
+        
+        public HealingContent(String title, String content, String category, String emoji) {
+            this.title = title;
+            this.content = content;
+            this.category = category;
+            this.emoji = emoji;
+        }
+        
+        public String getTitle() { return title; }
+        public String getContent() { return content; }
+        public String getCategory() { return category; }
+        public String getEmoji() { return emoji; }
+    }
 }
 

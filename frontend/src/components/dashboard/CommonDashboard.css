@@ -1,5 +1,6 @@
 /* 공통 대시보드 스타일 - 새로운 디자인 시스템 적용 */
 
+.mg-dashboard-layout,
 .dashboard-container {
     padding: var(--spacing-lg);
     max-width: 1200px;
@@ -8,20 +9,63 @@
     min-height: 100vh;
 }
 
+/* 대시보드 섹션 간격 통일 */
+.mg-dashboard-layout > *,
+.dashboard-container > * {
+    margin-bottom: var(--spacing-lg);
+}
+
+.mg-dashboard-layout > *:last-child,
+.dashboard-container > *:last-child {
+    margin-bottom: 0;
+}
+
+/* 상담사 대시보드 특별 간격 조정 */
+.mg-dashboard-layout.consultant .mg-card,
+.dashboard-container.consultant .mg-card {
+    margin-bottom: var(--spacing-xl);
+}
+
+.mg-dashboard-layout.consultant .mg-card:last-child,
+.dashboard-container.consultant .mg-card:last-child {
+    margin-bottom: 0;
+}
+
+/* 힐링 카드 래퍼 간격 */
+.mg-dashboard-layout.consultant .healing-card-wrapper,
+.dashboard-container.consultant .healing-card-wrapper {
+    margin-bottom: var(--spacing-xl);
+}
+
+/* 상담사 대시보드 내 모든 섹션 간격 통일 */
+.mg-dashboard-layout.consultant > *,
+.dashboard-container.consultant > * {
+    margin-bottom: var(--spacing-xl);
+}
+
+.mg-dashboard-layout.consultant > *:last-child,
+.dashboard-container.consultant > *:last-child {
+    margin-bottom: 0;
+}
+
+.mg-dashboard-layout.client,
 .dashboard-container.client {
     background: var(--ios-bg-secondary);
 }
 
+.mg-dashboard-layout.consultant,
 .dashboard-container.consultant {
     background: var(--ios-bg-primary);
 }
 
+.mg-dashboard-layout.admin,
 .dashboard-container.admin {
     background: var(--ios-bg-primary);
 }
 
 /* 반응형 디자인 */
 @media (max-width: 767px) {
+    .mg-dashboard-layout,
     .dashboard-container {
         padding: var(--spacing-md);
     }
@@ -29,6 +73,7 @@
 
 /* 아이패드 스타일 최적화 */
 @media (min-width: 768px) and (max-width: 1024px) {
+    .mg-dashboard-layout,
     .dashboard-container {
         padding: var(--spacing-lg) var(--spacing-xl);
     }

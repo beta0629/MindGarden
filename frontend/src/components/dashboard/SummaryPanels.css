@@ -2,27 +2,27 @@
 .summary-panels {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
 }
 
 .summary-panels-panel {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e9ecef;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  border: var(--border-width-thin) solid var(--border-color-light);
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: var(--transition-normal);
 }
 
 .summary-panels-panel:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
 }
 
 .summary-panels-panel-header {
   background: var(--dashboard-consultant-primary);
-  padding: 1rem 1.5rem;
+  padding: var(--spacing-md) var(--spacing-lg);
   color: white;
 }
 
@@ -32,35 +32,35 @@
 }
 
 .summary-panels-panel-title {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 .summary-panels-panel-icon {
-  font-size: 1.2rem;
+  font-size: var(--font-size-xl);
 }
 
 .summary-panels-panel-content {
-  padding: 1.5rem;
+  padding: var(--spacing-lg);
 }
 
 .summary-panels-summary-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: var(--background-light);
+  border-radius: var(--border-radius-md);
+  transition: var(--transition-fast);
 }
 
 .summary-panels-summary-item:hover {
-  background: #e9ecef;
+  background: var(--background-hover);
 }
 
 .summary-panels-summary-item:last-child {
@@ -68,15 +68,15 @@
 }
 
 .summary-panels-summary-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: var(--spacing-xl);
+  height: var(--spacing-xl);
+  border-radius: var(--border-radius-md);
   background: var(--dashboard-consultant-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  box-shadow: var(--shadow-sm);
 }
 
 /* 내담자 대시보드 아이콘 색상 */

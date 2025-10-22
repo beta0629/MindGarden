@@ -30,8 +30,8 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 100px;
-  height: 100px;
+  width: var(--spacing-xxl);
+  height: var(--spacing-xxl);
   border-radius: var(--border-radius-full);
   opacity: 0.05;
   transform: translate(30%, -30%);
@@ -196,7 +196,7 @@
 }
 
 .personalized-message-card--clickable:hover .message-card-action-icon {
-  transform: translateX(4px);
+  transform: translateX(var(--spacing-xs));
 }
 
 /* ============================================
@@ -241,7 +241,7 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(var(--spacing-sm));
   }
   to {
     opacity: 1;
@@ -250,7 +250,7 @@
 }
 
 .personalized-message-card {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn var(--transition-normal) ease-out;
 }
 
 .personalized-message-card:nth-child(1) { animation-delay: 0.05s; }

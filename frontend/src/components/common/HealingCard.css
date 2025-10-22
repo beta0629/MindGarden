@@ -1,0 +1,182 @@
+/* 오늘의 힐링 카드 - MindGarden 디자인 시스템 적용 */
+
+/* 힐링 카드 간격 설정 - CommonDashboard.css의 통일된 간격 사용 */
+.healing-card-wrapper {
+    margin-bottom: var(--spacing-lg);
+}
+
+/* 이모지 스타일 */
+.healing-emoji {
+    font-size: var(--mg-font-size-xl);
+    margin-right: var(--mg-spacing-xs);
+}
+
+/* 힐링 컨텐츠 영역 */
+.healing-content {
+    line-height: var(--mg-line-height-relaxed);
+    color: var(--mg-text-primary);
+}
+
+/* HTML 렌더링 스타일 */
+.healing-content h1,
+.healing-content h2,
+.healing-content h3,
+.healing-content h4,
+.healing-content h5,
+.healing-content h6 {
+    margin: var(--mg-spacing-md) 0 var(--mg-spacing-sm) 0;
+    color: var(--mg-text-primary);
+    font-weight: var(--mg-font-weight-semibold);
+}
+
+.healing-content h3 {
+    font-size: var(--mg-font-size-lg);
+    color: var(--mg-primary);
+    border-left: var(--mg-border-width-thick) solid var(--mg-primary);
+    padding-left: var(--mg-spacing-sm);
+    margin: var(--mg-spacing-lg) 0 var(--mg-spacing-md) 0;
+}
+
+.healing-content p {
+    margin: var(--mg-spacing-sm) 0;
+    line-height: var(--mg-line-height-relaxed);
+}
+
+.healing-content ul,
+.healing-content ol {
+    margin: var(--mg-spacing-sm) 0;
+    padding-left: var(--mg-spacing-md);
+}
+
+.healing-content li {
+    margin: var(--mg-spacing-xs) 0;
+    line-height: var(--mg-line-height-normal);
+}
+
+.healing-content strong {
+    font-weight: var(--mg-font-weight-semibold);
+    color: var(--mg-text-primary);
+}
+
+.healing-content em {
+    font-style: italic;
+    color: var(--mg-text-secondary);
+}
+
+/* 카테고리 배지 */
+.healing-category {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--mg-spacing-md);
+}
+
+/* 로딩 상태 */
+.mg-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--mg-spacing-xl);
+    color: var(--mg-text-secondary);
+}
+
+.mg-spinner {
+    width: var(--mg-spacing-lg);
+    height: var(--mg-spacing-lg);
+    border: var(--mg-border-width-thin) solid var(--mg-border-light);
+    border-top: var(--mg-border-width-thin) solid var(--mg-primary);
+    border-radius: var(--mg-radius-full);
+    animation: spin var(--mg-transition-slow) linear infinite;
+    margin-bottom: var(--mg-spacing-sm);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 에러 상태 */
+.mg-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--mg-spacing-xl);
+    color: var(--mg-error);
+    text-align: center;
+}
+
+.mg-error p {
+    margin-bottom: var(--mg-spacing-md);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .healing-content {
+        font-size: var(--mg-font-size-sm);
+    }
+    
+    .healing-content h3 {
+        font-size: var(--mg-font-size-md);
+    }
+    
+    .healing-emoji {
+        font-size: var(--mg-font-size-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .healing-content {
+        font-size: var(--mg-font-size-xs);
+        line-height: var(--mg-line-height-normal);
+    }
+    
+    .healing-content h3 {
+        font-size: var(--mg-font-size-sm);
+        padding-left: var(--mg-spacing-xs);
+    }
+    
+    .healing-emoji {
+        font-size: var(--mg-font-size-md);
+    }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+    .healing-content {
+        color: var(--mg-dark-text-primary);
+    }
+    
+    .healing-content h1,
+    .healing-content h2,
+    .healing-content h3,
+    .healing-content h4,
+    .healing-content h5,
+    .healing-content h6 {
+        color: var(--mg-dark-text-primary);
+    }
+    
+    .healing-content h3 {
+        color: var(--mg-dark-primary);
+        border-left-color: var(--mg-dark-primary);
+    }
+    
+    .healing-content strong {
+        color: var(--mg-dark-text-primary);
+    }
+    
+    .healing-content em {
+        color: var(--mg-dark-text-secondary);
+    }
+    
+    .mg-loading {
+        color: var(--mg-dark-text-secondary);
+    }
+    
+    .mg-spinner {
+        border-color: var(--mg-dark-border-light);
+        border-top-color: var(--mg-dark-primary);
+    }
+    
+    .mg-error {
+        color: var(--mg-dark-error);
+    }
+}

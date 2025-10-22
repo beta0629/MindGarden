@@ -16,7 +16,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
-import MotivationCard from '../common/MotivationCard';
+import HealingCard from '../common/HealingCard';
 import '../../styles/main.css';
 import './HQDashboard.css';
 
@@ -458,7 +458,7 @@ const HQDashboard = ({ user: propUser }) => {
                 {/* 동기부여 카드 */}
                 <Row>
                     <Col>
-                        <MotivationCard userRole={user?.role} />
+                        <HealingCard userRole={user?.role} />
                     </Col>
                 </Row>
             </Container>

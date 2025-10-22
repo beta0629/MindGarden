@@ -22,7 +22,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import ClientPersonalizedMessages from './ClientPersonalizedMessages';
 import ClientPaymentSessionsSection from './ClientPaymentSessionsSection';
 import ConsultantClientSection from './ConsultantClientSection';
-import MotivationCard from '../common/MotivationCard';
+import HealingCard from '../common/HealingCard';
 import ScheduleQuickAccess from './ScheduleQuickAccess';
 import RatableConsultationsSection from '../client/RatableConsultationsSection';
 import ConsultantRatingDisplay from '../consultant/ConsultantRatingDisplay';
@@ -773,7 +773,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
   return (
     <SimpleLayout>
-      <div className="mg-dashboard-layout">
+      <div className={`mg-dashboard-layout dashboard-container ${user?.role?.toLowerCase() || ''}`}>
         
         {/* 웰컴 섹션 */}
         <WelcomeSection 
@@ -816,8 +816,10 @@ const CommonDashboard = ({ user: propUser }) => {
           <ConsultationRecordSection consultantId={user.id} />
         )}
         
-        {/* 동기부여 카드 (모든 사용자) */}
-        <MotivationCard userRole={user?.role} />
+        {/* 오늘의 힐링 카드 (내담자와 상담사만) */}
+        {(user?.role === 'CLIENT' || user?.role === 'CONSULTANT') && (
+          <HealingCard userRole={user?.role} />
+        )}
         
         {/* 스케줄 빠른 접근 (상담사 전용) */}
         <ScheduleQuickAccess user={user} />

@@ -185,57 +185,29 @@ const ConsultantClientSection = ({ userId }) => {
   }
 
   return (
-    <div style={{
-      background: 'white',
-      borderRadius: '12px',
-      padding: '24px',
-      marginBottom: '24px',
-      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '20px'
-      }}>
-        <h3 style={{
-          margin: 0,
-          fontSize: 'var(--font-size-lg)',
-          fontWeight: '600',
-          color: '#2c3e50',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
+    <div className="mg-card">
+      <div className="mg-card__header">
+        <h3 className="mg-card__title">
           <i className="bi bi-people" style={{ color: '#007bff' }}></i>
           내 내담자 ({clients.length}명)
         </h3>
         <button 
-          className="btn btn-outline-primary btn-sm"
+          className="mg-button mg-button--ghost mg-button--sm"
           onClick={() => navigate('/consultant/clients')}
         >
           <i className="bi bi-arrow-right"></i> 전체보기
         </button>
       </div>
 
-      {clients.length === 0 ? (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 20px',
-          textAlign: 'center',
-          color: '#6c757d'
-        }}>
-          <i className="bi bi-person-x" style={{
-            fontSize: 'var(--font-size-xxxl)',
-            marginBottom: '16px',
-            color: '#dee2e6'
-          }}></i>
-          <p style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>아직 매칭된 내담자가 없습니다</p>
-        </div>
-      ) : (
+      <div className="mg-card__content">
+        {clients.length === 0 ? (
+          <div className="mg-empty-state">
+            <div className="mg-empty-state__icon">
+              <i className="bi bi-person-x"></i>
+            </div>
+            <div className="mg-empty-state__text">아직 매칭된 내담자가 없습니다</div>
+          </div>
+        ) : (
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
@@ -387,7 +359,8 @@ const ConsultantClientSection = ({ userId }) => {
             </div>
           ))}
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

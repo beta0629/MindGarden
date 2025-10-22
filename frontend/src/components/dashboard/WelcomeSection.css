@@ -42,15 +42,15 @@
 }
 
 .profile-avatar {
-  width: calc(var(--spacing-xl) * 3.75); /* 60px */
-  height: calc(var(--spacing-xl) * 3.75);
-  border-radius: 50%;
+  width: var(--spacing-xxl);
+  height: var(--spacing-xxl);
+  border-radius: var(--border-radius-full);
   background: white;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 2px solid var(--olive-green);
+  border: var(--border-width-thin) solid var(--olive-green);
   flex-shrink: 0;
   box-shadow: var(--shadow-sm);
 }
@@ -77,7 +77,7 @@
   font-size: var(--font-size-base);
   color: var(--dark-gray);
   margin: 0 0 var(--spacing-sm) 0;
-  line-height: 1.4;
+  line-height: var(--line-height-normal);
 }
 
 .welcome-time {

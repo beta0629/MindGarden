@@ -131,6 +131,6 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     
     @Override
     public void setUsdToKrwRate(Double rate) {
-        setConfigValue("USD_TO_KRW_RATE", rate.toString(), "USD-KRW 환율", "EXCHANGE_RATE", false);
+        setConfigValue("USD_TO_KRW_RATE", rate.toString(), "USD-KRW 환율", "EXCHANGE_RATE");
     }
 }

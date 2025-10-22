@@ -2,22 +2,22 @@ package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.util.List;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import com.mindgarden.consultation.entity.OpenAIUsageLog;
 import com.mindgarden.consultation.repository.OpenAIUsageLogRepository;
 import com.mindgarden.consultation.service.HealingContentService;
 import com.mindgarden.consultation.service.OpenAIWellnessService.HealingContent;
 import com.mindgarden.consultation.service.SystemConfigService;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,6 +45,8 @@ public class HealingContentServiceImpl implements HealingContentService {
     public HealingContent getHealingContent(String userRole, String category) {
         String cacheKey = generateCacheKey(userRole, category);
         
+        log.info("🔍 힐링 컨텐츠 요청 - 역할: {}, 카테고리: {}, 캐시키: {}", userRole, category, cacheKey);
+        
         // 캐시에서 조회
         HealingContent cachedContent = contentCache.get(cacheKey);
         if (cachedContent != null) {
@@ -52,6 +54,7 @@ public class HealingContentServiceImpl implements HealingContentService {
             return cachedContent;
         }
         
+        log.info("🆕 캐시에 없음 - 새로 생성 시작 - 역할: {}, 카테고리: {}", userRole, category);
         // 캐시에 없으면 새로 생성
         return generateNewHealingContent(userRole, category);
     }

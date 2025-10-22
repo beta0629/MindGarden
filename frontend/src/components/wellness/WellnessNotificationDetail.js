@@ -91,119 +91,22 @@ const WellnessNotificationDetail = () => {
   };
 
   /**
-   * AI 생성 웰니스 컨텐츠를 가독성 있게 포맷팅
-   * - HTML 태그 제거
-   * - 마크다운 문법 정리
-   * - 자동 줄바꿈 및 문단 구분
-   * - 제목/부제목 자동 감지
+   * AI 생성 웰니스 컨텐츠를 HTML로 렌더링
+   * - HTML 태그를 그대로 렌더링
+   * - 안전한 HTML 렌더링을 위해 dangerouslySetInnerHTML 사용
    */
   const formatWellnessContent = (content) => {
     if (!content) return null;
 
-    // 1. HTML 태그 모두 제거
-    let cleanContent = content.replace(/<[^>]*>/g, '');
-    
-    // 2. 마크다운 문법 정리
-    cleanContent = cleanContent
-      .replace(/^["']|["']$/g, '') // 앞뒤 따옴표 제거
-      .replace(/^\*\s*/gm, '• ') // * 를 • 로 변경
-      .replace(/^-\s*/gm, '• ') // - 를 • 로 변경
-      .replace(/^\d+\.\s*/gm, '') // 숫자 목록 제거
-      .replace(/\*\*(.*?)\*\*/g, '$1') // **굵은글씨** 제거
-      .replace(/\*(.*?)\*/g, '$1') // *기울임* 제거
-      .replace(/`(.*?)`/g, '$1'); // `코드` 제거
-
-    // 3. 줄바꿈 기준으로 분할
-    const lines = cleanContent.split('\n').map(line => line.trim()).filter(line => line);
-
-    // 4. 문단별로 그룹화 및 스타일 적용
-    const formattedElements = [];
-    let currentParagraph = [];
-    let elementIndex = 0;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // 빈 줄이면 현재 문단을 마무리
-      if (!line) {
-        if (currentParagraph.length > 0) {
-          formattedElements.push(createParagraphElement(currentParagraph, elementIndex++));
-          currentParagraph = [];
-        }
-        continue;
-      }
-
-      // 제목/부제목 감지
-      const isTitle = detectTitle(line);
-      
-      if (isTitle) {
-        // 현재 문단이 있으면 먼저 마무리
-        if (currentParagraph.length > 0) {
-          formattedElements.push(createParagraphElement(currentParagraph, elementIndex++));
-          currentParagraph = [];
-        }
-        // 제목 요소 추가
-        formattedElements.push(
-          <p key={elementIndex++} className="content-subtitle">
-            {line}
-          </p>
-        );
-      } else {
-        // 일반 문단에 추가
-        currentParagraph.push(line);
-      }
-    }
-
-    // 마지막 문단 처리
-    if (currentParagraph.length > 0) {
-      formattedElements.push(createParagraphElement(currentParagraph, elementIndex++));
-    }
-
-    return formattedElements;
-  };
-
-  /**
-   * 제목/부제목 감지 함수
-   */
-  const detectTitle = (line) => {
-    // 이모지로 시작하는 경우
-    if (/^[🎯🍂💡✨🌟💚🌱🌸🌿🌺🌻🌼🌷🌹🌾🌵🌲🌳🌴🌰🌙☀️🌤️⛅🌦️🌧️⛈️🌩️🌨️❄️🔥💧🌊🌈]/g.test(line)) {
-      return true;
-    }
-
-    // 특정 키워드 포함
-    const titleKeywords = [
-      '팁', '방법', '추천', '활동', '마음챙김', '명상', '운동', '수면', '영양',
-      '스트레스', '불안', '우울', '행복', '평정', '집중', '휴식', '치유',
-      '오늘', '이번', '이번주', '이번달', '새로운', '특별한', '중요한',
-      '기억하세요', '시도해보세요', '실천해보세요', '꼭', '반드시'
-    ];
-
-    return titleKeywords.some(keyword => line.includes(keyword));
-  };
-
-  /**
-   * 문단 요소 생성 함수
-   */
-  const createParagraphElement = (lines, key) => {
-    // 문단이 하나의 줄이면 단순하게 처리
-    if (lines.length === 1) {
-      return (
-        <p key={key} className="content-paragraph">
-          {lines[0]}
-        </p>
-      );
-    }
-
-    // 여러 줄이면 적절히 연결
-    const paragraphText = lines.join(' ');
-    
+    // HTML을 그대로 렌더링
     return (
-      <p key={key} className="content-paragraph">
-        {paragraphText}
-      </p>
+      <div 
+        className="wellness-content-html"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
     );
   };
+
 
   if (loading) {
     return (

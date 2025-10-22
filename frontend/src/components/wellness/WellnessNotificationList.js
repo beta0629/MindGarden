@@ -170,10 +170,11 @@ const WellnessNotificationList = () => {
                 {/* 내용 */}
                 <div className="card-content">
                   <h3 className="card-title">{notification.title}</h3>
-                  <p className="card-description">
-                    {notification.content?.replace(/<[^>]*>/g, '').substring(0, 100)}
-                    {notification.content?.length > 100 ? '...' : ''}
-                  </p>
+                  <div className="card-description">
+                    <div dangerouslySetInnerHTML={{ 
+                      __html: notification.content?.substring(0, 100) + (notification.content?.length > 100 ? '...' : '')
+                    }} />
+                  </div>
                   <div className="card-meta">
                     <div className="meta-item">
                       <Calendar size={14} />

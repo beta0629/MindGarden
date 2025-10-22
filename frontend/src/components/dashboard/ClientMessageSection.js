@@ -278,10 +278,13 @@ const ClientMessageSection = ({ userId }) => {
                       <span className="client-message-item__unread-dot"></span>
                     )}
                   </div>
-                  <p className="client-message-item__preview">
-                    {message.content?.substring(0, 60)}
-                    {message.content?.length > 60 ? '...' : ''}
-                  </p>
+                  <div className="client-message-item__preview">
+                    <div 
+                      dangerouslySetInnerHTML={{
+                        __html: message.content?.substring(0, 60) + (message.content?.length > 60 ? '...' : '')
+                      }}
+                    />
+                  </div>
                   <div className="client-message-item__footer">
                     <span className={`mg-badge mg-badge-${messageTypeInfo.colorClass} mg-badge-sm`}>
                       {messageTypeInfo.label}
@@ -341,7 +344,11 @@ const ClientMessageSection = ({ userId }) => {
               </span>
             </div>
             <div className="client-message-detail__content">
-              {selectedMessage.content}
+              <div 
+                dangerouslySetInnerHTML={{
+                  __html: selectedMessage.content
+                }}
+              />
             </div>
           </div>
         </UnifiedModal>

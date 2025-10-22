@@ -326,6 +326,102 @@
   border: var(--border-width-thin) solid rgba(255, 182, 193, 0.1);
 }
 
+/* HTML 렌더링 스타일 */
+.client-message-detail__content h1,
+.client-message-detail__content h2,
+.client-message-detail__content h3,
+.client-message-detail__content h4,
+.client-message-detail__content h5,
+.client-message-detail__content h6 {
+  margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.client-message-detail__content h3 {
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  border-left: var(--border-width-thick) solid var(--color-primary);
+  padding-left: var(--spacing-sm);
+  margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+}
+
+.client-message-detail__content p {
+  margin: var(--spacing-sm) 0;
+  line-height: var(--line-height-relaxed);
+}
+
+.client-message-detail__content ul,
+.client-message-detail__content ol {
+  margin: var(--spacing-sm) 0;
+  padding-left: var(--spacing-md);
+}
+
+.client-message-detail__content li {
+  margin: var(--spacing-xs) 0;
+  line-height: var(--line-height-normal);
+}
+
+.client-message-detail__content strong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.client-message-detail__content em {
+  font-style: italic;
+  color: var(--color-text-secondary);
+}
+
+.client-message-detail__content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--border-radius-sm);
+  margin: var(--spacing-xs) 0;
+}
+
+/* 미리보기 HTML 렌더링 스타일 */
+.client-message-item__preview h1,
+.client-message-item__preview h2,
+.client-message-item__preview h3,
+.client-message-item__preview h4,
+.client-message-item__preview h5,
+.client-message-item__preview h6 {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  display: inline;
+}
+
+.client-message-item__preview p {
+  margin: 0;
+  display: inline;
+}
+
+.client-message-item__preview ul,
+.client-message-item__preview ol {
+  margin: 0;
+  padding-left: var(--spacing-sm);
+  display: inline;
+}
+
+.client-message-item__preview li {
+  margin: 0;
+  display: inline;
+}
+
+.client-message-item__preview strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+.client-message-item__preview em {
+  font-style: italic;
+}
+
+.client-message-item__preview img {
+  display: none; /* 미리보기에서는 이미지 숨김 */
+}
+
 /* 반응형 디자인 */
 @media (max-width: 767px) {
   .client-message-header {
@@ -422,4 +518,38 @@
 .client-message-item:nth-child(3) { animation-delay: 0.1s; }
 .client-message-item:nth-child(4) { animation-delay: 0.15s; }
 .client-message-item:nth-child(5) { animation-delay: 0.2s; }
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .client-message-detail__content h1,
+  .client-message-detail__content h2,
+  .client-message-detail__content h3,
+  .client-message-detail__content h4,
+  .client-message-detail__content h5,
+  .client-message-detail__content h6 {
+    color: var(--mg-dark-text-primary);
+  }
+
+  .client-message-detail__content h3 {
+    color: var(--mg-dark-primary);
+    border-left-color: var(--mg-dark-primary);
+  }
+
+  .client-message-detail__content strong {
+    color: var(--mg-dark-text-primary);
+  }
+
+  .client-message-detail__content em {
+    color: var(--mg-dark-text-secondary);
+  }
+
+  .client-message-item__preview h1,
+  .client-message-item__preview h2,
+  .client-message-item__preview h3,
+  .client-message-item__preview h4,
+  .client-message-item__preview h5,
+  .client-message-item__preview h6 {
+    color: var(--mg-dark-text-secondary);
+  }
+}
 

@@ -509,4 +509,36 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT COUNT(u) FROM User u WHERE u.branch.id = ?1 AND u.role = ?2 AND u.isDeleted = false")
     long countByBranchIdAndRoleAndIsDeletedFalse(Long branchId, UserRole role);
+    
+    // === 통계 대시보드용 메서드 ===
+    
+    /**
+     * 역할별 사용자 수 조회 (문자열 역할명)
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
+    long countByRole(String role);
+    
+    /**
+     * 특정 날짜 이후 생성된 역할별 사용자 수 조회
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.createdAt > ?2 AND u.isDeleted = false")
+    long countByRoleAndCreatedAtAfter(String role, LocalDateTime dateTime);
+    
+    /**
+     * 특정 날짜 이전 생성된 역할별 사용자 수 조회
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.createdAt < ?2 AND u.isDeleted = false")
+    long countByRoleAndCreatedAtBefore(String role, LocalDateTime dateTime);
+    
+    /**
+     * 특정 기간에 생성된 역할별 사용자 수 조회
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.createdAt BETWEEN ?2 AND ?3 AND u.isDeleted = false")
+    long countByRoleAndCreatedAtBetween(String role, LocalDateTime startDate, LocalDateTime endDate);
+    
+    /**
+     * 최근 내담자 조회 (이름, 생성일시)
+     */
+    @Query("SELECT u.name, u.createdAt FROM User u WHERE u.role = 'CLIENT' AND u.isDeleted = false ORDER BY u.createdAt DESC")
+    List<Object[]> findRecentClients(int limit);
 }

@@ -56,8 +56,11 @@ public class HQErpController {
             return ResponseEntity.status(401).body(null);
         }
         
-        if (!dynamicPermissionService.hasPermission(currentUser, "HQ_DASHBOARD_VIEW")) {
-            return ResponseEntity.status(403).body(null);
+        if (!dynamicPermissionService.hasPermission(currentUser, "HQ_FINANCIAL_MANAGE")) {
+            return ResponseEntity.status(403).body(Map.of(
+                "success", false,
+                "message", "재무 관리 권한이 없습니다."
+            ));
         }
         
         try {
@@ -110,8 +113,11 @@ public class HQErpController {
             return ResponseEntity.status(401).body(null);
         }
         
-        if (!dynamicPermissionService.hasPermission(currentUser, "HQ_DASHBOARD_VIEW")) {
-            return ResponseEntity.status(403).body(null);
+        if (!dynamicPermissionService.hasPermission(currentUser, "HQ_FINANCIAL_MANAGE")) {
+            return ResponseEntity.status(403).body(Map.of(
+                "success", false,
+                "message", "재무 관리 권한이 없습니다."
+            ));
         }
         
         try {

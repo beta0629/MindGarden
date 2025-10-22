@@ -126,4 +126,26 @@ public interface StatisticsService {
      * 월간 통계 조회
      */
     Map<String, Object> getMonthlyStatistics(LocalDate startDate, LocalDate endDate, String branchCode);
+    
+    // ==================== 관리자 통계 대시보드용 메서드 ====================
+    
+    /**
+     * 전체 통계 조회 (관리자 대시보드용)
+     */
+    Map<String, Object> getOverallStatistics();
+    
+    /**
+     * 트렌드 통계 조회 (관리자 대시보드용)
+     */
+    Map<String, Object> getTrendStatistics();
+    
+    /**
+     * 차트 데이터 조회 (관리자 대시보드용)
+     */
+    Map<String, Object> getChartData();
+    
+    /**
+     * 최근 활동 조회 (관리자 대시보드용)
+     */
+    Map<String, Object> getRecentActivity();
 }

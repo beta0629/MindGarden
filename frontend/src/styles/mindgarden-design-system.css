@@ -31,15 +31,37 @@
   --spacing-lg: 2rem;
   --spacing-xl: 3rem;
   
+  /* Border */
+  --border-width: 1px;
+  
+  /* Grid */
+  --grid-min-width-sm: 150px;
+  --grid-min-width-md: 200px;
+  --grid-min-width-lg: 250px;
+  
+  /* Breakpoints */
+  --breakpoint-mobile: 480px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+  
   /* Component Sizes */
   --stat-card-min-width: 250px;
   --management-card-min-width: 280px;
-  --icon-size-sm: 32px;
-  --icon-size-md: 48px;
-  --icon-size-lg: 60px;
+  --icon-size-xs: 16px;
+  --icon-size-sm: 20px;
+  --icon-size-md: 24px;
+  --icon-size-lg: 32px;
+  --icon-size-xl: 48px;
+  --icon-size-xxl: 60px;
   --avatar-size-sm: 40px;
   --avatar-size-md: 60px;
   --avatar-size-lg: 80px;
+  
+  /* Card Heights */
+  --card-height-sm: 60px;
+  --card-height-md: 70px;
+  --card-height-lg: 80px;
+  --card-height-xl: 90px;
   
   /* Mobile Layout */
   --mobile-grid-columns: repeat(auto-fit, minmax(var(--stat-card-min-width), 1fr));
@@ -52,6 +74,19 @@
   --font-size-md: 1rem;
   --font-size-lg: 1.125rem;
   --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+  --font-size-6xl: 3.75rem;
+  --font-size-7xl: 4.5rem;
+  --font-size-8xl: 6rem;
+  --font-size-9xl: 8rem;
+  
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
   
   /* Layout */
   --container-max-width: 1200px;

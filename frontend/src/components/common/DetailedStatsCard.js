@@ -20,7 +20,7 @@ const DetailedStatsCard = ({
   subValue,
   subLabel,
   changeValue,
-  changeType,
+  changeType = 'neutral',
   changeLabel,
   rateValue,
   rateLabel,
@@ -119,10 +119,6 @@ DetailedStatsCard.propTypes = {
   detailLabel: PropTypes.string,
   descValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   descLabel: PropTypes.string
-};
-
-DetailedStatsCard.defaultProps = {
-  changeType: 'neutral'
 };
 
 export default DetailedStatsCard;

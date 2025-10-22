@@ -394,8 +394,4 @@ DetailedStatsGrid.propTypes = {
   statistics: PropTypes.object
 };
 
-DetailedStatsGrid.defaultProps = {
-  statistics: {}
-};
-
 export default DetailedStatsGrid;

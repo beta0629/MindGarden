@@ -14,10 +14,10 @@ const StatisticsCard = ({
   title, 
   value, 
   icon, 
-  color, 
+  color = 'var(--color-primary)', 
   loading = false, 
   error = false,
-  onClick 
+  onClick = null
 }) => {
   return (
     <div 
@@ -56,13 +56,6 @@ StatisticsCard.propTypes = {
   loading: PropTypes.bool,
   error: PropTypes.bool,
   onClick: PropTypes.func
-};
-
-StatisticsCard.defaultProps = {
-  color: 'var(--color-primary)',
-  loading: false,
-  error: false,
-  onClick: null
 };
 
 export default StatisticsCard;

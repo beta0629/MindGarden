@@ -153,12 +153,12 @@ export const ThemeProvider = ({ children }) => {
     if (savedTheme && savedTheme !== 'default') {
       switchTheme(savedTheme);
     }
-  }, [switchTheme]);
+  }, []); // switchTheme 의존성 제거
 
   // 테마 변경 시 CSS Variables 적용
   useEffect(() => {
     applyThemeVariables(theme);
-  }, [theme, applyThemeVariables]);
+  }, [theme]); // applyThemeVariables 의존성 제거
 
   const value = {
     theme,

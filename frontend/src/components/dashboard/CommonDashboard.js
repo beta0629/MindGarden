@@ -651,7 +651,7 @@ const CommonDashboard = ({ user: propUser }) => {
     return () => {
       isMounted = false;
     };
-  }, [sessionLoading, propUser?.id, sessionUser?.id, propUser?.role, sessionUser?.role, loadClientConsultationData, loadConsultantConsultationData, loadAdminSystemData]); // isLoggedIn 제거, sessionManager 사용자 정보만 의존
+  }, [sessionLoading, loadClientConsultationData, loadConsultantConsultationData, loadAdminSystemData]); // 사용자 객체 의존성 제거
 
   // 현재 시간 업데이트
   useEffect(() => {
@@ -825,7 +825,7 @@ const CommonDashboard = ({ user: propUser }) => {
         <ScheduleQuickAccess user={user} />
         
         {/* 요약 패널 섹션 (상담사/관리자 전용) */}
-        {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
+        {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN' || user?.role === 'HQ_MASTER') && (
           <SummaryPanels 
             user={user} 
             consultationData={consultationData} 

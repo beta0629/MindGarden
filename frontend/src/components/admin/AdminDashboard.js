@@ -177,7 +177,7 @@ const AdminDashboard = ({ user: propUser }) => {
         } catch (error) {
             console.error('오늘의 통계 로드 실패:', error);
         }
-    }, [propUser, sessionUser]);
+    }, []); // 사용자 객체 의존성 제거
 
     // 세션 체크 및 권한 확인
     useEffect(() => {
@@ -198,7 +198,7 @@ const AdminDashboard = ({ user: propUser }) => {
         };
 
         initializeDashboard();
-    }, [loadTodayStats]);
+    }, []); // loadTodayStats 의존성 제거
 
     const showToast = useCallback((message, type = 'success') => {
         setToastMessage(message);

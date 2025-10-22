@@ -112,13 +112,4 @@ StatisticsGrid.propTypes = {
   showToday: PropTypes.bool
 };
 
-StatisticsGrid.defaultProps = {
-  statistics: null,
-  loading: false,
-  error: false,
-  onCardClick: null,
-  showOverall: true,
-  showToday: true
-};
-
 export default StatisticsGrid;

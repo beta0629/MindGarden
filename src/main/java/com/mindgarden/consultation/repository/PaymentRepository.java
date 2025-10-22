@@ -162,4 +162,24 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * 주문 ID로 승인된 결제 존재 여부 확인
      */
     boolean existsByOrderIdAndStatusAndIsDeletedFalse(String orderId, Payment.PaymentStatus status);
+    
+    // ==================== 통계 대시보드용 메서드 ====================
+    
+    /**
+     * 승인된 결제 총 금액 조회
+     */
+    @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'APPROVED' AND p.isDeleted = false")
+    Long sumConfirmedAmount();
+    
+    /**
+     * 특정 날짜 이후 승인된 결제 총 금액 조회
+     */
+    @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'APPROVED' AND p.createdAt > ?1 AND p.isDeleted = false")
+    Long sumConfirmedAmountByCreatedAtAfter(LocalDateTime dateTime);
+    
+    /**
+     * 특정 날짜 이전 승인된 결제 총 금액 조회
+     */
+    @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'APPROVED' AND p.createdAt < ?1 AND p.isDeleted = false")
+    Long sumConfirmedAmountByCreatedAtBefore(LocalDateTime dateTime);
 }

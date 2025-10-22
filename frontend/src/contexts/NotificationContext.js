@@ -242,7 +242,7 @@ export const NotificationProvider = ({ children }) => {
         window.removeEventListener('notification-read', handleNotificationRead);
       };
     }
-  }, [isLoggedIn, user?.id]);
+  }, []); // isLoggedIn, user?.id 의존성 제거
 
   // 통합 unreadCount 계산
   useEffect(() => {

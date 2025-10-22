@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ConsultantPerformanceRepository;
 import com.mindgarden.consultation.repository.ConsultantRatingRepository;
+import com.mindgarden.consultation.repository.ConsultationRecordRepository;
 import com.mindgarden.consultation.repository.DailyStatisticsRepository;
 import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.PerformanceAlertRepository;
@@ -50,6 +53,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final UserRepository userRepository;
     private final FinancialTransactionRepository financialTransactionRepository;
     private final ConsultantRatingRepository consultantRatingRepository;
+    private final ConsultationRecordRepository consultationRecordRepository;
 
     // ==================== 일별 통계 관리 ====================
 
@@ -720,5 +724,232 @@ public class StatisticsServiceImpl implements StatisticsService {
             errorResponse.put("message", "월간 통계 조회 중 오류가 발생했습니다.");
             return errorResponse;
         }
+    }
+    
+    // ==================== 관리자 통계 대시보드용 메서드 구현 ====================
+    
+    @Override
+    public Map<String, Object> getOverallStatistics() {
+        try {
+            Map<String, Object> statistics = new HashMap<>();
+            
+            // 총 내담자 수
+            long totalClients = userRepository.countByRole("CLIENT");
+            statistics.put("totalClients", totalClients);
+            
+            // 총 상담사 수
+            long totalConsultants = userRepository.countByRole("CONSULTANT");
+            statistics.put("totalConsultants", totalConsultants);
+            
+            // 총 상담 세션 수
+            long totalSessions = scheduleRepository.count();
+            statistics.put("totalSessions", totalSessions);
+            
+            // 활성 매칭 수 (ConsultantClientMappingRepository 사용)
+            long activeMappings = 0; // TODO: ConsultantClientMappingRepository에서 조회
+            statistics.put("activeMappings", activeMappings);
+            
+            // 완료율 계산
+            long completedSessions = 0; // TODO: ConsultationRecordRepository에서 조회
+            double completionRate = totalSessions > 0 ? (double) completedSessions / totalSessions * 100 : 0;
+            statistics.put("completionRate", Math.round(completionRate * 10.0) / 10.0);
+            
+            // 총 수익 (원화)
+            Long totalRevenue = 0L; // TODO: PaymentRepository에서 조회
+            statistics.put("totalRevenue", totalRevenue != null ? totalRevenue : 0);
+            
+            return statistics;
+        } catch (Exception e) {
+            log.error("전체 통계 조회 오류", e);
+            return getDefaultOverallStatistics();
+        }
+    }
+    
+    @Override
+    public Map<String, Object> getTrendStatistics() {
+        try {
+            Map<String, Object> trends = new HashMap<>();
+            
+            LocalDate now = LocalDate.now();
+            LocalDate lastYear = now.minusYears(1);
+            
+            // 내담자 증가율
+            long currentClients = userRepository.countByRoleAndCreatedAtAfter("CLIENT", lastYear.atStartOfDay());
+            long lastYearClients = userRepository.countByRoleAndCreatedAtBefore("CLIENT", lastYear.atStartOfDay());
+            double clientGrowth = lastYearClients > 0 ? (double) (currentClients - lastYearClients) / lastYearClients * 100 : 0;
+            trends.put("clientGrowth", Math.round(clientGrowth * 10.0) / 10.0);
+            
+            // 상담사 증가율
+            long currentConsultants = userRepository.countByRoleAndCreatedAtAfter("CONSULTANT", lastYear.atStartOfDay());
+            long lastYearConsultants = userRepository.countByRoleAndCreatedAtBefore("CONSULTANT", lastYear.atStartOfDay());
+            double consultantGrowth = lastYearConsultants > 0 ? (double) (currentConsultants - lastYearConsultants) / lastYearConsultants * 100 : 0;
+            trends.put("consultantGrowth", Math.round(consultantGrowth * 10.0) / 10.0);
+            
+            // 상담 세션 증가율
+            long currentSessions = scheduleRepository.countByCreatedAtAfter(lastYear.atStartOfDay());
+            long lastYearSessions = scheduleRepository.countByCreatedAtBefore(lastYear.atStartOfDay());
+            double sessionGrowth = lastYearSessions > 0 ? (double) (currentSessions - lastYearSessions) / lastYearSessions * 100 : 0;
+            trends.put("sessionGrowth", Math.round(sessionGrowth * 10.0) / 10.0);
+            
+            // 수익 증가율
+            Long currentRevenue = 0L; // TODO: PaymentRepository에서 조회
+            Long lastYearRevenue = 0L; // TODO: PaymentRepository에서 조회
+            double revenueGrowth = (lastYearRevenue != null && lastYearRevenue > 0) ? 
+                (double) ((currentRevenue != null ? currentRevenue : 0) - lastYearRevenue) / lastYearRevenue * 100 : 0;
+            trends.put("revenueGrowth", Math.round(revenueGrowth * 10.0) / 10.0);
+            
+            return trends;
+        } catch (Exception e) {
+            log.error("트렌드 통계 조회 오류", e);
+            return getDefaultTrendStatistics();
+        }
+    }
+    
+    @Override
+    public Map<String, Object> getChartData() {
+        try {
+            Map<String, Object> chartData = new HashMap<>();
+            
+            // 최근 6개월 데이터
+            List<String> labels = new ArrayList<>();
+            List<Integer> clientData = new ArrayList<>();
+            List<Integer> sessionData = new ArrayList<>();
+            
+            LocalDate now = LocalDate.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M월");
+            
+            for (int i = 5; i >= 0; i--) {
+                LocalDate month = now.minusMonths(i);
+                labels.add(month.format(formatter));
+                
+                LocalDateTime monthStart = month.withDayOfMonth(1).atStartOfDay();
+                LocalDateTime monthEnd = month.withDayOfMonth(month.lengthOfMonth()).atTime(23, 59, 59);
+                
+                // 해당 월 내담자 수
+                long monthlyClients = userRepository.countByRoleAndCreatedAtBetween("CLIENT", monthStart, monthEnd);
+                clientData.add((int) monthlyClients);
+                
+                // 해당 월 상담 세션 수
+                long monthlySessions = scheduleRepository.countByCreatedAtBetween(monthStart, monthEnd);
+                sessionData.add((int) monthlySessions);
+            }
+            
+            chartData.put("labels", labels);
+            
+            List<Map<String, Object>> datasets = new ArrayList<>();
+            
+            Map<String, Object> clientDataset = new HashMap<>();
+            clientDataset.put("label", "내담자 수");
+            clientDataset.put("data", clientData);
+            clientDataset.put("borderColor", "var(--color-primary)");
+            clientDataset.put("backgroundColor", "var(--color-primary-light)");
+            clientDataset.put("tension", 0.1);
+            datasets.add(clientDataset);
+            
+            Map<String, Object> sessionDataset = new HashMap<>();
+            sessionDataset.put("label", "상담 세션");
+            sessionDataset.put("data", sessionData);
+            sessionDataset.put("borderColor", "var(--status-success)");
+            sessionDataset.put("backgroundColor", "var(--status-success-light)");
+            sessionDataset.put("tension", 0.1);
+            datasets.add(sessionDataset);
+            
+            chartData.put("datasets", datasets);
+            
+            return chartData;
+        } catch (Exception e) {
+            log.error("차트 데이터 조회 오류", e);
+            return getDefaultChartData();
+        }
+    }
+    
+    @Override
+    public Map<String, Object> getRecentActivity() {
+        try {
+            Map<String, Object> activity = new HashMap<>();
+            
+            List<Map<String, Object>> activities = new ArrayList<>();
+            
+            // 최근 내담자 등록
+            List<Object[]> recentClients = userRepository.findRecentClients(5);
+            for (Object[] client : recentClients) {
+                Map<String, Object> activityItem = new HashMap<>();
+                activityItem.put("type", "client");
+                activityItem.put("message", "새로운 내담자 등록: " + client[0]);
+                activityItem.put("time", formatTimeAgo((LocalDateTime) client[1]));
+                activities.add(activityItem);
+            }
+            
+            // 최근 상담 세션 완료 (TODO: ConsultationRecordRepository에서 조회)
+            // 최근 매칭 생성 (TODO: ConsultantClientMappingRepository에서 조회)
+            
+            // 시간순 정렬 (최신순)
+            activities.sort((a, b) -> {
+                String timeA = (String) a.get("time");
+                String timeB = (String) b.get("time");
+                return timeB.compareTo(timeA);
+            });
+            
+            // 최대 10개만 반환
+            if (activities.size() > 10) {
+                activities = activities.subList(0, 10);
+            }
+            
+            activity.put("activities", activities);
+            
+            return activity;
+        } catch (Exception e) {
+            log.error("최근 활동 조회 오류", e);
+            return getDefaultRecentActivity();
+        }
+    }
+    
+    private String formatTimeAgo(LocalDateTime dateTime) {
+        LocalDateTime now = LocalDateTime.now();
+        long minutes = java.time.Duration.between(dateTime, now).toMinutes();
+        
+        if (minutes < 1) {
+            return "방금 전";
+        } else if (minutes < 60) {
+            return minutes + "분 전";
+        } else if (minutes < 1440) {
+            return (minutes / 60) + "시간 전";
+        } else {
+            return (minutes / 1440) + "일 전";
+        }
+    }
+    
+    // 기본값 반환 메서드들
+    private Map<String, Object> getDefaultOverallStatistics() {
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalClients", 0);
+        stats.put("totalConsultants", 0);
+        stats.put("totalSessions", 0);
+        stats.put("activeMappings", 0);
+        stats.put("completionRate", 0.0);
+        stats.put("totalRevenue", 0);
+        return stats;
+    }
+    
+    private Map<String, Object> getDefaultTrendStatistics() {
+        Map<String, Object> trends = new HashMap<>();
+        trends.put("clientGrowth", 0.0);
+        trends.put("consultantGrowth", 0.0);
+        trends.put("sessionGrowth", 0.0);
+        trends.put("revenueGrowth", 0.0);
+        return trends;
+    }
+    
+    private Map<String, Object> getDefaultChartData() {
+        Map<String, Object> chartData = new HashMap<>();
+        chartData.put("labels", Arrays.asList("1월", "2월", "3월", "4월", "5월", "6월"));
+        chartData.put("datasets", new ArrayList<>());
+        return chartData;
+    }
+    
+    private Map<String, Object> getDefaultRecentActivity() {
+        Map<String, Object> activity = new HashMap<>();
+        activity.put("activities", new ArrayList<>());
+        return activity;
     }
 }

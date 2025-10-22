@@ -164,4 +164,16 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
      * 상담사 ID와 세션 날짜로 상담일지 작성 여부 확인
      */
     long countByConsultantIdAndSessionDateAndIsDeletedFalse(Long consultantId, LocalDate sessionDate);
+    
+    // ==================== 통계 대시보드용 메서드 ====================
+    
+    /**
+     * 최근 완료된 상담 세션 조회 (상담사명, 완료일시)
+     */
+    @Query("SELECT CONCAT(u1.name, ' - ', u2.name), cr.sessionDate FROM ConsultationRecord cr " +
+           "JOIN User u1 ON cr.consultantId = u1.id " +
+           "JOIN User u2 ON cr.clientId = u2.id " +
+           "WHERE cr.isSessionCompleted = true AND cr.isDeleted = false " +
+           "ORDER BY cr.sessionDate DESC")
+    List<Object[]> findRecentCompletedSessions(int limit);
 }

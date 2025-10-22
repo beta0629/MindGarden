@@ -147,7 +147,7 @@ const ClientDashboard = () => {
     if (isLoggedIn && user?.id) {
       loadClientData();
     }
-  }, [isLoggedIn, user?.id, loadClientData]);
+  }, [isLoggedIn, user?.id]); // loadClientData 의존성 제거
 
   // 로딩 상태 또는 로그인하지 않은 경우
   if (sessionLoading || isLoading || !isLoggedIn || !user?.id) {

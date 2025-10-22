@@ -82,4 +82,18 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     // 상담사 ID와 상태 목록으로 매칭 수 조회
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.consultant.id = :consultantId AND m.status IN :statuses")
     long countByConsultantIdAndStatusIn(@Param("consultantId") Long consultantId, @Param("statuses") List<ConsultantClientMapping.MappingStatus> statuses);
+    
+    // ==================== 통계 대시보드용 메서드 ====================
+    
+    /**
+     * 특정 상태 목록의 매칭 수 조회
+     */
+    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.status IN :statuses")
+    long countByStatusIn(@Param("statuses") List<String> statuses);
+    
+    /**
+     * 최근 매칭 조회 (이름, 생성일시)
+     */
+    @Query("SELECT CONCAT(m.consultant.name, ' - ', m.client.name), m.createdAt FROM ConsultantClientMapping m ORDER BY m.createdAt DESC")
+    List<Object[]> findRecentMappings(int limit);
 }

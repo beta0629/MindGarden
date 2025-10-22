@@ -320,11 +320,4 @@ StatsCardGrid.propTypes = {
   showChange: PropTypes.bool
 };
 
-StatsCardGrid.defaultProps = {
-  statistics: {},
-  loading: false,
-  error: false,
-  showChange: true
-};
-
 export default StatsCardGrid;

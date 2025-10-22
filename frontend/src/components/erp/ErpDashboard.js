@@ -72,7 +72,7 @@ const ErpDashboard = ({ user: propUser }) => {
     };
 
     setTimeout(checkSessionWithDelay, 100);
-  }, [sessionLoading, propUser, sessionUser, isLoggedIn, navigate]);
+  }, [sessionLoading, isLoggedIn, navigate]); // propUser, sessionUser 의존성 제거
 
   // 권한이 로드된 후 ERP 접근 권한 확인
   useEffect(() => {

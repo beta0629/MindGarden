@@ -514,15 +514,4 @@ ScheduleList.propTypes = {
   onScheduleComplete: PropTypes.func
 };
 
-ScheduleList.defaultProps = {
-  userRole: 'ADMIN',
-  userId: 1,
-  onScheduleView: null,
-  onScheduleEdit: null,
-  onScheduleDelete: null,
-  onScheduleConfirm: null,
-  onScheduleCancel: null,
-  onScheduleComplete: null
-};
-
 export default ScheduleList;

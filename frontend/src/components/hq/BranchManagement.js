@@ -16,7 +16,7 @@ import { normalizeBranchList, getBranchNameByCode } from '../../utils/branchUtil
 import UnifiedLoading from "../common/UnifiedLoading";
 import SimpleLayout from '../layout/SimpleLayout';
 import BranchRegistrationModal from './BranchRegistrationModal';
-// CSS 파일 제거 - 인라인 스타일 사용
+import './BranchManagement.css';
 
 /**
  * 본사 지점 관리 컴포넌트
@@ -217,37 +217,17 @@ const BranchManagement = () => {
                             <Row>
                                 <Col md={3}>
                                     <Card className="branch-management-card">
-                                        <Card.Header style={{
-                                            background: '#f8f9fa',
-                                            borderBottom: '1px solid #e9ecef',
-                                            padding: '16px 20px',
-                                            borderRadius: '12px 12px 0 0'
-                                        }}>
-                                            <div style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center'
-                                            }}>
-                                                <h5 style={{
-                                                    margin: 0,
-                                                    color: '#495057',
-                                                    fontSize: 'var(--font-size-base)',
-                                                    fontWeight: '600',
-                                                    display: 'flex',
-                                                    alignItems: 'center'
-                                                }}>
-                                                    <FaBuilding style={{ marginRight: '8px', color: '#007bff' }} />
+                                        <Card.Header>
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <h5 className="mb-0 d-flex align-items-center">
+                                                    <FaBuilding className="me-2" style={{ color: 'var(--color-primary)' }} />
                                                     지점 목록 ({branches.length}개)
                                                 </h5>
                                                 <Button
                                                     variant="primary"
                                                     size="sm"
                                                     onClick={() => setShowBranchRegistrationModal(true)}
-                                                    style={{
-                                                        padding: '4px 12px',
-                                                        fontSize: 'var(--font-size-xs)',
-                                                        borderRadius: '6px'
-                                                    }}
+                                                    className="branch-action-button branch-action-button--primary"
                                                 >
                                                     <FaPlus className="me-1" />
                                                     지점 등록

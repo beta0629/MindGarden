@@ -109,7 +109,7 @@ const QuickActions = ({ user }) => {
           </button>
           
           {/* 관리자 전용 액션 */}
-          {(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
+          {(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN' || user?.role === 'HQ_MASTER') && (
             <>
               <button className="quick-action-btn" onClick={goToMappingManagement}>
                 <Link2 size={24} />

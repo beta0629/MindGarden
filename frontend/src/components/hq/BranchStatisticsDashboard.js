@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-    Card, Row, Col, Button, FormSelect, 
-    Alert, Badge, ProgressBar
-} from 'react-bootstrap';
-import { 
     FaChartBar, FaUsers, FaUserTie, FaUser, FaCrown,
     FaCalendarAlt, FaDollarSign, FaArrowUp, FaArrowDown,
     FaClock, FaPercentage, FaTrophy, FaBuilding
@@ -12,7 +8,8 @@ import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
 import UnifiedLoading from "../common/UnifiedLoading";
-import '../../styles/main.css';
+import Chart from '../common/Chart';
+import SimpleLayout from '../layout/SimpleLayout';
 import './BranchStatisticsDashboard.css';
 
 /**
@@ -48,433 +45,421 @@ const BranchStatisticsDashboard = ({ selectedBranchId, onBranchSelect }) => {
                     getCommonCodes('STATS_PERIOD'),
                     getCommonCodes('STATS_METRIC')
                 ]);
-                
                 setStatsPeriodOptions(periods);
                 setStatsMetricOptions(metrics);
             } catch (error) {
-                console.error('공통코드 옵션 로드 실패:', error);
-                showNotification('통계 옵션을 불러오는데 실패했습니다.', 'error');
+                console.error('공통코드 로드 실패:', error);
             }
         };
-        
         loadOptions();
     }, []);
 
-    // 데이터 로드
-    const loadStatisticsData = useCallback(async () => {
+    // 통계 데이터 로드
+    const loadStatistics = useCallback(async () => {
         setLoading(true);
         try {
             const [branchesRes, overallRes, comparisonRes, trendRes] = await Promise.all([
-                apiGet('/api/hq/branches'),
-                apiGet(`/api/hq/statistics/overall?period=${selectedPeriod}`),
-                apiGet(`/api/hq/statistics/comparison?period=${selectedPeriod}`),
+                apiGet('/api/hq/branch-management/branches'),
+                apiGet('/api/hq/statistics/overall'),
+                apiGet('/api/hq/statistics/branch-comparison'),
                 apiGet(`/api/hq/statistics/trend?period=${selectedPeriod}&metric=${selectedMetric}`)
             ]);
-            
+
             setBranches(branchesRes.data || []);
-            setOverallStats(overallRes || {});
+            setOverallStats(overallRes.data || {});
             setBranchComparison(comparisonRes.data || []);
-            setTrendData(trendRes || {});
+            setTrendData(trendRes.data || {});
         } catch (error) {
             console.error('통계 데이터 로드 실패:', error);
-            showNotification('통계 데이터를 불러오는데 실패했습니다.', 'error');
+            showNotification('통계 데이터를 불러오는 중 오류가 발생했습니다.', 'error');
         } finally {
             setLoading(false);
         }
     }, [selectedPeriod, selectedMetric]);
 
-    // 컴포넌트 마운트 및 의존성 변경 시 데이터 로드
+    // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
-        loadStatisticsData();
-    }, [loadStatisticsData]);
+        loadStatistics();
+    }, [loadStatistics]);
 
-    // 지점 선택 핸들러
-    const handleBranchSelect = (branchId) => {
-        if (onBranchSelect) {
-            onBranchSelect(branchId);
+    // 차트 데이터 생성
+    const getChartData = () => {
+        if (!trendData.labels || trendData.labels.length === 0) {
+            return {
+                labels: ['데이터 없음'],
+                datasets: [{
+                    label: '통계',
+                    data: [0],
+                    borderColor: 'var(--color-primary)',
+                    backgroundColor: 'var(--color-primary-light)',
+                    tension: 0.1
+                }]
+            };
         }
-    };
 
-    // 성과 지표 계산
-    const calculatePerformanceMetrics = (branch) => {
-        const totalUsers = branch.totalUsers || 0;
-        const activeUsers = branch.activeUsers || 0;
-        const consultations = branch.totalConsultations || 0;
-        const revenue = branch.totalRevenue || 0;
-        
         return {
-            userGrowth: branch.userGrowth || 0,
-            consultationGrowth: branch.consultationGrowth || 0,
-            revenueGrowth: branch.revenueGrowth || 0,
-            userRetention: totalUsers > 0 ? (activeUsers / totalUsers) * 100 : 0,
-            avgConsultationPerUser: totalUsers > 0 ? consultations / totalUsers : 0,
-            revenuePerUser: totalUsers > 0 ? revenue / totalUsers : 0
+            labels: trendData.labels,
+            datasets: [{
+                label: trendData.metricName || '통계',
+                data: trendData.values,
+                borderColor: 'var(--color-primary)',
+                backgroundColor: 'var(--color-primary-light)',
+                tension: 0.1,
+                fill: true
+            }]
         };
     };
 
-    // 성과 순위 계산
-    const getPerformanceRank = (branchId, metric) => {
-        const sortedBranches = [...branchComparison]
-            .sort((a, b) => (b[metric] || 0) - (a[metric] || 0));
-        
-        const rank = sortedBranches.findIndex(b => b.id === branchId) + 1;
-        return rank || '-';
-    };
-
-    // 트렌드 방향 아이콘
-    const getTrendIcon = (value) => {
-        if (value > 0) {
-            return <FaArrowUp className="text-success" />;
-        } else if (value < 0) {
-            return <FaArrowDown className="text-danger" />;
+    // 유틸리티 함수
+    const formatNumber = (num) => {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
         }
-        return <span className="text-muted">-</span>;
+        return num?.toString() || '0';
     };
 
-    // 성과 등급 계산
-    const getPerformanceGrade = (rank, total) => {
-        const percentage = (rank / total) * 100;
-        if (percentage <= 20) return { grade: 'A+', color: 'success', label: '우수' };
-        if (percentage <= 40) return { grade: 'A', color: 'primary', label: '양호' };
-        if (percentage <= 60) return { grade: 'B', color: 'warning', label: '보통' };
-        if (percentage <= 80) return { grade: 'C', color: 'info', label: '개선필요' };
-        return { grade: 'D', color: 'danger', label: '미흡' };
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('ko-KR', {
+            style: 'currency',
+            currency: 'KRW'
+        }).format(amount);
+    };
+
+    const getTrendIcon = (trend) => {
+        switch (trend) {
+            case 'up': return <FaArrowUp className="stats-icon-success" />;
+            case 'down': return <FaArrowDown className="stats-icon-danger" />;
+            default: return <span className="stats-icon-neutral">→</span>;
+        }
+    };
+
+    const getTrendColor = (trend) => {
+        switch (trend) {
+            case 'up': return 'stats-value-success';
+            case 'down': return 'stats-value-danger';
+            default: return 'stats-value-neutral';
+        }
     };
 
     if (loading) {
         return (
-            <div className="branch-statistics-dashboard">
-                <div className="text-center py-5">
+            <SimpleLayout title="전사 통계">
+                <div className="branch-stats-container">
                     <UnifiedLoading text="통계 데이터를 불러오는 중..." size="large" type="inline" />
                 </div>
-            </div>
+            </SimpleLayout>
         );
     }
 
     return (
-        <div className="branch-statistics-dashboard">
-            {/* 헤더 및 필터 */}
-            <Card className="dashboard-header">
-                <Card.Header>
-                    <Row className="align-items-center">
-                        <Col>
-                            <h4 className="mb-1">
-                                <FaChartBar className="me-2" />
-                                지점별 통계 대시보드
-                            </h4>
-                            <p className="text-muted mb-0">
-                                전체 지점의 성과를 분석하고 비교합니다
-                            </p>
-                        </Col>
-                        <Col xs="auto">
-                            <div className="d-flex gap-2">
-                                <FormSelect
-                                    size="sm"
-                                    value={selectedPeriod}
-                                    onChange={(e) => setSelectedPeriod(e.target.value)}
-                                    className="filter-select"
-                                >
-                                    {statsPeriodOptions.map(option => (
-                                        <option key={option.codeValue} value={option.codeValue}>
-                                            {option.codeName}
-                                        </option>
+        <SimpleLayout title="전사 통계">
+            <div className="branch-stats-container">
+                {/* 헤더 및 필터 */}
+                <div className="branch-stats-header">
+                    <div className="branch-stats-title-section">
+                        <h2 className="branch-stats-title">
+                            <FaChartBar className="branch-stats-icon" />
+                            전사 통계 대시보드
+                        </h2>
+                        <p className="branch-stats-subtitle">전체 지점 통계 및 성과 분석</p>
+                    </div>
+                    <div className="branch-stats-filters">
+                        <div className="branch-stats-filter-group">
+                            <label className="branch-stats-filter-label">기간</label>
+                            <select
+                                className="branch-stats-filter-select"
+                                value={selectedPeriod}
+                                onChange={(e) => setSelectedPeriod(e.target.value)}
+                            >
+                                {statsPeriodOptions.map(option => (
+                                    <option key={option.code} value={option.code}>
+                                        {option.koreanName}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="branch-stats-filter-group">
+                            <label className="branch-stats-filter-label">지표</label>
+                            <select
+                                className="branch-stats-filter-select"
+                                value={selectedMetric}
+                                onChange={(e) => setSelectedMetric(e.target.value)}
+                            >
+                                {statsMetricOptions.map(option => (
+                                    <option key={option.code} value={option.code}>
+                                        {option.koreanName}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <button 
+                            className="branch-stats-refresh-btn"
+                            onClick={loadStatistics}
+                        >
+                            <FaChartBar />
+                            새로고침
+                        </button>
+                    </div>
+                </div>
+
+                {/* 전체 통계 요약 */}
+                <div className="branch-stats-summary-grid">
+                    <div className="branch-stats-summary-card">
+                        <div className="branch-stats-summary-header">
+                            <FaUsers className="branch-stats-summary-icon branch-stats-icon-primary" />
+                            <h3 className="branch-stats-summary-title">전체 사용자</h3>
+                        </div>
+                        <div className="branch-stats-summary-body">
+                            <div className="branch-stats-summary-value">
+                                {formatNumber(overallStats.totalUsers || 0)}
+                            </div>
+                            <div className="branch-stats-summary-trend">
+                                {getTrendIcon(overallStats.userTrend)}
+                                <span className={getTrendColor(overallStats.userTrend)}>
+                                    {overallStats.userGrowthRate || 0}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="branch-stats-summary-card">
+                        <div className="branch-stats-summary-header">
+                            <FaBuilding className="branch-stats-summary-icon branch-stats-icon-success" />
+                            <h3 className="branch-stats-summary-title">활성 지점</h3>
+                        </div>
+                        <div className="branch-stats-summary-body">
+                            <div className="branch-stats-summary-value">
+                                {overallStats.activeBranches || 0}개
+                            </div>
+                            <div className="branch-stats-summary-trend">
+                                {getTrendIcon(overallStats.branchTrend)}
+                                <span className={getTrendColor(overallStats.branchTrend)}>
+                                    {overallStats.branchGrowthRate || 0}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="branch-stats-summary-card">
+                        <div className="branch-stats-summary-header">
+                            <FaDollarSign className="branch-stats-summary-icon branch-stats-icon-warning" />
+                            <h3 className="branch-stats-summary-title">총 수익</h3>
+                        </div>
+                        <div className="branch-stats-summary-body">
+                            <div className="branch-stats-summary-value">
+                                {formatCurrency(overallStats.totalRevenue || 0)}
+                            </div>
+                            <div className="branch-stats-summary-trend">
+                                {getTrendIcon(overallStats.revenueTrend)}
+                                <span className={getTrendColor(overallStats.revenueTrend)}>
+                                    {overallStats.revenueGrowthRate || 0}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="branch-stats-summary-card">
+                        <div className="branch-stats-summary-header">
+                            <FaTrophy className="branch-stats-summary-icon branch-stats-icon-info" />
+                            <h3 className="branch-stats-summary-title">평균 성과</h3>
+                        </div>
+                        <div className="branch-stats-summary-body">
+                            <div className="branch-stats-summary-value">
+                                {overallStats.averagePerformance || 0}점
+                            </div>
+                            <div className="branch-stats-summary-trend">
+                                {getTrendIcon(overallStats.performanceTrend)}
+                                <span className={getTrendColor(overallStats.performanceTrend)}>
+                                    {overallStats.performanceGrowthRate || 0}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 트렌드 차트 */}
+                <div className="branch-stats-chart-section">
+                    <div className="branch-stats-chart-card">
+                        <div className="branch-stats-chart-header">
+                            <h3 className="branch-stats-chart-title">
+                                <FaChartBar className="branch-stats-chart-icon" />
+                                {selectedMetric === 'userCount' ? '사용자 수' : 
+                                 selectedMetric === 'revenue' ? '수익' : 
+                                 selectedMetric === 'sessions' ? '상담 세션' : '통계'} 트렌드
+                            </h3>
+                        </div>
+                        <div className="branch-stats-chart-body">
+                            <Chart
+                                type="line"
+                                data={getChartData()}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'top',
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: `${selectedPeriod === 'week' ? '주간' : 
+                                                   selectedPeriod === 'month' ? '월간' : 
+                                                   selectedPeriod === 'quarter' ? '분기' : '연간'} 트렌드`
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                callback: function(value) {
+                                                    return selectedMetric === 'revenue' ? 
+                                                        formatCurrency(value) : 
+                                                        formatNumber(value);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* 지점별 비교 */}
+                <div className="branch-stats-comparison-section">
+                    <div className="branch-stats-comparison-card">
+                        <div className="branch-stats-comparison-header">
+                            <h3 className="branch-stats-comparison-title">
+                                <FaBuilding className="branch-stats-comparison-icon" />
+                                지점별 성과 비교
+                            </h3>
+                        </div>
+                        <div className="branch-stats-comparison-body">
+                            {branchComparison.length > 0 ? (
+                                <div className="branch-stats-comparison-grid">
+                                    {branchComparison.map((branch, index) => (
+                                        <div key={branch.branchId} className="branch-stats-comparison-item">
+                                            <div className="branch-stats-comparison-item-header">
+                                                <div className="branch-stats-comparison-rank">
+                                                    <FaTrophy className={`branch-stats-rank-icon branch-stats-rank-${index < 3 ? 'top' : 'normal'}`} />
+                                                    <span className="branch-stats-rank-number">{index + 1}</span>
+                                                </div>
+                                                <h4 className="branch-stats-comparison-branch-name">
+                                                    {branch.branchName}
+                                                </h4>
+                                            </div>
+                                            <div className="branch-stats-comparison-item-body">
+                                                <div className="branch-stats-comparison-metrics">
+                                                    <div className="branch-stats-comparison-metric">
+                                                        <FaUsers className="branch-stats-metric-icon" />
+                                                        <span className="branch-stats-metric-label">사용자</span>
+                                                        <span className="branch-stats-metric-value">
+                                                            {formatNumber(branch.userCount)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="branch-stats-comparison-metric">
+                                                        <FaDollarSign className="branch-stats-metric-icon" />
+                                                        <span className="branch-stats-metric-label">수익</span>
+                                                        <span className="branch-stats-metric-value">
+                                                            {formatCurrency(branch.revenue)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="branch-stats-comparison-metric">
+                                                        <FaPercentage className="branch-stats-metric-icon" />
+                                                        <span className="branch-stats-metric-label">성장률</span>
+                                                        <span className={`branch-stats-metric-value ${getTrendColor(branch.growthTrend)}`}>
+                                                            {branch.growthRate}%
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="branch-stats-comparison-progress">
+                                                    <div className="branch-stats-progress-bar">
+                                                        <div 
+                                                            className="branch-stats-progress-fill"
+                                                            style={{ width: `${Math.min((branch.performance / 100) * 100, 100)}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <span className="branch-stats-progress-text">
+                                                        성과: {branch.performance}점
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     ))}
-                                </FormSelect>
-                                <FormSelect
-                                    size="sm"
-                                    value={selectedMetric}
-                                    onChange={(e) => setSelectedMetric(e.target.value)}
-                                    className="filter-select"
-                                >
-                                    {statsMetricOptions.map(option => (
-                                        <option key={option.codeValue} value={option.codeValue}>
-                                            {option.codeName}
-                                        </option>
-                                    ))}
-                                </FormSelect>
-                                <Button
-                                    variant="outline-primary"
-                                    size="sm"
-                                    onClick={loadStatisticsData}
-                                    className="refresh-btn"
-                                >
-                                    새로고침
-                                </Button>
-                            </div>
-                        </Col>
-                    </Row>
-                </Card.Header>
-            </Card>
-
-            {/* 전체 통계 요약 */}
-            <Row className="mb-4">
-                <Col md={3}>
-                    <Card className="stat-summary-card">
-                        <Card.Body>
-                            <div className="stat-icon total-users">
-                                <FaUsers />
-                            </div>
-                            <div className="stat-content">
-                                <h3>{overallStats.totalUsers || 0}</h3>
-                                <p>전체 사용자</p>
-                                <div className="stat-change">
-                                    {getTrendIcon(overallStats.userGrowth)}
-                                    <span className={overallStats.userGrowth >= 0 ? 'text-success' : 'text-danger'}>
-                                        {Math.abs(overallStats.userGrowth || 0)}%
-                                    </span>
                                 </div>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={3}>
-                    <Card className="stat-summary-card">
-                        <Card.Body>
-                            <div className="stat-icon total-branches">
-                                <FaBuilding />
-                            </div>
-                            <div className="stat-content">
-                                <h3>{overallStats.totalBranches || 0}</h3>
-                                <p>활성 지점</p>
-                                <div className="stat-change">
-                                    {getTrendIcon(overallStats.branchGrowth)}
-                                    <span className={overallStats.branchGrowth >= 0 ? 'text-success' : 'text-danger'}>
-                                        {Math.abs(overallStats.branchGrowth || 0)}%
-                                    </span>
+                            ) : (
+                                <div className="branch-stats-empty-state">
+                                    <FaChartBar className="branch-stats-empty-icon" />
+                                    <h4 className="branch-stats-empty-title">비교 데이터가 없습니다</h4>
+                                    <p className="branch-stats-empty-description">
+                                        지점별 성과 비교 데이터를 불러올 수 없습니다.
+                                    </p>
                                 </div>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={3}>
-                    <Card className="stat-summary-card">
-                        <Card.Body>
-                            <div className="stat-icon total-consultations">
-                                <FaCalendarAlt />
-                            </div>
-                            <div className="stat-content">
-                                <h3>{overallStats.totalConsultations || 0}</h3>
-                                <p>총 상담 건수</p>
-                                <div className="stat-change">
-                                    {getTrendIcon(overallStats.consultationGrowth)}
-                                    <span className={overallStats.consultationGrowth >= 0 ? 'text-success' : 'text-danger'}>
-                                        {Math.abs(overallStats.consultationGrowth || 0)}%
-                                    </span>
-                                </div>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={3}>
-                    <Card className="stat-summary-card">
-                        <Card.Body>
-                            <div className="stat-icon total-revenue">
-                                <FaDollarSign />
-                            </div>
-                            <div className="stat-content">
-                                <h3>{(overallStats.totalRevenue || 0).toLocaleString()}</h3>
-                                <p>총 매출 (원)</p>
-                                <div className="stat-change">
-                                    {getTrendIcon(overallStats.revenueGrowth)}
-                                    <span className={overallStats.revenueGrowth >= 0 ? 'text-success' : 'text-danger'}>
-                                        {Math.abs(overallStats.revenueGrowth || 0)}%
-                                    </span>
-                                </div>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-
-            {/* 지점 성과 비교 */}
-            <Card className="comparison-card">
-                <Card.Header>
-                    <h5 className="mb-0">
-                        <FaTrophy className="me-2" />
-                        지점 성과 비교
-                    </h5>
-                </Card.Header>
-                <Card.Body>
-                    {branchComparison.length === 0 ? (
-                        <div className="text-center py-4">
-                            <FaChartBar className="text-muted mb-3 branch-stats-empty-icon" />
-                            <p className="text-muted">비교할 지점 데이터가 없습니다.</p>
+                            )}
                         </div>
-                    ) : (
-                        <div className="branch-comparison-list">
-                            {branchComparison.map((branch, index) => {
-                                const metrics = calculatePerformanceMetrics(branch);
-                                const userRank = getPerformanceRank(branch.id, 'totalUsers');
-                                const consultationRank = getPerformanceRank(branch.id, 'totalConsultations');
-                                const revenueRank = getPerformanceRank(branch.id, 'totalRevenue');
-                                
-                                const overallRank = Math.round((userRank + consultationRank + revenueRank) / 3);
-                                const performanceGrade = getPerformanceGrade(overallRank, branchComparison.length);
+                    </div>
+                </div>
 
-                                return (
-                                    <div 
-                                        key={branch.id}
-                                        className={`branch-comparison-item ${selectedBranchId === branch.id ? 'selected' : ''}`}
-                                        onClick={() => handleBranchSelect(branch.id)}
-                                    >
-                                        <div className="branch-rank">
-                                            <Badge 
-                                                bg={performanceGrade.color}
-                                                className="rank-badge"
-                                            >
-                                                {overallRank}위
-                                            </Badge>
-                                            <div className="performance-grade">
-                                                <span className={`grade grade-${performanceGrade.color}`}>
-                                                    {performanceGrade.grade}
-                                                </span>
-                                                <small className="grade-label">{performanceGrade.label}</small>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="branch-info">
-                                            <h6 className="branch-name">
-                                                <FaBuilding className="me-2" />
-                                                {branch.name}
-                                            </h6>
-                                            <div className="branch-code">
-                                                <code>{branch.branchCode}</code>
-                                            </div>
-                                            {branch.managerName && (
-                                                <div className="branch-manager">
-                                                    <small className="text-muted">
-                                                        지점장: {branch.managerName}
-                                                    </small>
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        <div className="branch-metrics">
-                                            <div className="metric-row">
-                                                <div className="metric-item">
-                                                    <div className="metric-label">
-                                                        <FaUsers className="me-1" />
-                                                        사용자
-                                                    </div>
-                                                    <div className="metric-value">
-                                                        {branch.totalUsers || 0}명
-                                                        <span className="metric-rank">#{userRank}</span>
-                                                    </div>
-                                                    <div className="metric-trend">
-                                                        {getTrendIcon(metrics.userGrowth)}
-                                                        <span className={metrics.userGrowth >= 0 ? 'text-success' : 'text-danger'}>
-                                                            {Math.abs(metrics.userGrowth)}%
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="metric-item">
-                                                    <div className="metric-label">
-                                                        <FaCalendarAlt className="me-1" />
-                                                        상담
-                                                    </div>
-                                                    <div className="metric-value">
-                                                        {branch.totalConsultations || 0}건
-                                                        <span className="metric-rank">#{consultationRank}</span>
-                                                    </div>
-                                                    <div className="metric-trend">
-                                                        {getTrendIcon(metrics.consultationGrowth)}
-                                                        <span className={metrics.consultationGrowth >= 0 ? 'text-success' : 'text-danger'}>
-                                                            {Math.abs(metrics.consultationGrowth)}%
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="metric-item">
-                                                    <div className="metric-label">
-                                                        <FaDollarSign className="me-1" />
-                                                        매출
-                                                    </div>
-                                                    <div className="metric-value">
-                                                        {(branch.totalRevenue || 0).toLocaleString()}원
-                                                        <span className="metric-rank">#{revenueRank}</span>
-                                                    </div>
-                                                    <div className="metric-trend">
-                                                        {getTrendIcon(metrics.revenueGrowth)}
-                                                        <span className={metrics.revenueGrowth >= 0 ? 'text-success' : 'text-danger'}>
-                                                            {Math.abs(metrics.revenueGrowth)}%
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="performance-indicators">
-                                                <div className="indicator">
-                                                    <div className="indicator-label">
-                                                        <FaPercentage className="me-1" />
-                                                        사용자 유지율
-                                                    </div>
-                                                    <ProgressBar 
-                                                        now={metrics.userRetention} 
-                                                        variant={metrics.userRetention >= 80 ? 'success' : metrics.userRetention >= 60 ? 'warning' : 'danger'}
-                                                        className="indicator-bar"
-                                                    />
-                                                    <small className="indicator-value">
-                                                        {metrics.userRetention.toFixed(1)}%
-                                                    </small>
-                                                </div>
-                                                
-                                                <div className="indicator">
-                                                    <div className="indicator-label">
-                                                        <FaClock className="me-1" />
-                                                        사용자당 상담수
-                                                    </div>
-                                                    <div className="indicator-value">
-                                                        {metrics.avgConsultationPerUser.toFixed(1)}회
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="indicator">
-                                                    <div className="indicator-label">
-                                                        <FaDollarSign className="me-1" />
-                                                        사용자당 매출
-                                                    </div>
-                                                    <div className="indicator-value">
-                                                        {metrics.revenuePerUser.toLocaleString()}원
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                {/* 상세 통계 테이블 */}
+                <div className="branch-stats-table-section">
+                    <div className="branch-stats-table-card">
+                        <div className="branch-stats-table-header">
+                            <h3 className="branch-stats-table-title">
+                                <FaChartBar className="branch-stats-table-icon" />
+                                지점별 상세 통계
+                            </h3>
                         </div>
-                    )}
-                </Card.Body>
-            </Card>
-
-            {/* 트렌드 분석 */}
-            {trendData && Object.keys(trendData).length > 0 && (
-                <Card className="trend-card">
-                    <Card.Header>
-                        <h5 className="mb-0">
-                            <FaChartBar className="me-2" />
-                            {selectedMetric === 'userCount' ? '사용자 수' : 
-                             selectedMetric === 'consultationCount' ? '상담 건수' :
-                             selectedMetric === 'revenue' ? '매출' : '성장률'} 트렌드
-                        </h5>
-                    </Card.Header>
-                    <Card.Body>
-                        <div className="trend-chart-placeholder">
-                            <div className="text-center py-5">
-                                <FaChartBar className="text-muted mb-3 branch-stats-empty-icon" />
-                                <p className="text-muted">
-                                    차트 컴포넌트는 추후 구현 예정입니다.
-                                </p>
-                                <p className="text-muted small">
-                                    현재 선택된 지표: {selectedMetric}
-                                </p>
+                        <div className="branch-stats-table-body">
+                            <div className="branch-stats-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>지점명</th>
+                                            <th>사용자 수</th>
+                                            <th>수익</th>
+                                            <th>성장률</th>
+                                            <th>성과 점수</th>
+                                            <th>상태</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {branches.map((branch) => (
+                                            <tr key={branch.branchId}>
+                                                <td className="branch-stats-table-branch">
+                                                    <FaBuilding className="branch-stats-table-icon" />
+                                                    {branch.branchName}
+                                                </td>
+                                                <td className="branch-stats-table-users">
+                                                    {formatNumber(branch.userCount || 0)}
+                                                </td>
+                                                <td className="branch-stats-table-revenue">
+                                                    {formatCurrency(branch.revenue || 0)}
+                                                </td>
+                                                <td className={`branch-stats-table-growth ${getTrendColor(branch.growthTrend)}`}>
+                                                    {getTrendIcon(branch.growthTrend)}
+                                                    {branch.growthRate || 0}%
+                                                </td>
+                                                <td className="branch-stats-table-performance">
+                                                    {branch.performance || 0}점
+                                                </td>
+                                                <td className="branch-stats-table-status">
+                                                    <span className={`branch-stats-status-badge branch-stats-status-${branch.status || 'active'}`}>
+                                                        {branch.status === 'active' ? '활성' : 
+                                                         branch.status === 'inactive' ? '비활성' : 
+                                                         branch.status === 'maintenance' ? '점검중' : '알 수 없음'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    </Card.Body>
-                </Card>
-            )}
-        </div>
+                    </div>
+                </div>
+            </div>
+        </SimpleLayout>
     );
 };
 

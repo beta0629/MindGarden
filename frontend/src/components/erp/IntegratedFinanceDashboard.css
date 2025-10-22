@@ -1,5 +1,88 @@
 /* IntegratedFinanceDashboard 스타일 - MindGarden 디자인 시스템 */
 
+/* 유틸리티 클래스들 */
+.finance-card {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  background: var(--color-background);
+  border: var(--border-width) solid var(--color-border);
+  transition: var(--transition-all);
+}
+
+.finance-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.finance-value-large {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.finance-value-success {
+  color: var(--status-active);
+}
+
+.finance-value-danger {
+  color: var(--status-error);
+}
+
+.finance-value-info {
+  color: var(--olive-green);
+}
+
+.finance-value-warning {
+  color: var(--status-pending);
+}
+
+.finance-description {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: var(--spacing-xs);
+}
+
+.finance-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-background-light);
+  color: var(--text-primary);
+  border: var(--border-width) solid var(--color-border);
+}
+
+.finance-badge--info {
+  background: rgba(128, 128, 0, 0.1);
+  color: var(--olive-green);
+  border-color: var(--olive-green);
+}
+
+.finance-icon-inline {
+  display: inline-block;
+  margin-right: var(--spacing-sm);
+  vertical-align: middle;
+}
+
+.finance-empty-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--status-error);
+}
+
+.finance-section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+}
+
+.finance-section-title .mg-icon {
+  margin-right: var(--spacing-sm);
+}
+
 /* 대시보드 아이콘 */
 .mg-dashboard-icon {
   font-size: 2rem;
@@ -543,13 +626,14 @@
 
 /* 재무 개요 카드 - 수입/지출/순이익 */
 .finance-summary-card {
-  padding: var(--spacing-xl);
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-lg);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   color: var(--dark-gray);
+  min-height: var(--card-height-sm);
 }
 
 .finance-summary-card--income {
@@ -719,5 +803,64 @@
   
   .net-income-value {
     font-size: var(--font-size-xxl);
+  }
+  
+  /* 모바일에서 카드 패딩 조정 */
+  .finance-summary-card {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    min-height: var(--card-height-sm);
+  }
+  
+  .finance-summary-card-title {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .net-income-value {
+    font-size: var(--font-size-lg);
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .finance-card,
+  .finance-kpi-card {
+    background: var(--color-background-dark);
+    border-color: var(--color-border-dark);
+  }
+  
+  .finance-summary-card {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: var(--color-border-dark);
+  }
+  
+  .net-income-card {
+    background: linear-gradient(135deg, var(--mint-green-dark), var(--soft-mint-dark));
+  }
+  
+  .finance-empty-state {
+    color: var(--status-error);
+  }
+  
+  .finance-value-success {
+    color: var(--status-active);
+  }
+  
+  .finance-value-danger {
+    color: var(--status-error);
+  }
+  
+  .finance-value-info {
+    color: var(--olive-green);
+  }
+  
+  .finance-value-warning {
+    color: var(--status-pending);
+  }
+  
+  .finance-badge--info {
+    background: rgba(128, 128, 0, 0.2);
+    color: var(--olive-green);
+    border-color: var(--olive-green);
   }
 }

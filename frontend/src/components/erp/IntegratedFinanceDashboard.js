@@ -117,7 +117,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
     // OAuth2 콜백 후 세션 설정을 위한 지연
     setTimeout(checkSessionWithDelay, 100);
-  }, [sessionLoading, user, isLoggedIn, navigate]);
+  }, [sessionLoading, isLoggedIn, navigate]); // user 의존성 제거
 
   useEffect(() => {
     if (user) {
@@ -464,49 +464,31 @@ const OverviewTab = ({ data }) => {
         </h3>
         
         <div className="finance-kpi-grid">
-          <div style={{
-            padding: '16px',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            border: '1px solid #dee2e6',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#28a745' }}>
+          <div className="finance-card text-center">
+            <div className="finance-value-large finance-value-success">
               {financialData.incomeByCategory?.CONSULTATION ? 
                 `₩${formatNumber(financialData.incomeByCategory.CONSULTATION)}` : '₩0'}
             </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
+            <div className="finance-description">
               💰 매핑 입금확인 수입
             </div>
           </div>
           
-          <div style={{
-            padding: '16px',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            border: '1px solid #dee2e6',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#dc3545' }}>
+          <div className="finance-card text-center">
+            <div className="finance-value-large finance-value-danger">
               {financialData.expenseByCategory?.CONSULTATION ? 
                 `₩${formatNumber(financialData.expenseByCategory.CONSULTATION)}` : '₩0'}
             </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
+            <div className="finance-description">
               📤 매핑 환불처리 지출
             </div>
           </div>
           
-          <div style={{
-            padding: '16px',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            border: '1px solid #dee2e6',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#007bff' }}>
+          <div className="finance-card text-center">
+            <div className="finance-value-large finance-value-info">
               {financialData.transactionCount || 0}
             </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
+            <div className="finance-description">
               🔄 총 연동 거래 건수
             </div>
           </div>
@@ -548,7 +530,7 @@ const OverviewTab = ({ data }) => {
         <div className="finance-summary-card finance-summary-card--income">
           <div className="net-income-decoration-1"></div>
           <h3 className="finance-summary-card-title">
-            <TrendingUp size={24} style={{ color: 'var(--olive-green)' }} />
+            <TrendingUp size={24} className="finance-icon-inline" style={{ color: 'var(--olive-green)' }} />
             수입
           </h3>
           <div className="net-income-value">
@@ -561,7 +543,7 @@ const OverviewTab = ({ data }) => {
         <div className="finance-summary-card finance-summary-card--expense">
           <div className="net-income-decoration-1"></div>
           <h3 className="finance-summary-card-title">
-            <TrendingDown size={24} style={{ color: 'var(--olive-green)' }} />
+            <TrendingDown size={24} className="finance-icon-inline" style={{ color: 'var(--olive-green)' }} />
             지출
           </h3>
           <div className="net-income-value">
@@ -628,7 +610,7 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
   return (
     <div>
       <h2 className="finance-section-title">
-        <PieChart size={28} style={{ display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+        <PieChart size={28} className="finance-icon-inline" />
         대차대조표
       </h2>
       
@@ -777,7 +759,7 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
   return (
     <div>
       <h2 className="finance-section-title">
-        <BarChart3 size={28} style={{ display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+        <BarChart3 size={28} className="finance-icon-inline" />
         손익계산서
       </h2>
       
@@ -901,7 +883,7 @@ const DailyReportTab = ({ period }) => {
 
   if (error) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: '#e74c3c' }}>
+      <div className="finance-empty-state">
         오류: {error}
       </div>
     );
@@ -910,7 +892,7 @@ const DailyReportTab = ({ period }) => {
   return (
     <div>
       <h2 className="finance-section-title">
-        <Calendar size={28} style={{ display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+        <Calendar size={28} className="finance-icon-inline" />
         일간 재무 리포트
       </h2>
       
@@ -965,7 +947,7 @@ const DailyReportTab = ({ period }) => {
       {/* 거래 건수 */}
       <div className="finance-transactions-section">
         <h3 className="finance-transactions-title">
-          <BarChart3 size={24} style={{ display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+          <BarChart3 size={24} className="finance-icon-inline" />
           일간 거래 건수
         </h3>
         <div className="finance-transactions-grid">
@@ -1028,7 +1010,7 @@ const MonthlyReportTab = ({ period }) => {
 
   if (error) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: '#e74c3c' }}>
+      <div className="finance-empty-state">
         오류: {error}
       </div>
     );
@@ -1037,7 +1019,7 @@ const MonthlyReportTab = ({ period }) => {
   return (
     <div>
       <h2 className="finance-section-title">
-        <BarChart3 size={28} style={{ display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+        <BarChart3 size={28} className="finance-icon-inline" />
         월간 재무 리포트
       </h2>
       
@@ -1094,7 +1076,7 @@ const MonthlyReportTab = ({ period }) => {
       {/* 월간 거래 건수 */}
       <div className="finance-transactions-section">
         <h3 className="finance-transactions-title">
-          <BarChart3 size={24} style={{ display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+          <BarChart3 size={24} className="finance-icon-inline" />
           월간 거래 건수
         </h3>
         <div className="finance-transactions-grid">
@@ -1157,7 +1139,7 @@ const YearlyReportTab = ({ period }) => {
 
   if (error) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: '#e74c3c' }}>
+      <div className="finance-empty-state">
         오류: {error}
       </div>
     );
@@ -1166,7 +1148,7 @@ const YearlyReportTab = ({ period }) => {
   return (
     <div>
       <h2 className="finance-section-title">
-        <TrendingUp size={28} style={{ display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+        <TrendingUp size={28} className="finance-icon-inline" />
         년간 재무 리포트
       </h2>
       

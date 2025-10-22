@@ -356,7 +356,7 @@ export const SessionProvider = ({ children }) => {
     }, SESSION_CHECK_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [checkSession, state.isLoading]);
+  }, []); // checkSession, state.isLoading 의존성 제거
 
   // 자동 리다이렉트 로직 제거 (무한루프 방지)
   // OAuth2 콜백에서만 리다이렉트 처리

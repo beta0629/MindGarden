@@ -1,200 +1,275 @@
-/* 지점별 재무관리 컴포넌트 스타일 */
+/* 지점별 재무관리 컴포넌트 스타일 - MindGarden 디자인 시스템 v2.0 */
 
 .branch-financial-management {
-    padding: 1rem 0;
+    padding: 0;
     max-width: 100%;
     overflow-x: hidden;
 }
 
-/* 반응형 컨테이너 */
-@media (max-width: 768px) {
-    .branch-financial-management {
-        padding: 0.5rem 0;
-    }
-    
-    .branch-financial-management .card {
-        margin-bottom: 1rem;
-    }
-    
-    .branch-financial-management .row {
-        margin: 0;
-    }
-    
-    .branch-financial-management .col-lg-2,
-    .branch-financial-management .col-lg-3 {
-        margin-bottom: 0.5rem;
-    }
+/* 통계 그리드 */
+.mg-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--grid-min-width-lg), 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
 }
 
-.branch-financial-management h2 {
-    color: #2c3e50;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+/* 폼 그리드 */
+.mg-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--grid-min-width-md), 1fr));
+    gap: var(--spacing-md);
+    align-items: end;
 }
 
-.branch-financial-management .card {
-    border: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+.mg-form-group--button {
+    display: flex;
+    align-items: end;
 }
 
-.branch-financial-management .card:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
+/* 테이블 컨테이너 */
+.mg-table-container {
+    overflow-x: auto;
+    border-radius: var(--border-radius-md);
+    border: var(--border-width) solid var(--color-border);
 }
 
-.branch-financial-management .card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    font-weight: 500;
-}
-
-.branch-financial-management .card-header h5 {
-    margin: 0;
+/* 통계 카드 스타일 */
+.mg-stat {
     display: flex;
     align-items: center;
+    gap: var(--spacing-md);
+    min-height: var(--card-height-md);
 }
 
-/* 재무 요약 카드 스타일 */
-.branch-financial-management .border-success {
-    border-left: 4px solid var(--color-success);
-}
-
-.branch-financial-management .border-danger {
-    border-left: 4px solid var(--color-danger);
-}
-
-.branch-financial-management .border-primary {
-    border-left: 4px solid var(--color-primary);
-}
-
-.branch-financial-management .border-info {
-    border-left: 4px solid var(--color-info);
-}
-
-/* 테이블 스타일 */
-.branch-financial-management .table {
-    font-size: 0.9rem;
-}
-
-.branch-financial-management .table th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    border-top: none;
-    color: #495057;
-}
-
-.branch-financial-management .table td {
-    vertical-align: middle;
-}
-
-/* 필터 섹션 */
-.branch-financial-management .form-label {
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 0.5rem;
-}
-
-.branch-financial-management .form-control,
-.branch-financial-management .form-select {
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.branch-financial-management .form-control:focus,
-.branch-financial-management .form-select:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-/* 탭 스타일 */
-.branch-financial-management .nav-tabs .nav-link {
-    color: #495057;
-    border: none;
-    border-bottom: 2px solid transparent;
-    font-weight: 500;
-}
-
-.branch-financial-management .nav-tabs .nav-link:hover {
-    border-bottom-color: #dee2e6;
-}
-
-.branch-financial-management .nav-tabs .nav-link.active {
-    color: #007bff;
-    border-bottom-color: #007bff;
-    background-color: transparent;
-}
-
-/* 배지 스타일 */
-.branch-financial-management .badge {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.75rem;
-}
-
-/* 버튼 스타일 */
-.branch-financial-management .btn {
-    font-weight: 500;
-    border-radius: 0.375rem;
-    transition: all 0.3s ease;
-}
-
-.branch-financial-management .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* 알림 스타일 */
-.branch-financial-management .alert {
-    border: none;
-    border-radius: 0.5rem;
-    font-weight: 500;
-}
-
-/* 반응형 */
-@media (max-width: 768px) {
-    .branch-financial-management {
-        padding: 0.5rem;
-    }
-    
-    .branch-financial-management h2 {
-        font-size: 1.5rem;
-    }
-    
-    .branch-financial-management .table {
-        font-size: 0.8rem;
-    }
-}
-
-/* 로딩 상태 */
-.branch-financial-management .loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
+.mg-stat__icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
+    width: var(--icon-size-lg);
+    height: var(--icon-size-lg);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-light);
+    flex-shrink: 0;
 }
 
-/* 애니메이션 */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+.mg-stat__content {
+    flex: 1;
+    min-width: 0;
 }
 
-.branch-financial-management .card {
-    animation: fadeIn 0.5s ease-out;
+.mg-stat__number {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: var(--spacing-xs);
 }
 
-/* 통계 카드 호버 효과 */
-.branch-financial-management .card.border-success:hover,
-.branch-financial-management .card.border-danger:hover,
-.branch-financial-management .card.border-primary:hover,
-.branch-financial-management .card.border-info:hover {
-    border-left-width: 6px;
+.mg-stat__label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+    line-height: 1.3;
+}
+
+.mg-stat__trend {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    margin-top: var(--spacing-xs);
+}
+
+.mg-stat__trend--up {
+    color: var(--color-success);
+}
+
+.mg-stat__trend--down {
+    color: var(--color-danger);
+}
+
+/* 테이블 스타일 */
+.mg-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+.mg-table th {
+    background: var(--color-background-light);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+    padding: var(--spacing-md);
+    text-align: left;
+    border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.mg-table td {
+    padding: var(--spacing-md);
+    border-bottom: var(--border-width) solid var(--color-border-light);
+    color: var(--text-primary);
+}
+
+.mg-table tbody tr:hover {
+    background: var(--color-background-light);
+}
+
+/* 텍스트 색상 유틸리티 */
+.mg-text--success {
+    color: var(--color-success) !important;
+}
+
+.mg-text--danger {
+    color: var(--color-danger) !important;
+}
+
+.mg-text--warning {
+    color: var(--color-warning) !important;
+}
+
+.mg-text--info {
+    color: var(--color-info) !important;
+}
+
+/* 반응형 디자인 */
+@media (max-width: var(--breakpoint-tablet)) {
+    .mg-stats-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+    
+    .mg-form-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .mg-form-group--button {
+        justify-content: stretch;
+    }
+    
+    .mg-form-group--button .mg-button {
+        width: 100%;
+    }
+    
+    .mg-table-container {
+        font-size: var(--font-size-xs);
+    }
+    
+    .mg-table th,
+    .mg-table td {
+        padding: var(--spacing-sm);
+    }
+    
+    /* 태블릿에서 카드 통일 */
+    .mg-card {
+        min-height: var(--card-height-xl);
+        padding: var(--spacing-sm) var(--spacing-md) !important;
+    }
+    
+    .mg-stat {
+        gap: var(--spacing-md);
+        min-height: var(--card-height-md);
+        align-items: center;
+    }
+    
+    .mg-stat__icon {
+        width: var(--icon-size-lg);
+        height: var(--icon-size-lg);
+        flex-shrink: 0;
+    }
+    
+    .mg-stat__number {
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-bold);
+    }
+    
+    .mg-stat__label {
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+    }
+}
+
+@media (max-width: var(--breakpoint-mobile)) {
+    .mg-stats-grid {
+        gap: var(--spacing-md);
+    }
+    
+    .mg-table th,
+    .mg-table td {
+        padding: var(--spacing-xs);
+        font-size: var(--font-size-xs);
+    }
+    
+    /* 모바일에서 카드 완전 통일 */
+    .mg-card {
+        min-height: var(--card-height-lg);
+        padding: var(--spacing-xs) var(--spacing-sm) !important;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .mg-stat {
+        gap: var(--spacing-sm);
+        min-height: var(--card-height-sm);
+        align-items: center;
+        justify-content: flex-start;
+    }
+    
+    .mg-stat__icon {
+        width: var(--icon-size-md);
+        height: var(--icon-size-md);
+        flex-shrink: 0;
+    }
+    
+    .mg-stat__content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .mg-stat__number {
+        font-size: var(--font-size-lg);
+        font-weight: var(--font-weight-bold);
+        line-height: 1.2;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .mg-stat__label {
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-medium);
+        color: var(--text-secondary);
+        line-height: 1.3;
+    }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+    .mg-stat__icon {
+        background: var(--color-background-dark);
+    }
+    
+    .mg-table th {
+        background: var(--color-background-dark);
+        border-bottom-color: var(--color-border-dark);
+    }
+    
+    .mg-table td {
+        border-bottom-color: var(--color-border-dark);
+    }
+    
+    .mg-table tbody tr:hover {
+        background: var(--color-background-dark);
+    }
+    
+    .mg-table-container {
+        border-color: var(--color-border-dark);
+    }
+    
+    .mg-table th {
+        border-bottom-color: var(--color-border-dark);
+    }
+    
+    .mg-table td {
+        border-bottom-color: var(--color-border-dark);
+    }
 }

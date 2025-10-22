@@ -1,93 +1,576 @@
-/* BranchStatisticsDashboard 스타일 - 새로운 디자인 시스템 적용 */
-
-.branch-statistics-dashboard {
+/* 전사 통계 대시보드 스타일 */
+.branch-stats-container {
     padding: var(--spacing-lg);
     max-width: 1400px;
     margin: 0 auto;
-    background: var(--ios-bg-primary);
-    min-height: 100vh;
-    font-family: var(--font-family-ios);
 }
 
-.branch-statistics-dashboard__header {
-    margin-bottom: var(--spacing-xxl);
-    text-align: center;
+/* 헤더 및 필터 */
+.branch-stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-xl);
+    gap: var(--spacing-lg);
 }
 
-.branch-statistics-dashboard__title {
-    font-size: var(--font-size-xxxl);
+.branch-stats-title-section {
+    flex: 1;
+}
+
+.branch-stats-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-bold);
-    color: var(--ios-text-primary);
+    color: var(--text-primary);
+}
+
+.branch-stats-icon {
+    color: var(--color-primary);
+    font-size: var(--icon-size-lg);
+}
+
+.branch-stats-subtitle {
     margin: 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
 }
 
-.branch-statistics-dashboard__filters {
-    margin-bottom: var(--spacing-xxl);
+.branch-stats-filters {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: flex-end;
 }
 
-.branch-statistics-dashboard__stats {
+.branch-stats-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.branch-stats-filter-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+}
+
+.branch-stats-filter-select {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    background: var(--background-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    min-width: 120px;
+}
+
+.branch-stats-filter-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.branch-stats-refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.branch-stats-refresh-btn:hover {
+    background: var(--color-primary-dark);
+    transform: translateY(-1px);
+}
+
+/* 요약 통계 그리드 */
+.branch-stats-summary-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xxl);
+    margin-bottom: var(--spacing-xl);
 }
 
-.branch-statistics-dashboard__charts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xxl);
+.branch-stats-summary-card {
+    background: var(--background-primary);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
 }
 
-.branch-statistics-dashboard__comparison {
-    margin-bottom: var(--spacing-xxl);
+.branch-stats-summary-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
-.branch-statistics-dashboard__section {
-    margin-bottom: var(--spacing-xxl);
+.branch-stats-summary-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
 }
 
-.branch-statistics-dashboard__section-title {
-    font-size: var(--font-size-xxl);
+.branch-stats-summary-icon {
+    font-size: var(--icon-size-lg);
+}
+
+.branch-stats-icon-primary { color: var(--color-primary); }
+.branch-stats-icon-success { color: var(--status-success); }
+.branch-stats-icon-warning { color: var(--status-warning); }
+.branch-stats-icon-info { color: var(--status-info); }
+
+.branch-stats-summary-title {
+    margin: 0;
+    font-size: var(--font-size-lg);
     font-weight: var(--font-weight-semibold);
-    color: var(--ios-text-primary);
-    margin: 0 0 var(--spacing-lg) 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+
+.branch-stats-summary-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.branch-stats-summary-value {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+.branch-stats-summary-trend {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+}
+
+.stats-icon-success { color: var(--status-success); }
+.stats-icon-danger { color: var(--status-error); }
+.stats-icon-neutral { color: var(--text-muted); }
+
+.stats-value-success { color: var(--status-success); }
+.stats-value-danger { color: var(--status-error); }
+.stats-value-neutral { color: var(--text-muted); }
+
+/* 차트 섹션 */
+.branch-stats-chart-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.branch-stats-chart-card {
+    background: var(--background-primary);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.branch-stats-chart-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.branch-stats-chart-title {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.branch-stats-chart-icon {
+    color: var(--color-primary);
+    font-size: var(--icon-size-md);
+}
+
+.branch-stats-chart-body {
+    height: 400px;
+    position: relative;
+}
+
+/* 비교 섹션 */
+.branch-stats-comparison-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.branch-stats-comparison-card {
+    background: var(--background-primary);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.branch-stats-comparison-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.branch-stats-comparison-title {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.branch-stats-comparison-icon {
+    color: var(--color-primary);
+    font-size: var(--icon-size-md);
+}
+
+.branch-stats-comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.branch-stats-comparison-item {
+    background: var(--background-secondary);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-lg);
+    transition: all 0.2s ease;
+}
+
+.branch-stats-comparison-item:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.branch-stats-comparison-item-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.branch-stats-comparison-rank {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.branch-stats-rank-icon {
+    font-size: var(--icon-size-md);
+}
+
+.branch-stats-rank-top { color: var(--status-warning); }
+.branch-stats-rank-normal { color: var(--text-muted); }
+
+.branch-stats-rank-number {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+.branch-stats-comparison-branch-name {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.branch-stats-comparison-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.branch-stats-comparison-metric {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.branch-stats-metric-icon {
+    color: var(--text-muted);
+    font-size: var(--icon-size-sm);
+    width: 16px;
+}
+
+.branch-stats-metric-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    min-width: 50px;
+}
+
+.branch-stats-metric-value {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+}
+
+.branch-stats-comparison-progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.branch-stats-progress-bar {
+    height: 8px;
+    background: var(--background-tertiary);
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+}
+
+.branch-stats-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+    border-radius: var(--border-radius-sm);
+    transition: width 0.3s ease;
+}
+
+.branch-stats-progress-text {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+/* 빈 상태 */
+.branch-stats-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xxl);
+    text-align: center;
+}
+
+.branch-stats-empty-icon {
+    font-size: var(--icon-size-xxl);
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-lg);
+}
+
+.branch-stats-empty-title {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.branch-stats-empty-description {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+/* 테이블 섹션 */
+.branch-stats-table-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.branch-stats-table-card {
+    background: var(--background-primary);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.branch-stats-table-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.branch-stats-table-title {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.branch-stats-table-icon {
+    color: var(--color-primary);
+    font-size: var(--icon-size-md);
+}
+
+.branch-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.branch-stats-table th,
+.branch-stats-table td {
+    padding: var(--spacing-md);
+    text-align: left;
+    border-bottom: var(--border-width) solid var(--border-color);
+}
+
+.branch-stats-table th {
+    background: var(--background-secondary);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.branch-stats-table td {
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.branch-stats-table-branch {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.branch-stats-table-users,
+.branch-stats-table-revenue {
+    font-weight: var(--font-weight-medium);
+}
+
+.branch-stats-table-growth {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.branch-stats-table-performance {
+    font-weight: var(--font-weight-medium);
+}
+
+.branch-stats-table-status {
+    text-align: center;
+}
+
+.branch-stats-status-badge {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.branch-stats-status-active {
+    background: var(--status-success-light);
+    color: var(--status-success);
+}
+
+.branch-stats-status-inactive {
+    background: var(--status-error-light);
+    color: var(--status-error);
+}
+
+.branch-stats-status-maintenance {
+    background: var(--status-warning-light);
+    color: var(--status-warning);
 }
 
 /* 반응형 디자인 */
-@media (max-width: 767px) {
-    .branch-statistics-dashboard {
+@media (max-width: 768px) {
+    .branch-stats-container {
         padding: var(--spacing-md);
     }
-
-    .branch-statistics-dashboard__title {
-        font-size: var(--font-size-xxl);
+    
+    .branch-stats-header {
+        flex-direction: column;
+        gap: var(--spacing-md);
     }
-
-    .branch-statistics-dashboard__stats {
+    
+    .branch-stats-filters {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+    
+    .branch-stats-summary-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
     }
-
-    .branch-statistics-dashboard__charts {
+    
+    .branch-stats-comparison-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
+    }
+    
+    .branch-stats-chart-body {
+        height: 300px;
+    }
+    
+    .branch-stats-table {
+        font-size: var(--font-size-xs);
+    }
+    
+    .branch-stats-table th,
+    .branch-stats-table td {
+        padding: var(--spacing-sm);
     }
 }
 
-/* 아이패드 스타일 최적화 */
-@media (min-width: 768px) and (max-width: 1024px) {
-    .branch-statistics-dashboard {
-        padding: var(--spacing-lg) var(--spacing-xl);
+@media (max-width: 480px) {
+    .branch-stats-container {
+        padding: var(--spacing-sm);
     }
-
-    .branch-statistics-dashboard__stats {
-        grid-template-columns: repeat(2, 1fr);
+    
+    .branch-stats-title {
+        font-size: var(--font-size-xl);
     }
+    
+    .branch-stats-summary-card {
+        padding: var(--spacing-md);
+    }
+    
+    .branch-stats-summary-value {
+        font-size: var(--font-size-2xl);
+    }
+    
+    .branch-stats-chart-body {
+        height: 250px;
+    }
+}
 
-    .branch-statistics-dashboard__charts {
-        grid-template-columns: 1fr;
+/* 다크 테마 */
+@media (prefers-color-scheme: dark) {
+    .branch-stats-container {
+        background: var(--background-dark);
+        color: var(--text-dark);
+    }
+    
+    .branch-stats-summary-card,
+    .branch-stats-chart-card,
+    .branch-stats-comparison-card,
+    .branch-stats-table-card {
+        background: var(--background-dark-secondary);
+        border-color: var(--border-dark);
+    }
+    
+    .branch-stats-comparison-item {
+        background: var(--background-dark-tertiary);
+        border-color: var(--border-dark);
+    }
+    
+    .branch-stats-filter-select {
+        background: var(--background-dark-secondary);
+        border-color: var(--border-dark);
+        color: var(--text-dark);
+    }
+    
+    .branch-stats-table th {
+        background: var(--background-dark-tertiary);
+    }
+    
+    .branch-stats-progress-bar {
+        background: var(--background-dark-tertiary);
     }
 }

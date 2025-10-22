@@ -202,14 +202,4 @@ ScheduleCard.propTypes = {
   showActions: PropTypes.bool
 };
 
-ScheduleCard.defaultProps = {
-  onView: null,
-  onEdit: null,
-  onDelete: null,
-  onConfirm: null,
-  onCancel: null,
-  onComplete: null,
-  showActions: true
-};
-
 export default ScheduleCard;

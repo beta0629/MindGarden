@@ -18,9 +18,9 @@ const StatsCard = ({
   value,
   label,
   change,
-  changeType,
+  changeType = 'neutral',
   changeLabel,
-  color,
+  color = 'default',
   loading = false,
   error = false
 }) => {
@@ -119,13 +119,6 @@ StatsCard.propTypes = {
   color: PropTypes.oneOf(['primary', 'success', 'warning', 'danger', 'info', 'default']),
   loading: PropTypes.bool,
   error: PropTypes.bool
-};
-
-StatsCard.defaultProps = {
-  changeType: 'neutral',
-  color: 'default',
-  loading: false,
-  error: false
 };
 
 export default StatsCard;

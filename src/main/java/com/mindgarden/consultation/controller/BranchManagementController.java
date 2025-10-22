@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import com.mindgarden.consultation.dto.BranchResponse;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.BranchService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,14 +39,33 @@ public class BranchManagementController {
     
     private final UserService userService;
     private final BranchService branchService;
+    private final DynamicPermissionService dynamicPermissionService;
     
     /**
      * 지점 목록 조회 (branches 테이블 기반)
      */
     @GetMapping("/branches")
-    public ResponseEntity<Map<String, Object>> getBranches() {
+    public ResponseEntity<Map<String, Object>> getBranches(HttpSession session) {
         try {
             log.info("지점 목록 조회 요청 (branches 테이블 기반)");
+            
+            // 권한 체크
+            User currentUser = (User) session.getAttribute("user");
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다.",
+                    "redirectToLogin", true
+                ));
+            }
+            
+            // HQ 권한 체크
+            if (!dynamicPermissionService.hasPermission(currentUser, "HQ_BRANCH_VIEW")) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "지점 조회 권한이 없습니다."
+                ));
+            }
             
             // branches 테이블에서 지점 목록 조회
             List<BranchResponse> branchResponses = branchService.getAllActiveBranches();
@@ -74,10 +95,27 @@ public class BranchManagementController {
      * 지점별 사용자 통계 조회
      */
     @GetMapping("/branches/{branchCode}/statistics")
-    // @PreAuthorize("hasAnyRole('HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')") // 임시로 주석 처리
-    public ResponseEntity<Map<String, Object>> getBranchStatistics(@PathVariable String branchCode) {
+    public ResponseEntity<Map<String, Object>> getBranchStatistics(@PathVariable String branchCode, HttpSession session) {
         try {
             log.info("지점 통계 조회 요청: branchCode={}", branchCode);
+            
+            // 권한 체크
+            User currentUser = (User) session.getAttribute("user");
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다.",
+                    "redirectToLogin", true
+                ));
+            }
+            
+            // HQ 권한 체크
+            if (!dynamicPermissionService.hasPermission(currentUser, "HQ_STATISTICS_VIEW")) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "통계 조회 권한이 없습니다."
+                ));
+            }
             
             // 지점 코드 유효성 검사
             if (!isValidBranchCode(branchCode)) {

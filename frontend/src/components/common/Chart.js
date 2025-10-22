@@ -282,14 +282,4 @@ Chart.propTypes = {
   onLegendClick: PropTypes.func
 };
 
-Chart.defaultProps = {
-  type: CHART_DEFAULTS.TYPE,
-  height: CHART_DEFAULTS.HEIGHT,
-  loading: false,
-  error: null,
-  className: '',
-  onDataPointClick: null,
-  onLegendClick: null
-};
-
 export default Chart;

@@ -15,6 +15,7 @@ import HeadquartersLogin from './components/auth/HeadquartersLogin';
 import CommonDashboard from './components/dashboard/CommonDashboard';
 import ClientDashboard from './components/client/ClientDashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
+import HQDashboard from './components/hq/HQDashboard';
 import MyPage from './components/mypage/MyPage';
 import ConsultantSchedule from './components/consultant/ConsultantSchedule';
 import ConsultationRecordScreen from './components/consultant/ConsultationRecordScreen';
@@ -53,7 +54,6 @@ import IntegrationTest from './components/test/IntegrationTest';
 import AccountManagement from './components/admin/AccountManagement';
 import UserManagement from './components/admin/UserManagement';
 import BranchManagement from './components/hq/BranchManagement';
-import HQDashboard from './components/hq/HQDashboard';
 import BranchFinancialManagement from './components/hq/BranchFinancialManagement';
 import ConsolidatedFinancial from './components/hq/ConsolidatedFinancial';
 import FinancialReports from './components/hq/FinancialReports';
@@ -165,7 +165,7 @@ function AppContent() {
     } else {
       console.log('🔓 공개 경로 - 세션 체크 건너뛰기:', window.location.pathname);
     }
-  }, [checkSession, isPublicPath, window.location.pathname]);
+  }, [checkSession, isPublicPath]); // window.location.pathname 의존성 제거
   
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
@@ -193,7 +193,7 @@ function AppContent() {
   useEffect(() => {
     logMount();
     return logUnmount;
-  }, []); // 의존성 배열을 비워서 한 번만 실행
+  }, [logMount, logUnmount]); // 의존성 배열에 함수들 추가
 
   // 동적 테마 시스템 초기화
   useEffect(() => {
@@ -240,7 +240,7 @@ function AppContent() {
     return () => {
       duplicateLoginManager.stopChecking();
     };
-  }, [user, sessionInfo]);
+  }, []); // user, sessionInfo 의존성 제거
 
   // 중복 로그인 이벤트 리스너
   useEffect(() => {

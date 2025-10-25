@@ -163,13 +163,11 @@ const ClientDashboard = () => {
     // sessionUser 또는 user 둘 중 하나라도 있으면 진행
     const currentUser = sessionUser || user;
     if (!currentUser?.id) {
-      console.log('❌ 사용자 정보 없음:', { sessionUser, user });
       return;
     }
 
     try {
       setIsLoading(true);
-      console.log('📊 내담자 데이터 로드 시작, userId:', currentUser.id);
 
       // 스케줄 데이터 로드
       const scheduleResponse = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
@@ -249,7 +247,6 @@ const ClientDashboard = () => {
   useEffect(() => {
     // 세션이 로딩 중이면 대기
     if (sessionLoading) {
-      console.log('⏳ 세션 로딩 중...');
       return;
     }
     
@@ -257,37 +254,14 @@ const ClientDashboard = () => {
     const currentUser = sessionUser || user;
     const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
     
-    console.log('🔍 ClientDashboard useEffect 실행:', {
-      sessionLoading,
-      sessionIsLoggedIn,
-      sessionUser: sessionUser?.id,
-      user: user?.id,
-      currentIsLoggedIn,
-      currentUser: currentUser?.id
-    });
-    
     if (currentIsLoggedIn && currentUser?.id) {
-      console.log('✅ ClientDashboard 데이터 로드 시작');
       loadClientData();
-    } else {
-      console.log('❌ 데이터 로드 조건 불충족');
     }
-  }, [sessionLoading, sessionIsLoggedIn, sessionUser?.id, user?.id, loadClientData]); // sessionLoading 추가
+  }, [sessionLoading, sessionIsLoggedIn, sessionUser?.id, user?.id, loadClientData]);
 
   // 로딩 상태 또는 로그인하지 않은 경우
   const currentUser = sessionUser || user;
   const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
-  
-  console.log('🎯 ClientDashboard 렌더링 조건 체크:', {
-    isLoading,
-    sessionLoading,
-    currentIsLoggedIn,
-    currentUser: currentUser?.id,
-    sessionIsLoggedIn,
-    sessionUser: sessionUser?.id,
-    isLoggedIn,
-    user: user?.id
-  });
   
   // 세션 로딩 중이거나, 세션이 아직 로드되지 않았거나, 사용자 정보가 없으면 로딩 표시
   if (isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
@@ -431,7 +405,7 @@ const ClientDashboard = () => {
         />
 
         {/* 결제 및 회기 현황 */}
-        <ClientPaymentSessionsSection userId={user?.id} />
+        <ClientPaymentSessionsSection userId={currentUser?.id} />
 
         {/* 상담사 평가 */}
         <RatableConsultationsSection />
@@ -475,7 +449,7 @@ const ClientDashboard = () => {
         </div>
 
         {/* 메시지 섹션 */}
-        <ClientMessageSection userId={user?.id} />
+        <ClientMessageSection userId={currentUser?.id} />
       </div>
     </SimpleLayout>
   );

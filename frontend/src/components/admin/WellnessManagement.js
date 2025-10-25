@@ -339,7 +339,7 @@ const WellnessManagement = () => {
 
                 {/* 통계 카드 */}
                 <div className="mg-v2-stats-grid">
-                    <div className="wellness-stat-card wellness-stat-card--cost">
+                    <div className="mg-v2-card">
                         <div className="wellness-stat-icon">
                             <DollarSign size={24} />
                         </div>
@@ -359,7 +359,7 @@ const WellnessManagement = () => {
                         </div>
                     </div>
 
-                    <div className="wellness-stat-card wellness-stat-card--tokens">
+                    <div className="mg-v2-card">
                         <div className="wellness-stat-icon">
                             <Database size={24} />
                         </div>
@@ -374,7 +374,7 @@ const WellnessManagement = () => {
                         </div>
                     </div>
 
-                    <div className="wellness-stat-card wellness-stat-card--requests">
+                    <div className="mg-v2-card">
                         <div className="wellness-stat-icon">
                             <TrendingUp size={24} />
                         </div>
@@ -389,7 +389,7 @@ const WellnessManagement = () => {
                         </div>
                     </div>
 
-                    <div className="wellness-stat-card wellness-stat-card--templates">
+                    <div className="mg-v2-card">
                         <div className="wellness-stat-icon">
                             <BarChart3 size={24} />
                         </div>
@@ -406,25 +406,27 @@ const WellnessManagement = () => {
                 </div>
 
                 {/* 월 선택 */}
-                <div className="wellness-month-selector">
-                    <MGButton variant="primary" className="wellness-month-btn" onClick={() => handleMonthChange(-1)}>◀
-                    </MGButton>
-                    <span className="wellness-month-text">
-                        {selectedMonth.year}년 {selectedMonth.month}월
-                    </span>
-                    <MGButton variant="primary" className="wellness-month-btn" onClick={() => handleMonthChange(1)} disabled={
-                            selectedMonth.year === new Date().getFullYear() &&
-                            selectedMonth.month === new Date().getMonth() + 1
-                        }>▶
-                    </MGButton>
+                <div className="mg-v2-section">
+                    <div className="mg-v2-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--spacing-md)' }}>
+                        <MGButton variant="primary" size="small" onClick={() => handleMonthChange(-1)}>◀
+                        </MGButton>
+                        <span className="mg-v2-h2">
+                            {selectedMonth.year}년 {selectedMonth.month}월
+                        </span>
+                        <MGButton variant="primary" size="small" onClick={() => handleMonthChange(1)} disabled={
+                                selectedMonth.year === new Date().getFullYear() &&
+                                selectedMonth.month === new Date().getMonth() + 1
+                            }>▶
+                        </MGButton>
+                    </div>
                 </div>
 
                 {/* 최근 API 사용 로그 */}
-                <div className="wellness-section">
-                    <h2 className="wellness-section-title">
-                        <Clock size={20} />
-                        <span>최근 API 사용 내역</span>
-                    </h2>
+                <div className="mg-v2-section">
+                    <div className="mg-v2-card">
+                        <h2 className="mg-v2-h2">
+                            <Clock size={20} /> 최근 API 사용 내역
+                        </h2>
                     <div className="wellness-logs">
                         {stats.recentLogs && stats.recentLogs.length > 0 ? (
                             stats.recentLogs.map((log) => (
@@ -467,14 +469,15 @@ const WellnessManagement = () => {
                             </div>
                         )}
                     </div>
+                    </div>
                 </div>
 
                 {/* 템플릿 목록 */}
-                <div className="wellness-section">
-                    <h2 className="wellness-section-title">
-                        <Database size={20} />
-                        <span>웰니스 템플릿 목록</span>
-                    </h2>
+                <div className="mg-v2-section">
+                    <div className="mg-v2-card">
+                        <h2 className="mg-v2-h2">
+                            <Database size={20} /> 웰니스 템플릿 목록
+                        </h2>
                     <div className="wellness-templates">
                         {templates.length > 0 ? (
                             templates.map((template) => (
@@ -521,6 +524,7 @@ const WellnessManagement = () => {
                                 </p>
                             </div>
                         )}
+                    </div>
                     </div>
                 </div>
             </div>

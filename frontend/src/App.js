@@ -113,8 +113,6 @@ function QueryParamHandler({ children, onLoginSuccess }) {
     const message = searchParams.get('message');
     
     if (loginStatus === 'success' && message) {
-      console.log('로그인 성공 메시지:', decodeURIComponent(message));
-      
       // URL에서 쿼리 파라미터 제거
       const cleanUrl = location.pathname;
       if (window.history && window.history.replaceState) {
@@ -207,24 +205,19 @@ function AppContent() {
   useEffect(() => {
     // 통합 레이아웃 시스템 초기화
     unifiedLayoutManager.init();
-    
-    console.log('🏗️ 통합 레이아웃 시스템 초기화 완료');
   }, []);
 
   // 중복 로그인 체크 시작/중지 (개발 환경에서는 비활성화)
   useEffect(() => {
     // 개발 환경에서는 중복 로그인 체크 비활성화
     if (process.env.NODE_ENV === 'development') {
-      console.log('🛑 개발 환경: 중복 로그인 체크 비활성화');
       duplicateLoginManager.forceStop();
       return;
     }
 
     if (user && sessionInfo) {
-      console.log('🔍 중복 로그인 체크 시작');
       duplicateLoginManager.startChecking();
     } else {
-      console.log('🛑 중복 로그인 체크 중지');
       duplicateLoginManager.stopChecking();
     }
 
@@ -236,7 +229,6 @@ function AppContent() {
   // 중복 로그인 이벤트 리스너
   useEffect(() => {
     const handleDuplicateLoginEvent = (event) => {
-      console.log('⚠️ 중복 로그인 이벤트 수신:', event.detail);
       
       // UnifiedNotification을 통해 중복 로그인 알림 표시
       notificationManager.show({
@@ -283,15 +275,12 @@ function AppContent() {
   }, []);
 
   const handleLogout = useCallback(() => {
-    console.log('🚪 로그아웃 처리됨');
     logout();
   }, [logout]);
 
   const handleLoginSuccess = useCallback(() => {
-    console.log('🔐 로그인 성공 처리됨');
     // 세션 재확인 전에 잠시 대기 (백엔드 세션 설정 완료 대기)
     setTimeout(() => {
-      console.log('⏳ 세션 확인 시작...');
       checkSession();
     }, 1000); // 1초 대기
   }, []); // checkSession 의존성 제거 (무한루프 방지)
@@ -575,7 +564,6 @@ function AppContent() {
           />
           
           {/* 지점 매핑 모달 */}
-          {console.log('🔍 BranchMappingModal 상태:', branchMappingModal)}
           <BranchMappingModal
             isOpen={branchMappingModal.isOpen}
             onClose={() => {
@@ -609,12 +597,10 @@ function App() {
 if (process.env.NODE_ENV === 'development') {
   window.clearSession = () => {
     sessionManager.forceClearSession();
-    console.log('🧹 세션 강제 초기화 완료! 페이지를 새로고침하세요.');
   };
   
   window.clearLocalStorage = () => {
     sessionManager.clearLocalStorage();
-    console.log('🧹 localStorage 정리 완료! 페이지를 새로고침하세요.');
   };
   
   window.getSessionInfo = () => {
@@ -628,11 +614,6 @@ if (process.env.NODE_ENV === 'development') {
       }
     });
   };
-  
-  console.log('🔧 개발자 도구 함수 사용 가능:');
-  console.log('  - clearSession(): 세션 강제 초기화 (서버+클라이언트)');
-  console.log('  - clearLocalStorage(): localStorage만 정리');
-  console.log('  - getSessionInfo(): 현재 세션 정보 확인');
 }
 
 export default App;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
+import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
 import './ErpCommon.css';
@@ -12,6 +13,10 @@ import notificationManager from '../../utils/notification';
  */
 const ImprovedTaxManagement = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  
+  // sessionManager로 직접 확인
+  const sessionUser = sessionManager.getUser();
+  const sessionIsLoggedIn = sessionManager.isLoggedIn();
   const [activeTab, setActiveTab] = useState('overview');
   const [taxData, setTaxData] = useState([]);
   const [taxCategories, setTaxCategories] = useState([]);
@@ -31,12 +36,13 @@ const ImprovedTaxManagement = () => {
     description: ''
   });
 
-  // 데이터 로드
+  // 데이터 로드 (sessionManager 사용)
   useEffect(() => {
-    if (!sessionLoading && isLoggedIn && user?.id) {
+    if (sessionIsLoggedIn && sessionUser?.id) {
+      console.log('✅ ImprovedTaxManagement 데이터 로드 시작');
       loadData();
     }
-  }, [sessionLoading, isLoggedIn, user?.id, activeTab]);
+  }, [sessionIsLoggedIn, sessionUser?.id, activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     try {
@@ -214,17 +220,8 @@ const ImprovedTaxManagement = () => {
     }
   };
 
-  if (sessionLoading) {
-    return (
-      <SimpleLayout 
-        title="세무 관리"
-        loading={true}
-        loadingText="세션 정보를 불러오는 중..."
-      />
-    );
-  }
-
-  if (!isLoggedIn) {
+  // 로그인 체크
+  if (!sessionIsLoggedIn || !sessionUser) {
     return (
       <SimpleLayout title="세무 관리">
         <div className="erp-error">

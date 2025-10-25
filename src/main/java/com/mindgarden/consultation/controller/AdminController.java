@@ -12,6 +12,7 @@ import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantTransferRequest;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
+import com.mindgarden.consultation.entity.ConsultationRecord;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AdminService;
@@ -27,6 +28,8 @@ import com.mindgarden.consultation.service.StoredProcedureService;
 import com.mindgarden.consultation.service.UserService;
 import com.mindgarden.consultation.util.PermissionCheckUtils;
 import com.mindgarden.consultation.utils.SessionUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -3527,5 +3530,80 @@ public class AdminController {
         
         return "prod".equals(activeProfile) || "prod".equals(envProfile) || 
                "production".equals(activeProfile) || "production".equals(envProfile);
+    }
+
+    /**
+     * 상담 이력 조회
+     */
+    @GetMapping("/consultations")
+    public ResponseEntity<Map<String, Object>> getConsultations(
+            @RequestParam(required = false) Long consultantId,
+            @RequestParam(required = false) Long clientId,
+            HttpSession session) {
+        try {
+            log.info("🔍 상담 이력 조회 요청 - 상담사ID: {}, 내담자ID: {}", consultantId, clientId);
+            
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "인증이 필요합니다."
+                ));
+            }
+            
+            // 권한 체크
+            if (!dynamicPermissionService.hasPermission(currentUser, "ADMIN_CONSULTATION_VIEW")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "상담 이력 조회 권한이 없습니다."
+                ));
+            }
+            
+            // 상담 이력 조회
+            Pageable pageable = Pageable.ofSize(100); // 최대 100개
+            Page<ConsultationRecord> consultationRecords = consultationRecordService.getConsultationRecords(
+                consultantId, clientId, pageable);
+            
+            // 조회 결과를 Map으로 변환
+            List<Map<String, Object>> consultations = consultationRecords.getContent().stream()
+                .map(record -> {
+                    Map<String, Object> consultation = new HashMap<>();
+                    consultation.put("id", record.getId());
+                    consultation.put("consultantId", record.getConsultantId());
+                    consultation.put("clientId", record.getClientId());
+                    consultation.put("sessionDate", record.getSessionDate());
+                    consultation.put("sessionNumber", record.getSessionNumber());
+                    consultation.put("sessionDurationMinutes", record.getSessionDurationMinutes());
+                    consultation.put("progressScore", record.getProgressScore());
+                    consultation.put("riskAssessment", record.getRiskAssessment());
+                    consultation.put("clientCondition", record.getClientCondition());
+                    consultation.put("mainIssues", record.getMainIssues());
+                    consultation.put("interventionMethods", record.getInterventionMethods());
+                    consultation.put("clientResponse", record.getClientResponse());
+                    consultation.put("consultantObservations", record.getConsultantObservations());
+                    consultation.put("consultantAssessment", record.getConsultantAssessment());
+                    consultation.put("isSessionCompleted", record.getIsSessionCompleted());
+                    consultation.put("createdAt", record.getCreatedAt());
+                    consultation.put("updatedAt", record.getUpdatedAt());
+                    return consultation;
+                })
+                .collect(Collectors.toList());
+            
+            log.info("✅ 상담 이력 조회 완료 - 조회된 건수: {}", consultations.size());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", consultations,
+                "count", consultations.size(),
+                "totalElements", consultationRecords.getTotalElements(),
+                "message", "상담 이력 조회 완료"
+            ));
+        } catch (Exception e) {
+            log.error("❌ 상담 이력 조회 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "상담 이력 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
     }
 }

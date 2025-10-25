@@ -37,19 +37,11 @@ const ClientDashboard = () => {
   const sessionUser = sessionManager.getUser();
   const sessionIsLoggedIn = sessionManager.isLoggedIn();
   
-  // 디버깅: localStorage 확인 및 세션 재확인
+  // 세션 재확인 (SNS 로그인 시 세션이 로드되지 않는 경우)
   useEffect(() => {
-    const storedUser = localStorage.getItem('userInfo');
-    console.log('🔍 localStorage 확인:', {
-      hasUserInfo: !!storedUser,
-      userInfo: storedUser ? JSON.parse(storedUser) : null,
-      sessionUser,
-      sessionIsLoggedIn
-    });
-    
-    // 세션이 아직 로드되지 않았지만 localStorage에 사용자 정보가 있으면 세션 재확인
-    if (!sessionIsLoggedIn && !sessionUser && storedUser) {
-      console.log('⏳ localStorage에 사용자 정보가 있지만 세션이 아직 로드되지 않음, 세션 재확인 시작...');
+    // 세션이 아직 로드되지 않았을 때 세션 재확인
+    if (!sessionIsLoggedIn && !sessionUser) {
+      console.log('⏳ 세션이 로드되지 않음, 세션 재확인 시작...');
       
       // 세션 재확인
       const checkSession = async () => {
@@ -71,16 +63,26 @@ const ClientDashboard = () => {
               });
               // 페이지 새로고침하여 세션 반영
               window.location.reload();
+            } else {
+              console.log('❌ 세션 없음, 로그인 페이지로 이동');
+              // 세션이 없으면 로그인 페이지로 이동
+              window.location.href = '/login';
             }
+          } else {
+            console.log('❌ 세션 확인 실패, 로그인 페이지로 이동');
+            // 세션 확인 실패 시 로그인 페이지로 이동
+            window.location.href = '/login';
           }
         } catch (error) {
           console.error('❌ 세션 재확인 실패:', error);
+          // 오류 발생 시 로그인 페이지로 이동
+          window.location.href = '/login';
         }
       };
       
       checkSession();
     }
-  }, []);
+  }, [sessionIsLoggedIn, sessionUser]);
   
   const [currentTime, setCurrentTime] = useState('');
   const [consultationData, setConsultationData] = useState({

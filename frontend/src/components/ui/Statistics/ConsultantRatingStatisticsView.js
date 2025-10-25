@@ -58,8 +58,12 @@ const ConsultantRatingStatisticsView = ({ statistics, loading }) => {
                         <TrendingUp size={24} />
                     </div>
                     <div className="rating-stat-content">
-                        <div className="rating-stat-value">{statistics.recentTrends ? statistics.recentTrends.length : 0}</div>
-                        <div className="rating-stat-label">최근 평가</div>
+                        <div className="rating-stat-value">
+                            {statistics.recentTrends 
+                                ? statistics.recentTrends.reduce((sum, trend) => sum + (trend.count || 0), 0)
+                                : 0}
+                        </div>
+                        <div className="rating-stat-label">최근 평가 (7일)</div>
                     </div>
                 </div>
                 

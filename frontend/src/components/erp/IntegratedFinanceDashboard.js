@@ -155,10 +155,12 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   }, [userPermissions.length]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => {
-    if (selectedBranch) {
+    // selectedBranch가 설정되거나 권한 체크가 완료된 후 데이터 로드
+    if (permissionCheckedRef.current && (selectedBranch || !isHQUser)) {
+      console.log('📍 대시보드 데이터 로드 시작:', { selectedBranch, isHQUser });
       fetchDashboardData();
     }
-  }, [selectedBranch]);
+  }, [selectedBranch, permissionCheckedRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
   
   const initializeComponent = async () => {
     try {
@@ -171,8 +173,11 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         // 본사 사용자: 지점 목록 로드
         await loadBranches();
       } else {
-        // 지점 사용자: 자기 지점으로 설정
-        setSelectedBranch(user?.branchCode || '');
+        // 지점 사용자: 자기 지점으로 설정하고 즉시 데이터 로드
+        const branchCode = user?.branchCode || '';
+        setSelectedBranch(branchCode);
+        console.log('📍 지점 사용자 - 지점 코드 설정:', branchCode);
+        // fetchDashboardData는 useEffect에서 자동 호출됨
       }
     } catch (err) {
       console.error('컴포넌트 초기화 실패:', err);

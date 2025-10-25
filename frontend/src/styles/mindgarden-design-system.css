@@ -9527,11 +9527,8 @@ body {
 
 .mg-v2-stats-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-    padding: 16px;
-    background-color: var(--color-bg-secondary);
-    border-radius: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
 }
 
 .mg-v2-stat-item {
@@ -12979,13 +12976,6 @@ body {
 /* Statistics Tab Styles */
 .mg-v2-client-statistics {
     padding: var(--spacing-md);
-}
-
-.mg-v2-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
 }
 
 @media (max-width: 768px) {

@@ -10672,6 +10672,12 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+@media (max-width: 480px) {
+    .mg-v2-card {
+        padding: var(--spacing-md);
+    }
+}
+
 .mg-v2-card-content {
     padding: var(--spacing-lg);
 }
@@ -12129,6 +12135,12 @@ body {
     max-width: var(--container-max-width);
     margin: 0 auto;
     padding: var(--spacing-md);
+}
+
+@media (max-width: 480px) {
+    .mg-v2-container {
+        padding: var(--spacing-sm);
+    }
 }
 
 @media (min-width: 1024px) {

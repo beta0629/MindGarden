@@ -30,6 +30,10 @@ const ClientPaymentSessionsSection = ({ userId }) => {
 
   // 결제 및 회기 데이터 로드
   useEffect(() => {
+    // userId가 없으면 호출하지 않음
+    if (!userId) {
+      return;
+    }
     loadPaymentSessionsData();
   }, [userId]);
 
@@ -37,6 +41,12 @@ const ClientPaymentSessionsSection = ({ userId }) => {
     try {
       setIsLoading(true);
       setError(null);
+
+      // userId 체크
+      if (!userId) {
+        setIsLoading(false);
+        return;
+      }
 
       // 내담자의 매핑 정보 조회
       const mappingResponse = await apiGet(`/api/admin/mappings/client?clientId=${userId}`);

@@ -339,66 +339,64 @@ const WellnessManagement = () => {
 
                 {/* 통계 카드 */}
                 <div className="mg-v2-stats-grid">
-                    <div className="mg-v2-card">
-                        <div className="wellness-stat-icon">
-                            <DollarSign size={24} />
+                    <div className="mg-v2-card" style={{ display: 'flex', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
+                            <DollarSign size={20} />
                         </div>
-                        <div className="wellness-stat-content">
-                            <p className="wellness-stat-label">이번 달 비용</p>
-                            <p className="wellness-stat-value">
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <p className="mg-v2-text-sm" style={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}>이번 달 비용</p>
+                            <p className="mg-v2-h3" style={{ marginBottom: '4px' }}>
                                 {stats.totalCostDisplay || `$${(stats.totalCost || 0).toFixed(4)}`}
                             </p>
-                            <p className="wellness-stat-description">
+                            <p className="mg-v2-text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                                 {selectedMonth.year}년 {selectedMonth.month}월
                                 {stats.exchangeRateDisplay && (
-                                    <span className="wellness-exchange-rate">
-                                        (환율: {stats.exchangeRateDisplay})
-                                    </span>
+                                    <span> (환율: {stats.exchangeRateDisplay})</span>
                                 )}
                             </p>
                         </div>
                     </div>
 
-                    <div className="mg-v2-card">
-                        <div className="wellness-stat-icon">
-                            <Database size={24} />
+                    <div className="mg-v2-card" style={{ display: 'flex', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
+                            <Database size={20} />
                         </div>
-                        <div className="wellness-stat-content">
-                            <p className="wellness-stat-label">사용 토큰</p>
-                            <p className="wellness-stat-value">
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <p className="mg-v2-text-sm" style={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}>사용 토큰</p>
+                            <p className="mg-v2-h3" style={{ marginBottom: '4px' }}>
                                 {(stats.totalTokens || 0).toLocaleString()}
                             </p>
-                            <p className="wellness-stat-description">
+                            <p className="mg-v2-text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                                 총 토큰 사용량
                             </p>
                         </div>
                     </div>
 
-                    <div className="mg-v2-card">
-                        <div className="wellness-stat-icon">
-                            <TrendingUp size={24} />
+                    <div className="mg-v2-card" style={{ display: 'flex', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
+                            <TrendingUp size={20} />
                         </div>
-                        <div className="wellness-stat-content">
-                            <p className="wellness-stat-label">API 호출</p>
-                            <p className="wellness-stat-value">
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <p className="mg-v2-text-sm" style={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}>API 호출</p>
+                            <p className="mg-v2-h3" style={{ marginBottom: '4px' }}>
                                 {(stats.totalRequests || 0).toLocaleString()}
                             </p>
-                            <p className="wellness-stat-description">
+                            <p className="mg-v2-text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                                 이번 달 총 호출 수
                             </p>
                         </div>
                     </div>
 
-                    <div className="mg-v2-card">
-                        <div className="wellness-stat-icon">
-                            <BarChart3 size={24} />
+                    <div className="mg-v2-card" style={{ display: 'flex', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
+                            <BarChart3 size={20} />
                         </div>
-                        <div className="wellness-stat-content">
-                            <p className="wellness-stat-label">템플릿 수</p>
-                            <p className="wellness-stat-value">
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <p className="mg-v2-text-sm" style={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}>템플릿 수</p>
+                            <p className="mg-v2-h3" style={{ marginBottom: '4px' }}>
                                 {templates.length}
                             </p>
-                            <p className="wellness-stat-description">
+                            <p className="mg-v2-text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                                 활성화된 템플릿
                             </p>
                         </div>

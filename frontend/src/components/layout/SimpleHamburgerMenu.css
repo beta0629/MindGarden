@@ -216,6 +216,37 @@
     padding-top: 0;
     justify-content: flex-end;
   }
+  
+  /* 모바일에서 푸터 패딩 조정 */
+  .simple-hamburger-footer {
+    padding: 1rem;
+    min-height: 90px;
+  }
+  
+  .simple-hamburger-content {
+    max-height: calc(100vh - 220px);
+  }
+}
+
+/* 데스크탑에서도 푸터가 잘 보이도록 조정 */
+@media (min-width: 769px) {
+  .simple-hamburger-menu {
+    max-height: 95vh;
+  }
+  
+  .simple-hamburger-overlay {
+    padding-top: 20px;
+  }
+  
+  .simple-hamburger-content {
+    max-height: calc(95vh - 280px);
+  }
+  
+  /* 푸터 고정 높이 */
+  .simple-hamburger-footer {
+    position: sticky;
+    bottom: 0;
+  }
 }
 
 /* 동적 메뉴 추가 스타일 */

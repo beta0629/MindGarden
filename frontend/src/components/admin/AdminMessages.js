@@ -40,22 +40,29 @@ const AdminMessages = () => {
     try {
       setLoading(true);
       console.log('📨 관리자 메시지 목록 로드');
+      console.log('👤 현재 사용자:', { email: user?.email, role: user?.role, id: user?.id });
       
       // 관리자는 모든 메시지 조회
+      console.log('🌐 API 호출: /api/consultation-messages/all');
       const response = await apiGet('/api/consultation-messages/all');
+      console.log('📨 API 응답:', response);
       
       if (response && response.success) {
         console.log('✅ 메시지 목록 로드 성공:', response.data);
         setMessages(response.data || []);
       } else {
-        console.warn('❌ 메시지 목록 로드 실패:', response?.message);
+        console.error('❌ 메시지 목록 로드 실패:', response?.message);
+        console.error('❌ 전체 응답:', response);
         notificationManager.error(response?.message || '메시지 목록을 불러오는데 실패했습니다.');
+        setLoading(false); // 오류 시 로딩 상태 해제
+        return; // 오류 발생 시 종료
       }
     } catch (err) {
       console.error('❌ 메시지 로드 중 오류:', err);
+      console.error('❌ 오류 상세:', err.message, err.stack);
       notificationManager.error('메시지를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
+      setLoading(false); // 오류 시 로딩 상태 해제
+      return; // 오류 발생 시 종료
     }
   }, []);
 

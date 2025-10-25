@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
+import { sessionManager } from '../../utils/sessionManager';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
 import { 
@@ -31,6 +32,11 @@ import './ClientDashboard.css';
 const ClientDashboard = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  
+  // sessionManager로 직접 확인
+  const sessionUser = sessionManager.getUser();
+  const sessionIsLoggedIn = sessionManager.isLoggedIn();
+  
   const [currentTime, setCurrentTime] = useState('');
   const [consultationData, setConsultationData] = useState({
     todaySchedules: [],
@@ -144,16 +150,24 @@ const ClientDashboard = () => {
   }, [user?.id]);
 
   useEffect(() => {
-    if (isLoggedIn && user?.id) {
+    // sessionManager로 직접 확인
+    const currentUser = sessionUser || user;
+    const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
+    
+    if (currentIsLoggedIn && currentUser?.id) {
+      console.log('✅ ClientDashboard 데이터 로드 시작');
       loadClientData();
     }
-  }, [isLoggedIn, user?.id]); // loadClientData 의존성 제거
+  }, [sessionIsLoggedIn, sessionUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 로딩 상태 또는 로그인하지 않은 경우
-  if (sessionLoading || isLoading || !isLoggedIn || !user?.id) {
+  const currentUser = sessionUser || user;
+  const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
+  
+  if (isLoading || !currentIsLoggedIn || !currentUser?.id) {
     return (
       <SimpleLayout>
-        <div className="mg-dashboard-layout">
+        <div className="mg-v2-dashboard-layout">
           <UnifiedLoading text="대시보드를 불러오는 중..." />
         </div>
       </SimpleLayout>
@@ -170,26 +184,28 @@ const ClientDashboard = () => {
 
   return (
     <SimpleLayout>
-      <div className="mg-dashboard-layout client-dashboard">
+      <div className="mg-v2-dashboard-layout">
         
         {/* 웰컴 헤더 - 화사하고 밝은 느낌 */}
-        <div className="client-dashboard__welcome">
-          <div className="client-dashboard__welcome-content">
-            <div className="client-dashboard__welcome-icon">
-              <Sun size={32} />
+        <div className="mg-v2-client-dashboard-header">
+          <div className="mg-v2-dashboard-header-content">
+            <div className="mg-v2-flex mg-align-center mg-gap-md">
+              <div className="mg-v2-dashboard-icon">
+                <Sun size={32} />
+              </div>
+              <div>
+                <h1 className="mg-v2-h1">
+                  {getGreeting()}, <span style={{color: 'var(--color-primary)'}}>{currentUser?.name}</span>님!
+                </h1>
+                <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mt-xs">
+                  <Sparkles size={16} className="mg-v2-mr-xs" />
+                  오늘도 마음 건강을 위한 한 걸음을 함께해요
+                </p>
+              </div>
             </div>
-            <div className="client-dashboard__welcome-text">
-              <h1 className="client-dashboard__greeting">
-                {getGreeting()}, <span className="client-dashboard__name">{user?.name}</span>님!
-              </h1>
-              <p className="client-dashboard__subtitle">
-                <Sparkles size={16} />
-                오늘도 마음 건강을 위한 한 걸음을 함께해요
-              </p>
-            </div>
-            <div className="client-dashboard__time">
+            <div className="mg-v2-flex mg-align-center mg-gap-sm">
               <Clock size={18} />
-              <span>{currentTime}</span>
+              <span className="mg-v2-text-sm">{currentTime}</span>
             </div>
           </div>
         </div>

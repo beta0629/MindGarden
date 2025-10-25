@@ -13617,3 +13617,228 @@ body {
     min-height: 44px;
   }
 }
+
+/* ============================================
+   내담자 대시보드 - 화사하고 밝은 디자인
+   ============================================ */
+
+/* 패턴 카드 배경 */
+.mg-v2-card-pattern {
+  position: relative;
+  background: linear-gradient(135deg, #FFE5E5 0%, #FFF8E1 100%);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+.mg-v2-card-pattern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(255, 182, 193, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(30%, -30%);
+  pointer-events: none;
+}
+
+.mg-v2-card-pattern::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(182, 229, 216, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-30%, 30%);
+  pointer-events: none;
+}
+
+/* 내담자 대시보드 헤더 */
+.mg-v2-client-dashboard-header {
+  background: linear-gradient(135deg, #FFE5E5 0%, #FFF8E1 100%);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-xxl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: 0 4px 20px rgba(255, 182, 193, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.mg-v2-client-dashboard-header .mg-v2-dashboard-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  position: relative;
+  z-index: 1;
+}
+
+.mg-v2-client-dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255, 182, 193, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.mg-v2-dashboard-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border-radius: var(--border-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* 통계 카드 */
+.mg-v2-stats-grid > .mg-v2-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.mg-v2-stats-grid > .mg-v2-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  opacity: 0.1;
+  transform: translate(30%, -30%);
+}
+
+.mg-v2-stats-grid > .mg-v2-card:nth-child(1)::before {
+  background: #FFB6C1;
+}
+
+.mg-v2-stats-grid > .mg-v2-card:nth-child(2)::before {
+  background: #98E4D8;
+}
+
+.mg-v2-stats-grid > .mg-v2-card:nth-child(3)::before {
+  background: #A8D8EA;
+}
+
+.mg-v2-stats-grid > .mg-v2-card:nth-child(4)::before {
+  background: #FFE5B4;
+}
+
+.mg-v2-stats-grid > .mg-v2-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(255, 182, 193, 0.25);
+}
+
+/* 섹션 카드 */
+.mg-v2-section.mg-mb-lg {
+  background: white;
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: 0 4px 20px rgba(255, 182, 193, 0.15);
+}
+
+/* 카드 날짜 디자인 */
+.mg-v2-card-date {
+  width: 60px;
+  height: 60px;
+  background: white;
+  border-radius: var(--border-radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(255, 182, 193, 0.2);
+}
+
+.mg-v2-card-day {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: #FF69B4;
+  line-height: 1;
+}
+
+.mg-v2-card-month {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* 빠른 액션 그리드 */
+.mg-v2-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.mg-v2-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl);
+  background: white;
+  border: none;
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 182, 193, 0.15);
+}
+
+.mg-v2-action-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(255, 182, 193, 0.25);
+}
+
+.mg-v2-action-btn svg {
+  transition: all 0.3s ease;
+}
+
+.mg-v2-action-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .mg-v2-action-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .mg-v2-client-dashboard-header {
+    padding: var(--spacing-lg);
+  }
+  
+  .mg-v2-dashboard-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .mg-v2-section.mg-mb-lg {
+    padding: var(--spacing-lg);
+  }
+  
+  .mg-v2-card-date {
+    width: 50px;
+    height: 50px;
+  }
+}

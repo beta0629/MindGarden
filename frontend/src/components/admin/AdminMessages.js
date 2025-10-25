@@ -51,19 +51,19 @@ const AdminMessages = () => {
       if (response && response.success) {
         console.log('✅ 메시지 목록 로드 성공:', response.data);
         setMessages(response.data || []);
+        console.log('✅ setLoading(false) 호출 예정');
       } else {
         console.error('❌ 메시지 목록 로드 실패:', response?.message);
         console.error('❌ 전체 응답:', response);
         notificationManager.error(response?.message || '메시지 목록을 불러오는데 실패했습니다.');
-        setLoading(false); // 오류 시 로딩 상태 해제
-        return; // 오류 발생 시 종료
       }
     } catch (err) {
       console.error('❌ 메시지 로드 중 오류:', err);
       console.error('❌ 오류 상세:', err.message, err.stack);
       notificationManager.error('메시지를 불러오는 중 오류가 발생했습니다.');
-      setLoading(false); // 오류 시 로딩 상태 해제
-      return; // 오류 발생 시 종료
+    } finally {
+      console.log('✅ finally 블록 실행 - setLoading(false)');
+      setLoading(false);
     }
   }, []);
 

@@ -74,7 +74,7 @@ const MappingCard = ({
                 background: 'rgba(255, 255, 255, 0.3)',
                 borderBottom: '1px solid rgba(139, 69, 19, 0.1)'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', flex: 1 }}>
+                <div className="mg-v2-mapping-card-header-left">
                     <span style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -111,7 +111,7 @@ const MappingCard = ({
                 
                 {onView && (
                     <button 
-                        className="mg-button mg-button-sm mg-button-primary"
+                        className="mg-v2-button mg-v2-button-sm mg-v2-button-primary"
                         onClick={() => onView(mapping)}
                     >
                         상세보기
@@ -120,28 +120,23 @@ const MappingCard = ({
             </div>
 
             {/* Body */}
-            <div style={{ padding: 'var(--spacing-md)', flex: 1 }}>
+            <div className="mg-v2-mapping-card-body">
                 {/* Participants */}
-                <div style={{ 
-                    display: 'flex', 
-                    gap: 'var(--spacing-md)', 
-                    marginBottom: 'var(--spacing-md)',
-                    flexWrap: 'wrap'
-                }}>
-                    <div style={{ flex: 1, minWidth: '0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                        <User size={16} style={{ color: 'var(--olive-green)', flexShrink: 0 }} />
-                        <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--medium-gray)' }}>상담사</div>
-                            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--dark-gray)', fontWeight: 'var(--font-weight-semibold)', wordBreak: 'break-word' }}>
+                <div className="mg-v2-mapping-participants">
+                    <div className="mg-v2-mapping-participant">
+                        <User size={16} className="mg-v2-mapping-icon" />
+                        <div className="mg-v2-mapping-participant-info">
+                            <div className="mg-v2-mapping-participant-label">상담사</div>
+                            <div className="mg-v2-mapping-participant-name">
                                 {mapping.consultantName || 'N/A'}
                             </div>
                         </div>
                     </div>
                     
-                    <div style={{ flex: 1, minWidth: '0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                    <div className="mg-v2-mapping-package-item">
                         <User size={16} style={{ color: 'var(--olive-green)', flexShrink: 0 }} />
-                        <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--medium-gray)' }}>내담자</div>
+                        <div className="mg-v2-mapping-package-info">
+                            <div className="mg-v2-mapping-package-label">내담자</div>
                             <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--dark-gray)', fontWeight: 'var(--font-weight-semibold)', wordBreak: 'break-word' }}>
                                 {mapping.clientName || 'N/A'}
                             </div>
@@ -150,17 +145,12 @@ const MappingCard = ({
                 </div>
 
                 {/* Package & Amount */}
-                <div style={{ 
-                    display: 'flex', 
-                    gap: 'var(--spacing-md)', 
-                    marginBottom: 'var(--spacing-md)',
-                    flexWrap: 'wrap'
-                }}>
+                <div className="mg-v2-mapping-package-section">
                     <div style={{ flex: 1, minWidth: '0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
                         <Package size={16} style={{ color: 'var(--olive-green)', flexShrink: 0 }} />
                         <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--medium-gray)' }}>패키지</div>
-                            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--dark-gray)', fontWeight: 'var(--font-weight-semibold)' }}>
+                            <div className="mg-v2-mapping-package-name">
                                 {mapping.packageName || 'N/A'}
                             </div>
                         </div>
@@ -170,7 +160,7 @@ const MappingCard = ({
                         <CreditCard size={16} style={{ color: 'var(--olive-green)', flexShrink: 0 }} />
                         <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--medium-gray)' }}>금액</div>
-                            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--olive-green)', fontWeight: 'var(--font-weight-bold)' }}>
+                            <div className="mg-v2-mapping-amount">
                                 {formatAmount(mapping.packagePrice || mapping.paymentAmount)}
                             </div>
                         </div>
@@ -186,10 +176,10 @@ const MappingCard = ({
                     gap: 'var(--spacing-xs)'
                 }}>
                     {mapping.startDate && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-xs)' }}>
-                            <Calendar size={14} style={{ color: 'var(--medium-gray)' }} />
-                            <span style={{ color: 'var(--medium-gray)', fontWeight: 'var(--font-weight-medium)' }}>시작일:</span>
-                            <span style={{ color: 'var(--dark-gray)', fontWeight: 'var(--font-weight-semibold)' }}>{formatDate(mapping.startDate)}</span>
+                        <div className="mg-v2-mapping-date-item">
+                            <Calendar size={14} className="mg-v2-mapping-date-icon" />
+                            <span className="mg-v2-mapping-date-label">시작일:</span>
+                            <span className="mg-v2-mapping-date-value">{formatDate(mapping.startDate)}</span>
                         </div>
                     )}
                     
@@ -203,7 +193,7 @@ const MappingCard = ({
                     
                     {mapping.adminApprovalDate && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-xs)' }}>
-                            <CheckCircle size={14} style={{ color: 'var(--color-success)' }} />
+                            <CheckCircle size={14} className="mg-v2-mapping-approval-icon" />
                             <span style={{ color: 'var(--medium-gray)', fontWeight: 'var(--font-weight-medium)' }}>승인일:</span>
                             <span style={{ color: 'var(--dark-gray)', fontWeight: 'var(--font-weight-semibold)' }}>{formatDate(mapping.adminApprovalDate)}</span>
                         </div>
@@ -222,10 +212,10 @@ const MappingCard = ({
                 gap: 'var(--spacing-sm)',
                 flexWrap: 'wrap'
             }}>
-                <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
+                <div className="mg-v2-mapping-card-footer-left">
                     {mapping.status === 'PENDING_PAYMENT' && (
                         <button 
-                            className="mg-button mg-button-sm mg-button-success"
+                            className="mg-v2-button mg-v2-button-sm mg-v2-button-success"
                             onClick={() => setShowPaymentModal(true)}
                         >
                             결제 확인
@@ -234,7 +224,7 @@ const MappingCard = ({
                     
                     {mapping.status === 'PAYMENT_CONFIRMED' && (
                         <button 
-                            className="mg-button mg-button-sm mg-button-primary"
+                            className="mg-v2-button mg-v2-button-sm mg-v2-button-primary"
                             onClick={() => setShowDepositModal(true)}
                         >
                             입금 확인
@@ -243,7 +233,7 @@ const MappingCard = ({
                     
                     {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
                         <button 
-                            className="mg-button mg-button-sm mg-button-success"
+                            className="mg-v2-button mg-v2-button-sm mg-v2-button-success"
                             onClick={() => onApprove(mapping)}
                         >
                             최종 승인
@@ -252,7 +242,7 @@ const MappingCard = ({
                     
                     {onEdit && (
                         <button 
-                            className="mg-button mg-button-sm mg-button-outline"
+                            className="mg-v2-button mg-v2-button-sm mg-v2-button-outline"
                             onClick={() => onEdit(mapping)}
                         >
                             수정
@@ -261,7 +251,7 @@ const MappingCard = ({
                     
                     {onRefund && (
                         <button 
-                            className="mg-button mg-button-sm mg-button-danger"
+                            className="mg-v2-button mg-v2-button-sm mg-v2-button-danger"
                             onClick={() => onRefund(mapping)}
                         >
                             환불

@@ -1,0 +1,408 @@
+/**
+ * Button 컴포넌트 CSS
+ * MindGarden 디자인 시스템 v2.0
+ */
+
+/* ============================================
+   Button 기본 스타일
+   ============================================ */
+
+.mg-v2-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--mg-v2-spacing-xs);
+  font-family: var(--mg-v2-fontFamily-base);
+  font-weight: var(--mg-v2-fontWeight-medium);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.mg-v2-button:focus {
+  outline: 2px solid var(--mg-v2-primary);
+  outline-offset: 2px;
+}
+
+.mg-v2-button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================
+   Button 크기 변형
+   ============================================ */
+
+.mg-v2-button--small {
+  padding: var(--mg-v2-spacing-xs) var(--mg-v2-spacing-sm);
+  font-size: var(--mg-v2-fontSize-sm);
+  line-height: var(--mg-v2-lineHeight-tight);
+  min-height: 32px;
+}
+
+.mg-v2-button--medium {
+  padding: var(--mg-v2-spacing-sm) var(--mg-v2-spacing-md);
+  font-size: var(--mg-v2-fontSize-base);
+  line-height: var(--mg-v2-lineHeight-normal);
+  min-height: 40px;
+}
+
+.mg-v2-button--large {
+  padding: var(--mg-v2-spacing-md) var(--mg-v2-spacing-lg);
+  font-size: var(--mg-v2-fontSize-lg);
+  line-height: var(--mg-v2-lineHeight-normal);
+  min-height: 48px;
+}
+
+/* ============================================
+   Button 색상 변형
+   ============================================ */
+
+.mg-v2-button--primary {
+  background-color: var(--mg-v2-primary);
+  color: var(--color-white);
+  border: 1px solid var(--mg-v2-primary);
+}
+
+.mg-v2-button--primary:hover:not(:disabled) {
+  background-color: var(--mg-v2-primary-dark);
+  border-color: var(--mg-v2-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.mg-v2-button--primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+}
+
+.mg-v2-button--secondary {
+  background-color: var(--mg-v2-secondary);
+  color: var(--color-white);
+  border: 1px solid var(--mg-v2-secondary);
+}
+
+.mg-v2-button--secondary:hover:not(:disabled) {
+  background-color: var(--mg-v2-secondary-dark);
+  border-color: var(--mg-v2-secondary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.mg-v2-button--success {
+  background-color: var(--mg-v2-status-success);
+  color: var(--color-white);
+  border: 1px solid var(--mg-v2-status-success);
+}
+
+.mg-v2-button--success:hover:not(:disabled) {
+  background-color: var(--mg-v2-status-success-dark);
+  border-color: var(--mg-v2-status-success-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.mg-v2-button--warning {
+  background-color: var(--mg-v2-status-warning);
+  color: var(--color-white);
+  border: 1px solid var(--mg-v2-status-warning);
+}
+
+.mg-v2-button--warning:hover:not(:disabled) {
+  background-color: var(--mg-v2-status-warning-dark);
+  border-color: var(--mg-v2-status-warning-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.mg-v2-button--error {
+  background-color: var(--mg-v2-status-error);
+  color: var(--color-white);
+  border: 1px solid var(--mg-v2-status-error);
+}
+
+.mg-v2-button--error:hover:not(:disabled) {
+  background-color: var(--mg-v2-status-error-dark);
+  border-color: var(--mg-v2-status-error-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.mg-v2-button--info {
+  background-color: var(--mg-v2-status-info);
+  color: var(--color-white);
+  border: 1px solid var(--mg-v2-status-info);
+}
+
+.mg-v2-button--info:hover:not(:disabled) {
+  background-color: var(--mg-v2-status-info-dark);
+  border-color: var(--mg-v2-status-info-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.mg-v2-button--outline {
+  background-color: transparent;
+  color: var(--mg-v2-primary);
+  border: 1px solid var(--mg-v2-primary);
+}
+
+.mg-v2-button--outline:hover:not(:disabled) {
+  background-color: var(--mg-v2-primary);
+  color: var(--color-white);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.mg-v2-button--ghost {
+  background-color: transparent;
+  color: var(--mg-v2-primary);
+  border: 1px solid transparent;
+}
+
+.mg-v2-button--ghost:hover:not(:disabled) {
+  background-color: rgba(0, 123, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.mg-v2-button--link {
+  background-color: transparent;
+  color: var(--mg-v2-primary);
+  border: 1px solid transparent;
+  text-decoration: underline;
+  padding: 0;
+  min-height: auto;
+}
+
+.mg-v2-button--link:hover:not(:disabled) {
+  color: var(--mg-v2-primary-dark);
+  text-decoration: none;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ============================================
+   Button 상태 스타일
+   ============================================ */
+
+.mg-v2-button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.mg-v2-button--full-width {
+  width: 100%;
+}
+
+/* ============================================
+   Button 내용 스타일
+   ============================================ */
+
+.mg-v2-button__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-v2-spacing-xs);
+  width: 100%;
+  height: 100%;
+}
+
+.mg-v2-button__text {
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-v2-button__text--loading {
+  opacity: 0.7;
+}
+
+/* ============================================
+   Button 아이콘 스타일
+   ============================================ */
+
+.mg-v2-button--with-icon {
+  gap: var(--mg-v2-spacing-xs);
+}
+
+.mg-v2-button__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mg-v2-button__icon--left {
+  order: -1;
+}
+
+.mg-v2-button__icon--right {
+  order: 1;
+}
+
+/* ============================================
+   Button 로딩 스타일
+   ============================================ */
+
+.mg-v2-button__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mg-v2-button__processing-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(2px);
+}
+
+/* ============================================
+   Button 그룹 스타일
+   ============================================ */
+
+.mg-v2-button-group {
+  display: inline-flex;
+  border-radius: var(--mg-v2-spacing-xs);
+  overflow: hidden;
+}
+
+.mg-v2-button-group .mg-v2-button {
+  border-radius: 0;
+  border-right-width: 0;
+}
+
+.mg-v2-button-group .mg-v2-button:first-child {
+  border-top-left-radius: var(--mg-v2-spacing-xs);
+  border-bottom-left-radius: var(--mg-v2-spacing-xs);
+}
+
+.mg-v2-button-group .mg-v2-button:last-child {
+  border-top-right-radius: var(--mg-v2-spacing-xs);
+  border-bottom-right-radius: var(--mg-v2-spacing-xs);
+  border-right-width: 1px;
+}
+
+.mg-v2-button-group .mg-v2-button:only-child {
+  border-radius: var(--mg-v2-spacing-xs);
+  border-right-width: 1px;
+}
+
+.mg-v2-button-toolbar {
+  display: flex;
+  gap: var(--mg-v2-spacing-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ============================================
+   반응형 Button 스타일
+   ============================================ */
+
+@media (max-width: 768px) {
+  .mg-v2-button--large {
+    padding: var(--mg-v2-spacing-sm) var(--mg-v2-spacing-md);
+    font-size: var(--mg-v2-fontSize-base);
+    min-height: 44px; /* 터치 타겟 최소 크기 */
+  }
+  
+  .mg-v2-button--medium {
+    min-height: 44px; /* 터치 타겟 최소 크기 */
+  }
+  
+  .mg-v2-button--small {
+    min-height: 36px;
+  }
+  
+  .mg-v2-button-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .mg-v2-button-toolbar .mg-v2-button {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   접근성 개선
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-button {
+    transition: none;
+  }
+  
+  .mg-v2-button:hover:not(:disabled) {
+    transform: none;
+  }
+  
+  .mg-v2-button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ============================================
+   다크 모드 지원
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  .mg-v2-button--outline {
+    color: var(--mg-v2-primary-light);
+    border-color: var(--mg-v2-primary-light);
+  }
+  
+  .mg-v2-button--outline:hover:not(:disabled) {
+    background-color: var(--mg-v2-primary-light);
+    color: var(--color-white);
+  }
+  
+  .mg-v2-button--ghost {
+    color: var(--mg-v2-primary-light);
+  }
+  
+  .mg-v2-button--ghost:hover:not(:disabled) {
+    background-color: rgba(0, 123, 255, 0.2);
+  }
+  
+  .mg-v2-button--link {
+    color: var(--mg-v2-primary-light);
+  }
+  
+  .mg-v2-button--link:hover:not(:disabled) {
+    color: var(--mg-v2-primary);
+  }
+}
+
+/* ============================================
+   고대비 모드 지원
+   ============================================ */
+
+@media (prefers-contrast: high) {
+  .mg-v2-button {
+    border-width: 2px;
+  }
+  
+  .mg-v2-button--outline {
+    border-width: 3px;
+  }
+  
+  .mg-v2-button:focus {
+    outline-width: 3px;
+  }
+}

@@ -68,11 +68,11 @@
 /* .stat-item.loading 제거 - 공통 LoadingSpinner 사용 */
 
 .stat-item.error .stat-value {
-    color: #ef4444;
+    color: var(--status-error);
 }
 
 .stat-item.error .stat-label {
-    color: #ef4444;
+    color: var(--status-error);
 }
 
 @keyframes pulse {

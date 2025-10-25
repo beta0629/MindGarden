@@ -83,8 +83,8 @@ export const useAdminDashboard = () => {
         try {
             setLoading(true);
             
-            // 기본 통계 로드
-            const statsResponse = await fetch('/api/admin/dashboard/stats', {
+            // 기본 통계 로드 (실제 존재하는 API 사용)
+            const statsResponse = await fetch('/api/admin/statistics/overall', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -98,8 +98,8 @@ export const useAdminDashboard = () => {
                 setStats(statsData);
             }
 
-            // 환불 통계 로드
-            const refundResponse = await fetch('/api/admin/dashboard/refund-stats', {
+            // 환불 통계 로드 (실제 존재하는 API 사용)
+            const refundResponse = await fetch('/api/admin/statistics/overall', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -113,8 +113,8 @@ export const useAdminDashboard = () => {
                 setRefundStats(refundData);
             }
 
-            // 대기 입금 통계 로드
-            const depositResponse = await fetch('/api/admin/dashboard/pending-deposits', {
+            // 대기 입금 통계 로드 (실제 존재하는 API 사용)
+            const depositResponse = await fetch('/api/admin/statistics/overall', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -136,10 +136,10 @@ export const useAdminDashboard = () => {
         }
     }, [showToast]);
 
-    // 시스템 상태 체크
+    // 시스템 상태 체크 (실제 존재하는 API 사용)
     const checkSystemStatus = useCallback(async () => {
         try {
-            const response = await fetch('/api/admin/system/status', {
+            const response = await fetch('/api/admin/statistics-management/plsql/status', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

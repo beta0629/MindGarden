@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { DollarSign, Settings, FileText, Users, Calculator, Receipt } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from "../common/UnifiedLoading";
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import ConsultantProfileModal from './ConsultantProfileModal';
@@ -104,7 +104,7 @@ const SalaryManagement = () => {
     // 급여일 옵션 로드
     const loadPayDayOptions = async () => {
         try {
-        const response = await apiGet('/api/common-codes/group/SALARY_PAY_DAY');
+        const response = await apiGet('/api/common-codes/SALARY_PAY_DAY');
         if (response && Array.isArray(response)) {
             setPayDayOptions(response);
         }
@@ -350,7 +350,7 @@ const SalaryManagement = () => {
                         </div>
                         <div className="mg-dashboard-header-right">
                             <button 
-                                className="mg-dashboard-icon-btn mg-button-primary"
+                                className="mg-dashboard-icon-btn mg-v2-button-primary"
                                 onClick={() => setIsConfigModalOpen(true)}
                                 title="급여 기산일 설정"
                             >
@@ -365,7 +365,7 @@ const SalaryManagement = () => {
                                         loadTaxStatistics(e.target.value);
                                     }
                                 }}
-                                className="mg-select"
+                                className="mg-v2-select"
                             >
                                 <option key="period-default" value="">기간 선택</option>
                                 <option key="2025-01" value="2025-01">2025년 1월</option>
@@ -379,7 +379,7 @@ const SalaryManagement = () => {
 
                 {/* Main Content */}
                 <div className="mg-dashboard-content">
-                    <div className="mg-card">
+                    <div className="mg-v2-card">
                         {/* 탭 메뉴 */}
                         <div className="mg-tabs">
                             <button 

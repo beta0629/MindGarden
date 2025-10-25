@@ -230,6 +230,19 @@ public class User extends BaseEntity {
     private String notificationPreferences;
     
     /**
+     * 테마 설정 (client, consultant, admin)
+     */
+    @Column(name = "theme_preference", length = 50)
+    @Builder.Default
+    private String themePreference = null; // 역할별 기본값은 서비스에서 설정
+    
+    /**
+     * 커스텀 테마 색상 (JSON 형태로 저장)
+     */
+    @Column(name = "custom_theme_colors", columnDefinition = "TEXT")
+    private String customThemeColors;
+    
+    /**
      * 프로필 공개 설정 (public, private, friends)
      */
     @Column(name = "profile_visibility", length = 20)

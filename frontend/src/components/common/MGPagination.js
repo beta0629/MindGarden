@@ -49,7 +49,7 @@ const MGPagination = ({
     const halfVisible = Math.floor(maxVisible / 2);
     
     let startPage = Math.max(1, currentPage - halfVisible);
-    let endPage = Math.min(totalPages, currentPage + halfVisible);
+    const endPage = Math.min(totalPages, currentPage + halfVisible);
     
     // 시작 페이지 조정
     if (endPage - startPage + 1 < maxVisible) {

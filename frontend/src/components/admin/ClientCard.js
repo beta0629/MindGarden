@@ -1,4 +1,5 @@
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { User, Mail, Phone, Calendar, CheckCircle } from 'lucide-react';
 import { getFormattedContact, getFormattedRegistrationDate } from '../../utils/codeHelper';
 
@@ -33,7 +34,7 @@ const ClientCard = ({
                 marginBottom: '12px'
             }}
         >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="mg-v2-client-card-header">
                 <div style={{
                     width: '40px',
                     height: '40px',
@@ -49,7 +50,7 @@ const ClientCard = ({
                     {client.name?.charAt(0) || '?'}
                 </div>
                 
-                <div style={{ flex: 1 }}>
+                <div className="mg-v2-client-info">
                     <h4 style={{ 
                         margin: '0 0 4px 0', 
                         fontSize: '16px', 
@@ -59,13 +60,13 @@ const ClientCard = ({
                         {client.name || '이름 없음'}
                     </h4>
                     
-                    <div style={{ fontSize: '14px', color: '#6B6B6B', lineHeight: '1.4' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                    <div className="mg-v2-client-contact">
+                        <div className="mg-v2-contact-item mg-v2-contact-item-email">
                             <Mail size={14} />
                             {contact.email || '이메일 없음'}
                         </div>
                         {contact.phone && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div className="mg-v2-contact-item mg-v2-contact-item-phone">
                                 <Phone size={14} />
                                 {contact.phone}
                             </div>
@@ -74,34 +75,25 @@ const ClientCard = ({
                 </div>
                 
                 {isSelected && (
-                    <div style={{
-                        color: '#10b981',
-                        fontSize: '20px'
-                    }}>
+                    <div className="mg-v2-client-selected-icon">
                         <CheckCircle />
                     </div>
                 )}
             </div>
             
-            <div style={{ 
-                marginTop: '12px', 
-                paddingTop: '12px', 
-                borderTop: '1px solid #f3f4f6',
-                fontSize: '14px',
-                color: '#6B6B6B'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+            <div className="mg-v2-client-card-footer">
+                <div className="mg-v2-footer-item mg-v2-footer-item-mapping">
                     <Calendar size={14} />
                     매핑 {clientMappings.length}개
                 </div>
                 {activeMappings.length > 0 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                    <div className="mg-v2-footer-item mg-v2-footer-item-active">
                         <CheckCircle size={14} />
                         활성 {activeMappings.length}개
                     </div>
                 )}
                 {registrationDate && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div className="mg-v2-footer-item mg-v2-footer-item-registration">
                         <User size={14} />
                         가입일: {registrationDate}
                     </div>

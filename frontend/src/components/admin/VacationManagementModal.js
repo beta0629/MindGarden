@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { X, Calendar, Clock, User, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
@@ -55,7 +56,7 @@ const VacationManagementModal = ({
         const loadVacationTypeCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/common-codes/group/VACATION_TYPE');
+                const response = await apiGet('/api/common-codes/VACATION_TYPE');
                 if (response && response.length > 0) {
                     // 원하는 휴가 유형만 필터링 (시간이 표시된 구체적인 옵션만)
                     const allowedTypes = [
@@ -456,15 +457,15 @@ const VacationManagementModal = ({
     }
 
     return (
-        <div className="mg-modal-overlay" onClick={onClose}>
-            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-modal-header">
-                    <div className="mg-flex mg-gap-sm mg-align-center">
+        <div className="mg-v2-modal-overlay" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header">
+                    <div className="mg-v2-flex mg-gap-sm mg-align-center">
                         <Calendar size={24} />
-                        <h3 className="mg-modal-title">휴가 관리</h3>
+                        <h3 className="mg-v2-modal-title">휴가 관리</h3>
                     </div>
                     <button 
-                        className="mg-modal-close" 
+                        className="mg-v2-modal-close" 
                         onClick={onClose}
                         disabled={loading}
                     >
@@ -472,13 +473,13 @@ const VacationManagementModal = ({
                     </button>
                 </div>
 
-                <div className="mg-modal-body">
+                <div className="mg-v2-modal-body">
                     {/* 상담사 선택 (관리자만) */}
                     {userRole !== 'CONSULTANT' && (
-                        <div className="mg-form-group">
-                            <label className="mg-label">상담사 선택</label>
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-label">상담사 선택</label>
                             <select
-                                className="mg-select"
+                                className="mg-v2-select"
                                 value={selectedConsultantId || ''}
                                 onChange={(e) => setSelectedConsultantId(Number(e.target.value))}
                                 disabled={loading}
@@ -495,10 +496,10 @@ const VacationManagementModal = ({
                     
                     {/* 상담사용 안내 메시지 */}
                     {userRole === 'CONSULTANT' && (
-                        <div className="mg-form-group">
-                            <div className="mg-flex mg-gap-sm mg-align-center mg-p-sm mg-bg-info-light mg-radius-md">
+                        <div className="mg-v2-form-group">
+                            <div className="mg-v2-flex mg-gap-sm mg-align-center mg-p-sm mg-bg-info-light mg-radius-md">
                                 <User size={16} />
-                                <span className="mg-text-sm">본인의 휴가를 등록합니다</span>
+                                <span className="mg-v2-text-sm">본인의 휴가를 등록합니다</span>
                             </div>
                         </div>
                     )}

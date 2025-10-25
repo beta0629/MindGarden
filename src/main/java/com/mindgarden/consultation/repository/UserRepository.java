@@ -522,19 +522,19 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * 특정 날짜 이후 생성된 역할별 사용자 수 조회
      */
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.createdAt > ?2 AND u.isDeleted = false")
-    long countByRoleAndCreatedAtAfter(String role, LocalDateTime dateTime);
+    long countByRoleAndCreatedAtAfter(UserRole role, LocalDateTime dateTime);
     
     /**
      * 특정 날짜 이전 생성된 역할별 사용자 수 조회
      */
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.createdAt < ?2 AND u.isDeleted = false")
-    long countByRoleAndCreatedAtBefore(String role, LocalDateTime dateTime);
+    long countByRoleAndCreatedAtBefore(UserRole role, LocalDateTime dateTime);
     
     /**
      * 특정 기간에 생성된 역할별 사용자 수 조회
      */
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.createdAt BETWEEN ?2 AND ?3 AND u.isDeleted = false")
-    long countByRoleAndCreatedAtBetween(String role, LocalDateTime startDate, LocalDateTime endDate);
+    long countByRoleAndCreatedAtBetween(UserRole role, LocalDateTime startDate, LocalDateTime endDate);
     
     /**
      * 최근 내담자 조회 (이름, 생성일시)

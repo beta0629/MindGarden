@@ -15,7 +15,7 @@ const Select = ({
   return (
     <div className={`mg-form-group ${className}`.trim()}>
       {label && (
-        <label className="mg-label">
+        <label className="mg-v2-label">
           {label}
           {required && <span className="mg-required">*</span>}
         </label>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CalendarShowcase = () => {
@@ -68,8 +69,8 @@ const CalendarShowcase = () => {
   };
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">달력</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">달력</h2>
       
       <div style={{ maxWidth: '500px', margin: '0 auto' }}>
         <div className="mg-calendar">
@@ -116,7 +117,7 @@ const CalendarShowcase = () => {
           {/* Selected Date Info */}
           {selectedDate && (
             <div className="mg-card" style={{ marginTop: 'var(--spacing-lg)', background: 'var(--light-cream)' }}>
-              <p className="mg-text-center" style={{ fontWeight: 500 }}>
+              <p className="mg-v2-text-center" style={{ fontWeight: 500 }}>
                 선택된 날짜: {year}년 {month + 1}월 {selectedDate}일
               </p>
             </div>

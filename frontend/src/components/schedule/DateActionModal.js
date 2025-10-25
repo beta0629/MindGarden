@@ -27,7 +27,8 @@ const DateActionModal = ({
 
     const formatDate = (date) => {
         if (!date) return '';
-        return date.toLocaleDateString('ko-KR', {
+        const dateObj = date instanceof Date ? date : new Date(date);
+        return dateObj.toLocaleDateString('ko-KR', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',

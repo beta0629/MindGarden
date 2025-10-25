@@ -114,17 +114,17 @@
 }
 
 .consultant-status-badge[data-status="available"] {
-    background-color: #d1fae5;
+    background-color: var(--status-success-bg);
     color: #065f46;
 }
 
 .consultant-status-badge[data-status="busy"] {
-    background-color: #fef3c7;
+    background-color: var(--status-warning-bg);
     color: #92400e;
 }
 
 .consultant-status-badge[data-status="unavailable"] {
-    background-color: #fee2e2;
+    background-color: var(--status-error-bg);
     color: #991b1b;
 }
 
@@ -149,7 +149,7 @@
 }
 
 .consultant-status-error {
-    color: #ef4444;
+    color: var(--status-error);
 }
 
 .consultant-status-empty {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 const NotificationShowcase = () => {
@@ -48,8 +49,8 @@ const NotificationShowcase = () => {
   };
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">알림 (Toast)</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">알림 (Toast)</h2>
       
       <div className="mg-card mg-p-xl">
         <p className="mg-body-medium mg-mb-md">

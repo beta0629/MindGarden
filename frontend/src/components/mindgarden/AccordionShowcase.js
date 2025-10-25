@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { ChevronDown } from 'lucide-react';
 
 const AccordionShowcase = () => {
@@ -32,8 +33,8 @@ const AccordionShowcase = () => {
   };
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">아코디언</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">아코디언</h2>
       
       <div style={{ maxWidth: '700px', margin: '0 auto' }}>
         <div className="mg-accordion">

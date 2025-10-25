@@ -20,7 +20,7 @@ const NotificationTest = () => {
     const loadNotificationTypeCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await fetch('/api/common-codes/group/NOTIFICATION_TYPE');
+            const response = await fetch('/api/common-codes/NOTIFICATION_TYPE');
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.length > 0) {

@@ -181,7 +181,7 @@ const UnifiedNotifications = () => {
   if (!isLoggedIn) {
     return (
       <SimpleLayout title="알림">
-        <div className="mg-card mg-text-center mg-p-xl">
+        <div className="mg-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>
         </div>
       </SimpleLayout>
@@ -194,10 +194,10 @@ const UnifiedNotifications = () => {
         {/* 헤더 */}
         <div className="mg-card mg-mb-lg">
           <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm">
-            <Bell className="mg-color-primary" size={24} />
+            <Bell className="mg-v2-color-primary" size={24} />
             <h2 className="mg-h3 mg-mb-0">알림</h2>
           </div>
-          <p className="mg-text-sm mg-color-text-secondary mg-mb-0">
+          <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
             시스템 공지와 메시지를 확인하세요.
           </p>
         </div>
@@ -255,21 +255,21 @@ const UnifiedNotifications = () => {
                               {notification.title}
                             </h4>
                             {notification.isUrgent && (
-                              <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
+                              <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
                             )}
                             {notification.isImportant && (
-                              <span className="mg-badge mg-badge-warning mg-text-xs">중요</span>
+                              <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
                             )}
-                            <span className="mg-badge mg-badge-secondary mg-text-xs">
+                            <span className="mg-badge mg-badge-secondary mg-v2-text-xs">
                               {notification.targetType === 'ALL' ? '전체' :
                                notification.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
                             </span>
                           </div>
-                          <span className="mg-text-xs mg-color-text-secondary">
+                          <span className="mg-v2-text-xs mg-v2-color-text-secondary">
                             {formatDate(notification.publishedAt || notification.createdAt)}
                           </span>
                         </div>
-                        <p className="mg-text-sm mg-color-text-secondary mg-mb-0">
+                        <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
                           {notification.content.length > 100
                             ? `${notification.content.substring(0, 100)}...`
                             : notification.content}
@@ -313,28 +313,28 @@ const UnifiedNotifications = () => {
                               {message.title}
                             </h4>
                             <span 
-                              className="mg-badge mg-text-xs"
+                              className="mg-badge mg-v2-text-xs"
                               style={{ backgroundColor: getMessageTypeColor(message.messageType), color: 'white' }}
                             >
                               {getMessageTypeLabel(message.messageType)}
                             </span>
                             {message.isImportant && (
-                              <span className="mg-badge mg-badge-warning mg-text-xs">중요</span>
+                              <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
                             )}
                             {message.isUrgent && (
-                              <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
+                              <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
                             )}
                           </div>
-                          <span className="mg-text-xs mg-color-text-secondary">
+                          <span className="mg-v2-text-xs mg-v2-color-text-secondary">
                             {formatDate(message.createdAt)}
                           </span>
                         </div>
-                        <p className="mg-text-sm mg-color-text-secondary mg-mb-sm">
+                        <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-sm">
                           {message.content.length > 100
                             ? `${message.content.substring(0, 100)}...`
                             : message.content}
                         </p>
-                        <div className="mg-text-xs mg-color-text-secondary">
+                        <div className="mg-v2-text-xs mg-v2-color-text-secondary">
                           {message.senderType === 'CONSULTANT' ? '발신' : '수신'} · 
                           {message.senderName || '알 수 없음'}
                         </div>
@@ -377,7 +377,7 @@ const UnifiedNotifications = () => {
                         {getMessageTypeLabel(selectedItem.data.messageType)}
                       </span>
                     )}
-                    <span className="mg-text-sm mg-color-text-secondary">
+                    <span className="mg-v2-text-sm mg-v2-color-text-secondary">
                       {selectedItem.data.authorName || selectedItem.data.senderName || '관리자'} · 
                       {formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}
                     </span>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
-import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
 
 /**
@@ -33,7 +33,7 @@ const MessageSendModal = ({
     const loadMessageTypeCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/group/MESSAGE_TYPE');
+        const response = await apiGet('/api/common-codes/MESSAGE_TYPE');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,

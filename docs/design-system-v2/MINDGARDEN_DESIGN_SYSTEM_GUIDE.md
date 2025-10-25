@@ -685,5 +685,18 @@ export default AdminDashboard;
 
 ---
 
+## 📚 참고 문서
+
+- **[MASTER_GUIDE.md](./MASTER_GUIDE.md)** - 전체 디자인 시스템 개요 (필수)
+- **[ICON_LAYOUT_CENTRALIZATION_GUIDE.md](./ICON_LAYOUT_CENTRALIZATION_GUIDE.md)** - 아이콘/레이아웃 중앙화
+- **[CARD_SYSTEM_GUIDE.md](./CARD_SYSTEM_GUIDE.md)** - 카드 시스템 상세 가이드
+- **[MGBUTTON_MIGRATION_GUIDE.md](./MGBUTTON_MIGRATION_GUIDE.md)** - MGButton 마이그레이션 가이드
+- **[MOBILE_OPTIMIZATION_GUIDE.md](./MOBILE_OPTIMIZATION_GUIDE.md)** - 모바일 최적화 가이드
+- [디자인 시스템 아키텍처](./DESIGN_SYSTEM_ARCHITECTURE.md)
+- [구현 계획](./IMPLEMENTATION_PLAN.md)
+- [진행 상황 보고서](./PROGRESS_REPORT.md)
+
+---
+
 **문의**: development@mindgarden.com  
-**문서 위치**: `/docs/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md`
+**문서 위치**: `/docs/design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md`

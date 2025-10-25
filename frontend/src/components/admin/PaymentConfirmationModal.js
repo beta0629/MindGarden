@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import ReactDOM from 'react-dom';
 import { CreditCard, X, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
@@ -90,7 +91,7 @@ const PaymentConfirmationModal = ({
     const loadPaymentMethodCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/group/PAYMENT_METHOD');
+        const response = await apiGet('/api/common-codes/PAYMENT_METHOD');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,
@@ -257,16 +258,16 @@ const PaymentConfirmationModal = ({
   if (!isOpen) return null;
 
   return ReactDOM.createPortal(
-    <div className="mg-modal-overlay" onClick={onClose}>
-      <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
         {/* 헤더 */}
-        <div className="mg-modal-header">
-          <h2 className="mg-modal-title">
+        <div className="mg-v2-modal-header">
+          <h2 className="mg-v2-modal-title">
             <CreditCard size={24} />
             결제 확인
           </h2>
           <button 
-            className="mg-modal-close"
+            className="mg-v2-modal-close"
             onClick={onClose}
             disabled={loading}
             aria-label="닫기"
@@ -276,11 +277,11 @@ const PaymentConfirmationModal = ({
         </div>
 
         {/* 본문 */}
-        <div className="mg-modal-body">
+        <div className="mg-v2-modal-body">
           {/* 매핑 목록 */}
-          <div className="mg-form-section">
-            <h3 className="mg-section-title">결제 대기 중인 매핑</h3>
-            <div className="mg-mapping-list">
+          <div className="mg-v2-form-section">
+            <h3 className="mg-v2-section-title">결제 대기 중인 매핑</h3>
+            <div className="mg-v2-mapping-list">
               {mappings
                 .filter(mapping => mapping.status === PAYMENT_STATUS.PENDING)
                 .map(mapping => (
@@ -292,18 +293,18 @@ const PaymentConfirmationModal = ({
                   >
                     <input 
                       type="checkbox"
-                      className="mg-checkbox"
+                      className="mg-v2-checkbox"
                       checked={selectedMappings.some(m => m.id === mapping.id)}
                       onChange={() => handleMappingToggle(mapping.id)}
                     />
-                    <div className="mg-mapping-info">
-                      <div className="mg-mapping-client">
+                    <div className="mg-v2-mapping-info">
+                      <div className="mg-v2-mapping-client">
                         <strong>{mapping.clientName}</strong>
                       </div>
-                      <div className="mg-mapping-consultant">
+                      <div className="mg-v2-mapping-consultant">
                         상담사: {mapping.consultantName}
                       </div>
-                      <div className="mg-mapping-amount">
+                      <div className="mg-v2-mapping-amount">
                         {formatCurrency(mapping.amount || 0)}
                       </div>
                     </div>
@@ -311,20 +312,20 @@ const PaymentConfirmationModal = ({
                 ))}
             </div>
             {errors.mappings && (
-              <div className="mg-error-message">{errors.mappings}</div>
+              <div className="mg-v2-error-message">{errors.mappings}</div>
             )}
           </div>
 
           {/* 결제 정보 입력 */}
-          <div className="mg-form-section">
-            <h3 className="mg-section-title">결제 정보</h3>
+          <div className="mg-v2-form-section">
+            <h3 className="mg-v2-section-title">결제 정보</h3>
             
-            <div className="mg-form-group">
-              <label className="mg-label">결제 방법</label>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-label">결제 방법</label>
               <select 
                 value={paymentData.method} 
                 onChange={(e) => handlePaymentDataChange('method', e.target.value)}
-                className="mg-select"
+                className="mg-v2-select"
                 disabled={loadingCodes}
               >
                 {paymentMethodOptions.map(option => (
@@ -335,55 +336,55 @@ const PaymentConfirmationModal = ({
               </select>
             </div>
 
-            <div className="mg-form-group">
-              <label className="mg-label">결제 금액</label>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-label">결제 금액</label>
               <input
                 type="number"
                 value={paymentData.amount}
                 onChange={(e) => handlePaymentDataChange('amount', parseInt(e.target.value) || 0)}
-                className={`mg-input ${errors.amount ? 'error' : ''}`}
+                className={`mg-v2-input ${errors.amount ? 'error' : ''}`}
                 min={VALIDATION.MIN_AMOUNT}
                 max={VALIDATION.MAX_AMOUNT}
               />
               {errors.amount && (
-                <div className="mg-error-message">{errors.amount}</div>
+                <div className="mg-v2-error-message">{errors.amount}</div>
               )}
             </div>
 
-            <div className="mg-form-group">
-              <label className="mg-label">메모 (선택사항)</label>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-label">메모 (선택사항)</label>
               <textarea
                 value={paymentData.note}
                 onChange={(e) => handlePaymentDataChange('note', e.target.value)}
-                className={`mg-textarea ${errors.note ? 'error' : ''}`}
+                className={`mg-v2-textarea ${errors.note ? 'error' : ''}`}
                 rows="3"
                 maxLength={VALIDATION.MAX_NOTE_LENGTH}
                 placeholder="결제 관련 메모를 입력하세요"
               />
               {errors.note && (
-                <div className="mg-error-message">{errors.note}</div>
+                <div className="mg-v2-error-message">{errors.note}</div>
               )}
             </div>
           </div>
         </div>
 
         {/* 푸터 */}
-        <div className="mg-modal-footer">
+        <div className="mg-v2-modal-footer">
           <button
-            className="mg-button mg-button-secondary"
+            className="mg-v2-button mg-v2-button-secondary"
             onClick={onClose}
             disabled={loading}
           >
             취소
           </button>
           <button
-            className="mg-button mg-button-danger"
+            className="mg-v2-button mg-v2-button-danger"
             onClick={handleCancelPayment}
             disabled={loading || selectedMappings.length === 0}
           >
             {loading ? (
               <>
-                <span className="mg-spinner"></span>
+                <span className="mg-v2-spinner"></span>
                 처리 중...
               </>
             ) : (
@@ -394,13 +395,13 @@ const PaymentConfirmationModal = ({
             )}
           </button>
           <button
-            className="mg-button mg-button-success"
+            className="mg-v2-button mg-v2-button-success"
             onClick={handleConfirmPayment}
             disabled={loading || selectedMappings.length === 0}
           >
             {loading ? (
               <>
-                <span className="mg-spinner"></span>
+                <span className="mg-v2-spinner"></span>
                 처리 중...
               </>
             ) : (

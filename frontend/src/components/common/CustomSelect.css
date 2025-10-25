@@ -45,7 +45,7 @@
 
 .custom-select__value {
   flex: 1;
-  color: #333;
+  color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   white-space: nowrap;
   overflow: hidden;
@@ -99,7 +99,7 @@
 .custom-select__search-input {
   width: 100%;
   padding: 6px 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: var(--font-size-sm);
   outline: none;
@@ -168,12 +168,12 @@
 }
 
 .custom-select__options::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--color-border);
   border-radius: 3px;
 }
 
 .custom-select__options::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--color-border-dark);
 }
 
 /* 반응형 디자인 */

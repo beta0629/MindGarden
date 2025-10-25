@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import './SalaryConfigModal.css';
 
 const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {

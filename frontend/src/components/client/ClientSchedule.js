@@ -49,7 +49,7 @@ const ClientSchedule = () => {
           <h3 className="client-schedule-error__title">오류가 발생했습니다</h3>
           <p className="client-schedule-error__message">{error}</p>
           <button 
-            className="mg-button mg-button-primary"
+            className="mg-v2-button mg-v2-button-primary"
             onClick={() => window.location.reload()}
           >
             다시 시도

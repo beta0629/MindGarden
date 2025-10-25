@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { CONSTANTS } from '../constants/magicNumbers';
 import { useSession } from './SessionContext';
 import { apiGet } from '../utils/ajax';
 
@@ -54,7 +55,7 @@ export const NotificationProvider = ({ children }) => {
       }
     } catch (error) {
       // 인증 오류는 조용히 처리
-      if (error.status !== 401 && error.status !== 403) {
+      if (error.status !== CONSTANTS.HTTP_STATUS.UNAUTHORIZED && error.status !== CONSTANTS.HTTP_STATUS.FORBIDDEN) {
         console.error('메시지 개수 로드 오류:', error);
       }
       setUnreadMessageCount(0);
@@ -78,12 +79,12 @@ export const NotificationProvider = ({ children }) => {
         console.log('📢 읽지 않은 공지 개수 업데이트:', response.unreadCount);
         setUnreadSystemCount(response.unreadCount || 0);
       } else {
-        // 401 등의 오류는 조용히 처리
+        // CONSTANTS.HTTP_STATUS.UNAUTHORIZED 등의 오류는 조용히 처리
         setUnreadSystemCount(0);
       }
     } catch (error) {
       // 인증 오류는 조용히 처리
-      if (error.status !== 401 && error.status !== 403) {
+      if (error.status !== CONSTANTS.HTTP_STATUS.UNAUTHORIZED && error.status !== CONSTANTS.HTTP_STATUS.FORBIDDEN) {
         console.error('공지 개수 로드 오류:', error);
       }
       setUnreadSystemCount(0);
@@ -116,7 +117,7 @@ export const NotificationProvider = ({ children }) => {
       if (response && response.success) {
         const unreadMessages = (response.data || [])
           .filter(msg => !msg.isRead)
-          .slice(0, 5); // 최근 5개만
+          .slice(0, CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS); // 최근 MAX_NOTIFICATIONS개만
         
         setNotifications(unreadMessages);
       } else {
@@ -124,7 +125,7 @@ export const NotificationProvider = ({ children }) => {
       }
     } catch (error) {
       // 인증 오류는 조용히 처리
-      if (error.status !== 401 && error.status !== 403) {
+      if (error.status !== CONSTANTS.HTTP_STATUS.UNAUTHORIZED && error.status !== CONSTANTS.HTTP_STATUS.FORBIDDEN) {
         console.error('메시지 목록 로드 오류:', error);
       }
       setNotifications([]);
@@ -141,17 +142,17 @@ export const NotificationProvider = ({ children }) => {
     }
 
     try {
-      const response = await apiGet('/api/system-notifications?page=0&size=5');
+      const response = await apiGet(`/api/system-notifications?page=0&size=${CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS}`);
       
       if (response && response.success) {
         setSystemNotifications(response.data || []);
       } else {
-        // 401 등의 오류는 조용히 처리
+        // CONSTANTS.HTTP_STATUS.UNAUTHORIZED 등의 오류는 조용히 처리
         setSystemNotifications([]);
       }
     } catch (error) {
       // 인증 오류는 조용히 처리
-      if (error.status !== 401 && error.status !== 403) {
+      if (error.status !== CONSTANTS.HTTP_STATUS.UNAUTHORIZED && error.status !== CONSTANTS.HTTP_STATUS.FORBIDDEN) {
         console.error('공지 목록 로드 오류:', error);
       }
       setSystemNotifications([]);
@@ -217,10 +218,10 @@ export const NotificationProvider = ({ children }) => {
       loadNotifications();
       loadSystemNotifications();
 
-      // 30초마다 자동 갱신
+      // CONSTANTS.BUSINESS_CONSTANTS.DEFAULT_CONSULTATION_DURATION초마다 자동 갱신
       const interval = setInterval(() => {
         loadUnreadCount();
-      }, 30000);
+      }, CONSTANTS.TIME_CONSTANTS.POLLING_INTERVAL);
 
       // 커스텀 이벤트 리스너 등록 (메시지 읽음 처리 시 카운트 갱신)
       const handleMessageRead = () => {

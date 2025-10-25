@@ -1,340 +1,340 @@
-/* 관리자 대시보드 스타일 - 새로운 디자인 시스템 적용 */
-/* CSS 변수는 main.css에서 관리됨 */
+/* AdminDashboard CSS - 리팩토링된 버전 */
 
-/* 대시보드 컨테이너 */
-.admin-dashboard {
-    padding: var(--spacing-lg);
-    max-width: 1200px;
-    margin: 0 auto;
-    background: var(--ios-bg-primary);
+/* 메인 컨테이너 */
+.mg-v2-admin-dashboard {
+    padding: 20px;
+    background-color: var(--mg-color-background);
     min-height: 100vh;
 }
 
-.admin-dashboard-content {
+/* 헤더 스타일 */
+.mg-v2-admin-dashboard-header {
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xl);
-}
-
-/* 섹션 스타일 */
-.dashboard-section {
-    margin-bottom: var(--spacing-xxl);
-}
-
-.section-title {
-    font-size: var(--font-size-xxl);
-    font-weight: var(--font-weight-bold);
-    color: var(--ios-text-primary);
-    margin-bottom: var(--spacing-lg);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    font-family: var(--font-family-ios);
-}
-
-/* 통계 그리드 */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xxl);
-}
-
-/* 관리 기능 그리드 */
-.management-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
-}
-
-/* 시스템 개요 카드 */
-.overview-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-xl);
-    margin-bottom: var(--spacing-xxl);
-}
-
-.overview-card {
-    background: var(--glass-bg-light);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: var(--border-radius-xl);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-glass);
-    padding: var(--spacing-xl);
-    transition: var(--transition-bounce);
-    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: var(--spacing-xl);
-    cursor: pointer;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--mg-color-surface);
+    border-radius: var(--mg-border-radius-lg);
+    box-shadow: var(--mg-shadow-md);
 }
 
-.overview-card:hover {
-    background: var(--glass-bg-medium);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: var(--shadow-glass-strong);
-    border-color: var(--glass-border-strong);
-}
-
-.overview-card:active {
-    transform: translateY(-4px) scale(0.98);
-}
-
-/* 카드 아이콘 */
-.card-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: var(--border-radius-xl);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-xxxl);
-    color: white;
-    flex-shrink: 0;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    transition: var(--transition-normal);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.overview-card:hover .card-icon {
-    transform: scale(1.1);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-}
-
-/* 아이콘 색상 */
-.card-icon.consultants { background: var(--ios-blue); }
-.card-icon.clients { background: var(--ios-green); }
-.card-icon.mappings { background: var(--ios-orange); }
-.card-icon.active { background: var(--ios-purple); }
-
-/* 카드 콘텐츠 */
-.card-content h3 {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
-    color: var(--ios-text-primary);
-    margin: 0 0 var(--spacing-sm) 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    font-family: var(--font-family-ios);
-}
-
-.card-value {
-    font-size: var(--font-size-xxxl);
-    font-weight: var(--font-weight-bold);
-    color: var(--ios-text-primary);
-    margin: 0 0 var(--spacing-sm) 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    font-family: var(--font-family-ios);
-}
-
-.card-description {
-    font-size: var(--font-size-sm);
-    color: var(--ios-text-secondary);
-    margin: 0;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
-    font-family: var(--font-family-ios);
-}
-
-/* 웰컴 섹션 */
-.dashboard-header {
-    margin-bottom: var(--spacing-xxl);
-}
-
-.welcome-section {
-    margin-bottom: var(--spacing-xl);
-}
-
-.welcome-card {
-    background: var(--glass-bg-light);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: var(--border-radius-xxl);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-glass);
-    padding: var(--spacing-xxl);
-    transition: var(--transition-bounce);
-}
-
-.welcome-profile {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xl);
-}
-
-.profile-avatar {
-    flex-shrink: 0;
-}
-
-.profile-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: var(--border-radius-xxl);
-    background: var(--ios-blue);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-xxxl);
-    color: white;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    box-shadow: 0 8px 25px rgba(0, 122, 255, 0.3);
-    transition: var(--transition-bounce);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.welcome-content {
+.mg-v2-admin-dashboard-header-left {
     flex: 1;
 }
 
-/* 로딩 및 에러 컨테이너 */
-.loading-container,
-.error-container {
+.mg-v2-admin-dashboard-user-info {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.mg-v2-admin-dashboard-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--mg-color-primary);
+    color: white;
+    display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 50vh;
-    text-align: center;
-    gap: var(--spacing-lg);
+    font-size: 1.5rem;
+    font-weight: 600;
+    box-shadow: var(--mg-shadow-sm);
 }
 
-.loading-container p,
-.error-container p {
-    color: var(--ios-text-secondary);
-    font-size: var(--font-size-base);
+.mg-v2-admin-dashboard-user-details {
+    flex: 1;
+}
+
+.mg-v2-admin-dashboard-welcome {
+    margin: 0 0 5px 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--mg-color-text-primary);
+}
+
+.mg-v2-admin-dashboard-role {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    color: var(--mg-color-text-secondary);
+}
+
+.mg-v2-admin-dashboard-branch {
     margin: 0;
+    font-size: 0.9rem;
+    color: var(--mg-color-text-muted);
 }
 
-.error-container h2 {
-    color: var(--ios-text-primary);
-    font-size: var(--font-size-xxl);
-    margin: 0;
-    font-weight: var(--font-weight-bold);
+.mg-v2-admin-dashboard-header-right {
+    display: flex;
+    align-items: center;
 }
 
-/* 토스트 메시지 */
-.toast {
-    position: fixed;
-    top: var(--spacing-xl);
-    right: var(--spacing-xl);
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--border-radius-lg);
-    color: white;
-    font-weight: var(--font-weight-semibold);
-    font-size: var(--font-size-sm);
-    z-index: var(--z-toast);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    box-shadow: var(--shadow-glass-strong);
-    border: 1px solid var(--glass-border);
-    animation: toast-slide-in 0.3s ease;
+.mg-v2-admin-dashboard-actions {
+    display: flex;
+    gap: 10px;
 }
 
-.toast-success {
-    background: rgba(52, 199, 89, 0.8);
+.mg-v2-admin-dashboard-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.toast-error {
-    background: rgba(255, 59, 48, 0.8);
+/* 통계 카드 스타일 */
+.mg-v2-admin-dashboard-stats {
+    margin-bottom: 30px;
 }
 
-.toast-info {
-    background: rgba(0, 122, 255, 0.8);
+.mg-v2-admin-dashboard-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
 }
 
-.toast-warning {
-    background: rgba(255, 149, 0, 0.8);
+.mg-v2-admin-dashboard-stat-card {
+    transition: all 0.3s ease;
 }
 
-@keyframes toast-slide-in {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
+.mg-v2-admin-dashboard-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--mg-shadow-lg);
+}
+
+/* 액션 버튼 스타일 */
+.mg-v2-admin-dashboard-actions {
+    margin-bottom: 30px;
+}
+
+.mg-v2-admin-dashboard-action-group {
+    margin-bottom: 25px;
+}
+
+.mg-v2-admin-dashboard-action-group-title {
+    margin: 0 0 15px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--mg-color-text-primary);
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--mg-color-primary-light);
+}
+
+.mg-v2-admin-dashboard-action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.mg-v2-admin-dashboard-action-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    text-align: left;
+    min-height: 80px;
+}
+
+.mg-v2-admin-dashboard-action-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mg-v2-admin-dashboard-action-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--mg-color-text-primary);
+}
+
+.mg-v2-admin-dashboard-action-description {
+    font-size: 0.85rem;
+    color: var(--mg-color-text-secondary);
+    line-height: 1.3;
+}
+
+/* 시스템 섹션 스타일 */
+.mg-v2-admin-dashboard-system {
+    margin-bottom: 30px;
+}
+
+.mg-v2-admin-dashboard-system-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+.mg-v2-admin-dashboard-system-section {
+    background: var(--mg-color-surface);
+    border-radius: var(--mg-border-radius-lg);
+    box-shadow: var(--mg-shadow-md);
+    overflow: hidden;
 }
 
 /* 반응형 디자인 */
-@media (max-width: 767px) {
-    .admin-dashboard {
-        padding: var(--spacing-md);
+@media (max-width: 768px) {
+    .mg-v2-admin-dashboard {
+        padding: 10px;
     }
     
-    .admin-dashboard-content {
-        gap: var(--spacing-lg);
-    }
-    
-    .stats-grid,
-    .management-grid,
-    .overview-cards {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .welcome-profile {
+    .mg-v2-admin-dashboard-header {
         flex-direction: column;
-        text-align: center;
-        gap: var(--spacing-lg);
+        align-items: flex-start;
+        gap: 15px;
     }
     
-    .overview-card {
+    .mg-v2-admin-dashboard-user-info {
         flex-direction: column;
-        text-align: center;
-        gap: var(--spacing-lg);
-        padding: var(--spacing-xl);
+        align-items: flex-start;
+        gap: 10px;
     }
     
-    .card-icon {
+    .mg-v2-admin-dashboard-avatar {
         width: 50px;
         height: 50px;
-        font-size: var(--font-size-xxl);
+        font-size: 1.2rem;
     }
     
-    .profile-icon {
-        width: 60px;
-        height: 60px;
-        font-size: var(--font-size-xxl);
+    .mg-v2-admin-dashboard-welcome {
+        font-size: 1.2rem;
     }
     
-    .card-value {
-        font-size: var(--font-size-xxl);
+    .mg-v2-admin-dashboard-header-right {
+        width: 100%;
+        justify-content: flex-start;
     }
     
-    .section-title {
-        font-size: var(--font-size-xl);
+    .mg-v2-admin-dashboard-actions {
+        flex-direction: column;
+        gap: 8px;
     }
     
-    .toast {
-        top: var(--spacing-md);
-        right: var(--spacing-md);
-        left: var(--spacing-md);
-        padding: var(--spacing-sm) var(--spacing-md);
+    .mg-v2-admin-dashboard-action-btn {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .mg-v2-admin-dashboard-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .mg-v2-admin-dashboard-action-buttons {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .mg-v2-admin-dashboard-action-button {
+        min-height: 70px;
+        padding: 12px 15px;
+    }
+    
+    .mg-v2-admin-dashboard-system-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
     }
 }
 
-/* 아이패드 스타일 최적화 */
-@media (min-width: 768px) and (max-width: 1024px) {
-    .stats-grid,
-    .management-grid,
-    .overview-cards {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+@media (max-width: 480px) {
+    .mg-v2-admin-dashboard-header {
+        padding: 15px;
     }
     
-    .admin-dashboard {
-        padding: var(--spacing-lg) var(--spacing-xl);
+    .mg-v2-admin-dashboard-user-info {
+        gap: 8px;
     }
     
-    /* 아이패드 호버 효과 (터치 디바이스에서는 제한적) */
-    @media (hover: hover) {
-        .overview-card:hover {
-            background: var(--glass-bg-medium);
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-glass-strong);
-        }
+    .mg-v2-admin-dashboard-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .mg-v2-admin-dashboard-welcome {
+        font-size: 1.1rem;
+    }
+    
+    .mg-v2-admin-dashboard-role {
+        font-size: 0.9rem;
+    }
+    
+    .mg-v2-admin-dashboard-branch {
+        font-size: 0.8rem;
+    }
+    
+    .mg-v2-admin-dashboard-action-button {
+        min-height: 60px;
+        padding: 10px 12px;
+    }
+    
+    .mg-v2-admin-dashboard-action-title {
+        font-size: 0.9rem;
+    }
+    
+    .mg-v2-admin-dashboard-action-description {
+        font-size: 0.8rem;
+    }
+}
+
+/* 애니메이션 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mg-v2-admin-dashboard {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.mg-v2-admin-dashboard-header {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.mg-v2-admin-dashboard-stats {
+    animation: fadeInUp 0.7s ease-out;
+}
+
+.mg-v2-admin-dashboard-actions {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.mg-v2-admin-dashboard-system {
+    animation: fadeInUp 0.9s ease-out;
+}
+
+/* 로딩 상태 */
+.mg-v2-admin-dashboard.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* 접근성 */
+.mg-v2-admin-dashboard-action-button:focus {
+    outline: 2px solid var(--mg-color-primary);
+    outline-offset: 2px;
+}
+
+.mg-v2-admin-dashboard-stat-card:focus {
+    outline: 2px solid var(--mg-color-primary);
+    outline-offset: 2px;
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .mg-v2-admin-dashboard {
+        --mg-color-background: #1a1a1a;
+        --mg-color-surface: #2d2d2d;
+        --mg-color-text-primary: #ffffff;
+        --mg-color-text-secondary: #b3b3b3;
+        --mg-color-text-muted: #808080;
+        --mg-color-primary: #4f46e5;
+        --mg-color-primary-light: #3730a3;
+        --mg-color-primary-dark: #312e81;
     }
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { useNavigate } from 'react-router-dom';
@@ -20,7 +21,7 @@ const ConsultantRecords = () => {
   const loadStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/group/STATUS');
+      const response = await apiGet('/api/common-codes/STATUS');
       if (response && response.length > 0) {
         // 상담기록에 적합한 상태만 필터링
         const consultationStatuses = response.filter(code => 

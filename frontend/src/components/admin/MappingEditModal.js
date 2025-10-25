@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
@@ -45,7 +46,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     /**
      * 패키지 옵션 로드
      */
-    const loadPackageOptions = async () => {
+    const loadPackageOptions = async() => {
         try {
             console.log('🔍 패키지 옵션 로드 시작');
             const codes = await getCommonCodes('CONSULTATION_PACKAGE');
@@ -103,8 +104,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     /**
      * 폼 데이터 변경 처리
      */
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
+    const handleInputChange = (e) => { const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -134,8 +134,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     /**
      * 폼 유효성 검사
      */
-    const validateForm = () => {
-        const newErrors = {};
+    const validateForm = () => { const newErrors = { };
 
         // 패키지 선택 검사만 수행 (가격과 회기 수는 자동 설정되므로)
         if (!formData.packageName.trim()) {
@@ -169,12 +168,11 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                 formData
             });
 
-            // PUT 요청으로 매칭 수정 (백엔드의 @PutMapping("/mappings/{id}") 엔드포인트 사용)
-            const response = await fetch(`/api/admin/mappings/${mapping.id}`, {
+            // PUT 요청으로 매칭 수정 (백엔드의 @PutMapping("/mappings/{ id }") 엔드포인트 사용)
+            const response = await fetch(`/api/admin/mappings/${ mapping.id }`, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
-                },
+                    'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     packageName: formData.packageName,
                     packagePrice: parseFloat(formData.packagePrice),
@@ -219,53 +217,53 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         return null;
     }
 
-    return (
+    return(
         <div className="mapping-edit-modal-overlay">
             <div className="mapping-edit-modal">
                 <div className="mapping-edit-modal-header">
                     <h2>매칭 정보 수정</h2>
                     <button 
                         className="close-btn" 
-                        onClick={handleClose}
-                        disabled={loading}
+                        onClick={ handleClose }
+                        disabled={ loading }
                     >
                         ×
                     </button>
                 </div>
 
                 <div className="mapping-edit-modal-body">
-                    {/* 매칭 정보 표시 */}
+                    { /* 매칭 정보 표시 */ }
                     <div className="mapping-info-display">
                         <div className="info-row">
                             <span className="label">상담사:</span>
-                            <span className="value">{mapping.consultantName}</span>
+                            <span className="value">{ mapping.consultantName }</span>
                         </div>
                         <div className="info-row">
                             <span className="label">내담자:</span>
-                            <span className="value">{mapping.clientName}</span>
+                            <span className="value">{ mapping.clientName }</span>
                         </div>
                         <div className="info-row">
                             <span className="label">현재 상태:</span>
-                            <span className="value">{mapping.status}</span>
+                            <span className="value">{ mapping.status }</span>
                         </div>
                     </div>
 
-                    <form onSubmit={handleSubmit}>
-                        {/* 패키지 선택 */}
+                    <form onSubmit={ handleSubmit }>
+                        { /* 패키지 선택 */ }
                         <div className="form-group">
                             <label htmlFor="packageName">패키지 *</label>
                             <select
                                 id="packageName"
                                 name="packageName"
-                                value={formData.packageName}
-                                onChange={handleInputChange}
-                                className={errors.packageName ? 'error' : ''}
-                                disabled={loading}
+                                value={ formData.packageName }
+                                onChange={ handleInputChange }
+                                className={ errors.packageName ? 'error' : '' }
+                                disabled={ loading }
                             >
                                 <option value="">패키지를 선택해주세요</option>
                                 {packageOptions.map(pkg => (
-                                    <option key={pkg.value} value={pkg.value}>
-                                        {pkg.label} ({pkg.sessions}회기, {pkg.price.toLocaleString()}원)
+                                    <option key={pkg.value} value={ pkg.value }>
+                                        { pkg.label } ({ pkg.sessions }회기, { pkg.price.toLocaleString() }원)
                                     </option>
                                 ))}
                             </select>
@@ -274,7 +272,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                             )}
                         </div>
 
-                        {/* 패키지 가격 (읽기 전용) */}
+                        { /* 패키지 가격 (읽기 전용) */ }
                         <div className="form-group">
                             <label htmlFor="packagePrice">패키지 가격 *</label>
                             <div className="price-display-wrapper">
@@ -282,9 +280,9 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                                     type="text"
                                     id="packagePrice"
                                     name="packagePrice"
-                                    value={formData.packagePrice ? formData.packagePrice.toLocaleString() : ''}
+                                    value={ formData.packagePrice ? formData.packagePrice.toLocaleString() : '' }
                                     className="readonly-input"
-                                    disabled={true}
+                                    disabled={ true }
                                     readOnly
                                 />
                                 <span className="currency">원</span>
@@ -294,7 +292,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                             </div>
                         </div>
 
-                        {/* 총 회기 수 (읽기 전용) */}
+                        { /* 총 회기 수 (읽기 전용) */ }
                         <div className="form-group">
                             <label htmlFor="totalSessions">총 회기 수 *</label>
                             <div className="sessions-display-wrapper">
@@ -302,9 +300,9 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                                     type="text"
                                     id="totalSessions"
                                     name="totalSessions"
-                                    value={formData.totalSessions || ''}
+                                    value={ formData.totalSessions || '' }
                                     className="readonly-input"
-                                    disabled={true}
+                                    disabled={ true }
                                     readOnly
                                 />
                                 <span className="unit">회기</span>
@@ -314,7 +312,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                             </div>
                         </div>
 
-                        {/* 주의사항 */}
+                        { /* 주의사항 */ }
                         <div className="warning-box">
                             <div className="warning-icon">⚠️</div>
                             <div className="warning-content">
@@ -333,18 +331,18 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                     <button
                         type="button"
                         className="btn btn-secondary"
-                        onClick={handleClose}
-                        disabled={loading}
+                        onClick={ handleClose }
+                        disabled={ loading }
                     >
                         취소
                     </button>
                     <button
                         type="submit"
                         className="btn btn-primary"
-                        onClick={handleSubmit}
-                        disabled={loading}
+                        onClick={ handleSubmit }
+                        disabled={ loading }
                     >
-                        {loading ? '수정 중...' : '수정 완료'}
+                        { loading ? '수정 중...' : '수정 완료' }
                     </button>
                 </div>
             </div>

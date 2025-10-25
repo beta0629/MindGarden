@@ -1,4 +1,5 @@
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { Link } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
 import './ComplianceMenu.css';

@@ -22,7 +22,7 @@ const ProfileSection = ({
     const loadGenderCodes = async () => {
       try {
         setLoading(true);
-        const response = await apiGet('/api/common-codes/group/GENDER');
+        const response = await apiGet('/api/common-codes/GENDER');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,

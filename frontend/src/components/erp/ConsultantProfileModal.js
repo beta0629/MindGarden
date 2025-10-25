@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import ReactDOM from 'react-dom';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
@@ -357,31 +358,23 @@ const ConsultantProfileModal = ({
                                         {console.log('현재 선택된 등급:', salaryFormData.grade)}
                                         <select
                                             value={salaryFormData.grade || ''}
-                                            onChange={async (e) => {
-                                                const selectedGrade = e.target.value;
-                                                console.log('선택된 등급:', selectedGrade);
-                                                console.log('현재 등급 목록:', grades);
-                                                
-                                                // 등급에 따른 기본급여 계산
-                                                const calculatedBaseSalary = calculateBaseSalaryByGrade(selectedGrade);
-                                                console.log('계산된 기본급여:', calculatedBaseSalary);
-                                                
-                                                setSalaryFormData({
-                                                    ...salaryFormData, 
-                                                    grade: selectedGrade,
-                                                    baseSalary: calculatedBaseSalary
-                                                });
-                                                
-                                                // 등급 변경 시 자동 저장
-                                                if (selectedGrade && consultant.id) {
-                                                    try {
-                                                        await apiPut(`/api/admin/consultants/${consultant.id}/grade`, { grade: selectedGrade });
-                                                        console.log('등급 자동 저장 완료:', selectedGrade);
-                                                        console.log('기본급여 자동 계산:', calculatedBaseSalary);
-                                                    } catch (error) {
-                                                        console.error('등급 자동 저장 실패:', error);
-                                                    }
-                                                }
+                                            onChange={(e) => {
+                                                const handleGradeChange = async () => {
+                                                    const selectedGrade = e.target.value;
+                                                    console.log('선택된 등급:', selectedGrade);
+                                                    console.log('현재 등급 목록:', grades);
+                                                    
+                                                    // 등급에 따른 기본급여 계산
+                                                    const calculatedBaseSalary = calculateBaseSalaryByGrade(selectedGrade);
+                                                    console.log('계산된 기본급여:', calculatedBaseSalary);
+                                                    
+                                                    setSalaryFormData({
+                                                        ...salaryFormData, 
+                                                        grade: selectedGrade,
+                                                        baseSalary: calculatedBaseSalary
+                                                    });
+                                                };
+                                                handleGradeChange();
                                             }}
                                             className="consultant-profile-form-select"
                                             required

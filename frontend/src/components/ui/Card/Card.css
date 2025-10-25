@@ -1,0 +1,150 @@
+/* Card 컴포넌트 스타일 */
+/* 쇼케이스 참조: frontend/src/components/mindgarden/CardShowcase.js */
+
+/* 기본 카드 */
+.mg-v2-card {
+  background: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* 카드 변형 */
+.mg-v2-card--glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+.mg-v2-card--gradient {
+  background: linear-gradient(135deg, var(--mint-green) 0%, var(--soft-mint) 100%);
+  color: var(--color-white);
+}
+
+.mg-v2-card--floating {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.mg-v2-card--border {
+  border: 2px solid var(--olive-green);
+  box-shadow: none;
+}
+
+/* 클릭 가능한 카드 */
+.mg-v2-card--clickable {
+  cursor: pointer;
+}
+
+.mg-v2-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 카드 헤더 */
+.mg-v2-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.mg-v2-card-header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.mg-v2-card-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius-md);
+  background: var(--soft-mint);
+  color: var(--olive-green);
+}
+
+.mg-v2-card-header-text {
+  flex: 1;
+}
+
+.mg-v2-card-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--dark-gray);
+}
+
+.mg-v2-card-subtitle {
+  margin: 4px 0 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--medium-gray);
+}
+
+.mg-v2-card-header-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+/* 카드 내용 */
+.mg-v2-card-content {
+  padding: var(--spacing-sm) 0;
+}
+
+/* 카드 푸터 */
+.mg-v2-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.mg-v2-card-meta {
+  font-size: var(--font-size-sm);
+  color: var(--medium-gray);
+}
+
+.mg-v2-card-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .mg-v2-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .mg-v2-card-header {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .mg-v2-card-header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .mg-v2-card-footer {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+  
+  .mg-v2-card-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .mg-v2-card-actions button {
+    flex: 1;
+  }
+}
+

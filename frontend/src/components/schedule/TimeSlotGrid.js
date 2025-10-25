@@ -784,7 +784,7 @@ const TimeSlotGrid = ({
                             {groupedSlots[hour].map(slot => {
                                 // 인라인 스타일 정의
                                 const getSlotStyle = (slot) => {
-                                    let baseStyle = {
+                                    const baseStyle = {
                                         display: 'flex',
                                         flexDirection: 'column',
                                         alignItems: 'center',

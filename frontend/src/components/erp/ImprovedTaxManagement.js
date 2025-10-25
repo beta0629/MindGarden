@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from "../common/UnifiedLoading";
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
@@ -103,7 +103,7 @@ const ImprovedTaxManagement = () => {
 
   const loadTaxSettings = async () => {
     try {
-      const response = await apiGet('/api/common-codes/group/TAX_CATEGORY');
+      const response = await apiGet('/api/common-codes/TAX_CATEGORY');
       if (response.success) {
         setTaxCategories(response.data || []);
       } else {

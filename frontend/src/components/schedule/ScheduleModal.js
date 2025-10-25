@@ -69,7 +69,7 @@ const ScheduleModalNew = ({
         const loadConsultationTypeCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/common-codes/group/CONSULTATION_TYPE');
+                const response = await apiGet('/api/common-codes/CONSULTATION_TYPE');
                 if (response && response.length > 0) {
                     const options = response.map(code => {
                         let durationMinutes = 50; // 기본값
@@ -114,7 +114,7 @@ const ScheduleModalNew = ({
         const loadDurationCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/common-codes/group/DURATION');
+                const response = await apiGet('/api/common-codes/DURATION');
                 if (response && response.length > 0) {
                     const options = response.map(code => {
                         let durationMinutes = 60; // 기본값
@@ -372,7 +372,7 @@ const ScheduleModalNew = ({
                     </div>
                     <div className="schedule-modal-header-center">
                         <div className="selected-date">
-                            {selectedDate?.toLocaleDateString('ko-KR', {
+                            {selectedDate && (selectedDate instanceof Date ? selectedDate : new Date(selectedDate)).toLocaleDateString('ko-KR', {
                                 year: 'numeric',
                                 month: 'long',
                                 day: 'numeric',
@@ -436,7 +436,7 @@ const ScheduleModalNew = ({
                             
                             <div className="mg-p-md mg-bg-light-gray mg-radius-md mg-border mg-flex mg-flex-col mg-gap-sm">
                                 <div className="mg-form-group">
-                                    <label className="mg-label">상담 유형:</label>
+                                    <label className="mg-v2-label">상담 유형:</label>
                                     <select 
                                         value={consultationType} 
                                         onChange={(e) => setConsultationType(e.target.value)}
@@ -452,7 +452,7 @@ const ScheduleModalNew = ({
                                 </div>
 
                                 <div className="mg-form-group">
-                                    <label className="mg-label">상담 시간:</label>
+                                    <label className="mg-v2-label">상담 시간:</label>
                                     <select 
                                         value={selectedDuration} 
                                         onChange={(e) => setSelectedDuration(e.target.value)}
@@ -504,7 +504,7 @@ const ScheduleModalNew = ({
                             </div>
                             
                             <div className="mg-form-group">
-                                <label className="mg-label">제목:</label>
+                                <label className="mg-v2-label">제목:</label>
                                 <input
                                     type="text"
                                     className="mg-input"
@@ -515,9 +515,9 @@ const ScheduleModalNew = ({
                             </div>
                             
                             <div className="mg-form-group">
-                                <label className="mg-label">설명:</label>
+                                <label className="mg-v2-label">설명:</label>
                                 <textarea
-                                    className="mg-textarea"
+                                    className="mg-v2-textarea"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="추가 설명 (선택사항)"

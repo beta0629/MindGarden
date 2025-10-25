@@ -5,7 +5,6 @@ import java.util.Map;
 import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.service.CommonCodeService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -62,10 +61,16 @@ public class CommonCodeController {
      * @param groupCode 그룹 코드
      * @return 공통코드 목록
      */
-    @GetMapping("/group/{groupCode}")
+    @GetMapping("/{groupCode}")
     public ResponseEntity<List<CommonCode>> getCommonCodesByGroup(
             @PathVariable String groupCode) {
         try {
+            // groupCode 유효성 검사
+            if (groupCode == null || groupCode.trim().isEmpty() || "undefined".equals(groupCode)) {
+                log.warn("잘못된 그룹 코드: {}", groupCode);
+                return ResponseEntity.badRequest().body(List.of());
+            }
+            
             log.info("공통코드 그룹 조회 요청: {}", groupCode);
             
             List<CommonCode> codes = commonCodeService.getCommonCodesByGroup(groupCode);
@@ -217,4 +222,5 @@ public class CommonCodeController {
             ));
         }
     }
+
 }

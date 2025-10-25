@@ -203,7 +203,7 @@ const SystemConfigManagement = () => {
             <div className="system-config-management">
                 
                 {/* 헤더 */}
-                <div className="mg-card system-config-header">
+                <div className="mg-v2-card system-config-header">
                     <div className="header-content">
                         <div className="header-icon">
                             <Settings size={32} />
@@ -216,7 +216,7 @@ const SystemConfigManagement = () => {
                 </div>
                 
                 {/* OpenAI 설정 */}
-                <div className="mg-card config-section">
+                <div className="mg-v2-card config-section">
                     <div className="section-header">
                         <Key size={24} />
                         <h2>OpenAI API 설정</h2>
@@ -232,12 +232,12 @@ const SystemConfigManagement = () => {
                                     value={configs.openaiApiKey}
                                     onChange={(e) => setConfigs(prev => ({ ...prev, openaiApiKey: e.target.value }))}
                                     placeholder="sk-..."
-                                    className="mg-input"
+                                    className="mg-v2-input"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowApiKey(!showApiKey)}
-                                    className="mg-button mg-button--secondary"
+                                    className="mg-v2-button mg-v2-button--secondary"
                                 >
                                     {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
@@ -255,7 +255,7 @@ const SystemConfigManagement = () => {
                                 type="url"
                                 value={configs.openaiApiUrl}
                                 onChange={(e) => setConfigs(prev => ({ ...prev, openaiApiUrl: e.target.value }))}
-                                className="mg-input"
+                                className="mg-v2-input"
                             />
                         </div>
                         
@@ -265,7 +265,7 @@ const SystemConfigManagement = () => {
                                 id="model"
                                 value={configs.openaiModel}
                                 onChange={(e) => setConfigs(prev => ({ ...prev, openaiModel: e.target.value }))}
-                                className="mg-select"
+                                className="mg-v2-select"
                             >
                                 <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
                                 <option value="gpt-4">GPT-4</option>
@@ -278,7 +278,7 @@ const SystemConfigManagement = () => {
                         <button
                             onClick={handleTest}
                             disabled={testing || !configs.openaiApiKey}
-                            className="mg-button mg-button--secondary"
+                            className="mg-v2-button mg-v2-button--secondary"
                         >
                             {testing ? <RefreshCw size={16} className="spinning" /> : <CheckCircle size={16} />}
                             API 테스트
@@ -304,7 +304,7 @@ const SystemConfigManagement = () => {
                 </div>
                 
                 {/* 웰니스 설정 */}
-                <div className="mg-card config-section">
+                <div className="mg-v2-card config-section">
                     <div className="section-header">
                         <Database size={24} />
                         <h2>웰니스 시스템 설정</h2>
@@ -332,7 +332,7 @@ const SystemConfigManagement = () => {
                                 type="time"
                                 value={configs.wellnessSendTime}
                                 onChange={(e) => setConfigs(prev => ({ ...prev, wellnessSendTime: e.target.value }))}
-                                className="mg-input"
+                                className="mg-v2-input"
                             />
                         </div>
                         
@@ -344,7 +344,7 @@ const SystemConfigManagement = () => {
                                 value={configs.wellnessTargetRoles}
                                 onChange={(e) => setConfigs(prev => ({ ...prev, wellnessTargetRoles: e.target.value }))}
                                 placeholder="CLIENT,ROLE_CLIENT"
-                                className="mg-input"
+                                className="mg-v2-input"
                             />
                             <small className="help-text">
                                 콤마로 구분하여 입력하세요.
@@ -354,11 +354,11 @@ const SystemConfigManagement = () => {
                 </div>
                 
                 {/* 저장 버튼 */}
-                <div className="mg-card save-section">
+                <div className="mg-v2-card save-section">
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="mg-button mg-button--primary mg-button--large"
+                        className="mg-v2-button mg-v2-button--primary mg-v2-button--large"
                     >
                         {saving ? <RefreshCw size={20} className="spinning" /> : <Save size={20} />}
                         {saving ? '저장 중...' : '설정 저장'}

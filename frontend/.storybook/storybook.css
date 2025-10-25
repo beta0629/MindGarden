@@ -1,0 +1,181 @@
+/* Storybook 전용 CSS */
+
+.mg-v2-storybook-wrapper {
+  padding: 20px;
+  background-color: var(--mg-v2-background, #ffffff);
+  min-height: 100vh;
+  font-family: var(--mg-v2-fontFamily-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif);
+}
+
+/* 테마 클래스 */
+.light-theme {
+  --mg-v2-background: #ffffff;
+  --mg-v2-text: #212529;
+  --mg-v2-primary: #007bff;
+  --mg-v2-secondary: #6c757d;
+}
+
+.dark-theme {
+  --mg-v2-background: #1a1a1a;
+  --mg-v2-text: #ffffff;
+  --mg-v2-primary: #66b3ff;
+  --mg-v2-secondary: #9ca3af;
+}
+
+.client-theme {
+  --mg-v2-background: #FFF0F5;
+  --mg-v2-text: #8B008B;
+  --mg-v2-primary: #FFB6C1;
+  --mg-v2-secondary: #FFE4E1;
+}
+
+.consultant-theme {
+  --mg-v2-background: #F5FFFA;
+  --mg-v2-text: #006400;
+  --mg-v2-primary: #98FB98;
+  --mg-v2-secondary: #F0FFF0;
+}
+
+.admin-theme {
+  --mg-v2-background: #F8F9FA;
+  --mg-v2-text: #191970;
+  --mg-v2-primary: #87CEEB;
+  --mg-v2-secondary: #F0F8FF;
+}
+
+/* Storybook 컴포넌트 스타일 */
+.sb-show-main {
+  background-color: var(--mg-v2-background);
+}
+
+.sb-main-padded {
+  padding: 20px;
+}
+
+/* 스토리 컨테이너 */
+.story-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  background-color: var(--mg-v2-background);
+  border-radius: 8px;
+  border: 1px solid var(--mg-v2-secondary-light, #e9ecef);
+}
+
+.story-section {
+  margin-bottom: 30px;
+}
+
+.story-section h3 {
+  margin-bottom: 15px;
+  color: var(--mg-v2-text);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.story-flex {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.story-code {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 15px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: auto;
+  margin: 15px 0;
+}
+
+.story-code pre {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* 반응형 스토리 */
+.story-responsive {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.story-responsive-item {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* 접근성 개선 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 포커스 스타일 */
+.focus-visible {
+  outline: 2px solid var(--mg-v2-primary);
+  outline-offset: 2px;
+}
+
+/* 애니메이션 제어 */
+.prefers-reduced-motion .mg-v2-button,
+.prefers-reduced-motion .mg-v2-icon,
+.prefers-reduced-motion .mg-v2-card {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .light-theme {
+    --mg-v2-background: #1a1a1a;
+    --mg-v2-text: #ffffff;
+    --mg-v2-primary: #66b3ff;
+    --mg-v2-secondary: #9ca3af;
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .mg-v2-storybook-wrapper {
+    border: 2px solid var(--mg-v2-text);
+  }
+  
+  .story-container {
+    border-width: 2px;
+  }
+  
+  .story-code {
+    border-width: 2px;
+  }
+}
+
+/* 인쇄 스타일 */
+@media print {
+  .mg-v2-storybook-wrapper {
+    background: white;
+    color: black;
+  }
+  
+  .story-container {
+    border: 1px solid black;
+  }
+}

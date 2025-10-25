@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -12,13 +13,7 @@ const ConsultantClientSection = ({ userId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (userId) {
-      loadClients();
-    }
-  }, [userId]);
-
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -81,7 +76,13 @@ const ConsultantClientSection = ({ userId }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) {
+      loadClients();
+    }
+  }, [userId, loadClients]);
 
   const handleClientClick = (clientId) => {
     navigate(`/consultant/client/${clientId}`);

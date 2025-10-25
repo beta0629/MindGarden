@@ -3,11 +3,12 @@
  * 
  * CSS Variables 기반 동적 테마 전환을 지원하는 Context Provider
  * 
- * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.1)
+ * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase CONSTANTS.NOTIFICATION_CONSTANTS.PRIORITY_LOW.CONSTANTS.NOTIFICATION_CONSTANTS.PRIORITY_LOW)
  * @reference /docs/design-system-v2/DESIGN_SYSTEM_ARCHITECTURE.md (Theme System)
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { CONSTANTS } from '../constants/magicNumbers';
 import { defaultTheme } from '../themes/defaultTheme';
 
 const ThemeContext = createContext();

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../hooks/useSession';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from "../common/UnifiedLoading";
 import './ConsultantAvailability.css';
 
 const ConsultantAvailability = () => {
@@ -21,7 +21,7 @@ const ConsultantAvailability = () => {
   const loadDurationCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/group/DURATION');
+      const response = await apiGet('/api/common-codes/DURATION');
       if (response && response.length > 0) {
         setDurationOptions(response.map(code => ({
           value: code.codeValue,

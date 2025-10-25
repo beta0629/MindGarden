@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 
 /**
- * ERP 공통 모달 컴포넌트 - MindGarden 디자인 시스템 mg-modal 활용
+ * ERP 공통 모달 컴포넌트 - MindGarden 디자인 시스템 mg-v2-modal 활용
  * ReactDOM.createPortal을 사용하여 document.body에 직접 렌더링
  * 
  * @param {boolean} isOpen - 모달 열림 상태
@@ -50,22 +50,22 @@ const ErpModal = ({
     }
   };
 
-  // MindGarden 디자인 시스템의 mg-modal 클래스 활용
+  // MindGarden 디자인 시스템의 mg-v2-modal 클래스 활용
   const modalClasses = [
-    'mg-modal-content',
-    size !== 'md' && `mg-modal-${size}`,
+    'mg-v2-modal-content',
+    size !== 'md' && `mg-v2-modal-${size}`,
     className
   ].filter(Boolean).join(' ');
 
   // ReactDOM.createPortal을 사용하여 document.body에 렌더링
   return ReactDOM.createPortal(
-    <div className="mg-modal-overlay" onClick={handleOverlayClick}>
+    <div className="mg-v2-modal-overlay" onClick={handleOverlayClick}>
       <div className={modalClasses}>
-        <div className="mg-modal-header">
+        <div className="mg-v2-modal-header">
           <h3 className="mg-h4">{title}</h3>
           {showCloseButton && (
             <button
-              className="mg-modal-close"
+              className="mg-v2-modal-close"
               onClick={onClose}
               aria-label="모달 닫기"
             >
@@ -73,7 +73,7 @@ const ErpModal = ({
             </button>
           )}
         </div>
-        <div className="mg-modal-body">
+        <div className="mg-v2-modal-body">
           {children}
         </div>
       </div>

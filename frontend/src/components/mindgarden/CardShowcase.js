@@ -1,10 +1,11 @@
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { Star } from 'lucide-react';
 
 const CardShowcase = () => {
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">카드 스타일</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">카드 스타일</h2>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-lg)' }}>
         {/* Basic Card */}

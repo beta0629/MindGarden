@@ -205,8 +205,8 @@ const HQDashboard = ({ user: propUser }) => {
         <SimpleLayout title="본사 대시보드">
             <div className="hq-dashboard">
                 {/* 환영 메시지 */}
-                <div className="mg-card mg-card--welcome">
-                    <div className="mg-card__content">
+                <div className="mg-v2-card mg-v2-card--welcome">
+                    <div className="mg-v2-card__content">
                         <div className="hq-welcome">
                             <div className="hq-welcome__icon">
                                 <Building2 className="hq-icon hq-icon--welcome" />
@@ -224,8 +224,8 @@ const HQDashboard = ({ user: propUser }) => {
 
                 {/* 전사 통계 카드 */}
                 <div className="hq-stats-grid">
-                    <div className="mg-card mg-card--stat mg-card--primary">
-                        <div className="mg-card__content">
+                    <div className="mg-v2-card mg-v2-card--stat mg-v2-card--primary">
+                        <div className="mg-v2-card__content">
                             <div className="hq-stat">
                                 <div className="hq-stat__icon">
                                     <Building2 className="hq-icon hq-icon--stat" />
@@ -239,8 +239,8 @@ const HQDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
 
-                    <div className="mg-card mg-card--stat mg-card--success">
-                        <div className="mg-card__content">
+                    <div className="mg-v2-card mg-v2-card--stat mg-v2-card--success">
+                        <div className="mg-v2-card__content">
                             <div className="hq-stat">
                                 <div className="hq-stat__icon">
                                     <UserCheck className="hq-icon hq-icon--stat" />
@@ -254,8 +254,8 @@ const HQDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
 
-                    <div className="mg-card mg-card--stat mg-card--info">
-                        <div className="mg-card__content">
+                    <div className="mg-v2-card mg-v2-card--stat mg-v2-card--info">
+                        <div className="mg-v2-card__content">
                             <div className="hq-stat">
                                 <div className="hq-stat__icon">
                                     <User className="hq-icon hq-icon--stat" />
@@ -269,8 +269,8 @@ const HQDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
 
-                    <div className="mg-card mg-card--stat mg-card--warning">
-                        <div className="mg-card__content">
+                    <div className="mg-v2-card mg-v2-card--stat mg-v2-card--warning">
+                        <div className="mg-v2-card__content">
                             <div className="hq-stat">
                                 <div className="hq-stat__icon">
                                     <Crown className="hq-icon hq-icon--stat" />
@@ -286,18 +286,18 @@ const HQDashboard = ({ user: propUser }) => {
                 </div>
 
                 {/* 빠른 액션 */}
-                <div className="mg-card">
-                    <div className="mg-card__header">
-                        <h3 className="mg-card__title">
+                <div className="mg-v2-card">
+                    <div className="mg-v2-card__header">
+                        <h3 className="mg-v2-card__title">
                             <Zap className="hq-icon hq-icon--title" />
                             빠른 액션
                         </h3>
                     </div>
-                    <div className="mg-card__content">
+                    <div className="mg-v2-card__content">
                         <div className="hq-actions-grid">
                             <div className="hq-action">
                                 <button 
-                                    className="mg-button mg-button--primary mg-button--lg hq-action__button"
+                                    className="mg-v2-button mg-v2-button--primary mg-v2-button--lg hq-action__button"
                                     onClick={handleBranchManagement}
                                 >
                                     <Building2 className="hq-icon hq-icon--button" />
@@ -308,7 +308,7 @@ const HQDashboard = ({ user: propUser }) => {
 
                             <div className="hq-action">
                                 <button 
-                                    className="mg-button mg-button--success mg-button--lg hq-action__button"
+                                    className="mg-v2-button mg-v2-button--success mg-v2-button--lg hq-action__button"
                                     onClick={() => navigate('/admin/user-management')}
                                 >
                                     <Users className="hq-icon hq-icon--button" />
@@ -319,7 +319,7 @@ const HQDashboard = ({ user: propUser }) => {
 
                             <div className="hq-action">
                                 <button 
-                                    className="mg-button mg-button--info mg-button--lg hq-action__button"
+                                    className="mg-v2-button mg-v2-button--info mg-v2-button--lg hq-action__button"
                                     onClick={() => navigate('/admin/statistics')}
                                 >
                                     <BarChart3 className="hq-icon hq-icon--button" />
@@ -330,7 +330,7 @@ const HQDashboard = ({ user: propUser }) => {
 
                             <div className="hq-action">
                                 <button 
-                                    className="mg-button mg-button--warning mg-button--lg hq-action__button"
+                                    className="mg-v2-button mg-v2-button--warning mg-v2-button--lg hq-action__button"
                                     onClick={() => navigate('/hq/erp/branch-financial')}
                                 >
                                     <DollarSign className="hq-icon hq-icon--button" />
@@ -341,7 +341,7 @@ const HQDashboard = ({ user: propUser }) => {
 
                             <div className="hq-action">
                                 <button 
-                                    className="mg-button mg-button--danger mg-button--lg hq-action__button"
+                                    className="mg-v2-button mg-v2-button--danger mg-v2-button--lg hq-action__button"
                                     onClick={() => navigate('/hq/erp/consolidated')}
                                 >
                                     <Calculator className="hq-icon hq-icon--button" />
@@ -352,7 +352,7 @@ const HQDashboard = ({ user: propUser }) => {
 
                             <div className="hq-action">
                                 <button 
-                                    className="mg-button mg-button--secondary mg-button--lg hq-action__button"
+                                    className="mg-v2-button mg-v2-button--secondary mg-v2-button--lg hq-action__button"
                                     onClick={() => navigate('/hq/erp/reports')}
                                 >
                                     <TrendingUp className="hq-icon hq-icon--button" />
@@ -365,21 +365,21 @@ const HQDashboard = ({ user: propUser }) => {
                 </div>
 
                 {/* 지점 현황 */}
-                <div className="mg-card">
-                    <div className="mg-card__header">
-                        <h3 className="mg-card__title">
+                <div className="mg-v2-card">
+                    <div className="mg-v2-card__header">
+                        <h3 className="mg-v2-card__title">
                             <MapPin className="hq-icon hq-icon--title" />
                             지점 현황
                         </h3>
                         <button 
-                            className="mg-button mg-button--ghost mg-button--sm"
+                            className="mg-v2-button mg-v2-button--ghost mg-v2-button--sm"
                             onClick={handleBranchManagement}
                         >
                             <Eye className="hq-icon hq-icon--small" />
                             전체보기
                         </button>
                     </div>
-                    <div className="mg-card__content">
+                    <div className="mg-v2-card__content">
                         {dashboardData.branchList.length === 0 ? (
                             <div className="mg-empty-state">
                                 <div className="mg-empty-state__icon">
@@ -392,10 +392,10 @@ const HQDashboard = ({ user: propUser }) => {
                                 {dashboardData.branchList.slice(0, 6).map((branch) => (
                                     <div 
                                         key={branch.id} 
-                                        className={`mg-card mg-card--branch ${!branch.isActive ? 'mg-card--inactive' : ''} hq-branch-card`}
+                                        className={`mg-v2-card mg-v2-card--branch ${!branch.isActive ? 'mg-v2-card--inactive' : ''} hq-branch-card`}
                                         onClick={() => handleBranchDetail(branch.branchCode)}
                                     >
-                                        <div className="mg-card__content">
+                                        <div className="mg-v2-card__content">
                                             <div className="hq-branch">
                                                 <div className="hq-branch__header">
                                                     <h4 className="hq-branch__name">{branch.branchName}</h4>

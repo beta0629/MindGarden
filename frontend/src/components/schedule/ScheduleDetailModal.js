@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { apiPut, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import ConsultationLogModal from '../consultant/ConsultationLogModal';
+// import ConsultationLogModal from '../consultant/ConsultationLogModal'; // 부모 컴포넌트에서 관리
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
@@ -20,13 +21,14 @@ const ScheduleDetailModal = ({
     isOpen, 
     onClose, 
     scheduleData, 
-    onScheduleUpdated 
+    onScheduleUpdated,
+    onConsultationLogOpen
 }) => {
     const { user } = useSession();
     const [loading, setLoading] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [showConsultationLogModal, setShowConsultationLogModal] = useState(false);
+    // 상담일지 모달은 부모 컴포넌트에서 관리
     const [adminNote, setAdminNote] = useState('');
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
@@ -39,7 +41,7 @@ const ScheduleDetailModal = ({
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/group/STATUS');
+            const response = await apiGet('/api/common-codes/STATUS');
             if (response && response.length > 0) {
                 // 우리가 원하는 6개 상태만 필터링
                 const allowedStatuses = ['AVAILABLE', 'BOOKED', 'CONFIRMED', 'VACATION', 'COMPLETED', 'CANCELLED'];
@@ -226,17 +228,12 @@ const ScheduleDetailModal = ({
         }
         
         console.log('📝 상담일지 작성 요청:', scheduleData.id);
-        setShowConsultationLogModal(true);
+        // 현재 모달을 닫고 부모 컴포넌트에서 상담일지 모달 열기
+        onClose();
+        onConsultationLogOpen?.(scheduleData);
     };
 
-    /**
-     * 상담일지 저장 완료 처리
-     */
-    const handleConsultationLogSaved = () => {
-        setShowConsultationLogModal(false);
-        onScheduleUpdated?.(); // 스케줄 목록 새로고침
-        notificationManager.success('상담일지가 저장되었습니다.');
-    };
+    // 상담일지 저장 완료 처리는 부모 컴포넌트에서 관리
 
     /**
      * 예약 변경 처리 - 드래그 앤 드롭 모드로 전환
@@ -339,14 +336,14 @@ const ScheduleDetailModal = ({
                 <div className="mg-modal__body">
                     <p>내담자의 입금을 확인하셨습니까?</p>
                     <div className="mg-form-group">
-                        <label className="mg-label">
+                        <label className="mg-v2-label">
                             관리자 메모 (선택사항):
                         </label>
                         <textarea
                             value={adminNote}
                             onChange={(e) => setAdminNote(e.target.value)}
                             placeholder="입금 확인 완료"
-                            className="mg-textarea"
+                            className="mg-v2-textarea"
                         />
                     </div>
                     <div className="mg-modal__actions">
@@ -548,15 +545,7 @@ const ScheduleDetailModal = ({
             {showCancelConfirm && renderCancelConfirm()}
             {showConfirmModal && renderConfirmModal()}
             
-            {/* 상담일지 작성 모달 */}
-            {showConsultationLogModal && (
-                <ConsultationLogModal
-                    isOpen={showConsultationLogModal}
-                    onClose={() => setShowConsultationLogModal(false)}
-                    scheduleData={scheduleData}
-                    onSave={handleConsultationLogSaved}
-                />
-            )}
+            {/* 상담일지 작성 모달은 부모 컴포넌트에서 관리 */}
         </>
     );
 };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 
 const FormShowcase = () => {
   const [formData, setFormData] = useState({
@@ -20,14 +21,14 @@ const FormShowcase = () => {
   };
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">폼 요소</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">폼 요소</h2>
       
       <div className="mg-card mg-p-xl" style={{ maxWidth: '600px', margin: '0 auto' }}>
         <form>
           {/* Text Input */}
           <div className="mg-mb-md">
-            <label className="mg-label">이름</label>
+            <label className="mg-v2-label">이름</label>
             <input
               type="text"
               name="name"
@@ -40,7 +41,7 @@ const FormShowcase = () => {
           
           {/* Email Input */}
           <div className="mg-mb-md">
-            <label className="mg-label">이메일</label>
+            <label className="mg-v2-label">이메일</label>
             <input
               type="email"
               name="email"
@@ -53,10 +54,10 @@ const FormShowcase = () => {
           
           {/* Textarea */}
           <div className="mg-mb-md">
-            <label className="mg-label">메시지</label>
+            <label className="mg-v2-label">메시지</label>
             <textarea
               name="message"
-              className="mg-textarea"
+              className="mg-v2-textarea"
               placeholder="메시지를 입력하세요"
               value={formData.message}
               onChange={handleChange}
@@ -65,7 +66,7 @@ const FormShowcase = () => {
           
           {/* Select */}
           <div className="mg-mb-md">
-            <label className="mg-label">서비스 선택</label>
+            <label className="mg-v2-label">서비스 선택</label>
             <select
               name="service"
               className="mg-select"
@@ -95,7 +96,7 @@ const FormShowcase = () => {
           
           {/* Radio Buttons */}
           <div className="mg-mb-md">
-            <label className="mg-label">성별</label>
+            <label className="mg-v2-label">성별</label>
             <div className="mg-flex mg-gap-md">
               <label className="mg-flex mg-gap-sm" style={{ alignItems: 'center', cursor: 'pointer' }}>
                 <input

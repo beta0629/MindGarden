@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import ReactDOM from 'react-dom';
 import { X, AlertTriangle } from 'lucide-react';
 
@@ -86,8 +87,8 @@ const ModalShowcase = () => {
   );
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">모달</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">모달</h2>
       
       <div className="mg-card mg-p-xl">
         <div className="mg-flex mg-gap-md" style={{ flexWrap: 'wrap' }}>

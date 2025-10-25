@@ -104,15 +104,15 @@ const MappingPaymentModal = ({
     const portalTarget = document.body || document.createElement('div');
     
     return ReactDOM.createPortal(
-        <div className="mg-modal-overlay" onClick={onClose}>
-            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-overlay" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
-                <div className="mg-modal-header">
-                    <h2 className="mg-modal-title">
+                <div className="mg-v2-modal-header">
+                    <h2 className="mg-v2-modal-title">
                         💰 결제 확인
                     </h2>
                     <button 
-                        className="mg-modal-close"
+                        className="mg-v2-modal-close"
                         onClick={onClose}
                         disabled={loading}
                         aria-label="닫기"
@@ -122,55 +122,30 @@ const MappingPaymentModal = ({
                 </div>
 
                 {/* 본문 */}
-                <div className="mg-modal-body">
+                <div className="mg-v2-modal-body">
 
-                <div style={{ marginBottom: '16px' }}>
-                    <div style={{
-                        padding: '12px',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '8px',
-                        marginBottom: '16px'
-                    }}>
-                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d', marginBottom: '4px' }}>
+                <div className="mg-v2-mapping-info-box">
+                    <div className="mg-v2-mapping-info-content">
+                        <div className="mg-v2-mapping-info-label">
                             매칭 정보
                         </div>
-                        <div style={{ fontSize: 'var(--font-size-base)', fontWeight: '600' }}>
+                        <div className="mg-v2-mapping-info-title">
                             {mapping.consultantName} → {mapping.clientName}
                         </div>
-                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d', marginTop: '4px' }}>
+                        <div className="mg-v2-mapping-info-subtitle">
                             {mapping.packageName} - {mapping.packagePrice?.toLocaleString()}원
                         </div>
                     </div>
                 </div>
 
-                <div style={{ marginBottom: '16px' }}>
-                    <label style={{
-                        display: 'block',
-                        marginBottom: '8px',
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '500',
-                        color: '#333'
-                    }}>
+                <div className="mg-v2-form-group">
+                    <label className="mg-v2-form-label">
                         결제 방법
                     </label>
                     <select
                         value={paymentData.paymentMethod}
                         onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                        style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            borderRadius: '8px',
-                            fontSize: 'var(--font-size-sm)',
-                            cursor: 'pointer',
-                            backgroundColor: '#ffffff',
-                            color: '#333333',
-                            border: '2px solid #e1e8ed',
-                            outline: 'none',
-                            boxSizing: 'border-box',
-                            WebkitAppearance: 'none',
-                            MozAppearance: 'none',
-                            appearance: 'none'
-                        }}
+                        className="mg-v2-form-select"
                     >
                         <option value="BANK_TRANSFER">계좌이체</option>
                         <option value="CARD">신용카드</option>
@@ -179,14 +154,8 @@ const MappingPaymentModal = ({
                 </div>
 
                 {paymentData.paymentMethod !== 'CASH' && (
-                    <div style={{ marginBottom: '16px' }}>
-                        <label style={{
-                            display: 'block',
-                            marginBottom: '8px',
-                            fontSize: 'var(--font-size-sm)',
-                            fontWeight: '500',
-                            color: '#333'
-                        }}>
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">
                             결제 참조번호
                         </label>
                         <input
@@ -199,45 +168,16 @@ const MappingPaymentModal = ({
                                 }));
                             }}
                             placeholder="자동 생성됩니다 (수정 가능)"
-                            style={{
-                                width: '100%',
-                                padding: '10px 12px',
-                                borderRadius: '8px',
-                                fontSize: 'var(--font-size-sm)',
-                                backgroundColor: 'var(--input-bg, #ffffff)',
-                                color: 'var(--input-color, #333333)',
-                                border: '2px solid var(--input-border, #e1e8ed)',
-                                outline: 'none',
-                                boxSizing: 'border-box',
-                                WebkitAppearance: 'none',
-                                MozAppearance: 'none',
-                                appearance: 'none',
-                                background: 'var(--input-bg, #ffffff)',
-                                backgroundImage: 'none',
-                                backgroundClip: 'padding-box',
-                                WebkitBackgroundClip: 'padding-box',
-                                MozBackgroundClip: 'padding-box'
-                            }}
+                            className="mg-v2-form-input"
                         />
-                        <small style={{
-                            display: 'block',
-                            marginTop: '4px',
-                            fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d'
-                        }}>
+                        <small className="mg-v2-form-help">
                             자동으로 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
                         </small>
                     </div>
                 )}
 
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{
-                        display: 'block',
-                        marginBottom: '8px',
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '500',
-                        color: '#333'
-                    }}>
+                <div className="mg-v2-form-group">
+                    <label className="mg-v2-form-label">
                         결제 금액
                     </label>
                     <input
@@ -248,36 +188,23 @@ const MappingPaymentModal = ({
                             paymentAmount: parseInt(e.target.value) || 0
                         }))}
                         placeholder="결제 금액을 입력하세요"
-                        style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            borderRadius: '8px',
-                            fontSize: 'var(--font-size-sm)',
-                            backgroundColor: '#ffffff',
-                            color: '#333333',
-                            border: '2px solid #e1e8ed',
-                            outline: 'none',
-                            boxSizing: 'border-box',
-                            WebkitAppearance: 'none',
-                            MozAppearance: 'none',
-                            appearance: 'none'
-                        }}
+                        className="mg-v2-form-input"
                     />
                 </div>
 
                 </div>
 
                 {/* 푸터 */}
-                <div className="mg-modal-footer">
+                <div className="mg-v2-modal-footer">
                     <button
-                        className="mg-btn mg-btn--secondary"
+                        className="mg-v2-btn mg-v2-btn--secondary"
                         onClick={onClose}
                         disabled={loading}
                     >
                         취소
                     </button>
                     <button
-                        className="mg-btn mg-btn--primary"
+                        className="mg-v2-btn mg-v2-btn--primary"
                         onClick={handleConfirmPayment}
                         disabled={loading}
                     >

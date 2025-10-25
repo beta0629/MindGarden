@@ -93,51 +93,51 @@ const MappingDepositModal = ({
     const portalTarget = document.body || document.createElement('div');
 
     return ReactDOM.createPortal(
-        <div className="mg-modal-overlay" onClick={handleClose}>
-            <div className="mg-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-modal-header">
-                    <h3 className="mg-modal-title">
+        <div className="mg-v2-modal-overlay" onClick={handleClose}>
+            <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header">
+                    <h3 className="mg-v2-modal-title">
                         <DollarSign size={24} />
                         입금 확인
                     </h3>
                     <button
                         onClick={handleClose}
-                        className="mg-modal-close"
+                        className="mg-v2-modal-close"
                         aria-label="닫기"
                     >
                         <X size={24} />
                     </button>
                 </div>
 
-                <div className="mg-modal-body">
-                    <div className="mg-info-box">
-                        <div className="mg-info-row">
-                            <span className="mg-info-label">상담사:</span>
-                            <span className="mg-info-value">
+                <div className="mg-v2-modal-body">
+                    <div className="mg-v2-info-box">
+                        <div className="mg-v2-info-row">
+                            <span className="mg-v2-info-label">상담사:</span>
+                            <span className="mg-v2-info-value">
                                 {mapping.consultantName || mapping.consultant?.name || mapping.consultant?.username || 'N/A'}
                             </span>
                         </div>
-                        <div className="mg-info-row">
-                            <span className="mg-info-label">내담자:</span>
-                            <span className="mg-info-value">
+                        <div className="mg-v2-info-row">
+                            <span className="mg-v2-info-label">내담자:</span>
+                            <span className="mg-v2-info-value">
                                 {mapping.clientName || mapping.client?.name || mapping.client?.username || 'N/A'}
                             </span>
                         </div>
-                        <div className="mg-info-row">
-                            <span className="mg-info-label">패키지:</span>
-                            <span className="mg-info-value">{mapping.packageName || 'N/A'}</span>
+                        <div className="mg-v2-info-row">
+                            <span className="mg-v2-info-label">패키지:</span>
+                            <span className="mg-v2-info-value">{mapping.packageName || 'N/A'}</span>
                         </div>
-                        <div className="mg-info-row mg-info-row-highlight">
-                            <span className="mg-info-label">금액:</span>
-                            <span className="mg-info-value">
+                        <div className="mg-v2-info-row mg-info-row-highlight">
+                            <span className="mg-v2-info-label">금액:</span>
+                            <span className="mg-v2-info-value">
                                 {(mapping.packagePrice || mapping.paymentAmount) ? `${(mapping.packagePrice || mapping.paymentAmount).toLocaleString()}원` : 'N/A'}
                             </span>
                         </div>
                     </div>
 
                     <form onSubmit={handleSubmit}>
-                        <div className="mg-form-group">
-                            <label className="mg-label">
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-label">
                                 입금 참조번호 *
                             </label>
                             <input
@@ -145,19 +145,19 @@ const MappingDepositModal = ({
                                 value={depositReference}
                                 onChange={(e) => setDepositReference(e.target.value)}
                                 placeholder="자동 생성됩니다 (수정 가능)"
-                                className="mg-input"
+                                className="mg-v2-input"
                                 required
                             />
-                            <small className="mg-form-help">
+                            <small className="mg-v2-form-help">
                                 자동으로 입금 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
                             </small>
                         </div>
 
-                        <div className="mg-modal-footer">
+                        <div className="mg-v2-modal-footer">
                             <button
                                 type="button"
                                 onClick={handleClose}
-                                className="mg-button mg-button-secondary"
+                                className="mg-v2-button mg-v2-button-secondary"
                                 disabled={isLoading}
                             >
                                 취소
@@ -165,11 +165,11 @@ const MappingDepositModal = ({
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="mg-button mg-button-success"
+                                className="mg-v2-button mg-v2-button-success"
                             >
                                 {isLoading ? (
                                     <>
-                                        <span className="mg-spinner"></span>
+                                        <span className="mg-v2-spinner"></span>
                                         처리 중...
                                     </>
                                 ) : (

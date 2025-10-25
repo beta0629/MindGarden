@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
-import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
 
 /**
@@ -31,7 +31,7 @@ const ConsultationLogModal = ({
   const loadPriorityCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/group/PRIORITY');
+      const response = await apiGet('/api/common-codes/PRIORITY');
       if (response && response.length > 0) {
         const options = response.map(code => ({
           value: code.codeValue,
@@ -105,7 +105,7 @@ const ConsultationLogModal = ({
   const loadCompletionStatusCodes = useCallback(async () => {
     try {
       setLoadingCompletionCodes(true);
-      const response = await apiGet('/api/common-codes/group/COMPLETION_STATUS');
+      const response = await apiGet('/api/common-codes/COMPLETION_STATUS');
       if (response && response.length > 0) {
         setCompletionStatusOptions(response.map((code, index) => ({
           value: code.codeValue,

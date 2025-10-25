@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 
 // 내담자 상세 정보 모달 컴포넌트
 const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {

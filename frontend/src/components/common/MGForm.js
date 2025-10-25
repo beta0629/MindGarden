@@ -180,7 +180,7 @@ export const MGFormTextarea = ({
   className = '',
   ...props
 }) => {
-  const textareaId = `mg-textarea-${name || Math.random().toString(36).substr(2, 9)}`;
+  const textareaId = `mg-v2-textarea-${name || Math.random().toString(36).substr(2, 9)}`;
 
   return (
     <MGFormGroup

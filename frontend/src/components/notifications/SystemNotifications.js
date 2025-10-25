@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
@@ -21,11 +22,11 @@ const SystemNotifications = () => {
   // 공지 타입별 정보
   const getNotificationTypeInfo = (type) => {
     const types = {
-      GENERAL: { icon: Info, label: '일반', colorClass: 'mg-color-primary' },
-      IMPORTANT: { icon: AlertCircle, label: '중요', colorClass: 'mg-color-warning' },
-      URGENT: { icon: AlertTriangle, label: '긴급', colorClass: 'mg-color-danger' },
-      MAINTENANCE: { icon: Settings, label: '점검', colorClass: 'mg-color-info' },
-      UPDATE: { icon: Calendar, label: '업데이트', colorClass: 'mg-color-success' }
+      GENERAL: { icon: Info, label: '일반', colorClass: 'mg-v2-color-primary' },
+      IMPORTANT: { icon: AlertCircle, label: '중요', colorClass: 'mg-v2-color-warning' },
+      URGENT: { icon: AlertTriangle, label: '긴급', colorClass: 'mg-v2-color-danger' },
+      MAINTENANCE: { icon: Settings, label: '점검', colorClass: 'mg-v2-color-info' },
+      UPDATE: { icon: Calendar, label: '업데이트', colorClass: 'mg-v2-color-success' }
     };
     return types[type] || types.GENERAL;
   };
@@ -109,7 +110,7 @@ const SystemNotifications = () => {
   if (!isLoggedIn) {
     return (
       <SimpleLayout title="시스템 공지">
-        <div className="mg-card mg-text-center mg-p-xl">
+        <div className="mg-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>
         </div>
       </SimpleLayout>
@@ -122,10 +123,10 @@ const SystemNotifications = () => {
         {/* 헤더 */}
         <div className="mg-card mg-mb-lg">
           <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm">
-            <Bell className="mg-color-primary" size={24} />
+            <Bell className="mg-v2-color-primary" size={24} />
             <h2 className="mg-h3 mg-mb-0">시스템 공지</h2>
           </div>
-          <p className="mg-text-sm mg-color-text-secondary mg-mb-0">
+          <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
             중요한 공지사항을 확인하세요.
           </p>
         </div>
@@ -173,20 +174,20 @@ const SystemNotifications = () => {
                             <div className="mg-flex mg-align-center mg-gap-sm mg-flex-wrap">
                               <h4 className="mg-h5 mg-mb-0">{notification.title}</h4>
                               {notification.isUrgent && (
-                                <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
+                                <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
                               )}
                               {notification.isImportant && (
-                                <span className="mg-badge mg-badge-warning mg-text-xs">중요</span>
+                                <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
                               )}
-                              <span className="mg-badge mg-badge-secondary mg-text-xs">
+                              <span className="mg-badge mg-badge-secondary mg-v2-text-xs">
                                 {getTargetTypeLabel(notification.targetType)}
                               </span>
                             </div>
-                            <span className="mg-text-xs mg-color-text-secondary">
+                            <span className="mg-v2-text-xs mg-v2-color-text-secondary">
                               {formatDate(notification.publishedAt || notification.createdAt)}
                             </span>
                           </div>
-                          <p className="mg-text-sm mg-color-text-secondary mg-mb-0">
+                          <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
                             {notification.content.length > 100
                               ? `${notification.content.substring(0, 100)}...`
                               : notification.content}
@@ -209,7 +210,7 @@ const SystemNotifications = () => {
                 >
                   이전
                 </button>
-                <span className="mg-text-sm mg-color-text-secondary mg-flex mg-align-center">
+                <span className="mg-v2-text-sm mg-v2-color-text-secondary mg-flex mg-align-center">
                   {currentPage + 1} / {totalPages}
                 </span>
                 <button
@@ -243,7 +244,7 @@ const SystemNotifications = () => {
                     <span className="mg-badge mg-badge-secondary">
                       {getTargetTypeLabel(selectedNotification.targetType)}
                     </span>
-                    <span className="mg-text-sm mg-color-text-secondary">
+                    <span className="mg-v2-text-sm mg-v2-color-text-secondary">
                       {selectedNotification.authorName || '관리자'} · 
                       {formatDate(selectedNotification.publishedAt || selectedNotification.createdAt)}
                     </span>

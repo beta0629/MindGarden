@@ -23,27 +23,27 @@ const MappingFilters = ({
     const statusOptions = MAPPING_FILTER_OPTIONS;
 
     return (
-        <div className="mapping-filters">
-            <div className="mapping-filters-header">
-                <h3 className="mapping-filters-title">🔍 필터 및 검색</h3>
+        <div className="mg-v2-mapping-filters">
+            <div className="mg-v2-mapping-filters-header">
+                <h3 className="mg-v2-mapping-filters-title">🔍 필터 및 검색</h3>
                 <button 
-                    className="mg-btn mg-btn--sm mg-btn--secondary"
+                    className="mg-v2-btn mg-v2-btn--sm mg-v2-btn--secondary"
                     onClick={onReset}
                 >
                     <RotateCcw size={16} /> 초기화
                 </button>
             </div>
             
-            <div className="mapping-filters-content">
-                <div className="mapping-filters-status">
-                    <label className="mapping-filters-label">
+            <div className="mg-v2-mapping-filters-content">
+                <div className="mg-v2-mapping-filters-status">
+                    <label className="mg-v2-mapping-filters-label">
                         <Filter size={16} />
                         상태 필터
                     </label>
                     <select 
                         value={filterStatus} 
                         onChange={(e) => onStatusChange(e.target.value)}
-                        className="mapping-filters-select"
+                        className="mg-v2-mapping-filters-select"
                     >
                         {statusOptions.map(option => (
                             <option key={option.value} value={option.value}>
@@ -53,22 +53,22 @@ const MappingFilters = ({
                     </select>
                 </div>
                 
-                <div className="mapping-filters-search">
-                    <label className="mapping-filters-label">
+                <div className="mg-v2-mapping-filters-search">
+                    <label className="mg-v2-mapping-filters-label">
                         <Search size={16} />
                         {' '}검색
                     </label>
-                    <div className="mapping-filters-search-wrapper">
+                    <div className="mg-v2-mapping-filters-search-wrapper">
                         <input
                             type="text"
                             placeholder="상담사 또는 내담자 이름으로 검색..."
                             value={searchTerm}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="mapping-filters-input"
+                            className="mg-v2-mapping-filters-input"
                         />
                         {searchTerm && (
                             <button 
-                                className="mapping-filters-clear-btn"
+                                className="mg-v2-mapping-filters-clear-btn"
                                 onClick={() => onSearchChange('')}
                             >
                                 <X size={16} />

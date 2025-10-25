@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { 
     Container, Row, Col, Card, Button, Badge, 
     InputGroup, FormControl, FormSelect, Alert
@@ -10,7 +11,6 @@ import {
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { normalizeBranchList, getBranchNameByCode } from '../../utils/branchUtils';
-import UnifiedLoading from "../common/UnifiedLoading";
 import './BranchList.css';
 
 /**

@@ -35,10 +35,14 @@ const StatCard = ({
   change,
   changeType,
   className = '',
+  loading = false,
   ...props
 }) => {
+  // loading 속성을 DOM에 전달하지 않도록 제거
+  const { loading: _, ...domProps } = props;
+  
   return (
-    <div className={`mg-dashboard-stat-card ${className}`.trim()} {...props}>
+    <div className={`mg-dashboard-stat-card ${className}`.trim()} {...domProps}>
       {icon && (
         <div className="mg-dashboard-stat-icon">
           {icon}

@@ -47,7 +47,7 @@
 .common-code-filters .form-select,
 .common-code-filters .form-control {
     padding: var(--spacing-sm) var(--spacing-sm);
-    border: 2px solid #e5e7eb;
+    border: 2px solid var(--color-border);
     border-radius: 8px;
     font-size: var(--font-size-sm);
     transition: all 0.2s ease;
@@ -57,7 +57,7 @@
 .common-code-filters .form-select:focus,
 .common-code-filters .form-control:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: var(--status-info);
     background-color: white;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
@@ -135,7 +135,7 @@
 .btn-outline-secondary {
     background: white;
     color: #6b7280;
-    border: 2px solid #e5e7eb;
+    border: 2px solid var(--color-border);
 }
 
 .btn-outline-secondary:hover {

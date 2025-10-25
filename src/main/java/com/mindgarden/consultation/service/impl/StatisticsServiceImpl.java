@@ -734,11 +734,11 @@ public class StatisticsServiceImpl implements StatisticsService {
             Map<String, Object> statistics = new HashMap<>();
             
             // 총 내담자 수
-            long totalClients = userRepository.countByRole("CLIENT");
+            long totalClients = userRepository.countByRole(UserRole.CLIENT);
             statistics.put("totalClients", totalClients);
             
             // 총 상담사 수
-            long totalConsultants = userRepository.countByRole("CONSULTANT");
+            long totalConsultants = userRepository.countByRole(UserRole.CONSULTANT);
             statistics.put("totalConsultants", totalConsultants);
             
             // 총 상담 세션 수
@@ -774,14 +774,14 @@ public class StatisticsServiceImpl implements StatisticsService {
             LocalDate lastYear = now.minusYears(1);
             
             // 내담자 증가율
-            long currentClients = userRepository.countByRoleAndCreatedAtAfter("CLIENT", lastYear.atStartOfDay());
-            long lastYearClients = userRepository.countByRoleAndCreatedAtBefore("CLIENT", lastYear.atStartOfDay());
+            long currentClients = userRepository.countByRoleAndCreatedAtAfter(UserRole.CLIENT, lastYear.atStartOfDay());
+            long lastYearClients = userRepository.countByRoleAndCreatedAtBefore(UserRole.CLIENT, lastYear.atStartOfDay());
             double clientGrowth = lastYearClients > 0 ? (double) (currentClients - lastYearClients) / lastYearClients * 100 : 0;
             trends.put("clientGrowth", Math.round(clientGrowth * 10.0) / 10.0);
             
             // 상담사 증가율
-            long currentConsultants = userRepository.countByRoleAndCreatedAtAfter("CONSULTANT", lastYear.atStartOfDay());
-            long lastYearConsultants = userRepository.countByRoleAndCreatedAtBefore("CONSULTANT", lastYear.atStartOfDay());
+            long currentConsultants = userRepository.countByRoleAndCreatedAtAfter(UserRole.CONSULTANT, lastYear.atStartOfDay());
+            long lastYearConsultants = userRepository.countByRoleAndCreatedAtBefore(UserRole.CONSULTANT, lastYear.atStartOfDay());
             double consultantGrowth = lastYearConsultants > 0 ? (double) (currentConsultants - lastYearConsultants) / lastYearConsultants * 100 : 0;
             trends.put("consultantGrowth", Math.round(consultantGrowth * 10.0) / 10.0);
             
@@ -826,7 +826,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                 LocalDateTime monthEnd = month.withDayOfMonth(month.lengthOfMonth()).atTime(23, 59, 59);
                 
                 // 해당 월 내담자 수
-                long monthlyClients = userRepository.countByRoleAndCreatedAtBetween("CLIENT", monthStart, monthEnd);
+                long monthlyClients = userRepository.countByRoleAndCreatedAtBetween(UserRole.CLIENT, monthStart, monthEnd);
                 clientData.add((int) monthlyClients);
                 
                 // 해당 월 상담 세션 수

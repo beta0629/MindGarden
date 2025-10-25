@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import { FaCalendarAlt, FaUserTie, FaChartBar, FaClock } from 'react-icons/fa';
-import UnifiedLoading from "../common/UnifiedLoading";
 import './VacationStatistics.css';
 
 /**
@@ -230,12 +231,8 @@ const VacationStatistics = ({ className = "" }) => {
                 <div className="vacation-error">
                     <FaCalendarAlt className="error-icon" />
                     <p>{error}</p>
-                    <button 
-                        className="retry-button"
-                        onClick={loadVacationStats}
-                    >
-                        다시 시도
-                    </button>
+                    <MGButton variant="primary" className="retry-button" onClick={loadVacationStats}>다시 시도
+                    </MGButton>
                 </div>
             </div>
         );

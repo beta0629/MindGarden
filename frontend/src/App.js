@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
 import { initializeDynamicThemeSystem } from './utils/designSystemHelper';
@@ -84,8 +84,7 @@ import WellnessNotificationList from './components/wellness/WellnessNotification
 import WellnessNotificationDetail from './components/wellness/WellnessNotificationDetail';
 import WellnessManagement from './components/admin/WellnessManagement';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
-import { SessionProvider } from './contexts/SessionContext';
-import { useSession } from './contexts/SessionContext';
+import { SessionProvider, useSession } from './contexts/SessionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { sessionManager } from './utils/sessionManager';
@@ -127,7 +126,7 @@ function QueryParamHandler({ children, onLoginSuccess }) {
         onLoginSuccess();
       }
     }
-  }, [location, onLoginSuccess]);
+  }, [location]); // onLoginSuccess 의존성 제거 (무한루프 방지)
   
   return children;
 }
@@ -155,17 +154,14 @@ function AppContent() {
     '/test/components'
   ];
   
-  const isPublicPath = publicPaths.includes(window.location.pathname);
-  
-  // 공개 경로가 아닐 때만 세션 체크 실행
-  useEffect(() => {
-    if (!isPublicPath) {
-      console.log('🔍 세션 확인 시작...');
-      checkSession();
-    } else {
-      console.log('🔓 공개 경로 - 세션 체크 건너뛰기:', window.location.pathname);
-    }
-  }, [checkSession, isPublicPath]); // window.location.pathname 의존성 제거
+  // 세션 체크를 useEffect에서 완전히 제거하고 다른 방식으로 처리
+  // const isPublicPath = publicPaths.includes(window.location.pathname);
+  // if (!isPublicPath) {
+  //   console.log('🔍 세션 확인 시작...');
+  //   checkSession();
+  // } else {
+  //   console.log('🔓 공개 경로 - 세션 체크 건너뛰기:', window.location.pathname);
+  // }
   
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
@@ -173,35 +169,30 @@ function AppContent() {
   // 중복 로그인 알림 상태
   const [showDuplicateLoginAlert, setShowDuplicateLoginAlert] = React.useState(false);
 
-  // 콜백 함수로 메모이제이션 (개발 환경에서만)
-  const logMount = useCallback(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 App 컴포넌트 마운트됨');
-      console.log('🌐 현재 환경:', process.env.NODE_ENV);
-      console.log('📱 React 버전:', React.version);
-      console.log('🔗 라우터 초기화 완료');
-      console.log('✅ 마인드가든 앱 시작됨');
-    }
-  }, []);
+  // 개발 환경에서만 로그 출력 (무한루프 방지를 위해 임시 비활성화)
+  // useEffect(() => {
+  //   if (process.env.NODE_ENV === 'development') {
+  //     console.log('🚀 App 컴포넌트 마운트됨');
+  //     console.log('🌐 현재 환경:', process.env.NODE_ENV);
+  //     console.log('📱 React 버전:', React.version);
+  //     console.log('🔗 라우터 초기화 완료');
+  //     console.log('✅ 마인드가든 앱 시작됨');
+  //   }
+  //   
+  //   return () => {
+  //     if (process.env.NODE_ENV === 'development') {
+  //       console.log('🚀 App 컴포넌트 언마운트됨');
+  //     }
+  //   };
+  // }, []); // 의존성 배열을 빈 배열로 설정
 
-  const logUnmount = useCallback(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 App 컴포넌트 언마운트됨');
-    }
-  }, []);
-
-  useEffect(() => {
-    logMount();
-    return logUnmount;
-  }, [logMount, logUnmount]); // 의존성 배열에 함수들 추가
-
-  // 동적 테마 시스템 초기화
+  // 동적 테마 시스템 초기화 (API 호출 비활성화로 무한루프 방지)
   useEffect(() => {
     initializeDynamicThemeSystem({
       theme: 'ios', // iOS 스타일 기본 테마
       enableThemeWatcher: true, // 테마 변경 감지 활성화
       enableDeviceWatcher: true, // 디바이스 변경 감지 활성화
-      loadConsultantColors: true, // 상담사 색상 로드 활성화
+      loadConsultantColors: true, // 상담사 색상 로드 활성화 (오류 확인용)
       autoDetectTheme: false, // 시스템 테마 자동 감지 비활성화 (iOS 라이트 모드 고정)
       zIndexOffsets: {
         // 테마별 z-index 오프셋 커스터마이징
@@ -303,7 +294,7 @@ function AppContent() {
       console.log('⏳ 세션 확인 시작...');
       checkSession();
     }, 1000); // 1초 대기
-  }, [checkSession]);
+  }, []); // checkSession 의존성 제거 (무한루프 방지)
 
   if (isLoading) {
     return <div>로딩 중...</div>;
@@ -550,7 +541,7 @@ function AppContent() {
             {/* 테스트 페이지 라우트 */}
             <Route path="/test/notifications" element={<NotificationTest />} />
             <Route path="/test/payment" element={<PaymentTest />} />
-            <Route path="/test/integration" element={<IntegrationTest />} />
+            {/* <Route path="/test/integration" element={<IntegrationTest />} /> */}
             <Route path="/test/ios-cards" element={<IOSCardSample />} />
             <Route path="/test/design-sample" element={<MindGardenDesignSample />} />
             <Route path="/test/premium-sample" element={<PremiumDesignSample />} />

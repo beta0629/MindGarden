@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet } from '../../utils/ajax';
-import UnifiedLoading from "../common/UnifiedLoading";
 import './ConsultantStatus.css';
 
 /**

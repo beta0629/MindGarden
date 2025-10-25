@@ -23,7 +23,7 @@
 
 .tax-details-modal-header {
     padding: 20px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--color-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -54,7 +54,7 @@
 .tax-details-consultant-info {
     padding: 15px 20px;
     background-color: #f1f5f9;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--color-border);
     display: flex;
     gap: 30px;
 }
@@ -95,7 +95,7 @@
 
 .tax-details-modal-footer {
     padding: 15px 20px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--color-border);
     display: flex;
     justify-content: flex-end;
     background-color: #f8fafc;
@@ -115,7 +115,7 @@
     padding: 8px 16px;
     border-radius: 4px;
     border: none;
-    background-color: #3b82f6;
+    background-color: var(--status-info);
     color: white;
     cursor: pointer;
     font-size: var(--font-size-sm);

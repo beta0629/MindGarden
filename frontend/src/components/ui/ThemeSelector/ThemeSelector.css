@@ -1,0 +1,217 @@
+/**
+ * 테마 선택기 컴포넌트 스타일
+ */
+
+.mg-v2-theme-selector {
+  width: 100%;
+  max-width: 800px;
+}
+
+.mg-v2-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--mg-v2-spacing-md);
+  margin-bottom: var(--mg-v2-spacing-lg);
+}
+
+.mg-v2-theme-option {
+  position: relative;
+  border: 2px solid var(--mg-v2-border-color);
+  border-radius: var(--mg-v2-border-radius-lg);
+  padding: var(--mg-v2-spacing-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--mg-v2-background);
+}
+
+.mg-v2-theme-option:hover {
+  border-color: var(--mg-v2-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.mg-v2-theme-option--selected {
+  border-color: var(--mg-v2-primary);
+  background: var(--mg-v2-primary-light);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.mg-v2-theme-preview {
+  width: 100%;
+  height: 60px;
+  border-radius: var(--mg-v2-border-radius-md);
+  margin-bottom: var(--mg-v2-spacing-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.mg-v2-theme-preview::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(255, 255, 255, 0.1) 25%, 
+    transparent 25%, 
+    transparent 75%, 
+    rgba(255, 255, 255, 0.1) 75%
+  );
+  background-size: 8px 8px;
+}
+
+.mg-v2-theme-preview--current {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-bottom: 0;
+}
+
+.mg-v2-theme-info {
+  text-align: center;
+}
+
+.mg-v2-theme-name {
+  font-size: var(--mg-v2-fontSize-base);
+  font-weight: var(--mg-v2-fontWeight-semibold);
+  color: var(--mg-v2-text);
+  margin: 0 0 var(--mg-v2-spacing-xs) 0;
+}
+
+.mg-v2-theme-description {
+  font-size: var(--mg-v2-fontSize-sm);
+  color: var(--mg-v2-text-muted);
+  margin: 0;
+  line-height: var(--mg-v2-lineHeight-normal);
+}
+
+.mg-v2-theme-check {
+  position: absolute;
+  top: var(--mg-v2-spacing-sm);
+  right: var(--mg-v2-spacing-sm);
+  background: var(--mg-v2-success);
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.mg-v2-custom-colors {
+  margin-bottom: var(--mg-v2-spacing-lg);
+  padding: var(--mg-v2-spacing-md);
+  background: var(--mg-v2-background-secondary);
+  border-radius: var(--mg-v2-border-radius-md);
+  border: 1px solid var(--mg-v2-border-color);
+}
+
+.mg-v2-color-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--mg-v2-spacing-md);
+}
+
+.mg-v2-color-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-spacing-xs);
+}
+
+.mg-v2-color-label {
+  font-size: var(--mg-v2-fontSize-sm);
+  font-weight: var(--mg-v2-fontWeight-medium);
+  color: var(--mg-v2-text);
+}
+
+.mg-v2-color-picker {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--mg-v2-border-color);
+  border-radius: var(--mg-v2-border-radius-md);
+  cursor: pointer;
+  background: none;
+  padding: 0;
+}
+
+.mg-v2-color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.mg-v2-color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: var(--mg-v2-border-radius-md);
+}
+
+.mg-v2-theme-actions {
+  display: flex;
+  gap: var(--mg-v2-spacing-md);
+  margin-bottom: var(--mg-v2-spacing-lg);
+  flex-wrap: wrap;
+}
+
+.mg-v2-current-theme {
+  padding: var(--mg-v2-spacing-md);
+  background: var(--mg-v2-background-secondary);
+  border-radius: var(--mg-v2-border-radius-md);
+  border: 1px solid var(--mg-v2-border-color);
+}
+
+.mg-v2-current-theme .mg-v2-theme-info {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-spacing-md);
+  text-align: left;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mg-v2-theme-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .mg-v2-color-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .mg-v2-theme-actions {
+    flex-direction: column;
+  }
+  
+  .mg-v2-theme-actions .mg-v2-button {
+    width: 100%;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .mg-v2-theme-option {
+    background: var(--mg-v2-background-dark, var(--mg-v2-background));
+    border-color: var(--mg-v2-border-color-dark, var(--mg-v2-border-color));
+  }
+  
+  .mg-v2-custom-colors,
+  .mg-v2-current-theme {
+    background: var(--mg-v2-background-secondary-dark, var(--mg-v2-background-secondary));
+    border-color: var(--mg-v2-border-color-dark, var(--mg-v2-border-color));
+  }
+}
+
+/* 애니메이션 */
+@keyframes theme-preview {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.mg-v2-theme-option--previewing {
+  animation: theme-preview 0.3s ease-in-out;
+}
+
+/* 접근성 */
+.mg-v2-theme-option:focus {
+  outline: 2px solid var(--mg-v2-primary);
+  outline-offset: 2px;
+}
+
+.mg-v2-color-picker:focus {
+  outline: 2px solid var(--mg-v2-primary);
+  outline-offset: 2px;
+}

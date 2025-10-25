@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { 
     FaChartBar, FaUsers, FaUserTie, FaUser, FaCrown,
     FaCalendarAlt, FaDollarSign, FaArrowUp, FaArrowDown,
@@ -7,7 +8,6 @@ import {
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
-import UnifiedLoading from "../common/UnifiedLoading";
 import Chart from '../common/Chart';
 import SimpleLayout from '../layout/SimpleLayout';
 import './BranchStatisticsDashboard.css';

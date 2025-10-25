@@ -58,19 +58,19 @@
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   margin: 0 0 var(--spacing-xs) 0;
-  color: #2c3e50;
+  color: var(--color-text-primary);
 }
 
 .stat-card-value {
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
   margin: var(--spacing-xs) 0;
-  color: #2c3e50;
+  color: var(--color-text-primary);
 }
 
 .stat-card-description {
   font-size: var(--font-size-sm);
-  color: #6c757d;
+  color: var(--color-secondary);
   margin: 0;
 }
 

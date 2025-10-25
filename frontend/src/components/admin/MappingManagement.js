@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import MGButton from '../common/MGButton';
 import { useNavigate } from 'react-router-dom';
 import { Link2, Plus } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -66,7 +67,7 @@ const MappingManagement = () => {
     const [editMapping, setEditMapping] = useState(null);
     const [isLoadingMappings, setIsLoadingMappings] = useState(false);
 
-    const loadMappings = async () => {
+    const loadMappings = async() => {
         if (isLoadingMappings) {
             console.log('⏸️ loadMappings 이미 실행 중, 스킵');
             return;
@@ -82,15 +83,13 @@ const MappingManagement = () => {
             const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || window.location.origin}/api/admin/mappings`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                },
+                    'Content-Type': 'application/json'},
                 credentials: 'include'
             });
             
             console.log('📡 Fetch 응답 상태:', response.status);
             
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) { throw new Error(`HTTP error! status: ${response.status }`);
             }
             
             console.log('🔄 JSON 파싱 시작...');
@@ -130,12 +129,11 @@ const MappingManagement = () => {
             setLoading(false);
         }, 3000);
         
-        return () => clearTimeout(timeout);
+        return() => clearTimeout(timeout);
     }, []);
 
     // 페이지 로드 시 스크롤을 맨 위로 이동
-    useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
 
     // 상태값 한글명 변환 함수
@@ -181,9 +179,9 @@ const MappingManagement = () => {
     };
 
     // 매칭 상태 정보 일괄 로드
-    const loadMappingStatusInfo = async () => {
+    const loadMappingStatusInfo = async() => {
         try {
-            const response = await apiGet('/api/common-codes/group/MAPPING_STATUS');
+            const response = await apiGet('/api/common-codes/MAPPING_STATUS');
             if (response && response.length > 0) {
                 const statusInfoMap = {};
                 
@@ -460,7 +458,7 @@ const MappingManagement = () => {
     };
 
     // 환불 처리 실행
-    const handleRefundProcess = async () => {
+    const handleRefundProcess = async() => {
         if (!refundReason.trim()) {
             notificationManager.warning('⚠️ 환불 사유를 반드시 입력해주세요.');
             return;
@@ -471,7 +469,7 @@ const MappingManagement = () => {
             return;
         }
 
-        const confirmMessage = `${refundMapping.clientName}과의 매칭을 환불 처리하시겠습니까?\n\n환불 회기: ${refundMapping.remainingSessions}회\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
+        const confirmMessage = `${ refundMapping.clientName }과의 매칭을 환불 처리하시겠습니까?\n\n환불 회기: ${ refundMapping.remainingSessions }회\n환불 사유: ${ refundReason.trim() }\n\n이 작업은 되돌릴 수 없습니다.`;
         const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(confirmMessage, resolve);
     });
@@ -527,8 +525,7 @@ const MappingManagement = () => {
     };
 
     // 매칭 삭제 핸들러
-    const handleDeleteMapping = async (mapping) => {
-        const confirmMessage = `${mapping.clientName}과의 매칭을 취소하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`;
+    const handleDeleteMapping = async (mapping) => { const confirmMessage = `${mapping.clientName }과의 매칭을 취소하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`;
         const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(confirmMessage, resolve);
     });
@@ -543,8 +540,7 @@ const MappingManagement = () => {
             const response = await fetch(`/api/admin/mappings/${mapping.id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/json',
-                },
+                    'Content-Type': 'application/json'},
                 credentials: 'include'  // 세션 쿠키 포함
             });
 
@@ -598,7 +594,7 @@ const MappingManagement = () => {
             case 'view':
                 // 해당 상태의 매칭만 필터링
                 setFilterStatus(stat.id);
-                notificationManager.info(`${stat.label} 매칭을 필터링합니다.`);
+                notificationManager.info(`${ stat.label } 매칭을 필터링합니다.`);
                 break;
             case 'view_all':
                 // 전체 매칭 표시
@@ -641,7 +637,7 @@ const MappingManagement = () => {
     
     if (loading) {
         console.log('⏳ 로딩 상태 - UnifiedLoading 표시');
-        return (
+        return(
             <SimpleLayout>
                 <div className="mapping-management">
                     <div className="loading-container">
@@ -656,7 +652,7 @@ const MappingManagement = () => {
         );
     }
 
-    return (
+    return(
         <SimpleLayout>
             <div className="mapping-management">
                 <div className="mapping-header">
@@ -665,25 +661,25 @@ const MappingManagement = () => {
                         <p>상담사와 내담자 간의 매칭을 관리합니다.</p>
                     </div>
                     <button 
-                        className="mg-button mg-button-primary"
-                        onClick={() => setShowCreateModal(true)}
+                        className="mg-v2-button mg-v2-button-primary"
+                        onClick={ () => setShowCreateModal(true) }
                     >
-                        <Plus size={20} />
+                        <Plus size={ 20 } />
                         새 매칭 생성
                     </button>
                 </div>
 
                 <MappingFilters
-                    filterStatus={filterStatus}
-                    searchTerm={searchTerm}
-                    onStatusChange={handleStatusChange}
-                    onSearchChange={handleSearchChange}
-                    onReset={handleResetFilters}
+                    filterStatus={ filterStatus }
+                    searchTerm={ searchTerm }
+                    onStatusChange={ handleStatusChange }
+                    onSearchChange={ handleSearchChange }
+                    onReset={ handleResetFilters }
                 />
 
                 <MappingStats 
-                    mappings={mappings} 
-                    onStatCardClick={handleStatCardClick}
+                    mappings={ mappings } 
+                    onStatCardClick={ handleStatCardClick }
                 />
 
                 <div className="mapping-list">
@@ -691,72 +687,72 @@ const MappingManagement = () => {
                     <div className="no-mappings">
                         <div className="no-mappings-icon">🔗</div>
                         <h3>{MAPPING_MESSAGES.NO_MAPPINGS}</h3>
-                        <p>{MAPPING_MESSAGES.NO_MAPPINGS_DESC}</p>
+                        <p>{ MAPPING_MESSAGES.NO_MAPPINGS_DESC }</p>
                         <button 
-                            className="mg-button mg-button-primary"
-                            onClick={() => setShowCreateModal(true)}
+                            className="mg-v2-button mg-v2-button-primary"
+                            onClick={ () => setShowCreateModal(true) }
                         >
-                            <Plus size={20} />
+                            <Plus size={ 20 } />
                             매칭 생성하기
                         </button>
                     </div>
                 ) : (
-                    <div className="mg-cards-grid">
+                    <div className="mg-v2-cards-grid">
                         {filteredMappings.map(mapping => (
                             <MappingCard
                                 key={mapping.id}
-                                mapping={mapping}
+                                mapping={ mapping }
                                 statusInfo={mappingStatusInfo[mapping.status] || {
                                     label: getStatusKoreanName(mapping.status),
                                     color: getStatusColor(mapping.status),
                                     icon: getStatusIcon(mapping.status)
                                 }}
-                                onView={() => handleViewMapping(mapping)}
-                                onEdit={() => handleEditMapping(mapping)}
-                                onRefund={() => handleRefundMapping(mapping)}
-                                onConfirmPayment={() => handleConfirmPayment(mapping)}
-                                onConfirmDeposit={() => handleConfirmDeposit(mapping)}
-                                onApprove={() => handleApproveMapping(mapping.id)}
+                                onView={ () => handleViewMapping(mapping) }
+                                onEdit={ () => handleEditMapping(mapping) }
+                                onRefund={ () => handleRefundMapping(mapping) }
+                                onConfirmPayment={ () => handleConfirmPayment(mapping) }
+                                onConfirmDeposit={ () => handleConfirmDeposit(mapping) }
+                                onApprove={ () => handleApproveMapping(mapping.id) }
                             />
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* 매칭 생성 모달 */}
+            { /* 매칭 생성 모달 */ }
             <MappingCreationModal
-                isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                onMappingCreated={handleMappingCreated}
+                isOpen={ showCreateModal }
+                onClose={ () => setShowCreateModal(false) }
+                onMappingCreated={ handleMappingCreated }
             />
 
-            {/* 상담사 변경 모달 */}
+            { /* 상담사 변경 모달 */ }
             <ConsultantTransferModal
-                isOpen={showTransferModal}
-                onClose={() => setShowTransferModal(false)}
-                currentMapping={selectedMapping}
-                onTransfer={handleTransferCompleted}
+                isOpen={ showTransferModal }
+                onClose={ () => setShowTransferModal(false) }
+                currentMapping={ selectedMapping }
+                onTransfer={ handleTransferCompleted }
             />
 
-            {/* 상담사 변경 이력 모달 */}
+            { /* 상담사 변경 이력 모달 */ }
             <ConsultantTransferHistory
-                isOpen={showTransferHistory}
-                onClose={handleCloseTransferHistory}
-                clientId={selectedClientId}
+                isOpen={ showTransferHistory }
+                onClose={ handleCloseTransferHistory }
+                clientId={ selectedClientId }
             />
 
-            {/* 결제 확인 모달 */}
+            { /* 결제 확인 모달 */ }
             <PaymentConfirmationModal
-                isOpen={showPaymentModal}
-                onClose={handlePaymentModalClose}
-                mappings={pendingMappings}
-                onPaymentConfirmed={handlePaymentConfirmed}
+                isOpen={ showPaymentModal }
+                onClose={ handlePaymentModalClose }
+                mappings={ pendingMappings }
+                onPaymentConfirmed={ handlePaymentConfirmed }
             />
 
-            {/* 부분 환불 모달 */}
+            { /* 부분 환불 모달 */ }
             <PartialRefundModal
-                mapping={partialRefundMapping}
-                isOpen={showPartialRefundModal}
+                mapping={ partialRefundMapping }
+                isOpen={ showPartialRefundModal }
                 onClose={() => {
                     setShowPartialRefundModal(false);
                     setPartialRefundMapping(null);
@@ -766,17 +762,17 @@ const MappingManagement = () => {
                 }}
             />
 
-            {/* 상세보기 모달 */}
+            { /* 상세보기 모달 */ }
             <MappingDetailModal
-                mapping={detailMapping}
-                isOpen={showDetailModal}
+                mapping={ detailMapping }
+                isOpen={ showDetailModal }
                 onClose={() => {
                     setShowDetailModal(false);
                     setDetailMapping(null);
                 }}
             />
 
-            {/* 환불 처리 모달 */}
+            { /* 환불 처리 모달 */ }
             {showRefundModal && refundMapping && (
                 <div className="mapping-refund-modal-overlay">
                     <div className="mapping-refund-modal">
@@ -787,7 +783,7 @@ const MappingManagement = () => {
                                     🔄 매칭 환불 처리
                                 </h3>
                                 <button
-                                    onClick={handleCloseRefundModal}
+                                    onClick={ handleCloseRefundModal }
                                     className="mapping-refund-modal-close"
                                 >
                                     ×
@@ -795,36 +791,36 @@ const MappingManagement = () => {
                             </div>
                         </div>
 
-                        {/* 모달 내용 */}
+                        { /* 모달 내용 */ }
                         <div className="mapping-refund-modal-body">
-                            {/* 매칭 정보 */}
+                            { /* 매칭 정보 */ }
                             <div className="mapping-refund-info">
                                 <h4 className="mapping-refund-info-title">
                                     환불 대상 매칭 정보
                                 </h4>
                                 <div className="mapping-refund-info-content">
-                                    <p><strong>상담사:</strong> {refundMapping.consultantName}</p>
-                                    <p><strong>내담자:</strong> {refundMapping.clientName}</p>
-                                    <p><strong>패키지:</strong> {refundMapping.packageName}</p>
-                                    <p><strong>총 회기:</strong> {refundMapping.totalSessions}회</p>
-                                    <p><strong>사용 회기:</strong> {refundMapping.usedSessions}회</p>
+                                    <p><strong>상담사:</strong> { refundMapping.consultantName }</p>
+                                    <p><strong>내담자:</strong> { refundMapping.clientName }</p>
+                                    <p><strong>패키지:</strong> { refundMapping.packageName }</p>
+                                    <p><strong>총 회기:</strong> { refundMapping.totalSessions }회</p>
+                                    <p><strong>사용 회기:</strong> { refundMapping.usedSessions }회</p>
                                     <p className="mapping-refund-info-sessions">
-                                        <strong>환불 회기:</strong> {refundMapping.remainingSessions}회
+                                        <strong>환불 회기:</strong> { refundMapping.remainingSessions }회
                                     </p>
                                 </div>
                             </div>
 
-                            {/* 환불 사유 입력 */}
+                            { /* 환불 사유 입력 */ }
                             <div className="mapping-refund-reason">
                                 <h4 className="mapping-refund-reason-title">
                                     환불 사유 <span className="mapping-refund-required">*</span>
                                 </h4>
                                 <textarea
-                                    value={refundReason}
-                                    onChange={(e) => setRefundReason(e.target.value)}
+                                    value={ refundReason }
+                                    onChange={ (e) => setRefundReason(e.target.value) }
                                     placeholder="환불 사유를 상세히 입력해주세요..."
-                                    rows={4}
-                                    className={`mapping-refund-reason-input ${!refundReason.trim() ? 'mapping-refund-reason-input--error' : ''}`}
+                                    rows={ 4 }
+                                    className={ `mapping-refund-reason-input ${!refundReason.trim() ? 'mapping-refund-reason-input--error' : '' }`}
                                 />
                                 {!refundReason.trim() && (
                                     <div className="mapping-refund-reason-error">
@@ -834,36 +830,36 @@ const MappingManagement = () => {
                             </div>
                         </div>
 
-                        {/* 모달 푸터 */}
+                        { /* 모달 푸터 */ }
                         <div className="mapping-refund-modal-footer">
                             <button
-                                onClick={handleCloseRefundModal}
-                                disabled={loading}
-                                className="mg-btn mg-btn--secondary"
+                                onClick={ handleCloseRefundModal }
+                                disabled={ loading }
+                                className="mg-v2-btn mg-btn--secondary"
                             >
                                 취소
                             </button>
                             <button
-                                onClick={handleRefundProcess}
-                                disabled={loading || !refundReason.trim()}
-                                className={`mg-btn mg-btn--danger ${!refundReason.trim() ? 'mg-btn--disabled' : ''}`}
+                                onClick={ handleRefundProcess }
+                                disabled={ loading || !refundReason.trim() }
+                                className={ `mg-btn mg-btn--danger ${!refundReason.trim() ? 'mg-btn--disabled' : '' }`}
                             >
-                                {loading ? '처리 중...' : '환불 처리'}
+                                { loading ? '처리 중...' : '환불 처리' }
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* 매칭 수정 모달 */}
+            { /* 매칭 수정 모달 */ }
             <MappingEditModal
-                isOpen={showEditModal}
+                isOpen={ showEditModal }
                 onClose={() => {
                     setShowEditModal(false);
                     setEditMapping(null);
                 }}
-                mapping={editMapping}
-                onSuccess={handleEditSuccess}
+                mapping={ editMapping }
+                onSuccess={ handleEditSuccess }
             />
             </div>
         </SimpleLayout>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 
@@ -55,8 +56,8 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
 
     if (loading) {
         return (
-            <div className="mg-card">
-                <div className="mg-card-body">
+            <div className="mg-v2-card">
+                <div className="mg-v2-card-body">
                     <div className="mg-loading-container">
                         <div className="mg-spinner"></div>
                         <p>평가 통계를 불러오는 중...</p>
@@ -68,13 +69,13 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
 
     if (!ratingStats || ratingStats.totalRatingCount === 0) {
         return (
-            <div className="mg-card">
-                <div className="mg-card-header">
+            <div className="mg-v2-card">
+                <div className="mg-v2-card-header">
                     <h3 className="mg-h4 mg-mb-0">
                         💖 내담자 평가
                     </h3>
                 </div>
-                <div className="mg-card-body">
+                <div className="mg-v2-card-body">
                     <div className="mg-empty-state">
                         <div className="mg-empty-state__icon">💖</div>
                         <div className="mg-empty-state__text">
@@ -90,9 +91,9 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
     }
 
     return (
-        <div className="mg-card">
+        <div className="mg-v2-card">
             {/* 카드 헤더 */}
-            <div className="mg-card-header mg-flex mg-justify-between mg-align-center">
+            <div className="mg-v2-card-header mg-flex mg-justify-between mg-align-center">
                 <h3 className="mg-h4 mg-mb-0">
                     💖 내담자 평가
                     <span className="mg-badge mg-badge-primary mg-ml-sm">
@@ -102,7 +103,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             </div>
 
             {/* 카드 바디 */}
-            <div className="mg-card-body">
+            <div className="mg-v2-card-body">
                 {/* 평가 통계 그리드 */}
                 <div className="mg-dashboard-stats mg-mb-lg">
                     {/* 평균 점수 */}
@@ -146,13 +147,13 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
 
                             return (
                                 <div key={score} className="rating-schedule-item">
-                                    <div className="mg-text-center mg-mb-xs">
+                                    <div className="mg-v2-text-center mg-mb-xs">
                                         {'💖'.repeat(score)}
                                     </div>
-                                    <div className="mg-text-center mg-font-semibold">
+                                    <div className="mg-v2-text-center mg-font-semibold">
                                         {count}개
                                     </div>
-                                    <div className="mg-text-center mg-text-sm mg-color-text-secondary">
+                                    <div className="mg-v2-text-center mg-v2-text-sm mg-v2-color-text-secondary">
                                         ({percentage}%)
                                     </div>
                                 </div>
@@ -174,15 +175,15 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                                     className="rating-schedule-item"
                                 >
                                     <div className="mg-flex mg-justify-between mg-align-start mg-mb-sm">
-                                        <div className="mg-text-base">
+                                        <div className="mg-v2-text-base">
                                             {renderHeartScore(rating.heartScore)}
                                         </div>
-                                        <div className="mg-text-xs mg-color-text-secondary">
+                                        <div className="mg-v2-text-xs mg-v2-color-text-secondary">
                                             {rating.clientName} • {new Date(rating.ratedAt).toLocaleDateString()}
                                         </div>
                                     </div>
                                     {rating.comment && (
-                                        <div className="mg-text-sm mg-color-text-primary mg-mb-sm rating-comment">
+                                        <div className="mg-v2-text-sm mg-v2-color-text-primary mg-mb-sm rating-comment">
                                             "{rating.comment}"
                                         </div>
                                     )}

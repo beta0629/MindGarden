@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import MGButton from '../common/MGButton';
 import { 
     FaUsers, FaUserTie, FaUser, FaChartBar, FaChartLine,
     FaBuilding, FaDollarSign, FaArrowUp, FaArrowDown,
@@ -182,12 +183,8 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId }) => {
                         <FaChartBar className="statistics-error-icon" />
                         <h3 className="statistics-error-title">오류 발생</h3>
                         <p className="statistics-error-message">{error}</p>
-                        <button 
-                            className="statistics-retry-btn"
-                            onClick={loadStatistics}
-                        >
-                            다시 시도
-                        </button>
+                        <MGButton variant="primary" className="statistics-retry-btn" onClick={loadStatistics}>다시 시도
+                        </MGButton>
                     </div>
                 </div>
             </div>

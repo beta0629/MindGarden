@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { apiPost } from '../../../utils/ajax';
-import { showNotification } from '../../../utils/notification';
-import notificationManager from '../../../utils/notification';
+import notificationManager, { showNotification } from '../../../utils/notification';
 
 /**
  * 부분 환불 모달 컴포넌트
@@ -151,36 +150,16 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   const withdrawalCheck = checkWithdrawalPeriod();
 
   return (
-    <div className="partial-refund-modal-overlay">
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        width: '90%',
-        maxWidth: '500px',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid #e9ecef'
-        }}>
-          <h3 style={{ margin: 0, color: '#dc3545', fontWeight: 'bold' }}>
+    <div className="mg-v2-partial-refund-modal-overlay">
+      <div className="mg-v2-partial-refund-modal">
+        <div className="mg-v2-partial-refund-modal-header">
+          <h3 className="mg-v2-partial-refund-modal-title">
             💸 부분 환불 처리
           </h3>
           <button
             onClick={handleClose}
             disabled={loading}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: 'var(--font-size-xxl)',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              color: '#6c757d'
-            }}
+            className="mg-v2-partial-refund-modal-close"
           >
             ✕
           </button>
@@ -188,14 +167,9 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
 
         <form onSubmit={handleSubmit}>
           {/* 매핑 정보 */}
-          <div style={{
-            backgroundColor: '#f8f9fa',
-            padding: '16px',
-            borderRadius: '8px',
-            marginBottom: '20px'
-          }}>
-            <h4 style={{ margin: '0 0 12px 0', color: '#495057' }}>📋 매핑 정보</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: 'var(--font-size-sm)' }}>
+          <div className="mg-v2-info-box">
+            <h4 className="mg-v2-info-box-title">📋 매핑 정보</h4>
+            <div className="mg-v2-info-grid">
               <div><strong>내담자:</strong> {mapping.clientName}</div>
               <div><strong>상담사:</strong> {mapping.consultantName}</div>
               <div><strong>총 회기:</strong> {mapping.totalSessions}회</div>
@@ -206,84 +180,42 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* 최근 추가 패키지 정보 */}
-          <div style={{
-            backgroundColor: '#fff3cd',
-            padding: '16px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            border: '1px solid #ffeaa7'
-          }}>
-            <h4 style={{ margin: '0 0 12px 0', color: '#856404' }}>📦 환불 대상 (최근 추가 패키지)</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: 'var(--font-size-sm)' }}>
+          <div className="mg-v2-refund-target-box">
+            <h4 className="mg-v2-refund-target-title">📦 환불 대상 (최근 추가 패키지)</h4>
+            <div className="mg-v2-refund-package-grid">
               <div><strong>패키지명:</strong> {lastAddedPackage.packageName}</div>
               <div><strong>패키지 회기수:</strong> {lastAddedPackage.sessions}회</div>
               <div><strong>패키지 가격:</strong> {lastAddedPackage.price?.toLocaleString()}원</div>
               <div><strong>회기당 단가:</strong> {lastAddedPackage.sessions > 0 ? Math.round(lastAddedPackage.price / lastAddedPackage.sessions).toLocaleString() : 0}원</div>
             </div>
-            <div style={{ 
-              marginTop: '8px', 
-              padding: '8px', 
-              backgroundColor: '#ffeaa7', 
-              borderRadius: '4px',
-              fontSize: 'var(--font-size-xs)',
-              color: '#856404'
-            }}>
+            <div className="mg-v2-refund-target-warning">
               ⚠️ 부분 환불은 가장 최근에 추가된 패키지를 우선으로 처리됩니다. (단회기, 임의 회기수도 가능)
             </div>
           </div>
 
           {/* 청약 철회 기간 확인 */}
-          <div style={{
-            backgroundColor: withdrawalCheck.isValid ? '#d4edda' : '#f8d7da',
-            padding: '16px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            border: `1px solid ${withdrawalCheck.isValid ? '#c3e6cb' : '#f5c6cb'}`
-          }}>
-            <h4 style={{ 
-              margin: '0 0 8px 0', 
-              color: withdrawalCheck.isValid ? '#155724' : '#721c24' 
-            }}>
+          <div className={`mg-v2-withdrawal-period-box mg-v2-withdrawal-period-box--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
+            <h4 className={`mg-v2-withdrawal-period-title mg-v2-withdrawal-period-title--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
               ⏰ 청약 철회 기간 확인
             </h4>
-            <div style={{ 
-              fontSize: 'var(--font-size-sm)', 
-              color: withdrawalCheck.isValid ? '#155724' : '#721c24',
-              fontWeight: '600'
-            }}>
+            <div className={`mg-v2-withdrawal-period-message mg-v2-withdrawal-period-message--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
               {withdrawalCheck.message}
             </div>
             {mapping.paymentDate && (
-              <div style={{ 
-                fontSize: 'var(--font-size-xs)', 
-                color: withdrawalCheck.isValid ? '#155724' : '#721c24',
-                marginTop: '4px'
-              }}>
+              <div className={`mg-v2-withdrawal-period-date mg-v2-withdrawal-period-date--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
                 결제일: {new Date(mapping.paymentDate).toLocaleDateString('ko-KR')}
               </div>
             )}
             {!withdrawalCheck.isValid && (
-              <div style={{ 
-                marginTop: '8px', 
-                padding: '8px', 
-                backgroundColor: '#f5c6cb', 
-                borderRadius: '4px',
-                fontSize: 'var(--font-size-xs)',
-                color: '#721c24'
-              }}>
+              <div className="mg-v2-withdrawal-period-warning">
                 ❌ 15일 초과로 청약 철회 불가능합니다. 특별한 사유가 있는 경우에만 처리하세요.
               </div>
             )}
           </div>
 
           {/* 환불 회기수 입력 */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: 'bold',
-              color: '#495057'
-            }}>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">
               💰 환불할 회기수
             </label>
             <input
@@ -293,51 +225,32 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               value={refundSessions}
               onChange={(e) => setRefundSessions(parseInt(e.target.value) || 1)}
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #dee2e6',
-                borderRadius: '8px',
-                fontSize: 'var(--font-size-base)',
-                outline: 'none',
-                transition: 'border-color 0.2s'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#007bff'}
-              onBlur={(e) => e.target.style.borderColor = '#dee2e6'}
+              className="mg-v2-form-input"
+              
+              
             />
-            <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
+            <small className="mg-v2-form-help">
               최대 {Math.min(mapping.remainingSessions, lastAddedPackage.sessions)}회까지 환불 가능 (최근 추가 패키지 기준)
             </small>
           </div>
 
           {/* 환불 금액 미리보기 */}
-          <div style={{
-            backgroundColor: '#e3f2fd',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            border: '1px solid #bbdefb'
-          }}>
-            <div style={{ fontWeight: 'bold', color: '#1976d2', marginBottom: '4px' }}>
+          <div className="mg-v2-refund-preview">
+            <div className="mg-v2-refund-preview-title">
               💵 예상 환불 금액
             </div>
-            <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'bold', color: '#1976d2' }}>
+            <div className="mg-v2-refund-preview-amount">
               {refundAmount.toLocaleString()}원
             </div>
-            <small style={{ color: '#1976d2', fontSize: 'var(--font-size-xs)' }}>
+            <small className="mg-v2-refund-preview-detail">
               환불 후 남은 회기: {mapping.remainingSessions - refundSessions}회
             </small>
           </div>
 
           {/* 환불 사유 입력 */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: 'bold',
-              color: '#495057'
-            }}>
-              📝 환불 사유 <span style={{ color: '#dc3545' }}>*</span>
+          <div className="mg-v2-refund-reason-section">
+            <label className="mg-v2-refund-reason-label">
+              📝 환불 사유 <span className="mg-v2-form-label-required">*</span>
             </label>
             <textarea
               value={reason}
@@ -345,59 +258,30 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               disabled={loading}
               placeholder="환불 사유를 상세히 입력해주세요 (최소 5자 이상)"
               rows="4"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #dee2e6',
-                borderRadius: '8px',
-                fontSize: 'var(--font-size-sm)',
-                outline: 'none',
-                resize: 'vertical',
-                transition: 'border-color 0.2s'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#007bff'}
-              onBlur={(e) => e.target.style.borderColor = '#dee2e6'}
+              className="mg-v2-form-textarea"
+              
+              
             />
-            <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
+            <small className="mg-v2-refund-reason-help">
               {reason.length}/500자 (최소 5자 이상 입력)
             </small>
           </div>
 
           {/* 버튼 */}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <div className="mg-v2-button-group">
             <button
               type="button"
               onClick={handleClose}
               disabled={loading}
-              style={{
-                padding: '12px 20px',
-                border: '2px solid #6c757d',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                color: '#6c757d',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s'
-              }}
+              className="mg-v2-button mg-v2-button--secondary"
             >
               취소
             </button>
             <button
               type="submit"
               disabled={loading || !reason.trim() || reason.trim().length < 5}
-              style={{
-                padding: '12px 20px',
-                border: 'none',
-                borderRadius: '8px',
-                backgroundColor: loading || !reason.trim() || reason.trim().length < 5 ? '#6c757d' : 
-                             !withdrawalCheck.isValid ? '#ffc107' : '#dc3545',
-                color: 'white',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: '600',
-                cursor: loading || !reason.trim() || reason.trim().length < 5 ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s'
-              }}
+              className={`mg-v2-button ${loading || !reason.trim() || reason.trim().length < 5 ? 'mg-v2-button--disabled' : 
+                             !withdrawalCheck.isValid ? 'mg-v2-button--warning' : 'mg-v2-button--danger'}`}
               title={!withdrawalCheck.isValid ? '청약 철회 기간 초과 - 특별 사유 시에만 처리' : ''}
             >
               {loading ? '처리 중...' : 

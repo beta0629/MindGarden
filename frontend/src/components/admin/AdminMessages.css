@@ -1,0 +1,642 @@
+/* AdminMessages 컴포넌트 모바일 반응형 스타일 */
+
+.admin-messages {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 헤더 섹션 */
+.admin-messages__header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-messages__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.admin-messages__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* 필터 및 검색 섹션 */
+.admin-messages__filters {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-messages__filters-grid {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-messages__search-container {
+  flex: 1 1 300px;
+  position: relative;
+  min-width: 200px;
+}
+
+.admin-messages__search-icon {
+  position: absolute;
+  left: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  z-index: 1;
+}
+
+.admin-messages__search-input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) calc(var(--spacing-md) * 2 + 20px);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: border-color 0.2s ease-in-out;
+}
+
+.admin-messages__search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.admin-messages__filter-select {
+  min-width: 120px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+/* 메시지 목록 */
+.admin-messages__list {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.admin-messages__empty-state {
+  text-align: center;
+  padding: var(--spacing-xxxl);
+  color: var(--color-text-tertiary);
+}
+
+.admin-messages__empty-icon {
+  margin-bottom: var(--spacing-md);
+  opacity: 0.5;
+}
+
+/* 데스크탑 테이블 */
+.admin-messages__table-container {
+  overflow-x: auto;
+}
+
+/* 데스크탑에서는 테이블 표시 */
+@media (min-width: 768px) {
+  .admin-messages__table-container {
+    display: block;
+  }
+}
+
+/* 모바일에서는 테이블 숨김 */
+@media (max-width: 767px) {
+  .admin-messages__table-container {
+    display: none !important;
+  }
+}
+
+.admin-messages__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-messages__table th {
+  background: var(--color-bg-secondary);
+  padding: var(--spacing-md);
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border-light);
+  white-space: nowrap;
+}
+
+.admin-messages__table td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.admin-messages__table-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.admin-messages__table-row:hover {
+  background: var(--color-bg-secondary);
+}
+
+.admin-messages__table-row--unread {
+  background: rgba(var(--color-primary-rgb), 0.05);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 모바일 카드 리스트 */
+.admin-messages__mobile-list {
+  display: none; /* 기본적으로 숨김 */
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+/* 데스크탑에서는 모바일 리스트 숨김 */
+@media (min-width: 768px) {
+  .admin-messages__mobile-list {
+    display: none !important;
+  }
+}
+
+/* 모바일에서는 모바일 리스트 표시 */
+@media (max-width: 767px) {
+  .admin-messages__mobile-list {
+    display: flex !important;
+  }
+}
+
+.admin-messages__mobile-card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.admin-messages__mobile-card:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.admin-messages__mobile-card--unread {
+  border: 2px solid var(--color-primary);
+  background: rgba(var(--color-primary-rgb), 0.02);
+}
+
+.admin-messages__mobile-card-header {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.admin-messages__mobile-card-title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+.admin-messages__mobile-card-title--unread {
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-messages__mobile-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+  min-height: 40px; /* 최소 높이 보장 */
+}
+
+.admin-messages__mobile-card-meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-height: 20px; /* 최소 높이 보장 */
+  padding: 2px 0; /* 약간의 패딩 추가 */
+}
+
+.admin-messages__mobile-card-meta-item span {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.admin-messages__mobile-card-date {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* 배지 그룹 */
+.admin-messages__badge-group {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+/* 배지 스타일 */
+.admin-messages__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+/* 제목 스타일 */
+.admin-messages__title {
+  font-weight: normal;
+}
+
+.admin-messages__title--unread {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 사용자 정보 스타일 */
+.admin-messages__user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.admin-messages__badge--primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.admin-messages__badge--secondary {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+}
+
+.admin-messages__badge--warning {
+  background: var(--color-warning);
+  color: var(--color-white);
+}
+
+.admin-messages__badge--danger {
+  background: var(--color-danger);
+  color: var(--color-white);
+}
+
+.admin-messages__badge--info {
+  background: var(--color-info);
+  color: var(--color-white);
+}
+
+.admin-messages__badge--success {
+  background: var(--color-success);
+  color: var(--color-white);
+}
+
+/* 모달 스타일 - 독립적인 스타일로 CSS 충돌 방지 */
+.admin-messages__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* 기존 모달보다 높은 z-index */
+  padding: var(--spacing-md);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.admin-messages__modal {
+  background: var(--color-bg-primary);
+  border-radius: var(--border-radius-lg);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border-light);
+}
+
+.admin-messages__modal-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.admin-messages__modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.admin-messages__modal-close {
+  background: none;
+  border: none;
+  font-size: var(--font-size-xl);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s ease-in-out;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-messages__modal-close:hover {
+  background: var(--color-bg-secondary);
+}
+
+.admin-messages__modal-body {
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.admin-messages__modal-actions {
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-border-light);
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* 모달 메타 섹션 */
+.admin-messages__modal-meta-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-messages__modal-badges {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.admin-messages__modal-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.admin-messages__modal-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.admin-messages__modal-info-item strong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* 모달 콘텐츠 */
+.admin-messages__modal-content {
+  padding: var(--spacing-lg);
+  background: var(--color-bg-primary);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-light);
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.admin-messages__modal-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-messages__modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.admin-messages__modal-close {
+  background: none;
+  border: none;
+  font-size: var(--font-size-xl);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.admin-messages__modal-close:hover {
+  background: var(--color-bg-secondary);
+}
+
+.admin-messages__modal-body {
+  padding: var(--spacing-lg);
+}
+
+.admin-messages__modal-meta {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.admin-messages__modal-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.admin-messages__modal-meta-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+.admin-messages__modal-meta-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.admin-messages__modal-content-text {
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+  .admin-messages__filters-grid {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .admin-messages__search-container {
+    flex: 1 1 100%;
+    min-width: unset;
+  }
+  
+  .admin-messages__filter-select {
+    flex: 1 1 calc(50% - var(--spacing-xs));
+    min-width: unset;
+  }
+  
+  .admin-messages__mobile-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .admin-messages__mobile-card-title {
+    font-size: var(--font-size-sm);
+  }
+  
+  .admin-messages__modal-overlay {
+    padding: var(--spacing-sm);
+  }
+  
+  .admin-messages__modal {
+    max-height: 90vh;
+    max-width: 95vw;
+  }
+  
+  .admin-messages__modal-header {
+    padding: var(--spacing-md);
+  }
+  
+  .admin-messages__modal-body {
+    padding: var(--spacing-md);
+  }
+  
+  .admin-messages__modal-meta {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  /* 모바일에서 그리드를 세로 배치로 변경 */
+  .admin-messages__modal-info-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .admin-messages__modal-info-item {
+    padding: var(--spacing-sm);
+    background: var(--color-bg-primary);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--color-border-light);
+  }
+  
+  .admin-messages__modal-badges {
+    gap: var(--spacing-sm);
+  }
+  
+  .admin-messages__modal-content {
+    padding: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 479px) {
+  .admin-messages__title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .admin-messages__filters {
+    padding: var(--spacing-md);
+  }
+  
+  .admin-messages__mobile-card-header {
+    gap: var(--spacing-xs);
+  }
+  
+  .admin-messages__badge {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+  
+  /* 매우 작은 화면에서 모달 최적화 */
+  .admin-messages__modal-overlay {
+    padding: var(--spacing-xs);
+  }
+  
+  .admin-messages__modal {
+    max-width: 100vw;
+    max-height: 95vh;
+    margin: var(--spacing-xs);
+  }
+  
+  .admin-messages__modal-header {
+    padding: var(--spacing-sm);
+  }
+  
+  .admin-messages__modal-body {
+    padding: var(--spacing-sm);
+  }
+  
+  .admin-messages__modal-info-grid {
+    padding: var(--spacing-sm);
+  }
+  
+  .admin-messages__modal-info-item {
+    padding: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+  }
+  
+  .admin-messages__modal-content {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+  
+  .admin-messages__modal-badges {
+    gap: var(--spacing-xs);
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .admin-messages__search-input:focus {
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+  }
+  
+  .admin-messages__mobile-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+}

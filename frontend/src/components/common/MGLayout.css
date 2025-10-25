@@ -16,12 +16,12 @@
 
 .mg-layout--dark {
   background: #1a202c;
-  color: #ffffff;
+  color: var(--color-bg-surface);
 }
 
 .mg-layout--gradient {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
+  color: var(--color-bg-surface);
 }
 
 /* ===== 섹션 컴포넌트 ===== */
@@ -59,7 +59,7 @@
 
 /* 섹션 배경 */
 .mg-section--bg-transparent { background: transparent; }
-.mg-section--bg-white { background: #ffffff; }
+.mg-section--bg-white { background: var(--color-bg-surface); }
 .mg-section--bg-gray { background: #f8fafc; }
 .mg-section--bg-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 .mg-section--bg-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }

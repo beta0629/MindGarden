@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import { User, Package, Plus, PauseCircle, CheckCircle } from 'lucide-react';
 import { getStatusColor, getStatusIcon, getMappingStatusKoreanName } from '../../utils/codeHelper';
 
@@ -14,7 +16,7 @@ const MappingCard = ({
     });
 
     useEffect(() => {
-        const loadStatusInfo = async () => {
+        const loadStatusInfo = async() => {
             try {
                 const [statusColor, statusIcon, statusLabel] = await Promise.all([
                     getStatusColor(mapping.status, 'MAPPING_STATUS'),
@@ -40,10 +42,10 @@ const MappingCard = ({
         loadStatusInfo();
     }, [mapping.status]);
 
-    return (
+    return(
         <div 
             className="mapping-card"
-            onClick={onClick}
+            onClick={ onClick }
             style={{
                 background: 'white',
                 border: '1px solid #e5e7eb',
@@ -55,8 +57,8 @@ const MappingCard = ({
                 marginBottom: '12px'
             }}
         >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={ { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div style={ { display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
                         width: '40px',
                         height: '40px',
@@ -69,7 +71,7 @@ const MappingCard = ({
                         fontWeight: '600',
                         color: '#2F2F2F'
                     }}>
-                        {mapping.clientName?.charAt(0) || '?'}
+                        { mapping.clientName?.charAt(0) || '?' }
                     </div>
                     <div>
                         <h5 style={{ 
@@ -78,7 +80,7 @@ const MappingCard = ({
                             fontWeight: '600',
                             color: '#2F2F2F'
                         }}>
-                            {mapping.clientName || '알 수 없음'}
+                            { mapping.clientName || '알 수 없음' }
                         </h5>
                         <span style={{
                             background: '#f3f4f6',
@@ -100,18 +102,18 @@ const MappingCard = ({
                     fontSize: '12px',
                     fontWeight: '500'
                 }}>
-                    {statusInfo.icon} {statusInfo.label}
+                    { statusInfo.icon } { statusInfo.label }
                 </div>
             </div>
 
-            <div style={{ marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontSize: '14px', color: '#6B6B6B' }}>
-                    <User size={14} />
-                    {mapping.consultantName}
+            <div style={ { marginBottom: '12px' }}>
+                <div style={ { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontSize: '14px', color: '#6B6B6B' }}>
+                    <User size={ 14 } />
+                    { mapping.consultantName }
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#6B6B6B' }}>
-                    <Package size={14} />
-                    {mapping.packageName}
+                <div style={ { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#6B6B6B' }}>
+                    <Package size={ 14 } />
+                    { mapping.packageName }
                 </div>
             </div>
 
@@ -121,23 +123,23 @@ const MappingCard = ({
                 gap: '8px',
                 marginBottom: '12px'
             }}>
-                <div style={{ textAlign: 'center', padding: '8px', background: '#f9fafb', borderRadius: '6px' }}>
-                    <div style={{ fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>총</div>
-                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#2F2F2F' }}>{mapping.totalSessions}</div>
+                <div style={ { textAlign: 'center', padding: '8px', background: '#f9fafb', borderRadius: '6px' }}>
+                    <div style={ { fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>총</div>
+                    <div style={ { fontSize: '16px', fontWeight: '600', color: '#2F2F2F' }}>{ mapping.totalSessions }</div>
                 </div>
-                <div style={{ textAlign: 'center', padding: '8px', background: '#fef2f2', borderRadius: '6px' }}>
-                    <div style={{ fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>사용</div>
-                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#dc2626' }}>{mapping.usedSessions}</div>
+                <div style={ { textAlign: 'center', padding: '8px', background: '#fef2f2', borderRadius: '6px' }}>
+                    <div style={ { fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>사용</div>
+                    <div style={ { fontSize: '16px', fontWeight: '600', color: '#dc2626' }}>{ mapping.usedSessions }</div>
                 </div>
-                <div style={{ textAlign: 'center', padding: '8px', background: '#f0fdf4', borderRadius: '6px' }}>
-                    <div style={{ fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>남은</div>
-                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#16a34a' }}>{mapping.remainingSessions}</div>
+                <div style={ { textAlign: 'center', padding: '8px', background: '#f0fdf4', borderRadius: '6px' }}>
+                    <div style={ { fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>남은</div>
+                    <div style={ { fontSize: '16px', fontWeight: '600', color: '#16a34a' }}>{ mapping.remainingSessions }</div>
                 </div>
             </div>
 
             {actions && (
                 <div style={{ display: 'flex', gap: '8px' }}>
-                    {actions}
+                    { actions }
                 </div>
             )}
         </div>

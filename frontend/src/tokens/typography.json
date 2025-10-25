@@ -1,0 +1,63 @@
+{
+  "version": "1.0.0",
+  "description": "MindGarden 타이포그래피 토큰",
+  "tokens": {
+    "fontFamily": {
+      "base": "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
+      "mono": "'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace"
+    },
+    "fontWeight": {
+      "normal": "400",
+      "medium": "500",
+      "semibold": "600",
+      "bold": "700"
+    },
+    "fontSize": {
+      "xs": {
+        "value": "0.75rem",
+        "pixel": "12px",
+        "description": "매우 작은 텍스트"
+      },
+      "sm": {
+        "value": "0.875rem",
+        "pixel": "14px",
+        "description": "작은 텍스트"
+      },
+      "base": {
+        "value": "1rem",
+        "pixel": "16px",
+        "description": "기본 텍스트"
+      },
+      "lg": {
+        "value": "1.125rem",
+        "pixel": "18px",
+        "description": "큰 텍스트"
+      },
+      "xl": {
+        "value": "1.25rem",
+        "pixel": "20px",
+        "description": "매우 큰 텍스트"
+      },
+      "2xl": {
+        "value": "1.5rem",
+        "pixel": "24px",
+        "description": "제목 텍스트"
+      },
+      "3xl": {
+        "value": "2rem",
+        "pixel": "32px",
+        "description": "큰 제목"
+      }
+    },
+    "lineHeight": {
+      "tight": "1.25",
+      "normal": "1.5",
+      "relaxed": "1.75"
+    },
+    "letterSpacing": {
+      "tight": "-0.025em",
+      "normal": "0",
+      "wide": "0.025em"
+    }
+  }
+}

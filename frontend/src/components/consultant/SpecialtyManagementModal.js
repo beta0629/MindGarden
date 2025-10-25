@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import './SpecialtyManagementModal.css';
@@ -53,7 +54,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
      */
     const loadSpecialties = async () => {
         try {
-            const response = await apiGet('/api/common-codes/group/SPECIALTY');
+            const response = await apiGet('/api/common-codes/SPECIALTY');
             if (response && Array.isArray(response)) {
                 setSpecialties(response);
             } else if (response && response.success !== false) {

@@ -32,7 +32,7 @@ const CommonPageTemplate = ({
     }
     
     return logUnmount;
-  }, [logMount, logUnmount, title]);
+  }, [title]); // logMount, logUnmount 의존성 제거 (무한루프 방지)
 
   return (
     <div className={`common-page-template ${bodyClass}`}>

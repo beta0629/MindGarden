@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
+import { CONSTANTS } from '../constants/magicNumbers';
 import { sessionManager } from '../utils/sessionManager';
 import { authAPI } from '../utils/ajax';
 import { SESSION_CHECK_INTERVAL } from '../constants/session';
@@ -9,7 +10,7 @@ const SessionState = {
   sessionInfo: null,
   isLoading: false,
   isLoggedIn: false,
-  lastCheckTime: 0,
+  lastCheckTime: 0, // 초기값을 0으로 설정
   error: null,
   isModalOpen: false, // 모달 상태 추가
   duplicateLoginModal: {
@@ -118,21 +119,30 @@ const SessionContext = createContext();
 // 세션 프로바이더 컴포넌트
 export const SessionProvider = ({ children }) => {
   const [state, dispatch] = useReducer(sessionReducer, SessionState);
+  const stateRef = useRef(state);
+  
+  // state가 변경될 때마다 ref 업데이트
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   // 세션 체크 함수 (useCallback으로 메모이제이션)
   const checkSession = useCallback(async (force = false) => {
     const now = Date.now();
     
+    // stateRef를 통해 최신 state 값 참조
+    const currentState = stateRef.current;
+    
     // 모달이 열려있으면 세션 체크 스킵 (모달 닫힘 방지)
-    if (!force && state.isModalOpen) {
+    if (!force && currentState.isModalOpen) {
       console.log('🔄 세션 체크 스킵 (모달 열림)');
-      return state.isLoggedIn;
+      return currentState.isLoggedIn;
     }
     
     // 강제 확인이 아니고, 이미 체크 중이거나 최근에 체크했으면 스킵
-    if (!force && (state.isLoading || (now - state.lastCheckTime < SESSION_CHECK_INTERVAL))) {
+    if (!force && (currentState.isLoading || (now - currentState.lastCheckTime < SESSION_CHECK_INTERVAL))) {
       console.log('🔄 세션 체크 스킵 (중복 방지)');
-      return state.isLoggedIn;
+      return currentState.isLoggedIn;
     }
 
     dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
@@ -145,14 +155,16 @@ export const SessionProvider = ({ children }) => {
 
       if (isLoggedIn && user) {
         // 기존 사용자 정보가 있으면 role 정보 보존
-        const currentUser = state.user;
+        const currentUser = currentState.user;
         if (currentUser && currentUser.role && !user.role) {
           console.log('🔄 기존 사용자 role 정보 보존:', currentUser.role);
           user.role = currentUser.role;
         }
         
+        console.log('🔄 SessionContext: checkSession에서 SET_USER 호출', user);
         dispatch({ type: SessionActionTypes.SET_USER, payload: user });
         if (sessionInfo) {
+          console.log('🔄 SessionContext: checkSession에서 SET_SESSION_INFO 호출', sessionInfo);
           dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
         }
         
@@ -190,14 +202,14 @@ export const SessionProvider = ({ children }) => {
           return true; // 로그인 상태 유지
         } else {
           dispatch({ type: SessionActionTypes.CLEAR_SESSION });
-          // 401 오류는 정상적인 상황이므로 콘솔에 로그하지 않음
+          // CONSTANTS.HTTP_STATUS.UNAUTHORIZED 오류는 정상적인 상황이므로 콘솔에 로그하지 않음
         }
       }
 
       return isLoggedIn;
     } catch (error) {
-      // 401 오류는 정상적인 상황이므로 콘솔에 오류로 표시하지 않음
-      if (error.message && !error.message.includes('401')) {
+      // CONSTANTS.HTTP_STATUS.UNAUTHORIZED 오류는 정상적인 상황이므로 콘솔에 오류로 표시하지 않음
+      if (error.message && !error.message.includes('CONSTANTS.HTTP_STATUS.UNAUTHORIZED')) {
         console.error('❌ 중앙 세션 확인 실패:', error);
       }
       dispatch({ type: SessionActionTypes.SET_ERROR, payload: error.message });
@@ -205,7 +217,7 @@ export const SessionProvider = ({ children }) => {
     } finally {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
     }
-  }, [state.isModalOpen, state.isLoading, state.lastCheckTime, state.user]);
+  }, []); // 의존성 배열을 빈 배열로 설정 (stateRef 사용으로 무한루프 방지)
 
   // 로그인 함수 (API 호출 포함)
   const login = async (loginData) => {
@@ -244,7 +256,7 @@ export const SessionProvider = ({ children }) => {
             console.error('❌ 로그인 후 세션 확인 실패:', error);
             console.log('⚠️ 세션 확인 실패했지만 사용자 정보 유지');
           }
-        }, 500); // 1초 → 500ms로 단축
+        }, CONSTANTS.FORM_CONSTANTS.MAX_COMMENT_LENGTH); // CONSTANTS.NOTIFICATION_CONSTANTS.PRIORITY_LOW초 → 500ms로 단축
         
         console.log('✅ 중앙 세션 로그인 완료:', response.user);
         return { success: true, user: response.user };
@@ -298,7 +310,7 @@ export const SessionProvider = ({ children }) => {
         } catch (error) {
           console.error('❌ 테스트 로그인 후 세션 확인 실패:', error);
         }
-      }, 500); // 1초 → 500ms로 단축
+      }, CONSTANTS.FORM_CONSTANTS.MAX_COMMENT_LENGTH); // CONSTANTS.NOTIFICATION_CONSTANTS.PRIORITY_LOW초 → 500ms로 단축
       
       console.log('✅ 테스트 로그인 완료:', userInfo);
       return true;
@@ -325,7 +337,7 @@ export const SessionProvider = ({ children }) => {
       // 로그인 페이지로 리다이렉트
       setTimeout(() => {
         window.location.href = '/login';
-      }, 100);
+      }, CONSTANTS.NOTIFICATION_CONSTANTS.MAX_STORED_NOTIFICATIONS);
       return true;
     } catch (error) {
       console.error('❌ 중앙 세션 로그아웃 실패:', error);
@@ -335,55 +347,56 @@ export const SessionProvider = ({ children }) => {
   };
 
   // 주기적 세션 체크
-  useEffect(() => {
-    // 현재 페이지가 로그인 페이지인지 확인
-    const currentPath = window.location.pathname;
-    const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-    
-    // 로그인 페이지가 아니면 초기 세션 체크
-    if (!isLoginPage) {
-      checkSession();
-    }
+  // 무한루프 방지를 위해 임시 비활성화
+  // useEffect(() => {
+  //   // 현재 페이지가 로그인 페이지인지 확인
+  //   const currentPath = window.location.pathname;
+  //   const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+  //   
+  //   // 로그인 페이지가 아니면 초기 세션 체크
+  //   if (!isLoginPage) {
+  //     checkSession();
+  //   }
 
-    // 주기적 세션 체크 설정 (로그인 페이지가 아닐 때만)
-    const interval = setInterval(() => {
-      const currentPath = window.location.pathname;
-      const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-      
-      if (!state.isLoading && !isLoginPage) {
-        checkSession();
-      }
-    }, SESSION_CHECK_INTERVAL);
+  //   // 주기적 세션 체크 설정 (로그인 페이지가 아닐 때만)
+  //   const interval = setInterval(() => {
+  //     const currentPath = window.location.pathname;
+  //     const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+  //     
+  //     if (!state.isLoading && !isLoginPage) {
+  //       checkSession();
+  //     }
+  //   }, SESSION_CHECK_INTERVAL);
 
-    return () => clearInterval(interval);
-  }, []); // checkSession, state.isLoading 의존성 제거
+  //   return () => clearInterval(interval);
+  // }, []); // 의존성 배열을 빈 배열로 설정 (checkSession이 안정적이므로)
 
   // 자동 리다이렉트 로직 제거 (무한루프 방지)
   // OAuth2 콜백에서만 리다이렉트 처리
 
-  // sessionManager 변경사항 리스너
-  useEffect(() => {
-    const handleSessionChange = () => {
-      const user = sessionManager.getUser();
-      const sessionInfo = sessionManager.getSessionInfo();
-      
-      if (user) {
-        dispatch({ type: SessionActionTypes.SET_USER, payload: user });
-        if (sessionInfo) {
-          dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
-        }
-      } else {
-        dispatch({ type: SessionActionTypes.CLEAR_SESSION });
-      }
-    };
+  // sessionManager 변경사항 리스너 (무한루프 방지를 위해 임시 비활성화)
+  // useEffect(() => {
+  //   const handleSessionChange = () => {
+  //     const user = sessionManager.getUser();
+  //     const sessionInfo = sessionManager.getSessionInfo();
+  //     
+  //     if (user) {
+  //       dispatch({ type: SessionActionTypes.SET_USER, payload: user });
+  //       if (sessionInfo) {
+  //         dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
+  //       }
+  //     } else {
+  //       dispatch({ type: SessionActionTypes.CLEAR_SESSION });
+  //     }
+  //   };
 
-    // sessionManager 리스너 등록
-    sessionManager.addListener(handleSessionChange);
+  //   // sessionManager 리스너 등록
+  //   sessionManager.addListener(handleSessionChange);
 
-    return () => {
-      sessionManager.removeListener(handleSessionChange);
-    };
-  }, []);
+  //   return () => {
+  //     sessionManager.removeListener(handleSessionChange);
+  //   };
+  // }, []);
 
   // 모달 상태 관리 함수들 (useCallback으로 메모이제이션)
   const setModalOpen = useCallback((isOpen) => {

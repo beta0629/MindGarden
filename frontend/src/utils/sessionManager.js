@@ -364,7 +364,7 @@ class SessionManager {
     getCsrfToken() {
         // 쿠키에서 CSRF 토큰 찾기 (여러 가능한 이름 확인)
         const cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
+        for (const cookie of cookies) {
             const [name, value] = cookie.trim().split('=');
             if (name === 'XSRF-TOKEN' || name === '_csrf' || name === 'csrfToken') {
                 return decodeURIComponent(value);

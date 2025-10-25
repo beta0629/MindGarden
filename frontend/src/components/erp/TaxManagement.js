@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
@@ -110,7 +111,7 @@ const TaxManagement = () => {
                             <select 
                                 value={selectedPeriod} 
                                 onChange={(e) => setSelectedPeriod(e.target.value)}
-                                className="mg-select"
+                                className="mg-v2-select"
                             >
                                 <option key="tax-period-default" value="">기간 선택</option>
                                 <option key="2025-01" value="2025-01">2025년 1월</option>
@@ -198,7 +199,7 @@ const TaxManagement = () => {
                                     <div className="mg-dashboard-section-header">
                                         <h3 className="mg-dashboard-section-title">세금 유형별 내역</h3>
                                         <button 
-                                            className="mg-button mg-button-primary"
+                                            className="mg-v2-button mg-v2-button-primary"
                                             onClick={() => loadTaxStatistics(selectedPeriod)}
                                             disabled={!selectedPeriod}
                                         >
@@ -213,7 +214,7 @@ const TaxManagement = () => {
                                                 {Object.entries(taxStatistics.taxByType).map(([type, amount]) => {
                                                     const taxTypeInfo = taxTypes.find(t => t.value === type);
                                                     return (
-                                                        <div key={type} className="mg-card tax-breakdown-item">
+                                                        <div key={type} className="mg-v2-card tax-breakdown-item">
                                                             <div 
                                                                 className="tax-type-indicator" 
                                                                 data-color={taxTypeInfo?.color || 'default'}
@@ -248,7 +249,7 @@ const TaxManagement = () => {
                                                     loadTaxCalculationsByType(e.target.value);
                                                 }
                                             }}
-                                            className="mg-select"
+                                            className="mg-v2-select"
                                         >
                                             <option key="tax-type-default-1" value="">세금 유형 선택</option>
                                             {taxTypes.map(type => (
@@ -262,7 +263,7 @@ const TaxManagement = () => {
                                     <div className="mg-dashboard-section-content">
                                         <div className="tax-calculations-grid">
                                             {taxCalculations.map(calculation => (
-                                                <div key={calculation.id} className="mg-card tax-calculation-card">
+                                                <div key={calculation.id} className="mg-v2-card tax-calculation-card">
                                                     <div className="tax-calculation-header">
                                                         <h4 className="tax-calculation-title">{calculation.taxName}</h4>
                                                         <span 
@@ -314,27 +315,27 @@ const TaxManagement = () => {
                                     </div>
                                     
                                     <div className="mg-dashboard-section-content">
-                                        <div className="mg-card tax-additional-form">
-                                            <div className="mg-form">
-                                                <div className="mg-form-group">
-                                                    <label className="mg-label">급여 계산 ID</label>
+                                        <div className="mg-v2-card tax-additional-form">
+                                            <div className="mg-v2-form">
+                                                <div className="mg-v2-form-group">
+                                                    <label className="mg-v2-label">급여 계산 ID</label>
                                                     <input 
                                                         type="number" 
-                                                        className="mg-input"
+                                                        className="mg-v2-input"
                                                         placeholder="급여 계산 ID를 입력하세요"
                                                     />
                                                 </div>
-                                                <div className="mg-form-group">
-                                                    <label className="mg-label">총 급여액</label>
+                                                <div className="mg-v2-form-group">
+                                                    <label className="mg-v2-label">총 급여액</label>
                                                     <input 
                                                         type="number" 
-                                                        className="mg-input"
+                                                        className="mg-v2-input"
                                                         placeholder="총 급여액을 입력하세요"
                                                     />
                                                 </div>
-                                                <div className="mg-form-group">
-                                                    <label className="mg-label">세금 유형</label>
-                                                    <select className="mg-select">
+                                                <div className="mg-v2-form-group">
+                                                    <label className="mg-v2-label">세금 유형</label>
+                                                    <select className="mg-v2-select">
                                                         <option key="tax-type-default-2" value="">세금 유형 선택</option>
                                                         {taxTypes.map(type => (
                                                             <option key={type.value} value={type.value}>
@@ -343,17 +344,17 @@ const TaxManagement = () => {
                                                         ))}
                                                     </select>
                                                 </div>
-                                                <div className="mg-form-group">
-                                                    <label className="mg-label">세율 (%)</label>
+                                                <div className="mg-v2-form-group">
+                                                    <label className="mg-v2-label">세율 (%)</label>
                                                     <input 
                                                         type="number" 
                                                         step="0.01"
-                                                        className="mg-input"
+                                                        className="mg-v2-input"
                                                         placeholder="세율을 입력하세요 (예: 3.3)"
                                                     />
                                                 </div>
-                                                <div className="mg-form-group">
-                                                    <button className="mg-button mg-button-primary mg-button-full">
+                                                <div className="mg-v2-form-group">
+                                                    <button className="mg-v2-button mg-v2-button-primary mg-v2-button-full">
                                                         <Calculator size={16} />
                                                         세금 계산
                                                     </button>

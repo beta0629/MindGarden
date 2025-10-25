@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import './RecurringExpenseModal.css';
@@ -92,7 +93,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadCategories = async () => {
         try {
-            const response = await apiGet('/api/common-codes/group/FINANCIAL_CATEGORY');
+            const response = await apiGet('/api/common-codes/FINANCIAL_CATEGORY');
             if (response && Array.isArray(response)) {
                 setCategories(response);
             } else if (response && response.success !== false) {

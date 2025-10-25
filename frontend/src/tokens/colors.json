@@ -1,0 +1,123 @@
+{
+  "version": "1.0.0",
+  "description": "MindGarden 색상 토큰",
+  "tokens": {
+    "main": {
+      "cream": {
+        "value": "#F5F5DC",
+        "description": "메인 크림색"
+      },
+      "lightBeige": {
+        "value": "#FDF5E6",
+        "description": "라이트 베이지"
+      },
+      "cocoa": {
+        "value": "#8B4513",
+        "description": "코코아색"
+      },
+      "oliveGreen": {
+        "value": "#808000",
+        "description": "올리브 그린"
+      },
+      "mintGreen": {
+        "value": "#98FB98",
+        "description": "민트 그린"
+      },
+      "softMint": {
+        "value": "#B6E5D8",
+        "description": "소프트 민트"
+      }
+    },
+    "primary": {
+      "value": "#007bff",
+      "light": "#66b3ff",
+      "dark": "#0056b3",
+      "rgb": "0, 123, 255"
+    },
+    "secondary": {
+      "value": "#6c757d",
+      "light": "#9ca3af",
+      "dark": "#495057",
+      "rgb": "108, 117, 125"
+    },
+    "status": {
+      "success": {
+        "value": "#28a745",
+        "light": "#6cbb6d",
+        "dark": "#1e7e34",
+        "rgb": "40, 167, 69"
+      },
+      "error": {
+        "value": "#dc3545",
+        "light": "#f56565",
+        "dark": "#c82333",
+        "rgb": "220, 53, 69"
+      },
+      "warning": {
+        "value": "#ffc107",
+        "light": "#ffd43b",
+        "dark": "#e0a800",
+        "rgb": "255, 193, 7"
+      },
+      "info": {
+        "value": "#17a2b8",
+        "light": "#4dd0e1",
+        "dark": "#138496",
+        "rgb": "23, 162, 184"
+      },
+      "pending": {
+        "value": "#fd7e14",
+        "light": "#ffa94d",
+        "dark": "#e55a00",
+        "rgb": "253, 126, 20"
+      }
+    },
+    "themes": {
+      "client": {
+        "name": "내담자 테마",
+        "description": "화사한 분위기 (핑크 계열)",
+        "primary": "#FFB6C1",
+        "primaryLight": "#FFC0CB",
+        "primaryDark": "#FF69B4",
+        "secondary": "#FFE4E1",
+        "accent": "#FF1493",
+        "background": "#FFF0F5",
+        "text": "#8B008B"
+      },
+      "consultant": {
+        "name": "상담사 테마",
+        "description": "활력 충만 분위기 (민트 그린 계열)",
+        "primary": "#98FB98",
+        "primaryLight": "#90EE90",
+        "primaryDark": "#32CD32",
+        "secondary": "#F0FFF0",
+        "accent": "#00FF7F",
+        "background": "#F5FFFA",
+        "text": "#006400"
+      },
+      "admin": {
+        "name": "관리자 테마",
+        "description": "간결하고 깔끔한 분위기 (블루 계열)",
+        "primary": "#87CEEB",
+        "primaryLight": "#B0E0E6",
+        "primaryDark": "#4682B4",
+        "secondary": "#F0F8FF",
+        "accent": "#1E90FF",
+        "background": "#F8F9FA",
+        "text": "#191970"
+      }
+    },
+    "text": {
+      "white": "#ffffff",
+      "dark": "#212529",
+      "darkGray": "#2F2F2F",
+      "mediumGray": "#6B6B6B",
+      "lightCream": "#FFFEF7"
+    },
+    "glass": {
+      "background": "rgba(255, 255, 255, 0.2)",
+      "border": "rgba(255, 255, 255, 0.2)",
+      "blur": "12px"
+    }
+  }
+}

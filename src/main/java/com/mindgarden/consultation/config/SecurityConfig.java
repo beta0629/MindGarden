@@ -169,6 +169,7 @@ public class SecurityConfig {
             "Cache-Control",
             "Pragma",
             "X-XSRF-TOKEN",  // CSRF 토큰 헤더 추가
+            "X-CSRF-TOKEN",  // CSRF 토큰 헤더 추가 (프론트엔드에서 사용)
             "_csrf",         // CSRF 파라미터 추가
             "Cookie",        // 쿠키 헤더 추가
             "Set-Cookie"     // Set-Cookie 헤더 추가

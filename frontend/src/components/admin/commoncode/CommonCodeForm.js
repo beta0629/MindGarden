@@ -37,7 +37,7 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
     const loadCommonCodeGroupOptions = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/group/COMMON_CODE_GROUP');
+            const response = await apiGet('/api/common-codes/COMMON_CODE_GROUP');
             if (response && response.length > 0) {
                 setCommonCodeGroupOptions(response.map(code => ({
                     value: code.codeValue,

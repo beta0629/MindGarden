@@ -288,7 +288,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 <select
                   value={selectedBranch}
                   onChange={(e) => setSelectedBranch(e.target.value)}
-                  className="mg-select"
+                  className="mg-v2-select"
                 >
                   <option key="branch-default" value="">지점 선택</option>
                   {branches.map(branch => (
@@ -301,7 +301,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               <select
                 value={selectedPeriod}
                 onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="mg-select"
+                className="mg-v2-select"
               >
                 <option key="daily" value="daily">일간</option>
                 <option key="monthly" value="monthly">월간</option>
@@ -309,21 +309,21 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               </select>
               <button
                 onClick={() => setShowQuickExpenseForm(true)}
-                className="mg-dashboard-icon-btn mg-button-danger"
+                className="mg-dashboard-icon-btn mg-v2-button-danger"
                 title="빠른 지출"
               >
                 <TrendingDown size={18} />
               </button>
               <button
                 onClick={() => setShowTransactionForm(true)}
-                className="mg-dashboard-icon-btn mg-button-success"
+                className="mg-dashboard-icon-btn mg-v2-button-success"
                 title="거래 등록"
               >
                 <DollarSign size={18} />
               </button>
               <button
                 onClick={() => window.location.href = '/erp/financial'}
-                className="mg-dashboard-icon-btn mg-button-primary"
+                className="mg-dashboard-icon-btn mg-v2-button-primary"
                 title="상세 내역 보기"
               >
                 <FileText size={18} />
@@ -334,7 +334,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
         {/* Main Content */}
         <div className="mg-dashboard-content">
-          <div className="mg-card">
+          <div className="mg-v2-card">
             {/* 탭 메뉴 */}
             <div className="integrated-finance-tabs">
               {[

@@ -5,15 +5,14 @@
 
 // ===== API 엔드포인트 =====
 export const API_ENDPOINTS = {
-  // 통계 API
-  TODAY_STATISTICS: '/api/admin/statistics/today',
-  CONSULTATION_STATS: '/api/admin/statistics/consultation-completion',
-  VACATION_STATS: '/api/admin/statistics/vacation',
-  CONSULTANT_RATING_STATS: '/api/admin/statistics/consultant-rating',
+  // 통계 API (실제 존재하는 엔드포인트)
+  OVERALL_STATISTICS: '/api/admin/statistics/overall',
+  TREND_STATISTICS: '/api/admin/statistics/trends',
+  SESSION_STATISTICS: '/api/admin/sessions/statistics',
   
-  // 시스템 API
-  SYSTEM_STATUS: '/api/admin/system/status',
-  SYSTEM_TOOLS: '/api/admin/system/tools',
+  // 시스템 API (실제 존재하는 엔드포인트)
+  SYSTEM_STATUS: '/api/admin/statistics-management/plsql/status',
+  SYSTEM_TOOLS: '/api/admin/system-tools',
   
   // ERP API
   ERP_REPORT: '/api/erp/reports',

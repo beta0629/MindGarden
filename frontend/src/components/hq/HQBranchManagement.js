@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { Container, Row, Col, Tab, Tabs } from 'react-bootstrap';
 import { FaBuilding, FaChartBar, FaCog } from 'react-icons/fa';
 import { useSession } from '../../contexts/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from "../common/UnifiedLoading";
 import BranchList from './BranchList';
 import BranchForm from './BranchForm';
 import BranchDetail from './BranchDetail';

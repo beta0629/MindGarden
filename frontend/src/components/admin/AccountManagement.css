@@ -14,7 +14,7 @@
 }
 
 .account-header h2 {
-  color: #2c3e50;
+  color: var(--color-text-primary);
   margin: 0;
   font-size: var(--font-size-xxl);
   font-weight: 600;
@@ -34,49 +34,49 @@
 }
 
 .btn-primary {
-  background: #3498db;
+  background: var(--color-primary);
   color: white;
 }
 
 .btn-primary:hover {
-  background: #2980b9;
+  background: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background: #95a5a6;
+  background: var(--color-gray-light);
   color: white;
 }
 
 .btn-secondary:hover {
-  background: #7f8c8d;
+  background: var(--color-gray-dark);
 }
 
 .btn-warning {
-  background: #f39c12;
+  background: var(--color-orange);
   color: white;
 }
 
 .btn-warning:hover {
-  background: #e67e22;
+  background: var(--color-orange-dark);
 }
 
 .btn-info {
-  background: #17a2b8;
+  background: var(--status-info);
   color: white;
 }
 
 .btn-info:hover {
-  background: #138496;
+  background: var(--status-info-dark);
 }
 
 .btn-danger {
-  background: #e74c3c;
+  background: var(--status-error);
   color: white;
 }
 
 .btn-danger:hover {
-  background: #c0392b;
+  background: var(--status-error-dark);
 }
 
 .btn-sm {
@@ -111,7 +111,7 @@
 
 .account-form h3 {
   margin: 0 0 20px 0;
-  color: #2c3e50;
+  color: var(--color-text-primary);
   font-size: var(--font-size-xxl);
   font-weight: 600;
 }
@@ -123,7 +123,7 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #34495e;
+  color: var(--color-text-primary);
   font-weight: 500;
   font-size: var(--font-size-sm);
 }
@@ -133,7 +133,7 @@
 .form-group textarea {
   width: 100%;
   padding: 12px;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--color-bg-secondary);
   border-radius: 6px;
   font-size: var(--font-size-sm);
   transition: border-color 0.3s ease;
@@ -144,7 +144,7 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
@@ -172,7 +172,7 @@
   justify-content: flex-end;
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--color-bg-secondary);
 }
 
 .account-list {
@@ -188,8 +188,8 @@
 }
 
 .account-table th {
-  background: #f8f9fa;
-  color: #495057;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
   font-weight: 600;
   padding: 15px 12px;
   text-align: left;
@@ -199,13 +199,13 @@
 
 .account-table td {
   padding: 15px 12px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--color-bg-secondary);
   font-size: var(--font-size-sm);
   vertical-align: middle;
 }
 
 .account-table tr:hover {
-  background: #f8f9fa;
+  background: var(--color-bg-secondary);
 }
 
 .status {
@@ -217,16 +217,16 @@
 
 .status.active {
   background: #d4edda;
-  color: #155724;
+  color: var(--status-success-dark);
 }
 
 .status.inactive {
-  background: #f8d7da;
-  color: #721c24;
+  background: var(--status-error-bg);
+  color: var(--status-error-dark);
 }
 
 .primary-badge {
-  background: #007bff;
+  background: var(--color-primary);
   color: white;
   padding: 4px 8px;
   border-radius: 4px;
@@ -243,7 +243,7 @@
 .loading {
   text-align: center;
   padding: 40px;
-  color: #6c757d;
+  color: var(--color-secondary);
   font-size: var(--font-size-base);
 }
 
@@ -289,15 +289,15 @@
 }
 
 .account-form::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-bg-secondary);
   border-radius: 3px;
 }
 
 .account-form::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--color-border);
   border-radius: 3px;
 }
 
 .account-form::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--color-border-dark);
 }

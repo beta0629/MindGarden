@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate, useLocation } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
 import SocialSignupModal from './SocialSignupModal';
 import DuplicateLoginModal from '../common/DuplicateLoginModal';
-import { authAPI } from '../../utils/ajax';
-import { testLogin } from '../../utils/ajax';
+import { authAPI, testLogin } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
 import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallback } from '../../utils/socialLogin';
 // import { setLoginSession, redirectToDashboard, logSessionInfo } from '../../utils/session'; // 제거됨

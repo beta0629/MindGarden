@@ -1,4 +1,5 @@
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { BarChart3, PieChart, TrendingUp } from 'lucide-react';
 
 const ChartShowcase = () => {
@@ -19,8 +20,8 @@ const ChartShowcase = () => {
   ];
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">차트 & 그래프</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">차트 & 그래프</h2>
       
       <div className="mg-chart-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 'var(--spacing-xl)' }}>
         {/* Bar Chart */}
@@ -41,7 +42,7 @@ const ChartShowcase = () => {
               </div>
             ))}
           </div>
-          <p className="mg-text-sm" style={{ color: 'var(--medium-gray)', textAlign: 'center' }}>
+          <p className="mg-v2-text-sm" style={{ color: 'var(--medium-gray)', textAlign: 'center' }}>
             주간 상담 건수 통계
           </p>
         </div>
@@ -61,11 +62,11 @@ const ChartShowcase = () => {
                 >
                   <span className="mg-progress-circle-value">{item.value}%</span>
                 </div>
-                <span className="mg-text-sm" style={{ fontWeight: 500 }}>{item.label}</span>
+                <span className="mg-v2-text-sm" style={{ fontWeight: 500 }}>{item.label}</span>
               </div>
             ))}
           </div>
-          <p className="mg-text-sm" style={{ color: 'var(--medium-gray)', textAlign: 'center' }}>
+          <p className="mg-v2-text-sm" style={{ color: 'var(--medium-gray)', textAlign: 'center' }}>
             전체 프로세스 진행 현황
           </p>
         </div>

@@ -16,13 +16,13 @@ const Textarea = ({
   return (
     <div className={`mg-form-group ${className}`.trim()}>
       {label && (
-        <label className="mg-label">
+        <label className="mg-v2-label">
           {label}
           {required && <span className="mg-required">*</span>}
         </label>
       )}
       <textarea
-        className={`mg-textarea ${error ? 'mg-input-error' : ''}`.trim()}
+        className={`mg-v2-textarea ${error ? 'mg-input-error' : ''}`.trim()}
         placeholder={placeholder}
         required={required}
         rows={rows}

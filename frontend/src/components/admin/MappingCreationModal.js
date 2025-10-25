@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../hooks/useSession';
@@ -28,8 +29,7 @@ import './MappingCreationModal.css';
  * @version 1.0.0
  * @since 2024-12-19
  */
-const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
-    const { user } = useSession();
+const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const { user } = useSession();
     const [step, setStep] = useState(MAPPING_CREATION_STEPS.CONSULTANT_SELECTION);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [selectedClient, setSelectedClient] = useState(null);
@@ -52,7 +52,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         };
         
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        return() => window.removeEventListener('resize', handleResize);
     }, []);
     
     // 모달 크기 결정 (공통 헤더 고려)
@@ -78,16 +78,12 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     // 참조번호 생성 함수
     const generateReferenceNumber = (method = 'BANK_TRANSFER') => {
         const now = new Date();
-        const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+        const timestamp = `${now.getFullYear()}${ (now.getMonth() + 1).toString().padStart(2, '0') }${ now.getDate().toString().padStart(2, '0') }_${ now.getHours().toString().padStart(2, '0') }${ now.getMinutes().toString().padStart(2, '0') }${ now.getSeconds().toString().padStart(2, '0') }`;
         
-        if (method === 'CASH') {
-            return `CASH_${timestamp}`;
-        } else if (method === 'CARD') {
-            return `CARD_${timestamp}`;
-        } else if (method === 'BANK_TRANSFER') {
-            return `BANK_${timestamp}`;
-        } else {
-            return `${method}_${timestamp}`;
+        if (method === 'CASH') { return `CASH_${timestamp }`;
+        } else if (method === 'CARD') { return `CARD_${timestamp }`;
+        } else if (method === 'BANK_TRANSFER') { return `BANK_${timestamp }`;
+        } else { return `${method }_${ timestamp }`;
         }
     };
 
@@ -113,10 +109,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     }, [isOpen, paymentInfo.paymentMethod]);
 
     // 패키지 코드 로드
-    const loadPackageCodes = useCallback(async () => {
+    const loadPackageCodes = useCallback(async() => {
         try {
             setLoadingPackageCodes(true);
-            const response = await apiGet('/api/common-codes/group/CONSULTATION_PACKAGE');
+            const response = await apiGet('/api/common-codes/CONSULTATION_PACKAGE');
             if (response && response.length > 0) {
                 const options = response.map(code => {
                     let sessions = 20; // 기본값
@@ -142,7 +138,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         price = parseInt(priceStr, 10);
                         // NaN 체크
                         if (isNaN(price)) {
-                            console.warn(`단회기 가격 파싱 실패: ${code.codeValue} -> ${priceStr}`);
+                            console.warn(`단회기 가격 파싱 실패: ${code.codeValue} -> ${ priceStr }`);
                             price = 30000; // 기본값
                         }
                     } else {
@@ -251,9 +247,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         filtered = filtered.sort((a, b) => {
             switch (clientSortBy) {
                 case 'name':
-                    return (a.name || '').localeCompare(b.name || '');
+                    return(a.name || '').localeCompare(b.name || '');
                 case 'email':
-                    return (a.email || '').localeCompare(b.email || '');
+                    return(a.email || '').localeCompare(b.email || '');
                 case 'createdAt':
                     return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
                 default:
@@ -264,7 +260,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         setFilteredClients(filtered);
     }, [clientSearchTerm, clientFilterStatus, clientSortBy, clients, mappings]);
 
-    const loadConsultants = async () => {
+    const loadConsultants = async() => {
         try {
             const today = new Date().toISOString().split('T')[0];
             const response = await apiGet(`/api/admin/consultants/with-vacation?date=${today}`);
@@ -283,7 +279,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         }
     };
 
-    const loadClients = async () => {
+    const loadClients = async() => {
         try {
             const response = await apiGet('/api/admin/clients/with-mapping-info');
             if (response.success) {
@@ -301,7 +297,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         }
     };
 
-    const loadMappings = async () => {
+    const loadMappings = async() => {
         try {
             const response = await apiGet('/api/admin/mappings');
             if (response.success) {
@@ -313,14 +309,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     };
 
     // 코드 옵션 로드
-    const loadCodeOptions = async () => {
+    const loadCodeOptions = async() => {
         try {
             // 패키지 타입 코드 로드 (공통 코드 유틸리티 사용)
             const packageOpts = await getPackageOptions();
             setPackageOptions(packageOpts);
 
             // 결제 방법 코드 로드
-            const paymentResponse = await apiGet('/api/common-codes/group/PAYMENT_METHOD');
+            const paymentResponse = await apiGet('/api/common-codes/PAYMENT_METHOD');
             if (paymentResponse && paymentResponse.length > 0) {
                 const paymentOpts = paymentResponse.map(code => ({
                     value: code.codeValue,
@@ -330,7 +326,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             }
 
             // 담당 업무 코드 로드
-            const responsibilityResponse = await apiGet('/api/common-codes/group/RESPONSIBILITY');
+            const responsibilityResponse = await apiGet('/api/common-codes/RESPONSIBILITY');
             if (responsibilityResponse && responsibilityResponse.length > 0) {
                 const responsibilityOpts = responsibilityResponse.map(code => ({
                     value: code.codeValue,
@@ -364,7 +360,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         ];
     };
 
-    const handleCreateMapping = async () => {
+    const handleCreateMapping = async() => {
         if (!selectedConsultant || !selectedClient) {
             notificationManager.warning('상담사와 내담자를 모두 선택해주세요.');
             return;
@@ -408,8 +404,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                        },
+                            'Content-Type': 'application/json'},
                         credentials: 'include',
                         body: JSON.stringify(mappingData)
                     });
@@ -425,11 +420,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     const packageName = paymentInfo.packageName || '패키지';
                     
                     notificationManager.success(
-                        `🎉 매칭이 완료되었습니다!\n` +
-                        `📋 상담사: ${consultantName}\n` +
-                        `👤 내담자: ${clientName}\n` +
-                        `📦 패키지: ${packageName}\n` +
-                        `✅ 상태: ${result.data?.status || 'ACTIVE'}`
+                        `🎉 매칭이 완료되었습니다!\n📋 상담사: ${consultantName}\n` +
+                        `👤 내담자: ${ clientName }\n📦 패키지: ${ packageName }\n` +
+                        `✅ 상태: ${ result.data?.status || 'ACTIVE' }`
                     );
                     
                     setStep(4);
@@ -442,7 +435,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         console.error('❌ 매칭 생성 실패:', error);
                     } catch (parseError) {
                         console.error('❌ 에러 응답 파싱 실패:', parseError);
-                        errorMessage = `서버 오류 (${response.status}): ${response.statusText}`;
+                        errorMessage = `서버 오류 (${response.status}): ${ response.statusText }`;
                     }
                     notificationManager.error(errorMessage);
                 }
@@ -490,7 +483,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 <button 
                     className="btn btn-secondary" 
                     onClick={() => setStep(step - 1)}
-                    disabled={loading}
+                    disabled={ loading }
                 >
                     이전
                 </button>
@@ -516,9 +509,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 <button 
                     className="btn btn-success" 
                     onClick={handleCreateMapping}
-                    disabled={loading}
+                    disabled={ loading }
                 >
-                    {loading ? '생성 중...' : '매칭 생성'}
+                    { loading ? '생성 중...' : '매칭 생성' }
                 </button>
             )}
 
@@ -533,38 +526,38 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         </>
     );
 
-    return (
+    return(
         <UnifiedModal
-            isOpen={isOpen}
-            onClose={handleClose}
+            isOpen={ isOpen }
+            onClose={ handleClose }
             title="🔗 상담사-내담자 매칭 생성"
-            size={getModalSize()}
+            size={ getModalSize() }
             variant="form"
-            backdropClick={false}
-            loading={loading}
-            actions={renderActions()}
+            backdropClick={ false }
+            loading={ loading }
+            actions={ renderActions() }
         >
-                    {/* 단계 표시기 */}
+                    { /* 단계 표시기 */ }
                     <div className="step-indicator">
-                        <div className={`step ${step >= 1 ? 'active' : ''}`}>
+                        <div className={ `step ${step >= 1 ? 'active' : '' }`}>
                             <span className="step-number">1</span>
                             <span className="step-label">상담사 선택</span>
                         </div>
-                        <div className={`step ${step >= 2 ? 'active' : ''}`}>
+                        <div className={ `step ${step >= 2 ? 'active' : '' }`}>
                             <span className="step-number">2</span>
                             <span className="step-label">내담자 선택</span>
                         </div>
-                        <div className={`step ${step >= 3 ? 'active' : ''}`}>
+                        <div className={ `step ${step >= 3 ? 'active' : '' }`}>
                             <span className="step-number">3</span>
                             <span className="step-label">결제 정보</span>
                         </div>
-                        <div className={`step ${step >= 4 ? 'active' : ''}`}>
+                        <div className={ `step ${step >= 4 ? 'active' : '' }`}>
                             <span className="step-number">4</span>
                             <span className="step-label">완료</span>
                         </div>
                     </div>
 
-                    {/* 1단계: 상담사 선택 */}
+                    { /* 1단계: 상담사 선택 */ }
                     {step === 1 && (
                         <div className="step-content">
                             <h3>상담사를 선택하세요</h3>
@@ -576,8 +569,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                     <input
                                         type="text"
                                         placeholder="상담사 이름 또는 이메일로 검색..."
-                                        value={consultantSearchTerm}
-                                        onChange={(e) => setConsultantSearchTerm(e.target.value)}
+                                        value={ consultantSearchTerm }
+                                        onChange={ (e) => setConsultantSearchTerm(e.target.value) }
                                         className="search-input"
                                     />
                                     {consultantSearchTerm && (
@@ -597,7 +590,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                         </span>
                                     ) : (
                                         <span className="total-count">
-                                            총 {consultants.length}명의 상담사
+                                            총 { consultants.length }명의 상담사
                                         </span>
                                     )}
                                 </div>
@@ -608,16 +601,16 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                     filteredConsultants.map(consultant => (
                                         <div 
                                             key={consultant.id}
-                                            className={`selection-card ${selectedConsultant?.id === consultant.id ? 'selected' : ''}`}
-                                            onClick={() => setSelectedConsultant(consultant)}
+                                            className={ `selection-card ${selectedConsultant?.id === consultant.id ? 'selected' : '' }`}
+                                            onClick={ () => setSelectedConsultant(consultant) }
                                         >
                                             <div className="card-avatar">
-                                                {consultant.name?.charAt(0) || '?'}
+                                                { consultant.name?.charAt(0) || '?' }
                                             </div>
                                             <div className="card-info">
-                                                <h4>{consultant.name}</h4>
-                                                <p>{consultant.email}</p>
-                                                <span className="role-badge">{consultant.role}</span>
+                                                <h4>{ consultant.name }</h4>
+                                                <p>{ consultant.email }</p>
+                                                <span className="role-badge">{ consultant.role }</span>
                                             </div>
                                         </div>
                                     ))
@@ -632,22 +625,22 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         </div>
                     )}
 
-                    {/* 2단계: 내담자 선택 */}
+                    { /* 2단계: 내담자 선택 */ }
                     {step === 2 && (
                         <div className="step-content">
                             <h3>내담자를 선택하세요</h3>
                             
                             {/* 필터 섹션 */}
                             <div className="filter-section">
-                                {/* 검색 입력 필드 */}
+                                { /* 검색 입력 필드 */ }
                                 <div className="search-container">
                                     <div className="search-input-wrapper">
                                         <i className="bi bi-search search-icon"></i>
                                         <input
                                             type="text"
                                             placeholder="내담자 이름 또는 이메일로 검색..."
-                                            value={clientSearchTerm}
-                                            onChange={(e) => setClientSearchTerm(e.target.value)}
+                                            value={ clientSearchTerm }
+                                            onChange={ (e) => setClientSearchTerm(e.target.value) }
                                             className="search-input"
                                         />
                                         {clientSearchTerm && (
@@ -662,13 +655,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                     </div>
                                 </div>
 
-                                {/* 상태 필터 */}
+                                { /* 상태 필터 */ }
                                 <div className="filter-controls">
                                     <div className="filter-group">
                                         <label className="filter-label">상태:</label>
                                         <select 
-                                            value={clientFilterStatus}
-                                            onChange={(e) => setClientFilterStatus(e.target.value)}
+                                            value={ clientFilterStatus }
+                                            onChange={ (e) => setClientFilterStatus(e.target.value) }
                                             className="filter-select"
                                         >
                                             <option value="ALL">전체</option>
@@ -682,8 +675,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                     <div className="filter-group">
                                         <label className="filter-label">정렬:</label>
                                         <select 
-                                            value={clientSortBy}
-                                            onChange={(e) => setClientSortBy(e.target.value)}
+                                            value={ clientSortBy }
+                                            onChange={ (e) => setClientSortBy(e.target.value) }
                                             className="filter-select"
                                         >
                                             <option value="name">이름순</option>
@@ -693,7 +686,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                     </div>
                                 </div>
 
-                                {/* 검색 결과 정보 */}
+                                { /* 검색 결과 정보 */ }
                                 <div className="search-results-info">
                                     {clientSearchTerm || clientFilterStatus !== 'ALL' ? (
                                         <span className="search-count">
@@ -701,7 +694,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                         </span>
                                     ) : (
                                         <span className="total-count">
-                                            총 {clients.length}명의 내담자
+                                            총 { clients.length }명의 내담자
                                         </span>
                                     )}
                                 </div>
@@ -712,16 +705,16 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                     filteredClients.map(client => (
                                         <div 
                                             key={client.id}
-                                            className={`selection-card ${selectedClient?.id === client.id ? 'selected' : ''}`}
-                                            onClick={() => setSelectedClient(client)}
+                                            className={ `selection-card ${selectedClient?.id === client.id ? 'selected' : '' }`}
+                                            onClick={ () => setSelectedClient(client) }
                                         >
                                             <div className="card-avatar">
-                                                {client.name?.charAt(0) || '?'}
+                                                { client.name?.charAt(0) || '?' }
                                             </div>
                                             <div className="card-info">
-                                                <h4>{client.name}</h4>
-                                                <p>{client.email}</p>
-                                                <span className="role-badge">{client.role}</span>
+                                                <h4>{ client.name }</h4>
+                                                <p>{ client.email }</p>
+                                                <span className="role-badge">{ client.role }</span>
                                             </div>
                                         </div>
                                     ))
@@ -736,7 +729,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         </div>
                     )}
 
-                    {/* 3단계: 결제 정보 */}
+                    { /* 3단계: 결제 정보 */ }
                     {step === 3 && (
                         <div className="step-content">
                             <h3>결제 정보를 입력하세요</h3>
@@ -759,7 +752,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                         <div className="auto-filled-field">
                                             <input
                                                 type="number"
-                                                value={paymentInfo.packagePrice}
+                                                value={ paymentInfo.packagePrice }
                                                 readOnly
                                                 className="readonly-input"
                                             />
@@ -771,7 +764,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                 <div className="form-group">
                                     <label>패키지 선택</label>
                                     <select
-                                        value={paymentInfo.packageName}
+                                        value={ paymentInfo.packageName }
                                         onChange={(e) => {
                                             const selectedPackage = packageOptions.find(pkg => pkg.label === e.target.value);
                                             if (selectedPackage) {
@@ -784,20 +777,19 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                                 
                                                 // 자동 매칭 성공 알림
                                                 notificationManager.success(
-                                                    `패키지가 선택되었습니다! 세션 수: ${selectedPackage.sessions}회기, 가격: ${selectedPackage.price.toLocaleString()}원`
+                                                    `패키지가 선택되었습니다! 세션 수: ${ selectedPackage.sessions }회기, 가격: ${ selectedPackage.price.toLocaleString() }원`
                                                 );
-                                            } else {
-                                                setPaymentInfo({...paymentInfo, packageName: e.target.value});
+                                            } else { setPaymentInfo({...paymentInfo, packageName: e.target.value });
                                             }
                                         }}
-                                        className={paymentInfo.packageName ? 'package-selected' : ''}
+                                        className={ paymentInfo.packageName ? 'package-selected' : '' }
                                     >
                                         <option value="">패키지를 선택하세요</option>
                                         {packageOptions.map(pkg => {
                                             const displayPrice = isNaN(pkg.price) ? '가격 오류' : pkg.price.toLocaleString();
-                                            return (
-                                                <option key={pkg.value} value={pkg.label}>
-                                                    {pkg.label} ({pkg.sessions}회기, {displayPrice}원)
+                                            return(
+                                                <option key={pkg.value} value={ pkg.label }>
+                                                    { pkg.label } ({ pkg.sessions }회기, { displayPrice }원)
                                                 </option>
                                             );
                                         })}
@@ -813,7 +805,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                 <div className="form-group">
                                     <label>결제 방법</label>
                                     <select
-                                        value={paymentInfo.paymentMethod}
+                                        value={ paymentInfo.paymentMethod }
                                         onChange={(e) => {
                                             const selectedMethod = e.target.value;
                                             const referenceNumber = generateReferenceNumber(selectedMethod);
@@ -829,8 +821,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                         }}
                                     >
                                         {paymentMethodOptions.map(method => (
-                                            <option key={method.value} value={method.label}>
-                                                {method.label}
+                                            <option key={method.value} value={ method.label }>
+                                                { method.label }
                                             </option>
                                         ))}
                                     </select>
@@ -840,7 +832,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                     <label>결제 참조번호</label>
                                     <input
                                         type="text"
-                                        value={paymentInfo.paymentReference || generateReferenceNumber(paymentInfo.paymentMethod)}
+                                        value={ paymentInfo.paymentReference || generateReferenceNumber(paymentInfo.paymentMethod) }
                                         onChange={(e) => {
                                             console.log('🔧 매칭 생성 - 참조번호 수동 변경:', e.target.value);
                                             setPaymentInfo({...paymentInfo, paymentReference: e.target.value});
@@ -855,12 +847,12 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                 <div className="form-group">
                                     <label>담당 업무</label>
                                     <select
-                                        value={paymentInfo.responsibility}
-                                        onChange={(e) => setPaymentInfo({...paymentInfo, responsibility: e.target.value})}
+                                        value={ paymentInfo.responsibility }
+                                        onChange={ (e) => setPaymentInfo({...paymentInfo, responsibility: e.target.value })}
                                     >
                                         {responsibilityOptions.map(responsibility => (
-                                            <option key={responsibility.value} value={responsibility.label}>
-                                                {responsibility.label}
+                                            <option key={responsibility.value} value={ responsibility.label }>
+                                                { responsibility.label }
                                             </option>
                                         ))}
                                     </select>
@@ -869,8 +861,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                 <div className="form-group">
                                     <label>특별 고려사항</label>
                                     <textarea
-                                        value={paymentInfo.specialConsiderations}
-                                        onChange={(e) => setPaymentInfo({...paymentInfo, specialConsiderations: e.target.value})}
+                                        value={ paymentInfo.specialConsiderations }
+                                        onChange={ (e) => setPaymentInfo({...paymentInfo, specialConsiderations: e.target.value })}
                                         placeholder="내담자의 특별한 고려사항이나 주의사항을 입력하세요"
                                         rows="3"
                                     />
@@ -879,8 +871,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                 <div className="form-group">
                                     <label>메모</label>
                                     <textarea
-                                        value={paymentInfo.notes}
-                                        onChange={(e) => setPaymentInfo({...paymentInfo, notes: e.target.value})}
+                                        value={ paymentInfo.notes }
+                                        onChange={ (e) => setPaymentInfo({...paymentInfo, notes: e.target.value })}
                                         placeholder="추가 메모사항을 입력하세요"
                                         rows="2"
                                     />
@@ -889,7 +881,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         </div>
                     )}
 
-                    {/* 4단계: 완료 */}
+                    { /* 4단계: 완료 */ }
                     {step === 4 && (
                         <div className="step-content">
                             <div className="completion-message">
@@ -901,22 +893,22 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                         <strong>📋 상담사:</strong> {selectedConsultant?.name}
                                     </div>
                                     <div className="summary-item">
-                                        <strong>👤 내담자:</strong> {selectedClient?.name}
+                                        <strong>👤 내담자:</strong> { selectedClient?.name }
                                     </div>
                                     <div className="summary-item">
-                                        <strong>📦 패키지:</strong> {paymentInfo.packageName}
+                                        <strong>📦 패키지:</strong> { paymentInfo.packageName }
                                     </div>
                                     <div className="summary-item">
-                                        <strong>🔢 총 세션:</strong> {paymentInfo.totalSessions}회
+                                        <strong>🔢 총 세션:</strong> { paymentInfo.totalSessions }회
                                     </div>
                                     <div className="summary-item">
-                                        <strong>💰 패키지 가격:</strong> {paymentInfo.packagePrice.toLocaleString()}원
+                                        <strong>💰 패키지 가격:</strong> { paymentInfo.packagePrice.toLocaleString() }원
                                     </div>
                                     <div className="summary-item">
-                                        <strong>💳 결제 방법:</strong> {paymentInfo.paymentMethod}
+                                        <strong>💳 결제 방법:</strong> { paymentInfo.paymentMethod }
                                     </div>
                                     <div className="summary-item">
-                                        <strong>📝 담당 업무:</strong> {paymentInfo.responsibility}
+                                        <strong>📝 담당 업무:</strong> { paymentInfo.responsibility }
                                     </div>
                                 </div>
                                 <p className="next-steps">

@@ -22,8 +22,8 @@
 /* 탭 네비게이션 */
 .mapping-detail-tabs {
     display: flex;
-    border-bottom: 1px solid #e9ecef;
-    background: #f8f9fa;
+    border-bottom: 1px solid var(--color-bg-secondary);
+    background: var(--color-bg-secondary);
     padding: 0 24px;
     overflow-x: auto;
 }
@@ -35,7 +35,7 @@
     cursor: pointer;
     font-size: var(--font-size-sm);
     font-weight: 500;
-    color: #6c757d;
+    color: var(--color-secondary);
     border-bottom: 3px solid transparent;
     transition: all 0.2s ease;
     white-space: nowrap;
@@ -45,13 +45,13 @@
 }
 
 .tab-btn:hover {
-    color: #495057;
+    color: var(--color-text-secondary);
     background: rgba(0, 0, 0, 0.02);
 }
 
 .tab-btn.active {
-    color: #007bff;
-    border-bottom-color: #007bff;
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
     background: white;
 }
 
@@ -74,13 +74,13 @@
 .info-section h4 {
     font-size: var(--font-size-base);
     font-weight: 600;
-    color: #495057;
+    color: var(--color-text-secondary);
     margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
     padding-bottom: 8px;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--color-bg-secondary);
 }
 
 /* 정보 그리드 */
@@ -241,13 +241,13 @@
 .progress-text {
     font-size: var(--font-size-xs);
     font-weight: 600;
-    color: #495057;
+    color: var(--color-text-secondary);
     min-width: 40px;
 }
 
 /* 금액 일관성 검사 */
 .consistency-check {
-    background: #f8f9fa;
+    background: var(--color-bg-secondary);
     border-radius: 12px;
     padding: var(--spacing-lg);
 }
@@ -256,7 +256,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    color: #28a745;
+    color: var(--status-success);
     font-weight: 500;
 }
 
@@ -293,10 +293,10 @@
 }
 
 .transaction-card {
-    background: #f8f9fa;
+    background: var(--color-bg-secondary);
     border-radius: 12px;
     padding: var(--spacing-md);
-    border-left: 4px solid #007bff;
+    border-left: 4px solid var(--color-primary);
 }
 
 .transaction-header {
@@ -316,12 +316,12 @@
 
 .transaction-type.income {
     background: #d4edda;
-    color: #155724;
+    color: var(--status-success-dark);
 }
 
 .transaction-type.expense {
-    background: #f8d7da;
-    color: #721c24;
+    background: var(--status-error-bg);
+    color: var(--status-error-dark);
 }
 
 .transaction-status {
@@ -333,13 +333,13 @@
 }
 
 .transaction-status.pending {
-    background: #fff3cd;
-    color: #856404;
+    background: var(--status-warning-bg);
+    color: var(--color-warning-dark);
 }
 
 .transaction-status.completed {
     background: #d4edda;
-    color: #155724;
+    color: var(--status-success-dark);
 }
 
 .transaction-details {
@@ -351,18 +351,18 @@
 .transaction-amount {
     font-size: var(--font-size-base);
     font-weight: 700;
-    color: #495057;
+    color: var(--color-text-secondary);
 }
 
 .transaction-date {
     font-size: var(--font-size-xs);
-    color: #6c757d;
+    color: var(--color-secondary);
 }
 
 .no-erp-data {
     text-align: center;
     padding: var(--spacing-xxxl);
-    color: #6c757d;
+    color: var(--color-secondary);
 }
 
 .no-erp-data i {
@@ -384,7 +384,7 @@
 
 /* 변경 이력 */
 .notes-content {
-    background: #f8f9fa;
+    background: var(--color-bg-secondary);
     border-radius: 12px;
     padding: var(--spacing-lg);
 }
@@ -395,7 +395,7 @@
     gap: 12px;
     margin-bottom: 12px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--color-bg-secondary);
 }
 
 .note-item:last-child {
@@ -407,7 +407,7 @@
 .note-bullet {
     width: 6px;
     height: 6px;
-    background: #007bff;
+    background: var(--color-primary);
     border-radius: 50%;
     margin-top: 6px;
     flex-shrink: 0;
@@ -415,14 +415,14 @@
 
 .note-text {
     font-size: var(--font-size-sm);
-    color: #495057;
+    color: var(--color-text-secondary);
     line-height: 1.5;
 }
 
 .no-history {
     text-align: center;
     padding: var(--spacing-xxxl);
-    color: #6c757d;
+    color: var(--color-secondary);
 }
 
 .no-history i {
@@ -432,11 +432,11 @@
 }
 
 .special-considerations {
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
+    background: var(--status-warning-bg);
+    border: 1px solid var(--status-warning-light);
     border-radius: 8px;
     padding: var(--spacing-md);
-    color: #856404;
+    color: var(--color-warning-dark);
     font-size: var(--font-size-sm);
     line-height: 1.5;
 }
@@ -444,15 +444,15 @@
 /* 푸터 */
 .mapping-detail-footer {
     padding: var(--spacing-lg) var(--spacing-xxl);
-    border-top: 1px solid #e9ecef;
-    background: #f8f9fa;
+    border-top: 1px solid var(--color-bg-secondary);
+    background: var(--color-bg-secondary);
     display: flex;
     justify-content: flex-end;
     gap: 12px;
 }
 
 .btn-secondary {
-    background: #6c757d;
+    background: var(--color-secondary);
     color: white;
     border: none;
     border-radius: 8px;

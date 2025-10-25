@@ -420,7 +420,7 @@
   color: var(--schedule-modal-white);
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--color-bg-secondary);
 }
 
 .consultant-info {

@@ -40,7 +40,7 @@ const ConfirmModal = ({
       size={size}
       type="confirm"
       stackLevel={2}
-      showCloseButton={false}
+      showCloseButton={true}
     >
       <div style={{ marginBottom: 'var(--spacing-lg)' }}>
         <p style={{ margin: 0, fontSize: 'var(--font-size-base)', lineHeight: 1.5 }}>

@@ -27,7 +27,7 @@ const AccountTable = ({
 
   return (
     <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_LIST}>
-      <table className={ACCOUNT_CSS_CLASSES.ACCOUNT_TABLE + ' mg-table'}>
+      <table className={ACCOUNT_CSS_CLASSES.ACCOUNT_TABLE + ' mg-v2-table'}>
         <thead>
           <tr>
             <th>{ACCOUNT_TABLE_COLUMNS.BANK}</th>

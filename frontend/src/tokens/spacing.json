@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "description": "MindGarden 간격 토큰",
+  "tokens": {
+    "xs": {
+      "value": "0.5rem",
+      "pixel": "8px",
+      "description": "매우 작은 간격"
+    },
+    "sm": {
+      "value": "1rem",
+      "pixel": "16px",
+      "description": "작은 간격"
+    },
+    "md": {
+      "value": "1.5rem",
+      "pixel": "24px",
+      "description": "중간 간격"
+    },
+    "lg": {
+      "value": "2rem",
+      "pixel": "32px",
+      "description": "큰 간격"
+    },
+    "xl": {
+      "value": "3rem",
+      "pixel": "48px",
+      "description": "매우 큰 간격"
+    },
+    "responsive": {
+      "mobile": {
+        "cardPadding": "12px",
+        "cardGap": "12px",
+        "sectionPadding": "16px"
+      },
+      "tablet": {
+        "cardPadding": "16px",
+        "cardGap": "16px",
+        "sectionPadding": "20px"
+      },
+      "desktop": {
+        "cardPadding": "20px",
+        "cardGap": "20px",
+        "sectionPadding": "24px"
+      }
+    }
+  }
+}

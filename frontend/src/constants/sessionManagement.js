@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
   CONFIRM_PAYMENT: '/api/admin/mappings/{id}/confirm-payment',
   EXTEND_SESSIONS: '/api/admin/mappings/{id}/extend-sessions',
   ERP_FINANCIAL: '/api/erp/financial/update-receivable',
-  PACKAGE_CODES: '/api/common-codes/group/PACKAGE'
+  PACKAGE_CODES: '/api/common-codes/PACKAGE'
 };
 
 // 상태 상수

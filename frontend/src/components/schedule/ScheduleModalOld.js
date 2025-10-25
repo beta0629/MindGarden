@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import StepIndicator from './components/StepIndicator';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
@@ -43,7 +44,7 @@ const ScheduleModal = ({
     const loadConsultationTypeCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await fetch('/api/common-codes/group/CONSULTATION_TYPE');
+            const response = await fetch('/api/common-codes/CONSULTATION_TYPE');
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.length > 0) {

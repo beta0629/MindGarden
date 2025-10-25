@@ -21,7 +21,7 @@
 
 .header-content h1 {
     margin: 0 0 8px 0;
-    color: #2c3e50;
+    color: var(--color-text-primary);
     font-size: var(--font-size-xxl);
     font-weight: 700;
 }
@@ -35,7 +35,7 @@
 .user-name {
     font-size: var(--font-size-base);
     font-weight: 600;
-    color: #495057;
+    color: var(--color-text-secondary);
 }
 
 .user-role {
@@ -79,18 +79,18 @@
 }
 
 .schedule-page-btn-primary {
-    background-color: #007bff;
+    background-color: var(--color-primary);
     color: white;
 }
 
 .schedule-page-btn-primary:hover {
-    background-color: #0056b3;
+    background-color: var(--color-primary-dark);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
 }
 
 .schedule-page-btn-secondary {
-    background-color: #6c757d;
+    background-color: var(--color-secondary);
     color: white;
 }
 
@@ -101,7 +101,7 @@
 }
 
 .schedule-page-btn-warning {
-    background-color: #ffc107;
+    background-color: var(--status-warning);
     color: #212529;
 }
 
@@ -112,7 +112,7 @@
 }
 
 .schedule-page-btn-warning:disabled {
-    background-color: #ffc107;
+    background-color: var(--status-warning);
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
@@ -121,12 +121,12 @@
 
 .schedule-page-btn-outline {
     background-color: transparent;
-    color: #007bff;
-    border: 1px solid #007bff;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
 }
 
 .schedule-page-btn-outline:hover {
-    background-color: #007bff;
+    background-color: var(--color-primary);
     color: white;
     transform: translateY(-1px);
 }
@@ -162,7 +162,7 @@
 
 .sidebar-section h3 {
     margin: 0 0 16px 0;
-    color: #2c3e50;
+    color: var(--color-text-primary);
     font-size: var(--font-size-base);
     font-weight: 600;
 }
@@ -177,21 +177,21 @@
 .stat-item {
     text-align: center;
     padding: 16px 12px;
-    background: #f8f9fa;
+    background: var(--color-bg-secondary);
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--color-bg-secondary);
 }
 
 .stat-value {
     font-size: var(--font-size-xxl);
     font-weight: 700;
-    color: #007bff;
+    color: var(--color-primary);
     margin-bottom: 4px;
 }
 
 .stat-label {
     font-size: var(--font-size-xs);
-    color: #6c757d;
+    color: var(--color-secondary);
     font-weight: 500;
 }
 
@@ -207,10 +207,10 @@
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: #f8f9fa;
+    background: var(--color-bg-secondary);
     border-radius: 6px;
     font-size: var(--font-size-sm);
-    color: #495057;
+    color: var(--color-text-secondary);
 }
 
 .status-dot {
@@ -221,15 +221,15 @@
 }
 
 .status-dot.available {
-    background-color: #28a745;
+    background-color: var(--status-success);
 }
 
 .status-dot.busy {
-    background-color: #ffc107;
+    background-color: var(--status-warning);
 }
 
 .status-dot.unavailable {
-    background-color: #dc3545;
+    background-color: var(--status-error);
 }
 
 /* 접근 거부 */
@@ -254,26 +254,26 @@
 
 .access-denied h2 {
     margin: 0 0 12px 0;
-    color: #dc3545;
+    color: var(--status-error);
     font-size: var(--font-size-xxl);
     font-weight: 600;
 }
 
 .access-denied p {
     margin: 0 0 20px 0;
-    color: #6c757d;
+    color: var(--color-secondary);
     font-size: var(--font-size-base);
     line-height: 1.5;
 }
 
 .current-role {
     font-size: var(--font-size-sm);
-    color: #495057;
+    color: var(--color-text-secondary);
 }
 
 .role-badge {
-    background-color: #e9ecef;
-    color: #495057;
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
     padding: 4px 8px;
     border-radius: 4px;
     font-weight: 600;

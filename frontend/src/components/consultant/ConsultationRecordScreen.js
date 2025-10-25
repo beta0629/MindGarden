@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
-import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 
@@ -31,7 +31,7 @@ const ConsultationRecordScreen = () => {
   const loadPriorityCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/group/PRIORITY');
+      const response = await apiGet('/api/common-codes/PRIORITY');
       if (response && response.length > 0) {
         const options = response.map(code => ({
           value: code.codeValue,
@@ -305,10 +305,10 @@ const ConsultationRecordScreen = () => {
   const loadCompletionStatusCodes = useCallback(async () => {
     try {
       setLoadingCompletionCodes(true);
-      const response = await apiGet('/api/common-codes/group/COMPLETION_STATUS');
+      const response = await apiGet('/api/common-codes/COMPLETION_STATUS');
       if (response && response.length > 0) {
         setCompletionStatusOptions(response.map(code => ({
-          value: code.codeValue === 'COMPLETED' ? true : false,
+          value: code.codeValue === 'COMPLETED',
           label: code.codeLabel,
           icon: code.icon,
           color: code.colorCode,
@@ -543,14 +543,14 @@ const ConsultationRecordScreen = () => {
       <div className="mg-dashboard-layout">
 
       {/* 내담자 정보 카드 */}
-      <div className="mg-card mg-mb-lg">
+      <div className="mg-v2-card mg-mb-lg">
         <h2 className="mg-h3 mg-mb-md mg-flex mg-align-center mg-gap-sm">
           👤 내담자 정보
         </h2>
         <div className="mg-grid mg-grid-cols-2 mg-gap-md">
           <div className="mg-flex mg-flex-col">
-            <span className="mg-label mg-text-sm mg-color-text-secondary">이름</span>
-            <span className="mg-text-base mg-font-medium">{client.name}</span>
+            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">이름</span>
+            <span className="mg-v2-text-base mg-font-medium">{client.name}</span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>이메일</span>

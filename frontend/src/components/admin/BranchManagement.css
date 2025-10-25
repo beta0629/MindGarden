@@ -197,17 +197,17 @@
 }
 
 .branch-type-badge.main {
-    background-color: #fef3c7;
+    background-color: var(--status-warning-bg);
     color: #92400e;
 }
 
 .branch-type-badge.franchise {
-    background-color: #dbeafe;
+    background-color: var(--status-info-bg);
     color: #1e40af;
 }
 
 .branch-type-badge.direct {
-    background-color: #d1fae5;
+    background-color: var(--status-success-bg);
     color: #047857;
 }
 
@@ -232,12 +232,12 @@
 }
 
 .branch-status-badge.preparing {
-    background-color: #fef3c7;
+    background-color: var(--status-warning-bg);
     color: #92400e;
 }
 
 .branch-status-badge.active {
-    background-color: #d1fae5;
+    background-color: var(--status-success-bg);
     color: #047857;
 }
 
@@ -247,7 +247,7 @@
 }
 
 .branch-status-badge.closed {
-    background-color: #e5e7eb;
+    background-color: var(--color-border);
     color: #6b7280;
 }
 
@@ -274,7 +274,7 @@
 }
 
 .btn-delete:hover {
-    background-color: #fee2e2;
+    background-color: var(--status-error-bg);
 }
 
 .status-select {
@@ -363,7 +363,7 @@
 
 /* 에러 메시지 */
 .error-message {
-    background-color: #fee2e2;
+    background-color: var(--status-error-bg);
     border: 1px solid #f87171;
     border-radius: var(--branch-border-radius);
     padding: 16px;
@@ -700,6 +700,6 @@ textarea:focus {
     
     .branch-table th,
     .branch-table td {
-        border-color: #000000;
+        border-color: var(--color-text-primary);
     }
 }

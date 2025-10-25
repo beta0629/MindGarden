@@ -179,7 +179,7 @@
   
   .page-header-content {
     background: white;
-    border: 1px solid #ccc;
+    border: 1px solid var(--color-border-light);
     box-shadow: none;
   }
   

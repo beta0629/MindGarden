@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
@@ -52,7 +53,7 @@ const PaymentManagement = () => {
     const loadPaymentStatusCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/group/PAYMENT_STATUS');
+        const response = await apiGet('/api/common-codes/PAYMENT_STATUS');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,
@@ -88,7 +89,7 @@ const PaymentManagement = () => {
   const loadPaymentGatewayCodes = useCallback(async () => {
     try {
       setLoadingGatewayCodes(true);
-      const response = await apiGet('/api/common-codes/group/PAYMENT_METHOD');
+      const response = await apiGet('/api/common-codes/PAYMENT_METHOD');
       if (response && response.length > 0) {
         setPaymentGatewayOptions(response.map(code => ({
           value: code.codeValue,
@@ -121,7 +122,7 @@ const PaymentManagement = () => {
   const loadPaymentMethodCodes = useCallback(async () => {
     try {
       setLoadingMethodCodes(true);
-      const response = await apiGet('/api/common-codes/group/PAYMENT_METHOD');
+      const response = await apiGet('/api/common-codes/PAYMENT_METHOD');
       if (response && response.length > 0) {
         setPaymentMethodOptions(response.map(code => ({
           value: code.codeValue,

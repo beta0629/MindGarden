@@ -41,8 +41,8 @@
 }
 
 .demo-item {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 20px;
   text-align: center;

@@ -61,17 +61,17 @@ const MessageCard = ({
               {message.title}
             </h5>
             {message.isImportant && (
-              <span className="mg-badge mg-badge-warning mg-text-xs">중요</span>
+              <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
             )}
             {message.isUrgent && (
-              <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
+              <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
             )}
           </div>
-          <p className="mg-text-sm mg-color-text-secondary mg-mb-xs">
+          <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-xs">
             {message.content?.substring(0, compact ? 40 : 50)}
             {message.content?.length > (compact ? 40 : 50) && '...'}
           </p>
-          <div className="mg-flex mg-align-center mg-gap-sm mg-text-xs mg-color-text-secondary mg-flex-wrap">
+          <div className="mg-flex mg-align-center mg-gap-sm mg-v2-text-xs mg-v2-color-text-secondary mg-flex-wrap">
             <span className={`mg-badge mg-badge-${typeInfo.colorClass}`}>{typeInfo.label}</span>
             <span>{formatDate(message.sentAt || message.createdAt)}</span>
           </div>

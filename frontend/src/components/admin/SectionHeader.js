@@ -1,4 +1,5 @@
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import './SectionHeader.css';
 
 /**
@@ -18,24 +19,24 @@ const SectionHeader = ({
     actions = null 
 }) => {
     return (
-        <div className="mg-section-header">
-            <div className="mg-section-content">
-                <div className="mg-section-title-area">
-                    <div className="mg-flex mg-items-center mg-gap-sm">
-                        {icon && <div className="mg-section-icon">{icon}</div>}
-                        <h2 className="mg-section-title">{title}</h2>
+        <div className="mg-v2-section-header">
+            <div className="mg-v2-section-content">
+                <div className="mg-v2-section-title-area">
+                    <div className="mg-v2-flex mg-v2-items-center mg-v2-gap-sm">
+                        {icon && <div className="mg-v2-section-icon">{icon}</div>}
+                        <h2 className="mg-v2-section-title">{title}</h2>
                     </div>
                     {subtitle && (
-                        <div className="mg-section-subtitle">
-                            <span className="mg-badge mg-badge-info">{subtitle}</span>
+                        <div className="mg-v2-section-subtitle">
+                            <span className="mg-v2-badge mg-v2-badge-info">{subtitle}</span>
                         </div>
                     )}
                     {stats && (
-                        <div className="mg-section-stats">
+                        <div className="mg-v2-section-stats">
                             {stats.map((stat, index) => (
-                                <div key={`stat-${index}`} className="mg-stat-item">
-                                    <span className="mg-stat-label">{stat.label}</span>
-                                    <span className="mg-stat-value">{stat.value}</span>
+                                <div key={`stat-${index}`} className="mg-v2-stat-item">
+                                    <span className="mg-v2-stat-label">{stat.label}</span>
+                                    <span className="mg-v2-stat-value">{stat.value}</span>
                                 </div>
                             ))}
                         </div>
@@ -43,7 +44,7 @@ const SectionHeader = ({
                 </div>
                 
                 {actions && (
-                    <div className="mg-section-actions">
+                    <div className="mg-v2-section-actions">
                         {actions}
                     </div>
                 )}

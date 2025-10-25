@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import MGButton from '../common/MGButton';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { Bell, Plus, Edit, Trash2, Send, Archive } from 'lucide-react';
@@ -225,7 +226,7 @@ const SystemNotificationManagement = () => {
   if (!isLoggedIn) {
     return (
       <SimpleLayout title="시스템 공지 관리">
-        <div className="mg-card mg-text-center mg-p-xl">
+        <div className="mg-v2-card mg-v2-text-center mg-p-xl">
           <h3>로그인이 필요합니다.</h3>
         </div>
       </SimpleLayout>
@@ -245,9 +246,9 @@ const SystemNotificationManagement = () => {
   if (!hasManagePermission()) {
     return (
       <SimpleLayout title="시스템 공지 관리">
-        <div className="mg-card mg-text-center mg-p-xl">
+        <div className="mg-v2-card mg-v2-text-center mg-p-xl">
           <h3>접근 권한이 없습니다.</h3>
-          <p className="mg-text-sm mg-color-text-secondary">
+          <p className="mg-v2-text-sm mg-v2-color-text-secondary">
             시스템 공지 관리 권한이 필요합니다.
           </p>
         </div>
@@ -257,26 +258,26 @@ const SystemNotificationManagement = () => {
 
   return (
     <SimpleLayout title="시스템 공지 관리">
-      <div className="mg-dashboard-layout">
+      <div className="mg-v2-dashboard-layout">
         {/* 헤더 */}
-        <div className="mg-card mg-mb-lg">
-          <div className="mg-flex mg-justify-between mg-align-center mg-mb-md">
-            <div className="mg-flex mg-align-center mg-gap-sm">
-              <Bell className="mg-color-primary" size={24} />
-              <h2 className="mg-h3 mg-mb-0">시스템 공지 관리</h2>
+        <div className="mg-v2-card mg-mb-lg">
+          <div className="mg-v2-flex mg-justify-between mg-align-center mg-mb-md">
+            <div className="mg-v2-flex mg-align-center mg-gap-sm">
+              <Bell className="mg-v2-color-primary" size={24} />
+              <h2 className="mg-v2-h3 mg-mb-0">시스템 공지 관리</h2>
             </div>
-            <button onClick={handleCreate} className="mg-button mg-button-primary">
-              <Plus size={18} className="mg-mr-sm" />
+            <button onClick={handleCreate} className="mg-v2-button mg-v2-button-primary">
+              <Plus size={18} className="mg-v2-mr-sm" />
               새 공지 작성
             </button>
           </div>
 
           {/* 필터 */}
-          <div className="mg-flex mg-gap-md mg-flex-wrap">
+          <div className="mg-v2-flex mg-gap-md mg-flex-wrap">
             <select
               value={filterTarget}
               onChange={(e) => setFilterTarget(e.target.value)}
-              className="mg-select"
+              className="mg-v2-select"
             >
               <option value="">전체 대상</option>
               <option value="ALL">전체 사용자</option>
@@ -286,7 +287,7 @@ const SystemNotificationManagement = () => {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="mg-select"
+              className="mg-v2-select"
             >
               <option value="">전체 상태</option>
               <option value="DRAFT">임시 저장</option>
@@ -301,59 +302,59 @@ const SystemNotificationManagement = () => {
 
         {/* 공지 목록 */}
         {!loading && (
-          <div className="mg-space-y-sm">
+          <div className="mg-v2-space-y-sm">
             {notifications.length === 0 ? (
-              <div className="mg-empty-state">
-                <div className="mg-empty-state__icon">
+              <div className="mg-v2-empty-state">
+                <div className="mg-v2-empty-state__icon">
                   <Bell size={48} />
                 </div>
-                <div className="mg-empty-state__text">작성된 공지가 없습니다</div>
-                <button onClick={handleCreate} className="mg-button mg-button-primary mg-mt-md">
+                <div className="mg-v2-empty-state__text">작성된 공지가 없습니다</div>
+                <button onClick={handleCreate} className="mg-v2-button mg-v2-button-primary mg-mt-md">
                   첫 공지 작성하기
                 </button>
               </div>
             ) : (
               notifications.map((notification) => (
-                <div key={notification.id} className="mg-card">
-                  <div className="mg-flex mg-justify-between mg-align-start mg-gap-md">
-                    <div className="mg-flex-1">
-                      <div className="mg-flex mg-align-center mg-gap-sm mg-mb-sm mg-flex-wrap">
-                        <h4 className="mg-h5 mg-mb-0">{notification.title}</h4>
-                        <span className={`mg-badge ${
-                          notification.status === 'PUBLISHED' ? 'mg-badge-success' :
-                          notification.status === 'DRAFT' ? 'mg-badge-secondary' :
-                          'mg-badge-warning'
+                <div key={notification.id} className="mg-v2-card">
+                  <div className="mg-v2-flex mg-justify-between mg-align-start mg-gap-md">
+                    <div className="mg-v2-flex-1">
+                      <div className="mg-v2-flex mg-align-center mg-gap-sm mg-mb-sm mg-flex-wrap">
+                        <h4 className="mg-v2-h5 mg-mb-0">{notification.title}</h4>
+                        <span className={`mg-v2-badge ${
+                          notification.status === 'PUBLISHED' ? 'mg-v2-badge-success' :
+                          notification.status === 'DRAFT' ? 'mg-v2-badge-secondary' :
+                          'mg-v2-badge-warning'
                         }`}>
                           {notification.status === 'PUBLISHED' ? '게시됨' :
                            notification.status === 'DRAFT' ? '임시저장' : '보관됨'}
                         </span>
-                        <span className="mg-badge mg-badge-primary">
+                        <span className="mg-v2-badge mg-v2-badge-primary">
                           {notification.targetType === 'ALL' ? '전체' :
                            notification.targetType === 'CONSULTANT' ? '상담사' : '내담자'}
                         </span>
                         {notification.isUrgent && (
-                          <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
+                          <span className="mg-v2-badge mg-v2-badge-danger mg-v2-text-xs">긴급</span>
                         )}
                         {notification.isImportant && (
-                          <span className="mg-badge mg-badge-warning mg-text-xs">중요</span>
+                          <span className="mg-v2-badge mg-v2-badge-warning mg-v2-text-xs">중요</span>
                         )}
                       </div>
-                      <p className="mg-text-sm mg-color-text-secondary mg-mb-sm">
+                      <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-sm">
                         {notification.content.length > 150
                           ? `${notification.content.substring(0, 150)}...`
                           : notification.content}
                       </p>
-                      <div className="mg-text-xs mg-color-text-secondary">
+                      <div className="mg-v2-text-xs mg-v2-color-text-secondary">
                         작성자: {notification.authorName} · 
                         작성일: {new Date(notification.createdAt).toLocaleDateString('ko-KR')}
                         {notification.viewCount > 0 && ` · 조회수: ${notification.viewCount}`}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div className="mg-v2-notification-actions">
                       {notification.status === 'DRAFT' && (
                         <button
                           onClick={() => handlePublish(notification.id)}
-                          className="mg-button mg-button-primary mg-button-small"
+                          className="mg-v2-button mg-v2-button-primary mg-v2-button-small"
                           title="게시"
                         >
                           <Send size={16} />
@@ -362,7 +363,7 @@ const SystemNotificationManagement = () => {
                       {notification.status === 'PUBLISHED' && (
                         <button
                           onClick={() => handleArchive(notification.id)}
-                          className="mg-button mg-button-outline mg-button-small"
+                          className="mg-v2-button mg-v2-button-outline mg-v2-button-small"
                           title="보관"
                         >
                           <Archive size={16} />
@@ -370,14 +371,14 @@ const SystemNotificationManagement = () => {
                       )}
                       <button
                         onClick={() => handleEdit(notification)}
-                        className="mg-button mg-button-outline mg-button-small"
+                        className="mg-v2-button mg-v2-button-outline mg-v2-button-small"
                         title="수정"
                       >
                         <Edit size={16} />
                       </button>
                       <button
                         onClick={() => handleDelete(notification.id)}
-                        className="mg-button mg-button-danger mg-button-small"
+                        className="mg-v2-button mg-v2-button-danger mg-v2-button-small"
                         title="삭제"
                       >
                         <Trash2 size={16} />
@@ -398,23 +399,23 @@ const SystemNotificationManagement = () => {
           size="large"
           actions={
             <>
-              <button onClick={() => setShowModal(false)} className="mg-button mg-button-outline">
+              <button onClick={() => setShowModal(false)} className="mg-v2-button mg-v2-button-outline">
                 취소
               </button>
-              <button onClick={handleSave} className="mg-button mg-button-primary">
+              <button onClick={handleSave} className="mg-v2-button mg-v2-button-primary">
                 {editingNotification ? '수정' : '작성'}
               </button>
             </>
           }
         >
-          <div className="mg-space-y-md">
+          <div className="mg-v2-space-y-md">
             {/* 대상 선택 */}
-            <div className="mg-form-group">
-              <label className="mg-label">대상</label>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-label">대상</label>
               <select
                 value={formData.targetType}
                 onChange={(e) => setFormData({ ...formData, targetType: e.target.value })}
-                className="mg-select"
+                className="mg-v2-select"
               >
                 <option value="ALL">전체 사용자</option>
                 <option value="CONSULTANT">상담사만</option>
@@ -423,36 +424,36 @@ const SystemNotificationManagement = () => {
             </div>
 
             {/* 제목 */}
-            <div className="mg-form-group">
-              <label className="mg-label">제목</label>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-label">제목</label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="mg-input"
+                className="mg-v2-input"
                 placeholder="공지 제목을 입력하세요"
               />
             </div>
 
             {/* 내용 */}
-            <div className="mg-form-group">
-              <label className="mg-label">내용</label>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-label">내용</label>
               <textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                className="mg-textarea"
+                className="mg-v2-textarea"
                 rows="10"
                 placeholder="공지 내용을 입력하세요"
               />
             </div>
 
             {/* 타입 */}
-            <div className="mg-form-group">
-              <label className="mg-label">공지 타입</label>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-label">공지 타입</label>
               <select
                 value={formData.notificationType}
                 onChange={(e) => setFormData({ ...formData, notificationType: e.target.value })}
-                className="mg-select"
+                className="mg-v2-select"
               >
                 <option value="GENERAL">일반</option>
                 <option value="IMPORTANT">중요</option>
@@ -463,37 +464,37 @@ const SystemNotificationManagement = () => {
             </div>
 
             {/* 체크박스 */}
-            <div className="mg-form-group">
-              <div className="mg-checkbox-group">
-                <label className="mg-checkbox-label">
+            <div className="mg-v2-form-group">
+              <div className="mg-v2-checkbox-group">
+                <label className="mg-v2-checkbox-label">
                   <input
                     type="checkbox"
-                    className="mg-checkbox-input"
+                    className="mg-v2-checkbox-input"
                     checked={formData.isImportant}
                     onChange={(e) => setFormData({ ...formData, isImportant: e.target.checked })}
                   />
-                  <span className="mg-checkbox-text">중요 공지</span>
+                  <span className="mg-v2-checkbox-text">중요 공지</span>
                 </label>
-                <label className="mg-checkbox-label">
+                <label className="mg-v2-checkbox-label">
                   <input
                     type="checkbox"
-                    className="mg-checkbox-input"
+                    className="mg-v2-checkbox-input"
                     checked={formData.isUrgent}
                     onChange={(e) => setFormData({ ...formData, isUrgent: e.target.checked })}
                   />
-                  <span className="mg-checkbox-text">긴급 공지</span>
+                  <span className="mg-v2-checkbox-text">긴급 공지</span>
                 </label>
               </div>
             </div>
 
             {/* 만료일 */}
-            <div className="mg-form-group">
-              <label className="mg-label">게시 종료일 (선택)</label>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-label">게시 종료일 (선택)</label>
               <input
                 type="datetime-local"
                 value={formData.expiresAt}
                 onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                className="mg-input"
+                className="mg-v2-input"
               />
             </div>
           </div>

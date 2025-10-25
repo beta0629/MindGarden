@@ -1,9 +1,10 @@
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 
 const TypographyShowcase = () => {
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">타이포그래피</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">타이포그래피</h2>
       
       <div className="mg-card mg-p-xl">
         <h1 className="mg-h1">Heading 1 - 메인 타이틀</h1>

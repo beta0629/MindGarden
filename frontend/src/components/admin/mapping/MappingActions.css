@@ -5,7 +5,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background: #f8f9fa;
+    background: var(--color-bg-secondary);
     border-top: 1px solid #e1e8ed;
 }
 
@@ -42,30 +42,30 @@
 
 .mapping-actions .btn-outline-info {
     background: transparent;
-    color: #17a2b8;
-    border: 1px solid #17a2b8;
+    color: var(--status-info);
+    border: 1px solid var(--status-info);
 }
 
 .mapping-actions .btn-outline-info:hover {
-    background-color: #17a2b8;
+    background-color: var(--status-info);
     color: white;
     transform: translateY(-1px);
 }
 
 .mapping-actions .btn-outline-danger {
     background: transparent;
-    color: #dc3545;
-    border: 1px solid #dc3545;
+    color: var(--status-error);
+    border: 1px solid var(--status-error);
 }
 
 .mapping-actions .btn-outline-danger:hover {
-    background-color: #dc3545;
+    background-color: var(--status-error);
     color: white;
     transform: translateY(-1px);
 }
 
 .mapping-actions .btn-success {
-    background-color: #28a745;
+    background-color: var(--status-success);
     color: white;
 }
 
@@ -75,17 +75,17 @@
 }
 
 .mapping-actions .btn-danger {
-    background-color: #dc3545;
+    background-color: var(--status-error);
     color: white;
 }
 
 .mapping-actions .btn-danger:hover {
-    background-color: #c82333;
+    background-color: var(--status-error-dark);
     transform: translateY(-1px);
 }
 
 .mapping-actions .btn-warning {
-    background-color: #ffc107;
+    background-color: var(--status-warning);
     color: #212529;
 }
 
@@ -95,17 +95,17 @@
 }
 
 .mapping-actions .btn-info {
-    background-color: #17a2b8;
+    background-color: var(--status-info);
     color: white;
 }
 
 .mapping-actions .btn-info:hover {
-    background-color: #138496;
+    background-color: var(--status-info-dark);
     transform: translateY(-1px);
 }
 
 .mapping-actions .btn-secondary {
-    background-color: #6c757d;
+    background-color: var(--color-secondary);
     color: white;
 }
 

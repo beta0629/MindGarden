@@ -145,7 +145,7 @@ const ClientPaymentHistory = () => {
             <h3 className="payment-error__title">오류가 발생했습니다</h3>
             <p className="payment-error__message">{error}</p>
             <button 
-              className="mg-button mg-button-primary"
+              className="mg-v2-button mg-v2-button-primary"
               onClick={loadPaymentData}
             >
               다시 시도
@@ -167,7 +167,7 @@ const ClientPaymentHistory = () => {
             <h3 className="payment-empty__title">결제 내역이 없습니다</h3>
             <p className="payment-empty__text">아직 결제한 패키지가 없습니다.</p>
             <button 
-              className="mg-button mg-button-primary"
+              className="mg-v2-button mg-v2-button-primary"
               onClick={() => navigate('/dashboard')}
             >
               대시보드로 이동

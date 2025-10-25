@@ -30,7 +30,7 @@ export const MGSection = ({
 }) => {
   return (
     <section 
-      className={`mg-section mg-section--${variant} mg-section--padding-${padding} mg-section--bg-${background} ${className}`}
+      className={`mg-v2-section mg-v2-section--${variant} mg-v2-section--padding-${padding} mg-v2-section--bg-${background} ${className}`}
       {...props}
     >
       {children}
@@ -46,7 +46,7 @@ export const MGContainer = ({
   ...props 
 }) => {
   return (
-    <div className={`mg-container mg-container--${size} ${className}`} {...props}>
+    <div className={`mg-v2-container mg-v2-container--${size} ${className}`} {...props}>
       {children}
     </div>
   );

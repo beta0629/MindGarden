@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -6,7 +7,6 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
-import LoadingSpinner from '../common/LoadingSpinner';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import './ScheduleCalendar.css';
@@ -54,7 +54,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/group/STATUS');
+            const response = await apiGet('/api/common-codes/STATUS');
             console.log('📋 스케줄 상태 코드 응답:', response);
             
             if (response && Array.isArray(response) && response.length > 0) {
@@ -764,8 +764,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             </div>
 
             {loading && (
-                <LoadingSpinner 
-                    text="스케줄을 불러오는 중..." 
+                <UnifiedLoading text="스케줄을 불러오는 중..." 
                     size="large" 
                     variant="pulse"
                     className="loading-spinner-fullscreen"

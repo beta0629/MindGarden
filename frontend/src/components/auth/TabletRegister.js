@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import { apiGet } from '../../utils/ajax';
@@ -37,7 +38,7 @@ const TabletRegister = () => {
     const loadGenderCodes = async () => {
       try {
         setLoading(true);
-        const response = await apiGet('/api/common-codes/group/GENDER');
+        const response = await apiGet('/api/common-codes/GENDER');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,

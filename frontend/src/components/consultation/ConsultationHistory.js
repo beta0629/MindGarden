@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from "../common/UnifiedLoading";
 import './ConsultationHistory.css';
 
 const ConsultationHistory = () => {
@@ -35,7 +35,7 @@ const ConsultationHistory = () => {
     const loadStatusCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/group/STATUS');
+        const response = await apiGet('/api/common-codes/STATUS');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,

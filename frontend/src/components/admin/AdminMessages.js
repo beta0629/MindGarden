@@ -5,6 +5,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
 import { MessageSquare, Search, Filter, Users, User } from 'lucide-react';
 import UnifiedLoading from "../common/UnifiedLoading";
+import MGButton from "../common/MGButton";
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import '../../styles/mindgarden-design-system.css';
@@ -42,7 +43,7 @@ const AdminMessages = () => {
     }
   }, [isLoggedIn, user?.id]);
 
-  const loadMessages = async () => {
+  const loadMessages = async() => {
     try {
       setLoading(true);
       console.log('📨 관리자 메시지 목록 로드');
@@ -81,7 +82,7 @@ const AdminMessages = () => {
   });
 
   // 메시지 상세 보기
-  const handleMessageClick = async (message) => {
+  const handleMessageClick = async(message) => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
       const response = await apiGet(`/api/consultation-messages/${message.id}`);
@@ -100,7 +101,7 @@ const AdminMessages = () => {
   };
 
   // 모달 닫기
-  const closeModal = async () => {
+  const closeModal = async() => {
     setSelectedMessage(null);
     
     // 목록 새로고침 (읽음 상태 반영)
@@ -118,7 +119,7 @@ const AdminMessages = () => {
   if (sessionLoading || loading) {
     return (
       <SimpleLayout>
-        <div className="mg-dashboard-layout">
+        <div className="mg-v2-dashboard-layout">
           <UnifiedLoading text="메시지를 불러오는 중..." />
         </div>
       </SimpleLayout>
@@ -129,8 +130,8 @@ const AdminMessages = () => {
   if (!isLoggedIn || !user) {
     return (
       <SimpleLayout>
-        <div className="mg-dashboard-layout">
-          <div className="mg-card">
+        <div className="mg-v2-dashboard-layout">
+          <div className="mg-v2-card">
             <h3>로그인이 필요합니다</h3>
             <p>메시지를 확인하려면 로그인해주세요.</p>
           </div>
@@ -141,15 +142,15 @@ const AdminMessages = () => {
 
   return (
     <SimpleLayout>
-      <div className="mg-dashboard-layout">
+      <div className="mg-v2-dashboard-layout">
         {/* 헤더 */}
-        <div className="mg-dashboard-header">
-          <div className="mg-dashboard-header-content">
-            <div className="mg-dashboard-header-left">
+        <div className="mg-v2-dashboard-header">
+          <div className="mg-v2-dashboard-header-content">
+            <div className="mg-v2-dashboard-header-left">
               <MessageSquare />
               <div>
-                <h1 className="mg-dashboard-title">메시지 관리</h1>
-                <p className="mg-dashboard-subtitle">
+                <h1 className="mg-v2-dashboard-title">메시지 관리</h1>
+                <p className="mg-v2-dashboard-subtitle">
                   전체 메시지 {messages.length}개 
                   {unreadCount > 0 && ` · 읽지 않음 ${unreadCount}개`}
                 </p>
@@ -159,41 +160,28 @@ const AdminMessages = () => {
         </div>
 
         {/* 필터 및 검색 */}
-        <div className="mg-card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <div style={{ 
-            display: 'flex', 
-            gap: 'var(--spacing-md)', 
-            flexWrap: 'wrap',
-            alignItems: 'center'
-          }}>
+        <div className="mg-v2-card mg-v2-message-filters-card mg-mobile-section">
+          <div className="mg-v2-message-filters-container mg-mobile-form-group">
             {/* 검색 */}
-            <div style={{ flex: '1 1 300px', position: 'relative' }}>
+            <div className="mg-v2-message-search-container">
               <Search 
                 size={20} 
-                style={{ 
-                  position: 'absolute', 
-                  left: 'var(--spacing-md)', 
-                  top: '50%', 
-                  transform: 'translateY(-50%)',
-                  color: 'var(--color-text-tertiary)'
-                }} 
+                className="mg-v2-message-search-icon" 
               />
               <input
                 type="text"
-                className="mg-input"
+                className="mg-v2-input mg-v2-message-search-input"
                 placeholder="제목, 내용, 발신자, 수신자로 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ paddingLeft: 'calc(var(--spacing-md) * 2 + 20px)' }}
               />
             </div>
 
             {/* 유형 필터 */}
             <select
-              className="mg-select"
+              className="mg-v2-select mg-v2-message-type-filter"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              style={{ minWidth: '150px' }}
             >
               {Object.entries(MESSAGE_TYPES).map(([value, { label }]) => (
                 <option key={value} value={value}>{label}</option>
@@ -202,10 +190,9 @@ const AdminMessages = () => {
 
             {/* 상태 필터 */}
             <select
-              className="mg-select"
+              className="mg-v2-select mg-v2-message-status-filter"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              style={{ minWidth: '120px' }}
             >
               <option value="ALL">전체 상태</option>
               <option value="UNREAD">읽지 않음</option>
@@ -215,21 +202,17 @@ const AdminMessages = () => {
         </div>
 
         {/* 메시지 목록 */}
-        <div className="mg-card">
+        <div className="mg-v2-card">
           {filteredMessages.length === 0 ? (
-            <div style={{ 
-              textAlign: 'center', 
-              padding: 'var(--spacing-xxxl)',
-              color: 'var(--color-text-tertiary)'
-            }}>
-              <MessageSquare size={48} style={{ marginBottom: 'var(--spacing-md)', opacity: 0.5 }} />
+            <div className="mg-v2-message-empty-state">
+              <MessageSquare size={48} className="mg-v2-message-empty-icon" />
               <p>메시지가 없습니다.</p>
             </div>
           ) : (
             <>
               {/* 데스크탑 테이블 */}
-              <div className="mg-table-container mg-hide-mobile">
-                <table className="mg-table">
+              <div className="mg-v2-table-container mg-desktop-only mg-mobile-table">
+                <table className="mg-v2-table">
                   <thead>
                     <tr>
                       <th>상태</th>
@@ -245,46 +228,41 @@ const AdminMessages = () => {
                       <tr 
                         key={message.id}
                         onClick={() => handleMessageClick(message)}
-                        style={{ cursor: 'pointer' }}
-                        className={!message.isRead ? 'mg-table-row-unread' : ''}
+                        className={`mg-v2-message-row-clickable ${!message.isRead ? 'mg-v2-table-row-unread' : ''}`}
                       >
                         <td>
-                          <span className={`mg-badge ${!message.isRead ? 'mg-badge-primary' : 'mg-badge-secondary'}`}>
+                          <span className={`mg-v2-badge ${!message.isRead ? 'mg-v2-badge-primary' : 'mg-v2-badge-secondary'}`}>
                             {!message.isRead ? '읽지 않음' : '읽음'}
                           </span>
                         </td>
                         <td>
-                          <div style={{ display: 'flex', gap: 'var(--spacing-xs)', flexWrap: 'wrap' }}>
+                          <div className="mg-v2-message-badge-container">
                             <span 
-                              className="mg-badge"
-                              style={{ 
-                                backgroundColor: getMessageTypeColor(message.messageType),
-                                color: 'white'
-                              }}
+                              className="mg-v2-badge mg-v2-message-badge"
                             >
                               {MESSAGE_TYPES[message.messageType]?.label || '일반'}
                             </span>
                             {message.isImportant && (
-                              <span className="mg-badge mg-badge-warning">중요</span>
+                              <span className="mg-v2-badge mg-v2-badge-warning">중요</span>
                             )}
                             {message.isUrgent && (
-                              <span className="mg-badge mg-badge-danger">긴급</span>
+                              <span className="mg-v2-badge mg-v2-badge-danger">긴급</span>
                             )}
                           </div>
                         </td>
                         <td>
-                          <div style={{ fontWeight: !message.isRead ? 'var(--font-weight-semibold)' : 'normal' }}>
+                          <div className={`mg-v2-message-title ${!message.isRead ? 'mg-v2-message-title-unread' : ''}`}>
                             {message.title}
                           </div>
                         </td>
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                          <div className="mg-v2-message-sender-container">
                             <User size={16} />
                             {message.senderName}
                           </div>
                         </td>
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                          <div className="mg-v2-message-receiver-container">
                             <Users size={16} />
                             {message.receiverName}
                           </div>
@@ -305,80 +283,49 @@ const AdminMessages = () => {
               </div>
 
               {/* 모바일 카드 리스트 */}
-              <div className="mg-hide-desktop" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+              <div className="mg-mobile-only mg-v2-message-mobile-list mg-mobile-card-stack">
                 {filteredMessages.map((message) => (
                   <div 
                     key={message.id}
-                    className="mg-card"
-                    onClick={() => handleMessageClick(message)}
-                    style={{ 
-                      cursor: 'pointer',
-                      padding: 'var(--spacing-md)',
-                      border: !message.isRead ? '2px solid var(--color-primary)' : '1px solid var(--color-border-light)',
-                      backgroundColor: !message.isRead ? 'var(--color-bg-primary)' : 'var(--color-bg-secondary)'
-                    }}
+                    className={`mg-v2-card mg-v2-message-mobile-card ${!message.isRead ? 'mg-v2-message-mobile-card-unread' : ''}`}
                   >
                     {/* 상단: 상태 + 유형 배지 */}
-                    <div style={{ 
-                      display: 'flex', 
-                      gap: 'var(--spacing-sm)', 
-                      marginBottom: 'var(--spacing-sm)',
-                      flexWrap: 'wrap'
-                    }}>
-                      <span className={`mg-badge ${!message.isRead ? 'mg-badge-primary' : 'mg-badge-secondary'}`}>
+                    <div className="mg-v2-message-mobile-header">
+                      <span className={`mg-v2-badge ${!message.isRead ? 'mg-v2-badge-primary' : 'mg-v2-badge-secondary'}`}>
                         {!message.isRead ? '읽지 않음' : '읽음'}
                       </span>
                       <span 
-                        className="mg-badge"
-                        style={{ 
-                          backgroundColor: getMessageTypeColor(message.messageType),
-                          color: 'white'
-                        }}
+                        className="mg-v2-badge mg-v2-message-badge"
                       >
                         {MESSAGE_TYPES[message.messageType]?.label || '일반'}
                       </span>
                       {message.isImportant && (
-                        <span className="mg-badge mg-badge-warning">중요</span>
+                        <span className="mg-v2-badge mg-v2-badge-warning">중요</span>
                       )}
                       {message.isUrgent && (
-                        <span className="mg-badge mg-badge-danger">긴급</span>
+                        <span className="mg-v2-badge mg-v2-badge-danger">긴급</span>
                       )}
                     </div>
 
                     {/* 제목 */}
-                    <div style={{ 
-                      fontWeight: !message.isRead ? 'var(--font-weight-semibold)' : 'normal',
-                      fontSize: 'var(--font-size-base)',
-                      marginBottom: 'var(--spacing-sm)',
-                      color: 'var(--color-text-primary)'
-                    }}>
+                    <div className={`mg-v2-message-mobile-title ${!message.isRead ? 'mg-v2-message-mobile-title-unread' : ''}`}>
                       {message.title}
                     </div>
 
                     {/* 발신자/수신자 */}
-                    <div style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column',
-                      gap: 'var(--spacing-xs)',
-                      fontSize: 'var(--font-size-sm)',
-                      color: 'var(--color-text-secondary)',
-                      marginBottom: 'var(--spacing-sm)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                    <div className="mg-v2-message-mobile-participants">
+                      <div className="mg-v2-message-mobile-participant">
                         <User size={14} />
                         <span>발신: {message.senderName}</span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                      <div className="mg-v2-message-mobile-participant">
                         <Users size={14} />
                         <span>수신: {message.receiverName}</span>
                       </div>
                     </div>
 
                     {/* 날짜 */}
-                    <div style={{ 
-                      fontSize: 'var(--font-size-xs)',
-                      color: 'var(--color-text-tertiary)'
-                    }}>
+                    <div className="mg-v2-message-mobile-date">
                       {new Date(message.createdAt).toLocaleDateString('ko-KR', {
                         year: 'numeric',
                         month: '2-digit',
@@ -396,52 +343,35 @@ const AdminMessages = () => {
 
         {/* 메시지 상세 모달 */}
         {selectedMessage && (
-          <div className="mg-modal-overlay" onClick={closeModal}>
-            <div className="mg-modal mg-modal--medium" onClick={(e) => e.stopPropagation()}>
-              <div className="mg-modal__header">
-                <h2 className="mg-modal__title">{selectedMessage.title}</h2>
-                <button 
-                  className="mg-modal__close"
+          <div className="mg-v2-modal-overlay" onClick={closeModal}>
+            <div className="mg-v2-modal mg-v2-modal--medium" onClick={(e) => e.stopPropagation()}>
+              <div className="mg-v2-modal__header">
+                <h2 className="mg-v2-modal__title">{selectedMessage.title}</h2>
+                <MGButton 
+                  variant="outline"
+                  size="small"
                   onClick={closeModal}
                   aria-label="닫기"
                 >
                   ×
-                </button>
+                </MGButton>
               </div>
-              <div className="mg-modal__body">
-                <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: 'var(--spacing-md)', 
-                    marginBottom: 'var(--spacing-md)',
-                    flexWrap: 'wrap'
-                  }}>
+              <div className="mg-v2-modal__body">
+                <div className="mg-v2-message-modal-content">
+                  <div className="mg-v2-message-modal-header">
                     <span 
-                      className="mg-badge"
-                      style={{ 
-                        backgroundColor: getMessageTypeColor(selectedMessage.messageType),
-                        color: 'white'
-                      }}
+                      className="mg-v2-badge mg-v2-message-badge"
                     >
                       {MESSAGE_TYPES[selectedMessage.messageType]?.label || '일반'}
                     </span>
                     {selectedMessage.isImportant && (
-                      <span className="mg-badge mg-badge-warning">중요</span>
+                      <span className="mg-v2-badge mg-v2-badge-warning">중요</span>
                     )}
                     {selectedMessage.isUrgent && (
-                      <span className="mg-badge mg-badge-danger">긴급</span>
+                      <span className="mg-v2-badge mg-v2-badge-danger">긴급</span>
                     )}
                   </div>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: 'var(--spacing-md)',
-                    padding: 'var(--spacing-md)',
-                    backgroundColor: 'var(--color-bg-secondary)',
-                    borderRadius: 'var(--border-radius-md)',
-                    fontSize: 'var(--font-size-sm)',
-                    color: 'var(--color-text-secondary)'
-                  }}>
+                  <div className="mg-v2-message-modal-info-grid">
                     <div>
                       <strong>발신자:</strong> {selectedMessage.senderName}
                     </div>
@@ -453,24 +383,17 @@ const AdminMessages = () => {
                     </div>
                   </div>
                 </div>
-                <div style={{ 
-                  padding: 'var(--spacing-lg)',
-                  backgroundColor: 'var(--color-bg-primary)',
-                  borderRadius: 'var(--border-radius-md)',
-                  border: '1px solid var(--color-border-light)',
-                  whiteSpace: 'pre-wrap',
-                  lineHeight: '1.6'
-                }}>
+                <div className="mg-v2-message-modal-body">
                   {selectedMessage.content}
                 </div>
               </div>
-              <div className="mg-modal__actions">
-                <button 
-                  className="mg-button mg-button-outline"
+              <div className="mg-v2-modal__actions">
+                <MGButton 
+                  variant="outline"
                   onClick={closeModal}
                 >
                   닫기
-                </button>
+                </MGButton>
               </div>
             </div>
           </div>

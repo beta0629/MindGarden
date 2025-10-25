@@ -20,7 +20,7 @@ export const getCommonCodes = async (groupCode, useCache = true) => {
             return codeCache.get(groupCode);
         }
 
-        const response = await apiGet(`/api/common-codes/group/${groupCode}`);
+        const response = await apiGet(`/api/common-codes/${groupCode}`);
         
         if (Array.isArray(response)) {
             // 캐시에 저장

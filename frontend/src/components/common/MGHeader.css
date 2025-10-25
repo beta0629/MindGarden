@@ -377,12 +377,12 @@
 }
 
 .mg-header__menu-item--logout {
-  color: #e53e3e;
+  color: var(--status-error);
 }
 
 .mg-header__menu-item--logout:hover {
   background: rgba(229, 62, 62, 0.1);
-  color: #e53e3e;
+  color: var(--status-error);
 }
 
 .mg-header__menu-icon {

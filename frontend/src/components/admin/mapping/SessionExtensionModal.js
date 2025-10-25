@@ -150,15 +150,15 @@ const SessionExtensionModal = ({
     const portalTarget = document.body || document.createElement('div');
 
     return ReactDOM.createPortal(
-        <div className="mg-modal-overlay" onClick={handleClose}>
-            <div className="mg-modal mg-modal-lg session-extension-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-modal-header session-extension-header">
+        <div className="mg-v2-modal-overlay" onClick={handleClose}>
+            <div className="mg-v2-modal mg-v2-modal-lg session-extension-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header session-extension-header">
                     <div className="session-extension-header-content">
                         <div className="session-extension-icon">
                             <Plus size={28} />
                         </div>
                         <div className="session-extension-title-area">
-                            <h3 className="mg-modal-title session-extension-title">
+                            <h3 className="mg-v2-modal-title session-extension-title">
                                 회기 추가 요청
                             </h3>
                             <p className="session-extension-subtitle">
@@ -168,7 +168,7 @@ const SessionExtensionModal = ({
                     </div>
                     <button 
                         type="button"
-                        className="mg-modal-close session-extension-close"
+                        className="mg-v2-modal-close session-extension-close"
                         onClick={handleClose}
                         disabled={isLoading}
                     >
@@ -176,7 +176,7 @@ const SessionExtensionModal = ({
                     </button>
                 </div>
                 
-                <div className="mg-modal-content session-extension-content">
+                <div className="mg-v2-modal-content session-extension-content">
                     {/* 매칭 정보 표시 */}
                     <div className="session-extension-mapping-info">
                         <div className="mapping-info-header">
@@ -223,34 +223,34 @@ const SessionExtensionModal = ({
                             />
                         
                         {/* 총 세션 수 (자동 설정) */}
-                        <div className="mg-form-group">
-                            <label className="mg-label">총 세션 수</label>
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-label">총 세션 수</label>
                             <input
                                 type="number"
-                                className="mg-input"
+                                className="mg-v2-input"
                                 value={additionalSessions}
                                 readOnly
                             />
-                            <div className="mg-text-secondary">자동 설정</div>
+                            <div className="mg-v2-text-secondary">자동 설정</div>
                         </div>
                         
                         {/* 패키지 가격 (자동 설정) */}
-                        <div className="mg-form-group">
-                            <label className="mg-label">패키지 가격(원)</label>
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-label">패키지 가격(원)</label>
                             <input
                                 type="text"
-                                className="mg-input"
+                                className="mg-v2-input"
                                 value={packagePrice > 0 ? packagePrice.toLocaleString() : ''}
                                 readOnly
                             />
-                            <div className="mg-text-secondary">자동 설정</div>
+                            <div className="mg-v2-text-secondary">자동 설정</div>
                         </div>
                         
                         {/* 결제 방법 선택 */}
-                        <div className="mg-form-group">
-                            <label className="mg-label">결제 방법</label>
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-label">결제 방법</label>
                             <select
-                                className="mg-select"
+                                className="mg-v2-select"
                                 value={paymentMethod}
                                 onChange={(e) => handlePaymentMethodChange(e.target.value)}
                                 disabled={isLoading}
@@ -262,11 +262,11 @@ const SessionExtensionModal = ({
                         </div>
                         
                         {/* 결제 참조번호 */}
-                        <div className="mg-form-group">
-                            <label className="mg-label">결제 참조번호</label>
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-label">결제 참조번호</label>
                             <input
                                 type="text"
-                                className="mg-input"
+                                className="mg-v2-input"
                                 value={paymentReference}
                                 onChange={(e) => setPaymentReference(e.target.value)}
                                 disabled={isLoading}
@@ -275,10 +275,10 @@ const SessionExtensionModal = ({
                         </div>
                         
                         {/* 추가 사유 입력 */}
-                        <div className="mg-form-group">
-                            <label className="mg-label">추가 사유 (선택사항)</label>
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-label">추가 사유 (선택사항)</label>
                             <textarea
-                                className="mg-input"
+                                className="mg-v2-input"
                                 rows="3"
                                 placeholder="회기 추가 사유를 입력하세요..."
                                 value={reason}
@@ -291,10 +291,10 @@ const SessionExtensionModal = ({
                 </div>
                 
                 {/* 모달 액션 버튼 */}
-                <div className="mg-modal-footer session-extension-footer">
+                <div className="mg-v2-modal-footer session-extension-footer">
                     <button 
                         type="button"
-                        className="mg-button mg-button-secondary session-extension-cancel"
+                        className="mg-v2-button mg-v2-button-secondary session-extension-cancel"
                         onClick={handleClose}
                         disabled={isLoading}
                     >
@@ -302,7 +302,7 @@ const SessionExtensionModal = ({
                     </button>
                     <button 
                         type="submit"
-                        className="mg-button mg-button-primary session-extension-submit"
+                        className="mg-v2-button mg-v2-button-primary session-extension-submit"
                         onClick={handleSubmit}
                         disabled={isLoading || additionalSessions <= 0}
                     >

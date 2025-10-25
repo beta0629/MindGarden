@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from "../common/UnifiedLoading";
 import './ConsultationReport.css';
 
 const ConsultationReport = () => {
@@ -51,7 +51,7 @@ const ConsultationReport = () => {
   const loadPeriodCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/group/REPORT_PERIOD');
+      const response = await apiGet('/api/common-codes/REPORT_PERIOD');
       if (response && response.length > 0) {
         // 중복 제거: codeValue 기준으로 유니크하게 필터링
         const uniqueCodes = response.reduce((acc, code) => {
@@ -82,7 +82,7 @@ const ConsultationReport = () => {
   const loadYearCodes = useCallback(async () => {
     try {
       setLoadingYearCodes(true);
-      const response = await apiGet('/api/common-codes/group/YEAR_RANGE');
+      const response = await apiGet('/api/common-codes/YEAR_RANGE');
       if (response && response.length > 0) {
         // 중복 제거: codeValue 기준으로 유니크하게 필터링
         const uniqueCodes = response.reduce((acc, code) => {
@@ -112,7 +112,7 @@ const ConsultationReport = () => {
   const loadMonthCodes = useCallback(async () => {
     try {
       setLoadingMonthCodes(true);
-      const response = await apiGet('/api/common-codes/group/MONTH_RANGE');
+      const response = await apiGet('/api/common-codes/MONTH_RANGE');
       if (response && response.length > 0) {
         // 중복 제거: codeValue 기준으로 유니크하게 필터링
         const uniqueCodes = response.reduce((acc, code) => {

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet, apiPost } from '../../utils/ajax';
-import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import './ConsultantMessages.css';
@@ -45,15 +45,7 @@ const ConsultantMessages = () => {
     { value: 'URGENT', label: '긴급', icon: '⚠️', color: '#dc3545' }
   ];
 
-  // 데이터 로드
-  useEffect(() => {
-    if (isLoggedIn && user?.id) {
-      loadMessages();
-      loadClients();
-    }
-  }, [isLoggedIn, user?.id]);
-
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     try {
       setLoading(true);
       console.log('📨 상담사 메시지 목록 로드:', user.id);
@@ -73,9 +65,9 @@ const ConsultantMessages = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     try {
       console.log('👥 연계된 내담자 목록 로드:', user.id);
       
@@ -92,7 +84,15 @@ const ConsultantMessages = () => {
     } catch (err) {
       console.error('❌ 내담자 로드 중 오류:', err);
     }
-  };
+  }, [user?.id]);
+
+  // 데이터 로드
+  useEffect(() => {
+    if (isLoggedIn && user?.id) {
+      loadMessages();
+      loadClients();
+    }
+  }, [isLoggedIn, user?.id, loadMessages, loadClients]);
 
   // 메시지 필터링
   const filteredMessages = messages.filter(message => {
@@ -267,7 +267,7 @@ const ConsultantMessages = () => {
 
           <button
             onClick={() => setShowSendModal(true)}
-            className="mg-button mg-button-primary"
+            className="mg-v2-button mg-v2-button-primary"
           >
             새 메시지
           </button>
@@ -311,7 +311,7 @@ const ConsultantMessages = () => {
                     <div
                       key={message.id}
                       onClick={() => handleMessageClick(message)}
-                      className="mg-card mg-cursor-pointer"
+                      className="mg-v2-card mg-cursor-pointer"
                     >
                       <div className="mg-flex mg-justify-between mg-align-center mg-mb-md">
                         <div className="mg-flex mg-align-center mg-gap-sm">
@@ -319,30 +319,30 @@ const ConsultantMessages = () => {
                             {typeInfo.label}
                           </span>
                           {message.isImportant && (
-                            <span className="mg-badge mg-badge-warning mg-text-xs">중요</span>
+                            <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
                           )}
                           {message.isUrgent && (
-                            <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
+                            <span className="mg-badge mg-badge-danger mg-v2-text-xs">긴급</span>
                           )}
                         </div>
-                        <span className="mg-text-xs mg-color-text-secondary">
+                        <span className="mg-v2-text-xs mg-v2-color-text-secondary">
                           {formatDate(message.createdAt)}
                         </span>
                       </div>
                       
-                      <h4 className="mg-h5 mg-mb-sm mg-text-center">
+                      <h4 className="mg-h5 mg-mb-sm mg-v2-text-center">
                         {message.title}
                       </h4>
                       
-                      <p className="mg-text-sm mg-color-text-secondary mg-mb-md">
+                      <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-md">
                         {message.content.substring(0, 100)}{message.content.length > 100 && '...'}
                       </p>
                       
                       <div className="mg-flex mg-justify-between mg-align-center mg-pt-md mg-border-top">
-                        <span className="mg-text-sm mg-color-text-secondary">
+                        <span className="mg-v2-text-sm mg-v2-color-text-secondary">
                           받는 사람: {message.clientName || '알 수 없음'}
                         </span>
-                        <span className={`mg-badge ${message.isRead ? 'mg-badge-success' : 'mg-badge-secondary'} mg-text-xs`}>
+                        <span className={`mg-badge ${message.isRead ? 'mg-badge-success' : 'mg-badge-secondary'} mg-v2-text-xs`}>
                           {message.isRead ? '읽음' : '안읽음'}
                         </span>
                       </div>
@@ -356,23 +356,23 @@ const ConsultantMessages = () => {
 
         {/* 새 메시지 작성 모달 */}
         {showSendModal && ReactDOM.createPortal(
-          <div className="mg-modal-overlay" onClick={() => setShowSendModal(false)}>
-            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
-              <div className="mg-modal-header">
+          <div className="mg-v2-modal-overlay" onClick={() => setShowSendModal(false)}>
+            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+              <div className="mg-v2-modal-header">
                 <h3 className="mg-h3 mg-mb-0">새 메시지 작성</h3>
                 <button
-                  className="mg-modal-close"
+                  className="mg-v2-modal-close"
                   onClick={() => setShowSendModal(false)}
                 >
                   ×
                 </button>
               </div>
               
-              <div className="mg-modal-body">
-                <div className="mg-form-group">
-                  <label className="mg-label">받는 사람 *</label>
+              <div className="mg-v2-modal-body">
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-label">받는 사람 *</label>
                   <select
-                    className="mg-select"
+                    className="mg-v2-select"
                     value={newMessage.clientId}
                     onChange={(e) => setNewMessage({ ...newMessage, clientId: e.target.value })}
                   >
@@ -385,10 +385,10 @@ const ConsultantMessages = () => {
                   </select>
                 </div>
                 
-                <div className="mg-form-group">
-                  <label className="mg-label">메시지 유형</label>
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-label">메시지 유형</label>
                   <select
-                    className="mg-select"
+                    className="mg-v2-select"
                     value={newMessage.messageType}
                     onChange={(e) => setNewMessage({ ...newMessage, messageType: e.target.value })}
                   >
@@ -400,21 +400,21 @@ const ConsultantMessages = () => {
                   </select>
                 </div>
                 
-                <div className="mg-form-group">
-                  <label className="mg-label">제목 *</label>
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-label">제목 *</label>
                   <input
                     type="text"
-                    className="mg-input"
+                    className="mg-v2-input"
                     value={newMessage.title}
                     onChange={(e) => setNewMessage({ ...newMessage, title: e.target.value })}
                     placeholder="메시지 제목을 입력하세요"
                   />
                 </div>
                 
-                <div className="mg-form-group">
-                  <label className="mg-label">내용 *</label>
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-label">내용 *</label>
                   <textarea
-                    className="mg-textarea"
+                    className="mg-v2-textarea"
                     value={newMessage.content}
                     onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
                     placeholder="메시지 내용을 입력하세요"
@@ -442,15 +442,15 @@ const ConsultantMessages = () => {
                 </div>
               </div>
               
-              <div className="mg-modal-footer">
+              <div className="mg-v2-modal-footer">
                 <button
-                  className="mg-button mg-button-secondary"
+                  className="mg-v2-button mg-v2-button-secondary"
                   onClick={() => setShowSendModal(false)}
                 >
                   취소
                 </button>
                 <button
-                  className="mg-button mg-button-primary"
+                  className="mg-v2-button mg-v2-button-primary"
                   onClick={handleSendMessage}
                 >
                   전송

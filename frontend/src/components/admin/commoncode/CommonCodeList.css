@@ -8,7 +8,7 @@
 
 .list-header {
     padding: 20px 24px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--color-border);
     background: #f9fafb;
 }
 
@@ -30,7 +30,7 @@
 /* 카드 스타일 */
 .code-card {
     background: white;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
@@ -45,7 +45,7 @@
 .code-card.inactive {
     opacity: 0.7;
     background-color: #fef2f2;
-    border-color: #fecaca;
+    border-color: var(--status-error-border);
 }
 
 /* 카드 헤더 */
@@ -131,7 +131,7 @@
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     font-size: 13px;
     font-weight: 500;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border);
 }
 
 .code-description {
@@ -165,12 +165,12 @@
 }
 
 .status-badge.active {
-    background: #d1fae5;
+    background: var(--status-success-bg);
     color: #065f46;
 }
 
 .status-badge.inactive {
-    background: #fee2e2;
+    background: var(--status-error-bg);
     color: #991b1b;
 }
 
@@ -194,7 +194,7 @@
     background: #f9fafb;
     padding: 4px 8px;
     border-radius: 4px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border);
 }
 
 /* 카드 푸터 */
@@ -227,12 +227,12 @@
 
 .btn-outline-primary {
     background: white;
-    color: #3b82f6;
-    border: 1px solid #3b82f6;
+    color: var(--status-info);
+    border: 1px solid var(--status-info);
 }
 
 .btn-outline-primary:hover {
-    background: #3b82f6;
+    background: var(--status-info);
     color: white;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
@@ -240,12 +240,12 @@
 
 .btn-outline-danger {
     background: white;
-    color: #ef4444;
-    border: 1px solid #ef4444;
+    color: var(--status-error);
+    border: 1px solid var(--status-error);
 }
 
 .btn-outline-danger:hover {
-    background: #ef4444;
+    background: var(--status-error);
     color: white;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);

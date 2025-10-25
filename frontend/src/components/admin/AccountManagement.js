@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import './AccountManagement.css';
@@ -36,7 +38,7 @@ const AccountManagement = () => {
     loadBanks();
   }, []);
 
-  const loadAccounts = async () => {
+  const loadAccounts = async() => {
     try {
       setLoading(true);
       const response = await fetch(ACCOUNT_API_ENDPOINTS.ACTIVE);
@@ -51,7 +53,7 @@ const AccountManagement = () => {
     }
   };
 
-  const loadBanks = async () => {
+  const loadBanks = async() => {
     try {
       const response = await fetch(ACCOUNT_API_ENDPOINTS.BANKS);
       if (response.ok) {
@@ -63,7 +65,7 @@ const AccountManagement = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     try {
       setLoading(true);
@@ -76,8 +78,7 @@ const AccountManagement = () => {
       const response = await fetch(url, {
         method,
         headers: {
-          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
-        },
+          [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON },
         credentials: 'include',
         body: JSON.stringify(formData)
       });
@@ -113,7 +114,7 @@ const AccountManagement = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async(id) => {
     const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(ACCOUNT_MESSAGES.CONFIRM.DELETE, resolve);
     });
@@ -140,7 +141,7 @@ const AccountManagement = () => {
     }
   };
 
-  const handleToggleStatus = async (id) => {
+  const handleToggleStatus = async(id) => {
     try {
       setLoading(true);
       const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}/toggle-status`, {
@@ -162,7 +163,7 @@ const AccountManagement = () => {
     }
   };
 
-  const handleSetPrimary = async (id) => {
+  const handleSetPrimary = async(id) => {
     try {
       setLoading(true);
       const response = await fetch(`${ACCOUNT_API_ENDPOINTS.BASE}/${id}/set-primary`, {
@@ -217,36 +218,32 @@ const AccountManagement = () => {
 
   return (
     <SimpleLayout>
-      <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT}>
-        <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER}>
-          <h2>{ACCOUNT_PAGE_TITLES.MAIN}</h2>
-          <button 
-            className="btn btn-primary"
-            onClick={() => setShowForm(true)}
-          >
-            {ACCOUNT_BUTTON_TEXT.REGISTER}
-          </button>
+      <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT }>
+        <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER }>
+          <h2>{ ACCOUNT_PAGE_TITLES.MAIN }</h2>
+          <MGButton variant="primary" className="btn btn-primary" onClick={ () => setShowForm(true) }>{ ACCOUNT_BUTTON_TEXT.REGISTER }
+          </MGButton>
         </div>
 
         <AccountForm
-          showForm={showForm}
-          editingAccount={editingAccount}
-          formData={formData}
-          banks={banks}
-          loading={loading}
-          onClose={resetForm}
-          onSubmit={handleSubmit}
-          onBankChange={handleBankChange}
-          onFormDataChange={handleFormDataChange}
+          showForm={ showForm }
+          editingAccount={ editingAccount }
+          formData={ formData }
+          banks={ banks }
+          loading={ loading }
+          onClose={ resetForm }
+          onSubmit={ handleSubmit }
+          onBankChange={ handleBankChange }
+          onFormDataChange={ handleFormDataChange }
         />
 
         <AccountTable
-          accounts={accounts}
-          loading={loading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onToggleStatus={handleToggleStatus}
-          onSetPrimary={handleSetPrimary}
+          accounts={ accounts }
+          loading={ loading }
+          onEdit={ handleEdit }
+          onDelete={ handleDelete }
+          onToggleStatus={ handleToggleStatus }
+          onSetPrimary={ handleSetPrimary }
         />
       </div>
     </SimpleLayout>

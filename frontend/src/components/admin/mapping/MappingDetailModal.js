@@ -63,7 +63,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
         
         const config = statusConfig[status] || { label: status || '알 수 없음', className: 'status-default' };
         return (
-            <span className={`mg-badge ${config.className}`}>
+            <span className={`mg-v2-badge ${config.className}`}>
                 {config.label}
             </span>
         );
@@ -78,7 +78,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
         
         const config = statusConfig[paymentStatus] || { label: paymentStatus || '알 수 없음', className: 'payment-default' };
         return (
-            <span className={`mg-badge ${config.className}`}>
+            <span className={`mg-v2-badge ${config.className}`}>
                 {config.label}
             </span>
         );
@@ -87,15 +87,15 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return ReactDOM.createPortal(
-        <div className="mg-modal-overlay" onClick={onClose}>
-            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-modal-header">
-                    <h2 className="mg-modal-title">
+        <div className="mg-v2-modal-overlay" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header">
+                    <h2 className="mg-v2-modal-title">
                         <Info size={24} />
                         매칭 상세 정보
                     </h2>
                     <button 
-                        className="mg-modal-close"
+                        className="mg-v2-modal-close"
                         onClick={onClose}
                         aria-label="닫기"
                     >
@@ -104,8 +104,8 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                 </div>
 
                 {loading ? (
-                    <div className="mg-modal-body">
-                        <div className="mg-loading-container">
+                    <div className="mg-v2-modal-body">
+                        <div className="mg-v2-loading-container">
                             <UnifiedLoading 
                                 text="상세 정보를 불러오는 중..." 
                                 size="medium" 
@@ -116,37 +116,37 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                 ) : (
                     <>
                         {/* 탭 네비게이션 */}
-                        <div className="mg-tabs">
+                        <div className="mg-v2-tabs">
                             <button 
-                                className={`mg-tab ${activeTab === 'basic' ? 'mg-tab-active' : ''}`}
+                                className={`mg-v2-tab ${activeTab === 'basic' ? 'mg-v2-tab-active' : ''}`}
                                 onClick={() => setActiveTab('basic')}
                             >
                                 <User size={18} />
                                 기본 정보
                             </button>
                             <button 
-                                className={`mg-tab ${activeTab === 'payment' ? 'mg-tab-active' : ''}`}
+                                className={`mg-v2-tab ${activeTab === 'payment' ? 'mg-v2-tab-active' : ''}`}
                                 onClick={() => setActiveTab('payment')}
                             >
                                 <CreditCard size={18} />
                                 결제 정보
                             </button>
                             <button 
-                                className={`mg-tab ${activeTab === 'sessions' ? 'mg-tab-active' : ''}`}
+                                className={`mg-v2-tab ${activeTab === 'sessions' ? 'mg-v2-tab-active' : ''}`}
                                 onClick={() => setActiveTab('sessions')}
                             >
                                 <Calendar size={18} />
                                 회기 정보
                             </button>
                             <button 
-                                className={`mg-tab ${activeTab === 'erp' ? 'mg-tab-active' : ''}`}
+                                className={`mg-v2-tab ${activeTab === 'erp' ? 'mg-v2-tab-active' : ''}`}
                                 onClick={() => setActiveTab('erp')}
                             >
                                 <TrendingUp size={18} />
                                 ERP 연동
                             </button>
                             <button 
-                                className={`mg-tab ${activeTab === 'history' ? 'mg-tab-active' : ''}`}
+                                className={`mg-v2-tab ${activeTab === 'history' ? 'mg-v2-tab-active' : ''}`}
                                 onClick={() => setActiveTab('history')}
                             >
                                 <Clock size={18} />
@@ -154,7 +154,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                             </button>
                         </div>
                         
-                        <div className="mg-modal-body">
+                        <div className="mg-v2-modal-body">
 
                         {/* 탭 컨텐츠 */}
                         <div className="mapping-detail-tab-content">
@@ -414,9 +414,9 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                     </>
                 )}
 
-                <div className="mg-modal-footer">
+                <div className="mg-v2-modal-footer">
                     <button 
-                        className="mg-button mg-button-secondary"
+                        className="mg-v2-button mg-v2-button-secondary"
                         onClick={onClose}
                     >
                         <X size={18} />

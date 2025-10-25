@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { 
     Card, Row, Col, Button, Badge, Alert, 
     Tab, Tabs, Table, Modal, Form, ButtonGroup
@@ -11,7 +12,6 @@ import {
 } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
-import UnifiedLoading from "../common/UnifiedLoading";
 import BranchUserTransfer from './BranchUserTransfer';
 import './BranchDetail.css';
 

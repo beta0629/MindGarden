@@ -1,9 +1,10 @@
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { Sparkles } from 'lucide-react';
 
 const HeroSection = () => {
   return (
-    <section className="mg-section mg-text-center">
+    <section className="mg-v2-section mg-v2-text-center">
       <div className="mg-glass-card mg-animate-fade-in">
         <div className="mg-welcome-badge mg-flex-center mg-gap-sm mg-mb-md">
           <Sparkles size={24} color="#808000" />

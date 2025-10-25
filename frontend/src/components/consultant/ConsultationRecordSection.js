@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 
@@ -60,8 +61,8 @@ const ConsultationRecordSection = ({ consultantId }) => {
 
   if (loading) {
     return (
-      <div className="mg-card">
-        <div className="mg-card-header">
+      <div className="mg-v2-card">
+        <div className="mg-v2-card-header">
           <h3 className="mg-h4 mg-mb-0">📝 상담일지</h3>
         </div>
         <div className="mg-loading-container">
@@ -73,19 +74,19 @@ const ConsultationRecordSection = ({ consultantId }) => {
   }
 
   return (
-    <div className="mg-card">
-      <div className="mg-card-header">
+    <div className="mg-v2-card">
+      <div className="mg-v2-card-header">
         <div className="mg-flex mg-justify-between mg-align-center consultation-record-header">
           <h3 className="mg-h4 mg-mb-0">📝 상담일지</h3>
           <div className="mg-flex mg-gap-sm consultation-record-header-buttons">
             <button 
-              className="mg-button mg-button-ghost mg-button-small"
+              className="mg-v2-button mg-v2-button-ghost mg-v2-button-small"
               onClick={handleViewAllRecords}
             >
               전체보기
             </button>
             <button 
-              className="mg-button mg-button-primary mg-button-small"
+              className="mg-v2-button mg-v2-button-primary mg-v2-button-small"
               onClick={handleCreateRecord}
             >
               새 일지 작성
@@ -94,7 +95,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
         </div>
       </div>
 
-      <div className="mg-card-body">
+      <div className="mg-v2-card-body">
         {error ? (
           <div className="mg-error-state">
             <p>{error}</p>
@@ -138,23 +139,23 @@ const ConsultationRecordSection = ({ consultantId }) => {
               <h4 className="mg-h5 mg-mb-md">최근 상담일지</h4>
               <div className="mg-space-y-sm">
                 {recordStats.recentRecords.map((record, index) => (
-                  <div key={record.id || index} className="mg-card mg-card-hover record-card">
+                  <div key={record.id || index} className="mg-v2-card mg-v2-card-hover record-card">
                     <div className="mg-flex mg-justify-between mg-align-center record-card-content">
                       <div className="mg-flex-1">
-                        <div className="mg-text-base mg-font-semibold mg-color-text-primary mg-mb-xs">
+                        <div className="mg-v2-text-base mg-font-semibold mg-v2-color-text-primary mg-mb-xs">
                           {record.clientName || '내담자'} - {record.sessionDate}
                         </div>
                         <div className="mg-flex mg-align-center mg-gap-sm record-meta">
                           <span className={`mg-badge ${record.isCompleted ? 'mg-badge-success' : 'mg-badge-warning'}`}>
                             {record.isCompleted ? '완료' : '미완료'}
                           </span>
-                          <span className="mg-text-sm mg-color-text-secondary">
+                          <span className="mg-v2-text-sm mg-v2-color-text-secondary">
                             {new Date(record.createdAt).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
                       <button 
-                        className="mg-button mg-button-ghost mg-button-small record-view-btn"
+                        className="mg-v2-button mg-v2-button-ghost mg-v2-button-small record-view-btn"
                         onClick={() => navigate(`/consultant/consultation-record-view/${record.id}`)}
                       >
                         보기
@@ -174,7 +175,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
                 첫 번째 상담일지를 작성해보세요
               </div>
               <button 
-                className="mg-button mg-button-primary"
+                className="mg-v2-button mg-v2-button-primary"
                 onClick={handleCreateRecord}
               >
                 상담일지 작성하기
@@ -185,19 +186,19 @@ const ConsultationRecordSection = ({ consultantId }) => {
           {/* 빠른 액션 */}
           <div className="quick-actions-grid mg-mt-lg mg-pt-lg mg-border-top">
             <button 
-              className="mg-button mg-button-primary"
+              className="mg-v2-button mg-v2-button-primary"
               onClick={handleCreateRecord}
             >
               새 일지 작성
             </button>
             <button 
-              className="mg-button mg-button-ghost"
+              className="mg-v2-button mg-v2-button-ghost"
               onClick={handleViewAllRecords}
             >
               전체 목록
             </button>
             <button 
-              className="mg-button mg-button-ghost"
+              className="mg-v2-button mg-v2-button-ghost"
               onClick={() => navigate('/consultant/consultation-records/statistics')}
             >
               통계 보기

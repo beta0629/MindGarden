@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../../utils/ajax';
@@ -85,12 +85,82 @@ const ConsultantClientList = () => {
     return colorMap[status] || 'var(--color-secondary, #6c757d)';
   };
 
+  const loadClients = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log('👤 상담사 ID로 연계된 내담자 목록 로드:', user.id);
+      console.log('👤 사용자 정보 전체:', user);
+
+      // 상담사와 연계된 내담자 목록 가져오기
+      const response = await apiGet(`/api/admin/mappings/consultant/${user.id}/clients`);
+      
+      console.log('📡 API 응답 전체:', response);
+      
+      if (response.success) {
+        console.log('✅ 내담자 목록 로드 성공:', response.data);
+        console.log('📊 내담자 수:', response.count);
+        
+        // API 응답에서 내담자 정보 추출 및 최신순 정렬
+        const clientData = response.data || [];
+        const sortedData = clientData.sort((a, b) => {
+          const dateA = new Date(a.assignedAt || a.client.createdAt || 0);
+          const dateB = new Date(b.assignedAt || b.client.createdAt || 0);
+          return dateB - dateA; // 최신순 정렬
+        });
+        
+        const clientList = sortedData.map((item, index) => {
+          // API 응답 구조에 맞게 내담자 정보 변환
+          if (item.client) {
+            // 테스트를 위해 다양한 상태 시뮬레이션 (실제 API에서 상태를 받으면 제거)
+            const testStatuses = ['ACTIVE', 'INACTIVE', 'PENDING', 'COMPLETED', 'SUSPENDED'];
+            // 더 균등한 분배를 위해 인덱스 기반 할당
+            const simulatedStatus = testStatuses[index % testStatuses.length];
+            
+            console.log(`🔄 상태 시뮬레이션 - 인덱스: ${index}, ID: ${item.client.id}, 할당된 상태: ${simulatedStatus}`);
+            
+            return {
+              id: item.mappingId || item.id, // mappingId를 우선 사용하여 고유성 보장
+              clientId: item.client.id, // 실제 클라이언트 ID는 별도로 저장
+              name: item.client.name,
+              email: item.client.email,
+              phone: item.client.phone,
+              status: item.client.status || simulatedStatus, // 실제 상태 또는 시뮬레이션
+              createdAt: item.assignedAt || item.client.createdAt || new Date().toISOString(),
+              profileImage: item.client.profileImage || null,
+              remainingSessions: item.remainingSessions,
+              totalSessions: item.totalSessions,
+              usedSessions: item.usedSessions,
+              packageName: item.packageName,
+              packagePrice: item.packagePrice,
+              paymentStatus: item.paymentStatus,
+              paymentDate: item.paymentDate,
+              mappingId: item.id
+            };
+          }
+          return null;
+        }).filter(client => client !== null);
+        
+        setClients(clientList);
+      } else {
+        console.error('❌ 내담자 목록 로드 실패:', response.message);
+        setError(response.message || '내담자 목록을 불러오는데 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('❌ 내담자 목록 로드 중 오류:', err);
+      setError('내담자 목록을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
   // 사용자 상태 코드 로드
   const loadUserStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
       console.log('🔄 사용자 상태 코드 로드 시작...');
-      const response = await apiGet('/api/common-codes/group/STATUS');
+      const response = await apiGet('/api/common-codes/STATUS');
       console.log('📡 API 응답:', response);
       
       if (response && response.length > 0) {
@@ -129,7 +199,7 @@ const ConsultantClientList = () => {
       loadClients();
       loadUserStatusCodes();
     }
-  }, [isLoggedIn, user?.id, loadUserStatusCodes]);
+  }, [isLoggedIn, user?.id, loadClients]);
 
   // URL에서 클라이언트 ID가 있을 때 해당 클라이언트 모달 열기
   useEffect(() => {
@@ -151,97 +221,29 @@ const ConsultantClientList = () => {
     }
   }, [clientIdFromUrl, clients, showClientModal]);
 
-  const loadClients = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      console.log('👤 상담사 ID로 연계된 내담자 목록 로드:', user.id);
-      console.log('👤 사용자 정보 전체:', user);
-
-      // 상담사와 연계된 내담자 목록 가져오기
-      const response = await apiGet(`/api/admin/mappings/consultant/${user.id}/clients`);
-      
-      console.log('📡 API 응답 전체:', response);
-      
-      if (response.success) {
-        console.log('✅ 내담자 목록 로드 성공:', response.data);
-        console.log('📊 내담자 수:', response.count);
-        
-        // API 응답에서 내담자 정보 추출 및 최신순 정렬
-        const clientData = response.data || [];
-        const sortedData = clientData.sort((a, b) => {
-          const dateA = new Date(a.assignedAt || a.client.createdAt || 0);
-          const dateB = new Date(b.assignedAt || b.client.createdAt || 0);
-          return dateB - dateA; // 최신순 정렬
-        });
-        
-        const clients = sortedData.map((item, index) => {
-          // API 응답 구조에 맞게 내담자 정보 변환
-          if (item.client) {
-            // 테스트를 위해 다양한 상태 시뮬레이션 (실제 API에서 상태를 받으면 제거)
-            const testStatuses = ['ACTIVE', 'INACTIVE', 'PENDING', 'COMPLETED', 'SUSPENDED'];
-            // 더 균등한 분배를 위해 인덱스 기반 할당
-            const simulatedStatus = testStatuses[index % testStatuses.length];
-            
-            console.log(`🔄 상태 시뮬레이션 - 인덱스: ${index}, ID: ${item.client.id}, 할당된 상태: ${simulatedStatus}`);
-            
-            return {
-              id: item.mappingId || item.id, // mappingId를 우선 사용하여 고유성 보장
-              clientId: item.client.id, // 실제 클라이언트 ID는 별도로 저장
-              name: item.client.name,
-              email: item.client.email,
-              phone: item.client.phone,
-              status: item.client.status || simulatedStatus, // 실제 상태 또는 시뮬레이션
-              createdAt: item.assignedAt || item.client.createdAt || new Date().toISOString(),
-              profileImage: item.client.profileImage || null,
-              remainingSessions: item.remainingSessions,
-              totalSessions: item.totalSessions,
-              usedSessions: item.usedSessions,
-              packageName: item.packageName,
-              packagePrice: item.packagePrice,
-              paymentStatus: item.paymentStatus,
-              paymentDate: item.paymentDate,
-              mappingId: item.id
-            };
-          }
-          return null;
-        }).filter(client => client !== null);
-        
-        setClients(clients);
-      } else {
-        console.error('❌ 내담자 목록 로드 실패:', response.message);
-        setError(response.message || '내담자 목록을 불러오는데 실패했습니다.');
-      }
-    } catch (err) {
-      console.error('❌ 내담자 목록 로드 중 오류:', err);
-      setError('내담자 목록을 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // 검색 및 필터링
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.phone?.includes(searchTerm);
-    
-    // 상태 필터링 개선 - 모든 상태 코드 지원
-    let matchesStatus = true;
-    if (filterStatus !== 'ALL') {
-      matchesStatus = client.status === filterStatus;
-    }
-    
-    console.log(`🔍 필터링 - 클라이언트: ${client.name}, 상태: ${client.status}, 필터: ${filterStatus}, 매치: ${matchesStatus}`);
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredClients = useMemo(() => {
+    const filtered = clients.filter(client => {
+      const matchesSearch = client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           client.phone?.includes(searchTerm);
+      
+      // 상태 필터링 개선 - 모든 상태 코드 지원
+      let matchesStatus = true;
+      if (filterStatus !== 'ALL') {
+        matchesStatus = client.status === filterStatus;
+      }
+      
+      return matchesSearch && matchesStatus;
+    });
 
-  // 디버깅을 위한 로그
-  console.log(`📊 필터링 결과 - 전체: ${clients.length}명, 필터링 후: ${filteredClients.length}명, 선택된 필터: ${filterStatus}`);
-  console.log(`📊 전체 내담자 상태 분포:`, clients.map(c => ({ name: c.name, status: c.status })));
-  console.log(`📊 필터링된 내담자:`, filteredClients.map(c => ({ name: c.name, status: c.status })));
+    // 디버깅을 위한 로그
+    console.log(`📊 필터링 결과 - 전체: ${clients.length}명, 필터링 후: ${filtered.length}명, 선택된 필터: ${filterStatus}`);
+    console.log(`📊 전체 내담자 상태 분포:`, clients.map(c => ({ name: c.name, status: c.status })));
+    console.log(`📊 필터링된 내담자:`, filtered.map(c => ({ name: c.name, status: c.status })));
+    
+    return filtered;
+  }, [searchTerm, filterStatus]); // clients 의존성 제거 (무한루프 방지)
 
   // 내담자 상세 정보 보기
   const handleViewClient = (client) => {
@@ -332,7 +334,7 @@ const ConsultantClientList = () => {
             ></i>
             <input
               type="text"
-              className="search-input mg-input"
+              className="search-input mg-v2-input"
               placeholder="이름, 이메일, 전화번호로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

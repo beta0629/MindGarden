@@ -1,17 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { FaChartLine, FaSync } from 'react-icons/fa';
-import { API_BASE_URL } from '../../constants/api';
+import { useState, useEffect, useCallback } from 'react';
+import TodayStatisticsView from '../ui/Statistics/TodayStatisticsView';
+import { SCHEDULE_API } from '../../constants/api';
 import './TodayStatistics.css';
 
 /**
- * 오늘의 통계 컴포넌트
- * 실시간으로 오늘의 스케줄 통계를 표시
+ * 오늘의 통계 컨테이너 컴포넌트
+ * - 비즈니스 로직만 담당
+ * - 상태 관리, 데이터 로드
+ * - Presentational 컴포넌트에 데이터와 핸들러 전달
  * 
  * @author MindGarden
- * @version 1.0.0
+ * @version 2.0.0 (Presentational/Container 분리)
  * @since 2024-12-19
  */
 const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
+    // ========== 상태 관리 ==========
     const [statistics, setStatistics] = useState({
         totalToday: 0,
         completedToday: 0,
@@ -24,9 +27,7 @@ const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
     const [loading, setLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState(null);
 
-    /**
-     * 통계 데이터 로드
-     */
+    // ========== 데이터 로드 ==========
     const loadStatistics = useCallback(async () => {
         if (!userRole) return;
         
@@ -34,7 +35,7 @@ const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
         try {
             console.log('📊 오늘의 통계 로드 시작:', { userId, userRole });
             
-            const response = await fetch(`${API_BASE_URL}/api/schedules/today/statistics?userRole=${userRole}`, {
+            const response = await fetch(`${SCHEDULE_API.TODAY_STATISTICS}?userRole=${userRole}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -64,27 +65,40 @@ const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
                 console.log('📊 오늘의 통계 로드 완료');
             } else {
                 console.error('오늘의 통계 API 응답 오류:', response.status, response.statusText);
+                setStatistics({
+                    totalToday: 0,
+                    completedToday: 0,
+                    inProgressToday: 0,
+                    cancelledToday: 0,
+                    bookedToday: 0,
+                    confirmedToday: 0
+                });
             }
         } catch (error) {
             console.error('오늘의 통계 로드 실패:', error);
+            setStatistics({
+                totalToday: 0,
+                completedToday: 0,
+                inProgressToday: 0,
+                cancelledToday: 0,
+                bookedToday: 0,
+                confirmedToday: 0
+            });
         } finally {
             setLoading(false);
         }
     }, [userRole, userId]);
 
-    /**
-     * 수동 새로고침
-     */
+    // ========== 이벤트 핸들러 ==========
     const handleRefresh = () => {
         loadStatistics();
     };
 
-    // 컴포넌트 마운트 시 및 의존성 변경 시 통계 로드
+    // ========== 효과 ==========
     useEffect(() => {
         loadStatistics();
     }, [loadStatistics]);
 
-    // 30초마다 자동 새로고침
     useEffect(() => {
         const interval = setInterval(() => {
             loadStatistics();
@@ -93,61 +107,15 @@ const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
         return () => clearInterval(interval);
     }, [loadStatistics]);
 
+    // ========== 렌더링 (Presentational 컴포넌트 사용) ==========
     return (
-        <div className="today-statistics">
-            <div className="statistics-header">
-                <h3 className="statistics-title">
-                    <FaChartLine className="title-icon" />
-                    오늘의 통계
-                </h3>
-                <div className="statistics-actions">
-                    <button
-                        className="statistics-view-btn"
-                        onClick={onShowStatistics}
-                        title="전체 통계 보기"
-                    >
-                        <i className="bi bi-graph-up"></i>
-                        통계 보기
-                    </button>
-                    <button 
-                        className="refresh-btn"
-                        onClick={handleRefresh}
-                        disabled={loading}
-                        title="새로고침"
-                    >
-                        <FaSync className={loading ? 'spinning' : ''} />
-                    </button>
-                </div>
-            </div>
-            
-            <div className="statistics-grid">
-                <div className="stat-card total">
-                    <div className="stat-number">{statistics.totalToday}</div>
-                    <div className="stat-label">총 상담</div>
-                </div>
-                
-                <div className="stat-card completed">
-                    <div className="stat-number">{statistics.completedToday}</div>
-                    <div className="stat-label">완료</div>
-                </div>
-                
-                <div className="stat-card in-progress">
-                    <div className="stat-number">{statistics.inProgressToday}</div>
-                    <div className="stat-label">진행중</div>
-                </div>
-                
-                <div className="stat-card cancelled">
-                    <div className="stat-number">{statistics.cancelledToday}</div>
-                    <div className="stat-label">취소</div>
-                </div>
-            </div>
-            
-            {lastUpdated && (
-                <div className="last-updated">
-                    마지막 업데이트: {lastUpdated.toLocaleTimeString('ko-KR')}
-                </div>
-            )}
-        </div>
+        <TodayStatisticsView
+            statistics={statistics}
+            loading={loading}
+            lastUpdated={lastUpdated}
+            onShowStatistics={onShowStatistics}
+            onRefresh={handleRefresh}
+        />
     );
 };
 

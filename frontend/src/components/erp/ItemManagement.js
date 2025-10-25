@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
-import UnifiedLoading from "../common/UnifiedLoading";
 import './ItemManagement.css';
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
@@ -44,7 +44,7 @@ const ItemManagement = () => {
   const loadCategoryCodes = async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/common-codes/group/ITEM_CATEGORY');
+      const response = await apiGet('/api/common-codes/ITEM_CATEGORY');
       if (response && response.length > 0) {
         const options = response.map(code => ({
           value: code.codeValue,

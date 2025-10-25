@@ -1,4 +1,5 @@
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import { useAdminDashboard } from '../../hooks';
 import { DashboardHeader } from '../common';
@@ -6,7 +7,6 @@ import DashboardStats from './components/DashboardStats';
 import DashboardManagement from './components/DashboardManagement';
 import DashboardModals from './components/DashboardModals';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from "../common/UnifiedLoading";
 import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
 import SystemTools from './system/SystemTools';

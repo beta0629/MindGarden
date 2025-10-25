@@ -1,4 +1,5 @@
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { LayoutDashboard, Users, Calendar, TrendingUp, Bell, Settings } from 'lucide-react';
 
 const DashboardLayoutShowcase = () => {
@@ -16,8 +17,8 @@ const DashboardLayoutShowcase = () => {
   ];
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">통일된 대시보드 레이아웃</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">통일된 대시보드 레이아웃</h2>
       
       <div className="mg-card mg-mb-lg">
         <h3 className="mg-h4 mg-mb-md">레이아웃 구조</h3>

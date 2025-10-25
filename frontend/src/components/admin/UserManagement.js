@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import MGButton from '../common/MGButton';
 import { FaUsers, FaEdit, FaUser, FaUserTie, FaCrown, FaBuilding, FaSearch, FaFilter, FaSync, FaTimes } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -34,7 +35,7 @@ const UserManagement = ({ onUpdate }) => {
     const loadRoleCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/group/ROLE');
+            const response = await apiGet('/api/common-codes/ROLE');
             if (response && response.length > 0) {
                 const options = response.map(code => ({
                     value: code.codeValue,
@@ -186,19 +187,19 @@ const UserManagement = ({ onUpdate }) => {
 
     return (
         <SimpleLayout>
-            <div className="mg-dashboard-layout">
+            <div className="mg-v2-dashboard-layout">
                 {/* Dashboard Header */}
-                <div className="mg-dashboard-header">
-                    <div className="mg-dashboard-header-content">
-                        <div className="mg-dashboard-header-left">
-                            <FaUsers className="mg-dashboard-icon" />
+                <div className="mg-v2-dashboard-header">
+                    <div className="mg-v2-dashboard-header-content">
+                        <div className="mg-v2-dashboard-header-left">
+                            <FaUsers className="mg-v2-dashboard-icon" />
                             <div>
-                                <h1 className="mg-dashboard-title">사용자 관리</h1>
-                                <p className="mg-dashboard-subtitle">전체 {filteredUsers.length}명의 사용자를 관리합니다</p>
+                                <h1 className="mg-v2-dashboard-title">사용자 관리</h1>
+                                <p className="mg-v2-dashboard-subtitle">전체 {filteredUsers.length}명의 사용자를 관리합니다</p>
                             </div>
                         </div>
-                        <div className="mg-dashboard-header-right">
-                            <button className="mg-dashboard-icon-btn" onClick={loadData} title="새로고침">
+                        <div className="mg-v2-dashboard-header-right">
+                            <button className="mg-v2-dashboard-icon-btn" onClick={loadData} title="새로고침">
                                 <FaSync />
                             </button>
                         </div>
@@ -206,22 +207,22 @@ const UserManagement = ({ onUpdate }) => {
                 </div>
 
                 {/* Main Content */}
-                <div className="mg-dashboard-content">
-                    <div className="mg-card">
+                <div className="mg-v2-dashboard-content">
+                    <div className="mg-v2-card">
                         {/* 필터 및 검색 */}
                         <div className="user-mgmt-filters">
                             <div className="user-mgmt-search-wrapper">
                                 <FaSearch className="user-mgmt-search-icon" />
                                 <input
                                     type="text"
-                                    className="mg-input user-mgmt-search-input"
+                                    className="mg-v2-input user-mgmt-search-input"
                                     placeholder="이름 또는 이메일로 검색..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                             <select
-                                className="mg-select user-mgmt-role-select"
+                                className="mg-v2-select user-mgmt-role-select"
                                 value={selectedRole}
                                 onChange={(e) => setSelectedRole(e.target.value)}
                             >
@@ -234,7 +235,7 @@ const UserManagement = ({ onUpdate }) => {
                             <label className="user-mgmt-checkbox-label">
                                 <input
                                     type="checkbox"
-                                    className="mg-checkbox"
+                                    className="mg-v2-checkbox"
                                     id="includeInactive"
                                     checked={includeInactive}
                                     onChange={(e) => setIncludeInactive(e.target.checked)}
@@ -242,29 +243,29 @@ const UserManagement = ({ onUpdate }) => {
                                 <span>비활성 사용자 포함</span>
                             </label>
                             <button 
-                                className="mg-button mg-button-ghost mg-button-sm"
+                                className="mg-v2-button mg-v2-button-ghost mg-v2-button-sm"
                                 onClick={() => {
                                     setSearchTerm('');
                                     setSelectedRole('');
                                     setIncludeInactive(false);
                                 }}
                             >
-                                <FaFilter className="mg-button-icon" />
+                                <FaFilter className="mg-v2-button-icon" />
                                 초기화
                             </button>
                         </div>
                         {loading ? (
                             <UnifiedLoading text="사용자 목록을 불러오는 중..." size="medium" type="inline" />
                         ) : users.length === 0 ? (
-                            <div className="mg-empty-state">
-                                <FaUsers className="mg-empty-state__icon" />
-                                <p className="mg-empty-state__text">등록된 사용자가 없습니다.</p>
+                            <div className="mg-v2-empty-state">
+                                <FaUsers className="mg-v2-empty-state__icon" />
+                                <p className="mg-v2-empty-state__text">등록된 사용자가 없습니다.</p>
                             </div>
                         ) : filteredUsers.length === 0 ? (
-                            <div className="mg-empty-state">
-                                <FaSearch className="mg-empty-state__icon" />
-                                <p className="mg-empty-state__text">검색 결과가 없습니다.</p>
-                                <p className="mg-empty-state__hint">다른 검색어나 필터를 시도해보세요.</p>
+                            <div className="mg-v2-empty-state">
+                                <FaSearch className="mg-v2-empty-state__icon" />
+                                <p className="mg-v2-empty-state__text">검색 결과가 없습니다.</p>
+                                <p className="mg-v2-empty-state__hint">다른 검색어나 필터를 시도해보세요.</p>
                             </div>
                         ) : (
                             <div className="user-mgmt-grid">
@@ -285,11 +286,11 @@ const UserManagement = ({ onUpdate }) => {
                                         </div>
                                         
                                         <div className="user-mgmt-badges">
-                                            <span className={`mg-badge mg-badge-${getRoleBadgeVariant(user.role)}`}>
+                                            <span className={`mg-v2-badge mg-v2-badge-${getRoleBadgeVariant(user.role)}`}>
                                                 {getRoleDisplayName(user.role)}
                                             </span>
                                             {user.isActive === false && (
-                                                <span className="mg-badge mg-badge-secondary">
+                                                <span className="mg-v2-badge mg-v2-badge-secondary">
                                                     비활성
                                                 </span>
                                             )}
@@ -299,7 +300,7 @@ const UserManagement = ({ onUpdate }) => {
                                             {/* 내담자→상담사 빠른 변경 버튼 */}
                                             {user.role === 'CLIENT' && (
                                                 <button 
-                                                    className="mg-button mg-button-success mg-button-sm"
+                                                    className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
                                                     onClick={() => {
                                                         setSelectedUser(user);
                                                         setForm({ newRole: 'CONSULTANT' });
@@ -313,7 +314,7 @@ const UserManagement = ({ onUpdate }) => {
                                             
                                             {/* 일반 역할 변경 버튼 */}
                                             <button 
-                                                className="mg-button mg-button-outline mg-button-sm"
+                                                className="mg-v2-button mg-v2-button-outline mg-v2-button-sm"
                                                 onClick={() => {
                                                     setSelectedUser(user);
                                                     setForm({ newRole: user.role });
@@ -321,7 +322,7 @@ const UserManagement = ({ onUpdate }) => {
                                                 }}
                                                 title="역할 변경"
                                             >
-                                                <FaEdit className="mg-button-icon" />
+                                                <FaEdit className="mg-v2-button-icon" />
                                                 변경
                                             </button>
                                         </div>
@@ -335,29 +336,29 @@ const UserManagement = ({ onUpdate }) => {
 
             {/* 역할 변경 모달 */}
             {showRoleModal && (
-                <div className="mg-modal-overlay" onClick={() => setShowRoleModal(false)}>
-                    <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
-                        <div className="mg-modal-header">
-                            <h3 className="mg-modal-title">
-                                <FaEdit className="mg-modal-title-icon" />
+                <div className="mg-v2-modal-overlay" onClick={() => setShowRoleModal(false)}>
+                    <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                        <div className="mg-v2-modal-header">
+                            <h3 className="mg-v2-modal-title">
+                                <FaEdit className="mg-v2-modal-title-icon" />
                                 사용자 역할 변경
                             </h3>
                             <button 
-                                className="mg-modal-close"
+                                className="mg-v2-modal-close"
                                 onClick={() => setShowRoleModal(false)}
                             >
                                 <FaTimes />
                             </button>
                         </div>
-                        <div className="mg-modal-body">
+                        <div className="mg-v2-modal-body">
                             {selectedUser && (
                                 <form onSubmit={handleRoleChange}>
-                                    <div className="mg-form-group">
+                                    <div className="mg-v2-form-group">
                                         <strong>사용자:</strong> {selectedUser.name} ({selectedUser.email})
                                     </div>
-                                    <div className="mg-form-group">
+                                    <div className="mg-v2-form-group">
                                         <strong>현재 역할:</strong> 
-                                        <span className={`mg-badge mg-badge-${getRoleBadgeVariant(selectedUser.role)} mg-ml-sm`}>
+                                        <span className={`mg-v2-badge mg-v2-badge-${getRoleBadgeVariant(selectedUser.role)} mg-ml-sm`}>
                                             {getRoleDisplayName(selectedUser.role)}
                                         </span>
                                     </div>
@@ -375,12 +376,12 @@ const UserManagement = ({ onUpdate }) => {
                                         </div>
                                     )}
                                     
-                                    <div className="mg-form-group">
-                                        <label className="mg-label">
+                                    <div className="mg-v2-form-group">
+                                        <label className="mg-v2-label">
                                             새로운 역할
                                         </label>
                                         <select
-                                            className="mg-select"
+                                            className="mg-v2-select"
                                             value={form.newRole}
                                             onChange={(e) => setForm({...form, newRole: e.target.value})}
                                             required
@@ -394,18 +395,18 @@ const UserManagement = ({ onUpdate }) => {
                                         </select>
                                     </div>
                                     
-                                    <div className="mg-modal-footer">
+                                    <div className="mg-v2-modal-footer">
                                         <button
                                             type="button"
                                             onClick={() => setShowRoleModal(false)}
-                                            className="mg-button mg-button-secondary"
+                                            className="mg-v2-button mg-v2-button-secondary"
                                         >
                                             취소
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={form.newRole === selectedUser.role}
-                                            className="mg-button mg-button-primary"
+                                            className="mg-v2-button mg-v2-button-primary"
                                         >
                                             {selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' 
                                                 ? '상담사로 변경' 

@@ -28,7 +28,7 @@ const PackageSelector = ({
     const loadPackageOptions = async () => {
         try {
             setLoading(true);
-            const response = await apiGet('/api/common-codes/group/PACKAGE');
+            const response = await apiGet('/api/common-codes/PACKAGE');
             const data = response?.data || response || [];
             
             if (Array.isArray(data)) {
@@ -132,7 +132,7 @@ const PackageSelector = ({
 
     return (
         <div className={`mg-form-group ${className}`}>
-            <label className="mg-label">패키지 선택</label>
+            <label className="mg-v2-label">패키지 선택</label>
             <select
                 value={value}
                 onChange={handleChange}

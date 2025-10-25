@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { User, MessageCircle, Calendar, TrendingUp, Phone, Mail, Clock, CheckCircle } from 'lucide-react';
 
 const ClientCardShowcase = () => {
@@ -218,8 +219,8 @@ const ClientCardShowcase = () => {
   );
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">클라이언트 카드 변형</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">클라이언트 카드 변형</h2>
       
       {/* 뷰 모드 선택 */}
       <div className="mg-card mg-mb-lg">

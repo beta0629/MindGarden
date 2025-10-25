@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { Check } from 'lucide-react';
 
 const ColorPaletteShowcase = () => {
@@ -23,8 +24,8 @@ const ColorPaletteShowcase = () => {
   };
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">색상 팔레트</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">색상 팔레트</h2>
       
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-lg)' }}>
@@ -128,7 +129,7 @@ const ColorPaletteShowcase = () => {
             <div style={{ color: 'var(--mint-green)' }}>{'}'}</div>
           </div>
 
-          <p className="mg-text-sm" style={{ marginTop: 'var(--spacing-md)', color: 'var(--medium-gray)', textAlign: 'center' }}>
+          <p className="mg-v2-text-sm" style={{ marginTop: 'var(--spacing-md)', color: 'var(--medium-gray)', textAlign: 'center' }}>
             각 색상 카드를 클릭하면 HEX 코드가 클립보드에 복사됩니다
           </p>
         </div>

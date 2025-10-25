@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { Menu, X, Home, Users, Calendar, Settings, ChevronRight } from 'lucide-react';
 
 const NavigationShowcase = () => {
@@ -8,8 +9,8 @@ const NavigationShowcase = () => {
   const tabs = ['대시보드', '상담 내역', '통계', '설정'];
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">네비게이션</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">네비게이션</h2>
       
       <div style={{ display: 'grid', gap: 'var(--spacing-xl)' }}>
         {/* Header Navigation */}

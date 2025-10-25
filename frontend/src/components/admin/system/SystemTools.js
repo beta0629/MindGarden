@@ -44,21 +44,21 @@ const SystemTools = ({
     ];
 
     return (
-        <div className="mg-stats-grid">
+        <div className="mg-v2-stats-grid">
             {tools.map((tool) => (
-                <div key={tool.id} className="mg-dashboard-stat-card mg-system-tool-card">
+                <div key={tool.id} className="mg-v2-dashboard-stat-card mg-system-tool-card">
                     <button 
-                        className={`mg-button mg-button-${tool.variant} mg-system-tool-button`}
+                        className={`mg-v2-button mg-v2-button-${tool.variant} mg-system-tool-button`}
                         onClick={tool.onClick}
                         disabled={loading}
                         title={tool.description}
                     >
-                        <div className="mg-system-tool-icon">
+                        <div className="mg-v2-system-tool-icon">
                             {tool.icon}
                         </div>
-                        <div className="mg-system-tool-content">
-                            <span className="mg-system-tool-label">{tool.label}</span>
-                            <div className="mg-system-tool-description">{tool.description}</div>
+                        <div className="mg-v2-system-tool-content">
+                            <span className="mg-v2-system-tool-label">{tool.label}</span>
+                            <div className="mg-v2-system-tool-description">{tool.description}</div>
                         </div>
                     </button>
                 </div>

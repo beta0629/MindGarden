@@ -123,8 +123,8 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-lg) var(--spacing-xl);
-    border-top: 1px solid #e9ecef;
-    background-color: #f8f9fa;
+    border-top: 1px solid var(--color-bg-secondary);
+    background-color: var(--color-bg-secondary);
     gap: 12px;
 }
 
@@ -150,18 +150,18 @@
 }
 
 .schedule-modal .btn-primary {
-    background-color: #007bff;
+    background-color: var(--color-primary);
     color: white;
 }
 
 .schedule-modal .btn-primary:hover:not(:disabled) {
-    background-color: #0056b3;
+    background-color: var(--color-primary-dark);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
 }
 
 .schedule-modal .btn-secondary {
-    background-color: #6c757d;
+    background-color: var(--color-secondary);
     color: white;
 }
 
@@ -172,7 +172,7 @@
 }
 
 .schedule-modal .btn-success {
-    background-color: #28a745;
+    background-color: var(--status-success);
     color: white;
 }
 
@@ -192,7 +192,7 @@
     margin-bottom: 6px;
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: #495057;
+    color: var(--color-text-secondary);
 }
 
 .schedule-modal .form-group input,
@@ -211,7 +211,7 @@
 .schedule-modal .form-group textarea:focus,
 .schedule-modal .form-group select:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
@@ -231,7 +231,7 @@
     border-radius: 8px;
     padding: var(--spacing-md);
     margin-bottom: 20px;
-    border: 2px solid #2196f3;
+    border: 2px solid var(--status-info);
 }
 
 .summary-item {
@@ -247,7 +247,7 @@
 }
 
 .summary-item strong {
-    color: #1976d2;
+    color: var(--color-primary-dark);
     font-weight: 600;
 }
 
@@ -255,9 +255,9 @@
 .consultation-type-selector {
     margin-bottom: 20px;
     padding: var(--spacing-md);
-    background-color: #f8f9fa;
+    background-color: var(--color-bg-secondary);
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--color-bg-secondary);
 }
 
 .consultation-type-selector label {
@@ -265,7 +265,7 @@
     margin-bottom: 8px;
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: #495057;
+    color: var(--color-text-secondary);
 }
 
 .consultation-type-selector select {
@@ -382,17 +382,17 @@
 }
 
 .schedule-modal-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--color-bg-secondary);
     border-radius: 3px;
 }
 
 .schedule-modal-content::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: var(--color-border);
     border-radius: 3px;
 }
 
 .schedule-modal-content::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: var(--color-border-dark);
 }
 
 /* 포커스 스타일 (접근성) */
@@ -518,7 +518,7 @@
         position: sticky;
         bottom: 0;
         background: white;
-        border-top: 1px solid #e9ecef;
+        border-top: 1px solid var(--color-bg-secondary);
     }
 
     /* 상담사 선택 단계 모바일 최적화 */

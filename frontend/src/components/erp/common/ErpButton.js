@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * ERP 공통 버튼 컴포넌트 - MindGarden 디자인 시스템 mg-button 활용
+ * ERP 공통 버튼 컴포넌트 - MindGarden 디자인 시스템 mg-v2-button 활용
  * 
  * @param {string} variant - 버튼 스타일 (primary, secondary, success, danger, warning, info, outline, ghost)
  * @param {string} size - 버튼 크기 (sm, md, lg)
@@ -20,12 +20,12 @@ const ErpButton = ({
   className = '',
   type = 'button'
 }) => {
-  // MindGarden 디자인 시스템의 mg-button 클래스 활용
+  // MindGarden 디자인 시스템의 mg-v2-button 클래스 활용
   const buttonClasses = [
-    'mg-button',
-    `mg-button-${variant}`,
-    size !== 'md' && `mg-button-${size}`,
-    loading && 'mg-button-loading',
+    'mg-v2-button',
+    `mg-v2-button-${variant}`,
+    size !== 'md' && `mg-v2-button-${size}`,
+    loading && 'mg-v2-button-loading',
     className
   ].filter(Boolean).join(' ');
 

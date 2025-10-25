@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { 
     Building2, DollarSign, TrendingUp, Calendar, 
     Filter, Download, Eye, ArrowUp, ArrowDown,
@@ -8,7 +9,6 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from "../common/UnifiedLoading";
 import './BranchFinancialManagement.css';
 
 /**
@@ -23,19 +23,19 @@ const BranchFilterCard = ({
     onApplyFilters
 }) => {
     return (
-        <div className="mg-card">
-            <div className="mg-card__header">
-                <h3 className="mg-card__title">
+        <div className="mg-v2-card">
+            <div className="mg-v2-card__header">
+                <h3 className="mg-v2-card__title">
                     <Filter className="mg-icon mg-icon--title" />
                     지점 선택 및 필터
                 </h3>
             </div>
-            <div className="mg-card__content">
-                <div className="mg-form-grid">
-                    <div className="mg-form-group">
-                        <label className="mg-form-label">지점 선택</label>
+            <div className="mg-v2-card__content">
+                <div className="mg-v2-form-grid">
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">지점 선택</label>
                         <select 
-                            className="mg-form-select"
+                            className="mg-v2-form-select"
                             value={selectedBranch?.branchCode || ''}
                             onChange={(e) => {
                                 const branch = branches.find(b => b.branchCode === e.target.value);
@@ -51,30 +51,30 @@ const BranchFilterCard = ({
                         </select>
                     </div>
                     
-                    <div className="mg-form-group">
-                        <label className="mg-form-label">시작일</label>
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">시작일</label>
                         <input 
                             type="date" 
-                            className="mg-form-input"
+                            className="mg-v2-form-input"
                             value={filters.startDate}
                             onChange={(e) => onFilterChange('startDate', e.target.value)}
                         />
                     </div>
                     
-                    <div className="mg-form-group">
-                        <label className="mg-form-label">종료일</label>
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">종료일</label>
                         <input 
                             type="date" 
-                            className="mg-form-input"
+                            className="mg-v2-form-input"
                             value={filters.endDate}
                             onChange={(e) => onFilterChange('endDate', e.target.value)}
                         />
                     </div>
                     
-                    <div className="mg-form-group">
-                        <label className="mg-form-label">카테고리</label>
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">카테고리</label>
                         <select 
-                            className="mg-form-select"
+                            className="mg-v2-form-select"
                             value={filters.category}
                             onChange={(e) => onFilterChange('category', e.target.value)}
                         >
@@ -84,10 +84,10 @@ const BranchFilterCard = ({
                         </select>
                     </div>
                     
-                    <div className="mg-form-group">
-                        <label className="mg-form-label">거래 유형</label>
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">거래 유형</label>
                         <select 
-                            className="mg-form-select"
+                            className="mg-v2-form-select"
                             value={filters.transactionType}
                             onChange={(e) => onFilterChange('transactionType', e.target.value)}
                         >
@@ -101,9 +101,9 @@ const BranchFilterCard = ({
                         </select>
                     </div>
                     
-                    <div className="mg-form-group mg-form-group--button">
+                    <div className="mg-v2-form-group mg-v2-form-group--button">
                         <button 
-                            className="mg-button mg-button--primary mg-button--lg"
+                            className="mg-v2-button mg-v2-button--primary mg-v2-button--lg"
                             onClick={onApplyFilters}
                         >
                             <Filter className="mg-icon mg-icon--button" />
@@ -121,8 +121,8 @@ const BranchFilterCard = ({
  */
 const FinancialSummaryCard = ({ title, value, icon: Icon, color = 'primary', trend = null }) => {
     return (
-        <div className={`mg-card mg-card--stat mg-card--${color}`}>
-            <div className="mg-card__content">
+        <div className={`mg-v2-card mg-v2-card--stat mg-v2-card--${color}`}>
+            <div className="mg-v2-card__content">
                 <div className="mg-stat">
                     <div className="mg-stat__icon">
                         <Icon className="mg-icon mg-icon--stat" />
@@ -153,8 +153,8 @@ const FinancialSummaryCard = ({ title, value, icon: Icon, color = 'primary', tre
 const TransactionTable = ({ transactions, loading }) => {
     if (loading) {
         return (
-            <div className="mg-card">
-                <div className="mg-card__content">
+            <div className="mg-v2-card">
+                <div className="mg-v2-card__content">
                     <UnifiedLoading message="거래 내역을 불러오는 중..." />
                 </div>
             </div>
@@ -163,8 +163,8 @@ const TransactionTable = ({ transactions, loading }) => {
 
     if (!transactions || transactions.length === 0) {
         return (
-            <div className="mg-card">
-                <div className="mg-card__content">
+            <div className="mg-v2-card">
+                <div className="mg-v2-card__content">
                     <div className="mg-empty-state">
                         <div className="mg-empty-state__icon">
                             <Receipt className="mg-icon mg-icon--empty" />
@@ -177,20 +177,20 @@ const TransactionTable = ({ transactions, loading }) => {
     }
 
     return (
-        <div className="mg-card">
-            <div className="mg-card__header">
-                <h3 className="mg-card__title">
+        <div className="mg-v2-card">
+            <div className="mg-v2-card__header">
+                <h3 className="mg-v2-card__title">
                     <Receipt className="mg-icon mg-icon--title" />
                     거래 내역
                 </h3>
-                <button className="mg-button mg-button--ghost mg-button--sm">
+                <button className="mg-v2-button mg-v2-button--ghost mg-v2-button--sm">
                     <Download className="mg-icon mg-icon--small" />
                     내보내기
                 </button>
             </div>
-            <div className="mg-card__content">
-                <div className="mg-table-container">
-                    <table className="mg-table">
+            <div className="mg-v2-card__content">
+                <div className="mg-v2-table-container">
+                    <table className="mg-v2-table">
                         <thead>
                             <tr>
                                 <th>날짜</th>
@@ -212,7 +212,7 @@ const TransactionTable = ({ transactions, loading }) => {
                                     </td>
                                     <td data-label="거래 유형">{transaction.transactionType}</td>
                                     <td data-label="설명">{transaction.description}</td>
-                                    <td data-label="금액" className={`mg-text--${transaction.category === 'REVENUE' ? 'success' : 'danger'}`}>
+                                    <td data-label="금액" className={`mg-v2-text--${transaction.category === 'REVENUE' ? 'success' : 'danger'}`}>
                                         {transaction.category === 'REVENUE' ? '+' : '-'}{transaction.amount?.toLocaleString()}원
                                     </td>
                                     <td data-label="상태">

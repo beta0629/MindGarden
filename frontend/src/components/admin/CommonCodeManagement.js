@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { 
@@ -11,7 +13,6 @@ import {
 } from '../../utils/codeHelper';
 import { useSession } from '../../contexts/SessionContext';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from "../common/UnifiedLoading";
 import './ImprovedCommonCodeManagement.css';
 
 /**
@@ -112,7 +113,7 @@ const CommonCodeManagement = () => {
     const [categoryFilter, setCategoryFilter] = useState('all');
 
     // 코드그룹 메타데이터 로드
-    const loadMetadata = useCallback(async () => {
+    const loadMetadata = useCallback(async() => {
         try {
             // 캐시 초기화 후 새 데이터 로드
             clearCodeGroupCache();
@@ -153,7 +154,7 @@ const CommonCodeManagement = () => {
     });
 
     // 코드그룹 목록 로드
-    const loadCodeGroups = useCallback(async () => {
+    const loadCodeGroups = useCallback(async() => {
         try {
             setLoading(true);
             const response = await apiGet('/api/common-codes/groups/list');
@@ -178,18 +179,16 @@ const CommonCodeManagement = () => {
     const loadGroupCodes = useCallback(async (groupName) => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/common-codes/group/${groupName}`);
+            const response = await apiGet(`/api/common-codes/${groupName}`);
             if (response && response.length > 0) {
                 setGroupCodes(response);
-            } else {
-                notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+            } else { notificationManager.error(`${groupName } 그룹의 코드 목록을 불러오는데 실패했습니다.`);
             }
         } catch (error) {
             console.error('그룹 코드 로드 오류:', error);
             if (error.response?.status === 403) {
                 notificationManager.error('해당 코드 그룹에 대한 접근 권한이 없습니다.');
-            } else {
-                notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+            } else { notificationManager.error(`${groupName } 그룹의 코드 목록을 불러오는데 실패했습니다.`);
             }
         } finally {
             setLoading(false);
@@ -595,27 +594,27 @@ const CommonCodeManagement = () => {
                 <p>관리하고자 하는 코드그룹을 선택하세요.</p>
             </div>
 
-            {/* 필터 UI */}
+            { /* 필터 UI */ }
             <div className="common-code-management-filter">
-                <div className="mg-flex mg-gap-md mg-align-center mg-mb-md" style={{ flexWrap: 'wrap' }}>
-                    {/* 검색 입력 */}
-                    <div className="mg-form-group" style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+                <div className="mg-v2-flex mg-gap-md mg-align-center mg-mb-md" className="mg-v2-filter-container">
+                    { /* 검색 입력 */ }
+                    <div className="mg-v2-form-group" className="mg-v2-search-group">
                         <input
                             type="text"
                             placeholder="코드그룹명, 한글명, 영문명으로 검색..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="mg-input"
-                            onFocus={(e) => e.target.style.borderColor = '#007bff'}
-                            onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                            value={ searchTerm }
+                            onChange={ (e) => setSearchTerm(e.target.value) }
+                            className="mg-v2-input"
+                            onFocus={ (e) => e.target.style.borderColor = '#007bff' }
+                            onBlur={ (e) => e.target.style.borderColor = '#e1e5e9' }
                         />
                         <i className="bi bi-search mg-search-icon"></i>
                     </div>
                     
-                    {/* 카테고리 필터 */}
+                    { /* 카테고리 필터 */ }
                     <select
-                        value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        value={ categoryFilter }
+                        onChange={ (e) => setCategoryFilter(e.target.value) }
                         style={{
                             padding: '10px 12px',
                             border: '2px solid #e1e5e9',
@@ -627,8 +626,8 @@ const CommonCodeManagement = () => {
                             cursor: 'pointer',
                             transition: 'border-color 0.2s ease'
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#007bff'}
-                        onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                        onFocus={ (e) => e.target.style.borderColor = '#007bff' }
+                        onBlur={ (e) => e.target.style.borderColor = '#e1e5e9' }
                     >
                         <option value="all">전체 카테고리</option>
                         <option value="user">사용자 관련</option>
@@ -638,7 +637,7 @@ const CommonCodeManagement = () => {
                         <option value="erp">ERP 관련</option>
                     </select>
                     
-                    {/* 필터 초기화 */}
+                    { /* 필터 초기화 */ }
                     {(searchTerm || categoryFilter !== 'all') && (
                         <button
                             onClick={() => {
@@ -658,8 +657,8 @@ const CommonCodeManagement = () => {
                                 alignItems: 'center',
                                 gap: '6px'
                             }}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
+                            onMouseEnter={ (e) => e.target.style.backgroundColor = '#5a6268' }
+                            onMouseLeave={ (e) => e.target.style.backgroundColor = '#6c757d' }
                         >
                             <i className="bi bi-x-circle"></i>
                             초기화
@@ -667,7 +666,7 @@ const CommonCodeManagement = () => {
                     )}
                 </div>
                 
-                {/* 필터 상태 표시 */}
+                { /* 필터 상태 표시 */ }
                 <div style={{
                             fontSize: 'var(--font-size-sm)',
                     color: '#6c757d',
@@ -679,12 +678,12 @@ const CommonCodeManagement = () => {
                     {searchTerm || categoryFilter !== 'all' ? (
                         <span>
                             검색 결과: <strong>{getFilteredCodeGroups().length}개</strong>
-                            {searchTerm && ` (검색어: "${searchTerm}")`}
-                            {categoryFilter !== 'all' && ` (카테고리: ${getCategoryName(categoryFilter)})`}
+                            { searchTerm && ` (검색어: "${searchTerm }")`}
+                            { categoryFilter !== 'all' && ` (카테고리: ${getCategoryName(categoryFilter) })`}
                         </span>
                     ) : (
                         <span>
-                            전체 <strong>{codeGroups.length}개</strong> 코드그룹
+                            전체 <strong>{ codeGroups.length }개</strong> 코드그룹
                         </span>
                     )}
                 </div>
@@ -698,12 +697,12 @@ const CommonCodeManagement = () => {
                         <div 
                             key={group} 
                             className="group-card"
-                            onClick={() => handleGroupSelect(group)}
+                            onClick={ () => handleGroupSelect(group) }
                         >
                             <div className="group-card-header">
-                                <div className="group-icon">{getGroupIcon(group)}</div>
-                                <h3>{getGroupKoreanName(group) || convertGroupNameToKorean(group)}</h3>
-                                <span className="group-code">{group}</span>
+                                <div className="group-icon">{ getGroupIcon(group) }</div>
+                                <h3>{ getGroupKoreanName(group) || convertGroupNameToKorean(group) }</h3>
+                                <span className="group-code">{ group }</span>
                             </div>
                             <div className="group-card-body">
                                 <p>코드 그룹 관리</p>
@@ -751,15 +750,11 @@ const CommonCodeManagement = () => {
                         transition: 'all 0.3s ease',
                         whiteSpace: 'nowrap'
                     }}
-                    onClick={handleBackToGroups}
+                    onClick={ handleBackToGroups }
                 >
                     ← 그룹 선택으로 돌아가기
                 </button>
-                <div style={{
-                    flex: 1,
-                    minWidth: 0,
-                    margin: '0 16px'
-                }}>
+                <div className="mg-v2-group-info">
                     <h2 style={{
                         color: '#2c3e50',
                         margin: '0 0 4px 0',
@@ -767,15 +762,10 @@ const CommonCodeManagement = () => {
                         fontWeight: '600',
                         lineHeight: '1.3'
                     }}>
-                        📁 {getGroupKoreanName(selectedGroup) || convertGroupNameToKorean(selectedGroup)} 그룹 관리
+                        📁 { getGroupKoreanName(selectedGroup) || convertGroupNameToKorean(selectedGroup) } 그룹 관리
                     </h2>
-                    <p style={{
-                        color: '#6c757d',
-                        margin: '0',
-                        fontSize: 'var(--font-size-sm)',
-                        lineHeight: '1.4'
-                    }}>
-                        {selectedGroup} - 코드를 추가, 수정, 삭제할 수 있습니다.
+                    <p className="mg-v2-group-description">
+                        { selectedGroup } - 코드를 추가, 수정, 삭제할 수 있습니다.
                     </p>
                 </div>
                 <button 
@@ -794,8 +784,8 @@ const CommonCodeManagement = () => {
                         transition: 'all 0.3s ease',
                         whiteSpace: 'nowrap'
                     }}
-                    onClick={() => setShowAddForm(true)}
-                    disabled={loading}
+                    onClick={ () => setShowAddForm(true) }
+                    disabled={ loading }
                 >
                     + 새 코드 추가
                 </button>
@@ -806,29 +796,25 @@ const CommonCodeManagement = () => {
                     <div className="form-header">
                         <h3>{editingCode ? '코드 수정' : '새 코드 추가'}</h3>
                         <button 
-                            className="mg-btn mg-btn--sm mg-btn--outline mg-btn--secondary"
-                            onClick={handleCancelForm}
+                            className="mg-v2-btn mg-btn--sm mg-btn--outline mg-btn--secondary"
+                            onClick={ handleCancelForm }
                         >
                             <i className="bi bi-x"></i>
                         </button>
                     </div>
-                    <form onSubmit={editingCode ? handleUpdateCode : handleAddCode}>
+                    <form onSubmit={ editingCode ? handleUpdateCode : handleAddCode }>
                         <div className="form-row">
                             <div className="form-group">
                                 <label htmlFor="codeValue">코드 값 *</label>
                                 <input
                                     type="text"
                                     id="codeValue"
-                                    value={newCodeData.codeValue}
-                                    onChange={(e) => setNewCodeData({...newCodeData, codeValue: e.target.value})}
+                                    value={ newCodeData.codeValue }
+                                    onChange={ (e) => setNewCodeData({...newCodeData, codeValue: e.target.value })}
                                     className="form-control"
                                     placeholder="예: ACTIVE, INACTIVE"
                                     required
-                                    style={{
-                                        color: '#000',
-                                        backgroundColor: '#fff',
-                                        border: '2px solid #e9ecef'
-                                    }}
+                                    className="mg-v2-form-input"
                                 />
                             </div>
                             <div className="form-group">
@@ -836,8 +822,8 @@ const CommonCodeManagement = () => {
                                 <input
                                     type="text"
                                     id="codeLabel"
-                                    value={newCodeData.codeLabel}
-                                    onChange={(e) => setNewCodeData({...newCodeData, codeLabel: e.target.value})}
+                                    value={ newCodeData.codeLabel }
+                                    onChange={ (e) => setNewCodeData({...newCodeData, codeLabel: e.target.value })}
                                     className="form-control"
                                     placeholder="예: 활성, 비활성"
                                     required
@@ -853,8 +839,8 @@ const CommonCodeManagement = () => {
                             <label htmlFor="codeDescription">설명</label>
                             <textarea
                                 id="codeDescription"
-                                value={newCodeData.codeDescription}
-                                onChange={(e) => setNewCodeData({...newCodeData, codeDescription: e.target.value})}
+                                value={ newCodeData.codeDescription }
+                                onChange={ (e) => setNewCodeData({...newCodeData, codeDescription: e.target.value })}
                                 className="form-control"
                                 rows="3"
                                 placeholder="코드에 대한 설명을 입력하세요."
@@ -871,8 +857,8 @@ const CommonCodeManagement = () => {
                                 <input
                                     type="number"
                                     id="sortOrder"
-                                    value={newCodeData.sortOrder}
-                                    onChange={(e) => setNewCodeData({...newCodeData, sortOrder: parseInt(e.target.value) || 0})}
+                                    value={ newCodeData.sortOrder }
+                                    onChange={ (e) => setNewCodeData({...newCodeData, sortOrder: parseInt(e.target.value) || 0 })}
                                     className="form-control"
                                     min="0"
                                     style={{
@@ -886,8 +872,8 @@ const CommonCodeManagement = () => {
                                 <label className="checkbox-label">
                                     <input
                                         type="checkbox"
-                                        checked={newCodeData.isActive}
-                                        onChange={(e) => setNewCodeData({...newCodeData, isActive: e.target.checked})}
+                                        checked={ newCodeData.isActive }
+                                        onChange={ (e) => setNewCodeData({...newCodeData, isActive: e.target.checked })}
                                     />
                                     <span>활성 상태</span>
                                 </label>
@@ -897,16 +883,16 @@ const CommonCodeManagement = () => {
                             <button 
                                 type="button" 
                                 className="btn btn-outline-secondary"
-                                onClick={handleCancelForm}
+                                onClick={ handleCancelForm }
                             >
                                 취소
                             </button>
                             <button 
                                 type="submit" 
                                 className="btn btn-primary"
-                                disabled={loading}
+                                disabled={ loading }
                             >
-                                {editingCode ? '수정' : '추가'}
+                                { editingCode ? '수정' : '추가' }
                             </button>
                         </div>
                     </form>
@@ -923,11 +909,7 @@ const CommonCodeManagement = () => {
                         <p>새로운 코드를 추가해보세요.</p>
                     </div>
                 ) : (
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                        gap: '16px'
-                    }}>
+                    <div className="mg-v2-code-grid">
                         {groupCodes.map((code) => (
                             <div 
                                 key={code.id} 
@@ -940,20 +922,10 @@ const CommonCodeManagement = () => {
                                     opacity: !code.isActive ? 0.6 : 1
                                 }}
                             >
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    marginBottom: '12px'
-                                }}>
+                                <div className="mg-v2-code-card-header">
                                     <div>
-                                        <h4 style={{
-                                            color: '#2c3e50',
-                                            margin: '0 0 4px 0',
-                                            fontSize: 'var(--font-size-base)',
-                                            fontWeight: '600'
-                                        }}>
-                                            {code.codeLabel}
+                                        <h4 className="mg-v2-code-label">
+                                            { code.codeLabel }
                                         </h4>
                                         <span style={{
                                             color: '#6c757d',
@@ -963,7 +935,7 @@ const CommonCodeManagement = () => {
                                             borderRadius: '4px',
                                             fontFamily: 'monospace'
                                         }}>
-                                            {code.codeValue}
+                                            { code.codeValue }
                                         </span>
                                     </div>
                                     <span style={{
@@ -974,36 +946,21 @@ const CommonCodeManagement = () => {
                                         backgroundColor: code.isActive ? '#d4edda' : '#f8d7da',
                                         color: code.isActive ? '#155724' : '#721c24'
                                     }}>
-                                        {code.isActive ? '활성' : '비활성'}
+                                        { code.isActive ? '활성' : '비활성' }
                                     </span>
                                 </div>
                                 {code.codeDescription && (
-                                    <div style={{ marginBottom: '12px' }}>
-                                        <p style={{
-                                            color: '#6c757d',
-                                            margin: '0',
-                                            fontSize: 'var(--font-size-sm)',
-                                            lineHeight: '1.4'
-                                        }}>
-                                            {code.codeDescription}
+                                    <div className="mg-v2-code-description-container">
+                                        <p className="mg-v2-code-description">
+                                            { code.codeDescription }
                                         </p>
                                     </div>
                                 )}
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between'
-                                }}>
-                                    <span style={{
-                                        color: '#6c757d',
-                                        fontSize: 'var(--font-size-xs)'
-                                    }}>
-                                        정렬: {code.sortOrder}
+                                <div className="mg-v2-code-card-footer">
+                                    <span className="mg-v2-sort-order">
+                                        정렬: { code.sortOrder }
                                     </span>
-                                    <div style={{
-                                        display: 'flex',
-                                        gap: '6px'
-                                    }}>
+                                    <div className="mg-v2-code-actions">
                                         <button 
                                             style={{
                                                 padding: '6px 10px',
@@ -1015,7 +972,7 @@ const CommonCodeManagement = () => {
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s ease'
                                             }}
-                                            onClick={() => handleEditCode(code)}
+                                            onClick={ () => handleEditCode(code) }
                                             title="수정"
                                         >
                                             ✏️
@@ -1031,10 +988,10 @@ const CommonCodeManagement = () => {
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s ease'
                                             }}
-                                            onClick={() => handleToggleStatus(code.id, code.isActive)}
-                                            title={code.isActive ? '비활성화' : '활성화'}
+                                            onClick={ () => handleToggleStatus(code.id, code.isActive) }
+                                            title={ code.isActive ? '비활성화' : '활성화' }
                                         >
-                                            {code.isActive ? '⏸️' : '▶️'}
+                                            { code.isActive ? '⏸️' : '▶️' }
                                         </button>
                                         <button 
                                             style={{
@@ -1047,7 +1004,7 @@ const CommonCodeManagement = () => {
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s ease'
                                             }}
-                                            onClick={() => handleDeleteCode(code.id)}
+                                            onClick={ () => handleDeleteCode(code.id) }
                                             title="삭제"
                                         >
                                             🗑️
@@ -1071,18 +1028,18 @@ const CommonCodeManagement = () => {
             </div>
 
                 <div className="step-indicator">
-                    <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
+                    <div className={ `step ${currentStep === 1 ? 'active' : 'completed' }`}>
                         <div className="step-number">1</div>
                         <div className="step-label">그룹 선택</div>
                     </div>
                     <div className="step-line"></div>
-                    <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
+                    <div className={ `step ${currentStep === 2 ? 'active' : '' }`}>
                         <div className="step-number">2</div>
                         <div className="step-label">코드 관리</div>
                     </div>
                 </div>
 
-                {currentStep === 1 ? renderGroupSelection() : renderCodeManagement()}
+                { currentStep === 1 ? renderGroupSelection() : renderCodeManagement() }
             </div>
         </SimpleLayout>
     );

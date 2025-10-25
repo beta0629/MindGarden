@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import MGButton from '../common/MGButton';
 import { 
     Sparkles, 
     Send, 
@@ -374,25 +375,16 @@ const WellnessManagement = () => {
 
                 {/* 월 선택 */}
                 <div className="wellness-month-selector">
-                    <button 
-                        className="wellness-month-btn"
-                        onClick={() => handleMonthChange(-1)}
-                    >
-                        ◀
-                    </button>
+                    <MGButton variant="primary" className="wellness-month-btn" onClick={() => handleMonthChange(-1)}>◀
+                    </MGButton>
                     <span className="wellness-month-text">
                         {selectedMonth.year}년 {selectedMonth.month}월
                     </span>
-                    <button 
-                        className="wellness-month-btn"
-                        onClick={() => handleMonthChange(1)}
-                        disabled={
+                    <MGButton variant="primary" className="wellness-month-btn" onClick={() => handleMonthChange(1)} disabled={
                             selectedMonth.year === new Date().getFullYear() &&
                             selectedMonth.month === new Date().getMonth() + 1
-                        }
-                    >
-                        ▶
-                    </button>
+                        }>▶
+                    </MGButton>
                 </div>
 
                 {/* 최근 API 사용 로그 */}

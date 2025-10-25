@@ -227,9 +227,12 @@
 .session-extension-modal {
   max-width: 600px;
   width: 90vw;
+  max-height: 90vh;
   border-radius: var(--radius-xl, 16px);
   box-shadow: var(--shadow-2xl, 0 25px 50px -12px rgba(0, 0, 0, 0.25));
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 헤더 스타일 */
@@ -298,6 +301,9 @@
 .session-extension-content {
   padding: var(--spacing-xl, 24px);
   background: var(--background-primary, #ffffff);
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(90vh - 200px);
 }
 
 /* 매칭 정보 섹션 */

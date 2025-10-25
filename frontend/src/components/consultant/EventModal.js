@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import ConfirmModal from '../common/ConfirmModal';
 import MessageSendModal from './MessageSendModal';
 import { apiGet } from '../../utils/ajax';
@@ -369,13 +370,13 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
       <div className="event-modal-content">
         <div className="event-modal-header">
           <h2 className="mg-h3 mg-mb-0">{mode === 'add' ? '새 일정 추가' : '일정 수정'}</h2>
-          <button className="mg-modal-close" onClick={onClose}>×</button>
+          <button className="mg-v2-modal-close" onClick={onClose}>×</button>
         </div>
         
         <form onSubmit={handleSubmit}>
           {/* 상담사 안내 메시지 */}
           {isReadOnly && (
-            <div className="mg-text-sm mg-color-warning mg-mb-md mg-p-sm mg-bg-warning-light mg-radius-md">
+            <div className="mg-v2-text-sm mg-v2-color-warning mg-mb-md mg-p-sm mg-bg-warning-light mg-radius-md">
               ⚠️ 상담사는 일정을 수정할 수 없습니다. 상담일지 작성만 가능합니다.
             </div>
           )}
@@ -385,17 +386,17 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
             <div className="mg-p-md mg-bg-info-light mg-radius-md mg-mb-md">
               {consultationLogStatus.loading ? (
                 <div className="mg-flex mg-align-center mg-gap-sm">
-                  <span className="mg-text-lg">⏳</span>
+                  <span className="mg-v2-text-lg">⏳</span>
                   상담일지 상태 확인 중...
                 </div>
               ) : consultationLogStatus.hasRecord ? (
-                <div className="mg-flex mg-align-center mg-gap-sm mg-color-success">
-                  <span className="mg-text-lg">✅</span>
+                <div className="mg-flex mg-align-center mg-gap-sm mg-v2-color-success">
+                  <span className="mg-v2-text-lg">✅</span>
                   상담일지가 작성되었습니다
                 </div>
               ) : (
-                <div className="mg-flex mg-align-center mg-gap-sm mg-color-warning">
-                  <span className="mg-text-lg">⚠️</span>
+                <div className="mg-flex mg-align-center mg-gap-sm mg-v2-color-warning">
+                  <span className="mg-v2-text-lg">⚠️</span>
                   상담일지를 작성해야 합니다
                 </div>
               )}

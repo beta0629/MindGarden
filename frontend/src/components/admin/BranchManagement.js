@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../constants/api';
@@ -300,13 +302,8 @@ const BranchManagement = () => {
         <div className="branch-management">
             <div className="branch-management-header">
                 <h2>지점 관리</h2>
-                <button 
-                    className="btn-primary" 
-                    onClick={handleCreateClick}
-                    disabled={loading}
-                >
-                    새 지점 추가
-                </button>
+                <MGButton variant="primary" className="btn-primary" onClick={handleCreateClick} disabled={loading}>새 지점 추가
+                </MGButton>
             </div>
 
             {/* 검색 및 필터 */}
@@ -369,7 +366,7 @@ const BranchManagement = () => {
 
             {/* 지점 목록 테이블 */}
             <div className="branch-table-container">
-                <table className="branch-table mg-table">
+                <table className="branch-table mg-v2-table">
                     <thead>
                         <tr>
                             <th onClick={() => handleSort('branchCode')} className="sortable">

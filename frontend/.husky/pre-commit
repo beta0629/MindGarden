@@ -1,0 +1,122 @@
+#!/bin/sh
+
+# MindGarden 디자인 시스템 v2.0 Pre-commit Hook
+# CSS 충돌 방지 및 코드 품질 검증
+
+echo "🔍 MindGarden Pre-commit 검증 시작..."
+
+# 색상 정의
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# 에러 카운터
+ERROR_COUNT=0
+
+# 1. CSS 클래스 검증
+echo "${BLUE}1. CSS 클래스 검증 중...${NC}"
+if [ -f "scripts/validate-css-classes.js" ]; then
+  node scripts/validate-css-classes.js
+  if [ $? -ne 0 ]; then
+    echo "${RED}❌ CSS 클래스 검증 실패${NC}"
+    ERROR_COUNT=$((ERROR_COUNT + 1))
+  else
+    echo "${GREEN}✅ CSS 클래스 검증 통과${NC}"
+  fi
+else
+  echo "${YELLOW}⚠️ CSS 검증 스크립트가 없습니다. 건너뜁니다.${NC}"
+fi
+
+# 2. ESLint 검사
+echo "${BLUE}2. ESLint 검사 중...${NC}"
+if command -v npx >/dev/null 2>&1; then
+  npx eslint src --ext .js,.jsx,.ts,.tsx --max-warnings 0
+  if [ $? -ne 0 ]; then
+    echo "${RED}❌ ESLint 검사 실패${NC}"
+    ERROR_COUNT=$((ERROR_COUNT + 1))
+  else
+    echo "${GREEN}✅ ESLint 검사 통과${NC}"
+  fi
+else
+  echo "${YELLOW}⚠️ npx가 설치되지 않았습니다. ESLint 검사를 건너뜁니다.${NC}"
+fi
+
+# 3. Prettier 포맷 검사
+echo "${BLUE}3. Prettier 포맷 검사 중...${NC}"
+if command -v npx >/dev/null 2>&1; then
+  npx prettier --check src/**/*.{js,jsx,ts,tsx,css,scss,json,md}
+  if [ $? -ne 0 ]; then
+    echo "${RED}❌ Prettier 포맷 검사 실패${NC}"
+    echo "${YELLOW}💡 다음 명령어로 자동 수정: npm run format${NC}"
+    ERROR_COUNT=$((ERROR_COUNT + 1))
+  else
+    echo "${GREEN}✅ Prettier 포맷 검사 통과${NC}"
+  fi
+else
+  echo "${YELLOW}⚠️ npx가 설치되지 않았습니다. Prettier 검사를 건너뜁니다.${NC}"
+fi
+
+# 4. TypeScript 타입 검사 (선택사항)
+echo "${BLUE}4. TypeScript 타입 검사 중...${NC}"
+if [ -f "tsconfig.json" ] && command -v npx >/dev/null 2>&1; then
+  npx tsc --noEmit
+  if [ $? -ne 0 ]; then
+    echo "${RED}❌ TypeScript 타입 검사 실패${NC}"
+    ERROR_COUNT=$((ERROR_COUNT + 1))
+  else
+    echo "${GREEN}✅ TypeScript 타입 검사 통과${NC}"
+  fi
+else
+  echo "${YELLOW}⚠️ TypeScript 설정이 없습니다. 타입 검사를 건너뜁니다.${NC}"
+fi
+
+# 5. 파일 크기 검사
+echo "${BLUE}5. 파일 크기 검사 중...${NC}"
+LARGE_FILES=$(find src -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | xargs wc -l | awk '$1 > 300 {print $2 " (" $1 " lines)"}')
+if [ ! -z "$LARGE_FILES" ]; then
+  echo "${YELLOW}⚠️ 큰 파일 발견:${NC}"
+  echo "$LARGE_FILES"
+  echo "${YELLOW}💡 파일을 더 작은 단위로 분할하는 것을 고려하세요.${NC}"
+fi
+
+# 6. 커밋 메시지 검사
+echo "${BLUE}6. 커밋 메시지 검사 중...${NC}"
+COMMIT_MSG_FILE=$1
+if [ -f "$COMMIT_MSG_FILE" ]; then
+  COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+  
+  # 커밋 메시지 길이 검사
+  if [ ${#COMMIT_MSG} -lt 10 ]; then
+    echo "${RED}❌ 커밋 메시지가 너무 짧습니다 (최소 10자)${NC}"
+    ERROR_COUNT=$((ERROR_COUNT + 1))
+  fi
+  
+  # 금지된 키워드 검사
+  if echo "$COMMIT_MSG" | grep -qi "wip\|temp\|test\|debug"; then
+    echo "${YELLOW}⚠️ 커밋 메시지에 임시 키워드가 포함되어 있습니다:${NC}"
+    echo "$COMMIT_MSG"
+  fi
+  
+  echo "${GREEN}✅ 커밋 메시지 검사 통과${NC}"
+fi
+
+# 결과 출력
+echo ""
+if [ $ERROR_COUNT -eq 0 ]; then
+  echo "${GREEN}🎉 모든 검증을 통과했습니다! 커밋을 진행합니다.${NC}"
+  exit 0
+else
+  echo "${RED}❌ $ERROR_COUNT 개의 검증이 실패했습니다. 커밋을 중단합니다.${NC}"
+  echo ""
+  echo "${YELLOW}💡 해결 방법:${NC}"
+  echo "1. ESLint 오류 수정: npm run lint:fix"
+  echo "2. Prettier 포맷 수정: npm run format"
+  echo "3. CSS 클래스 검증: npm run validate-css"
+  echo "4. TypeScript 오류 수정: npx tsc --noEmit"
+  echo ""
+  echo "${BLUE}🔧 자동 수정 명령어:${NC}"
+  echo "npm run lint:fix && npm run format"
+  exit 1
+fi

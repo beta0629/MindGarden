@@ -66,7 +66,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 16px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--color-bg-secondary);
   flex-shrink: 0;
   background: white;
   position: relative;
@@ -76,7 +76,7 @@
 .modal-title {
   font-size: 18px;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -84,7 +84,7 @@
   background: none;
   border: none;
   font-size: 20px;
-  color: #6c757d;
+  color: var(--color-secondary);
   cursor: pointer;
   padding: 4px;
   border-radius: 50%;
@@ -97,8 +97,8 @@
 }
 
 .modal-close:hover {
-  background: #f8f9fa;
-  color: #495057;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
 }
 
 .modal-body {
@@ -147,8 +147,8 @@
 /* 모달 버튼 영역 */
 .modal-actions {
   padding: 16px 24px;
-  border-top: 1px solid #e9ecef;
-  background: #f8f9fa;
+  border-top: 1px solid var(--color-bg-secondary);
+  background: var(--color-bg-secondary);
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -168,16 +168,16 @@
 }
 
 .modal-actions .btn-primary {
-  background: #007bff;
+  background: var(--color-primary);
   color: white;
 }
 
 .modal-actions .btn-primary:hover {
-  background: #0056b3;
+  background: var(--color-primary-dark);
 }
 
 .modal-actions .btn-secondary {
-  background: #6c757d;
+  background: var(--color-secondary);
   color: white;
 }
 

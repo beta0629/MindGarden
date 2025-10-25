@@ -4,8 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI, apiGet } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
-import { DASHBOARD_API } from '../../constants/api';
-import { API_BASE_URL } from '../../constants/api';
+import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
 import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import '../../styles/main.css';
 import './CommonDashboard.css';
@@ -581,7 +580,7 @@ const CommonDashboard = ({ user: propUser }) => {
         }
         
         // 3. 사용자 정보 가져오기 (위에서 확인한 currentUser 사용)
-        let dashboardUser = currentUser;
+        const dashboardUser = currentUser;
         
         console.log('👤 propUser:', propUser);
         console.log('👤 dashboardUser:', dashboardUser);

@@ -1,0 +1,40 @@
+{
+  "name": "MindGarden ESLint Config",
+  "version": "1.0.0",
+  "description": "MindGarden 디자인 시스템 v2.0을 위한 ESLint 설정",
+  "main": ".eslintrc.js",
+  "scripts": {
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+    "lint:check": "eslint src --ext .js,.jsx,.ts,.tsx --max-warnings 0",
+    "format": "prettier --write src/**/*.{js,jsx,ts,tsx,css,scss,json,md}",
+    "format:check": "prettier --check src/**/*.{js,jsx,ts,tsx,css,scss,json,md}",
+    "validate-css": "node scripts/validate-css-classes.js",
+    "scan-css": "node scripts/scan-css-classes.js",
+    "generate-css-docs": "node scripts/generate-css-docs.js"
+  },
+  "keywords": [
+    "eslint",
+    "prettier",
+    "react",
+    "typescript",
+    "mindgarden",
+    "design-system"
+  ],
+  "author": "MindGarden Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-import": "^2.25.0",
+    "eslint-plugin-jsx-a11y": "^6.5.0",
+    "eslint-plugin-react": "^7.30.0",
+    "eslint-plugin-react-hooks": "^4.4.0",
+    "prettier": "^3.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "typescript": ">=4.0.0"
+  }
+}

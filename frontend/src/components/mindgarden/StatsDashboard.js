@@ -1,4 +1,5 @@
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { Users, Calendar, CheckCircle, TrendingUp } from 'lucide-react';
 
 const StatsDashboard = () => {
@@ -34,8 +35,8 @@ const StatsDashboard = () => {
   ];
 
   return (
-    <section className="mg-section">
-      <h2 className="mg-h2 mg-text-center mg-mb-lg">통계 현황</h2>
+    <section className="mg-v2-section">
+      <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">통계 현황</h2>
       
       <div className="mg-stats-grid">
         {stats.map((stat, index) => (

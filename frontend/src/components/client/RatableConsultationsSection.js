@@ -169,7 +169,7 @@ const RatableConsultationsSection = () => {
                   </div>
                 </div>
                 <button
-                  className="mg-button mg-button-primary ratable-consultation-item__button"
+                  className="mg-v2-button mg-v2-button-primary ratable-consultation-item__button"
                   onClick={() => handleRateConsultant(schedule)}
                 >
                   <Heart size={16} />

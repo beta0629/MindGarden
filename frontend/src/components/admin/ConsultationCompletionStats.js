@@ -1,10 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import ConsultationCompletionStatsView from '../ui/Statistics/ConsultationCompletionStatsView';
 import { apiGet } from '../../utils/ajax';
 
+/**
+ * 상담 완료 통계 컨테이너 컴포넌트
+ * - 비즈니스 로직만 담당
+ * - 상태 관리, 데이터 로드
+ * - Presentational 컴포넌트에 데이터와 핸들러 전달
+ * 
+ * @version 2.0.0 (Presentational/Container 분리)
+ */
 const ConsultationCompletionStats = () => {
+    // ========== 상태 관리 ==========
     const [statistics, setStatistics] = useState([]);
     const [loading, setLoading] = useState(true);
-    // 현재 월을 기본값으로 설정 (YYYY-MM 형식)
+    const [error, setError] = useState(null);
+    
     const getCurrentPeriod = () => {
         const now = new Date();
         const year = now.getFullYear();
@@ -13,9 +24,8 @@ const ConsultationCompletionStats = () => {
     };
     
     const [selectedPeriod, setSelectedPeriod] = useState(getCurrentPeriod());
-    const [error, setError] = useState(null);
 
-    // 기간 옵션 생성 (최근 12개월)
+    // ========== 유틸리티 함수 ==========
     const generatePeriodOptions = () => {
         const options = [];
         const now = new Date();
@@ -32,49 +42,6 @@ const ConsultationCompletionStats = () => {
         return options;
     };
 
-    const periodOptions = generatePeriodOptions();
-
-    // 통계 데이터 로드
-    const loadStatistics = async (period = '') => {
-        try {
-            setLoading(true);
-            setError(null);
-            
-            const url = period 
-                ? `/api/admin/statistics/consultation-completion?period=${period}`
-                : '/api/admin/statistics/consultation-completion';
-            
-            const response = await apiGet(url);
-            console.log('📊 상담 완료 통계 API 응답:', response);
-            
-            if (response && response.success) {
-                console.log('📊 통계 데이터:', response.data);
-                setStatistics(response.data || []);
-            } else {
-                console.error('❌ API 응답 실패:', response);
-                setError('통계 데이터를 불러오는데 실패했습니다.');
-            }
-        } catch (err) {
-            console.error('상담 완료 건수 통계 로드 실패:', err);
-            setError('통계 데이터를 불러오는데 실패했습니다.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // 컴포넌트 마운트 시 데이터 로드 (현재 기간으로)
-    useEffect(() => {
-        loadStatistics(selectedPeriod);
-    }, []);
-
-    // 기간 변경 핸들러
-    const handlePeriodChange = (event) => {
-        const period = event.target.value;
-        setSelectedPeriod(period);
-        loadStatistics(period);
-    };
-
-    // 등급을 한글로 변환
     const convertGradeToKorean = (grade) => {
         const gradeMap = {
             'CONSULTANT_JUNIOR': '주니어',
@@ -85,7 +52,6 @@ const ConsultationCompletionStats = () => {
         return gradeMap[grade] || grade;
     };
 
-    // 전문분야를 한글로 변환
     const convertSpecialtyToKorean = (specialty) => {
         if (!specialty) return '전문분야 미설정';
         
@@ -115,7 +81,6 @@ const ConsultationCompletionStats = () => {
             'INITIAL': '초기상담'
         };
         
-        // 콤마로 구분된 여러 전문분야 처리
         if (specialty.includes(',')) {
             const specialties = specialty.split(',').map(s => s.trim());
             const koreanSpecialties = specialties.map(s => specialtyMap[s] || s);
@@ -125,292 +90,63 @@ const ConsultationCompletionStats = () => {
         return specialtyMap[specialty] || specialty;
     };
 
-    if (loading) {
-        return (
-            <div className="mg-loading-container">
-                <div className="mg-spinner"></div>
-                <p>상담 완료 건수 통계를 불러오는 중...</p>
-            </div>
-        );
-    }
+    // ========== 데이터 로드 ==========
+    const loadStatistics = async (period = '') => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            const url = period 
+                ? `/api/admin/statistics/consultation-completion?period=${period}`
+                : '/api/admin/statistics/consultation-completion';
+            
+            const response = await apiGet(url);
+            console.log('📊 상담 완료 통계 API 응답:', response);
+            
+            if (response && response.success) {
+                console.log('📊 통계 데이터:', response.data);
+                setStatistics(response.data || []);
+            } else {
+                console.error('❌ API 응답 실패:', response);
+                setError('통계 데이터를 불러오는데 실패했습니다.');
+            }
+        } catch (err) {
+            console.error('상담 완료 건수 통계 로드 실패:', err);
+            setError('통계 데이터를 불러오는데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    if (error) {
-        return (
-            <div className="mg-error-state">
-                <p>{error}</p>
-                <button 
-                    className="mg-button mg-button-danger"
-                    onClick={() => loadStatistics(selectedPeriod)}
-                >
-                    다시 시도
-                </button>
-            </div>
-        );
-    }
+    // ========== 이벤트 핸들러 ==========
+    const handlePeriodChange = (event) => {
+        const period = event.target.value;
+        setSelectedPeriod(period);
+        loadStatistics(period);
+    };
 
+    const handleRetry = () => {
+        loadStatistics(selectedPeriod);
+    };
+
+    // ========== 효과 ==========
+    useEffect(() => {
+        loadStatistics(selectedPeriod);
+    }, []);
+
+    // ========== 렌더링 (Presentational 컴포넌트 사용) ==========
     return (
-        <div className="mg-card">
-            {/* 헤더 */}
-            <div className="mg-card-header">
-                <div className="mg-flex mg-justify-between mg-align-center mg-mb-md">
-                    <h3 className="mg-h3 mg-mb-0">
-                        상담사별 상담 완료 건수
-                    </h3>
-                    <div className="mg-flex mg-align-center mg-gap-sm">
-                        <label className="mg-label mg-text-sm mg-color-text-secondary mg-font-medium">
-                            기간:
-                        </label>
-                        <select
-                            className="mg-select mg-select-sm"
-                            value={selectedPeriod}
-                            onChange={handlePeriodChange}
-                        >
-                            <option value="">전체</option>
-                            {periodOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-                
-            {/* 요약 정보 카드 */}
-            <div className="mg-stats-grid mg-mt-lg">
-                <div className="mg-stat-card mg-text-center">
-                    <div className="mg-stat-icon primary">
-                        👥
-                    </div>
-                    <div className="mg-stat-value mg-color-primary mg-mb-sm">
-                        {statistics.length}
-                    </div>
-                    <div className="mg-stat-label">
-                        총 상담사
-                    </div>
-                </div>
-                
-                <div className="mg-stat-card mg-text-center">
-                    <div className="mg-stat-icon success">
-                        ✅
-                    </div>
-                    <div className="mg-stat-value mg-color-success mg-mb-sm">
-                        {statistics.reduce((sum, stat) => sum + stat.completedCount, 0)}
-                    </div>
-                    <div className="mg-stat-label">
-                        완료 건수
-                    </div>
-                </div>
-                
-                <div className="mg-stat-card mg-text-center">
-                    <div className="mg-stat-icon warning">
-                        📊
-                    </div>
-                    <div style={{ 
-                        fontSize: 'var(--font-size-xxxl)',
-                        fontWeight: 'bold',
-                        color: '#ffc107',
-                        marginBottom: '8px'
-                    }}>
-                        {statistics.length > 0 
-                            ? Math.round(statistics.reduce((sum, stat) => sum + stat.completedCount, 0) / statistics.length)
-                            : 0
-                        }
-                    </div>
-                    <div className="mg-stat-label">
-                        평균 건수
-                    </div>
-                </div>
-            </div>
-            </div>
-
-            {/* 상담사별 통계 카드 그리드 */}
-            <div className="mg-management-grid mg-mt-lg">
-                {statistics.map((stat, index) => (
-                    <div key={stat.consultantId} className="mg-card" style={{ cursor: 'pointer' }}
->
-                        {/* 상담사 헤더 */}
-                        <div className="mg-flex mg-align-center mg-justify-between mg-mb-md">
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px'
-                            }}>
-                                <div style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    backgroundColor: index < 3 ? '#007bff' : '#6c757d',
-                                    borderRadius: '50%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                    fontSize: 'var(--font-size-base)'
-                                }}>
-                                    {index + 1}
-                                </div>
-                                <div>
-                                    <div style={{
-                                        fontSize: 'var(--font-size-lg)',
-                                        fontWeight: '600',
-                                        color: '#495057',
-                                        marginBottom: '4px'
-                                    }}>
-                                        {stat.consultantName}
-                                    </div>
-                                    <div style={{
-                                        fontSize: 'var(--font-size-xs)',
-                                        color: '#6c757d'
-                                    }}>
-                                        {stat.consultantPhone}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/* 등급 배지 */}
-                            <div style={{
-                                padding: '6px 12px',
-                                backgroundColor: stat.grade ? '#e9ecef' : '#f8f9fa',
-                                borderRadius: '20px',
-                                fontSize: 'var(--font-size-xs)',
-                                fontWeight: '500',
-                                color: stat.grade ? '#495057' : '#6c757d'
-                            }}>
-                                {stat.grade ? convertGradeToKorean(stat.grade) : '미설정'}
-                            </div>
-                        </div>
-
-                        {/* 전문분야 */}
-                        <div style={{
-                            marginBottom: '16px'
-                        }}>
-                            <div style={{
-                                fontSize: 'var(--font-size-xs)',
-                                color: '#6c757d',
-                                marginBottom: '6px',
-                                fontWeight: '500'
-                            }}>
-                                전문분야
-                            </div>
-                            <div style={{
-                                fontSize: 'var(--font-size-sm)',
-                                color: '#495057',
-                                lineHeight: '1.4'
-                            }}>
-                                {stat.specialization ? convertSpecialtyToKorean(stat.specialization) : '미설정'}
-                            </div>
-                        </div>
-
-                        {/* 통계 정보 */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr 1fr',
-                            gap: '16px',
-                            padding: '16px',
-                            backgroundColor: '#f8f9fa',
-                            borderRadius: '8px'
-                        }}>
-                            <div style={{ textAlign: 'center' }}>
-                                <div style={{
-                                    fontSize: 'var(--font-size-xxl)',
-                                    fontWeight: 'bold',
-                                    color: '#28a745',
-                                    marginBottom: '4px'
-                                }}>
-                                    {stat.completedCount}
-                                </div>
-                                <div style={{
-                                    fontSize: 'var(--font-size-xs)',
-                                    color: '#6c757d',
-                                    fontWeight: '500'
-                                }}>
-                                    완료 건수
-                                </div>
-                            </div>
-                            
-                            <div style={{ textAlign: 'center' }}>
-                                <div style={{
-                                    fontSize: 'var(--font-size-xxl)',
-                                    fontWeight: 'bold',
-                                    color: '#6c757d',
-                                    marginBottom: '4px'
-                                }}>
-                                    {stat.totalCount}
-                                </div>
-                                <div style={{
-                                    fontSize: 'var(--font-size-xs)',
-                                    color: '#6c757d',
-                                    fontWeight: '500'
-                                }}>
-                                    총 건수
-                                </div>
-                            </div>
-                            
-                            <div style={{ textAlign: 'center' }}>
-                                <div style={{
-                                    fontSize: 'var(--font-size-xxl)',
-                                    fontWeight: 'bold',
-                                    color: stat.completionRate >= 80 ? '#28a745' : 
-                                           stat.completionRate >= 60 ? '#ffc107' : '#dc3545',
-                                    marginBottom: '4px'
-                                }}>
-                                    {stat.completionRate}%
-                                </div>
-                                <div style={{
-                                    fontSize: 'var(--font-size-xs)',
-                                    color: '#6c757d',
-                                    fontWeight: '500'
-                                }}>
-                                    완료율
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {statistics.length === 0 && (
-                <div style={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #dee2e6',
-                    borderRadius: '12px',
-                    padding: '60px 40px',
-                    textAlign: 'center',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    marginTop: '20px'
-                }}>
-                    <div style={{
-                        width: '80px',
-                        height: '80px',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 20px',
-                        fontSize: 'var(--font-size-xxxl)',
-                        color: '#6c757d'
-                    }}>
-                        📊
-                    </div>
-                    <h3 style={{
-                        fontSize: 'var(--font-size-lg)',
-                        fontWeight: '600',
-                        color: '#495057',
-                        marginBottom: '8px'
-                    }}>
-                        상담 완료 건수 데이터가 없습니다
-                    </h3>
-                    <p style={{
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#6c757d',
-                        margin: 0
-                    }}>
-                        상담사들이 상담을 완료하면 여기에 통계가 표시됩니다.
-                    </p>
-                </div>
-            )}
-        </div>
+        <ConsultationCompletionStatsView
+            statistics={statistics}
+            loading={loading}
+            error={error}
+            selectedPeriod={selectedPeriod}
+            periodOptions={generatePeriodOptions()}
+            onPeriodChange={handlePeriodChange}
+            onRetry={handleRetry}
+            convertGradeToKorean={convertGradeToKorean}
+            convertSpecialtyToKorean={convertSpecialtyToKorean}
+        />
     );
 };
 

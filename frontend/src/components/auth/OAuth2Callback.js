@@ -166,6 +166,13 @@ const OAuth2Callback = () => {
           });
           console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
           
+          // sessionManager에도 명시적으로 설정
+          sessionManager.setUser(userInfo, {
+            accessToken: 'oauth2_token',
+            refreshToken: 'oauth2_refresh_token'
+          });
+          console.log('✅ sessionManager에도 사용자 정보 설정 완료');
+          
           // 공통 리다이렉트 함수 사용
           const redirectToDashboard = (userRole) => {
             if (userRole) {

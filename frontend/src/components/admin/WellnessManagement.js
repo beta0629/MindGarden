@@ -103,10 +103,15 @@ const WellnessManagement = () => {
     }, [selectedMonth]);
 
     useEffect(() => {
+        console.log('🔍 웰니스 관리 useEffect 실행:', { isLoggedIn, user: user?.email, selectedMonth });
         if (isLoggedIn && user) {
+            console.log('✅ 로그인 확인됨, loadData 호출');
             loadData();
+        } else {
+            console.log('❌ 로그인 안됨');
         }
-    }, [isLoggedIn, user, loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoggedIn, user?.id, selectedMonth.year, selectedMonth.month]);
 
 
 

@@ -8,6 +8,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { fetchUserPermissions, hasPermission as checkPermission } from '../../utils/permissionUtils';
+import { sessionManager } from '../../utils/sessionManager';
 import '../../styles/mindgarden-design-system.css';
 
 /**
@@ -222,8 +223,11 @@ const SystemNotificationManagement = () => {
     }
   }, [isLoggedIn, permissionsLoading, userPermissions, filterTarget, filterStatus]);
 
-  // 로그인 체크
-  if (!isLoggedIn) {
+  // 로그인 체크 (sessionManager로 직접 확인)
+  const sessionUser = sessionManager.getUser();
+  const sessionIsLoggedIn = sessionManager.isLoggedIn();
+  
+  if (!sessionIsLoggedIn || !sessionUser) {
     return (
       <SimpleLayout title="시스템 공지 관리">
         <div className="mg-v2-card mg-v2-text-center mg-p-xl">

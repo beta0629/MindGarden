@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import MGButton from '../common/MGButton';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -36,15 +36,16 @@ const SystemNotificationManagement = () => {
     expiresAt: ''
   });
 
-  // 권한 체크
-  const hasManagePermission = () => {
+  // 권한 체크 (useCallback으로 메모이제이션)
+  const hasManagePermission = useCallback(() => {
+    const hasPermission = checkPermission(userPermissions, 'SYSTEM_NOTIFICATION_MANAGE');
     console.log('🔍 시스템 공지 관리 권한 체크:', {
-      userPermissions,
-      hasPermission: checkPermission(userPermissions, 'SYSTEM_NOTIFICATION_MANAGE'),
-      user: user?.role
+      userPermissions: userPermissions?.length || 0,
+      hasPermission,
+      user: sessionUser?.role
     });
-    return checkPermission(userPermissions, 'SYSTEM_NOTIFICATION_MANAGE');
-  };
+    return hasPermission;
+  }, [userPermissions, sessionUser]);
 
   // 권한 로드
   useEffect(() => {
@@ -224,11 +225,13 @@ const SystemNotificationManagement = () => {
     }
   };
 
+  // 공지 목록 로드 (권한 로드 완료 후)
   useEffect(() => {
-    if (isLoggedIn && !permissionsLoading && hasManagePermission()) {
+    if (!permissionsLoading && hasManagePermission()) {
+      console.log('✅ 권한 확인 완료, 공지 목록 로드 시작');
       loadNotifications();
     }
-  }, [isLoggedIn, permissionsLoading, userPermissions, filterTarget, filterStatus]);
+  }, [permissionsLoading, userPermissions, filterTarget, filterStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 로그인 체크 (sessionManager로 직접 확인)
   const sessionUser = sessionManager.getUser();

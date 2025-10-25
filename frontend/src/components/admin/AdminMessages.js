@@ -61,10 +61,15 @@ const AdminMessages = () => {
 
   // 데이터 로드
   useEffect(() => {
+    console.log('🔍 메시지 관리 useEffect 실행:', { isLoggedIn, userId: user?.id });
     if (isLoggedIn && user?.id) {
+      console.log('✅ 로그인 확인됨, loadMessages 호출');
       loadMessages();
+    } else {
+      console.log('❌ 로그인 안됨');
     }
-  }, [isLoggedIn, user?.id, loadMessages]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, user?.id]);
 
   // 메시지 필터링
   const filteredMessages = messages.filter(message => {

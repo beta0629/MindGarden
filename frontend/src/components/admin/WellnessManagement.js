@@ -18,7 +18,7 @@ import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
-import sessionManager from '../../utils/sessionManager';
+import { sessionManager } from '../../utils/sessionManager';
 import './WellnessManagement.css';
 
 /**

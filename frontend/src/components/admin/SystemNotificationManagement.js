@@ -36,6 +36,10 @@ const SystemNotificationManagement = () => {
     expiresAt: ''
   });
 
+  // 로그인 체크 (sessionManager로 직접 확인) - 먼저 선언
+  const sessionUser = sessionManager.getUser();
+  const sessionIsLoggedIn = sessionManager.isLoggedIn();
+
   // 권한 체크 (useCallback으로 메모이제이션)
   const hasManagePermission = useCallback(() => {
     const hasPermission = checkPermission(userPermissions, 'SYSTEM_NOTIFICATION_MANAGE');
@@ -233,10 +237,7 @@ const SystemNotificationManagement = () => {
     }
   }, [permissionsLoading, userPermissions, filterTarget, filterStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 로그인 체크 (sessionManager로 직접 확인)
-  const sessionUser = sessionManager.getUser();
-  const sessionIsLoggedIn = sessionManager.isLoggedIn();
-  
+  // 로그인 체크
   if (!sessionIsLoggedIn || !sessionUser) {
     return (
       <SimpleLayout title="시스템 공지 관리">

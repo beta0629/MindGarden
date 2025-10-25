@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ConsultationMessageController {
 
     private final ConsultationMessageService consultationMessageService;
+    private final com.mindgarden.consultation.service.UserService userService;
 
     /**
      * 권한 체크: 관리자 권한 확인
@@ -45,6 +46,27 @@ public class ConsultationMessageController {
         if (user == null) return false;
         String role = user.getRole().name();
         return role.contains("ADMIN") || role.contains("SUPER");
+    }
+
+    /**
+     * 사용자 이름 조회 헬퍼 메서드
+     */
+    private String getUserName(Long userId, String userType) {
+        try {
+            if (userId == null) return "알 수 없음";
+            User user = userService.findById(userId).orElse(null);
+            if (user == null) return "알 수 없음";
+            
+            // 이름이 있으면 이름 반환, 없으면 닉네임 반환
+            String name = user.getName();
+            if (name == null || name.trim().isEmpty()) {
+                name = user.getNickname();
+            }
+            return name != null ? name : "알 수 없음";
+        } catch (Exception e) {
+            log.warn("사용자 이름 조회 실패: userId={}, error={}", userId, e.getMessage());
+            return "알 수 없음";
+        }
     }
 
     /**
@@ -80,11 +102,38 @@ public class ConsultationMessageController {
             // 모든 메시지 조회
             List<ConsultationMessage> messages = consultationMessageService.getAllMessages();
             
-            log.info("✅ 전체 메시지 조회 성공 - 총 {}개", messages.size());
+            // 데이터 변환 (senderName, receiverName 추가)
+            List<Map<String, Object>> messageData = messages.stream()
+                .map(message -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("id", message.getId());
+                    data.put("title", message.getTitle());
+                    data.put("content", message.getContent());
+                    data.put("senderType", message.getSenderType());
+                    data.put("senderId", message.getSenderId());
+                    data.put("senderName", getUserName(message.getSenderId(), message.getSenderType()));
+                    data.put("receiverId", message.getReceiverId());
+                    data.put("receiverName", getUserName(message.getReceiverId(), message.getSenderType().equals("CONSULTANT") ? "CLIENT" : "CONSULTANT"));
+                    data.put("messageType", message.getMessageType());
+                    data.put("status", message.getStatus());
+                    data.put("isImportant", message.getIsImportant());
+                    data.put("isUrgent", message.getIsUrgent());
+                    data.put("isRead", message.getIsRead());
+                    data.put("readAt", message.getReadAt());
+                    data.put("repliedAt", message.getRepliedAt());
+                    data.put("sentAt", message.getSentAt());
+                    data.put("createdAt", message.getCreatedAt());
+                    data.put("consultantId", message.getConsultantId());
+                    data.put("clientId", message.getClientId());
+                    return data;
+                })
+                .collect(Collectors.toList());
+            
+            log.info("✅ 전체 메시지 조회 성공 - 총 {}개", messageData.size());
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "data", messages,
+                "data", messageData,
                 "message", "메시지 목록을 성공적으로 조회했습니다."
             ));
             

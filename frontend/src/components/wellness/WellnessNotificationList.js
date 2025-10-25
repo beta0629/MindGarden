@@ -81,9 +81,17 @@ const WellnessNotificationList = () => {
   // HTML 태그 제거 및 텍스트 추출
   const stripHtml = (html) => {
     if (!html) return '';
-    const tmp = document.createElement('DIV');
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || '';
+    // HTML 태그 제거 (정규식 사용)
+    return html
+      .replace(/<[^>]*>/g, '') // HTML 태그 제거
+      .replace(/&nbsp;/g, ' ') // &nbsp; → 공백
+      .replace(/&lt;/g, '<') // &lt; → <
+      .replace(/&gt;/g, '>') // &gt; → >
+      .replace(/&amp;/g, '&') // &amp; → &
+      .replace(/&quot;/g, '"') // &quot; → "
+      .replace(/&#39;/g, "'") // &#39; → '
+      .replace(/\s+/g, ' ') // 여러 공백을 하나로
+      .trim(); // 앞뒤 공백 제거
   };
 
   if (loading) {

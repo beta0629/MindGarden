@@ -46,6 +46,16 @@ const ClientDashboard = () => {
       sessionUser,
       sessionIsLoggedIn
     });
+    
+    // 세션이 아직 로드되지 않았지만 localStorage에 사용자 정보가 있으면 잠시 대기
+    if (!sessionIsLoggedIn && !sessionUser && storedUser) {
+      console.log('⏳ localStorage에 사용자 정보가 있지만 세션이 아직 로드되지 않음, 1초 대기...');
+      setTimeout(() => {
+        const checkUser = sessionManager.getUser();
+        const checkLoggedIn = sessionManager.isLoggedIn();
+        console.log('🔍 1초 후 재확인:', { checkUser, checkLoggedIn });
+      }, 1000);
+    }
   }, []);
   
   const [currentTime, setCurrentTime] = useState('');

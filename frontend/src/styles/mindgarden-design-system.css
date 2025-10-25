@@ -11714,6 +11714,26 @@ body {
     justify-content: flex-end;
     margin-top: var(--spacing-lg);
     padding-top: var(--spacing-md);
+}
+
+.mg-v2-header-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .mg-v2-header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .mg-v2-header-actions .mg-button {
+        width: 100%;
+    }
+}
+
+.mg-v2-modal-actions {
     border-top: 1px solid var(--color-border-light);
 }
 

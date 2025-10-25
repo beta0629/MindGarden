@@ -18,6 +18,7 @@ import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
+import sessionManager from '../../utils/sessionManager';
 import './WellnessManagement.css';
 
 /**
@@ -103,16 +104,18 @@ const WellnessManagement = () => {
     }, [selectedMonth]);
 
     useEffect(() => {
-        console.log('🔍 웰니스 관리 useEffect 실행:', { isLoggedIn, user: user?.email, selectedMonth });
-        
-        if (!isLoggedIn || !user) {
-            console.log('❌ 로그인 안됨');
-            return;
-        }
-        
-        console.log('✅ 로그인 확인됨, loadData 호출');
+        console.log('🔍 웰니스 관리 useEffect 실행:', { isLoggedIn, userId: user?.id, selectedMonth });
         
         const loadDataAsync = async () => {
+            // sessionManager에서 직접 사용자 확인
+            const sessionUser = sessionManager.getUser();
+            if (!sessionUser?.id) {
+                console.log('❌ sessionManager에 사용자 정보 없음');
+                return;
+            }
+            
+            console.log('✅ 사용자 확인됨, 데이터 로드 시작');
+            
             try {
                 setLoading(true);
                 console.log('📊 웰니스 관리 데이터 로드 시작');
@@ -161,7 +164,7 @@ const WellnessManagement = () => {
         };
         
         loadDataAsync();
-    }, [isLoggedIn, user, selectedMonth.year, selectedMonth.month]);
+    }, [user?.id, selectedMonth.year, selectedMonth.month]);
 
 
 
@@ -289,49 +292,53 @@ const WellnessManagement = () => {
 
     return (
         <SimpleLayout>
-            <div className="wellness-management">
+            <div className="mg-v2-container">
                 {/* 헤더 */}
-                <div className="wellness-header">
-                    <div className="wellness-header-content">
-                        <div className="wellness-header-icon">
-                            <Sparkles size={32} />
+                <div className="mg-v2-section">
+                    <div className="mg-v2-dashboard-header">
+                        <div className="mg-v2-dashboard-header-content">
+                            <div className="mg-v2-dashboard-header-left">
+                                <Sparkles size={32} />
+                                <div>
+                                    <h1 className="mg-v2-dashboard-title">웰니스 알림 관리</h1>
+                                    <p className="mg-v2-dashboard-subtitle">AI 기반 자동 웰니스 컨텐츠 생성 및 발송 관리</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="wellness-header-text">
-                            <h1 className="wellness-title">웰니스 알림 관리</h1>
-                            <p className="wellness-subtitle">AI 기반 자동 웰니스 컨텐츠 생성 및 발송 관리</p>
+                        <div className="mg-v2-header-actions">
+                            <MGButton 
+                                variant="outline"
+                                size="small"
+                                onClick={handleExchangeRateRefresh}
+                                disabled={refreshing}
+                            >
+                                <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
+                                환율 새로고침
+                            </MGButton>
+                            <MGButton 
+                                variant="outline"
+                                size="small"
+                                onClick={handleRefresh}
+                                disabled={refreshing}
+                            >
+                                <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
+                                새로고침
+                            </MGButton>
+                            <MGButton 
+                                variant="primary"
+                                size="small"
+                                onClick={handleTestSend}
+                                disabled={sending}
+                            >
+                                <Send size={18} />
+                                {sending ? '발송 중...' : '테스트 발송'}
+                            </MGButton>
                         </div>
-                    </div>
-                    <div className="wellness-header-actions">
-                        <button 
-                            className="wellness-btn wellness-btn--secondary"
-                            onClick={handleExchangeRateRefresh}
-                            disabled={refreshing}
-                            title="환율 새로고침"
-                        >
-                            <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
-                            <span>환율 새로고침</span>
-                        </button>
-                        <button 
-                            className="wellness-btn wellness-btn--secondary"
-                            onClick={handleRefresh}
-                            disabled={refreshing}
-                        >
-                            <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
-                            <span>새로고침</span>
-                        </button>
-                        <button 
-                            className="wellness-btn wellness-btn--primary"
-                            onClick={handleTestSend}
-                            disabled={sending}
-                        >
-                            <Send size={18} />
-                            <span>{sending ? '발송 중...' : '테스트 발송'}</span>
-                        </button>
                     </div>
                 </div>
 
                 {/* 통계 카드 */}
-                <div className="wellness-stats-grid">
+                <div className="mg-v2-stats-grid">
                     <div className="wellness-stat-card wellness-stat-card--cost">
                         <div className="wellness-stat-icon">
                             <DollarSign size={24} />

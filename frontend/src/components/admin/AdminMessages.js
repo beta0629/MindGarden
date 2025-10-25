@@ -61,15 +61,27 @@ const AdminMessages = () => {
 
   // 데이터 로드
   useEffect(() => {
-    console.log('🔍 메시지 관리 useEffect 실행:', { isLoggedIn, userId: user?.id });
+    console.log('🔍 메시지 관리 useEffect 실행:', { 
+      isLoggedIn, 
+      userId: user?.id, 
+      sessionLoading,
+      userEmail: user?.email 
+    });
+    
+    // sessionLoading 중이면 대기
+    if (sessionLoading) {
+      console.log('⏳ 세션 로딩 중...');
+      return;
+    }
+    
     if (isLoggedIn && user?.id) {
       console.log('✅ 로그인 확인됨, loadMessages 호출');
       loadMessages();
     } else {
-      console.log('❌ 로그인 안됨');
+      console.log('❌ 로그인 안됨 - isLoggedIn:', isLoggedIn, 'userId:', user?.id);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, user?.id]);
+  }, [isLoggedIn, user?.id, sessionLoading]);
 
   // 메시지 필터링
   const filteredMessages = messages.filter(message => {

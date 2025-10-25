@@ -225,10 +225,21 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             log.debug("권한 시스템 초기화 상태 확인: 권한={}개, 역할권한={}개", permissionCount, rolePermissionCount);
             
             // 최소한의 권한과 역할권한이 있어야 초기화된 것으로 간주
-            return permissionCount > 10 && rolePermissionCount > 20;
+            // 추가: 특정 권한이 존재하는지도 확인 (더 정확한 판단)
+            boolean hasSpecificPermission = permissionRepository.existsByPermissionCode("SYSTEM_NOTIFICATION_MANAGE");
+            
+            boolean initialized = permissionCount > 10 && rolePermissionCount > 20;
+            
+            if (initialized) {
+                log.info("✅ 권한 시스템이 이미 초기화되어 있음 (권한={}개, 역할권한={}개, 시스템공지권한={})", 
+                    permissionCount, rolePermissionCount, hasSpecificPermission);
+            }
+            
+            return initialized;
             
         } catch (Exception e) {
             log.error("권한 시스템 초기화 상태 확인 중 오류", e);
+            // 오류 발생 시 안전하게 초기화 진행
             return false;
         }
     }

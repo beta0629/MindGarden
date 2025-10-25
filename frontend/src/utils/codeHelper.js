@@ -59,7 +59,7 @@ export const getCodeGroupKoreanName = async (groupName) => {
         }
         
         // 캐시에 없으면 API 호출
-        const response = await apiGet(`/api/common-codes/group/${groupName}`);
+        const response = await apiGet(`/api/common-codes/${groupName}`);
         if (response && response.length > 0) {
             // 첫 번째 코드의 koreanName 반환 (그룹명으로 사용)
             return response[0].koreanName || groupName;
@@ -84,7 +84,7 @@ export const getCodeGroupIcon = async (groupName) => {
             }
         }
         
-        const response = await apiGet(`/api/common-codes/group/${groupName}`);
+        const response = await apiGet(`/api/common-codes/${groupName}`);
         if (response && response.length > 0) {
             // 첫 번째 코드의 icon 반환
             return response[0].icon || '📋';
@@ -109,7 +109,7 @@ export const getCodeGroupColor = async (groupName) => {
             }
         }
         
-        const response = await apiGet(`/api/common-codes/group/${groupName}`);
+        const response = await apiGet(`/api/common-codes/${groupName}`);
         if (response && response.length > 0) {
             // 첫 번째 코드의 colorCode 반환
             return response[0].colorCode || '#6c757d';
@@ -123,11 +123,58 @@ export const getCodeGroupColor = async (groupName) => {
 };
 
 /**
+ * 상태별 색상 조회 (동기 버전 - fallback 사용)
+ */
+export const getStatusColorSync = (codeValue) => {
+    if (!codeValue) {
+        return '#6b7280';
+    }
+    
+    // 기본 색상 매칭 (fallback) - 확장된 매칭
+    const defaultColorMap = {
+        // 스케줄 상태
+        'AVAILABLE': '#e5e7eb',
+        'BOOKED': '#3b82f6',
+        'CONFIRMED': '#8b5cf6',
+        'IN_PROGRESS': '#f59e0b',
+        'COMPLETED': '#10b981',
+        'CANCELLED': '#ef4444',
+        'BLOCKED': '#6b7280',
+        'UNDER_REVIEW': '#f97316',
+        'VACATION': '#06b6d4',
+        'NO_SHOW': '#dc2626',
+        'MAINTENANCE': '#6b7280',
+        
+        // 매칭 상태
+        'PENDING_PAYMENT': '#ffc107',
+        'PAYMENT_CONFIRMED': '#17a2b8',
+        'ACTIVE': '#28a745',
+        'INACTIVE': '#6c757d',
+        'SUSPENDED': '#fd7e14',
+        'TERMINATED': '#dc3545',
+        'SESSIONS_EXHAUSTED': '#6f42c1',
+        
+        // 사용자 상태
+        'PENDING': '#6b7280',
+        'APPROVED': '#10b981',
+        'REJECTED': '#ef4444',
+        'PAYMENT_PENDING': '#ffc107',
+        'PAYMENT_REJECTED': '#dc3545',
+        
+        // 기타
+        'true': '#10b981',
+        'false': '#ef4444'
+    };
+    
+    return defaultColorMap[codeValue] || '#6b7280';
+};
+
+/**
  * 상태별 색상 조회 (동적)
  */
 export const getStatusColor = async (codeValue, groupName) => {
     try {
-        const response = await apiGet(`/api/common-codes/group/${groupName}`);
+        const response = await apiGet(`/api/common-codes/${groupName}`);
         if (response && response.length > 0) {
             // 정확한 매칭 먼저 시도
             let code = response.find(c => c.codeValue === codeValue);
@@ -199,7 +246,7 @@ export const getStatusColor = async (codeValue, groupName) => {
  */
 export const getStatusIcon = async (codeValue, groupName) => {
     try {
-        const response = await apiGet(`/api/common-codes/group/${groupName}`);
+        const response = await apiGet(`/api/common-codes/${groupName}`);
         if (response && response.length > 0) {
             // 정확한 매칭 먼저 시도
             let code = response.find(c => c.codeValue === codeValue);
@@ -271,7 +318,7 @@ export const getStatusIcon = async (codeValue, groupName) => {
  */
 export const getCodeGroupDisplayOptions = async (groupName) => {
     try {
-        const response = await apiGet(`/api/common-codes/group/${groupName}`);
+        const response = await apiGet(`/api/common-codes/${groupName}`);
         if (response.success && response.data) {
             return response.data;
         }
@@ -321,7 +368,7 @@ export const getCodeGroupIconSync = (groupName) => {
  */
 export const getUserStatusKoreanName = async (status) => {
     try {
-        const response = await apiGet(`/api/common-codes/group/STATUS`);
+        const response = await apiGet(`/api/common-codes/STATUS`);
         if (response.success && response.data && response.data.codes) {
             const code = response.data.codes.find(c => c.codeValue === status);
             if (code && code.codeLabel) {
@@ -351,11 +398,29 @@ export const getUserStatusKoreanName = async (status) => {
 };
 
 /**
+ * 사용자 상태 한글명 조회 (동기 버전 - 기본값만 사용)
+ */
+export const getUserStatusKoreanNameSync = (status) => {
+    const defaultStatusMap = {
+        'ACTIVE': '활성',
+        'INACTIVE': '비활성',
+        'PENDING': '대기',
+        'SUSPENDED': '정지',
+        'DELETED': '삭제됨',
+        'PENDING_APPROVAL': '승인대기',
+        'APPROVED': '승인됨',
+        'REJECTED': '거부됨'
+    };
+    
+    return defaultStatusMap[status] || status;
+};
+
+/**
  * 사용자 등급 한글명 조회 (동적)
  */
 export const getUserGradeKoreanName = async (grade) => {
     try {
-        const response = await apiGet(`/api/admin/common-codes/group/USER_GRADE/display-options`);
+        const response = await apiGet(`/api/admin/common-codes/USER_GRADE/display-options`);
         if (response.success && response.data && response.data.codes) {
             const code = response.data.codes.find(c => c.codeValue === grade);
             if (code && code.codeLabel) {
@@ -387,11 +452,34 @@ export const getUserGradeKoreanName = async (grade) => {
 };
 
 /**
+ * 사용자 등급 한글명 조회 (동기 버전 - 기본값만 사용)
+ */
+export const getUserGradeKoreanNameSync = (grade) => {
+    const defaultGradeMap = {
+        'CLIENT_BRONZE': '브론즈',
+        'CLIENT_SILVER': '실버',
+        'CLIENT_GOLD': '골드',
+        'CLIENT_PLATINUM': '플래티넘',
+        'CLIENT_DIAMOND': '다이아몬드',
+        'CONSULTANT_JUNIOR': '주니어',
+        'CONSULTANT_SENIOR': '시니어',
+        'CONSULTANT_EXPERT': '전문가',
+        'ADMIN': '관리자',
+        'BRANCH_SUPER_ADMIN': '수퍼관리자',
+        'HQ_ADMIN': '본사 관리자',
+        'SUPER_HQ_ADMIN': '본사 수퍼 관리자',
+        'HQ_MASTER': '본사 총관리자'
+    };
+    
+    return defaultGradeMap[grade] || grade || '브론즈';
+};
+
+/**
  * 사용자 등급 아이콘 조회 (동적)
  */
 export const getUserGradeIcon = async (grade) => {
     try {
-        const response = await apiGet(`/api/admin/common-codes/group/USER_GRADE/display-options`);
+        const response = await apiGet(`/api/admin/common-codes/USER_GRADE/display-options`);
         if (response.success && response.data && response.data.codes) {
             const code = response.data.codes.find(c => c.codeValue === grade);
             if (code && code.icon) {
@@ -423,11 +511,34 @@ export const getUserGradeIcon = async (grade) => {
 };
 
 /**
+ * 사용자 등급 아이콘 조회 (동기 버전 - 기본값만 사용)
+ */
+export const getUserGradeIconSync = (grade) => {
+    const defaultGradeIconMap = {
+        'CLIENT_BRONZE': '🥉',
+        'CLIENT_SILVER': '🥈',
+        'CLIENT_GOLD': '🥇',
+        'CLIENT_PLATINUM': '💎',
+        'CLIENT_DIAMOND': '💠',
+        'CONSULTANT_JUNIOR': '⭐',
+        'CONSULTANT_SENIOR': '⭐⭐',
+        'CONSULTANT_EXPERT': '⭐⭐⭐',
+        'ADMIN': '👑',
+        'BRANCH_SUPER_ADMIN': '👑👑',
+        'HQ_ADMIN': '🏢',
+        'SUPER_HQ_ADMIN': '🏢👑',
+        'HQ_MASTER': '👑🏢'
+    };
+    
+    return defaultGradeIconMap[grade] || '👤';
+};
+
+/**
  * 매칭 상태 한글명 조회 (동적)
  */
 export const getMappingStatusKoreanName = async (status) => {
     try {
-        const response = await apiGet(`/api/common-codes/group/MAPPING_STATUS`);
+        const response = await apiGet(`/api/common-codes/MAPPING_STATUS`);
         if (response && response.length > 0) {
             // 정확한 매칭 먼저 시도
             let code = response.find(c => c.codeValue === status);
@@ -523,7 +634,7 @@ export const getSpecialtyKoreanNames = (codes) => {
  */
 export const getSpecialtyFromCommonCode = async (codeValue) => {
     try {
-        const response = await apiGet(`/api/common-codes/group/SPECIALTY`);
+        const response = await apiGet(`/api/common-codes/SPECIALTY`);
         if (response && response.length > 0) {
             const code = response.find(c => c.codeValue === codeValue);
             if (code) {

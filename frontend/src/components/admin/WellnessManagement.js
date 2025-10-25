@@ -304,35 +304,35 @@ const WellnessManagement = () => {
                                     <p className="mg-v2-dashboard-subtitle">AI 기반 자동 웰니스 컨텐츠 생성 및 발송 관리</p>
                                 </div>
                             </div>
-                        </div>
-                        <div className="mg-v2-header-actions">
-                            <MGButton 
-                                variant="outline"
-                                size="small"
-                                onClick={handleExchangeRateRefresh}
-                                disabled={refreshing}
-                            >
-                                <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
-                                환율 새로고침
-                            </MGButton>
-                            <MGButton 
-                                variant="outline"
-                                size="small"
-                                onClick={handleRefresh}
-                                disabled={refreshing}
-                            >
-                                <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
-                                새로고침
-                            </MGButton>
-                            <MGButton 
-                                variant="primary"
-                                size="small"
-                                onClick={handleTestSend}
-                                disabled={sending}
-                            >
-                                <Send size={18} />
-                                {sending ? '발송 중...' : '테스트 발송'}
-                            </MGButton>
+                            <div className="mg-v2-header-actions">
+                                <MGButton 
+                                    variant="outline"
+                                    size="small"
+                                    onClick={handleExchangeRateRefresh}
+                                    disabled={refreshing}
+                                >
+                                    <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
+                                    환율 새로고침
+                                </MGButton>
+                                <MGButton 
+                                    variant="outline"
+                                    size="small"
+                                    onClick={handleRefresh}
+                                    disabled={refreshing}
+                                >
+                                    <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
+                                    새로고침
+                                </MGButton>
+                                <MGButton 
+                                    variant="primary"
+                                    size="small"
+                                    onClick={handleTestSend}
+                                    disabled={sending}
+                                >
+                                    <Send size={18} />
+                                    {sending ? '발송 중...' : '테스트 발송'}
+                                </MGButton>
+                            </div>
                         </div>
                     </div>
                 </div>

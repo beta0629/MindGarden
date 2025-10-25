@@ -11723,13 +11723,21 @@ body {
 }
 
 @media (max-width: 768px) {
-    .mg-v2-header-actions {
+    .mg-v2-dashboard-header-content {
         flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+    
+    .mg-v2-header-actions {
         width: 100%;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
     }
     
     .mg-v2-header-actions .mg-button {
-        width: 100%;
+        flex: 1;
+        min-width: calc(50% - var(--spacing-sm));
     }
 }
 

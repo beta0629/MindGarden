@@ -39,24 +39,30 @@ const ClientDashboard = () => {
   
   // 세션 재확인 (SNS 로그인 시 세션이 로드되지 않는 경우)
   useEffect(() => {
-    // 세션이 아직 로드되지 않았을 때 세션 재확인
-    if (!sessionIsLoggedIn && !sessionUser) {
-      console.log('⏳ 세션이 로드되지 않음, 세션 재확인 시작...');
-      
-      // 먼저 localStorage에 사용자 정보가 있는지 확인
+    // 컴포넌트가 마운트된 후 한 번만 실행
+    let isMounted = true;
+    
+    const checkAndRestoreSession = async () => {
+      // localStorage에 사용자 정보가 있는지 확인
       const storedUser = localStorage.getItem('userInfo');
+      
       if (storedUser) {
         console.log('📦 localStorage에서 사용자 정보 발견, 세션 복원 시도...');
         try {
           const userInfo = JSON.parse(storedUser);
           console.log('✅ localStorage 사용자 정보:', userInfo);
+          
           // sessionManager에 사용자 정보 설정
           sessionManager.setUser(userInfo, {
             accessToken: userInfo.accessToken || 'local_token',
             refreshToken: userInfo.refreshToken || 'local_refresh_token'
           });
-          // 페이지 새로고침하여 세션 반영
-          window.location.reload();
+          
+          // 컴포넌트가 아직 마운트되어 있으면 새로고침
+          if (isMounted) {
+            console.log('🔄 세션 복원 완료, 페이지 새로고침...');
+            window.location.reload();
+          }
           return;
         } catch (error) {
           console.error('❌ localStorage 사용자 정보 파싱 실패:', error);
@@ -64,47 +70,69 @@ const ClientDashboard = () => {
       }
       
       // localStorage에 정보가 없으면 서버에서 세션 확인
-      const checkSession = async () => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
-            credentials: 'include',
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.user) {
-              console.log('✅ 세션 재확인 성공:', result.user);
-              // sessionManager에 사용자 정보 설정
-              sessionManager.setUser(result.user, {
-                accessToken: result.accessToken,
-                refreshToken: result.refreshToken
-              });
-              // 페이지 새로고침하여 세션 반영
+      try {
+        console.log('🌐 서버에서 세션 확인 중...');
+        const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+          credentials: 'include',
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.user) {
+            console.log('✅ 서버 세션 확인 성공:', result.user);
+            
+            // sessionManager에 사용자 정보 설정
+            sessionManager.setUser(result.user, {
+              accessToken: result.accessToken,
+              refreshToken: result.refreshToken
+            });
+            
+            // 컴포넌트가 아직 마운트되어 있으면 새로고침
+            if (isMounted) {
+              console.log('🔄 세션 복원 완료, 페이지 새로고침...');
               window.location.reload();
-            } else {
-              console.log('❌ 세션 없음, 로그인 페이지로 이동');
-              // 세션이 없으면 로그인 페이지로 이동
-              window.location.href = '/login';
             }
           } else {
-            console.log('❌ 세션 확인 실패, 로그인 페이지로 이동');
-            // 세션 확인 실패 시 로그인 페이지로 이동
+            console.log('⚠️ 서버에 세션 없음, 로그인 페이지로 이동...');
+            // 세션이 없으면 로그인 페이지로 이동
+            if (isMounted) {
+              window.location.href = '/login';
+            }
+          }
+        } else {
+          console.log('⚠️ 서버 세션 확인 실패, 로그인 페이지로 이동...');
+          // 세션 확인 실패 시 로그인 페이지로 이동
+          if (isMounted) {
             window.location.href = '/login';
           }
-        } catch (error) {
-          console.error('❌ 세션 재확인 실패:', error);
-          // 오류 발생 시 로그인 페이지로 이동
-          window.location.href = '/login';
         }
-      };
+      } catch (error) {
+        console.error('❌ 세션 재확인 실패:', error);
+        // 오류 발생 시에도 로그인 페이지로 이동하지 않고 대기
+        console.log('⏳ 세션 재확인 대기 중...');
+      }
+    };
+    
+    // 세션이 아직 로드되지 않았을 때만 세션 재확인
+    if (!sessionIsLoggedIn && !sessionUser) {
+      console.log('⏳ 세션이 로드되지 않음, 세션 재확인 시작...');
       
-      // 1초 대기 후 세션 확인 (백엔드 리다이렉트 완료 대기)
-      setTimeout(() => {
-        checkSession();
-      }, 1000);
+      // 약간의 지연 후 세션 확인 (백엔드 리다이렉트 완료 대기)
+      const timer = setTimeout(() => {
+        checkAndRestoreSession();
+      }, 500);
+      
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+      };
     }
+    
+    return () => {
+      isMounted = false;
+    };
   }, [sessionIsLoggedIn, sessionUser]);
   
   const [currentTime, setCurrentTime] = useState('');

@@ -49,10 +49,15 @@ const SystemNotificationManagement = () => {
   // 권한 로드
   useEffect(() => {
     const loadPermissions = async () => {
-      if (isLoggedIn) {
+      // sessionManager를 통해 직접 사용자 확인
+      const currentUser = sessionManager.getUser();
+      const currentIsLoggedIn = sessionManager.isLoggedIn();
+      
+      if (currentIsLoggedIn && currentUser) {
         setPermissionsLoading(true);
         try {
-          await fetchUserPermissions(setUserPermissions);
+          const permissions = await fetchUserPermissions(setUserPermissions);
+          console.log('✅ SystemNotificationManagement 권한 로드 완료:', permissions?.length || 0, '개');
         } catch (error) {
           console.error('권한 로드 오류:', error);
         } finally {
@@ -62,8 +67,10 @@ const SystemNotificationManagement = () => {
         setPermissionsLoading(false);
       }
     };
+    
+    // 즉시 실행
     loadPermissions();
-  }, [isLoggedIn]);
+  }, []); // 빈 배열 - 마운트 시에만 실행
 
   // 공지 목록 로드
   const loadNotifications = async () => {

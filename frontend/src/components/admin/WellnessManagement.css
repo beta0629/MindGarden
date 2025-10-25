@@ -119,6 +119,14 @@
     padding: var(--spacing-md);
 }
 
+/* 월 선택 */
+.wellness-month-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+}
+
 .wellness-stat-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);

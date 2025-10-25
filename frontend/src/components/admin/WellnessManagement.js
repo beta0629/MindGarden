@@ -339,73 +339,57 @@ const WellnessManagement = () => {
 
                 {/* 통계 카드 */}
                 <div className="mg-v2-stats-grid">
-                    <div className="mg-v2-card wellness-stat-card">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
-                            <DollarSign size={20} />
+                    <div className="mg-v2-stat-card">
+                        <div className="mg-v2-stat-icon">
+                            <DollarSign size={24} />
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <p className="mg-v2-text-sm" style={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}>이번 달 비용</p>
-                            <p className="mg-v2-h3" style={{ marginBottom: '4px' }}>
-                                {stats.totalCostDisplay || `$${(stats.totalCost || 0).toFixed(4)}`}
-                            </p>
-                            <p className="mg-v2-text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                        <div className="mg-v2-stat-content">
+                            <div className="mg-v2-stat-value">{stats.totalCostDisplay || `$${(stats.totalCost || 0).toFixed(4)}`}</div>
+                            <div className="mg-v2-stat-label">이번 달 비용</div>
+                            <div className="mg-v2-stat-description">
                                 {selectedMonth.year}년 {selectedMonth.month}월
-                                {stats.exchangeRateDisplay && (
-                                    <span> (환율: {stats.exchangeRateDisplay})</span>
-                                )}
-                            </p>
+                                {stats.exchangeRateDisplay && ` (환율: ${stats.exchangeRateDisplay})`}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="mg-v2-card wellness-stat-card">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
-                            <Database size={20} />
+                    <div className="mg-v2-stat-card">
+                        <div className="mg-v2-stat-icon">
+                            <Database size={24} />
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <p className="mg-v2-text-sm" style={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}>사용 토큰</p>
-                            <p className="mg-v2-h3" style={{ marginBottom: '4px' }}>
-                                {(stats.totalTokens || 0).toLocaleString()}
-                            </p>
-                            <p className="mg-v2-text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                                총 토큰 사용량
-                            </p>
+                        <div className="mg-v2-stat-content">
+                            <div className="mg-v2-stat-value">{(stats.totalTokens || 0).toLocaleString()}</div>
+                            <div className="mg-v2-stat-label">사용 토큰</div>
+                            <div className="mg-v2-stat-description">총 토큰 사용량</div>
                         </div>
                     </div>
 
-                    <div className="mg-v2-card wellness-stat-card">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
-                            <TrendingUp size={20} />
+                    <div className="mg-v2-stat-card">
+                        <div className="mg-v2-stat-icon">
+                            <TrendingUp size={24} />
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <p className="mg-v2-text-sm" style={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}>API 호출</p>
-                            <p className="mg-v2-h3" style={{ marginBottom: '4px' }}>
-                                {(stats.totalRequests || 0).toLocaleString()}
-                            </p>
-                            <p className="mg-v2-text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                                이번 달 총 호출 수
-                            </p>
+                        <div className="mg-v2-stat-content">
+                            <div className="mg-v2-stat-value">{(stats.totalRequests || 0).toLocaleString()}</div>
+                            <div className="mg-v2-stat-label">API 호출</div>
+                            <div className="mg-v2-stat-description">이번 달 총 호출 수</div>
                         </div>
                     </div>
 
-                    <div className="mg-v2-card wellness-stat-card">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
-                            <BarChart3 size={20} />
+                    <div className="mg-v2-stat-card">
+                        <div className="mg-v2-stat-icon">
+                            <BarChart3 size={24} />
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <p className="mg-v2-text-sm" style={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}>템플릿 수</p>
-                            <p className="mg-v2-h3" style={{ marginBottom: '4px' }}>
-                                {templates.length}
-                            </p>
-                            <p className="mg-v2-text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                                활성화된 템플릿
-                            </p>
+                        <div className="mg-v2-stat-content">
+                            <div className="mg-v2-stat-value">{templates.length}</div>
+                            <div className="mg-v2-stat-label">템플릿 수</div>
+                            <div className="mg-v2-stat-description">활성화된 템플릿</div>
                         </div>
                     </div>
                 </div>
 
                 {/* 월 선택 */}
                 <div className="mg-v2-section">
-                    <div className="mg-v2-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--spacing-md)' }}>
+                    <div className="mg-v2-card wellness-month-selector">
                         <MGButton variant="primary" size="small" onClick={() => handleMonthChange(-1)}>◀
                         </MGButton>
                         <span className="mg-v2-h2">

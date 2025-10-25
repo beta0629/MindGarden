@@ -105,50 +105,8 @@ const ClientDashboard = () => {
         }
       }
       
-      // localStorage에 정보가 없으면 서버에서 세션 확인
-      try {
-        console.log('🌐 서버에서 세션 확인 중...');
-        const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
-          credentials: 'include',
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.user) {
-            console.log('✅ 서버 세션 확인 성공:', result.user);
-            
-            // sessionManager에 사용자 정보 설정
-            sessionManager.setUser(result.user, {
-              accessToken: result.accessToken,
-              refreshToken: result.refreshToken
-            });
-            
-            // 컴포넌트가 아직 마운트되어 있으면 새로고침
-            if (isMounted) {
-              console.log('🔄 세션 복원 완료, 페이지 새로고침...');
-              window.location.reload();
-            }
-          } else {
-            console.log('⚠️ 서버에 세션 없음, 로그인 페이지로 이동...');
-            // 세션이 없으면 로그인 페이지로 이동
-            if (isMounted) {
-              window.location.href = '/login';
-            }
-          }
-        } else {
-          console.log('⚠️ 서버 세션 확인 실패, 로그인 페이지로 이동...');
-          // 세션 확인 실패 시 로그인 페이지로 이동
-          if (isMounted) {
-            window.location.href = '/login';
-          }
-        }
-      } catch (error) {
-        console.error('❌ 세션 재확인 실패:', error);
-        // 오류 발생 시에도 로그인 페이지로 이동하지 않고 대기
-        console.log('⏳ 세션 재확인 대기 중...');
-      }
+      // localStorage에 정보가 없으면 아무것도 하지 않고 대기
+      console.log('⏳ localStorage에 사용자 정보가 없음, 세션 로딩 대기 중...');
     };
     
     // 세션이 아직 로드되지 않았을 때만 세션 재확인

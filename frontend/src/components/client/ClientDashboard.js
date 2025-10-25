@@ -37,7 +37,7 @@ const ClientDashboard = () => {
   const sessionUser = sessionManager.getUser();
   const sessionIsLoggedIn = sessionManager.isLoggedIn();
   
-  // 디버깅: localStorage 확인
+  // 디버깅: localStorage 확인 및 세션 재확인
   useEffect(() => {
     const storedUser = localStorage.getItem('userInfo');
     console.log('🔍 localStorage 확인:', {
@@ -47,14 +47,38 @@ const ClientDashboard = () => {
       sessionIsLoggedIn
     });
     
-    // 세션이 아직 로드되지 않았지만 localStorage에 사용자 정보가 있으면 잠시 대기
+    // 세션이 아직 로드되지 않았지만 localStorage에 사용자 정보가 있으면 세션 재확인
     if (!sessionIsLoggedIn && !sessionUser && storedUser) {
-      console.log('⏳ localStorage에 사용자 정보가 있지만 세션이 아직 로드되지 않음, 1초 대기...');
-      setTimeout(() => {
-        const checkUser = sessionManager.getUser();
-        const checkLoggedIn = sessionManager.isLoggedIn();
-        console.log('🔍 1초 후 재확인:', { checkUser, checkLoggedIn });
-      }, 1000);
+      console.log('⏳ localStorage에 사용자 정보가 있지만 세션이 아직 로드되지 않음, 세션 재확인 시작...');
+      
+      // 세션 재확인
+      const checkSession = async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+            credentials: 'include',
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.user) {
+              console.log('✅ 세션 재확인 성공:', result.user);
+              // sessionManager에 사용자 정보 설정
+              sessionManager.setUser(result.user, {
+                accessToken: result.accessToken,
+                refreshToken: result.refreshToken
+              });
+              // 페이지 새로고침하여 세션 반영
+              window.location.reload();
+            }
+          }
+        } catch (error) {
+          console.error('❌ 세션 재확인 실패:', error);
+        }
+      };
+      
+      checkSession();
     }
   }, []);
   

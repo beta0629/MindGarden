@@ -68,20 +68,25 @@ const ClientDashboard = () => {
 
   // 내담자 데이터 로드
   const loadClientData = useCallback(async () => {
-    if (!user?.id) return;
+    // sessionUser 또는 user 둘 중 하나라도 있으면 진행
+    const currentUser = sessionUser || user;
+    if (!currentUser?.id) {
+      console.log('❌ 사용자 정보 없음:', { sessionUser, user });
+      return;
+    }
 
     try {
       setIsLoading(true);
-      console.log('📊 내담자 데이터 로드 시작');
+      console.log('📊 내담자 데이터 로드 시작, userId:', currentUser.id);
 
       // 스케줄 데이터 로드
       const scheduleResponse = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
-        userId: user.id,
+        userId: currentUser.id,
         userRole: 'CLIENT'
       });
 
       // 매핑 정보 로드 (실제 회기 수를 가져오기 위해)
-      const mappingResponse = await apiGet(`/api/admin/mappings/client?clientId=${user.id}`);
+      const mappingResponse = await apiGet(`/api/admin/mappings/client?clientId=${currentUser.id}`);
 
       let totalSessions = 0;
       let usedSessions = 0;
@@ -147,7 +152,7 @@ const ClientDashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, sessionUser?.id]);
 
   useEffect(() => {
     // sessionManager로 직접 확인

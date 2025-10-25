@@ -306,10 +306,17 @@ public class OAuth2Controller {
                     String frontendUrl = getFrontendBaseUrl(request);
                     String redirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
                     
-                    // 세션 쿠키 설정을 명시적으로 추가
+                    // 세션 쿠키를 프론트엔드로 전달하기 위해 쿠키에 세션 ID를 포함
+                    // 프론트엔드에서 이 쿠키를 사용하여 세션을 복원
+                    String sessionId = session.getId();
+                    String cookieValue = String.format("JSESSIONID=%s; Path=/; SameSite=None; Max-Age=3600; Secure; HttpOnly=false", sessionId);
+                    
+                    log.info("세션 쿠키 설정: {}", cookieValue);
+                    log.info("리다이렉트 URL: {}", redirectUrl);
+                    
         return ResponseEntity.status(302)
             .header("Location", redirectUrl)
-            .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; SameSite=None; Max-Age=3600; HttpOnly=false", session.getId()))
+            .header("Set-Cookie", cookieValue)
             .build();
                 }
             } else if (response.isRequiresSignup()) {

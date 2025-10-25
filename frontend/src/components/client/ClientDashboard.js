@@ -43,7 +43,27 @@ const ClientDashboard = () => {
     if (!sessionIsLoggedIn && !sessionUser) {
       console.log('⏳ 세션이 로드되지 않음, 세션 재확인 시작...');
       
-      // 세션 재확인
+      // 먼저 localStorage에 사용자 정보가 있는지 확인
+      const storedUser = localStorage.getItem('userInfo');
+      if (storedUser) {
+        console.log('📦 localStorage에서 사용자 정보 발견, 세션 복원 시도...');
+        try {
+          const userInfo = JSON.parse(storedUser);
+          console.log('✅ localStorage 사용자 정보:', userInfo);
+          // sessionManager에 사용자 정보 설정
+          sessionManager.setUser(userInfo, {
+            accessToken: userInfo.accessToken || 'local_token',
+            refreshToken: userInfo.refreshToken || 'local_refresh_token'
+          });
+          // 페이지 새로고침하여 세션 반영
+          window.location.reload();
+          return;
+        } catch (error) {
+          console.error('❌ localStorage 사용자 정보 파싱 실패:', error);
+        }
+      }
+      
+      // localStorage에 정보가 없으면 서버에서 세션 확인
       const checkSession = async () => {
         try {
           const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
@@ -80,7 +100,10 @@ const ClientDashboard = () => {
         }
       };
       
-      checkSession();
+      // 1초 대기 후 세션 확인 (백엔드 리다이렉트 완료 대기)
+      setTimeout(() => {
+        checkSession();
+      }, 1000);
     }
   }, [sessionIsLoggedIn, sessionUser]);
   

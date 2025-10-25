@@ -12751,6 +12751,65 @@ body {
     background: transparent;
 }
 
+/* Mobile Responsive Styles for Schedule Calendar */
+@media (max-width: 768px) {
+    .mg-v2-schedule-calendar {
+        padding: var(--spacing-sm);
+    }
+    
+    .mg-v2-schedule-title {
+        font-size: var(--font-size-lg);
+    }
+    
+    .mg-v2-legend-title {
+        font-size: var(--font-size-xs);
+    }
+    
+    .mg-v2-legend-items {
+        gap: var(--spacing-xs);
+    }
+    
+    .mg-v2-legend-item {
+        font-size: var(--font-size-xs);
+        padding: 2px 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mg-v2-schedule-calendar {
+        padding: var(--spacing-xs);
+    }
+    
+    .mg-v2-schedule-header {
+        padding: var(--spacing-sm);
+    }
+    
+    .mg-v2-schedule-legend {
+        padding: var(--spacing-sm);
+    }
+    
+    .mg-v2-schedule-title {
+        font-size: var(--font-size-md);
+    }
+    
+    .mg-v2-schedule-actions {
+        width: 100%;
+    }
+    
+    .mg-v2-consultant-filter {
+        width: 100%;
+    }
+    
+    .mg-v2-legend-section {
+        width: 100%;
+    }
+    
+    .mg-v2-legend-items {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
 /* Loading Spinner */
 .mg-v2-schedule-calendar .loading-spinner-fullscreen {
     position: fixed;

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet } from '../../utils/ajax';
-import { DASHBOARD_API } from '../../constants/api';
+import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
 import { 
   Heart, 
   Calendar, 

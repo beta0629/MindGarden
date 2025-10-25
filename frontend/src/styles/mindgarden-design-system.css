@@ -6870,13 +6870,32 @@ body {
   /* v2 Cards - 모바일에서도 표시 */
   .mg-v2-consultant-card {
     display: block !important;
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
     min-height: auto;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .mg-v2-consultant-cards-grid {
     grid-template-columns: 1fr;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs);
+  }
+  
+  /* 모바일에서 카드 내부 요소들 크기 조정 */
+  .mg-v2-consultant-card__avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 18px;
+  }
+  
+  .mg-v2-consultant-card__name {
+    font-size: var(--font-size-base);
+  }
+  
+  .mg-v2-consultant-card__actions {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
   }
 }
 

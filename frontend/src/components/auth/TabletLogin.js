@@ -99,8 +99,6 @@ const TabletLogin = () => {
 
     const checkExistingSession = async () => {
       try {
-        console.log('🔍 로그인 페이지 - 기존 세션 확인 중...');
-        
         // ajax.js의 checkSessionAndRedirect를 우회하여 직접 세션 체크
         const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
           credentials: 'include',
@@ -111,7 +109,6 @@ const TabletLogin = () => {
           const result = await response.json();
           if (result.success && result.user) {
             console.log('✅ 기존 세션 발견, 대시보드로 리다이렉트:', result.user.role);
-            console.log('👤 사용자 정보:', result.user);
             
             // sessionManager에 사용자 정보 설정
             sessionManager.setUser(result.user, {
@@ -122,15 +119,10 @@ const TabletLogin = () => {
             const dashboardPath = getDashboardPath(result.user.role);
             navigate(dashboardPath, { replace: true });
           }
-        } else if (response.status === 401) {
-          // 401은 정상 (로그인하지 않은 상태)
-          console.log('🔍 기존 세션 없음 - 로그인 페이지 유지 (401 Unauthorized)');
-        } else {
-          console.log('🔍 기존 세션 없음 - 로그인 페이지 유지');
         }
+        // 401 등은 조용히 처리 (로그인 페이지 유지)
       } catch (error) {
         // 네트워크 오류 등은 무시
-        console.log('🔍 세션 확인 중 네트워크 오류 (로그인 페이지 유지)');
       }
     };
 

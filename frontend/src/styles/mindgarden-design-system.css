@@ -9632,6 +9632,23 @@ body {
     gap: var(--spacing-sm);
     flex-wrap: wrap;
     align-items: center;
+    flex-shrink: 0;
+}
+
+/* 모바일 반응형: notification actions 세로 정렬 */
+@media (max-width: 768px) {
+    .mg-v2-notification-actions {
+        flex-direction: row;
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: var(--spacing-md);
+    }
+    
+    /* 공지 카드 내부 flex 레이아웃 모바일 대응 */
+    .mg-v2-card > .mg-v2-flex {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
 }
 
 /* MappingCard 컴포넌트 스타일 */

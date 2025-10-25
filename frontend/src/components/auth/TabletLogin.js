@@ -122,12 +122,15 @@ const TabletLogin = () => {
             const dashboardPath = getDashboardPath(result.user.role);
             navigate(dashboardPath, { replace: true });
           }
+        } else if (response.status === 401) {
+          // 401은 정상 (로그인하지 않은 상태)
+          console.log('🔍 기존 세션 없음 - 로그인 페이지 유지 (401 Unauthorized)');
         } else {
           console.log('🔍 기존 세션 없음 - 로그인 페이지 유지');
         }
       } catch (error) {
-        console.error('❌ 세션 확인 실패:', error);
-        // 세션 확인 실패해도 로그인 페이지 유지
+        // 네트워크 오류 등은 무시
+        console.log('🔍 세션 확인 중 네트워크 오류 (로그인 페이지 유지)');
       }
     };
 

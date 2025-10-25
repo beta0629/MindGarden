@@ -101,7 +101,7 @@ const WellnessManagement = () => {
             loadData();
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLoggedIn, user, selectedMonth]); // loadData 제거
+    }, [isLoggedIn, user, loadData]);
 
 
 
@@ -119,8 +119,8 @@ const WellnessManagement = () => {
             
             if (response.success) {
                 notificationManager.show('웰니스 알림이 성공적으로 발송되었습니다!', 'success');
-                // 통계 새로고침
-                await loadUsageStats();
+                // 데이터 새로고침
+                await loadData();
             } else {
                 notificationManager.show(response.message || '발송에 실패했습니다.', 'error');
             }

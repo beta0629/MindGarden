@@ -78,22 +78,6 @@ const WellnessNotificationList = () => {
     return <Bell size={24} />;
   };
 
-  // HTML 태그 제거 및 텍스트 추출
-  const stripHtml = (html) => {
-    if (!html) return '';
-    // HTML 태그 제거 (정규식 사용)
-    return html
-      .replace(/<[^>]*>/g, '') // HTML 태그 제거
-      .replace(/&nbsp;/g, ' ') // &nbsp; → 공백
-      .replace(/&lt;/g, '<') // &lt; → <
-      .replace(/&gt;/g, '>') // &gt; → >
-      .replace(/&amp;/g, '&') // &amp; → &
-      .replace(/&quot;/g, '"') // &quot; → "
-      .replace(/&#39;/g, "'") // &#39; → '
-      .replace(/\s+/g, ' ') // 여러 공백을 하나로
-      .trim(); // 앞뒤 공백 제거
-  };
-
   if (loading) {
     return (
       <SimpleLayout title="웰니스 알림">
@@ -186,14 +170,19 @@ const WellnessNotificationList = () => {
                 {/* 내용 */}
                 <div className="card-content">
                   <h3 className="card-title">{notification.title}</h3>
-                  <p className="card-description">
-                    {(() => {
-                      const plainText = stripHtml(notification.content || '');
-                      return plainText.length > 100
-                        ? `${plainText.substring(0, 100)}...`
-                        : plainText;
-                    })()}
-                  </p>
+                  <div 
+                    className="card-description"
+                    dangerouslySetInnerHTML={{ 
+                      __html: (() => {
+                        const content = notification.content || '';
+                        // HTML 태그 제거하여 미리보기만 표시
+                        const textOnly = content.replace(/<[^>]*>/g, '');
+                        return textOnly.length > 100
+                          ? `${textOnly.substring(0, 100)}...`
+                          : textOnly;
+                      })()
+                    }}
+                  />
                   <div className="card-meta">
                     <div className="meta-item">
                       <Calendar size={14} />

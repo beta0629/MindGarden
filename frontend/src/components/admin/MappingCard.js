@@ -44,101 +44,57 @@ const MappingCard = ({
 
     return(
         <div 
-            className="mapping-card"
+            className="mg-v2-card mg-v2-mapping-card"
             onClick={ onClick }
-            style={{
-                background: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                padding: '16px',
-                cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.2s ease',
-                marginBottom: '12px'
-            }}
         >
-            <div style={ { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <div style={ { display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #98FB98, #B6E5D8)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        color: '#2F2F2F'
-                    }}>
+            <div className="mg-v2-mapping-card-header">
+                <div className="mg-v2-mapping-card-title-section">
+                    <div className="mg-v2-client-avatar">
                         { mapping.clientName?.charAt(0) || '?' }
                     </div>
-                    <div>
-                        <h5 style={{ 
-                            margin: '0 0 4px 0', 
-                            fontSize: '16px', 
-                            fontWeight: '600',
-                            color: '#2F2F2F'
-                        }}>
+                    <div className="mg-v2-mapping-client-info">
+                        <h5 className="mg-v2-client-name">
                             { mapping.clientName || '알 수 없음' }
                         </h5>
-                        <span style={{
-                            background: '#f3f4f6',
-                            color: '#6B6B6B',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            fontSize: '12px'
-                        }}>
+                        <span className="mg-v2-client-badge">
                             내담자
                         </span>
                     </div>
                 </div>
                 
-                <div style={{
-                    background: statusInfo.color,
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: '500'
-                }}>
+                <div className="mg-v2-status-badge" style={{ background: statusInfo.color }}>
                     { statusInfo.icon } { statusInfo.label }
                 </div>
             </div>
 
-            <div style={ { marginBottom: '12px' }}>
-                <div style={ { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontSize: '14px', color: '#6B6B6B' }}>
+            <div className="mg-v2-mapping-card-details">
+                <div className="mg-v2-mapping-detail-item">
                     <User size={ 14 } />
                     { mapping.consultantName }
                 </div>
-                <div style={ { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#6B6B6B' }}>
+                <div className="mg-v2-mapping-detail-item">
                     <Package size={ 14 } />
                     { mapping.packageName }
                 </div>
             </div>
 
-            <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: '1fr 1fr 1fr', 
-                gap: '8px',
-                marginBottom: '12px'
-            }}>
-                <div style={ { textAlign: 'center', padding: '8px', background: '#f9fafb', borderRadius: '6px' }}>
-                    <div style={ { fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>총</div>
-                    <div style={ { fontSize: '16px', fontWeight: '600', color: '#2F2F2F' }}>{ mapping.totalSessions }</div>
+            <div className="mg-v2-mapping-sessions-grid">
+                <div className="mg-v2-session-stat mg-v2-session-stat-total">
+                    <div className="mg-v2-session-stat-label">총</div>
+                    <div className="mg-v2-session-stat-value">{ mapping.totalSessions }</div>
                 </div>
-                <div style={ { textAlign: 'center', padding: '8px', background: '#fef2f2', borderRadius: '6px' }}>
-                    <div style={ { fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>사용</div>
-                    <div style={ { fontSize: '16px', fontWeight: '600', color: '#dc2626' }}>{ mapping.usedSessions }</div>
+                <div className="mg-v2-session-stat mg-v2-session-stat-used">
+                    <div className="mg-v2-session-stat-label">사용</div>
+                    <div className="mg-v2-session-stat-value">{ mapping.usedSessions }</div>
                 </div>
-                <div style={ { textAlign: 'center', padding: '8px', background: '#f0fdf4', borderRadius: '6px' }}>
-                    <div style={ { fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>남은</div>
-                    <div style={ { fontSize: '16px', fontWeight: '600', color: '#16a34a' }}>{ mapping.remainingSessions }</div>
+                <div className="mg-v2-session-stat mg-v2-session-stat-remaining">
+                    <div className="mg-v2-session-stat-label">남은</div>
+                    <div className="mg-v2-session-stat-value">{ mapping.remainingSessions }</div>
                 </div>
             </div>
 
             {actions && (
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="mg-v2-mapping-card-actions">
                     { actions }
                 </div>
             )}

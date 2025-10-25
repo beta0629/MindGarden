@@ -53,18 +53,19 @@ const WellnessManagement = () => {
         month: new Date().getMonth() + 1
     });
 
-    /**
-     * 데이터 로드
-     */
+    // 데이터 로드 함수 (재사용 가능)
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
+            console.log('📊 웰니스 관리 데이터 로드 시작');
             
             // API 사용 통계 로드
             const usageStatsResponse = await apiGet('/api/admin/wellness/usage-stats', {
                 year: selectedMonth.year,
                 month: selectedMonth.month
             });
+            
+            console.log('📊 통계 응답:', usageStatsResponse);
             
             if (usageStatsResponse && usageStatsResponse.success) {
                 setStats(usageStatsResponse.data);
@@ -73,12 +74,16 @@ const WellnessManagement = () => {
             // 템플릿 목록 로드
             const templatesResponse = await apiGet('/api/admin/wellness/templates');
             
+            console.log('📋 템플릿 응답:', templatesResponse);
+            
             if (templatesResponse && templatesResponse.success) {
                 setTemplates(templatesResponse.data);
             }
             
             // 환율 정보 로드
             const exchangeRateResponse = await apiGet('/api/admin/wellness/exchange-rate');
+            
+            console.log('💰 환율 응답:', exchangeRateResponse);
             
             if (exchangeRateResponse && exchangeRateResponse.success) {
                 setStats(prev => ({
@@ -88,6 +93,7 @@ const WellnessManagement = () => {
                 }));
             }
             
+            console.log('✅ 웰니스 관리 데이터 로드 완료');
         } catch (error) {
             console.error('❌ 데이터 로드 실패:', error);
             notificationManager.show('데이터를 불러오는데 실패했습니다.', 'error');
@@ -100,7 +106,6 @@ const WellnessManagement = () => {
         if (isLoggedIn && user) {
             loadData();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoggedIn, user, loadData]);
 
 
@@ -157,7 +162,8 @@ const WellnessManagement = () => {
             
             if (response.success) {
                 notificationManager.show('환율을 새로고침했습니다.', 'success');
-                await loadExchangeRate();
+                // 전체 데이터 다시 로드
+                await loadData();
             } else {
                 notificationManager.show(response.message || '환율 새로고침에 실패했습니다.', 'error');
             }

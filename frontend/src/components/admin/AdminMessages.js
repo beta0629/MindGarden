@@ -7,6 +7,7 @@ import { MessageSquare, Search, Filter, Users, User } from 'lucide-react';
 import UnifiedLoading from "../common/UnifiedLoading";
 import MGButton from "../common/MGButton";
 import notificationManager from '../../utils/notification';
+import { sessionManager } from '../../utils/sessionManager';
 import SimpleLayout from '../layout/SimpleLayout';
 import '../../styles/mindgarden-design-system.css';
 
@@ -75,19 +76,31 @@ const AdminMessages = () => {
       userEmail: user?.email 
     });
     
-    // sessionLoading 중이면 대기
-    if (sessionLoading) {
-      console.log('⏳ 세션 로딩 중...');
-      return;
-    }
+    const loadData = async () => {
+      // sessionLoading 중이면 대기
+      if (sessionLoading) {
+        console.log('⏳ 세션 로딩 중...');
+        return;
+      }
+      
+      // user 정보가 있으면 로그인된 것으로 간주
+      if (user?.id) {
+        console.log('✅ 사용자 정보 확인됨, loadMessages 호출');
+        await loadMessages();
+      } else {
+        console.log('❌ 사용자 정보 없음 - sessionManager에서 직접 확인');
+        // SessionManager에서 직접 사용자 확인
+        const sessionUser = sessionManager.getUser();
+        if (sessionUser?.id) {
+          console.log('✅ sessionManager에서 사용자 확인됨:', sessionUser.email);
+          await loadMessages();
+        } else {
+          console.log('❌ sessionManager에도 사용자 정보 없음');
+        }
+      }
+    };
     
-    // user 정보가 있으면 로그인된 것으로 간주
-    if (user?.id) {
-      console.log('✅ 사용자 정보 확인됨, loadMessages 호출');
-      loadMessages();
-    } else {
-      console.log('❌ 사용자 정보 없음 - isLoggedIn:', isLoggedIn, 'userId:', user?.id);
-    }
+    loadData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, sessionLoading]);
 

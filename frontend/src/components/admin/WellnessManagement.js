@@ -339,7 +339,7 @@ const WellnessManagement = () => {
 
                 {/* 통계 카드 */}
                 <div className="mg-v2-stats-grid">
-                    <div className="mg-v2-card" style={{ display: 'flex', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)' }}>
+                    <div className="mg-v2-card wellness-stat-card">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
                             <DollarSign size={20} />
                         </div>
@@ -357,7 +357,7 @@ const WellnessManagement = () => {
                         </div>
                     </div>
 
-                    <div className="mg-v2-card" style={{ display: 'flex', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)' }}>
+                    <div className="mg-v2-card wellness-stat-card">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
                             <Database size={20} />
                         </div>
@@ -372,7 +372,7 @@ const WellnessManagement = () => {
                         </div>
                     </div>
 
-                    <div className="mg-v2-card" style={{ display: 'flex', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)' }}>
+                    <div className="mg-v2-card wellness-stat-card">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
                             <TrendingUp size={20} />
                         </div>
@@ -387,7 +387,7 @@ const WellnessManagement = () => {
                         </div>
                     </div>
 
-                    <div className="mg-v2-card" style={{ display: 'flex', gap: 'var(--spacing-md)', padding: 'var(--spacing-md)' }}>
+                    <div className="mg-v2-card wellness-stat-card">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px' }}>
                             <BarChart3 size={20} />
                         </div>

@@ -115,12 +115,8 @@
 .wellness-stat-card {
     display: flex;
     align-items: center;
-    gap: var(--spacing-lg);
-    padding: var(--spacing-xl);
-    background: var(--color-white);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-md);
-    transition: all var(--transition-fast);
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
 }
 
 .wellness-stat-card:hover {

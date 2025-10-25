@@ -164,8 +164,10 @@ const AdminMessages = () => {
     );
   }
 
-  // 권한 체크
-  if (!isLoggedIn || !user) {
+  // 권한 체크 (sessionManager에서 직접 확인)
+  const sessionUser = sessionManager.getUser();
+  if (!sessionUser) {
+    console.log('❌ 권한 체크 실패 - sessionUser 없음');
     return (
       <SimpleLayout>
         <div className="mg-v2-dashboard-layout">
@@ -177,6 +179,8 @@ const AdminMessages = () => {
       </SimpleLayout>
     );
   }
+  
+  console.log('✅ 권한 체크 통과:', sessionUser.email);
 
   return (
     <SimpleLayout>

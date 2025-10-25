@@ -155,11 +155,18 @@ const ClientDashboard = () => {
   }, [user?.id, sessionUser?.id]);
 
   useEffect(() => {
+    // 세션이 로딩 중이면 대기
+    if (sessionLoading) {
+      console.log('⏳ 세션 로딩 중...');
+      return;
+    }
+    
     // sessionManager로 직접 확인
     const currentUser = sessionUser || user;
     const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
     
     console.log('🔍 ClientDashboard useEffect 실행:', {
+      sessionLoading,
       sessionIsLoggedIn,
       sessionUser: sessionUser?.id,
       user: user?.id,
@@ -173,13 +180,25 @@ const ClientDashboard = () => {
     } else {
       console.log('❌ 데이터 로드 조건 불충족');
     }
-  }, [sessionIsLoggedIn, sessionUser?.id, loadClientData]); // loadClientData 의존성 추가
+  }, [sessionLoading, sessionIsLoggedIn, sessionUser?.id, user?.id, loadClientData]); // sessionLoading 추가
 
   // 로딩 상태 또는 로그인하지 않은 경우
   const currentUser = sessionUser || user;
   const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
   
-  if (isLoading || !currentIsLoggedIn || !currentUser?.id) {
+  console.log('🎯 ClientDashboard 렌더링 조건 체크:', {
+    isLoading,
+    sessionLoading,
+    currentIsLoggedIn,
+    currentUser: currentUser?.id,
+    sessionIsLoggedIn,
+    sessionUser: sessionUser?.id,
+    isLoggedIn,
+    user: user?.id
+  });
+  
+  // 세션 로딩 중이거나, 세션이 아직 로드되지 않았거나, 사용자 정보가 없으면 로딩 표시
+  if (isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
     return (
       <SimpleLayout>
         <div className="mg-v2-dashboard-layout">

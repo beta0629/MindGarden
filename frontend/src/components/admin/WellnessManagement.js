@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import MGButton from '../common/MGButton';
 import { 
     Sparkles, 
@@ -53,16 +53,65 @@ const WellnessManagement = () => {
         month: new Date().getMonth() + 1
     });
 
-    useEffect(() => {
-        if (isLoggedIn && user) {
-            loadData();
+    /**
+     * API 사용 통계 로드
+     */
+    const loadUsageStats = useCallback(async () => {
+        try {
+            const response = await apiGet('/api/admin/wellness/usage-stats', {
+                year: selectedMonth.year,
+                month: selectedMonth.month
+            });
+            
+            if (response && response.success) {
+                setStats(response.data);
+            }
+        } catch (error) {
+            console.error('❌ 통계 로드 실패:', error);
+            throw error;
         }
-    }, [isLoggedIn, user, selectedMonth]);
+    }, [selectedMonth]);
+
+    /**
+     * 템플릿 목록 로드
+     */
+    const loadTemplates = useCallback(async () => {
+        try {
+            const response = await apiGet('/api/admin/wellness/templates');
+            
+            if (response && response.success) {
+                setTemplates(response.data);
+            }
+        } catch (error) {
+            console.error('❌ 템플릿 로드 실패:', error);
+            throw error;
+        }
+    }, []);
+
+    /**
+     * 환율 정보 로드
+     */
+    const loadExchangeRate = useCallback(async () => {
+        try {
+            const response = await apiGet('/api/admin/wellness/exchange-rate');
+            
+            if (response && response.success) {
+                setStats(prev => ({
+                    ...prev,
+                    exchangeRate: response.data.exchangeRate || 1300.0,
+                    exchangeRateDisplay: response.data.exchangeRateDisplay || ''
+                }));
+            }
+        } catch (error) {
+            console.error('❌ 환율 정보 로드 실패:', error);
+            // 환율 로드 실패는 치명적이지 않으므로 에러를 던지지 않음
+        }
+    }, []);
 
     /**
      * 데이터 로드
      */
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             setLoading(true);
             await Promise.all([
@@ -76,62 +125,15 @@ const WellnessManagement = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [loadUsageStats, loadTemplates, loadExchangeRate]);
 
-    /**
-     * API 사용 통계 로드
-     */
-    const loadUsageStats = async () => {
-        try {
-            const response = await apiGet('/api/admin/wellness/usage-stats', {
-                year: selectedMonth.year,
-                month: selectedMonth.month
-            });
-            
-            if (response.success) {
-                setStats(response.data);
-            }
-        } catch (error) {
-            console.error('❌ 통계 로드 실패:', error);
-            throw error;
+    useEffect(() => {
+        if (isLoggedIn && user) {
+            loadData();
         }
-    };
+    }, [isLoggedIn, user, loadData]);
 
-    /**
-     * 템플릿 목록 로드
-     */
-    const loadTemplates = async () => {
-        try {
-            const response = await apiGet('/api/admin/wellness/templates');
-            
-            if (response.success) {
-                setTemplates(response.data);
-            }
-        } catch (error) {
-            console.error('❌ 템플릿 로드 실패:', error);
-            throw error;
-        }
-    };
 
-    /**
-     * 환율 정보 로드
-     */
-    const loadExchangeRate = async () => {
-        try {
-            const response = await apiGet('/api/admin/wellness/exchange-rate');
-            
-            if (response.success) {
-                setStats(prev => ({
-                    ...prev,
-                    exchangeRate: response.data.exchangeRate || 1300.0,
-                    exchangeRateDisplay: response.data.exchangeRateDisplay || ''
-                }));
-            }
-        } catch (error) {
-            console.error('❌ 환율 정보 로드 실패:', error);
-            // 환율 로드 실패는 치명적이지 않으므로 에러를 던지지 않음
-        }
-    };
 
     /**
      * 테스트 발송

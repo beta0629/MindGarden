@@ -202,8 +202,8 @@ const AdminMessages = () => {
         </div>
 
         {/* 필터 및 검색 */}
-        <div className="mg-v2-card mg-v2-message-filters-card mg-mobile-section">
-          <div className="mg-v2-message-filters-container mg-mobile-form-group">
+        <div className="mg-v2-card mg-v2-message-filters-card">
+          <div className="mg-v2-message-filters-container">
             {/* 검색 */}
             <div className="mg-v2-message-search-container">
               <Search 

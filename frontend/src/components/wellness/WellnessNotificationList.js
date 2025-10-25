@@ -78,6 +78,14 @@ const WellnessNotificationList = () => {
     return <Bell size={24} />;
   };
 
+  // HTML 태그 제거 및 텍스트 추출
+  const stripHtml = (html) => {
+    if (!html) return '';
+    const tmp = document.createElement('DIV');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  };
+
   if (loading) {
     return (
       <SimpleLayout title="웰니스 알림">
@@ -170,11 +178,14 @@ const WellnessNotificationList = () => {
                 {/* 내용 */}
                 <div className="card-content">
                   <h3 className="card-title">{notification.title}</h3>
-                  <div className="card-description">
-                    <div dangerouslySetInnerHTML={{ 
-                      __html: notification.content?.substring(0, 100) + (notification.content?.length > 100 ? '...' : '')
-                    }} />
-                  </div>
+                  <p className="card-description">
+                    {(() => {
+                      const plainText = stripHtml(notification.content || '');
+                      return plainText.length > 100
+                        ? `${plainText.substring(0, 100)}...`
+                        : plainText;
+                    })()}
+                  </p>
                   <div className="card-meta">
                     <div className="meta-item">
                       <Calendar size={14} />

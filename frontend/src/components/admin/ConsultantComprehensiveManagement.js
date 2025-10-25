@@ -17,6 +17,7 @@ const ConsultantComprehensiveManagement = () => {
     const [mappings, setMappings] = useState([]);
     const [schedules, setSchedules] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
     const [mainTab, setMainTab] = useState('comprehensive');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
@@ -150,6 +151,17 @@ const ConsultantComprehensiveManagement = () => {
         window.addEventListener('forceRefresh', handleForceRefresh);
         return() => window.removeEventListener('forceRefresh', handleForceRefresh);
     }, [loadAllData]);
+
+    // 모바일 감지
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // 필터링된 상담사 목록
     const getFilteredConsultants = useMemo(() => { console.log('🔍 상담사 필터링 시작:', { searchTerm, filterStatus, filterBranch, consultants: consultants.length });
@@ -562,11 +574,11 @@ const ConsultantComprehensiveManagement = () => {
                                 </select>
                             </div>
 
-                            <div className="mg-v2-consultant-cards-grid mg-consultant-cards-grid--detailed">
+                            <div className={isMobile ? "mg-v2-consultant-cards-grid--mobile" : "mg-v2-consultant-cards-grid mg-consultant-cards-grid--detailed"}>
                                 {getFilteredConsultants.map(consultant => (
                                     <div
                                         key={consultant.id}
-                                        className="mg-v2-consultant-card mg-consultant-card--detailed"
+                                        className={isMobile ? "mg-v2-consultant-card-mobile" : "mg-v2-consultant-card mg-consultant-card--detailed"}
                                         onClick={ () => handleConsultantSelect(consultant) }
                                     >
                                         <div className={`mg-v2-consultant-card__status-badge mg-v2-consultant-card__status-badge--${consultant.status?.toLowerCase() || 'unknown'}`}>

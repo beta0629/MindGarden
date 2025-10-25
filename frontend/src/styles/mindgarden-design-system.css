@@ -6867,35 +6867,82 @@ body {
     display: flex !important;
   }
   
-  /* v2 Cards - 모바일에서도 표시 */
-  .mg-v2-consultant-card {
-    display: block !important;
-    padding: var(--spacing-sm);
-    min-height: auto;
-    width: 100%;
-    box-sizing: border-box;
+  /* 모바일 전용 카드 스타일 */
+  .mg-v2-consultant-card-mobile {
+    background: white;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
   }
   
-  .mg-v2-consultant-cards-grid {
-    grid-template-columns: 1fr;
+  .mg-v2-consultant-cards-grid--mobile {
+    display: flex;
+    flex-direction: column;
     gap: var(--spacing-sm);
     padding: var(--spacing-xs);
   }
   
-  /* 모바일에서 카드 내부 요소들 크기 조정 */
-  .mg-v2-consultant-card__avatar {
-    width: 50px;
-    height: 50px;
+  /* 모바일 카드 헤더 */
+  .mg-v2-consultant-card-mobile .mg-v2-consultant-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .mg-v2-consultant-card-mobile .mg-v2-consultant-card__avatar {
+    width: 48px;
+    height: 48px;
     font-size: 18px;
+    flex-shrink: 0;
   }
   
-  .mg-v2-consultant-card__name {
-    font-size: var(--font-size-base);
+  .mg-v2-consultant-card-mobile .mg-v2-consultant-card__name {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    flex: 1;
   }
   
-  .mg-v2-consultant-card__actions {
-    flex-wrap: wrap;
+  .mg-v2-consultant-card-mobile .mg-v2-consultant-card__status-badge {
+    position: static;
+    align-self: flex-start;
+  }
+  
+  /* 모바일 카드 내용 */
+  .mg-v2-consultant-card-mobile .mg-v2-consultant-card__info {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+  }
+  
+  .mg-v2-consultant-card-mobile .mg-v2-consultant-card__actions {
+    display: flex;
     gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+  }
+  
+  .mg-v2-consultant-card-mobile .mg-v2-button-sm {
+    flex: 1;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+  
+  .mg-v2-consultant-card-mobile .mg-v2-consultant-card__specialties {
+    margin-top: var(--spacing-xs);
+  }
+  
+  .mg-v2-consultant-card-mobile .mg-v2-consultant-card__specialties-title {
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .mg-v2-consultant-card-mobile .mg-v2-consultant-card__specialty-tag {
+    font-size: var(--font-size-xs);
+    padding: 2px 8px;
   }
 }
 

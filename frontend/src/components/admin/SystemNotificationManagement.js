@@ -354,11 +354,19 @@ const SystemNotificationManagement = () => {
                           <span className="mg-v2-badge mg-v2-badge-warning mg-v2-text-xs">중요</span>
                         )}
                       </div>
-                      <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-sm">
-                        {notification.content.length > 150
-                          ? `${notification.content.substring(0, 150)}...`
-                          : notification.content}
-                      </p>
+                      <div 
+                        className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-sm"
+                        dangerouslySetInnerHTML={{ 
+                          __html: (() => {
+                            const content = notification.content || '';
+                            // HTML 태그 제거하여 미리보기만 표시
+                            const textOnly = content.replace(/<[^>]*>/g, '');
+                            return textOnly.length > 150
+                              ? `${textOnly.substring(0, 150)}...`
+                              : textOnly;
+                          })()
+                        }}
+                      />
                       <div className="mg-v2-text-xs mg-v2-color-text-secondary">
                         작성자: {notification.authorName} · 
                         작성일: {new Date(notification.createdAt).toLocaleDateString('ko-KR')}

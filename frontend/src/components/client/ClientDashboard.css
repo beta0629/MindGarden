@@ -92,7 +92,7 @@
 }
 
 /* ============================================
-   통계 카드
+   통계 카드 (Droplet Glass 적용)
    ============================================ */
 
 .client-dashboard__stats {
@@ -103,13 +103,17 @@
 }
 
 .client-dashboard__stat-card {
-  background: white;
+  /* Droplet Glass 효과 */
+  background: var(--droplet-bg);
+  backdrop-filter: var(--droplet-backdrop-filter);
+  -webkit-backdrop-filter: var(--droplet-backdrop-filter);
+  border: 1px solid var(--droplet-border);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-xl);
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
-  box-shadow: var(--client-shadow);
+  box-shadow: var(--droplet-shadow);
   transition: all var(--transition-normal) ease;
   position: relative;
   overflow: hidden;
@@ -125,6 +129,26 @@
   border-radius: var(--border-radius-full);
   opacity: 0.1;
   transform: translate(30%, -30%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Droplet Glass 배경 패턴 (정적) */
+.client-dashboard__stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--droplet-pattern-background);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.client-dashboard__stat-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .client-dashboard__stat-card--primary::before {
@@ -144,8 +168,11 @@
 }
 
 .client-dashboard__stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--client-shadow-hover);
+  background: rgba(255, 255, 255, var(--glass-hover-opacity));
+  backdrop-filter: saturate(200%) blur(var(--glass-hover-blur));
+  -webkit-backdrop-filter: saturate(200%) blur(var(--glass-hover-blur));
+  transform: translateY(var(--hover-lift));
+  box-shadow: var(--glass-hover-shadow);
 }
 
 .client-dashboard__stat-icon {
@@ -383,6 +410,10 @@
     transform: scale(1.05);
   }
 }
+
+
+
+/* 애니메이션 제거 - 정적 Droplet Glass 패턴만 유지 */
 
 /* ============================================
    반응형 디자인

@@ -93,6 +93,36 @@
   --glass-border: rgba(255, 255, 255, 0.2);
   --glass-blur: 12px;
   
+  /* iOS 18 Droplet Glass Effects */
+  --droplet-bg: rgba(255, 255, 255, 0.7);
+  --droplet-bg-dark: rgba(0, 0, 0, 0.4);
+  --droplet-border: rgba(255, 255, 255, 0.3);
+  --droplet-blur: blur(20px);
+  --droplet-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --droplet-backdrop-filter: saturate(180%) blur(20px);
+  
+  /* Droplet Glass Background Patterns (자연스러운 무작위 배치) */
+  --droplet-pattern-1: radial-gradient(ellipse at 23% 47%, rgba(147, 197, 253, 0.15), transparent 65%);
+  --droplet-pattern-2: radial-gradient(ellipse at 78% 23%, rgba(251, 191, 36, 0.12), transparent 58%);
+  --droplet-pattern-3: radial-gradient(ellipse at 42% 81%, rgba(239, 68, 68, 0.18), transparent 62%);
+  --droplet-pattern-4: radial-gradient(ellipse at 61% 38%, rgba(139, 92, 246, 0.14), transparent 60%);
+  --droplet-pattern-5: radial-gradient(ellipse at 35% 15%, rgba(34, 197, 94, 0.12), transparent 55%);
+  --droplet-pattern-6: radial-gradient(ellipse at 15% 65%, rgba(236, 72, 153, 0.16), transparent 68%);
+  --droplet-pattern-7: radial-gradient(ellipse at 85% 72%, rgba(99, 102, 241, 0.13), transparent 64%);
+  --droplet-pattern-blend: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(236, 72, 153, 0.12));
+  
+  /* Droplet Glass 통합 패턴 변수 (한 번에 수정 가능) */
+  --droplet-pattern-background: var(--droplet-pattern-1), var(--droplet-pattern-2), var(--droplet-pattern-3), var(--droplet-pattern-4), var(--droplet-pattern-5), var(--droplet-pattern-6), var(--droplet-pattern-7), var(--droplet-pattern-blend);
+  --droplet-animation-duration: 20s;
+  
+  /* Droplet Glass Hover 효과 변수 */
+  --glass-hover-opacity: 0.8;
+  --glass-hover-blur: 25px;
+  --glass-hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  
+  /* Droplet Glass 호버 리프트 변수 */
+  --hover-lift: -4px;
+  
   /* Spacing */
   --spacing-xs: 0.5rem;
   --spacing-sm: 1rem;
@@ -389,6 +419,73 @@ body {
   border-radius: var(--radius-xl);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   padding: var(--spacing-lg);
+}
+
+/* ============================================
+   Droplet Glass Effect (iOS 18 Style)
+   ============================================ */
+.mg-droplet-glass {
+  background: var(--droplet-bg);
+  backdrop-filter: var(--droplet-backdrop-filter);
+  -webkit-backdrop-filter: var(--droplet-backdrop-filter);
+  border: 1px solid var(--droplet-border);
+  border-radius: 20px;
+  box-shadow: var(--droplet-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Droplet Glass 배경 패턴 */
+.mg-droplet-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    var(--droplet-pattern-1),
+    var(--droplet-pattern-2),
+    var(--droplet-pattern-3),
+    var(--droplet-pattern-4),
+    var(--droplet-pattern-blend);
+  animation: dropletFloat 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Droplet Glass 콘텐츠는 패턴 위에 표시 */
+.mg-droplet-glass > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Droplet Glass 호버 효과 */
+.mg-droplet-glass:hover {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: saturate(200%) blur(25px);
+  -webkit-backdrop-filter: saturate(200%) blur(25px);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes dropletFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.7;
+  }
+  25% {
+    transform: translate(10px, -10px) scale(1.05);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate(-10px, 10px) scale(0.95);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translate(10px, 10px) scale(1.02);
+    opacity: 0.85;
+  }
 }
 
 /* ============================================

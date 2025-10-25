@@ -37,6 +37,17 @@ const ClientDashboard = () => {
   const sessionUser = sessionManager.getUser();
   const sessionIsLoggedIn = sessionManager.isLoggedIn();
   
+  // 디버깅: localStorage 확인
+  useEffect(() => {
+    const storedUser = localStorage.getItem('userInfo');
+    console.log('🔍 localStorage 확인:', {
+      hasUserInfo: !!storedUser,
+      userInfo: storedUser ? JSON.parse(storedUser) : null,
+      sessionUser,
+      sessionIsLoggedIn
+    });
+  }, []);
+  
   const [currentTime, setCurrentTime] = useState('');
   const [consultationData, setConsultationData] = useState({
     todaySchedules: [],

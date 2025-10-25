@@ -43,6 +43,42 @@ const ClientDashboard = () => {
     let isMounted = true;
     
     const checkAndRestoreSession = async () => {
+      // URL 파라미터에서 OAuth 정보 확인
+      const urlParams = new URLSearchParams(window.location.search);
+      const oauth = urlParams.get('oauth');
+      
+      if (oauth === 'success') {
+        console.log('🔗 OAuth 로그인 성공, URL 파라미터에서 사용자 정보 복원...');
+        
+        const userInfo = {
+          id: parseInt(urlParams.get('userId')) || 0,
+          email: urlParams.get('email') || '',
+          name: decodeURIComponent(urlParams.get('name') || ''),
+          nickname: decodeURIComponent(urlParams.get('nickname') || ''),
+          role: urlParams.get('role') || 'CLIENT',
+          profileImageUrl: decodeURIComponent(urlParams.get('profileImage') || ''),
+          provider: urlParams.get('provider') || 'UNKNOWN'
+        };
+        
+        console.log('✅ URL 파라미터에서 사용자 정보:', userInfo);
+        
+        // sessionManager에 사용자 정보 설정
+        sessionManager.setUser(userInfo, {
+          accessToken: 'oauth2_token',
+          refreshToken: 'oauth2_refresh_token'
+        });
+        
+        // URL 파라미터 제거
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // 컴포넌트가 아직 마운트되어 있으면 새로고침
+        if (isMounted) {
+          console.log('🔄 세션 복원 완료, 페이지 새로고침...');
+          window.location.reload();
+        }
+        return;
+      }
+      
       // localStorage에 사용자 정보가 있는지 확인
       const storedUser = localStorage.getItem('userInfo');
       

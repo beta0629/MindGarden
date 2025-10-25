@@ -304,7 +304,24 @@ public class OAuth2Controller {
                     
                     // 사용자 역할에 따른 리다이렉트 (공통 유틸리티 사용)
                     String frontendUrl = getFrontendBaseUrl(request);
-                    String redirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
+                    String baseRedirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
+                    
+                    // provider 정보 가져오기
+                    String provider = "UNKNOWN";
+                    if (response.getSocialAccountInfo() != null && response.getSocialAccountInfo().getProvider() != null) {
+                        provider = response.getSocialAccountInfo().getProvider();
+                    }
+                    
+                    // 사용자 정보를 URL 파라미터로 전달 (세션 복원용)
+                    String redirectUrl = baseRedirectUrl + "?" +
+                        "oauth=success" +
+                        "&userId=" + user.getId() +
+                        "&email=" + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8) +
+                        "&name=" + URLEncoder.encode(user.getName(), StandardCharsets.UTF_8) +
+                        "&nickname=" + URLEncoder.encode(user.getNickname() != null ? user.getNickname() : "", StandardCharsets.UTF_8) +
+                        "&role=" + user.getRole() +
+                        "&profileImage=" + URLEncoder.encode(user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "", StandardCharsets.UTF_8) +
+                        "&provider=" + provider;
                     
                     // 세션 쿠키를 프론트엔드로 전달하기 위해 쿠키에 세션 ID를 포함
                     // 프론트엔드에서 이 쿠키를 사용하여 세션을 복원

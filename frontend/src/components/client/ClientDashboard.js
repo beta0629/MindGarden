@@ -203,7 +203,7 @@ const ClientDashboard = () => {
     }
   }, [sessionLoading, sessionIsLoggedIn, sessionUser?.id, user?.id, loadClientData]); // sessionLoading 추가
 
-  // 사용자 정보 확인 (AdminDashboard와 동일한 패턴)
+  // 로딩 상태 또는 로그인하지 않은 경우
   const currentUser = sessionUser || user;
   const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
   
@@ -218,8 +218,8 @@ const ClientDashboard = () => {
     user: user?.id
   });
   
-  // AdminDashboard와 동일한 패턴: isLoading만 체크
-  if (isLoading) {
+  // 세션 로딩 중이거나, 세션이 아직 로드되지 않았거나, 사용자 정보가 없으면 로딩 표시
+  if (isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id) {
     return (
       <SimpleLayout>
         <div className="mg-v2-dashboard-layout">
@@ -227,13 +227,6 @@ const ClientDashboard = () => {
         </div>
       </SimpleLayout>
     );
-  }
-  
-  // 사용자 정보가 없으면 로그인 페이지로 리다이렉트
-  if (!currentUser?.id) {
-    console.log('❌ 사용자 정보 없음, 로그인 페이지로 리다이렉트');
-    window.location.href = '/login';
-    return null;
   }
 
   // 인사말 메시지

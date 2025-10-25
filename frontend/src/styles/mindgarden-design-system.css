@@ -6869,8 +6869,14 @@ body {
   
   /* v2 Cards - 모바일에서도 표시 */
   .mg-v2-consultant-card {
+    display: block !important;
     padding: var(--spacing-md);
     min-height: auto;
+  }
+  
+  .mg-v2-consultant-cards-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
   }
 }
 

@@ -159,11 +159,21 @@ const ClientDashboard = () => {
     const currentUser = sessionUser || user;
     const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
     
+    console.log('🔍 ClientDashboard useEffect 실행:', {
+      sessionIsLoggedIn,
+      sessionUser: sessionUser?.id,
+      user: user?.id,
+      currentIsLoggedIn,
+      currentUser: currentUser?.id
+    });
+    
     if (currentIsLoggedIn && currentUser?.id) {
       console.log('✅ ClientDashboard 데이터 로드 시작');
       loadClientData();
+    } else {
+      console.log('❌ 데이터 로드 조건 불충족');
     }
-  }, [sessionIsLoggedIn, sessionUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionIsLoggedIn, sessionUser?.id, loadClientData]); // loadClientData 의존성 추가
 
   // 로딩 상태 또는 로그인하지 않은 경우
   const currentUser = sessionUser || user;

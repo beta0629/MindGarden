@@ -6866,6 +6866,12 @@ body {
   .mg-client-card--mobile-simple {
     display: flex !important;
   }
+  
+  /* v2 Cards - 모바일에서도 표시 */
+  .mg-v2-consultant-card {
+    padding: var(--spacing-md);
+    min-height: auto;
+  }
 }
 
 /* ============================================

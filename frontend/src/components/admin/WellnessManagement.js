@@ -54,84 +54,54 @@ const WellnessManagement = () => {
     });
 
     /**
-     * API 사용 통계 로드
-     */
-    const loadUsageStats = useCallback(async () => {
-        try {
-            const response = await apiGet('/api/admin/wellness/usage-stats', {
-                year: selectedMonth.year,
-                month: selectedMonth.month
-            });
-            
-            if (response && response.success) {
-                setStats(response.data);
-            }
-        } catch (error) {
-            console.error('❌ 통계 로드 실패:', error);
-            throw error;
-        }
-    }, [selectedMonth]);
-
-    /**
-     * 템플릿 목록 로드
-     */
-    const loadTemplates = useCallback(async () => {
-        try {
-            const response = await apiGet('/api/admin/wellness/templates');
-            
-            if (response && response.success) {
-                setTemplates(response.data);
-            }
-        } catch (error) {
-            console.error('❌ 템플릿 로드 실패:', error);
-            throw error;
-        }
-    }, []);
-
-    /**
-     * 환율 정보 로드
-     */
-    const loadExchangeRate = useCallback(async () => {
-        try {
-            const response = await apiGet('/api/admin/wellness/exchange-rate');
-            
-            if (response && response.success) {
-                setStats(prev => ({
-                    ...prev,
-                    exchangeRate: response.data.exchangeRate || 1300.0,
-                    exchangeRateDisplay: response.data.exchangeRateDisplay || ''
-                }));
-            }
-        } catch (error) {
-            console.error('❌ 환율 정보 로드 실패:', error);
-            // 환율 로드 실패는 치명적이지 않으므로 에러를 던지지 않음
-        }
-    }, []);
-
-    /**
      * 데이터 로드
      */
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
-            await Promise.all([
-                loadUsageStats(),
-                loadTemplates(),
-                loadExchangeRate()
-            ]);
+            
+            // API 사용 통계 로드
+            const usageStatsResponse = await apiGet('/api/admin/wellness/usage-stats', {
+                year: selectedMonth.year,
+                month: selectedMonth.month
+            });
+            
+            if (usageStatsResponse && usageStatsResponse.success) {
+                setStats(usageStatsResponse.data);
+            }
+            
+            // 템플릿 목록 로드
+            const templatesResponse = await apiGet('/api/admin/wellness/templates');
+            
+            if (templatesResponse && templatesResponse.success) {
+                setTemplates(templatesResponse.data);
+            }
+            
+            // 환율 정보 로드
+            const exchangeRateResponse = await apiGet('/api/admin/wellness/exchange-rate');
+            
+            if (exchangeRateResponse && exchangeRateResponse.success) {
+                setStats(prev => ({
+                    ...prev,
+                    exchangeRate: exchangeRateResponse.data.exchangeRate || 1300.0,
+                    exchangeRateDisplay: exchangeRateResponse.data.exchangeRateDisplay || ''
+                }));
+            }
+            
         } catch (error) {
             console.error('❌ 데이터 로드 실패:', error);
             notificationManager.show('데이터를 불러오는데 실패했습니다.', 'error');
         } finally {
             setLoading(false);
         }
-    }, [loadUsageStats, loadTemplates, loadExchangeRate]);
+    }, [selectedMonth]);
 
     useEffect(() => {
         if (isLoggedIn && user) {
             loadData();
         }
-    }, [isLoggedIn, user, loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoggedIn, user, selectedMonth]); // loadData 제거
 
 
 

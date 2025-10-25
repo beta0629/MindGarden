@@ -81,14 +81,15 @@ const AdminMessages = () => {
       return;
     }
     
-    if (isLoggedIn && user?.id) {
-      console.log('✅ 로그인 확인됨, loadMessages 호출');
+    // user 정보가 있으면 로그인된 것으로 간주
+    if (user?.id) {
+      console.log('✅ 사용자 정보 확인됨, loadMessages 호출');
       loadMessages();
     } else {
-      console.log('❌ 로그인 안됨 - isLoggedIn:', isLoggedIn, 'userId:', user?.id);
+      console.log('❌ 사용자 정보 없음 - isLoggedIn:', isLoggedIn, 'userId:', user?.id);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, user?.id, sessionLoading]);
+  }, [user?.id, sessionLoading]);
 
   // 메시지 필터링
   const filteredMessages = messages.filter(message => {

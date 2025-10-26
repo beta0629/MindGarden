@@ -16,14 +16,28 @@ import { useSession } from '../../contexts/SessionContext';
 const ConsultantSchedule = () => {
   const { user, isLoading: sessionLoading } = useSession();
 
+  console.log('📅 ConsultantSchedule 렌더링:', { user, sessionLoading });
+
   // 세션 로딩 중이면 로딩 표시
-  if (sessionLoading || !user) {
+  if (sessionLoading) {
+    console.log('⏳ ConsultantSchedule: 세션 로딩 중...');
     return (
       <SimpleLayout>
         <UnifiedLoading />
       </SimpleLayout>
     );
   }
+
+  if (!user) {
+    console.log('❌ ConsultantSchedule: 사용자 정보 없음');
+    return (
+      <SimpleLayout>
+        <UnifiedLoading />
+      </SimpleLayout>
+    );
+  }
+
+  console.log('✅ ConsultantSchedule: UnifiedScheduleComponent 렌더링 시작', { userRole: 'CONSULTANT', userId: user.id });
 
   return (
     <SimpleLayout>

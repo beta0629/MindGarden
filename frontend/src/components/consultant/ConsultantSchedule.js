@@ -14,14 +14,22 @@ import { useSession } from '../../contexts/SessionContext';
  * @since 2025-09-16
  */
 const ConsultantSchedule = () => {
-  const { user } = useSession();
+  const { user, isLoading: sessionLoading } = useSession();
+
+  // 세션 로딩 중이면 로딩 표시
+  if (sessionLoading || !user) {
+    return (
+      <SimpleLayout>
+        <UnifiedLoading />
+      </SimpleLayout>
+    );
+  }
 
   return (
     <SimpleLayout>
       <UnifiedScheduleComponent 
-        user={user}
         userRole="CONSULTANT"
-        userId={user?.id}
+        userId={user.id}
       />
     </SimpleLayout>
   );

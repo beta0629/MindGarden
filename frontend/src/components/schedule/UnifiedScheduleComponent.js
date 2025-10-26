@@ -403,7 +403,22 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         
         const isPastDate = clickedDate < today;
         
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'CONSULTANT') {
+        // 상담사는 휴가만 등록 가능
+        if (userRole === 'CONSULTANT') {
+            if (isPastDate) {
+                alert('과거 날짜에는 휴가를 등록할 수 없습니다.');
+                return;
+            }
+            
+            // 상담사는 바로 휴가 등록 모달 열기
+            setSelectedDate(info.date);
+            setSelectedInfo(info);
+            setIsVacationModalOpen(true);
+            return;
+        }
+        
+        // 관리자는 스케줄/휴가 선택 모달 표시
+        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
             if (isPastDate) {
                 alert('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다.\n기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;

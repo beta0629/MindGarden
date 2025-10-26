@@ -23,6 +23,8 @@ import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
  * @since 2024-12-19
  */
 const UnifiedScheduleComponent = ({ userRole, userId }) => {
+    console.log('📅 UnifiedScheduleComponent 렌더링:', { userRole, userId });
+    
     // ========== 상태 관리 ==========
     const [events, setEvents] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
@@ -369,6 +371,8 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     }, [userId, userRole, selectedConsultantId]);
 
     useEffect(() => {
+        console.log('🔍 UnifiedScheduleComponent useEffect 실행:', { userId, userRole, selectedConsultantId });
+        
         loadSchedules();
         loadScheduleStatusCodes();
         

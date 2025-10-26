@@ -255,6 +255,13 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     }, []);
 
     const loadSchedules = useCallback(async () => {
+        // userId가 없으면 로드하지 않음
+        if (!userId) {
+            console.warn('⚠️ userId가 없어 스케줄을 로드하지 않습니다');
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
             console.log('📅 스케줄 로드 시작:', { userId, userRole, selectedConsultantId });
@@ -368,7 +375,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
             loadConsultants();
         }
-    }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole, selectedConsultantId]);
+    }, [userId, userRole, selectedConsultantId]);
 
     // ========== 이벤트 핸들러 ==========
     const handleDateClick = (info) => {

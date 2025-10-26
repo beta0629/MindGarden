@@ -144,6 +144,19 @@ jobs:
         strip_components: 1
         overwrite: true
         
+    - name: 🔧 SQL 파일 권한 설정
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        script: |
+          # SQL 파일 권한 설정
+          sudo chmod 644 /tmp/production_all_missing_procedures.sql
+          echo "✅ SQL 파일 권한 설정 완료"
+        
     - name: 🔧 프론트엔드 파일 권한 설정
       uses: appleboy/ssh-action@v1.1.0
       with:
@@ -211,10 +224,6 @@ jobs:
           # PL/SQL 프로시저 등록
           echo "🔧 PL/SQL 프로시저 등록 시작..."
           if [ -f /tmp/production_all_missing_procedures.sql ]; then
-            # 파일 권한 설정
-            chmod 644 /tmp/production_all_missing_procedures.sql
-            echo "✅ 파일 권한 설정 완료"
-            
             # 파일 내용 확인
             echo "📋 파일 내용 확인:"
             head -5 /tmp/production_all_missing_procedures.sql

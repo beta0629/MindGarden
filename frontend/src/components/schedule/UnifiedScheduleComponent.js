@@ -268,9 +268,15 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         try {
             console.log('📅 스케줄 로드 시작:', { userId, userRole, selectedConsultantId });
             
-            let url = `/api/schedules?userId=${userId}&userRole=${userRole}`;
+            let url = '';
             
-            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
+            // 상담사는 자신의 스케줄만 조회
+            if (userRole === 'CONSULTANT') {
+                url = `/api/schedules/consultant/${userId}`;
+                console.log('🔍 상담사 자신의 스케줄만 조회:', userId);
+            }
+            // 관리자는 관리자 API 사용
+            else if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
                 url = '/api/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
@@ -278,6 +284,11 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 } else {
                     console.log('🔍 전체 상담사 조회');
                 }
+            }
+            // 기타 사용자 (내담자 등)
+            else {
+                url = `/api/schedules?userId=${userId}&userRole=${userRole}`;
+                console.log('🔍 일반 사용자 스케줄 조회');
             }
             
             const timestamp = new Date().getTime();

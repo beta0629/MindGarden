@@ -264,7 +264,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     
     return (
         <div 
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backgroundColor: 'rgba(0,0,0,0.5)' }}
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backgroundColor: 'rgba(0,0,0,0.5)', pointerEvents: 'none' }}
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
                     console.log('🖱️ 오버레이 클릭 - 모달 닫기');
@@ -273,7 +273,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
             }}
         >
             <div 
-                style={{ position: 'relative', zIndex: 1000000, backgroundColor: 'white', maxWidth: '800px', width: '90%', maxHeight: '90vh', borderRadius: '12px', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+                style={{ position: 'relative', zIndex: 1000000, backgroundColor: 'white', maxWidth: '800px', width: '90%', maxHeight: '90vh', borderRadius: '12px', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', overflow: 'hidden', display: 'flex', flexDirection: 'column', pointerEvents: 'auto' }}
                 onClick={(e) => e.stopPropagation()}
             >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>

@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import com.mindgarden.consultation.entity.ConsultationMessage;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.ConsultationMessageService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,7 @@ public class ConsultationMessageController {
 
     private final ConsultationMessageService consultationMessageService;
     private final com.mindgarden.consultation.service.UserService userService;
+    private final com.mindgarden.consultation.service.DynamicPermissionService dynamicPermissionService;
 
     /**
      * 권한 체크: 관리자 권한 확인
@@ -218,9 +220,27 @@ public class ConsultationMessageController {
             @RequestParam(required = false) Boolean isRead,
             @RequestParam(required = false) Boolean isImportant,
             @RequestParam(required = false) Boolean isUrgent,
-            Pageable pageable) {
+            Pageable pageable,
+            HttpSession session) {
         try {
             log.info("📨 내담자 메시지 목록 조회 - 내담자 ID: {}, 상담사 ID: {}", clientId, consultantId);
+            
+            // 권한 체크
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                log.warn("⚠️ 인증되지 않은 사용자");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            }
+            
+            // 내담자는 자신의 메시지만 조회 가능
+            if (currentUser.getRole() == com.mindgarden.consultation.constant.UserRole.CLIENT 
+                && !currentUser.getId().equals(clientId)) {
+                log.warn("⚠️ 권한 없음 - 다른 내담자의 메시지 접근 시도: currentUserId={}, requestedClientId={}", 
+                    currentUser.getId(), clientId);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "자신의 메시지만 조회할 수 있습니다."));
+            }
             
             Page<ConsultationMessage> messages = consultationMessageService.getClientMessages(
                 clientId, consultantId, status, isRead, isImportant, isUrgent, pageable);

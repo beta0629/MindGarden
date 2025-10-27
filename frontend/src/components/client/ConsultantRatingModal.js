@@ -95,6 +95,10 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
     }
 
     // 모달 액션 버튼들
+    const isSubmitDisabled = heartScore === 0 || isSubmitting;
+    
+    console.log('💖 버튼 상태 체크:', { heartScore, isSubmitting, isSubmitDisabled });
+    
     const modalActions = (
         <>
             <button 
@@ -106,10 +110,13 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
             </button>
             <button 
                 className="mg-v2-button mg-v2-button--primary" 
-                onClick={handleSubmit}
-                disabled={heartScore === 0 || isSubmitting}
+                onClick={() => {
+                    console.log('💖 평가 완료 버튼 클릭:', { heartScore, isSubmitting });
+                    handleSubmit();
+                }}
+                disabled={isSubmitDisabled}
             >
-                {isSubmitting ? <UnifiedLoading text="평가 중..." /> : '평가 완료'}
+                {isSubmitting ? '평가 중...' : '평가 완료'}
             </button>
         </>
     );

@@ -245,6 +245,30 @@ export const SessionProvider = ({ children }) => {
       
       console.log('🔐 중앙 세션 로그인 시작:', loginData);
       
+      // 기존 세션이 있으면 먼저 정리 (다른 계정으로 로그인 시 충돌 방지)
+      if (state.user || sessionManager.isLoggedIn()) {
+        console.log('🧹 기존 세션 정리 시작...');
+        const currentUser = state.user || sessionManager.getUser();
+        console.log('현재 로그인된 사용자:', currentUser?.email || currentUser?.id);
+        
+        // 세션 상태만 정리 (백엔드 로그아웃 API는 호출하지 않음)
+        dispatch({ type: SessionActionTypes.CLEAR_SESSION });
+        
+        // sessionManager 초기화
+        await sessionManager.logout();
+        
+        // localStorage 정리
+        localStorage.removeItem('user');
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('sessionId');
+        localStorage.removeItem('sessionInfo');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        sessionStorage.clear();
+        
+        console.log('✅ 기존 세션 정리 완료');
+      }
+      
       // API 호출
       const response = await authAPI.login(loginData);
       console.log('📡 로그인 API 응답:', response);

@@ -1,5 +1,10 @@
 /* RecurringExpenseModal.css */
 
+/* 모달이 열렸을 때 body 스크롤 방지 */
+body.modal-open {
+  overflow: hidden;
+}
+
 /* 모달 오버레이 */
 .recurring-expense-modal-overlay {
   position: fixed;

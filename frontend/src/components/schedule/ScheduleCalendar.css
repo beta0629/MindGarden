@@ -151,6 +151,36 @@
     /* 모바일 전용 스타일 */
 }
 
+/* 모바일에서 달력 이벤트 스타일 개선 */
+@media (max-width: 768px) {
+    .fc-event {
+        min-height: 24px;
+        display: flex;
+        align-items: center;
+        font-size: 0.75rem;
+        padding: 3px 6px;
+        margin-bottom: 2px;
+    }
+    
+    .fc-event-title {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .fc-daygrid-event {
+        white-space: normal;
+        word-break: break-word;
+    }
+    
+    /* 이벤트 상태 텍스트를 위로 정렬 */
+    .fc-event-main {
+        display: flex;
+        align-items: flex-start;
+        padding-top: 1px;
+    }
+}
+
 /* 달력 이벤트 스타일 */
 .mg-v2-calendar-event {
     border-radius: 4px;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -54,12 +54,12 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         return () => {
             document.body.classList.remove('modal-open');
         };
-    }, [isOpen]);
+    }, [isOpen, loadExpenses, loadStatistics, loadCategories]);
 
     /**
      * 반복 지출 목록 로드
      */
-    const loadExpenses = async () => {
+    const loadExpenses = useCallback(async () => {
         try {
             setLoading(true);
             const response = await apiGet('/api/admin/recurring-expenses');
@@ -72,12 +72,12 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     /**
      * 반복 지출 통계 로드
      */
-    const loadStatistics = async () => {
+    const loadStatistics = useCallback(async () => {
         try {
             const response = await apiGet('/api/admin/statistics/recurring-expenses');
             if (response && response.success !== false) {
@@ -86,12 +86,12 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         } catch (error) {
             console.error('반복 지출 통계 로드 실패:', error);
         }
-    };
+    }, []);
 
     /**
      * 카테고리 목록 로드
      */
-    const loadCategories = async () => {
+    const loadCategories = useCallback(async () => {
         try {
             const response = await apiGet('/api/common-codes/FINANCIAL_CATEGORY');
             if (response && Array.isArray(response)) {
@@ -102,7 +102,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         } catch (error) {
             console.error('카테고리 목록 로드 실패:', error);
         }
-    };
+    }, []);
 
     /**
      * 폼 데이터 변경 처리

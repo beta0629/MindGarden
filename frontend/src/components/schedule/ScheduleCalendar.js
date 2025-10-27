@@ -384,6 +384,12 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const handleDateClick = (info) => {
         console.log('📅 날짜 클릭:', info);
         
+        // 내담자는 날짜 클릭 불가
+        if (currentUserRole === 'CLIENT') {
+            notificationManager.info('일정은 상담사가 관리합니다.');
+            return;
+        }
+        
         if (isMobile) {
             const clickedDate = new Date(info.date);
             const today = new Date();
@@ -607,6 +613,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 onEventDrop={handleEventDrop}
                 isMobile={isMobile}
                 forceMobileMode={forceMobileMode}
+                readOnly={currentUserRole === 'CLIENT'}
             />
 
             {/* 모바일 확대 모달 */}

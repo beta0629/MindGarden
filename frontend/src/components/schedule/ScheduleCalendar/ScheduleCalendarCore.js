@@ -17,7 +17,8 @@ const ScheduleCalendarCore = ({
     onEventClick,
     onEventDrop,
     isMobile,
-    forceMobileMode
+    forceMobileMode,
+    readOnly = false
 }) => {
     const calendarRef = React.useRef(null);
 
@@ -32,10 +33,10 @@ const ScheduleCalendarCore = ({
                 right: isMobile ? 'dayGridMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
             },
             events: events,
-            editable: true,
-            droppable: true,
-            selectable: true,
-            selectMirror: true,
+            editable: !readOnly,
+            droppable: !readOnly,
+            selectable: !readOnly,
+            selectMirror: !readOnly,
             dayMaxEvents: true,
             weekends: true,
             locale: 'ko',

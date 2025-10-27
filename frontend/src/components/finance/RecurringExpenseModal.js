@@ -56,7 +56,8 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         return () => {
             document.body.classList.remove('modal-open');
         };
-    }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]); // loadExpenses, loadStatistics, loadCategories 의존성 제거하여 무한 루프 방지
 
     /**
      * 반복 지출 목록 로드
@@ -244,11 +245,8 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     };
 
     if (!isOpen) {
-        console.log('🚫 RecurringExpenseModal: isOpen이 false입니다');
         return null;
     }
-
-    console.log('✅ RecurringExpenseModal: 모달 렌더링 시작');
     return (
         <div className="recurring-expense-modal-overlay">
             <div className="recurring-expense-modal">

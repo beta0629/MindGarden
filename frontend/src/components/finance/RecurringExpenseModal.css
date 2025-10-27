@@ -47,6 +47,7 @@ body.modal-open {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  pointer-events: auto;
 }
 
 /* 모바일 대응: 전체 화면 높이 사용, 상단 모서리만 둥글게 */

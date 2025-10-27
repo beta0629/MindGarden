@@ -265,7 +265,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     
     const modalContent = (
         <div 
-            className="recurring-expense-modal-overlay"
+            className="mg-v2-modal-overlay"
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
                     console.log('🖱️ 오버레이 클릭 - 모달 닫기');
@@ -273,19 +273,20 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                 }
             }}
         >
-            <div className="recurring-expense-modal">
-                <div className="recurring-expense-modal-header">
-                    <h3>🔄 반복 지출 관리</h3>
+            <div className="mg-v2-modal mg-v2-modal-large">
+                <div className="mg-v2-modal-header">
+                    <h2 className="mg-v2-modal-title">🔄 반복 지출 관리</h2>
                     <button 
-                        className="recurring-expense-modal-close"
+                        className="mg-v2-modal-close"
                         onClick={handleClose}
                         disabled={loading}
+                        aria-label="닫기"
                     >
                         ✕
                     </button>
                 </div>
 
-                <div className="recurring-expense-modal-body">
+                <div className="mg-v2-modal-body">
                     {/* 통계 정보 */}
                     {statistics && (
                         <div className="expense-statistics">

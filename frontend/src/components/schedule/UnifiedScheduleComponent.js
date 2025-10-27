@@ -4,6 +4,7 @@ import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import ConsultationLogModal from '../consultant/ConsultationLogModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
+import ConsultantVacationModal from '../consultant/ConsultantVacationModal';
 import DateActionModal from './DateActionModal';
 import ScheduleHeader from '../ui/Schedule/ScheduleHeader';
 import ScheduleLegend from '../ui/Schedule/ScheduleLegend';
@@ -715,7 +716,20 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 />
             )}
 
-            {isVacationModalOpen && (
+            {isVacationModalOpen && userRole === 'CONSULTANT' && (
+                <ConsultantVacationModal
+                    isOpen={isVacationModalOpen}
+                    onClose={() => setIsVacationModalOpen(false)}
+                    selectedDate={selectedDate}
+                    consultantId={userId}
+                    onVacationUpdated={() => {
+                        console.log('휴가 정보가 업데이트되었습니다.');
+                        loadSchedules();
+                    }}
+                />
+            )}
+
+            {isVacationModalOpen && userRole !== 'CONSULTANT' && (
                 <VacationManagementModal
                     isOpen={isVacationModalOpen}
                     onClose={() => setIsVacationModalOpen(false)}

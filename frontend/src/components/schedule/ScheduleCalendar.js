@@ -147,6 +147,13 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
     // 상담사 목록 로드
     const loadConsultants = useCallback(async () => {
+        // 내담자는 상담사 목록을 불러오지 않음
+        if (currentUserRole === 'CLIENT') {
+            console.log('👤 내담자 - 상담사 목록 로드 생략');
+            setConsultants([]);
+            return;
+        }
+        
         try {
             setLoadingConsultants(true);
             

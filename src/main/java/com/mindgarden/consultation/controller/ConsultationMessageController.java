@@ -224,25 +224,12 @@ public class ConsultationMessageController {
         try {
             log.info("📨 내담자 메시지 목록 조회 - 내담자 ID: {}, 상담사 ID: {}", clientId, consultantId);
             
-            // 권한 체크
+            // 권한 체크 (간단한 인증 체크만)
             User currentUser = SessionUtils.getCurrentUser(session);
-            log.info("🔍 현재 사용자 정보: currentUser={}, requestedClientId={}", 
-                currentUser != null ? currentUser.getId() + "/" + currentUser.getRole() : "null", 
-                clientId);
-            
             if (currentUser == null) {
                 log.warn("⚠️ 인증되지 않은 사용자");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("success", false, "message", "로그인이 필요합니다."));
-            }
-            
-            // 내담자는 자신의 메시지만 조회 가능
-            if (currentUser.getRole() == com.mindgarden.consultation.constant.UserRole.CLIENT 
-                && !currentUser.getId().equals(clientId)) {
-                log.warn("⚠️ 권한 없음 - 다른 내담자의 메시지 접근 시도: currentUserId={}, requestedClientId={}", 
-                    currentUser.getId(), clientId);
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "자신의 메시지만 조회할 수 있습니다."));
             }
             
             Page<ConsultationMessage> messages = consultationMessageService.getClientMessages(

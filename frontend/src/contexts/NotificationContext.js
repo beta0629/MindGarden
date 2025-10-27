@@ -247,20 +247,24 @@ export const NotificationProvider = ({ children }) => {
     // 디버깅: 현재 상태 확인
     console.log('📨 NotificationContext useEffect 실행:', {
       isLoggedIn,
+      isLoggedInRef: isLoggedInRef.current,
       user: user?.id,
+      userRef: userRef.current?.id,
       hasUser: !!user
     });
     
-    // 로그인하지 않으면 아무것도 하지 않음
-    if (!isLoggedIn || !user?.id) {
+    // ref를 사용하여 체크 (최신 값)
+    if (!isLoggedInRef.current || !userRef.current?.id) {
       console.log('📨 NotificationContext: 로그인하지 않음 - 알림 로드 스킵', {
         isLoggedIn,
-        userId: user?.id
+        isLoggedInRef: isLoggedInRef.current,
+        userId: user?.id,
+        userRefId: userRef.current?.id
       });
       return;
     }
 
-    console.log('📨 NotificationContext: 알림 로드 시작 - 사용자 ID:', user.id);
+    console.log('📨 NotificationContext: 알림 로드 시작 - 사용자 ID:', userRef.current.id);
     loadUnreadCount();
     loadNotifications();
     loadSystemNotifications();

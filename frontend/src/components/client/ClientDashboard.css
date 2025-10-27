@@ -36,21 +36,21 @@
 }
 
 .client-dashboard__welcome-icon {
-  width: 64px;
-  height: 64px;
+  width: calc(var(--spacing-xl) * 4);
+  height: calc(var(--spacing-xl) * 4);
   background: linear-gradient(135deg, #FFD700, #FFA500);
   border-radius: var(--border-radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-white);
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
   animation: pulse 2s ease-in-out infinite;
 }
 
 .client-dashboard__welcome-text {
   flex: 1;
-  min-width: 250px;
+  min-width: calc(var(--spacing-lg) * 10);
 }
 
 .client-dashboard__greeting {
@@ -124,8 +124,8 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 100px;
-  height: 100px;
+  width: calc(var(--spacing-xl) * 5);
+  height: calc(var(--spacing-xl) * 5);
   border-radius: var(--border-radius-full);
   opacity: 0.1;
   transform: translate(30%, -30%);
@@ -182,7 +182,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-white);
   flex-shrink: 0;
 }
 
@@ -225,7 +225,7 @@
    ============================================ */
 
 .client-dashboard__section {
-  background: white;
+  background: var(--color-white);
   border-radius: var(--border-radius-xl);
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
@@ -277,9 +277,9 @@
 }
 
 .client-dashboard__schedule-date {
-  width: 60px;
-  height: 60px;
-  background: white;
+  width: calc(var(--spacing-lg) * 5);
+  height: calc(var(--spacing-lg) * 5);
+  background: var(--color-white);
   border-radius: var(--border-radius-md);
   display: flex;
   flex-direction: column;
@@ -351,7 +351,7 @@
   justify-content: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-xl);
-  background: white;
+  background: var(--color-white);
   border: none;
   border-radius: var(--border-radius-lg);
   font-size: var(--font-size-sm);
@@ -430,8 +430,8 @@
   }
 
   .client-dashboard__welcome-icon {
-    width: 48px;
-    height: 48px;
+    width: calc(var(--spacing-lg) * 4);
+    height: calc(var(--spacing-lg) * 4);
   }
 
   .client-dashboard__greeting {
@@ -453,8 +453,8 @@
   }
 
   .client-dashboard__stat-icon {
-    width: 48px;
-    height: 48px;
+    width: calc(var(--spacing-lg) * 4);
+    height: calc(var(--spacing-lg) * 4);
   }
 
   .client-dashboard__stat-value {
@@ -471,8 +471,8 @@
   }
 
   .client-dashboard__schedule-date {
-    width: 50px;
-    height: 50px;
+    width: calc(var(--spacing-lg) * 5);
+    height: calc(var(--spacing-lg) * 5);
   }
 
   .client-dashboard__action-grid {

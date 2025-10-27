@@ -295,7 +295,7 @@ const ClientDashboard = () => {
               </div>
               <div>
                 <h1 className="mg-v2-h1">
-                  {getGreeting()}, <span style={{color: 'var(--color-primary)'}}>{currentUser?.name}</span>님!
+                  {getGreeting()}, <span className="mg-v2-color-primary">{currentUser?.name}</span>님!
                 </h1>
                 <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mt-xs">
                   <Sparkles size={16} className="mg-v2-mr-xs" />

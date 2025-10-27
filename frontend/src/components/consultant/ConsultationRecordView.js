@@ -4,10 +4,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
+import '../../styles/mindgarden-design-system.css';
 
 /**
  * 상담일지 조회 전용 화면
  * 작성된 상담일지를 조회만 할 수 있는 화면
+ * 디자인 시스템 v2.0 적용
  */
 const ConsultationRecordView = () => {
   const { recordId } = useParams();
@@ -51,11 +53,7 @@ const ConsultationRecordView = () => {
   if (loading) {
     return (
       <SimpleLayout title="상담기록 조회">
-        <div className="consultation-record-view-loading">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">로딩 중...</span>
-          </div>
-        </div>
+        <UnifiedLoading text="상담기록을 불러오는 중..." />
       </SimpleLayout>
     );
   }
@@ -63,13 +61,11 @@ const ConsultationRecordView = () => {
   if (error) {
     return (
       <SimpleLayout title="상담기록 조회">
-        <div style={{ textAlign: 'center', padding: '50px' }}>
-          <div className="alert alert-danger" role="alert">
-            <i className="bi bi-exclamation-triangle-fill"></i>
-            {error}
-          </div>
+        <div className="mg-v2-empty-state">
+          <div className="mg-v2-empty-state-icon">⚠️</div>
+          <div className="mg-v2-empty-state-text">{error}</div>
           <button 
-            className="btn btn-outline-primary" 
+            className="mg-v2-button mg-v2-button--secondary mg-mt-md"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
@@ -83,10 +79,11 @@ const ConsultationRecordView = () => {
   if (!record) {
     return (
       <SimpleLayout title="상담기록 조회">
-        <div style={{ textAlign: 'center', padding: '50px' }}>
-          <h3>상담기록을 찾을 수 없습니다.</h3>
+        <div className="mg-v2-empty-state">
+          <div className="mg-v2-empty-state-icon">📋</div>
+          <div className="mg-v2-empty-state-text">상담기록을 찾을 수 없습니다.</div>
           <button 
-            className="btn btn-outline-primary" 
+            className="mg-v2-button mg-v2-button--secondary mg-mt-md"
             onClick={() => navigate('/consultant/consultation-records')}
           >
             <i className="bi bi-arrow-left"></i>
@@ -99,174 +96,69 @@ const ConsultationRecordView = () => {
 
   return (
     <SimpleLayout title="상담기록 조회">
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-        {/* 헤더 */}
-        <div style={{ 
-          backgroundColor: '#f8f9fa', 
-          padding: '20px', 
-          borderRadius: '10px', 
-          marginBottom: '20px',
-          border: '1px solid #dee2e6'
-        }}>
-          <h1 style={{ 
-            fontSize: '1.8rem', 
-            fontWeight: '600', 
-            color: '#2c3e50', 
-            marginBottom: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}>
-            <i className="bi bi-journal-text"></i>
-            {record.title || '상담기록'}
-          </h1>
-          <p style={{ color: '#6c757d', margin: 0 }}>
-            상담사: {user?.name || '알 수 없음'} | 
-            상담일: {record.consultationDate ? (() => {
-              try {
-                const date = new Date(record.consultationDate);
-                return date.toLocaleDateString('ko-KR', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  weekday: 'short'
-                });
-              } catch (error) {
-                return record.consultationDate;
-              }
-            })() : '날짜 정보 없음'}
-          </p>
+      <div className="mg-v2-record-view">
+        {/* 기본 정보 카드 */}
+        <div className="mg-v2-card">
+          <h3 className="mg-v2-h3 mg-mb-md">기본 정보</h3>
+          <div className="mg-v2-record-grid">
+            <div className="mg-v2-record-item">
+              <div className="mg-v2-record-label">세션 번호</div>
+              <div className="mg-v2-record-value">{record.sessionNumber || '정보 없음'}</div>
+            </div>
+            <div className="mg-v2-record-item">
+              <div className="mg-v2-record-label">상담 시간</div>
+              <div className="mg-v2-record-value">
+                {record.startTime && record.endTime ? (() => {
+                  try {
+                    const startTime = record.startTime.includes('T') ? 
+                      record.startTime.split('T')[1]?.slice(0,5) : 
+                      record.startTime;
+                    const endTime = record.endTime.includes('T') ? 
+                      record.endTime.split('T')[1]?.slice(0,5) : 
+                      record.endTime;
+                    return `${startTime || '00:00'} - ${endTime || '00:00'}`;
+                  } catch (error) {
+                    return '시간 정보 없음';
+                  }
+                })() : '시간 정보 없음'}
+              </div>
+            </div>
+            <div className="mg-v2-record-item">
+              <div className="mg-v2-record-label">상담 유형</div>
+              <div className="mg-v2-record-value">{record.consultationType || '개별 상담'}</div>
+            </div>
+            <div className="mg-v2-record-item">
+              <div className="mg-v2-record-label">상태</div>
+              <div className="mg-v2-record-value">
+                <span className={`mg-v2-badge ${record.isSessionCompleted ? 'mg-v2-badge-success' : 'mg-v2-badge-warning'}`}>
+                  {record.isSessionCompleted ? '완료' : '대기'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* 상담기록 내용 */}
-        <div style={{ 
-          backgroundColor: 'white', 
-          padding: '30px', 
-          borderRadius: '10px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-        }}>
-          {/* 기본 정보 */}
-          <div style={{ marginBottom: '30px' }}>
-            <h3 style={{ 
-              fontSize: '1.3rem', 
-              fontWeight: '600', 
-              color: '#2c3e50', 
-              marginBottom: '15px',
-              borderBottom: '2px solid #e9ecef',
-              paddingBottom: '10px'
-            }}>
-              📋 기본 정보
-            </h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <div>
-                <label style={{ fontWeight: '600', color: '#495057' }}>세션 번호</label>
-                <p style={{ margin: '5px 0 0 0', fontSize: '1.1rem' }}>
-                  {record.sessionNumber || '정보 없음'}
-                </p>
-              </div>
-              
-              <div>
-                <label style={{ fontWeight: '600', color: '#495057' }}>상담 시간</label>
-                <p style={{ margin: '5px 0 0 0', fontSize: '1.1rem' }}>
-                  {record.startTime && record.endTime ? (() => {
-                    try {
-                      const startTime = record.startTime.includes('T') ? 
-                        record.startTime.split('T')[1]?.slice(0,5) : 
-                        record.startTime;
-                      const endTime = record.endTime.includes('T') ? 
-                        record.endTime.split('T')[1]?.slice(0,5) : 
-                        record.endTime;
-                      return `${startTime || '00:00'} - ${endTime || '00:00'}`;
-                    } catch (error) {
-                      return '시간 정보 없음';
-                    }
-                  })() : '시간 정보 없음'}
-                </p>
-              </div>
-              
-              <div>
-                <label style={{ fontWeight: '600', color: '#495057' }}>상담 유형</label>
-                <p style={{ margin: '5px 0 0 0', fontSize: '1.1rem' }}>
-                  {record.consultationType || '개별 상담'}
-                </p>
-              </div>
-              
-              <div>
-                <label style={{ fontWeight: '600', color: '#495057' }}>상태</label>
-                <p style={{ margin: '5px 0 0 0', fontSize: '1.1rem' }}>
-                  <span style={{
-                    backgroundColor: record.isSessionCompleted ? '#d4edda' : '#fff3cd',
-                    color: record.isSessionCompleted ? '#155724' : '#856404',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    fontSize: '0.9rem',
-                    fontWeight: '500'
-                  }}>
-                    {record.isSessionCompleted ? '완료' : '대기'}
-                  </span>
-                </p>
-              </div>
-            </div>
+        {/* 상담 내용 카드 */}
+        <div className="mg-v2-card mg-mt-lg">
+          <h3 className="mg-v2-h3 mg-mb-md">상담 내용</h3>
+          <div className="mg-v2-record-content-box">
+            {record.notes ? (
+              <div className="mg-v2-record-notes">{record.notes}</div>
+            ) : (
+              <div className="mg-v2-record-empty">작성된 상담 내용이 없습니다.</div>
+            )}
           </div>
+        </div>
 
-          {/* 상담 내용 */}
-          <div style={{ marginBottom: '30px' }}>
-            <h3 style={{ 
-              fontSize: '1.3rem', 
-              fontWeight: '600', 
-              color: '#2c3e50', 
-              marginBottom: '15px',
-              borderBottom: '2px solid #e9ecef',
-              paddingBottom: '10px'
-            }}>
-              📝 상담 내용
-            </h3>
-            
-            <div style={{
-              backgroundColor: '#f8f9fa',
-              padding: '20px',
-              borderRadius: '8px',
-              border: '1px solid #e9ecef',
-              minHeight: '200px'
-            }}>
-              {record.notes ? (
-                <p style={{ 
-                  margin: 0, 
-                  lineHeight: '1.6', 
-                  whiteSpace: 'pre-wrap',
-                  fontSize: '1rem'
-                }}>
-                  {record.notes}
-                </p>
-              ) : (
-                <p style={{ 
-                  margin: 0, 
-                  color: '#6c757d', 
-                  fontStyle: 'italic' 
-                }}>
-                  작성된 상담 내용이 없습니다.
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* 액션 버튼 */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '10px', 
-            justifyContent: 'center',
-            paddingTop: '20px',
-            borderTop: '1px solid #e9ecef'
-          }}>
-            <button 
-              className="btn btn-outline-secondary"
-              onClick={() => navigate('/consultant/consultation-records')}
-            >
-              <i className="bi bi-arrow-left"></i>
-              목록으로 돌아가기
-            </button>
-          </div>
+        {/* 액션 버튼 */}
+        <div className="mg-v2-record-actions mg-mt-lg">
+          <button 
+            className="mg-v2-button mg-v2-button--secondary"
+            onClick={() => navigate('/consultant/consultation-records')}
+          >
+            <i className="bi bi-arrow-left"></i>
+            목록으로 돌아가기
+          </button>
         </div>
       </div>
     </SimpleLayout>

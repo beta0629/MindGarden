@@ -508,7 +508,11 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     );
     
     // React Portal을 사용하여 document.body에 모달 렌더링
-    return isOpen ? ReactDOM.createPortal(modalContent, document.body) : null;
+    if (isOpen) {
+        console.log('✅ Portal로 모달 DOM 추가:', document.body);
+        return ReactDOM.createPortal(modalContent, document.body);
+    }
+    return null;
 };
 
 export default RecurringExpenseModal;

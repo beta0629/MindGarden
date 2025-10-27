@@ -262,13 +262,42 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     
     console.log('✅ 모달 렌더링 시작 - DOM에 추가됨');
     return (
-        <div className="recurring-expense-modal-overlay" onClick={(e) => {
-            if (e.target === e.currentTarget) {
-                console.log('🖱️ 오버레이 클릭 - 모달 닫기');
-                handleClose();
-            }
-        }}>
-            <div className="recurring-expense-modal">
+        <div 
+            className="recurring-expense-modal-overlay" 
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                zIndex: 99999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    console.log('🖱️ 오버레이 클릭 - 모달 닫기');
+                    handleClose();
+                }
+            }}
+        >
+            <div 
+                className="recurring-expense-modal"
+                style={{
+                    backgroundColor: 'white',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    width: '90vw',
+                    maxWidth: '800px',
+                    maxHeight: '90vh',
+                    overflow: 'auto',
+                    zIndex: 100000
+                }}
+            >
                 <div className="recurring-expense-modal-header">
                     <h3>🔄 반복 지출 관리</h3>
                     <button 

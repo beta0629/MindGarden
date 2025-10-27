@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedModal from '../common/modals/UnifiedModal';
+import { Heart, X, Calendar, User, Briefcase } from 'lucide-react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
+import '../../styles/mindgarden-design-system.css';
 
 /**
  * 상담사 하트 평가 모달 컴포넌트
  * - 내담자가 상담 후 상담사에게 하트 점수 부여
  * - 1-5 하트 점수 시스템
  * - 평가 태그 및 코멘트 지원
+ * - 디자인 시스템 v2.0 적용
  * 
  * @author MindGarden
- * @version 1.0.0
- * @since 2025-09-17
+ * @version 2.0.0
+ * @since 2025-10-27
  */
 const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) => {
     const { user } = useSession();
@@ -39,6 +43,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
             setComment('');
             setSelectedTags([]);
             setIsAnonymous(false);
+            setIsSubmitting(false);
         }
     }, [isOpen]);
 
@@ -89,245 +94,123 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
         return null;
     }
 
-    return (
+    // 모달 액션 버튼들
+    const modalActions = (
         <>
-            {/* 배경 오버레이 */}
-            <div className="consultant-rating-modal-overlay"
+            <button 
+                className="mg-v2-button mg-v2-button--secondary" 
                 onClick={onClose}
+                disabled={isSubmitting}
             >
-                {/* 모달 컨테이너 */}
-                <div
-                    style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '16px',
-                        padding: '32px',
-                        width: '500px',
-                        maxWidth: '90vw',
-                        maxHeight: '80vh',
-                        overflowY: 'auto',
-                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
-                        fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    {/* 헤더 */}
-                    <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                        <h2 style={{
-                            fontSize: 'var(--font-size-xl)',
-                            fontWeight: '600',
-                            color: '#333',
-                            marginBottom: '8px'
-                        }}>
-                            상담사 평가
-                        </h2>
-                        <p style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: '#666',
-                            margin: 0
-                        }}>
-                            {schedule.consultantName}님과의 상담은 어떠셨나요?
-                        </p>
-                    </div>
+                취소
+            </button>
+            <button 
+                className="mg-v2-button mg-v2-button--primary" 
+                onClick={handleSubmit}
+                disabled={heartScore === 0 || isSubmitting}
+            >
+                {isSubmitting ? <UnifiedLoading text="평가 중..." /> : '평가 완료'}
+            </button>
+        </>
+    );
 
-                    {/* 상담 정보 */}
-                    <div style={{
-                        backgroundColor: '#f8f9fa',
-                        padding: '16px',
-                        borderRadius: '8px',
-                        marginBottom: '24px'
-                    }}>
-                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#495057', marginBottom: '4px' }}>
-                            📅 상담일: {schedule.consultationDate} {schedule.consultationTime}
-                        </div>
-                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#495057', marginBottom: '4px' }}>
-                            👩‍⚕️ 상담사: {schedule.consultantName}님
-                        </div>
-                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#495057' }}>
-                            💼 상담 유형: {schedule.consultationType}
-                        </div>
+    return (
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="상담사 평가"
+            subtitle={`${schedule.consultantName}님과의 상담은 어떠셨나요?`}
+            size="large"
+            variant="form"
+            actions={modalActions}
+            loading={isSubmitting}
+        >
+            <div className="mg-v2-modal-content">
+                {/* 상담 정보 */}
+                <div className="mg-v2-info-card">
+                    <div className="mg-v2-info-item">
+                        <Calendar size={16} />
+                        <span>상담일: {schedule.consultationDate} {schedule.consultationTime}</span>
                     </div>
-
-                    {/* 하트 점수 선택 */}
-                    <div style={{ marginBottom: '24px' }}>
-                        <h3 style={{
-                            fontSize: 'var(--font-size-base)',
-                            fontWeight: '600',
-                            color: '#333',
-                            marginBottom: '12px'
-                        }}>
-                            만족도를 하트로 표현해주세요
-                        </h3>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            marginBottom: '8px'
-                        }}>
-                            {[1, 2, 3, 4, 5].map(score => (
-                                <button
-                                    key={score}
-                                    style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        fontSize: 'var(--font-size-xxxl)',
-                                        cursor: 'pointer',
-                                        padding: '4px',
-                                        transition: 'transform 0.2s ease',
-                                        transform: (hoveredScore >= score || heartScore >= score) ? 'scale(1.1)' : 'scale(1)'
-                                    }}
-                                    onMouseEnter={() => setHoveredScore(score)}
-                                    onMouseLeave={() => setHoveredScore(0)}
-                                    onClick={() => setHeartScore(score)}
-                                >
-                                    {(hoveredScore >= score || heartScore >= score) ? '💖' : '🤍'}
-                                </button>
-                            ))}
-                        </div>
-                        <div style={{
-                            textAlign: 'center',
-                            fontSize: 'var(--font-size-sm)',
-                            color: '#6c757d'
-                        }}>
-                            {heartScore > 0 && `${heartScore}개의 하트를 선택하셨습니다`}
-                        </div>
+                    <div className="mg-v2-info-item">
+                        <User size={16} />
+                        <span>상담사: {schedule.consultantName}님</span>
                     </div>
-
-                    {/* 평가 태그 */}
-                    <div style={{ marginBottom: '24px' }}>
-                        <h3 style={{
-                            fontSize: 'var(--font-size-base)',
-                            fontWeight: '600',
-                            color: '#333',
-                            marginBottom: '12px'
-                        }}>
-                            어떤 점이 좋았나요? (선택사항)
-                        </h3>
-                        <div style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '8px'
-                        }}>
-                            {ratingTags.map(tag => (
-                                <button
-                                    key={tag}
-                                    style={{
-                                        padding: '6px 12px',
-                                        borderRadius: '20px',
-                                        border: selectedTags.includes(tag) ? '2px solid #007bff' : '1px solid #dee2e6',
-                                        backgroundColor: selectedTags.includes(tag) ? '#e7f3ff' : '#ffffff',
-                                        color: selectedTags.includes(tag) ? '#007bff' : '#495057',
-                                        fontSize: 'var(--font-size-sm)',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease'
-                                    }}
-                                    onClick={() => handleTagToggle(tag)}
-                                >
-                                    {tag}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* 코멘트 */}
-                    <div style={{ marginBottom: '24px' }}>
-                        <h3 style={{
-                            fontSize: 'var(--font-size-base)',
-                            fontWeight: '600',
-                            color: '#333',
-                            marginBottom: '12px'
-                        }}>
-                            추가 의견 (선택사항)
-                        </h3>
-                        <textarea
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            placeholder="상담사님께 전하고 싶은 말씀이 있으시면 적어주세요..."
-                            style={{
-                                width: '100%',
-                                height: '80px',
-                                padding: '12px',
-                                borderRadius: '8px',
-                                border: '1px solid #dee2e6',
-                                fontSize: 'var(--font-size-sm)',
-                                fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
-                                resize: 'none',
-                                outline: 'none'
-                            }}
-                            maxLength={500}
-                        />
-                        <div style={{
-                            textAlign: 'right',
-                            fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d',
-                            marginTop: '4px'
-                        }}>
-                            {comment.length}/500
-                        </div>
-                    </div>
-
-                    {/* 익명 옵션 */}
-                    <div style={{ marginBottom: '24px' }}>
-                        <label style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                            fontSize: 'var(--font-size-sm)',
-                            color: '#495057'
-                        }}>
-                            <input
-                                type="checkbox"
-                                checked={isAnonymous}
-                                onChange={(e) => setIsAnonymous(e.target.checked)}
-                                style={{ marginRight: '8px' }}
-                            />
-                            익명으로 평가하기
-                        </label>
-                    </div>
-
-                    {/* 버튼 */}
-                    <div style={{
-                        display: 'flex',
-                        gap: '12px',
-                        justifyContent: 'flex-end'
-                    }}>
-                        <button
-                            onClick={onClose}
-                            disabled={isSubmitting}
-                            style={{
-                                padding: '12px 24px',
-                                borderRadius: '8px',
-                                border: '1px solid #dee2e6',
-                                backgroundColor: '#ffffff',
-                                color: '#495057',
-                                fontSize: 'var(--font-size-sm)',
-                                fontWeight: '500',
-                                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                                opacity: isSubmitting ? 0.6 : 1
-                            }}
-                        >
-                            취소
-                        </button>
-                        <button
-                            onClick={handleSubmit}
-                            disabled={heartScore === 0 || isSubmitting}
-                            style={{
-                                padding: '12px 24px',
-                                borderRadius: '8px',
-                                border: 'none',
-                                backgroundColor: heartScore === 0 ? '#dee2e6' : '#007bff',
-                                color: heartScore === 0 ? '#6c757d' : '#ffffff',
-                                fontSize: 'var(--font-size-sm)',
-                                fontWeight: '500',
-                                cursor: (heartScore === 0 || isSubmitting) ? 'not-allowed' : 'pointer',
-                                opacity: isSubmitting ? 0.6 : 1
-                            }}
-                        >
-                            {isSubmitting ? '평가 중...' : '평가 완료'}
-                        </button>
+                    <div className="mg-v2-info-item">
+                        <Briefcase size={16} />
+                        <span>상담 유형: {schedule.consultationType}</span>
                     </div>
                 </div>
+
+                {/* 하트 점수 선택 */}
+                <div className="mg-v2-form-group">
+                    <label className="mg-v2-label">만족도를 하트로 표현해주세요</label>
+                    <div className="mg-v2-heart-rating">
+                        {[1, 2, 3, 4, 5].map(score => (
+                            <button
+                                key={score}
+                                className={`mg-v2-heart-btn ${(hoveredScore >= score || heartScore >= score) ? 'mg-v2-heart-btn--active' : ''}`}
+                                onMouseEnter={() => setHoveredScore(score)}
+                                onMouseLeave={() => setHoveredScore(0)}
+                                onClick={() => setHeartScore(score)}
+                            >
+                                {(hoveredScore >= score || heartScore >= score) ? '💖' : '🤍'}
+                            </button>
+                        ))}
+                    </div>
+                    {heartScore > 0 && (
+                        <div className="mg-v2-text-center mg-v2-text-sm mg-v2-color-text-secondary">
+                            {heartScore}개의 하트를 선택하셨습니다
+                        </div>
+                    )}
+                </div>
+
+                {/* 평가 태그 */}
+                <div className="mg-v2-form-group">
+                    <label className="mg-v2-label">어떤 점이 좋았나요? (선택사항)</label>
+                    <div className="mg-v2-tag-group">
+                        {ratingTags.map(tag => (
+                            <button
+                                key={tag}
+                                className={`mg-v2-tag ${selectedTags.includes(tag) ? 'mg-v2-tag--selected' : ''}`}
+                                onClick={() => handleTagToggle(tag)}
+                            >
+                                {tag}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 코멘트 */}
+                <div className="mg-v2-form-group">
+                    <label className="mg-v2-label">추가 의견 (선택사항)</label>
+                    <textarea
+                        className="mg-v2-textarea"
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder="상담사님께 전하고 싶은 말씀이 있으시면 적어주세요..."
+                        rows="4"
+                        maxLength={500}
+                    />
+                    <div className="mg-v2-text-right mg-v2-text-xs mg-v2-color-text-secondary">
+                        {comment.length}/500
+                    </div>
+                </div>
+
+                {/* 익명 옵션 */}
+                <div className="mg-v2-form-group">
+                    <label className="mg-v2-checkbox-label">
+                        <input
+                            type="checkbox"
+                            checked={isAnonymous}
+                            onChange={(e) => setIsAnonymous(e.target.checked)}
+                            className="mg-v2-checkbox"
+                        />
+                        익명으로 평가하기
+                    </label>
+                </div>
             </div>
-        </>
+        </UnifiedModal>
     );
 };
 

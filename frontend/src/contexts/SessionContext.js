@@ -246,18 +246,20 @@ export const SessionProvider = ({ children }) => {
       console.log('🔐 중앙 세션 로그인 시작:', loginData);
       
       // 기존 세션이 있으면 먼저 정리 (다른 계정으로 로그인 시 충돌 방지)
+      // 단, 같은 디바이스/브라우저에서만 정리 (다른 디바이스는 그대로 유지)
       if (state.user || sessionManager.isLoggedIn()) {
         console.log('🧹 기존 세션 정리 시작...');
         const currentUser = state.user || sessionManager.getUser();
         console.log('현재 로그인된 사용자:', currentUser?.email || currentUser?.id);
         
         // 세션 상태만 정리 (백엔드 로그아웃 API는 호출하지 않음)
+        // 주의: 현재 디바이스의 세션만 정리 (백엔드에서 다른 디바이스 세션은 그대로 유지됨)
         dispatch({ type: SessionActionTypes.CLEAR_SESSION });
         
-        // sessionManager 초기화
+        // sessionManager 초기화 (현재 디바이스의 세션 정보만)
         await sessionManager.logout();
         
-        // localStorage 정리
+        // localStorage 정리 (현재 디바이스만)
         localStorage.removeItem('user');
         localStorage.removeItem('userInfo');
         localStorage.removeItem('sessionId');
@@ -266,7 +268,7 @@ export const SessionProvider = ({ children }) => {
         localStorage.removeItem('refreshToken');
         sessionStorage.clear();
         
-        console.log('✅ 기존 세션 정리 완료');
+        console.log('✅ 기존 세션 정리 완료 (현재 디바이스)');
       }
       
       // API 호출

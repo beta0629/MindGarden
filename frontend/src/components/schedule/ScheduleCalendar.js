@@ -440,7 +440,31 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
     const showDetailModal = (event) => {
         console.log('📅 상세 모달 표시:', event);
-        setSelectedSchedule(event);
+        
+        // FullCalendar 이벤트 객체에서 스케줄 데이터 추출
+        let scheduleData = event;
+        if (event.extendedProps) {
+            // FullCalendar의 이벤트 객체인 경우 extendedProps 사용
+            scheduleData = {
+                id: event.id,
+                consultantId: event.extendedProps.consultantId,
+                consultantName: event.extendedProps.consultantName,
+                clientId: event.extendedProps.clientId,
+                clientName: event.extendedProps.clientName,
+                status: event.extendedProps.status,
+                statusKorean: event.extendedProps.statusKorean,
+                type: event.extendedProps.type,
+                consultationType: event.extendedProps.consultationType,
+                description: event.extendedProps.description,
+                title: event.title,
+                date: event.start.toISOString().split('T')[0],
+                startTime: event.start.toTimeString().split(' ')[0].substring(0, 5),
+                endTime: event.end?.toTimeString().split(' ')[0].substring(0, 5) || ''
+            };
+        }
+        
+        console.log('📅 추출된 스케줄 데이터:', scheduleData);
+        setSelectedSchedule(scheduleData);
         setIsDetailModalOpen(true);
     };
 
@@ -601,7 +625,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             <ScheduleDetailModal
                 isOpen={isDetailModalOpen}
                 onClose={handleDetailModalClose}
-                schedule={selectedSchedule}
+                scheduleData={selectedSchedule}
                 currentUser={currentUser}
                 currentUserRole={currentUserRole}
                 onScheduleUpdated={handleScheduleUpdated}

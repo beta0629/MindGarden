@@ -423,6 +423,14 @@
   margin-bottom: var(--spacing-xxs);
 }
 
+.client-message-screen-stat-value-danger {
+  color: var(--status-error);
+}
+
+.client-message-screen-stat-value-warning {
+  color: var(--status-warning);
+}
+
 .client-message-screen-stat-label {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);

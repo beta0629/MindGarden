@@ -164,15 +164,15 @@ const ClientMessageScreen = () => {
             <div className="client-message-screen-stat-label">전체 메시지</div>
           </div>
           <div className="client-message-screen-stat-item">
-            <div className="client-message-screen-stat-value" style={{color: '#dc3545'}}>{unreadCount}</div>
+            <div className="client-message-screen-stat-value client-message-screen-stat-value-danger">{unreadCount}</div>
             <div className="client-message-screen-stat-label">읽지 않음</div>
           </div>
           <div className="client-message-screen-stat-item">
-            <div className="client-message-screen-stat-value" style={{color: '#ffc107'}}>{importantCount}</div>
+            <div className="client-message-screen-stat-value client-message-screen-stat-value-warning">{importantCount}</div>
             <div className="client-message-screen-stat-label">중요 메시지</div>
           </div>
           <div className="client-message-screen-stat-item">
-            <div className="client-message-screen-stat-value" style={{color: '#dc3545'}}>{urgentCount}</div>
+            <div className="client-message-screen-stat-value client-message-screen-stat-value-danger">{urgentCount}</div>
             <div className="client-message-screen-stat-label">긴급 메시지</div>
           </div>
         </div>

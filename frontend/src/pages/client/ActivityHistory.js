@@ -98,12 +98,12 @@ const ActivityHistory = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      completed: '#28a745',
-      pending: '#ffc107',
-      info: '#17a2b8',
-      error: '#dc3545'
+      completed: 'var(--status-success)',
+      pending: 'var(--status-warning)',
+      info: 'var(--status-info)',
+      error: 'var(--status-error)'
     };
-    return colors[status] || '#6c757d';
+    return colors[status] || 'var(--color-text-secondary)';
   };
 
   const filteredActivities = activities.filter(activity => {

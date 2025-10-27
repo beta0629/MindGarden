@@ -16,11 +16,11 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
 
     useEffect(() => {
         fetchHealingData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userRole, category]);
 
     const fetchHealingData = async () => {
         try {
-            console.log('💚 HealingCard: 힐링 컨텐츠 로딩 시작', { userRole, category, targetRole });
             setLoading(true);
             setError(null);
 
@@ -28,20 +28,15 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
             if (category) params.append('category', category);
             if (targetRole) params.append('userRole', targetRole);
 
-            console.log('💚 HealingCard: API 호출', `/api/healing/content?${params}`);
             const response = await apiGet(`/api/healing/content?${params}`);
-
-            console.log('💚 HealingCard: API 응답', response);
 
             if (response.success) {
                 setHealingData(response.data);
-                console.log('💚 HealingCard: 힐링 데이터 설정 완료', response.data);
             } else {
                 setError(response.message || '힐링 컨텐츠를 불러오는데 실패했습니다.');
-                console.error('💚 HealingCard: API 오류', response.message);
             }
         } catch (err) {
-            console.error('💚 HealingCard: 힐링 컨텐츠 로딩 오류:', err);
+            console.error('힐링 컨텐츠 로딩 오류:', err);
             setError('서버와의 통신 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
@@ -103,14 +98,6 @@ const HealingCard = ({ userRole = 'CLIENT', category = null }) => {
             </div>
         );
     }
-
-    console.log('💚 HealingCard: 렌더링', {
-        loading,
-        error,
-        healingData,
-        userRole,
-        category
-    });
 
     return (
         <div className="healing-card-wrapper">

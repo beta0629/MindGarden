@@ -80,8 +80,10 @@ const RatableConsultationsSection = () => {
   };
 
   const handleRateConsultant = (schedule) => {
+    console.log('💖 평가하기 버튼 클릭:', schedule);
     setSelectedSchedule(schedule);
     setShowRatingModal(true);
+    console.log('💖 모달 열림:', showRatingModal);
   };
 
   const handleRatingComplete = () => {

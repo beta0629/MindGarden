@@ -65,12 +65,14 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     const loadExpenses = async () => {
         try {
             setLoading(true);
+            console.log('🔄 반복 지출 목록 API 호출 시작');
             const response = await apiGet('/api/admin/recurring-expenses');
+            console.log('📋 반복 지출 목록 API 응답:', response);
             if (response && response.success !== false) {
                 setExpenses(response.data || []);
             }
         } catch (error) {
-            console.error('반복 지출 목록 로드 실패:', error);
+            console.error('❌ 반복 지출 목록 로드 실패:', error);
             notificationManager.error('반복 지출 목록을 불러올 수 없습니다.');
         } finally {
             setLoading(false);
@@ -245,14 +247,24 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     };
 
     // 디버깅: isOpen 상태 확인
-    console.log('🔍 RecurringExpenseModal 렌더링:', { isOpen, expensesLength: expenses.length });
+    console.log('🔍 RecurringExpenseModal 렌더링:', { 
+        isOpen, 
+        expensesLength: expenses.length,
+        loading,
+        showForm,
+        editingExpense: !!editingExpense
+    });
     
     if (!isOpen) {
+        console.log('🚫 모달이 닫혀 있음');
         return null;
     }
+    
+    console.log('✅ 모달 렌더링 시작 - DOM에 추가됨');
     return (
         <div className="recurring-expense-modal-overlay" onClick={(e) => {
             if (e.target === e.currentTarget) {
+                console.log('🖱️ 오버레이 클릭 - 모달 닫기');
                 handleClose();
             }
         }}>

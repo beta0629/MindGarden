@@ -15,6 +15,80 @@
   --client-shadow-hover: 0 8px 30px rgba(255, 182, 193, 0.25);
 }
 
+/* 대시보드 배경 패턴 및 애니메이션 */
+.mg-v2-dashboard-layout {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #FFF5F8 0%, #F0FDF4 50%, #F0F9FF 100%);
+  overflow: hidden;
+}
+
+/* 배경 패턴 레이어 */
+.mg-v2-dashboard-layout::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.03;
+  background-image: 
+    repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255, 182, 193, 0.5) 35px, rgba(255, 182, 193, 0.5) 70px),
+    repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(182, 229, 216, 0.5) 35px, rgba(182, 229, 216, 0.5) 70px);
+  animation: patternMove 20s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 배경 애니메이션 원들 */
+.mg-v2-dashboard-layout::after {
+  content: '';
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(255, 182, 193, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(182, 229, 216, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(168, 216, 234, 0.08) 0%, transparent 50%);
+  animation: backgroundFloat 15s ease-in-out infinite;
+}
+
+/* 패턴 이동 애니메이션 */
+@keyframes patternMove {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(70px, 70px);
+  }
+}
+
+/* 배경 플로팅 애니메이션 */
+@keyframes backgroundFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+    opacity: 0.8;
+  }
+  66% {
+    transform: translate(-30px, 30px) scale(0.9);
+    opacity: 0.9;
+  }
+}
+
+/* 모든 대시보드 컨텐츠가 배경 위에 표시되도록 */
+.mg-v2-dashboard-layout > * {
+  position: relative;
+  z-index: 1;
+}
+
 /* ============================================
    웰컴 헤더
    ============================================ */
@@ -133,7 +207,7 @@
   z-index: 0;
 }
 
-/* Droplet Glass 배경 패턴 (정적) */
+/* Droplet Glass 배경 패턴 (은은한 애니메이션) */
 .client-dashboard__stat-card::after {
   content: '';
   position: absolute;
@@ -144,6 +218,18 @@
   background: var(--droplet-pattern-background);
   pointer-events: none;
   z-index: 0;
+  opacity: 0.4;
+  animation: dropletPatternPulse 8s ease-in-out infinite;
+}
+
+/* 드롭렛 패턴 펄스 애니메이션 */
+@keyframes dropletPatternPulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .client-dashboard__stat-card > * {

@@ -13552,6 +13552,19 @@ body {
     gap: var(--spacing-xs);
 }
 
+/* Link Styles */
+.mg-v2-link {
+    font-size: 0.8em;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: text-decoration 0.2s ease;
+}
+
+.mg-v2-link:hover {
+    text-decoration: underline;
+}
+
 .mg-v2-stat-card {
     display: flex;
     flex-direction: column;

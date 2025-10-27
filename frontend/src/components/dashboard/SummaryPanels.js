@@ -92,18 +92,7 @@ const SummaryPanels = ({ user, consultationData }) => {
                         <div className="summary-panels-more-indicator">
                           <a 
                             href="/consultant/schedule" 
-                            style={{
-                              fontSize: '0.8em',
-                              color: '#667eea',
-                              textDecoration: 'none',
-                              fontWeight: '500'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.target.style.textDecoration = 'underline';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.textDecoration = 'none';
-                            }}
+                            className="mg-v2-link"
                           >
                             +{upcomingCount - 3}건 더 보기 →
                           </a>

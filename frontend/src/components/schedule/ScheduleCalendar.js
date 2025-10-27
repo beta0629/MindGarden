@@ -439,12 +439,19 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     };
 
     const showDetailModal = (event) => {
-        console.log('📅 상세 모달 표시:', event);
+        console.log('📅 상세 모달 표시 - 원본 이벤트:', event);
+        console.log('📅 이벤트 extendedProps:', event.extendedProps);
+        console.log('📅 이벤트 start:', event.start);
+        console.log('📅 이벤트 end:', event.end);
+        console.log('📅 이벤트 title:', event.title);
         
         // FullCalendar 이벤트 객체에서 스케줄 데이터 추출
         let scheduleData = event;
         if (event.extendedProps) {
             // FullCalendar의 이벤트 객체인 경우 extendedProps 사용
+            const eventStart = event.start instanceof Date ? event.start : new Date(event.start);
+            const eventEnd = event.end instanceof Date ? event.end : new Date(event.end);
+            
             scheduleData = {
                 id: event.id,
                 consultantId: event.extendedProps.consultantId,
@@ -454,16 +461,20 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 status: event.extendedProps.status,
                 statusKorean: event.extendedProps.statusKorean,
                 type: event.extendedProps.type,
-                consultationType: event.extendedProps.consultationType,
+                consultationType: event.extendedProps.consultationType || event.extendedProps.type,
                 description: event.extendedProps.description,
                 title: event.title,
-                date: event.start.toISOString().split('T')[0],
-                startTime: event.start.toTimeString().split(' ')[0].substring(0, 5),
-                endTime: event.end?.toTimeString().split(' ')[0].substring(0, 5) || ''
+                date: eventStart.toISOString().split('T')[0],
+                startTime: eventStart.toTimeString().split(' ')[0].substring(0, 5),
+                endTime: eventEnd ? eventEnd.toTimeString().split(' ')[0].substring(0, 5) : ''
             };
         }
         
         console.log('📅 추출된 스케줄 데이터:', scheduleData);
+        console.log('📅 상담 유형:', scheduleData.consultationType);
+        console.log('📅 상태:', scheduleData.status);
+        console.log('📅 시간:', scheduleData.startTime, '-', scheduleData.endTime);
+        
         setSelectedSchedule(scheduleData);
         setIsDetailModalOpen(true);
     };

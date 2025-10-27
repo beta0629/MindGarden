@@ -44,9 +44,14 @@ public class ConsultationMessageController {
      * 권한 체크: 관리자 권한 확인
      */
     private boolean isAdmin(User user) {
-        if (user == null) return false;
+        if (user == null) {
+            log.warn("⚠️ isAdmin: user is null");
+            return false;
+        }
         String role = user.getRole().name();
-        return role.contains("ADMIN") || role.contains("SUPER");
+        boolean hasAdmin = role.contains("ADMIN") || role.contains("SUPER");
+        log.info("🔍 isAdmin 체크: role={}, hasAdmin={}", role, hasAdmin);
+        return hasAdmin;
     }
 
     /**

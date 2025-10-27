@@ -21,6 +21,16 @@ export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [systemNotifications, setSystemNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // isLoggedIn과 user를 ref로 저장 (클로저 문제 해결)
+  const isLoggedInRef = React.useRef(isLoggedIn);
+  const userRef = React.useRef(user);
+  
+  // ref 업데이트
+  useEffect(() => {
+    isLoggedInRef.current = isLoggedIn;
+    userRef.current = user;
+  }, [isLoggedIn, user]);
 
   // 읽지 않은 메시지 개수 로드
   const loadUnreadMessageCount = async () => {
@@ -257,22 +267,26 @@ export const NotificationProvider = ({ children }) => {
 
     // CONSTANTS.BUSINESS_CONSTANTS.DEFAULT_CONSULTATION_DURATION초마다 자동 갱신 (로그인 상태에서만)
     const interval = setInterval(() => {
-      // 재확인: 로그인 상태가 유지되는지 확인
-      if (isLoggedIn && user?.id) {
+      // 재확인: 로그인 상태가 유지되는지 확인 (ref 사용)
+      console.log('⏰ setInterval 실행 - isLoggedIn:', isLoggedInRef.current, 'user:', userRef.current?.id);
+      if (isLoggedInRef.current && userRef.current?.id) {
+        console.log('✅ 로그인 상태 확인됨 - loadUnreadCount 호출');
         loadUnreadCount();
+      } else {
+        console.log('❌ 로그인하지 않음 - loadUnreadCount 스킵');
       }
     }, CONSTANTS.TIME_CONSTANTS.POLLING_INTERVAL);
 
     // 커스텀 이벤트 리스너 등록 (메시지 읽음 처리 시 카운트 갱신)
     const handleMessageRead = () => {
-      if (isLoggedIn && user?.id) {
+      if (isLoggedInRef.current && userRef.current?.id) {
         console.log('📨 메시지 읽음 이벤트 감지 - 카운트 갱신');
         loadUnreadMessageCount();
       }
     };
 
     const handleNotificationRead = () => {
-      if (isLoggedIn && user?.id) {
+      if (isLoggedInRef.current && userRef.current?.id) {
         console.log('📢 공지 읽음 이벤트 감지 - 카운트 갱신');
         loadUnreadSystemCount();
       }

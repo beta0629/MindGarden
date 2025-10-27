@@ -25,7 +25,7 @@ const ScheduleCalendarCore = ({
     const getCalendarConfig = () => {
         const baseConfig = {
             plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-            initialView: isMobile ? 'dayGridMonth' : 'timeGridWeek',
+            initialView: 'dayGridMonth',
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',

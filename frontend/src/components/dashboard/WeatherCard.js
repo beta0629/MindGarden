@@ -167,11 +167,11 @@ const WeatherCard = () => {
 
   // 온도에 따른 색상 결정
   const getTemperatureColor = (temp) => {
-    if (temp < 0) return '#2196f3'; // 파란색 (매우 추움)
-    if (temp < 10) return '#03a9f4'; // 연한 파란색 (추움)
-    if (temp < 20) return '#4caf50'; // 초록색 (시원함)
-    if (temp < 30) return '#ff9800'; // 주황색 (따뜻함)
-    return '#f44336'; // 빨간색 (더움)
+    if (temp < 0) return 'var(--status-info)'; // 매우 추움
+    if (temp < 10) return 'var(--status-info-light)'; // 추움
+    if (temp < 20) return 'var(--status-success)'; // 시원함
+    if (temp < 30) return 'var(--status-warning)'; // 따뜻함
+    return 'var(--status-error)'; // 더움
   };
 
   if (weatherData.loading) {

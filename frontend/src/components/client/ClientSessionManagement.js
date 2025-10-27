@@ -310,7 +310,7 @@ const ClientSessionManagement = () => {
         {/* 최근 상담 일정 */}
         <div className="consultation-history">
           <h3>
-            <i className="bi bi-calendar3" style={{ color: 'var(--color-primary)' }}></i>
+            <i className="bi bi-calendar3 mg-color-primary"></i>
             최근 상담 일정
           </h3>
           {sessionData.schedules && sessionData.schedules.length > 0 ? (

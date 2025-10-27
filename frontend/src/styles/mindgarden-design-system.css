@@ -1112,6 +1112,22 @@ body {
   flex-shrink: 0;
 }
 
+.mg-dashboard-stat-icon-olive {
+  background: var(--olive-green) !important;
+}
+
+.mg-dashboard-stat-icon-mint {
+  background: var(--mint-green) !important;
+}
+
+.mg-dashboard-stat-icon-cocoa {
+  background: var(--cocoa) !important;
+}
+
+.mg-color-primary {
+  color: var(--color-primary);
+}
+
 .mg-stats-grid .mg-dashboard-stat-content {
   flex: 1;
   display: flex;

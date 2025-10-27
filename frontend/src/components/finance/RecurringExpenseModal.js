@@ -36,15 +36,17 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
             // 모달이 열릴 때 body에 클래스 추가
             document.body.classList.add('modal-open');
             
-            loadExpenses();
-            loadStatistics();
-            loadCategories();
             // 현재 날짜로 초기화
             const today = new Date().toISOString().split('T')[0];
             setFormData(prev => ({
                 ...prev,
                 startDate: today
             }));
+            
+            // API 호출
+            loadExpenses();
+            loadStatistics();
+            loadCategories();
         } else {
             // 모달이 닫힐 때 body에서 클래스 제거
             document.body.classList.remove('modal-open');
@@ -54,12 +56,12 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         return () => {
             document.body.classList.remove('modal-open');
         };
-    }, [isOpen, loadExpenses, loadStatistics, loadCategories]);
+    }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
     /**
      * 반복 지출 목록 로드
      */
-    const loadExpenses = useCallback(async () => {
+    const loadExpenses = async () => {
         try {
             setLoading(true);
             const response = await apiGet('/api/admin/recurring-expenses');
@@ -72,12 +74,12 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    };
 
     /**
      * 반복 지출 통계 로드
      */
-    const loadStatistics = useCallback(async () => {
+    const loadStatistics = async () => {
         try {
             const response = await apiGet('/api/admin/statistics/recurring-expenses');
             if (response && response.success !== false) {
@@ -86,12 +88,12 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         } catch (error) {
             console.error('반복 지출 통계 로드 실패:', error);
         }
-    }, []);
+    };
 
     /**
      * 카테고리 목록 로드
      */
-    const loadCategories = useCallback(async () => {
+    const loadCategories = async () => {
         try {
             const response = await apiGet('/api/common-codes/FINANCIAL_CATEGORY');
             if (response && Array.isArray(response)) {
@@ -102,7 +104,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         } catch (error) {
             console.error('카테고리 목록 로드 실패:', error);
         }
-    }, []);
+    };
 
     /**
      * 폼 데이터 변경 처리

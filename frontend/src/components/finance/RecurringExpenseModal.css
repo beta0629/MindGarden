@@ -16,6 +16,17 @@
   transform: none;
   will-change: auto;
   backdrop-filter: blur(2px);
+  padding: var(--modal-overlay-padding);
+  box-sizing: border-box;
+}
+
+/* 모바일 대응: 하단 정렬하여 제목과 닫기 버튼이 잘리지 않도록 */
+@media (max-width: 768px) {
+  .recurring-expense-modal-overlay {
+    padding: var(--modal-overlay-padding-mobile);
+    align-items: flex-end;
+    padding-bottom: 0;
+  }
 }
 
 /* 모달 컨테이너 */
@@ -24,7 +35,7 @@
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   max-width: 90vw;
-  max-height: 90vh;
+  max-height: var(--modal-max-height);
   width: 800px;
   z-index: var(--z-index-modal);
   position: relative;
@@ -32,6 +43,15 @@
   contain: layout style paint;
   transform: none;
   will-change: auto;
+}
+
+/* 모바일 대응: 전체 화면 높이 사용, 상단 모서리만 둥글게 */
+@media (max-width: 768px) {
+  .recurring-expense-modal {
+    width: 100%;
+    max-height: var(--modal-max-height);
+    border-radius: var(--modal-border-radius) var(--modal-border-radius) 0 0;
+  }
 }
 
 /* 모달 헤더 */
@@ -43,6 +63,18 @@
   align-items: center;
   justify-content: space-between;
   border-radius: 12px 12px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+  .recurring-expense-modal-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 0;
+  }
 }
 
 .recurring-expense-modal-title {

@@ -212,6 +212,14 @@
   --checkbox-size: 18px;
   --chart-height: 20;
   
+  /* 모달 변수 */
+  --modal-max-width: 1000px;
+  --modal-width: 95%;
+  --modal-max-height: 90vh;
+  --modal-border-radius: 16px;
+  --modal-overlay-padding: var(--spacing-md);
+  --modal-overlay-padding-mobile: var(--spacing-xs);
+  
   /* 스케줄 모달 변수 */
   --schedule-modal-max-width: 1400px;
   --schedule-modal-width: 95%;

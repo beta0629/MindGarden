@@ -316,6 +316,13 @@
   position: relative;
 }
 
+.package-info-content {
+  display: block;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
 /* 스크롤바 스타일링 */
 .package-info::-webkit-scrollbar {
   width: var(--spacing-sm);
@@ -349,6 +356,7 @@
 }
 
 .package-card {
+  background: var(--color-bg-primary);
   border: var(--border-width) solid var(--color-border-light);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-lg);
@@ -360,6 +368,47 @@
   width: 100%;
   position: relative;
   box-sizing: border-box;
+}
+
+.package-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.package-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.package-card-icon {
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+}
+
+.package-card-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.package-card-status {
+  padding: var(--spacing-xxs) var(--spacing-md);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.package-card-status.active {
+  background: var(--color-bg-success-light);
+  color: var(--status-completed);
+}
+
+.package-card-status.inactive {
+  background: var(--color-bg-danger-light);
+  color: var(--color-danger);
 }
 
 .package-card:first-child {
@@ -381,6 +430,15 @@
   align-items: center;
   margin-bottom: var(--spacing-lg);
   text-align: center;
+}
+
+.package-card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
 
 .package-header h4 {

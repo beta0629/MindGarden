@@ -224,37 +224,48 @@ export const NotificationProvider = ({ children }) => {
 
   // 사용자 로그인 시 알림 로드
   useEffect(() => {
-    if (isLoggedIn && user?.id) {
-      console.log('📨 NotificationContext: 알림 로드 시작 - 사용자 ID:', user.id);
-      loadUnreadCount();
-      loadNotifications();
-      loadSystemNotifications();
+    // 로그인하지 않으면 아무것도 하지 않음
+    if (!isLoggedIn || !user?.id) {
+      console.log('📨 NotificationContext: 로그인하지 않음 - 알림 로드 스킵');
+      return;
+    }
 
-      // CONSTANTS.BUSINESS_CONSTANTS.DEFAULT_CONSULTATION_DURATION초마다 자동 갱신
-      const interval = setInterval(() => {
+    console.log('📨 NotificationContext: 알림 로드 시작 - 사용자 ID:', user.id);
+    loadUnreadCount();
+    loadNotifications();
+    loadSystemNotifications();
+
+    // CONSTANTS.BUSINESS_CONSTANTS.DEFAULT_CONSULTATION_DURATION초마다 자동 갱신 (로그인 상태에서만)
+    const interval = setInterval(() => {
+      // 재확인: 로그인 상태가 유지되는지 확인
+      if (isLoggedIn && user?.id) {
         loadUnreadCount();
-      }, CONSTANTS.TIME_CONSTANTS.POLLING_INTERVAL);
+      }
+    }, CONSTANTS.TIME_CONSTANTS.POLLING_INTERVAL);
 
-      // 커스텀 이벤트 리스너 등록 (메시지 읽음 처리 시 카운트 갱신)
-      const handleMessageRead = () => {
+    // 커스텀 이벤트 리스너 등록 (메시지 읽음 처리 시 카운트 갱신)
+    const handleMessageRead = () => {
+      if (isLoggedIn && user?.id) {
         console.log('📨 메시지 읽음 이벤트 감지 - 카운트 갱신');
         loadUnreadMessageCount();
-      };
+      }
+    };
 
-      const handleNotificationRead = () => {
+    const handleNotificationRead = () => {
+      if (isLoggedIn && user?.id) {
         console.log('📢 공지 읽음 이벤트 감지 - 카운트 갱신');
         loadUnreadSystemCount();
-      };
+      }
+    };
 
-      window.addEventListener('message-read', handleMessageRead);
-      window.addEventListener('notification-read', handleNotificationRead);
+    window.addEventListener('message-read', handleMessageRead);
+    window.addEventListener('notification-read', handleNotificationRead);
 
-      return () => {
-        clearInterval(interval);
-        window.removeEventListener('message-read', handleMessageRead);
-        window.removeEventListener('notification-read', handleNotificationRead);
-      };
-    }
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('message-read', handleMessageRead);
+      window.removeEventListener('notification-read', handleNotificationRead);
+    };
   }, [isLoggedIn, user?.id]); // isLoggedIn, user?.id 의존성 추가
 
   // 통합 unreadCount 계산

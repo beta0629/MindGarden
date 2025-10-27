@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import ReactDOM from 'react-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -508,12 +507,9 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         </div>
     );
     
-    // React Portal을 사용하여 document.body에 모달 렌더링
-    if (isOpen) {
-        console.log('✅ Portal로 모달 DOM 추가:', document.body);
-        return ReactDOM.createPortal(modalContent, document.body);
-    }
-    return null;
+    // 모달 렌더링 - Portal 사용 안 함 (SpecialtyManagementModal과 동일하게)
+    if (!isOpen) return null;
+    return modalContent;
 };
 
 export default RecurringExpenseModal;

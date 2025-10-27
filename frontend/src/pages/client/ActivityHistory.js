@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { API_BASE_URL } from '../../constants/api';
 import SimpleLayout from '../../components/layout/SimpleLayout';
+import './ActivityHistory.css';
 
 const ActivityHistory = () => {
   const navigate = useNavigate();
@@ -126,60 +127,48 @@ const ActivityHistory = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">로딩중...</span>
+      <SimpleLayout>
+        <div className="activity-history-loading">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">로딩중...</span>
+          </div>
+          <p className="activity-history-loading-text">활동 내역을 불러오는 중...</p>
         </div>
-        <p style={{ marginTop: '10px' }}>활동 내역을 불러오는 중...</p>
-      </div>
+      </SimpleLayout>
     );
   }
 
   return (
     <SimpleLayout>
-      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="activity-history-container">
         {/* 헤더 */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '30px',
-          paddingBottom: '20px',
-          borderBottom: '2px solid #e9ecef'
-        }}>
-          <div>
-            <h2 style={{ margin: 0, color: '#2c3e50' }}>
-              <i className="bi bi-clock-history" style={{ marginRight: '10px', color: '#007bff' }}></i>
+        <div className="activity-history-header">
+          <div className="activity-history-header-content">
+            <h2>
+              <i className="bi bi-clock-history"></i>
               활동 내역
             </h2>
-            <p style={{ margin: '5px 0 0 0', color: '#6c757d' }}>
+            <p>
               최근 활동과 시스템 알림을 확인하세요
             </p>
           </div>
           <button 
             className="btn btn-outline-secondary"
             onClick={() => navigate('/client/dashboard')}
-            style={{ padding: '8px 16px' }}
           >
-            <i className="bi bi-arrow-left" style={{ marginRight: '5px' }}></i>
+            <i className="bi bi-arrow-left"></i>
             대시보드로
           </button>
         </div>
 
       {/* 필터 */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '10px', 
-        marginBottom: '30px',
-        flexWrap: 'wrap'
-      }}>
+      <div className="activity-history-filters">
         <div className="btn-group" role="group">
           {['all', 'consultation', 'payment', 'system'].map(type => (
             <button
               key={type}
               className={`btn ${filter === type ? 'btn-primary' : 'btn-outline-primary'}`}
               onClick={() => setFilter(type)}
-              style={{ fontSize: 'var(--font-size-sm)', padding: '6px 12px' }}
             >
               {getActivityTypeLabel(type)}
             </button>
@@ -188,85 +177,54 @@ const ActivityHistory = () => {
       </div>
 
       {/* 활동 목록 */}
-      <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+      <div className="activity-history-list">
         {filteredActivities.length > 0 ? (
           <div>
             {filteredActivities.map((activity, index) => (
               <div 
                 key={activity.id}
-                style={{
-                  padding: '20px',
-                  borderBottom: index < filteredActivities.length - 1 ? '1px solid #e9ecef' : 'none',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '15px',
-                  transition: 'background-color 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                className={`activity-history-item ${index < filteredActivities.length - 1 ? '' : 'last'}`}
               >
                 {/* 아이콘 */}
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '8px',
-                  backgroundColor: activity.color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  <i className={`bi ${activity.icon}`} style={{ color: 'white', fontSize: 'var(--font-size-lg)' }}></i>
+                <div 
+                  className="activity-history-icon"
+                  style={{ backgroundColor: activity.color }}
+                >
+                  <i className={`bi ${activity.icon}`}></i>
                 </div>
 
                 {/* 내용 */}
-                <div style={{ flex: 1 }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'flex-start',
-                    marginBottom: '5px'
-                  }}>
-                    <h5 style={{ margin: 0, color: '#2c3e50', fontSize: 'var(--font-size-base)' }}>
+                <div className="activity-history-content">
+                  <div className="activity-history-header-content">
+                    <h5 className="activity-history-title">
                       {activity.title}
                     </h5>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      fontSize: 'var(--font-size-xs)',
-                      fontWeight: '600',
-                      backgroundColor: getStatusColor(activity.status) + '20',
-                      color: getStatusColor(activity.status)
-                    }}>
+                    <span 
+                      className="activity-history-badge"
+                      style={{
+                        backgroundColor: getStatusColor(activity.status) + '20',
+                        color: getStatusColor(activity.status)
+                      }}
+                    >
                       {getStatusLabel(activity.status)}
                     </span>
                   </div>
                   
-                  <p style={{ 
-                    margin: '0 0 8px 0', 
-                    color: '#6c757d', 
-                    fontSize: 'var(--font-size-sm)',
-                    lineHeight: '1.4'
-                  }}>
+                  <p className="activity-history-description">
                     {activity.description}
                   </p>
                   
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: '15px', 
-                    fontSize: 'var(--font-size-xs)', 
-                    color: '#adb5bd' 
-                  }}>
+                  <div className="activity-history-footer">
                     <span>
-                      <i className="bi bi-calendar3" style={{ marginRight: '4px' }}></i>
+                      <i className="bi bi-calendar3"></i>
                       {activity.date}
                     </span>
                     <span>
-                      <i className="bi bi-clock" style={{ marginRight: '4px' }}></i>
+                      <i className="bi bi-clock"></i>
                       {activity.time}
                     </span>
                     <span>
-                      <i className="bi bi-hourglass-split" style={{ marginRight: '4px' }}></i>
+                      <i className="bi bi-hourglass-split"></i>
                       {getTimeAgo(activity.date, activity.time)}
                     </span>
                   </div>
@@ -275,57 +233,33 @@ const ActivityHistory = () => {
             ))}
           </div>
         ) : (
-          <div style={{ 
-            padding: '60px 20px', 
-            textAlign: 'center',
-            color: '#6c757d'
-          }}>
-            <i className="bi bi-inbox" style={{ fontSize: 'var(--font-size-xxxl)', marginBottom: '15px' }}></i>
-            <h5>활동 내역이 없습니다</h5>
-            <p>선택한 조건에 해당하는 활동이 없습니다.</p>
+          <div className="activity-history-empty">
+            <i className="bi bi-inbox activity-history-empty-icon"></i>
+            <h5 className="activity-history-empty-title">활동 내역이 없습니다</h5>
+            <p className="activity-history-empty-description">선택한 조건에 해당하는 활동이 없습니다.</p>
           </div>
         )}
       </div>
 
       {/* 통계 정보 */}
-      <div style={{ 
-        marginTop: '30px',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '15px'
-      }}>
-        <div style={{
-          padding: '20px',
-          backgroundColor: '#e3f2fd',
-          borderRadius: '8px',
-          textAlign: 'center'
-        }}>
-          <h4 style={{ margin: '0 0 5px 0', color: '#1976d2' }}>
+      <div className="activity-history-stats">
+        <div className="activity-history-stat" style={{ backgroundColor: '#e3f2fd' }}>
+          <h4 className="activity-history-stat-title">
             {activities.filter(a => a.type === 'consultation').length}
           </h4>
-          <p style={{ margin: 0, color: '#666' }}>상담 관련</p>
+          <p className="activity-history-stat-description">상담 관련</p>
         </div>
-        <div style={{
-          padding: '20px',
-          backgroundColor: '#f3e5f5',
-          borderRadius: '8px',
-          textAlign: 'center'
-        }}>
-          <h4 style={{ margin: '0 0 5px 0', color: '#7b1fa2' }}>
+        <div className="activity-history-stat" style={{ backgroundColor: '#f3e5f5' }}>
+          <h4 className="activity-history-stat-title purple">
             {activities.filter(a => a.type === 'payment').length}
           </h4>
-          <p style={{ margin: 0, color: '#666' }}>결제 관련</p>
+          <p className="activity-history-stat-description">결제 관련</p>
         </div>
-        <div style={{
-          padding: '20px',
-          backgroundColor: '#e8f5e8',
-          borderRadius: '8px',
-          textAlign: 'center'
-        }}>
-          <h4 style={{ margin: '0 0 5px 0', color: '#388e3c' }}>
+        <div className="activity-history-stat" style={{ backgroundColor: '#e8f5e8' }}>
+          <h4 className="activity-history-stat-title green">
             {activities.filter(a => a.status === 'completed').length}
           </h4>
-          <p style={{ margin: 0, color: '#666' }}>완료된 활동</p>
+          <p className="activity-history-stat-description">완료된 활동</p>
         </div>
       </div>
       </div>

@@ -178,17 +178,29 @@
 }
 
 .activity-history-stat-title.purple {
-  color: #7b1fa2;
+  color: var(--color-secondary);
 }
 
 .activity-history-stat-title.green {
-  color: #388e3c;
+  color: var(--status-completed);
 }
 
 .activity-history-stat-description {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+}
+
+.activity-history-stat-blue {
+  background: var(--color-bg-accent-light) !important;
+}
+
+.activity-history-stat-purple {
+  background: var(--color-bg-tertiary) !important;
+}
+
+.activity-history-stat-green {
+  background: var(--color-bg-success-light) !important;
 }
 
 /* 반응형 디자인 */

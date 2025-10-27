@@ -188,7 +188,6 @@ const ActivityHistory = () => {
                 {/* 아이콘 */}
                 <div 
                   className="activity-history-icon"
-                  style={{ backgroundColor: activity.color }}
                 >
                   <i className={`bi ${activity.icon}`}></i>
                 </div>
@@ -201,10 +200,6 @@ const ActivityHistory = () => {
                     </h5>
                     <span 
                       className="activity-history-badge"
-                      style={{
-                        backgroundColor: getStatusColor(activity.status) + '20',
-                        color: getStatusColor(activity.status)
-                      }}
                     >
                       {getStatusLabel(activity.status)}
                     </span>
@@ -243,19 +238,19 @@ const ActivityHistory = () => {
 
       {/* 통계 정보 */}
       <div className="activity-history-stats">
-        <div className="activity-history-stat" style={{ backgroundColor: '#e3f2fd' }}>
+        <div className="activity-history-stat activity-history-stat-blue">
           <h4 className="activity-history-stat-title">
             {activities.filter(a => a.type === 'consultation').length}
           </h4>
           <p className="activity-history-stat-description">상담 관련</p>
         </div>
-        <div className="activity-history-stat" style={{ backgroundColor: '#f3e5f5' }}>
+        <div className="activity-history-stat activity-history-stat-purple">
           <h4 className="activity-history-stat-title purple">
             {activities.filter(a => a.type === 'payment').length}
           </h4>
           <p className="activity-history-stat-description">결제 관련</p>
         </div>
-        <div className="activity-history-stat" style={{ backgroundColor: '#e8f5e8' }}>
+        <div className="activity-history-stat activity-history-stat-green">
           <h4 className="activity-history-stat-title green">
             {activities.filter(a => a.status === 'completed').length}
           </h4>

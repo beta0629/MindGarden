@@ -22,7 +22,11 @@ const UnifiedNotifications = () => {
 
   // 시스템 공지 로드
   const loadSystemNotifications = async () => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || !user?.id) {
+      console.log('📢 UnifiedNotifications - 시스템 공지 로드 스킵 - 로그인 정보 없음');
+      setSystemNotifications([]);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -32,7 +36,13 @@ const UnifiedNotifications = () => {
         setSystemNotifications(response.data || []);
       }
     } catch (error) {
-      console.error('시스템 공지 로드 오류:', error);
+      // 인증 오류는 조용히 처리
+      if (error.status === 401 || error.status === 403) {
+        console.log('📢 시스템 공지 로드 실패 - 인증 필요');
+      } else {
+        console.error('시스템 공지 로드 오류:', error);
+      }
+      setSystemNotifications([]);
     } finally {
       setLoading(false);
     }

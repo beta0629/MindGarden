@@ -172,6 +172,19 @@ jobs:
         strip_components: 1
         overwrite: true
         
+    - name: 📤 메시지 권한 강제 추가 SQL 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "sql/add_message_management_permissions_force.sql"
+        target: "/tmp/"
+        strip_components: 1
+        overwrite: true
+        
     # SQL 파일 권한 설정은 메뉴 업데이트가 필요한 경우에만 실행
     # - name: 🔧 SQL 파일 권한 설정
     #   uses: appleboy/ssh-action@v1.1.0
@@ -261,12 +274,12 @@ jobs:
             EXISTING_COUNT=$(mysql -u mindgarden -p'mindgarden2025' mind_garden -N -e "SELECT COUNT(*) FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') AND role_name='BRANCH_SUPER_ADMIN' AND is_active=true;")
             
             if [ "$EXISTING_COUNT" -eq 0 ]; then
-              echo "📝 메시지 권한이 없음 - 추가 실행"
-              mysql -u mindgarden -p'mindgarden2025' mind_garden < /tmp/add_message_management_permissions.sql
+              echo "📝 메시지 권한이 없음 - 강제 추가 실행"
+              mysql -u mindgarden -p'mindgarden2025' mind_garden < /tmp/add_message_management_permissions_force.sql
               
               if [ $? -eq 0 ]; then
-                echo "✅ 메시지 관리 권한 추가 완료"
-                mysql -u mindgarden -p'mindgarden2025' mind_garden -e "SELECT role_name, permission_code FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') AND role_name='BRANCH_SUPER_ADMIN' AND is_active=true;"
+                echo "✅ 메시지 관리 권한 강제 추가 완료"
+                mysql -u mindgarden -p'mindgarden2025' mind_garden -e "SELECT role_name, permission_code FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') ORDER BY role_name, permission_code;"
               else
                 echo "❌ 메시지 관리 권한 추가 실패"
               fi

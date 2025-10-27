@@ -244,11 +244,18 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         onClose();
     };
 
+    // 디버깅: isOpen 상태 확인
+    console.log('🔍 RecurringExpenseModal 렌더링:', { isOpen, expensesLength: expenses.length });
+    
     if (!isOpen) {
         return null;
     }
     return (
-        <div className="recurring-expense-modal-overlay">
+        <div className="recurring-expense-modal-overlay" onClick={(e) => {
+            if (e.target === e.currentTarget) {
+                handleClose();
+            }
+        }}>
             <div className="recurring-expense-modal">
                 <div className="recurring-expense-modal-header">
                     <h3>🔄 반복 지출 관리</h3>

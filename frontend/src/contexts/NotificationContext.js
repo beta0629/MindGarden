@@ -244,27 +244,19 @@ export const NotificationProvider = ({ children }) => {
 
   // 사용자 로그인 시 알림 로드
   useEffect(() => {
-    // 디버깅: 현재 상태 확인
-    console.log('📨 NotificationContext useEffect 실행:', {
-      isLoggedIn,
-      isLoggedInRef: isLoggedInRef.current,
-      user: user?.id,
-      userRef: userRef.current?.id,
-      hasUser: !!user
-    });
-    
-    // ref를 사용하여 체크 (최신 값)
-    if (!isLoggedInRef.current || !userRef.current?.id) {
-      console.log('📨 NotificationContext: 로그인하지 않음 - 알림 로드 스킵', {
-        isLoggedIn,
-        isLoggedInRef: isLoggedInRef.current,
-        userId: user?.id,
-        userRefId: userRef.current?.id
-      });
+    // 로그인 상태가 없으면 아무것도 하지 않음
+    if (!isLoggedIn || !user?.id) {
+      console.log('📨 NotificationContext: 로그인하지 않음 - 알림 로드 스킵');
+      // 알림 카운트 초기화
+      setUnreadCount(0);
+      setUnreadMessageCount(0);
+      setUnreadSystemCount(0);
+      setNotifications([]);
+      setSystemNotifications([]);
       return;
     }
 
-    console.log('📨 NotificationContext: 알림 로드 시작 - 사용자 ID:', userRef.current.id);
+    console.log('📨 NotificationContext: 알림 로드 시작 - 사용자 ID:', user.id);
     loadUnreadCount();
     loadNotifications();
     loadSystemNotifications();
@@ -272,12 +264,9 @@ export const NotificationProvider = ({ children }) => {
     // CONSTANTS.BUSINESS_CONSTANTS.DEFAULT_CONSULTATION_DURATION초마다 자동 갱신 (로그인 상태에서만)
     const interval = setInterval(() => {
       // 재확인: 로그인 상태가 유지되는지 확인 (ref 사용)
-      console.log('⏰ setInterval 실행 - isLoggedIn:', isLoggedInRef.current, 'user:', userRef.current?.id);
       if (isLoggedInRef.current && userRef.current?.id) {
-        console.log('✅ 로그인 상태 확인됨 - loadUnreadCount 호출');
+        console.log('⏰ 주기적 알림 갱신 - loadUnreadCount 호출');
         loadUnreadCount();
-      } else {
-        console.log('❌ 로그인하지 않음 - loadUnreadCount 스킵');
       }
     }, CONSTANTS.TIME_CONSTANTS.POLLING_INTERVAL);
 

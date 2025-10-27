@@ -263,54 +263,21 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     console.log('✅ 모달 렌더링 시작');
     
     return (
-        <>
-            {/* 배경 딤 */}
-            <div 
-                style={{ 
-                    position: 'fixed', 
-                    top: 0, 
-                    left: 0, 
-                    right: 0, 
-                    bottom: 0, 
-                    backgroundColor: 'rgba(0,0,0,0.5)', 
-                    zIndex: 999999 
-                }}
-                onClick={handleClose}
-            />
-            
-            {/* 모달 컨텐츠 */}
-            <div 
-                style={{ 
-                    position: 'fixed', 
-                    top: '50%', 
-                    left: '50%', 
-                    transform: 'translate(-50%, -50%)', 
-                    zIndex: 1000000, 
-                    backgroundColor: 'white', 
-                    maxWidth: '800px', 
-                    width: '90%', 
-                    maxHeight: '90vh', 
-                    borderRadius: '12px', 
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.3)', 
-                    overflow: 'hidden', 
-                    display: 'flex', 
-                    flexDirection: 'column' 
-                }}
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-                    <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>🔄 반복 지출 관리</h2>
+        древ<div className="recurring-expense-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}>
+            <div className="recurring-expense-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="recurring-expense-modal-header">
+                    <h2 className="recurring-expense-modal-title">🔄 반복 지출 관리</h2>
                     <button 
+                        className="recurring-expense-modal-close"
                         onClick={handleClose}
                         disabled={loading}
                         aria-label="닫기"
-                        style={{ background: 'none', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer', padding: '4px 8px' }}
                     >
                         ✕
                     </button>
                 </div>
 
-                <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+                <div className="recurring-expense-modal-body">
                     {/* 통계 정보 */}
                     {statistics && (
                         <div className="expense-statistics">
@@ -535,7 +502,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                     )}
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

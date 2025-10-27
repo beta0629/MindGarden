@@ -234,9 +234,19 @@ export const NotificationProvider = ({ children }) => {
 
   // 사용자 로그인 시 알림 로드
   useEffect(() => {
+    // 디버깅: 현재 상태 확인
+    console.log('📨 NotificationContext useEffect 실행:', {
+      isLoggedIn,
+      user: user?.id,
+      hasUser: !!user
+    });
+    
     // 로그인하지 않으면 아무것도 하지 않음
     if (!isLoggedIn || !user?.id) {
-      console.log('📨 NotificationContext: 로그인하지 않음 - 알림 로드 스킵');
+      console.log('📨 NotificationContext: 로그인하지 않음 - 알림 로드 스킵', {
+        isLoggedIn,
+        userId: user?.id
+      });
       return;
     }
 

@@ -214,6 +214,7 @@ export const NotificationProvider = ({ children }) => {
   // 사용자 로그인 시 알림 로드
   useEffect(() => {
     if (isLoggedIn && user?.id) {
+      console.log('📨 NotificationContext: 알림 로드 시작 - 사용자 ID:', user.id);
       loadUnreadCount();
       loadNotifications();
       loadSystemNotifications();
@@ -243,7 +244,7 @@ export const NotificationProvider = ({ children }) => {
         window.removeEventListener('notification-read', handleNotificationRead);
       };
     }
-  }, []); // isLoggedIn, user?.id 의존성 제거
+  }, [isLoggedIn, user?.id]); // isLoggedIn, user?.id 의존성 추가
 
   // 통합 unreadCount 계산
   useEffect(() => {

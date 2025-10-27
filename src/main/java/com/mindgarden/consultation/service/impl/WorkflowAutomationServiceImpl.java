@@ -376,7 +376,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                 null, // consultationId
                 getRoleCodeFromCommonCode("CLIENT"), 
                 title, 
-                message + String.format("\n📅 일시: %s %s-%s", 
+                message + String.format("\n\n📅 일시: %s %s-%s", 
                     schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),
                 getMessageTypeFromCommonCode("REMINDER"),
                 false, // isImportant
@@ -390,7 +390,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                 null, // consultationId
                 getRoleCodeFromCommonCode("CONSULTANT"), 
                 title, 
-                message + String.format("\n📅 일시: %s %s-%s", 
+                message + String.format("\n\n📅 일시: %s %s-%s", 
                     schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),
                 getMessageTypeFromCommonCode("REMINDER"),
                 false, // isImportant

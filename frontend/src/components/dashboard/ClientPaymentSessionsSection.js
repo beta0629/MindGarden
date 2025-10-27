@@ -238,16 +238,15 @@ const ClientPaymentSessionsSection = ({ userId }) => {
                 </div>
                 <div className="payment-item__content">
                   <div className="payment-item__header">
-                    <h4 className="payment-item__package">{payment.packageName}</h4>
+                    <h4 className="payment-item__package">
+                      <DollarSign size={18} />
+                      {formatCurrency(payment.amount)}
+                    </h4>
                     <span className={`mg-badge mg-badge-${getStatusClass(payment.status)}`}>
                       {getStatusText(payment.status)}
                     </span>
                   </div>
                   <div className="payment-item__details">
-                    <span className="payment-item__amount">
-                      <DollarSign size={14} />
-                      {formatCurrency(payment.amount)}
-                    </span>
                     <span className="payment-item__sessions">
                       <Package size={14} />
                       {payment.sessions}회

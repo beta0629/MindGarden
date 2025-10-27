@@ -95,13 +95,15 @@ public class ConsultationMessageController {
                     ));
             }
             
-            // 관리자 권한 체크
-            if (!isAdmin(currentUser)) {
-                log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}", currentUser.getId(), currentUser.getRole());
+            // 동적 권한 체크 (하드코딩된 역할 체크 제거)
+            boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
+            if (!hasPermission) {
+                log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}, 권한: MESSAGE_MANAGE", 
+                    currentUser.getId(), currentUser.getRole());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of(
                         "success", false,
-                        "message", "관리자 권한이 필요합니다."
+                        "message", "메시지 관리 권한이 필요합니다."
                     ));
             }
             

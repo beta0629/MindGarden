@@ -255,7 +255,9 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         editingExpense: !!editingExpense
     });
     
-    const modalContent = (
+    if (!isOpen) return null;
+    
+    return (
         <div 
             className="mg-v2-modal-overlay"
             onClick={(e) => {
@@ -505,10 +507,6 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
             </div>
         </div>
     );
-    
-    // 모달 렌더링 - Portal 사용 안 함 (SpecialtyManagementModal과 동일하게)
-    if (!isOpen) return null;
-    return modalContent;
 };
 
 export default RecurringExpenseModal;

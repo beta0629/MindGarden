@@ -64,7 +64,10 @@ export const NotificationProvider = ({ children }) => {
 
   // 읽지 않은 시스템 공지 개수 로드
   const loadUnreadSystemCount = async () => {
+    console.log('📢 loadUnreadSystemCount 시작 - isLoggedIn:', isLoggedIn, 'user:', user?.id);
+    
     if (!isLoggedIn || !user?.id) {
+      console.log('📢 로그인 상태가 아니거나 사용자 정보가 없어 0으로 설정');
       setUnreadSystemCount(0);
       return;
     }
@@ -73,20 +76,19 @@ export const NotificationProvider = ({ children }) => {
       const timestamp = new Date().getTime();
       const endpoint = `/api/system-notifications/unread-count?_t=${timestamp}`;
 
+      console.log('📢 시스템 공지 개수 API 호출:', endpoint);
       const response = await apiGet(endpoint);
+      console.log('📢 시스템 공지 개수 API 응답:', response);
       
       if (response && response.success) {
         console.log('📢 읽지 않은 공지 개수 업데이트:', response.unreadCount);
         setUnreadSystemCount(response.unreadCount || 0);
       } else {
-        // CONSTANTS.HTTP_STATUS.UNAUTHORIZED 등의 오류는 조용히 처리
+        console.log('📢 응답이 없거나 실패:', response);
         setUnreadSystemCount(0);
       }
     } catch (error) {
-      // 인증 오류는 조용히 처리
-      if (error.status !== CONSTANTS.HTTP_STATUS.UNAUTHORIZED && error.status !== CONSTANTS.HTTP_STATUS.FORBIDDEN) {
-        console.error('공지 개수 로드 오류:', error);
-      }
+      console.error('📢 공지 개수 로드 오류:', error);
       setUnreadSystemCount(0);
     }
   };
@@ -136,25 +138,30 @@ export const NotificationProvider = ({ children }) => {
 
   // 시스템 공지 목록 로드
   const loadSystemNotifications = async () => {
+    console.log('📢 loadSystemNotifications 시작 - isLoggedIn:', isLoggedIn, 'user:', user?.id);
+    
     if (!isLoggedIn || !user?.id) {
+      console.log('📢 로그인 상태가 아니거나 사용자 정보가 없어 빈 배열로 설정');
       setSystemNotifications([]);
       return;
     }
 
     try {
-      const response = await apiGet(`/api/system-notifications?page=0&size=${CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS}`);
+      const endpoint = `/api/system-notifications?page=0&size=${CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS}`;
+      console.log('📢 시스템 공지 목록 API 호출:', endpoint);
+      
+      const response = await apiGet(endpoint);
+      console.log('📢 시스템 공지 목록 API 응답:', response);
       
       if (response && response.success) {
+        console.log('📢 공지 목록 업데이트:', response.data?.length || 0, '개');
         setSystemNotifications(response.data || []);
       } else {
-        // CONSTANTS.HTTP_STATUS.UNAUTHORIZED 등의 오류는 조용히 처리
+        console.log('📢 응답이 없거나 실패:', response);
         setSystemNotifications([]);
       }
     } catch (error) {
-      // 인증 오류는 조용히 처리
-      if (error.status !== CONSTANTS.HTTP_STATUS.UNAUTHORIZED && error.status !== CONSTANTS.HTTP_STATUS.FORBIDDEN) {
-        console.error('공지 목록 로드 오류:', error);
-      }
+      console.error('📢 공지 목록 로드 오류:', error);
       setSystemNotifications([]);
     }
   };

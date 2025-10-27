@@ -13422,6 +13422,17 @@ body {
     }
 }
 
+/* Hover Effect for Cards */
+.mg-v2-card-hover {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mg-v2-card-hover:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
 /* Message Card Styles */
 .mg-v2-message-card {
     background-color: var(--color-bg-primary);
@@ -13482,6 +13493,63 @@ body {
     border-radius: 50%;
     background-color: var(--color-primary);
     flex-shrink: 0;
+}
+
+/* Weather Card Styles */
+.mg-v2-weather-container {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+}
+
+.mg-v2-weather-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mg-v2-weather-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.mg-v2-weather-temp {
+    margin-bottom: var(--spacing-xs);
+}
+
+.mg-v2-temp-value {
+    font-size: var(--font-size-xxl);
+    font-weight: 700;
+    margin-right: var(--spacing-xs);
+}
+
+.mg-v2-temp-description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.mg-v2-weather-details {
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+.mg-v2-weather-detail {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.mg-v2-weather-location {
+    margin-top: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
 }
 
 .mg-v2-stat-card {

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import { CloudSun, Droplet, Wind, RefreshCw, AlertTriangle } from 'lucide-react';
+import '../../styles/mindgarden-design-system.css';
 
 /**
  * 날씨 정보 카드 컴포넌트
  * 실시간 날씨 정보를 표시합니다
+ * 디자인 시스템 v2.0 적용
  */
 const WeatherCard = () => {
   const [weatherData, setWeatherData] = useState({
@@ -174,23 +176,9 @@ const WeatherCard = () => {
 
   if (weatherData.loading) {
     return (
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        borderRadius: '16px',
-        padding: '24px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '120px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div className="spinner-border spinner-border-sm text-primary" role="status">
-            <span className="visually-hidden">로딩중...</span>
-          </div>
-          <span style={{ color: '#6c757d', fontSize: 'var(--font-size-sm)' }}>날씨 정보 로딩 중...</span>
+      <div className="mg-v2-card mg-v2-card-hover">
+        <div className="mg-v2-card-body">
+          <UnifiedLoading text="날씨 정보 로딩 중..." />
         </div>
       </div>
     );
@@ -198,154 +186,64 @@ const WeatherCard = () => {
 
   if (weatherData.error) {
     return (
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        borderRadius: '16px',
-        padding: '24px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        textAlign: 'center'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '12px',
-          marginBottom: '8px'
-        }}>
-          <i className="bi bi-exclamation-triangle" style={{
-            color: '#ffc107',
-            fontSize: 'var(--font-size-xl)'
-          }}></i>
-          <span style={{
-            fontSize: 'var(--font-size-sm)',
-            color: '#6c757d'
-          }}>
-            날씨 정보 오류
-          </span>
+      <div className="mg-v2-card">
+        <div className="mg-v2-card-body">
+          <div className="mg-v2-empty-state">
+            <AlertTriangle className="mg-v2-empty-state-icon" />
+            <div className="mg-v2-empty-state-text">
+              <h3>날씨 정보 오류</h3>
+              <button
+                className="mg-v2-button mg-v2-button--text mg-v2-button--sm"
+                onClick={fetchWeatherData}
+              >
+                다시 시도
+              </button>
+            </div>
+          </div>
         </div>
-        <button
-          onClick={fetchWeatherData}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#007bff',
-            fontSize: 'var(--font-size-xs)',
-            cursor: 'pointer',
-            textDecoration: 'underline'
-          }}
-        >
-          다시 시도
-        </button>
       </div>
     );
   }
 
   return (
-    <div style={{
-      background: 'rgba(255, 255, 255, 0.95)',
-      borderRadius: '16px',
-      padding: '24px',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      transition: 'all 0.3s ease',
-      cursor: 'pointer'
-    }}
-    onMouseEnter={(e) => {
-      e.target.style.transform = 'translateY(-2px)';
-      e.target.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.12)';
-    }}
-    onMouseLeave={(e) => {
-      e.target.style.transform = 'translateY(0)';
-      e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
-    }}
-    onClick={fetchWeatherData}
-    title="클릭하여 날씨 정보 새로고침"
-    >
-      <div style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '16px'
-      }}>
-        <div style={{
-          width: '48px',
-          height: '48px',
-          borderRadius: '12px',
-          background: getTemperatureColor(weatherData.temperature),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0
-        }}>
-          <i className={`bi ${weatherData.icon}`} style={{
-            color: 'white',
-            fontSize: 'var(--font-size-xl)'
-          }}></i>
-        </div>
-        
-        <div style={{ flex: 1 }}>
-          <h3 style={{
-            fontSize: 'var(--font-size-lg)',
-            fontWeight: '600',
-            color: '#2c3e50',
-            margin: '0 0 8px 0',
-            lineHeight: '1.3'
-          }}>
-            오늘의 날씨
-          </h3>
-          
-          <div style={{ marginBottom: '8px' }}>
-            <span style={{
-              fontSize: 'var(--font-size-xxl)',
-              fontWeight: '700',
-              color: getTemperatureColor(weatherData.temperature),
-              marginRight: '8px'
-            }}>
-              {weatherData.temperature}°C
-            </span>
-            <span style={{
-              fontSize: 'var(--font-size-sm)',
-              color: '#6c757d'
-            }}>
-              {weatherData.description}
-            </span>
+    <div className="mg-v2-card mg-v2-card-hover" onClick={fetchWeatherData} title="클릭하여 날씨 정보 새로고침">
+      <div className="mg-v2-card-body">
+        <div className="mg-v2-weather-container">
+          <div 
+            className="mg-v2-weather-icon"
+            style={{ background: getTemperatureColor(weatherData.temperature) }}
+          >
+            <CloudSun size={24} color="white" />
           </div>
           
-          <div style={{
-            display: 'flex',
-            gap: '16px',
-            fontSize: 'var(--font-size-xs)',
-            color: '#6c757d'
-          }}>
-            <span>
-              <i className="bi bi-droplet" style={{ marginRight: '4px' }}></i>
-              습도 {weatherData.humidity}%
-            </span>
-            <span>
-              <i className="bi bi-wind" style={{ marginRight: '4px' }}></i>
-              바람 {weatherData.windSpeed}m/s
-            </span>
-          </div>
-          
-          <div style={{
-            marginTop: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span style={{
-              fontSize: 'var(--font-size-xs)',
-              color: '#6c757d',
-              fontWeight: '500'
-            }}>
-              {weatherData.location}
-            </span>
-            <i className="bi bi-arrow-clockwise" style={{
-              fontSize: 'var(--font-size-xs)',
-              color: '#6c757d'
-            }}></i>
+          <div className="mg-v2-weather-content">
+            <h3 className="mg-v2-h3 mg-mb-sm">오늘의 날씨</h3>
+            
+            <div className="mg-v2-weather-temp">
+              <span 
+                className="mg-v2-temp-value"
+                style={{ color: getTemperatureColor(weatherData.temperature) }}
+              >
+                {weatherData.temperature}°C
+              </span>
+              <span className="mg-v2-temp-description">{weatherData.description}</span>
+            </div>
+            
+            <div className="mg-v2-weather-details">
+              <span className="mg-v2-weather-detail">
+                <Droplet size={14} />
+                습도 {weatherData.humidity}%
+              </span>
+              <span className="mg-v2-weather-detail">
+                <Wind size={14} />
+                바람 {weatherData.windSpeed}m/s
+              </span>
+            </div>
+            
+            <div className="mg-v2-weather-location">
+              <span className="mg-v2-text-xs mg-v2-color-text-secondary">{weatherData.location}</span>
+              <RefreshCw size={12} className="mg-v2-color-text-secondary" />
+            </div>
           </div>
         </div>
       </div>

@@ -13,6 +13,7 @@ import SystemTools from './system/SystemTools';
 import PermissionManagement from './PermissionManagement';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
 import SystemNotificationSection from '../dashboard/SystemNotificationSection';
+import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 // 새로 추가된 모달 컴포넌트들
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS } from '../../constants/css-variables';
@@ -1302,6 +1303,14 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                     <div className="mg-toast-body">{toastMessage}</div>
                 </div>
+            )}
+
+            {/* 전문분야 관리 모달 */}
+            {showSpecialtyManagement && (
+                <SpecialtyManagementModal
+                    show={showSpecialtyManagement}
+                    onHide={() => setShowSpecialtyManagement(false)}
+                />
             )}
 
             {/* 권한 관리 - 지점 수퍼 어드민 이상만 접근 가능 */}

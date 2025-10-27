@@ -255,7 +255,12 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         editingExpense: !!editingExpense
     });
     
-    if (!isOpen) return null;
+    if (!isOpen) {
+        console.log('❌ 모달이 닫혀있음 - 렌더링 안 함');
+        return null;
+    }
+    
+    console.log('✅ 모달 렌더링 시작');
     
     return (
         <div 

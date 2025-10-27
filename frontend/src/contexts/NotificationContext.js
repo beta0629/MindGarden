@@ -255,7 +255,13 @@ export const NotificationProvider = ({ children }) => {
 
   // 통합 unreadCount 계산
   useEffect(() => {
-    setUnreadCount(unreadMessageCount + unreadSystemCount);
+    const totalUnread = unreadMessageCount + unreadSystemCount;
+    console.log('📊 통합 알림 개수 계산:', {
+      unreadMessageCount,
+      unreadSystemCount,
+      totalUnread
+    });
+    setUnreadCount(totalUnread);
   }, [unreadMessageCount, unreadSystemCount]);
 
   const value = {

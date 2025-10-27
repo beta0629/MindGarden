@@ -158,6 +158,19 @@ jobs:
         strip_components: 3
         overwrite: true
         
+    - name: 📤 메시지 권한 SQL 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "sql/add_message_management_permissions.sql"
+        target: "/tmp/"
+        strip_components: 1
+        overwrite: true
+        
     # SQL 파일 권한 설정은 메뉴 업데이트가 필요한 경우에만 실행
     # - name: 🔧 SQL 파일 권한 설정
     #   uses: appleboy/ssh-action@v1.1.0
@@ -238,6 +251,23 @@ jobs:
           # 데이터베이스 스키마 업데이트는 별도 워크플로우에서 수동 실행
           echo "ℹ️ DB 스키마 업데이트는 별도 워크플로우에서 수동 실행하세요"
           echo "ℹ️ Actions > 'Fix Production Database' 워크플로우 사용"
+          
+          # 메시지 관리 권한 추가
+          echo "🔧 메시지 관리 권한 추가 시작..."
+          if [ -f /tmp/add_message_management_permissions.sql ]; then
+            echo "📋 메시지 권한 SQL 파일 확인 완료"
+            mysql -u mindgarden -p'mindgarden2025' mind_garden < /tmp/add_message_management_permissions.sql
+            
+            if [ $? -eq 0 ]; then
+              echo "✅ 메시지 관리 권한 추가 완료"
+              mysql -u mindgarden -p'mindgarden2025' mind_garden -e "SELECT role_name, permission_code FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') AND role_name='BRANCH_SUPER_ADMIN' AND is_active=true;"
+              rm -f /tmp/add_message_management_permissions.sql
+            else
+              echo "❌ 메시지 관리 권한 추가 실패"
+            fi
+          else
+            echo "⚠️ 메시지 권한 SQL 파일을 찾을 수 없습니다"
+          fi
           
           # PL/SQL 프로시저 등록
           echo "🔧 PL/SQL 프로시저 등록 시작..."

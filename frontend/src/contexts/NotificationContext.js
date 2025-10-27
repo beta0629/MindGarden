@@ -99,6 +99,11 @@ export const NotificationProvider = ({ children }) => {
 
   // 통합 읽지 않은 개수 로드
   const loadUnreadCount = async () => {
+    // 로그인하지 않으면 스킵
+    if (!isLoggedIn || !user?.id) {
+      console.log('📊 통합 읽지 않은 개수 로드 스킵 - 로그인 정보 없음');
+      return;
+    }
     await Promise.all([
       loadUnreadMessageCount(),
       loadUnreadSystemCount()
@@ -217,6 +222,11 @@ export const NotificationProvider = ({ children }) => {
 
   // 알림 새로고침
   const refreshNotifications = () => {
+    // 로그인하지 않으면 스킵
+    if (!isLoggedIn || !user?.id) {
+      console.log('📨 알림 새로고침 스킵 - 로그인 정보 없음');
+      return;
+    }
     loadUnreadCount();
     loadNotifications();
     loadSystemNotifications();

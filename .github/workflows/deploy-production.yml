@@ -131,18 +131,19 @@ jobs:
         strip_components: 1
         overwrite: true
         
-    - name: 📤 PL/SQL 프로시저 업로드
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 120s
-        source: "sql/production_all_missing_procedures.sql"
-        target: "/tmp/"
-        strip_components: 1
-        overwrite: true
+    # PL/SQL 프로시저 업로드는 필요할 때만 수동으로 실행
+    # - name: 📤 PL/SQL 프로시저 업로드
+    #   uses: appleboy/scp-action@v0.1.7
+    #   with:
+    #     host: ${{ secrets.PRODUCTION_HOST }}
+    #     username: ${{ secrets.PRODUCTION_USER }}
+    #     key: ${{ secrets.PRODUCTION_SSH_KEY }}
+    #     port: 22
+    #     timeout: 120s
+    #     source: "sql/production_all_missing_procedures.sql"
+    #     target: "/tmp/"
+    #     strip_components: 1
+    #     overwrite: true
         
     - name: 📤 메뉴 업데이트 SQL 업로드
       uses: appleboy/scp-action@v0.1.7
@@ -157,19 +158,19 @@ jobs:
         strip_components: 3
         overwrite: true
         
-    - name: 🔧 SQL 파일 권한 설정
-      uses: appleboy/ssh-action@v1.1.0
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 60s
-        script: |
-          # SQL 파일 권한 설정
-          sudo chmod 644 /tmp/production_all_missing_procedures.sql
-          sudo chmod 644 /tmp/update_all_role_menus.sql
-          echo "✅ SQL 파일 권한 설정 완료"
+    # SQL 파일 권한 설정은 메뉴 업데이트가 필요한 경우에만 실행
+    # - name: 🔧 SQL 파일 권한 설정
+    #   uses: appleboy/ssh-action@v1.1.0
+    #   with:
+    #     host: ${{ secrets.PRODUCTION_HOST }}
+    #     username: ${{ secrets.PRODUCTION_USER }}
+    #     key: ${{ secrets.PRODUCTION_SSH_KEY }}
+    #     port: 22
+    #     timeout: 60s
+    #     script: |
+    #       # SQL 파일 권한 설정
+    #       sudo chmod 644 /tmp/update_all_role_menus.sql
+    #       echo "✅ SQL 파일 권한 설정 완료"
         
     - name: 🔧 프론트엔드 파일 권한 설정
       uses: appleboy/ssh-action@v1.1.0

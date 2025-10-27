@@ -83,6 +83,10 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.mg-v2-theme-preview-circle[data-theme-color] {
+  background-color: attr(data-theme-color);
+}
+
 .mg-v2-theme-actions {
   display: flex;
   gap: var(--mg-v2-spacing-md);

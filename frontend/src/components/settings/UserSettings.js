@@ -63,7 +63,7 @@ const UserSettings = ({user, onSettingsUpdate}) => {const {currentTheme, availab
                   <div className="mg-v2-v2-v2-flex mg-v2-v2-v2-items-center mg-v2-v2-v2-gap-md">
                     <div 
                       className="mg-v2-v2-v2-theme-preview-circle"
-                      style={{backgroundColor: themeColors.primary}}
+                      data-theme-color={themeColors.primary}
                     />
                     <div>
                       <h3 className="mg-v2-v2-v2-h3 mg-v2-v2-v2-text-primary">{currentTheme.name}</h3>

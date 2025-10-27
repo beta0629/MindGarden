@@ -136,6 +136,21 @@ const ScheduleDetailModal = ({
     };
 
     /**
+     * 상태값에 따른 색상 클래스 반환
+     */
+    const getStatusColorClass = (status) => {
+        const statusMap = {
+            'BOOKED': 'info',
+            'CONFIRMED': 'success',
+            'COMPLETED': 'secondary',
+            'CANCELLED': 'danger',
+            'VACATION': 'warning',
+            'AVAILABLE': 'success'
+        };
+        return statusMap[status] || 'secondary';
+    };
+
+    /**
      * 휴가 이벤트인지 확인
      */
     const isVacationEvent = () => {
@@ -421,7 +436,7 @@ const ScheduleDetailModal = ({
                     </div>
                     <div className="info-row">
                         <span className="label">상태:</span>
-                        <span className={`value status-${scheduleData.status?.toLowerCase()}`}>
+                        <span className={`value mg-v2-badge mg-v2-badge-${getStatusColorClass(scheduleData.status)}`}>
                             {convertStatusToKorean(scheduleData.status)}
                         </span>
                     </div>

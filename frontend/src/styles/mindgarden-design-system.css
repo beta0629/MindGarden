@@ -13309,6 +13309,45 @@ body {
     line-height: 1.5;
 }
 
+/* Consultant Client Card Styles */
+.mg-v2-client-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.mg-v2-client-card-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    flex-shrink: 0;
+}
+
+.mg-v2-client-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mg-v2-client-card-footer {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-xs);
+    background: rgba(227, 242, 253, 0.5);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-xs);
+    color: var(--color-primary);
+}
+
 @media (max-width: 768px) {
     .mg-v2-client-grid {
         grid-template-columns: 1fr;

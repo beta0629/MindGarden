@@ -2,10 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import { Users, Calendar, TrendingUp } from 'lucide-react';
+import '../../styles/mindgarden-design-system.css';
 
 /**
  * 상담사용 내담자 섹션 컴포넌트
+ * 디자인 시스템 v2.0 적용
  */
 const ConsultantClientSection = ({ userId }) => {
   const navigate = useNavigate();
@@ -18,11 +20,9 @@ const ConsultantClientSection = ({ userId }) => {
       setIsLoading(true);
       setError(null);
 
-      // 매핑 정보를 포함한 내담자 목록 조회
       const response = await apiGet(`/api/admin/mappings/consultant/${userId}/clients`);
       const mappings = response.data || [];
       
-      // 클라이언트별로 그룹화하여 누적 회기수 계산
       const clientMap = new Map();
       
       mappings.forEach(mapping => {
@@ -58,7 +58,6 @@ const ConsultantClientSection = ({ userId }) => {
           remainingSessions: mapping.remainingSessions || 0
         });
         
-        // 가장 최근 상담일로 업데이트
         if (mapping.lastConsultationDate && 
             (!client.lastConsultationDate || 
              new Date(mapping.lastConsultationDate) > new Date(client.lastConsultationDate))) {
@@ -67,7 +66,6 @@ const ConsultantClientSection = ({ userId }) => {
       });
       
       const clientsWithMappingInfo = Array.from(clientMap.values());
-      
       setClients(clientsWithMappingInfo);
 
     } catch (err) {
@@ -88,22 +86,22 @@ const ConsultantClientSection = ({ userId }) => {
     navigate(`/consultant/client/${clientId}`);
   };
 
-  const getStatusColor = (status) => {
+  const getStatusClass = (status) => {
     switch (status) {
       case 'ACTIVE':
-        return '#28a745';
+        return 'mg-v2-badge-success';
       case 'PENDING':
-        return '#ffc107';
+        return 'mg-v2-badge-warning';
       case 'INACTIVE':
-        return '#6c757d';
+        return 'mg-v2-badge-secondary';
       case 'COMPLETED':
-        return '#17a2b8';
+        return 'mg-v2-badge-info';
       case 'SUSPENDED':
-        return '#dc3545';
+        return 'mg-v2-badge-danger';
       case 'DELETED':
-        return '#6c757d';
+        return 'mg-v2-badge-secondary';
       default:
-        return '#6c757d';
+        return 'mg-v2-badge-secondary';
     }
   };
 
@@ -128,23 +126,9 @@ const ConsultantClientSection = ({ userId }) => {
 
   if (isLoading) {
     return (
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        marginBottom: '24px',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 20px'
-        }}>
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">로딩 중...</span>
-          </div>
-          <span style={{ marginLeft: '12px', color: '#6c757d' }}>내담자 목록을 불러오는 중...</span>
+      <div className="mg-v2-card">
+        <div className="mg-v2-card-body">
+          <UnifiedLoading text="내담자 목록을 불러오는 중..." />
         </div>
       </div>
     );
@@ -152,214 +136,91 @@ const ConsultantClientSection = ({ userId }) => {
 
   if (error) {
     return (
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        marginBottom: '24px',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
-      }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 20px',
-          textAlign: 'center'
-        }}>
-          <i className="bi bi-exclamation-triangle" style={{
-            fontSize: 'var(--font-size-xxxl)',
-            color: '#dc3545',
-            marginBottom: '16px'
-          }}></i>
-          <h3 style={{ color: '#dc3545', marginBottom: '8px' }}>오류가 발생했습니다</h3>
-          <p style={{ color: '#6c757d', marginBottom: '20px' }}>{error}</p>
-          <button 
-            className="mg-btn mg-btn--primary"
-            onClick={loadClients}
-          >
-            다시 시도
-          </button>
+      <div className="mg-v2-card">
+        <div className="mg-v2-card-body">
+          <div className="mg-v2-empty-state">
+            <div className="mg-v2-empty-state-icon">⚠️</div>
+            <div className="mg-v2-empty-state-text">
+              <h3>오류가 발생했습니다</h3>
+              <p>{error}</p>
+              <button 
+                className="mg-v2-button mg-v2-button--primary"
+                onClick={loadClients}
+              >
+                다시 시도
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mg-card">
-      <div className="mg-card__header">
-        <h3 className="mg-card__title">
-          <i className="bi bi-people" style={{ color: '#007bff' }}></i>
+    <div className="mg-v2-card">
+      <div className="mg-v2-card-header">
+        <div className="mg-v2-card-title">
+          <Users size={20} />
           내 내담자 ({clients.length}명)
-        </h3>
+        </div>
         <button 
-          className="mg-button mg-button--ghost mg-button--sm"
+          className="mg-v2-button mg-v2-button--ghost mg-v2-button--sm"
           onClick={() => navigate('/consultant/clients')}
         >
-          <i className="bi bi-arrow-right"></i> 전체보기
+          전체보기 →
         </button>
       </div>
 
-      <div className="mg-card__content">
+      <div className="mg-v2-card-body">
         {clients.length === 0 ? (
-          <div className="mg-empty-state">
-            <div className="mg-empty-state__icon">
-              <i className="bi bi-person-x"></i>
-            </div>
-            <div className="mg-empty-state__text">아직 매칭된 내담자가 없습니다</div>
+          <div className="mg-v2-empty-state">
+            <div className="mg-v2-empty-state-icon">👤</div>
+            <div className="mg-v2-empty-state-text">아직 매칭된 내담자가 없습니다</div>
           </div>
         ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: '16px'
-        }}>
-          {clients.slice(0, 5).map((client, index) => (
-            <div
-              key={`${client.id}-${index}`}
-              style={{
-                border: '1px solid #e9ecef',
-                borderRadius: '8px',
-                padding: '16px',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                background: 'white'
-              }}
-              onClick={() => handleClientClick(client.id)}
-              onMouseEnter={(e) => {
-                e.target.style.borderColor = '#007bff';
-                e.target.style.boxShadow = '0 4px 12px rgba(0, 123, 255, 0.15)';
-                e.target.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.borderColor = '#e9ecef';
-                e.target.style.boxShadow = 'none';
-                e.target.style.transform = 'translateY(0)';
-              }}
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '12px'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px'
-                }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: '600',
-                    fontSize: 'var(--font-size-base)'
-                  }}>
+          <div className="mg-v2-client-grid">
+            {clients.slice(0, 5).map((client, index) => (
+              <div
+                key={`${client.id}-${index}`}
+                className="mg-v2-client-card"
+                onClick={() => handleClientClick(client.id)}
+              >
+                <div className="mg-v2-client-card-header">
+                  <div className="mg-v2-client-card-avatar">
                     {client.name ? client.name.charAt(0) : '?'}
                   </div>
-                  <div>
-                    <h4 style={{
-                      margin: 0,
-                      fontSize: 'var(--font-size-base)',
-                      fontWeight: '600',
-                      color: '#2c3e50'
-                    }}>
-                      {client.name || '이름 없음'}
-                    </h4>
-                    <p style={{
-                      margin: 0,
-                      fontSize: 'var(--font-size-sm)',
-                      color: '#6c757d'
-                    }}>
+                  <div className="mg-v2-client-card-info">
+                    <h4 className="mg-v2-h4">{client.name || '이름 없음'}</h4>
+                    <p className="mg-v2-text-sm mg-v2-color-text-secondary">
                       {client.email || '이메일 없음'}
                     </p>
                   </div>
+                  <span className={`mg-v2-badge ${getStatusClass(client.mappingStatus)}`}>
+                    {getStatusText(client.mappingStatus)}
+                  </span>
                 </div>
-                <span style={{
-                  padding: '4px 8px',
-                  borderRadius: '12px',
-                  fontSize: 'var(--font-size-xs)',
-                  fontWeight: '500',
-                  background: getStatusColor(client.mappingStatus) + '20',
-                  color: getStatusColor(client.mappingStatus)
-                }}>
-                  {getStatusText(client.mappingStatus)}
-                </span>
-              </div>
 
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px',
-                marginTop: '12px'
-              }}>
-                <div style={{
-                  textAlign: 'center',
-                  padding: '8px',
-                  background: '#f8f9fa',
-                  borderRadius: '6px'
-                }}>
-                  <div style={{
-                    fontSize: 'var(--font-size-xs)',
-                    color: '#6c757d',
-                    marginBottom: '4px'
-                  }}>
-                    총 회기
+                <div className="mg-v2-stats-grid">
+                  <div className="mg-v2-stat-item">
+                    <div className="mg-v2-stat-label">총 회기</div>
+                    <div className="mg-v2-stat-value">{client.totalSessions || 0}회</div>
                   </div>
-                  <div style={{
-                    fontSize: 'var(--font-size-base)',
-                    fontWeight: '600',
-                    color: '#2c3e50'
-                  }}>
-                    {client.totalSessions || 0}회
+                  <div className="mg-v2-stat-item">
+                    <div className="mg-v2-stat-label">사용 회기</div>
+                    <div className="mg-v2-stat-value">{client.usedSessions || 0}회</div>
                   </div>
                 </div>
-                <div style={{
-                  textAlign: 'center',
-                  padding: '8px',
-                  background: '#f8f9fa',
-                  borderRadius: '6px'
-                }}>
-                  <div style={{
-                    fontSize: 'var(--font-size-xs)',
-                    color: '#6c757d',
-                    marginBottom: '4px'
-                  }}>
-                    사용한 회기
-                  </div>
-                  <div style={{
-                    fontSize: 'var(--font-size-base)',
-                    fontWeight: '600',
-                    color: '#2c3e50'
-                  }}>
-                    {client.usedSessions || 0}회
-                  </div>
-                </div>
-              </div>
 
-              <div style={{
-                marginTop: '12px',
-                padding: '8px',
-                background: '#e3f2fd',
-                borderRadius: '6px',
-                    fontSize: 'var(--font-size-xs)',
-                    color: '#1976d2',
-                    textAlign: 'center'
-              }}>
-                <i className="bi bi-calendar-check" style={{ marginRight: '4px' }}></i>
-                마지막 상담: {client.lastConsultationDate ? 
-                  new Date(client.lastConsultationDate).toLocaleDateString('ko-KR') : 
-                  '없음'
-                }
+                <div className="mg-v2-client-card-footer">
+                  <Calendar size={14} />
+                  마지막 상담: {client.lastConsultationDate ? 
+                    new Date(client.lastConsultationDate).toLocaleDateString('ko-KR') : 
+                    '없음'
+                  }
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

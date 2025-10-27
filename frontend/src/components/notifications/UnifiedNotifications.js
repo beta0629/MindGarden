@@ -209,14 +209,14 @@ const UnifiedNotifications = () => {
               onClick={() => handleTabChange('system')}
               className={`mg-button ${activeTab === 'system' ? 'mg-button-primary' : 'mg-button-outline'}`}
             >
-              <Bell size={16} style={{ marginRight: 'var(--spacing-xs)' }} />
+              <Bell size={16} className="mg-mr-xs" />
               시스템 공지
             </button>
             <button
               onClick={() => handleTabChange('messages')}
               className={`mg-button ${activeTab === 'messages' ? 'mg-button-primary' : 'mg-button-outline'}`}
             >
-              <MessageSquare size={16} style={{ marginRight: 'var(--spacing-xs)' }} />
+              <MessageSquare size={16} className="mg-mr-xs" />
               일반 메시지
             </button>
           </div>
@@ -241,17 +241,13 @@ const UnifiedNotifications = () => {
                   <div
                     key={notification.id}
                     onClick={() => handleSystemNotificationClick(notification)}
-                    className="mg-card mg-cursor-pointer"
-                    style={{ 
-                      borderLeft: notification.isRead ? 'none' : '4px solid var(--color-primary)',
-                      backgroundColor: notification.isRead ? 'var(--color-bg-secondary)' : 'var(--color-bg-primary)'
-                    }}
+                    className={`mg-card mg-cursor-pointer ${notification.isRead ? 'mg-card-read' : 'mg-card-unread'}`}
                   >
                     <div className="mg-flex mg-gap-md">
                       <div className="mg-flex-1">
                         <div className="mg-flex mg-justify-between mg-align-start mg-mb-sm">
                           <div className="mg-flex mg-align-center mg-gap-sm mg-flex-wrap">
-                            <h4 className="mg-h5 mg-mb-0" style={{ fontWeight: notification.isRead ? 'normal' : 'var(--font-weight-semibold)' }}>
+                            <h4 className={`mg-h5 mg-mb-0 ${notification.isRead ? '' : 'mg-font-weight-semibold'}`}>
                               {notification.title}
                             </h4>
                             {notification.isUrgent && (
@@ -299,22 +295,18 @@ const UnifiedNotifications = () => {
                   <div
                     key={message.id}
                     onClick={() => handleMessageClick(message)}
-                    className="mg-card mg-cursor-pointer"
-                    style={{ 
-                      borderLeft: message.isRead ? 'none' : '4px solid var(--color-primary)',
-                      backgroundColor: message.isRead ? 'var(--color-bg-secondary)' : 'var(--color-bg-primary)'
-                    }}
+                    className={`mg-card mg-cursor-pointer ${message.isRead ? 'mg-card-read' : 'mg-card-unread'}`}
                   >
                     <div className="mg-flex mg-gap-md">
                       <div className="mg-flex-1">
                         <div className="mg-flex mg-justify-between mg-align-start mg-mb-sm">
                           <div className="mg-flex mg-align-center mg-gap-sm mg-flex-wrap">
-                            <h4 className="mg-h5 mg-mb-0" style={{ fontWeight: message.isRead ? 'normal' : 'var(--font-weight-semibold)' }}>
+                            <h4 className={`mg-h5 mg-mb-0 ${message.isRead ? '' : 'mg-font-weight-semibold'}`}>
                               {message.title}
                             </h4>
                             <span 
-                              className="mg-badge mg-v2-text-xs"
-                              style={{ backgroundColor: getMessageTypeColor(message.messageType), color: 'white' }}
+                              className="mg-badge mg-v2-text-xs mg-badge-message-type"
+                              data-type={message.messageType}
                             >
                               {getMessageTypeLabel(message.messageType)}
                             </span>
@@ -371,8 +363,8 @@ const UnifiedNotifications = () => {
                     )}
                     {selectedItem.type === 'message' && (
                       <span 
-                        className="mg-badge"
-                        style={{ backgroundColor: getMessageTypeColor(selectedItem.data.messageType), color: 'white' }}
+                        className="mg-badge mg-badge-message-type"
+                        data-type={selectedItem.data.messageType}
                       >
                         {getMessageTypeLabel(selectedItem.data.messageType)}
                       </span>

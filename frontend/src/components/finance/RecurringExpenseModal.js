@@ -267,7 +267,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                 }
             }}
         >
-            <div className="mg-v2-modal mg-v2-modal-large">
+            <div className="mg-v2-modal mg-v2-modal-large" style={{ position: 'relative', zIndex: 10001, backgroundColor: 'white' }}>
                 <div className="mg-v2-modal-header">
                     <h2 className="mg-v2-modal-title">🔄 반복 지출 관리</h2>
                     <button 

@@ -106,16 +106,17 @@ const ClientMessageSection = ({ userId }) => {
         }));
       }
 
-      // 2. 시스템 공지 로드 (전체 공지 + 내담자 대상 공지)
+      // 2. 시스템 공지 로드 (전체 공지만 표시 - 중복 제거)
       const notificationsResponse = await apiGet('/api/system-notifications/active');
       
       let systemNotifications = [];
       if (notificationsResponse.success) {
+        // 전체 공지만 필터링하여 중복 제거
         systemNotifications = (notificationsResponse.data || [])
           .filter(notice => {
-            // 전체 공지 또는 내담자 대상 공지만 표시
             const targetRoles = notice.targetRoles || [];
-            return targetRoles.includes('ALL') || targetRoles.includes('CLIENT');
+            // 전체 공지만 표시 (내담자 전용 공지는 제외)
+            return targetRoles.includes('ALL') && !targetRoles.includes('CLIENT');
           })
           .map(notice => ({
             id: `system-${notice.id}`,

@@ -47,6 +47,8 @@ const UnifiedNotifications = () => {
       
       // 역할에 따라 다른 API 호출
       let endpoint = '';
+      console.log('🔍 메시지 로드 - 사용자 역할:', user.role, 'ID:', user.id);
+      
       if (user.role === 'CONSULTANT') {
         endpoint = `/api/consultation-messages/consultant/${user.id}?page=0&size=50`;
       } else if (user.role === 'CLIENT') {
@@ -56,6 +58,7 @@ const UnifiedNotifications = () => {
         endpoint = '/api/consultation-messages/all';
       }
 
+      console.log('🌐 API 호출:', endpoint);
       const response = await apiGet(endpoint);
 
       if (response.success) {

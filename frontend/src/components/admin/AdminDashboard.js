@@ -14,6 +14,8 @@ import PermissionManagement from './PermissionManagement';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
 import SystemNotificationSection from '../dashboard/SystemNotificationSection';
 import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
+import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
+import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 // 새로 추가된 모달 컴포넌트들
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS } from '../../constants/css-variables';
@@ -1308,8 +1310,24 @@ const AdminDashboard = ({ user: propUser }) => {
             {/* 전문분야 관리 모달 */}
             {showSpecialtyManagement && (
                 <SpecialtyManagementModal
-                    show={showSpecialtyManagement}
-                    onHide={() => setShowSpecialtyManagement(false)}
+                    isOpen={showSpecialtyManagement}
+                    onClose={() => setShowSpecialtyManagement(false)}
+                />
+            )}
+            
+            {/* 성과 지표 모달 */}
+            {showPerformanceMetrics && (
+                <PerformanceMetricsModal
+                    isOpen={showPerformanceMetrics}
+                    onClose={() => setShowPerformanceMetrics(false)}
+                />
+            )}
+            
+            {/* 반복 지출 모달 */}
+            {showRecurringExpense && (
+                <RecurringExpenseModal
+                    isOpen={showRecurringExpense}
+                    onClose={() => setShowRecurringExpense(false)}
                 />
             )}
 

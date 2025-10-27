@@ -144,6 +144,19 @@ jobs:
         strip_components: 1
         overwrite: true
         
+    - name: 📤 메뉴 업데이트 SQL 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "src/main/resources/sql/update_all_role_menus.sql"
+        target: "/tmp/"
+        strip_components: 3
+        overwrite: true
+        
     - name: 🔧 SQL 파일 권한 설정
       uses: appleboy/ssh-action@v1.1.0
       with:
@@ -155,6 +168,7 @@ jobs:
         script: |
           # SQL 파일 권한 설정
           sudo chmod 644 /tmp/production_all_missing_procedures.sql
+          sudo chmod 644 /tmp/update_all_role_menus.sql
           echo "✅ SQL 파일 권한 설정 완료"
         
     - name: 🔧 프론트엔드 파일 권한 설정
@@ -176,6 +190,9 @@ jobs:
           sudo find /var/www/html/ -name "*.js" -exec chmod 644 {} \;
           
           echo "✅ 프론트엔드 파일 권한 설정 완료"
+        
+    # 참고: 메뉴 구조 업데이트는 필요할 때만 수동으로 실행
+    # sudo mysql -u root -p'!QAZ2wsx#EDC4rfv' mindgarden < /tmp/update_all_role_menus.sql
         
     - name: 🔄 서비스 재시작
       uses: appleboy/ssh-action@v1.1.0

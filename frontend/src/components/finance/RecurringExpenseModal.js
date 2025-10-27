@@ -256,13 +256,6 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         editingExpense: !!editingExpense
     });
     
-    if (!isOpen) {
-        console.log('🚫 모달이 닫혀 있음');
-        return null;
-    }
-    
-    console.log('✅ 모달 렌더링 시작 - DOM에 추가됨');
-    
     const modalContent = (
         <div 
             className="mg-v2-modal-overlay"

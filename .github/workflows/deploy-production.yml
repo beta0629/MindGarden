@@ -172,18 +172,19 @@ jobs:
         strip_components: 1
         overwrite: true
         
-    - name: 📤 메시지 권한 강제 추가 SQL 업로드
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 120s
-        source: "sql/add_message_management_permissions_force.sql"
-        target: "/tmp/"
-        strip_components: 1
-        overwrite: true
+    # 메시지 권한 강제 추가 SQL은 한 번만 실행되어야 함 - 수동 실행 필요
+    # - name: 📤 메시지 권한 강제 추가 SQL 업로드
+    #   uses: appleboy/scp-action@v0.1.7
+    #   with:
+    #     host: ${{ secrets.PRODUCTION_HOST }}
+    #     username: ${{ secrets.PRODUCTION_USER }}
+    #     key: ${{ secrets.PRODUCTION_SSH_KEY }}
+    #     port: 22
+    #     timeout: 120s
+    #     source: "sql/add_message_management_permissions_force.sql"
+    #     target: "/tmp/"
+    #     strip_components: 1
+    #     overwrite: true
         
     # SQL 파일 권한 설정은 메뉴 업데이트가 필요한 경우에만 실행
     # - name: 🔧 SQL 파일 권한 설정
@@ -274,15 +275,10 @@ jobs:
             EXISTING_COUNT=$(mysql -u mindgarden -p'mindgarden2025' mind_garden -N -e "SELECT COUNT(*) FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') AND role_name='BRANCH_SUPER_ADMIN' AND is_active=true;")
             
             if [ "$EXISTING_COUNT" -eq 0 ]; then
-              echo "📝 메시지 권한이 없음 - 강제 추가 실행"
-              mysql -u mindgarden -p'mindgarden2025' mind_garden < /tmp/add_message_management_permissions_force.sql
-              
-              if [ $? -eq 0 ]; then
-                echo "✅ 메시지 관리 권한 강제 추가 완료"
-                mysql -u mindgarden -p'mindgarden2025' mind_garden -e "SELECT role_name, permission_code FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') ORDER BY role_name, permission_code;"
-              else
-                echo "❌ 메시지 관리 권한 추가 실패"
-              fi
+              echo "📝 메시지 권한이 없음 - 수동으로 SQL 실행 필요"
+              echo "⚠️ 운영 서버 SSH 접속 후 다음 명령어 실행:"
+              echo "   mysql -u mindgarden -p'mindgarden2025' mind_garden < sql/add_message_management_permissions_force.sql"
+              echo "⚠️ 또는 워크플로우에 SQL 내용을 직접 실행하도록 추가 필요"
             else
               echo "✅ 메시지 관리 권한이 이미 존재함 (${EXISTING_COUNT}개)"
             fi

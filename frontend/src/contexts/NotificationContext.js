@@ -25,6 +25,7 @@ export const NotificationProvider = ({ children }) => {
   // 읽지 않은 메시지 개수 로드
   const loadUnreadMessageCount = async () => {
     if (!isLoggedIn || !user?.id) {
+      console.log('📨 메시지 개수 로드 스킵 - 로그인 정보 없음');
       setUnreadMessageCount(0);
       return;
     }
@@ -45,6 +46,7 @@ export const NotificationProvider = ({ children }) => {
       const timestamp = new Date().getTime();
       const endpoint = `/api/consultation-messages/unread-count?userId=${user.id}&userType=${userType}&_t=${timestamp}`;
 
+      console.log('📨 메시지 개수 API 호출:', endpoint);
       const response = await apiGet(endpoint);
       
       if (response && response.success) {
@@ -55,8 +57,10 @@ export const NotificationProvider = ({ children }) => {
       }
     } catch (error) {
       // 인증 오류는 조용히 처리
-      if (error.status !== CONSTANTS.HTTP_STATUS.UNAUTHORIZED && error.status !== CONSTANTS.HTTP_STATUS.FORBIDDEN) {
-        console.error('메시지 개수 로드 오류:', error);
+      if (error.status === CONSTANTS.HTTP_STATUS.UNAUTHORIZED || error.status === CONSTANTS.HTTP_STATUS.FORBIDDEN) {
+        console.log('📨 메시지 개수 로드 실패 - 인증 필요');
+      } else {
+        console.error('📨 메시지 개수 로드 오류:', error);
       }
       setUnreadMessageCount(0);
     }

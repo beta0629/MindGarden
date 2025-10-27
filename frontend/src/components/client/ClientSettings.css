@@ -1,0 +1,150 @@
+/* ============================================
+   내담자 설정 페이지 스타일
+   ============================================ */
+
+.client-settings-container {
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+  min-height: 100vh;
+}
+
+.client-settings-card {
+  max-width: calc(var(--container-max-width) * 0.8);
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--border-radius-2xl);
+  padding: var(--spacing-xxl);
+  box-shadow: var(--shadow-xl);
+  backdrop-filter: blur(var(--blur-lg));
+  border: var(--border-width) solid rgba(255, 255, 255, 0.2);
+}
+
+.client-settings-header {
+  margin-bottom: var(--spacing-xxl);
+}
+
+.client-settings-title {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.client-settings-title i {
+  color: var(--color-primary);
+  font-size: var(--font-size-xxxl);
+}
+
+.client-settings-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.client-settings-message {
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  background: var(--color-success-light);
+  color: var(--color-success-dark);
+  border: var(--border-width) solid var(--color-success);
+}
+
+.client-settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.client-settings-section {
+  padding: var(--spacing-lg);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-xl);
+  border: var(--border-width) solid var(--color-border-light);
+}
+
+.client-settings-section-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.client-settings-section-title i {
+  color: var(--color-primary);
+}
+
+.client-settings-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.client-settings-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.client-settings-option:last-child {
+  border-bottom: none;
+}
+
+.client-settings-option h4 {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.client-settings-option p {
+  margin: var(--spacing-xxs) 0 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+.client-settings-switch {
+  transform: scale(1.2);
+}
+
+.client-settings-select {
+  max-width: calc(var(--spacing-xl) * 5);
+  padding: var(--spacing-sm);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-base);
+}
+
+.client-settings-footer {
+  text-align: center;
+  margin-top: var(--spacing-xxl);
+}
+
+.client-settings-save-btn {
+  padding: var(--spacing-md) var(--spacing-xxl);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--border-radius-lg);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .client-settings-container {
+    padding: var(--spacing-md);
+  }
+  
+  .client-settings-card {
+    padding: var(--spacing-lg);
+  }
+  
+  .client-settings-title {
+    font-size: var(--font-size-xl);
+  }
+}

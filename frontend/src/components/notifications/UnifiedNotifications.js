@@ -291,11 +291,19 @@ const UnifiedNotifications = () => {
                             {formatDate(notification.publishedAt || notification.createdAt)}
                           </span>
                         </div>
-                        <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
-                          {notification.content.length > 100
-                            ? `${notification.content.substring(0, 100)}...`
-                            : notification.content}
-                        </p>
+                        <div 
+                          className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0"
+                          dangerouslySetInnerHTML={{
+                            __html: (() => {
+                              const content = notification.content || '';
+                              // HTML 태그 제거하여 미리보기만 표시
+                              const textOnly = content.replace(/<[^>]*>/g, '');
+                              return textOnly.length > 100
+                                ? `${textOnly.substring(0, 100)}...`
+                                : textOnly;
+                            })()
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -406,11 +414,12 @@ const UnifiedNotifications = () => {
                 </button>
               </div>
               <div className="mg-modal__body">
-                <div className="notification-content">
-                  {selectedItem.data.content.split('\n').map((line, index) => (
-                    <p key={index} className="mg-mb-sm">{line || '\u00A0'}</p>
-                  ))}
-                </div>
+                <div 
+                  className="notification-content"
+                  dangerouslySetInnerHTML={{
+                    __html: selectedItem.data.content || ''
+                  }}
+                />
               </div>
               <div className="mg-modal__actions">
                 <button onClick={closeModal} className="mg-button mg-button-primary">

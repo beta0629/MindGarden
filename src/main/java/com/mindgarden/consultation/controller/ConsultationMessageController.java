@@ -48,9 +48,9 @@ public class ConsultationMessageController {
             log.warn("⚠️ isAdmin: user is null");
             return false;
         }
-        String role = user.getRole().name();
-        boolean hasAdmin = role.contains("ADMIN") || role.contains("SUPER");
-        log.info("🔍 isAdmin 체크: role={}, hasAdmin={}", role, hasAdmin);
+        // 동적 권한 체크로 변경
+        boolean hasAdmin = dynamicPermissionService.hasPermission(user, "MESSAGE_MANAGE");
+        log.info("🔍 isAdmin 체크: role={}, hasAdmin={}", user.getRole().name(), hasAdmin);
         return hasAdmin;
     }
 

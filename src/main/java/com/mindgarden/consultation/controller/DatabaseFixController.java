@@ -5,6 +5,7 @@ import com.mindgarden.consultation.entity.OpenAIUsageLog;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.OpenAIUsageLogRepository;
 import com.mindgarden.consultation.utils.SessionUtils;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DatabaseFixController {
     
     private final OpenAIUsageLogRepository usageLogRepository;
+    private final DynamicPermissionService dynamicPermissionService;
     
     /**
      * OpenAI 사용 로그의 estimatedCost null 값 수정
@@ -42,12 +44,13 @@ public class DatabaseFixController {
                 ));
             }
             
-            // 관리자 권한 확인
-            if (!currentUser.getRole().name().contains("ADMIN") && 
-                !currentUser.getRole().name().contains("SUPER")) {
+            // 동적 권한 확인
+            boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "DATABASE_MANAGE");
+            if (!hasPermission) {
+                log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}", currentUser.getId(), currentUser.getRole());
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
-                    "message", "관리자 권한이 필요합니다."
+                    "message", "데이터베이스 관리 권한이 필요합니다."
                 ));
             }
             

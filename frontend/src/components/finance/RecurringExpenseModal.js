@@ -263,8 +263,8 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     console.log('✅ 모달 렌더링 시작');
     
     return (
-        <div className="recurring-expense-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }} style={{ display: 'flex' }}>
-            <div className="recurring-expense-modal" onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
+        <div className="recurring-expense-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}>
+            <div className="recurring-expense-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="recurring-expense-modal-header">
                     <h2 className="recurring-expense-modal-title">🔄 반복 지출 관리</h2>
                     <button 

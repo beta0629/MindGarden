@@ -126,6 +126,25 @@ export const SessionProvider = ({ children }) => {
     stateRef.current = state;
   }, [state]);
 
+  // 초기 마운트 시 sessionManager에서 사용자 정보 복원
+  useEffect(() => {
+    console.log('🔄 SessionProvider 마운트: sessionManager에서 사용자 정보 복원');
+    const user = sessionManager.getUser();
+    const sessionInfo = sessionManager.getSessionInfo();
+    const isLoggedIn = sessionManager.isLoggedIn();
+    
+    if (user && isLoggedIn) {
+      console.log('✅ SessionProvider: sessionManager에서 사용자 정보 발견:', user);
+      dispatch({ type: SessionActionTypes.SET_USER, payload: user });
+      dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
+      if (sessionInfo) {
+        dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
+      }
+    } else {
+      console.log('❌ SessionProvider: sessionManager에 사용자 정보 없음');
+    }
+  }, []); // 빈 배열: 마운트 시 한 번만 실행
+
   // 세션 체크 함수 (useCallback으로 메모이제이션)
   const checkSession = useCallback(async (force = false) => {
     const now = Date.now();

@@ -5,6 +5,7 @@ import { apiGet, apiPut, apiPost } from '../../utils/ajax';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
+import './ClientMessageScreen.css';
 
 /**
  * 내담자 메시지 확인 화면
@@ -20,7 +21,7 @@ const ClientMessageScreen = () => {
   const [replying, setReplying] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   
-  // 컴포넌트 스타일
+  // DEPRECATED: styles 객체 - CSS 파일로 대체됨
   const styles = {
     container: {
       minHeight: '100vh',

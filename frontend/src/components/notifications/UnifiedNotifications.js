@@ -60,16 +60,17 @@ const UnifiedNotifications = () => {
       console.log('🔍 메시지 로드 - 사용자 역할:', user.role, 'ID:', user.id);
       
       // 관리자 여부 확인 (role에 ADMIN이 포함되거나 특정 관리자 역할인 경우)
-      const isAdmin = user.role && (
-        user.role.includes('ADMIN') || 
-        user.role.includes('SUPER') || 
-        user.role.includes('HQ_MASTER') ||
-        user.role.includes('BRANCH_SUPER_ADMIN')
+      const userRole = String(user.role || '');
+      const isAdmin = userRole && (
+        userRole.includes('ADMIN') || 
+        userRole.includes('SUPER') || 
+        userRole.includes('HQ_MASTER') ||
+        userRole.includes('BRANCH_SUPER_ADMIN')
       );
       
-      if (user.role === 'CONSULTANT' || user.role === 'ROLE_CONSULTANT') {
+      if (userRole === 'CONSULTANT' || userRole === 'ROLE_CONSULTANT') {
         endpoint = `/api/consultation-messages/consultant/${user.id}?page=0&size=50`;
-      } else if (user.role === 'CLIENT' || user.role === 'ROLE_CLIENT') {
+      } else if (userRole === 'CLIENT' || userRole === 'ROLE_CLIENT') {
         endpoint = `/api/consultation-messages/client/${user.id}?page=0&size=50`;
       } else if (isAdmin) {
         // 관리자는 전체 메시지

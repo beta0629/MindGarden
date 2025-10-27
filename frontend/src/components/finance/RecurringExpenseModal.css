@@ -42,7 +42,7 @@ body.modal-open {
   max-width: 90vw;
   max-height: 90vh;
   width: 800px;
-  z-index: var(--z-index-modal);
+  z-index: 10001;
   position: relative;
   overflow: hidden;
   display: flex;

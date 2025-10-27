@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import com.mindgarden.consultation.entity.ConsultationMessage;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.ConsultationMessageService;
-import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -227,6 +226,10 @@ public class ConsultationMessageController {
             
             // 권한 체크
             User currentUser = SessionUtils.getCurrentUser(session);
+            log.info("🔍 현재 사용자 정보: currentUser={}, requestedClientId={}", 
+                currentUser != null ? currentUser.getId() + "/" + currentUser.getRole() : "null", 
+                clientId);
+            
             if (currentUser == null) {
                 log.warn("⚠️ 인증되지 않은 사용자");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

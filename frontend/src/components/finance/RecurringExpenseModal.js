@@ -259,7 +259,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     const modalContent = (
         <div 
             className="mg-v2-modal-overlay"
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
                     console.log('🖱️ 오버레이 클릭 - 모달 닫기');
@@ -267,7 +267,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                 }
             }}
         >
-            <div className="mg-v2-modal mg-v2-modal-large" style={{ position: 'relative', zIndex: 10001, backgroundColor: 'white', maxWidth: '800px', padding: 0 }}>
+            <div className="mg-v2-modal mg-v2-modal-large" style={{ position: 'relative', zIndex: 1000000, backgroundColor: 'white', maxWidth: '800px', padding: 0, borderRadius: '12px', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)' }}>
                 <div className="mg-v2-modal-header">
                     <h2 className="mg-v2-modal-title">🔄 반복 지출 관리</h2>
                     <button 

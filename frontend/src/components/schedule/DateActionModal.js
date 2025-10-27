@@ -51,28 +51,30 @@ const DateActionModal = ({
                 </div>
                 
                 <div className="date-action-modal-buttons">
-                    <button 
-                        onClick={onScheduleClick}
-                        className="date-action-button date-action-button--primary"
-                    >
-                        <span className="date-action-button-icon">📋</span>
-                        <div className="date-action-button-content">
-                            <div className="date-action-button-title">일정 등록</div>
-                            <div className="date-action-button-description">상담 일정을 등록합니다</div>
-                        </div>
-                    </button>
-                    
-                    {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
-                        <button 
-                            onClick={onVacationClick}
-                            className="date-action-button date-action-button--secondary"
-                        >
-                            <span className="date-action-button-icon">🏖️</span>
-                            <div className="date-action-button-content">
-                                <div className="date-action-button-title">휴가 등록</div>
-                                <div className="date-action-button-description">상담사의 휴가를 등록합니다</div>
-                            </div>
-                        </button>
+                    {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') && (
+                        <>
+                            <button 
+                                onClick={onScheduleClick}
+                                className="date-action-button date-action-button--primary"
+                            >
+                                <span className="date-action-button-icon">📋</span>
+                                <div className="date-action-button-content">
+                                    <div className="date-action-button-title">상담 일정 등록</div>
+                                    <div className="date-action-button-description">상담사와 내담자의 상담 일정을 등록합니다</div>
+                                </div>
+                            </button>
+                            
+                            <button 
+                                onClick={onVacationClick}
+                                className="date-action-button date-action-button--secondary"
+                            >
+                                <span className="date-action-button-icon">🏖️</span>
+                                <div className="date-action-button-content">
+                                    <div className="date-action-button-title">휴가 등록</div>
+                                    <div className="date-action-button-description">상담사의 휴가를 등록합니다</div>
+                                </div>
+                            </button>
+                        </>
                     )}
                     
                     <button 

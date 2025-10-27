@@ -295,9 +295,42 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             const separator = url.includes('?') ? '&' : '?';
             const response = await apiGet(`${url}${separator}_t=${timestamp}`);
 
+            console.log('📅 API 응답:', response);
+
             let scheduleEvents = [];
-            if (response && response.success) {
-                console.log('📅 API 응답 데이터:', response);
+            
+            // 응답이 배열인 경우 (상담사 API 응답)
+            if (Array.isArray(response)) {
+                console.log('📅 배열 형태 응답 받음:', response);
+                scheduleEvents = response.map(schedule => {
+                    console.log('📅 스케줄 데이터 처리:', schedule);
+                    return {
+                        id: schedule.id,
+                        title: schedule.title || '상담',
+                        start: `${schedule.date}T${schedule.startTime}`,
+                        end: `${schedule.date}T${schedule.endTime}`,
+                        backgroundColor: getConsultantColor(schedule.consultantId),
+                        borderColor: getConsultantColor(schedule.consultantId),
+                        className: `schedule-event status-${schedule.status?.toLowerCase()}`,
+                        extendedProps: {
+                            id: schedule.id,
+                            consultantId: schedule.consultantId,
+                            consultantName: schedule.consultantName,
+                            clientId: schedule.clientId,
+                            clientName: schedule.clientName,
+                            status: schedule.status,
+                            statusKorean: convertStatusToKorean(schedule.status),
+                            type: schedule.scheduleType,
+                            consultationType: schedule.consultationType,
+                            description: schedule.description
+                        }
+                    };
+                });
+                console.log('📅 변환된 이벤트:', scheduleEvents);
+            }
+            // 응답이 객체이고 success가 있는 경우
+            else if (response && response.success) {
+                console.log('📅 성공 응답 데이터:', response);
                 
                 const schedules = response.data || response;
                 
@@ -331,7 +364,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                     console.warn('📅 스케줄 데이터가 배열이 아닙니다:', schedules);
                 }
             } else {
-                console.warn('📅 API 응답 실패:', response);
+                console.warn('📅 API 응답 실패 또는 빈 응답:', response);
             }
 
             const vacationEvents = [];

@@ -158,19 +158,19 @@ jobs:
         strip_components: 3
         overwrite: true
         
-    # 메시지 권한 SQL은 최초 1회만 필요 (이미 권한이 있으면 건너뜀)
-    # - name: 📤 메시지 권한 SQL 업로드
-    #   uses: appleboy/scp-action@v0.1.7
-    #   with:
-    #     host: ${{ secrets.PRODUCTION_HOST }}
-    #     username: ${{ secrets.PRODUCTION_USER }}
-    #     key: ${{ secrets.PRODUCTION_SSH_KEY }}
-    #     port: 22
-    #     timeout: 120s
-    #     source: "sql/add_message_management_permissions.sql"
-    #     target: "/tmp/"
-    #     strip_components: 1
-    #     overwrite: true
+    # 메시지 권한 SQL 업로드 (이미 권한이 있으면 건너뜀)
+    - name: 📤 메시지 권한 SQL 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "sql/add_message_management_permissions.sql"
+        target: "/tmp/"
+        strip_components: 1
+        overwrite: true
         
     # SQL 파일 권한 설정은 메뉴 업데이트가 필요한 경우에만 실행
     # - name: 🔧 SQL 파일 권한 설정

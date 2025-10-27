@@ -263,29 +263,21 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     console.log('✅ 모달 렌더링 시작');
     
     return (
-        <div 
-            className="recurring-expense-modal-overlay"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                    console.log('🖱️ 오버레이 클릭 - 모달 닫기');
-                    handleClose();
-                }
-            }}
-        >
-            <div className="recurring-expense-modal">
-                <div className="recurring-expense-modal-header">
-                    <h2 className="recurring-expense-modal-title">🔄 반복 지출 관리</h2>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ position: 'relative', zIndex: 10001, backgroundColor: 'white', maxWidth: '800px', width: '90%', maxHeight: '90vh', borderRadius: '12px', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+                    <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>🔄 반복 지출 관리</h2>
                     <button 
-                        className="recurring-expense-modal-close"
                         onClick={handleClose}
                         disabled={loading}
                         aria-label="닫기"
+                        style={{ background: 'none', border: 'none', color: 'white', fontSize: '24px', cursor: 'pointer', padding: '4px 8px' }}
                     >
                         ✕
                     </button>
                 </div>
 
-                <div className="recurring-expense-modal-body">
+                <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
                     {/* 통계 정보 */}
                     {statistics && (
                         <div className="expense-statistics">

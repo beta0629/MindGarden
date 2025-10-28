@@ -154,15 +154,11 @@ const ConsultationCompletionStatsView = ({
                                 </div>
                             </div>
                             
-                            <div style={{ textAlign: 'center' }}>
+                            <div className="mg-v2-text-center">
                                 <div className="mg-v2-stat-number mg-v2-stat-number-secondary">
                                     {stat.totalCount}
                                 </div>
-                                <div style={{
-                                    fontSize: 'var(--font-size-xs)',
-                                    color: '#6c757d',
-                                    fontWeight: '500'
-                                }}>
+                                <div className="mg-v2-text-xs mg-v2-text-secondary mg-v2-font-weight-medium">
                                     총 건수
                                 </div>
                             </div>
@@ -182,27 +178,8 @@ const ConsultationCompletionStatsView = ({
             </div>
 
             {statistics.length === 0 && (
-                <div style={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #dee2e6',
-                    borderRadius: '12px',
-                    padding: '60px 40px',
-                    textAlign: 'center',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    marginTop: '20px'
-                }}>
-                    <div style={{
-                        width: '80px',
-                        height: '80px',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 20px',
-                        fontSize: 'var(--font-size-xxxl)',
-                        color: '#6c757d'
-                    }}>
+                <div className="mg-v2-card mg-v2-text-center" style={{ padding: '60px 40px', marginTop: '20px' }}>
+                    <div className="mg-v2-empty-state-icon" style={{ width: '80px', height: '80px', margin: '0 auto 20px' }}>
                         📊
                     </div>
                     <h3 className="mg-v2-empty-title">

@@ -15542,3 +15542,14 @@ body {
 .mg-v2-text-info {
     color: #17a2b8;
 }
+
+/* Empty State Icon */
+.mg-v2-empty-state-icon {
+    background-color: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xxxl);
+    color: #6c757d;
+}

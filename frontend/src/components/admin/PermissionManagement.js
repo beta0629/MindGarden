@@ -3,47 +3,100 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/mindgarden-design-system.css';
 
 const PERMISSION_CATEGORIES = {
-    '대시보드': [
-        { code: 'ADMIN_DASHBOARD_VIEW', name: '관리자 대시보드', description: '관리자 대시보드 접근' },
-        { code: 'HQ_DASHBOARD_VIEW', name: '본사 대시보드', description: '본사 대시보드 접근' },
-        { code: 'DASHBOARD_VIEW', name: '대시보드 조회', description: '대시보드 통계 조회' },
-        { code: 'REPORT_VIEW', name: '보고서 조회', description: '보고서 및 통계 조회' },
-        { code: 'ERP_ACCESS', name: 'ERP 시스템', description: 'ERP 시스템 접근' },
+    '대시보드 및 보고서': [
+        { code: 'ADMIN_DASHBOARD_VIEW', name: '관리자 대시보드', description: '관리자 대시보드 전체 접근' },
+        { code: 'HQ_DASHBOARD_VIEW', name: '본사 대시보드', description: '본사 대시보드 전체 접근 (성과지표, ERP보고서 포함)' },
+        { code: 'DASHBOARD_VIEW', name: '대시보드 조회', description: '대시보드 통계 및 데이터 조회' },
+        { code: 'REPORT_VIEW', name: '보고서 조회', description: '보고서 및 통계 조회 (성과지표 포함)' },
+        { code: 'ERP_ACCESS', name: 'ERP 시스템', description: 'ERP 시스템 전체 접근' },
+        { code: 'ERP_DASHBOARD_VIEW', name: 'ERP 대시보드', description: 'ERP 대시보드 조회' },
         { code: 'INTEGRATED_FINANCE_VIEW', name: '통합 재무 관리', description: '통합 재무 관리 시스템 접근' }
     ],
     '사용자 관리': [
+        { code: 'USER_VIEW', name: '사용자 조회', description: '사용자 목록 및 정보 조회' },
         { code: 'USER_MANAGE', name: '사용자 관리', description: '사용자 등록, 수정, 삭제' },
+        { code: 'USER_ROLE_CHANGE', name: '사용자 역할 변경', description: '사용자 역할 변경 권한' },
+        { code: 'CONSULTANT_VIEW', name: '상담사 조회', description: '상담사 목록 및 정보 조회' },
         { code: 'CONSULTANT_MANAGE', name: '상담사 관리', description: '상담사 등록, 수정, 삭제' },
+        { code: 'CLIENT_VIEW', name: '고객 조회', description: '고객 목록 및 정보 조회' },
         { code: 'CLIENT_MANAGE', name: '고객 관리', description: '고객 정보 관리' }
     ],
+    '상담사 상세 관리': [
+        { code: 'CONSULTANT_FUNCTIONS_VIEW', name: '상담사 기능 조회', description: '상담사 기능 및 역할 조회' },
+        { code: 'CONSULTANT_SPECIALTY_MANAGE', name: '상담사 전문분야 관리', description: '상담사 전문분야 관리' },
+        { code: 'CONSULTANT_AVAILABILITY_MANAGE', name: '상담사 가능시간 관리', description: '상담사 가능시간 설정/수정' },
+        { code: 'VACATION_MANAGE', name: '휴가 관리', description: '상담사 휴가 등록/관리' },
+        { code: 'CONSULTANT_TRANSFER', name: '상담사 이동', description: '상담사 다른 지점으로 이동' },
+        { code: 'CONSULTANT_RATING_VIEW', name: '상담사 평가 조회', description: '상담사 평가 정보 조회' }
+    ],
     '지점 관리': [
+        { code: 'BRANCH_VIEW', name: '지점 조회', description: '지점 목록 및 정보 조회' },
         { code: 'BRANCH_MANAGE', name: '지점 관리', description: '지점 등록, 수정, 삭제' },
-        { code: 'BRANCH_DETAILS_VIEW', name: '지점 상세 조회', description: '지점 상세 정보 조회' }
-    ],
-    '일정 관리': [
-        { code: 'SCHEDULE_MANAGE', name: '일정 관리', description: '일정 전체 관리' },
-        { code: 'SCHEDULE_CREATE', name: '일정 생성', description: '새 일정 생성' },
-        { code: 'SCHEDULE_MODIFY', name: '일정 수정', description: '기존 일정 수정' },
-        { code: 'SCHEDULE_DELETE', name: '일정 삭제', description: '일정 삭제' }
-    ],
-    'ERP 하위 메뉴': [
-        { code: 'SALARY_MANAGE', name: '급여 관리', description: '급여 관리 시스템' },
-        { code: 'TAX_MANAGE', name: '세금 관리', description: '세금 관리 시스템' },
-        { code: 'REFUND_MANAGE', name: '환불 관리', description: '환불 관리 시스템' },
-        { code: 'PURCHASE_REQUEST_VIEW', name: '구매 요청', description: '구매 요청 시스템' },
-        { code: 'APPROVAL_MANAGE', name: '승인 관리', description: '승인 관리 시스템' },
-        { code: 'ITEM_MANAGE', name: '아이템 관리', description: '아이템 관리 시스템' },
-        { code: 'BUDGET_MANAGE', name: '예산 관리', description: '예산 관리 시스템' }
+        { code: 'BRANCH_DETAILS_VIEW', name: '지점 상세 조회', description: '지점 상세 정보 조회' },
+        { code: 'BRANCH_FINANCIAL_VIEW', name: '지점 재무 조회', description: '지점 재무 정보 조회' }
     ],
     '매핑 관리': [
         { code: 'MAPPING_VIEW', name: '매핑 조회', description: '상담사-내담자 매핑 조회' },
-        { code: 'MAPPING_MANAGE', name: '매핑 관리', description: '상담사-내담자 매핑 관리' }
+        { code: 'MAPPING_MANAGE', name: '매핑 관리', description: '상담사-내담자 매핑 생성/수정/삭제' },
+        { code: 'CONSULTATION_PACKAGE_MANAGE', name: '상담 패키지 관리', description: '상담 패키지 설정 및 관리' },
+        { code: 'DUPLICATE_MAPPING_MANAGE', name: '중복 매핑 관리', description: '중복 매핑 처리' }
     ],
-    '통계 및 조회': [
-        { code: 'STATISTICS_VIEW', name: '통계 조회', description: '전체 통계 조회' },
+    '일정 관리': [
+        { code: 'SCHEDULE_VIEW', name: '일정 조회', description: '일정 목록 및 정보 조회' },
+        { code: 'SCHEDULE_MANAGE', name: '일정 관리', description: '일정 전체 관리 (생성/수정/삭제)' }
+    ],
+    '상담일지 및 기록': [
+        { code: 'CONSULTATION_RECORD_VIEW', name: '상담 기록 조회', description: '상담 기록 조회' },
+        { code: 'CONSULTATION_RECORD_MANAGE', name: '상담 기록 관리', description: '상담 기록 생성/수정' },
+        { code: 'CONSULTATION_HISTORY_VIEW', name: '상담 이력 조회', description: '상담 이력 전체 조회' },
+        { code: 'CONSULTATION_STATISTICS_VIEW', name: '상담 통계 조회', description: '상담 통계 조회' },
+        { code: 'CONSULTATION_REPORT_VIEW', name: '상담 보고서 조회', description: '상담 보고서 조회' }
+    ],
+    '재무 관리': [
         { code: 'FINANCIAL_VIEW', name: '재무 조회', description: '재무 정보 조회' },
-        { code: 'CONSULTATION_STATISTICS_VIEW', name: '상담 통계', description: '상담 통계 조회' },
-        { code: 'CONSULTATION_RECORD_VIEW', name: '상담 기록', description: '상담 기록 조회' }
+        { code: 'FINANCIAL_MANAGE', name: '재무 관리', description: '재무 정보 생성/수정/삭제' },
+        { code: 'TAX_MANAGE', name: '세금 관리', description: '세금 계산 및 관리' },
+        { code: 'SALARY_MANAGE', name: '급여 관리', description: '급여 계산 및 관리' },
+        { code: 'REFUND_MANAGE', name: '환불 관리', description: '환불 처리 및 관리' },
+        { code: 'ANNUAL_FINANCIAL_REPORT_VIEW', name: '연간 재무 보고서', description: '연간 재무 보고서 조회' }
+    ],
+    '결제 관리': [
+        { code: 'PAYMENT_ACCESS', name: '결제 접근', description: '결제 시스템 접근' },
+        { code: 'PAYMENT_METHOD_MANAGE', name: '결제 수단 관리', description: '결제 수단 설정 및 관리' }
+    ],
+    'ERP 구매 및 승인': [
+        { code: 'PURCHASE_REQUEST_VIEW', name: '구매 요청 조회', description: '구매 요청 목록 조회' },
+        { code: 'PURCHASE_REQUEST_MANAGE', name: '구매 요청 관리', description: '구매 요청 생성/수정' },
+        { code: 'APPROVAL_MANAGE', name: '승인 관리', description: '구매/결제 승인 처리' },
+        { code: 'ITEM_MANAGE', name: '아이템 관리', description: '구매 가능한 아이템 관리' },
+        { code: 'BUDGET_MANAGE', name: '예산 관리', description: '예산 설정 및 관리' }
+    ],
+    '통계 및 분석': [
+        { code: 'STATISTICS_VIEW', name: '통계 조회', description: '전체 통계 조회' },
+        { code: 'DATA_EXPORT', name: '데이터 내보내기', description: '데이터 엑셀 등 내보내기' },
+        { code: 'DATA_IMPORT', name: '데이터 가져오기', description: '엑셀 등에서 데이터 가져오기' }
+    ],
+    '시스템 관리': [
+        { code: 'PERMISSION_MANAGEMENT', name: '권한 관리', description: '사용자 권한 설정 및 관리' },
+        { code: 'SYSTEM_SETTINGS_MANAGE', name: '시스템 설정 관리', description: '시스템 전체 설정 관리' },
+        { code: 'BUSINESS_TIME_MANAGE', name: '업무 시간 관리', description: '업무 시간 설정 및 관리' },
+        { code: 'CONSULTATION_TYPE_MANAGE', name: '상담 유형 관리', description: '상담 유형 설정 및 관리' },
+        { code: 'COMMON_CODE_MANAGE', name: '공통코드 관리', description: '시스템 공통코드 관리' },
+        { code: 'NOTIFICATION_MANAGE', name: '알림 관리', description: '사용자 알림 설정' },
+        { code: 'SYSTEM_NOTIFICATION_MANAGE', name: '시스템 알림 관리', description: '시스템 전체 알림 관리' },
+        { code: 'MENU_MANAGE', name: '메뉴 관리', description: '메뉴 구조 관리' }
+    ],
+    '감사 및 모니터링': [
+        { code: 'AUDIT_LOG_VIEW', name: '감사 로그 조회', description: '시스템 감사 로그 조회' },
+        { code: 'SYSTEM_HEALTH_CHECK', name: '시스템 건강 체크', description: '시스템 상태 모니터링' }
+    ],
+    '고객 지원': [
+        { code: 'ANNOUNCEMENT_MANAGE', name: '공지사항 관리', description: '공지사항 작성 및 관리' },
+        { code: 'FAQ_MANAGE', name: 'FAQ 관리', description: 'FAQ 작성 및 관리' },
+        { code: 'CUSTOMER_SUPPORT_MANAGE', name: '고객 지원 관리', description: '고객 지원 관리' }
+    ],
+    '소셜 계정': [
+        { code: 'SOCIAL_ACCOUNT_VIEW', name: '소셜 계정 조회', description: '소셜 계정 연동 정보 조회' }
     ]
 };
 

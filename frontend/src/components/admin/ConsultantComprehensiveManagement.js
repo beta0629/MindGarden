@@ -264,14 +264,24 @@ const ConsultantComprehensiveManagement = () => {
         if (consultant) {
             setSelectedConsultant(consultant);
             if (type === 'edit') {
-            setFormData({
-                name: consultant.name || '',
-                email: consultant.email || '',
-                phone: consultant.phone || '',
+                // 전문분야 배열 변환
+                let specialties = [];
+                if (consultant.specialization) {
+                    // 쉼표로 구분된 문자열을 배열로 변환
+                    specialties = consultant.specialization.split(',').map(s => s.trim());
+                } else if (consultant.specialty) {
+                    // 단일 값이면 배열로 변환
+                    specialties = [consultant.specialty];
+                }
+                
+                setFormData({
+                    name: consultant.name || '',
+                    email: consultant.email || '',
+                    phone: consultant.phone || '',
                     status: consultant.status || 'ACTIVE',
-                    specialty: consultant.specialties || [],
-                password: ''
-            });
+                    specialty: specialties,
+                    password: ''
+                });
             }
         } else if (type === 'create') {
             setFormData({

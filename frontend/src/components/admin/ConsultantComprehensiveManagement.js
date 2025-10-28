@@ -874,15 +874,13 @@ const ConsultantComprehensiveManagement = () => {
                                             <div className="mg-v2-detail-section">
                                                 <h5>전문분야</h5>
                                                 <div className="mg-v2-specialty-list">
-                                                    {selectedConsultant.specialty ? (
-                                                        <>
-                                                            <span className="mg-v2-specialty-tag">
-                                                                { selectedConsultant.specialty }
-                                                            </span>
-                                                            {selectedConsultant.specialtyDetails && (
-                                                                <p className="mg-v2-specialty-details">{ selectedConsultant.specialtyDetails }</p>
-                                                            )}
-                                                        </>
+                                                    {(selectedConsultant.specialty || selectedConsultant.specialization) ? (
+                                                        <SpecialtyDisplay 
+                                                            consultant={selectedConsultant} 
+                                                            variant="tag" 
+                                                            showTitle={false}
+                                                            maxItems={10}
+                                                        />
                                                     ) : (
                                                         <span className="mg-v2-no-data">전문분야 정보가 없습니다.</span>
                                                     )}

@@ -45,7 +45,7 @@ const ClientOverviewTab = ({
                     <div className="mg-v2-client-status">
                         <span 
                             className="mg-v2-status-badge"
-                            style={{ backgroundColor: statusColor }}
+                            style={{ '--status-bg-color': statusColor }}
                         >
                             {statusKorean}
                         </span>

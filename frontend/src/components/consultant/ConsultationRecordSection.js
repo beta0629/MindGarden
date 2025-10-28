@@ -105,7 +105,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
           {/* 통계 카드 */}
           <div className="mg-dashboard-stats mg-mb-lg">
             <div className="mg-dashboard-stat-card">
-              <div className="mg-dashboard-stat-icon" style={{ background: 'var(--olive-green)' }}>
+              <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-olive">
                 📊
               </div>
               <div className="mg-dashboard-stat-content">
@@ -114,7 +114,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
               </div>
             </div>
             <div className="mg-dashboard-stat-card">
-              <div className="mg-dashboard-stat-icon" style={{ background: 'var(--mint-green)' }}>
+              <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-mint">
                 📅
               </div>
               <div className="mg-dashboard-stat-content">
@@ -123,7 +123,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
               </div>
             </div>
             <div className="mg-dashboard-stat-card">
-              <div className="mg-dashboard-stat-icon" style={{ background: 'var(--cocoa)' }}>
+              <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-cocoa">
                 ⏳
               </div>
               <div className="mg-dashboard-stat-content">

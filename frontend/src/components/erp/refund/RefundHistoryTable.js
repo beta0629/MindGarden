@@ -31,40 +31,33 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
         <ErpCard title="환불 이력">
             {refundHistory.length > 0 ? (
                 <>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{
-                            width: '100%',
-                            borderCollapse: 'collapse',
-                            fontSize: 'var(--font-size-sm)',
-                            fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                        }}>
+                    <div className="mg-v2-table-container">
+                        <table className="mg-v2-table">
                             <thead>
-                                <tr style={{ backgroundColor: '#f8f9fa' }}>
-                                    <th style={{ padding: '12px', border: '1px solid #ddd', fontWeight: '600' }}>환불일시</th>
-                                    <th style={{ padding: '12px', border: '1px solid #ddd', fontWeight: '600' }}>내담자</th>
-                                    <th style={{ padding: '12px', border: '1px solid #ddd', fontWeight: '600' }}>상담사</th>
-                                    <th style={{ padding: '12px', border: '1px solid #ddd', fontWeight: '600' }}>패키지</th>
-                                    <th style={{ padding: '12px', border: '1px solid #ddd', fontWeight: '600' }}>환불 회기</th>
-                                    <th style={{ padding: '12px', border: '1px solid #ddd', fontWeight: '600' }}>환불 금액</th>
-                                    <th style={{ padding: '12px', border: '1px solid #ddd', fontWeight: '600' }}>환불 사유</th>
-                                    <th style={{ padding: '12px', border: '1px solid #ddd', fontWeight: '600' }}>ERP 상태</th>
+                                <tr>
+                                    <th>환불일시</th>
+                                    <th>내담자</th>
+                                    <th>상담사</th>
+                                    <th>패키지</th>
+                                    <th>환불 회기</th>
+                                    <th>환불 금액</th>
+                                    <th>환불 사유</th>
+                                    <th>ERP 상태</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {refundHistory.map((refund, index) => (
-                                    <tr key={`${refund.mappingId}-${refund.terminatedAt}-${index}`} style={{ 
-                                        backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' 
-                                    }}>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                                    <tr key={`${refund.mappingId}-${refund.terminatedAt}-${index}`} className={index % 2 === 0 ? 'mg-v2-table-row' : 'mg-v2-table-row-alt'}>
+                                        <td>
                                             {refund.terminatedAt}
                                         </td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                                        <td>
                                             {refund.clientName}
                                         </td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                                        <td>
                                             {refund.consultantName}
                                         </td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                                        <td>
                                             {refund.packageName}
                                         </td>
                                         <td style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center' }}>
@@ -73,7 +66,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
                                         <td style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'right' }}>
                                             {formatCurrency(refund.refundAmount)}
                                         </td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd' }}>
+                                        <td>
                                             {refund.standardizedReason}
                                         </td>
                                         <td style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center' }}>

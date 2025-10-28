@@ -342,8 +342,8 @@ const ItemManagement = () => {
           title="새 아이템 추가"
         >
           <form onSubmit={handleCreateItem}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
                 아이템명 *
               </label>
               <input
@@ -352,17 +352,12 @@ const ItemManagement = () => {
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
+                className="mg-v2-form-input"
               />
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
                 설명
               </label>
               <textarea
@@ -380,8 +375,8 @@ const ItemManagement = () => {
               />
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
                 카테고리 *
               </label>
               <select
@@ -389,12 +384,7 @@ const ItemManagement = () => {
                 value={formData.category}
                 onChange={handleInputChange}
                 required
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
+                className="mg-v2-form-input"
               >
                 <option key="item-category-default" value="">카테고리를 선택하세요</option>
                 {categoryOptions.map(option => (
@@ -405,9 +395,9 @@ const ItemManagement = () => {
               </select>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div className="mg-v2-form-grid">
               <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+                <label className="mg-v2-form-label">
                   단가 *
                 </label>
                 <input
@@ -428,7 +418,7 @@ const ItemManagement = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+                <label className="mg-v2-form-label">
                   재고 수량 *
                 </label>
                 <input
@@ -448,8 +438,8 @@ const ItemManagement = () => {
               </div>
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
                 공급업체
               </label>
               <input
@@ -457,12 +447,7 @@ const ItemManagement = () => {
                 name="supplier"
                 value={formData.supplier}
                 onChange={handleInputChange}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
+                className="mg-v2-form-input"
               />
             </div>
 
@@ -499,8 +484,8 @@ const ItemManagement = () => {
           title="아이템 수정"
         >
           <form onSubmit={handleUpdateItem}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
                 아이템명 *
               </label>
               <input
@@ -509,17 +494,12 @@ const ItemManagement = () => {
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
+                className="mg-v2-form-input"
               />
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
                 설명
               </label>
               <textarea
@@ -537,8 +517,8 @@ const ItemManagement = () => {
               />
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
                 카테고리 *
               </label>
               <select
@@ -546,12 +526,7 @@ const ItemManagement = () => {
                 value={formData.category}
                 onChange={handleInputChange}
                 required
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
+                className="mg-v2-form-input"
               >
                 {categoryOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -561,9 +536,9 @@ const ItemManagement = () => {
               </select>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div className="mg-v2-form-grid">
               <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+                <label className="mg-v2-form-label">
                   단가 *
                 </label>
                 <input
@@ -584,7 +559,7 @@ const ItemManagement = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+                <label className="mg-v2-form-label">
                   재고 수량 *
                 </label>
                 <input
@@ -604,8 +579,8 @@ const ItemManagement = () => {
               </div>
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600' }}>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
                 공급업체
               </label>
               <input
@@ -613,12 +588,7 @@ const ItemManagement = () => {
                 name="supplier"
                 value={formData.supplier}
                 onChange={handleInputChange}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
+                className="mg-v2-form-input"
               />
             </div>
 

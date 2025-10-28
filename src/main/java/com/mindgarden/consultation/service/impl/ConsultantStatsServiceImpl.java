@@ -98,7 +98,8 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
                     consultantMap.put("branchCode", consultant.getBranchCode());
                     consultantMap.put("isActive", consultant.getIsActive());
                     consultantMap.put("isDeleted", consultant.getIsDeleted());
-                    consultantMap.put("specialties", consultant.getSpecialties());
+                    consultantMap.put("specialty", consultant.getSpecialty());
+                    consultantMap.put("specialtyDetails", consultant.getSpecialtyDetails());
                     consultantMap.put("createdAt", consultant.getCreatedAt());
                     consultantMap.put("updatedAt", consultant.getUpdatedAt());
                     

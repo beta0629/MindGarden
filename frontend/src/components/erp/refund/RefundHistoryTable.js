@@ -60,16 +60,16 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
                                         <td>
                                             {refund.packageName}
                                         </td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                        <td className="mg-v2-table-cell">
                                             {refund.refundedSessions}회
                                         </td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'right' }}>
+                                        <td className="mg-v2-table-cell mg-v2-text-right">
                                             {formatCurrency(refund.refundAmount)}
                                         </td>
                                         <td>
                                             {refund.standardizedReason}
                                         </td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                        <td className="mg-v2-table-cell">
                                             {getErpStatusBadge(refund.erpStatus)}
                                         </td>
                                     </tr>

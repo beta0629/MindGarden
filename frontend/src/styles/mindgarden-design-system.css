@@ -15553,3 +15553,18 @@ body {
     font-size: var(--font-size-xxxl);
     color: #6c757d;
 }
+
+/* Table Cell */
+.mg-v2-table-cell {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.mg-v2-table-cell.mg-v2-text-center {
+    text-align: center;
+}
+
+.mg-v2-table-cell.mg-v2-text-right {
+    text-align: right;
+}

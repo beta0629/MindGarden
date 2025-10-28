@@ -1142,14 +1142,22 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">구매 가능한 아이템을 관리합니다</p>
                         </div>
                         
-                        {/* 새로 추가된 ERP 보고서 카드 */}
-                        <div className="mg-management-card" onClick={() => setShowErpReport(true)}>
-                            <div className="mg-management-icon">
-                                <FaFileExport />
+                        {/* ERP 보고서 카드 - 본사 관리자 전용 */}
+                        {(() => {
+                            const currentRole = (propUser || sessionUser)?.role;
+                            const isHQAdmin = currentRole === 'HQ_ADMIN' || 
+                                             currentRole === 'SUPER_HQ_ADMIN' || 
+                                             currentRole === 'HQ_MASTER';
+                            return isHQAdmin;
+                        })() && (
+                            <div className="mg-management-card" onClick={() => setShowErpReport(true)}>
+                                <div className="mg-management-icon">
+                                    <FaFileExport />
+                                </div>
+                                <h3>ERP 보고서</h3>
+                                <p className="mg-management-description">월별/분기별/연별 재무 보고서를 생성합니다 (본사 관리자 전용)</p>
                             </div>
-                            <h3>ERP 보고서</h3>
-                            <p className="mg-management-description">월별/분기별/연별 재무 보고서를 생성합니다</p>
-                        </div>
+                        )}
                         
                         <div className="mg-management-card" onClick={() => navigate('/erp/budgets')}>
                             <div className="mg-management-icon">

@@ -568,7 +568,7 @@ const ConsultationLogModal = ({
 
               <div className="mg-v2-form-group">
                 <label className="mg-v2-form-label">
-                  세션 시간 (분) <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                  세션 시간 (분) <span className="mg-form-required">*</span>
                 </label>
                 <input
                   type="number"
@@ -617,7 +617,7 @@ const ConsultationLogModal = ({
               {/* 내담자 상태 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-form-label">
-                  내담자 상태 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                  내담자 상태 <span className="mg-form-required">*</span>
                 </label>
                 <textarea
                   name="clientCondition"
@@ -639,7 +639,7 @@ const ConsultationLogModal = ({
               {/* 주요 이슈 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-form-label">
-                  주요 이슈 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                  주요 이슈 <span className="mg-form-required">*</span>
                 </label>
                 <textarea
                   name="mainIssues"
@@ -661,7 +661,7 @@ const ConsultationLogModal = ({
               {/* 개입 방법 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-form-label">
-                  개입 방법 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                  개입 방법 <span className="mg-form-required">*</span>
                 </label>
                 <textarea
                   name="interventionMethods"
@@ -683,7 +683,7 @@ const ConsultationLogModal = ({
               {/* 내담자 반응 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-form-label">
-                  내담자 반응 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                  내담자 반응 <span className="mg-form-required">*</span>
                 </label>
                 <textarea
                   name="clientResponse"
@@ -740,7 +740,7 @@ const ConsultationLogModal = ({
               {/* 위험도 평가 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-form-label">
-                  위험도 평가 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                  위험도 평가 <span className="mg-form-required">*</span>
                 </label>
                 <select
                   name="riskAssessment"
@@ -792,7 +792,7 @@ const ConsultationLogModal = ({
               {/* 진행 평가 */}
               <div className="mg-v2-form-group">
                 <label className="mg-v2-form-label">
-                  진행 평가 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                  진행 평가 <span className="mg-form-required">*</span>
                 </label>
                 <textarea
                   name="progressEvaluation"

@@ -15629,3 +15629,9 @@ body {
 
 /* Color Utilities */
 .mg-text-olive-green { color: var(--olive-green); }
+
+/* Form Required Label */
+.mg-form-required {
+    color: var(--color-danger);
+    font-weight: var(--font-weight-bold);
+}

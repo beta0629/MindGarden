@@ -100,7 +100,7 @@ const PrivacyPolicy = () => {
             padding: '15px',
             marginBottom: '15px'
           }}>
-            <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: '#856404' }}>
+            <p className="mg-v2-text-sm mg-v2-m-0" style={{ color: '#856404' }}>
               <strong>주의:</strong> 상담 서비스 제공을 위해 상담사에게 필요한 최소한의 정보만 제공되며, 
               이는 상담 서비스의 질적 향상을 위한 목적으로만 사용됩니다.
             </p>
@@ -136,7 +136,7 @@ const PrivacyPolicy = () => {
             <li>개인정보 정정·삭제요구</li>
             <li>개인정보 처리정지요구</li>
           </ul>
-          <p style={{ marginTop: '15px', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
+          <p className="mg-v2-text-sm mg-v2-text-secondary" style={{ marginTop: '15px' }}>
             권리 행사는 회사에 대해 서면, 전화, 전자우편, 모사전송(FAX) 등을 통하여 하실 수 있으며 회사는 이에 대해 지체없이 조치하겠습니다.
           </p>
         </div>
@@ -161,13 +161,13 @@ const PrivacyPolicy = () => {
             8. 개인정보 보호책임자
           </h2>
           <div className="mg-v2-terms-box">
-            <p style={{ margin: '0 0 10px 0' }}>
+            <p className="mg-v2-mb-md">
               <strong>개인정보 보호책임자:</strong> 마인드가든 개인정보보호팀
             </p>
-            <p style={{ margin: '0 0 10px 0' }}>
+            <p className="mg-v2-mb-md">
               <strong>연락처:</strong> privacy@mindgarden.co.kr
             </p>
-            <p style={{ margin: '0' }}>
+            <p className="mg-v2-m-0">
               <strong>전화:</strong> 02-1234-5678
             </p>
           </div>

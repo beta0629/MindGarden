@@ -92,6 +92,10 @@
   --glass-bg: rgba(255, 255, 255, 0.2);
   --glass-border: rgba(255, 255, 255, 0.2);
   --glass-blur: 12px;
+
+  /* Visibility Utilities */
+  --display-block: block;
+  --display-none: none;
   
   /* iOS 18 Droplet Glass Effects */
   --droplet-bg: rgba(255, 255, 255, 0.7);
@@ -15570,5 +15574,11 @@ body {
 .mg-v2-table-cell.mg-v2-text-right {
     text-align: right;
 }
-✅ .mg-v2-flex-1 { flex: 1; }
-/* Icon Size */ .mg-v2-text-xl { font-size: var(--font-size-xl); }
+.mg-v2-flex-1 { flex: 1; }
+
+/* Visibility Utilities */
+.mg-hidden { display: none !important; }
+.mg-visible { display: block !important; }
+
+/* Icon Size */
+.mg-v2-text-xl { font-size: var(--font-size-xl); }

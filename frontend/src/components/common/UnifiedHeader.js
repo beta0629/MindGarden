@@ -181,8 +181,7 @@ const UnifiedHeader = ({
               />
             ) : null}
             <i 
-              className="bi bi-person-circle mg-header__profile-icon"
-              style={{ display: profileImageUrl ? 'none' : 'block' }}
+              className={`bi bi-person-circle mg-header__profile-icon ${profileImageUrl ? 'mg-hidden' : 'mg-visible'}`}
             ></i>
           </div>
           

@@ -176,7 +176,8 @@ const OAuth2Callback = () => {
               redirectToDashboardWithFallback(userRole, navigate);
             } else {
               console.log('🎯 기본 대시보드로 리다이렉트');
-              navigate('/dashboard', { replace: true });
+              const defaultPath = getDashboardPath('CLATMNT');
+              navigate(defaultPath, { replace: true });
             }
           };
 
@@ -277,7 +278,9 @@ const OAuth2Callback = () => {
             console.log('계정 통합 성공:', response);
             setShowIntegrationModal(false);
             // 통합 성공 후 대시보드로 이동
-            navigate('/dashboard');
+            const userRole = response?.user?.role || 'CLIENT';
+            const dashboardPath = getDashboardPath(userRole);
+            navigate(dashboardPath || '/dashboard');
           }}
         />
       </>

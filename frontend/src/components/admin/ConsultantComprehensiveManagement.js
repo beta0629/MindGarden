@@ -50,27 +50,11 @@ const ConsultantComprehensiveManagement = () => {
             console.log('📊 상담사 목록 응답:', response);
             
             if (response.success) {
-                let consultantsData = response.data || [];
-                
-                // 매핑 데이터가 이미 로드되었다면 currentClients 계산
-                if (mappings.length > 0) {
-                    consultantsData = consultantsData.map(consultant => {
-                        const activeMappings = mappings.filter(m => 
-                            m.consultant?.id === consultant.id && 
-                            (m.status === 'ACTIVE' || m.status === 'PAYMENT_CONFIRMED')
-                        );
-                        return {
-                            ...consultant,
-                            currentClients: activeMappings.length
-                        };
-                    });
-                }
-                
-                setConsultants(consultantsData);
-                console.log('✅ 상담사 목록 설정 완료:', consultantsData.length, ' cumplidores');
+                setConsultants(response.data || []);
+                console.log('✅ 상담사 목록 설정 완료:', response.data?.length || 0, '명');
                 // 첫 번째 상담사 데이터 확인
-                if (consultantsData.length > 0) {
-                    const firstConsultant = consultantsData[0];
+                if (response.data && response.data.length > 0) {
+                    const firstConsultant = response.data[0];
                     console.log('🔍 첫 번째 상담사 데이터:', {
                         name: firstConsultant.name,
                         currentClients: firstConsultant.currentClients,
@@ -638,7 +622,7 @@ const ConsultantComprehensiveManagement = () => {
                                                             </div>
                                                 
                                                 <div className="mg-v2-consultant-card__detail-item">
-                                                    <span>👥 총 클라이언트: { consultant.totalClients || 0 }명</span>
+                                                    <span>👥 총 클라이언트: { consultant.currentClients || 0 }명</span>
                                                             </div>
                                                             </div>
                                             
@@ -763,7 +747,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 </div>
                                                 
                                                 <div className="mg-v2-consultant-card__detail-item">
-                                                    <span>👥 총 클라이언트: { consultant.totalClients || 0 }명</span>
+                                                    <span>👥 총 클라이언트: { consultant.currentClients || 0 }명</span>
                                                 </div>
                                             </div>
                                             

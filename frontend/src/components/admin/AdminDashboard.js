@@ -18,6 +18,7 @@ import SystemNotificationSection from '../dashboard/SystemNotificationSection';
 import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
 import RecurringExpenseModal from '../finance/RecurringExpenseModal';
+import ErpReportModal from '../erp/ErpReportModal';
 // 새로 추가된 모달 컴포넌트들
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS } from '../../constants/css-variables';
@@ -1359,6 +1360,14 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                 </div>,
                 document.body
+            )}
+
+            {/* ERP 보고서 모달 */}
+            {showErpReport && (
+                <ErpReportModal
+                    isOpen={showErpReport}
+                    onClose={() => setShowErpReport(false)}
+                />
             )}
 
             {/* 권한 관리 - 지점 수퍼 어드민 이상만 접근 가능 */}

@@ -6566,6 +6566,7 @@ body {
 }
 
 .mg-consultant-card__status-badge {
+  background-color: var(--availability-color, #6c757d);
   position: absolute;
   top: var(--spacing-md);
   right: var(--spacing-md);

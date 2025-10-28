@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { AlertTriangle, XCircle, Check } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import { getDashboardPath } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
-import './DuplicateLoginModal.css';
 
 const DuplicateLoginModal = () => {
   const { duplicateLoginModal, setDuplicateLoginModal } = useSession();
@@ -82,36 +82,45 @@ const DuplicateLoginModal = () => {
   }
 
   return ReactDOM.createPortal(
-    <div className="duplicate-login-modal-overlay">
-      <div className="duplicate-login-modal-content">
-        {/* 아이콘 */}
-        <div className="duplicate-login-icon">
-          ⚠️
+    <div className="mg-v2-modal-overlay">
+      <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <AlertTriangle size={28} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">중복 로그인 감지</h2>
+          </div>
+          <button className="mg-v2-modal-close" onClick={handleCancel} aria-label="닫기">
+            <XCircle size={24} />
+          </button>
         </div>
         
-        {/* 제목 */}
-        <h3 className="duplicate-login-title">
-          중복 로그인 감지
-        </h3>
-        
-        {/* 메시지 */}
-        <p className="duplicate-login-message">
-          {duplicateLoginModal.message}
-        </p>
-        
-        {/* 버튼들 */}
-        <div className="duplicate-login-actions">
+        <div className="mg-v2-modal-body">
+          <div className="mg-v2-empty-state">
+            <AlertTriangle size={48} className="mg-v2-color-warning" />
+            <p className="mg-v2-text-base mg-v2-mt-md">{duplicateLoginModal.message}</p>
+          </div>
+          
+          <div className="mg-v2-info-box mg-v2-mt-md">
+            <p className="mg-v2-text-sm mg-v2-text-secondary">
+              기존 세션을 종료하면 현재 기기에서 로그인할 수 있습니다.
+            </p>
+          </div>
+        </div>
+
+        <div className="mg-v2-modal-footer">
           <button
             onClick={handleCancel}
-            className="mg-btn mg-btn--secondary"
+            className="mg-v2-btn mg-v2-btn--secondary"
           >
+            <XCircle size={20} className="mg-v2-icon-inline" />
             취소
           </button>
           
           <button
             onClick={handleConfirm}
-            className="mg-btn mg-btn--primary"
+            className="mg-v2-btn mg-v2-btn--primary"
           >
+            <Check size={20} className="mg-v2-icon-inline" />
             기존 세션 종료하고 로그인
           </button>
         </div>

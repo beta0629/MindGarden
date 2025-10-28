@@ -546,10 +546,10 @@ const ScheduleDetailModal = ({
                             textAlign: 'center',
                             color: 'var(--color-text-secondary)'
                         }}>
-                            <p style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>
+                            <p className="mg-v2-text-base">
                                 📅 예약 정보를 확인하실 수 있습니다.
                             </p>
-                            <p style={{ margin: 'var(--spacing-xs) 0 0 0', fontSize: 'var(--font-size-sm)' }}>
+                            <p className="mg-v2-text-sm" style={{ marginTop: 'var(--spacing-xs)' }}>
                                 예약 변경이 필요하신 경우 상담사에게 문의해주세요.
                             </p>
                         </div>

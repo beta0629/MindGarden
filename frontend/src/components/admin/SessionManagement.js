@@ -13,7 +13,6 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import SessionExtensionModal from './mapping/SessionExtensionModal';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate } from '../../utils/codeHelper';
 import '../../styles/mindgarden-design-system.css';
-import './mapping/SessionExtensionModal.css';
 
 /**
  * 회기 관리 컴포넌트 - 완전 재설계

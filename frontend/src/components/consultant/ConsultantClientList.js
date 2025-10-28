@@ -486,14 +486,7 @@ const ConsultantClientList = () => {
                             <i className="bi bi-graph-up" style={{ color: '#007bff' }}></i>
                             <span>회기 현황</span>
                           </div>
-                          <div 
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr 1fr 1fr',
-                              gap: '8px',
-                              fontSize: '0.85rem'
-                            }}
-                          >
+                          <div className="mg-v2-client-session-grid">
                             <div style={{ textAlign: 'center' }}>
                               <div style={{ color: '#007bff', fontWeight: '600' }}>
                                 {client.totalSessions || 0}회

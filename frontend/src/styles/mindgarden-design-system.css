@@ -15625,3 +15625,6 @@ body {
 
 /* Icon Size */
 .mg-v2-text-xl { font-size: var(--font-size-xl); }
+
+/* Color Utilities */
+.mg-text-olive-green { color: var(--olive-green); }

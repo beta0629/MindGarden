@@ -134,7 +134,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                 {todayConsultations.length > 0 
                   ? (
                     <span>
-                      <span className="mg-v2-text-lg mg-v2-font-weight-bold" style={{ color: 'var(--olive-green)' }}>{todayConsultations.length}</span>
+                      <span className="mg-v2-text-lg mg-v2-font-weight-bold mg-text-olive-green">{todayConsultations.length}</span>
                       건의 상담이 오늘 예정되어 있습니다
                     </span>
                   )
@@ -159,7 +159,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                   
                   {/* 더 많은 상담이 있을 때 표시 */}
                   {todayConsultations.length > 3 && (
-                    <div className="mg-v2-text-center mg-v2-text-sm mg-v2-card mg-v2-card--outlined" style={{ marginTop: 'var(--spacing-sm)', padding: 'var(--spacing-sm)', background: 'var(--light-beige)', color: 'var(--medium-gray)' }}>
+                    <div className="mg-v2-text-center mg-v2-text-sm mg-v2-card mg-v2-card--outlined mg-v2-mt-sm mg-v2-p-sm">
                       +{todayConsultations.length - 3}건의 추가 상담이 있습니다
                     </div>
                   )}
@@ -220,9 +220,9 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                   
                 </div>
               ) : (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--medium-gray)', fontSize: 'var(--font-size-sm)', textAlign: 'center', padding: 'var(--spacing-lg)' }}>
+                <div className="mg-v2-flex-1 mg-d-flex mg-align-center mg-justify-center mg-text-center mg-v2-p-lg">
                   <div>
-                    <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-md)' }}>📅</div>
+                    <div className="mg-v2-text-3xl mg-v2-mb-md">📅</div>
                     <div>오늘 예정된 상담이 없습니다</div>
                   </div>
                 </div>
@@ -230,10 +230,10 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               
               {/* 오늘 상담이 많을 때 자세히 보기 버튼 */}
               {todayConsultations.length > 4 && (
-                <div style={{ textAlign: 'center', marginTop: 'var(--spacing-md)', paddingTop: 'var(--spacing-md)', borderTop: '1px solid var(--light-beige)', width: '100%' }}>
+                <div className="mg-text-center mg-v2-mt-md mg-v2-pt-md mg-v2-w-full" style={{ borderTop: '1px solid var(--light-beige)' }}>
                   <button 
                     onClick={() => handleCardClick('schedule')}
-                    style={{ background: 'transparent', border: '1px solid var(--olive-green)', borderRadius: 'var(--radius-md)', padding: 'var(--spacing-sm) var(--spacing-md)', color: 'var(--olive-green)', fontSize: 'var(--font-size-xs)', fontWeight: '500', cursor: 'pointer', transition: 'all 0.2s ease', width: '100%' }}
+                    className="mg-v2-btn mg-v2-btn-outline-olive mg-v2-w-full"
                   >
                     +{todayConsultations.length - 4}건 더 보기
                   </button>

@@ -73,12 +73,15 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     }
 
     @Override
-    @Cacheable(value = "consultantsWithStats", key = "'all'")
+    @CacheEvict(value = "consultantsWithStats", allEntries = true) // 캐시 무효화 후
+    @Cacheable(value = "consultantsWithStats", key = "'all:active'") // 새 키로 캐싱
     public List<Map<String, Object>> getAllConsultantsWithStats() {
         log.info("📊 전체 상담사 통계 조회 (DB)");
         
-        // 삭제되지 않은 상담사만 조회
-        List<Consultant> consultants = consultantRepository.findByIsDeletedFalse();
+        // 삭제되지 않고 활성인 상담사만 조회
+        List<Consultant> consultants = consultantRepository.findByIsDeletedFalse().stream()
+                .filter(c -> c.getIsActive() != null && c.getIsActive())
+                .collect(Collectors.toList());
         
         return consultants.stream()
                 .map(consultant -> {

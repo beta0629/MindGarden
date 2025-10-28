@@ -294,13 +294,13 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
             <button 
               onClick={() => setShowLogoutModal(false)}
-              style={{ padding: '8px 16px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              className="mg-v2-button mg-v2-button-secondary"
             >
               취소
             </button>
             <button 
               onClick={confirmLogout}
-              style={{ padding: '8px 16px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              className="mg-v2-button mg-v2-button-danger"
             >
               로그아웃
             </button>

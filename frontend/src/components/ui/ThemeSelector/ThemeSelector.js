@@ -70,7 +70,7 @@ const ThemeSelector = ({onThemeChange,
               >
                 <div 
                   className="mg-v2-v2-v2-theme-preview"
-                  style={{backgroundColor: theme.preview}}
+                  style={{'--theme-preview': theme.preview}}
                 />
                 <div className="mg-v2-v2-v2-theme-info">
                   <h4 className="mg-v2-v2-v2-theme-name">{theme.name}</h4>
@@ -123,7 +123,7 @@ const ThemeSelector = ({onThemeChange,
             <div className="mg-v2-v2-v2-theme-info">
               <div 
                 className="mg-v2-v2-v2-theme-preview mg-v2-v2-v2-theme-preview--current"
-                style={{backgroundColor: currentTheme.colors.primary}}
+                style={{'--theme-primary': currentTheme.colors.primary}}
               />
               <div>
                 <p className="mg-v2-v2-v2-text-sm mg-v2-v2-v2-font-medium">{currentTheme.name}</p>

@@ -1611,23 +1611,38 @@ public class AdminServiceImpl implements AdminService {
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
+        log.info("🔄 매핑 정보 수정: id={}, packageName={}, packagePrice={}, totalSessions={}", 
+                id, dto.getPackageName(), dto.getPackagePrice(), dto.getTotalSessions());
+        
+        // 패키지 정보 업데이트
+        if (dto.getPackageName() != null) {
+            mapping.setPackageName(dto.getPackageName());
+        }
+        if (dto.getPackagePrice() != null) {
+            mapping.setPackagePrice(dto.getPackagePrice());
+        }
+        
+        // 회기 수 업데이트
+        if (dto.getTotalSessions() != null) {
+            mapping.setTotalSessions(dto.getTotalSessions());
+            // remainingSessions도 함께 업데이트 (totalSessions - usedSessions)
+            mapping.setRemainingSessions(dto.getTotalSessions() - mapping.getUsedSessions());
+        }
+        
         // 상태 업데이트
         if (dto.getStatus() != null) {
             mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus()));
-        }
-        
-        // 기타 필드들도 업데이트 가능하도록 추가
-        if (dto.getTotalSessions() != null) {
-            mapping.setTotalSessions(dto.getTotalSessions());
-        }
-        if (dto.getRemainingSessions() != null) {
-            mapping.setRemainingSessions(dto.getRemainingSessions());
         }
         if (dto.getPaymentStatus() != null) {
             mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus()));
         }
         
-        return mappingRepository.save(mapping);
+        ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
+        log.info("✅ 매핑 정보 수정 완료: id={}, packageName={}, packagePrice={}, totalSessions={}", 
+                savedMapping.getId(), savedMapping.getPackageName(), 
+                savedMapping.getPackagePrice(), savedMapping.getTotalSessions());
+        
+        return savedMapping;
     }
 
     @Override

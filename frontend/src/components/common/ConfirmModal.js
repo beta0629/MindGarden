@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { XCircle, AlertTriangle, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
-import './ConfirmModal.css';
 
 /**
  * 확인 모달 컴포넌트
@@ -46,42 +47,70 @@ const ConfirmModal = ({
     onClose();
   };
 
-  return (
-    <div className="confirm-modal-overlay" onClick={handleOverlayClick}>
-      <div className="confirm-modal-container">
-        <div className="confirm-modal-header">
-          <h3 className="confirm-modal-title">{title}</h3>
-          <button className="confirm-modal-close" onClick={onClose}>
-            <i className="bi bi-x"></i>
+  const getIcon = () => {
+    switch (type) {
+      case 'danger':
+        return <AlertTriangle size={48} className="mg-v2-color-danger" />;
+      case 'warning':
+        return <AlertCircle size={48} className="mg-v2-color-warning" />;
+      case 'success':
+        return <CheckCircle size={48} className="mg-v2-color-success" />;
+      default:
+        return <HelpCircle size={48} className="mg-v2-color-primary" />;
+    }
+  };
+
+  const getConfirmButtonClass = () => {
+    switch (type) {
+      case 'danger':
+        return 'mg-v2-btn--danger';
+      case 'warning':
+        return 'mg-v2-btn--warning';
+      case 'success':
+        return 'mg-v2-btn--success';
+      default:
+        return 'mg-v2-btn--primary';
+    }
+  };
+
+  const portalTarget = document.body || document.createElement('div');
+
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={handleOverlayClick}>
+      <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <h2 className="mg-v2-modal-title">{title}</h2>
+          </div>
+          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
+            <XCircle size={24} />
           </button>
         </div>
         
-        <div className="confirm-modal-body">
-          <div className="confirm-modal-icon">
-            {type === 'danger' && <i className="bi bi-exclamation-triangle-fill"></i>}
-            {type === 'warning' && <i className="bi bi-exclamation-circle-fill"></i>}
-            {type === 'success' && <i className="bi bi-check-circle-fill"></i>}
-            {type === 'default' && <i className="bi bi-question-circle-fill"></i>}
+        <div className="mg-v2-modal-body">
+          <div className="mg-v2-empty-state">
+            {getIcon()}
+            <p className="mg-v2-text-base mg-v2-mt-md">{message}</p>
           </div>
-          <p className="confirm-modal-message">{message}</p>
         </div>
         
-        <div className="confirm-modal-footer">
+        <div className="mg-v2-modal-footer">
           <button 
-            className="confirm-modal-btn confirm-modal-btn-cancel" 
+            className="mg-v2-btn mg-v2-btn--secondary"
             onClick={onClose}
           >
             {cancelText}
           </button>
           <button 
-            className={`confirm-modal-btn confirm-modal-btn-confirm confirm-modal-btn-${type}`}
+            className={`mg-v2-btn ${getConfirmButtonClass()}`}
             onClick={handleConfirm}
           >
             {confirmText}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

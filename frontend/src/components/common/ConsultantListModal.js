@@ -1,6 +1,6 @@
 import React from 'react';
-import './ConsultantListModal.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import ReactDOM from 'react-dom';
+import { Users, XCircle, User, UserX, Check } from 'lucide-react';
 
 /**
  * 상담사 목록 모달 컴포넌트
@@ -8,123 +8,78 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
   if (!isOpen) return null;
 
-  return (
-    <div className="consultant-list-overlay">
-      <div className="consultant-list-modal">
-        {/* 헤더 */}
-        <div className="consultant-list-modal-header">
-          <h2 className="consultant-list-modal-title">
-            상담사 목록
-          </h2>
-          <button
-            onClick={onClose}
-            className="consultant-list-modal-close"
-          >
-            <i className="bi bi-x"></i>
+  const portalTarget = document.body || document.createElement('div');
+
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <Users size={28} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">상담사 목록</h2>
+          </div>
+          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
+            <XCircle size={24} />
           </button>
         </div>
 
-        {/* 상담사 목록 또는 안내 메시지 */}
-        {consultantList && consultantList.length > 0 ? (
-          <div>
-            <div className="consultant-list-count">
-              총 {consultantList.length}명의 상담사가 있습니다
-            </div>
-            
-            <div className="consultant-list-items">
-              {consultantList.map((consultant, index) => (
-                <div
-                  key={index}
-                  className="consultant-list-item"
-                >
-                  <div className="consultant-list-avatar">
-                    <i className="bi bi-person consultant-list-avatar-icon"></i>
-                  </div>
-                  
-                  <div className="consultant-list-info">
-                    <div className="consultant-list-name">
-                      {consultant.name}
+        <div className="mg-v2-modal-body">
+          {consultantList && consultantList.length > 0 ? (
+            <div className="mg-v2-form-section">
+              <div className="mg-v2-info-box mg-v2-mb-md">
+                <p className="mg-v2-text-sm mg-v2-text-secondary">
+                  총 <strong className="mg-v2-color-primary">{consultantList.length}명</strong>의 상담사가 있습니다
+                </p>
+              </div>
+              
+              <div className="mg-v2-list-container">
+                {consultantList.map((consultant, index) => (
+                  <div key={index} className="mg-v2-list-item">
+                    <div className="mg-v2-list-item-avatar">
+                      <User size={24} />
                     </div>
-                    <div className="consultant-list-specialty">
-                      {consultant.specialty || '상담 심리학'}
+                    <div className="mg-v2-list-item-content">
+                      <div className="mg-v2-list-item-title">{consultant.name}</div>
+                      <div className="mg-v2-list-item-subtitle">{consultant.specialty || '상담 심리학'}</div>
+                      {consultant.intro && (
+                        <div className="mg-v2-list-item-description">{consultant.intro}</div>
+                      )}
                     </div>
-                    {consultant.intro && (
-                      <div className="consultant-list-modal-intro">
-                        {consultant.intro}
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div style={{
-            textAlign: 'center',
-            padding: '40px 20px'
-          }}>
-            <div style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '50%',
-              backgroundColor: '#f8f9fa',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 20px',
-              border: '2px solid #e9ecef'
-            }}>
-              <i className="bi bi-person-x" style={{
-                fontSize: 'var(--font-size-xxxl)',
-                color: '#6c757d'
-              }}></i>
+          ) : (
+            <div className="mg-v2-empty-state">
+              <UserX size={48} />
+              <h3 className="mg-v2-text-lg mg-v2-font-semibold mg-v2-mt-md">상담사가 없습니다</h3>
+              <p className="mg-v2-text-sm mg-v2-text-secondary mg-v2-mt-xs">
+                아직 연결된 상담사가 없습니다.<br/>
+                상담사와 연결하여 상담을 시작해보세요.
+              </p>
+              <button
+                className="mg-v2-btn mg-v2-btn--primary mg-v2-mt-md"
+                onClick={onClose}
+              >
+                <Check size={20} className="mg-v2-icon-inline" />
+                확인
+              </button>
             </div>
-            
-            <h3 style={{
-              fontSize: 'var(--font-size-lg)',
-              fontWeight: '600',
-              color: '#2c3e50',
-              margin: '0 0 8px 0'
-            }}>
-              상담사가 없습니다
-            </h3>
-            
-            <p style={{
-              fontSize: 'var(--font-size-sm)',
-              color: '#6c757d',
-              margin: '0 0 20px 0',
-              lineHeight: '1.5'
-            }}>
-              아직 연결된 상담사가 없습니다.<br/>
-              상담사와 연결하여 상담을 시작해보세요.
-            </p>
-            
-            <button
-              onClick={onClose}
-              style={{
-                backgroundColor: '#667eea',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '10px 20px',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#5a6fd8';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#667eea';
-              }}
-            >
-              확인
-            </button>
-          </div>
-        )}
+          )}
+        </div>
+
+        <div className="mg-v2-modal-footer">
+          <button 
+            className="mg-v2-btn mg-v2-btn--ghost"
+            onClick={onClose}
+          >
+            <XCircle size={20} className="mg-v2-icon-inline" />
+            닫기
+          </button>
+        </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

@@ -20,15 +20,44 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         setLoading(true);
 
         try {
-            const today = new Date().toISOString().split('T')[0];
-            const response = await fetch(`/api/admin/consultants/with-vacation?date=${today}`);
-            if (response.ok) {
-                const data = await response.json();
-                setConsultants(data.data || []);
+            console.log('🔄 상담사 목록 로딩 시작 (통합 API)...');
+            
+            // 통합 API 사용 (전문분야 포함)
+            const consultantsList = await getAllConsultantsWithStats();
+            console.log('📊 통합 API 응답:', consultantsList);
+            
+            if (consultantsList && consultantsList.length > 0) {
+                // 응답 데이터 변환: Map.of() 구조 파싱
+                const consultantsData = consultantsList.map(item => {
+                    const consultantEntity = item.consultant || {};
+                    return {
+                        id: consultantEntity.id,
+                        name: consultantEntity.name,
+                        email: consultantEntity.email,
+                        phone: consultantEntity.phone,
+                        role: consultantEntity.role,
+                        isActive: consultantEntity.isActive,
+                        branchCode: consultantEntity.branchCode,
+                        specialty: consultantEntity.specialty,
+                        specialtyDetails: consultantEntity.specialtyDetails,
+                        specialization: consultantEntity.specialization,
+                        specializationDetails: consultantEntity.specializationDetails,
+                        yearsOfExperience: consultantEntity.yearsOfExperience,
+                        maxClients: consultantEntity.maxClients,
+                        currentClients: item.currentClients || 0,
+                        totalClients: item.totalClients || 0
+                    };
+                });
+                
+                setConsultants(consultantsData);
+                console.log('✅ 상담사 목록 설정 완료 (통합 API):', consultantsData.length, '명');
+            } else {
+                console.warn('⚠️ 상담사 데이터 없음');
+                setConsultants([]);
             }
         } catch (error) {
-            console.error('상담사 목록 로드 실패:', error);
-
+            console.error('❌ 상담사 목록 로딩 오류:', error);
+            setConsultants([]);
         } finally {
             setLoading(false);
         }

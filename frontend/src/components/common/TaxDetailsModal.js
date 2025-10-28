@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { Receipt, XCircle, User, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
+import UnifiedLoading from './UnifiedLoading';
 import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS } from '../../constants/salaryConstants';
 import { apiGet } from '../../utils/ajax';
-import './TaxDetailsModal.css';
 
 /**
  * 세금 내역 보기 모달 컴포넌트
@@ -38,7 +40,6 @@ const TaxDetailsModal = ({
       const response = await apiGet(`/api/admin/salary/tax/${calculationId}`);
       
       if (response.success) {
-        // response.data는 객체이고, 실제 세금 배열은 taxDetails 필드에 있음
         setTaxDetails(response.data?.taxDetails || []);
       } else {
         setError(response.message || SALARY_MESSAGES.CALCULATION_ERROR);
@@ -73,128 +74,117 @@ const TaxDetailsModal = ({
     return `${(rate * 100).toFixed(1)}%`;
   };
 
-  // 총 세금 계산 (안전한 배열 처리)
+  // 총 세금 계산
   const totalTaxAmount = Array.isArray(taxDetails) 
     ? taxDetails.reduce((sum, tax) => sum + (tax.taxAmount || 0), 0)
     : 0;
 
   if (!isOpen) return null;
 
-  return (
-    <div className="tax-details-modal-overlay">
-      <div className="tax-details-modal-content">
-        {/* 헤더 */}
-        <div className="tax-details-modal-header">
-          <h3 className="tax-details-modal-title">
-            세금 내역 상세
-          </h3>
-          <button 
-            className="tax-details-modal-close-btn"
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            ×
+  const portalTarget = document.body || document.createElement('div');
+
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <Receipt size={28} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">세금 내역 상세</h2>
+          </div>
+          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
+            <XCircle size={24} />
           </button>
         </div>
 
-        {/* 상담사 정보 */}
-        <div className="tax-details-consultant-info">
-          <div className="info-item">
-            <span className="label">상담사:</span>
-            <span className="value">{consultantName || '정보 없음'}</span>
+        <div className="mg-v2-modal-body">
+          {/* 상담사 정보 */}
+          <div className="mg-v2-info-grid mg-v2-mb-lg">
+            <div className="mg-v2-info-item">
+              <User size={16} className="mg-v2-icon-inline" />
+              <span className="mg-v2-info-label">상담사</span>
+              <span className="mg-v2-info-value">{consultantName || '정보 없음'}</span>
+            </div>
+            <div className="mg-v2-info-item">
+              <Calendar size={16} className="mg-v2-icon-inline" />
+              <span className="mg-v2-info-label">기간</span>
+              <span className="mg-v2-info-value">{period || '정보 없음'}</span>
+            </div>
           </div>
-          <div className="info-item">
-            <span className="label">기간:</span>
-            <span className="value">{period || '정보 없음'}</span>
-          </div>
-        </div>
 
-        {/* 내용 */}
-        <div className="tax-details-modal-body">
+          {/* 내용 */}
           {loading ? (
-            <div className="tax-details-loading">
-              <div className="spinner"></div>
-              <p>세금 내역을 불러오는 중...</p>
+            <div className="mg-v2-loading-overlay">
+              <UnifiedLoading variant="pulse" size="large" text="세금 내역을 불러오는 중..." type="inline" />
             </div>
           ) : error ? (
-            <div className="tax-details-error">
-              <p>❌ {error}</p>
+            <div className="mg-v2-alert mg-v2-alert--error">
+              <AlertCircle size={20} className="mg-v2-icon-inline" />
+              <p>{error}</p>
               <button 
-                className="tax-details-retry-button"
+                className="mg-v2-btn mg-v2-btn--primary mg-v2-mt-md"
                 onClick={loadTaxDetails}
               >
+                <RefreshCw size={20} className="mg-v2-icon-inline" />
                 다시 시도
               </button>
             </div>
           ) : taxDetails.length === 0 ? (
-            <div className="tax-details-empty">
-              <p>📋 세금 내역이 없습니다.</p>
+            <div className="mg-v2-empty-state">
+              <Receipt size={48} />
+              <p>세금 내역이 없습니다.</p>
             </div>
           ) : (
-            <div className="tax-details-container">
-              {/* 세금 내역 테이블 */}
-              <table className="tax-details-table">
-                <thead>
-                  <tr className={SALARY_CSS_CLASSES.TABLE_HEADER}>
-                    <th>세금 유형</th>
-                    <th>세금명</th>
-                    <th>세율</th>
-                    <th>과세표준</th>
-                    <th>세액</th>
-                    <th>설명</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {taxDetails.map((tax, index) => (
-                    <tr key={tax.id || index} className={SALARY_CSS_CLASSES.TABLE_ROW}>
-                      <td className={SALARY_CSS_CLASSES.TABLE_CELL}>
-                        {getTaxTypeLabel(tax.taxType)}
-                      </td>
-                      <td className={SALARY_CSS_CLASSES.TABLE_CELL}>
-                        {tax.taxName || '-'}
-                      </td>
-                      <td className={SALARY_CSS_CLASSES.TABLE_CELL}>
-                        {formatTaxRate(tax.taxRate)}
-                      </td>
-                      <td className={`${SALARY_CSS_CLASSES.TABLE_CELL} ${SALARY_CSS_CLASSES.AMOUNT_POSITIVE}`}>
-                        {formatAmount(tax.taxableAmount)}원
-                      </td>
-                      <td className={`${SALARY_CSS_CLASSES.TABLE_CELL} ${SALARY_CSS_CLASSES.AMOUNT_NEGATIVE}`}>
-                        {formatAmount(tax.taxAmount)}원
-                      </td>
-                      <td className={SALARY_CSS_CLASSES.TABLE_CELL}>
-                        {tax.taxDescription || '-'}
-                      </td>
+            <div className="mg-v2-form-section">
+              <h3 className="mg-v2-section-title mg-v2-mb-md">세금 내역</h3>
+              <div className="mg-v2-table-container">
+                <table className="mg-v2-table">
+                  <thead>
+                    <tr>
+                      <th>세금 유형</th>
+                      <th>세금명</th>
+                      <th>세율</th>
+                      <th>과세표준</th>
+                      <th>세액</th>
+                      <th>설명</th>
                     </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="tax-details-total-row">
-                    <td colSpan="4" className="total-label">
-                      <strong>총 세금</strong>
-                    </td>
-                    <td className={`total-amount ${SALARY_CSS_CLASSES.AMOUNT_NEGATIVE}`}>
-                      <strong>{formatAmount(totalTaxAmount)}원</strong>
-                    </td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
+                  </thead>
+                  <tbody>
+                    {taxDetails.map((tax, index) => (
+                      <tr key={tax.id || index}>
+                        <td>{getTaxTypeLabel(tax.taxType)}</td>
+                        <td>{tax.taxName || '-'}</td>
+                        <td>{formatTaxRate(tax.taxRate)}</td>
+                        <td className="mg-v2-color-primary">{formatAmount(tax.taxableAmount)}원</td>
+                        <td className="mg-v2-color-danger">{formatAmount(tax.taxAmount)}원</td>
+                        <td>{tax.taxDescription || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="mg-v2-table-row--emphasized">
+                      <td colSpan="4"><strong>총 세금</strong></td>
+                      <td className="mg-v2-color-danger"><strong>{formatAmount(totalTaxAmount)}원</strong></td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           )}
         </div>
 
-        {/* 푸터 */}
-        <div className="tax-details-modal-footer">
+        <div className="mg-v2-modal-footer">
           <button 
-            className="tax-details-footer-button"
+            className="mg-v2-btn mg-v2-btn--primary"
             onClick={onClose}
           >
+            <XCircle size={20} className="mg-v2-icon-inline" />
             닫기
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

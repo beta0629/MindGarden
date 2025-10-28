@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { Building, XCircle, MapPin, Check } from 'lucide-react';
+import UnifiedLoading from './UnifiedLoading';
 import { API_ENDPOINTS } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import { apiPost } from '../../utils/ajax';
-import './BranchMappingModal.css';
 
 /**
  * 지점 매핑 모달 컴포넌트
@@ -127,40 +129,46 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
     return null;
   }
 
-  return (
-    <div className="branch-mapping-modal-overlay">
-      <div className="branch-mapping-modal">
-        <div className="branch-mapping-modal-header">
-          <h2>지점 매핑 설정</h2>
-          <button 
-            type="button" 
-            className="close-button"
-            onClick={handleClose}
-            disabled={isLoading}
-          >
-            ×
+  const portalTarget = document.body || document.createElement('div');
+
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <Building size={28} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">지점 매핑 설정</h2>
+          </div>
+          <button className="mg-v2-modal-close" onClick={handleClose} disabled={isLoading} aria-label="닫기">
+            <XCircle size={24} />
           </button>
         </div>
         
-        <div className="branch-mapping-modal-body">
-          <div className="branch-mapping-info">
-            <p>관리자 계정에 지점을 매핑해주세요.</p>
-            <p>지점을 선택하면 해당 지점의 사용자들을 관리할 수 있습니다.</p>
+        <div className="mg-v2-modal-body">
+          <div className="mg-v2-info-box mg-v2-mb-lg">
+            <MapPin size={20} className="mg-v2-section-title-icon" />
+            <div>
+              <p className="mg-v2-text-sm">관리자 계정에 지점을 매핑해주세요.</p>
+              <p className="mg-v2-text-sm mg-v2-mt-xs">지점을 선택하면 해당 지점의 사용자들을 관리할 수 있습니다.</p>
+            </div>
           </div>
           
-          <form onSubmit={handleBranchMapping} className="branch-mapping-form">
-            <div className="form-group">
-              <label htmlFor="branchSelect">지점 선택 *</label>
+          <form onSubmit={handleBranchMapping}>
+            <div className="mg-v2-form-group">
+              <label htmlFor="branchSelect" className="mg-v2-form-label">
+                <Building size={16} className="mg-v2-form-label-icon" />
+                지점 선택 <span className="mg-v2-form-label-required">*</span>
+              </label>
               {isLoadingBranches ? (
-                <div className="loading-placeholder">
-                  지점 목록을 불러오는 중...
+                <div className="mg-v2-loading-overlay">
+                  <UnifiedLoading variant="dots" size="small" text="지점 목록을 불러오는 중..." type="inline" />
                 </div>
               ) : (
                 <select
                   id="branchSelect"
                   value={selectedBranchCode}
                   onChange={handleBranchChange}
-                  className="form-select"
+                  className="mg-v2-form-select"
                   required
                   disabled={isLoading}
                 >
@@ -175,32 +183,39 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
             
             {error && (
-              <div className="error-message">
+              <div className="mg-v2-alert mg-v2-alert--error mg-v2-mt-md">
                 {error}
               </div>
             )}
             
-            <div className="form-actions">
+            <div className="mg-v2-modal-footer">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="mg-v2-btn mg-v2-btn--secondary"
                 onClick={handleClose}
                 disabled={isLoading}
               >
+                <XCircle size={20} className="mg-v2-icon-inline" />
                 취소
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="mg-v2-btn mg-v2-btn--primary"
                 disabled={isLoading || !selectedBranchCode || isLoadingBranches}
               >
-                {isLoading ? '매핑 중...' : '지점 매핑'}
+                {isLoading ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                  <>
+                    <Check size={20} className="mg-v2-icon-inline" />
+                    지점 매핑
+                  </>
+                )}
               </button>
             </div>
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

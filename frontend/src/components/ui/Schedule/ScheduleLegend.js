@@ -35,8 +35,8 @@ const ScheduleLegend = ({
                             <div key={`consultant-${consultant.id}-${index}`} className="mg-v2-legend-item">
                                 <span 
                                     className="mg-v2-legend-color" 
-                                    style={{ backgroundColor: getConsultantColor(consultant.id) }}
-                                ></span>
+                                    style={{ '--legend-color': getConsultantColor(consultant.id) }}
+                                ></span income호
                                 <span className="mg-v2-legend-text">{consultant.name}</span>
                             </div>
                         ))}
@@ -56,7 +56,7 @@ const ScheduleLegend = ({
                             <div key={option.value || `status-${index}`} className="mg-v2-legend-item">
                                 <span 
                                     className="mg-v2-legend-color" 
-                                    style={{ backgroundColor: option.color }}
+                                    style={{ '--legend-color': option.color }}
                                 ></span>
                                 <span className="mg-v2-legend-text">{option.label}</span>
                             </div>

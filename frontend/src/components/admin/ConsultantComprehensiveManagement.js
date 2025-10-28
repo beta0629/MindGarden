@@ -47,25 +47,49 @@ const ConsultantComprehensiveManagement = () => {
             
             console.log('👤 현재 사용자 지점코드:', userBranchCode);
             
-            // 기존 API 사용 (통합 API는 테스트 후 적용 예정)
-            const response = await apiGet('/api/admin/consultants');
-            console.log('📊 상담사 목록 응답:', response);
+            // 통합 API 사용 (캐시 적용)
+            const consultantsList = await getAllConsultantsWithStats();
+            console.log('📊 통합 API 응답:', consultantsList);
             
-            if (response.success) {
-                setConsultants(response.data || []);
-                console.log('✅ 상담사 목록 설정 완료:', response.data?.length || 0, '명');
+            if (consultantsList && consultantsList.length > 0) {
+                console.log('🔍 첫 번째 아이템 구조:', consultantsList[0]);
+                
+                // 응답 데이터 변환: Map.of() 구조 파싱
+                const consultants = consultantsList.map(item => {
+                    // item 구조: { consultant: Consultant엔티티, currentClients: number, ... }
+                    const consultantEntity = item.consultant || {};
+                    
+                    // Consultant 엔티티에서 필요한 필드 추출
+                    return {
+                        id: consultantEntity.id,
+                        name: consultantEntity.name,
+                        email: consultantEntity.email,
+                        phone: consultantEntity.phone,
+                        role: consultantEntity.role,
+                        isActive: consultantEntity.isActive,
+                        branchCode: consultantEntity.branchCode,
+                        specialization: consultantEntity.specialization,
+                        yearsOfExperience: consultantEntity.yearsOfExperience,
+                        maxClients: consultantEntity.maxClients,
+                        totalConsultations: consultantEntity.totalConsultations,
+                        createdAt: consultantEntity.createdAt,
+                        updatedAt: consultantEntity.updatedAt,
+                        // 통계 정보 추가
+                        currentClients: item.currentClients || 0,
+                        totalClients: item.totalClients || 0,
+                        statistics: item.statistics || {}
+                    };
+                });
+                
+                setConsultants(consultants);
+                console.log('✅ 상담사 목록 설정 완료 (통합 API):', consultants.length, '명');
+                
                 // 첫 번째 상담사 데이터 확인
-                if (response.data && response.data.length > 0) {
-                    const firstConsultant = response.data[0];
-                    console.log('🔍 첫 번째 상담사 데이터:', {
-                        name: firstConsultant.name,
-                        currentClients: firstConsultant.currentClients,
-                        maxClients: firstConsultant.maxClients,
-                        totalClients: firstConsultant.totalClients
-                    });
+                if (consultants.length > 0) {
+                    console.log('🔍 변환된 첫 번째 상담사:', consultants[0]);
                 }
             } else {
-                console.error('❌ 상담사 목록 로딩 실패:', response.message);
+                console.warn('⚠️ 상담사 데이터 없음');
                 setConsultants([]);
             }
         } catch (error) {

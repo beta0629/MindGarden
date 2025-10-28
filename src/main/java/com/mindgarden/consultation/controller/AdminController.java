@@ -99,16 +99,51 @@ public class AdminController {
      * GET /api/admin/consultants/with-stats
      */
     @GetMapping("/consultants/with-stats")
-    public ResponseEntity<?> getAllConsultantsWithStats() {
+    public ResponseEntity<?> getAllConsultantsWithStats(HttpSession session) {
         try {
             log.info("📊 전체 상담사 통계 조회 API 호출");
             
-            List<Map<String, Object>> stats = consultantStatsService.getAllConsultantsWithStats();
+            // 현재 사용자 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            String branchCode = currentUser.getBranchCode();
+            log.info("🔍 현재 사용자 지점코드: {}, 역할: {}", branchCode, currentUser.getRole());
+            
+            // 모든 상담사 조회
+            List<Map<String, Object>> allStats = consultantStatsService.getAllConsultantsWithStats();
+            
+            // 지점별 필터링
+            List<Map<String, Object>> filteredStats;
+            
+            // HQ 관리자는 모든 지점 조회 가능
+            if ("HQ_ADMIN".equals(currentUser.getRole()) || 
+                "SUPER_HQ_ADMIN".equals(currentUser.getRole()) || 
+                "HQ_MASTER".equals(currentUser.getRole())) {
+                filteredStats = allStats;
+                log.info("🏢 본사 관리자 - 모든 지점 상담사 조회");
+            } else {
+                // 지점별 필터링
+                filteredStats = allStats.stream()
+                    .filter(item -> {
+                        Map<String, Object> consultantObj = (Map<String, Object>) item.get("consultant");
+                        if (consultantObj == null) return false;
+                        String consultantBranchCode = (String) consultantObj.get("branchCode");
+                        return branchCode != null && branchCode.equals(consultantBranchCode);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+                log.info("🏢 지점별 상담사 조회: 지점코드={}, 조회된 수={}/{}", branchCode, filteredStats.size(), allStats.size());
+            }
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "data", stats,
-                "count", stats.size()
+                "data", filteredStats,
+                "count", filteredStats.size()
             ));
         } catch (Exception e) {
             log.error("❌ 전체 상담사 통계 조회 실패", e);

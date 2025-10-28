@@ -179,7 +179,7 @@ const UnifiedNotification = ({
               <div 
                 className="mg-notification-progress-bar"
                 style={{
-                  animationDuration: `${notification.duration || duration}ms`
+                  '--animation-duration': `${notification.duration || duration}ms`
                 }}
               />
             </div>
@@ -262,7 +262,7 @@ const UnifiedNotification = ({
                   <div 
                     className="mg-notification-countdown-progress"
                     style={{
-                      width: `${((notification.countdown - countdowns[notification.id]) / notification.countdown) * 100}%`
+                      '--progress-width': `${((notification.countdown - countdowns[notification.id]) / notification.countdown) * 100}%`
                     }}
                   />
                 </div>

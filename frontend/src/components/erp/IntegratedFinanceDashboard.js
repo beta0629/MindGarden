@@ -139,8 +139,10 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       });
       
       if (!hasIntegratedFinancePermission) {
-        console.log('❌ 통합재무관리 접근 권한 없음, ERP 대시보드로 이동');
-        navigate('/erp/dashboard', { replace: true });
+        console.log('❌ 통합재무관리 접근 권한 없음');
+        setError('통합재무관리 접근 권한이 없습니다.');
+        setLoading(false);
+        permissionCheckedRef.current = true; // 체크 완료로 표시하여 무한 로딩 방지
         return;
       }
       

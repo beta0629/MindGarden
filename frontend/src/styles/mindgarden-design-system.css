@@ -14724,3 +14724,191 @@ body {
     max-height: 90vh;
     overflow: auto;
 }
+
+/* ============================================
+   상담사 내담자 목록 카드
+   ============================================ */
+.mg-v2-client-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
+    position: relative;
+}
+
+.mg-v2-client-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #e9ecef;
+}
+
+.mg-v2-client-avatar-container {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.mg-v2-client-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mg-v2-client-card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.mg-v2-client-name {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    margin-top: 0;
+}
+
+.mg-v2-client-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.mg-v2-client-info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6c757d;
+    font-size: 0.95rem;
+    min-height: 20px;
+}
+
+.mg-v2-client-session-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.mg-v2-client-session-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #2c3e50;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.mg-v2-client-session-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.mg-v2-client-session-item {
+    text-align: center;
+}
+
+.mg-v2-client-session-value {
+    font-weight: 600;
+}
+
+.mg-v2-client-session-label {
+    color: #6c757d;
+    font-size: 0.75rem;
+}
+
+.mg-v2-client-card-footer {
+    padding: 15px 20px 20px;
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+    margin-top: auto;
+    display: block;
+}
+
+.mg-v2-client-view-btn {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid #3498db;
+    background: transparent;
+    color: #3498db;
+    cursor: pointer;
+}
+
+.mg-v2-client-view-btn:hover {
+    background: #3498db;
+    color: #fff;
+}
+
+.mg-v2-client-view-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mg-v2-btn-reset-filter {
+    margin-top: 15px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #3498db;
+    background: transparent;
+    color: #3498db;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mg-v2-btn-reset-filter:hover {
+    background: #3498db;
+    color: #fff;
+}
+
+.mg-v2-icon-fixed {
+    width: 16px;
+    color: #3498db;
+    flex-shrink: 0;
+}
+
+.mg-v2-status-badge {
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mg-v2-status-badge--active { background-color: #10b981; }
+.mg-v2-status-badge--inactive { background-color: #ef4444; }
+.mg-v2-status-badge--pending { background-color: #f59e0b; }
+.mg-v2-status-badge--completed { background-color: #059669; }
+.mg-v2-status-badge--suspended { background-color: #dc2626; }
+.mg-v2-status-badge--default { background-color: #6b7280; }

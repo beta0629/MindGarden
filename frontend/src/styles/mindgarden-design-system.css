@@ -12050,6 +12050,12 @@ body {
     padding: var(--spacing-lg);
 }
 
+.mg-v2-modal-content--scrollable {
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 .mg-v2-modal-description {
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);

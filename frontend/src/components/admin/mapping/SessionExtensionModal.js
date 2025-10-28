@@ -150,7 +150,7 @@ const SessionExtensionModal = ({
 
     return ReactDOM.createPortal(
         <div className="mg-v2-modal-overlay" onClick={handleClose}>
-            <div className="mg-v2-modal mg-v2-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="mg-v2-modal mg-v2-modal-lg mg-v2-modal--scrollable" onClick={(e) => e.stopPropagation()}>
                 <div className="mg-v2-modal-header">
                     <div className="mg-v2-modal-header-content">
                         <div className="mg-v2-modal-icon">
@@ -175,7 +175,7 @@ const SessionExtensionModal = ({
                     </button>
                 </div>
                 
-                <div className="mg-v2-modal-content">
+                <div className="mg-v2-modal-content mg-v2-modal-content--scrollable">
                     {/* 매칭 정보 표시 */}
                     <div className="mg-v2-card mg-v2-card--outlined">
                         <div className="mg-v2-card-header">

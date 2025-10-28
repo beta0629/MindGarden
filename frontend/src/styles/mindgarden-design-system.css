@@ -15580,5 +15580,13 @@ body {
 .mg-hidden { display: none !important; }
 .mg-visible { display: block !important; }
 
+/* Modal Loading Text */
+.mg-modal__loading-text {
+  margin-left: 12px;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+}
+
 /* Icon Size */
 .mg-v2-text-xl { font-size: var(--font-size-xl); }

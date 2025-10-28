@@ -136,12 +136,7 @@ const UnifiedModal = ({
           <div className="mg-modal__loading-overlay">
             <div className="mg-modal__loading-spinner">
               <div className="mg-loading-spinner-icon mg-loading-spinner-small"></div>
-              <div style={{ 
-                marginLeft: '12px', 
-                color: 'var(--color-text-primary)', 
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 'var(--font-weight-medium)'
-              }}>
+              <div className="mg-modal__loading-text">
                 처리 중...
               </div>
             </div>

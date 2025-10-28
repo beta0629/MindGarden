@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { FaUser } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import { getAllClientsWithStats } from '../../utils/consultantHelper';
 import { 
     getUserStatusKoreanName,
     getUserGradeKoreanName,
@@ -86,22 +87,46 @@ const ClientComprehensiveManagement = () => {
         }
     }, []);
 
-    // 내담자 목록 로드
+    // 내담자 목록 로드 (통합 API 사용)
     const loadClients = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await apiGet('/api/admin/clients');
-            console.log('📊 내담자 목록 응답:', response);
+            console.log('🔄 내담자 목록 로딩 시작 (통합 API)...');
             
-            if (response && response.success) {
-                setClients(response.data || []);
+            // 통합 API 사용 (통계 포함)
+            const clientsList = await getAllClientsWithStats();
+            console.log('📊 통합 API 응답:', clientsList);
+            
+            if (clientsList && clientsList.length > 0) {
+                // 응답 데이터 변환
+                const clientsData = clientsList.map(item => {
+                    const clientEntity = item.client || {};
+                    return {
+                        id: clientEntity.id,
+                        name: clientEntity.name,
+                        email: clientEntity.email,
+                        phone: clientEntity.phone,
+                        role: clientEntity.role,
+                        status: clientEntity.status,
+                        isActive: clientEntity.isActive,
+                        branchCode: clientEntity.branchCode,
+                        createdAt: clientEntity.createdAt,
+                        updatedAt: clientEntity.updatedAt,
+                        // 통계 정보 추가
+                        currentConsultants: item.currentConsultants || 0,
+                        totalConsultants: item.totalConsultants || 0,
+                        statistics: item.statistics || {}
+                    };
+                });
+                
+                setClients(clientsData);
+                console.log('✅ 내담자 목록 설정 완료 (통합 API):', clientsData.length, '명');
             } else {
-                console.warn('내담자 목록 응답 실패:', response);
+                console.warn('⚠️ 내담자 데이터 없음');
                 setClients([]);
             }
         } catch (error) {
-            console.error('내담자 목록 로드 실패:', error);
-            // 오류 시 빈 배열 사용
+            console.error('❌ 내담자 목록 로딩 오류:', error);
             setClients([]);
             showError('내담자 목록을 불러오는데 실패했습니다.');
         } finally {

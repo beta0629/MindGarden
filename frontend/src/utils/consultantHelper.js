@@ -108,3 +108,46 @@ export const transformConsultantData = (consultantRaw) => {
         statistics: consultantRaw.statistics || {}
     };
 };
+
+// ========================================
+// 내담자 통합 API
+// ========================================
+
+/**
+ * 내담자 정보 + 통계 정보 통합 조회
+ * 
+ * @param {number} clientId 내담자 ID
+ * @returns {Promise<Object|null>} 내담자 정보 + 통계 정보
+ */
+export const getClientWithStats = async (clientId) => {
+    try {
+        const response = await apiGet(`/api/admin/clients/with-stats/${clientId}`);
+        if (response.success) {
+            return response.data;
+        }
+        console.error('내담자 통계 조회 실패:', response.message);
+        return null;
+    } catch (error) {
+        console.error('내담자 통계 조회 중 오류:', error);
+        return null;
+    }
+};
+
+/**
+ * 전체 내담자 목록 + 통계 정보 조회
+ * 
+ * @returns {Promise<Array>} 내담자 목록 + 통계 정보
+ */
+export const getAllClientsWithStats = async () => {
+    try {
+        const response = await apiGet('/api/admin/clients/with-stats');
+        if (response.success) {
+            return response.data || [];
+        }
+        console.error('전체 내담자 통계 조회 실패:', response.message);
+        return [];
+    } catch (error) {
+        console.error('전체 내담자 통계 조회 중 오류:', error);
+        return [];
+    }
+};

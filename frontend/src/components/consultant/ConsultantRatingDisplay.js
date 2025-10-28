@@ -108,7 +108,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                 <div className="mg-dashboard-stats mg-mb-lg">
                     {/* 평균 점수 */}
                     <div className="mg-dashboard-stat-card">
-                        <div className="mg-dashboard-stat-icon" style={{ background: 'var(--olive-green)' }}>
+                        <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-olive">
                             💖
                         </div>
                         <div className="mg-dashboard-stat-content">
@@ -121,7 +121,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
 
                     {/* 총 평가 수 */}
                     <div className="mg-dashboard-stat-card">
-                        <div className="mg-dashboard-stat-icon" style={{ background: 'var(--mint-green)' }}>
+                        <div className="mg-dashboard-stat-icon mg-dashboard-stat-icon-mint">
                             📊
                         </div>
                         <div className="mg-dashboard-stat-content">

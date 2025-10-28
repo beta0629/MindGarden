@@ -687,52 +687,16 @@ const TimeSlotGrid = ({
                     <span className="time-slot-legend-color time-slot-legend-color--available"></span>
                     <span>사용 가능</span>
                 </div>
-                <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '6px', 
-                    fontSize: 'var(--font-size-xs)', 
-                    color: '#495057' 
-                }}>
-                    <span style={{ 
-                        width: '12px', 
-                        height: '12px', 
-                        backgroundColor: '#ffc107', 
-                        borderRadius: '50%',
-                        display: 'inline-block'
-                    }}></span>
+                <div className="mg-v2-legend-item">
+                    <span className="mg-v2-legend-color mg-v2-legend-color--vacation"></span>
                     <span>휴가 시간</span>
                 </div>
-                <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '6px', 
-                    fontSize: 'var(--font-size-xs)', 
-                    color: '#495057' 
-                }}>
-                    <span style={{ 
-                        width: '12px', 
-                        height: '12px', 
-                        backgroundColor: '#dc3545', 
-                        borderRadius: '50%',
-                        display: 'inline-block'
-                    }}></span>
+                <div className="mg-v2-legend-item">
+                    <span className="mg-v2-legend-color mg-v2-legend-color--conflict"></span>
                     <span>충돌</span>
                 </div>
-                <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '6px', 
-                    fontSize: 'var(--font-size-xs)', 
-                    color: '#495057' 
-                }}>
-                    <span style={{ 
-                        width: '12px', 
-                        height: '12px', 
-                        backgroundColor: '#6c757d', 
-                        borderRadius: '50%',
-                        display: 'inline-block'
-                    }}></span>
+                <div className="mg-v2-legend-item">
+                    <span className="mg-v2-legend-color mg-v2-legend-color--unavailable"></span>
                     <span>사용 불가</span>
                 </div>
                 <div style={{ 
@@ -753,34 +717,13 @@ const TimeSlotGrid = ({
                 </div>
             </div>
 
-            <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: '12px' 
-            }}>
+            <div className="mg-v2-time-slot-container">
                 {Object.keys(groupedSlots)
                     .sort((a, b) => parseInt(a) - parseInt(b))
                     .map(hour => (
-                    <div key={hour} style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '12px' 
-                    }}>
-                        <div style={{ 
-                            minWidth: '60px', 
-                            fontSize: 'var(--font-size-sm)', 
-                            fontWeight: '600', 
-                            color: '#495057', 
-                            textAlign: 'center', 
-                            backgroundColor: '#e9ecef', 
-                            padding: '8px 4px', 
-                            borderRadius: '4px' 
-                        }}>{hour}:00</div>
-                        <div style={{ 
-                            display: 'flex', 
-                            gap: '8px', 
-                            flexWrap: 'wrap' 
-                        }}>
+                    <div key={hour} className="mg-v2-time-slot-row">
+                        <div className="mg-v2-time-slot-hour">{hour}:00</div>
+                        <div className="mg-v2-time-slot-grid">
                             {groupedSlots[hour].map(slot => {
                                 // 인라인 스타일 정의
                                 const getSlotStyle = (slot) => {

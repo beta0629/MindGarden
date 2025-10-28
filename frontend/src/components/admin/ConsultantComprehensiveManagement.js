@@ -47,25 +47,45 @@ const ConsultantComprehensiveManagement = () => {
             
             console.log('👤 현재 사용자 지점코드:', userBranchCode);
             
-            // 기존 API 사용 (통합 API는 아직 안정화 전)
-            const response = await apiGet('/api/admin/consultants');
-            console.log('📊 상담사 목록 응답:', response);
+            // 통합 API 사용 (캐시 적용)
+            const consultantsList = await getAllConsultantsWithStats();
+            console.log('📊 상담사 목록 응답 (캐시):', consultantsList);
             
-            if (response.success) {
-                setConsultants(response.data || []);
-                console.log('✅ 상담사 목록 설정 완료:', response.data?.length || 0, '명');
+            if (consultantsList && consultantsList.length > 0) {
+                // 응답 데이터 변환 (Map.of()로 반환된 객체 파싱)
+                const consultants = consultantsList.map(item => {
+                    const consultant = item.consultant || item;
+                    
+                    // consultant 객체가 Map이면 일반 객체로 변환
+                    const consultantObj = consultant && typeof consultant === 'object' && !Array.isArray(consultant)
+                        ? consultant
+                        : {};
+                    
+                    return {
+                        ...consultantObj,
+                        currentClients: item.currentClients || 0,
+                        statistics: item.statistics || {},
+                        maxClients: item.maxClients || 0,
+                        totalClients: item.totalClients || 0
+                    };
+                });
+                
+                setConsultants(consultants);
+                console.log('✅ 상담사 목록 설정 완료 (캐시):', consultants.length, '명');
+                
                 // 첫 번째 상담사 데이터 확인
-                if (response.data && response.data.length > 0) {
-                    const firstConsultant = response.data[0];
+                if (consultants.length > 0) {
+                    const firstConsultant = consultants[0];
                     console.log('🔍 첫 번째 상담사 데이터:', {
                         name: firstConsultant.name,
                         currentClients: firstConsultant.currentClients,
                         maxClients: firstConsultant.maxClients,
-                        totalClients: firstConsultant.totalClients
+                        totalClients: firstConsultant.totalClients,
+                        statistics: firstConsultant.statistics
                     });
                 }
             } else {
-                console.error('❌ 상담사 목록 로딩 실패:', response.message);
+                console.warn('⚠️ 상담사 데이터 없음');
                 setConsultants([]);
             }
         } catch (error) {

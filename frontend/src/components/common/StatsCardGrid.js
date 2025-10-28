@@ -22,44 +22,20 @@ const StatsCardGrid = ({
   // 로딩 상태
   if (loading) {
     return (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '20px',
-        marginBottom: '24px'
-      }}>
+      <div className="mg-v2-form-grid">
         {Array.from({ length: 4 }, (_, index) => (
-          <div key={index} style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e9ecef',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '20px'
-          }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '12px',
-              backgroundColor: '#f8f9fa',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 'var(--font-size-xxl)',
-              color: '#6c757d'
-            }}>
+          <div key={index} className="mg-v2-card">
+            <div className="mg-v2-icon-container">
               <i className="fas fa-chart-bar"></i>
             </div>
             <div>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
+              <h3 className="mg-v2-text-sm mg-v2-font-weight-semibold mg-v2-text-secondary">
                 로딩 중...
               </h3>
-              <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: '700', color: '#2c3e50', margin: '0 0 4px 0' }}>
+              <div className="mg-v2-text-xxl mg-v2-font-weight-bold mg-v2-text-primary">
                 0
               </div>
-              <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>
+              <p className="mg-v2-text-xs mg-v2-text-secondary">
                 데이터를 불러오는 중
               </p>
             </div>
@@ -72,44 +48,20 @@ const StatsCardGrid = ({
   // 에러 상태
   if (error) {
     return (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '20px',
-        marginBottom: '24px'
-      }}>
+      <div className="mg-v2-form-grid">
         {Array.from({ length: 4 }, (_, index) => (
-          <div key={index} style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e9ecef',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '20px'
-          }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '12px',
-              backgroundColor: '#fff5f5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 'var(--font-size-xxl)',
-              color: '#e53e3e'
-            }}>
+          <div key={index} className="mg-v2-card">
+            <div className="mg-v2-icon-container mg-v2-icon-container--error">
               <i className="fas fa-exclamation-triangle"></i>
             </div>
             <div>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
+              <h3 className="mg-v2-text-sm mg-v2-font-weight-semibold mg-v2-text-secondary">
                 에러
               </h3>
-              <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: '700', color: '#2c3e50', margin: '0 0 4px 0' }}>
+              <div className="mg-v2-text-xxl mg-v2-font-weight-bold mg-v2-text-primary">
                 0
               </div>
-              <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>
+              <p className="mg-v2-text-xs mg-v2-text-secondary">
                 데이터를 불러올 수 없습니다
               </p>
             </div>

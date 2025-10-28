@@ -408,12 +408,7 @@ const ItemManagement = () => {
                   required
                   min="0"
                   step="0.01"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
+                  className="mg-v2-form-input"
                 />
               </div>
 
@@ -428,12 +423,7 @@ const ItemManagement = () => {
                   onChange={handleInputChange}
                   required
                   min="0"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
+                  className="mg-v2-form-input"
                 />
               </div>
             </div>
@@ -451,7 +441,7 @@ const ItemManagement = () => {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div className="mg-v2-text-right" style={{ display: 'flex', gap: '12px' }}>
               <ErpButton
                 type="button"
                 variant="secondary"
@@ -549,12 +539,7 @@ const ItemManagement = () => {
                   required
                   min="0"
                   step="0.01"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
+                  className="mg-v2-form-input"
                 />
               </div>
 
@@ -569,12 +554,7 @@ const ItemManagement = () => {
                   onChange={handleInputChange}
                   required
                   min="0"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
+                  className="mg-v2-form-input"
                 />
               </div>
             </div>
@@ -592,7 +572,7 @@ const ItemManagement = () => {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div className="mg-v2-text-right" style={{ display: 'flex', gap: '12px' }}>
               <ErpButton
                 type="button"
                 variant="secondary"

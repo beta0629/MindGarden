@@ -15537,3 +15537,8 @@ body {
     transform: translateY(-1px);
     box-shadow:国安 0 4px 12px rgba(0, 123, 255, 0.3);
 }
+
+/* Text Colors */
+.mg-v2-text-info {
+    color: #17a2b8;
+}

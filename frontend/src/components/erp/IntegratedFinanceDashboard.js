@@ -514,17 +514,11 @@ const OverviewTab = ({ data }) => {
             </div>
           </div>
           
-          <div style={{
-            padding: '16px',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            border: '1px solid #dee2e6',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: 'var(--font-size-base)', fontWeight: 'bold', color: '#17a2b8' }}>
+          <div className="mg-v2-card mg-v2-card--outlined mg-v2-text-center">
+            <div className="mg-v2-text-info mg-v2-font-weight-bold">
               실시간 연동
             </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
+            <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: '4px' }}>
               ✅ 매핑 ↔ ERP 자동 동기화
             </div>
             <button

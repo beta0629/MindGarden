@@ -300,7 +300,7 @@ const ClientCard = ({
                             <span className="mg-client-card__progress-value-mobile">{getProgressPercentage()}%</span>
                         </div>
                         <div className="mg-progress-bar mg-progress-bar--mobile">
-                            <div className="mg-progress-fill" style={{ width: `${getProgressPercentage()}%` }}></div>
+                            <div className="mg-progress-fill" style={{ '--progress': `${getProgressPercentage()}%` }}></div>
                         </div>
                     </div>
                 )}

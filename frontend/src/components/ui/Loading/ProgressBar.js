@@ -38,7 +38,7 @@ const ProgressBar = ({
       <div className={`mg-progress-bar ${sizeClass} ${className}`.trim()}>
         <div 
           className="mg-progress-fill" 
-          style={{ width: `${percentage}%` }}
+          style={{ '--progress-percentage': `${percentage}%` }}
         />
       </div>
     </div>

@@ -2384,6 +2384,7 @@ body {
 }
 
 .mg-progress-fill {
+  width: var(--progress-percentage, 0%);
   height: 100%;
   background: linear-gradient(90deg, var(--mint-green), var(--soft-mint));
   border-radius: var(--radius-lg);
@@ -3187,6 +3188,7 @@ body {
 }
 
 .mg-progress-fill {
+  width: var(--progress-percentage, 0%);
   height: 100%;
   background: linear-gradient(90deg, var(--mint-green), var(--soft-mint));
   border-radius: var(--radius-sm);

@@ -811,66 +811,28 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        maxWidth: '600px',
-        width: '90%',
-        maxHeight: '80vh',
-        overflow: 'auto',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
-      }}>
+    <div className="mg-v2-modal-overlay--high-z">
+      <div className="mg-v2-modal mg-v2-modal-lg mg-v2-modal--scrollable">
         {/* 헤더 */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-          paddingBottom: '15px',
-          borderBottom: '2px solid #f1f3f4'
-        }}>
-          <h2 style={{ margin: 0, fontSize: 'var(--font-size-xl)', color: '#333' }}>
+        <div className="mg-v2-modal-header">
+          <h2 className="mg-v2-modal-title">
             💰 거래 상세 정보 #{transaction.id}
           </h2>
           <button
             onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: 'var(--font-size-xxl)',
-              cursor: 'pointer',
-              color: '#666'
-            }}
+            className="mg-v2-modal-close"
           >
             ✕
           </button>
         </div>
 
         {/* 기본 거래 정보 */}
-        <div style={{
-          backgroundColor: '#f8f9fa',
-          padding: '16px',
-          borderRadius: '8px',
-          marginBottom: '20px'
-        }}>
-          <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: '#495057' }}>
+        <div className="mg-v2-card mg-v2-card--outlined">
+          <h3 className="mg-v2-section-header">
             📊 기본 정보
           </h3>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="mg-v2-form-grid">
             <div>
               <strong>거래 유형:</strong>
               <span style={{
@@ -929,7 +891,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 <div>로딩 중...</div>
               </div>
             ) : mappingDetail ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="mg-v2-form-grid">
                 <div>
                   <strong>매핑 ID:</strong> #{mappingDetail.mappingId}
                 </div>
@@ -1031,7 +993,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
               🔗 연동 정보
             </h3>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="mg-v2-form-grid">
               <div>
                 <strong>연동 유형:</strong> {transaction.relatedEntityType}
               </div>

@@ -178,8 +178,8 @@ const ConsultationCompletionStatsView = ({
             </div>
 
             {statistics.length === 0 && (
-                <div className="mg-v2-card mg-v2-text-center" style={{ padding: '60px 40px', marginTop: '20px' }}>
-                    <div className="mg-v2-empty-state-icon" style={{ width: '80px', height: '80px', margin: '0 auto 20px' }}>
+                <div className="mg-v2-card mg-v2-text-center mg-v2-pt-xl mg-v2-px-xxl mg-v2-mt-md">
+                    <div className="mg-v2-empty-state-icon mg-v2-empty-state-icon-large">
                         📊
                     </div>
                     <h3 className="mg-v2-empty-title">

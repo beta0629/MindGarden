@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell } from 'react-icons/fa';
-import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles } from 'lucide-react';
+import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, XCircle } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SystemStatus from './system/SystemStatus';
@@ -1333,12 +1334,31 @@ const AdminDashboard = ({ user: propUser }) => {
             )}
 
             {/* 통계 모달 */}
-            {showStatisticsModal && (
-                <StatisticsDashboard
-                    userRole={(propUser || sessionUser)?.role || 'ADMIN'}
-                    userId={(propUser || sessionUser)?.id}
-                    onClose={() => setShowStatisticsModal(false)}
-                />
+            {showStatisticsModal && ReactDOM.createPortal(
+                <div className="mg-v2-modal-overlay" onClick={() => setShowStatisticsModal(false)} style={{ zIndex: 9999 }}>
+                    <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflow: 'auto' }}>
+                        <div className="mg-v2-modal-header">
+                            <div className="mg-v2-modal-title-wrapper">
+                                <BarChart size={28} className="mg-v2-modal-title-icon" />
+                                <h2 className="mg-v2-modal-title">통계 대시보드</h2>
+                            </div>
+                            <button 
+                                className="mg-v2-modal-close" 
+                                onClick={() => setShowStatisticsModal(false)}
+                                aria-label="닫기"
+                            >
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+                        <div className="mg-v2-modal-body">
+                            <StatisticsDashboard
+                                userRole={(propUser || sessionUser)?.role || 'ADMIN'}
+                                userId={(propUser || sessionUser)?.id}
+                            />
+                        </div>
+                    </div>
+                </div>,
+                document.body
             )}
 
             {/* 권한 관리 - 지점 수퍼 어드민 이상만 접근 가능 */}

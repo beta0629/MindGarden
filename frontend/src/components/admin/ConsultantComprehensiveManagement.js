@@ -7,6 +7,7 @@ import { getUserStatusColor, getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { getCurrentUser } from '../../utils/session';
 import { getBranchNameByCode } from '../../utils/branchUtils';
+import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import { MGConfirmModal } from '../common/MGModal';
 

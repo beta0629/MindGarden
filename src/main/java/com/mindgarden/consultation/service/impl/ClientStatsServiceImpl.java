@@ -44,9 +44,10 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     public Map<String, Object> getClientWithStats(Long clientId) {
         log.info("📊 내담자 통계 조회 (DB): clientId={}", clientId);
         
-        Client client = userRepository.findById(clientId)
-                .map(user -> convertToClient(user))
+        com.mindgarden.consultation.entity.User user = userRepository.findById(clientId)
                 .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다: " + clientId));
+        
+        Client client = convertToClient(user);
         
         // 활성 매핑 수 계산
         long currentConsultants = calculateCurrentConsultants(clientId);
@@ -127,7 +128,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     /**
      * User를 Client로 변환 (개인정보 복호화 포함)
      */
-    private Client convertToClient(com.musagearden.consultation.entity.User user) {
+    private Client convertToClient(com.mindgarden.consultation.entity.User user) {
         Client client = new Client();
         client.setId(user.getId());
         client.setName(user.getName());
@@ -156,7 +157,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         client.setGender(user.getGender());
         client.setBranchCode(user.getBranchCode());
         client.setIsDeleted(user.getIsDeleted());
-        client.setIsActive(user.getIsActive());
         client.setCreatedAt(user.getCreatedAt());
         client.setUpdatedAt(user.getUpdatedAt());
         

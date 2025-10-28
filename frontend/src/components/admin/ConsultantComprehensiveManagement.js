@@ -69,6 +69,8 @@ const ConsultantComprehensiveManagement = () => {
                         isActive: consultantEntity.isActive,
                         branchCode: consultantEntity.branchCode,
                         specialization: consultantEntity.specialization,
+                        specialty: consultantEntity.specialty, // 전문분야 추가
+                        specialtyDetails: consultantEntity.specialtyDetails, // 전문분야 상세 추가
                         yearsOfExperience: consultantEntity.yearsOfExperience,
                         maxClients: consultantEntity.maxClients,
                         totalConsultations: consultantEntity.totalConsultations,
@@ -652,15 +654,16 @@ const ConsultantComprehensiveManagement = () => {
                                                             </div>
                                                             </div>
                                             
-                                            <div className="mg-v2-consultant-card__specialties">
-                                                <h5 className="mg-v2-consultant-card__specialties-title">전문 분야</h5>
-                                                <div className="mg-v2-consultant-card__specialties-list">
-                                                    {consultant.specialties && consultant.specialties.map((specialty, index) => (
-                                                        <span key={index} className="mg-v2-consultant-card__specialty-tag">
-                                                            { specialty }
-                                                                </span>
-                                                    ))}
-                                                            </div>
+                                            {consultant.specialty && (
+                                                <div className="mg-v2-consultant-card__specialties">
+                                                    <h5 className="mg-v2-consultant-card__specialties-title">전문 분야</h5>
+                                                    <div className="mg-v2-consultant-card__specialties-list">
+                                                        <span className="mg-v2-consultant-card__specialty-tag">
+                                                            { consultant.specialty }
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
                                                         </div>
                                             
                                             <div className="mg-v2-consultant-card__actions">
@@ -777,15 +780,16 @@ const ConsultantComprehensiveManagement = () => {
                                                 </div>
                                             </div>
                                             
-                                            <div className="mg-v2-consultant-card__specialties">
-                                                <h5 className="mg-v2-consultant-card__specialties-title">전문 분야</h5>
-                                                <div className="mg-v2-consultant-card__specialties-list">
-                                                    {consultant.specialties && consultant.specialties.map((specialty, index) => (
-                                                        <span key={index} className="mg-v2-consultant-card__specialty-tag">
-                                                            { specialty }
+                                            {consultant.specialty && (
+                                                <div className="mg-v2-consultant-card__specialties">
+                                                    <h5 className="mg-v2-consultant-card__specialties-title">전문 분야</h5>
+                                                    <div className="mg-v2-consultant-card__specialties-list">
+                                                        <span className="mg-v2-consultant-card__specialty-tag">
+                                                            { consultant.specialty }
                                                         </span>
-                                                    ))}
+                                                    </div>
                                                 </div>
+                                            )}
                                             </div>
                                             
                                             <div className="mg-v2-consultant-card__actions">
@@ -871,11 +875,18 @@ const ConsultantComprehensiveManagement = () => {
                                             <div className="mg-v2-detail-section">
                                                 <h5>전문분야</h5>
                                                 <div className="mg-v2-specialty-list">
-                                                    {selectedConsultant.specialties?.map((specialty, index) => (
-                                                        <span key={index} className="mg-v2-specialty-tag">
-                                                            { specialty }
-                                                        </span>
-                                                    )) || <span className="mg-v2-no-data">전문분야 정보가 없습니다.</span>}
+                                                    {selectedConsultant.specialty ? (
+                                                        <>
+                                                            <span className="mg-v2-specialty-tag">
+                                                                { selectedConsultant.specialty }
+                                                            </span>
+                                                            {selectedConsultant.specialtyDetails && (
+                                                                <p className="mg-v2-specialty-details">{ selectedConsultant.specialtyDetails }</p>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <span className="mg-v2-no-data">전문분야 정보가 없습니다.</span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

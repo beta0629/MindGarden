@@ -137,15 +137,7 @@ const PackageSelector = ({
                 value={value}
                 onChange={handleChange}
                 disabled={disabled || loading}
-                className={`mg-input ${value ? 'package-selected' : ''}`}
-                style={{
-                    appearance: 'none',
-                    backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3e%3c/svg%3e")',
-                    backgroundPosition: 'right 8px center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: '16px',
-                    paddingRight: '40px'
-                }}
+                className={`mg-v2-form-select ${value ? 'package-selected' : ''}`}
             >
                 <option value="">{placeholder}</option>
                 {packageOptions.map(pkg => (
@@ -155,14 +147,7 @@ const PackageSelector = ({
                 ))}
             </select>
             {value && (
-                <div className="mg-form-success" style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '8px', 
-                    marginTop: '8px',
-                    color: 'var(--success-600)',
-                    fontSize: 'var(--font-size-sm)'
-                }}>
+                <div className="mg-v2-form-success">
                     <span>✓</span>
                     패키지 선택 완료 - 세션 수와 가격이 자동으로 설정되었습니다
                 </div>

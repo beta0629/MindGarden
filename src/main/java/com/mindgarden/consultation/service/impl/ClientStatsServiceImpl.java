@@ -49,6 +49,9 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         
         Client client = convertToClient(user);
         
+        // Client를 Map으로 변환
+        Map<String, Object> clientMap = convertClientToMap(client);
+        
         // 활성 매핑 수 계산
         long currentConsultants = calculateCurrentConsultants(clientId);
         
@@ -57,7 +60,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         
         // Map.of()는 null을 허용하지 않으므로 HashMap 사용
         Map<String, Object> result = new HashMap<>();
-        result.put("client", client);
+        result.put("client", clientMap);
         result.put("currentConsultants", currentConsultants);
         result.put("statistics", stats);
         
@@ -76,12 +79,16 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return clientUsers.stream()
                 .map(user -> {
                     Client client = convertToClient(user);
+                    
+                    // Client를 Map으로 변환
+                    Map<String, Object> clientMap = convertClientToMap(client);
+                    
                     long currentConsultants = calculateCurrentConsultants(client.getId());
                     Map<String, Object> stats = calculateClientStats(client.getId());
                     
                     // Map.of()는 null을 허용하지 않으므로 HashMap 사용
                     Map<String, Object> result = new HashMap<>();
-                    result.put("client", client);
+                    result.put("client", clientMap);
                     result.put("currentConsultants", currentConsultants);
                     result.put("statistics", stats);
                     
@@ -159,6 +166,27 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         client.setUpdatedAt(user.getUpdatedAt());
         
         return client;
+    }
+    
+    /**
+     * Client 엔티티를 Map으로 변환
+     */
+    private Map<String, Object> convertClientToMap(Client client) {
+        Map<String, Object> clientMap = new HashMap<>();
+        clientMap.put("id", client.getId());
+        clientMap.put("name", client.getName());
+        clientMap.put("email", client.getEmail());
+        clientMap.put("phone", client.getPhone());
+        clientMap.put("birthDate", client.getBirthDate());
+        clientMap.put("gender", client.getGender());
+        clientMap.put("branchCode", client.getBranchCode());
+        clientMap.put("role", "CLIENT");
+        clientMap.put("status", "ACTIVE");
+        clientMap.put("isActive", true);
+        clientMap.put("isDeleted", client.getIsDeleted());
+        clientMap.put("createdAt", client.getCreatedAt());
+        clientMap.put("updatedAt", client.getUpdatedAt());
+        return clientMap;
     }
     
     /**

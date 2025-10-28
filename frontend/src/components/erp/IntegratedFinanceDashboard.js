@@ -545,7 +545,7 @@ const OverviewTab = ({ data }) => {
         <div className="finance-summary-card finance-summary-card--income">
           <div className="net-income-decoration-1"></div>
           <h3 className="finance-summary-card-title">
-            <TrendingUp size={24} className="finance-icon-inline" style={{ color: 'var(--olive-green)' }} />
+            <TrendingUp size={24} className="finance-icon-inline" />
             수입
           </h3>
           <div className="net-income-value">
@@ -558,7 +558,7 @@ const OverviewTab = ({ data }) => {
         <div className="finance-summary-card finance-summary-card--expense">
           <div className="net-income-decoration-1"></div>
           <h3 className="finance-summary-card-title">
-            <TrendingDown size={24} className="finance-icon-inline" style={{ color: 'var(--olive-green)' }} />
+            <TrendingDown size={24} className="finance-icon-inline" />
             지출
           </h3>
           <div className="net-income-value">

@@ -9688,6 +9688,34 @@ body {
     color: var(--color-background-primary);
 }
 
+.mg-v2-button-primary {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+}
+
+.mg-v2-button-primary:hover:not(:disabled) {
+    background-color: var(--color-primary-dark, #0056b3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.mg-v2-button-secondary {
+    background-color: var(--color-secondary);
+    color: white;
+    border: none;
+}
+
+.mg-v2-button-secondary:hover:not(:disabled) {
+    background-color: var(--color-secondary-dark, #545b62);
+    transform: translateY(-1px);
+}
+
+.mg-v2-button-sm {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+}
+
 /* ConsultationCompletionStats 컴포넌트 스타일 */
 .mg-v2-stat-value-warning {
     font-size: var(--font-size-xxxl);

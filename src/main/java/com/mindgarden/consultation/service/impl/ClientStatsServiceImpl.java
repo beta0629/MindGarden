@@ -71,9 +71,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         
         // 삭제되지 않고 활성인 CLIENT 역할 사용자만 조회
         List<com.mindgarden.consultation.entity.User> clientUsers = userRepository
-                .findByRoleAndIsDeletedFalse(UserRole.CLIENT.name()).stream()
-                .filter(user -> user.getIsActive() != null && user.getIsActive())
-                .collect(Collectors.toList());
+                .findByRoleAndIsActiveTrue(UserRole.CLIENT);
         
         return clientUsers.stream()
                 .map(user -> {

@@ -115,79 +115,28 @@ const SalaryExportModal = ({
     <div className={`${SALARY_CSS_CLASSES.MODAL} modal-overlay`}>
       <div className="modal-content">
         {/* 헤더 */}
-        <div style={{
-          padding: '20px',
-          borderBottom: '1px solid #e5e7eb',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          backgroundColor: '#f8fafc'
-        }}>
-          <h3 style={{
-            margin: 0,
-            fontSize: 'var(--font-size-lg)',
-            fontWeight: '600',
-            color: '#1f2937'
-          }}>
+        <div className="mg-v2-modal-header">
+          <h3 className="mg-v2-modal-title">
             급여 계산서 출력
           </h3>
           <button 
             onClick={onClose}
             aria-label="닫기"
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: 'var(--font-size-xxl)',
-              cursor: 'pointer',
-              color: '#6b7280',
-              padding: '0',
-              width: '30px',
-              height: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
+            className="mg-v2-modal-close"
           >
             ×
           </button>
         </div>
 
         {/* 내용 */}
-        <div style={{
-          padding: '20px',
-          maxHeight: '60vh',
-          overflowY: 'auto'
-        }}>
+        <div className="mg-v2-modal-content">
           {/* 급여 정보 요약 */}
-          <div style={{
-            marginBottom: '20px',
-            padding: '15px',
-            backgroundColor: '#f8fafc',
-            borderRadius: '6px',
-            border: '1px solid #e5e7eb'
-          }}>
-            <h4 style={{
-              margin: '0 0 15px 0',
-              fontSize: 'var(--font-size-base)',
-              fontWeight: '600',
-              color: '#1f2937'
-            }}>
+          <div className="mg-v2-card mg-v2-card--outlined">
+            <h4 className="mg-v2-section-header">
               급여 정보
             </h4>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '10px'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb'
-              }}>
+            <div className="mg-v2-form-grid">
+              <div className="mg-v2-card-item">
                 <div style={{ fontSize: 'var(--font-size-lg)' }}>👤</div>
                 <div>
                   <div style={{
@@ -203,15 +152,7 @@ const SalaryExportModal = ({
                   }}>{consultantName || '정보 없음'}</div>
                 </div>
               </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb'
-              }}>
+              <div className="mg-v2-card-item">
                 <div style={{ fontSize: 'var(--font-size-lg)' }}>📅</div>
                 <div>
                   <div style={{
@@ -227,15 +168,7 @@ const SalaryExportModal = ({
                   }}>{period || '정보 없음'}</div>
                 </div>
               </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb'
-              }}>
+              <div className="mg-v2-card-item">
                 <div style={{ fontSize: 'var(--font-size-lg)' }}>💵</div>
                 <div>
                   <div style={{

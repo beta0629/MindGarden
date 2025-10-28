@@ -192,41 +192,13 @@ const ResetPassword = () => {
                           value={formData.newPassword}
                           onChange={handleInputChange}
                           placeholder="영문, 숫자 포함 8자 이상"
+                          className="mg-v2-form-input-reset"
                           disabled={isLoading}
-                          style={{
-                            width: '100%',
-                            padding: '16px 50px 16px 16px',
-                            fontSize: 'var(--font-size-base)',
-                            border: '2px solid #e2e8f0',
-                            borderRadius: '12px',
-                            outline: 'none',
-                            transition: 'all 0.2s ease',
-                            fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
-                            backgroundColor: isLoading ? '#f7fafc' : '#ffffff'
-                          }}
-                          onFocus={(e) => {
-                            e.target.style.borderColor = '#667eea';
-                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                          }}
-                          onBlur={(e) => {
-                            e.target.style.borderColor = '#e2e8f0';
-                            e.target.style.boxShadow = 'none';
-                          }}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          style={{
-                            position: 'absolute',
-                            right: '16px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            background: 'none',
-                            border: 'none',
-                            color: '#718096',
-                            cursor: 'pointer',
-                            fontSize: 'var(--font-size-lg)'
-                          }}
+                          className="mg-v2-icon-toggle-btn"
                         >
                           {showPassword ? '👁️' : '👁️‍🗨️'}
                         </button>
@@ -244,41 +216,13 @@ const ResetPassword = () => {
                           value={formData.confirmPassword}
                           onChange={handleInputChange}
                           placeholder="비밀번호를 다시 입력해주세요"
+                          className="mg-v2-form-input-reset"
                           disabled={isLoading}
-                          style={{
-                            width: '100%',
-                            padding: '16px 50px 16px 16px',
-                            fontSize: 'var(--font-size-base)',
-                            border: '2px solid #e2e8f0',
-                            borderRadius: '12px',
-                            outline: 'none',
-                            transition: 'all 0.2s ease',
-                            fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
-                            backgroundColor: isLoading ? '#f7fafc' : '#ffffff'
-                          }}
-                          onFocus={(e) => {
-                            e.target.style.borderColor = '#667eea';
-                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                          }}
-                          onBlur={(e) => {
-                            e.target.style.borderColor = '#e2e8f0';
-                            e.target.style.boxShadow = 'none';
-                          }}
                         />
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          style={{
-                            position: 'absolute',
-                            right: '16px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            background: 'none',
-                            border: 'none',
-                            color: '#718096',
-                            cursor: 'pointer',
-                            fontSize: 'var(--font-size-lg)'
-                          }}
+                          className="mg-v2-icon-toggle-btn"
                         >
                           {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
                         </button>

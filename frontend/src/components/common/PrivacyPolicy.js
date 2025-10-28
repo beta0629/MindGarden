@@ -40,31 +40,18 @@ const PrivacyPolicy = () => {
           </ul>
         </div>
 
-        <div style={{ marginBottom: '30px' }}>
-          <h2 style={{
-            fontSize: 'var(--font-size-xl)',
-            fontWeight: '600',
-            color: '#2c3e50',
-            marginBottom: '15px',
-            paddingLeft: '10px',
-            borderLeft: '4px solid #3498db'
-          }}>
+        <div className="mg-v2-terms-section">
+          <h2 className="mg-v2-terms-title">
             2. 개인정보의 처리 및 보유기간
           </h2>
-          <p style={{ marginBottom: '15px' }}>
+          <p className="mg-v2-terms-paragraph">
             회사는 법령에 따른 개인정보 보유·이용기간 또는 정보주체로부터 개인정보를 수집 시에 동의받은 개인정보 보유·이용기간 내에서 개인정보를 처리·보유합니다.
           </p>
-          <div style={{
-            background: '#fff',
-            border: '1px solid #dee2e6',
-            borderRadius: '8px',
-            padding: '20px',
-            marginBottom: '15px'
-          }}>
-            <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: '600', marginBottom: '10px', color: '#495057' }}>
+          <div className="mg-v2-terms-box">
+            <h3 className="mg-v2-terms-subtitle">
               각각의 개인정보 처리 및 보유기간은 다음과 같습니다:
             </h3>
-            <ul style={{ paddingLeft: '20px', margin: '0' }}>
+            <ul className="mg-v2-terms-list">
               <li><strong>회원 정보:</strong> 회원 탈퇴 시까지 (단, 관계법령에 의해 보존이 필요한 경우 해당 기간까지)</li>
               <li><strong>상담 기록:</strong> 상담 완료 후 5년 (의료법에 의한 의료기록 보존 의무)</li>
               <li><strong>결제 정보:</strong> 결제 완료 후 5년 (전자상거래법에 의한 거래기록 보존 의무)</li>
@@ -73,38 +60,25 @@ const PrivacyPolicy = () => {
           </div>
         </div>
 
-        <div style={{ marginBottom: '30px' }}>
-          <h2 style={{
-            fontSize: 'var(--font-size-xl)',
-            fontWeight: '600',
-            color: '#2c3e50',
-            marginBottom: '15px',
-            paddingLeft: '10px',
-            borderLeft: '4px solid #3498db'
-          }}>
+        <div className="mg-v2-terms-section">
+          <h2 className="mg-v2-terms-title">
             3. 처리하는 개인정보의 항목
           </h2>
-          <div style={{
-            background: '#fff',
-            border: '1px solid #dee2e6',
-            borderRadius: '8px',
-            padding: '20px',
-            marginBottom: '15px'
-          }}>
-            <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: '600', marginBottom: '10px', color: '#495057' }}>
+          <div className="mg-v2-terms-box">
+            <h3 className="mg-v2-terms-subtitle">
               필수 수집 항목:
             </h3>
-            <ul style={{ paddingLeft: '20px', margin: '0 0 15px 0' }}>
+            <ul className="mg-v2-terms-list mg-v2-terms-list-spaced">
               <li>이름, 이메일, 전화번호</li>
               <li>생년월일, 성별</li>
               <li>주소 (상담 서비스 제공을 위해)</li>
               <li>상담 목적 및 상담 이력</li>
             </ul>
             
-            <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: '600', marginBottom: '10px', color: '#495057' }}>
+            <h3 className="mg-v2-terms-subtitle">
               선택 수집 항목:
             </h3>
-            <ul style={{ paddingLeft: '20px', margin: '0' }}>
+            <ul className="mg-v2-terms-list">
               <li>프로필 사진</li>
               <li>마케팅 정보 수신 동의</li>
               <li>추가 연락처</li>
@@ -112,18 +86,11 @@ const PrivacyPolicy = () => {
           </div>
         </div>
 
-        <div style={{ marginBottom: '30px' }}>
-          <h2 style={{
-            fontSize: 'var(--font-size-xl)',
-            fontWeight: '600',
-            color: '#2c3e50',
-            marginBottom: '15px',
-            paddingLeft: '10px',
-            borderLeft: '4px solid #3498db'
-          }}>
+        <div className="mg-v2-terms-section">
+          <h2 className="mg-v2-terms-title">
             4. 개인정보의 제3자 제공
           </h2>
-          <p style={{ marginBottom: '15px' }}>
+          <p className="mg-v2-terms-paragraph">
             회사는 개인정보를 제1조(개인정보의 처리목적)에서 명시한 범위 내에서만 처리하며, 정보주체의 동의, 법률의 특별한 규정 등 개인정보보호법 제17조에 해당하는 경우에만 개인정보를 제3자에게 제공합니다.
           </p>
           <div style={{
@@ -140,28 +107,15 @@ const PrivacyPolicy = () => {
           </div>
         </div>
 
-        <div style={{ marginBottom: '30px' }}>
-          <h2 style={{
-            fontSize: 'var(--font-size-xl)',
-            fontWeight: '600',
-            color: '#2c3e50',
-            marginBottom: '15px',
-            paddingLeft: '10px',
-            borderLeft: '4px solid #3498db'
-          }}>
+        <div className="mg-v2-terms-section">
+          <h2 className="mg-v2-terms-title">
             5. 개인정보 처리의 위탁
           </h2>
-          <p style={{ marginBottom: '15px' }}>
+          <p className="mg-v2-terms-paragraph">
             회사는 원활한 개인정보 업무처리를 위하여 다음과 같이 개인정보 처리업무를 위탁하고 있습니다:
           </p>
-          <div style={{
-            background: '#fff',
-            border: '1px solid #dee2e6',
-            borderRadius: '8px',
-            padding: '20px',
-            marginBottom: '15px'
-          }}>
-            <ul style={{ paddingLeft: '20px', margin: '0' }}>
+          <div className="mg-v2-terms-box">
+            <ul className="mg-v2-terms-list">
               <li><strong>결제 처리:</strong> 토스페이먼츠, 카카오페이, 네이버페이</li>
               <li><strong>이메일 발송:</strong> AWS SES</li>
               <li><strong>데이터 저장:</strong> AWS RDS (암호화 적용)</li>
@@ -169,21 +123,14 @@ const PrivacyPolicy = () => {
           </div>
         </div>
 
-        <div style={{ marginBottom: '30px' }}>
-          <h2 style={{
-            fontSize: 'var(--font-size-xl)',
-            fontWeight: '600',
-            color: '#2c3e50',
-            marginBottom: '15px',
-            paddingLeft: '10px',
-            borderLeft: '4px solid #3498db'
-          }}>
+        <div className="mg-v2-terms-section">
+          <h2 className="mg-v2-terms-title">
             6. 정보주체의 권리·의무 및 행사방법
           </h2>
-          <p style={{ marginBottom: '15px' }}>
+          <p className="mg-v2-terms-paragraph">
             정보주체는 회사에 대해 언제든지 다음 각 호의 개인정보 보호 관련 권리를 행사할 수 있습니다:
           </p>
-          <ul style={{ paddingLeft: '20px' }}>
+          <ul className="mg-v2-terms-list">
             <li>개인정보 처리현황 통지요구</li>
             <li>개인정보 열람요구</li>
             <li>개인정보 정정·삭제요구</li>
@@ -194,21 +141,14 @@ const PrivacyPolicy = () => {
           </p>
         </div>
 
-        <div style={{ marginBottom: '30px' }}>
-          <h2 style={{
-            fontSize: 'var(--font-size-xl)',
-            fontWeight: '600',
-            color: '#2c3e50',
-            marginBottom: '15px',
-            paddingLeft: '10px',
-            borderLeft: '4px solid #3498db'
-          }}>
+        <div className="mg-v2-terms-section">
+          <h2 className="mg-v2-terms-title">
             7. 개인정보의 안전성 확보조치
           </h2>
-          <p style={{ marginBottom: '15px' }}>
+          <p className="mg-v2-terms-paragraph">
             회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 취하고 있습니다:
           </p>
-          <ul style={{ paddingLeft: '20px' }}>
+          <ul className="mg-v2-terms-list">
             <li>관리적 조치: 내부관리계획 수립·시행, 전담조직 운영</li>
             <li>기술적 조치: 개인정보처리시스템 등의 접근권한 관리, 접근통제시스템 설치</li>
             <li>물리적 조치: 전산실, 자료보관실 등의 접근통제</li>
@@ -216,24 +156,11 @@ const PrivacyPolicy = () => {
           </ul>
         </div>
 
-        <div style={{ marginBottom: '30px' }}>
-          <h2 style={{
-            fontSize: 'var(--font-size-xl)',
-            fontWeight: '600',
-            color: '#2c3e50',
-            marginBottom: '15px',
-            paddingLeft: '10px',
-            borderLeft: '4px solid #3498db'
-          }}>
+        <div className="mg-v2-terms-section">
+          <h2 className="mg-v2-terms-title">
             8. 개인정보 보호책임자
           </h2>
-          <div style={{
-            background: '#fff',
-            border: '1px solid #dee2e6',
-            borderRadius: '8px',
-            padding: '20px',
-            marginBottom: '15px'
-          }}>
+          <div className="mg-v2-terms-box">
             <p style={{ margin: '0 0 10px 0' }}>
               <strong>개인정보 보호책임자:</strong> 마인드가든 개인정보보호팀
             </p>
@@ -246,18 +173,11 @@ const PrivacyPolicy = () => {
           </div>
         </div>
 
-        <div style={{ marginBottom: '30px' }}>
-          <h2 style={{
-            fontSize: 'var(--font-size-xl)',
-            fontWeight: '600',
-            color: '#2c3e50',
-            marginBottom: '15px',
-            paddingLeft: '10px',
-            borderLeft: '4px solid #3498db'
-          }}>
+        <div className="mg-v2-terms-section">
+          <h2 className="mg-v2-terms-title">
             9. 개인정보 처리방침의 변경
           </h2>
-          <p style={{ marginBottom: '15px' }}>
+          <p className="mg-v2-terms-paragraph">
             이 개인정보처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.
           </p>
         </div>

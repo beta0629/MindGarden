@@ -15541,7 +15541,7 @@ body {
 .mg-v2-add-code-btn:hover {
     background-color: #0056b3;
     transform: translateY(-1px);
-    box-shadow:国安 0 4px 12px rgba(0, 123, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
 /* Text Colors */

@@ -315,8 +315,7 @@ const ClientCard = ({
                 {showActions && (
                     <div className="mg-client-card__actions mg-client-card__actions--mobile">
                         <button 
-                            className="mg-button mg-button-primary mg-button-sm" 
-                            style={{ flex: 1 }}
+                            className="mg-button mg-button-primary mg-button-sm mg-v2-flex-1" 
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleClick();

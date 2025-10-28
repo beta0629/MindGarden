@@ -222,7 +222,7 @@ const TermsOfService = () => {
         </div>
 
         <div className="mg-v2-terms-box mg-v2-text-center">
-          <p className="mg-v2-text-sm mg-v2-m-0" style={{ color: '#0c5460' }}>
+          <p className="mg-v2-text-sm mg-v2-m-0 mg-v2-text-info">
             <strong>본 이용약관은 2025년 1월 17일부터 시행됩니다.</strong>
           </p>
         </div>

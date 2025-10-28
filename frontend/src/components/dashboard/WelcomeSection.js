@@ -134,7 +134,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                 {todayConsultations.length > 0 
                   ? (
                     <span>
-                      <span style={{ fontSize: '1.2em', fontWeight: '700', color: 'var(--olive-green)' }}>{todayConsultations.length}</span>
+                      <span className="mg-v2-text-lg mg-v2-font-weight-bold" style={{ color: 'var(--olive-green)' }}>{todayConsultations.length}</span>
                       건의 상담이 오늘 예정되어 있습니다
                     </span>
                   )
@@ -159,7 +159,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                   
                   {/* 더 많은 상담이 있을 때 표시 */}
                   {todayConsultations.length > 3 && (
-                    <div style={{ textAlign: 'center', marginTop: 'var(--spacing-sm)', padding: 'var(--spacing-sm)', background: 'var(--light-beige)', borderRadius: 'var(--radius-md)', fontSize: 'var(--font-size-sm)', color: 'var(--medium-gray)' }}>
+                    <div className="mg-v2-text-center mg-v2-text-sm mg-v2-card mg-v2-card--outlined" style={{ marginTop: 'var(--spacing-sm)', padding: 'var(--spacing-sm)', background: 'var(--light-beige)', color: 'var(--medium-gray)' }}>
                       +{todayConsultations.length - 3}건의 추가 상담이 있습니다
                     </div>
                   )}

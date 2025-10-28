@@ -63,7 +63,7 @@ const ClientFilters = ({
                     필터 초기화
                 </MGButton>
             </div>
-        </div前期>
+        </div>
     );
 };
 

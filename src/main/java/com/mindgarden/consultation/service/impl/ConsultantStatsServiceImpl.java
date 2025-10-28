@@ -1,5 +1,10 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
@@ -7,15 +12,12 @@ import com.mindgarden.consultation.repository.ConsultantRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.service.ConsultantRatingService;
 import com.mindgarden.consultation.service.ConsultantStatsService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 상담사 통계 정보 조회 서비스 구현

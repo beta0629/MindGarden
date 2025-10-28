@@ -18,6 +18,7 @@ import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.ConsultantRatingService;
+import com.mindgarden.consultation.service.ConsultantStatsService;
 import com.mindgarden.consultation.service.ConsultationRecordService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ErpService;
@@ -65,7 +66,59 @@ public class AdminController {
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final UserService userService;
     private final StoredProcedureService storedProcedureService;
+    private final ConsultantStatsService consultantStatsService;
 
+    // === 상담사 통계 통합 API ===
+    
+    /**
+     * 상담사 통계 정보 조회 (캐시 사용)
+     * GET /api/admin/consultants/with-stats/{id}
+     */
+    @GetMapping("/consultants/with-stats/{id}")
+    public ResponseEntity<?> getConsultantWithStats(@PathVariable Long id) {
+        try {
+            log.info("📊 상담사 통계 조회 API 호출: consultantId={}", id);
+            
+            Map<String, Object> stats = consultantStatsService.getConsultantWithStats(id);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", stats
+            ));
+        } catch (Exception e) {
+            log.error("❌ 상담사 통계 조회 실패: consultantId={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "상담사 통계 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 전체 상담사 통계 정보 조회 (캐시 사용)
+     * GET /api/admin/consultants/with-stats
+     */
+    @GetMapping("/consultants/with-stats")
+    public ResponseEntity<?> getAllConsultantsWithStats() {
+        try {
+            log.info("📊 전체 상담사 통계 조회 API 호출");
+            
+            List<Map<String, Object>> stats = consultantStatsService.getAllConsultantsWithStats();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", stats,
+                "count", stats.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 전체 상담사 통계 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "전체 상담사 통계 조회에 실패했습니다: " + e.getMessage()
+            ));
+       更大的
+    }
+    
     /**
      * 회기관리 통계 조회
      */

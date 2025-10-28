@@ -651,20 +651,14 @@ const ConsultantComprehensiveManagement = () => {
                                                 
                                                 <div className="mg-v2-consultant-card__detail-item">
                                                     <span>👥 총 클라이언트: { consultant.currentClients || 0 }명</span>
-                                                            </div>
-                                                            </div>
-                                            
-                                            {consultant.specialty && (
-                                                <div className="mg-v2-consultant-card__specialties">
-                                                    <h5 className="mg-v2-consultant-card__specialties-title">전문 분야</h5>
-                                                    <div className="mg-v2-consultant-card__specialties-list">
-                                                        <span className="mg-v2-consultant-card__specialty-tag">
-                                                            { consultant.specialty }
-                                                        </span>
-                                                    </div>
                                                 </div>
-                                            )}
-                                                        </div>
+                                                
+                                                {consultant.specialty && (
+                                                    <div className="mg-v2-consultant-card__detail-item">
+                                                        <span>🎯 전문분야: { consultant.specialty }</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                             
                                             <div className="mg-v2-consultant-card__actions">
                                                 <button 
@@ -778,18 +772,12 @@ const ConsultantComprehensiveManagement = () => {
                                                 <div className="mg-v2-consultant-card__detail-item">
                                                     <span>👥 총 클라이언트: { consultant.currentClients || 0 }명</span>
                                                 </div>
-                                            </div>
-                                            
-                                            {consultant.specialty && (
-                                                <div className="mg-v2-consultant-card__specialties">
-                                                    <h5 className="mg-v2-consultant-card__specialties-title">전문 분야</h5>
-                                                    <div className="mg-v2-consultant-card__specialties-list">
-                                                        <span className="mg-v2-consultant-card__specialty-tag">
-                                                            { consultant.specialty }
-                                                        </span>
+                                                
+                                                {consultant.specialty && (
+                                                    <div className="mg-v2-consultant-card__detail-item">
+                                                        <span>🎯 전문분야: { consultant.specialty }</span>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
                                             </div>
                                             
                                             <div className="mg-v2-consultant-card__actions">

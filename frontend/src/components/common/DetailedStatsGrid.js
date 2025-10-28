@@ -187,7 +187,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-check-circle-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
+            <i className="bi bi-check-circle-fill mg-v2-text-xl"></i>
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
@@ -243,7 +243,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-x-circle-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
+            <i className="bi bi-x-circle-fill mg-v2-text-xl"></i>
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
@@ -299,7 +299,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-calendar-week-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
+            <i className="bi bi-calendar-week-fill mg-v2-text-xl"></i>
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
@@ -355,7 +355,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-calendar-day-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
+            <i className="bi bi-calendar-day-fill mg-v2-text-xl"></i>
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',

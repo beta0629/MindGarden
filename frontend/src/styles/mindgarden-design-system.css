@@ -15569,3 +15569,4 @@ body {
     text-align: right;
 }
 ✅ .mg-v2-flex-1 { flex: 1; }
+/* Icon Size */ .mg-v2-text-xl { font-size: var(--font-size-xl); }

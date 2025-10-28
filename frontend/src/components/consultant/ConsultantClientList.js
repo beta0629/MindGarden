@@ -463,77 +463,41 @@ const ConsultantClientList = () => {
                           <span>가입일: {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : '정보 없음'}</span>
                         </div>
                         {/* 회기 현황 섹션 */}
-                        <div 
-                          style={{
-                            background: '#f8f9fa',
-                            borderRadius: '8px',
-                            padding: '12px',
-                            marginTop: '8px',
-                            border: '1px solid #e9ecef'
-                          }}
-                        >
-                          <div 
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              color: '#2c3e50',
-                              fontSize: '0.9rem',
-                              fontWeight: '600',
-                              marginBottom: '8px'
-                            }}
-                          >
+                        <div className="mg-v2-client-session-info">
+                          <div className="mg-v2-client-session-title">
                             <i className="bi bi-graph-up" style={{ color: '#007bff' }}></i>
                             <span>회기 현황</span>
                           </div>
                           <div className="mg-v2-client-session-grid">
-                            <div style={{ textAlign: 'center' }}>
-                              <div style={{ color: '#007bff', fontWeight: '600' }}>
+                            <div className="mg-v2-client-session-item">
+                              <div className="mg-v2-client-session-value" style={{ color: '#007bff' }}>
                                 {client.totalSessions || 0}회
                               </div>
-                              <div style={{ color: '#6c757d', fontSize: '0.75rem' }}>총 회기</div>
+                              <div className="mg-v2-client-session-label">총 회기</div>
                             </div>
-                            <div style={{ textAlign: 'center' }}>
-                              <div style={{ color: '#28a745', fontWeight: '600' }}>
+                            <div className="mg-v2-client-session-item">
+                              <div className="mg-v2-client-session-value" style={{ color: '#28a745' }}>
                                 {client.usedSessions || 0}회
                               </div>
-                              <div style={{ color: '#6c757d', fontSize: '0.75rem' }}>사용</div>
+                              <div className="mg-v2-client-session-label">사용</div>
                             </div>
-                            <div style={{ textAlign: 'center' }}>
-                              <div style={{ color: '#ffc107', fontWeight: '600' }}>
+                            <div className="mg-v2-client-session-item">
+                              <div className="mg-v2-client-session-value" style={{ color: '#ffc107' }}>
                                 {client.remainingSessions || 0}회
                               </div>
-                              <div style={{ color: '#6c757d', fontSize: '0.75rem' }}>남은 회기</div>
+                              <div className="mg-v2-client-session-label">남은 회기</div>
                             </div>
                           </div>
                         </div>
+
                         
-                        <div 
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            color: '#6c757d',
-                            fontSize: '0.95rem',
-                            minHeight: '20px',
-                            marginTop: '8px'
-                          }}
-                        >
-                          <i className="bi bi-box" style={{ width: '16px', color: '#3498db', flexShrink: '0' }}></i>
+                        <div className="mg-v2-client-info-item" style={{ marginTop: '8px' }}>
+                          <i className="bi bi-box mg-v2-icon-fixed"></i>
                           <span>패키지: {client.packageName || '정보 없음'}</span>
                         </div>
                         {client.packagePrice && (
-                          <div 
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '10px',
-                              color: '#6c757d',
-                              fontSize: '0.95rem',
-                              minHeight: '20px'
-                            }}
-                          >
-                            <i className="bi bi-currency-dollar" style={{ width: '16px', color: '#3498db', flexShrink: '0' }}></i>
+                          <div className="mg-v2-client-info-item">
+                            <i className="bi bi-currency-dollar mg-v2-icon-fixed"></i>
                             <span>가격: {new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(client.packagePrice)}</span>
                           </div>
                         )}
@@ -541,41 +505,11 @@ const ConsultantClientList = () => {
                     </div>
                     
                     {/* 카드 푸터 - 상세보기 버튼 (항상 표시) */}
-                    <div 
-                      style={{
-                        padding: '15px 20px 20px',
-                        borderTop: '1px solid #e9ecef',
-                        background: '#f8f9fa',
-                        marginTop: 'auto',
-                        display: 'block'
-                      }}
-                    >
+                    <div className="mg-v2-client-card-footer">
                       <button
                         onClick={() => handleViewClient(client)}
                         disabled={!client.id}
-                        style={{
-                          width: '100%',
-                          padding: '10px 15px',
-                          borderRadius: '8px',
-                          fontWeight: '500',
-                          transition: 'all 0.3s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          border: '1px solid #3498db',
-                          background: 'transparent',
-                          color: '#3498db',
-                          cursor: 'pointer'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.background = '#3498db';
-                          e.target.style.color = '#fff';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.background = 'transparent';
-                          e.target.style.color = '#3498db';
-                        }}
+                        className="mg-v2-client-view-btn"
                       >
                         <i className="bi bi-eye"></i>
                         상세보기

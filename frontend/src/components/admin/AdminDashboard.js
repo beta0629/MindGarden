@@ -1238,17 +1238,11 @@ const AdminDashboard = ({ user: propUser }) => {
                 </DashboardSection>
             )}
 
-            {/* 통계 및 분석 - 본사 관리자만 */}
-            {(() => {
-                const currentRole = (propUser || sessionUser)?.role;
-                const canViewHQMetrics = currentRole === 'HQ_ADMIN' || 
-                                         currentRole === 'SUPER_HQ_ADMIN' || 
-                                         currentRole === 'HQ_MASTER';
-                return canViewHQMetrics;
-            })() && (
+            {/* 통계 및 분석 - 동적 권한 체크 */}
+            {PermissionChecks.canViewStatistics(userPermissions) && (
                 <DashboardSection
                     title="통계 및 분석"
-                    subtitle="시스템 통계 및 성과 분석 (본사 관리자 전용)"
+                    subtitle="시스템 통계 및 성과 분석"
                     icon={<BarChart />}
                 >
                     <div className="mg-management-grid">

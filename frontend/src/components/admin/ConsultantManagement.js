@@ -238,7 +238,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                             <p><strong>이름:</strong> {selectedConsultant.name}</p>
                             <p><strong>이메일:</strong> {selectedConsultant.email}</p>
                             <p><strong>전화번호:</strong> {selectedConsultant.phone}</p>
-                            <p><strong>전문분야:</strong> {selectedConsultant.specialization || '미설정'}</p>
+                            <p><strong>전문분야:</strong> {selectedConsultant.specialty || selectedConsultant.specialization || '미설정'}</p>
                             <p><strong>상태:</strong> 
                                 <Badge bg={selectedConsultant.isActive ? 'success' : 'secondary'} className="ms-2">
                                     {selectedConsultant.isActive ? '활성' : '비활성'}

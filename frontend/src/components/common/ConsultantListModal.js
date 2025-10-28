@@ -40,7 +40,9 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
                     </div>
                     <div className="mg-v2-list-item-content">
                       <div className="mg-v2-list-item-title">{consultant.name}</div>
-                      <div className="mg-v2-list-item-subtitle">{consultant.specialty || '상담 심리학'}</div>
+                      <div className="mg-v2-list-item-subtitle">
+                        {consultant.specialty || consultant.specialization || '상담 심리학'}
+                      </div>
                       {consultant.intro && (
                         <div className="mg-v2-list-item-description">{consultant.intro}</div>
                       )}

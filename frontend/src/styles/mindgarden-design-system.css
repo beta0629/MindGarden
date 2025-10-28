@@ -15233,3 +15233,78 @@ body {
 .mg-v2-text-primary {
     color: #2c3e50;
 }
+
+/* Financial Calendar Classes */
+.mg-v2-legend-container {
+    display: flex;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.mg-v2-legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.mg-v2-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-sm);
+}
+
+.mg-v2-legend-color--success {
+    background-color: #28a745;
+}
+
+.mg-v2-legend-color--danger {
+    background-color: #dc3545;
+}
+
+.mg-v2-legend-color--info {
+    background-color: #007bff;
+}
+
+.mg-v2-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background-color: #dee2e6;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.mg-v2-calendar-header {
+    padding: var(--spacing-md);
+    background-color: #495057;
+    color: white;
+    text-align: center;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+}
+
+.mg-v2-calendar-cell {
+    padding: var(--spacing-sm);
+    background-color: #f8f9fa;
+    min-height: 100px;
+}
+
+.mg-v2-calendar-cell--today {
+    background-color: #e3f2fd;
+    border: 2px solid #2196f3;
+}
+
+.mg-v2-calendar-cell--selected {
+    background-color: #fff3cd;
+    border: 2px solid #ffc107;
+}
+
+.mg-v2-calendar-transactions {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+.mg-v2-calendar-day-number {
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}

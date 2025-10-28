@@ -134,34 +134,19 @@ const FinancialCalendarView = () => {
       </div>
 
       {/* 범례 */}
-      <div className="mg-v2-card mg-v2-card--outlined" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '16px',
-            height: '16px',
-            backgroundColor: '#28a745',
-            borderRadius: '4px'
-          }}></div>
+      <div className="mg-v2-legend-container">
+        <div className="mg-v2-legend-item">
+          <div className="mg-v2-legend-color mg-v2-legend-color--success"></div>
           <span>💰 수입</span>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '16px',
-            height: '16px',
-            backgroundColor: '#dc3545',
-            borderRadius: '4px'
-          }}></div>
+        <div className="mg-v2-legend-item">
+          <div className="mg-v2-legend-color mg-v2-legend-color--danger"></div>
           <span>💸 지출</span>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '16px',
-            height: '16px',
-            backgroundColor: '#007bff',
-            borderRadius: '4px'
-          }}></div>
+        <div className="mg-v2-legend-item">
+          <div className="mg-v2-legend-color mg-v2-legend-color--info"></div>
           <span>🔗 매핑연동</span>
         </div>
       </div>
@@ -179,14 +164,7 @@ const FinancialCalendarView = () => {
         {['일', '월', '화', '수', '목', '금', '토'].map((dayName, index) => (
           <div
             key={dayName}
-            style={{
-              padding: '12px',
-              backgroundColor: '#495057',
-              color: 'white',
-              textAlign: 'center',
-              fontWeight: '600',
-              fontSize: 'var(--font-size-sm)'
-            }}
+            className="mg-v2-calendar-header"
           >
             {dayName}
           </div>

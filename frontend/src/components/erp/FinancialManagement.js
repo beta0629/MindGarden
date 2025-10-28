@@ -445,7 +445,7 @@ const FinancialManagement = () => {
                       </div>
                     </div>
                     
-                    <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
+                    <div className="mg-v2-form-group" style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                       <button
                         onClick={() => setFilters({
                           transactionType: 'ALL',
@@ -456,30 +456,14 @@ const FinancialManagement = () => {
                           endDate: '',
                           searchText: ''
                         })}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#6c757d',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: 'var(--font-size-xs)',
-                          cursor: 'pointer'
-                        }}
+                        className="mg-v2-button mg-v2-button-secondary"
                       >
                         🔄 필터 초기화
                       </button>
                       
                       <button
                         onClick={() => loadData()}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#007bff',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: 'var(--font-size-xs)',
-                          cursor: 'pointer'
-                        }}
+                        className="mg-v2-button mg-v2-button-primary"
                       >
                         🔍 검색
                       </button>
@@ -504,21 +488,13 @@ const FinancialManagement = () => {
                           transactions.map((transaction) => (
                             <tr key={transaction.id}>
                               <td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <div className="mg-v2-form-group" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <button
                                     onClick={() => {
                                       setSelectedTransaction(transaction);
                                       setShowDetailModal(true);
                                     }}
-                                    style={{
-                                      background: 'none',
-                                      border: 'none',
-                                      color: '#007bff',
-                                      textDecoration: 'underline',
-                                      cursor: 'pointer',
-                                      fontSize: 'var(--font-size-sm)',
-                                      fontWeight: '600'
-                                    }}
+                                    className="mg-v2-button mg-v2-button--link"
                                   >
                                     #{transaction.id}
                                   </button>
@@ -527,14 +503,7 @@ const FinancialManagement = () => {
                                     transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
                                     transaction.description?.includes('상담료 입금 확인') ||
                                     transaction.description?.includes('상담료 환불')) && (
-                                    <span style={{
-                                      fontSize: 'var(--font-size-xs)',
-                                      padding: '2px 6px',
-                                      backgroundColor: '#e3f2fd',
-                                      color: '#1976d2',
-                                      borderRadius: '10px',
-                                      fontWeight: '600'
-                                    }}>
+                                    <span className="mg-v2-badge mg-v2-badge--primary">
                                       🔗 매핑연동
                                     </span>
                                   )}
@@ -550,12 +519,12 @@ const FinancialManagement = () => {
                                   {transaction.category}
                                   {/* 매핑 연동 거래 세부 정보 */}
                                   {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
-                                    <div style={{ fontSize: 'var(--font-size-xs)', color: '#28a745', marginTop: '2px' }}>
+                                    <div className="mg-v2-text-xs mg-v2-text-success" style={{ marginTop: '2px' }}>
                                       💰 입금확인 자동생성
                                     </div>
                                   )}
                                   {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' && (
-                                    <div style={{ fontSize: 'var(--font-size-xs)', color: '#dc3545', marginTop: '2px' }}>
+                                    <div className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '2px' }}>
                                       📤 환불처리 자동생성
                                     </div>
                                   )}

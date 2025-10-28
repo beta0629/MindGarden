@@ -129,13 +129,20 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   // 권한이 로드된 후 통합재무관리 접근 권한 확인
   useEffect(() => {
-    if (userPermissions && userPermissions.length > 0) {
+    console.log('🔍 권한 체크 useEffect 실행:', {
+      userPermissionsLength: userPermissions?.length,
+      permissionChecked: permissionCheckedRef.current
+    });
+    
+    // 권한이 로드되었는지 확인 (빈 배열도 로드 완료로 간주)
+    if (userPermissions !== null && userPermissions !== undefined) {
       // 권한이 안정적으로 로드되었는지 확인
       const hasIntegratedFinancePermission = userPermissions.includes('INTEGRATED_FINANCE_VIEW');
       
       console.log('🔍 통합재무관리 권한 체크:', {
         userPermissionsCount: userPermissions.length,
-        hasPermission: hasIntegratedFinancePermission
+        hasPermission: hasIntegratedFinancePermission,
+        userPermissions: userPermissions
       });
       
       if (!hasIntegratedFinancePermission) {
@@ -153,8 +160,11 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         permissionCheckedRef.current = true;
         initializeComponent();
       }
+    } else if (!sessionLoading && user) {
+      // 세션 로딩이 완료되었는데 권한이 아직 로드되지 않은 경우
+      console.log('⏳ 권한 로딩 대기 중...');
     }
-  }, [userPermissions.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userPermissions, sessionLoading, user]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => {
     // selectedBranch가 설정되거나 권한 체크가 완료된 후 데이터 로드

@@ -56,6 +56,19 @@ const ConsultantCard = ({
         }
     };
 
+    /**
+     * 가용성 상태에 따른 색상 반환 (CSS 변수 사용)
+     */
+    const getAvailabilityColor = () => {
+        const availabilityClass = getAvailabilityClass();
+        switch (availabilityClass) {
+            case 'available': return 'var(--color-success)';
+            case 'busy': return 'var(--color-warning)';
+            case 'unavailable': return 'var(--color-danger)';
+            default: return 'var(--color-gray)';
+        }
+    };
+
 
     /**
      * 이니셜 반환
@@ -108,7 +121,7 @@ const ConsultantCard = ({
             <div className="mg-consultant-card__info">
                 <div className="mg-consultant-card__header">
                     <h4 className="mg-consultant-card__name">{consultant.name}</h4>
-                    <div className="mg-consultant-card__status" style={{ '--availability-color': getAvailabilityClass() === 'available' ? '#10b981' : getAvailabilityClass() === 'busy' ? '#f59e0b' : '#ef4444' }}>
+                    <div className="mg-consultant-card__status" style={{ '--availability-color': getAvailabilityColor() }}>
                         <span>{getAvailabilityText()}</span>
                     </div>
                 </div>
@@ -142,7 +155,7 @@ const ConsultantCard = ({
             aria-label={`${consultant.name} 상담사 선택`}
         >
             {/* 상태 배지 */}
-            <div className="mg-consultant-card__status-badge" style={{ '--availability-color': getAvailabilityClass() === 'available' ? '#10b981' : getAvailabilityClass() === 'busy' ? '#f59e0b' : '#ef4444' }}>
+            <div className="mg-consultant-card__status-badge" style={{ '--availability-color': getAvailabilityColor() }}>
                 <span>{getAvailabilityText()}</span>
             </div>
 
@@ -269,7 +282,7 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile">
                     {getInitial()}
                 </div>
-                <div className="mg-consultant-card__status" style={{ '--availability-color': getAvailabilityClass() === 'available' ? '#10b981' : getAvailabilityClass() === 'busy' ? '#f59e0b' : '#ef4444' }}>
+                <div className="mg-consultant-card__status" style={{ '--availability-color': getAvailabilityColor() }}>
                     <span>{getAvailabilityText()}</span>
                 </div>
             </div>
@@ -394,7 +407,7 @@ const ConsultantCard = ({
                 </div>
             </div>
             
-            <div className="mg-consultant-card__status mg-consultant-card__status--mobile-simple" style={{ '--availability-color': getAvailabilityClass() === 'available' ? '#10b981' : getAvailabilityClass() === 'busy' ? '#f59e0b' : '#ef4444' }}>
+            <div className="mg-consultant-card__status mg-consultant-card__status--mobile-simple" style={{ '--availability-color': getAvailabilityColor() }}>
                 <TrendingUp size={12} />
             </div>
         </div>

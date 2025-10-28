@@ -41,7 +41,7 @@ const ClientStatisticsTab = ({
     // 통계 카드 렌더링
     const renderStatCard = (title, value, icon, color = '#007bff') => (
         <div className="mg-v2-card mg-v2-stat-card">
-            <div className="mg-v2-stat-icon" style={{ color }}>
+            <div className="mg-v2-stat-icon" style={{ '--icon-color': color }}>
                 {icon}
             </div>
             <div className="mg-v2-stat-content">
@@ -91,8 +91,8 @@ const ClientStatisticsTab = ({
                                 <div 
                                     className="mg-v2-chart-fill"
                                     style={{ 
-                                        width: `${maxValue > 0 ? (value / maxValue) * 100 : 0}%`,
-                                        backgroundColor: color
+                                        '--chart-width': `${maxValue > 0 ? (value / maxValue) * 100 : 0}%`,
+                                        '--chart-color': color
                                     }}
                                 />
                             </div>

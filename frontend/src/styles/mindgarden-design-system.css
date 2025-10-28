@@ -12760,6 +12760,7 @@ body {
 }
 
 .mg-v2-stat-icon {
+    color: var(--icon-color, #007bff);
     font-size: 24px;
     margin-bottom: var(--spacing-sm);
 }
@@ -13844,6 +13845,7 @@ body {
 }
 
 .mg-v2-stat-icon {
+    color: var(--icon-color, #007bff);
     font-size: 32px;
     margin-bottom: var(--spacing-md);
 }
@@ -13905,7 +13907,9 @@ body {
 }
 
 .mg-v2-chart-fill {
+    width: var(--chart-width, 0%);
     height: 100%;
+    background-color: var(--chart-color, #007bff);
     transition: width 0.3s ease;
 }
 

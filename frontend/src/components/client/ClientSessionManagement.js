@@ -256,7 +256,7 @@ const ClientSessionManagement = () => {
             <div 
               className="progress-fill"
               style={{
-                width: sessionData.totalSessions > 0 
+                '--progress-width': sessionData.totalSessions > 0 
                   ? `${(sessionData.usedSessions / sessionData.totalSessions) * 100}%`
                   : '0%'
               }}

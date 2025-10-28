@@ -133,7 +133,7 @@ export const MGStatisticsChart = ({
   };
 
   return (
-    <div className={getChartClasses()} style={{ height: `${height}px` }} {...props}>
+    <div className={getChartClasses()} style={{ '--chart-height': `${height}px` }} {...props}>
       {title && (
         <div className="mg-statistics-chart__title">
           {title}

@@ -57,7 +57,6 @@ const MGStats = ({
               className="mg-stats__sparkline-svg" 
               viewBox={`0 0 100 50`} 
               preserveAspectRatio="none"
-              style={{ width: '100%', height: '48px' }}
             >
               <polyline
                 fill="none"

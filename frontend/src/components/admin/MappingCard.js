@@ -64,7 +64,7 @@ const MappingCard = ({
                 
                 <div 
                     className="mg-v2-status-badge" 
-                    style={{ backgroundColor: statusInfo.color }}
+                    style={{ '--status-color': statusInfo.color }}
                 >
                     { statusInfo.icon } { statusInfo.label }
                 </div>

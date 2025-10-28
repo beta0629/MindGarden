@@ -195,6 +195,7 @@
 
 /* ===== 통계 차트 ===== */
 .mg-statistics-chart {
+  height: var(--chart-height, 300px);
   position: relative;
   background: var(--bg-primary);
   border-radius: var(--border-radius-lg);

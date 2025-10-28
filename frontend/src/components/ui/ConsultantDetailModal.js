@@ -82,7 +82,7 @@ const ConsultantDetailModal = ({
                                 </div>
                                 <div 
                                     className="mg-consultant-detail-status-badge"
-                                    style={{ backgroundColor: availability.color }}
+                                    style={{ '--availability-color': availability.color }}
                                 >
                                     {availability.text}
                                 </div>

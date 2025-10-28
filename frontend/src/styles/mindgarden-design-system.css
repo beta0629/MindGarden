@@ -7846,6 +7846,7 @@ body {
     bottom: 8px;
     right: 8px;
     padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--availability-color, #28a745);
     border-radius: var(--border-radius-full);
     color: white;
     font-size: var(--font-size-xs);

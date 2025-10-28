@@ -4447,7 +4447,7 @@ body {
 /* 모바일 스크롤 최적화 */
 .mg-mobile-scroll {
     -webkit-overflow-scrolling: touch;
-    overflow-scrolling: touch;
+    /* overflow-scrolling: touch; deprecated - removed */
 }
 
 /* 모바일 텍스트 최적화 */

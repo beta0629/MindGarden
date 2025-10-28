@@ -12,6 +12,7 @@ import { API_BASE_URL } from '../../constants/api';
 import SystemTools from './system/SystemTools';
 import PermissionManagement from './PermissionManagement';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
+import StatisticsDashboard from './StatisticsDashboard';
 import SystemNotificationSection from '../dashboard/SystemNotificationSection';
 import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
@@ -136,6 +137,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
     const [showSpecialtyManagement, setShowSpecialtyManagement] = useState(false);
     const [showRecurringExpense, setShowRecurringExpense] = useState(false);
+    const [showStatisticsModal, setShowStatisticsModal] = useState(false);
     
     const [todayStats, setTodayStats] = useState({
         totalToday: 0,
@@ -154,7 +156,6 @@ const AdminDashboard = ({ user: propUser }) => {
         database: 'unknown',
         lastChecked: null
     });
-    const [showStatisticsModal, setShowStatisticsModal] = useState(false);
     const isInitialized = useRef(false);
 
     const loadTodayStats = useCallback(async () => {
@@ -1328,6 +1329,15 @@ const AdminDashboard = ({ user: propUser }) => {
                 <RecurringExpenseModal
                     isOpen={showRecurringExpense}
                     onClose={() => setShowRecurringExpense(false)}
+                />
+            )}
+
+            {/* 통계 모달 */}
+            {showStatisticsModal && (
+                <StatisticsDashboard
+                    userRole={(propUser || sessionUser)?.role || 'ADMIN'}
+                    userId={(propUser || sessionUser)?.id}
+                    onClose={() => setShowStatisticsModal(false)}
                 />
             )}
 

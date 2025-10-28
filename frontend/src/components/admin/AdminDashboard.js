@@ -140,6 +140,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const [showSpecialtyManagement, setShowSpecialtyManagement] = useState(false);
     const [showRecurringExpense, setShowRecurringExpense] = useState(false);
     const [showStatisticsModal, setShowStatisticsModal] = useState(false);
+    const [isConsultantRatingExpanded, setIsConsultantRatingExpanded] = useState(false);
     
     const [todayStats, setTodayStats] = useState({
         totalToday: 0,
@@ -795,32 +796,61 @@ const AdminDashboard = ({ user: propUser }) => {
                 </DashboardSection>
 
                 {/* 상담사 평가 통계 섹션 */}
-                <DashboardSection
-                    title="상담사 평가 통계"
-                    subtitle="전체 상담사 평가 현황 및 만족도 지표"
-                    icon={<Heart />}
-                >
-                    <div className="mg-stats-grid">
-                        <StatCard
-                            icon={<Heart />}
-                            value={`${stats.consultantRatingStats?.totalRatings || 0}개`}
-                            label="총 평가 수"
-                        />
-                        <StatCard
-                            icon={<Trophy />}
-                            value={(stats.consultantRatingStats?.averageScore || 0).toFixed(1)}
-                            label="전체 평균 점수"
-                        />
-                        <StatCard
-                            icon={<Users />}
-                            value={`${stats.consultantRatingStats?.topConsultants?.length || 0}명`}
-                            label="평가받은 상담사"
-                        />
+                <div className="mg-mb-lg">
+                    <div 
+                        onClick={() => setIsConsultantRatingExpanded(!isConsultantRatingExpanded)}
+                        className={`mg-v2-card mg-flex mg-align-center mg-justify-between mg-cursor-pointer ${isConsultantRatingExpanded ? 'mg-mb-0' : 'mg-mb-md'}`}
+                    >
+                        <div className="mg-flex mg-align-center mg-gap-sm">
+                            <Heart />
+                            <div>
+                                <h3 className="mg-h4 mg-mb-0">
+                                    상담사 평가 통계
+                                </h3>
+                                <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
+                                    전체 상담사 평가 현황 및 만족도 지표 (클릭하여 펼치기/접기)
+                                </p>
+                            </div>
+                        </div>
+                        <div style={{
+                            fontSize: '20px',
+                            color: '#666'
+                        }}>
+                            {isConsultantRatingExpanded ? '▲' : '▼'}
+                        </div>
                     </div>
                     
-                    {/* 상세 상담사 평가 통계 */}
-                    <ConsultantRatingStatistics />
-                </DashboardSection>
+                    {isConsultantRatingExpanded && (
+                        <div style={{
+                            padding: '20px',
+                            backgroundColor: 'white',
+                            border: '1px solid #e9ecef',
+                            borderTop: 'none',
+                            borderRadius: '0 0 8px 8px'
+                        }}>
+                            <div className="mg-stats-grid mg-mb-lg">
+                                <StatCard
+                                    icon={<Heart />}
+                                    value={`${stats.consultantRatingStats?.totalRatings || 0}개`}
+                                    label="총 평가 수"
+                                />
+                                <StatCard
+                                    icon={<Trophy />}
+                                    value={(stats.consultantRatingStats?.averageScore || 0).toFixed(1)}
+                                    label="전체 평균 점수"
+                                />
+                                <StatCard
+                                    icon={<Users />}
+                                    value={`${stats.consultantRatingStats?.topConsultants?.length || 0}명`}
+                                    label="평가받은 상담사"
+                                />
+                            </div>
+                            
+                            {/* 상세 상담사 평가 통계 */}
+                            <ConsultantRatingStatistics />
+                        </div>
+                    )}
+                </div>
 
                 {/* 환불 통계 섹션 */}
                 <DashboardSection

@@ -812,22 +812,13 @@ const AdminDashboard = ({ user: propUser }) => {
                                 </p>
                             </div>
                         </div>
-                        <div style={{
-                            fontSize: '20px',
-                            color: '#666'
-                        }}>
+                        <div className="mg-v2-accordion-toggle-icon">
                             {isConsultantRatingExpanded ? '▲' : '▼'}
                         </div>
                     </div>
                     
                     {isConsultantRatingExpanded && (
-                        <div style={{
-                            padding: '20px',
-                            backgroundColor: 'white',
-                            border: '1px solid #e9ecef',
-                            borderTop: 'none',
-                            borderRadius: '0 0 8px 8px'
-                        }}>
+                        <div className="mg-v2-accordion-content">
                             <div className="mg-stats-grid mg-mb-lg">
                                 <StatCard
                                     icon={<Heart />}
@@ -1368,8 +1359,8 @@ const AdminDashboard = ({ user: propUser }) => {
 
             {/* 통계 모달 */}
             {showStatisticsModal && ReactDOM.createPortal(
-                <div className="mg-v2-modal-overlay" onClick={() => setShowStatisticsModal(false)} style={{ zIndex: 9999 }}>
-                    <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflow: 'auto' }}>
+                <div className="mg-v2-modal-overlay mg-v2-modal-overlay--high-z" onClick={() => setShowStatisticsModal(false)}>
+                    <div className="mg-v2-modal mg-v2-modal-large mg-v2-modal--scrollable" onClick={(e) => e.stopPropagation()}>
                         <div className="mg-v2-modal-header">
                             <div className="mg-v2-modal-title-wrapper">
                                 <BarChart size={28} className="mg-v2-modal-title-icon" />
@@ -1432,22 +1423,13 @@ const AdminDashboard = ({ user: propUser }) => {
                                 </p>
                             </div>
                         </div>
-                        <div style={{
-                            fontSize: '20px',
-                            color: '#666'
-                        }}>
+                        <div className="mg-v2-accordion-toggle-icon">
                             {isPermissionSectionExpanded ? '▲' : '▼'}
                         </div>
                     </div>
                     
                     {isPermissionSectionExpanded && (
-                        <div style={{
-                            padding: '20px',
-                            backgroundColor: 'white',
-                            border: '1px solid #e9ecef',
-                            borderTop: 'none',
-                            borderRadius: '0 0 8px 8px'
-                        }}>
+                        <div className="mg-v2-accordion-content">
                             <PermissionManagement />
                         </div>
                     )}

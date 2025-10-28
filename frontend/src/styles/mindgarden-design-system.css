@@ -14696,3 +14696,31 @@ body {
     width: 100%;
   }
 }
+
+/* ============================================
+   아코디언 컴포넌트
+   ============================================ */
+.mg-v2-accordion-toggle-icon {
+    font-size: 20px;
+    color: #666;
+}
+
+.mg-v2-accordion-content {
+    padding: 20px;
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+}
+
+/* ============================================
+   모달 개선
+   ============================================ */
+.mg-v2-modal-overlay--high-z {
+    z-index: 9999;
+}
+
+.mg-v2-modal--scrollable {
+    max-height: 90vh;
+    overflow: auto;
+}

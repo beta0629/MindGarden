@@ -15308,3 +15308,157 @@ body {
     font-weight: 600;
     margin-bottom: var(--spacing-xs);
 }
+
+/* Auth Form Input Classes */
+.mg-v2-form-input-reset {
+    width: 100%;
+    padding: 16px 50px 16px 16px;
+    font-size: var(--font-size-base);
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+    background-color: #ffffff;
+}
+
+.mg-v2-form-input-reset:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.mg-v2-form-input-reset:disabled {
+    background-color: #f7fafc;
+}
+
+.mg-v2-icon-toggle-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #718096;
+    cursor: pointer;
+    font-size: var(--font-size-lg);
+}
+
+.mg-v2-info-box {
+    background-color: #f7fafc;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    border: 1px solid #e2e8f0;
+}
+
+.mg-v2-info-text {
+    font-size: var(--font-size-xs);
+    color: #4a5568;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.mg-v2-submit-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+
+.mg-v2-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.mg-v2-submit-btn:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+}
+
+.mg-v2-success-icon-box {
+    width: 64px;
+    height: 64px;
+    background-color: #48bb78;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xxl);
+    margin: 0 auto 24px;
+    color: white;
+}
+
+.mg-v2-form-container {
+    max-width: 480px;
+    margin: 80px auto;
+    padding: 40px 32px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+
+.mg-v2-center-container {
+    text-align: center;
+}
+
+.mg-v2-header-icon-box {
+    width: 64px;
+    height: 64px;
+    background-color他才: #667eea;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xxl);
+    margin: 0 auto 24px;
+    color: white;
+}
+
+.mg-v2-title-large {
+    font-size: var(--font-size-xxl);
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 12px;
+}
+
+.mg-v2-title-complete {
+    font-size: var(--font-size-xxl);
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 16px;
+}
+
+.mg-v2-subtitle {
+    font-size: var(--font-size-base);
+    color: #718096;
+    line-height: 1.6;
+    margin-bottom: 32px;
+}
+
+.mg-v2-success-link {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    text-decoration: none;
+    text-align: center;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+
+.mg-v2-success-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0. dogma3);
+}

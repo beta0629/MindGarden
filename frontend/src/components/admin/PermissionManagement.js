@@ -6,6 +6,8 @@ const PERMISSION_CATEGORIES = {
     '대시보드': [
         { code: 'ADMIN_DASHBOARD_VIEW', name: '관리자 대시보드', description: '관리자 대시보드 접근' },
         { code: 'HQ_DASHBOARD_VIEW', name: '본사 대시보드', description: '본사 대시보드 접근' },
+        { code: 'DASHBOARD_VIEW', name: '대시보드 조회', description: '대시보드 통계 조회' },
+        { code: 'REPORT_VIEW', name: '보고서 조회', description: '보고서 및 통계 조회' },
         { code: 'ERP_ACCESS', name: 'ERP 시스템', description: 'ERP 시스템 접근' },
         { code: 'INTEGRATED_FINANCE_VIEW', name: '통합 재무 관리', description: '통합 재무 관리 시스템 접근' }
     ],
@@ -75,15 +77,15 @@ const ROLE_PERMISSIONS = {
         'CONSULTATION_STATISTICS_VIEW'
     ],
     'HQ_ADMIN': [
-        'HQ_DASHBOARD_VIEW', 'BRANCH_MANAGE', 'USER_MANAGE', 'STATISTICS_VIEW',
+        'HQ_DASHBOARD_VIEW', 'DASHBOARD_VIEW', 'REPORT_VIEW', 'BRANCH_MANAGE', 'USER_MANAGE', 'STATISTICS_VIEW',
         'FINANCIAL_VIEW', 'CONSULTATION_STATISTICS_VIEW'
     ],
     'SUPER_HQ_ADMIN': [
-        'HQ_DASHBOARD_VIEW', 'BRANCH_MANAGE', 'USER_MANAGE', 'STATISTICS_VIEW',
+        'HQ_DASHBOARD_VIEW', 'DASHBOARD_VIEW', 'REPORT_VIEW', 'BRANCH_MANAGE', 'USER_MANAGE', 'STATISTICS_VIEW',
         'FINANCIAL_VIEW', 'CONSULTATION_STATISTICS_VIEW', 'ERP_ACCESS'
     ],
     'HQ_MASTER': [
-        'HQ_DASHBOARD_VIEW', 'BRANCH_MANAGE', 'USER_MANAGE', 'STATISTICS_VIEW',
+        'HQ_DASHBOARD_VIEW', 'DASHBOARD_VIEW', 'REPORT_VIEW', 'BRANCH_MANAGE', 'USER_MANAGE', 'STATISTICS_VIEW',
         'FINANCIAL_VIEW', 'CONSULTATION_STATISTICS_VIEW', 'ERP_ACCESS',
         'INTEGRATED_FINANCE_VIEW'
     ]

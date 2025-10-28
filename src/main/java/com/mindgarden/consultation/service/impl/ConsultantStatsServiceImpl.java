@@ -60,14 +60,16 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         // 통계 정보
         Map<String, Object> stats = calculateConsultantStats(consultantId);
         
-        return Map.of(
-            "consultant", consultant,
-            "currentClients", currentClients,
-            "maxClients", consultant.getMaxClients(),
-            "totalClients", consultant.getTotalClients(),
-            "recentMappings", recentMappings.stream().map(this::mappingToMap).collect(Collectors.toList()),
-            "statistics", stats
-        );
+        // Map.of()는 null을 허용하지 않으므로 HashMap 사용
+        Map<String, Object> result = new HashMap<>();
+        result.put("consultant", consultant);
+        result.put("currentClients", currentClients);
+        result.put("maxClients", consultant.getMaxClients() != null ? consultant.getMaxClients() : 0);
+        result.put("totalClients", consultant.getTotalClients() != null ? consultant.getTotalClients() : 0);
+        result.put("recentMappings", recentMappings.stream().map(this::mappingToMap).collect(Collectors.toList()));
+        result.put("statistics", stats);
+        
+        return result;
     }
 
     @Override
@@ -82,13 +84,15 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
                     long currentClients = calculateCurrentClients(consultant.getId());
                     Map<String, Object> stats = calculateConsultantStats(consultant.getId());
                     
-                    return Map.of(
-                        "consultant", consultant,
-                        "currentClients", currentClients,
-                        "maxClients", consultant.getMaxClients(),
-                        "totalClients", consultant.getTotalClients(),
-                        "statistics", stats
-                    );
+                    // Map.of()는 null을 허용하지 않으므로 HashMap 사용
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("consultant", consultant);
+                    result.put("currentClients", currentClients);
+                    result.put("maxClients", consultant.getMaxClients() != null ? consultant.getMaxClients() : 0);
+                    result.put("totalClients", consultant.getTotalClients() != null ? consultant.getTotalClients() : 0);
+                    result.put("statistics", stats);
+                    
+                    return result;
                 })
                 .collect(Collectors.toList());
     }

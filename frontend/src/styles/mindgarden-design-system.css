@@ -15151,3 +15151,14 @@ body {
     color: #6c757d;
     line-height: 1;
 }
+
+/* Card Item for displaying items within a card grid */
+.mg-v2-card-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}

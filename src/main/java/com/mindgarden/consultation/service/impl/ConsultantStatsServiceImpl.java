@@ -89,7 +89,20 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
                     
                     // Map.of()는 null을 허용하지 않으므로 HashMap 사용
                     Map<String, Object> result = new HashMap<>();
-                    result.put("consultant", consultant);
+                    
+                    // Consultant 엔티티를 Map으로 변환
+                    Map<String, Object> consultantMap = new HashMap<>();
+                    consultantMap.put("id", consultant.getId());
+                    consultantMap.put("name", consultant.getName());
+                    consultantMap.put("role", consultant.getRole() != null ? consultant.getRole().name() : null);
+                    consultantMap.put("branchCode", consultant.getBranchCode());
+                    consultantMap.put("isActive", consultant.getIsActive());
+                    consultantMap.put("isDeleted", consultant.getIsDeleted());
+                    consultantMap.put("specialties", consultant.getSpecialties());
+                    consultantMap.put("createdAt", consultant.getCreatedAt());
+                    consultantMap.put("updatedAt", consultant.getUpdatedAt());
+                    
+                    result.put("consultant", consultantMap);
                     result.put("currentClients", currentClients);
                     result.put("maxClients", consultant.getMaxClients() != null ? consultant.getMaxClients() : 0);
                     result.put("totalClients", consultant.getTotalClients() != null ? consultant.getTotalClients() : 0);

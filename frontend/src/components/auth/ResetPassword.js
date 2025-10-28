@@ -163,15 +163,7 @@ const ResetPassword = () => {
         
         <main className="tablet-main">
           <div className="tablet-container">
-            <div style={{
-              maxWidth: '480px',
-              margin: '80px auto',
-              padding: '40px 32px',
-              background: '#ffffff',
-              borderRadius: '20px',
-              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-              fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-            }}>
+            <div className="mg-v2-form-container">
               {!isPasswordReset ? (
                 <>
                   {/* 헤더 */}

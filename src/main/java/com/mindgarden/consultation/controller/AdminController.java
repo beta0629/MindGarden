@@ -3728,8 +3728,12 @@ public class AdminController {
                 ));
             }
             
-            // 권한 체크
-            if (!dynamicPermissionService.hasPermission(currentUser, "ADMIN_CONSULTATION_VIEW")) {
+            // 권한 체크 (Admin 역할이면 허용)
+            boolean hasAdminRole = currentUser.getRole().contains("ADMIN") || currentUser.getRole().contains("MASTER");
+            boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "ADMIN_CONSULTATION_VIEW");
+            
+            if (!hasAdminRole && !hasPermission) {
+                log.warn("⚠️ 상담 이력 조회 권한 없음: user={}, role={}", currentUser.getId(), currentUser.getRole());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
                     "message", "상담 이력 조회 권한이 없습니다."

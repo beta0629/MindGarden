@@ -702,19 +702,7 @@ const CommonCodeManagement = () => {
     // 2단계: 코드 관리 화면
     const renderCodeManagement = () => (
         <div className="code-management">
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '32px',
-                padding: '24px',
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                flexWrap: 'wrap',
-                gap: '16px',
-                minHeight: '80px'
-            }}>
+            <div className="mg-v2-header-bar">
                 <button 
                     className="mg-v2-button mg-v2-button-outline"
                     onClick={ handleBackToGroups }
@@ -722,13 +710,7 @@ const CommonCodeManagement = () => {
                     ← 그룹 선택으로 돌아가기
                 </button>
                 <div className="mg-v2-group-info">
-                    <h2 style={{
-                        color: '#2c3e50',
-                        margin: '0 0 4px 0',
-                        fontSize: 'var(--font-size-xl)',
-                        fontWeight: '600',
-                        lineHeight: '1.3'
-                    }}>
+                    <h2 className="mg-v2-group-title">
                         📁 { getGroupKoreanName(selectedGroup) || convertGroupNameToKorean(selectedGroup) } 그룹 관리
                     </h2>
                     <p className="mg-v2-group-description">

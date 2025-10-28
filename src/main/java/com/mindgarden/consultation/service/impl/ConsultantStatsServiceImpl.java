@@ -77,7 +77,8 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     public List<Map<String, Object>> getAllConsultantsWithStats() {
         log.info("📊 전체 상담사 통계 조회 (DB)");
         
-        List<Consultant> consultants = consultantRepository.findAll();
+        // 삭제되지 않은 상담사만 조회
+        List<Consultant> consultants = consultantRepository.findByIsDeletedFalse();
         
         return consultants.stream()
                 .map(consultant -> {

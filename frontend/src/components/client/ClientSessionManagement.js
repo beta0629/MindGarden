@@ -11,6 +11,7 @@ import notificationManager from '../../utils/notification';
 
 const ClientSessionManagement = () => {
   const navigate = useNavigate();
+  const { user } = useSession();
   const [sessionData, setSessionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);

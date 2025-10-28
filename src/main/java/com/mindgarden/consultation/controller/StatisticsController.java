@@ -2,6 +2,8 @@ package com.mindgarden.consultation.controller;
 
 import java.util.Map;
 import com.mindgarden.consultation.service.StatisticsService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
+import com.mindgarden.consultation.util.PermissionCheckUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,12 +27,23 @@ import lombok.extern.slf4j.Slf4j;
 public class StatisticsController {
     
     private final StatisticsService statisticsService;
+    private final DynamicPermissionService dynamicPermissionService;
     
     /**
      * 전체 통계 조회
      */
     @GetMapping("/overall")
     public ResponseEntity<Map<String, Object>> getOverallStatistics(HttpSession session) {
+        // 동적 권한 체크: REPORT_VIEW 또는 DASHBOARD_VIEW 권한 필요
+        ResponseEntity<?> permissionCheck = PermissionCheckUtils.checkPermission(
+            session, 
+            "REPORT_VIEW", 
+            dynamicPermissionService
+        );
+        if (permissionCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) permissionCheck;
+        }
+        
         try {
             Map<String, Object> statistics = statisticsService.getOverallStatistics();
             return ResponseEntity.ok(statistics);
@@ -46,6 +59,16 @@ public class StatisticsController {
      */
     @GetMapping("/trends")
     public ResponseEntity<Map<String, Object>> getTrendStatistics(HttpSession session) {
+        // 동적 권한 체크
+        ResponseEntity<?> permissionCheck = PermissionCheckUtils.checkPermission(
+            session, 
+            "REPORT_VIEW", 
+            dynamicPermissionService
+        );
+        if (permissionCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) permissionCheck;
+        }
+        
         try {
             Map<String, Object> trends = statisticsService.getTrendStatistics();
             return ResponseEntity.ok(trends);
@@ -61,6 +84,16 @@ public class StatisticsController {
      */
     @GetMapping("/chart-data")
     public ResponseEntity<Map<String, Object>> getChartData(HttpSession session) {
+        // 동적 권한 체크
+        ResponseEntity<?> permissionCheck = PermissionCheckUtils.checkPermission(
+            session, 
+            "REPORT_VIEW", 
+            dynamicPermissionService
+        );
+        if (permissionCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) permissionCheck;
+        }
+        
         try {
             Map<String, Object> chartData = statisticsService.getChartData();
             return ResponseEntity.ok(chartData);
@@ -76,6 +109,16 @@ public class StatisticsController {
      */
     @GetMapping("/recent-activity")
     public ResponseEntity<Map<String, Object>> getRecentActivity(HttpSession session) {
+        // 동적 권한 체크
+        ResponseEntity<?> permissionCheck = PermissionCheckUtils.checkPermission(
+            session, 
+            "REPORT_VIEW", 
+            dynamicPermissionService
+        );
+        if (permissionCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) permissionCheck;
+        }
+        
         try {
             Map<String, Object> activities = statisticsService.getRecentActivity();
             return ResponseEntity.ok(activities);

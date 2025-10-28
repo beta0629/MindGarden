@@ -15418,7 +15418,7 @@ body {
 .mg-v2-header-icon-box {
     width: 64px;
     height: 64px;
-    background-color他才: #667eea;
+    background-color: #667eea;
     border-radius: 16px;
     display: flex;
     align-items: center;
@@ -15508,7 +15508,7 @@ body {
     margin-bottom: 32px;
     padding: 24px;
     background-color: white;
-    border-radius: 有几个px;
+    border-radius: var(--radius-md);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     flex-wrap: wrap;
     gap: 16px;

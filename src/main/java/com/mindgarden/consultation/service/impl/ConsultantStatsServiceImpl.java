@@ -73,8 +73,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     }
 
     @Override
-    @CacheEvict(value = "consultantsWithStats", allEntries = true) // 캐시 무효화 후
-    @Cacheable(value = "consultantsWithStats", key = "'all:active'") // 새 키로 캐싱
+    @Cacheable(value = "consultantsWithStats", key = "'all:active'")
     public List<Map<String, Object>> getAllConsultantsWithStats() {
         log.info("📊 전체 상담사 통계 조회 (DB)");
         

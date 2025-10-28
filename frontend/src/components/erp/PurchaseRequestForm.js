@@ -182,27 +182,15 @@ const PurchaseRequestForm = () => {
           }
         />
 
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <div className="mg-v2-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
         <ErpCard title="구매 요청서 작성">
           <form onSubmit={handleSubmit}>
             {/* 아이템 선택 */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600',
-                color: '#333'
-              }}>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
                 아이템 선택 *
               </label>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', 
-                gap: '16px',
-                maxHeight: '400px',
-                overflowY: 'auto',
-                padding: '4px'
-              }}>
+              <div className="mg-v2-form-grid" style={{ maxHeight: '400px', overflowY: 'auto', padding: '4px', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                 {items.map(item => (
                   <div
                     key={item.id}
@@ -306,7 +294,7 @@ const PurchaseRequestForm = () => {
 
             {/* 선택된 아이템들의 수량 입력 */}
             {selectedItems.length > 0 && (
-              <div style={{ marginBottom: '24px' }}>
+              <div className="mg-v2-form-group">
                 <label style={{ 
                   display: 'block', 
                   marginBottom: '16px', 
@@ -402,13 +390,8 @@ const PurchaseRequestForm = () => {
             )}
 
             {/* 사유 입력 */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600',
-                color: '#333'
-              }}>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
                 구매 사유
               </label>
               <textarea

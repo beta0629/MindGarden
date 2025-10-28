@@ -112,35 +112,21 @@ const FinancialCalendarView = () => {
           📅 재무 달력
         </h2>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div className="mg-v2-form-group" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <button
             onClick={() => navigateMonth(-1)}
-            style={{
-              padding: '8px 12px',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            className="mg-v2-button mg-v2-button-secondary"
           >
             ◀ 이전
           </button>
           
-          <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', minWidth: '120px', textAlign: 'center' }}>
+          <h3 className="mg-v2-text-lg mg-v2-text-center" style={{ margin: 0, minWidth: '120px' }}>
             {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
           </h3>
           
           <button
             onClick={() => navigateMonth(1)}
-            style={{
-              padding: '8px 12px',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            className="mg-v2-button mg-v2-button-secondary"
           >
             다음 ▶
           </button>
@@ -148,14 +134,7 @@ const FinancialCalendarView = () => {
       </div>
 
       {/* 범례 */}
-      <div style={{
-        display: 'flex',
-        gap: '20px',
-        marginBottom: '20px',
-        padding: '15px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px'
-      }}>
+      <div className="mg-v2-card mg-v2-card--outlined" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{
             width: '16px',

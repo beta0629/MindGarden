@@ -86,46 +86,22 @@ const ClientComprehensiveManagement = () => {
         }
     }, []);
 
-    // 내담자 목록 로드 (통합 API 사용)
+    // 내담자 목록 로드
     const loadClients = useCallback(async () => {
         setLoading(true);
         try {
-            console.log('🔄 내담자 목록 로딩 시작 (통합 API)...');
+            const response = await apiGet('/api/admin/clients');
+            console.log('📊 내담자 목록 응답:', response);
             
-            // 통합 API 사용 (통계 포함)
-            const clientsList = await getAllClientsWithStats();
-            console.log('📊 통합 API 응답:', clientsList);
-            
-            if (clientsList && clientsList.length > 0) {
-                // 응답 데이터 변환
-                const clientsData = clientsList.map(item => {
-                    const clientEntity = item.client || {};
-                    return {
-                        id: clientEntity.id,
-                        name: clientEntity.name,
-                        email: clientEntity.email,
-                        phone: clientEntity.phone,
-                        role: clientEntity.role,
-                        status: clientEntity.status,
-                        isActive: clientEntity.isActive,
-                        branchCode: clientEntity.branchCode,
-                        createdAt: clientEntity.createdAt,
-                        updatedAt: clientEntity.updatedAt,
-                        // 통계 정보 추가
-                        currentConsultants: item.currentConsultants || 0,
-                        totalConsultants: item.totalConsultants || 0,
-                        statistics: item.statistics || {}
-                    };
-                });
-                
-                setClients(clientsData);
-                console.log('✅ 내담자 목록 설정 완료 (통합 API):', clientsData.length, '명');
+            if (response && response.success) {
+                setClients(response.data || []);
             } else {
-                console.warn('⚠️ 내담자 데이터 없음');
+                console.warn('내담자 목록 응답 실패:', response);
                 setClients([]);
             }
         } catch (error) {
-            console.error('❌ 내담자 목록 로딩 오류:', error);
+            console.error('내담자 목록 로드 실패:', error);
+            // 오류 시 빈 배열 사용
             setClients([]);
             showError('내담자 목록을 불러오는데 실패했습니다.');
         } finally {

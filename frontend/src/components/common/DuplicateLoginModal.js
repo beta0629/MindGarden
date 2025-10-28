@@ -82,7 +82,7 @@ const DuplicateLoginModal = () => {
   }
 
   return ReactDOM.createPortal(
-    <div className="mg-v2-modal-overlay">
+    <div className="mg-v2-modal-overlay mg-v2-modal-overlay--high-z">
       <div className="mg-v2-modal" onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
           <div className="mg-v2-modal-title-wrapper">

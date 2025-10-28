@@ -311,7 +311,7 @@ const ScheduleDetailModal = ({
      * 취소 확인 모달
      */
     const renderCancelConfirm = () => (
-        <div className="mg-modal-overlay mg-modal-overlay--visible" style={{ zIndex: 10001 }}>
+        <div className="mg-modal-overlay mg-modal-overlay--visible mg-modal-overlay--high-z">
             <div className="mg-modal mg-modal--medium">
                 <div className="mg-modal__header">
                     <h4 className="mg-modal__title">예약 취소 확인</h4>
@@ -343,7 +343,7 @@ const ScheduleDetailModal = ({
      * 예약 확정 확인 모달
      */
     const renderConfirmModal = () => (
-        <div className="mg-modal-overlay mg-modal-overlay--visible" style={{ zIndex: 10001 }}>
+        <div className="mg-modal-overlay mg-modal-overlay--visible mg-modal-overlay--high-z">
             <div className="mg-modal mg-modal--medium">
                 <div className="mg-modal__header">
                     <h4 className="mg-modal__title">예약 확정</h4>
@@ -538,18 +538,11 @@ const ScheduleDetailModal = ({
                         </>
                     ) : (
                         // 내담자인 경우 - 조회만 가능 메시지 표시
-                        <div className="schedule-detail-client-notice" style={{
-                            padding: 'var(--spacing-lg)',
-                            background: 'var(--bg-gradient-cool)',
-                            border: 'var(--border-width-thin) solid var(--border-pink-light)',
-                            borderRadius: 'var(--border-radius-md)',
-                            textAlign: 'center',
-                            color: 'var(--color-text-secondary)'
-                        }}>
+                        <div className="mg-v2-info-box mg-v2-text-center mg-v2-text-secondary">
                             <p className="mg-v2-text-base">
                                 📅 예약 정보를 확인하실 수 있습니다.
                             </p>
-                            <p className="mg-v2-text-sm" style={{ marginTop: 'var(--spacing-xs)' }}>
+                            <p className="mg-v2-text-sm mg-v2-mt-xs">
                                 예약 변경이 필요하신 경우 상담사에게 문의해주세요.
                             </p>
                         </div>

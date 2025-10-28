@@ -152,14 +152,7 @@ const FinancialCalendarView = () => {
       </div>
 
       {/* 달력 */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(7, 1fr)',
-        gap: '1px',
-        backgroundColor: '#dee2e6',
-        borderRadius: '8px',
-        overflow: 'hidden'
-      }}>
+      <div className="mg-v2-calendar-grid">
         {/* 요일 헤더 */}
         {['일', '월', '화', '수', '목', '금', '토'].map((dayName, index) => (
           <div

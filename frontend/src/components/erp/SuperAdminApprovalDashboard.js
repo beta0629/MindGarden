@@ -210,7 +210,7 @@ const SuperAdminApprovalDashboard = () => {
                     <div className="approval-admin-status">
                       관리자 승인 완료
                     </div>
-                    <div style={{ fontSize: 'var(--font-size-sm)' }}>
+                    <div className="mg-v2-text-sm">
                       <div><strong>승인자:</strong> {request.adminApprover.name}</div>
                       <div><strong>승인일:</strong> {formatDate(request.adminApprovedAt)}</div>
                       {request.adminComment && (
@@ -221,7 +221,7 @@ const SuperAdminApprovalDashboard = () => {
                 )}
                 
                 {request.reason && (
-                  <div style={{ marginBottom: '12px' }}>
+                  <div className="mg-v2-form-group" style={{ marginBottom: '12px' }}>
                     <strong>요청 사유:</strong>
                     <div style={{ 
                       marginTop: '4px', 
@@ -271,7 +271,7 @@ const SuperAdminApprovalDashboard = () => {
       >
         {selectedRequest && (
           <div>
-            <div style={{ marginBottom: '16px' }}>
+            <div className="mg-v2-form-group">
               <h4>최종 승인할 구매 요청</h4>
               <div style={{ 
                 padding: '12px', 
@@ -286,8 +286,8 @@ const SuperAdminApprovalDashboard = () => {
               </div>
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ 
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label"> 
                 display: 'block', 
                 marginBottom: '8px', 
                 fontWeight: '600' 
@@ -309,7 +309,7 @@ const SuperAdminApprovalDashboard = () => {
               />
             </div>
 
-            <div style={{ textAlign: 'right' }}>
+            <div className="mg-v2-text-right">
               <ErpButton
                 variant="secondary"
                 onClick={() => setShowApprovalModal(false)}
@@ -338,7 +338,7 @@ const SuperAdminApprovalDashboard = () => {
       >
         {selectedRequest && (
           <div>
-            <div style={{ marginBottom: '16px' }}>
+            <div className="mg-v2-form-group">
               <h4>거부할 구매 요청</h4>
               <div style={{ 
                 padding: '12px', 
@@ -353,8 +353,8 @@ const SuperAdminApprovalDashboard = () => {
               </div>
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ 
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label"> 
                 display: 'block', 
                 marginBottom: '8px', 
                 fontWeight: '600' 
@@ -377,7 +377,7 @@ const SuperAdminApprovalDashboard = () => {
               />
             </div>
 
-            <div style={{ textAlign: 'right' }}>
+            <div className="mg-v2-text-right">
               <ErpButton
                 variant="secondary"
                 onClick={() => setShowRejectionModal(false)}

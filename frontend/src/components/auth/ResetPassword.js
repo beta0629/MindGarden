@@ -168,26 +168,10 @@ const ResetPassword = () => {
                 <>
                   {/* 헤더 */}
                   <div className="mg-v2-text-center" style={{ marginBottom: '40px' }}>
-                    <div style={{
-                      width: '64px',
-                      height: '64px',
-                      backgroundColor: '#667eea',
-                      borderRadius: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 'var(--font-size-xxl)',
-                      margin: '0 auto 24px',
-                      color: 'white'
-                    }}>
+                    <div className="mg-v2-header-icon-box">
                       🔒
                     </div>
-                    <h1 className="mg-v2-modal-title" style={{
-                      fontSize: 'var(--font-size-xxl)',
-                      fontWeight: '700',
-                      color: '#2d3748',
-                      marginBottom: '12px'
-                    }}>
+                    <h1 className="mg-v2-modal-title mg-v2-title-large">
                       새 비밀번호 설정
                     </h1>
                     <p className="mg-v2-text-base mg-v2-text-secondary" style={{ lineHeight: '1.5' }}>

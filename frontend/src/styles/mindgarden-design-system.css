@@ -11834,6 +11834,27 @@ body {
     gap: var(--spacing-lg);
 }
 
+.mg-v2-mapping-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.mg-v2-mapping-client,
+.mg-v2-mapping-consultant {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.mg-v2-mapping-sessions {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: var(--spacing-xs) 0;
+}
+
 .mg-v2-mapping-list {
     display: flex;
     flex-direction: column;

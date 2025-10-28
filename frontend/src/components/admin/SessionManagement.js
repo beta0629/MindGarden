@@ -547,24 +547,30 @@ const SessionManagement = () => {
                                     {getFilteredMappings().slice(0, 20).map(mapping => (
                                         <div key={mapping.id} className="mg-v2-mapping-card">
                                             <div className="mg-v2-mapping-info">
-                                                <div className="mg-v2-mapping-client">{mapping.clientName}</div>
-                                                <div className="mg-v2-mapping-consultant">{mapping.consultantName}</div>
+                                                <div className="mg-v2-mapping-client">
+                                                    👤 {mapping.clientName}
+                                                </div>
+                                                <div className="mg-v2-mapping-consultant">
+                                                    🤝 {mapping.consultantName}
+                                                </div>
                                                 <div className="mg-v2-mapping-sessions">
-                                                    {mapping.usedSessions}/{mapping.totalSessions}회기
+                                                    📊 {mapping.usedSessions}/{mapping.totalSessions}회기
                                                 </div>
                                                 <div className={`mg-mapping-status mg-status-${mapping.status.toLowerCase()}`}>
                                                     {mapping.status}
                                                 </div>
                                             </div>
-                                            <button 
-                                                className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
-                                                onClick={() => handleQuickAdd(mapping)}
-                                                disabled={mapping.status !== 'ACTIVE'}
-                                                title={mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : ''}
-                                            >
-                                                <Plus size={14} />
-                                                회기 추가
-                                            </button>
+                                            <div className="mg-v2-mapping-card-actions">
+                                                <button 
+                                                    className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
+                                                    onClick={() => handleQuickAdd(mapping)}
+                                                    disabled={mapping.status !== 'ACTIVE'}
+                                                    title={mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : ''}
+                                                >
+                                                    <Plus size={14} />
+                                                    회기 추가
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

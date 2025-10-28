@@ -369,33 +369,21 @@ const FinancialManagement = () => {
                   </div>
 
                   {/* 필터 섹션 */}
-                  <div style={{
-                    backgroundColor: '#f8f9fa',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    marginBottom: '20px',
-                    border: '1px solid #dee2e6'
-                  }}>
-                    <h3 style={{ marginBottom: '15px', fontSize: 'var(--font-size-base)', color: '#495057' }}>
+                  <div className="mg-v2-filter-section">
+                    <h3 className="mg-v2-filter-title">
                       🔍 필터 및 검색
                     </h3>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                    <div className="mg-v2-filter-grid">
                       {/* 거래 유형 필터 */}
                       <div>
-                        <label style={{ display: 'block', marginBottom: '5px', fontSize: 'var(--font-size-xs)', fontWeight: '600' }}>
+                        <label className="mg-v2-form-label">
                           거래 유형
                         </label>
                         <select
                           value={filters.transactionType}
                           onChange={(e) => setFilters(prev => ({ ...prev, transactionType: e.target.value }))}
-                          style={{
-                            width: '100%',
-                            padding: '8px 12px',
-                            border: '1px solid #ced4da',
-                            borderRadius: '4px',
-                            fontSize: 'var(--font-size-sm)'
-                          }}
+                          className="mg-v2-form-select"
                         >
                           <option value="ALL">전체</option>
                           <option value="INCOME">💰 수입</option>
@@ -405,19 +393,13 @@ const FinancialManagement = () => {
                       
                       {/* 카테고리 필터 */}
                       <div>
-                        <label style={{ display: 'block', marginBottom: '5px', fontSize: 'var(--font-size-xs)', fontWeight: '600' }}>
+                        <label className="mg-v2-form-label">
                           카테고리
                         </label>
                         <select
                           value={filters.category}
                           onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-                          style={{
-                            width: '100%',
-                            padding: '8px 12px',
-                            border: '1px solid #ced4da',
-                            borderRadius: '4px',
-                            fontSize: 'var(--font-size-sm)'
-                          }}
+                          className="mg-v2-form-select"
                         >
                           <option value="ALL">전체</option>
                           <option value="CONSULTATION">🗣️ 상담료</option>
@@ -431,19 +413,13 @@ const FinancialManagement = () => {
                       
                       {/* 연동 유형 필터 */}
                       <div>
-                        <label style={{ display: 'block', marginBottom: '5px', fontSize: 'var(--font-size-xs)', fontWeight: '600' }}>
+                        <label className="mg-v2-form-label">
                           연동 유형
                         </label>
                         <select
                           value={filters.relatedEntityType}
                           onChange={(e) => setFilters(prev => ({ ...prev, relatedEntityType: e.target.value }))}
-                          style={{
-                            width: '100%',
-                            padding: '8px 12px',
-                            border: '1px solid #ced4da',
-                            borderRadius: '4px',
-                            fontSize: 'var(--font-size-sm)'
-                          }}
+                          className="mg-v2-form-select"
                         >
                           <option value="ALL">전체</option>
                           <option value="CONSULTANT_CLIENT_MAPPING">🔗 매핑연동</option>
@@ -456,7 +432,7 @@ const FinancialManagement = () => {
                       
                       {/* 검색 */}
                       <div>
-                        <label style={{ display: 'block', marginBottom: '5px', fontSize: 'var(--font-size-xs)', fontWeight: '600' }}>
+                        <label className="mg-v2-form-label">
                           검색
                         </label>
                         <input
@@ -464,13 +440,7 @@ const FinancialManagement = () => {
                           placeholder="상담사명, 내담자명, 설명 검색..."
                           value={filters.searchText}
                           onChange={(e) => setFilters(prev => ({ ...prev, searchText: e.target.value }))}
-                          style={{
-                            width: '100%',
-                            padding: '8px 12px',
-                            border: '1px solid #ced4da',
-                            borderRadius: '4px',
-                            fontSize: 'var(--font-size-sm)'
-                          }}
+                          className="mg-v2-form-select"
                         />
                       </div>
                     </div>

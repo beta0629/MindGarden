@@ -59,7 +59,7 @@ const DateActionModal = ({
                                 className="mg-v2-btn mg-v2-btn--primary mg-v2-btn--large mg-v2-w-full"
                             >
                                 <FileText size={24} className="mg-v2-icon-inline--lg" />
-                                <div style={{ textAlign: 'left', flex: 1 }}>
+                                <div className="mg-v2-text-left mg-v2-flex-1">
                                     <div className="mg-v2-text-lg mg-v2-font-semibold">상담 일정 등록</div>
                                     <div className="mg-v2-text-sm mg-v2-text-secondary">상담사와 내담자의 상담 일정을 등록합니다</div>
                                 </div>
@@ -70,7 +70,7 @@ const DateActionModal = ({
                                 className="mg-v2-btn mg-v2-btn--secondary mg-v2-btn--large mg-v2-w-full mg-v2-mt-md"
                             >
                                 <Umbrella size={24} className="mg-v2-icon-inline--lg" />
-                                <div style={{ textAlign: 'left', flex: 1 }}>
+                                <div className="mg-v2-text-left mg-v2-flex-1">
                                     <div className="mg-v2-text-lg mg-v2-font-semibold">휴가 등록</div>
                                     <div className="mg-v2-text-sm mg-v2-text-secondary">상담사의 휴가를 등록합니다</div>
                                 </div>

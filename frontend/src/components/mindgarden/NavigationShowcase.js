@@ -12,11 +12,11 @@ const NavigationShowcase = () => {
     <section className="mg-v2-section">
       <h2 className="mg-h2 mg-v2-text-center mg-mb-lg">네비게이션</h2>
       
-      <div style={{ display: 'grid', gap: 'var(--spacing-xl)' }}>
+      <div className="mg-v2-grid-layout" style={{ gap: 'var(--spacing-xl)' }}>
         {/* Header Navigation */}
         <div>
           <h4 className="mg-h4 mg-mb-md">헤더 네비게이션</h4>
-          <div className="mg-card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="mg-card mg-card-no-padding">
             <div className="mg-header-nav">
               <div className="mg-header-brand">
                 <div className="mg-header-logo">MindGarden</div>
@@ -37,11 +37,10 @@ const NavigationShowcase = () => {
         {/* Sidebar Navigation */}
         <div>
           <h4 className="mg-h4 mg-mb-md">사이드바 네비게이션</h4>
-          <div className="mg-card" style={{ padding: 0, overflow: 'hidden', position: 'relative', minHeight: '400px' }}>
+          <div className="mg-card mg-card-no-padding mg-v2-relative" style={{ minHeight: '400px' }}>
             {/* Mobile Menu Button */}
             <button 
-              className="mg-button mg-button-outline"
-              style={{ position: 'absolute', top: 'var(--spacing-md)', left: 'var(--spacing-md)', zIndex: 20 }}
+              className="mg-button mg-button-outline mg-v2-absolute mg-v2-top-md mg-v2-left-md" style={{ zIndex: 20 }}
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             >
               {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}

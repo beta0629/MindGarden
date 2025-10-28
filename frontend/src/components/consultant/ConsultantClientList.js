@@ -445,33 +445,11 @@ const ConsultantClientList = () => {
                     </div>
                     
                     {/* 카드 본문 - 이름 + 연락처 정보 */}
-                    <div 
-                      style={{
-                        padding: '20px',
-                        flex: '1',
-                        display: 'flex',
-                        flexDirection: 'column'
-                      }}
-                    >
-                      <h3 
-                        style={{
-                          fontSize: '1.3rem',
-                          fontWeight: '600',
-                          color: '#2c3e50',
-                          marginBottom: '15px',
-                          marginTop: '0'
-                        }}
-                      >
+                    <div className="mg-v2-client-card-body">
+                      <h3 className="mg-v2-client-name">
                         {client.name || '이름 없음'}
                       </h3>
-                      <div 
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '8px',
-                          flex: '1'
-                        }}
-                      >
+                      <div className="mg-v2-client-info-list">
                         <div 
                           style={{
                             display: 'flex',

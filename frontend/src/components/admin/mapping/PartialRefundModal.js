@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CreditCard, RefreshCcw, XCircle, Package, Clock, AlertTriangle } from 'lucide-react';
+import { CreditCard, RefreshCcw, XCircle, Package, Clock, AlertTriangle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager, { showNotification } from '../../../utils/notification';
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { FaUser } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
-import { getAllClientsWithStats } from '../../utils/consultantHelper';
 import { 
     getUserStatusKoreanName,
     getUserGradeKoreanName,

@@ -735,21 +735,7 @@ const CommonCodeManagement = () => {
                 minHeight: '80px'
             }}>
                 <button 
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 16px',
-                        border: '2px solid #6c757d',
-                        borderRadius: '8px',
-                        backgroundColor: 'transparent',
-                        color: '#6c757d',
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        whiteSpace: 'nowrap'
-                    }}
+                    className="mg-v2-button mg-v2-button-outline"
                     onClick={ handleBackToGroups }
                 >
                     ← 그룹 선택으로 돌아가기

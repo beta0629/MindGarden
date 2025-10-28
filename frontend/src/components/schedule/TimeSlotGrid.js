@@ -798,34 +798,16 @@ const TimeSlotGrid = ({
                                             }
                                         }}
                                     >
-                                        <div style={{ 
-                                            width: '20px', 
-                                            height: '20px', 
-                                            backgroundColor: getSlotIcon(slot).color, 
-                                            borderRadius: '50%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            fontSize: 'var(--font-size-xs)',
-                                            color: 'white',
-                                            fontWeight: 'bold',
-                                            lineHeight: '1'
-                                        }}>
+                                        <div 
+                                            className="mg-v2-time-slot-icon"
+                                            style={{ backgroundColor: getSlotIcon(slot).color }}
+                                        >
                                             {getSlotIcon(slot).text}
                                         </div>
-                                        <div style={{ 
-                                            fontSize: 'var(--font-size-xs)', 
-                                            fontWeight: '600', 
-                                            color: slot.selected ? '#28a745' : '#495057',
-                                            lineHeight: '1'
-                                        }}>
+                                        <div className={`mg-v2-time-slot-time ${slot.selected ? 'mg-v2-time-slot-time--selected' : 'mg-v2-time-slot-time--available'}`}>
                                             {slot.time}
                                         </div>
-                                        <div style={{ 
-                                            fontSize: 'var(--font-size-xs)', 
-                                            color: '#6c757d',
-                                            lineHeight: '1'
-                                        }}>
+                                        <div className="mg-v2-time-slot-duration-text">
                                             {duration}분
                                         </div>
                                     </div>
@@ -849,17 +831,10 @@ const TimeSlotGrid = ({
                     <div className="mg-v2-schedule-list">
                         {existingSchedules.map(schedule => (
                             <div key={schedule.id} className="mg-v2-schedule-item">
-                                <span style={{ 
-                                    color: '#007bff', 
-                                    fontWeight: '600', 
-                                    fontFamily: 'monospace' 
-                                }}>
+                                <span className="mg-v2-schedule-time">
                                     {schedule.startTime} - {schedule.endTime}
                                 </span>
-                                <span style={{ 
-                                    color: '#495057', 
-                                    fontWeight: '500' 
-                                }}>
+                                <span className="mg-v2-schedule-title">
                                     {schedule.title}
                                 </span>
                             </div>

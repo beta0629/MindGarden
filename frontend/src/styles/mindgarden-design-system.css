@@ -15047,3 +15047,24 @@ body {
 .mg-v2-schedule-item:last-child {
     border-bottom: none;
 }
+
+.mg-v2-schedule-time {
+    color: #007bff;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.mg-v2-schedule-title {
+    color: #495057;
+    font-weight: 500;
+}
+
+.mg-v2-time-slot-time--available {
+    color: #495057;
+}
+
+.mg-v2-time-slot-duration-text {
+    font-size: var(--font-size-xs);
+    color: #6c757d;
+    line-height: 1;
+}

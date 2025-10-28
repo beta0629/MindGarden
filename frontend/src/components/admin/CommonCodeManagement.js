@@ -718,21 +718,7 @@ const CommonCodeManagement = () => {
                     </p>
                 </div>
                 <button 
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 16px',
-                        border: 'none',
-                        borderRadius: '8px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        whiteSpace: 'nowrap'
-                    }}
+                    className="mg-v2-add-code-btn"
                     onClick={ () => setShowAddForm(true) }
                     disabled={ loading }
                 >

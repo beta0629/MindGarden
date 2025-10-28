@@ -48,7 +48,7 @@ const MGLoading = ({
       <div className="mg-loading-progress__track">
         <div 
           className="mg-loading-progress__bar"
-          style={{ width: `${progress}%` }}
+          style={{ '--progress-width': `${progress}%` }}
         ></div>
       </div>
       {text && (

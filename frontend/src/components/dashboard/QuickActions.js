@@ -62,7 +62,7 @@ const QuickActions = ({ user }) => {
     <div className="mg-card">
       {/* 카드 헤더 */}
       <div className="mg-card-header mg-flex mg-align-center mg-gap-sm">
-        <Zap size={20} style={{ color: 'var(--olive-green)' }} />
+        <Zap size={20} className="finance-icon-inline" />
         <h3 className="mg-h4 mg-mb-0">빠른 액션</h3>
       </div>
 

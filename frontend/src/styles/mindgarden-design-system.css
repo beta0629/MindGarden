@@ -14527,6 +14527,79 @@ body {
   margin-top: var(--spacing-xs);
 }
 
+/* 리스트 불릿 */
+.mg-v2-list-bullet {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mg-v2-list-bullet-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.mg-v2-list-bullet-item:last-child {
+  border-bottom: none;
+}
+
+/* FAQ 리스트 */
+.mg-v2-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.mg-v2-faq-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.mg-v2-faq-answer {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  margin-left: calc(14px + var(--spacing-xs));
+}
+
+/* 뱃지 */
+.mg-v2-badge {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  border-radius: var(--border-radius-sm);
+  margin-left: var(--spacing-sm);
+}
+
+.mg-v2-badge--danger {
+  background-color: var(--color-danger);
+  color: var(--color-white);
+}
+
+.mg-v2-badge--success {
+  background-color: var(--color-success);
+  color: var(--color-white);
+}
+
+.mg-v2-badge--warning {
+  background-color: var(--color-warning);
+  color: var(--color-white);
+}
+
+.mg-v2-badge--primary {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
 /* 라디오 버튼 색상 */
 .mg-v2-radio-color[data-color] {
   background-color: attr(data-color);

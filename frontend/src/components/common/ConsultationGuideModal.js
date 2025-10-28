@@ -1,510 +1,215 @@
 import React from 'react';
-import './ConsultationGuideModal.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import ReactDOM from 'react-dom';
+import { Book, XCircle, Check, Info, Heart, Lightbulb, Phone, Wifi, Video, Battery, Headphones, Shield, Circle } from 'lucide-react';
 
 const ConsultationGuideModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
-  return (
-    <div className="consultation-guide-overlay" onClick={onClose}>
-      <div className="consultation-guide-modal" onClick={(e) => e.stopPropagation()}>
-        <div 
-          className="consultation-guide-header"
-        >
-          <h2 
-            className="consultation-guide-title"
-          >
-            <i className="bi bi-book consultation-guide-icon"></i>
-            상담 가이드
-          </h2>
-          <button 
-            className="consultation-guide-close-btn"
-            onClick={onClose}
-            onMouseEnter={(e) => {
-              e.target.style.background = '#f8f9fa';
-              e.target.style.color = '#495057';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = 'none';
-              e.target.style.color = '#6c757d';
-            }}
-          >
-            <i className="bi bi-x-lg"></i>
+  const guideItems = [
+    {
+      icon: Check,
+      text: '편안한 장소에서 조용한 환경을 준비해주세요'
+    },
+    {
+      icon: Check,
+      text: '상담 시간 10분 전에 미리 준비해주세요'
+    },
+    {
+      icon: Check,
+      text: '상담하고 싶은 주제나 고민을 미리 정리해보세요'
+    },
+    {
+      icon: Check,
+      text: '충분한 시간을 확보해주세요 (최소 50분)'
+    }
+  ];
+
+  const precautions = [
+    {
+      icon: Shield,
+      text: '솔직하고 진정성 있게 이야기해주세요'
+    },
+    {
+      icon: Shield,
+      text: '상담사님의 질문에 최대한 구체적으로 답변해주세요'
+    },
+    {
+      icon: Shield,
+      text: '궁금한 점이 있으면 언제든지 물어보세요'
+    },
+    {
+      icon: Shield,
+      text: '상담 내용은 비밀이 보장됩니다'
+    }
+  ];
+
+  const tips = [
+    {
+      icon: Lightbulb,
+      text: '상담 후 받은 조언을 일상에서 실천해보세요'
+    },
+    {
+      icon: Lightbulb,
+      text: '상담 일지를 작성해보세요'
+    },
+    {
+      icon: Lightbulb,
+      text: '규칙적인 상담을 통해 지속적인 변화를 만들어가세요'
+    },
+    {
+      icon: Lightbulb,
+      text: '상담사님과의 신뢰 관계를 쌓아가세요'
+    }
+  ];
+
+  const technicalItems = [
+    {
+      icon: Wifi,
+      text: '안정적인 인터넷 연결을 확인해주세요'
+    },
+    {
+      icon: Video,
+      text: '카메라와 마이크가 정상 작동하는지 확인해주세요'
+    },
+    {
+      icon: Battery,
+      text: '기기 배터리를 충분히 충전해주세요'
+    },
+    {
+      icon: Headphones,
+      text: '이어폰이나 헤드셋을 사용하면 더 좋습니다'
+    }
+  ];
+
+  const faqs = [
+    {
+      question: '상담 시간을 변경할 수 있나요?',
+      answer: '상담 시간 24시간 전까지는 변경 가능합니다. 상담사님께 메시지를 보내주세요.'
+    },
+    {
+      question: '상담 내용이 비밀이 보장되나요?',
+      answer: '네, 상담사님은 상담 내용에 대해 비밀을 지킬 의무가 있습니다.'
+    },
+    {
+      question: '상담을 건너뛸 수 있나요?',
+      answer: '상담을 건너뛰면 회기가 차감됩니다. 꼭 필요한 경우 상담사님께 미리 연락해주세요.'
+    }
+  ];
+
+  const portalTarget = document.body || document.createElement('div');
+
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <Book size={28} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">상담 가이드</h2>
+          </div>
+          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
+            <XCircle size={24} />
           </button>
         </div>
 
-        <div 
-          className="consultation-guide-content"
-        >
-          <div className="consultation-guide-intro">
-            <h3 
-              style={{
-                margin: '0 0 16px 0',
-                fontSize: 'var(--font-size-lg)',
-                fontWeight: '600',
-                color: '#2c3e50',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                paddingBottom: '8px',
-                borderBottom: '2px solid #e9ecef'
-              }}
-            >
-              <i className="bi bi-info-circle consultation-guide-icon"></i>
+        <div className="mg-v2-modal-body">
+          {/* 상담 전 준비사항 */}
+          <div className="mg-v2-form-section mg-v2-mb-lg">
+            <h3 className="mg-v2-section-title mg-v2-mb-md">
+              <Info size={20} className="mg-v2-section-title-icon" />
               상담 전 준비사항
             </h3>
-            <ul 
-              style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0
-              }}
-            >
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>편안한 장소에서 조용한 환경을 준비해주세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담 시간 10분 전에 미리 준비해주세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담하고 싶은 주제나 고민을 미리 정리해보세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: 'none'
-                }}
-              >
-                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>충분한 시간을 확보해주세요 (최소 50분)</span>
-              </li>
+            <ul className="mg-v2-list-bullet">
+              {guideItems.map((item, index) => (
+                <li key={index} className="mg-v2-list-bullet-item">
+                  <item.icon size={16} className="mg-v2-color-success mg-v2-icon-inline" />
+                  {item.text}
+                </li>
+              ))}
             </ul>
           </div>
 
-          <div className="consultation-guide-intro">
-            <h3 
-              style={{
-                margin: '0 0 16px 0',
-                fontSize: 'var(--font-size-lg)',
-                fontWeight: '600',
-                color: '#2c3e50',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                paddingBottom: '8px',
-                borderBottom: '2px solid #e9ecef'
-              }}
-            >
-              <i className="bi bi-heart" style={{ fontSize: 'var(--font-size-base)' }}></i>
+          {/* 상담 중 주의사항 */}
+          <div className="mg-v2-form-section mg-v2-mb-lg">
+            <h3 className="mg-v2-section-title mg-v2-mb-md">
+              <Heart size={20} className="mg-v2-section-title-icon" />
               상담 중 주의사항
             </h3>
-            <ul 
-              style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0
-              }}
-            >
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>솔직하고 진정성 있게 이야기해주세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담사님의 질문에 최대한 구체적으로 답변해주세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>궁금한 점이 있으면 언제든지 물어보세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: 'none'
-                }}
-              >
-                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담 내용은 비밀이 보장됩니다</span>
-              </li>
+            <ul className="mg-v2-list-bullet">
+              {precautions.map((item, index) => (
+                <li key={index} className="mg-v2-list-bullet-item">
+                  <item.icon size={16} className="mg-v2-color-success mg-v2-icon-inline" />
+                  {item.text}
+                </li>
+              ))}
             </ul>
           </div>
 
-          <div className="consultation-guide-intro">
-            <h3 
-              style={{
-                margin: '0 0 16px 0',
-                fontSize: 'var(--font-size-lg)',
-                fontWeight: '600',
-                color: '#2c3e50',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                paddingBottom: '8px',
-                borderBottom: '2px solid #e9ecef'
-              }}
-            >
-              <i className="bi bi-lightbulb" style={{ fontSize: 'var(--font-size-base)' }}></i>
+          {/* 효과적인 상담을 위한 팁 */}
+          <div className="mg-v2-form-section mg-v2-mb-lg">
+            <h3 className="mg-v2-section-title mg-v2-mb-md">
+              <Lightbulb size={20} className="mg-v2-section-title-icon" />
               효과적인 상담을 위한 팁
             </h3>
-            <ul 
-              style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0
-              }}
-            >
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-star" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담 후 받은 조언을 일상에서 실천해보세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-star" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담 일지를 작성해보세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-star" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>규칙적인 상담을 통해 지속적인 변화를 만들어가세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: 'none'
-                }}
-              >
-                <i className="bi bi-star" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담사님과의 신뢰 관계를 쌓아가세요</span>
-              </li>
+            <ul className="mg-v2-list-bullet">
+              {tips.map((item, index) => (
+                <li key={index} className="mg-v2-list-bullet-item">
+                  <item.icon size={16} className="mg-v2-color-success mg-v2-icon-inline" />
+                  {item.text}
+                </li>
+              ))}
             </ul>
           </div>
 
-          <div className="consultation-guide-intro">
-            <h3 
-              style={{
-                margin: '0 0 16px 0',
-                fontSize: 'var(--font-size-lg)',
-                fontWeight: '600',
-                color: '#2c3e50',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                paddingBottom: '8px',
-                borderBottom: '2px solid #e9ecef'
-              }}
-            >
-              <i className="bi bi-telephone" style={{ fontSize: 'var(--font-size-base)' }}></i>
+          {/* 기술적 준비사항 */}
+          <div className="mg-v2-form-section mg-v2-mb-lg">
+            <h3 className="mg-v2-section-title mg-v2-mb-md">
+              <Phone size={20} className="mg-v2-section-title-icon" />
               기술적 준비사항
             </h3>
-            <ul 
-              style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0
-              }}
-            >
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-wifi" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>안정적인 인터넷 연결을 확인해주세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-camera-video" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>카메라와 마이크가 정상 작동하는지 확인해주세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: '1px solid #f8f9fa'
-                }}
-              >
-                <i className="bi bi-battery-full" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>기기 배터리를 충분히 충전해주세요</span>
-              </li>
-              <li 
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: 'none'
-                }}
-              >
-                <i className="bi bi-headphones" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>이어폰이나 헤드셋을 사용하면 더 좋습니다</span>
-              </li>
+            <ul className="mg-v2-list-bullet">
+              {technicalItems.map((item, index) => (
+                <li key={index} className="mg-v2-list-bullet-item">
+                  <item.icon size={16} className="mg-v2-color-success mg-v2-icon-inline" />
+                  {item.text}
+                </li>
+              ))}
             </ul>
           </div>
 
-          <div style={{ marginBottom: '0' }}>
-            <h3 
-              style={{
-                margin: '0 0 16px 0',
-                fontSize: 'var(--font-size-lg)',
-                fontWeight: '600',
-                color: '#2c3e50',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                paddingBottom: '8px',
-                borderBottom: '2px solid #e9ecef'
-              }}
-            >
-              <i className="bi bi-question-circle" style={{ fontSize: 'var(--font-size-base)' }}></i>
+          {/* 자주 묻는 질문 */}
+          <div className="mg-v2-form-section">
+            <h3 className="mg-v2-section-title mg-v2-mb-md">
+              <Info size={20} className="mg-v2-section-title-icon" />
               자주 묻는 질문
             </h3>
-            <div 
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px'
-              }}
-            >
-              <div 
-                style={{
-                  background: '#f8f9fa',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  borderLeft: '4px solid #17a2b8'
-                }}
-              >
-                <div 
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '8px',
-                    fontWeight: '600',
-                    color: '#2c3e50',
-                    fontSize: 'var(--font-size-sm)'
-                  }}
-                >
-                  <i className="bi bi-question-circle-fill" style={{ color: '#17a2b8', fontSize: 'var(--font-size-sm)' }}></i>
-                  <span>상담 시간을 변경할 수 있나요?</span>
+            <div className="mg-v2-faq-list">
+              {faqs.map((faq, index) => (
+                <div key={index} className="mg-v2-info-box">
+                  <div className="mg-v2-faq-title">
+                    <Circle size={14} className="mg-v2-color-primary mg-v2-icon-inline" />
+                    {faq.question}
+                  </div>
+                  <div className="mg-v2-faq-answer">
+                    {faq.answer}
+                  </div>
                 </div>
-                <div 
-                  style={{
-                    color: '#6c757d',
-                    fontSize: 'var(--font-size-sm)',
-                    lineHeight: '1.5',
-                    marginLeft: '22px'
-                  }}
-                >
-                  상담 시간 24시간 전까지는 변경 가능합니다. 상담사님께 메시지를 보내주세요.
-                </div>
-              </div>
-              <div 
-                style={{
-                  background: '#f8f9fa',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  borderLeft: '4px solid #17a2b8'
-                }}
-              >
-                <div 
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '8px',
-                    fontWeight: '600',
-                    color: '#2c3e50',
-                    fontSize: 'var(--font-size-sm)'
-                  }}
-                >
-                  <i className="bi bi-question-circle-fill" style={{ color: '#17a2b8', fontSize: 'var(--font-size-sm)' }}></i>
-                  <span>상담 내용이 비밀이 보장되나요?</span>
-                </div>
-                <div 
-                  style={{
-                    color: '#6c757d',
-                    fontSize: 'var(--font-size-sm)',
-                    lineHeight: '1.5',
-                    marginLeft: '22px'
-                  }}
-                >
-                  네, 상담사님은 상담 내용에 대해 비밀을 지킬 의무가 있습니다.
-                </div>
-              </div>
-              <div 
-                style={{
-                  background: '#f8f9fa',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  borderLeft: '4px solid #17a2b8'
-                }}
-              >
-                <div 
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '8px',
-                    fontWeight: '600',
-                    color: '#2c3e50',
-                    fontSize: 'var(--font-size-sm)'
-                  }}
-                >
-                  <i className="bi bi-question-circle-fill" style={{ color: '#17a2b8', fontSize: 'var(--font-size-sm)' }}></i>
-                  <span>상담을 건너뛸 수 있나요?</span>
-                </div>
-                <div 
-                  style={{
-                    color: '#6c757d',
-                    fontSize: 'var(--font-size-sm)',
-                    lineHeight: '1.5',
-                    marginLeft: '22px'
-                  }}
-                >
-                  상담을 건너뛰면 회기가 차감됩니다. 꼭 필요한 경우 상담사님께 미리 연락해주세요.
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
-        <div 
-          style={{
-            padding: '24px 32px',
-            borderTop: '1px solid #e9ecef',
-            background: '#f8f9fa',
-            display: 'flex',
-            justifyContent: 'center'
-          }}
-        >
+        <div className="mg-v2-modal-footer">
           <button 
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 24px',
-              fontSize: 'var(--font-size-base)',
-              fontWeight: '600',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              background: '#17a2b8',
-              color: 'white',
-              transition: 'all 0.3s ease'
-            }}
+            className="mg-v2-btn mg-v2-btn--primary"
             onClick={onClose}
-            onMouseEnter={(e) => {
-              e.target.style.background = '#138496';
-              e.target.style.transform = 'translateY(-1px)';
-              e.target.style.boxShadow = '0 4px 12px rgba(23, 162, 184, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = '#17a2b8';
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = 'none';
-            }}
           >
-            <i className="bi bi-check-lg"></i>
+            <Check size={20} className="mg-v2-icon-inline" />
             확인했습니다
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

@@ -150,24 +150,24 @@ const SessionExtensionModal = ({
 
     return ReactDOM.createPortal(
         <div className="mg-v2-modal-overlay" onClick={handleClose}>
-            <div className="mg-v2-modal mg-v2-modal-lg session-extension-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-v2-modal-header session-extension-header">
-                    <div className="session-extension-header-content">
-                        <div className="session-extension-icon">
+            <div className="mg-v2-modal mg-v2-modal-lg" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header">
+                    <div className="mg-v2-modal-header-content">
+                        <div className="mg-v2-modal-icon">
                             <Plus size={28} />
                         </div>
-                        <div className="session-extension-title-area">
-                            <h3 className="mg-v2-modal-title session-extension-title">
+                        <div className="mg-v2-modal-title-area">
+                            <h3 className="mg-v2-modal-title">
                                 회기 추가 요청
                             </h3>
-                            <p className="session-extension-subtitle">
+                            <p className="mg-v2-modal-subtitle">
                                 새로운 패키지를 선택하고 회기를 추가하세요
                             </p>
                         </div>
                     </div>
                     <button 
                         type="button"
-                        className="mg-v2-modal-close session-extension-close"
+                        className="mg-v2-modal-close"
                         onClick={handleClose}
                         disabled={isLoading}
                     >
@@ -175,45 +175,47 @@ const SessionExtensionModal = ({
                     </button>
                 </div>
                 
-                <div className="mg-v2-modal-content session-extension-content">
+                <div className="mg-v2-modal-content">
                     {/* 매칭 정보 표시 */}
-                    <div className="session-extension-mapping-info">
-                        <div className="mapping-info-header">
+                    <div className="mg-v2-card mg-v2-card--outlined">
+                        <div className="mg-v2-card-header">
                             <Calendar size={20} />
-                            <h4>현재 매칭 정보</h4>
+                            <h4 className="mg-v2-card-title">현재 매칭 정보</h4>
                         </div>
-                        <div className="mapping-info-grid">
-                            <div className="mapping-info-item">
-                                <div className="mapping-info-label">내담자</div>
-                                <div className="mapping-info-value">
-                                    {mapping.client?.name || mapping.clientName || '알 수 없음'}
+                        <div className="mg-v2-card-body">
+                            <div className="mg-v2-form-grid">
+                                <div className="mg-v2-form-group">
+                                    <label className="mg-v2-label">내담자</label>
+                                    <div className="mg-v2-text-primary">
+                                        {mapping.client?.name || mapping.clientName || '알 수 없음'}
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="mapping-info-item">
-                                <div className="mapping-info-label">상담사</div>
-                                <div className="mapping-info-value">
-                                    {mapping.consultant?.name || mapping.consultantName || '알 수 없음'}
+                                <div className="mg-v2-form-group">
+                                    <label className="mg-v2-label">상담사</label>
+                                    <div className="mg-v2-text-primary">
+                                        {mapping.consultant?.name || mapping.consultantName || '알 수 없음'}
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="mapping-info-item">
-                                <div className="mapping-info-label">현재 회기</div>
-                                <div className="mapping-info-value">
-                                    <span className="session-current">{mapping.usedSessions || 0}</span>
-                                    <span className="session-separator">/</span>
-                                    <span className="session-total">{mapping.totalSessions || mapping.package?.sessions || 0}</span>
-                                    <span className="session-unit">회기</span>
+                                <div className="mg-v2-form-group">
+                                    <label className="mg-v2-label">현재 회기</label>
+                                    <div className="mg-v2-text-primary mg-v2-font-weight-semibold">
+                                        <span>{mapping.usedSessions || 0}</span>
+                                        <span className="mg-v2-text-secondary">/</span>
+                                        <span>{mapping.totalSessions || mapping.package?.sessions || 0}</span>
+                                        <span className="mg-v2-text-secondary">회기</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div className="session-extension-form-section">
-                        <div className="form-section-header">
-                            <h4>회기 추가 정보</h4>
-                            <p>새로운 패키지를 선택하고 결제 정보를 입력하세요</p>
+                    <div className="mg-v2-form-section">
+                        <div className="mg-v2-section-header">
+                            <h4 className="mg-v2-section-title">회기 추가 정보</h4>
+                            <p className="mg-v2-section-subtitle">새로운 패키지를 선택하고 결제 정보를 입력하세요</p>
                         </div>
                         
-                        <form onSubmit={handleSubmit} className="session-extension-form">
+                        <form onSubmit={handleSubmit} className="mg-v2-form">
                             {/* 패키지 선택 */}
                             <PackageSelector
                                 value={selectedPackage}
@@ -290,10 +292,10 @@ const SessionExtensionModal = ({
                 </div>
                 
                 {/* 모달 액션 버튼 */}
-                <div className="mg-v2-modal-footer session-extension-footer">
+                <div className="mg-v2-modal-footer">
                     <button 
                         type="button"
-                        className="mg-v2-button mg-v2-button-secondary session-extension-cancel"
+                        className="mg-v2-button mg-v2-button-secondary"
                         onClick={handleClose}
                         disabled={isLoading}
                     >
@@ -301,7 +303,7 @@ const SessionExtensionModal = ({
                     </button>
                     <button 
                         type="submit"
-                        className="mg-v2-button mg-v2-button-primary session-extension-submit"
+                        className="mg-v2-button mg-v2-button-primary"
                         onClick={handleSubmit}
                         disabled={isLoading || additionalSessions <= 0}
                     >

@@ -699,20 +699,8 @@ const TimeSlotGrid = ({
                     <span className="mg-v2-legend-color mg-v2-legend-color--unavailable"></span>
                     <span>사용 불가</span>
                 </div>
-                <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '6px', 
-                    fontSize: 'var(--font-size-xs)', 
-                    color: '#495057' 
-                }}>
-                    <span style={{ 
-                        width: '12px', 
-                        height: '12px', 
-                        backgroundColor: '#28a745', 
-                        borderRadius: '50%',
-                        display: 'inline-block'
-                    }}></span>
+                <div className="mg-v2-legend-item">
+                    <span className="mg-v2-legend-color mg-v2-legend-color--selected"></span>
                     <span>선택됨</span>
                 </div>
             </div>
@@ -849,42 +837,16 @@ const TimeSlotGrid = ({
             </div>
 
             {timeSlots.length === 0 && (
-                <div style={{ 
-                    textAlign: 'center', 
-                    padding: '40px 20px', 
-                    color: '#6c757d' 
-                }}>
-                    <p style={{ 
-                        margin: '0 0 8px 0', 
-                        fontSize: 'var(--font-size-base)', 
-                        fontWeight: '500' 
-                    }}>사용 가능한 시간이 없습니다.</p>
-                    <small style={{ 
-                        fontSize: 'var(--font-size-sm)', 
-                        opacity: '0.8' 
-                    }}>상담 시간과 휴식 시간을 고려한 결과입니다.</small>
+                <div className="mg-v2-empty-state-centered">
+                    <p className="mg-v2-empty-state-text">사용 가능한 시간이 없습니다.</p>
+                    <small className="mg-v2-empty-state-subtext">상담 시간과 휴식 시간을 고려한 결과입니다.</small>
                 </div>
             )}
 
             {existingSchedules.length > 0 && (
-                <div style={{ 
-                    marginTop: '20px', 
-                    padding: '16px', 
-                    backgroundColor: '#f8f9fa', 
-                    borderRadius: '8px', 
-                    border: '1px solid #e9ecef' 
-                }}>
-                    <h6 style={{ 
-                        margin: '0 0 12px 0', 
-                        color: '#495057', 
-                        fontSize: 'var(--font-size-sm)', 
-                        fontWeight: '600' 
-                    }}>기존 스케줄</h6>
-                    <div style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        gap: '8px' 
-                    }}>
+                <div className="mg-v2-schedule-info-box">
+                    <h6 className="mg-v2-schedule-info-title">기존 스케줄</h6>
+                    <div className="mg-v2-schedule-list">
                         {existingSchedules.map(schedule => (
                             <div key={schedule.id} style={{ 
                                 display: 'flex', 

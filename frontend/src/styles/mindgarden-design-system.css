@@ -12251,6 +12251,23 @@ body {
     border-radius: var(--border-radius-sm);
     cursor: pointer;
     font-size: var(--font-size-sm);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.mg-v2-quick-add-button:hover:not(:disabled) {
+    background-color: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.mg-v2-quick-add-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.mg-v2-quick-add-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .mg-v2-quick-mapping-avatar {
@@ -12273,6 +12290,17 @@ body {
     border-radius: var(--border-radius-md);
     padding: var(--spacing-md);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.mg-v2-quick-mapping-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+    transform: translateY(-2px);
 }
 
 .mg-v2-quick-mapping-client {

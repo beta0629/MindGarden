@@ -116,7 +116,7 @@ public class AdminController {
                 "success", false,
                 "message", "전체 상담사 통계 조회에 실패했습니다: " + e.getMessage()
             ));
-       更大的
+        }
     }
     
     /**

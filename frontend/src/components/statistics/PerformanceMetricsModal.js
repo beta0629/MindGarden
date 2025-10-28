@@ -70,7 +70,8 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                 branchCode: branchCode || ''
             });
 
-            const response = await apiGet(`/api/statistics/performance?${params}`);
+            // 임시: 사용 가능한 API 사용
+            const response = await apiGet(`/api/admin/statistics/overall?${params}`);
             
             if (response && response.success !== false) {
                 setMetrics(response.data);

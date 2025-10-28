@@ -13072,6 +13072,7 @@ body {
 .mg-v2-legend-color {
     width: var(--icon-size-xs);
     height: var(--icon-size-xs);
+    background-color: var(--legend-color, #6c757d);
     border-radius: var(--border-radius-sm);
     flex-shrink: 0;
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -15611,6 +15612,14 @@ body {
 .mg-v2-pt-xl { padding-top: 60px; }
 .mg-v2-px-xxl { padding-left: 40px; padding-right: 40px; }
 .mg-v2-mt-md { margin-top: 20px; }
+
+/* Consultant Color */
+.mg-v2-consultant-color {
+    width: 12px;
+    height: 12px;
+    background-color: var(--consultant-color, #007bff);
+    border-radius: 50%;
+}
 
 /* Icon Size */
 .mg-v2-text-xl { font-size: var(--font-size-xl); }

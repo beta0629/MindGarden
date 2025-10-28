@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
+import { FileText, XCircle, Save, CheckCircle, User, AlertTriangle, Clock, Target } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
@@ -412,294 +414,96 @@ const ConsultationLogModal = ({
 
   if (!isOpen) return null;
 
-  // 컴포넌트 스타일
-  const styles = {
-    modalOverlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 10000,
-      padding: '20px'
-    },
-    modalContent: {
-      backgroundColor: '#fff',
-      borderRadius: '12px',
-      width: '95%',
-      maxWidth: '1200px',
-      maxHeight: '90vh',
-      overflowY: 'auto',
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-      position: 'relative'
-    },
-    header: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '20px 24px',
-      borderBottom: '1px solid #e9ecef',
-      backgroundColor: '#f8f9fa',
-      borderRadius: '12px 12px 0 0'
-    },
-    headerTitle: {
-      fontSize: 'var(--font-size-xl)',
-      fontWeight: '600',
-      color: '#2c3e50',
-      margin: 0
-    },
-    closeBtn: {
-      background: 'none',
-      border: 'none',
-      fontSize: 'var(--font-size-xxl)',
-      cursor: 'pointer',
-      color: '#6c757d',
-      padding: '4px',
-      borderRadius: '4px',
-      transition: 'all 0.2s ease'
-    },
-    content: {
-      padding: '24px'
-    },
-    clientInfo: {
-      backgroundColor: '#f8f9fa',
-      borderRadius: '8px',
-      padding: '16px',
-      marginBottom: '24px',
-      border: '1px solid #e9ecef'
-    },
-    clientInfoTitle: {
-      fontSize: 'var(--font-size-base)',
-      fontWeight: '600',
-      color: '#495057',
-      marginBottom: '12px'
-    },
-    clientInfoGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: '16px'
-    },
-    clientInfoItem: {
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '12px',
-      backgroundColor: '#f8f9fa',
-      borderRadius: '8px',
-      border: '1px solid #e9ecef'
-    },
-    clientInfoLabel: {
-      fontSize: 'var(--font-size-xs)',
-      color: '#6c757d',
-      marginBottom: '6px',
-      fontWeight: '500',
-      textTransform: 'uppercase',
-      letterSpacing: '0.5px'
-    },
-    clientInfoValue: {
-      fontSize: 'var(--font-size-sm)',
-      color: '#212529',
-      fontWeight: '600',
-      wordBreak: 'break-word'
-    },
-    formCard: {
-      backgroundColor: '#fff',
-      borderRadius: '8px',
-      padding: '20px',
-      border: '1px solid #e9ecef'
-    },
-    formTitle: {
-      fontSize: 'var(--font-size-lg)',
-      fontWeight: '600',
-      color: '#2c3e50',
-      marginBottom: '20px',
-      paddingBottom: '12px',
-      borderBottom: '2px solid #007bff'
-    },
-    formGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      gap: '20px'
-    },
-    formGroup: {
-      display: 'flex',
-      flexDirection: 'column'
-    },
-    formLabel: {
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '600',
-      color: '#495057',
-      marginBottom: '8px'
-    },
-    formInput: {
-      padding: '10px 12px',
-      border: '2px solid #e9ecef',
-      borderRadius: '6px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
-      color: '#495057',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box'
-    },
-    formSelect: {
-      padding: '10px 12px',
-      border: '2px solid #e9ecef',
-      borderRadius: '6px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
-      color: '#495057',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box'
-    },
-    formTextarea: {
-      padding: '10px 12px',
-      border: '2px solid #e9ecef',
-      borderRadius: '6px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
-      color: '#495057',
-      minHeight: '80px',
-      resize: 'vertical',
-      fontFamily: 'inherit',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box'
-    },
-    buttonGroup: {
-      display: 'flex',
-      gap: '12px',
-      justifyContent: 'flex-end',
-      marginTop: '24px',
-      paddingTop: '20px',
-      borderTop: '1px solid #e9ecef'
-    },
-    button: {
-      padding: '12px 24px',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      border: 'none',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    primaryButton: {
-      backgroundColor: '#007bff',
-      color: '#fff'
-    },
-    successButton: {
-      backgroundColor: '#28a745',
-      color: '#fff'
-    },
-    secondaryButton: {
-      backgroundColor: '#6c757d',
-      color: '#fff'
-    },
-    loadingOverlay: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999
-    }
-  };
+  const portalTarget = document.body || document.createElement('div');
 
   if (loading) {
-    return (
-      <div className="consultation-log-modal-overlay">
-        <div className="consultation-log-modal-content">
-          <div className="consultation-log-modal-loading">
-            <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." type="inline" />
+    return ReactDOM.createPortal(
+      <div className="mg-v2-modal-overlay">
+        <div className="mg-v2-modal mg-v2-modal-large">
+          <div className="mg-v2-modal-body">
+            <div className="mg-v2-loading-overlay">
+              <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." type="inline" />
+            </div>
           </div>
         </div>
-      </div>
+      </div>,
+      portalTarget
     );
   }
 
-  return (
-    <div style={styles.modalOverlay}>
-      <div style={styles.modalContent}>
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
         {/* 헤더 */}
-        <div style={styles.header}>
-          <h1 style={styles.headerTitle}>
-            📝 상담일지 작성
-            {isEditMode && <span style={{...styles.statusBadge, backgroundColor: '#17a2b8', color: '#fff'}}>수정 모드</span>}
-          </h1>
-          <button style={styles.closeBtn} onClick={onClose}>×</button>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <FileText size={28} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">
+              상담일지 작성
+              {isEditMode && <span className="mg-v2-badge mg-v2-badge--info">수정 모드</span>}
+            </h2>
+          </div>
+          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
+            <XCircle size={24} />
+          </button>
         </div>
 
-        <div style={styles.content}>
+        <div className="mg-v2-modal-body">
           {/* 필수값 안내 */}
-          <div style={{
-            backgroundColor: '#fff3cd',
-            border: '1px solid #ffeaa7',
-            borderRadius: '8px',
-            padding: '12px',
-            marginBottom: '20px',
-            fontSize: 'var(--font-size-sm)',
-            color: '#856404'
-          }}>
-            <div style={{display: 'flex', alignItems: 'center', marginBottom: '8px'}}>
-              <span style={{fontSize: 'var(--font-size-base)', marginRight: '8px'}}>⚠️</span>
+          <div className="mg-v2-alert mg-v2-alert--warning mg-v2-mb-md">
+            <AlertTriangle size={20} className="mg-v2-section-title-icon" />
+            <div>
               <strong>필수 입력 항목 안내</strong>
-            </div>
-            <div style={{marginLeft: '24px', lineHeight: '1.5'}}>
-              <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span> 표시된 항목은 반드시 입력해야 합니다.
-              <br />
-              필수 항목: 세션 시간, 내담자 상태, 주요 이슈, 개입 방법, 내담자 반응, 위험도 평가, 진행 평가
+              <p>
+                <span className="mg-v2-form-label-required">*</span> 표시된 항목은 반드시 입력해야 합니다.
+                필수 항목: 세션 시간, 내담자 상태, 주요 이슈, 개입 방법, 내담자 반응, 위험도 평가, 진행 평가
+              </p>
             </div>
           </div>
 
           {/* 내담자 정보 */}
           {client && (
-            <div style={styles.clientInfo}>
-              <h3 style={styles.clientInfoTitle}>👤 내담자 정보</h3>
-              <div style={styles.clientInfoGrid}>
-                <div style={styles.clientInfoItem}>
-                  <span style={styles.clientInfoLabel}>이름</span>
-                  <span style={styles.clientInfoValue}>{client.name}</span>
+            <div className="mg-v2-info-box mg-v2-mb-lg">
+              <h3 className="mg-v2-info-box-title">
+                <User size={20} className="mg-v2-section-title-icon" />
+                내담자 정보
+              </h3>
+              <div className="mg-v2-info-grid">
+                <div className="mg-v2-info-item">
+                  <span className="mg-v2-info-label">이름</span>
+                  <span className="mg-v2-info-value">{client.name}</span>
                 </div>
-                <div style={styles.clientInfoItem}>
-                  <span style={styles.clientInfoLabel}>나이</span>
-                  <span style={styles.clientInfoValue}>{client.age ? `${client.age}세` : '미입력'}</span>
+                <div className="mg-v2-info-item">
+                  <span className="mg-v2-info-label">나이</span>
+                  <span className="mg-v2-info-value">{client.age ? `${client.age}세` : '미입력'}</span>
                 </div>
-                <div style={styles.clientInfoItem}>
-                  <span style={styles.clientInfoLabel}>성별</span>
-                  <span style={styles.clientInfoValue}>
+                <div className="mg-v2-info-item">
+                  <span className="mg-v2-info-label">성별</span>
+                  <span className="mg-v2-info-value">
                     {client.gender === 'MALE' ? '남성' : 
                      client.gender === 'FEMALE' ? '여성' : 
                      client.gender || '미입력'}
                   </span>
                 </div>
-                <div style={styles.clientInfoItem}>
-                  <span style={styles.clientInfoLabel}>연락처</span>
-                  <span style={styles.clientInfoValue}>{client.phone || '미입력'}</span>
+                <div className="mg-v2-info-item">
+                  <span className="mg-v2-info-label">연락처</span>
+                  <span className="mg-v2-info-value">{client.phone || '미입력'}</span>
                 </div>
-                <div style={styles.clientInfoItem}>
-                  <span style={styles.clientInfoLabel}>주소</span>
-                  <span style={styles.clientInfoValue}>{client.address || '미입력'}</span>
+                <div className="mg-v2-info-item">
+                  <span className="mg-v2-info-label">주소</span>
+                  <span className="mg-v2-info-value">{client.address || '미입력'}</span>
                 </div>
-                <div style={styles.clientInfoItem}>
-                  <span style={styles.clientInfoLabel}>이메일</span>
-                  <span style={styles.clientInfoValue}>{client.email || '미입력'}</span>
+                <div className="mg-v2-info-item">
+                  <span className="mg-v2-info-label">이메일</span>
+                  <span className="mg-v2-info-value">{client.email || '미입력'}</span>
                 </div>
-                <div style={styles.clientInfoItem}>
-                  <span style={styles.clientInfoLabel}>상담 목적</span>
-                  <span style={styles.clientInfoValue}>{client.consultationPurpose || '미입력'}</span>
+                <div className="mg-v2-info-item">
+                  <span className="mg-v2-info-label">상담 목적</span>
+                  <span className="mg-v2-info-value">{client.consultationPurpose || '미입력'}</span>
                 </div>
-                <div style={styles.clientInfoItem}>
-                  <span style={styles.clientInfoLabel}>상담 유형</span>
-                  <span style={styles.clientInfoValue}>
+                <div className="mg-v2-info-item">
+                  <span className="mg-v2-info-label">상담 유형</span>
+                  <span className="mg-v2-info-value">
                     {scheduleData.consultationType === 'INDIVIDUAL' ? '개인상담' :
                      scheduleData.consultationType === 'GROUP' ? '그룹상담' :
                      scheduleData.consultationType === 'COUPLE' ? '부부상담' :
@@ -712,22 +516,23 @@ const ConsultationLogModal = ({
           )}
 
           {/* 상담일지 작성 폼 */}
-          <div style={styles.formCard}>
-            <h2 style={styles.formTitle}>
-              📋 상담일지 작성
-            </h2>
+          <div className="mg-v2-form-section">
+            <h3 className="mg-v2-section-title">
+              <FileText size={20} className="mg-v2-section-title-icon" />
+              상담일지 작성
+            </h3>
             
-            <div style={styles.formGrid}>
+            <div className="mg-v2-form-grid">
               {/* 기본 정보 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>세션 일자 *</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">세션 일자 *</label>
                 <input
                   type="date"
                   name="sessionDate"
                   value={formData.sessionDate}
                   onChange={handleInputChange}
+                  className="mg-v2-form-input"
                   style={{
-                    ...styles.formInput,
                     backgroundColor: '#f8f9fa',
                     color: '#6c757d',
                     cursor: 'not-allowed'
@@ -740,8 +545,8 @@ const ConsultationLogModal = ({
                 </small>
               </div>
               
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>세션 번호</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">세션 번호</label>
                 <input
                   type="number"
                   name="sessionNumber"
@@ -749,8 +554,8 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   min="1"
                   disabled={true}
+                  className="mg-v2-form-input"
                   style={{
-                    ...styles.formInput,
                     backgroundColor: '#f5f5f5',
                     color: '#666',
                     cursor: 'not-allowed'
@@ -761,8 +566,8 @@ const ConsultationLogModal = ({
                 </small>
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">
                   세션 시간 (분) <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
                 </label>
                 <input
@@ -772,8 +577,8 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   min="1"
                   max="180"
+                  className="mg-v2-form-input"
                   style={{
-                    ...styles.formInput,
                     borderColor: validationErrors.sessionDurationMinutes ? '#dc3545' : '#ced4da'
                   }}
                   required
@@ -785,15 +590,14 @@ const ConsultationLogModal = ({
                 )}
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>세션 완료 여부</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">세션 완료 여부</label>
                 <select
                   name="isSessionCompleted"
                   value={formData.isSessionCompleted}
                   onChange={handleInputChange}
                   disabled={true}
                   style={{
-                    ...styles.formSelect,
                     backgroundColor: '#f5f5f5',
                     color: '#666',
                     cursor: 'not-allowed'
@@ -811,8 +615,8 @@ const ConsultationLogModal = ({
               </div>
 
               {/* 내담자 상태 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">
                   내담자 상태 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
                 </label>
                 <textarea
@@ -821,7 +625,6 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   placeholder="내담자의 현재 상태를 기록해주세요."
                   style={{
-                    ...styles.formTextarea,
                     borderColor: validationErrors.clientCondition ? '#dc3545' : '#ced4da'
                   }}
                   required
@@ -834,8 +637,8 @@ const ConsultationLogModal = ({
               </div>
 
               {/* 주요 이슈 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">
                   주요 이슈 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
                 </label>
                 <textarea
@@ -844,7 +647,6 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   placeholder="이번 세션에서 다룬 주요 이슈를 기록해주세요."
                   style={{
-                    ...styles.formTextarea,
                     borderColor: validationErrors.mainIssues ? '#dc3545' : '#ced4da'
                   }}
                   required
@@ -857,8 +659,8 @@ const ConsultationLogModal = ({
               </div>
 
               {/* 개입 방법 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">
                   개입 방법 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
                 </label>
                 <textarea
@@ -867,7 +669,6 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   placeholder="사용한 상담 기법이나 개입 방법을 기록해주세요."
                   style={{
-                    ...styles.formTextarea,
                     borderColor: validationErrors.interventionMethods ? '#dc3545' : '#ced4da'
                   }}
                   required
@@ -880,8 +681,8 @@ const ConsultationLogModal = ({
               </div>
 
               {/* 내담자 반응 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">
                   내담자 반응 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
                 </label>
                 <textarea
@@ -890,7 +691,6 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   placeholder="내담자의 반응이나 변화를 기록해주세요."
                   style={{
-                    ...styles.formTextarea,
                     borderColor: validationErrors.clientResponse ? '#dc3545' : '#ced4da'
                   }}
                   required
@@ -903,43 +703,43 @@ const ConsultationLogModal = ({
               </div>
 
               {/* 다음 세션 계획 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>다음 세션 계획</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">다음 세션 계획</label>
                 <textarea
                   name="nextSessionPlan"
                   value={formData.nextSessionPlan}
                   onChange={handleInputChange}
                   placeholder="다음 세션에서 다룰 내용을 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
               {/* 과제 부여 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>과제 부여</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">과제 부여</label>
                 <textarea
                   name="homeworkAssigned"
                   value={formData.homeworkAssigned}
                   onChange={handleInputChange}
                   placeholder="부여한 과제나 숙제를 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>과제 제출 기한</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">과제 제출 기한</label>
                 <input
                   type="date"
                   name="homeworkDueDate"
                   value={formData.homeworkDueDate}
                   onChange={handleInputChange}
-                  style={styles.formInput}
+                  className="mg-v2-form-input"
                 />
               </div>
 
               {/* 위험도 평가 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">
                   위험도 평가 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
                 </label>
                 <select
@@ -948,7 +748,6 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   onClick={(e) => e.stopPropagation()}
                   style={{
-                    ...styles.formSelect,
                     borderColor: validationErrors.riskAssessment ? '#dc3545' : '#ced4da'
                   }}
                   disabled={loadingCodes}
@@ -968,31 +767,31 @@ const ConsultationLogModal = ({
                 )}
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>위험 요인</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">위험 요인</label>
                 <textarea
                   name="riskFactors"
                   value={formData.riskFactors}
                   onChange={handleInputChange}
                   placeholder="발견된 위험 요인을 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>응급 대응 계획</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">응급 대응 계획</label>
                 <textarea
                   name="emergencyResponsePlan"
                   value={formData.emergencyResponsePlan}
                   onChange={handleInputChange}
                   placeholder="응급 상황 시 대응 계획을 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
               {/* 진행 평가 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">
                   진행 평가 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
                 </label>
                 <textarea
@@ -1001,7 +800,6 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   placeholder="전반적인 진행 상황을 평가해주세요."
                   style={{
-                    ...styles.formTextarea,
                     borderColor: validationErrors.progressEvaluation ? '#dc3545' : '#ced4da'
                   }}
                   required
@@ -1013,8 +811,8 @@ const ConsultationLogModal = ({
                 )}
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>진행 점수 (0-100)</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">진행 점수 (0-100)</label>
                 <input
                   type="range"
                   name="progressScore"
@@ -1022,19 +820,19 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   min="0"
                   max="100"
-                  style={styles.formInput}
+                  className="mg-v2-form-input"
                 />
                 <span style={{fontSize: 'var(--font-size-xs)', color: '#6c757d'}}>{formData.progressScore}점</span>
               </div>
 
               {/* 목표 달성도 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>목표 달성도</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">목표 달성도</label>
                 <select
                   name="goalAchievement"
                   value={formData.goalAchievement}
                   onChange={handleInputChange}
-                  style={styles.formSelect}
+                  className="mg-v2-form-select"
                 >
                   {goalAchievementLevels.map(level => (
                     <option key={level.value} value={level.value}>
@@ -1044,136 +842,136 @@ const ConsultationLogModal = ({
                 </select>
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>목표 달성 세부사항</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">목표 달성 세부사항</label>
                 <textarea
                   name="goalAchievementDetails"
                   value={formData.goalAchievementDetails}
                   onChange={handleInputChange}
                   placeholder="목표 달성에 대한 구체적인 내용을 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
               {/* 상담사 관찰 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>상담사 관찰</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">상담사 관찰</label>
                 <textarea
                   name="consultantObservations"
                   value={formData.consultantObservations}
                   onChange={handleInputChange}
                   placeholder="내담자에 대한 관찰 내용을 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
               {/* 상담사 평가 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>상담사 평가</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">상담사 평가</label>
                 <textarea
                   name="consultantAssessment"
                   value={formData.consultantAssessment}
                   onChange={handleInputChange}
                   placeholder="전문적인 관점에서의 평가를 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
               {/* 특별 고려사항 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>특별 고려사항</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">특별 고려사항</label>
                 <textarea
                   name="specialConsiderations"
                   value={formData.specialConsiderations}
                   onChange={handleInputChange}
                   placeholder="특별히 고려해야 할 사항을 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
               {/* 의료 정보 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>의료 정보</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">의료 정보</label>
                 <textarea
                   name="medicalInformation"
                   value={formData.medicalInformation}
                   onChange={handleInputChange}
                   placeholder="관련 의료 정보를 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>복용 약물</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">복용 약물</label>
                 <textarea
                   name="medicationInfo"
                   value={formData.medicationInfo}
                   onChange={handleInputChange}
                   placeholder="복용 중인 약물 정보를 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
               {/* 가족 관계 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>가족 관계</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">가족 관계</label>
                 <textarea
                   name="familyRelationships"
                   value={formData.familyRelationships}
                   onChange={handleInputChange}
                   placeholder="가족 관계에 대한 정보를 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
               {/* 사회적 지지 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>사회적 지지</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">사회적 지지</label>
                 <textarea
                   name="socialSupport"
                   value={formData.socialSupport}
                   onChange={handleInputChange}
                   placeholder="사회적 지지 체계에 대한 정보를 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
               {/* 환경적 요인 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>환경적 요인</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">환경적 요인</label>
                 <textarea
                   name="environmentalFactors"
                   value={formData.environmentalFactors}
                   onChange={handleInputChange}
                   placeholder="환경적 요인에 대한 정보를 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
               {/* 미완료 사유 */}
               {!formData.isSessionCompleted && (
-                <div style={styles.formGroup}>
-                  <label style={styles.formLabel}>미완료 사유</label>
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">미완료 사유</label>
                   <textarea
                     name="incompletionReason"
                     value={formData.incompletionReason}
                     onChange={handleInputChange}
                     placeholder="세션이 미완료된 사유를 기록해주세요."
-                    style={styles.formTextarea}
+                    className="mg-v2-form-textarea"
                   />
                 </div>
               )}
 
               {/* 다음 세션 일정 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>다음 세션 일정</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">다음 세션 일정</label>
                 <input
                   type="date"
                   name="nextSessionDate"
                   value={formData.nextSessionDate}
                   onChange={handleInputChange}
+                  className="mg-v2-form-input"
                   style={{
-                    ...styles.formInput,
                     backgroundColor: '#f8f9fa',
                     color: '#6c757d',
                     cursor: 'not-allowed'
@@ -1186,35 +984,35 @@ const ConsultationLogModal = ({
               </div>
 
               {/* 후속 조치사항 */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>후속 조치사항</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">후속 조치사항</label>
                 <textarea
                   name="followUpActions"
                   value={formData.followUpActions}
                   onChange={handleInputChange}
                   placeholder="후속 조치가 필요한 사항을 기록해주세요."
-                  style={styles.formTextarea}
+                  className="mg-v2-form-textarea"
                 />
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>후속 조치 기한</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">후속 조치 기한</label>
                 <input
                   type="date"
                   name="followUpDueDate"
                   value={formData.followUpDueDate}
                   onChange={handleInputChange}
-                  style={styles.formInput}
+                  className="mg-v2-form-input"
                 />
               </div>
             </div>
 
             {/* 버튼 그룹 */}
-            <div style={styles.buttonGroup}>
+            <div className="mg-v2-modal-footer">
               <button
                 type="button"
                 onClick={onClose}
-                style={{...styles.button, ...styles.secondaryButton}}
+                className="mg-v2-btn mg-v2-btn--secondary"
                 disabled={saving}
               >
                 취소
@@ -1222,7 +1020,7 @@ const ConsultationLogModal = ({
               <button
                 type="button"
                 onClick={handleSave}
-                style={{...styles.button, ...styles.primaryButton}}
+                className="mg-v2-btn mg-v2-btn--primary"
                 disabled={saving}
               >
                 {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '💾 저장'}
@@ -1230,7 +1028,7 @@ const ConsultationLogModal = ({
               <button
                 type="button"
                 onClick={handleComplete}
-                style={{...styles.button, ...styles.successButton}}
+                className="mg-v2-btn mg-v2-btn--success"
                 disabled={saving}
               >
                 {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '✅ 완료'}
@@ -1239,7 +1037,8 @@ const ConsultationLogModal = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

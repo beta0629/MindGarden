@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { Briefcase, XCircle, Edit2, Save, Plus, Users, Target } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import './SpecialtyManagementModal.css';
 
 /**
  * 상담사 전문분야 관리 모달 컴포넌트
@@ -187,113 +188,124 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    return (
-        <div className="specialty-management-modal-overlay">
-            <div className="specialty-management-modal">
-                <div className="specialty-management-modal-header">
-                    <h3>🎯 상담사 전문분야 관리</h3>
-                    <button 
-                        className="specialty-management-close-btn"
-                        onClick={handleClose}
-                        disabled={loading}
-                    >
-                        ✕
+    const portalTarget = document.body || document.createElement('div');
+
+    return ReactDOM.createPortal(
+        <div className="mg-v2-modal-overlay" onClick={handleClose}>
+            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header">
+                    <div className="mg-v2-modal-title-wrapper">
+                        <Target size={28} className="mg-v2-modal-title-icon" />
+                        <h2 className="mg-v2-modal-title">상담사 전문분야 관리</h2>
+                    </div>
+                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading} aria-label="닫기">
+                        <XCircle size={24} />
                     </button>
                 </div>
 
-                <div className="specialty-management-modal-content">
+                <div className="mg-v2-modal-body">
                     {/* 통계 정보 */}
                     {statistics && (
-                        <div className="specialty-statistics">
-                            <h4>전문분야 통계</h4>
-                            <div className="stats-grid">
-                                <div className="stat-item">
-                                    <span className="stat-label">총 상담사</span>
-                                    <span className="stat-value">{statistics.totalConsultants || 0}명</span>
+                        <div className="mg-v2-info-box">
+                            <h4 className="mg-v2-info-box-title">
+                                <Briefcase size={20} className="mg-v2-section-title-icon" />
+                                전문분야 통계
+                            </h4>
+                            <div className="mg-v2-info-grid">
+                                <div className="mg-v2-info-item">
+                                    <span className="mg-v2-info-label">총 상담사</span>
+                                    <span className="mg-v2-info-value">{statistics.totalConsultants || 0}명</span>
                                 </div>
-                                <div className="stat-item">
-                                    <span className="stat-label">전문분야 설정</span>
-                                    <span className="stat-value">{statistics.specialtySet || 0}명</span>
+                                <div className="mg-v2-info-item">
+                                    <span className="mg-v2-info-label">전문분야 설정</span>
+                                    <span className="mg-v2-info-value">{statistics.specialtySet || 0}명</span>
                                 </div>
-                                <div className="stat-item">
-                                    <span className="stat-label">전문분야 종류</span>
-                                    <span className="stat-value">{statistics.specialtyTypes || 0}개</span>
+                                <div className="mg-v2-info-item">
+                                    <span className="mg-v2-info-label">전문분야 종류</span>
+                                    <span className="mg-v2-info-value">{statistics.specialtyTypes || 0}개</span>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    <div className="specialty-content">
+                    <div className="mg-v2-form-row">
                         {/* 상담사 목록 */}
-                        <div className="consultants-section">
-                            <div className="section-header">
-                                <h4>상담사 목록</h4>
-                                <div className="filter-controls">
-                                    <select
-                                        value={filterSpecialty}
-                                        onChange={(e) => setFilterSpecialty(e.target.value)}
-                                        disabled={loading}
-                                    >
-                                        <option value="">전체 전문분야</option>
-                                        {specialties.map(specialty => (
-                                            <option key={specialty.codeValue} value={specialty.codeLabel}>
-                                                {specialty.codeLabel}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                        <div className="mg-v2-form-section">
+                            <h3 className="mg-v2-section-title">
+                                <Users size={20} className="mg-v2-section-title-icon" />
+                                상담사 목록
+                            </h3>
+                            <div className="mg-v2-form-group">
+                                <label className="mg-v2-form-label">필터</label>
+                                <select
+                                    value={filterSpecialty}
+                                    onChange={(e) => setFilterSpecialty(e.target.value)}
+                                    disabled={loading}
+                                    className="mg-v2-form-select"
+                                >
+                                    <option value="">전체 전문분야</option>
+                                    {specialties.map(specialty => (
+                                        <option key={specialty.codeValue} value={specialty.codeLabel}>
+                                            {specialty.codeLabel}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
-                            <div className="consultants-list">
+                            <div className="mg-v2-list-container">
                                 {filteredConsultants.map(consultant => (
                                     <div 
                                         key={consultant.id} 
-                                        className={`consultant-item ${selectedConsultant?.id === consultant.id ? 'selected' : ''}`}
+                                        className={`mg-v2-list-item ${selectedConsultant?.id === consultant.id ? 'mg-v2-list-item--active' : ''}`}
                                         onClick={() => handleConsultantSelect(consultant)}
                                     >
-                                        <div className="consultant-info">
-                                            <div className="consultant-name">{consultant.name || consultant.username}</div>
-                                            <div className="consultant-specialty">
+                                        <div className="mg-v2-list-item-content">
+                                            <div className="mg-v2-list-item-title">{consultant.name || consultant.username}</div>
+                                            <div className="mg-v2-list-item-subtitle">
                                                 {consultant.specialty || '전문분야 미설정'}
                                             </div>
                                         </div>
-                                        <div className="consultant-actions">
-                                            <button 
-                                                className="btn-edit"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleConsultantSelect(consultant);
-                                                }}
-                                            >
-                                                ✏️
-                                            </button>
-                                        </div>
+                                        <button 
+                                            className="mg-v2-btn mg-v2-btn--icon"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleConsultantSelect(consultant);
+                                            }}
+                                        >
+                                            <Edit2 size={20} />
+                                        </button>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
                         {/* 전문분야 설정 */}
-                        <div className="specialty-section">
-                            <h4>전문분야 설정</h4>
+                        <div className="mg-v2-form-section">
+                            <h3 className="mg-v2-section-title">
+                                <Briefcase size={20} className="mg-v2-section-title-icon" />
+                                전문분야 설정
+                            </h3>
                             
                             {selectedConsultant ? (
-                                <div className="specialty-form">
-                                    <div className="form-group">
-                                        <label>선택된 상담사</label>
-                                        <div className="selected-consultant">
-                                            {selectedConsultant.name || selectedConsultant.username}
+                                <div className="mg-v2-form-container">
+                                    <div className="mg-v2-form-group">
+                                        <label className="mg-v2-form-label">선택된 상담사</label>
+                                        <div className="mg-v2-info-box">
+                                            <div className="mg-v2-info-text">
+                                                {selectedConsultant.name || selectedConsultant.username}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="form-group">
-                                        <label htmlFor="specialty">전문분야</label>
-                                        <div className="specialty-input-group">
+                                    <div className="mg-v2-form-group">
+                                        <label className="mg-v2-form-label" htmlFor="specialty">전문분야</label>
+                                        <div className="mg-v2-form-row">
                                             <select
                                                 id="specialty"
                                                 value={newSpecialty}
                                                 onChange={(e) => setNewSpecialty(e.target.value)}
                                                 disabled={loading}
+                                                className="mg-v2-form-select mg-v2-form-select--flex-1"
                                             >
                                                 <option value="">전문분야를 선택하세요</option>
                                                 {specialties.map(specialty => (
@@ -303,46 +315,55 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                                 ))}
                                             </select>
                                             <button 
-                                                className="btn-save"
+                                                className="mg-v2-btn mg-v2-btn--primary"
                                                 onClick={handleSaveSpecialty}
                                                 disabled={loading || !newSpecialty.trim()}
                                             >
+                                                <Save size={20} className="mg-v2-icon-inline" />
                                                 {loading ? '저장 중...' : '저장'}
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="no-selection">
+                                <div className="mg-v2-empty-state">
                                     <p>상담사를 선택해주세요.</p>
                                 </div>
                             )}
 
                             {/* 새 전문분야 추가 */}
-                            <div className="add-specialty-form">
-                                <h5>새 전문분야 추가</h5>
-                                <div className="add-specialty-input-group">
-                                    <input
-                                        type="text"
-                                        placeholder="새 전문분야를 입력하세요"
-                                        value={newSpecialty}
-                                        onChange={(e) => setNewSpecialty(e.target.value)}
-                                        disabled={loading}
-                                    />
-                                    <button 
-                                        className="btn-add"
-                                        onClick={handleAddSpecialty}
-                                        disabled={loading || !newSpecialty.trim()}
-                                    >
-                                        {loading ? '추가 중...' : '추가'}
-                                    </button>
+                            <div className="mg-v2-form-section mg-v2-mt-lg">
+                                <h4 className="mg-v2-section-title">
+                                    <Plus size={20} className="mg-v2-section-title-icon" />
+                                    새 전문분야 추가
+                                </h4>
+                                <div className="mg-v2-form-group">
+                                    <div className="mg-v2-form-row">
+                                        <input
+                                            type="text"
+                                            placeholder="새 전문분야를 입력하세요"
+                                            value={newSpecialty}
+                                            onChange={(e) => setNewSpecialty(e.target.value)}
+                                            disabled={loading}
+                                            className="mg-v2-form-input mg-v2-form-input--flex-1"
+                                        />
+                                        <button 
+                                            className="mg-v2-btn mg-v2-btn--secondary"
+                                            onClick={handleAddSpecialty}
+                                            disabled={loading || !newSpecialty.trim()}
+                                        >
+                                            <Plus size={20} className="mg-v2-icon-inline" />
+                                            {loading ? '추가 중...' : '추가'}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        portalTarget
     );
 };
 

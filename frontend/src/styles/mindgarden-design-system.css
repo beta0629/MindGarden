@@ -11996,9 +11996,32 @@ body {
     right: var(--spacing-md);
     background: none;
     border: none;
-    font-size: 24px;
+    padding: var(--spacing-xs);
     cursor: pointer;
     color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border-radius: var(--border-radius-sm);
+}
+
+.mg-v2-modal-close:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-primary);
+}
+
+.mg-v2-modal-close:active {
+    background-color: var(--color-bg-active);
+}
+
+.mg-v2-modal-close:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mg-v2-modal-close:disabled:hover {
+    background: none;
 }
 
 .mg-v2-modal-content {
@@ -12013,6 +12036,7 @@ body {
 }
 
 .mg-v2-modal-header {
+    position: relative;
     padding: var(--spacing-lg) var(--spacing-lg) 0;
     border-bottom: 1px solid var(--color-border-light);
     margin-bottom: var(--spacing-lg);
@@ -14294,6 +14318,230 @@ body {
   font-size: var(--font-size-lg);
   color: var(--color-text-secondary);
   margin-bottom: var(--spacing-md);
+}
+
+/* 아이콘 인라인 클래스 (하드코딩 제거) */
+.mg-v2-icon-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-right: var(--spacing-xs);
+  vertical-align: middle;
+}
+
+.mg-v2-icon-inline--lg {
+  gap: var(--spacing-sm);
+  margin-right: var(--spacing-sm);
+}
+
+/* 폼 레이블 아이콘 */
+.mg-v2-form-label-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: var(--spacing-xs);
+  vertical-align: middle;
+}
+
+/* 섹션 타이틀 아이콘 */
+.mg-v2-section-title-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: var(--spacing-xs);
+  vertical-align: middle;
+}
+
+/* 모달 타이틀 아이콘 */
+.mg-v2-modal-title-icon {
+  margin-right: var(--spacing-xs);
+}
+
+/* 폼 체크박스 그룹 */
+.mg-v2-form-checkbox-group {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.mg-v2-form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.mg-v2-form-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.mg-v2-form-checkbox input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+/* 로딩 오버레이 */
+.mg-v2-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  border-radius: inherit;
+}
+
+/* Flex-1 클래스 */
+.mg-v2-form-select--flex-1,
+.mg-v2-form-input--flex-1 {
+  flex: 1;
+}
+
+/* 폼 그리드 */
+.mg-v2-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-md);
+}
+
+/* 빈 상태 */
+.mg-v2-empty-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+}
+
+/* 하트 평가 */
+.mg-v2-heart-rating {
+  display: flex;
+  gap: var(--spacing-xs);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.mg-v2-heart-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  padding: var(--spacing-xs);
+}
+
+.mg-v2-heart-btn:hover {
+  transform: scale(1.2);
+}
+
+.mg-v2-heart-btn--active {
+  transform: scale(1.1);
+}
+
+/* 태그 그룹 */
+.mg-v2-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.mg-v2-tag {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-full);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+}
+
+.mg-v2-tag:hover {
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-color: var(--color-primary);
+}
+
+.mg-v2-tag--selected {
+  background: var(--color-primary);
+  color: var(--color-white);
+  border-color: var(--color-primary);
+}
+
+/* 중첩 모달 */
+.mg-v2-modal-overlay--nested {
+  z-index: 10001;
+}
+
+/* 폼 입력 그룹 (input + button) */
+.mg-v2-form-input-group {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+}
+
+.mg-v2-form-group--flex {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 폼 에러 메시지 */
+.mg-v2-form-error {
+  display: block;
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.mg-v2-form-input--error {
+  border-color: var(--color-danger);
+}
+
+.mg-v2-form-input--error:focus {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* 폼 행 (2개 컬럼) */
+.mg-v2-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+/* 버튼 아이콘 전용 */
+.mg-v2-btn--icon {
+  padding: var(--spacing-sm);
+  min-width: auto;
+  width: auto;
+}
+
+/* 리스트 아이템 설명 */
+.mg-v2-list-item-description {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* 라디오 버튼 색상 */
+.mg-v2-radio-color[data-color] {
+  background-color: attr(data-color);
+}
+.mg-v2-radio-color[data-color="#28a745"],
+.mg-v2-radio-color[data-color="#10b981"] {
+  background-color: #10b981;
+}
+.mg-v2-radio-color[data-color="#ffc107"],
+.mg-v2-radio-color[data-color="#fbbf24"] {
+  background-color: #fbbf24;
+}
+.mg-v2-radio-color[data-color="#dc3545"],
+.mg-v2-radio-color[data-color="#ef4444"] {
+  background-color: #ef4444;
 }
 
 /* 상담 기록 컨테이너 */

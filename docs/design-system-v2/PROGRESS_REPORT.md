@@ -10,7 +10,16 @@
 
 ### 완료율
 - **Admin Dashboard**: ✅ 100% 완료
-- **Admin 모달**: 🔄 70% 완료 (9/13개)
+- **Admin 모달**: ✅ 100% 완료 (14/14개)
+- **Consultant Dashboard**: ✅ 100% 완료
+- **Consultant 모달**: ✅ 100% 완료 (8/8개)
+- **Client Dashboard**: ✅ 100% 완료
+- **Client 모달**: ✅ 100% 완료 (1/1개)
+- **ERP 모달**: ✅ 1/1개 완료
+- **재무 모달**: ✅ 1/1개 완료
+- **통계 모달**: ✅ 1/1개 완료
+- **HQ 모달**: ✅ 1/1개 완료
+- **Schedule 모달**: ✅ 1/1개 완료
 - **디자인 시스템 컴포넌트**: ✅ 95% 완료
 
 ---
@@ -33,11 +42,119 @@
 - **SystemTools.js**: `mg-system-tool-card` + `lucide-react` 아이콘
 - **PermissionManagement.js**: `mg-permission-management` + 폼 컴포넌트
 
-### 2. Admin 모달 컴포넌트 (9/13개 완료)
+### 2. Admin 모달 컴포넌트 (14/14개 완료) ✅
+
+#### 🔄 진행 중인 모달
+- MappingPaymentModal (298줄)
+- ConsultantTransferModal (388줄)  
+- PartialRefundModal (410줄)
+- MappingEditModal (위치 확인 필요)
+
+### 3. Consultant Dashboard 모달 컴포넌트 (8/8개 완료) ✅
 
 #### ✅ 완료된 모달
 
-##### PaymentConfirmationModal
+##### ConsultantVacationModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (Calendar)
+- mg-v2- 클래스 적용
+- 하드코딩 완전 제거
+
+##### VacationModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (Calendar, Clock, CheckCircle, XCircle)
+- mg-v2- 클래스 적용
+- Flex-1 CSS 클래스로 변수화
+
+##### ClientInfoModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (User, Edit3, Save, Phone, Mail, Home, MapPin, MessageSquare, AlertCircle, FileText, XCircle, Clock)
+- mg-v2- 클래스 적용
+- **삭제된 파일**: `ClientInfoModal.css`
+
+##### ClientDetailModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 전체 적용
+- mg-v2- 클래스 적용
+
+##### MessageSendModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (MessageSquare, XCircle, Send, User, Bell, AlertTriangle)
+- mg-v2- 클래스 적용
+- 체크박스 그룹 CSS 추가
+
+##### EventModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (Calendar, XCircle, Save, Trash2, FileText, MessageSquare, AlertTriangle)
+- mg-v2- 클래스 적용
+
+##### SpecialtyManagementModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (Briefcase, XCircle, Edit2, Save, Plus, Users, Target)
+- mg-v2- 클래스 적용
+- **삭제된 파일**: `SpecialtyManagementModal.css`
+
+##### ConsultationLogModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (FileText, XCircle, Save, CheckCircle, User, AlertTriangle)
+- mg-v2- 클래스 적용
+- 모든 인라인 스타일 제거
+
+### 4. ERP 모달 (1/1개 완료) ✅
+
+#### ✅ ErpReportModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (FileBarChart, XCircle, Download, Calendar, Building, DollarSign, TrendingUp)
+- mg-v2- 클래스 적용
+- **삭제된 파일**: `ErpReportModal.css`
+
+### 5. 재무 모달 (1/1개 완료) ✅
+
+#### ✅ RecurringExpenseModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (RefreshCw, XCircle, Plus, Edit2, Trash2, DollarSign, Calendar, FileText)
+- mg-v2- 클래스 적용
+- 중첩 모달 지원 (폼)
+- **삭제된 파일**: `RecurringExpenseModal.css`
+
+### 6. 통계 모달 (1/1개 완료) ✅
+
+#### ✅ PerformanceMetricsModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (TrendingUp, XCircle, RefreshCw, Calendar, Building, BarChart, Target, DollarSign)
+- mg-v2- 클래스 적용
+- **삭제된 파일**: `PerformanceMetricsModal.css`
+
+### 7. HQ 모달 (1/1개 완료) ✅
+
+#### ✅ BranchRegistrationModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (Building, XCircle, Search, MapPin, Phone, Mail, Clock, Users, FileText, Plus)
+- mg-v2- 클래스 적용
+- React Bootstrap 완전 제거
+- 카카오 주소 API 통합
+- 폼 검증 시스템 적용
+
+### 8. Schedule 모달 (1/1개 완료) ✅
+
+#### ✅ DateActionModal
+- ReactDOM.createPortal 렌더링
+- lucide-react 아이콘 (Calendar, XCircle, FileText, Umbrella)
+- mg-v2- 클래스 적용
+- **삭제된 파일**: `DateActionModal.css`
+
+### 9. Consultant Dashboard ✅
+
+모든 모달이 디자인 시스템 v2.0을 적용 완료되었습니다.
+
+### 5. 클라이언트 Dashboard 모달
+
+#### 진행 예정
+- ConsultantRatingModal (UnifiedModal 사용 중)
+
+---
+
+## 🎨 디자인 시스템 확장
 - `lucide-react` 아이콘 (CreditCard, CheckCircle, XCircle)
 - `mg-modal`, `mg-form-group`, `mg-button` 적용
 - `ReactDOM.createPortal` 렌더링
@@ -81,7 +198,7 @@
 - PartialRefundModal (410줄)
 - MappingEditModal (위치 확인 필요)
 
-### 3. 디자인 시스템 확장
+### 5. 디자인 시스템 확장
 
 #### 추가된 CSS 컴포넌트
 

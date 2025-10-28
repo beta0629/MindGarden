@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { TrendingUp, XCircle, RefreshCw, Calendar, Building, BarChart, Target, DollarSign } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import './PerformanceMetricsModal.css';
 
 /**
  * 성과 지표 대시보드 모달 컴포넌트
@@ -131,48 +132,65 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    return (
-        <div className="performance-metrics-modal-overlay">
-            <div className="performance-metrics-modal">
-                <div className="performance-metrics-modal-header">
-                    <h3>📈 성과 지표 대시보드</h3>
-                    <button 
-                        className="performance-metrics-close-btn"
-                        onClick={handleClose}
-                        disabled={loading || recalculating}
-                    >
-                        ✕
+    const portalTarget = document.body || document.createElement('div');
+
+    return ReactDOM.createPortal(
+        <div className="mg-v2-modal-overlay" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header">
+                    <div className="mg-v2-modal-title-wrapper">
+                        <TrendingUp size={28} className="mg-v2-modal-title-icon" />
+                        <h2 className="mg-v2-modal-title">성과 지표 대시보드</h2>
+                    </div>
+                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading || recalculating} aria-label="닫기">
+                        <XCircle size={24} />
                     </button>
                 </div>
 
-                <div className="performance-metrics-modal-content">
+                <div className="mg-v2-modal-body">
                     {/* 필터 설정 */}
-                    <div className="metrics-filters">
-                        <div className="filter-row">
-                            <div className="form-group">
-                                <label>시작일</label>
+                    <div className="mg-v2-form-section">
+                        <h3 className="mg-v2-section-title">
+                            <BarChart size={20} className="mg-v2-section-title-icon" />
+                            필터 설정
+                        </h3>
+                        <div className="mg-v2-form-grid">
+                            <div className="mg-v2-form-group">
+                                <label className="mg-v2-form-label">
+                                    <Calendar size={16} className="mg-v2-form-label-icon" />
+                                    시작일
+                                </label>
                                 <input
                                     type="date"
                                     value={dateRange.startDate}
                                     onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
                                     disabled={loading || recalculating}
+                                    className="mg-v2-form-input"
                                 />
                             </div>
-                            <div className="form-group">
-                                <label>종료일</label>
+                            <div className="mg-v2-form-group">
+                                <label className="mg-v2-form-label">
+                                    <Calendar size={16} className="mg-v2-form-label-icon" />
+                                    종료일
+                                </label>
                                 <input
                                     type="date"
                                     value={dateRange.endDate}
                                     onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
                                     disabled={loading || recalculating}
+                                    className="mg-v2-form-input"
                                 />
                             </div>
-                            <div className="form-group">
-                                <label>지점</label>
+                            <div className="mg-v2-form-group">
+                                <label className="mg-v2-form-label">
+                                    <Building size={16} className="mg-v2-form-label-icon" />
+                                    지점
+                                </label>
                                 <select
                                     value={branchCode}
                                     onChange={(e) => setBranchCode(e.target.value)}
                                     disabled={loading || recalculating}
+                                    className="mg-v2-form-select"
                                 >
                                     <option value="">전체 지점</option>
                                     {branches.map(branch => (
@@ -182,119 +200,116 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                     ))}
                                 </select>
                             </div>
-                            <div className="filter-actions">
-                                <button 
-                                    className="btn-filter"
-                                    onClick={handleFilterChange}
-                                    disabled={loading || recalculating}
-                                >
-                                    🔍 조회
-                                </button>
-                                <button 
-                                    className="btn-recalculate"
-                                    onClick={handleRecalculate}
-                                    disabled={loading || recalculating}
-                                >
-                                    {recalculating ? '재계산 중...' : '🔄 재계산'}
-                                </button>
-                            </div>
+                        </div>
+                        <div className="mg-v2-modal-footer">
+                            <button 
+                                className="mg-v2-btn mg-v2-btn--primary"
+                                onClick={handleFilterChange}
+                                disabled={loading || recalculating}
+                            >
+                                <BarChart size={20} className="mg-v2-icon-inline" />
+                                조회
+                            </button>
+                            <button 
+                                className="mg-v2-btn mg-v2-btn--secondary"
+                                onClick={handleRecalculate}
+                                disabled={loading || recalculating}
+                            >
+                                {recalculating ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                                    <>
+                                        <RefreshCw size={20} className="mg-v2-icon-inline" />
+                                        재계산
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
 
                     {/* 성과 지표 표시 */}
                     {loading ? (
-                        <div className="loading-container">
-                            <div className="loading-spinner"></div>
-                            <p>성과 지표를 불러오는 중...</p>
+                        <div className="mg-v2-loading-overlay">
+                            <UnifiedLoading variant="pulse" size="large" text="성과 지표를 불러오는 중..." type="inline" />
                         </div>
                     ) : metrics ? (
-                        <div className="metrics-content">
-                            {/* 주요 지표 */}
-                            <div className="main-metrics">
-                                <h4>주요 성과 지표</h4>
-                                <div className="metrics-grid">
-                                    <div className="metric-card">
-                                        <div className="metric-icon">👥</div>
-                                        <div className="metric-info">
-                                            <div className="metric-label">총 상담사 수</div>
-                                            <div className="metric-value">{metrics.totalConsultants || 0}명</div>
-                                        </div>
-                                    </div>
-                                    <div className="metric-card">
-                                        <div className="metric-icon">📅</div>
-                                        <div className="metric-info">
-                                            <div className="metric-label">총 상담 건수</div>
-                                            <div className="metric-value">{metrics.totalConsultations || 0}건</div>
-                                        </div>
-                                    </div>
-                                    <div className="metric-card">
-                                        <div className="metric-icon">💰</div>
-                                        <div className="metric-info">
-                                            <div className="metric-label">총 매출</div>
-                                            <div className="metric-value">
-                                                {(metrics.totalRevenue || 0).toLocaleString()}원
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="metric-card">
-                                        <div className="metric-icon">⭐</div>
-                                        <div className="metric-info">
-                                            <div className="metric-label">평균 만족도</div>
-                                            <div className="metric-value">{metrics.averageSatisfaction || 0}점</div>
-                                        </div>
-                                    </div>
+                        <div className="mg-v2-form-section mg-v2-mt-lg">
+                            <h4 className="mg-v2-section-title mg-v2-mb-md">
+                                <Target size={20} className="mg-v2-section-title-icon" />
+                                주요 성과 지표
+                            </h4>
+                            <div className="mg-v2-info-grid">
+                                <div className="mg-v2-info-item">
+                                    <span className="mg-v2-info-label">총 상담사 수</span>
+                                    <span className="mg-v2-info-value">{metrics.totalConsultants || 0}명</span>
+                                </div>
+                                <div className="mg-v2-info-item">
+                                    <span className="mg-v2-info-label">총 상담 건수</span>
+                                    <span className="mg-v2-info-value">{metrics.totalConsultations || 0}건</span>
+                                </div>
+                                <div className="mg-v2-info-item">
+                                    <DollarSign size={16} className="mg-v2-icon-inline" />
+                                    <span className="mg-v2-info-label">총 매출</span>
+                                    <span className="mg-v2-info-value">
+                                        {(metrics.totalRevenue || 0).toLocaleString()}원
+                                    </span>
+                                </div>
+                                <div className="mg-v2-info-item">
+                                    <span className="mg-v2-info-label">평균 만족도</span>
+                                    <span className="mg-v2-info-value">{metrics.averageSatisfaction || 0}점</span>
                                 </div>
                             </div>
 
                             {/* 상세 지표 */}
-                            <div className="detailed-metrics">
-                                <div className="metrics-section">
-                                    <h5>상담사별 성과</h5>
-                                    <div className="consultant-performance">
+                            <div className="mg-v2-mt-lg">
+                                <div className="mg-v2-form-section">
+                                    <h5 className="mg-v2-section-title mg-v2-mb-md">상담사별 성과</h5>
+                                    <div className="mg-v2-list-container">
                                         {metrics.consultantPerformance?.map((consultant, index) => (
-                                            <div key={index} className="consultant-item">
-                                                <div className="consultant-name">{consultant.name}</div>
-                                                <div className="consultant-stats">
-                                                    <span>상담: {consultant.consultationCount}건</span>
-                                                    <span>매출: {consultant.revenue?.toLocaleString()}원</span>
-                                                    <span>만족도: {consultant.satisfaction}점</span>
+                                            <div key={index} className="mg-v2-list-item">
+                                                <div className="mg-v2-list-item-content">
+                                                    <div className="mg-v2-list-item-title">{consultant.name}</div>
+                                                    <div className="mg-v2-list-item-subtitle">
+                                                        상담: {consultant.consultationCount}건 · 매출: {consultant.revenue?.toLocaleString()}원 · 만족도: {consultant.satisfaction}점
+                                                    </div>
                                                 </div>
                                             </div>
-                                        )) || <p className="no-data">데이터가 없습니다.</p>}
+                                        )) || <div className="mg-v2-empty-state"><p>데이터가 없습니다.</p></div>}
                                     </div>
                                 </div>
 
-                                <div className="metrics-section">
-                                    <h5>일별 성과 추이</h5>
-                                    <div className="daily-trend">
+                                <div className="mg-v2-form-section mg-v2-mt-lg">
+                                    <h5 className="mg-v2-section-title mg-v2-mb-md">일별 성과 추이</h5>
+                                    <div className="mg-v2-list-container">
                                         {metrics.dailyTrend?.map((day, index) => (
-                                            <div key={index} className="trend-item">
-                                                <div className="trend-date">{day.date}</div>
-                                                <div className="trend-stats">
-                                                    <span>상담: {day.consultations}건</span>
-                                                    <span>매출: {day.revenue?.toLocaleString()}원</span>
+                                            <div key={index} className="mg-v2-list-item">
+                                                <div className="mg-v2-list-item-content">
+                                                    <div className="mg-v2-list-item-title">{day.date}</div>
+                                                    <div className="mg-v2-list-item-subtitle">
+                                                        상담: {day.consultations}건 · 매출: {day.revenue?.toLocaleString()}원
+                                                    </div>
                                                 </div>
                                             </div>
-                                        )) || <p className="no-data">데이터가 없습니다.</p>}
+                                        )) || <div className="mg-v2-empty-state"><p>데이터가 없습니다.</p></div>}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="no-data-container">
+                        <div className="mg-v2-empty-state">
                             <p>성과 지표 데이터가 없습니다.</p>
                             <button 
-                                className="btn-load"
+                                className="mg-v2-btn mg-v2-btn--primary mg-v2-mt-md"
                                 onClick={loadMetrics}
                                 disabled={loading}
                             >
+                                <RefreshCw size={20} className="mg-v2-icon-inline" />
                                 데이터 로드
                             </button>
                         </div>
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        portalTarget
     );
 };
 

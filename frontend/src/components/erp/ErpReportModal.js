@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { FileBarChart, XCircle, Download, Calendar, Building, DollarSign, TrendingUp } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import './ErpReportModal.css';
 
 /**
  * ERP 보고서 모달 컴포넌트
@@ -133,27 +134,33 @@ const ErpReportModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    return (
-        <div className="erp-report-modal-overlay">
-            <div className="erp-report-modal">
-                <div className="erp-report-modal-header">
-                    <h3>📊 ERP 보고서</h3>
-                    <button 
-                        className="erp-report-close-btn"
-                        onClick={handleClose}
-                        disabled={loading}
-                    >
-                        ✕
+    const portalTarget = document.body || document.createElement('div');
+
+    return ReactDOM.createPortal(
+        <div className="mg-v2-modal-overlay" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header">
+                    <div className="mg-v2-modal-title-wrapper">
+                        <FileBarChart size={28} className="mg-v2-modal-title-icon" />
+                        <h2 className="mg-v2-modal-title">ERP 보고서</h2>
+                    </div>
+                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading} aria-label="닫기">
+                        <XCircle size={24} />
                     </button>
                 </div>
 
-                <div className="erp-report-modal-content">
+                <div className="mg-v2-modal-body">
                     {/* 보고서 설정 */}
-                    <div className="report-settings">
-                        <div className="form-group">
-                            <label>보고서 유형</label>
-                            <div className="radio-group">
-                                <label className="radio-item">
+                    <div className="mg-v2-form-section">
+                        <h3 className="mg-v2-section-title">
+                            <Calendar size={20} className="mg-v2-section-title-icon" />
+                            보고서 설정
+                        </h3>
+
+                        <div className="mg-v2-form-group">
+                            <label className="mg-v2-form-label">보고서 유형</label>
+                            <div className="mg-v2-form-radio-group">
+                                <label className="mg-v2-form-radio">
                                     <input
                                         type="radio"
                                         value="monthly"
@@ -163,7 +170,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     />
                                     <span>월별 보고서</span>
                                 </label>
-                                <label className="radio-item">
+                                <label className="mg-v2-form-radio">
                                     <input
                                         type="radio"
                                         value="quarterly"
@@ -173,7 +180,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     />
                                     <span>분기별 보고서</span>
                                 </label>
-                                <label className="radio-item">
+                                <label className="mg-v2-form-radio">
                                     <input
                                         type="radio"
                                         value="yearly"
@@ -186,8 +193,8 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                             </div>
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="period">기간 선택</label>
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="period" className="mg-v2-form-label">기간 선택</label>
                             {reportType === 'monthly' && (
                                 <input
                                     type="month"
@@ -195,6 +202,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     value={period}
                                     onChange={(e) => setPeriod(e.target.value)}
                                     disabled={loading}
+                                    className="mg-v2-form-input"
                                 />
                             )}
                             {reportType === 'quarterly' && (
@@ -203,6 +211,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     value={period}
                                     onChange={(e) => setPeriod(e.target.value)}
                                     disabled={loading}
+                                    className="mg-v2-form-select"
                                 >
                                     <option key="quarter-default" value="">분기를 선택하세요</option>
                                     <option key="2025-Q1" value="2025-Q1">2025년 1분기</option>
@@ -217,6 +226,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     value={period}
                                     onChange={(e) => setPeriod(e.target.value)}
                                     disabled={loading}
+                                    className="mg-v2-form-select"
                                 >
                                     <option key="year-default" value="">연도를 선택하세요</option>
                                     <option key="2025" value="2025">2025년</option>
@@ -226,13 +236,17 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                             )}
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="branch">지점 선택</label>
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="branch" className="mg-v2-form-label">
+                                <Building size={20} className="mg-v2-form-label-icon" />
+                                지점 선택
+                            </label>
                             <select
                                 id="branch"
                                 value={branchCode}
                                 onChange={(e) => setBranchCode(e.target.value)}
                                 disabled={loading}
+                                className="mg-v2-form-select"
                             >
                                 <option key="branch-default" value="">전체 지점</option>
                                 {branches.map(branch => (
@@ -243,50 +257,72 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                             </select>
                         </div>
 
-                        <button 
-                            className="btn-generate"
-                            onClick={handleGenerateReport}
-                            disabled={loading || !period}
-                        >
-                            {loading ? '생성 중...' : '보고서 생성'}
-                        </button>
+                        <div className="mg-v2-modal-footer">
+                            <button 
+                                className="mg-v2-btn mg-v2-btn--secondary"
+                                onClick={onClose}
+                                disabled={loading}
+                            >
+                                <XCircle size={20} className="mg-v2-icon-inline" />
+                                취소
+                            </button>
+                            <button 
+                                className="mg-v2-btn mg-v2-btn--primary"
+                                onClick={handleGenerateReport}
+                                disabled={loading || !period}
+                            >
+                                {loading ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                                    <>
+                                        <TrendingUp size={20} className="mg-v2-icon-inline" />
+                                        보고서 생성
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
 
                     {/* 보고서 결과 */}
                     {reportData && (
-                        <div className="report-results">
-                            <div className="report-header">
-                                <h4>보고서 결과</h4>
+                        <div className="mg-v2-form-section mg-v2-mt-lg">
+                            <div className="mg-v2-modal-footer mg-v2-justify-between">
+                                <h4 className="mg-v2-section-title">
+                                    <FileBarChart size={20} className="mg-v2-section-title-icon" />
+                                    보고서 결과
+                                </h4>
                                 <button 
-                                    className="btn-download"
+                                    className="mg-v2-btn mg-v2-btn--success"
                                     onClick={handleDownloadReport}
                                 >
-                                    📥 다운로드
+                                    <Download size={20} className="mg-v2-icon-inline" />
+                                    다운로드
                                 </button>
                             </div>
 
-                            <div className="report-summary">
-                                <div className="summary-item">
-                                    <span className="label">총 수익</span>
-                                    <span className="value revenue">
+                            <div className="mg-v2-info-grid mg-v2-mt-md">
+                                <div className="mg-v2-info-item">
+                                    <DollarSign size={20} className="mg-v2-icon-inline" />
+                                    <span className="mg-v2-info-label">총 수익</span>
+                                    <span className="mg-v2-info-value mg-v2-color-success">
                                         {reportData.summary?.totalRevenue?.toLocaleString() || 0}원
                                     </span>
                                 </div>
-                                <div className="summary-item">
-                                    <span className="label">총 지출</span>
-                                    <span className="value expense">
+                                <div className="mg-v2-info-item">
+                                    <DollarSign size={20} className="mg-v2-icon-inline" />
+                                    <span className="mg-v2-info-label">총 지출</span>
+                                    <span className="mg-v2-info-value mg-v2-color-danger">
                                         {reportData.summary?.totalExpenses?.toLocaleString() || 0}원
                                     </span>
                                 </div>
-                                <div className="summary-item">
-                                    <span className="label">순이익</span>
-                                    <span className="value profit">
+                                <div className="mg-v2-info-item">
+                                    <TrendingUp size={20} className="mg-v2-icon-inline" />
+                                    <span className="mg-v2-info-label">순이익</span>
+                                    <span className="mg-v2-info-value mg-v2-color-primary">
                                         {reportData.summary?.netProfit?.toLocaleString() || 0}원
                                     </span>
                                 </div>
-                                <div className="summary-item">
-                                    <span className="label">거래 건수</span>
-                                    <span className="value">
+                                <div className="mg-v2-info-item">
+                                    <span className="mg-v2-info-label">거래 건수</span>
+                                    <span className="mg-v2-info-value">
                                         {reportData.summary?.transactionCount || 0}건
                                     </span>
                                 </div>
@@ -294,15 +330,19 @@ const ErpReportModal = ({ isOpen, onClose }) => {
 
                             {/* 카테고리별 분석 */}
                             {reportData.categoryBreakdown && reportData.categoryBreakdown.length > 0 && (
-                                <div className="category-breakdown">
-                                    <h5>카테고리별 분석</h5>
-                                    <div className="category-list">
+                                <div className="mg-v2-mt-lg">
+                                    <h5 className="mg-v2-section-title mg-v2-mb-md">카테고리별 분석</h5>
+                                    <div className="mg-v2-list-container">
                                         {reportData.categoryBreakdown.map((item, index) => (
-                                            <div key={index} className="category-item">
-                                                <span className="category-name">{item.category}</span>
-                                                <span className="category-amount">
-                                                    {item.amount?.toLocaleString() || 0}원
-                                                </span>
+                                            <div key={index} className="mg-v2-list-item">
+                                                <div className="mg-v2-list-item-content">
+                                                    <div className="mg-v2-list-item-title">{item.category}</div>
+                                                </div>
+                                                <div className="mg-v2-list-item-action">
+                                                    <span className="mg-v2-info-value">
+                                                        {item.amount?.toLocaleString() || 0}원
+                                                    </span>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -312,7 +352,8 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        portalTarget
     );
 };
 

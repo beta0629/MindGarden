@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { Calendar, XCircle, Save, Trash2, FileText, MessageSquare, AlertTriangle } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import ConfirmModal from '../common/ConfirmModal';
 import MessageSendModal from './MessageSendModal';
@@ -122,236 +124,6 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
     setIsMessageModalOpen(false);
   };
 
-  // 컴포넌트 스타일
-  const styles = {
-    modalOverlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999
-    },
-    modalContent: {
-      backgroundColor: '#fff',
-      borderRadius: '12px',
-      padding: '24px',
-      width: '90%',
-      maxWidth: '500px',
-      maxHeight: '90vh',
-      overflowY: 'auto',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-      position: 'relative'
-    },
-    modalHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '24px',
-      paddingBottom: '16px',
-      borderBottom: '1px solid #e9ecef'
-    },
-    modalTitle: {
-      fontSize: 'var(--font-size-xl)',
-      fontWeight: '600',
-      color: '#2c3e50',
-      margin: 0
-    },
-    closeBtn: {
-      background: 'none',
-      border: 'none',
-      fontSize: 'var(--font-size-xxl)',
-      cursor: 'pointer',
-      color: '#6c757d',
-      padding: '4px',
-      borderRadius: '4px',
-      transition: 'all 0.2s ease'
-    },
-    formGroup: {
-      marginBottom: '20px'
-    },
-    label: {
-      display: 'block',
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '600',
-      color: '#495057',
-      marginBottom: '8px'
-    },
-    input: {
-      width: '100%',
-      padding: '12px 16px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
-      color: '#495057',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box'
-    },
-    inputDisabled: {
-      width: '100%',
-      padding: '12px 16px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#f8f9fa',
-      color: '#6c757d',
-      cursor: 'not-allowed',
-      boxSizing: 'border-box'
-    },
-    inputFocus: {
-      borderColor: '#007bff',
-      boxShadow: '0 0 0 3px rgba(0, 123, 255, 0.1)'
-    },
-    select: {
-      width: '100%',
-      padding: '12px 16px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
-      color: '#495057',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box'
-    },
-    selectDisabled: {
-      width: '100%',
-      padding: '12px 16px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#f8f9fa',
-      color: '#6c757d',
-      cursor: 'not-allowed',
-      boxSizing: 'border-box'
-    },
-    textarea: {
-      width: '100%',
-      padding: '12px 16px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
-      color: '#495057',
-      minHeight: '80px',
-      resize: 'vertical',
-      fontFamily: 'inherit',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box'
-    },
-    textareaDisabled: {
-      width: '100%',
-      padding: '12px 16px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#f8f9fa',
-      color: '#6c757d',
-      minHeight: '80px',
-      resize: 'none',
-      fontFamily: 'inherit',
-      cursor: 'not-allowed',
-      boxSizing: 'border-box'
-    },
-    modalActions: {
-      display: 'flex',
-      gap: '12px',
-      justifyContent: 'flex-end',
-      marginTop: '24px',
-      paddingTop: '20px',
-      borderTop: '1px solid #e9ecef'
-    },
-    button: {
-      padding: '12px 24px',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      border: 'none',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    deleteBtn: {
-      backgroundColor: '#dc3545',
-      color: '#fff'
-    },
-    saveBtn: {
-      backgroundColor: '#28a745',
-      color: '#fff'
-    },
-    cancelBtn: {
-      backgroundColor: '#6c757d',
-      color: '#fff'
-    },
-    consultationLogBtn: {
-      backgroundColor: '#17a2b8',
-      color: '#fff'
-    },
-    messageBtn: {
-      backgroundColor: '#6f42c1',
-      color: '#fff'
-    },
-    noticeText: {
-      backgroundColor: '#fff3cd',
-      border: '1px solid #ffeaa7',
-      borderRadius: '8px',
-      padding: '12px 16px',
-      marginBottom: '20px',
-      color: '#856404',
-      fontSize: 'var(--font-size-sm)',
-      textAlign: 'center'
-    },
-    consultationLogStatus: {
-      marginBottom: '20px'
-    },
-    statusLoading: {
-      backgroundColor: '#e3f2fd',
-      border: '1px solid #90caf9',
-      color: '#1565c0',
-      padding: '12px',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '500',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    statusCompleted: {
-      backgroundColor: '#e8f5e8',
-      border: '1px solid #81c784',
-      color: '#2e7d32',
-      padding: '12px',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '500',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    statusPending: {
-      backgroundColor: '#fff3e0',
-      border: '1px solid #ffb74d',
-      color: '#ef6c00',
-      padding: '12px',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '500',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    statusIcon: {
-      fontSize: 'var(--font-size-base)'
-    }
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave(formData);
@@ -365,37 +137,47 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
     onDelete(event.id);
   };
 
-  return (
-    <div className="event-modal-overlay">
-      <div className="event-modal-content">
-        <div className="event-modal-header">
-          <h2 className="mg-h3 mg-mb-0">{mode === 'add' ? '새 일정 추가' : '일정 수정'}</h2>
-          <button className="mg-v2-modal-close" onClick={onClose}>×</button>
+  if (!event) return null;
+  
+  const portalTarget = document.body || document.createElement('div');
+
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-medium" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <Calendar size={28} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">{mode === 'add' ? '새 일정 추가' : '일정 수정'}</h2>
+          </div>
+          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
+            <XCircle size={24} />
+          </button>
         </div>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="mg-v2-modal-body">
           {/* 상담사 안내 메시지 */}
           {isReadOnly && (
-            <div className="mg-v2-text-sm mg-v2-color-warning mg-mb-md mg-p-sm mg-bg-warning-light mg-radius-md">
-              ⚠️ 상담사는 일정을 수정할 수 없습니다. 상담일지 작성만 가능합니다.
+            <div className="mg-v2-alert mg-v2-alert--warning mg-v2-mb-md">
+              <AlertTriangle size={20} className="mg-v2-section-title-icon" />
+              상담사는 일정을 수정할 수 없습니다. 상담일지 작성만 가능합니다.
             </div>
           )}
 
           {/* 상담일지 작성 상태 표시 */}
           {isReadOnly && (
-            <div className="mg-p-md mg-bg-info-light mg-radius-md mg-mb-md">
+            <div className="mg-v2-info-box mg-v2-mb-md">
               {consultationLogStatus.loading ? (
-                <div className="mg-flex mg-align-center mg-gap-sm">
+                <div className="mg-v2-info-box-title">
                   <span className="mg-v2-text-lg">⏳</span>
                   상담일지 상태 확인 중...
                 </div>
               ) : consultationLogStatus.hasRecord ? (
-                <div className="mg-flex mg-align-center mg-gap-sm mg-v2-color-success">
+                <div className="mg-v2-info-box-title mg-v2-color-success">
                   <span className="mg-v2-text-lg">✅</span>
                   상담일지가 작성되었습니다
                 </div>
               ) : (
-                <div className="mg-flex mg-align-center mg-gap-sm mg-v2-color-warning">
+                <div className="mg-v2-info-box-title mg-v2-color-warning">
                   <span className="mg-v2-text-lg">⚠️</span>
                   상담일지를 작성해야 합니다
                 </div>
@@ -403,84 +185,85 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
             </div>
           )}
           
-          <div style={styles.formGroup}>
-            <label style={styles.label}>제목</label>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">제목</label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({...formData, title: e.target.value})}
-              style={isReadOnly ? styles.inputDisabled : styles.input}
+              className={`mg-v2-form-input ${isReadOnly ? 'mg-v2-form-input--disabled' : ''}`}
               disabled={isReadOnly}
               required
             />
           </div>
           
-          <div style={styles.formGroup}>
-            <label style={styles.label}>시작 시간</label>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">시작 시간</label>
             <input
               type="datetime-local"
               value={formData.start}
               onChange={(e) => setFormData({...formData, start: e.target.value})}
-              style={isReadOnly ? styles.inputDisabled : styles.input}
+              className={`mg-v2-form-input ${isReadOnly ? 'mg-v2-form-input--disabled' : ''}`}
               disabled={isReadOnly}
               required
             />
           </div>
           
-          <div style={styles.formGroup}>
-            <label style={styles.label}>종료 시간</label>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">종료 시간</label>
             <input
               type="datetime-local"
               value={formData.end}
               onChange={(e) => setFormData({...formData, end: e.target.value})}
-              style={isReadOnly ? styles.inputDisabled : styles.input}
+              className={`mg-v2-form-input ${isReadOnly ? 'mg-v2-form-input--disabled' : ''}`}
               disabled={isReadOnly}
               required
             />
           </div>
           
-          <div style={styles.formGroup}>
-            <label style={styles.label}>내담자 이름</label>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">내담자 이름</label>
             <input
               type="text"
               value={formData.clientName || '미지정'}
-              style={isReadOnly ? styles.inputDisabled : styles.input}
+              className="mg-v2-form-input mg-v2-form-input--disabled"
               disabled={true}
               readOnly
             />
           </div>
           
-          <div style={styles.formGroup}>
-            <label style={styles.label}>상담 유형</label>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">상담 유형</label>
             <input
               type="text"
               value={formData.consultationType || '미지정'}
-              style={isReadOnly ? styles.inputDisabled : styles.input}
+              className="mg-v2-form-input mg-v2-form-input--disabled"
               disabled={true}
               readOnly
             />
           </div>
           
-          <div style={styles.formGroup}>
-            <label style={styles.label}>메모</label>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">메모</label>
             <textarea
               value={formData.notes || '메모 없음'}
               rows="3"
-              style={isReadOnly ? styles.textareaDisabled : styles.textarea}
+              className="mg-v2-form-textarea mg-v2-form-textarea--disabled"
               disabled={true}
               readOnly
             />
           </div>
           
-          <div style={styles.modalActions}>
+          <div className="mg-v2-modal-footer">
             {/* 상담사일 때 상담일지 작성 버튼 표시 */}
             {isReadOnly && (
               <button 
                 type="button" 
-                style={{...styles.button, ...styles.consultationLogBtn}} 
+                className="mg-v2-btn mg-v2-btn--info"
                 onClick={handleWriteConsultationLog}
               >
-                {consultationLogStatus.hasRecord ? '📝 상담일지 수정' : '📝 상담일지 작성'}
+                <FileText size={20} className="mg-v2-icon-inline" />
+                {consultationLogStatus.hasRecord ? '상담일지 수정' : '상담일지 작성'}
               </button>
             )}
 
@@ -488,10 +271,11 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
             {isReadOnly && event?.extendedProps?.clientId && (
               <button 
                 type="button" 
-                style={{...styles.button, ...styles.messageBtn}} 
+                className="mg-v2-btn mg-v2-btn--purple"
                 onClick={handleSendMessage}
               >
-                💬 메시지 보내기
+                <MessageSquare size={20} className="mg-v2-icon-inline" />
+                메시지 보내기
               </button>
             )}
             
@@ -499,30 +283,34 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
             {!isReadOnly && mode === 'edit' && (
               <button 
                 type="button" 
-                style={{...styles.button, ...styles.deleteBtn}} 
+                className="mg-v2-btn mg-v2-btn--danger"
                 onClick={handleDelete}
               >
+                <Trash2 size={20} className="mg-v2-icon-inline" />
                 삭제
               </button>
             )}
             {!isReadOnly && (
               <button 
                 type="submit" 
-                style={{...styles.button, ...styles.saveBtn}}
+                className="mg-v2-btn mg-v2-btn--success"
               >
+                <Save size={20} className="mg-v2-icon-inline" />
                 {mode === 'add' ? '추가' : '수정'}
               </button>
             )}
             <button 
               type="button" 
-              style={{...styles.button, ...styles.cancelBtn}} 
+              className="mg-v2-btn mg-v2-btn--secondary"
               onClick={onClose}
             >
+              <XCircle size={20} className="mg-v2-icon-inline" />
               취소
             </button>
           </div>
         </form>
       </div>
+      
       
       {/* 삭제 확인 모달 */}
       <ConfirmModal
@@ -555,7 +343,8 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
           onSend={handleMessageSent}
         />
       )}
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CreditCard, RefreshCcw, XCircle, Package, Clock, AlertTriangle } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager, { showNotification } from '../../../utils/notification';
 
@@ -153,22 +154,28 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
     <div className="mg-v2-partial-refund-modal-overlay">
       <div className="mg-v2-partial-refund-modal">
         <div className="mg-v2-partial-refund-modal-header">
-          <h3 className="mg-v2-partial-refund-modal-title">
-            💸 부분 환불 처리
-          </h3>
+          <div className="mg-v2-modal-title-wrapper">
+            <RefreshCcw size={28} className="mg-v2-modal-title-icon" />
+            <h3 className="mg-v2-partial-refund-modal-title">
+              부분 환불 처리
+            </h3>
+          </div>
           <button
             onClick={handleClose}
             disabled={loading}
             className="mg-v2-partial-refund-modal-close"
           >
-            ✕
+            <XCircle size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           {/* 매핑 정보 */}
           <div className="mg-v2-info-box">
-            <h4 className="mg-v2-info-box-title">📋 매핑 정보</h4>
+            <h4 className="mg-v2-info-box-title">
+              <Package size={20} className="mg-v2-section-title-icon" />
+              매핑 정보
+            </h4>
             <div className="mg-v2-info-grid">
               <div><strong>내담자:</strong> {mapping.clientName}</div>
               <div><strong>상담사:</strong> {mapping.consultantName}</div>
@@ -181,7 +188,10 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
 
           {/* 최근 추가 패키지 정보 */}
           <div className="mg-v2-refund-target-box">
-            <h4 className="mg-v2-refund-target-title">📦 환불 대상 (최근 추가 패키지)</h4>
+            <h4 className="mg-v2-refund-target-title">
+              <Package size={20} className="mg-v2-section-title-icon" />
+              환불 대상 (최근 추가 패키지)
+            </h4>
             <div className="mg-v2-refund-package-grid">
               <div><strong>패키지명:</strong> {lastAddedPackage.packageName}</div>
               <div><strong>패키지 회기수:</strong> {lastAddedPackage.sessions}회</div>
@@ -196,7 +206,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           {/* 청약 철회 기간 확인 */}
           <div className={`mg-v2-withdrawal-period-box mg-v2-withdrawal-period-box--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
             <h4 className={`mg-v2-withdrawal-period-title mg-v2-withdrawal-period-title--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
-              ⏰ 청약 철회 기간 확인
+              <Clock size={20} className="mg-v2-section-title-icon" />
+              청약 철회 기간 확인
             </h4>
             <div className={`mg-v2-withdrawal-period-message mg-v2-withdrawal-period-message--${withdrawalCheck.isValid ? 'valid' : 'invalid'}`}>
               {withdrawalCheck.message}
@@ -208,7 +219,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             )}
             {!withdrawalCheck.isValid && (
               <div className="mg-v2-withdrawal-period-warning">
-                ❌ 15일 초과로 청약 철회 불가능합니다. 특별한 사유가 있는 경우에만 처리하세요.
+                <AlertTriangle size={16} className="mg-v2-icon-inline" />
+                15일 초과로 청약 철회 불가능합니다. 특별한 사유가 있는 경우에만 처리하세요.
               </div>
             )}
           </div>
@@ -216,7 +228,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           {/* 환불 회기수 입력 */}
           <div className="mg-v2-form-group">
             <label className="mg-v2-form-label">
-              💰 환불할 회기수
+              <CreditCard size={16} className="mg-v2-form-label-icon" />
+              환불할 회기수
             </label>
             <input
               type="number"
@@ -237,7 +250,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           {/* 환불 금액 미리보기 */}
           <div className="mg-v2-refund-preview">
             <div className="mg-v2-refund-preview-title">
-              💵 예상 환불 금액
+              <DollarSign size={20} className="mg-v2-icon-inline" />
+              예상 환불 금액
             </div>
             <div className="mg-v2-refund-preview-amount">
               {refundAmount.toLocaleString()}원
@@ -250,7 +264,8 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
           {/* 환불 사유 입력 */}
           <div className="mg-v2-refund-reason-section">
             <label className="mg-v2-refund-reason-label">
-              📝 환불 사유 <span className="mg-v2-form-label-required">*</span>
+              <Clock size={16} className="mg-v2-form-label-icon" />
+              환불 사유 <span className="mg-v2-form-label-required">*</span>
             </label>
             <textarea
               value={reason}

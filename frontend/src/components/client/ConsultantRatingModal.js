@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
-import UnifiedModal from '../common/modals/UnifiedModal';
-import { Heart, X, Calendar, User, Briefcase } from 'lucide-react';
+import { Heart, XCircle, CheckCircle, Calendar, User, Briefcase } from 'lucide-react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -94,130 +94,150 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
         return null;
     }
 
-    // 모달 액션 버튼들
     const isSubmitDisabled = heartScore === 0 || isSubmitting;
     
-    console.log('💖 버튼 상태 체크:', { heartScore, isSubmitting, isSubmitDisabled });
-    
-    const modalActions = (
-        <>
-            <button 
-                className="mg-v2-button mg-v2-button--secondary" 
-                onClick={onClose}
-                disabled={isSubmitting}
-            >
-                취소
-            </button>
-            <button 
-                className="mg-v2-button mg-v2-button--primary" 
-                onClick={() => {
-                    console.log('💖 평가 완료 버튼 클릭:', { heartScore, isSubmitting });
-                    handleSubmit();
-                }}
-                disabled={isSubmitDisabled}
-            >
-                {isSubmitting ? '평가 중...' : '평가 완료'}
-            </button>
-        </>
-    );
+    const portalTarget = document.body || document.createElement('div');
 
-    return (
-        <UnifiedModal
-            isOpen={isOpen}
-            onClose={onClose}
-            title="상담사 평가"
-            subtitle={`${schedule.consultantName}님과의 상담은 어떠셨나요?`}
-            size="large"
-            variant="form"
-            actions={modalActions}
-            loading={isSubmitting}
-        >
-            <div className="mg-v2-modal-content">
-                {/* 상담 정보 */}
-                <div className="mg-v2-info-card">
-                    <div className="mg-v2-info-item">
-                        <Calendar size={16} />
-                        <span>상담일: {schedule.consultationDate} {schedule.consultationTime}</span>
-                    </div>
-                    <div className="mg-v2-info-item">
-                        <User size={16} />
-                        <span>상담사: {schedule.consultantName}님</span>
-                    </div>
-                    <div className="mg-v2-info-item">
-                        <Briefcase size={16} />
-                        <span>상담 유형: {schedule.consultationType}</span>
-                    </div>
-                </div>
-
-                {/* 하트 점수 선택 */}
-                <div className="mg-v2-form-group">
-                    <label className="mg-v2-label">만족도를 하트로 표현해주세요</label>
-                    <div className="mg-v2-heart-rating">
-                        {[1, 2, 3, 4, 5].map(score => (
-                            <button
-                                key={score}
-                                className={`mg-v2-heart-btn ${(hoveredScore >= score || heartScore >= score) ? 'mg-v2-heart-btn--active' : ''}`}
-                                onMouseEnter={() => setHoveredScore(score)}
-                                onMouseLeave={() => setHoveredScore(0)}
-                                onClick={() => setHeartScore(score)}
-                            >
-                                {(hoveredScore >= score || heartScore >= score) ? '💖' : '🤍'}
-                            </button>
-                        ))}
-                    </div>
-                    {heartScore > 0 && (
-                        <div className="mg-v2-text-center mg-v2-text-sm mg-v2-color-text-secondary">
-                            {heartScore}개의 하트를 선택하셨습니다
+    return ReactDOM.createPortal(
+        <div className="mg-v2-modal-overlay" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-modal-medium" onClick={(e) => e.stopPropagation()}>
+                {/* 헤더 */}
+                <div className="mg-v2-modal-header">
+                    <div className="mg-v2-modal-title-wrapper">
+                        <Heart size={28} className="mg-v2-modal-title-icon" />
+                        <div>
+                            <h2 className="mg-v2-modal-title">상담사 평가</h2>
+                            <p className="mg-v2-modal-subtitle">{schedule.consultantName}님과의 상담은 어떠셨나요?</p>
                         </div>
-                    )}
-                </div>
-
-                {/* 평가 태그 */}
-                <div className="mg-v2-form-group">
-                    <label className="mg-v2-label">어떤 점이 좋았나요? (선택사항)</label>
-                    <div className="mg-v2-tag-group">
-                        {ratingTags.map(tag => (
-                            <button
-                                key={tag}
-                                className={`mg-v2-tag ${selectedTags.includes(tag) ? 'mg-v2-tag--selected' : ''}`}
-                                onClick={() => handleTagToggle(tag)}
-                            >
-                                {tag}
-                            </button>
-                        ))}
                     </div>
+                    <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
+                        <XCircle size={24} />
+                    </button>
                 </div>
 
-                {/* 코멘트 */}
-                <div className="mg-v2-form-group">
-                    <label className="mg-v2-label">추가 의견 (선택사항)</label>
-                    <textarea
-                        className="mg-v2-textarea"
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        placeholder="상담사님께 전하고 싶은 말씀이 있으시면 적어주세요..."
-                        rows="4"
-                        maxLength={500}
-                    />
-                    <div className="mg-v2-text-right mg-v2-text-xs mg-v2-color-text-secondary">
-                        {comment.length}/500
+                <div className="mg-v2-modal-body">
+                    {/* 상담 정보 */}
+                    <div className="mg-v2-info-box mg-v2-mb-lg">
+                        <div className="mg-v2-info-grid">
+                            <div className="mg-v2-info-item">
+                                <Calendar size={16} className="mg-v2-icon-inline" />
+                                <span className="mg-v2-info-label">상담일:</span>
+                                <span className="mg-v2-info-value">{schedule.consultationDate} {schedule.consultationTime}</span>
+                            </div>
+                            <div className="mg-v2-info-item">
+                                <User size={16} className="mg-v2-icon-inline" />
+                                <span className="mg-v2-info-label">상담사:</span>
+                                <span className="mg-v2-info-value">{schedule.consultantName}님</span>
+                            </div>
+                            <div className="mg-v2-info-item">
+                                <Briefcase size={16} className="mg-v2-icon-inline" />
+                                <span className="mg-v2-info-label">상담 유형:</span>
+                                <span className="mg-v2-info-value">{schedule.consultationType}</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                {/* 익명 옵션 */}
-                <div className="mg-v2-form-group">
-                    <label className="mg-v2-checkbox-label">
-                        <input
-                            type="checkbox"
-                            checked={isAnonymous}
-                            onChange={(e) => setIsAnonymous(e.target.checked)}
-                            className="mg-v2-checkbox"
+                    {/* 하트 점수 선택 */}
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">
+                            <Heart size={20} className="mg-v2-form-label-icon" />
+                            만족도를 하트로 표현해주세요 <span className="mg-v2-form-label-required">*</span>
+                        </label>
+                        <div className="mg-v2-heart-rating">
+                            {[1, 2, 3, 4, 5].map(score => (
+                                <button
+                                    key={score}
+                                    type="button"
+                                    className={`mg-v2-heart-btn ${(hoveredScore >= score || heartScore >= score) ? 'mg-v2-heart-btn--active' : ''}`}
+                                    onMouseEnter={() => setHoveredScore(score)}
+                                    onMouseLeave={() => setHoveredScore(0)}
+                                    onClick={() => setHeartScore(score)}
+                                >
+                                    {(hoveredScore >= score || heartScore >= score) ? '💖' : '🤍'}
+                                </button>
+                            ))}
+                        </div>
+                        {heartScore > 0 && (
+                            <div className="mg-v2-text-center mg-v2-text-sm mg-v2-color-text-secondary mg-v2-mt-xs">
+                                {heartScore}개의 하트를 선택하셨습니다
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 평가 태그 */}
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">어떤 점이 좋았나요? (선택사항)</label>
+                        <div className="mg-v2-tag-group">
+                            {ratingTags.map(tag => (
+                                <button
+                                    key={tag}
+                                    type="button"
+                                    className={`mg-v2-tag ${selectedTags.includes(tag) ? 'mg-v2-tag--selected' : ''}`}
+                                    onClick={() => handleTagToggle(tag)}
+                                >
+                                    {tag}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* 코멘트 */}
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">추가 의견 (선택사항)</label>
+                        <textarea
+                            className="mg-v2-form-textarea"
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            placeholder="상담사님께 전하고 싶은 말씀이 있으시면 적어주세요..."
+                            rows="4"
+                            maxLength={500}
                         />
-                        익명으로 평가하기
-                    </label>
+                        <div className="mg-v2-text-right mg-v2-text-xs mg-v2-color-text-secondary mg-v2-mt-xs">
+                            {comment.length}/500
+                        </div>
+                    </div>
+
+                    {/* 익명 옵션 */}
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-checkbox">
+                            <input
+                                type="checkbox"
+                                checked={isAnonymous}
+                                onChange={(e) => setIsAnonymous(e.target.checked)}
+                            />
+                            익명으로 평가하기
+                        </label>
+                    </div>
+                </div>
+
+                {/* 푸터 */}
+                <div className="mg-v2-modal-footer">
+                    <button 
+                        className="mg-v2-btn mg-v2-btn--secondary" 
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                    >
+                        <XCircle size={20} className="mg-v2-icon-inline" />
+                        취소
+                    </button>
+                    <button 
+                        className="mg-v2-btn mg-v2-btn--primary" 
+                        onClick={handleSubmit}
+                        disabled={isSubmitDisabled}
+                    >
+                        {isSubmitting ? (
+                            <UnifiedLoading variant="dots" size="small" type="inline" />
+                        ) : (
+                            <>
+                                <CheckCircle size={20} className="mg-v2-icon-inline" />
+                                평가 완료
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
-        </UnifiedModal>
+        </div>,
+        portalTarget
     );
 };
 

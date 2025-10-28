@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
+import { CalendarX, XCircle, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiPost } from '../../utils/ajax';
-import './VacationModal.css';
 import { 
   VACATION_TYPES, 
   VACATION_TYPE_LABELS, 
@@ -111,49 +112,54 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
     });
   };
 
-  return (
-    <div className="modal-overlay vacation-modal-overlay">
-      <div className="vacation-modal">
-        <div className="vacation-modal-header">
-          <h2 className="vacation-modal-title">
-            <i className="bi bi-calendar-x"></i>
-            휴무 설정
-          </h2>
+  const portalTarget = document.body || document.createElement('div');
+
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+        {/* 헤더 */}
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <CalendarX size={28} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">휴무 설정</h2>
+          </div>
           <button 
-            className="vacation-modal-close-btn" 
+            className="mg-v2-modal-close" 
             onClick={handleClose}
             disabled={loading}
+            aria-label="닫기"
           >
-            ×
+            <XCircle size={24} />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="vacation-modal-body">
-          <div className="vacation-date-info">
-            <div className="vacation-date-label">선택된 날짜</div>
-            <div className="vacation-date-value">
-              {formatDate(selectedDate)}
+        {/* 본문 */}
+        <form onSubmit={handleSubmit} className="mg-v2-modal-body">
+          <div className="mg-v2-info-box">
+            <div className="mg-v2-info-row">
+              <span className="mg-v2-info-label">선택된 날짜</span>
+              <span className="mg-v2-info-value">{formatDate(selectedDate)}</span>
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">휴무 유형 *</label>
-            <div className="vacation-type-options">
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">휴무 유형 <span className="mg-v2-form-label-required">*</span></label>
+            <div className="mg-v2-radio-group">
               {vacationTypes.map(type => (
-                <label key={type.value} className="vacation-type-option">
+                <label key={type.value} className="mg-v2-radio-option">
                   <input
                     type="radio"
                     name="type"
                     value={type.value}
                     checked={formData.type === type.value}
                     onChange={handleInputChange}
-                    className="vacation-type-radio"
+                    className="mg-v2-radio"
                   />
-                  <div className="vacation-type-content">
-                    <span className="vacation-type-icon">{type.icon}</span>
-                    <span className="vacation-type-label">{type.label}</span>
+                  <div className="mg-v2-radio-content">
+                    <span className="mg-v2-radio-icon">{type.icon}</span>
+                    <span className="mg-v2-radio-label">{type.label}</span>
                     <span 
-                      className="vacation-type-color" 
+                      className="mg-v2-radio-color"
                       data-color={type.color}
                     ></span>
                   </div>
@@ -164,42 +170,45 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
 
           {/* 사용자 정의 시간 설정 */}
           {formData.type === VACATION_TYPES.CUSTOM_TIME && (
-            <div className="form-group">
-              <label className="form-label">휴무 시간 설정</label>
-              <div className="time-input-group">
-                <div className="time-input">
-                  <label>시작 시간</label>
+            <div className="mg-v2-form-group">
+              <label className="mg-v2-form-label">
+                <Clock size={16} className="mg-v2-form-label-icon" />
+                휴무 시간 설정
+              </label>
+              <div className="mg-v2-form-row">
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">시작 시간</label>
                   <input
                     type="time"
                     name="customStartTime"
                     value={formData.customStartTime}
                     onChange={handleInputChange}
-                    className="form-control"
+                    className="mg-v2-form-input"
                   />
                 </div>
-                <div className="time-separator">~</div>
-                <div className="time-input">
-                  <label>종료 시간</label>
+                <div className="mg-v2-time-separator">~</div>
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">종료 시간</label>
                   <input
                     type="time"
                     name="customEndTime"
                     value={formData.customEndTime}
                     onChange={handleInputChange}
-                    className="form-control"
+                    className="mg-v2-form-input"
                   />
                 </div>
               </div>
             </div>
           )}
 
-          <div className="form-group">
-            <label className="form-label">휴무 사유 *</label>
-            <div className="reason-options">
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">휴무 사유 <span className="mg-v2-form-label-required">*</span></label>
+            <div className="mg-v2-chip-group">
               {DEFAULT_VACATION_REASONS.map((reason, index) => (
                 <button
                   key={index}
                   type="button"
-                  className={`reason-option ${formData.reason === reason ? 'selected' : ''}`}
+                  className={`mg-v2-chip ${formData.reason === reason ? 'mg-v2-chip--selected' : ''}`}
                   onClick={() => setFormData(prev => ({ ...prev, reason }))}
                 >
                   {reason}
@@ -210,7 +219,7 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
               name="reason"
               value={formData.reason}
               onChange={handleInputChange}
-              className="form-control vacation-reason-textarea"
+              className="mg-v2-form-textarea"
               placeholder="직접 입력하거나 위의 옵션을 선택하세요"
               rows="3"
               required
@@ -218,44 +227,46 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
           </div>
 
           {error && (
-            <div className="vacation-error">
-              <i className="bi bi-exclamation-triangle"></i>
+            <div className="mg-v2-alert mg-v2-alert--error">
+              <AlertTriangle size={20} />
               {error}
             </div>
           )}
         </form>
         
-        <div className="vacation-modal-footer">
+        {/* 푸터 */}
+        <div className="mg-v2-modal-footer">
           <button 
             type="button" 
-            className="btn btn-secondary" 
+            className="mg-v2-btn mg-v2-btn--secondary" 
             onClick={handleClose}
             disabled={loading}
           >
-            <i className="bi bi-x-circle"></i>
+            <XCircle size={20} className="mg-v2-icon-inline" />
             취소
           </button>
           <button 
             type="submit" 
-            className="btn btn-primary" 
+            className="mg-v2-btn mg-v2-btn--primary" 
             onClick={handleSubmit}
             disabled={loading}
           >
             {loading ? (
               <>
-                <i className="bi bi-hourglass-split"></i>
+                <UnifiedLoading />
                 설정 중...
               </>
             ) : (
               <>
-                <i className="bi bi-check-circle"></i>
+                <CheckCircle size={20} className="mg-v2-icon-inline" />
                 휴무 설정
               </>
             )}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

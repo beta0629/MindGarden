@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { Edit3, XCircle, Package2, DollarSign, Calendar, AlertCircle } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
-import './MappingEditModal.css';
 
 /**
  * 매칭 수정 모달 컴포넌트
@@ -217,47 +218,59 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         return null;
     }
 
-    return(
-        <div className="mapping-edit-modal-overlay">
-            <div className="mapping-edit-modal">
-                <div className="mapping-edit-modal-header">
-                    <h2>매칭 정보 수정</h2>
+    const portalTarget = document.body || document.createElement('div');
+
+    return ReactDOM.createPortal(
+        <div className="mg-v2-modal-overlay" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header">
+                    <div className="mg-v2-modal-title-wrapper">
+                        <Edit3 size={28} className="mg-v2-modal-title-icon" />
+                        <h2 className="mg-v2-modal-title">매칭 정보 수정</h2>
+                    </div>
                     <button 
-                        className="close-btn" 
+                        className="mg-v2-modal-close" 
                         onClick={ handleClose }
                         disabled={ loading }
+                        aria-label="닫기"
                     >
-                        ×
+                        <XCircle size={24} />
                     </button>
                 </div>
 
-                <div className="mapping-edit-modal-body">
+                <div className="mg-v2-modal-body">
                     { /* 매칭 정보 표시 */ }
-                    <div className="mapping-info-display">
-                        <div className="info-row">
-                            <span className="label">상담사:</span>
-                            <span className="value">{ mapping.consultantName }</span>
-                        </div>
-                        <div className="info-row">
-                            <span className="label">내담자:</span>
-                            <span className="value">{ mapping.clientName }</span>
-                        </div>
-                        <div className="info-row">
-                            <span className="label">현재 상태:</span>
-                            <span className="value">{ mapping.status }</span>
+                    <div className="mg-v2-info-box">
+                        <h3 className="mg-v2-info-box-title">
+                            <Package2 size={20} className="mg-v2-section-title-icon" />
+                            현재 매칭 정보
+                        </h3>
+                        <div className="mg-v2-info-grid">
+                            <div className="mg-v2-info-row">
+                                <span className="mg-v2-info-label">상담사:</span>
+                                <span className="mg-v2-info-value">{ mapping.consultantName }</span>
+                            </div>
+                            <div className="mg-v2-info-row">
+                                <span className="mg-v2-info-label">내담자:</span>
+                                <span className="mg-v2-info-value">{ mapping.clientName }</span>
+                            </div>
+                            <div className="mg-v2-info-row">
+                                <span className="mg-v2-info-label">현재 상태:</span>
+                                <span className="mg-v2-info-value">{ mapping.status }</span>
+                            </div>
                         </div>
                     </div>
 
                     <form onSubmit={ handleSubmit }>
                         { /* 패키지 선택 */ }
-                        <div className="form-group">
-                            <label htmlFor="packageName">패키지 *</label>
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="packageName" className="mg-v2-form-label">패키지 <span className="mg-v2-form-label-required">*</span></label>
                             <select
                                 id="packageName"
                                 name="packageName"
                                 value={ formData.packageName }
                                 onChange={ handleInputChange }
-                                className={ errors.packageName ? 'error' : '' }
+                                className={`mg-v2-form-select ${errors.packageName ? 'mg-v2-form-input-error' : ''}`}
                                 disabled={ loading }
                             >
                                 <option value="">패키지를 선택해주세요</option>
@@ -268,54 +281,42 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                                 ))}
                             </select>
                             {errors.packageName && (
-                                <span className="error-message">{errors.packageName}</span>
+                                <span className="mg-v2-form-error">{errors.packageName}</span>
                             )}
                         </div>
 
                         { /* 패키지 가격 (읽기 전용) */ }
-                        <div className="form-group">
-                            <label htmlFor="packagePrice">패키지 가격 *</label>
-                            <div className="price-display-wrapper">
-                                <input
-                                    type="text"
-                                    id="packagePrice"
-                                    name="packagePrice"
-                                    value={ formData.packagePrice ? formData.packagePrice.toLocaleString() : '' }
-                                    className="readonly-input"
-                                    disabled={ true }
-                                    readOnly
-                                />
-                                <span className="currency">원</span>
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="packagePrice" className="mg-v2-form-label">
+                                <DollarSign size={16} className="mg-v2-form-label-icon" />
+                                패키지 가격 <span className="mg-v2-form-label-required">*</span>
+                            </label>
+                            <div className="mg-v2-form-input-readonly">
+                                { formData.packagePrice ? formData.packagePrice.toLocaleString() : '' }원
                             </div>
-                            <div className="field-description">
+                            <div className="mg-v2-form-help">
                                 패키지 선택 시 자동으로 설정됩니다
                             </div>
                         </div>
 
                         { /* 총 회기 수 (읽기 전용) */ }
-                        <div className="form-group">
-                            <label htmlFor="totalSessions">총 회기 수 *</label>
-                            <div className="sessions-display-wrapper">
-                                <input
-                                    type="text"
-                                    id="totalSessions"
-                                    name="totalSessions"
-                                    value={ formData.totalSessions || '' }
-                                    className="readonly-input"
-                                    disabled={ true }
-                                    readOnly
-                                />
-                                <span className="unit">회기</span>
+                        <div className="mg-v2-form-group">
+                            <label htmlFor="totalSessions" className="mg-v2-form-label">
+                                <Calendar size={16} className="mg-v2-form-label-icon" />
+                                총 회기 수 <span className="mg-v2-form-label-required">*</span>
+                            </label>
+                            <div className="mg-v2-form-input-readonly">
+                                { formData.totalSessions || '' }회기
                             </div>
-                            <div className="field-description">
+                            <div className="mg-v2-form-help">
                                 패키지 선택 시 자동으로 설정됩니다
                             </div>
                         </div>
 
                         { /* 주의사항 */ }
-                        <div className="warning-box">
-                            <div className="warning-icon">⚠️</div>
-                            <div className="warning-content">
+                        <div className="mg-v2-alert mg-v2-alert--warning">
+                            <AlertCircle size={20} className="mg-v2-section-title-icon" />
+                            <div>
                                 <strong>주의사항:</strong>
                                 <ul>
                                     <li>매칭 정보 수정 시 ERP 시스템의 모든 관련 데이터가 자동으로 업데이트됩니다.</li>
@@ -327,26 +328,33 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                     </form>
                 </div>
 
-                <div className="mapping-edit-modal-footer">
+                <div className="mg-v2-modal-footer">
                     <button
                         type="button"
-                        className="btn btn-secondary"
+                        className="mg-v2-btn mg-v2-btn--secondary"
                         onClick={ handleClose }
                         disabled={ loading }
                     >
+                        <XCircle size={20} className="mg-v2-icon-inline" />
                         취소
                     </button>
                     <button
                         type="submit"
-                        className="btn btn-primary"
+                        className="mg-v2-btn mg-v2-btn--primary"
                         onClick={ handleSubmit }
                         disabled={ loading }
                     >
-                        { loading ? '수정 중...' : '수정 완료' }
+                        { loading ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                            <>
+                                <Edit3 size={20} className="mg-v2-icon-inline" />
+                                수정 완료
+                            </>
+                        )}
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        portalTarget
     );
 };
 

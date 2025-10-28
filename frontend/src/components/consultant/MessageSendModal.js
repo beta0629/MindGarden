@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { MessageSquare, XCircle, Send, User, Bell, AlertTriangle } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
@@ -150,226 +152,57 @@ const MessageSendModal = ({
 
   if (!isOpen) return null;
 
-  // 컴포넌트 스타일
-  const styles = {
-    modalOverlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 10000,
-      padding: '20px'
-    },
-    modalContent: {
-      backgroundColor: '#fff',
-      borderRadius: '12px',
-      width: '90%',
-      maxWidth: '600px',
-      maxHeight: '80vh',
-      overflowY: 'auto',
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-      position: 'relative'
-    },
-    header: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '20px 24px',
-      borderBottom: '1px solid #e9ecef',
-      backgroundColor: '#f8f9fa',
-      borderRadius: '12px 12px 0 0'
-    },
-    headerTitle: {
-      fontSize: 'var(--font-size-lg)',
-      fontWeight: '600',
-      color: '#2c3e50',
-      margin: 0
-    },
-    closeBtn: {
-      background: 'none',
-      border: 'none',
-      fontSize: 'var(--font-size-xxl)',
-      cursor: 'pointer',
-      color: '#6c757d',
-      padding: '4px',
-      borderRadius: '4px',
-      transition: 'all 0.2s ease'
-    },
-    content: {
-      padding: '24px'
-    },
-    clientInfo: {
-      backgroundColor: '#f8f9fa',
-      borderRadius: '8px',
-      padding: '16px',
-      marginBottom: '20px',
-      border: '1px solid #e9ecef'
-    },
-    clientInfoTitle: {
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '600',
-      color: '#495057',
-      marginBottom: '8px'
-    },
-    clientInfoText: {
-      fontSize: 'var(--font-size-sm)',
-      color: '#6c757d'
-    },
-    formGroup: {
-      marginBottom: '20px'
-    },
-    formLabel: {
-      display: 'block',
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '600',
-      color: '#495057',
-      marginBottom: '8px'
-    },
-    formInput: {
-      width: '100%',
-      padding: '12px 16px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
-      color: '#495057',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box'
-    },
-    formSelect: {
-      width: '100%',
-      padding: '12px 16px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
-      color: '#495057',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box'
-    },
-    formTextarea: {
-      width: '100%',
-      padding: '12px 16px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
-      color: '#495057',
-      minHeight: '120px',
-      resize: 'vertical',
-      fontFamily: 'inherit',
-      transition: 'all 0.2s ease',
-      boxSizing: 'border-box'
-    },
-    checkboxGroup: {
-      display: 'flex',
-      gap: '16px',
-      marginTop: '8px'
-    },
-    checkboxItem: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    checkbox: {
-      width: '16px',
-      height: '16px',
-      cursor: 'pointer'
-    },
-    checkboxLabel: {
-      fontSize: 'var(--font-size-sm)',
-      color: '#495057',
-      cursor: 'pointer'
-    },
-    buttonGroup: {
-      display: 'flex',
-      gap: '12px',
-      justifyContent: 'flex-end',
-      marginTop: '24px',
-      paddingTop: '20px',
-      borderTop: '1px solid #e9ecef'
-    },
-    button: {
-      padding: '12px 24px',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      border: 'none',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    primaryButton: {
-      backgroundColor: '#007bff',
-      color: '#fff'
-    },
-    secondaryButton: {
-      backgroundColor: '#6c757d',
-      color: '#fff'
-    },
-    loadingOverlay: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(255, 255, 255, 0.8)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999
-    }
-  };
+  const portalTarget = document.body || document.createElement('div');
 
-  return (
-    <div className="message-send-modal-overlay">
-      <div className="message-send-modal-content">
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-medium" onClick={(e) => e.stopPropagation()}>
         {/* 헤더 */}
-        <div style={styles.header}>
-          <h1 style={styles.headerTitle}>📨 내담자에게 메시지 보내기</h1>
-          <button style={styles.closeBtn} onClick={onClose}>×</button>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <MessageSquare size={28} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">내담자에게 메시지 보내기</h2>
+          </div>
+          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
+            <XCircle size={24} />
+          </button>
         </div>
 
-        <div style={styles.content}>
+        <div className="mg-v2-modal-body">
           {/* 내담자 정보 */}
           {clientData && (
-            <div style={styles.clientInfo}>
-              <div style={styles.clientInfoTitle}>👤 수신자</div>
-              <div style={styles.clientInfoText}>
+            <div className="mg-v2-info-box">
+              <h4 className="mg-v2-info-box-title">
+                <User size={20} className="mg-v2-section-title-icon" />
+                수신자
+              </h4>
+              <div className="mg-v2-info-text">
                 {clientData.name} ({clientData.age}세, {clientData.gender})
               </div>
             </div>
           )}
 
           {/* 메시지 작성 폼 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>제목 *</label>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">제목 <span className="mg-v2-form-label-required">*</span></label>
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleInputChange}
               placeholder="메시지 제목을 입력하세요"
-              style={styles.formInput}
+              className="mg-v2-form-input"
               required
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>메시지 타입</label>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">메시지 타입</label>
             <select
               name="messageType"
               value={formData.messageType}
               onChange={handleInputChange}
-              style={styles.formSelect}
+              className="mg-v2-form-select"
             >
               {messageTypeOptions.map(type => (
                 <option key={type.value} value={type.value}>
@@ -379,73 +212,80 @@ const MessageSendModal = ({
             </select>
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>내용 *</label>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">내용 <span className="mg-v2-form-label-required">*</span></label>
             <textarea
               name="content"
               value={formData.content}
               onChange={handleInputChange}
               placeholder="메시지 내용을 입력하세요"
-              style={styles.formTextarea}
+              className="mg-v2-form-textarea"
               required
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>옵션</label>
-            <div style={styles.checkboxGroup}>
-              <div style={styles.checkboxItem}>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">옵션</label>
+            <div className="mg-v2-form-checkbox-group">
+              <label className="mg-v2-form-checkbox">
                 <input
                   type="checkbox"
                   name="isImportant"
                   checked={formData.isImportant}
                   onChange={handleInputChange}
-                  style={styles.checkbox}
                 />
-                <label style={styles.checkboxLabel}>중요 메시지</label>
-              </div>
-              <div style={styles.checkboxItem}>
+                <Bell size={16} className="mg-v2-icon-inline" />
+                중요 메시지
+              </label>
+              <label className="mg-v2-form-checkbox">
                 <input
                   type="checkbox"
                   name="isUrgent"
                   checked={formData.isUrgent}
                   onChange={handleInputChange}
-                  style={styles.checkbox}
                 />
-                <label style={styles.checkboxLabel}>긴급 메시지</label>
-              </div>
+                <AlertTriangle size={16} className="mg-v2-icon-inline" />
+                긴급 메시지
+              </label>
             </div>
           </div>
+        </div>
 
-          {/* 버튼 그룹 */}
-          <div style={styles.buttonGroup}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{...styles.button, ...styles.secondaryButton}}
-              disabled={sending}
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              onClick={handleSend}
-              style={{...styles.button, ...styles.primaryButton}}
-              disabled={sending}
-            >
-              {sending ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '📤 메시지 전송'}
-            </button>
-          </div>
+        {/* 푸터 */}
+        <div className="mg-v2-modal-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="mg-v2-btn mg-v2-btn--secondary"
+            disabled={sending}
+          >
+            <XCircle size={20} className="mg-v2-icon-inline" />
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleSend}
+            className="mg-v2-btn mg-v2-btn--primary"
+            disabled={sending}
+          >
+            {sending ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+              <>
+                <Send size={20} className="mg-v2-icon-inline" />
+                메시지 전송
+              </>
+            )}
+          </button>
         </div>
 
         {/* 로딩 오버레이 */}
         {sending && (
-          <div style={styles.loadingOverlay}>
+          <div className="mg-v2-loading-overlay">
             <UnifiedLoading variant="pulse" size="large" text="메시지 전송 중..." type="inline" />
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

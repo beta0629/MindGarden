@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
 
@@ -108,16 +109,19 @@ const MappingPaymentModal = ({
             <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="mg-v2-modal-header">
-                    <h2 className="mg-v2-modal-title">
-                        💰 결제 확인
-                    </h2>
+                    <div className="mg-v2-modal-title-wrapper">
+                        <CreditCard size={28} className="mg-v2-modal-title-icon" />
+                        <h2 className="mg-v2-modal-title">
+                            결제 확인
+                        </h2>
+                    </div>
                     <button 
                         className="mg-v2-modal-close"
                         onClick={onClose}
                         disabled={loading}
                         aria-label="닫기"
                     >
-                        ×
+                        <XCircle size={24} />
                     </button>
                 </div>
 

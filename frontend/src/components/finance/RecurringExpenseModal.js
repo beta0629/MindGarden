@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
+import { RefreshCw, XCircle, Plus, Edit2, Trash2, DollarSign, Calendar, FileText } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import './RecurringExpenseModal.css';
 
 /**
  * 반복 지출 관리 모달 컴포넌트
@@ -33,9 +34,6 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 
     useEffect(() => {
         if (isOpen) {
-            // 모달이 열릴 때 body에 클래스 추가
-            document.body.classList.add('modal-open');
-            
             // 현재 날짜로 초기화
             const today = new Date().toISOString().split('T')[0];
             setFormData(prev => ({
@@ -47,15 +45,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
             loadExpenses();
             loadStatistics();
             loadCategories();
-        } else {
-            // 모달이 닫힐 때 body에서 클래스 제거
-            document.body.classList.remove('modal-open');
         }
-        
-        // 컴포넌트 언마운트 시 클래스 제거
-        return () => {
-            document.body.classList.remove('modal-open');
-        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]); // loadExpenses, loadStatistics, loadCategories 의존성 제거하여 무한 루프 방지
 
@@ -246,56 +236,49 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         onClose();
     };
 
-    // 디버깅: isOpen 상태 확인
-    console.log('🔍 RecurringExpenseModal 렌더링:', { 
-        isOpen, 
-        expensesLength: expenses.length,
-        loading,
-        showForm,
-        editingExpense: !!editingExpense
-    });
-    
     if (!isOpen) {
-        console.log('❌ 모달이 닫혀있음 - 렌더링 안 함');
         return null;
     }
     
-    console.log('✅ 모달 렌더링 시작');
+    const portalTarget = document.body || document.createElement('div');
     
-    return (
-        <div className="recurring-expense-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}>
-            <div className="recurring-expense-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="recurring-expense-modal-header">
-                    <h2 className="recurring-expense-modal-title">🔄 반복 지출 관리</h2>
-                    <button 
-                        className="recurring-expense-modal-close"
-                        onClick={handleClose}
-                        disabled={loading}
-                        aria-label="닫기"
-                    >
-                        ✕
+    return ReactDOM.createPortal(
+        <div className="mg-v2-modal-overlay" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-v2-modal-header">
+                    <div className="mg-v2-modal-title-wrapper">
+                        <RefreshCw size={28} className="mg-v2-modal-title-icon" />
+                        <h2 className="mg-v2-modal-title">반복 지출 관리</h2>
+                    </div>
+                    <button className="mg-v2-modal-close" onClick={handleClose} disabled={loading} aria-label="닫기">
+                        <XCircle size={24} />
                     </button>
                 </div>
 
-                <div className="recurring-expense-modal-body">
+                <div className="mg-v2-modal-body">
                     {/* 통계 정보 */}
                     {statistics && (
-                        <div className="expense-statistics">
-                            <h4>반복 지출 통계</h4>
-                            <div className="stats-grid">
-                                <div className="stat-item">
-                                    <span className="stat-label">총 반복 지출</span>
-                                    <span className="stat-value">{statistics.totalExpenses || 0}개</span>
+                        <div className="mg-v2-info-box mg-v2-mb-lg">
+                            <h4 className="mg-v2-info-box-title">
+                                <RefreshCw size={20} className="mg-v2-section-title-icon" />
+                                반복 지출 통계
+                            </h4>
+                            <div className="mg-v2-info-grid">
+                                <div className="mg-v2-info-item">
+                                    <span className="mg-v2-info-label">총 반복 지출</span>
+                                    <span className="mg-v2-info-value">{statistics.totalExpenses || 0}개</span>
                                 </div>
-                                <div className="stat-item">
-                                    <span className="stat-label">월 총액</span>
-                                    <span className="stat-value">
+                                <div className="mg-v2-info-item">
+                                    <DollarSign size={16} className="mg-v2-icon-inline" />
+                                    <span className="mg-v2-info-label">월 총액</span>
+                                    <span className="mg-v2-info-value">
                                         {(statistics.monthlyTotal || 0).toLocaleString()}원
                                     </span>
                                 </div>
-                                <div className="stat-item">
-                                    <span className="stat-label">연 총액</span>
-                                    <span className="stat-value">
+                                <div className="mg-v2-info-item">
+                                    <DollarSign size={16} className="mg-v2-icon-inline" />
+                                    <span className="mg-v2-info-label">연 총액</span>
+                                    <span className="mg-v2-info-value">
                                         {(statistics.yearlyTotal || 0).toLocaleString()}원
                                     </span>
                                 </div>
@@ -304,66 +287,62 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                     )}
 
                     {/* 액션 버튼 */}
-                    <div className="action-buttons">
+                    <div className="mg-v2-mb-md">
                         <button 
-                            className="btn-add"
+                            className="mg-v2-btn mg-v2-btn--primary"
                             onClick={handleAddExpense}
                             disabled={loading}
                         >
-                            ➕ 새 반복 지출 추가
+                            <Plus size={20} className="mg-v2-icon-inline" />
+                            새 반복 지출 추가
                         </button>
                     </div>
 
                     {/* 반복 지출 목록 */}
-                    <div className="expenses-section">
-                        <h4>반복 지출 목록</h4>
+                    <div className="mg-v2-form-section">
+                        <h4 className="mg-v2-section-title mg-v2-mb-md">반복 지출 목록</h4>
                         {loading ? (
-                            <div className="loading-container">
-                                <div className="loading-spinner"></div>
-                                <p>로딩 중...</p>
+                            <div className="mg-v2-loading-overlay">
+                                <UnifiedLoading variant="pulse" size="large" text="로딩 중..." type="inline" />
                             </div>
                         ) : expenses.length > 0 ? (
-                            <div className="expenses-list">
+                            <div className="mg-v2-list-container">
                                 {expenses.map(expense => (
-                                    <div key={expense.id} className="expense-item">
-                                        <div className="expense-info">
-                                            <div className="expense-name">{expense.name}</div>
-                                            <div className="expense-details">
-                                                <span className="expense-amount">
-                                                    {expense.amount?.toLocaleString()}원
-                                                </span>
-                                                <span className="expense-frequency">
-                                                    {expense.frequency === 'monthly' ? '월간' : 
-                                                     expense.frequency === 'quarterly' ? '분기별' : 
-                                                     expense.frequency === 'yearly' ? '연간' : expense.frequency}
-                                                </span>
-                                                <span className="expense-category">{expense.category}</span>
+                                    <div key={expense.id} className="mg-v2-list-item">
+                                        <div className="mg-v2-list-item-content">
+                                            <div className="mg-v2-list-item-title">{expense.name}</div>
+                                            <div className="mg-v2-list-item-subtitle">
+                                                {expense.amount?.toLocaleString()}원 · {' '}
+                                                {expense.frequency === 'monthly' ? '월간' : 
+                                                 expense.frequency === 'quarterly' ? '분기별' : 
+                                                 expense.frequency === 'yearly' ? '연간' : expense.frequency} · {' '}
+                                                {expense.category}
                                             </div>
                                             {expense.description && (
-                                                <div className="expense-description">{expense.description}</div>
+                                                <div className="mg-v2-list-item-description">{expense.description}</div>
                                             )}
                                         </div>
-                                        <div className="expense-actions">
+                                        <div className="mg-v2-list-item-actions">
                                             <button 
-                                                className="btn-edit"
+                                                className="mg-v2-btn mg-v2-btn--icon"
                                                 onClick={() => handleEditExpense(expense)}
                                                 disabled={loading}
                                             >
-                                                ✏️
+                                                <Edit2 size={20} />
                                             </button>
                                             <button 
-                                                className="btn-delete"
+                                                className="mg-v2-btn mg-v2-btn--icon mg-v2-btn--danger"
                                                 onClick={() => handleDeleteExpense(expense.id)}
                                                 disabled={loading}
                                             >
-                                                🗑️
+                                                <Trash2 size={20} />
                                             </button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="no-data">
+                            <div className="mg-v2-empty-state">
                                 <p>등록된 반복 지출이 없습니다.</p>
                             </div>
                         )}
@@ -371,22 +350,25 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 
                     {/* 반복 지출 폼 */}
                     {showForm && (
-                        <div className="expense-form-overlay">
-                            <div className="expense-form">
-                                <div className="form-header">
-                                    <h4>{editingExpense ? '반복 지출 수정' : '새 반복 지출 추가'}</h4>
-                                    <button 
-                                        className="form-close-btn"
-                                        onClick={() => setShowForm(false)}
-                                        disabled={loading}
-                                    >
-                                        ✕
+                        <div className="mg-v2-modal-overlay mg-v2-modal-overlay--nested">
+                            <div className="mg-v2-modal mg-v2-modal-medium">
+                                <div className="mg-v2-modal-header">
+                                    <div className="mg-v2-modal-title-wrapper">
+                                        {editingExpense ? <Edit2 size={28} className="mg-v2-modal-title-icon" /> : <Plus size={28} className="mg-v2-modal-title-icon" />}
+                                        <h3 className="mg-v2-modal-title">
+                                            {editingExpense ? '반복 지출 수정' : '새 반복 지출 추가'}
+                                        </h3>
+                                    </div>
+                                    <button className="mg-v2-modal-close" onClick={() => setShowForm(false)} disabled={loading} aria-label="닫기">
+                                        <XCircle size={24} />
                                     </button>
                                 </div>
 
-                                <div className="form-content">
-                                    <div className="form-group">
-                                        <label htmlFor="name">지출명 *</label>
+                                <div className="mg-v2-modal-body">
+                                    <div className="mg-v2-form-group">
+                                        <label htmlFor="name" className="mg-v2-form-label">
+                                            지출명 <span className="mg-v2-form-label-required">*</span>
+                                        </label>
                                         <input
                                             type="text"
                                             id="name"
@@ -394,12 +376,15 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                             onChange={(e) => handleInputChange('name', e.target.value)}
                                             placeholder="예: 사무실 임대료"
                                             disabled={loading}
+                                            className="mg-v2-form-input"
                                         />
                                     </div>
 
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label htmlFor="amount">금액 *</label>
+                                    <div className="mg-v2-form-row">
+                                        <div className="mg-v2-form-group">
+                                            <label htmlFor="amount" className="mg-v2-form-label">
+                                                금액 <span className="mg-v2-form-label-required">*</span>
+                                            </label>
                                             <input
                                                 type="number"
                                                 id="amount"
@@ -407,16 +392,20 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                                 onChange={(e) => handleInputChange('amount', e.target.value)}
                                                 placeholder="0"
                                                 disabled={loading}
+                                                className="mg-v2-form-input"
                                             />
                                         </div>
 
-                                        <div className="form-group">
-                                            <label htmlFor="frequency">주기 *</label>
+                                        <div className="mg-v2-form-group">
+                                            <label htmlFor="frequency" className="mg-v2-form-label">
+                                                주기 <span className="mg-v2-form-label-required">*</span>
+                                            </label>
                                             <select
                                                 id="frequency"
                                                 value={formData.frequency}
                                                 onChange={(e) => handleInputChange('frequency', e.target.value)}
                                                 disabled={loading}
+                                                className="mg-v2-form-select"
                                             >
                                                 <option value="monthly">월간</option>
                                                 <option value="quarterly">분기별</option>
@@ -425,13 +414,16 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         </div>
                                     </div>
 
-                                    <div className="form-group">
-                                        <label htmlFor="category">카테고리 *</label>
+                                    <div className="mg-v2-form-group">
+                                        <label htmlFor="category" className="mg-v2-form-label">
+                                            카테고리 <span className="mg-v2-form-label-required">*</span>
+                                        </label>
                                         <select
                                             id="category"
                                             value={formData.category}
                                             onChange={(e) => handleInputChange('category', e.target.value)}
                                             disabled={loading}
+                                            className="mg-v2-form-select"
                                         >
                                             <option value="">카테고리를 선택하세요</option>
                                             {categories.map(category => (
@@ -442,32 +434,43 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         </select>
                                     </div>
 
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label htmlFor="startDate">시작일</label>
+                                    <div className="mg-v2-form-row">
+                                        <div className="mg-v2-form-group">
+                                            <label htmlFor="startDate" className="mg-v2-form-label">
+                                                <Calendar size={16} className="mg-v2-form-label-icon" />
+                                                시작일
+                                            </label>
                                             <input
                                                 type="date"
                                                 id="startDate"
                                                 value={formData.startDate}
                                                 onChange={(e) => handleInputChange('startDate', e.target.value)}
                                                 disabled={loading}
+                                                className="mg-v2-form-input"
                                             />
                                         </div>
 
-                                        <div className="form-group">
-                                            <label htmlFor="endDate">종료일</label>
+                                        <div className="mg-v2-form-group">
+                                            <label htmlFor="endDate" className="mg-v2-form-label">
+                                                <Calendar size={16} className="mg-v2-form-label-icon" />
+                                                종료일
+                                            </label>
                                             <input
                                                 type="date"
                                                 id="endDate"
                                                 value={formData.endDate}
                                                 onChange={(e) => handleInputChange('endDate', e.target.value)}
                                                 disabled={loading}
+                                                className="mg-v2-form-input"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="form-group">
-                                        <label htmlFor="description">설명</label>
+                                    <div className="mg-v2-form-group">
+                                        <label htmlFor="description" className="mg-v2-form-label">
+                                            <FileText size={16} className="mg-v2-form-label-icon" />
+                                            설명
+                                        </label>
                                         <textarea
                                             id="description"
                                             value={formData.description}
@@ -475,25 +478,32 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                             placeholder="반복 지출에 대한 추가 설명"
                                             rows={3}
                                             disabled={loading}
+                                            className="mg-v2-form-textarea"
                                         />
                                     </div>
 
-                                    <div className="form-actions">
+                                    <div className="mg-v2-modal-footer">
                                         <button 
                                             type="button"
-                                            className="btn-cancel"
+                                            className="mg-v2-btn mg-v2-btn--secondary"
                                             onClick={() => setShowForm(false)}
                                             disabled={loading}
                                         >
+                                            <XCircle size={20} className="mg-v2-icon-inline" />
                                             취소
                                         </button>
                                         <button 
                                             type="button"
-                                            className="btn-save"
+                                            className="mg-v2-btn mg-v2-btn--primary"
                                             onClick={handleSaveExpense}
                                             disabled={loading}
                                         >
-                                            {loading ? '저장 중...' : '저장'}
+                                            {loading ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                                                <>
+                                                    <Edit2 size={20} className="mg-v2-icon-inline" />
+                                                    저장
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
@@ -502,7 +512,8 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        portalTarget
     );
 };
 

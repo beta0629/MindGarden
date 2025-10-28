@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { User, XCircle, Edit3, Save, Home, MessageSquare, AlertCircle, FileText, Mail, Phone, UserPlus, MapPin, Clock } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
-import './ClientInfoModal.css';
 
 const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => {
   const [formData, setFormData] = useState({
@@ -79,25 +80,37 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
 
   if (!isOpen) return null;
 
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content client-info-modal">
-        <div className="modal-header">
-          <h2>
-            {mode === 'add' ? '새 내담자 등록' : 
-             mode === 'edit' ? '내담자 정보 수정' : '내담자 정보'}
-          </h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+  const modalTitle = mode === 'add' ? '새 내담자 등록' : 
+                     mode === 'edit' ? '내담자 정보 수정' : '내담자 정보';
+
+  const portalTarget = document.body || document.createElement('div');
+
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            {mode === 'add' ? <UserPlus size={28} className="mg-v2-modal-title-icon" /> :
+             mode === 'edit' ? <Edit3 size={28} className="mg-v2-modal-title-icon" /> :
+             <User size={28} className="mg-v2-modal-title-icon" />}
+            <h2 className="mg-v2-modal-title">{modalTitle}</h2>
+          </div>
+          <button className="mg-v2-modal-close" onClick={onClose} aria-label="닫기">
+            <XCircle size={24} />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-sections">
+        <form onSubmit={handleSubmit} className="mg-v2-modal-body">
+          <div className="mg-v2-form-sections">
             {/* 기본 정보 섹션 */}
-            <div className="form-section">
-              <h3 className="section-title">📋 기본 정보</h3>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>이름 *</label>
+            <div className="mg-v2-form-section">
+              <h3 className="mg-v2-section-title">
+                <User size={20} className="mg-v2-section-title-icon" />
+                기본 정보
+              </h3>
+              <div className="mg-v2-form-row">
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">이름 <span className="mg-v2-form-label-required">*</span></label>
                   <input
                     type="text"
                     name="name"
@@ -106,10 +119,11 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                     required
                     disabled={!isEditing && mode !== 'add'}
                     placeholder="내담자 이름"
+                    className="mg-v2-form-input"
                   />
                 </div>
-                <div className="form-group">
-                  <label>나이</label>
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">나이</label>
                   <input
                     type="number"
                     name="age"
@@ -119,13 +133,17 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                     placeholder="나이"
                     min="1"
                     max="120"
+                    className="mg-v2-form-input"
                   />
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>연락처</label>
+              <div className="mg-v2-form-row">
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">
+                    <Phone size={16} className="mg-v2-form-label-icon" />
+                    연락처
+                  </label>
                   <input
                     type="tel"
                     name="phone"
@@ -133,10 +151,14 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                     onChange={handleInputChange}
                     disabled={!isEditing && mode !== 'add'}
                     placeholder="010-0000-0000"
+                    className="mg-v2-form-input"
                   />
                 </div>
-                <div className="form-group">
-                  <label>이메일</label>
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">
+                    <Mail size={16} className="mg-v2-form-label-icon" />
+                    이메일
+                  </label>
                   <input
                     type="email"
                     name="email"
@@ -144,17 +166,21 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                     onChange={handleInputChange}
                     disabled={!isEditing && mode !== 'add'}
                     placeholder="email@example.com"
+                    className="mg-v2-form-input"
                   />
                 </div>
               </div>
             </div>
 
             {/* 주소 정보 섹션 */}
-            <div className="form-section">
-              <h3 className="section-title">🏠 주소 정보</h3>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>우편번호</label>
+            <div className="mg-v2-form-section">
+              <h3 className="mg-v2-section-title">
+                <Home size={20} className="mg-v2-section-title-icon" />
+                주소 정보
+              </h3>
+              <div className="mg-v2-form-row">
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">우편번호</label>
                   <input
                     type="text"
                     name="postalCode"
@@ -162,10 +188,14 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                     onChange={handleInputChange}
                     disabled={!isEditing && mode !== 'add'}
                     placeholder="우편번호"
+                    className="mg-v2-form-input"
                   />
                 </div>
-                <div className="form-group">
-                  <label>주소</label>
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">
+                    <MapPin size={16} className="mg-v2-form-label-icon" />
+                    주소
+                  </label>
                   <input
                     type="text"
                     name="address"
@@ -173,11 +203,12 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                     onChange={handleInputChange}
                     disabled={!isEditing && mode !== 'add'}
                     placeholder="기본 주소"
+                    className="mg-v2-form-input"
                   />
                 </div>
               </div>
-              <div className="form-group">
-                <label>상세주소</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">상세주소</label>
                 <input
                   type="text"
                   name="addressDetail"
@@ -185,15 +216,19 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                   onChange={handleInputChange}
                   disabled={!isEditing && mode !== 'add'}
                   placeholder="상세 주소"
+                  className="mg-v2-form-input"
                 />
               </div>
             </div>
 
             {/* 상담 정보 섹션 */}
-            <div className="form-section">
-              <h3 className="section-title">💭 상담 정보</h3>
-              <div className="form-group">
-                <label>상담 목적 *</label>
+            <div className="mg-v2-form-section">
+              <h3 className="mg-v2-section-title">
+                <MessageSquare size={20} className="mg-v2-section-title-icon" />
+                상담 정보
+              </h3>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">상담 목적 <span className="mg-v2-form-label-required">*</span></label>
                 <textarea
                   name="consultationPurpose"
                   value={formData.consultationPurpose}
@@ -202,10 +237,11 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                   disabled={!isEditing && mode !== 'add'}
                   placeholder="어떤 문제로 상담을 원하시나요? (예: 스트레스, 관계 문제, 직장 문제 등)"
                   rows="3"
+                  className="mg-v2-form-textarea"
                 />
               </div>
-              <div className="form-group">
-                <label>상담 이력</label>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">상담 이력</label>
                 <textarea
                   name="consultationHistory"
                   value={formData.consultationHistory}
@@ -213,16 +249,20 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                   disabled={!isEditing && mode !== 'add'}
                   placeholder="이전 상담 경험이나 치료 이력이 있다면 기록해주세요"
                   rows="3"
+                  className="mg-v2-form-textarea"
                 />
               </div>
             </div>
 
             {/* 비상연락처 섹션 */}
-            <div className="form-section">
-              <h3 className="section-title">🚨 비상연락처</h3>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>비상연락처 이름</label>
+            <div className="mg-v2-form-section">
+              <h3 className="mg-v2-section-title">
+                <AlertCircle size={20} className="mg-v2-section-title-icon" />
+                비상연락처
+              </h3>
+              <div className="mg-v2-form-row">
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">비상연락처 이름</label>
                   <input
                     type="text"
                     name="emergencyContact"
@@ -230,10 +270,11 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                     onChange={handleInputChange}
                     disabled={!isEditing && mode !== 'add'}
                     placeholder="비상시 연락할 사람"
+                    className="mg-v2-form-input"
                   />
                 </div>
-                <div className="form-group">
-                  <label>비상연락처 번호</label>
+                <div className="mg-v2-form-group">
+                  <label className="mg-v2-form-label">비상연락처 번호</label>
                   <input
                     type="tel"
                     name="emergencyPhone"
@@ -241,16 +282,20 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                     onChange={handleInputChange}
                     disabled={!isEditing && mode !== 'add'}
                     placeholder="010-0000-0000"
+                    className="mg-v2-form-input"
                   />
                 </div>
               </div>
             </div>
 
             {/* 메모 섹션 */}
-            <div className="form-section">
-              <h3 className="section-title">📝 메모</h3>
-              <div className="form-group">
-                <label>추가 메모</label>
+            <div className="mg-v2-form-section">
+              <h3 className="mg-v2-section-title">
+                <FileText size={20} className="mg-v2-section-title-icon" />
+                메모
+              </h3>
+              <div className="mg-v2-form-group">
+                <label className="mg-v2-form-label">추가 메모</label>
                 <textarea
                   name="notes"
                   value={formData.notes}
@@ -258,44 +303,51 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
                   disabled={!isEditing && mode !== 'add'}
                   placeholder="내담자에 대한 추가 정보나 특이사항을 기록해주세요"
                   rows="3"
+                  className="mg-v2-form-textarea"
                 />
               </div>
             </div>
           </div>
-
-          <div className="modal-actions">
-            {mode === 'view' && (
-              <button 
-                type="button" 
-                className="edit-btn"
-                onClick={handleEdit}
-              >
-                수정
-              </button>
-            )}
-            {(mode === 'add' || isEditing) && (
-              <>
-                <button type="submit" className="save-btn">
-                  {mode === 'add' ? '등록' : '저장'}
-                </button>
-                {isEditing && (
-                  <button 
-                    type="button" 
-                    className="cancel-btn"
-                    onClick={handleCancel}
-                  >
-                    취소
-                  </button>
-                )}
-              </>
-            )}
-            <button type="button" className="close-btn-secondary" onClick={onClose}>
-              닫기
-            </button>
-          </div>
         </form>
+        
+        {/* 푸터 */}
+        <div className="mg-v2-modal-footer">
+          {mode === 'view' && (
+            <button 
+              type="button" 
+              className="mg-v2-btn mg-v2-btn--secondary"
+              onClick={handleEdit}
+            >
+              <Edit3 size={20} className="mg-v2-icon-inline" />
+              수정
+            </button>
+          )}
+          {(mode === 'add' || isEditing) && (
+            <>
+              <button type="submit" className="mg-v2-btn mg-v2-btn--primary">
+                <Save size={20} className="mg-v2-icon-inline" />
+                {mode === 'add' ? '등록' : '저장'}
+              </button>
+              {isEditing && (
+                <button 
+                  type="button" 
+                  className="mg-v2-btn mg-v2-btn--secondary"
+                  onClick={handleCancel}
+                >
+                  <XCircle size={20} className="mg-v2-icon-inline" />
+                  취소
+                </button>
+              )}
+            </>
+          )}
+          <button type="button" className="mg-v2-btn mg-v2-btn--secondary" onClick={onClose}>
+            <Clock size={20} className="mg-v2-icon-inline" />
+            닫기
+          </button>
+        </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

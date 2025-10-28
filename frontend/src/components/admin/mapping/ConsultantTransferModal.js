@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import './ConsultantTransferModal.css';
+import ReactDOM from 'react-dom';
+import { UserCheck, XCircle, Users, Package, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 
 /**
@@ -179,62 +180,70 @@ const ConsultantTransferModal = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="mg-v2-mg-v2-transfer-modal-overlay">
-      <div className="mg-v2-transfer-modal">
-        <div className="mg-v2-mg-v2-transfer-modal-header">
-          <h2 className="mg-v2-mg-v2-transfer-modal-title">상담사 변경</h2>
+  const portalTarget = document.body || document.createElement('div');
+
+  return ReactDOM.createPortal(
+    <div className="mg-v2-modal-overlay" onClick={onClose}>
+      <div className="mg-v2-modal mg-v2-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-v2-modal-header">
+          <div className="mg-v2-modal-title-wrapper">
+            <UserCheck size={28} className="mg-v2-modal-title-icon" />
+            <h2 className="mg-v2-modal-title">상담사 변경</h2>
+          </div>
           <button 
             type="button" 
-            className="mg-v2-mg-v2-transfer-modal-close"
+            className="mg-v2-modal-close"
             onClick={handleClose}
             aria-label="닫기"
           >
-            ✕
+            <XCircle size={24} />
           </button>
         </div>
         
-        <div className="mg-v2-mg-v2-transfer-modal-content">
+        <div className="mg-v2-modal-body">
           {/* 현재 매핑 정보 */}
           {currentMapping && (
-            <div className="mg-v2-transfer-current-info">
-              <h3 className="mg-v2-transfer-section-title">현재 매핑 정보</h3>
-              <div className="mg-v2-transfer-info-card">
-                <div className="mg-v2-transfer-info-item">
-                  <span className="mg-v2-transfer-info-label">내담자:</span>
-                  <span className="mg-v2-transfer-info-value">{currentMapping.clientName}</span>
+            <div className="mg-v2-info-box">
+              <h3 className="mg-v2-info-box-title">
+                <Users size={20} className="mg-v2-section-title-icon" />
+                현재 매핑 정보
+              </h3>
+              <div className="mg-v2-info-grid">
+                <div className="mg-v2-info-row">
+                  <span className="mg-v2-info-label">내담자:</span>
+                  <span className="mg-v2-info-value">{currentMapping.clientName}</span>
                 </div>
-                <div className="mg-v2-transfer-info-item">
-                  <span className="mg-v2-transfer-info-label">현재 상담사:</span>
-                  <span className="mg-v2-transfer-info-value">{currentMapping.consultantName}</span>
+                <div className="mg-v2-info-row">
+                  <span className="mg-v2-info-label">현재 상담사:</span>
+                  <span className="mg-v2-info-value">{currentMapping.consultantName}</span>
                 </div>
-                <div className="mg-v2-transfer-info-item">
-                  <span className="mg-v2-transfer-info-label">남은 회기수:</span>
-                  <span className="mg-v2-transfer-info-value">{currentMapping.remainingSessions}회</span>
+                <div className="mg-v2-info-row">
+                  <span className="mg-v2-info-label">남은 회기수:</span>
+                  <span className="mg-v2-info-value"><Calendar size={16} className="mg-v2-icon-inline" />{currentMapping.remainingSessions}회</span>
                 </div>
-                <div className="mg-v2-transfer-info-item">
-                  <span className="mg-v2-transfer-info-label">패키지:</span>
-                  <span className="mg-v2-transfer-info-value">{currentMapping.packageName}</span>
+                <div className="mg-v2-info-row">
+                  <span className="mg-v2-info-label">패키지:</span>
+                  <span className="mg-v2-info-value"><Package size={16} className="mg-v2-icon-inline" />{currentMapping.packageName}</span>
                 </div>
               </div>
             </div>
           )}
           
           {/* 상담사 변경 폼 */}
-          <form onSubmit={handleSubmit} className="mg-v2-transfer-form">
-            <h3 className="mg-v2-transfer-section-title">변경 정보 입력</h3>
+          <form onSubmit={handleSubmit}>
+            <h3 className="mg-v2-section-title">변경 정보 입력</h3>
             
             {/* 새 상담사 선택 */}
-            <div className="mg-v2-mg-v2-transfer-form-group">
-              <label htmlFor="newConsultantId" className="mg-v2-mg-v2-transfer-form-label">
-                새 상담사 <span className="required">*</span>
+            <div className="mg-v2-form-group">
+              <label htmlFor="newConsultantId" className="mg-v2-form-label">
+                새 상담사 <span className="mg-v2-form-label-required">*</span>
               </label>
               <select
                 id="newConsultantId"
                 name="newConsultantId"
                 value={formData.newConsultantId}
                 onChange={handleInputChange}
-                className={`transfer-form-select ${errors.newConsultantId ? 'error' : ''}`}
+                className={`mg-v2-form-select ${errors.newConsultantId ? 'mg-v2-form-input-error' : ''}`}
                 required
               >
                 <option value="">상담사를 선택해주세요</option>
@@ -245,32 +254,32 @@ const ConsultantTransferModal = ({
                 ))}
               </select>
               {errors.newConsultantId && (
-                <span className="mg-v2-mg-v2-transfer-form-error">{errors.newConsultantId}</span>
+                <span className="mg-v2-form-error">{errors.newConsultantId}</span>
               )}
             </div>
             
             {/* 변경 사유 */}
-            <div className="mg-v2-mg-v2-transfer-form-group">
-              <label htmlFor="transferReason" className="mg-v2-mg-v2-transfer-form-label">
-                변경 사유 <span className="required">*</span>
+            <div className="mg-v2-form-group">
+              <label htmlFor="transferReason" className="mg-v2-form-label">
+                변경 사유 <span className="mg-v2-form-label-required">*</span>
               </label>
               <textarea
                 id="transferReason"
                 name="transferReason"
                 value={formData.transferReason}
                 onChange={handleInputChange}
-                className={`transfer-form-textarea ${errors.transferReason ? 'error' : ''}`}
+                className={`mg-v2-form-textarea ${errors.transferReason ? 'mg-v2-form-input-error' : ''}`}
                 placeholder="상담사 변경 사유를 입력해주세요"
                 required
               />
               {errors.transferReason && (
-                <span className="mg-v2-mg-v2-transfer-form-error">{errors.transferReason}</span>
+                <span className="mg-v2-form-error">{errors.transferReason}</span>
               )}
             </div>
             
             {/* 특별 고려사항 */}
-            <div className="mg-v2-mg-v2-transfer-form-group">
-              <label htmlFor="specialConsiderations" className="mg-v2-mg-v2-transfer-form-label">
+            <div className="mg-v2-form-group">
+              <label htmlFor="specialConsiderations" className="mg-v2-form-label">
                 특별 고려사항
               </label>
               <textarea
@@ -278,15 +287,15 @@ const ConsultantTransferModal = ({
                 name="specialConsiderations"
                 value={formData.specialConsiderations}
                 onChange={handleInputChange}
-                className="mg-v2-mg-v2-transfer-form-textarea"
+                className="mg-v2-form-textarea"
                 placeholder="새 상담사에게 전달할 특별 고려사항이 있다면 입력해주세요"
               />
             </div>
             
             {/* 회기수 설정 */}
-            <div className="mg-v2-mg-v2-transfer-form-row">
-              <div className="mg-v2-mg-v2-transfer-form-group">
-                <label htmlFor="totalSessions" className="mg-v2-mg-v2-transfer-form-label">
+            <div className="mg-v2-form-row">
+              <div className="mg-v2-form-group">
+                <label htmlFor="totalSessions" className="mg-v2-form-label">
                   총 회기수
                 </label>
                 <input
@@ -295,17 +304,17 @@ const ConsultantTransferModal = ({
                   name="totalSessions"
                   value={formData.totalSessions}
                   onChange={handleInputChange}
-                  className={`transfer-form-input ${errors.totalSessions ? 'error' : ''}`}
+                  className={`mg-v2-form-input ${errors.totalSessions ? 'mg-v2-form-input-error' : ''}`}
                   placeholder="기본값: 현재 남은 회기수"
                   min="1"
                 />
                 {errors.totalSessions && (
-                  <span className="mg-v2-mg-v2-transfer-form-error">{errors.totalSessions}</span>
+                  <span className="mg-v2-form-error">{errors.totalSessions}</span>
                 )}
               </div>
               
-              <div className="mg-v2-mg-v2-transfer-form-group">
-                <label htmlFor="remainingSessions" className="mg-v2-mg-v2-transfer-form-label">
+              <div className="mg-v2-form-group">
+                <label htmlFor="remainingSessions" className="mg-v2-form-label">
                   남은 회기수
                 </label>
                 <input
@@ -314,20 +323,20 @@ const ConsultantTransferModal = ({
                   name="remainingSessions"
                   value={formData.remainingSessions}
                   onChange={handleInputChange}
-                  className={`transfer-form-input ${errors.remainingSessions ? 'error' : ''}`}
+                  className={`mg-v2-form-input ${errors.remainingSessions ? 'mg-v2-form-input-error' : ''}`}
                   placeholder="기본값: 현재 남은 회기수"
                   min="0"
                 />
                 {errors.remainingSessions && (
-                  <span className="mg-v2-mg-v2-transfer-form-error">{errors.remainingSessions}</span>
+                  <span className="mg-v2-form-error">{errors.remainingSessions}</span>
                 )}
               </div>
             </div>
             
             {/* 패키지 정보 */}
-            <div className="mg-v2-mg-v2-transfer-form-row">
-              <div className="mg-v2-mg-v2-transfer-form-group">
-                <label htmlFor="packageName" className="mg-v2-mg-v2-transfer-form-label">
+            <div className="mg-v2-form-row">
+              <div className="mg-v2-form-group">
+                <label htmlFor="packageName" className="mg-v2-form-label">
                   패키지명
                 </label>
                 <input
@@ -336,13 +345,13 @@ const ConsultantTransferModal = ({
                   name="packageName"
                   value={formData.packageName}
                   onChange={handleInputChange}
-                  className="mg-v2-mg-v2-transfer-form-input"
+                  className="mg-v2-form-input"
                   placeholder="기본값: 현재 패키지명"
                 />
               </div>
               
-              <div className="mg-v2-mg-v2-transfer-form-group">
-                <label htmlFor="packagePrice" className="mg-v2-mg-v2-transfer-form-label">
+              <div className="mg-v2-form-group">
+                <label htmlFor="packagePrice" className="mg-v2-form-label">
                   패키지 가격
                 </label>
                 <input
@@ -351,22 +360,22 @@ const ConsultantTransferModal = ({
                   name="packagePrice"
                   value={formData.packagePrice}
                   onChange={handleInputChange}
-                  className={`transfer-form-input ${errors.packagePrice ? 'error' : ''}`}
+                  className={`mg-v2-form-input ${errors.packagePrice ? 'mg-v2-form-input-error' : ''}`}
                   placeholder="기본값: 현재 패키지 가격"
                   min="0"
                 />
                 {errors.packagePrice && (
-                  <span className="mg-v2-mg-v2-transfer-form-error">{errors.packagePrice}</span>
+                  <span className="mg-v2-form-error">{errors.packagePrice}</span>
                 )}
               </div>
             </div>
           </form>
         </div>
         
-        <div className="mg-v2-mg-v2-transfer-modal-footer">
+        <div className="mg-v2-modal-footer">
           <button
             type="button"
-            className="mg-v2-transfer-btn mg-v2-mg-v2-transfer-btn-secondary"
+            className="mg-v2-btn mg-v2-btn--secondary"
             onClick={handleClose}
             disabled={loading}
           >
@@ -374,7 +383,7 @@ const ConsultantTransferModal = ({
           </button>
           <button
             type="submit"
-            className="mg-v2-transfer-btn mg-v2-mg-v2-transfer-btn-primary"
+            className="mg-v2-btn mg-v2-btn--primary"
             onClick={handleSubmit}
             disabled={loading}
           >
@@ -382,7 +391,8 @@ const ConsultantTransferModal = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 };
 

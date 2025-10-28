@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedModal from '../common/modals/UnifiedModal';
+import ReactDOM from 'react-dom';
+import { Calendar, XCircle, AlertCircle } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
@@ -137,69 +138,92 @@ const ConsultantVacationModal = ({
         });
     };
 
-    const modalActions = (
-        <>
-            <button 
-                className="mg-v2-button mg-v2-button--secondary" 
-                onClick={onClose}
-                disabled={loading}
-            >
-                취소
-            </button>
-            <button 
-                className="mg-v2-button mg-v2-button--primary" 
-                onClick={handleSubmit}
-                disabled={loading}
-            >
-                {loading ? '등록 중...' : '휴가 등록'}
-            </button>
-        </>
-    );
+    if (!isOpen) return null;
 
-    return (
-        <UnifiedModal
-            isOpen={isOpen}
-            onClose={onClose}
-            title="휴가 등록"
-            subtitle={selectedDate ? formatDate(selectedDate) : ''}
-            size="medium"
-            variant="form"
-            actions={modalActions}
-            loading={loading}
-        >
-            <div className="mg-v2-modal-content">
-                <div className="mg-v2-form-group">
-                    <label className="mg-v2-label">휴가 유형 *</label>
-                    <select
-                        className="mg-v2-select"
-                        name="type"
-                        value={vacationData.type}
-                        onChange={handleInputChange}
+    const portalTarget = document.body || document.createElement('div');
+
+    return ReactDOM.createPortal(
+        <div className="mg-v2-modal-overlay" onClick={onClose}>
+            <div className="mg-v2-modal mg-v2-modal-medium" onClick={(e) => e.stopPropagation()}>
+                {/* 헤더 */}
+                <div className="mg-v2-modal-header">
+                    <div className="mg-v2-modal-title-wrapper">
+                        <Calendar size={28} className="mg-v2-modal-title-icon" />
+                        <div>
+                            <h2 className="mg-v2-modal-title">휴가 등록</h2>
+                            {selectedDate && (
+                                <p className="mg-v2-modal-subtitle">{formatDate(selectedDate)}</p>
+                            )}
+                        </div>
+                    </div>
+                    <button 
+                        className="mg-v2-modal-close" 
+                        onClick={onClose}
+                        disabled={loading}
+                        aria-label="닫기"
+                    >
+                        <XCircle size={24} />
+                    </button>
+                </div>
+
+                {/* 본문 */}
+                <div className="mg-v2-modal-body">
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">
+                            휴가 유형 <span className="mg-v2-form-label-required">*</span>
+                        </label>
+                        <select
+                            className="mg-v2-form-select"
+                            name="type"
+                            value={vacationData.type}
+                            onChange={handleInputChange}
+                            disabled={loading}
+                        >
+                            {vacationTypeOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="mg-v2-form-group">
+                        <label className="mg-v2-form-label">
+                            휴가 사유 <span className="mg-v2-form-label-required">*</span>
+                        </label>
+                        <textarea
+                            className="mg-v2-form-textarea"
+                            name="reason"
+                            value={vacationData.reason}
+                            onChange={handleInputChange}
+                            placeholder="휴가 사유를 입력해주세요"
+                            rows="4"
+                            disabled={loading}
+                            required
+                        />
+                    </div>
+                </div>
+
+                {/* 푸터 */}
+                <div className="mg-v2-modal-footer">
+                    <button 
+                        className="mg-v2-btn mg-v2-btn--secondary" 
+                        onClick={onClose}
                         disabled={loading}
                     >
-                        {vacationTypeOptions.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="mg-v2-form-group">
-                    <label className="mg-v2-label">휴가 사유 *</label>
-                    <textarea
-                        className="mg-v2-textarea"
-                        name="reason"
-                        value={vacationData.reason}
-                        onChange={handleInputChange}
-                        placeholder="휴가 사유를 입력해주세요"
-                        rows="4"
+                        취소
+                    </button>
+                    <button 
+                        className="mg-v2-btn mg-v2-btn--primary" 
+                        onClick={handleSubmit}
                         disabled={loading}
-                        required
-                    />
+                    >
+                        {loading ? '등록 중...' : '휴가 등록'}
+                    </button>
                 </div>
             </div>
-        </UnifiedModal>
+        </div>,
+        portalTarget
     );
 };
 

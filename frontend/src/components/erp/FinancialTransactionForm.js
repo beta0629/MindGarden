@@ -173,8 +173,8 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
           </div>
 
           {/* 세부 카테고리 */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#2c3e50' }}>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">
               세부 카테고리
             </label>
             <select
@@ -193,15 +193,15 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               ))}
             </select>
             {!formData.category && (
-              <div style={{ fontSize: 'var(--font-size-xs)', color: '#666', marginTop: '5px' }}>
+              <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: '5px' }}>
                 먼저 카테고리를 선택해주세요
               </div>
             )}
           </div>
 
           {/* 금액 */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#2c3e50' }}>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">
               금액 (원)
             </label>
             <input
@@ -218,8 +218,8 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
           </div>
 
           {/* 거래일 */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#2c3e50' }}>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">
               거래일
             </label>
             <input
@@ -233,8 +233,8 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
           </div>
 
           {/* 설명 */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#2c3e50' }}>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">
               설명 (선택사항)
             </label>
             <textarea

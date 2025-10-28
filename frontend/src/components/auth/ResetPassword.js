@@ -230,19 +230,8 @@ const ResetPassword = () => {
                     </div>
 
                     {/* 비밀번호 안내 */}
-                    <div style={{
-                      backgroundColor: '#f7fafc',
-                      padding: '16px',
-                      borderRadius: '8px',
-                      marginBottom: '24px',
-                      border: '1px solid #e2e8f0'
-                    }}>
-                      <p style={{
-                        fontSize: 'var(--font-size-xs)',
-                        color: '#4a5568',
-                        lineHeight: '1.4',
-                        margin: 0
-                      }}>
+                    <div className="mg-v2-info-box">
+                      <p className="mg-v2-info-text">
                         💡 <strong>비밀번호 요구사항</strong><br />
                         • 8자 이상 100자 이하<br />
                         • 영문과 숫자 포함<br />

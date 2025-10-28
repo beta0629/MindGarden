@@ -15162,3 +15162,74 @@ body {
     border-radius: 8px;
     border: 1px solid #e5e7eb;
 }
+
+/* Button Link Styles */
+.mg-v2-button--link {
+    background: none;
+    border: none;
+    color: #007bff;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    padding: 0;
+}
+
+.mg-v2-button--link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* Position Utilities */
+.mg-v2-relative {
+    position: relative;
+}
+
+.mg-v2-absolute {
+    position: absolute;
+}
+
+/* Text Alignment Utilities */
+.mg-v2-text-center {
+    text-align: center;
+}
+
+.mg-v2-text-right {
+    text-align: right;
+}
+
+.mg-v2-text-left {
+    text-align: left;
+}
+
+/* Position Utilities (Top/Left) */
+.mg-v2-top-md {
+    top: var(--spacing-md);
+}
+
+.mg-v2-left-md {
+    left: var(--spacing-md);
+}
+
+/* Card No Padding */
+.mg-card-no-padding {
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Text Utilities */
+.mg-v2-text-secondary {
+    color: #6c757d;
+}
+
+.mg-v2-text-danger {
+    color: #dc3545;
+}
+
+.mg-v2-text-success {
+    color: #28a745;
+}
+
+.mg-v2-text-primary {
+    color: #2c3e50;
+}

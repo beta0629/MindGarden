@@ -1,5 +1,6 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -90,7 +91,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
                     // Map.of()는 null을 허용하지 않으므로 HashMap 사용
                     Map<String, Object> result = new HashMap<>();
                     
-                    // Consultant 엔티티를 Map으로 변환
+                    // Consultant 엔티티를 Map으로 변환 (User 엔티티도 포함)
                     Map<String, Object> consultantMap = new HashMap<>();
                     consultantMap.put("id", consultant.getId());
                     consultantMap.put("name", consultant.getName());
@@ -98,8 +99,16 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
                     consultantMap.put("branchCode", consultant.getBranchCode());
                     consultantMap.put("isActive", consultant.getIsActive());
                     consultantMap.put("isDeleted", consultant.getIsDeleted());
+                    
+                    // Consultant의 specialty (단수)
                     consultantMap.put("specialty", consultant.getSpecialty());
                     consultantMap.put("specialtyDetails", consultant.getSpecialtyDetails());
+                    
+                    // User의 specialization (복수 형태, 쉼표로 구분)
+                    String specialization = consultant.getSpecialization();
+                    consultantMap.put("specialization", specialization);
+                    consultantMap.put("specializationDetails", getSpecializationDetailsFromDB(specialization));
+                    
                     consultantMap.put("createdAt", consultant.getCreatedAt());
                     consultantMap.put("updatedAt", consultant.getUpdatedAt());
                     
@@ -182,6 +191,55 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     @CacheEvict(value = {"consultantsWithStats", "consultantCurrentClients"}, allEntries = true)
     public void evictAllConsultantStatsCache() {
         log.info("🗑️ 전체 캐시 무효화");
+    }
+    
+    /**
+     * 데이터베이스에서 전문분야 상세 정보 조회
+     */
+    private List<Map<String, String>> getSpecializationDetailsFromDB(String specialization) {
+        if (specialization == null || specialization.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // 전문분야 코드들을 배열로 분리
+        String[] codes = specialization.split(",");
+        List<Map<String, String>> details = new ArrayList<>();
+        
+        for (String code : codes) {
+            code = code.trim();
+            if (!code.isEmpty()) {
+                Map<String, String> detail = new HashMap<>();
+                detail.put("code", code);
+                detail.put("name", getSpecialtyNameByCode(code));
+                details.add(detail);
+            }
+        }
+        
+        return details;
+    }
+    
+    /**
+     * 코드로 전문분야 이름 조회
+     */
+    private String getSpecialtyNameByCode(String code) {
+        if (code == null || code.trim().isEmpty()) {
+            return "미설정";
+        }
+        
+        // 이미 한글로 된 경우 그대로 반환
+        if (code.matches(".*[가-힣].*")) {
+            return code;
+        }
+        
+        // 영문 코드 매핑 (필요시 확장)
+        Map<String, String> specialtyMap = new HashMap<>();
+        specialtyMap.put("DEPRESSION", "우울증");
+        specialtyMap.put("ANXIETY", "불안장애");
+        specialtyMap.put("STRESS", "스트레스");
+        specialtyMap.put("RELATIONSHIP", "인간관계");
+        specialtyMap.put("SELF_DEVELOPMENT", "자기개발");
+        
+        return specialtyMap.getOrDefault(code.toUpperCase(), code);
     }
     
     /**

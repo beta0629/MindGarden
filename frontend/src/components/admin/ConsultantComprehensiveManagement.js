@@ -69,8 +69,10 @@ const ConsultantComprehensiveManagement = () => {
                         isActive: consultantEntity.isActive,
                         branchCode: consultantEntity.branchCode,
                         specialization: consultantEntity.specialization,
-                        specialty: consultantEntity.specialty, // 전문분야 추가
-                        specialtyDetails: consultantEntity.specialtyDetails, // 전문분야 상세 추가
+                        specialty: consultantEntity.specialty, // Consultant 엔티티의 specialty
+                        specialtyDetails: consultantEntity.specialtyDetails, // Consultant 엔티티의 specialtyDetails
+                        specialization: consultantEntity.specialization, // User 엔티티의 specialization
+                        specializationDetails: consultantEntity.specializationDetails, // User 엔티티의 specializationDetails
                         yearsOfExperience: consultantEntity.yearsOfExperience,
                         maxClients: consultantEntity.maxClients,
                         totalConsultations: consultantEntity.totalConsultations,

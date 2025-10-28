@@ -822,7 +822,7 @@ const ConsultationLogModal = ({
                   max="100"
                   className="mg-v2-form-input"
                 />
-                <span style={{fontSize: 'var(--font-size-xs)', color: '#6c757d'}}>{formData.progressScore}점</span>
+                <span className="mg-v2-text-xs mg-v2-text-secondary">{formData.progressScore}점</span>
               </div>
 
               {/* 목표 달성도 */}

@@ -4,6 +4,7 @@ import notificationManager from '../../utils/notification';
 import { X, Calendar, Clock, User, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
+import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 
@@ -114,37 +115,43 @@ const VacationManagementModal = ({
      * 상담사 목록 로드 (활성 상담사만)
      */
     const loadConsultants = async () => {
-        console.log('🏖️ 활성 상담사 목록 로드 시작');
+        console.log('🏖️ 활성 상담사 목록 로드 시작 (통합 API)');
         try {
-            // 활성 상담사만 조회하는 API 사용
-            const response = await fetch(`${API_BASE_URL}/api/admin/consultants`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include'
-            });
-
-            console.log('🏖️ 활성 상담사 API 응답:', response.status);
+            // 통합 API 사용 (전문분야 포함)
+            const consultantsList = await getAllConsultantsWithStats();
+            console.log('📊 통합 API 응답:', consultantsList);
             
-            if (response.ok) {
-                const result = await response.json();
-                console.log('🏖️ 활성 상담사 API 결과:', result);
+            if (consultantsList && consultantsList.length > 0) {
+                // 응답 데이터 변환: Map.of() 구조 파싱
+                const consultantsData = consultantsList.map(item => {
+                    const consultantEntity = item.consultant || {};
+                    return {
+                        id: consultantEntity.id,
+                        name: consultantEntity.name,
+                        email: consultantEntity.email,
+                        phone: consultantEntity.phone,
+                        role: consultantEntity.role,
+                        isActive: consultantEntity.isActive,
+                        branchCode: consultantEntity.branchCode,
+                        specialty: consultantEntity.specialty,
+                        specialtyDetails: consultantEntity.specialtyDetails,
+                        specialization: consultantEntity.specialization,
+                        specializationDetails: consultantEntity.specializationDetails,
+                        yearsOfExperience: consultantEntity.yearsOfExperience,
+                        maxClients: consultantEntity.maxClients,
+                        currentClients: item.currentClients || 0,
+                        totalClients: item.totalClients || 0
+                    };
+                }).filter(c => c.isActive); // 활성 상담사만 필터링
                 
-                if (result.success && result.data) {
-                    // 이미 활성 상담사만 반환되므로 추가 필터링 불필요
-                    console.log('🏖️ 활성 상담사 목록:', result.data);
-                    setConsultants(result.data);
-                } else {
-                    console.log('🏖️ 활성 상담사 데이터 없음');
-                    setConsultants([]);
-                }
+                setConsultants(consultantsData);
+                console.log('✅ 활성 상담사 목록 설정 완료:', consultantsData.length, '명');
             } else {
-                console.log('🏖️ 활성 상담사 API 실패:', response.status);
+                console.warn('⚠️ 상담사 데이터 없음');
                 setConsultants([]);
             }
         } catch (error) {
-            console.error('🏖️ 활성 상담사 목록 로드 실패:', error);
+            console.error('❌ 상담사 목록 로딩 오류:', error);
             setConsultants([]);
         }
     };

@@ -3729,7 +3729,8 @@ public class AdminController {
             }
             
             // 권한 체크 (Admin 역할이면 허용)
-            boolean hasAdminRole = currentUser.getRole().contains("ADMIN") || currentUser.getRole().contains("MASTER");
+            String userRole = currentUser.getRole().name();
+            boolean hasAdminRole = userRole.contains("ADMIN") || userRole.contains("MASTER");
             boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "ADMIN_CONSULTATION_VIEW");
             
             if (!hasAdminRole && !hasPermission) {

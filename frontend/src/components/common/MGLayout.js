@@ -65,7 +65,7 @@ export const MGGrid = ({
   return (
     <div 
       className={`mg-grid mg-grid--gap-${gap} ${className}`}
-      style={{ gridTemplateColumns: gridCols }}
+      style={{ '--grid-cols': gridCols }}
       {...props}
     >
       {children}

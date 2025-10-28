@@ -132,7 +132,7 @@ const MGChart = ({
   }
 
   return (
-    <div className={getChartClasses()} style={{ height: `${height}px` }}>
+    <div className={getChartClasses()} style={{ '--chart-height': `${height}px` }}>
       {loading && (
         <div className="mg-chart__loading">
           <div className="mg-chart__spinner"></div>

@@ -15588,5 +15588,13 @@ body {
   font-weight: var(--font-weight-medium);
 }
 
+/* Terms Box */
+.mg-v2-terms-box {
+    background: #e8f4fd;
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+    padding: 20px;
+}
+
 /* Icon Size */
 .mg-v2-text-xl { font-size: var(--font-size-xl); }

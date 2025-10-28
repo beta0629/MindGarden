@@ -25,51 +25,45 @@ const ClientFilters = ({
                 </MGButton>
             </div>
             
-            <div className="mg-v2-filters-content">
-                <div className="mg-mobile-form-group">
-                    <div className="mg-v2-search-box">
-                        <FaSearch className="mg-v2-search-icon" />
-                        <input
-                            type="text"
-                            placeholder="내담자 이름, 이메일, 전화번호로 검색..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="mg-v2-input mg-v2-search-input"
-                        />
-                    </div>
+            <div className="mg-v2-filters-content mg-v2-filters-horizontal">
+                <div className="mg-v2-search-box mg-v2-flex-1">
+                    <FaSearch className="mg-v2-search-icon" />
+                    <input
+                        type="text"
+                        placeholder="내담자 이름, 이메일, 전화번호로 검색..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="mg-v2-input mg-v2-search-input mg-v2-w-full"
+                    />
                 </div>
                 
-                <div className="mg-mobile-form-group">
-                    <div className="mg-v2-filter-box">
-                        <FaFilter className="mg-v2-filter-icon" />
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="mg-v2-select mg-v2-filter-select"
-                        >
-                            <option value="all">전체 상태</option>
-                            {userStatusOptions.map(option => (
-                                <option key={option.codeValue} value={option.codeValue}>
-                                    {option.codeLabel}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-                
-                <div className="mg-v2-filter-actions">
-                    <MGButton
-                        variant="outline"
-                        onClick={() => {
-                            setSearchTerm('');
-                            setFilterStatus('all');
-                        }}
+                <div className="mg-v2-filter-box mg-v2-filter-select-min">
+                    <FaFilter className="mg-v2-filter-icon" />
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="mg-v2-select mg-v2-filter-select mg-v2-w-full"
                     >
-                        필터 초기화
-                    </MGButton>
+                        <option value="all">전체 상태</option>
+                        {userStatusOptions.map(option => (
+                            <option key={option.codeValue} value={option.codeValue}>
+                                {option.codeLabel}
+                            </option>
+                        ))}
+                    </select>
                 </div>
+                
+                <MGButton
+                    variant="outline"
+                    onClick={() => {
+                        setSearchTerm('');
+                        setFilterStatus('all');
+                    }}
+                >
+                    필터 초기화
+                </MGButton>
             </div>
-        </div>
+        </div前期>
     );
 };
 

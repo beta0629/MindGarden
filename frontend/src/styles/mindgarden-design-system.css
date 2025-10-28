@@ -15635,3 +15635,18 @@ body {
     color: var(--color-danger);
     font-weight: var(--font-weight-bold);
 }
+
+/* Filter Horizontal Layout */
+.mg-v2-filters-horizontal {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.mg-v2-filter-select-min {
+    min-width: 180px;
+}
+
+.mg-v2-w-full {
+    width: 100%;
+}

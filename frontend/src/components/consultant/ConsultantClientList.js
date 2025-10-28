@@ -465,24 +465,24 @@ const ConsultantClientList = () => {
                         {/* 회기 현황 섹션 */}
                         <div className="mg-v2-client-session-info">
                           <div className="mg-v2-client-session-title">
-                            <i className="bi bi-graph-up" style={{ color: '#007bff' }}></i>
+                            <i className="bi bi-graph-up mg-v2-text-primary"></i>
                             <span>회기 현황</span>
                           </div>
                           <div className="mg-v2-client-session-grid">
                             <div className="mg-v2-client-session-item">
-                              <div className="mg-v2-client-session-value" style={{ color: '#007bff' }}>
+                              <div className="mg-v2-client-session-value mg-v2-text-primary">
                                 {client.totalSessions || 0}회
                               </div>
                               <div className="mg-v2-client-session-label">총 회기</div>
                             </div>
                             <div className="mg-v2-client-session-item">
-                              <div className="mg-v2-client-session-value" style={{ color: '#28a745' }}>
+                              <div className="mg-v2-client-session-value mg-v2-text-success">
                                 {client.usedSessions || 0}회
                               </div>
                               <div className="mg-v2-client-session-label">사용</div>
                             </div>
                             <div className="mg-v2-client-session-item">
-                              <div className="mg-v2-client-session-value" style={{ color: '#ffc107' }}>
+                              <div className="mg-v2-client-session-value mg-v2-text-warning">
                                 {client.remainingSessions || 0}회
                               </div>
                               <div className="mg-v2-client-session-label">남은 회기</div>

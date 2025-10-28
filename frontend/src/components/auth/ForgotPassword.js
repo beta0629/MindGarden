@@ -116,32 +116,8 @@ const ForgotPassword = () => {
 
                     <button
                       type="submit"
+                      className="mg-v2-submit-btn"
                       disabled={isLoading || !formData.email}
-                      style={{
-                        width: '100%',
-                        padding: '16px',
-                        fontSize: 'var(--font-size-base)',
-                        fontWeight: '600',
-                        color: 'white',
-                        background: isLoading || !formData.email 
-                          ? '#cbd5e0' 
-                          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        border: 'none',
-                        borderRadius: '12px',
-                        cursor: isLoading || !formData.email ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s ease',
-                        fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isLoading && formData.email) {
-                          e.target.style.transform = 'translateY(-2px)';
-                          e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.3)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = 'none';
-                      }}
                     >
                       {isLoading ? (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>

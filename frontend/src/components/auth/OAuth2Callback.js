@@ -176,7 +176,7 @@ const OAuth2Callback = () => {
               redirectToDashboardWithFallback(userRole, navigate);
             } else {
               console.log('🎯 기본 대시보드로 리다이렉트');
-              const defaultPath = getDashboardPath('CLATMNT');
+              const defaultPath = getDashboardPath('CLIENT');
               navigate(defaultPath, { replace: true });
             }
           };

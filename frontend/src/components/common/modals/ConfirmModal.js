@@ -42,8 +42,8 @@ const ConfirmModal = ({
       stackLevel={2}
       showCloseButton={true}
     >
-      <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-        <p style={{ margin: 0, fontSize: 'var(--font-size-base)', lineHeight: 1.5 }}>
+      <div className="mg-v2-mb-lg">
+        <p className="mg-v2-text-base mg-v2-m-0" style={{ lineHeight: 1.5 }}>
           {message}
         </p>
       </div>

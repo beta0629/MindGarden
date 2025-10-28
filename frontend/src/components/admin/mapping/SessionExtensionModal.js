@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Plus, X, Calendar } from 'lucide-react';
+import { Plus, XCircle, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
 import PackageSelector from '../../common/PackageSelector';
-import './SessionExtensionModal.css';
 
 /**
  * 회기 추가 요청 모달 컴포넌트
@@ -172,7 +171,7 @@ const SessionExtensionModal = ({
                         onClick={handleClose}
                         disabled={isLoading}
                     >
-                        <X size={20} />
+                        <XCircle size={24} />
                     </button>
                 </div>
                 

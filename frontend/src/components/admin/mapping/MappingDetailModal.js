@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Info, X, User, CreditCard, Calendar, TrendingUp, Clock } from 'lucide-react';
+import { Info, XCircle, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
 import UnifiedLoading from '../../common/UnifiedLoading';
-import './MappingDetailModal.css';
 
 /**
  * 매칭 상세보기 모달 컴포넌트

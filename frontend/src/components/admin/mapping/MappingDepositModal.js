@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { DollarSign, X, CheckCircle } from 'lucide-react';
+import { DollarSign, XCircle, CheckCircle } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
 
@@ -105,7 +105,7 @@ const MappingDepositModal = ({
                         className="mg-v2-modal-close"
                         aria-label="닫기"
                     >
-                        <X size={24} />
+                        <XCircle size={24} />
                     </button>
                 </div>
 

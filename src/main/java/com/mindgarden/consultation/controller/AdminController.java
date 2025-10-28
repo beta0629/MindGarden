@@ -18,6 +18,7 @@ import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.ConsultantRatingService;
+import com.mindgarden.consultation.service.ClientStatsService;
 import com.mindgarden.consultation.service.ConsultantStatsService;
 import com.mindgarden.consultation.service.ConsultationRecordService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
@@ -67,6 +68,7 @@ public class AdminController {
     private final UserService userService;
     private final StoredProcedureService storedProcedureService;
     private final ConsultantStatsService consultantStatsService;
+    private final ClientStatsService clientStatsService;
 
     // === 상담사 통계 통합 API ===
     
@@ -150,6 +152,92 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "success", false,
                 "message", "전체 상담사 통계 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    // === 내담자 통계 통합 API ===
+    
+    /**
+     * 내담자 통계 정보 조회 (캐시 사용)
+     * GET /api/admin/clients/with-stats/{id}
+     */
+    @GetMapping("/clients/with-stats/{id}")
+    public ResponseEntity<?> getClientWithStats(@PathVariable Long id) {
+        try {
+            log.info("📊 내담자 통계 조회 API 호출: clientId={}", id);
+            
+            Map<String, Object> stats = clientStatsService.getClientWithStats(id);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", stats
+            ));
+        } catch (Exception e) {
+            log.error("❌ 내담자 통계 조회 실패: clientId={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "내담자 통계 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 전체 내담자 통계 정보 조회 (캐시 사용 + 지점별 필터링)
+     * GET /api/admin/clients/with-stats
+     */
+    @GetMapping("/clients/with-stats")
+    public ResponseEntity<?> getAllClientsWithStats(HttpSession session) {
+        try {
+            log.info("📊 전체 내담자 통계 조회 API 호출");
+            
+            // 현재 사용자 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            String branchCode = currentUser.getBranchCode();
+            log.info("🔍 현재 사용자 지점코드: {}, 역할: {}", branchCode, currentUser.getRole());
+            
+            // 모든 내담자 조회
+            List<Map<String, Object>> allStats = clientStatsService.getAllClientsWithStats();
+            
+            // 지점별 필터링
+            List<Map<String, Object>> filteredStats;
+            
+            // HQ 관리자는 모든 지점 조회 가능
+            if ("HQ_ADMIN".equals(currentUser.getRole()) || 
+                "SUPER_HQ_ADMIN".equals(currentUser.getRole()) || 
+                "HQ_MASTER".equals(currentUser.getRole())) {
+                filteredStats = allStats;
+                log.info("🏢 본사 관리자 - 모든 지점 내담자 조회");
+            } else {
+                // 지점별 필터링
+                filteredStats = allStats.stream()
+                    .filter(item -> {
+                        Map<String, Object> clientObj = (Map<String, Object>) item.get("client");
+                        if (clientObj == null) return false;
+                        String clientBranchCode = (String) clientObj.get("branchCode");
+                        return branchCode != null && branchCode.equals(clientBranchCode);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+                log.info("🏢 지점별 내담자 조회: 지점코드={}, 조회된 수={}/{}", branchCode, filteredStats.size(), allStats.size());
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", filteredStats,
+                "count", filteredStats.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 전체 내담자 통계 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "전체 내담자 통계 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }

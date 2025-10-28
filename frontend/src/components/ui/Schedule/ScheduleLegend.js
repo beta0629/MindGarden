@@ -36,7 +36,7 @@ const ScheduleLegend = ({
                                 <span 
                                     className="mg-v2-legend-color" 
                                     style={{ '--legend-color': getConsultantColor(consultant.id) }}
-                                ></span income호
+                                ></span>
                                 <span className="mg-v2-legend-text">{consultant.name}</span>
                             </div>
                         ))}

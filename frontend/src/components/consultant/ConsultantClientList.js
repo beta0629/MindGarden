@@ -401,17 +401,8 @@ const ConsultantClientList = () => {
               </p>
               {clients.length > 0 && (
                 <button 
-                  className="btn btn-outline-primary"
+                  className="btn btn-outline-primary mg-v2-btn-reset-filter"
                   onClick={() => setFilterStatus('ALL')}
-                  style={{
-                    marginTop: '15px',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: '1px solid #3498db',
-                    background: 'transparent',
-                    color: '#3498db',
-                    cursor: 'pointer'
-                  }}
                 >
                   전체 상태 보기
                 </button>
@@ -430,79 +421,27 @@ const ConsultantClientList = () => {
                 return (
                   <div 
                     key={client.id} 
-                    style={{
-                      background: '#fff',
-                      borderRadius: '16px',
-                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                      transition: 'all 0.3s ease',
-                      overflow: 'hidden',
-                      border: '1px solid #e9ecef',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      minHeight: '320px',
-                      position: 'relative'
-                    }}
+                    className="mg-v2-client-card"
                   >
                     {/* 카드 헤더 - 아바타 + 상태 */}
-                    <div 
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '20px 20px 15px',
-                        background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                        borderBottom: '1px solid #e9ecef'
-                      }}
-                    >
-                      <div 
-                        style={{
-                          width: '50px',
-                          height: '50px',
-                          borderRadius: '50%',
-                          overflow: 'hidden',
-                          border: '3px solid #fff',
-                          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                          flexShrink: 0
-                        }}
-                      >
+                    <div className="mg-v2-client-card-header">
+                      <div className="mg-v2-client-avatar-container">
                         <img
                           src={client.profileImage || '/default-avatar.svg'}
                           alt={client.name}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
-                          }}
+                          className="mg-v2-client-avatar-img"
                           onError={(e) => {
                             e.target.src = '/default-avatar.svg';
                           }}
                         />
                       </div>
-                      <div style={{ flexShrink: 0 }}>
-                        <span 
-                          style={{ 
-                            backgroundColor: client.status === 'ACTIVE' ? '#10b981' : 
-                                          client.status === 'INACTIVE' ? '#ef4444' :
-                                          client.status === 'PENDING' ? '#f59e0b' :
-                                          client.status === 'COMPLETED' ? '#059669' :
-                                          client.status === 'SUSPENDED' ? '#dc2626' : '#6b7280',
-                            color: '#ffffff',
-                            padding: '6px 12px',
-                            borderRadius: '15px',
-                            fontSize: '0.8rem',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            whiteSpace: 'nowrap',
-                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-                          }}
-                        >
-                          {statusInfo.icon} {statusInfo.label}
-                        </span>
-                      </div>
+                      <span className={`mg-v2-status-badge mg-v2-status-badge--${client.status === 'ACTIVE' ? 'active' : 
+                                                          client.status === 'INACTIVE' ? 'inactive' :
+                                                          client.status === 'PENDING' ? 'pending' :
+                                                          client.status === 'COMPLETED' ? 'completed' :
+                                                          client.status === 'SUSPENDED' ? 'suspended' : 'default'}`}>
+                        {statusInfo.icon} {statusInfo.label}
+                      </span>
                     </div>
                     
                     {/* 카드 본문 - 이름 + 연락처 정보 */}

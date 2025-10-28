@@ -633,13 +633,6 @@ const CommonCodeManagement = () => {
                                 setCategoryFilter('all');
                             }}
                             className="mg-v2-filter-reset-btn"
-                                transition: 'background-color 0.2s ease',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px'
-                            }}
-                            onMouseEnter={ (e) => e.target.style.backgroundColor = '#5a6268' }
-                            onMouseLeave={ (e) => e.target.style.backgroundColor = '#6c757d' }
                         >
                             <i className="bi bi-x-circle"></i>
                             초기화

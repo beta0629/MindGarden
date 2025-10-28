@@ -450,43 +450,16 @@ const ConsultantClientList = () => {
                         {client.name || '이름 없음'}
                       </h3>
                       <div className="mg-v2-client-info-list">
-                        <div 
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            color: '#6c757d',
-                            fontSize: '0.95rem',
-                            minHeight: '20px'
-                          }}
-                        >
-                          <i className="bi bi-envelope" style={{ width: '16px', color: '#3498db', flexShrink: '0' }}></i>
+                        <div className="mg-v2-client-info-item">
+                          <i className="bi bi-envelope mg-v2-icon-fixed"></i>
                           <span>{client.email || '이메일 없음'}</span>
                         </div>
-                        <div 
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            color: '#6c757d',
-                            fontSize: '0.95rem',
-                            minHeight: '20px'
-                          }}
-                        >
-                          <i className="bi bi-telephone" style={{ width: '16px', color: '#3498db', flexShrink: '0' }}></i>
+                        <div className="mg-v2-client-info-item">
+                          <i className="bi bi-telephone mg-v2-icon-fixed"></i>
                           <span>{client.phone || '전화번호 없음'}</span>
                         </div>
-                        <div 
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            color: '#6c757d',
-                            fontSize: '0.95rem',
-                            minHeight: '20px'
-                          }}
-                        >
-                          <i className="bi bi-calendar" style={{ width: '16px', color: '#3498db', flexShrink: '0' }}></i>
+                        <div className="mg-v2-client-info-item">
+                          <i className="bi bi-calendar mg-v2-icon-fixed"></i>
                           <span>가입일: {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : '정보 없음'}</span>
                         </div>
                         {/* 회기 현황 섹션 */}

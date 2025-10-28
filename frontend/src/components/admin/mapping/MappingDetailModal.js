@@ -98,7 +98,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                         onClick={onClose}
                         aria-label="닫기"
                     >
-                        <X size={24} />
+                        <XCircle size={24} />
                     </button>
                 </div>
 
@@ -418,7 +418,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                         className="mg-v2-button mg-v2-button-secondary"
                         onClick={onClose}
                     >
-                        <X size={18} />
+                        <XCircle size={18} />
                         닫기
                     </button>
                 </div>

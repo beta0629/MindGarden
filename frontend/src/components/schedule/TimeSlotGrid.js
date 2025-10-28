@@ -848,16 +848,7 @@ const TimeSlotGrid = ({
                     <h6 className="mg-v2-schedule-info-title">기존 스케줄</h6>
                     <div className="mg-v2-schedule-list">
                         {existingSchedules.map(schedule => (
-                            <div key={schedule.id} style={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
-                                alignItems: 'center', 
-                                padding: '8px 12px', 
-                                backgroundColor: '#fff', 
-                                borderRadius: '6px', 
-                                border: '1px solid #e9ecef', 
-                                fontSize: 'var(--font-size-xs)' 
-                            }}>
+                            <div key={schedule.id} className="mg-v2-schedule-item">
                                 <span style={{ 
                                     color: '#007bff', 
                                     fontWeight: '600', 

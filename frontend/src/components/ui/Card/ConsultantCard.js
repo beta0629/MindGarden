@@ -327,7 +327,7 @@ const ConsultantCard = ({
                     <div className="mg-consultant-card__actions mg-consultant-card__actions--mobile">
                         <button 
                             className="mg-button mg-button-primary mg-button-sm" 
-                            style={{ flex: 1 }}
+                            className="mg-v2-flex-1"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleClick();

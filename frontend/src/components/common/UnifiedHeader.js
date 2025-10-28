@@ -167,8 +167,7 @@ const UnifiedHeader = ({
           <div 
             className="mg-header__user-avatar mg-header__user-avatar--clickable"
             onClick={handleProfileClick}
-            title="마이페이지로 이동"
-            style={{ cursor: 'pointer' }}
+            title無人 마이페이지로 이동"
           >
             {profileImageUrl ? (
               <img 

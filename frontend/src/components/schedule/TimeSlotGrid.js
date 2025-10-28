@@ -800,7 +800,7 @@ const TimeSlotGrid = ({
                                     >
                                         <div 
                                             className="mg-v2-time-slot-icon"
-                                            style={{ backgroundColor: getSlotIcon(slot).color }}
+                                            style={{ '--slot-icon-color': getSlotIcon(slot).color }}
                                         >
                                             {getSlotIcon(slot).text}
                                         </div>

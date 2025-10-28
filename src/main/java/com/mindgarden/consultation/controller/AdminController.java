@@ -1576,9 +1576,10 @@ public class AdminController {
         try {
             log.info("🔧 매칭 정보 수정: ID={}", id);
             
-            // 동적 권한 체크
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_UPDATE", dynamicPermissionService);
+            // 동적 권한 체크 (MAPPING_MANAGE 권한 사용)
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
             if (permissionResponse != null) {
+                log.warn("❌ 매칭 수정 권한 없음: MAPPING_MANAGE");
                 return permissionResponse;
             }
             

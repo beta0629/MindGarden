@@ -14,6 +14,8 @@ import {
   Phone
 } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
+import { getDashboardPath } from '../../utils/session';
+import { useSession } from '../../contexts/SessionContext';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
@@ -26,6 +28,7 @@ import './ClientPaymentHistory.css';
  */
 const ClientPaymentHistory = () => {
   const navigate = useNavigate();
+  const { user } = useSession();
   const [paymentData, setPaymentData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -168,7 +171,10 @@ const ClientPaymentHistory = () => {
             <p className="payment-empty__text">아직 결제한 패키지가 없습니다.</p>
             <button 
               className="mg-v2-button mg-v2-button-primary"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => {
+                const dashboardPath = getDashboardPath(user?.role);
+                navigate(dashboardPath || '/dashboard');
+              }}
             >
               대시보드로 이동
             </button>

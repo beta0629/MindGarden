@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
+import { getDashboardPath } from '../../utils/session';
+import { useSession } from '../../contexts/SessionContext';
 import SimpleLayout from '../layout/SimpleLayout';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './ClientSessionManagement.css';
@@ -59,7 +61,8 @@ const ClientSessionManagement = () => {
     setIsMenuOpen(false);
     switch (action) {
       case 'dashboard':
-        navigate('/dashboard');
+        const dashboardPath = getDashboardPath(user?.role);
+        navigate(dashboardPath || '/dashboard');
         break;
       case 'session-management':
         navigate('/client/session-management');

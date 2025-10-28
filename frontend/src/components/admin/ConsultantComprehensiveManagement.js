@@ -52,6 +52,16 @@ const ConsultantComprehensiveManagement = () => {
             if (response.success) {
                 setConsultants(response.data || []);
                 console.log('✅ 상담사 목록 설정 완료:', response.data?.length || 0, '명');
+                // 첫 번째 상담사 데이터 확인
+                if (response.data && response.data.length > 0) {
+                    const firstConsultant = response.data[0];
+                    console.log('🔍 첫 번째 상담사 데이터:', {
+                        name: firstConsultant.name,
+                        currentClients: firstConsultant.currentClients,
+                        maxClients: firstConsultant.maxClients,
+                        totalClients: firstConsultant.totalClients
+                    });
+                }
             } else {
                 console.error('❌ 상담사 목록 로딩 실패:', response.message);
                 setConsultants([]);

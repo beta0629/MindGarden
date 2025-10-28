@@ -175,7 +175,7 @@ const ResetPassword = () => {
               {!isPasswordReset ? (
                 <>
                   {/* 헤더 */}
-                  <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                  <div className="mg-v2-text-center" style={{ marginBottom: '40px' }}>
                     <div style={{
                       width: '64px',
                       height: '64px',
@@ -190,7 +190,7 @@ const ResetPassword = () => {
                     }}>
                       🔒
                     </div>
-                    <h1 style={{
+                    <h1 className="mg-v2-modal-title" style={{
                       fontSize: 'var(--font-size-xxl)',
                       fontWeight: '700',
                       color: '#2d3748',
@@ -198,28 +198,18 @@ const ResetPassword = () => {
                     }}>
                       새 비밀번호 설정
                     </h1>
-                    <p style={{
-                      fontSize: 'var(--font-size-base)',
-                      color: '#718096',
-                      lineHeight: '1.5'
-                    }}>
+                    <p className="mg-v2-text-base mg-v2-text-secondary" style={{ lineHeight: '1.5' }}>
                       안전한 새 비밀번호를 설정해주세요
                     </p>
                   </div>
 
                   {/* 폼 */}
                   <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '24px' }}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '600',
-                        color: '#4a5568',
-                        marginBottom: '8px'
-                      }}>
+                    <div className="mg-v2-form-group">
+                      <label className="mg-v2-form-label">
                         새 비밀번호
                       </label>
-                      <div style={{ position: 'relative' }}>
+                      <div className="mg-v2-relative">
                         <input
                           type={showPassword ? 'text' : 'password'}
                           name="newPassword"
@@ -267,17 +257,11 @@ const ResetPassword = () => {
                       </div>
                     </div>
 
-                    <div style={{ marginBottom: '24px' }}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '600',
-                        color: '#4a5568',
-                        marginBottom: '8px'
-                      }}>
+                    <div className="mg-v2-form-group">
+                      <label className="mg-v2-form-label">
                         비밀번호 확인
                       </label>
-                      <div style={{ position: 'relative' }}>
+                      <div className="mg-v2-relative">
                         <input
                           type={showConfirmPassword ? 'text' : 'password'}
                           name="confirmPassword"

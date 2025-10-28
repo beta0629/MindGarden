@@ -1142,20 +1142,14 @@ const AdminDashboard = ({ user: propUser }) => {
                             <p className="mg-management-description">구매 가능한 아이템을 관리합니다</p>
                         </div>
                         
-                        {/* ERP 보고서 카드 - 본사 관리자 전용 */}
-                        {(() => {
-                            const currentRole = (propUser || sessionUser)?.role;
-                            const isHQAdmin = currentRole === 'HQ_ADMIN' || 
-                                             currentRole === 'SUPER_HQ_ADMIN' || 
-                                             currentRole === 'HQ_MASTER';
-                            return isHQAdmin;
-                        })() && (
+                        {/* ERP 보고서 카드 - 본사 관리자 전용 (동적 권한) */}
+                        {PermissionChecks.canViewHQDashboard(userPermissions) && (
                             <div className="mg-management-card" onClick={() => setShowErpReport(true)}>
                                 <div className="mg-management-icon">
                                     <FaFileExport />
                                 </div>
                                 <h3>ERP 보고서</h3>
-                                <p className="mg-management-description">월별/분기별/연별 재무 보고서를 생성합니다 (본사 관리자 전용)</p>
+                                <p className="mg-management-description">월별/분기별/연별 재무 보고서를 생성합니다</p>
                             </div>
                         )}
                         
@@ -1247,17 +1241,11 @@ const AdminDashboard = ({ user: propUser }) => {
                 </DashboardSection>
             )}
 
-            {/* 통계 및 분석 - 본사 관리자 전용 */}
-            {(() => {
-                const currentRole = (propUser || sessionUser)?.role;
-                const canViewHQMetrics = currentRole === 'HQ_ADMIN' || 
-                                         currentRole === 'SUPER_HQ_ADMIN' || 
-                                         currentRole === 'HQ_MASTER';
-                return canViewHQMetrics && PermissionChecks.canViewStatistics(userPermissions);
-            })() && (
+            {/* 통계 및 분석 - 본사 관리자 전용 (동적 권한) */}
+            {PermissionChecks.canViewHQDashboard(userPermissions) && (
                 <DashboardSection
                     title="통계 및 분석"
-                    subtitle="시스템 통계 및 성과 분석 (본사 관리자 전용)"
+                    subtitle="시스템 통계 및 성과 분석"
                     icon={<BarChart />}
                 >
                     <div className="mg-management-grid">

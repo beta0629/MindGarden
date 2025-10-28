@@ -615,19 +615,7 @@ const CommonCodeManagement = () => {
                     <select
                         value={ categoryFilter }
                         onChange={ (e) => setCategoryFilter(e.target.value) }
-                        style={{
-                            padding: '10px 12px',
-                            border: '2px solid #e1e5e9',
-                            borderRadius: '8px',
-                            fontSize: 'var(--font-size-sm)',
-                            backgroundColor: '#f8f9fa',
-                            minWidth: '150px',
-                            outline: 'none',
-                            cursor: 'pointer',
-                            transition: 'border-color 0.2s ease'
-                        }}
-                        onFocus={ (e) => e.target.style.borderColor = '#007bff' }
-                        onBlur={ (e) => e.target.style.borderColor = '#e1e5e9' }
+                        className="mg-v2-filter-select"
                     >
                         <option value="all">전체 카테고리</option>
                         <option value="user">사용자 관련</option>
@@ -644,14 +632,7 @@ const CommonCodeManagement = () => {
                                 setSearchTerm('');
                                 setCategoryFilter('all');
                             }}
-                            style={{
-                                padding: '10px 16px',
-                                backgroundColor: '#6c757d',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                fontSize: 'var(--font-size-sm)',
-                                cursor: 'pointer',
+                            className="mg-v2-filter-reset-btn"
                                 transition: 'background-color 0.2s ease',
                                 display: 'flex',
                                 alignItems: 'center',

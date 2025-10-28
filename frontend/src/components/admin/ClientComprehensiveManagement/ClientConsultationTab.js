@@ -27,25 +27,27 @@ const ClientConsultationTab = ({
                 <div className="mg-v2-consultation-info">
                     <h4>상담 #{consultation.id}</h4>
                     <p className="mg-v2-consultation-date">
-                        <FaCalendarAlt /> {new Date(consultation.date).toLocaleDateString()}
+                        <FaCalendarAlt /> {consultation.sessionDate ? new Date(consultation.sessionDate).toLocaleDateString() : '날짜 없음'}
                     </p>
                 </div>
                 <div className="mg-v2-consultation-status">
-                    <span className={`mg-v2-status-badge mg-v2-status-${consultation.status?.toLowerCase()}`}>
-                        {consultation.status}
+                    <span className={`mg-v2-status-badge ${consultation.isSessionCompleted ? 'mg-v2-status-completed' : 'mg-v2-status-pending'}`}>
+                        {consultation.isSessionCompleted ? '완료' : '진행중'}
                     </span>
                 </div>
             </div>
             
             <div className="mg-v2-card-content">
                 <div className="mg-v2-consultation-details">
-                    <p><strong>상담사:</strong> {consultation.consultantName}</p>
+                    <p><strong>세션 번호:</strong> {consultation.sessionNumber || 'N/A'}</p>
                     <p><strong>상담 시간:</strong> 
-                        <FaClock /> {consultation.duration}분
+                        <FaClock /> {consultation.sessionDurationMinutes || 0}분
                     </p>
-                    <p><strong>상담 유형:</strong> {consultation.type}</p>
-                    {consultation.notes && (
-                        <p><strong>상담 내용:</strong> {consultation.notes}</p>
+                    {consultation.progressScore && (
+                        <p><strong>진행 점수:</strong> {consultation.progressScore}</p>
+                    )}
+                    {consultation.consultantObservations && (
+                        <p><strong>상담 내용:</strong> {consultation.consultantObservations}</p>
                     )}
                 </div>
             </div>

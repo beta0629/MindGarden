@@ -10288,6 +10288,7 @@ body {
 
 .mg-v2-status-badge {
     padding: 4px 12px;
+    background-color: var(--status-bg-color, #6c757d);
     border-radius: 20px;
     font-size: var(--font-size-xs);
     font-weight: 600;

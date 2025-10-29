@@ -384,7 +384,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                                 <option value="">전문분야를 선택하세요</option>
                                                 {specialties.map(specialty => (
                                                     <option key={specialty.codeValue} value={specialty.codeLabel}>
-                                                        {specialty.codeLabel}
+                                                        {getSpecialtyKoreanName(specialty.codeValue) || specialty.codeLabel}
                                                     </option>
                                                 ))}
                                             </select>

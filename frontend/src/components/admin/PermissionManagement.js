@@ -173,6 +173,7 @@ const PermissionManagement = () => {
     const [rolePermissions, setRolePermissions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [allPermissions, setAllPermissions] = useState([]); // DB에서 로드한 모든 권한
 
     const fetchUserInfo = async () => {
         try {
@@ -192,6 +193,25 @@ const PermissionManagement = () => {
             return null;
         }
     };
+
+    const loadAllPermissions = useCallback(async () => {
+        try {
+            // DB에서 모든 권한 목록 로드
+            const response = await fetch('/api/permissions/manageable', {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    setAllPermissions(data.data);
+                    console.log('✅ 모든 권한 로드 완료:', data.data.length, '개');
+                }
+            }
+        } catch (error) {
+            console.error('❌ 모든 권한 로드 실패:', error);
+        }
+    }, []);
 
     const loadUserPermissions = useCallback(async () => {
         try {
@@ -268,8 +288,9 @@ const PermissionManagement = () => {
     }, [selectedRole]);
 
     useEffect(() => {
+        loadAllPermissions();
         loadUserPermissions();
-    }, [loadUserPermissions]);
+    }, [loadAllPermissions, loadUserPermissions]);
 
     useEffect(() => {
         loadRolePermissions();
@@ -424,26 +445,57 @@ const PermissionManagement = () => {
             </div>
 
             <div className="mg-v2-permission-categories">
-                {Object.entries(PERMISSION_CATEGORIES).map(([categoryName, permissions]) => (
-                    <div key={categoryName} className="mg-v2-permission-category">
-                        <h3>{categoryName}</h3>
-                        <div className="mg-v2-permission-list">
-                            {permissions.map(permission => (
-                                <div key={permission.code} className="mg-v2-permission-item">
-                                    <label className="mg-v2-permission-checkbox">
-                                        <input
-                                            type="checkbox"
-                                            checked={rolePermissions.includes(permission.code)}
-                                            onChange={() => handlePermissionToggle(permission.code)}
-                                        />
-                                        <span className="mg-v2-permission-name">{permission.name}</span>
-                                    </label>
-                                    <p className="mg-v2-permission-description">{permission.description}</p>
-                                </div>
-                            ))}
+                {allPermissions.length > 0 ? (
+                    // DB에서 로드한 권한들을 카테고리별로 그룹화
+                    Object.entries(
+                        allPermissions.reduce((acc, perm) => {
+                            const category = perm.category || '기타';
+                            if (!acc[category]) acc[category] = [];
+                            acc[category].push(perm);
+                            return acc;
+                        }, {})
+                    ).map(([categoryName, permissions]) => (
+                        <div key={categoryName} className="mg-v2-permission-category">
+                            <h3>{categoryName}</h3>
+                            <div className="mg-v2-permission-list">
+                                {permissions.map(permission => (
+                                    <div key={permission.permissionCode} className="mg-v2-permission-item">
+                                        <label className="mg-v2-permission-checkbox">
+                                            <input
+                                                type="checkbox"
+                                                checked={rolePermissions.includes(permission.permissionCode)}
+                                                onChange={() => handlePermissionToggle(permission.permissionCode)}
+                                            />
+                                            <span className="mg-v2-permission-name">{permission.permissionName}</span>
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                ) : (
+                    // 로딩 중이면 하드코딩된 목록 사용 (폴백)
+                    Object.entries(PERMISSION_CATEGORIES).map(([categoryName, permissions]) => (
+                        <div key={categoryName} className="mg-v2-permission-category">
+                            <h3>{categoryName}</h3>
+                            <div className="mg-v2-permission-list">
+                                {permissions.map(permission => (
+                                    <div key={permission.code} className="mg-v2-permission-item">
+                                        <label className="mg-v2-permission-checkbox">
+                                            <input
+                                                type="checkbox"
+                                                checked={rolePermissions.includes(permission.code)}
+                                                onChange={() => handlePermissionToggle(permission.code)}
+                                            />
+                                            <span className="mg-v2-permission-name">{permission.name}</span>
+                                        </label>
+                                        <p className="mg-v2-permission-description">{permission.description}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             <div className="mg-v2-permission-summary">

@@ -627,7 +627,9 @@ const CommonCodeManagement = () => {
                     
                     { /* 필터 초기화 */ }
                     {(searchTerm || categoryFilter !== 'all') && (
-                        <button
+                        <MGButton
+                            variant="secondary"
+                            size="small"
                             onClick={() => {
                                 setSearchTerm('');
                                 setCategoryFilter('all');
@@ -636,7 +638,7 @@ const CommonCodeManagement = () => {
                         >
                             <i className="bi bi-x-circle"></i>
                             초기화
-                        </button>
+                        </MGButton>
                     )}
                 </div>
                 
@@ -710,25 +712,27 @@ const CommonCodeManagement = () => {
                         { selectedGroup } - 코드를 추가, 수정, 삭제할 수 있습니다.
                     </p>
                 </div>
-                <button 
-                    className="mg-v2-add-code-btn"
+                <MGButton 
+                    variant="primary"
                     onClick={ () => setShowAddForm(true) }
                     disabled={ loading }
+                    className="mg-v2-add-code-btn"
                 >
                     + 새 코드 추가
-                </button>
+                </MGButton>
             </div>
 
             {showAddForm && (
                 <div className="add-code-form">
                     <div className="form-header">
                         <h3>{editingCode ? '코드 수정' : '새 코드 추가'}</h3>
-                        <button 
-                            className="mg-v2-btn mg-btn--sm mg-btn--outline mg-btn--secondary"
+                        <MGButton 
+                            variant="secondary"
+                            size="small"
                             onClick={ handleCancelForm }
                         >
                             <i className="bi bi-x"></i>
-                        </button>
+                        </MGButton>
                     </div>
                     <form onSubmit={ editingCode ? handleUpdateCode : handleAddCode }>
                         <div className="form-row">
@@ -808,20 +812,20 @@ const CommonCodeManagement = () => {
                             </div>
                         </div>
                         <div className="form-actions">
-                            <button 
+                            <MGButton 
                                 type="button" 
-                                className="btn btn-outline-secondary"
+                                variant="secondary"
                                 onClick={ handleCancelForm }
                             >
                                 취소
-                            </button>
-                            <button 
+                            </MGButton>
+                            <MGButton 
                                 type="submit" 
-                                className="btn btn-primary"
+                                variant="primary"
                                 disabled={ loading }
                             >
                                 { editingCode ? '수정' : '추가' }
-                            </button>
+                            </MGButton>
                         </div>
                     </form>
                 </div>

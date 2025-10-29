@@ -12183,7 +12183,15 @@ body {
 }
 
 .mg-v2-modal-large {
-    max-width: 800px;
+    max-width: 1000px;
+    width: 90vw;
+}
+
+@media (max-width: 768px) {
+    .mg-v2-modal-large {
+        max-width: 95vw;
+        width: 95vw;
+    }
 }
 
 .mg-v2-modal-overlay {

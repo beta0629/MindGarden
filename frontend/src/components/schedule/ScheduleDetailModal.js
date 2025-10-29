@@ -397,10 +397,36 @@ const ScheduleDetailModal = ({
                         <span className="label">이벤트:</span>
                         <span className="value">{scheduleData.title}</span>
                     </div>
-                    <div className="info-row">
-                        <span className="label">상담사:</span>
-                        <span className="value">{scheduleData.consultantName}</span>
-                    </div>
+                    
+                    {!isVacationEvent() && (() => {
+                        // title에서 이름 파싱: "김선희 - 이재학" 형식
+                        let parsedConsultantName = scheduleData.consultantName;
+                        let parsedClientName = scheduleData.clientName;
+                        
+                        if ((!parsedConsultantName || parsedConsultantName === '상담사 정보 없음' || parsedConsultantName === 'undefined') &&
+                            (!parsedClientName || parsedClientName === '내담자 정보 없음' || parsedClientName === 'undefined')) {
+                            if (scheduleData.title && scheduleData.title.includes(' - ')) {
+                                const names = scheduleData.title.split(' - ');
+                                if (names.length === 2) {
+                                    parsedConsultantName = names[0].trim();
+                                    parsedClientName = names[1].trim();
+                                }
+                            }
+                        }
+                        
+                        return (
+                            <>
+                                <div className="info-row">
+                                    <span className="label">상담사:</span>
+                                    <span className="value">{parsedConsultantName || '상담사 정보 없음'}</span>
+                                </div>
+                                <div className="info-row">
+                                    <span className="label">내담자:</span>
+                                    <span className="value">{parsedClientName || '내담자 정보 없음'}</span>
+                                </div>
+                            </>
+                        );
+                    })()}
                     
                     {isVacationEvent() ? (
                         // 휴가 이벤트인 경우
@@ -417,10 +443,6 @@ const ScheduleDetailModal = ({
                     ) : (
                         // 일반 스케줄인 경우
                         <>
-                            <div className="info-row">
-                                <span className="label">내담자:</span>
-                                <span className="value">{scheduleData.clientName}</span>
-                            </div>
                             <div className="info-row">
                                 <span className="label">상담 유형:</span>
                                 <span className="value">{convertConsultationTypeToKorean(scheduleData.consultationType)}</span>

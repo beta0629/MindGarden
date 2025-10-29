@@ -522,27 +522,8 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         const koreanStatus = event.extendedProps.statusKorean || convertStatusToKorean(event.extendedProps.status);
         const koreanConsultationType = convertConsultationTypeToKorean(event.extendedProps.consultationType);
         
-        let consultantName = event.extendedProps.consultantName;
-        const consultantId = event.extendedProps.consultantId;
-        
-        if (!consultantName || consultantName === 'undefined' || consultantName === '알 수 없음') {
-            if (consultantId && consultantId !== 'undefined') {
-                consultantName = `상담사 ${consultantId}`;
-            } else {
-                consultantName = '상담사 정보 없음';
-            }
-        }
-        
-        let clientName = event.extendedProps.clientName;
-        const clientId = event.extendedProps.clientId;
-        
-        if (!clientName || clientName === 'undefined' || clientName === '알 수 없음') {
-            if (clientId && clientId !== 'undefined') {
-                clientName = `클라이언트 ${clientId}`;
-            } else {
-                clientName = '클라이언트 정보 없음';
-            }
-        }
+        const consultantName = event.extendedProps.consultantName || '상담사 정보 없음';
+        const clientName = event.extendedProps.clientName || '내담자 정보 없음';
 
         const scheduleData = {
             id: event.extendedProps.id,

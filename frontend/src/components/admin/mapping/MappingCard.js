@@ -54,55 +54,16 @@ const MappingCard = ({
     };
 
     return (
-        <div style={{
-            background: 'rgba(255, 255, 255, 0.6)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.5)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-            transition: 'all 0.3s ease',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column'
-        }}>
+        <div className="mg-v2-card mg-v2-card-glass">
             {/* Header */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: 'var(--spacing-md)',
-                background: 'rgba(255, 255, 255, 0.3)',
-                borderBottom: '1px solid rgba(139, 69, 19, 0.1)'
-            }}>
+            <div className="mg-v2-card-header">
                 <div className="mg-v2-mapping-card-header-left">
-                    <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-xs)',
-                        padding: 'var(--spacing-xs) var(--spacing-md)',
-                        borderRadius: '50px',
-                        background: statusInfo.color === 'var(--color-danger)' ? 'var(--color-danger)' : 'var(--mint-green)',
-                        color: statusInfo.color === 'var(--color-danger)' ? 'white' : 'var(--dark-gray)',
-                        fontSize: 'var(--font-size-xs)',
-                        fontWeight: 'var(--font-weight-semibold)',
-                        boxShadow: 'var(--shadow-sm)',
-                        border: '1px solid rgba(139, 69, 19, 0.1)'
-                    }}>
+                    <span className={`mg-v2-badge ${statusInfo.color === 'var(--color-danger)' ? 'mg-v2-badge-danger' : 'mg-v2-badge-success'}`}>
                         {statusInfo.icon} {statusInfo.label}
                     </span>
                     
                     {isErpIntegrated() && (
-                        <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 'var(--spacing-xs)',
-                            padding: 'var(--spacing-xs) var(--spacing-sm)',
-                            borderRadius: 'var(--radius-sm)',
-                            background: 'rgba(59, 130, 246, 0.1)',
-                            color: 'var(--color-info)',
-                            fontSize: 'var(--font-size-xs)',
-                            fontWeight: 'var(--font-weight-medium)'
-                        }}>
+                        <span className="mg-v2-badge mg-v2-badge-info">
                             <Database size={12} />
                             ERP 연동
                         </span>
@@ -134,10 +95,10 @@ const MappingCard = ({
                     </div>
                     
                     <div className="mg-v2-mapping-package-item">
-                        <User size={16} style={{ color: 'var(--olive-green)', flexShrink: 0 }} />
-                        <div className="mg-v2-mapping-package-info">
-                            <div className="mg-v2-mapping-package-label">내담자</div>
-                            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--dark-gray)', fontWeight: 'var(--font-weight-semibold)', wordBreak: 'break-word' }}>
+                        <User size={16} className="mg-v2-mapping-icon" />
+                        <div className="mg-v2-mapping-participant-info">
+                            <div className="mg-v2-mapping-participant-label">내담자</div>
+                            <div className="mg-v2-mapping-participant-name">
                                 {mapping.clientName || 'N/A'}
                             </div>
                         </div>
@@ -146,20 +107,20 @@ const MappingCard = ({
 
                 {/* Package & Amount */}
                 <div className="mg-v2-mapping-package-section">
-                    <div style={{ flex: 1, minWidth: '0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                        <Package size={16} style={{ color: 'var(--olive-green)', flexShrink: 0 }} />
-                        <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--medium-gray)' }}>패키지</div>
+                    <div className="mg-v2-mapping-package-row">
+                        <Package size={16} className="mg-v2-mapping-icon" />
+                        <div className="mg-v2-mapping-package-info-item">
+                            <div className="mg-v2-mapping-package-label">패키지</div>
                             <div className="mg-v2-mapping-package-name">
                                 {mapping.packageName || 'N/A'}
                             </div>
                         </div>
                     </div>
                     
-                    <div style={{ flex: 1, minWidth: '0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                        <CreditCard size={16} style={{ color: 'var(--olive-green)', flexShrink: 0 }} />
-                        <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--medium-gray)' }}>금액</div>
+                    <div className="mg-v2-mapping-package-row">
+                        <CreditCard size={16} className="mg-v2-mapping-icon" />
+                        <div className="mg-v2-mapping-package-info-item">
+                            <div className="mg-v2-mapping-package-label">금액</div>
                             <div className="mg-v2-mapping-amount">
                                 {formatAmount(mapping.packagePrice || mapping.paymentAmount)}
                             </div>
@@ -168,13 +129,7 @@ const MappingCard = ({
                 </div>
 
                 {/* Dates */}
-                <div style={{ 
-                    borderTop: '1px solid rgba(139, 69, 19, 0.1)', 
-                    paddingTop: 'var(--spacing-sm)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 'var(--spacing-xs)'
-                }}>
+                <div className="mg-v2-mapping-dates-section">
                     {mapping.startDate && (
                         <div className="mg-v2-mapping-date-item">
                             <Calendar size={14} className="mg-v2-mapping-date-icon" />
@@ -184,34 +139,25 @@ const MappingCard = ({
                     )}
                     
                     {mapping.createdAt && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-xs)' }}>
-                            <Clock size={14} style={{ color: 'var(--medium-gray)' }} />
-                            <span style={{ color: 'var(--medium-gray)', fontWeight: 'var(--font-weight-medium)' }}>생성일:</span>
-                            <span style={{ color: 'var(--dark-gray)', fontWeight: 'var(--font-weight-semibold)' }}>{formatDate(mapping.createdAt)}</span>
+                        <div className="mg-v2-mapping-date-item">
+                            <Clock size={14} className="mg-v2-mapping-date-icon" />
+                            <span className="mg-v2-mapping-date-label">생성일:</span>
+                            <span className="mg-v2-mapping-date-value">{formatDate(mapping.createdAt)}</span>
                         </div>
                     )}
                     
                     {mapping.adminApprovalDate && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-xs)' }}>
+                        <div className="mg-v2-mapping-date-item">
                             <CheckCircle size={14} className="mg-v2-mapping-approval-icon" />
-                            <span style={{ color: 'var(--medium-gray)', fontWeight: 'var(--font-weight-medium)' }}>승인일:</span>
-                            <span style={{ color: 'var(--dark-gray)', fontWeight: 'var(--font-weight-semibold)' }}>{formatDate(mapping.adminApprovalDate)}</span>
+                            <span className="mg-v2-mapping-date-label">승인일:</span>
+                            <span className="mg-v2-mapping-date-value">{formatDate(mapping.adminApprovalDate)}</span>
                         </div>
                     )}
                 </div>
             </div>
 
             {/* Footer */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: 'var(--spacing-md)',
-                background: 'rgba(255, 255, 255, 0.3)',
-                borderTop: '1px solid rgba(139, 69, 19, 0.1)',
-                gap: 'var(--spacing-sm)',
-                flexWrap: 'wrap'
-            }}>
+            <div className="mg-v2-card-footer">
                 <div className="mg-v2-mapping-card-footer-left">
                     {mapping.status === 'PENDING_PAYMENT' && (
                         <button 

@@ -835,7 +835,7 @@ const TimeSlotGrid = ({
                                     {schedule.startTime} - {schedule.endTime}
                                 </span>
                                 <span className="mg-v2-schedule-title">
-                                    {schedule.title}
+                                    {schedule.title || `${schedule.consultantName || '상담사 ID ' + (schedule.consultantId || '알 수 없음')} - ${schedule.clientName || '내담자 ID ' + (schedule.clientId || '알 수 없음')}`}
                                 </span>
                             </div>
                         ))}

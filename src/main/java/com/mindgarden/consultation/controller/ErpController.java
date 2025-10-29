@@ -18,13 +18,13 @@ import com.mindgarden.consultation.entity.PurchaseOrder;
 import com.mindgarden.consultation.entity.PurchaseRequest;
 import com.mindgarden.consultation.entity.RecurringExpense;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.repository.RolePermissionRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.RecurringExpenseService;
-import com.mindgarden.consultation.util.PermissionCheckUtils;
 import com.mindgarden.consultation.util.TaxCalculationUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.data.domain.Page;
@@ -67,6 +67,7 @@ public class ErpController {
     private final CommonCodeService commonCodeService;
     private final DynamicPermissionService dynamicPermissionService;
     private final UserRepository userRepository;
+    private final RolePermissionRepository rolePermissionRepository;
     
     // ==================== Item Management ====================
     
@@ -2038,24 +2039,31 @@ public class ErpController {
             log.info("🔍 재무 거래 삭제 요청: 사용자={}, 역할={}, 권한코드=FINANCIAL_TRANSACTION_DELETE", 
                     currentUser.getEmail(), currentUser.getRole());
             
-            // 사용자의 모든 권한 확인 (디버깅용)
-            try {
-                List<String> userPermissions = dynamicPermissionService.getUserPermissionsAsStringList(currentUser);
-                log.info("🔍 현재 사용자 권한 목록: {}", userPermissions);
-                boolean hasDeletePermission = userPermissions.contains("FINANCIAL_TRANSACTION_DELETE");
-                log.info("🔍 FINANCIAL_TRANSACTION_DELETE 권한 보유 여부: {}", hasDeletePermission);
-            } catch (Exception e) {
-                log.warn("사용자 권한 조회 실패: {}", e.getMessage());
+            // 캐시 우회하여 직접 DB에서 권한 확인 (운영 환경 대응)
+            String roleName = currentUser.getRole().name();
+            String permissionCode = "FINANCIAL_TRANSACTION_DELETE";
+            
+            boolean hasPermission = rolePermissionRepository
+                    .existsByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
+            
+            log.info("🔍 직접 DB 권한 체크 결과: 역할={}, 권한={}, 결과={}", roleName, permissionCode, hasPermission);
+            
+            // 추가 디버깅: 해당 역할의 모든 권한 조회
+            if (!hasPermission) {
+                var allRolePermissions = rolePermissionRepository.findByRoleNameAndIsActiveTrue(roleName);
+                List<String> permissionCodes = allRolePermissions.stream()
+                        .map(rp -> rp.getPermissionCode())
+                        .collect(java.util.stream.Collectors.toList());
+                log.warn("📋 해당 역할의 모든 활성 권한: {}", permissionCodes);
+                log.warn("❌ 재무 거래 삭제 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
+                
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "재무 거래 삭제 권한이 없습니다. 지점 수퍼 어드민만 삭제할 수 있습니다."
+                ));
             }
             
-            // 동적 권한 체크 - 재무 거래 삭제 권한 확인
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "FINANCIAL_TRANSACTION_DELETE", dynamicPermissionService);
-            if (permissionResponse != null) {
-                log.warn("❌ 재무 거래 삭제 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
-                @SuppressWarnings("unchecked")
-                ResponseEntity<Map<String, Object>> typedResponse = (ResponseEntity<Map<String, Object>>) permissionResponse;
-                return typedResponse;
-            }
+            log.info("✅ 재무 거래 삭제 권한 확인 완료: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
             
             // 재무 거래 삭제
             financialTransactionService.deleteTransaction(id, currentUser);

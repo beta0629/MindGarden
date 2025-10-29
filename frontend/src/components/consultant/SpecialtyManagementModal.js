@@ -342,7 +342,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                         <div className="mg-v2-list-item-content">
                                             <div className="mg-v2-list-item-title">{consultant.name || consultant.username}</div>
                                             <div className="mg-v2-list-item-subtitle">
-                                                {getSpecialtyKoreanName(consultant.specialty || consultant.specialization)}
+                                                {consultant.specialtyDisplay || getSpecialtyKoreanName(consultant.specialty || consultant.specialization)}
                                             </div>
                                         </div>
                                         <button 

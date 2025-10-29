@@ -271,8 +271,18 @@ const PermissionManagement = () => {
             });
 
             if (response.ok) {
+                const result = await response.json();
                 setMessage('권한이 성공적으로 저장되었습니다.');
-                loadUserPermissions(); // 현재 사용자 권한 새로고침
+                
+                // 현재 사용자의 역할에 권한을 부여한 경우 페이지 새로고침
+                if (selectedRole === currentUserRole) {
+                    console.log('✅ 현재 사용자 권한 변경됨 - 페이지 새로고침');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    loadUserPermissions(); // 다른 역할 권한은 새로고침
+                }
             } else {
                 const error = await response.json();
                 setMessage(`저장 실패: ${error.message || '알 수 없는 오류'}`);

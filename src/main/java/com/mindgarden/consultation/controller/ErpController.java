@@ -2040,7 +2040,7 @@ public class ErpController {
             
             // 사용자의 모든 권한 확인 (디버깅용)
             try {
-                List<String> userPermissions = dynamicPermissionService.getUserPermissions(currentUser.getId());
+                List<String> userPermissions = dynamicPermissionService.getUserPermissionsAsStringList(currentUser);
                 log.info("🔍 현재 사용자 권한 목록: {}", userPermissions);
                 boolean hasDeletePermission = userPermissions.contains("FINANCIAL_TRANSACTION_DELETE");
                 log.info("🔍 FINANCIAL_TRANSACTION_DELETE 권한 보유 여부: {}", hasDeletePermission);

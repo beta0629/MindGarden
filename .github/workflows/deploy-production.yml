@@ -158,6 +158,19 @@ jobs:
         strip_components: 3
         overwrite: true
         
+    - name: 📤 매핑 수정 프로시저 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "sql/mapping_update_procedures_mysql.sql"
+        target: "/tmp/"
+        strip_components: 1
+        overwrite: true
+        
     # 메시지 권한 SQL 업로드 - 권한 오류로 주석 처리
     # SQL 파일은 한 번만 실행되어야 함 - 수동 실행 필요
     # - name: 📤 메시지 권한 SQL 업로드
@@ -278,6 +291,34 @@ jobs:
             echo "   mysql -u mindgarden -p'mindgarden2025' mind_garden < /path/to/sql/add_message_management_permissions_force.sql"
           else
             echo "✅ 메시지 관리 권한이 이미 존재함 (${EXISTING_COUNT}개)"
+          fi
+          
+          # 매핑 수정 프로시저 배포
+          echo "🔧 매핑 수정 프로시저 배포 시작..."
+          if [ -f /tmp/mapping_update_procedures_mysql.sql ]; then
+            echo "📋 매핑 수정 프로시저 파일 확인됨"
+            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/mapping_update_procedures_mysql.sql
+            
+            if [ $? -eq 0 ]; then
+              echo "✅ 매핑 수정 프로시저 배포 완료"
+              
+              # 프로시저 확인
+              echo "📋 배포된 프로시저 확인:"
+              mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden -e "
+              SELECT ROUTINE_NAME, CREATED 
+              FROM information_schema.ROUTINES 
+              WHERE ROUTINE_SCHEMA = 'mind_garden' 
+              AND ROUTINE_TYPE = 'PROCEDURE' 
+              AND ROUTINE_NAME IN ('UpdateMappingInfo', 'UpdateMappingStatistics', 'CheckMappingUpdatePermission')
+              ORDER BY CREATED DESC;
+              " 2>/dev/null || true
+            else
+              echo "⚠️ 매핑 수정 프로시저 배포 실패 (무시하고 계속 진행)"
+            fi
+            
+            rm -f /tmp/mapping_update_procedures_mysql.sql
+          else
+            echo "⚠️ 매핑 수정 프로시저 파일을 찾을 수 없습니다"
           fi
           
           # PL/SQL 프로시저 등록

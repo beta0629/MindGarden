@@ -6,6 +6,7 @@ import { authAPI, apiGet } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
 import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
+import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import '../../styles/main.css';
 import './CommonDashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
@@ -745,9 +746,9 @@ const CommonDashboard = ({ user: propUser }) => {
   // 일정 새로고침
   const refreshSchedule = async () => {
     try {
-      if (user?.role === 'CLIENT') {
+      if (RoleUtils.isClient(user)) {
         await loadClientConsultationData(user.id);
-      } else if (user?.role === 'CONSULTANT') {
+      } else if (RoleUtils.isConsultant(user)) {
         await loadConsultantConsultationData(user.id);
       }
     } catch (error) {
@@ -782,7 +783,7 @@ const CommonDashboard = ({ user: propUser }) => {
         />
         
         {/* 내담자 맞춤형 메시지 (내담자 전용) */}
-        {user?.role === 'CLIENT' && (
+        {RoleUtils.isClient(user) && (
           <ClientPersonalizedMessages 
             user={user}
             consultationData={consultationData}
@@ -791,32 +792,32 @@ const CommonDashboard = ({ user: propUser }) => {
         )}
 
         {/* 내담자 결제 내역 및 회기 현황 (내담자 전용) */}
-        {user?.role === 'CLIENT' && (
+        {RoleUtils.isClient(user) && (
           <ClientPaymentSessionsSection userId={user.id} />
         )}
 
         {/* 상담사 평가 섹션 (내담자 전용) */}
-        {user?.role === 'CLIENT' && (
+        {RoleUtils.isClient(user) && (
           <RatableConsultationsSection />
         )}
 
         {/* 상담사 내담자 섹션 (상담사 전용) */}
-        {user?.role === 'CONSULTANT' && (
+        {RoleUtils.isConsultant(user) && (
           <ConsultantClientSection userId={user.id} />
         )}
 
         {/* 상담사 평가 표시 섹션 (상담사 전용) */}
-        {user?.role === 'CONSULTANT' && (
+        {RoleUtils.isConsultant(user) && (
           <ConsultantRatingDisplay consultantId={user.id} />
         )}
 
         {/* 상담일지 섹션 (상담사 전용) */}
-        {user?.role === 'CONSULTANT' && (
+        {RoleUtils.isConsultant(user) && (
           <ConsultationRecordSection consultantId={user.id} />
         )}
-        
+
         {/* 오늘의 힐링 카드 (내담자와 상담사만) */}
-        {(user?.role === 'CLIENT' || user?.role === 'CONSULTANT') && (
+        {(RoleUtils.isClient(user) || RoleUtils.isConsultant(user)) && (
           <HealingCard userRole={user?.role} />
         )}
         
@@ -824,7 +825,7 @@ const CommonDashboard = ({ user: propUser }) => {
         <ScheduleQuickAccess user={user} />
         
         {/* 요약 패널 섹션 (상담사/관리자 전용) */}
-        {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN' || user?.role === 'HQ_MASTER') && (
+        {(RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) && (
           <SummaryPanels 
             user={user} 
             consultationData={consultationData} 
@@ -838,17 +839,17 @@ const CommonDashboard = ({ user: propUser }) => {
         <RecentActivities consultationData={consultationData} />
         
         {/* 시스템 알림 섹션 (상담사 전용) */}
-        {user?.role === 'CONSULTANT' && (
+        {RoleUtils.isConsultant(user) && (
           <SystemNotificationSection />
         )}
 
         {/* ERP 구매 요청 섹션 (상담사 전용) */}
-        {user?.role === 'CONSULTANT' && (
+        {RoleUtils.isConsultant(user) && (
           <ErpPurchaseRequestPanel user={user} />
         )}
         
         {/* 내담자 메시지 섹션 */}
-        {user?.role === 'CLIENT' && (
+        {RoleUtils.isClient(user) && (
           <ClientMessageSection userId={user.id} />
         )}
       </div>

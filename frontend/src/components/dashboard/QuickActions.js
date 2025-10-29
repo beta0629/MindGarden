@@ -3,6 +3,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import { Zap, User, Calendar, MessageCircle, UserPlus, History, FileText, Link2, Code, BarChart3, HelpCircle, Settings } from 'lucide-react';
 import ConsultantApplicationModal from '../common/ConsultantApplicationModal';
+import { RoleUtils, USER_ROLES } from '../../constants/roles';
 
 const QuickActions = ({ user }) => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const QuickActions = ({ user }) => {
   };
 
   const goToSchedule = () => {
-    if (user?.role === 'CONSULTANT') {
+    if (RoleUtils.isConsultant(user)) {
       navigate('/consultant/schedule');
     } else {
       navigate(`/${user?.role?.toLowerCase()}/schedule`);
@@ -45,9 +46,9 @@ const QuickActions = ({ user }) => {
   };
 
   const goToMessages = () => {
-    if (user?.role === 'CLIENT') {
+    if (RoleUtils.isClient(user)) {
       navigate('/client/messages');
-    } else if (user?.role === 'CONSULTANT') {
+    } else if (RoleUtils.isConsultant(user)) {
       navigate('/consultant/messages');
     }
   };
@@ -79,15 +80,15 @@ const QuickActions = ({ user }) => {
           </button>
           
           {/* 메시지 버튼 (내담자/상담사) */}
-          {(user?.role === 'CLIENT' || user?.role === 'CONSULTANT') && (
+          {(RoleUtils.isClient(user) || RoleUtils.isConsultant(user)) && (
             <button className="quick-action-btn" onClick={goToMessages}>
               <MessageCircle size={24} />
-              <span>{user?.role === 'CLIENT' ? '상담사 메시지' : '메시지 관리'}</span>
+              <span>{RoleUtils.isClient(user) ? '상담사 메시지' : '메시지 관리'}</span>
             </button>
           )}
           
           {/* 상담사 신청 버튼 (내담자 전용) - 임시 비활성화 */}
-          {false && user?.role === 'CLIENT' && (
+          {false && RoleUtils.isClient(user) && (
             <button 
               className="quick-action-btn"
               onClick={() => setShowConsultantApplicationModal(true)}
@@ -110,7 +111,7 @@ const QuickActions = ({ user }) => {
           </button>
           
           {/* 관리자 전용 액션 */}
-          {(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN' || user?.role === 'HQ_MASTER') && (
+          {(RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) && (
             <>
               <button className="quick-action-btn" onClick={goToMappingManagement}>
                 <Link2 size={24} />

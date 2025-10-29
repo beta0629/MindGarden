@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import MGButton from '../common/MGButton';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
+import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell } from 'react-icons/fa';
 import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, XCircle } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -899,7 +900,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 </DashboardSection>
 
             {/* 상담 완료 건수 통계 (어드민/수퍼어드민/지점수퍼어드민) */}
-            {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_BRANCH_SUPER_ADMIN') && (
+            {RoleUtils.isAdmin(propUser || sessionUser) && (
                     <DashboardSection
                         title="상담 완료 통계"
                         subtitle="월별 상담 완료 현황 및 성과 지표"
@@ -1106,7 +1107,7 @@ const AdminDashboard = ({ user: propUser }) => {
             </DashboardSection>
 
             {/* 컴플라이언스 관리 (관리자 전용) */}
-            {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_BRANCH_SUPER_ADMIN') && (
+            {RoleUtils.isAdmin(propUser || sessionUser) && (
                 <DashboardSection
                     title="컴플라이언스 관리"
                     subtitle="규정 준수 및 보안 관리"

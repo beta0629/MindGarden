@@ -3,6 +3,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { SUMMARY_PANELS_CSS } from '../../constants/css';
 import { DASHBOARD_ICONS, DASHBOARD_LABELS, DASHBOARD_MESSAGES } from '../../constants/dashboard';
+import { RoleUtils } from '../../constants/roles';
 import './SummaryPanels.css';
 
 const SummaryPanels = ({ user, consultationData }) => {
@@ -53,7 +54,7 @@ const SummaryPanels = ({ user, consultationData }) => {
   return (
     <div className={SUMMARY_PANELS_CSS.CONTAINER}>
       {/* 상담 일정 요약 (상담사/관리자 전용) */}
-      {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
+      {(RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user)) && (
         <div className={`${SUMMARY_PANELS_CSS.PANEL} consultation-summary`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
@@ -127,7 +128,7 @@ const SummaryPanels = ({ user, consultationData }) => {
       
 
       {/* 상담 통계 (상담사 전용) */}
-      {user?.role === 'CONSULTANT' && (
+      {RoleUtils.isConsultant(user) && (
         <div className={`${SUMMARY_PANELS_CSS.PANEL} consultation-stats`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
@@ -162,7 +163,7 @@ const SummaryPanels = ({ user, consultationData }) => {
 
       
       {/* 시스템 현황 (관리자 전용) */}
-      {(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
+      {RoleUtils.isAdmin(user) && (
         <div className={`${SUMMARY_PANELS_CSS.PANEL} system-status`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
@@ -194,7 +195,7 @@ const SummaryPanels = ({ user, consultationData }) => {
       )}
 
       {/* 매핑 관리 (관리자 전용) */}
-      {(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
+      {RoleUtils.isAdmin(user) && (
         <div className={`${SUMMARY_PANELS_CSS.PANEL} mapping-management`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>

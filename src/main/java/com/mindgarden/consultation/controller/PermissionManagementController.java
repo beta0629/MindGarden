@@ -264,19 +264,26 @@ public class PermissionManagementController {
 
             log.info("🔍 현재 사용자: {} ({})", currentUser.getEmail(), currentUser.getRole());
 
-            // 권한 확인 (관리자만 가능)
-            boolean hasUserManagePermission = dynamicPermissionService.hasPermission(currentUser, "USER_MANAGE");
-            log.info("🔍 USER_MANAGE 권한 확인: {}", hasUserManagePermission);
+            // 관리자 역할 확인 (BRANCH_ADMIN 이상만 권한 관리 가능)
+            String currentUserRole = currentUser.getRole().name();
+            boolean isAdmin = "ADMIN".equals(currentUserRole) || 
+                             "BRANCH_SUPER_ADMIN".equals(currentUserRole) || 
+                             "BRANCH_ADMIN".equals(currentUserRole) ||
+                             "SUPER_HQ_ADMIN".equals(currentUserRole) || 
+                             "HQ_ADMIN".equals(currentUserRole) || 
+                             "HQ_MASTER".equals(currentUserRole);
             
-            if (!hasUserManagePermission) {
-                log.warn("⚠️ USER_MANAGE 권한이 없습니다");
+            log.info("🔍 관리자 권한 확인: isAdmin={}", isAdmin);
+            
+            if (!isAdmin) {
+                log.warn("⚠️ 관리자 권한이 없습니다: 역할={}", currentUserRole);
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
-                    "message", "권한이 없습니다."
+                    "message", "권한이 없습니다. 관리자만 권한을 관리할 수 있습니다."
                 ));
             }
 
-            String currentUserRole = currentUser.getRole().name();
+            // currentUserRole은 이미 위에서 선언됨
             log.info("🔍 관리 가능한 권한 조회 요청: 사용자 역할={}", currentUserRole);
 
             // 사용자 역할에 따라 관리 가능한 권한만 필터링

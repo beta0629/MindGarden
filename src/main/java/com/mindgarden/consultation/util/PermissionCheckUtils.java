@@ -194,6 +194,8 @@ public class PermissionCheckUtils {
                 return "스케줄 삭제 권한이 없습니다.";
             case "SCHEDULE_MANAGE":
                 return "스케줄 관리 권한이 없습니다.";
+            case "FINANCIAL_TRANSACTION_DELETE":
+                return "재무 거래 삭제 권한이 없습니다. 지점 수퍼 어드민만 삭제할 수 있습니다.";
             default:
                 return "해당 기능에 대한 접근 권한이 없습니다.";
         }

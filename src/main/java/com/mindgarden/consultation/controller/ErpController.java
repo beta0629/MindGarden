@@ -2035,9 +2035,23 @@ public class ErpController {
                     .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
             
+            log.info("🔍 재무 거래 삭제 요청: 사용자={}, 역할={}, 권한코드=FINANCIAL_TRANSACTION_DELETE", 
+                    currentUser.getEmail(), currentUser.getRole());
+            
+            // 사용자의 모든 권한 확인 (디버깅용)
+            try {
+                List<String> userPermissions = dynamicPermissionService.getUserPermissions(currentUser.getId());
+                log.info("🔍 현재 사용자 권한 목록: {}", userPermissions);
+                boolean hasDeletePermission = userPermissions.contains("FINANCIAL_TRANSACTION_DELETE");
+                log.info("🔍 FINANCIAL_TRANSACTION_DELETE 권한 보유 여부: {}", hasDeletePermission);
+            } catch (Exception e) {
+                log.warn("사용자 권한 조회 실패: {}", e.getMessage());
+            }
+            
             // 동적 권한 체크 - 재무 거래 삭제 권한 확인
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "FINANCIAL_TRANSACTION_DELETE", dynamicPermissionService);
             if (permissionResponse != null) {
+                log.warn("❌ 재무 거래 삭제 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
                 @SuppressWarnings("unchecked")
                 ResponseEntity<Map<String, Object>> typedResponse = (ResponseEntity<Map<String, Object>>) permissionResponse;
                 return typedResponse;

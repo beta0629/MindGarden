@@ -394,8 +394,13 @@ public class PermissionManagementController {
             // currentUserRole은 이미 위에서 선언됨
             boolean canManageRole = false;
             
+            // 자신의 역할에 대한 권한 변경은 항상 허용
+            if (currentUserRole.equals(roleName)) {
+                log.info("✅ 자신의 역할 권한 변경 요청 - 허용");
+                canManageRole = true;
+            }
             // HQ 마스터는 모든 역할 관리 가능
-            if ("HQ_MASTER".equals(currentUserRole)) {
+            else if ("HQ_MASTER".equals(currentUserRole)) {
                 canManageRole = true;
             }
             // SUPER_HQ_ADMIN은 HQ_MASTER를 제외한 모든 역할 관리 가능

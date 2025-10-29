@@ -2017,6 +2017,48 @@ public class ErpController {
         }
     }
     
+    /**
+     * 재무 거래 삭제
+     */
+    @DeleteMapping("/finance/transactions/{id}")
+    public ResponseEntity<Map<String, Object>> deleteFinancialTransaction(
+            @PathVariable Long id,
+            HttpSession session) {
+        try {
+            log.info("재무 거래 삭제 요청: id={}", id);
+            
+            // 세션에서 현재 사용자 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            }
+            
+            // 권한 확인
+            if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) &&
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()) &&
+                !UserRole.HQ_ADMIN.equals(currentUser.getRole())) {
+                log.warn("❌ 재무 거래 삭제 권한 없음: 현재 역할={}", currentUser.getRole());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "재무 거래 삭제는 본사 관리자 권한이 필요합니다."));
+            }
+            
+            // 재무 거래 삭제
+            financialTransactionService.deleteTransaction(id, currentUser);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "재무 거래가 성공적으로 삭제되었습니다.");
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("재무 거래 삭제 실패: id={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "재무 거래 삭제 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
     // ==================== 반복 지출 관리 ====================
     
     /**

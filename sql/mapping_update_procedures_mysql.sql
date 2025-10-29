@@ -122,6 +122,7 @@ BEGIN
             transaction_date,
             status,
             is_deleted,
+            tax_included,
             created_at,
             updated_at
         ) VALUES (
@@ -135,6 +136,7 @@ BEGIN
             v_branch_code,
             NOW(),
             'COMPLETED',
+            FALSE,
             FALSE,
             NOW(),
             NOW()

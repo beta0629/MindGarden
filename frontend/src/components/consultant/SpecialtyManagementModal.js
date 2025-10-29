@@ -4,6 +4,8 @@ import { Briefcase, XCircle, Edit2, Save, Plus, Users, Target } from 'lucide-rea
 import UnifiedLoading from '../common/UnifiedLoading';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
+import { useSession } from '../../contexts/SessionContext';
 
 /**
  * 상담사 전문분야 관리 모달 컴포넌트
@@ -16,6 +18,7 @@ import notificationManager from '../../utils/notification';
  * @since 2025-09-30
  */
 const SpecialtyManagementModal = ({ isOpen, onClose }) => {
+    const { user } = useSession();
     const [loading, setLoading] = useState(false);
     const [consultants, setConsultants] = useState([]);
     const [specialties, setSpecialties] = useState([]);
@@ -33,14 +36,50 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
     }, [isOpen]);
 
     /**
-     * 상담사 목록 로드
+     * 상담사 목록 로드 (통합 API 사용, 지점별 + 삭제 제외)
      */
     const loadConsultants = async () => {
         try {
             setLoading(true);
-            const response = await apiGet('/api/admin/consultants');
-            if (response && response.success !== false) {
-                setConsultants(response.data || []);
+            const consultantsList = await getAllConsultantsWithStats();
+            
+            if (consultantsList && consultantsList.length > 0) {
+                // 응답 데이터 변환: Map.of() 구조 파싱
+                const consultantsData = consultantsList.map(item => {
+                    const consultantEntity = item.consultant || {};
+                    return {
+                        id: consultantEntity.id,
+                        name: consultantEntity.name,
+                        email: consultantEntity.email,
+                        phone: consultantEntity.phone,
+                        role: consultantEntity.role,
+                        isActive: consultantEntity.isActive,
+                        branchCode: consultantEntity.branchCode,
+                        specialty: consultantEntity.specialty,
+                        specialtyDetails: consultantEntity.specialtyDetails,
+                        specialization: consultantEntity.specialization,
+                        specializationDetails: consultantEntity.specializationDetails,
+                        yearsOfExperience: consultantEntity.yearsOfExperience,
+                        maxClients: consultantEntity.maxClients,
+                        currentClients: item.currentClients || 0,
+                        totalClients: item.totalClients || 0,
+                        isDeleted: consultantEntity.isDeleted || false
+                    };
+                });
+                
+                // 삭제된 상담사 필터링
+                const filteredData = consultantsData.filter(consultant => !consultant.isDeleted);
+                setConsultants(filteredData);
+                
+                // 통계 자동 계산
+                calculateStatistics(filteredData);
+            } else {
+                setConsultants([]);
+                setStatistics({
+                    totalConsultants: 0,
+                    specialtySet: 0,
+                    specialtyTypes: 0
+                });
             }
         } catch (error) {
             console.error('상담사 목록 로드 실패:', error);
@@ -78,6 +117,32 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         } catch (error) {
             console.error('전문분야 통계 로드 실패:', error);
         }
+    };
+
+    /**
+     * 통계 자동 계산
+     */
+    const calculateStatistics = (consultantsList) => {
+        const totalConsultants = consultantsList.length;
+        const specialtySetCount = consultantsList.filter(c => c.specialty || c.specialization).length;
+        
+        // 전문분야 종류 계산
+        const specialtyTypesSet = new Set();
+        consultantsList.forEach(consultant => {
+            if (consultant.specialty) {
+                specialtyTypesSet.add(consultant.specialty);
+            }
+            if (consultant.specialization) {
+                const specialties = consultant.specialization.split(',');
+                specialties.forEach(s => specialtyTypesSet.add(s.trim()));
+            }
+        });
+        
+        setStatistics({
+            totalConsultants,
+            specialtySet: specialtySetCount,
+            specialtyTypes: specialtyTypesSet.size
+        });
     };
 
     /**

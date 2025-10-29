@@ -110,57 +110,49 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       }
 
       console.log('✅ IntegratedFinanceDashboard 접근 허용:', currentUser?.role);
-      
-      // 동적 권한 목록 가져오기
-      await fetchUserPermissions(setUserPermissions);
     };
 
     // OAuth2 콜백 후 세션 설정을 위한 지연
     setTimeout(checkSessionWithDelay, 100);
   }, [sessionLoading, isLoggedIn, navigate]); // user 의존성 제거
 
-  // 권한 로드 (user 변경 시에만) - 단순화: 이미 로드된 권한 사용
+  // 권한 체크 및 데이터 로드
   useEffect(() => {
-    if (user && user.id && !permissionCheckedRef.current) {
-      console.log('🔍 IntegratedFinanceDashboard 권한 로드 시작');
-      // 이미 로드된 권한이 있으면 사용, 없으면 새로 조회
-      if (window.userPermissions && window.userPermissions.length > 0) {
-        console.log('✅ 이미 로드된 권한 사용:', window.userPermissions.length);
-        setUserPermissions(window.userPermissions);
-      } else {
-        fetchUserPermissions(setUserPermissions);
-      }
-    }
-  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // 단순한 권한 체크 - 전역 권한 사용
-  useEffect(() => {
-    if (!sessionLoading && user && !permissionCheckedRef.current) {
-      console.log('🔍 통합재무관리 단순 권한 체크 시작');
-      
-      // 전역 권한 또는 로컬 권한 확인
-      const currentPermissions = userPermissions.length > 0 ? userPermissions : (window.userPermissions || []);
-      const hasIntegratedFinancePermission = currentPermissions.includes('INTEGRATED_FINANCE_VIEW');
-      
-      console.log('🔍 통합재무관리 권한 체크:', {
-        userPermissionsCount: currentPermissions.length,
-        hasPermission: hasIntegratedFinancePermission,
-        userPermissions: currentPermissions
-      });
-      
-      if (!hasIntegratedFinancePermission) {
-        console.log('❌ 통합재무관리 접근 권한 없음');
-        setError('통합재무관리 접근 권한이 없습니다.');
-        setLoading(false);
+    const checkPermissionAndLoad = async () => {
+      if (!sessionLoading && user && user.id && !permissionCheckedRef.current) {
+        console.log('🔍 통합재무관리 권한 체크 및 로드 시작');
+        
+        // 권한 조회
+        const permissions = await fetchUserPermissions();
+        console.log('✅ 권한 조회 완료:', permissions);
+        
+        // 권한 확인
+        const hasIntegratedFinancePermission = permissions.includes('INTEGRATED_FINANCE_VIEW');
+        console.log('🔍 통합재무관리 권한 체크:', {
+          permissionsCount: permissions.length,
+          hasPermission: hasIntegratedFinancePermission,
+          permissions: permissions
+        });
+        
+        if (!hasIntegratedFinancePermission) {
+          console.log('❌ 통합재무관리 접근 권한 없음');
+          setError('통합재무관리 접근 권한이 없습니다.');
+          setLoading(false);
+          permissionCheckedRef.current = true;
+          return;
+        }
+        
+        console.log('✅ 통합재무관리 접근 권한 확인됨');
+        setUserPermissions(permissions);
         permissionCheckedRef.current = true;
-        return;
+        
+        // 데이터 로드
+        await initializeComponent();
       }
-      
-      console.log('✅ 통합재무관리 접근 권한 확인됨');
-      permissionCheckedRef.current = true;
-      initializeComponent();
-    }
-  }, [sessionLoading, user, userPermissions]); // eslint-disable-line react-hooks/exhaustive-deps
+    };
+    
+    checkPermissionAndLoad();
+  }, [sessionLoading, user]); // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => {
     // selectedBranch가 설정되거나 권한 체크가 완료된 후 데이터 로드

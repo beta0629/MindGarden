@@ -15651,6 +15651,69 @@ body {
     width: 100%;
 }
 
+/* Filter 기본 클래스 */
+.mg-v2-filters-section {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.mg-v2-filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.mg-v2-filters-header h3 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.mg-v2-filters-content {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.mg-v2-search-box {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    position: relative;
+}
+
+.mg-v2-search-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+}
+
+.mg-v2-search-input {
+    padding-left: 40px;
+}
+
+.mg-v2-filter-box {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    position: relative;
+}
+
+.mg-v2-filter-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+    z-index: 1;
+}
+
 /* 모바일 반응형 */
 @media (max-width: 768px) {
     .mg-v2-filters-horizontal {
@@ -15672,6 +15735,11 @@ body {
     
     .mg-v2-filters-header h3 {
         margin-bottom: 0;
+    }
+    
+    .mg-v2-search-box,
+    .mg-v2-filter-box {
+        width: 100%;
     }
 }
 

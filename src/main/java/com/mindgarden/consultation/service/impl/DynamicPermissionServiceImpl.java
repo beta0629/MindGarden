@@ -486,6 +486,7 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     
     @Override
     @Transactional
+    @CacheEvict(value = {"userPermissions", "userPermissionsList", "rolePermissions"}, allEntries = true)
     public boolean setRolePermissions(String roleName, List<String> permissionCodes) {
         try {
             log.info("역할별 권한 설정 시작: 역할={}, 권한수={}", roleName, permissionCodes.size());
@@ -521,11 +522,13 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
                 }
             }
             
-            log.info("역할별 권한 설정 완료: 역할={}, 성공={}/{}", roleName, successCount, permissionCodes.size());
+            log.info("✅ 역할별 권한 설정 완료: 역할={}, 성공={}/{}", roleName, successCount, permissionCodes.size());
+            log.info("🔄 권한 캐시가 자동으로 클리어됩니다 (@CacheEvict)");
+            
             return successCount > 0;
             
         } catch (Exception e) {
-            log.error("역할별 권한 설정 실패: 역할={}", roleName, e);
+            log.error("❌ 역할별 권한 설정 실패: 역할={}", roleName, e);
             return false;
         }
     }

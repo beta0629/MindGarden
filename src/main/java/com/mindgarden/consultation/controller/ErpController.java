@@ -2034,11 +2034,10 @@ public class ErpController {
                     .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
             
-            // 권한 확인 - 지점 수퍼 어드민만 삭제 가능
-            if (!UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole())) {
-                log.warn("❌ 재무 거래 삭제 권한 없음: 현재 역할={}", currentUser.getRole());
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "재무 거래 삭제는 지점 수퍼 어드민 권한이 필요합니다."));
+            // 동적 권한 체크 - 재무 거래 삭제 권한 확인
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "FINANCIAL_TRANSACTION_DELETE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
             // 재무 거래 삭제

@@ -181,11 +181,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public void deleteTransaction(Long id, User currentUser) {
         log.info("💼 회계 거래 삭제: ID={}", id);
         
-        // 지점 수퍼 어드민만 삭제 가능
-        if (!UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole())) {
-            throw new RuntimeException("회계 거래 삭제 권한이 없습니다. 지점 수퍼 어드민만 삭제할 수 있습니다.");
-        }
-        
         FinancialTransaction transaction = financialTransactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("거래를 찾을 수 없습니다: " + id));
         

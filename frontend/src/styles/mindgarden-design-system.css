@@ -11871,6 +11871,43 @@ body {
     gap: var(--spacing-lg);
 }
 
+/* 전체 매핑 카드 모바일 반응형 */
+@media (max-width: 768px) {
+    .mg-v2-mapping-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+
+    .mg-v2-mapping-card {
+        margin: 0;
+        padding: var(--spacing-md);
+    }
+
+    .mg-v2-mapping-info {
+        padding: var(--spacing-sm);
+        gap: var(--spacing-xs);
+    }
+
+    .mg-v2-mapping-client,
+    .mg-v2-mapping-consultant,
+    .mg-v2-mapping-sessions {
+        font-size: var(--font-size-sm);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mg-v2-mapping-card-actions {
+        flex-direction: column;
+        padding: var(--spacing-sm);
+    }
+
+    .mg-v2-mapping-card-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 .mg-v2-mapping-info {
     display: flex;
     flex-direction: column;

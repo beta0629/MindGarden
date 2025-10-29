@@ -131,11 +131,20 @@ public class PermissionManagementController {
     @GetMapping("/role/{roleName}")
     public ResponseEntity<?> getRolePermissions(@PathVariable String roleName) {
         try {
+            log.info("🔍 역할 권한 조회: roleName={}", roleName);
             UserRole role = UserRole.fromString(roleName);
-            List<String> permissionCodes = dynamicPermissionService.getRolePermissions(role);
             
-            // 프론트엔드에서 expect하는 형식으로 변환 (permission_code 필드 포함)
-            List<Map<String, Object>> permissions = permissionCodes.stream()
+            // 캐시 우회하여 직접 DB에서 조회
+            List<Map<String, Object>> permissions = dynamicPermissionService.getRolePermissions(roleName);
+            List<String> permissionCodes = permissions.stream()
+                .map(p -> (String) p.get("permission_code"))
+                .filter(code -> code != null)
+                .collect(java.util.stream.Collectors.toList());
+            
+            log.info("🔍 DB에서 조회한 권한: {}", permissionCodes);
+            
+            // 프론트엔드에서 expect하는 형식으로 변환
+            List<Map<String, Object>> resultPermissions = permissionCodes.stream()
                 .map(code -> {
                     Map<String, Object> perm = new HashMap<>();
                     perm.put("permission_code", code);
@@ -148,8 +157,8 @@ public class PermissionManagementController {
                 "success", true,
                 "data", Map.of(
                     "role", role,
-                    "permissions", permissions,
-                    "permissionCount", permissions.size()
+                    "permissions", resultPermissions,
+                    "permissionCount", resultPermissions.size()
                 )
             ));
             

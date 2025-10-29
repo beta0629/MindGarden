@@ -134,8 +134,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       permissionChecked: permissionCheckedRef.current
     });
     
-    // 권한이 로드되었는지 확인 (빈 배열도 로드 완료로 간주)
-    if (userPermissions !== null && userPermissions !== undefined) {
+    // 권한이 실제로 로드되었는지 확인 (빈 배열이 아닌 경우만)
+    if (userPermissions !== null && userPermissions !== undefined && userPermissions.length > 0) {
       // 권한이 안정적으로 로드되었는지 확인
       const hasIntegratedFinancePermission = userPermissions.includes('INTEGRATED_FINANCE_VIEW');
       
@@ -160,6 +160,12 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         permissionCheckedRef.current = true;
         initializeComponent();
       }
+    } else if (!sessionLoading && user && userPermissions !== null && userPermissions.length === 0) {
+      // 권한이 빈 배열로 로드된 경우 (실제 권한이 없는 경우)
+      console.log('❌ 권한이 빈 배열로 로드됨 - 권한 없음');
+      setError('통합재무관리 접근 권한이 없습니다.');
+      setLoading(false);
+      permissionCheckedRef.current = true;
     } else if (!sessionLoading && user) {
       // 세션 로딩이 완료되었는데 권한이 아직 로드되지 않은 경우
       console.log('⏳ 권한 로딩 대기 중...');

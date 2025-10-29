@@ -47,20 +47,26 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                 // 응답 데이터 변환: Map.of() 구조 파싱
                 const consultantsData = consultantsList.map(item => {
                     const consultantEntity = item.consultant || {};
+                    
+                    // username 필드도 추가 (name이 없을 경우 대체)
+                    const consultantName = consultantEntity.name || consultantEntity.username || '이름 없음';
+                    const consultantEmail = consultantEntity.email || '';
+                    
                     return {
                         id: consultantEntity.id,
-                        name: consultantEntity.name,
-                        email: consultantEntity.email,
-                        phone: consultantEntity.phone,
-                        role: consultantEntity.role,
-                        isActive: consultantEntity.isActive,
-                        branchCode: consultantEntity.branchCode,
-                        specialty: consultantEntity.specialty,
-                        specialtyDetails: consultantEntity.specialtyDetails,
-                        specialization: consultantEntity.specialization,
-                        specializationDetails: consultantEntity.specializationDetails,
-                        yearsOfExperience: consultantEntity.yearsOfExperience,
-                        maxClients: consultantEntity.maxClients,
+                        name: consultantName,
+                        username: consultantEntity.username || consultantName,
+                        email: consultantEmail,
+                        phone: consultantEntity.phone || '',
+                        role: consultantEntity.role || 'CONSULTANT',
+                        isActive: consultantEntity.isActive !== undefined ? consultantEntity.isActive : true,
+                        branchCode: consultantEntity.branchCode || '',
+                        specialty: consultantEntity.specialty || consultantEntity.specialization || '',
+                        specialtyDetails: consultantEntity.specialtyDetails || consultantEntity.specializationDetails || '',
+                        specialization: consultantEntity.specialization || consultantEntity.specialty || '',
+                        specializationDetails: consultantEntity.specializationDetails || consultantEntity.specialtyDetails || '',
+                        yearsOfExperience: consultantEntity.yearsOfExperience || 0,
+                        maxClients: consultantEntity.maxClients || 0,
                         currentClients: item.currentClients || 0,
                         totalClients: item.totalClients || 0,
                         isDeleted: consultantEntity.isDeleted || false

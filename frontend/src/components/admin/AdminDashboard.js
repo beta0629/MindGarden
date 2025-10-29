@@ -621,9 +621,14 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                     <div className="mg-dashboard-header-right">
-                        <button className="mg-dashboard-icon-btn" onClick={() => setShowStatisticsModal(true)}>
+                        <MGButton 
+                            variant="outline" 
+                            size="small"
+                            className="mg-dashboard-icon-btn" 
+                            onClick={() => setShowStatisticsModal(true)}
+                        >
                             <BarChart />
-                        </button>
+                        </MGButton>
                     </div>
                 </div>
             </div>

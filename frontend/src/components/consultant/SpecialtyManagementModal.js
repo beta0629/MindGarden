@@ -32,7 +32,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         if (isOpen) {
             loadConsultants();
             loadSpecialties();
-            loadStatistics();
+            // loadStatistics(); // 제거: loadConsultants에서 calculateStatistics로 자동 계산됨
         }
     }, [isOpen]);
 
@@ -119,18 +119,18 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
     };
 
     /**
-     * 전문분야 통계 로드
+     * 전문분야 통계 로드 (Deprecated - calculateStatistics로 대체됨)
      */
-    const loadStatistics = async () => {
-        try {
-            const response = await apiGet('/api/admin/statistics/specialty');
-            if (response && response.success !== false) {
-                setStatistics(response.data);
-            }
-        } catch (error) {
-            console.error('전문분야 통계 로드 실패:', error);
-        }
-    };
+    // const loadStatistics = async () => {
+    //     try {
+    //         const response = await apiGet('/api/admin/statistics/specialty');
+    //         if (response && response.success !== false) {
+    //             setStatistics(response.data);
+    //         }
+    //     } catch (error) {
+    //         console.error('전문분야 통계 로드 실패:', error);
+    //     }
+    // };
 
     /**
      * 통계 자동 계산
@@ -188,16 +188,15 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                 notificationManager.success('전문분야가 저장되었습니다.');
                 
                 // 상담사 목록 업데이트
-                setConsultants(prev => 
-                    prev.map(consultant => 
-                        consultant.id === selectedConsultant.id 
-                            ? { ...consultant, specialty: newSpecialty.trim() }
-                            : consultant
-                    )
+                const updatedConsultants = consultants.map(consultant => 
+                    consultant.id === selectedConsultant.id 
+                        ? { ...consultant, specialty: newSpecialty.trim() }
+                        : consultant
                 );
+                setConsultants(updatedConsultants);
                 
-                // 통계 새로고침
-                loadStatistics();
+                // 통계 새로고침 (로컬 계산)
+                calculateStatistics(updatedConsultants);
             } else {
                 throw new Error(response?.message || '전문분야 저장에 실패했습니다.');
             }

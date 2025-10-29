@@ -374,22 +374,22 @@ const ConsultantTransferModal = ({
         </div>
         
         <div className="mg-v2-modal-footer">
-          <button
+          <MGButton
             type="button"
-            className="mg-v2-btn mg-v2-btn--secondary"
+            variant="secondary"
             onClick={handleClose}
             disabled={loading}
           >
             취소
-          </button>
-          <button
+          </MGButton>
+          <MGButton
             type="submit"
-            className="mg-v2-btn mg-v2-btn--primary"
+            variant="primary"
             onClick={handleSubmit}
             disabled={loading}
           >
-            {loading ? '변경 중...' : '상담사 변경'}
-          </button>
+{loading ? '변경 중...' : '상담사 변경'}
+          </MGButton>
         </div>
       </div>
     </div>,

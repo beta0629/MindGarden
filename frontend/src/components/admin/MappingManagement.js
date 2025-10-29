@@ -832,20 +832,20 @@ const MappingManagement = () => {
 
                         { /* 모달 푸터 */ }
                         <div className="mapping-refund-modal-footer">
-                            <button
+                            <MGButton
+                                variant="secondary"
                                 onClick={ handleCloseRefundModal }
                                 disabled={ loading }
-                                className="mg-v2-btn mg-btn--secondary"
                             >
                                 취소
-                            </button>
-                            <button
+                            </MGButton>
+                            <MGButton
+                                variant="danger"
                                 onClick={ handleRefundProcess }
                                 disabled={ loading || !refundReason.trim() }
-                                className={ `mg-btn mg-btn--danger ${!refundReason.trim() ? 'mg-btn--disabled' : '' }`}
                             >
                                 { loading ? '처리 중...' : '환불 처리' }
-                            </button>
+                            </MGButton>
                         </div>
                     </div>
                 </div>

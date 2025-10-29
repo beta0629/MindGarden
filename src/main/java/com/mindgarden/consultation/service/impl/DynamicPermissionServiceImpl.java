@@ -491,9 +491,14 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
         try {
             log.info("역할별 권한 설정 시작: 역할={}, 권한수={}", roleName, permissionCodes.size());
             
-            // 1. 기존 권한 모두 삭제
-            rolePermissionRepository.deleteByRoleName(roleName);
-            log.debug("기존 권한 삭제 완료: 역할={}", roleName);
+            // 1. 기존 권한 비활성화 (삭제 대신)
+            List<RolePermission> existingPermissions = rolePermissionRepository.findByRoleNameAndIsActiveTrue(roleName);
+            for (RolePermission rp : existingPermissions) {
+                rp.setIsActive(false);
+                rp.setUpdatedAt(LocalDateTime.now());
+                rolePermissionRepository.save(rp);
+            }
+            log.debug("기존 권한 비활성화 완료: 역할={}, 개수={}", roleName, existingPermissions.size());
             
             // 2. 새 권한들 추가
             int successCount = 0;
@@ -504,17 +509,31 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
                     continue;
                 }
                 
-                // 역할별 권한 추가
-                RolePermission rolePermission = new RolePermission();
-                rolePermission.setRoleName(roleName);
-                rolePermission.setPermissionCode(permissionCode);
-                rolePermission.setIsActive(true);
-                rolePermission.setCreatedAt(LocalDateTime.now());
-                rolePermission.setUpdatedAt(LocalDateTime.now());
+                // 이미 비활성화된 권한인지 확인
+                var allPermissions = rolePermissionRepository.findAll();
+                var existingPermission = allPermissions.stream()
+                    .filter(rp -> rp.getRoleName().equals(roleName) && rp.getPermissionCode().equals(permissionCode))
+                    .findFirst();
                 
-                rolePermissionRepository.save(rolePermission);
+                if (existingPermission.isPresent()) {
+                    // 이미 존재하는 권한은 활성화만
+                    RolePermission rp = existingPermission.get();
+                    rp.setIsActive(true);
+                    rp.setUpdatedAt(LocalDateTime.now());
+                    rolePermissionRepository.save(rp);
+                    log.debug("권한 활성화 완료: 역할={}, 권한={}", roleName, permissionCode);
+                } else {
+                    // 새로운 권한 추가
+                    RolePermission rolePermission = new RolePermission();
+                    rolePermission.setRoleName(roleName);
+                    rolePermission.setPermissionCode(permissionCode);
+                    rolePermission.setIsActive(true);
+                    rolePermission.setCreatedAt(LocalDateTime.now());
+                    rolePermission.setUpdatedAt(LocalDateTime.now());
+                    
+                    rolePermissionRepository.save(rolePermission);
+                }
                 successCount++;
-                log.debug("권한 추가 완료: 역할={}, 권한={}", roleName, permissionCode);
             }
             
             log.info("✅ 역할별 권한 설정 완료: 역할={}, 성공={}/{}", roleName, successCount, permissionCodes.size());

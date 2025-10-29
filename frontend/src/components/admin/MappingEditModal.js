@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Edit3, XCircle, Package2, DollarSign, Calendar, AlertCircle } from 'lucide-react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../common/MGButton';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
@@ -329,18 +330,18 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                 </div>
 
                 <div className="mg-v2-modal-footer">
-                    <button
+                    <MGButton
                         type="button"
-                        className="mg-v2-btn mg-v2-btn--secondary"
+                        variant="secondary"
                         onClick={ handleClose }
                         disabled={ loading }
                     >
                         <XCircle size={20} className="mg-v2-icon-inline" />
                         취소
-                    </button>
-                    <button
+                    </MGButton>
+                    <MGButton
                         type="submit"
-                        className="mg-v2-btn mg-v2-btn--primary"
+                        variant="primary"
                         onClick={ handleSubmit }
                         disabled={ loading }
                     >
@@ -350,7 +351,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                                 수정 완료
                             </>
                         )}
-                    </button>
+                    </MGButton>
                 </div>
             </div>
         </div>,

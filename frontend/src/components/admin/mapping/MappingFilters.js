@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, Filter, RotateCcw, X } from 'lucide-react';
 import { MAPPING_FILTER_OPTIONS } from '../../../constants/mapping';
+import MGButton from '../../common/MGButton';
 import './MappingFilters.css';
 
 /**
@@ -26,12 +27,13 @@ const MappingFilters = ({
         <div className="mg-v2-mapping-filters">
             <div className="mg-v2-mapping-filters-header">
                 <h3 className="mg-v2-mapping-filters-title">🔍 필터 및 검색</h3>
-                <button 
-                    className="mg-v2-btn mg-v2-btn--sm mg-v2-btn--secondary"
+                <MGButton 
+                    variant="secondary"
+                    size="small"
                     onClick={onReset}
                 >
                     <RotateCcw size={16} /> 초기화
-                </button>
+                </MGButton>
             </div>
             
             <div className="mg-v2-mapping-filters-content">

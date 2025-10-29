@@ -53,10 +53,30 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                     const consultantName = consultantEntity.name || consultantEntity.username || '이름 없음';
                     const consultantEmail = consultantEntity.email || '';
                     
-                    // 전문분야 데이터 확인
+                    // 전문분야 데이터 확인 (공통코드에서 동적으로 가져오기)
                     const rawSpecialty = consultantEntity.specialty || consultantEntity.specialization || '';
                     console.log('📋 전문분야 원본 데이터:', rawSpecialty);
-                    console.log('📋 전문분야 한글 변환:', getSpecialtyKoreanName(rawSpecialty));
+                    
+                    // specialties 배열에서 한글명 찾기
+                    let specialtyDisplay = '미설정';
+                    if (rawSpecialty) {
+                        // 먼저 getSpecialtyKoreanName으로 fallback 사용
+                        specialtyDisplay = getSpecialtyKoreanName(rawSpecialty);
+                        
+                        // specialties 배열에서 더 정확한 한글명 찾기 시도
+                        if (specialties.length > 0) {
+                            const foundSpecialty = specialties.find(s => 
+                                s.codeValue === rawSpecialty || 
+                                s.codeValue === rawSpecialty.toUpperCase() ||
+                                s.codeLabel === rawSpecialty
+                            );
+                            if (foundSpecialty) {
+                                specialtyDisplay = foundSpecialty.koreanName || foundSpecialty.codeLabel || specialtyDisplay;
+                            }
+                        }
+                    }
+                    
+                    console.log('📋 전문분야 한글 변환:', specialtyDisplay);
                     
                     return {
                         id: consultantEntity.id,
@@ -68,7 +88,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                         isActive: consultantEntity.isActive !== undefined ? consultantEntity.isActive : true,
                         branchCode: consultantEntity.branchCode || '',
                         specialty: rawSpecialty, // 원본 저장
-                        specialtyDisplay: getSpecialtyKoreanName(rawSpecialty), // 한글 변환 버전
+                        specialtyDisplay: specialtyDisplay, // 동적으로 조회한 한글명
                         specialtyDetails: consultantEntity.specialtyDetails || consultantEntity.specializationDetails || '',
                         specialization: consultantEntity.specialization || consultantEntity.specialty || '',
                         specializationDetails: consultantEntity.specializationDetails || consultantEntity.specialtyDetails || '',

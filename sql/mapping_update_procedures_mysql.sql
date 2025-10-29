@@ -95,17 +95,111 @@ BEGIN
             p_updated_by
         );
 
-        -- 6. ERP 재무 거래 데이터 동기화 (매핑과 연관된 거래 업데이트)
+        -- 6. ERP 재무 거래 데이터 동기화
+        -- 6-1. 기존 INCOME 거래 취소 처리 (여러 개일 수 있으므로 모두 처리)
         UPDATE financial_transactions 
         SET 
-            amount = p_new_package_price,
-            description = CONCAT('상담료 입금 확인 - ', p_new_package_name, ' (', p_new_package_price, '원) (BANK_TRANSFER) [정확한금액: ', p_new_package_price, '원]'),
+            status = 'CANCELLED',
+            description = CONCAT('패키지 수정으로 인한 취소 - ', description),
             updated_at = NOW()
         WHERE 
             related_entity_type = 'CONSULTANT_CLIENT_MAPPING' 
             AND related_entity_id = p_mapping_id
             AND transaction_type = 'INCOME'
-            AND category = 'CONSULTATION';
+            AND category = 'CONSULTATION'
+            AND status = 'COMPLETED';
+        
+        -- 6-2. 가격 차이에 따른 처리
+        IF v_price_difference != 0 THEN
+            IF v_price_difference > 0 THEN
+                -- 가격이 올라간 경우: 차액만큼 추가 수입 거래 생성
+                INSERT INTO financial_transactions (
+                    transaction_type,
+                    category,
+                    subcategory,
+                    amount,
+                    description,
+                    related_entity_id,
+                    related_entity_type,
+                    branch_code,
+                    transaction_date,
+                    status,
+                    created_at,
+                    updated_at
+                ) VALUES (
+                    'INCOME',
+                    'CONSULTATION',
+                    'PACKAGE_PRICE_ADJUSTMENT',
+                    v_price_difference,
+                    CONCAT('패키지 수정 - 추가 금액: ', p_new_package_name, ' (', v_old_package_price, '원 → ', p_new_package_price, '원)'),
+                    p_mapping_id,
+                    'CONSULTANT_CLIENT_MAPPING',
+                    v_branch_code,
+                    NOW(),
+                    'COMPLETED',
+                    NOW(),
+                    NOW()
+                );
+            ELSE
+                -- 가격이 내려간 경우: 차액만큼 환불 거래 생성
+                INSERT INTO financial_transactions (
+                    transaction_type,
+                    category,
+                    subcategory,
+                    amount,
+                    description,
+                    related_entity_id,
+                    related_entity_type,
+                    branch_code,
+                    transaction_date,
+                    status,
+                    created_at,
+                    updated_at
+                ) VALUES (
+                    'EXPENSE',
+                    'CONSULTATION',
+                    'PACKAGE_PRICE_REFUND',
+                    ABS(v_price_difference),
+                    CONCAT('패키지 수정 - 환불 금액: ', p_new_package_name, ' (', v_old_package_price, '원 → ', p_new_package_price, '원)'),
+                    p_mapping_id,
+                    'CONSULTANT_CLIENT_MAPPING',
+                    v_branch_code,
+                    NOW(),
+                    'COMPLETED',
+                    NOW(),
+                    NOW()
+                );
+            END IF;
+        END IF;
+        
+        -- 6-3. 새로운 패키지 금액으로 수입 거래 생성
+        INSERT INTO financial_transactions (
+            transaction_type,
+            category,
+            subcategory,
+            amount,
+            description,
+            related_entity_id,
+            related_entity_type,
+            branch_code,
+            transaction_date,
+            status,
+            created_at,
+            updated_at
+        ) VALUES (
+            'INCOME',
+            'CONSULTATION',
+            'PACKAGE_SALE',
+            p_new_package_price,
+            CONCAT('상담료 입금 확인 - ', p_new_package_name, ' (', p_new_package_price, '원) - 패키지 수정 후'),
+            p_mapping_id,
+            'CONSULTANT_CLIENT_MAPPING',
+            v_branch_code,
+            NOW(),
+            'COMPLETED',
+            NOW(),
+            NOW()
+        );
 
         -- 7. 통계 데이터 갱신
         CALL UpdateMappingStatistics(p_mapping_id, v_consultant_id, v_client_id, v_branch_code);

@@ -239,8 +239,12 @@ const PermissionManagement = () => {
             
             if (response.ok) {
                 const data = await response.json();
+                console.log('🔍 역할 권한 응답 데이터:', data);
                 if (data.success && data.data && data.data.permissions) {
-                    const permissionCodes = data.data.permissions.map(p => p.permission_code || p);
+                    const permissionCodes = data.data.permissions.map(p => {
+                        // Map 형식이면 permission_code 필드 사용, String이면 그대로 사용
+                        return typeof p === 'string' ? p : (p.permission_code || p.permissionCode || p);
+                    });
                     setRolePermissions(permissionCodes);
                     console.log('✅ 역할 권한 로드 완료:', permissionCodes);
                 } else {

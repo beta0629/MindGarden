@@ -24,6 +24,7 @@ import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.RecurringExpenseService;
+import com.mindgarden.consultation.util.PermissionCheckUtils;
 import com.mindgarden.consultation.util.TaxCalculationUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.data.domain.Page;
@@ -2037,7 +2038,9 @@ public class ErpController {
             // 동적 권한 체크 - 재무 거래 삭제 권한 확인
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "FINANCIAL_TRANSACTION_DELETE", dynamicPermissionService);
             if (permissionResponse != null) {
-                return permissionResponse;
+                @SuppressWarnings("unchecked")
+                ResponseEntity<Map<String, Object>> typedResponse = (ResponseEntity<Map<String, Object>>) permissionResponse;
+                return typedResponse;
             }
             
             // 재무 거래 삭제

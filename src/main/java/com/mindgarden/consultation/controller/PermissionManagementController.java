@@ -412,16 +412,22 @@ public class PermissionManagementController {
             
             // 관리자 역할 확인 (BRANCH_ADMIN 이상만 권한 관리 가능)
             String currentUserRole = currentUser.getRole().name();
+            log.info("🔍 권한 저장 요청: 사용자 역할={}, 이메일={}", currentUserRole, currentUser.getEmail());
+            
             boolean isAdmin = "ADMIN".equals(currentUserRole) || 
                              "BRANCH_SUPER_ADMIN".equals(currentUserRole) || 
+                             "BRANCH_ADMIN".equals(currentUserRole) ||
                              "SUPER_HQ_ADMIN".equals(currentUserRole) || 
                              "HQ_ADMIN".equals(currentUserRole) || 
                              "HQ_MASTER".equals(currentUserRole);
             
+            log.info("🔍 관리자 권한 확인: isAdmin={}", isAdmin);
+            
             if (!isAdmin) {
+                log.warn("❌ 관리자 권한 없음: 역할={}", currentUserRole);
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
-                    "message", "권한이 없습니다."
+                    "message", "권한이 없습니다. 관리자만 권한을 변경할 수 있습니다."
                 ));
             }
             

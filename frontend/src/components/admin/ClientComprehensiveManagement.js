@@ -173,24 +173,26 @@ const ClientComprehensiveManagement = () => {
     // 상담 이력 로드
     const loadConsultations = useCallback(async () => {
         try {
+            console.log('🔄 상담 이력 로드 시작...');
             const response = await apiGet('/api/admin/consultations');
             console.log('📊 상담 이력 응답:', response);
             
             // /api/admin/consultations는 현재 빈 배열을 직접 반환하므로 배열인지 확인
             if (Array.isArray(response)) {
+                console.log('✅ 상담 이력 배열로 처리:', response.length, '건');
                 setConsultations(response);
             } else if (response && response.success) {
+                console.log('✅ 상담 이력 성공 응답:', response.data?.length || 0, '건');
                 setConsultations(response.data || []);
             } else {
-                console.warn('상담 이력 응답 실패:', response);
+                console.warn('⚠️ 상담 이력 응답 실패:', response);
                 setConsultations([]);
             }
         } catch (error) {
             // 403 오류는 권한 문제이므로 조용히 처리
+            console.error('❌ 상담 이력 로드 실패:', error);
             if (error.message && error.message.includes('권한')) {
                 console.log('⚠️ 상담 이력 조회 권한이 없습니다. 빈 배열로 처리합니다.');
-            } else {
-                console.error('상담 이력 로드 실패:', error);
             }
             setConsultations([]);
         }

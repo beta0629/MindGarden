@@ -94,20 +94,55 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
     const [responsibilityOptions, setResponsibilityOptions] = useState(RESPONSIBILITY_OPTIONS);
     const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
 
-    // 모달이 열릴 때 초기 참조번호 생성
+    // 모달이 열릴 때 마지막 사용 패키지와 지불방법 자동 설정
     useEffect(() => {
-        if (isOpen && !paymentInfo.paymentReference) {
-            const initialReference = generateReferenceNumber(paymentInfo.paymentMethod);
-            console.log('🔧 매칭 생성 모달 - 초기 참조번호 생성:', {
-                method: paymentInfo.paymentMethod,
-                generatedReference: initialReference
+        if (isOpen) {
+            // 로컬 스토리지에서 마지막 사용 값 불러오기
+            const lastUsedPackage = localStorage.getItem('lastUsedPackage');
+            const lastUsedPaymentMethod = localStorage.getItem('lastUsedPaymentMethod');
+            
+            console.log('🔧 마지막 사용 값 불러오기:', {
+                package: lastUsedPackage,
+                paymentMethod: lastUsedPaymentMethod
             });
-            setPaymentInfo(prev => ({
-                ...prev,
-                paymentReference: initialReference
-            }));
+            
+            // 마지막 사용 패키지가 있으면 자동 설정
+            if (lastUsedPackage) {
+                const savedPackageData = JSON.parse(lastUsedPackage);
+                const foundPackage = packageOptions.find(pkg => pkg.label === savedPackageData.packageName || pkg.value === savedPackageData.packageName);
+                
+                if (foundPackage) {
+                    setPaymentInfo(prev => ({
+                        ...prev,
+                        packageName: foundPackage.label,
+                        totalSessions: foundPackage.sessions || savedPackageData.totalSessions,
+                        packagePrice: foundPackage.price || savedPackageData.packagePrice
+                    }));
+                    console.log('✅ 마지막 사용 패키지 자동 설정:', foundPackage);
+                }
+            }
+            
+            // 마지막 사용 지불방법이 있으면 자동 설정
+            if (lastUsedPaymentMethod) {
+                const paymentMethodExists = paymentMethodOptions.find(method => method.value === lastUsedPaymentMethod);
+                if (paymentMethodExists) {
+                    setPaymentInfo(prev => ({
+                        ...prev,
+                        paymentMethod: lastUsedPaymentMethod,
+                        paymentReference: generateReferenceNumber(lastUsedPaymentMethod)
+                    }));
+                    console.log('✅ 마지막 사용 지불방법 자동 설정:', lastUsedPaymentMethod);
+                }
+            } else if (!paymentInfo.paymentReference) {
+                // 저장된 값이 없으면 기본값으로 참조번호 생성
+                const initialReference = generateReferenceNumber(paymentInfo.paymentMethod);
+                setPaymentInfo(prev => ({
+                    ...prev,
+                    paymentReference: initialReference
+                }));
+            }
         }
-    }, [isOpen, paymentInfo.paymentMethod]);
+    }, [isOpen, packageOptions, paymentMethodOptions]);
 
     // 패키지 코드 로드
     const loadPackageCodes = useCallback(async() => {
@@ -438,6 +473,22 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                 if (response.ok) {
                     const result = await response.json();
                     console.log('✅ 매칭 생성 성공:', result);
+                    
+                    // 마지막 사용 패키지와 지불방법 저장
+                    if (paymentInfo.packageName) {
+                        const packageData = {
+                            packageName: paymentInfo.packageName,
+                            totalSessions: paymentInfo.totalSessions,
+                            packagePrice: paymentInfo.packagePrice
+                        };
+                        localStorage.setItem('lastUsedPackage', JSON.stringify(packageData));
+                        console.log('💾 마지막 사용 패키지 저장:', packageData);
+                    }
+                    
+                    if (paymentInfo.paymentMethod) {
+                        localStorage.setItem('lastUsedPaymentMethod', paymentInfo.paymentMethod);
+                        console.log('💾 마지막 사용 지불방법 저장:', paymentInfo.paymentMethod);
+                    }
                     
                     // 상세한 완료 메시지 생성
                     const consultantName = selectedConsultant?.name || '상담사';

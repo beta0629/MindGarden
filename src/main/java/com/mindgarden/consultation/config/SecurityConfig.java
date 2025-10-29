@@ -60,8 +60,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                     .csrfTokenRepository(csrfTokenRepository())
                     .ignoringRequestMatchers(
-                        "/api/auth/**",           // 인증 관련 API는 CSRF 제외
-                        "/api/admin/mappings/**"  // 매칭 관리 API는 CSRF 제외 (AJAX 요청)
+                        "/api/auth/**",                              // 인증 관련 API는 CSRF 제외
+                        "/api/admin/mappings/**",                     // 매칭 관리 API는 CSRF 제외 (AJAX 요청)
+                        "/api/erp/finance/transactions/**"           // 재무 거래 DELETE는 CSRF 제외 (권한 체크는 별도로 수행)
                     )
                 )
                 

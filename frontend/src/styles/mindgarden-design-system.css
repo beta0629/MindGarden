@@ -11769,11 +11769,17 @@ body {
     .mg-v2-list-item-subtitle {
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
+        white-space: normal; /* 여러 줄 허용 */
+        word-wrap: break-word;
+        word-break: break-word;
         font-size: 0.7rem; /* 모바일에서 더 작게 */
         color: var(--color-text-secondary);
         max-width: 100%;
-        display: block;
+        display: -webkit-box; /* 2줄 제한을 위한 display */
+        -webkit-line-clamp: 2; /* 2줄로 제한 */
+        -webkit-box-orient: vertical;
+        line-height: 1.4;
+        max-height: 2.8em; /* 2줄 높이 제한 */
         margin-top: 2px;
     }
 

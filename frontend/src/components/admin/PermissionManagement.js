@@ -290,7 +290,9 @@ const PermissionManagement = () => {
     };
 
     // 권한 관리는 지점 수퍼 어드민 이상만 가능
-    const canManagePermissions = currentUserRole === 'BRANCH_SUPER_ADMIN' || 
+    const canManagePermissions = currentUserRole === 'ADMIN' ||
+                                currentUserRole === 'BRANCH_ADMIN' ||
+                                currentUserRole === 'BRANCH_SUPER_ADMIN' || 
                                 currentUserRole === 'HQ_ADMIN' || 
                                 currentUserRole === 'SUPER_HQ_ADMIN' || 
                                 currentUserRole === 'HQ_MASTER';

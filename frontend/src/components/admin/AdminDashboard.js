@@ -1432,11 +1432,8 @@ const AdminDashboard = ({ user: propUser }) => {
                 });
                 return canManagePermissions;
             })() && (
-                <div className="mg-mb-lg">
-                    <div 
-                        onClick={() => setIsPermissionSectionExpanded(!isPermissionSectionExpanded)}
-                        className={`mg-v2-card mg-flex mg-align-center mg-justify-between mg-cursor-pointer ${isPermissionSectionExpanded ? 'mg-mb-0' : 'mg-mb-md'}`}
-                    >
+                <div className="mg-v2-card mg-mb-lg">
+                    <div className="mg-flex mg-align-center mg-justify-between">
                         <div className="mg-flex mg-align-center mg-gap-sm">
                             <Shield />
                             <div>
@@ -1444,20 +1441,17 @@ const AdminDashboard = ({ user: propUser }) => {
                                     권한 관리
                                 </h3>
                                 <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-0">
-                                    사용자 권한 설정 및 관리 (클릭하여 펼치기/접기)
+                                    사용자 권한 설정 및 관리
                                 </p>
                             </div>
                         </div>
-                        <div className="mg-v2-accordion-toggle-icon">
-                            {isPermissionSectionExpanded ? '▲' : '▼'}
-                        </div>
+                        <button 
+                            className="mg-v2-button mg-v2-button-primary"
+                            onClick={() => navigate('/admin/permissions')}
+                        >
+                            권한 관리하기
+                        </button>
                     </div>
-                    
-                    {isPermissionSectionExpanded && (
-                        <div className="mg-v2-accordion-content">
-                            <PermissionManagement />
-                        </div>
-                    )}
                 </div>
             )}
 

@@ -53,6 +53,7 @@ import PaymentTest from './components/test/PaymentTest';
 import IntegrationTest from './components/test/IntegrationTest';
 import AccountManagement from './components/admin/AccountManagement';
 import UserManagement from './components/admin/UserManagement';
+import PermissionManagement from './components/admin/PermissionManagement';
 import BranchManagement from './components/hq/BranchManagement';
 import BranchFinancialManagement from './components/hq/BranchFinancialManagement';
 import ConsolidatedFinancial from './components/hq/ConsolidatedFinancial';
@@ -338,6 +339,13 @@ function AppContent() {
             <Route path="/consultant/schedule" element={<ConsultantSchedule />} />
             <Route path="/consultant/consultation-record/:consultationId" element={<ConsultationRecordScreen />} />
             <Route path="/consultant/consultation-record-view/:recordId" element={<ConsultationRecordView />} />
+            
+            {/* 권한 관리 */}
+            <Route path="/admin/permissions" element={
+              <SimpleLayout>
+                <PermissionManagement />
+              </SimpleLayout>
+            } />
             
             {/* ERP 관리 */}
             <Route path="/erp/purchase" element={<PurchaseManagement />} />

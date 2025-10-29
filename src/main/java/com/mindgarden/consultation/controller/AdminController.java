@@ -1785,7 +1785,11 @@ public class AdminController {
                 return permissionResponse;
             }
             
-            ConsultantClientMapping mapping = adminService.updateMapping(id, dto);
+            // 세션에서 현재 사용자 정보 가져오기 (프로시저 호출 시 사용)
+            User currentUser = SessionUtils.getCurrentUser(session);
+            String updatedBy = currentUser != null ? currentUser.getName() : "System";
+            
+            ConsultantClientMapping mapping = adminService.updateMapping(id, dto, updatedBy);
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "매칭 정보가 성공적으로 수정되었습니다",

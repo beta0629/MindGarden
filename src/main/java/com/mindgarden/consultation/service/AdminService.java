@@ -82,7 +82,7 @@ public interface AdminService {
     /**
      * 매칭 정보 수정
      */
-    ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingDto request);
+    ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingDto request, String updatedBy);
 
     /**
      * 상담사 삭제

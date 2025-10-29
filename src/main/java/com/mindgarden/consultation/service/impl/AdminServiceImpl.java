@@ -45,6 +45,7 @@ import com.mindgarden.consultation.service.ConsultationMessageService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.NotificationService;
 import com.mindgarden.consultation.service.RealTimeStatisticsService;
+import com.mindgarden.consultation.service.StoredProcedureService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -80,6 +81,7 @@ public class AdminServiceImpl implements AdminService {
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final FinancialTransactionRepository financialTransactionRepository;
     private final AmountManagementService amountManagementService;
+    private final StoredProcedureService storedProcedureService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
@@ -1630,12 +1632,18 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingDto dto) {
+    @Transactional
+    public ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingDto dto, String updatedBy) {
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
         log.info("🔄 매핑 정보 수정: id={}, packageName={}, packagePrice={}, totalSessions={}", 
                 id, dto.getPackageName(), dto.getPackagePrice(), dto.getTotalSessions());
+        
+        // 기존 값 저장 (프로시저 호출 시 사용)
+        String oldPackageName = mapping.getPackageName();
+        Long oldPackagePrice = mapping.getPackagePrice();
+        Integer oldTotalSessions = mapping.getTotalSessions();
         
         // 패키지 정보 업데이트
         if (dto.getPackageName() != null) {
@@ -1661,6 +1669,45 @@ public class AdminServiceImpl implements AdminService {
         }
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
+        
+        // 패키지 정보가 변경된 경우 프로시저 호출하여 ERP 재무 거래 동기화
+        boolean packageChanged = (dto.getPackageName() != null && !dto.getPackageName().equals(oldPackageName)) ||
+                                (dto.getPackagePrice() != null && !dto.getPackagePrice().equals(oldPackagePrice)) ||
+                                (dto.getTotalSessions() != null && !dto.getTotalSessions().equals(oldTotalSessions));
+        
+        if (packageChanged) {
+            try {
+                log.info("🔄 패키지 정보 변경 감지, ERP 재무 거래 동기화 프로시저 호출: mappingId={}", id);
+                
+                // updatedBy는 컨트롤러에서 전달된 로그인 사용자 정보 사용 (없으면 매핑의 상담사 정보 또는 시스템)
+                String procedureUpdatedBy = updatedBy != null && !updatedBy.isEmpty() 
+                    ? updatedBy 
+                    : (savedMapping.getConsultant() != null && savedMapping.getConsultant().getName() != null
+                        ? savedMapping.getConsultant().getName()
+                        : "System");
+                
+                Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
+                    id,
+                    savedMapping.getPackageName(),
+                    savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
+                    savedMapping.getTotalSessions(),
+                    procedureUpdatedBy
+                );
+                
+                if ((Boolean) procedureResult.getOrDefault("success", false)) {
+                    log.info("✅ ERP 재무 거래 동기화 완료: mappingId={}, message={}", 
+                            id, procedureResult.get("message"));
+                } else {
+                    log.warn("⚠️ ERP 재무 거래 동기화 실패: mappingId={}, message={}", 
+                            id, procedureResult.get("message"));
+                }
+            } catch (Exception e) {
+                log.error("❌ ERP 재무 거래 동기화 프로시저 호출 실패: mappingId={}", id, e);
+                // 프로시저 실패해도 매핑 업데이트는 완료되도록 예외는 발생시키지 않음
+                // (ERP 동기화는 부가 기능이므로 매핑 수정 자체는 성공 처리)
+            }
+        }
+        
         log.info("✅ 매핑 정보 수정 완료: id={}, packageName={}, packagePrice={}, totalSessions={}", 
                 savedMapping.getId(), savedMapping.getPackageName(), 
                 savedMapping.getPackagePrice(), savedMapping.getTotalSessions());

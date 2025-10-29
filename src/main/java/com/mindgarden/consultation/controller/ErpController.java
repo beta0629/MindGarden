@@ -2034,13 +2034,11 @@ public class ErpController {
                     .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
             
-            // 권한 확인
-            if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) &&
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()) &&
-                !UserRole.HQ_ADMIN.equals(currentUser.getRole())) {
+            // 권한 확인 - 지점 수퍼 어드민만 삭제 가능
+            if (!UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole())) {
                 log.warn("❌ 재무 거래 삭제 권한 없음: 현재 역할={}", currentUser.getRole());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "재무 거래 삭제는 본사 관리자 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "재무 거래 삭제는 지점 수퍼 어드민 권한이 필요합니다."));
             }
             
             // 재무 거래 삭제

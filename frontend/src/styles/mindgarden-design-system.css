@@ -11674,6 +11674,45 @@ body {
     margin-bottom: var(--spacing-lg);
 }
 
+/* 상담사 전문분야 관리 모달 모바일 반응형 */
+@media (max-width: 768px) {
+    .mg-v2-modal-large .mg-v2-form-row {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .mg-v2-modal-large .mg-v2-form-section {
+        width: 100%;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .mg-v2-modal-large .mg-v2-form-row button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .mg-v2-modal-large .mg-v2-btn--icon {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .mg-v2-list-item {
+        padding: var(--spacing-sm);
+    }
+
+    .mg-v2-list-item-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .mg-v2-list-item-title,
+    .mg-v2-list-item-subtitle {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
 .mg-v2-gap-sm {
     gap: var(--spacing-sm);
 }

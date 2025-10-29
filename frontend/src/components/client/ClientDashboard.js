@@ -429,7 +429,7 @@ const ClientDashboard = () => {
             </MGButton>
             <MGButton 
               variant="success"
- large Width={true}
+              fullWidth={true}
               onClick={() => navigate('/client/messages')}
               className="client-dashboard__action-btn"
             >

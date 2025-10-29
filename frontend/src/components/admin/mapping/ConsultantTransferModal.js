@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { UserCheck, XCircle, Users, Package, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
+import MGButton from '../../common/MGButton';
 
 /**
  * 상담사 변경 모달 컴포넌트

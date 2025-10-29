@@ -151,18 +151,70 @@ export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
     
     try {
         const response = await apiGet(`/api/common-codes/${groupName}`);
-        if (response && Array.isArray(response)) {
-            const code = response.find(c => c.codeValue === codeValue);
+        if (response && response.length > 0) {
+            // 정확한 매칭 먼저 시도
+            let code = response.find(c => c.codeValue === codeValue);
+            
+            // 정확한 매칭이 없으면 매칭 테이블 사용 (MAPPING_STATUS인 경우)
+            if (!code && groupName === 'MAPPING_STATUS') {
+                const statusMapping = {
+                    'ACTIVE': 'ACTIVE_MAPPING',
+                    'INACTIVE': 'INACTIVE_MAPPING',
+                    'TERMINATED': 'TERMINATED_MAPPING',
+                    'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
+                };
+                
+                const mappedStatus = statusMapping[codeValue];
+                if (mappedStatus) {
+                    code = response.find(c => c.codeValue === mappedStatus);
+                }
+            }
+            
             if (code && code.icon) {
                 return code.icon;
             }
         }
     } catch (error) {
-        console.warn('아이콘 조회 실패, fallback 사용:', error);
+        console.error('아이콘 조회 실패, fallback 사용:', error);
     }
     
-    // Fallback
-    return '📋';
+    // 기본 아이콘 매칭 (fallback) - 확장된 매칭
+    const defaultIconMap = {
+        // 스케줄 상태
+        'AVAILABLE': '⚪',
+        'BOOKED': '📅',
+        'CONFIRMED': '✅',
+        'IN_PROGRESS': '🔄',
+        'COMPLETED': '🎉',
+        'CANCELLED': '❌',
+        'BLOCKED': '🚫',
+        'UNDER_REVIEW': '🔍',
+        'VACATION': '🏖️',
+        'NO_SHOW': '👻',
+        'MAINTENANCE': '🔧',
+        
+        // 매칭 상태
+        'PENDING_PAYMENT': '⏳',
+        'PAYMENT_CONFIRMED': '💰',
+        'ACTIVE': '✅',
+        'INACTIVE': '⏸️',
+        'SUSPENDED': '⏸️',
+        'TERMINATED': '❌',
+        'SESSIONS_EXHAUSTED': '🔚',
+        
+        // 사용자 상태
+        'PENDING': '⏳',
+        'APPROVED': '✅',
+        'REJECTED': '❌',
+        'PAYMENT_PENDING': '⏳',
+        'PAYMENT_REJECTED': '❌',
+        
+        // 기타
+        'true': '✅',
+        'false': '❌'
+    };
+    
+    return defaultIconMap[codeValue] || '📋';
 };
 
 /**
@@ -265,78 +317,6 @@ export const getStatusColor = async (codeValue, groupName) => {
     };
     
     return defaultColorMap[codeValue] || '#6b7280';
-};
-
-/**
- * 상태별 아이콘 조회 (동적)
- */
-export const getStatusIcon = async (codeValue, groupName) => {
-    try {
-        const response = await apiGet(`/api/common-codes/${groupName}`);
-        if (response && response.length > 0) {
-            // 정확한 매칭 먼저 시도
-            let code = response.find(c => c.codeValue === codeValue);
-            
-            // 정확한 매칭이 없으면 매칭 테이블 사용 (MAPPING_STATUS인 경우)
-            if (!code && groupName === 'MAPPING_STATUS') {
-                const statusMapping = {
-                    'ACTIVE': 'ACTIVE_MAPPING',
-                    'INACTIVE': 'INACTIVE_MAPPING',
-                    'TERMINATED': 'TERMINATED_MAPPING',
-                    'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
-                };
-                
-                const mappedStatus = statusMapping[codeValue];
-                if (mappedStatus) {
-                    code = response.find(c => c.codeValue === mappedStatus);
-                }
-            }
-            
-            if (code && code.icon) {
-                return code.icon;
-            }
-        }
-    } catch (error) {
-        console.error('상태별 아이콘 조회 실패:', error);
-    }
-    
-    // 기본 아이콘 매칭 (fallback) - 확장된 매칭
-    const defaultIconMap = {
-        // 스케줄 상태
-        'AVAILABLE': '⚪',
-        'BOOKED': '📅',
-        'CONFIRMED': '✅',
-        'IN_PROGRESS': '🔄',
-        'COMPLETED': '🎉',
-        'CANCELLED': '❌',
-        'BLOCKED': '🚫',
-        'UNDER_REVIEW': '🔍',
-        'VACATION': '🏖️',
-        'NO_SHOW': '👻',
-        'MAINTENANCE': '🔧',
-        
-        // 매칭 상태
-        'PENDING_PAYMENT': '⏳',
-        'PAYMENT_CONFIRMED': '💰',
-        'ACTIVE': '✅',
-        'INACTIVE': '⏸️',
-        'SUSPENDED': '⏸️',
-        'TERMINATED': '❌',
-        'SESSIONS_EXHAUSTED': '🔚',
-        
-        // 사용자 상태
-        'PENDING': '⏳',
-        'APPROVED': '✅',
-        'REJECTED': '❌',
-        'PAYMENT_PENDING': '⏳',
-        'PAYMENT_REJECTED': '❌',
-        
-        // 기타
-        'true': '✅',
-        'false': '❌'
-    };
-    
-    return defaultIconMap[codeValue] || '📋';
 };
 
 /**

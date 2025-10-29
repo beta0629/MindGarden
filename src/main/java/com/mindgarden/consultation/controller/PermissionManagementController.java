@@ -410,8 +410,15 @@ public class PermissionManagementController {
                 ));
             }
             
-            // 권한 확인 (관리자만 가능)
-            if (!dynamicPermissionService.hasPermission(currentUser, "USER_MANAGE")) {
+            // 관리자 역할 확인 (BRANCH_ADMIN 이상만 권한 관리 가능)
+            String currentUserRole = currentUser.getRole().name();
+            boolean isAdmin = "ADMIN".equals(currentUserRole) || 
+                             "BRANCH_SUPER_ADMIN".equals(currentUserRole) || 
+                             "SUPER_HQ_ADMIN".equals(currentUserRole) || 
+                             "HQ_ADMIN".equals(currentUserRole) || 
+                             "HQ_MASTER".equals(currentUserRole);
+            
+            if (!isAdmin) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
                     "message", "권한이 없습니다."
@@ -430,7 +437,7 @@ public class PermissionManagementController {
             }
             
             // 역할 계층 구조에 따른 권한 변경 제한
-            String currentUserRole = currentUser.getRole().name();
+            // currentUserRole은 이미 위에서 선언됨
             boolean canManageRole = false;
             
             // HQ 마스터는 모든 역할 관리 가능

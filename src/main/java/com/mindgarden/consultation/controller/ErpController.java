@@ -2043,23 +2043,50 @@ public class ErpController {
             String roleName = currentUser.getRole().name();
             String permissionCode = "FINANCIAL_TRANSACTION_DELETE";
             
+            log.info("🔍 권한 체크 시작: 사용자={}, 역할={}, 역할명={}, 권한코드={}", 
+                    currentUser.getEmail(), currentUser.getRole(), roleName, permissionCode);
+            
+            // 먼저 해당 역할의 모든 권한 조회 (디버깅용)
+            var allRolePermissions = rolePermissionRepository.findByRoleNameAndIsActiveTrue(roleName);
+            List<String> allPermissionCodes = allRolePermissions.stream()
+                    .map(rp -> rp.getPermissionCode())
+                    .collect(java.util.stream.Collectors.toList());
+            log.info("📋 {} 역할의 모든 활성 권한 ({}개): {}", roleName, allPermissionCodes.size(), allPermissionCodes);
+            
+            // 특정 권한 존재 여부 확인
             boolean hasPermission = rolePermissionRepository
                     .existsByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
             
             log.info("🔍 직접 DB 권한 체크 결과: 역할={}, 권한={}, 결과={}", roleName, permissionCode, hasPermission);
             
-            // 추가 디버깅: 해당 역할의 모든 권한 조회
+            // 추가 확인: 직접 조회도 시도
+            var directPermission = rolePermissionRepository
+                    .findByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
+            if (directPermission.isPresent()) {
+                log.info("✅ 권한 직접 조회 성공: {}", directPermission.get());
+            } else {
+                log.warn("⚠️ 권한 직접 조회 실패: 역할={}, 권한={}", roleName, permissionCode);
+                
+                // 권한이 있는지 확인 (대소문자 무시)
+                boolean foundIgnoreCase = allPermissionCodes.stream()
+                        .anyMatch(code -> code != null && code.equalsIgnoreCase(permissionCode));
+                log.info("🔍 대소문자 무시 검색 결과: {}", foundIgnoreCase);
+            }
+            
             if (!hasPermission) {
-                var allRolePermissions = rolePermissionRepository.findByRoleNameAndIsActiveTrue(roleName);
-                List<String> permissionCodes = allRolePermissions.stream()
-                        .map(rp -> rp.getPermissionCode())
-                        .collect(java.util.stream.Collectors.toList());
-                log.warn("📋 해당 역할의 모든 활성 권한: {}", permissionCodes);
-                log.warn("❌ 재무 거래 삭제 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
+                log.error("❌ 재무 거래 삭제 권한 없음: 사용자={}, 역할={}, 권한코드={}", 
+                        currentUser.getEmail(), currentUser.getRole(), permissionCode);
+                log.error("❌ 필요 권한: {}, 보유 권한: {}", permissionCode, allPermissionCodes);
                 
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
-                    "message", "재무 거래 삭제 권한이 없습니다. 지점 수퍼 어드민만 삭제할 수 있습니다."
+                    "message", "재무 거래 삭제 권한이 없습니다. 지점 수퍼 어드민만 삭제할 수 있습니다.",
+                    "debug", Map.of(
+                        "roleName", roleName,
+                        "permissionCode", permissionCode,
+                        "hasPermission", hasPermission,
+                        "allPermissions", allPermissionCodes
+                    )
                 ));
             }
             

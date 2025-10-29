@@ -30,8 +30,9 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
 
     useEffect(() => {
         if (isOpen) {
-            loadConsultants();
-            loadSpecialties();
+            loadSpecialties().then(() => {
+                loadConsultants(); // specialties 로드 후 실행
+            });
             // loadStatistics(); // 제거: loadConsultants에서 calculateStatistics로 자동 계산됨
         }
     }, [isOpen]);
@@ -60,20 +61,30 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                     // specialties 배열에서 한글명 찾기
                     let specialtyDisplay = '미설정';
                     if (rawSpecialty) {
-                        // 먼저 getSpecialtyKoreanName으로 fallback 사용
-                        specialtyDisplay = getSpecialtyKoreanName(rawSpecialty);
+                        // 쉼표로 구분된 전문분야들을 배열로 변환
+                        const specialtyArray = rawSpecialty.includes(',') 
+                            ? rawSpecialty.split(',').map(s => s.trim())
+                            : [rawSpecialty.trim()];
                         
-                        // specialties 배열에서 더 정확한 한글명 찾기 시도
-                        if (specialties.length > 0) {
-                            const foundSpecialty = specialties.find(s => 
-                                s.codeValue === rawSpecialty || 
-                                s.codeValue === rawSpecialty.toUpperCase() ||
-                                s.codeLabel === rawSpecialty
-                            );
-                            if (foundSpecialty) {
-                                specialtyDisplay = foundSpecialty.koreanName || foundSpecialty.codeLabel || specialtyDisplay;
+                        // 각 전문분야를 한글로 변환
+                        const koreanSpecialties = specialtyArray.map(specialty => {
+                            let korean = getSpecialtyKoreanName(specialty); // fallback
+                            
+                            // specialties 배열에서 더 정확한 한글명 찾기
+                            if (specialties.length > 0) {
+                                const foundSpecialty = specialties.find(s => 
+                                    s.codeValue === specialty || 
+                                    s.codeValue === specialty.toUpperCase() ||
+                                    s.codeLabel === specialty
+                                );
+                                if (foundSpecialty) {
+                                    korean = foundSpecialty.koreanName || foundSpecialty.codeLabel || korean;
+                                }
                             }
-                        }
+                            return korean;
+                        });
+                        
+                        specialtyDisplay = koreanSpecialties.join(', '); // 쉼표로 연결
                     }
                     
                     console.log('📋 전문분야 한글 변환:', specialtyDisplay);

@@ -1,4 +1,35 @@
 /* 공통코드 목록 스타일 - 카드 형태 */
+
+/* 아이콘 및 색상 표시 스타일 */
+.code-icon {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+.code-icon-display {
+    font-size: 1.5em;
+    margin-right: 8px;
+}
+
+.color-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.color-swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+    display: inline-block;
+}
+
+.color-code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #6b7280;
+}
 .common-code-list {
     background: white;
     border-radius: 12px;

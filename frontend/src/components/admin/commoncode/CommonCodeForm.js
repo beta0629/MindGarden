@@ -21,7 +21,9 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         isActive: true,
         parentCodeGroup: '',
         parentCodeValue: '',
-        extraData: ''
+        extraData: '',
+        icon: '',
+        colorCode: ''
     });
     
     // 패키지 전용 필드 (CONSULTATION_PACKAGE 그룹일 때만 사용)
@@ -294,6 +296,48 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                     {errors.sortOrder}
                                 </div>
                             )}
+                        </div>
+                        
+                        <div className="form-group">
+                            <label htmlFor="icon">아이콘</label>
+                            <input
+                                type="text"
+                                id="icon"
+                                name="icon"
+                                value={formData.icon}
+                                onChange={handleChange}
+                                className="form-control"
+                                placeholder="예: ⭐, 📅, ✅, 🔴"
+                                maxLength="10"
+                            />
+                            <small className="form-text text-muted">
+                                이모지나 유니코드 문자를 입력하세요 (최대 10자)
+                            </small>
+                        </div>
+                        
+                        <div className="form-group">
+                            <label htmlFor="colorCode">색상 코드</label>
+                            <div className="color-input-group">
+                                <input
+                                    type="color"
+                                    id="colorCode"
+                                    name="colorCode"
+                                    value={formData.colorCode || '#6b7280'}
+                                    onChange={handleChange}
+                                    className="form-control color-picker"
+                                />
+                                <input
+                                    type="text"
+                                    value={formData.colorCode}
+                                    onChange={handleChange}
+                                    className="form-control color-text"
+                                    placeholder="#6b7280"
+                                    pattern="^#[0-9A-Fa-f]{6}$"
+                                />
+                            </div>
+                            <small className="form-text text-muted">
+                                HEX 색상 코드를 입력하거나 색상 선택기를 사용하세요
+                            </small>
                         </div>
 
                         <div className="form-group">

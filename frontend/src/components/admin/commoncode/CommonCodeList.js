@@ -54,7 +54,10 @@ const CommonCodeList = ({
                                 <span className="code-group-badge">
                                     {code.codeGroup}
                                 </span>
-                                <h4 className="code-label">{code.codeLabel}</h4>
+                                <h4 className="code-label">
+                                    {code.icon && <span className="code-icon" style={{ color: code.colorCode || '#6b7280' }}>{code.icon}</span>}
+                                    {code.codeLabel}
+                                </h4>
                             </div>
                             <div className="card-status">
                                 <span 
@@ -93,6 +96,32 @@ const CommonCodeList = ({
                                         </span>
                                     </div>
                                 </div>
+                                
+                                {(code.icon || code.colorCode) && (
+                                    <div className="info-row">
+                                        {code.icon && (
+                                            <div className="info-item">
+                                                <label>아이콘:</label>
+                                                <span className="code-icon-display" style={{ color: code.colorCode || '#6b7280' }}>
+                                                    {code.icon}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {code.colorCode && (
+                                            <div className="info-item">
+                                                <label>색상:</label>
+                                                <div className="color-display">
+                                                    <span 
+                                                        className="color-swatch" 
+                                                        style={{ backgroundColor: code.colorCode }}
+                                                        title={code.colorCode}
+                                                    ></span>
+                                                    <span className="color-code">{code.colorCode}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 
                                 {code.updatedAt && code.updatedAt !== code.createdAt && (
                                     <div className="info-item">

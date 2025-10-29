@@ -228,6 +228,44 @@ const FinancialManagement = () => {
     }
   };
 
+  // 거래 삭제 핸들러
+  const handleDeleteTransaction = async (transaction) => {
+    if (!window.confirm(`정말 이 거래를 삭제하시겠습니까?\n거래 번호: #${transaction.id}\n금액: ${transaction.amount.toLocaleString()}원`)) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/erp/finance/transactions/${transaction.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('거래가 성공적으로 삭제되었습니다.');
+        loadData(); // 데이터 새로고침
+      } else {
+        alert('거래 삭제에 실패했습니다: ' + result.message);
+      }
+    } catch (error) {
+      console.error('거래 삭제 실패:', error);
+      alert('거래 삭제 중 오류가 발생했습니다.');
+    }
+  };
+  
+  // 거래 상세 보기 핸들러
+  const handleViewTransaction = (transaction) => {
+    setSelectedTransaction(transaction);
+    setShowDetailModal(true);
+  };
+  
+  // 거래 수정 핸들러
+  const handleEditTransaction = (transaction) => {
+    // TODO: 거래 수정 모달 열기
+    alert('거래 수정 기능은 준비중입니다.');
+  };
+
   const handlePageChange = (newPage) => {
     setPagination(prev => ({
       ...prev,
@@ -543,11 +581,24 @@ const FinancialManagement = () => {
                               <td>{formatDate(transaction.transactionDate)}</td>
                               <td>
                                 <div className="d-flex gap-1">
-                                  <button className="mg-btn mg-btn--sm mg-btn--outline mg-btn--primary">
+                                  <button 
+                                    className="mg-btn mg-btn--sm mg-btn--outline mg-btn--primary"
+                                    onClick={() => handleViewTransaction(transaction)}
+                                  >
                                     <i className="bi bi-eye"></i>
                                   </button>
-                                  <button className="mg-btn mg-btn--sm mg-btn--outline mg-btn--secondary">
+                                  <button 
+                                    className="mg-btn mg-btn--sm mg-btn--outline mg-btn--secondary"
+                                    onClick={() => handleEditTransaction(transaction)}
+                                  >
                                     <i className="bi bi-pencil"></i>
+                                  </button>
+                                  <button 
+                                    className="mg-btn mg-btn--sm mg-btn--outline mg-btn--danger"
+                                    onClick={() => handleDeleteTransaction(transaction)}
+                                    title="삭제"
+                                  >
+                                    <i className="bi bi-trash"></i>
                                   </button>
                                 </div>
                               </td>

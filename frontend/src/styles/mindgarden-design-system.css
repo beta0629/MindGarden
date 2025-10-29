@@ -11724,6 +11724,19 @@ body {
         font-size: var(--font-size-xs);
         color: var(--color-text-secondary);
     }
+
+    /* 필터 select 모바일 최적화 */
+    .mg-v2-modal-large .mg-v2-form-select {
+        width: 100%;
+        font-size: 16px; /* iOS 줌 방지 */
+        min-height: 44px;
+        padding: var(--spacing-sm);
+    }
+
+    .mg-v2-modal-large .mg-v2-form-label {
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--spacing-xs);
+    }
 }
 
 .mg-v2-gap-sm {

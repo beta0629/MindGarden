@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
+import MGButton from '../../common/MGButton';
 
 /**
  * 매칭 입금확인 모달 컴포넌트
@@ -200,20 +201,20 @@ const MappingPaymentModal = ({
 
                 {/* 푸터 */}
                 <div className="mg-v2-modal-footer">
-                    <button
-                        className="mg-v2-btn mg-v2-btn--secondary"
+                    <MGButton
+                        variant="secondary"
                         onClick={onClose}
                         disabled={loading}
                     >
                         취소
-                    </button>
-                    <button
-                        className="mg-v2-btn mg-v2-btn--primary"
+                    </MGButton>
+                    <MGButton
+                        variant="primary"
                         onClick={handleConfirmPayment}
                         disabled={loading}
                     >
                         {loading ? '처리 중...' : '확인'}
-                    </button>
+                    </MGButton>
                 </div>
             </div>
         </div>,

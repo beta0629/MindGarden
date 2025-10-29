@@ -1671,9 +1671,12 @@ public class AdminServiceImpl implements AdminService {
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
         // 패키지 정보가 변경된 경우 프로시저 호출하여 ERP 재무 거래 동기화
-        boolean packageChanged = (dto.getPackageName() != null && !dto.getPackageName().equals(oldPackageName)) ||
-                                (dto.getPackagePrice() != null && !dto.getPackagePrice().equals(oldPackagePrice)) ||
-                                (dto.getTotalSessions() != null && !dto.getTotalSessions().equals(oldTotalSessions));
+        boolean packageChanged = (dto.getPackageName() != null && oldPackageName != null && !dto.getPackageName().equals(oldPackageName)) ||
+                                (dto.getPackageName() != null && oldPackageName == null) ||
+                                (dto.getPackagePrice() != null && oldPackagePrice != null && !dto.getPackagePrice().equals(oldPackagePrice)) ||
+                                (dto.getTotalSessions() != null && oldTotalSessions != null && !dto.getTotalSessions().equals(oldTotalSessions)) ||
+                                (dto.getPackagePrice() != null && oldPackagePrice == null) ||
+                                (dto.getTotalSessions() != null && oldTotalSessions == null);
         
         if (packageChanged) {
             try {

@@ -15650,3 +15650,9 @@ body {
 .mg-v2-w-full {
     width: 100%;
 }
+
+/* Stat Value Date - 작은 폰트 */
+.mg-v2-stat-value-date {
+    font-size: 0.75rem;
+    white-space: nowrap;
+}

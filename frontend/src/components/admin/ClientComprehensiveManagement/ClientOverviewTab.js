@@ -67,8 +67,8 @@ const ClientOverviewTab = ({
                         </div>
                         <div className="mg-v2-stat-item">
                             <span className="mg-v2-stat-label">등록일</span>
-                            <span className="mg-v2-stat-value">
-                                {new Date(client.createdAt).toLocaleDateString()}
+                            <span className="mg-v2-stat-value mg-v2-stat-value-date">
+                                {client.createdAt ? new Date(client.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'N/A'}
                             </span>
                         </div>
                     </div>

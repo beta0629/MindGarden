@@ -156,7 +156,9 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
      */
     const handleConsultantSelect = (consultant) => {
         setSelectedConsultant(consultant);
-        setNewSpecialty(consultant.specialty || '');
+        // specialty 또는 specialization 둘 중 하나를 선택
+        const specialtyValue = consultant.specialty || consultant.specialization || '';
+        setNewSpecialty(specialtyValue);
     };
 
     /**
@@ -333,7 +335,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                         <div className="mg-v2-list-item-content">
                                             <div className="mg-v2-list-item-title">{consultant.name || consultant.username}</div>
                                             <div className="mg-v2-list-item-subtitle">
-                                                {consultant.specialty || '전문분야 미설정'}
+                                                {consultant.specialty || consultant.specialization || '전문분야 미설정'}
                                             </div>
                                         </div>
                                         <button 

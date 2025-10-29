@@ -11694,26 +11694,35 @@ body {
     .mg-v2-modal-large .mg-v2-btn--icon {
         min-width: 44px;
         min-height: 44px;
+        flex-shrink: 0;
     }
 
     .mg-v2-list-item {
         padding: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
     }
 
     .mg-v2-list-item-content {
         flex: 1;
         min-width: 0;
+        overflow: hidden;
     }
 
-    .mg-v2-list-item-title,
+    .mg-v2-list-item-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--font-size-sm);
+    }
+
     .mg-v2-list-item-subtitle {
         overflow: hidden;
         text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        line-height: 1.4;
-        max-height: 2.8em;
+        white-space: nowrap;
+        font-size: var(--font-size-xs);
+        color: var(--color-text-secondary);
     }
 }
 

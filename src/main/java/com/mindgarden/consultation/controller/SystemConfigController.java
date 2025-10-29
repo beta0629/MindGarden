@@ -42,16 +42,12 @@ public class SystemConfigController {
             return false;
         }
         try {
-            String role = user.getRole().name();
-            return role != null && (
-                role.equals("ADMIN") ||
-                role.equals("BRANCH_ADMIN") ||
-                role.equals("BRANCH_MANAGER") ||
-                role.equals("BRANCH_SUPER_ADMIN") ||
-                role.equals("HQ_ADMIN") ||
-                role.equals("SUPER_HQ_ADMIN") ||
-                role.equals("HQ_MASTER")
-            );
+            com.mindgarden.consultation.constant.UserRole role = user.getRole();
+            if (role == null) {
+                return false;
+            }
+            // 유틸리티 클래스 활용
+            return com.mindgarden.consultation.util.AdminRoleUtils.isAdmin(role);
         } catch (Exception e) {
             log.error("권한 체크 중 오류 발생", e);
             return false;

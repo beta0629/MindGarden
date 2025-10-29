@@ -12,6 +12,8 @@ import {
     clearCodeGroupCache
 } from '../../utils/codeHelper';
 import { useSession } from '../../contexts/SessionContext';
+import { RoleUtils, USER_ROLES } from '../../constants/roles';
+import { usePermissions } from '../../hooks/usePermissions';
 import SimpleLayout from '../layout/SimpleLayout';
 import './ImprovedCommonCodeManagement.css';
 
@@ -28,35 +30,36 @@ import './ImprovedCommonCodeManagement.css';
 const CommonCodeManagement = () => {
     // 세션 정보
     const { user } = useSession();
+    const { canManageCodeGroup } = usePermissions();
     
-    // 권한 체크 함수들
+    // 권한 체크 함수들 - RoleUtils 사용
     const hasErpCodePermission = () => {
-        return user?.role === 'BRANCH_SUPER_ADMIN' || 
-               user?.role === 'HQ_MASTER';
+        return RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN) ||
+               RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER);
     };
     
     const hasFinancialCodePermission = () => {
-        return user?.role === 'BRANCH_SUPER_ADMIN' || 
-               user?.role === 'HQ_MASTER';
+        return RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN) ||
+               RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER);
     };
     
     const hasHqCodePermission = () => {
-        return user?.role === 'HQ_MASTER' || 
-               user?.role === 'SUPER_HQ_ADMIN' ||
-               user?.role === 'HQ_ADMIN';
+        return RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER) ||
+               RoleUtils.hasRole(user, USER_ROLES.SUPER_HQ_ADMIN) ||
+               RoleUtils.hasRole(user, USER_ROLES.HQ_ADMIN);
     };
     
     const hasBranchCodePermission = () => {
-        return user?.role === 'BRANCH_SUPER_ADMIN' || 
-               user?.role === 'HQ_MASTER';
+        return RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN) ||
+               RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER);
     };
     
     const hasGeneralCodePermission = () => {
-        return user?.role === 'ADMIN' || 
-               user?.role === 'BRANCH_SUPER_ADMIN' || 
-               user?.role === 'HQ_MASTER' || 
-               user?.role === 'SUPER_HQ_ADMIN' ||
-               user?.role === 'HQ_ADMIN';
+        return RoleUtils.hasRole(user, USER_ROLES.ADMIN) ||
+               RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN) ||
+               RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER) ||
+               RoleUtils.hasRole(user, USER_ROLES.SUPER_HQ_ADMIN) ||
+               RoleUtils.hasRole(user, USER_ROLES.HQ_ADMIN);
     };
     
     const isErpCodeGroup = (codeGroup) => {

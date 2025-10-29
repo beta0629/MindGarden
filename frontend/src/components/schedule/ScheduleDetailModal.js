@@ -5,6 +5,7 @@ import notificationManager from '../../utils/notification';
 // import ConsultationLogModal from '../consultant/ConsultationLogModal'; // 부모 컴포넌트에서 관리
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { useSession } from '../../contexts/SessionContext';
+import { RoleUtils } from '../../constants/roles';
 import '../../styles/main.css';
 
 /**
@@ -34,7 +35,7 @@ const ScheduleDetailModal = ({
     const [loadingCodes, setLoadingCodes] = useState(false);
     
     // 내담자인지 확인
-    const isClient = user?.role === 'CLIENT';
+    const isClient = RoleUtils.isClient(user);
     
 
     // 일정 상태 코드 로드

@@ -402,9 +402,9 @@ public class BranchServiceImpl extends BaseServiceImpl<Branch, Long> implements 
         }
         
         // 목표 지점 수용 인원 확인
-        if (user.getRole().equals("CONSULTANT") && !isConsultantCapacityAvailable(toBranchId)) {
+        if (user.getRole() == com.mindgarden.consultation.constant.UserRole.CONSULTANT && !isConsultantCapacityAvailable(toBranchId)) {
             throw new ValidationException("목표 지점의 상담사 수용 인원을 초과했습니다.");
-        } else if (user.getRole().equals("CLIENT") && !isClientCapacityAvailable(toBranchId)) {
+        } else if (user.getRole() == com.mindgarden.consultation.constant.UserRole.CLIENT && !isClientCapacityAvailable(toBranchId)) {
             throw new ValidationException("목표 지점의 내담자 수용 인원을 초과했습니다.");
         }
         

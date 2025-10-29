@@ -121,7 +121,11 @@ public class ConsultationMessageController {
                     data.put("senderId", message.getSenderId());
                     data.put("senderName", getUserName(message.getSenderId(), message.getSenderType()));
                     data.put("receiverId", message.getReceiverId());
-                    data.put("receiverName", getUserName(message.getReceiverId(), message.getSenderType().equals("CONSULTANT") ? "CLIENT" : "CONSULTANT"));
+                    // 반대 역할 결정 - enum 활용
+                    String receiverType = com.mindgarden.consultation.constant.UserRole.CONSULTANT.name().equals(message.getSenderType()) 
+                                        ? com.mindgarden.consultation.constant.UserRole.CLIENT.name()
+                                        : com.mindgarden.consultation.constant.UserRole.CONSULTANT.name();
+                    data.put("receiverName", getUserName(message.getReceiverId(), receiverType));
                     data.put("messageType", message.getMessageType());
                     data.put("status", message.getStatus());
                     data.put("isImportant", message.getIsImportant());

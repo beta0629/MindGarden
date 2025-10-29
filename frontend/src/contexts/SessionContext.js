@@ -3,6 +3,7 @@ import { CONSTANTS } from '../constants/magicNumbers';
 import { sessionManager } from '../utils/sessionManager';
 import { authAPI } from '../utils/ajax';
 import { SESSION_CHECK_INTERVAL } from '../constants/session';
+import { RoleUtils, USER_ROLES } from '../constants/roles';
 
 // 세션 상태 타입 정의
 const SessionState = {
@@ -503,12 +504,11 @@ export const SessionProvider = ({ children }) => {
     // 유틸리티
     hasRole: (role) => state.user?.role === role,
     hasAnyRole: (roles) => roles.includes(state.user?.role),
-    isAdmin: () => state.user?.role === 'ADMIN' || state.user?.role === 'BRANCH_SUPER_ADMIN' || 
-              state.user?.role === 'BRANCH_MANAGER' || state.user?.role === 'HQ_ADMIN' || 
-              state.user?.role === 'SUPER_HQ_ADMIN' || state.user?.role === 'HQ_MASTER',
-    isSuperAdmin: () => state.user?.role === 'BRANCH_SUPER_ADMIN' || state.user?.role === 'SUPER_HQ_ADMIN',
-    isConsultant: () => state.user?.role === 'CONSULTANT',
-    isClient: () => state.user?.role === 'CLIENT',
+    isAdmin: () => RoleUtils.isAdmin(state.user),
+    isSuperAdmin: () => state.user?.role === USER_ROLES.BRANCH_SUPER_ADMIN || 
+                        state.user?.role === USER_ROLES.SUPER_HQ_ADMIN,
+    isConsultant: () => RoleUtils.isConsultant(state.user),
+    isClient: () => RoleUtils.isClient(state.user),
     
     // 동적 권한 체크 (백엔드 API 호출)
     hasPermission: async (permission) => {

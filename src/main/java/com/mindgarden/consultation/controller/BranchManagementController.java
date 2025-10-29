@@ -144,8 +144,8 @@ public class BranchManagementController {
             Map<String, Object> statistics = new HashMap<>();
             statistics.put("branchCode", branchCode);
             statistics.put("totalUsers", activeUsers.size());
-            statistics.put("clients", activeUsers.stream().filter(u -> u.getRole().name().equals("CLIENT")).count());
-            statistics.put("consultants", activeUsers.stream().filter(u -> u.getRole().name().equals("CONSULTANT")).count());
+            statistics.put("clients", activeUsers.stream().filter(u -> u.getRole() == com.mindgarden.consultation.constant.UserRole.CLIENT).count());
+            statistics.put("consultants", activeUsers.stream().filter(u -> u.getRole() == com.mindgarden.consultation.constant.UserRole.CONSULTANT).count());
             statistics.put("admins", activeUsers.stream().filter(u -> adminRoles.contains(u.getRole().name())).count());
             statistics.put("activeUsers", activeUsers.size());
             statistics.put("inactiveUsers", allBranchUsers.size() - activeUsers.size());

@@ -432,7 +432,9 @@ const SessionManagement = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button 
+                                            <MGButton 
+                                                variant="primary"
+                                                size="small"
                                                 className="mg-v2-quick-add-button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -441,7 +443,7 @@ const SessionManagement = () => {
                                             >
                                                 <Plus size={16} />
                                                 회기 추가
-                                            </button>
+                                            </MGButton>
                                         </div>
                                     );
                                 })}
@@ -500,8 +502,9 @@ const SessionManagement = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button 
-                                                    className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
+                                                <MGButton 
+                                                    variant="success"
+                                                    size="small"
                                                     disabled={clientMappings.length === 0}
                                                     title={clientMappings.length === 0 ? '활성 매핑이 없습니다' : ''}
                                                     onClick={() => {
@@ -512,7 +515,7 @@ const SessionManagement = () => {
                                                 >
                                                     <Plus size={14} />
                                                     회기 추가
-                                                </button>
+                                                </MGButton>
                                             </div>
                                         );
                                     })}

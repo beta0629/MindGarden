@@ -132,7 +132,17 @@ public class PermissionManagementController {
     public ResponseEntity<?> getRolePermissions(@PathVariable String roleName) {
         try {
             UserRole role = UserRole.fromString(roleName);
-            List<String> permissions = dynamicPermissionService.getRolePermissions(role);
+            List<String> permissionCodes = dynamicPermissionService.getRolePermissions(role);
+            
+            // 프론트엔드에서 expect하는 형식으로 변환 (permission_code 필드 포함)
+            List<Map<String, Object>> permissions = permissionCodes.stream()
+                .map(code -> {
+                    Map<String, Object> perm = new HashMap<>();
+                    perm.put("permission_code", code);
+                    perm.put("permissionCode", code);
+                    return perm;
+                })
+                .collect(java.util.stream.Collectors.toList());
             
             return ResponseEntity.ok(Map.of(
                 "success", true,

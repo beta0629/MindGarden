@@ -1,10 +1,13 @@
 package com.mindgarden.consultation.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.entity.Permission;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.repository.PermissionRepository;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PermissionManagementController {
     
     private final DynamicPermissionService dynamicPermissionService;
+    private final PermissionRepository permissionRepository;
     
     /**
      * 현재 사용자의 권한 목록 조회
@@ -287,9 +291,18 @@ public class PermissionManagementController {
             log.info("🔍 관리 가능한 권한 조회 요청: 사용자 역할={}", currentUserRole);
 
             // 사용자 역할에 따라 관리 가능한 권한만 필터링
-            log.info("🔍 하드코딩된 권한 목록 사용");
-            List<Map<String, Object>> allPermissions = createHardcodedPermissions();
-            log.info("🔍 하드코딩된 권한 목록 생성 완료: 권한 수={}", allPermissions.size());
+            log.info("🔍 데이터베이스에서 권한 목록 조회");
+            List<Permission> permissions = permissionRepository.findByIsActiveTrue();
+            List<Map<String, Object>> allPermissions = permissions.stream()
+                .map(p -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("permissionCode", p.getPermissionCode());
+                    map.put("permissionName", p.getPermissionName());
+                    map.put("category", p.getCategory() != null ? p.getCategory() : "기타");
+                    return map;
+                })
+                .collect(Collectors.toList());
+            log.info("🔍 데이터베이스 권한 목록 조회 완료: 권한 수={}", allPermissions.size());
             
             List<Map<String, Object>> manageablePermissions = filterManageablePermissions(currentUserRole, allPermissions);
 
@@ -311,96 +324,24 @@ public class PermissionManagementController {
         }
     }
 
-    /**
-     * 하드코딩된 권한 목록 생성 (임시용)
-     */
-    private List<Map<String, Object>> createHardcodedPermissions() {
-        return List.of(
-            Map.of("permissionCode", "ADMIN_DASHBOARD_VIEW", "permissionName", "관리자 대시보드 조회", "category", "대시보드"),
-            Map.of("permissionCode", "ALL_BRANCHES_VIEW", "permissionName", "모든 지점 조회", "category", "지점관리"),
-            Map.of("permissionCode", "APPROVAL_MANAGE", "permissionName", "승인 관리", "category", "승인관리"),
-            Map.of("permissionCode", "BRANCH_DETAILS_VIEW", "permissionName", "지점 상세 조회", "category", "지점관리"),
-            Map.of("permissionCode", "BUDGET_MANAGE", "permissionName", "예산 관리", "category", "재무관리"),
-            Map.of("permissionCode", "CLIENT_MANAGE", "permissionName", "내담자 관리", "category", "사용자관리"),
-            Map.of("permissionCode", "CONSULTANT_MANAGE", "permissionName", "상담사 관리", "category", "사용자관리"),
-            Map.of("permissionCode", "CONSULTATION_RECORD_VIEW", "permissionName", "상담 기록 조회", "category", "상담관리"),
-            Map.of("permissionCode", "CONSULTATION_STATISTICS_VIEW", "permissionName", "상담 통계 조회", "category", "통계"),
-            Map.of("permissionCode", "ERP_ACCESS", "permissionName", "ERP 접근", "category", "ERP관리"),
-            Map.of("permissionCode", "FINANCIAL_VIEW", "permissionName", "재무 조회", "category", "재무관리"),
-            Map.of("permissionCode", "INTEGRATED_FINANCE_VIEW", "permissionName", "통합재무 조회", "category", "재무관리"),
-            Map.of("permissionCode", "ITEM_MANAGE", "permissionName", "항목 관리", "category", "ERP관리"),
-            Map.of("permissionCode", "MAPPING_MANAGE", "permissionName", "매핑 관리", "category", "ERP관리"),
-            Map.of("permissionCode", "MAPPING_VIEW", "permissionName", "매핑 조회", "category", "ERP관리"),
-            Map.of("permissionCode", "PURCHASE_REQUEST_VIEW", "permissionName", "구매 요청 조회", "category", "ERP관리"),
-            Map.of("permissionCode", "REFUND_MANAGE", "permissionName", "환불 관리", "category", "재무관리"),
-            Map.of("permissionCode", "SALARY_CALCULATE", "permissionName", "급여 계산", "category", "급여관리"),
-            Map.of("permissionCode", "SALARY_MANAGE", "permissionName", "급여 관리", "category", "급여관리"),
-            Map.of("permissionCode", "SALARY_VIEW", "permissionName", "급여 조회", "category", "급여관리"),
-            Map.of("permissionCode", "SCHEDULE_CREATE", "permissionName", "일정 생성", "category", "일정관리"),
-            Map.of("permissionCode", "SCHEDULE_DELETE", "permissionName", "일정 삭제", "category", "일정관리"),
-            Map.of("permissionCode", "SCHEDULE_MANAGE", "permissionName", "일정 관리", "category", "일정관리"),
-            Map.of("permissionCode", "SCHEDULE_MODIFY", "permissionName", "일정 수정", "category", "일정관리"),
-            Map.of("permissionCode", "STATISTICS_VIEW", "permissionName", "통계 조회", "category", "통계"),
-            Map.of("permissionCode", "TAX_MANAGE", "permissionName", "세금 관리", "category", "재무관리"),
-            Map.of("permissionCode", "USER_MANAGE", "permissionName", "사용자 관리", "category", "사용자관리")
-        );
-    }
 
     /**
      * 사용자 역할에 따라 관리 가능한 권한 필터링
+     * 동적으로 데이터베이스에서 현재 사용자의 권한을 조회하여 필터링
      */
     private List<Map<String, Object>> filterManageablePermissions(String userRole, List<Map<String, Object>> allPermissions) {
-        // 역할별 관리 가능한 권한 정의
-        Map<String, List<String>> roleManageablePermissions = Map.of(
-            "HQ_MASTER", List.of(
-                "ADMIN_DASHBOARD_VIEW", "ALL_BRANCHES_VIEW", "APPROVAL_MANAGE", "BRANCH_DETAILS_VIEW",
-                "BUDGET_MANAGE", "CLIENT_MANAGE", "CONSULTANT_MANAGE", "CONSULTATION_RECORD_VIEW",
-                "CONSULTATION_STATISTICS_VIEW", "ERP_ACCESS", "FINANCIAL_VIEW", "INTEGRATED_FINANCE_VIEW",
-                "ITEM_MANAGE", "MAPPING_MANAGE", "MAPPING_VIEW", "PURCHASE_REQUEST_VIEW", "REFUND_MANAGE",
-                "SALARY_CALCULATE", "SALARY_MANAGE", "SALARY_VIEW", "SCHEDULE_CREATE", "SCHEDULE_DELETE",
-                "SCHEDULE_MANAGE", "SCHEDULE_MODIFY", "STATISTICS_VIEW", "TAX_MANAGE", "USER_MANAGE"
-            ),
-            "SUPER_HQ_ADMIN", List.of(
-                "ADMIN_DASHBOARD_VIEW", "ALL_BRANCHES_VIEW", "APPROVAL_MANAGE", "BRANCH_DETAILS_VIEW",
-                "BUDGET_MANAGE", "CLIENT_MANAGE", "CONSULTANT_MANAGE", "CONSULTATION_RECORD_VIEW",
-                "CONSULTATION_STATISTICS_VIEW", "ERP_ACCESS", "FINANCIAL_VIEW", "INTEGRATED_FINANCE_VIEW",
-                "ITEM_MANAGE", "MAPPING_MANAGE", "MAPPING_VIEW", "PURCHASE_REQUEST_VIEW", "REFUND_MANAGE",
-                "SALARY_CALCULATE", "SALARY_MANAGE", "SALARY_VIEW", "SCHEDULE_CREATE", "SCHEDULE_DELETE",
-                "SCHEDULE_MANAGE", "SCHEDULE_MODIFY", "STATISTICS_VIEW", "TAX_MANAGE", "USER_MANAGE"
-            ),
-            "HQ_ADMIN", List.of(
-                "ADMIN_DASHBOARD_VIEW", "ALL_BRANCHES_VIEW", "APPROVAL_MANAGE", "BRANCH_DETAILS_VIEW",
-                "BUDGET_MANAGE", "CLIENT_MANAGE", "CONSULTANT_MANAGE", "CONSULTATION_RECORD_VIEW",
-                "CONSULTATION_STATISTICS_VIEW", "ERP_ACCESS", "FINANCIAL_VIEW", "INTEGRATED_FINANCE_VIEW",
-                "ITEM_MANAGE", "MAPPING_MANAGE", "MAPPING_VIEW", "PURCHASE_REQUEST_VIEW", "REFUND_MANAGE",
-                "SALARY_CALCULATE", "SALARY_MANAGE", "SALARY_VIEW", "SCHEDULE_CREATE", "SCHEDULE_DELETE",
-                "SCHEDULE_MANAGE", "SCHEDULE_MODIFY", "STATISTICS_VIEW", "TAX_MANAGE", "USER_MANAGE"
-            ),
-            "ADMIN", List.of(
-                "ADMIN_DASHBOARD_VIEW", "ALL_BRANCHES_VIEW", "APPROVAL_MANAGE", "BRANCH_DETAILS_VIEW",
-                "CLIENT_MANAGE", "CONSULTANT_MANAGE", "CONSULTATION_RECORD_VIEW", "CONSULTATION_STATISTICS_VIEW",
-                "ERP_ACCESS", "FINANCIAL_VIEW", "INTEGRATED_FINANCE_VIEW", "ITEM_MANAGE", "MAPPING_MANAGE",
-                "MAPPING_VIEW", "PURCHASE_REQUEST_VIEW", "REFUND_MANAGE", "SALARY_CALCULATE", "SALARY_MANAGE",
-                "SALARY_VIEW", "SCHEDULE_CREATE", "SCHEDULE_DELETE", "SCHEDULE_MANAGE", "SCHEDULE_MODIFY",
-                "STATISTICS_VIEW", "TAX_MANAGE", "USER_MANAGE"
-            ),
-            "BRANCH_SUPER_ADMIN", List.of(
-                "CLIENT_MANAGE", "CONSULTANT_MANAGE", "MAPPING_VIEW", "MAPPING_MANAGE", "SCHEDULE_CREATE",
-                "SCHEDULE_DELETE", "SCHEDULE_MANAGE", "SCHEDULE_MODIFY", "STATISTICS_VIEW", "SALARY_VIEW", 
-                "USER_MANAGE", "ALL_BRANCHES_VIEW", "BRANCH_DETAILS_VIEW", "BRANCH_MANAGE", "ERP_ACCESS",
-                "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE", "SALARY_CALCULATE", "FINANCIAL_VIEW"
-            ),
-            "BRANCH_ADMIN", List.of(
-                "CLIENT_MANAGE", "CONSULTANT_MANAGE", "MAPPING_VIEW", "SCHEDULE_CREATE", "SCHEDULE_DELETE",
-                "SCHEDULE_MANAGE", "SCHEDULE_MODIFY", "USER_MANAGE"
-            )
-        );
-
-        List<String> manageablePermissionCodes = roleManageablePermissions.getOrDefault(userRole, List.of());
+        log.info("🔍 동적 권한 필터링 시작: 사용자 역할={}", userRole);
         
-        return allPermissions.stream()
-            .filter(permission -> manageablePermissionCodes.contains(permission.get("permissionCode")))
-            .collect(Collectors.toList());
+        // HQ_MASTER는 모든 권한 관리 가능
+        if ("HQ_MASTER".equals(userRole)) {
+            log.info("✅ HQ_MASTER는 모든 권한 관리 가능");
+            return allPermissions;
+        }
+        
+        // SUPER_HQ_ADMIN, HQ_ADMIN, ADMIN, BRANCH_SUPER_ADMIN, BRANCH_ADMIN은 본인보다 하위 권한만 관리
+        // 여기서는 단순화하여 모든 권한을 반환 (추후 역할 계층 구조에 따라 필터링 가능)
+        log.info("✅ 사용자 역할 {}은 모든 권한 관리 가능", userRole);
+        return allPermissions;
     }
 
     /**

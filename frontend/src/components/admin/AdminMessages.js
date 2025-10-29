@@ -27,6 +27,11 @@ const AdminMessages = () => {
   const [filterType, setFilterType] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
 
+  // selectedMessage 상태 추적
+  useEffect(() => {
+    console.log('🔄 selectedMessage 상태 변경:', selectedMessage ? `ID: ${selectedMessage.id}` : 'null');
+  }, [selectedMessage]);
+
   // 메시지 유형 옵션
   const MESSAGE_TYPES = {
     ALL: { label: '전체', color: 'var(--color-text-secondary)' },
@@ -121,18 +126,23 @@ const AdminMessages = () => {
 
   // 메시지 상세 보기
   const handleMessageClick = async(message) => {
+    console.log('🖱️ 메시지 클릭:', message.id, message.title, message.isRead);
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
+      console.log('📞 API 호출:', `/api/consultation-messages/${message.id}`);
       const response = await apiGet(`/api/consultation-messages/${message.id}`);
+      console.log('✅ API 응답:', response);
       
       if (response.success) {
+        console.log('✅ 메시지 상세 데이터:', response.data);
         setSelectedMessage(response.data);
       } else {
+        console.warn('⚠️ API 응답 실패:', response);
         // 실패 시 기존 데이터 사용
         setSelectedMessage(message);
       }
     } catch (error) {
-      console.error('메시지 상세 조회 오류:', error);
+      console.error('❌ 메시지 상세 조회 오류:', error);
       // 오류 시 기존 데이터 사용
       setSelectedMessage(message);
     }
@@ -140,12 +150,14 @@ const AdminMessages = () => {
 
   // 모달 닫기
   const closeModal = async() => {
+    console.log('🔒 모달 닫기 시작');
     setSelectedMessage(null);
     
     // 목록 새로고침 (읽음 상태 반영)
     await loadMessages();
     // 메시지 읽음 이벤트 발생 (NotificationContext가 카운트 갱신)
     window.dispatchEvent(new Event('message-read'));
+    console.log('✅ 모달 닫기 완료');
   };
 
   // 메시지 유형별 색상
@@ -269,8 +281,13 @@ const AdminMessages = () => {
                     {filteredMessages.map((message) => (
                       <tr 
                         key={message.id}
-                        onClick={() => handleMessageClick(message)}
+                        onClick={(e) => {
+                          console.log('🖱️ 테이블 행 클릭 이벤트:', message.id);
+                          e.stopPropagation();
+                          handleMessageClick(message);
+                        }}
                         className={`mg-v2-message-row-clickable ${!message.isRead ? 'mg-v2-table-row-unread' : ''}`}
+                        style={{ cursor: 'pointer' }}
                       >
                         <td>
                           <span className={`mg-v2-badge ${!message.isRead ? 'mg-v2-badge-primary' : 'mg-v2-badge-secondary'}`}>
@@ -329,7 +346,13 @@ const AdminMessages = () => {
                 {filteredMessages.map((message) => (
                   <div 
                     key={message.id}
+                    onClick={(e) => {
+                      console.log('🖱️ 카드 클릭 이벤트:', message.id);
+                      e.stopPropagation();
+                      handleMessageClick(message);
+                    }}
                     className={`mg-v2-card mg-v2-message-mobile-card ${!message.isRead ? 'mg-v2-message-mobile-card-unread' : ''}`}
+                    style={{ cursor: 'pointer' }}
                   >
                     {/* 상단: 상태 + 유형 배지 */}
                     <div className="mg-v2-message-mobile-header">

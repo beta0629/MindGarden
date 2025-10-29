@@ -289,23 +289,30 @@ public class ConsultationMessageController {
     @GetMapping("/{messageId}")
     public ResponseEntity<?> getMessage(@PathVariable Long messageId) {
         try {
-            log.info("📨 메시지 상세 조회 - 메시지 ID: {}", messageId);
+            log.info("📨 메시지 상세 조회 시작 - 메시지 ID: {}", messageId);
             
             ConsultationMessage message = consultationMessageService.getById(messageId);
             if (message == null) {
+                log.error("❌ 메시지를 찾을 수 없음 - 메시지 ID: {}", messageId);
                 return ResponseEntity.notFound().build();
             }
+            
+            log.info("📨 메시지 조회 성공 - ID: {}, 읽음 상태: {}", messageId, message.getIsRead());
             
             // 자동 읽음 처리 (읽지 않은 메시지만)
             if (!message.getIsRead()) {
                 try {
+                    log.info("🔄 읽음 처리 시작 - 메시지 ID: {}", messageId);
                     consultationMessageService.markAsRead(messageId);
                     log.info("✅ 메시지 자동 읽음 처리 완료 - 메시지 ID: {}", messageId);
                     // 최신 메시지 정보 다시 조회
                     message = consultationMessageService.getById(messageId);
+                    log.info("✅ 최신 메시지 정보 조회 완료 - 읽음 상태: {}", message.getIsRead());
                 } catch (Exception e) {
-                    log.warn("⚠️ 메시지 자동 읽음 처리 실패 (무시): {}", e.getMessage());
+                    log.error("⚠️ 메시지 자동 읽음 처리 실패:", e);
                 }
+            } else {
+                log.info("ℹ️ 이미 읽은 메시지 - 메시지 ID: {}", messageId);
             }
             
             Map<String, Object> messageData = new HashMap<>();

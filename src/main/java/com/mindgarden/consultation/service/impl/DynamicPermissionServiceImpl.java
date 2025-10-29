@@ -498,28 +498,23 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
             // 2. 새 권한들 추가
             int successCount = 0;
             for (String permissionCode : permissionCodes) {
-                try {
-                    // 권한이 존재하는지 확인
-                    if (!permissionExists(permissionCode)) {
-                        log.warn("권한이 존재하지 않음: {}", permissionCode);
-                        continue;
-                    }
-                    
-                    // 역할별 권한 추가
-                    RolePermission rolePermission = new RolePermission();
-                    rolePermission.setRoleName(roleName);
-                    rolePermission.setPermissionCode(permissionCode);
-                    rolePermission.setIsActive(true);
-                    rolePermission.setCreatedAt(LocalDateTime.now());
-                    rolePermission.setUpdatedAt(LocalDateTime.now());
-                    
-                    rolePermissionRepository.save(rolePermission);
-                    successCount++;
-                    log.debug("권한 추가 완료: 역할={}, 권한={}", roleName, permissionCode);
-                    
-                } catch (Exception e) {
-                    log.error("권한 추가 실패: 역할={}, 권한={}", roleName, permissionCode, e);
+                // 권한이 존재하는지 확인
+                if (!permissionExists(permissionCode)) {
+                    log.warn("권한이 존재하지 않음: {}", permissionCode);
+                    continue;
                 }
+                
+                // 역할별 권한 추가
+                RolePermission rolePermission = new RolePermission();
+                rolePermission.setRoleName(roleName);
+                rolePermission.setPermissionCode(permissionCode);
+                rolePermission.setIsActive(true);
+                rolePermission.setCreatedAt(LocalDateTime.now());
+                rolePermission.setUpdatedAt(LocalDateTime.now());
+                
+                rolePermissionRepository.save(rolePermission);
+                successCount++;
+                log.debug("권한 추가 완료: 역할={}, 권한={}", roleName, permissionCode);
             }
             
             log.info("✅ 역할별 권한 설정 완료: 역할={}, 성공={}/{}", roleName, successCount, permissionCodes.size());

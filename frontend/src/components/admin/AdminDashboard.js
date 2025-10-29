@@ -142,6 +142,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const [showRecurringExpense, setShowRecurringExpense] = useState(false);
     const [showStatisticsModal, setShowStatisticsModal] = useState(false);
     const [isConsultantRatingExpanded, setIsConsultantRatingExpanded] = useState(false);
+    const [isVacationExpanded, setIsVacationExpanded] = useState(false);
     
     const [todayStats, setTodayStats] = useState({
         totalToday: 0,
@@ -732,11 +733,26 @@ const AdminDashboard = ({ user: propUser }) => {
                 )}
 
                 {/* 휴가 통계 섹션 */}
-                <DashboardSection
-                    title="휴가 현황"
-                    subtitle="상담사별 휴가 사용 현황 및 통계"
-                    icon={<CalendarDays />}
-                >
+                <div className="mg-mb-lg">
+                    <div 
+                        onClick={() => setIsVacationExpanded(!isVacationExpanded)}
+                        className={`mg-v2-card mg-flex mg-align-center mg-justify-between mg-cursor-pointer ${isVacationExpanded ? 'mg-mb-0' : 'mg-mb-md'}`}
+                    >
+                        <div className="mg-flex mg-align-center mg-gap-sm">
+                            <CalendarDays size={20} />
+                            <div>
+                                <h3 className="mg-v2-section-title">휴가 현황</h3>
+                                <p className="mg-v2-section-subtitle">상담사별 휴가 사용 현황 및 통계</p>
+                            </div>
+                        </div>
+                        <div className="mg-v2-accordion-toggle-icon">
+                            {isVacationExpanded ? '▲' : '▼'}
+                        </div>
+                    </div>
+                    
+                    {isVacationExpanded && (
+                        <div className="mg-v2-accordion-content">
+                            <DashboardSection>
                     <div className="mg-stats-grid">
                         <StatCard
                             icon={<User />}
@@ -799,7 +815,10 @@ const AdminDashboard = ({ user: propUser }) => {
                             </table>
                         </div>
                     )}
-                </DashboardSection>
+                            </DashboardSection>
+                        </div>
+                    )}
+                </div>
 
                 {/* 상담사 평가 통계 섹션 */}
                 <div className="mg-mb-lg">

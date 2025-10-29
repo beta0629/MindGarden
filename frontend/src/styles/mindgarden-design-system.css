@@ -11698,6 +11698,7 @@ body {
 .mg-v2-list-item-content {
     flex: 1;
     min-width: 0;
+    max-width: calc(100% - 60px); /* 버튼 영역 제외 */
     overflow: hidden;
 }
 
@@ -11752,6 +11753,7 @@ body {
     .mg-v2-list-item-content {
         flex: 1;
         min-width: 0;
+        max-width: calc(100% - 60px); /* 버튼 영역 제외 */
         overflow: hidden;
     }
 

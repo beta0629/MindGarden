@@ -2,8 +2,10 @@ package com.mindgarden.consultation.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
@@ -3518,7 +3520,7 @@ public class AdminController {
     }
 
     /**
-     * 전문분야 통계 조회
+     * 전문분야 통계 조회 (통합 상담사 데이터 사용, 지점별 필터링 + 삭제 제외)
      */
     @GetMapping("/statistics/specialty")
     public ResponseEntity<Map<String, Object>> getSpecialtyStatistics(HttpSession session) {
@@ -3539,16 +3541,42 @@ public class AdminController {
                 ));
             }
 
-            List<User> consultants = userService.findByRole(UserRole.CONSULTANT.name());
-            long totalConsultants = consultants.size();
-            long specialtySet = consultants.stream().filter(c -> c.getSpecialty() != null && !c.getSpecialty().trim().isEmpty()).count();
+            // 통합 상담사 데이터 사용 (이미 지점별 + 삭제 제외 필터링됨)
+            List<Map<String, Object>> consultantsList = consultantStatsService.getAllConsultantsWithStats();
             
-            // 전문분야 종류 계산
-            long specialtyTypes = consultants.stream()
-                .filter(c -> c.getSpecialty() != null && !c.getSpecialty().trim().isEmpty())
-                .map(c -> c.getSpecialty().trim())
-                .distinct()
-                .count();
+            // 통계 계산
+            long totalConsultants = consultantsList.size();
+            long specialtySet = 0;
+            Set<String> specialtyTypesSet = new HashSet<>();
+            
+            for (Map<String, Object> item : consultantsList) {
+                Map<String, Object> consultantMap = (Map<String, Object>) item.get("consultant");
+                if (consultantMap != null) {
+                    String specialty = (String) consultantMap.get("specialty");
+                    String specialization = (String) consultantMap.get("specialization");
+                    
+                    // 전문분야 설정 여부 체크
+                    if ((specialty != null && !specialty.trim().isEmpty()) || 
+                        (specialization != null && !specialization.trim().isEmpty())) {
+                        specialtySet++;
+                    }
+                    
+                    // 전문분야 종류 수집
+                    if (specialty != null && !specialty.trim().isEmpty()) {
+                        specialtyTypesSet.add(specialty.trim());
+                    }
+                    if (specialization != null && !specialization.trim().isEmpty()) {
+                        String[] specialties = specialization.split(",");
+                        for (String s : specialties) {
+                            if (!s.trim().isEmpty()) {
+                                specialtyTypesSet.add(s.trim());
+                            }
+                        }
+                    }
+                }
+            }
+            
+            long specialtyTypes = specialtyTypesSet.size();
 
             Map<String, Object> statistics = Map.of(
                 "totalConsultants", totalConsultants,

@@ -53,6 +53,11 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                     const consultantName = consultantEntity.name || consultantEntity.username || '이름 없음';
                     const consultantEmail = consultantEntity.email || '';
                     
+                    // 전문분야 데이터 확인
+                    const rawSpecialty = consultantEntity.specialty || consultantEntity.specialization || '';
+                    console.log('📋 전문분야 원본 데이터:', rawSpecialty);
+                    console.log('📋 전문분야 한글 변환:', getSpecialtyKoreanName(rawSpecialty));
+                    
                     return {
                         id: consultantEntity.id,
                         name: consultantName,
@@ -62,7 +67,8 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                         role: consultantEntity.role || 'CONSULTANT',
                         isActive: consultantEntity.isActive !== undefined ? consultantEntity.isActive : true,
                         branchCode: consultantEntity.branchCode || '',
-                        specialty: consultantEntity.specialty || consultantEntity.specialization || '',
+                        specialty: rawSpecialty, // 원본 저장
+                        specialtyDisplay: getSpecialtyKoreanName(rawSpecialty), // 한글 변환 버전
                         specialtyDetails: consultantEntity.specialtyDetails || consultantEntity.specializationDetails || '',
                         specialization: consultantEntity.specialization || consultantEntity.specialty || '',
                         specializationDetails: consultantEntity.specializationDetails || consultantEntity.specialtyDetails || '',

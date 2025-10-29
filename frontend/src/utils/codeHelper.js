@@ -124,49 +124,75 @@ export const getCodeGroupColor = async (groupName) => {
 
 /**
  * 상태별 색상 조회 (동기 버전 - fallback 사용)
+ * @deprecated - getStatusColorAsync 사용 권장
  */
 export const getStatusColorSync = (codeValue) => {
     if (!codeValue) {
         return '#6b7280';
     }
     
-    // 기본 색상 매칭 (fallback) - 확장된 매칭
+    // 기본 색상 매칭 (fallback) - 최소한의 매칭만 유지
     const defaultColorMap = {
-        // 스케줄 상태
-        'AVAILABLE': '#e5e7eb',
-        'BOOKED': '#3b82f6',
-        'CONFIRMED': '#8b5cf6',
-        'IN_PROGRESS': '#f59e0b',
-        'COMPLETED': '#10b981',
-        'CANCELLED': '#ef4444',
-        'BLOCKED': '#6b7280',
-        'UNDER_REVIEW': '#f97316',
-        'VACATION': '#06b6d4',
-        'NO_SHOW': '#dc2626',
-        'MAINTENANCE': '#6b7280',
-        
-        // 매칭 상태
-        'PENDING_PAYMENT': '#ffc107',
-        'PAYMENT_CONFIRMED': '#17a2b8',
-        'ACTIVE': '#28a745',
-        'INACTIVE': '#6c757d',
-        'SUSPENDED': '#fd7e14',
-        'TERMINATED': '#dc3545',
-        'SESSIONS_EXHAUSTED': '#6f42c1',
-        
-        // 사용자 상태
-        'PENDING': '#6b7280',
-        'APPROVED': '#10b981',
-        'REJECTED': '#ef4444',
-        'PAYMENT_PENDING': '#ffc107',
-        'PAYMENT_REJECTED': '#dc3545',
-        
-        // 기타
+        // 기본 상태
         'true': '#10b981',
         'false': '#ef4444'
     };
     
     return defaultColorMap[codeValue] || '#6b7280';
+};
+
+/**
+ * 상태별 아이콘 조회 (동적)
+ */
+export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
+    if (!codeValue) {
+        return '📋';
+    }
+    
+    try {
+        const response = await apiGet(`/api/common-codes/${groupName}`);
+        if (response && Array.isArray(response)) {
+            const code = response.find(c => c.codeValue === codeValue);
+            if (code && code.icon) {
+                return code.icon;
+            }
+        }
+    } catch (error) {
+        console.warn('아이콘 조회 실패, fallback 사용:', error);
+    }
+    
+    // Fallback
+    return '📋';
+};
+
+/**
+ * 상태별 색상과 아이콘을 함께 조회 (동적)
+ */
+export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
+    if (!codeValue) {
+        return { color: '#6b7280', icon: '📋' };
+    }
+    
+    try {
+        const response = await apiGet(`/api/common-codes/${groupName}`);
+        if (response && Array.isArray(response)) {
+            const code = response.find(c => c.codeValue === codeValue);
+            if (code) {
+                return {
+                    color: code.colorCode || '#6b7280',
+                    icon: code.icon || '📋'
+                };
+            }
+        }
+    } catch (error) {
+        console.warn('상태 스타일 조회 실패, fallback 사용:', error);
+    }
+    
+    // Fallback
+    return {
+        color: getStatusColorSync(codeValue),
+        icon: '📋'
+    };
 };
 
 /**

@@ -11,6 +11,38 @@
 import { apiGet } from './ajax';
 
 /**
+ * 상담사 등급별 색상/아이콘 정보 조회
+ * 
+ * @returns {Promise<Object>} 등급별 스타일 정보
+ */
+export const getConsultantGradeStyles = async () => {
+    try {
+        const response = await apiGet('/api/common-codes/CONSULTANT_GRADE');
+        if (response && Array.isArray(response)) {
+            const gradeStyles = {};
+            response.forEach(code => {
+                gradeStyles[code.codeValue] = {
+                    color: code.colorCode || '#6b7280',
+                    icon: code.icon || '⭐',
+                    label: code.codeLabel,
+                    description: code.codeDescription
+                };
+            });
+            return gradeStyles;
+        }
+        return {};
+    } catch (error) {
+        console.warn('상담사 등급 스타일 조회 실패, 기본값 사용:', error);
+        return {
+            'CONSULTANT_JUNIOR': { color: '#f59e0b', icon: '⭐', label: '주니어 상담사' },
+            'CONSULTANT_SENIOR': { color: '#f59e0b', icon: '⭐⭐', label: '시니어 상담사' },
+            'CONSULTANT_EXPERT': { color: '#f59e0b', icon: '⭐⭐⭐', label: '엑스퍼트 상담사' },
+            'CONSULTANT_MASTER': { color: '#dc2626', icon: '👑', label: '마스터 상담사' }
+        };
+    }
+};
+
+/**
  * 상담사 정보 + 통계 정보 통합 조회
  * 
  * @param {number} consultantId 상담사 ID

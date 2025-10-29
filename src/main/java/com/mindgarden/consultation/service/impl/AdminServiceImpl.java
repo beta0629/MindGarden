@@ -38,6 +38,7 @@ import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.AmountManagementService;
 import com.mindgarden.consultation.service.BranchService;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ConsultantRatingService;
 import com.mindgarden.consultation.service.ConsultationMessageService;
@@ -68,6 +69,7 @@ public class AdminServiceImpl implements AdminService {
     private final ConsultantRatingService consultantRatingService;
     private final ScheduleRepository scheduleRepository;
     private final CommonCodeRepository commonCodeRepository;
+    private final CommonCodeService commonCodeService;
     private final PasswordEncoder passwordEncoder;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final ConsultantAvailabilityService consultantAvailabilityService;
@@ -1010,6 +1012,20 @@ public class AdminServiceImpl implements AdminService {
     public List<Map<String, Object>> getAllConsultantsWithSpecialty() {
         List<Consultant> consultants = consultantRepository.findActiveConsultants();
         
+        // 상담사 등급별 색상/아이콘 정보 조회
+        Map<String, Map<String, String>> gradeStyles = new HashMap<>();
+        try {
+            List<CommonCode> gradeCodes = commonCodeService.getCommonCodesByGroup("CONSULTANT_GRADE");
+            for (CommonCode code : gradeCodes) {
+                Map<String, String> style = new HashMap<>();
+                style.put("color", code.getColorCode() != null ? code.getColorCode() : "#6b7280");
+                style.put("icon", code.getIcon() != null ? code.getIcon() : "⭐");
+                gradeStyles.put(code.getCodeValue(), style);
+            }
+        } catch (Exception e) {
+            log.warn("상담사 등급 스타일 조회 실패, 기본값 사용: {}", e.getMessage());
+        }
+        
         return consultants.stream()
             .map(consultant -> {
                 Map<String, Object> consultantData = new HashMap<>();
@@ -1035,6 +1051,13 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("branchCode", consultant.getBranchCode());
                 consultantData.put("createdAt", consultant.getCreatedAt());
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
+                
+                // 상담사 등급별 색상/아이콘 추가
+                String grade = consultant.getGrade() != null ? consultant.getGrade() : "CONSULTANT_JUNIOR";
+                Map<String, String> style = gradeStyles.getOrDefault(grade, Map.of("color", "#6b7280", "icon", "⭐"));
+                consultantData.put("gradeColor", style.get("color"));
+                consultantData.put("gradeIcon", style.get("icon"));
+                consultantData.put("grade", grade);
                 
                 // Consultant 엔티티의 추가 정보 가져오기
                 // 실제 활성 매핑 수를 계산

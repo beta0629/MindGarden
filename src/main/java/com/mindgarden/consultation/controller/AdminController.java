@@ -30,6 +30,7 @@ import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.service.StoredProcedureService;
 import com.mindgarden.consultation.service.UserService;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.util.PermissionCheckUtils;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.data.domain.Page;
@@ -71,6 +72,7 @@ public class AdminController {
     private final StoredProcedureService storedProcedureService;
     private final ConsultantStatsService consultantStatsService;
     private final ClientStatsService clientStatsService;
+    private final CommonCodeService commonCodeService;
 
     // === 상담사 통계 통합 API ===
     
@@ -400,7 +402,7 @@ public class AdminController {
             }
             
             // 권한 확인 - BRANCH_SUPER_ADMIN은 자신의 지점만 조회 가능
-            if (currentUser.getRole().name().equals("BRANCH_SUPER_ADMIN")) {
+            if (currentUser.getRole() == com.mindgarden.consultation.constant.UserRole.BRANCH_SUPER_ADMIN) {
                 Long currentUserBranchId = currentUser.getBranch() != null ? currentUser.getBranch().getId() : null;
                 if (currentUserBranchId == null || !currentUserBranchId.equals(branchId)) {
                     log.warn("❌ 지점 어드민이 다른 지점 조회 시도: 요청={}, 소속={}", branchId, currentUserBranchId);
@@ -416,6 +418,20 @@ public class AdminController {
             List<User> branchConsultants = branchService.getBranchConsultants(branchId);
             log.info("🔍 지점별 상담사 조회 완료: branchId={}, count={}", branchId, branchConsultants.size());
             
+            // 상담사 등급별 색상/아이콘 정보 조회
+            Map<String, Map<String, String>> gradeStyles = new HashMap<>();
+            try {
+                List<com.mindgarden.consultation.entity.CommonCode> gradeCodes = commonCodeService.getCommonCodesByGroup("CONSULTANT_GRADE");
+                for (com.mindgarden.consultation.entity.CommonCode code : gradeCodes) {
+                    Map<String, String> style = new HashMap<>();
+                    style.put("color", code.getColorCode() != null ? code.getColorCode() : "#6b7280");
+                    style.put("icon", code.getIcon() != null ? code.getIcon() : "⭐");
+                    gradeStyles.put(code.getCodeValue(), style);
+                }
+            } catch (Exception e) {
+                log.warn("상담사 등급 스타일 조회 실패, 기본값 사용: {}", e.getMessage());
+            }
+            
             // 상담사 정보를 Map 형태로 변환
             List<Map<String, Object>> consultantsData = branchConsultants.stream()
                 .filter(consultant -> !consultant.getIsDeleted() && consultant.getIsActive()) // 삭제되지 않고 활성화된 상담사만
@@ -430,6 +446,14 @@ public class AdminController {
                     consultantData.put("role", consultant.getRole().name());
                     consultantData.put("isActive", consultant.getIsActive());
                     consultantData.put("createdAt", consultant.getCreatedAt());
+                    
+                    // 상담사 등급별 색상/아이콘 추가
+                    String grade = consultant.getGrade() != null ? consultant.getGrade() : "CONSULTANT_JUNIOR";
+                    Map<String, String> style = gradeStyles.getOrDefault(grade, Map.of("color", "#6b7280", "icon", "⭐"));
+                    consultantData.put("gradeColor", style.get("color"));
+                    consultantData.put("gradeIcon", style.get("icon"));
+                    consultantData.put("grade", grade);
+                    
                     return consultantData;
                 })
                 .collect(java.util.stream.Collectors.toList());

@@ -83,46 +83,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 const allowedStatuses = ['AVAILABLE', 'BOOKED', 'CONFIRMED', 'VACATION', 'COMPLETED', 'CANCELLED'];
                 const filteredResponse = response.filter(code => allowedStatuses.includes(code.codeValue));
                 
-                // 하드코딩된 색상/아이콘 사용
-                const statusOptions = filteredResponse.map(code => {
-                    let icon = '📋';
-                    let color = '#6b7280';
-                    
-                    switch (code.codeValue) {
-                        case 'AVAILABLE':
-                            icon = '✅';
-                            color = '#28a745';
-                            break;
-                        case 'BOOKED':
-                            icon = '📅';
-                            color = '#007bff';
-                            break;
-                        case 'CONFIRMED':
-                            icon = '✅';
-                            color = '#17a2b8';
-                            break;
-                        case 'VACATION':
-                            icon = '🏖️';
-                            color = '#ffc107';
-                            break;
-                        case 'COMPLETED':
-                            icon = '✅';
-                            color = '#6c757d';
-                            break;
-                        case 'CANCELLED':
-                            icon = '❌';
-                            color = '#dc3545';
-                            break;
-                    }
-                    
-                    return {
-                        value: code.codeValue,
-                        label: code.codeLabel,
-                        color: color,
-                        icon: icon,
-                        description: code.codeDescription
-                    };
-                });
+                // DB에서 색상/아이콘 동적 로드
+                const statusOptions = filteredResponse.map(code => ({
+                    value: code.codeValue,
+                    label: code.codeLabel,
+                    color: code.colorCode || '#6b7280',
+                    icon: code.icon || '📋',
+                    description: code.codeDescription
+                }));
                 
                 console.log('📋 변환된 상태 옵션 (동적 처리):', statusOptions);
                 setScheduleStatusOptions(statusOptions);

@@ -6,6 +6,7 @@ import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import { useSession } from '../../contexts/SessionContext';
+import { getSpecialtyKoreanName } from '../../utils/codeHelper';
 
 /**
  * 상담사 전문분야 관리 모달 컴포넌트

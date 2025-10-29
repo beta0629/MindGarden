@@ -45,4 +45,8 @@ public class FinancialTransactionResponse {
     private String remarks;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    // 매칭 정보 (CONSULTANT_CLIENT_MAPPING 관련 거래인 경우)
+    private String consultantName;
+    private String clientName;
 }

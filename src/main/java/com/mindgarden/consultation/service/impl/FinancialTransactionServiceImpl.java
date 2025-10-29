@@ -622,7 +622,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     // 헬퍼 메서드들
     
     private FinancialTransactionResponse convertToResponse(FinancialTransaction transaction) {
-        return FinancialTransactionResponse.builder()
+        FinancialTransactionResponse.FinancialTransactionResponseBuilder builder = FinancialTransactionResponse.builder()
                 .id(transaction.getId())
                 .transactionType(transaction.getTransactionType().name())
                 .transactionTypeDisplayName(transaction.getTransactionType().getDisplayName())
@@ -646,8 +646,33 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 .amountBeforeTax(transaction.getAmountBeforeTax())
                 .remarks(transaction.getRemarks())
                 .createdAt(transaction.getCreatedAt())
-                .updatedAt(transaction.getUpdatedAt())
-                .build();
+                .updatedAt(transaction.getUpdatedAt());
+        
+        // 매핑 정보 조회 (CONSULTANT_CLIENT_MAPPING 관련 거래인 경우)
+        if ("CONSULTANT_CLIENT_MAPPING".equals(transaction.getRelatedEntityType()) 
+                || "CONSULTANT_CLIENT_MAPPING_REFUND".equals(transaction.getRelatedEntityType())) {
+            if (transaction.getRelatedEntityId() != null) {
+                try {
+                    ConsultantClientMapping mapping = consultantClientMappingRepository
+                            .findById(transaction.getRelatedEntityId())
+                            .orElse(null);
+                    
+                    if (mapping != null) {
+                        String consultantName = mapping.getConsultant() != null ? mapping.getConsultant().getName() : null;
+                        String clientName = mapping.getClient() != null ? mapping.getClient().getName() : null;
+                        builder.consultantName(consultantName);
+                        builder.clientName(clientName);
+                        log.debug("✅ 매핑 정보 포함: mappingId={}, 상담사={}, 내담자={}", 
+                                transaction.getRelatedEntityId(), consultantName, clientName);
+                    }
+                } catch (Exception e) {
+                    log.warn("⚠️ 매핑 정보 조회 실패: mappingId={}, error={}", 
+                            transaction.getRelatedEntityId(), e.getMessage());
+                }
+            }
+        }
+        
+        return builder.build();
     }
     
     private List<FinancialDashboardResponse.CategoryFinancialData> convertToCategoryFinancialData(List<Object[]> results) {

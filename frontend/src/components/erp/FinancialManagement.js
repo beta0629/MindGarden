@@ -515,6 +515,7 @@ const FinancialManagement = () => {
                           <th>거래 번호</th>
                           <th>거래 유형</th>
                           <th>카테고리</th>
+                          <th>매칭 정보</th>
                           <th>금액</th>
                           <th>상태</th>
                           <th>거래일</th>
@@ -568,6 +569,20 @@ const FinancialManagement = () => {
                                   )}
                                 </div>
                               </td>
+                              <td>
+                                {transaction.consultantName || transaction.clientName ? (
+                                  <div style={{ fontSize: '0.9rem' }}>
+                                    <div style={{ fontWeight: '500', color: '#2563eb' }}>
+                                      👤 {transaction.consultantName || '상담사 정보 없음'}
+                                    </div>
+                                    <div style={{ marginTop: '4px', color: '#16a34a' }}>
+                                      👥 {transaction.clientName || '내담자 정보 없음'}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>-</span>
+                                )}
+                              </td>
                               <td className="text-end">
                                 <span className={`fw-bold ${transaction.amount >= 0 ? 'text-success' : 'text-danger'}`}>
                                   {transaction.amount >= 0 ? '+' : ''}{formatCurrency(transaction.amount)}
@@ -606,7 +621,7 @@ const FinancialManagement = () => {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="7" className="text-center py-4">
+                            <td colSpan="8" className="text-center py-4">
                               <div className="text-muted">
                                 <i className="bi bi-inbox" style={{ fontSize: '2rem' }}></i>
                                 <p className="mt-2 mb-0">거래 내역이 없습니다.</p>

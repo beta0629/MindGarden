@@ -672,17 +672,19 @@ const ConsultantComprehensiveManagement = () => {
                                             </div>
                                             
                                             <div className="mg-v2-consultant-card__actions">
-                                                <button 
-                                                    className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
+                                                <MGButton 
+                                                    variant="primary"
+                                                    size="small"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleOpenModal('edit', consultant);
                                                     }}
                                                 >
                                                     수정
-                                                </button>
-                                                <button 
-                                                    className="mg-v2-button mg-v2-button-danger mg-v2-button-sm"
+                                                </MGButton>
+                                                <MGButton 
+                                                    variant="danger"
+                                                    size="small"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setSelectedConsultant(consultant);
@@ -690,7 +692,7 @@ const ConsultantComprehensiveManagement = () => {
                                                     }}
                                                 >
                                                     삭제
-                                                </button>
+                                                </MGButton>
                                                             </div>
                                                                 </div>
                                                             </div>
@@ -792,17 +794,19 @@ const ConsultantComprehensiveManagement = () => {
                                             </div>
                                             
                                             <div className="mg-v2-consultant-card__actions">
-                                        <button 
-                                                    className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
+                                        <MGButton 
+                                                    variant="primary"
+                                                    size="small"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleOpenModal('edit', consultant);
                                             }}
                                         >
                                             수정
-                                        </button>
-                                        <button 
-                                                    className="mg-v2-button mg-v2-button-danger mg-v2-button-sm"
+                                        </MGButton>
+                                        <MGButton 
+                                                    variant="danger"
+                                                    size="small"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                         setSelectedConsultant(consultant);
@@ -810,7 +814,7 @@ const ConsultantComprehensiveManagement = () => {
                                             }}
                                         >
                                             삭제
-                                        </button>
+                                        </MGButton>
                                             </div>
                                     </div>
                                 </div>

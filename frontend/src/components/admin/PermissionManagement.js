@@ -230,9 +230,37 @@ const PermissionManagement = () => {
         }
     }, []);
 
-    const loadRolePermissions = useCallback(() => {
-        const permissions = ROLE_PERMISSIONS[selectedRole] || [];
-        setRolePermissions(permissions);
+    const loadRolePermissions = useCallback(async () => {
+        try {
+            // 데이터베이스에서 역할 권한 로드
+            const response = await fetch(`/api/permissions/role/${selectedRole}`, {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data && data.data.permissions) {
+                    const permissionCodes = data.data.permissions.map(p => p.permission_code || p);
+                    setRolePermissions(permissionCodes);
+                    console.log('✅ 역할 권한 로드 완료:', permissionCodes);
+                } else {
+                    console.error('❌ 역할 권한 로드 실패:', data.message);
+                    // 폴백: 하드코딩된 권한 사용
+                    const permissions = ROLE_PERMISSIONS[selectedRole] || [];
+                    setRolePermissions(permissions);
+                }
+            } else {
+                console.error('❌ 역할 권한 로드 실패:', response.status);
+                // 폴백: 하드코딩된 권한 사용
+                const permissions = ROLE_PERMISSIONS[selectedRole] || [];
+                setRolePermissions(permissions);
+            }
+        } catch (error) {
+            console.error('❌ 역할 권한 로드 실패:', error);
+            // 폴백: 하드코딩된 권한 사용
+            const permissions = ROLE_PERMISSIONS[selectedRole] || [];
+            setRolePermissions(permissions);
+        }
     }, [selectedRole]);
 
     useEffect(() => {
@@ -273,6 +301,9 @@ const PermissionManagement = () => {
             if (response.ok) {
                 const result = await response.json();
                 setMessage('권한이 성공적으로 저장되었습니다.');
+                
+                // 권한 다시 로드
+                loadRolePermissions();
                 
                 // 현재 사용자의 역할에 권한을 부여한 경우 페이지 새로고침
                 if (selectedRole === currentUserRole) {

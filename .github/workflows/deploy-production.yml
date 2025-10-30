@@ -298,11 +298,30 @@ jobs:
           if [ -f /tmp/mapping_update_procedures_mysql.sql ]; then
             echo "📋 매핑 수정 프로시저 파일 확인됨"
             
-            # 프로시저 배포 실행
+            # DROP 구문 제거 (권한 오류 방지) - DROP 없이 CREATE만 시도
+            echo "📋 DROP 구문 제거한 임시 파일 생성..."
+            sed '/^DROP PROCEDURE/d' /tmp/mapping_update_procedures_mysql.sql > /tmp/mapping_proc_no_drop.sql || cp /tmp/mapping_update_procedures_mysql.sql /tmp/mapping_proc_no_drop.sql
+            
+            # 프로시저 배포 실행 (DROP 없이)
             echo "📋 프로시저 배포 실행..."
-            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/mapping_update_procedures_mysql.sql 2>&1 | tee /tmp/procedure_deploy.log
+            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/mapping_proc_no_drop.sql 2>&1 | tee /tmp/procedure_deploy.log
             
             DEPLOY_RESULT=${PIPESTATUS[0]}
+            
+            # DROP 권한 오류로 실패한 경우, root로 재시도
+            if [ $DEPLOY_RESULT -ne 0 ] && grep -q "Access denied\|DROP PROCEDURE\|SYSTEM_USER" /tmp/procedure_deploy.log 2>/dev/null; then
+              echo "⚠️ DROP 권한 오류 감지 - root 권한으로 재시도..."
+              sudo mysql -h localhost -u root -pmindgarden2025 mind_garden < /tmp/mapping_update_procedures_mysql.sql 2>&1 | tee /tmp/procedure_deploy_root.log
+              
+              if [ ${PIPESTATUS[0]} -eq 0 ]; then
+                echo "✅ root 권한으로 프로시저 배포 완료"
+                DEPLOY_RESULT=0
+              else
+                echo "❌ root 권한으로도 배포 실패"
+                cat /tmp/procedure_deploy_root.log || true
+                rm -f /tmp/procedure_deploy_root.log
+              fi
+            fi
             
             if [ $DEPLOY_RESULT -eq 0 ]; then
               echo "✅ 매핑 수정 프로시저 배포 완료"
@@ -312,6 +331,8 @@ jobs:
               cat /tmp/procedure_deploy.log || true
               echo "⚠️ 프로시저 배포 실패해도 서비스는 계속 진행"
             fi
+            
+            rm -f /tmp/mapping_proc_no_drop.sql /tmp/procedure_deploy.log
             
             # 프로시저 확인
             echo "📋 최종 프로시저 확인:"

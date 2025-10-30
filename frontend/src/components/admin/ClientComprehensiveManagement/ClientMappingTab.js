@@ -1,6 +1,7 @@
 import React from 'react';
 import MGButton from '../../common/MGButton';
 import { FaUser, FaHandshake, FaCalendarAlt } from 'react-icons/fa';
+import { getMappingStatusKoreanNameSync } from '../../../utils/codeHelper';
 
 /**
  * 내담자 매칭 관리 탭 컴포넌트
@@ -44,7 +45,9 @@ const ClientMappingTab = ({
                 <div className="mg-v2-card-content">
                     <div className="mg-v2-mapping-details">
                         <p><strong>상담사:</strong> {consultant?.name || '알 수 없음'}</p>
-                        <p><strong>매칭 유형:</strong> {mapping.type}</p>
+                        {mapping.packageName && (
+                            <p><strong>패키지:</strong> {mapping.packageName}</p>
+                        )}
                         <p><strong>시작일:</strong> {new Date(mapping.startDate).toLocaleDateString()}</p>
                         {mapping.endDate && (
                             <p><strong>종료일:</strong> {new Date(mapping.endDate).toLocaleDateString()}</p>

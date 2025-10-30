@@ -171,19 +171,6 @@ jobs:
         strip_components: 1
         overwrite: true
         
-    - name: 📤 매핑 수정 프로시저 배포 스크립트 업로드
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 120s
-        source: "sql/mapping_update_procedures_mysql_deploy.sh"
-        target: "/tmp/"
-        strip_components: 1
-        overwrite: true
-        
     # 메시지 권한 SQL 업로드 - 권한 오류로 주석 처리
     # SQL 파일은 한 번만 실행되어야 함 - 수동 실행 필요
     # - name: 📤 메시지 권한 SQL 업로드
@@ -311,40 +298,19 @@ jobs:
           if [ -f /tmp/mapping_update_procedures_mysql.sql ]; then
             echo "📋 매핑 수정 프로시저 파일 확인됨"
             
-            # 배포 스크립트 실행 권한 부여
-            if [ -f /tmp/mapping_update_procedures_mysql_deploy.sh ]; then
-              chmod +x /tmp/mapping_update_procedures_mysql_deploy.sh
-              echo "📋 배포 스크립트 실행..."
-              /tmp/mapping_update_procedures_mysql_deploy.sh /tmp/mapping_update_procedures_mysql.sql
-              
-              if [ $? -eq 0 ]; then
-                echo "✅ 매핑 수정 프로시저 배포 완료"
-              else
-                echo "❌ 매핑 수정 프로시저 배포 실패 - 직접 실행 시도..."
-                # 배포 스크립트 실패 시 직접 실행
-                mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/mapping_update_procedures_mysql.sql 2>&1 | tee /tmp/procedure_deploy_direct.log
-                
-                if [ ${PIPESTATUS[0]} -eq 0 ]; then
-                  echo "✅ 직접 실행으로 프로시저 배포 완료"
-                else
-                  echo "❌ 직접 실행도 실패"
-                  cat /tmp/procedure_deploy_direct.log || true
-                  echo "⚠️ 프로시저 배포 실패해도 서비스는 계속 진행"
-                fi
-                rm -f /tmp/procedure_deploy_direct.log
-              fi
+            # 프로시저 배포 실행
+            echo "📋 프로시저 배포 실행..."
+            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/mapping_update_procedures_mysql.sql 2>&1 | tee /tmp/procedure_deploy.log
+            
+            DEPLOY_RESULT=${PIPESTATUS[0]}
+            
+            if [ $DEPLOY_RESULT -eq 0 ]; then
+              echo "✅ 매핑 수정 프로시저 배포 완료"
             else
-              echo "📋 배포 스크립트 없음 - 직접 실행..."
-              mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/mapping_update_procedures_mysql.sql 2>&1 | tee /tmp/procedure_deploy.log
-              
-              if [ ${PIPESTATUS[0]} -eq 0 ]; then
-                echo "✅ 매핑 수정 프로시저 배포 완료"
-              else
-                echo "❌ 매핑 수정 프로시저 배포 실패"
-                cat /tmp/procedure_deploy.log || true
-                echo "⚠️ 프로시저 배포 실패해도 서비스는 계속 진행"
-              fi
-              rm -f /tmp/procedure_deploy.log
+              echo "❌ 매핑 수정 프로시저 배포 실패"
+              echo "📋 배포 로그 (오류 확인):"
+              cat /tmp/procedure_deploy.log || true
+              echo "⚠️ 프로시저 배포 실패해도 서비스는 계속 진행"
             fi
             
             # 프로시저 확인
@@ -364,7 +330,7 @@ jobs:
             AND ROUTINE_NAME = 'UpdateMappingInfo';
             " 2>/dev/null || true
             
-            rm -f /tmp/mapping_update_procedures_mysql.sql /tmp/mapping_update_procedures_mysql_deploy.sh
+            rm -f /tmp/mapping_update_procedures_mysql.sql /tmp/procedure_deploy.log
           else
             echo "⚠️ 매핑 수정 프로시저 파일을 찾을 수 없습니다"
           fi

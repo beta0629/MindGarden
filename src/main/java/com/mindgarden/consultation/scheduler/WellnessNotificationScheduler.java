@@ -45,10 +45,11 @@ public class WellnessNotificationScheduler {
     private final HealingContentServiceImpl healingContentService;
     
     /**
-     * 매일 오전 9시에 웰니스 알림 자동 발송
+     * 매일 오전 9시에 웰니스 알림 자동 발송 (한국 시간 기준)
      * cron: 초 분 시 일 월 요일
+     * zone: Asia/Seoul (운영 환경에서 한국 시간 기준 실행 보장)
      */
-    @Scheduled(cron = "0 0 9 * * *")
+    @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
     public void sendDailyWellnessTip() {
         try {
             log.info("💚 웰니스 알림 자동 발송 시작");

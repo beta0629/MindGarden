@@ -171,6 +171,19 @@ jobs:
         strip_components: 1
         overwrite: true
         
+    - name: 📤 매핑 수정 프로시저 배포 스크립트 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "sql/mapping_update_procedures_mysql_deploy.sh"
+        target: "/tmp/"
+        strip_components: 1
+        overwrite: true
+        
     # 메시지 권한 SQL 업로드 - 권한 오류로 주석 처리
     # SQL 파일은 한 번만 실행되어야 함 - 수동 실행 필요
     # - name: 📤 메시지 권한 SQL 업로드
@@ -298,46 +311,60 @@ jobs:
           if [ -f /tmp/mapping_update_procedures_mysql.sql ]; then
             echo "📋 매핑 수정 프로시저 파일 확인됨"
             
-            # 프로시저 배포 전 백업 (DROP PROCEDURE는 root 권한 필요할 수 있어서 직접 실행)
-            # mysql 사용자로는 DROP 권한이 없을 수 있으므로, 프로시저 파일에서 DROP 구문 제거 후 실행
-            echo "📋 프로시저 파일 내용 확인:"
-            head -10 /tmp/mapping_update_procedures_mysql.sql || true
-            
-            # DROP 구문 제거한 임시 파일 생성 (권한 오류 방지)
-            grep -v "^DROP PROCEDURE" /tmp/mapping_update_procedures_mysql.sql > /tmp/mapping_update_procedures_temp.sql || cp /tmp/mapping_update_procedures_mysql.sql /tmp/mapping_update_procedures_temp.sql
-            
-            # 프로시저 배포 실행
-            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/mapping_update_procedures_temp.sql 2>&1 | tee /tmp/procedure_deploy.log
-            
-            DEPLOY_RESULT=$?
-            
-            if [ $DEPLOY_RESULT -eq 0 ]; then
-              echo "✅ 매핑 수정 프로시저 배포 완료"
+            # 배포 스크립트 실행 권한 부여
+            if [ -f /tmp/mapping_update_procedures_mysql_deploy.sh ]; then
+              chmod +x /tmp/mapping_update_procedures_mysql_deploy.sh
+              echo "📋 배포 스크립트 실행..."
+              /tmp/mapping_update_procedures_mysql_deploy.sh /tmp/mapping_update_procedures_mysql.sql
               
-              # 프로시저 확인
-              echo "📋 배포된 프로시저 확인:"
-              mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden -e "
-              SELECT 
-                  ROUTINE_NAME,
-                  CREATED,
-                  LAST_ALTERED,
-                  CASE 
-                      WHEN ROUTINE_DEFINITION LIKE '%tax_included%' THEN '✅ 최신버전'
-                      ELSE '⚠️ 구버전'
-                  END AS '버전'
-              FROM information_schema.ROUTINES 
-              WHERE ROUTINE_SCHEMA = 'mind_garden' 
-              AND ROUTINE_TYPE = 'PROCEDURE' 
-              AND ROUTINE_NAME = 'UpdateMappingInfo';
-              " 2>/dev/null || true
+              if [ $? -eq 0 ]; then
+                echo "✅ 매핑 수정 프로시저 배포 완료"
+              else
+                echo "❌ 매핑 수정 프로시저 배포 실패 - 직접 실행 시도..."
+                # 배포 스크립트 실패 시 직접 실행
+                mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/mapping_update_procedures_mysql.sql 2>&1 | tee /tmp/procedure_deploy_direct.log
+                
+                if [ ${PIPESTATUS[0]} -eq 0 ]; then
+                  echo "✅ 직접 실행으로 프로시저 배포 완료"
+                else
+                  echo "❌ 직접 실행도 실패"
+                  cat /tmp/procedure_deploy_direct.log || true
+                  echo "⚠️ 프로시저 배포 실패해도 서비스는 계속 진행"
+                fi
+                rm -f /tmp/procedure_deploy_direct.log
+              fi
             else
-              echo "❌ 매핑 수정 프로시저 배포 실패"
-              echo "📋 배포 로그:"
-              cat /tmp/procedure_deploy.log || true
-              echo "⚠️ 프로시저 배포 실패해도 서비스는 계속 진행 (수동 배포 필요)"
+              echo "📋 배포 스크립트 없음 - 직접 실행..."
+              mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/mapping_update_procedures_mysql.sql 2>&1 | tee /tmp/procedure_deploy.log
+              
+              if [ ${PIPESTATUS[0]} -eq 0 ]; then
+                echo "✅ 매핑 수정 프로시저 배포 완료"
+              else
+                echo "❌ 매핑 수정 프로시저 배포 실패"
+                cat /tmp/procedure_deploy.log || true
+                echo "⚠️ 프로시저 배포 실패해도 서비스는 계속 진행"
+              fi
+              rm -f /tmp/procedure_deploy.log
             fi
             
-            rm -f /tmp/mapping_update_procedures_mysql.sql /tmp/mapping_update_procedures_temp.sql /tmp/procedure_deploy.log
+            # 프로시저 확인
+            echo "📋 최종 프로시저 확인:"
+            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden -e "
+            SELECT 
+                ROUTINE_NAME,
+                CREATED,
+                LAST_ALTERED,
+                CASE 
+                    WHEN ROUTINE_DEFINITION LIKE '%tax_included%' THEN '✅ 최신버전'
+                    ELSE '⚠️ 구버전'
+                END AS '버전'
+            FROM information_schema.ROUTINES 
+            WHERE ROUTINE_SCHEMA = 'mind_garden' 
+            AND ROUTINE_TYPE = 'PROCEDURE' 
+            AND ROUTINE_NAME = 'UpdateMappingInfo';
+            " 2>/dev/null || true
+            
+            rm -f /tmp/mapping_update_procedures_mysql.sql /tmp/mapping_update_procedures_mysql_deploy.sh
           else
             echo "⚠️ 매핑 수정 프로시저 파일을 찾을 수 없습니다"
           fi

@@ -154,11 +154,19 @@ const ClientModal = ({
                         onChange={handleInputChange}
                         className="mg-v2-form-select"
                     >
-                        {userStatusOptions.map(option => (
-                            <option key={option.code} value={option.code}>
-                                {option.name}
-                            </option>
-                        ))}
+                        {userStatusOptions && userStatusOptions.length > 0 ? (
+                            userStatusOptions.map(option => (
+                                <option key={option.codeValue || option.code} value={option.codeValue || option.code}>
+                                    {option.codeLabel || option.name || option.codeValue || option.code}
+                                </option>
+                            ))
+                        ) : (
+                            <>
+                                <option value="ACTIVE">활성</option>
+                                <option value="INACTIVE">비활성</option>
+                                <option value="PENDING">대기</option>
+                            </>
+                        )}
                     </select>
                 </div>
                 

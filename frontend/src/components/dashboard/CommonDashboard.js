@@ -330,7 +330,7 @@ const CommonDashboard = ({ user: propUser }) => {
           if (displayName !== '내담자' || schedule.clientId) {
             recentActivities.push({
               type: 'schedule',
-              title: `${displayName}과의 상담 일정 ${get定性Label(schedule.status)}`,
+              title: `${displayName}과의 상담 일정 ${getStatusLabel(schedule.status)}`,
               time: timeAgo,
               details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
             });

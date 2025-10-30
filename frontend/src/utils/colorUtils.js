@@ -182,7 +182,8 @@ export const getStatusLabel = (status) => {
   const labelMap = {
     'REQUESTED': '요청됨',
     'ASSIGNED': '배정됨',
-    'CONFIRMED': '확인됨',
+    'CONFIRMED': '확정',
+    'BOOKED': '예약',
     'IN_PROGRESS': '진행중',
     'COMPLETED': '완료',
     'CANCELLED': '취소됨',

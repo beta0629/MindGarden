@@ -276,22 +276,22 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
         <div className="mg-v2-modal-footer">
           {isEditing ? (
             <>
-              <button className="mg-v2-btn mg-v2-btn--secondary" onClick={handleCancel}>
+              <button className="mg-v2-button mg-v2-button--secondary" onClick={handleCancel}>
                 <XCircle size={20} className="mg-v2-icon-inline" />
                 취소
               </button>
-              <button className="mg-v2-btn mg-v2-btn--primary" onClick={handleSave}>
+              <button className="mg-v2-button mg-v2-button--primary" onClick={handleSave}>
                 <Save size={20} className="mg-v2-icon-inline" />
                 저장
               </button>
             </>
           ) : (
             <>
-              <button className="mg-v2-btn mg-v2-btn--secondary" onClick={onClose}>
+              <button className="mg-v2-button mg-v2-button--secondary" onClick={onClose}>
                 <XCircle size={20} className="mg-v2-icon-inline" />
                 닫기
               </button>
-              <button className="mg-v2-btn mg-v2-btn--primary" onClick={handleEdit}>
+              <button className="mg-v2-button mg-v2-button--primary" onClick={handleEdit}>
                 <Edit3 size={20} className="mg-v2-icon-inline" />
                 수정
               </button>

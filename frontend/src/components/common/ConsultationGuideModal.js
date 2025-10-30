@@ -200,7 +200,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
 
         <div className="mg-v2-modal-footer">
           <button 
-            className="mg-v2-btn mg-v2-btn--primary"
+            className="mg-v2-button mg-v2-button--primary"
             onClick={onClose}
           >
             <Check size={20} className="mg-v2-icon-inline" />

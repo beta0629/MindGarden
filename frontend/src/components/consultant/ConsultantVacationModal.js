@@ -207,14 +207,14 @@ const ConsultantVacationModal = ({
                 {/* 푸터 */}
                 <div className="mg-v2-modal-footer">
                     <button 
-                        className="mg-v2-btn mg-v2-btn--secondary" 
+                        className="mg-v2-button mg-v2-button--secondary" 
                         onClick={onClose}
                         disabled={loading}
                     >
                         취소
                     </button>
                     <button 
-                        className="mg-v2-btn mg-v2-btn--primary" 
+                        className="mg-v2-button mg-v2-button--primary" 
                         onClick={handleSubmit}
                         disabled={loading}
                     >

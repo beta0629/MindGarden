@@ -259,7 +259,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
 
                         <div className="mg-v2-modal-footer">
                             <button 
-                                className="mg-v2-btn mg-v2-btn--secondary"
+                                className="mg-v2-button mg-v2-button--secondary"
                                 onClick={onClose}
                                 disabled={loading}
                             >
@@ -267,7 +267,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 취소
                             </button>
                             <button 
-                                className="mg-v2-btn mg-v2-btn--primary"
+                                className="mg-v2-button mg-v2-button--primary"
                                 onClick={handleGenerateReport}
                                 disabled={loading || !period}
                             >
@@ -290,7 +290,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     보고서 결과
                                 </h4>
                                 <button 
-                                    className="mg-v2-btn mg-v2-btn--success"
+                                    className="mg-v2-button mg-v2-button--success"
                                     onClick={handleDownloadReport}
                                 >
                                     <Download size={20} className="mg-v2-icon-inline" />

@@ -315,7 +315,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
           {mode === 'view' && (
             <button 
               type="button" 
-              className="mg-v2-btn mg-v2-btn--secondary"
+              className="mg-v2-button mg-v2-button--secondary"
               onClick={handleEdit}
             >
               <Edit3 size={20} className="mg-v2-icon-inline" />
@@ -324,14 +324,14 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
           )}
           {(mode === 'add' || isEditing) && (
             <>
-              <button type="submit" className="mg-v2-btn mg-v2-btn--primary">
+              <button type="submit" className="mg-v2-button mg-v2-button--primary">
                 <Save size={20} className="mg-v2-icon-inline" />
                 {mode === 'add' ? '등록' : '저장'}
               </button>
               {isEditing && (
                 <button 
                   type="button" 
-                  className="mg-v2-btn mg-v2-btn--secondary"
+                  className="mg-v2-button mg-v2-button--secondary"
                   onClick={handleCancel}
                 >
                   <XCircle size={20} className="mg-v2-icon-inline" />
@@ -340,7 +340,7 @@ const ClientInfoModal = ({ client, isOpen, onClose, onSave, mode = 'view' }) => 
               )}
             </>
           )}
-          <button type="button" className="mg-v2-btn mg-v2-btn--secondary" onClick={onClose}>
+          <button type="button" className="mg-v2-button mg-v2-button--secondary" onClick={onClose}>
             <Clock size={20} className="mg-v2-icon-inline" />
             닫기
           </button>

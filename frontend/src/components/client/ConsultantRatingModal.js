@@ -213,7 +213,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                 {/* 푸터 */}
                 <div className="mg-v2-modal-footer">
                     <button 
-                        className="mg-v2-btn mg-v2-btn--secondary" 
+                        className="mg-v2-button mg-v2-button--secondary" 
                         onClick={onClose}
                         disabled={isSubmitting}
                     >
@@ -221,7 +221,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         취소
                     </button>
                     <button 
-                        className="mg-v2-btn mg-v2-btn--primary" 
+                        className="mg-v2-button mg-v2-button--primary" 
                         onClick={handleSubmit}
                         disabled={isSubmitDisabled}
                     >

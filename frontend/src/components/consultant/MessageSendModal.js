@@ -256,7 +256,7 @@ const MessageSendModal = ({
           <button
             type="button"
             onClick={onClose}
-            className="mg-v2-btn mg-v2-btn--secondary"
+            className="mg-v2-button mg-v2-button--secondary"
             disabled={sending}
           >
             <XCircle size={20} className="mg-v2-icon-inline" />
@@ -265,7 +265,7 @@ const MessageSendModal = ({
           <button
             type="button"
             onClick={handleSend}
-            className="mg-v2-btn mg-v2-btn--primary"
+            className="mg-v2-button mg-v2-button--primary"
             disabled={sending}
           >
             {sending ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (

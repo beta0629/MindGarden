@@ -121,7 +121,7 @@ const TaxDetailsModal = ({
               <AlertCircle size={20} className="mg-v2-icon-inline" />
               <p>{error}</p>
               <button 
-                className="mg-v2-btn mg-v2-btn--primary mg-v2-mt-md"
+                className="mg-v2-button mg-v2-button--primary mg-v2-mt-md"
                 onClick={loadTaxDetails}
               >
                 <RefreshCw size={20} className="mg-v2-icon-inline" />
@@ -175,7 +175,7 @@ const TaxDetailsModal = ({
 
         <div className="mg-v2-modal-footer">
           <button 
-            className="mg-v2-btn mg-v2-btn--primary"
+            className="mg-v2-button mg-v2-button--primary"
             onClick={onClose}
           >
             <XCircle size={20} className="mg-v2-icon-inline" />

@@ -289,7 +289,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                     {/* 액션 버튼 */}
                     <div className="mg-v2-mb-md">
                         <button 
-                            className="mg-v2-btn mg-v2-btn--primary"
+                            className="mg-v2-button mg-v2-button--primary"
                             onClick={handleAddExpense}
                             disabled={loading}
                         >
@@ -324,14 +324,14 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         </div>
                                         <div className="mg-v2-list-item-actions">
                                             <button 
-                                                className="mg-v2-btn mg-v2-btn--icon"
+                                                className="mg-v2-button mg-v2-button--icon"
                                                 onClick={() => handleEditExpense(expense)}
                                                 disabled={loading}
                                             >
                                                 <Edit2 size={20} />
                                             </button>
                                             <button 
-                                                className="mg-v2-btn mg-v2-btn--icon mg-v2-btn--danger"
+                                                className="mg-v2-button mg-v2-button--icon mg-v2-button--danger"
                                                 onClick={() => handleDeleteExpense(expense.id)}
                                                 disabled={loading}
                                             >
@@ -485,7 +485,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                     <div className="mg-v2-modal-footer">
                                         <button 
                                             type="button"
-                                            className="mg-v2-btn mg-v2-btn--secondary"
+                                            className="mg-v2-button mg-v2-button--secondary"
                                             onClick={() => setShowForm(false)}
                                             disabled={loading}
                                         >
@@ -494,7 +494,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                         </button>
                                         <button 
                                             type="button"
-                                            className="mg-v2-btn mg-v2-btn--primary"
+                                            className="mg-v2-button mg-v2-button--primary"
                                             onClick={handleSaveExpense}
                                             disabled={loading}
                                         >

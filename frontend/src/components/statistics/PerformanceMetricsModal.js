@@ -204,7 +204,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                         </div>
                         <div className="mg-v2-modal-footer">
                             <button 
-                                className="mg-v2-btn mg-v2-btn--primary"
+                                className="mg-v2-button mg-v2-button--primary"
                                 onClick={handleFilterChange}
                                 disabled={loading || recalculating}
                             >
@@ -212,7 +212,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                 조회
                             </button>
                             <button 
-                                className="mg-v2-btn mg-v2-btn--secondary"
+                                className="mg-v2-button mg-v2-button--secondary"
                                 onClick={handleRecalculate}
                                 disabled={loading || recalculating}
                             >
@@ -298,7 +298,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                         <div className="mg-v2-empty-state">
                             <p>성과 지표 데이터가 없습니다.</p>
                             <button 
-                                className="mg-v2-btn mg-v2-btn--primary mg-v2-mt-md"
+                                className="mg-v2-button mg-v2-button--primary mg-v2-mt-md"
                                 onClick={loadMetrics}
                                 disabled={loading}
                             >

@@ -63,13 +63,13 @@ const ConfirmModal = ({
   const getConfirmButtonClass = () => {
     switch (type) {
       case 'danger':
-        return 'mg-v2-btn--danger';
+        return 'mg-v2-button--danger';
       case 'warning':
-        return 'mg-v2-btn--warning';
+        return 'mg-v2-button--warning';
       case 'success':
-        return 'mg-v2-btn--success';
+        return 'mg-v2-button--success';
       default:
-        return 'mg-v2-btn--primary';
+        return 'mg-v2-button--primary';
     }
   };
 
@@ -96,13 +96,13 @@ const ConfirmModal = ({
         
         <div className="mg-v2-modal-footer">
           <button 
-            className="mg-v2-btn mg-v2-btn--secondary"
+            className="mg-v2-button mg-v2-button--secondary"
             onClick={onClose}
           >
             {cancelText}
           </button>
           <button 
-            className={`mg-v2-btn ${getConfirmButtonClass()}`}
+            className={`mg-v2-button ${getConfirmButtonClass()}`}
             onClick={handleConfirm}
           >
             {confirmText}

@@ -1012,7 +1012,7 @@ const ConsultationLogModal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="mg-v2-btn mg-v2-btn--secondary"
+                className="mg-v2-button mg-v2-button--secondary"
                 disabled={saving}
               >
                 취소
@@ -1020,7 +1020,7 @@ const ConsultationLogModal = ({
               <button
                 type="button"
                 onClick={handleSave}
-                className="mg-v2-btn mg-v2-btn--primary"
+                className="mg-v2-button mg-v2-button--primary"
                 disabled={saving}
               >
                 {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '💾 저장'}
@@ -1028,7 +1028,7 @@ const ConsultationLogModal = ({
               <button
                 type="button"
                 onClick={handleComplete}
-                className="mg-v2-btn mg-v2-btn--success"
+                className="mg-v2-button mg-v2-button--success"
                 disabled={saving}
               >
                 {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '✅ 완료'}

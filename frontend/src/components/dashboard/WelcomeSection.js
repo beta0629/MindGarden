@@ -233,7 +233,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                 <div className="mg-text-center mg-v2-mt-md mg-v2-pt-md mg-v2-w-full" style={{ borderTop: '1px solid var(--light-beige)' }}>
                   <button 
                     onClick={() => handleCardClick('schedule')}
-                    className="mg-v2-btn mg-v2-btn-outline-olive mg-v2-w-full"
+                    className="mg-v2-button mg-v2-button--outline mg-v2-w-full"
                   >
                     +{todayConsultations.length - 4}건 더 보기
                   </button>

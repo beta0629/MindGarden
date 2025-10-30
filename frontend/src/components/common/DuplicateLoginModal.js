@@ -110,7 +110,7 @@ const DuplicateLoginModal = () => {
         <div className="mg-v2-modal-footer">
           <button
             onClick={handleCancel}
-            className="mg-v2-btn mg-v2-btn--secondary"
+            className="mg-v2-button mg-v2-button--secondary"
           >
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
@@ -118,7 +118,7 @@ const DuplicateLoginModal = () => {
           
           <button
             onClick={handleConfirm}
-            className="mg-v2-btn mg-v2-btn--primary"
+            className="mg-v2-button mg-v2-button--primary"
           >
             <Check size={20} className="mg-v2-icon-inline" />
             기존 세션 종료하고 로그인

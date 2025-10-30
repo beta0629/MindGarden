@@ -60,7 +60,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
                 상담사와 연결하여 상담을 시작해보세요.
               </p>
               <button
-                className="mg-v2-btn mg-v2-btn--primary mg-v2-mt-md"
+                className="mg-v2-button mg-v2-button--primary mg-v2-mt-md"
                 onClick={onClose}
               >
                 <Check size={20} className="mg-v2-icon-inline" />
@@ -72,7 +72,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
 
         <div className="mg-v2-modal-footer">
           <button 
-            className="mg-v2-btn mg-v2-btn--ghost"
+            className="mg-v2-button mg-v2-button--ghost"
             onClick={onClose}
           >
             <XCircle size={20} className="mg-v2-icon-inline" />

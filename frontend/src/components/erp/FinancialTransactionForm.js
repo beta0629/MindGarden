@@ -279,14 +279,14 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             <button
               type="button"
               onClick={onClose}
-              className="mg-v2-btn mg-v2-btn--secondary"
+              className="mg-v2-button mg-v2-button--secondary"
             >
               취소
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="mg-v2-btn mg-v2-btn--primary"
+              className="mg-v2-button mg-v2-button--primary"
             >
               {loading ? '등록 중...' : '등록하기'}
             </button>

@@ -99,7 +99,7 @@ const PrivacyConsentModal = ({
                   <button
                     type="button"
                     onClick={() => setShowPrivacyDetail(!showPrivacyDetail)}
-                    className="mg-v2-btn mg-v2-btn--link mg-v2-mt-xs"
+                    className="mg-v2-button mg-v2-button--link mg-v2-mt-xs"
                   >
                     {showPrivacyDetail ? (
                       <>
@@ -159,7 +159,7 @@ const PrivacyConsentModal = ({
                   <button
                     type="button"
                     onClick={() => setShowTermsDetail(!showTermsDetail)}
-                    className="mg-v2-btn mg-v2-btn--link mg-v2-mt-xs"
+                    className="mg-v2-button mg-v2-button--link mg-v2-mt-xs"
                   >
                     {showTermsDetail ? (
                       <>
@@ -228,14 +228,14 @@ const PrivacyConsentModal = ({
 
         <div className="mg-v2-modal-footer">
           <button
-            className="mg-v2-btn mg-v2-btn--secondary"
+            className="mg-v2-button mg-v2-button--secondary"
             onClick={onClose}
           >
             <XCircle size={20} className="mg-v2-icon-inline" />
             취소
           </button>
           <button
-            className="mg-v2-btn mg-v2-btn--primary"
+            className="mg-v2-button mg-v2-button--primary"
             onClick={handleSubmit}
             disabled={isSubmitDisabled}
           >

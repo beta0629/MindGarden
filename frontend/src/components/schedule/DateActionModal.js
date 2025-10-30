@@ -56,7 +56,7 @@ const DateActionModal = ({
                         <div className="mg-v2-form-section">
                             <button 
                                 onClick={onScheduleClick}
-                                className="mg-v2-btn mg-v2-btn--primary mg-v2-btn--large mg-v2-w-full"
+                                className="mg-v2-button mg-v2-button--primary mg-v2-button--large mg-v2-w-full"
                             >
                                 <FileText size={24} className="mg-v2-icon-inline--lg" />
                                 <div className="mg-v2-text-left mg-v2-flex-1">
@@ -67,7 +67,7 @@ const DateActionModal = ({
                             
                             <button 
                                 onClick={onVacationClick}
-                                className="mg-v2-btn mg-v2-btn--secondary mg-v2-btn--large mg-v2-w-full mg-v2-mt-md"
+                                className="mg-v2-button mg-v2-button--secondary mg-v2-button--large mg-v2-w-full mg-v2-mt-md"
                             >
                                 <Umbrella size={24} className="mg-v2-icon-inline--lg" />
                                 <div className="mg-v2-text-left mg-v2-flex-1">
@@ -82,7 +82,7 @@ const DateActionModal = ({
                 <div className="mg-v2-modal-footer">
                     <button 
                         onClick={onClose}
-                        className="mg-v2-btn mg-v2-btn--ghost mg-v2-w-full"
+                        className="mg-v2-button mg-v2-button--ghost mg-v2-w-full"
                     >
                         <XCircle size={20} className="mg-v2-icon-inline" />
                         취소

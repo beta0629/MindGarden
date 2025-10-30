@@ -376,7 +376,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                             </div>
                                         </div>
                                         <button 
-                                            className="mg-v2-btn mg-v2-btn--icon"
+                                            className="mg-v2-button mg-v2-button--icon"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleConsultantSelect(consultant);
@@ -425,7 +425,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                                 ))}
                                             </select>
                                             <button 
-                                                className="mg-v2-btn mg-v2-btn--primary"
+                                                className="mg-v2-button mg-v2-button--primary"
                                                 onClick={handleSaveSpecialty}
                                                 disabled={loading || !newSpecialty.trim()}
                                             >
@@ -458,7 +458,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                                             className="mg-v2-form-input mg-v2-form-input--flex-1"
                                         />
                                         <button 
-                                            className="mg-v2-btn mg-v2-btn--secondary"
+                                            className="mg-v2-button mg-v2-button--secondary"
                                             onClick={handleAddSpecialty}
                                             disabled={loading || !newSpecialty.trim()}
                                         >

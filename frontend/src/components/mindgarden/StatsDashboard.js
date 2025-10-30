@@ -40,14 +40,16 @@ const StatsDashboard = () => {
       
       <div className="mg-stats-grid">
         {stats.map((stat, index) => (
-          <div key={index} className="mg-stat-card mg-animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-            <div className="mg-stat-icon">
+          <div key={index} className="mg-dashboard-stat-card mg-animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+            <div className="mg-dashboard-stat-icon">
               {stat.icon}
             </div>
-            <div className="mg-stat-value">{stat.value}</div>
-            <div className="mg-stat-label">{stat.label}</div>
-            <div className={`mg-stat-change ${stat.positive ? 'positive' : 'negative'}`}>
-              {stat.change}
+            <div className="mg-dashboard-stat-content">
+              <div className="mg-dashboard-stat-value">{stat.value}</div>
+              <div className="mg-dashboard-stat-label">{stat.label}</div>
+              <div className={`mg-dashboard-stat-change ${stat.positive ? 'positive' : 'negative'}`}>
+                {stat.change}
+              </div>
             </div>
           </div>
         ))}

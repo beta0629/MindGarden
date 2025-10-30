@@ -37,7 +37,7 @@ const ClientMappingTab = ({
                     </div>
                     <div className="mg-v2-mapping-status">
                         <span className={`mg-v2-status-badge mg-v2-status-${mapping.status?.toLowerCase()}`}>
-                            {mapping.status}
+                            {getMappingStatusKoreanNameSync(mapping.status)}
                         </span>
                     </div>
                 </div>

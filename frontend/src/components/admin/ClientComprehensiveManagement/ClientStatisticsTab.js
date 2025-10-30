@@ -18,7 +18,8 @@ const ClientStatisticsTab = ({
     
     // 등급별 내담자 수
     const clientsByGrade = clients.reduce((acc, client) => {
-        acc[client.grade] = (acc[client.grade] || 0) + 1;
+        const grade = client.grade || '미설정';
+        acc[grade] = (acc[grade] || 0) + 1;
         return acc;
     }, {});
     

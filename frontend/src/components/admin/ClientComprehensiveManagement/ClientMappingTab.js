@@ -48,6 +48,9 @@ const ClientMappingTab = ({
                         {mapping.packageName && (
                             <p><strong>패키지:</strong> {mapping.packageName}</p>
                         )}
+                        {(mapping.totalSessions || mapping.remainingSessions !== undefined) && (
+                            <p><strong>회기:</strong> {mapping.usedSessions || 0}/{mapping.totalSessions || 0} (남은: {mapping.remainingSessions || 0})</p>
+                        )}
                         <p><strong>시작일:</strong> {new Date(mapping.startDate).toLocaleDateString()}</p>
                         {mapping.endDate && (
                             <p><strong>종료일:</strong> {new Date(mapping.endDate).toLocaleDateString()}</p>

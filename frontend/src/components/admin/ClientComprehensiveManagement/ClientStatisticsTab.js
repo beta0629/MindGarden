@@ -70,8 +70,16 @@ const ClientStatisticsTab = ({
         
         // 라벨 변환 함수
         const getLabel = (key) => {
+            // undefined, null 체크
+            if (!key || key === 'undefined' || key === 'null') {
+                return '알 수 없음';
+            }
             // 등급별 분포인 경우
             if (title.includes('등급')) {
+                // '미설정'은 그대로 표시
+                if (key === '미설정') {
+                    return '미설정';
+                }
                 return getUserGradeKoreanNameSync(key) || key || '알 수 없음';
             }
             // 상태별 분포인 경우

@@ -69,6 +69,10 @@
 
 .dashboard-section-content {
   animation: fadeIn var(--transition-normal);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 @keyframes fadeIn {

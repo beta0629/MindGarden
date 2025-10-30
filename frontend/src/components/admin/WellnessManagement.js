@@ -16,6 +16,7 @@ import {
 import { apiGet, apiPost } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
+import ConfirmModal from '../common/ConfirmModal';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { sessionManager } from '../../utils/sessionManager';
@@ -52,6 +53,15 @@ const WellnessManagement = () => {
     const [selectedMonth, setSelectedMonth] = useState({
         year: new Date().getFullYear(),
         month: new Date().getMonth() + 1
+    });
+    
+    // 컨펌 모달 상태
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'default',
+        onConfirm: null
     });
 
     // 데이터 로드 함수 (재사용 가능)
@@ -172,27 +182,31 @@ const WellnessManagement = () => {
      * 테스트 발송
      */
     const handleTestSend = async () => {
-        if (!window.confirm('웰니스 알림을 테스트 발송하시겠습니까?\n\n모든 내담자에게 즉시 발송됩니다.')) {
-            return;
-        }
-
-        try {
-            setSending(true);
-            const response = await apiPost('/api/admin/wellness/test-send');
-            
-            if (response.success) {
-                notificationManager.show('웰니스 알림이 성공적으로 발송되었습니다!', 'success');
-                // 페이지 새로고침으로 데이터 다시 로드
-                window.location.reload();
-            } else {
-                notificationManager.show(response.message || '발송에 실패했습니다.', 'error');
+        setConfirmModal({
+            isOpen: true,
+            title: '웰니스 알림 테스트 발송',
+            message: '웰니스 알림을 테스트 발송하시겠습니까?\n\n모든 내담자에게 즉시 발송됩니다.',
+            type: 'warning',
+            onConfirm: async () => {
+                try {
+                    setSending(true);
+                    const response = await apiPost('/api/admin/wellness/test-send');
+                    
+                    if (response.success) {
+                        notificationManager.show('웰니스 알림이 성공적으로 발송되었습니다!', 'success');
+                        // 페이지 새로고침으로 데이터 다시 로드
+                        window.location.reload();
+                    } else {
+                        notificationManager.show(response.message || '발송에 실패했습니다.', 'error');
+                    }
+                } catch (error) {
+                    console.error('❌ 테스트 발송 실패:', error);
+                    notificationManager.show('테스트 발송 중 오류가 발생했습니다.', 'error');
+                } finally {
+                    setSending(false);
+                }
             }
-        } catch (error) {
-            console.error('❌ 테스트 발송 실패:', error);
-            notificationManager.show('테스트 발송 중 오류가 발생했습니다.', 'error');
-        } finally {
-            setSending(false);
-        }
+        });
     };
 
     /**
@@ -510,6 +524,16 @@ const WellnessManagement = () => {
                     </div>
                 </div>
             </div>
+            
+            {/* 컨펌 모달 */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                type={confirmModal.type}
+            />
         </SimpleLayout>
     );
 };

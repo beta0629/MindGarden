@@ -12,7 +12,11 @@ import { sessionManager } from '../../utils/sessionManager';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import HealingCard from '../common/HealingCard';
+import StatCard from '../ui/Card/StatCard';
+import DashboardSection from '../layout/DashboardSection';
+import MGButton from '../common/MGButton';
 import '../../styles/main.css';
+import '../../styles/mindgarden-design-system.css';
 import './HQDashboard.css';
 
 /**
@@ -223,163 +227,134 @@ const HQDashboard = ({ user: propUser }) => {
                 </div>
 
                 {/* 전사 통계 카드 */}
-                <div className="hq-stats-grid">
-                    <div className="mg-v2-card mg-v2-card--stat mg-v2-card--primary">
-                        <div className="mg-v2-card__content">
-                            <div className="hq-stat">
-                                <div className="hq-stat__icon">
-                                    <Building2 className="hq-icon hq-icon--stat" />
-                                </div>
-                                <div className="hq-stat__content">
-                                    <div className="hq-stat__number">{dashboardData.branchStats.activeBranches}</div>
-                                    <div className="hq-stat__label">활성 지점</div>
-                                    <div className="hq-stat__subtitle">전체 {dashboardData.branchStats.totalBranches}개</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mg-v2-card mg-v2-card--stat mg-v2-card--success">
-                        <div className="mg-v2-card__content">
-                            <div className="hq-stat">
-                                <div className="hq-stat__icon">
-                                    <UserCheck className="hq-icon hq-icon--stat" />
-                                </div>
-                                <div className="hq-stat__content">
-                                    <div className="hq-stat__number">{dashboardData.branchStats.totalConsultants}</div>
-                                    <div className="hq-stat__label">전체 상담사</div>
-                                    <div className="hq-stat__subtitle">활동 중인 상담사</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mg-v2-card mg-v2-card--stat mg-v2-card--info">
-                        <div className="mg-v2-card__content">
-                            <div className="hq-stat">
-                                <div className="hq-stat__icon">
-                                    <User className="hq-icon hq-icon--stat" />
-                                </div>
-                                <div className="hq-stat__content">
-                                    <div className="hq-stat__number">{dashboardData.branchStats.totalClients}</div>
-                                    <div className="hq-stat__label">전체 내담자</div>
-                                    <div className="hq-stat__subtitle">등록된 내담자</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mg-v2-card mg-v2-card--stat mg-v2-card--warning">
-                        <div className="mg-v2-card__content">
-                            <div className="hq-stat">
-                                <div className="hq-stat__icon">
-                                    <Crown className="hq-icon hq-icon--stat" />
-                                </div>
-                                <div className="hq-stat__content">
-                                    <div className="hq-stat__number">{dashboardData.branchStats.totalAdmins}</div>
-                                    <div className="hq-stat__label">전체 관리자</div>
-                                    <div className="hq-stat__subtitle">지점 관리자 포함</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div className="mg-dashboard-stats">
+                    <StatCard
+                        icon={<Building2 />}
+                        value={dashboardData.branchStats.activeBranches}
+                        label="활성 지점"
+                        change={`전체 ${dashboardData.branchStats.totalBranches}개`}
+                    />
+                    <StatCard
+                        icon={<UserCheck />}
+                        value={dashboardData.branchStats.totalConsultants}
+                        label="전체 상담사"
+                        change="활동 중인 상담사"
+                    />
+                    <StatCard
+                        icon={<User />}
+                        value={dashboardData.branchStats.totalClients}
+                        label="전체 내담자"
+                        change="등록된 내담자"
+                    />
+                    <StatCard
+                        icon={<Crown />}
+                        value={dashboardData.branchStats.totalAdmins}
+                        label="전체 관리자"
+                        change="지점 관리자 포함"
+                    />
                 </div>
 
                 {/* 빠른 액션 */}
-                <div className="mg-v2-card">
-                    <div className="mg-v2-card__header">
-                        <h3 className="mg-v2-card__title">
-                            <Zap className="hq-icon hq-icon--title" />
-                            빠른 액션
-                        </h3>
-                    </div>
-                    <div className="mg-v2-card__content">
-                        <div className="hq-actions-grid">
+                <DashboardSection
+                    title="빠른 액션"
+                    icon={<Zap />}
+                >
+                    <div className="hq-actions-grid">
                             <div className="hq-action">
-                                <button 
-                                    className="mg-v2-button mg-v2-button--primary mg-v2-button--lg hq-action__button"
+                                <MGButton 
+                                    variant="primary"
+                                    size="large"
                                     onClick={handleBranchManagement}
+                                    className="hq-action__button"
                                 >
                                     <Building2 className="hq-icon hq-icon--button" />
                                     지점 관리
-                                </button>
+                                </MGButton>
                                 <p className="hq-action__description">지점 현황 및 사용자 이동</p>
                             </div>
 
                             <div className="hq-action">
-                                <button 
-                                    className="mg-v2-button mg-v2-button--success mg-v2-button--lg hq-action__button"
+                                <MGButton 
+                                    variant="success"
+                                    size="large"
                                     onClick={() => navigate('/admin/user-management')}
+                                    className="hq-action__button"
                                 >
                                     <Users className="hq-icon hq-icon--button" />
                                     사용자 관리
-                                </button>
+                                </MGButton>
                                 <p className="hq-action__description">역할 변경 및 권한 관리</p>
                             </div>
 
                             <div className="hq-action">
-                                <button 
-                                    className="mg-v2-button mg-v2-button--info mg-v2-button--lg hq-action__button"
+                                <MGButton 
+                                    variant="info"
+                                    size="large"
                                     onClick={() => navigate('/admin/statistics')}
+                                    className="hq-action__button"
                                 >
                                     <BarChart3 className="hq-icon hq-icon--button" />
                                     전사 통계
-                                </button>
+                                </MGButton>
                                 <p className="hq-action__description">전사 현황 및 분석</p>
                             </div>
 
                             <div className="hq-action">
-                                <button 
-                                    className="mg-v2-button mg-v2-button--warning mg-v2-button--lg hq-action__button"
+                                <MGButton 
+                                    variant="warning"
+                                    size="large"
                                     onClick={() => navigate('/hq/erp/branch-financial')}
+                                    className="hq-action__button"
                                 >
                                     <DollarSign className="hq-icon hq-icon--button" />
                                     지점별 재무관리
-                                </button>
+                                </MGButton>
                                 <p className="hq-action__description">지점별 수익/지출 분석</p>
                             </div>
 
                             <div className="hq-action">
-                                <button 
-                                    className="mg-v2-button mg-v2-button--danger mg-v2-button--lg hq-action__button"
+                                <MGButton 
+                                    variant="danger"
+                                    size="large"
                                     onClick={() => navigate('/hq/erp/consolidated')}
+                                    className="hq-action__button"
                                 >
                                     <Calculator className="hq-icon hq-icon--button" />
                                     통합 재무현황
-                                </button>
+                                </MGButton>
                                 <p className="hq-action__description">전사 재무 통합 분석</p>
                             </div>
 
                             <div className="hq-action">
-                                <button 
-                                    className="mg-v2-button mg-v2-button--secondary mg-v2-button--lg hq-action__button"
+                                <MGButton 
+                                    variant="secondary"
+                                    size="large"
                                     onClick={() => navigate('/hq/erp/reports')}
+                                    className="hq-action__button"
                                 >
                                     <TrendingUp className="hq-icon hq-icon--button" />
                                     재무 보고서
-                                </button>
+                                </MGButton>
                                 <p className="hq-action__description">월별/연별 재무 리포트</p>
                             </div>
                         </div>
-                    </div>
-                </div>
+                </DashboardSection>
 
                 {/* 지점 현황 */}
-                <div className="mg-v2-card">
-                    <div className="mg-v2-card__header">
-                        <h3 className="mg-v2-card__title">
-                            <MapPin className="hq-icon hq-icon--title" />
-                            지점 현황
-                        </h3>
-                        <button 
-                            className="mg-v2-button mg-v2-button--ghost mg-v2-button--sm"
+                <DashboardSection
+                    title="지점 현황"
+                    icon={<MapPin />}
+                    actions={
+                        <MGButton
+                            variant="outline"
+                            size="small"
                             onClick={handleBranchManagement}
                         >
                             <Eye className="hq-icon hq-icon--small" />
                             전체보기
-                        </button>
-                    </div>
-                    <div className="mg-v2-card__content">
+                        </MGButton>
+                    }
+                >
                         {dashboardData.branchList.length === 0 ? (
                             <div className="mg-empty-state">
                                 <div className="mg-empty-state__icon">
@@ -429,8 +404,7 @@ const HQDashboard = ({ user: propUser }) => {
                                 ))}
                             </div>
                         )}
-                    </div>
-                </div>
+                </DashboardSection>
 
                 {/* 오늘의 힐링 카드 */}
                 <HealingCard userRole={user?.role} />

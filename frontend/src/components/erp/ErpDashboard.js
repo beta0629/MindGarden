@@ -4,11 +4,13 @@ import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import SimpleLayout from '../layout/SimpleLayout';
-import ErpCard from './common/ErpCard';
-import ErpButton from './common/ErpButton';
-import ErpHeader from './common/ErpHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
-import { LayoutDashboard, Package, Clock, ShoppingCart, TrendingUp } from 'lucide-react';
+import StatCard from '../ui/Card/StatCard';
+import DashboardSection from '../layout/DashboardSection';
+import { LayoutDashboard, Package, Clock, ShoppingCart, TrendingUp, DollarSign } from 'lucide-react';
+import MGButton from '../common/MGButton';
+import '../../styles/main.css';
+import '../../styles/mindgarden-design-system.css';
 import './ErpDashboard.css';
 
 /**
@@ -141,164 +143,159 @@ const ErpDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <SimpleLayout>
-      <div className="erp-dashboard-container">
+    <SimpleLayout title="ERP 관리 시스템">
+      <div className="mg-dashboard-layout">
         {/* 대시보드 헤더 */}
-        <ErpHeader
-          title="ERP 관리 시스템"
-          subtitle="통합 자원 관리 및 회계 시스템"
-          icon={<LayoutDashboard size={28} />}
-          actions={
-            <ErpButton variant="primary" size="sm" onClick={loadDashboardData}>
-              새로고침
-            </ErpButton>
-          }
-        />
-
-        {/* 통계 카드 그리드 */}
-        <div className="erp-stats-grid">
-          <div className="erp-stat-card">
-            <div className="erp-stat-icon">
-              <Package size={20} />
-            </div>
-            <div className="erp-stat-content">
-              <div className="erp-stat-value">{stats.totalItems.toLocaleString()}</div>
-              <div className="erp-stat-label">총 아이템 수</div>
-              <div className="erp-stat-description">등록된 비품 수</div>
-            </div>
-          </div>
-
-          <div className="erp-stat-card">
-            <div className="erp-stat-icon erp-stat-icon-warning">
-              <Clock size={20} />
-            </div>
-            <div className="erp-stat-content">
-              <div className="erp-stat-value">{stats.pendingRequests.toLocaleString()}</div>
-              <div className="erp-stat-label">승인 대기 요청</div>
-              <div className="erp-stat-description">관리자 승인 대기</div>
-            </div>
-          </div>
-
-          <div className="erp-stat-card">
-            <div className="erp-stat-icon erp-stat-icon-success">
-              <ShoppingCart size={20} />
-            </div>
-            <div className="erp-stat-content">
-              <div className="erp-stat-value">{stats.totalOrders.toLocaleString()}</div>
-              <div className="erp-stat-label">총 주문 수</div>
-              <div className="erp-stat-description">완료된 구매 주문</div>
-            </div>
-          </div>
-
-          <div className="erp-stat-card">
-            <div className="erp-stat-icon erp-stat-icon-danger">
-              <TrendingUp size={20} />
-            </div>
-            <div className="erp-stat-content">
-              <div className="erp-stat-value">{getBudgetUsagePercentage()}%</div>
-              <div className="erp-stat-label">예산 사용률</div>
-              <div className="erp-stat-description">
-                {formatCurrency(stats.usedBudget)} / {formatCurrency(stats.totalBudget)}
+        <div className="mg-dashboard-header">
+          <div className="mg-dashboard-header-content">
+            <div className="mg-dashboard-header-left">
+              <LayoutDashboard />
+              <div>
+                <h1 className="mg-dashboard-title">ERP 관리 시스템</h1>
+                <p className="mg-dashboard-subtitle">통합 자원 관리 및 회계 시스템</p>
               </div>
+            </div>
+            <div className="mg-dashboard-header-right">
+              <MGButton 
+                variant="outline" 
+                size="small"
+                onClick={loadDashboardData}
+              >
+                새로고침
+              </MGButton>
             </div>
           </div>
         </div>
 
-        {/* 콘텐츠 영역 - 완전히 새로운 클래스 */}
-        <div className="erp-content-wrapper">
+        {/* 통계 카드 그리드 */}
+        <div className="mg-dashboard-stats">
+          <StatCard
+            icon={<Package />}
+            value={stats.totalItems.toLocaleString()}
+            label="총 아이템 수"
+            change="등록된 비품 수"
+          />
+          <StatCard
+            icon={<Clock />}
+            value={stats.pendingRequests.toLocaleString()}
+            label="승인 대기 요청"
+            change="관리자 승인 대기"
+            changeType="negative"
+          />
+          <StatCard
+            icon={<ShoppingCart />}
+            value={stats.totalOrders.toLocaleString()}
+            label="총 주문 수"
+            change="완료된 구매 주문"
+            changeType="positive"
+          />
+          <StatCard
+            icon={<TrendingUp />}
+            value={`${getBudgetUsagePercentage()}%`}
+            label="예산 사용률"
+            change={`${formatCurrency(stats.usedBudget)} / ${formatCurrency(stats.totalBudget)}`}
+          />
+        </div>
+
+        {/* 콘텐츠 영역 */}
+        <div className="mg-dashboard-content">
           {/* 빠른 액션 섹션 */}
-          <div className="erp-section">
-            <div className="erp-section-header">
-              <h3 className="erp-section-title">빠른 액션</h3>
+          <DashboardSection
+            title="빠른 액션"
+            icon={<LayoutDashboard />}
+          >
+            <div className="mg-management-grid">
+              {PermissionChecks.canViewPurchaseRequests(userPermissions) && (
+                <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
+                  <div className="mg-management-icon">
+                    <ShoppingCart />
+                  </div>
+                  <h3>구매 요청하기</h3>
+                  <p className="mg-management-description">상품 및 비품 구매 요청을 제출합니다</p>
+                </div>
+              )}
+              
+              {PermissionChecks.canManageApprovals(userPermissions) && (
+                <div className="mg-management-card" onClick={() => navigate('/erp/approvals')}>
+                  <div className="mg-management-icon">
+                    <Clock />
+                  </div>
+                  <h3>승인 관리</h3>
+                  <p className="mg-management-description">구매 요청 승인 및 거부를 관리합니다</p>
+                </div>
+              )}
+              
+              {PermissionChecks.canManageItems(userPermissions) && (
+                <div className="mg-management-card" onClick={() => navigate('/erp/items')}>
+                  <div className="mg-management-icon">
+                    <Package />
+                  </div>
+                  <h3>아이템 관리</h3>
+                  <p className="mg-management-description">등록된 비품 및 상품을 관리합니다</p>
+                </div>
+              )}
+              
+              {PermissionChecks.canManageBudget(userPermissions) && (
+                <div className="mg-management-card" onClick={() => navigate('/erp/budget')}>
+                  <div className="mg-management-icon">
+                    <TrendingUp />
+                  </div>
+                  <h3>예산 관리</h3>
+                  <p className="mg-management-description">지점별 예산을 설정하고 관리합니다</p>
+                </div>
+              )}
+              
+              {PermissionChecks.canManageSalary(userPermissions) && (
+                <div className="mg-management-card" onClick={() => navigate('/erp/salary')}>
+                  <div className="mg-management-icon">
+                    <DollarSign />
+                  </div>
+                  <h3>급여 관리</h3>
+                  <p className="mg-management-description">상담사 급여 계산 및 지급을 관리합니다</p>
+                </div>
+              )}
+              
+              {PermissionChecks.canManageTax(userPermissions) && (
+                <div className="mg-management-card" onClick={() => navigate('/erp/tax')}>
+                  <div className="mg-management-icon">
+                    <LayoutDashboard />
+                  </div>
+                  <h3>세금 관리</h3>
+                  <p className="mg-management-description">원천징수 및 세금 관련 업무를 관리합니다</p>
+                </div>
+              )}
+              
+              {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
+                <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial')}>
+                  <div className="mg-management-icon">
+                    <TrendingUp />
+                  </div>
+                  <h3>통합 회계 시스템</h3>
+                  <p className="mg-management-description">전체 재무 데이터 및 통계를 확인합니다</p>
+                </div>
+              )}
+              
+              {PermissionChecks.canManageRefund(userPermissions) && (
+                <div className="mg-management-card" onClick={() => navigate('/erp/refund-management')}>
+                  <div className="mg-management-icon">
+                    <Clock />
+                  </div>
+                  <h3>환불 관리 시스템</h3>
+                  <p className="mg-management-description">환불 요청 및 처리 내역을 관리합니다</p>
+                </div>
+              )}
             </div>
-            <div className="erp-section-content">
-              <div className="erp-action-grid">
-                {PermissionChecks.canViewPurchaseRequests(userPermissions) && (
-                  <ErpButton
-                    variant="primary"
-                    onClick={() => window.location.href = '/erp/purchase-requests'}
-                  >
-                    구매 요청하기
-                  </ErpButton>
-                )}
-                
-                {PermissionChecks.canManageApprovals(userPermissions) && (
-                  <ErpButton
-                    variant="info"
-                    onClick={() => window.location.href = '/erp/approvals'}
-                  >
-                    승인 관리
-                  </ErpButton>
-                )}
-                
-                {PermissionChecks.canManageItems(userPermissions) && (
-                  <ErpButton
-                    variant="success"
-                    onClick={() => window.location.href = '/erp/items'}
-                  >
-                    아이템 관리
-                  </ErpButton>
-                )}
-                
-                {PermissionChecks.canManageBudget(userPermissions) && (
-                  <ErpButton
-                    variant="warning"
-                    onClick={() => window.location.href = '/erp/budget'}
-                  >
-                    예산 관리
-                  </ErpButton>
-                )}
-                
-                {PermissionChecks.canManageSalary(userPermissions) && (
-                  <ErpButton
-                    variant="danger"
-                    onClick={() => window.location.href = '/erp/salary'}
-                  >
-                    급여 관리
-                  </ErpButton>
-                )}
-                
-                {PermissionChecks.canManageTax(userPermissions) && (
-                  <ErpButton
-                    variant="secondary"
-                    onClick={() => window.location.href = '/erp/tax'}
-                  >
-                    세금 관리
-                  </ErpButton>
-                )}
-                
-                {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
-                  <ErpButton
-                    variant="primary"
-                    onClick={() => navigate('/admin/erp/financial')}
-                  >
-                    📊 통합 회계 시스템
-                  </ErpButton>
-                )}
-                
-                {PermissionChecks.canManageRefund(userPermissions) && (
-                  <ErpButton
-                    variant="danger"
-                    onClick={() => navigate('/erp/refund-management')}
-                  >
-                    💸 환불 관리 시스템
-                  </ErpButton>
-                )}
-              </div>
-            </div>
-          </div>
+          </DashboardSection>
 
           {/* 최근 활동 섹션 */}
-          <div className="erp-section">
-            <div className="erp-section-header">
-              <h3 className="erp-section-title">최근 활동</h3>
+          <DashboardSection
+            title="최근 활동"
+            icon={<Clock />}
+          >
+            <div className="mg-empty-state">
+              <div className="mg-empty-state__text">최근 활동 내역이 없습니다.</div>
             </div>
-            <div className="erp-section-content">
-              <div className="erp-empty-state">
-                최근 활동 내역이 없습니다.
-              </div>
-            </div>
-          </div>
+          </DashboardSection>
         </div>
       </div>
     </SimpleLayout>

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { DollarSign, Settings, FileText, Users, Calculator, Receipt } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
+import StatCard from '../ui/Card/StatCard';
+import DashboardSection from '../layout/DashboardSection';
+import MGButton from '../common/MGButton';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import ConsultantProfileModal from './ConsultantProfileModal';
@@ -342,20 +345,22 @@ const SalaryManagement = () => {
                 <div className="mg-dashboard-header">
                     <div className="mg-dashboard-header-content">
                         <div className="mg-dashboard-header-left">
-                            <DollarSign className="mg-dashboard-icon" size={32} />
+                            <DollarSign size={32} />
                             <div>
                                 <h1 className="mg-dashboard-title">급여 관리</h1>
                                 <p className="mg-dashboard-subtitle">상담사 급여 프로필 및 계산 관리</p>
                             </div>
                         </div>
                         <div className="mg-dashboard-header-right">
-                            <button 
-                                className="mg-dashboard-icon-btn mg-v2-button-primary"
+                            <MGButton
+                                variant="primary"
+                                size="small"
                                 onClick={() => setIsConfigModalOpen(true)}
                                 title="급여 기산일 설정"
+                                className="mg-dashboard-icon-btn"
                             >
                                 <Settings size={18} />
-                            </button>
+                            </MGButton>
                             <select 
                                 value={selectedPeriod} 
                                 onChange={(e) => {
@@ -412,16 +417,19 @@ const SalaryManagement = () => {
                         </div>
 
             {activeTab === 'profiles' && (
-                <div className="profiles-section">
-                    <div className="section-header">
-                        <h3>상담사 급여 프로필</h3>
-                        <button 
-                            className="btn-primary"
+                <DashboardSection
+                    title="상담사 급여 프로필"
+                    icon={<Users size={24} />}
+                    actions={
+                        <MGButton
+                            variant="primary"
+                            size="small"
                             onClick={() => setIsProfileFormOpen(true)}
                         >
                             새 프로필 생성
-                        </button>
-                    </div>
+                        </MGButton>
+                    }
+                >
                     
                     {salaryProfiles.length === 0 && !loading && (
                         <div className="no-profiles-message">
@@ -432,12 +440,14 @@ const SalaryManagement = () => {
                                 급여 계산을 하기 위해서는 먼저 상담사별 급여 프로필을 작성해야 합니다.<br/>
                                 위의 "새 프로필 생성" 버튼을 클릭하여 급여 프로필을 작성해주세요.
                             </p>
-                            <button 
-                                className="salary-management-create-btn"
+                            <MGButton
+                                variant="primary"
+                                size="medium"
                                 onClick={() => setIsProfileFormOpen(true)}
+                                className="salary-management-create-btn"
                             >
                                 지금 프로필 작성하기
-                            </button>
+                            </MGButton>
                         </div>
                     )}
                     
@@ -462,39 +472,44 @@ const SalaryManagement = () => {
                                             <p>등급: {consultant.grade}</p>
                                         </div>
                                         <div className="profile-actions">
-                                            <button 
-                                                className="btn-secondary"
+                                            <MGButton
+                                                variant="secondary"
+                                                size="small"
                                                 onClick={() => {
                                                     console.log('프로필 조회 클릭:', consultant.name);
                                                     openModal(consultant);
                                                 }}
                                             >
                                                 프로필 조회
-                                            </button>
+                                            </MGButton>
                                         </div>
                                     </div>
                                 );
                             })
                         ) : null}
                     </div>
-                </div>
+                </DashboardSection>
             )}
 
             {activeTab === 'calculations' && (
-                <div className="calculations-section">
-                    <div className="section-header">
-                        <h3>급여 계산</h3>
-                        {salaryProfiles.length === 0 && (
+                <DashboardSection
+                    title="급여 계산"
+                    icon={<Calculator size={24} />}
+                    actions={
+                        salaryProfiles.length === 0 && (
                             <div className="profile-warning">
                                 ⚠️ 급여 프로필이 작성되지 않았습니다. 
-                                <button 
+                                <MGButton
+                                    variant="outline"
+                                    size="small"
                                     onClick={() => setActiveTab('profiles')}
-                                    className="salary-management-profile-link"
                                 >
                                     지금 작성하기
-                                </button>
+                                </MGButton>
                             </div>
-                        )}
+                        )
+                    }
+                >
                         <div className="calculation-controls">
                             <div className="control-group">
                                 <label>상담사 선택:</label>
@@ -543,15 +558,19 @@ const SalaryManagement = () => {
                                 </select>
                             </div>
                             
-                            <button 
-                                className="btn-primary"
-                                onClick={executeSalaryCalculation}
-                                disabled={loading || !selectedConsultant || !selectedPeriod || salaryProfiles.length === 0}
-                            >
-                                {loading ? '계산 중...' : '급여 계산 실행'}
-                            </button>
+                            <div className="control-group">
+                                <MGButton
+                                    variant="primary"
+                                    size="medium"
+                                    onClick={executeSalaryCalculation}
+                                    disabled={loading || !selectedConsultant || !selectedPeriod || salaryProfiles.length === 0}
+                                    loading={loading}
+                                    loadingText="계산 중..."
+                                >
+                                    급여 계산 실행
+                                </MGButton>
+                            </div>
                         </div>
-                    </div>
                     
                     <div className="calculations-history">
                         <h4>급여 계산 내역</h4>
@@ -629,24 +648,26 @@ const SalaryManagement = () => {
                                     </div>
                                 </div>
                                 <div className="calculation-actions">
-                                    <button 
-                                        className="btn-secondary"
+                                    <MGButton
+                                        variant="secondary"
+                                        size="small"
                                         onClick={() => {
                                             setSelectedCalculation(calculation);
                                             setIsTaxDetailsOpen(true);
                                         }}
                                     >
                                         세금 내역 보기
-                                    </button>
-                                    <button 
-                                        className="btn-primary"
+                                    </MGButton>
+                                    <MGButton
+                                        variant="primary"
+                                        size="small"
                                         onClick={() => {
                                             setSelectedCalculation(calculation);
                                             setIsExportModalOpen(true);
                                         }}
                                     >
                                         출력
-                                    </button>
+                                    </MGButton>
                                     
                                     {/* 프린트 컴포넌트 */}
                                     <SalaryPrintComponent
@@ -661,20 +682,23 @@ const SalaryManagement = () => {
                         ))}
                         </div>
                     </div>
-                </div>
+                </DashboardSection>
             )}
 
             {activeTab === 'tax' && (
-                <div className="tax-section">
-                    <div className="section-header">
-                        <h3>세금 관리</h3>
-                        <button 
-                            className="btn-primary"
+                <DashboardSection
+                    title="세금 관리"
+                    icon={<Receipt size={24} />}
+                    actions={
+                        <MGButton
+                            variant="primary"
+                            size="small"
                             onClick={() => loadTaxStatistics(selectedPeriod)}
                         >
                             세금 통계 조회
-                        </button>
-                    </div>
+                        </MGButton>
+                    }
+                >
                     <div className="tax-calculations-history">
                         <h4>세금 통계 내역</h4>
                         <div className="tax-calculations-list">
@@ -756,24 +780,26 @@ const SalaryManagement = () => {
                                         </div>
                                     </div>
                                     <div className="calculation-actions">
-                                        <button 
-                                            className="btn-secondary"
+                                        <MGButton
+                                            variant="secondary"
+                                            size="small"
                                             onClick={() => {
                                                 // 세금 상세 내역 모달 열기
                                                 console.log('세금 상세 내역 보기');
                                             }}
                                         >
                                             세금 상세 내역 보기
-                                        </button>
-                                        <button 
-                                            className="btn-primary"
+                                        </MGButton>
+                                        <MGButton
+                                            variant="primary"
+                                            size="small"
                                             onClick={() => {
                                                 // 세금 통계 출력
                                                 console.log('세금 통계 출력');
                                             }}
                                         >
                                             출력
-                                        </button>
+                                        </MGButton>
                                     </div>
                                 </div>
                             ) : (
@@ -783,7 +809,7 @@ const SalaryManagement = () => {
                             )}
                         </div>
                     </div>
-                </div>
+                </DashboardSection>
             )}
 
             {loading && (

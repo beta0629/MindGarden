@@ -11,6 +11,7 @@ import ScheduleLegend from '../ui/Schedule/ScheduleLegend';
 import ScheduleCalendarView from '../ui/Schedule/ScheduleCalendarView';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
+import notificationManager from '../../utils/notification';
 // import './ScheduleCalendar.css'; // 제거: mindgarden-design-system.css 사용
 
 /**
@@ -440,7 +441,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         // 상담사는 휴가만 등록 가능
         if (userRole === 'CONSULTANT') {
             if (isPastDate) {
-                alert('과거 날짜에는 휴가를 등록할 수 없습니다.');
+                notificationManager.warning('과거 날짜에는 휴가를 등록할 수 없습니다.');
                 return;
             }
             
@@ -454,7 +455,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         // 관리자는 스케줄/휴가 선택 모달 표시
         if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
             if (isPastDate) {
-                alert('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다.\n기존 스케줄을 클릭하여 조회하실 수 있습니다.');
+                notificationManager.warning('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;
             }
             
@@ -462,7 +463,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             setSelectedInfo(info);
             setIsDateActionModalOpen(true);
         } else {
-            alert('스케줄 생성 권한이 없습니다.');
+            notificationManager.warning('스케줄 생성 권한이 없습니다.');
         }
     };
 
@@ -562,14 +563,15 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
 
             if (!response.ok) {
                 info.revert();
-                alert('스케줄 이동에 실패했습니다.');
+                notificationManager.error('스케줄 이동에 실패했습니다.');
             } else {
                 console.log('✅ 스케줄 이동 완료');
+                notificationManager.success('스케줄 이동이 완료되었습니다.');
             }
         } catch (error) {
             console.error('스케줄 이동 오류:', error);
             info.revert();
-            alert('스케줄 이동 중 오류가 발생했습니다.');
+            notificationManager.error('스케줄 이동 중 오류가 발생했습니다.');
         }
     };
 

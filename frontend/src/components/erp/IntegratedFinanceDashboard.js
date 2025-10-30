@@ -9,6 +9,9 @@ import SimpleLayout from '../layout/SimpleLayout';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
 import UnifiedLoading from '../common/UnifiedLoading';
+import StatCard from '../ui/Card/StatCard';
+import DashboardSection from '../layout/DashboardSection';
+import MGButton from '../common/MGButton';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -281,7 +284,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         <div className="mg-dashboard-header">
           <div className="mg-dashboard-header-content">
             <div className="mg-dashboard-header-left">
-              <BarChart3 className="mg-dashboard-icon" size={32} />
+              <BarChart3 size={32} />
               <div>
                 <h1 className="mg-dashboard-title">통합 회계 관리 시스템</h1>
                 <p className="mg-dashboard-subtitle">
@@ -316,27 +319,33 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 <option key="monthly" value="monthly">월간</option>
                 <option key="yearly" value="yearly">년간</option>
               </select>
-              <button
+              <MGButton
+                variant="danger"
+                size="small"
                 onClick={() => setShowQuickExpenseForm(true)}
-                className="mg-dashboard-icon-btn mg-v2-button-danger"
                 title="빠른 지출"
+                className="mg-dashboard-icon-btn"
               >
                 <TrendingDown size={18} />
-              </button>
-              <button
+              </MGButton>
+              <MGButton
+                variant="success"
+                size="small"
                 onClick={() => setShowTransactionForm(true)}
-                className="mg-dashboard-icon-btn mg-v2-button-success"
                 title="거래 등록"
+                className="mg-dashboard-icon-btn"
               >
                 <DollarSign size={18} />
-              </button>
-              <button
+              </MGButton>
+              <MGButton
+                variant="primary"
+                size="small"
                 onClick={() => window.location.href = '/erp/financial'}
-                className="mg-dashboard-icon-btn mg-v2-button-primary"
                 title="상세 내역 보기"
+                className="mg-dashboard-icon-btn"
               >
                 <FileText size={18} />
-              </button>
+              </MGButton>
             </div>
           </div>
         </div>
@@ -428,80 +437,65 @@ const OverviewTab = ({ data }) => {
 
   return (
     <div>
-      <h2 className="finance-overview-title">
-        <BarChart3 size={28} className="mg-icon-inline mg-mr-sm" />
-        재무 개요
-      </h2>
-      
-      {/* KPI 카드들 */}
-      <div className="finance-kpi-grid">
-        <KPICard
-          title="총 아이템 수"
-          value={data.erpStats?.totalItems || 0}
-          subtitle="등록된 비품 수"
-          colorType="info"
-          IconComponent={Package}
-        />
-        <KPICard
-          title="승인 대기 요청"
-          value={data.erpStats?.pendingRequests || 0}
-          subtitle="관리자 승인 대기"
-          colorType="warning"
-          IconComponent={Clock}
-        />
-        <KPICard
-          title="총 주문 수"
-          value={data.erpStats?.totalOrders || 0}
-          subtitle="완료된 구매 주문"
-          colorType="success"
-          IconComponent={ShoppingCart}
-        />
-        <KPICard
-          title="예산 사용률"
-          value={data.erpStats?.budgetUsage || '0%'}
-          subtitle={`${formatCurrency(data.erpStats?.budgetUsed || 0)} / ${formatCurrency(data.erpStats?.budgetTotal || 0)}`}
-          colorType="warning"
-          IconComponent={DollarSign}
-        />
-      </div>
+      <DashboardSection
+        title="재무 개요"
+        icon={<BarChart3 size={24} />}
+      >
+        {/* KPI 카드들 */}
+        <div className="mg-dashboard-stats">
+          <StatCard
+            icon={<Package />}
+            value={(data.erpStats?.totalItems || 0).toLocaleString()}
+            label="총 아이템 수"
+            change="등록된 비품 수"
+          />
+          <StatCard
+            icon={<Clock />}
+            value={(data.erpStats?.pendingRequests || 0).toLocaleString()}
+            label="승인 대기 요청"
+            change="관리자 승인 대기"
+            changeType="negative"
+          />
+          <StatCard
+            icon={<ShoppingCart />}
+            value={(data.erpStats?.totalOrders || 0).toLocaleString()}
+            label="총 주문 수"
+            change="완료된 구매 주문"
+            changeType="positive"
+          />
+          <StatCard
+            icon={<DollarSign />}
+            value={data.erpStats?.budgetUsage || '0%'}
+            label="예산 사용률"
+            change={`${formatCurrency(data.erpStats?.budgetUsed || 0)} / ${formatCurrency(data.erpStats?.budgetTotal || 0)}`}
+          />
+        </div>
+      </DashboardSection>
       
       {/* 매핑 연동 상태 섹션 */}
-      <div className="finance-mapping-section">
-        <h3 className="finance-mapping-title">
-          <i className="bi bi-link-45deg finance-mapping-icon"></i>
-          매핑시스템 연동 상태
-        </h3>
-        
-        <div className="finance-kpi-grid">
-          <div className="finance-card text-center">
-            <div className="finance-value-large finance-value-success">
-              {financialData.incomeByCategory?.CONSULTATION ? 
-                `₩${formatNumber(financialData.incomeByCategory.CONSULTATION)}` : '₩0'}
-            </div>
-            <div className="finance-description">
-              💰 매핑 입금확인 수입
-            </div>
-          </div>
-          
-          <div className="finance-card text-center">
-            <div className="finance-value-large finance-value-danger">
-              {financialData.expenseByCategory?.CONSULTATION ? 
-                `₩${formatNumber(financialData.expenseByCategory.CONSULTATION)}` : '₩0'}
-            </div>
-            <div className="finance-description">
-              📤 매핑 환불처리 지출
-            </div>
-          </div>
-          
-          <div className="finance-card text-center">
-            <div className="finance-value-large finance-value-info">
-              {financialData.transactionCount || 0}
-            </div>
-            <div className="finance-description">
-              🔄 총 연동 거래 건수
-            </div>
-          </div>
-          
+      <DashboardSection
+        title="매핑시스템 연동 상태"
+        icon={<BarChart3 size={24} />}
+      >
+        <div className="mg-dashboard-stats">
+          <StatCard
+            icon={<TrendingUp />}
+            value={financialData.incomeByCategory?.CONSULTATION ? 
+              formatCurrency(financialData.incomeByCategory.CONSULTATION) : formatCurrency(0)}
+            label="매핑 입금확인 수입"
+          />
+          <StatCard
+            icon={<TrendingDown />}
+            value={financialData.expenseByCategory?.CONSULTATION ? 
+              formatCurrency(financialData.expenseByCategory.CONSULTATION) : formatCurrency(0)}
+            label="매핑 환불처리 지출"
+            changeType="negative"
+          />
+          <StatCard
+            icon={<BarChart3 />}
+            value={(financialData.transactionCount || 0).toLocaleString()}
+            label="총 연동 거래 건수"
+          />
           <div className="mg-v2-card mg-v2-card--outlined mg-v2-text-center">
             <div className="mg-v2-text-info mg-v2-font-weight-bold">
               실시간 연동
@@ -509,70 +503,68 @@ const OverviewTab = ({ data }) => {
             <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: '4px' }}>
               ✅ 매핑 ↔ ERP 자동 동기화
             </div>
-            <button
-              style={{
-                marginTop: '8px',
-                padding: '4px 8px',
-                fontSize: 'var(--font-size-xs)',
-                border: '1px solid #17a2b8',
-                borderRadius: '4px',
-                backgroundColor: 'transparent',
-                color: '#17a2b8',
-                cursor: 'pointer'
-              }}
+            <MGButton
+              variant="outline"
+              size="small"
+              style={{ marginTop: '8px' }}
               onClick={() => window.location.href = '/branch_super_admin/mapping-management'}
             >
               📋 매핑시스템 확인
-            </button>
+            </MGButton>
           </div>
         </div>
-      </div>
+      </DashboardSection>
 
       {/* 수입/지출 요약 */}
-      <div className="finance-kpi-grid">
-        <div className="finance-summary-card finance-summary-card--income">
-          <div className="net-income-decoration-1"></div>
-          <h3 className="finance-summary-card-title">
-            <TrendingUp size={24} className="finance-icon-inline" />
-            수입
-          </h3>
-          <div className="net-income-value">
-            {formatCurrency(totalIncome)}
+      <DashboardSection
+        title="수입/지출 요약"
+        icon={<BarChart3 size={24} />}
+      >
+        <div className="mg-dashboard-stats">
+          <div className="finance-summary-card finance-summary-card--income">
+            <div className="net-income-decoration-1"></div>
+            <h3 className="finance-summary-card-title">
+              <TrendingUp size={24} className="finance-icon-inline" />
+              수입
+            </h3>
+            <div className="net-income-value">
+              {formatCurrency(totalIncome)}
+            </div>
+            <div className="net-income-subtitle">
+              {getIncomeDescription()}
+            </div>
           </div>
-          <div className="net-income-subtitle">
-            {getIncomeDescription()}
+          <div className="finance-summary-card finance-summary-card--expense">
+            <div className="net-income-decoration-1"></div>
+            <h3 className="finance-summary-card-title">
+              <TrendingDown size={24} className="finance-icon-inline" />
+              지출
+            </h3>
+            <div className="net-income-value">
+              {formatCurrency(totalExpense)}
+            </div>
+            <div className="net-income-subtitle">
+              {getExpenseDescription()}
+            </div>
           </div>
         </div>
-        <div className="finance-summary-card finance-summary-card--expense">
-          <div className="net-income-decoration-1"></div>
-          <h3 className="finance-summary-card-title">
-            <TrendingDown size={24} className="finance-icon-inline" />
-            지출
-          </h3>
-          <div className="net-income-value">
-            {formatCurrency(totalExpense)}
-          </div>
-          <div className="net-income-subtitle">
-            {getExpenseDescription()}
-          </div>
-        </div>
-      </div>
 
-      {/* 순이익 */}
-      <div className="net-income-card">
-        <div className="net-income-decoration-1"></div>
-        <div className="net-income-decoration-2"></div>
-        <h3 className="net-income-title">
-          <DollarSign className="net-income-icon" size={32} />
-          순이익
-        </h3>
-        <div className="net-income-value">
-          {formatCurrency(netProfit)}
+        {/* 순이익 */}
+        <div className="net-income-card">
+          <div className="net-income-decoration-1"></div>
+          <div className="net-income-decoration-2"></div>
+          <h3 className="net-income-title">
+            <DollarSign className="net-income-icon" size={32} />
+            순이익
+          </h3>
+          <div className="net-income-value">
+            {formatCurrency(netProfit)}
+          </div>
+          <div className="net-income-subtitle">
+            수입 - 지출
+          </div>
         </div>
-        <div className="net-income-subtitle">
-          수입 - 지출
-        </div>
-      </div>
+      </DashboardSection>
     </div>
   );
 };
@@ -612,10 +604,10 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
 
   return (
     <div>
-      <h2 className="finance-section-title">
-        <PieChart size={28} className="finance-icon-inline" />
-        대차대조표
-      </h2>
+      <DashboardSection
+        title="대차대조표"
+        icon={<PieChart size={24} />}
+      >
       
       <div className="balance-sheet-grid">
         {/* 자산 */}
@@ -722,6 +714,7 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
           )}
         </div>
       </div>
+      </DashboardSection>
     </div>
   );
 };
@@ -761,10 +754,10 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
 
   return (
     <div>
-      <h2 className="finance-section-title">
-        <BarChart3 size={28} className="finance-icon-inline" />
-        손익계산서
-      </h2>
+      <DashboardSection
+        title="손익계산서"
+        icon={<BarChart3 size={24} />}
+      >
       
       <div className="income-statement-grid">
         {/* 수익 */}
@@ -847,6 +840,7 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
           수익 총계 - 비용 총계
         </div>
       </div>
+      </DashboardSection>
     </div>
   );
 };
@@ -894,10 +888,10 @@ const DailyReportTab = ({ period }) => {
 
   return (
     <div>
-      <h2 className="finance-section-title">
-        <Calendar size={28} className="finance-icon-inline" />
-        일간 재무 리포트
-      </h2>
+      <DashboardSection
+        title="일간 재무 리포트"
+        icon={<Calendar size={24} />}
+      >
       
       <div className="finance-kpi-grid">
         {/* 일간 수입 */}
@@ -974,6 +968,7 @@ const DailyReportTab = ({ period }) => {
           </div>
         </div>
       </div>
+      </DashboardSection>
     </div>
   );
 };
@@ -1021,10 +1016,10 @@ const MonthlyReportTab = ({ period }) => {
 
   return (
     <div>
-      <h2 className="finance-section-title">
-        <BarChart3 size={28} className="finance-icon-inline" />
-        월간 재무 리포트
-      </h2>
+      <DashboardSection
+        title="월간 재무 리포트"
+        icon={<BarChart3 size={24} />}
+      >
       
       <div className="finance-kpi-grid">
         {/* 월간 수입 */}
@@ -1103,6 +1098,7 @@ const MonthlyReportTab = ({ period }) => {
           </div>
         </div>
       </div>
+      </DashboardSection>
     </div>
   );
 };
@@ -1150,10 +1146,10 @@ const YearlyReportTab = ({ period }) => {
 
   return (
     <div>
-      <h2 className="finance-section-title">
-        <TrendingUp size={28} className="finance-icon-inline" />
-        년간 재무 리포트
-      </h2>
+      <DashboardSection
+        title="년간 재무 리포트"
+        icon={<TrendingUp size={24} />}
+      >
       
       <div className="finance-kpi-grid">
         {/* 년간 수입 */}
@@ -1205,38 +1201,7 @@ const YearlyReportTab = ({ period }) => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-// KPI 카드 컴포넌트
-const KPICard = ({ title, value, subtitle, colorType = 'success', IconComponent }) => {
-  // colorType에 따라 CSS 클래스 결정
-  const getCardClass = (type) => {
-    const typeMap = {
-      'success': 'balance-sheet-card--assets',
-      'warning': 'balance-sheet-card--liabilities',
-      'info': 'balance-sheet-card--equity',
-      'primary': 'balance-sheet-card--assets'
-    };
-    return typeMap[type] || 'balance-sheet-card--assets';
-  };
-
-  return (
-    <div className={`finance-kpi-card ${getCardClass(colorType)}`}>
-      <div className="net-income-decoration-1"></div>
-      <div className="net-income-title">
-        {IconComponent && <IconComponent className="net-income-icon" size={32} />}
-      </div>
-      <div className="net-income-value">
-        {value}
-      </div>
-      <div className="balance-sheet-card-title">
-        {title}
-      </div>
-      <div className="net-income-subtitle">
-        {subtitle}
-      </div>
+      </DashboardSection>
     </div>
   );
 };

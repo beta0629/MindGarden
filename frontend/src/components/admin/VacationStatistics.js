@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
-import { FaCalendarAlt, FaUserTie, FaChartBar, FaClock } from 'react-icons/fa';
+import StatCard from '../ui/Card/StatCard';
+import DashboardSection from '../layout/DashboardSection';
+import { Calendar, User, BarChart3, Clock } from 'lucide-react';
 import './VacationStatistics.css';
 
 /**
@@ -227,85 +229,77 @@ const VacationStatistics = ({ className = "" }) => {
 
     if (error) {
         return (
-            <div className={`vacation-statistics ${className}`}>
-                <div className="vacation-error">
-                    <FaCalendarAlt className="error-icon" />
-                    <p>{error}</p>
-                    <MGButton variant="primary" className="retry-button" onClick={loadVacationStats}>다시 시도
-                    </MGButton>
+            <div className={`vacation-statistics mg-dashboard-layout ${className}`}>
+                <div className="mg-empty-state">
+                    <div className="mg-empty-state__icon">
+                        <Calendar size={48} />
+                    </div>
+                    <div className="mg-empty-state__text">{error}</div>
+                    <MGButton variant="primary" onClick={loadVacationStats}>다시 시도</MGButton>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className={`vacation-statistics ${className}`}>
+        <div className={`vacation-statistics mg-dashboard-layout ${className}`}>
             {/* 헤더 */}
-            <div className="vacation-header">
-                <div className="header-title">
-                    <FaCalendarAlt className="title-icon" />
-                    <h3>휴가 현황</h3>
-                </div>
-                <div className="period-selector">
-                    {['week', 'month', 'quarter', 'year'].map(period => (
-                        <button
-                            key={period}
-                            className={`period-button ${selectedPeriod === period ? 'active' : ''}`}
-                            onClick={() => handlePeriodChange(period)}
-                        >
-                            {period === 'week' && '1주일'}
-                            {period === 'month' && '1개월'}
-                            {period === 'quarter' && '3개월'}
-                            {period === 'year' && '1년'}
-                        </button>
-                    ))}
+            <div className="mg-dashboard-header">
+                <div className="mg-dashboard-header-content">
+                    <div className="mg-dashboard-header-left">
+                        <Calendar size={32} />
+                        <div>
+                            <h1 className="mg-dashboard-title">휴가 현황</h1>
+                            <p className="mg-dashboard-subtitle">상담사별 휴가 사용 통계 및 현황</p>
+                        </div>
+                    </div>
+                    <div className="mg-dashboard-header-right">
+                        <div className="period-selector">
+                            {['week', 'month', 'quarter', 'year'].map(period => (
+                                <MGButton
+                                    key={period}
+                                    variant={selectedPeriod === period ? 'primary' : 'outline'}
+                                    size="small"
+                                    onClick={() => handlePeriodChange(period)}
+                                >
+                                    {period === 'week' && '1주일'}
+                                    {period === 'month' && '1개월'}
+                                    {period === 'quarter' && '3개월'}
+                                    {period === 'year' && '1년'}
+                                </MGButton>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* 요약 통계 */}
-            <div className="vacation-summary">
-                <div className="summary-card">
-                    <div className="card-icon consultant-icon">
-                        <FaUserTie />
-                    </div>
-                    <div className="card-content">
-                        <h4>전체 상담사</h4>
-                        <div className="card-value">{vacationStats.summary.totalConsultants}명</div>
-                    </div>
-                </div>
-                
-                <div className="summary-card">
-                    <div className="card-icon vacation-icon">
-                        <FaCalendarAlt />
-                    </div>
-                    <div className="card-content">
-                        <h4>총 휴가일수</h4>
-                        <div className="card-value">
-                            {typeof vacationStats.summary.totalVacationDays === 'number' 
-                                ? vacationStats.summary.totalVacationDays.toFixed(1)
-                                : vacationStats.summary.totalVacationDays}일
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="summary-card">
-                    <div className="card-icon average-icon">
-                        <FaChartBar />
-                    </div>
-                    <div className="card-content">
-                        <h4>평균 휴가일수</h4>
-                        <div className="card-value">{vacationStats.summary.averageVacationDays.toFixed(1)}일</div>
-                    </div>
-                </div>
+            <div className="mg-dashboard-stats">
+                <StatCard
+                    icon={<User />}
+                    value={`${vacationStats.summary.totalConsultants}명`}
+                    label="전체 상담사"
+                />
+                <StatCard
+                    icon={<Calendar />}
+                    value={`${typeof vacationStats.summary.totalVacationDays === 'number' 
+                        ? vacationStats.summary.totalVacationDays.toFixed(1)
+                        : vacationStats.summary.totalVacationDays}일`}
+                    label="총 휴가일수"
+                />
+                <StatCard
+                    icon={<BarChart3 />}
+                    value={`${vacationStats.summary.averageVacationDays.toFixed(1)}일`}
+                    label="평균 휴가일수"
+                />
             </div>
 
             {/* 상담사별 휴가 현황 */}
-            <div className="vacation-details">
-                <div className="details-section">
-                    <h4 className="section-title">
-                        <FaUserTie className="section-icon" />
-                        상담사별 휴가 현황
-                    </h4>
+            <div className="mg-dashboard-content">
+                <DashboardSection
+                    title="상담사별 휴가 현황"
+                    icon={<User size={24} />}
+                >
                     <div className="consultant-list">
                         {vacationStats.consultantStats.map(consultant => {
                             const consultantColor = getConsultantColor(consultant.consultantId);
@@ -356,7 +350,7 @@ const VacationStatistics = ({ className = "" }) => {
                                             ))}
                                         </div>
                                         <div className="last-vacation">
-                                            <FaClock className="clock-icon" />
+                                            <Clock size={16} className="clock-icon" />
                                             <span>최근: {formatDate(consultant.lastVacationDate)}</span>
                                         </div>
                                     </div>
@@ -364,14 +358,13 @@ const VacationStatistics = ({ className = "" }) => {
                             );
                         })}
                     </div>
-                </div>
+                </DashboardSection>
 
                 {/* 휴가 많은 상담사 TOP 3 */}
-                <div className="top-vacation-section">
-                    <h4 className="section-title">
-                        <FaChartBar className="section-icon" />
-                        휴가 사용 TOP 3
-                    </h4>
+                <DashboardSection
+                    title="휴가 사용 TOP 3"
+                    icon={<BarChart3 size={24} />}
+                >
                     <div className="top-list">
                         {vacationStats.topVacationConsultants.map((consultant, index) => {
                             const consultantColor = getConsultantColor(consultant.consultantId);
@@ -390,7 +383,7 @@ const VacationStatistics = ({ className = "" }) => {
                             );
                         })}
                     </div>
-                </div>
+                </DashboardSection>
             </div>
         </div>
     );

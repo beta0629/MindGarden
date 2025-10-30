@@ -3,6 +3,8 @@ import { Calendar, Link2, Plus, Users, CheckCircle, TrendingUp, Clock, Zap } fro
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
+import StatCard from '../ui/Card/StatCard';
+import DashboardSection from '../layout/DashboardSection';
 import StatisticsDashboard from './StatisticsDashboard';
 import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
@@ -289,122 +291,80 @@ const SessionManagement = () => {
 
     return (
         <SimpleLayout>
-            <div className="mg-v2-session-management-redesign">
-                {/* 통계 카드 그리드 */}
-                <div className="mg-v2-session-stats-grid">
-                    <div className="mg-v2-stat-card">
-                        <div className="mg-v2-stat-card-icon">
-                            <Users />
-                        </div>
-                        <div className="mg-v2-stat-card-content">
-                            <div className="mg-v2-stat-card-value">{clients.length}</div>
-                            <div className="mg-v2-stat-card-label">총 내담자</div>
-                        </div>
-                    </div>
-                    <div className="mg-v2-stat-card">
-                        <div className="mg-v2-stat-card-icon">
-                            <CheckCircle />
-                        </div>
-                        <div className="mg-v2-stat-card-content">
-                            <div className="mg-v2-stat-card-value">{mappings.filter(m => m.status === 'ACTIVE').length}</div>
-                            <div className="mg-v2-stat-card-label">활성 매핑</div>
-                        </div>
-                    </div>
-                    <div className="mg-v2-stat-card">
-                        <div className="mg-v2-stat-card-icon">
-                            <Calendar />
-                        </div>
-                        <div className="mg-v2-stat-card-content">
-                            <div className="mg-v2-stat-card-value">{mappings.reduce((sum, m) => sum + (m.usedSessions || 0), 0)}</div>
-                            <div className="mg-v2-stat-card-label">사용된 회기</div>
-                        </div>
-                    </div>
-                    <div className="mg-v2-stat-card">
-                        <div className="mg-v2-stat-card-icon">
-                            <TrendingUp />
-                        </div>
-                        <div className="mg-v2-stat-card-content">
-                            <div className="mg-v2-stat-card-value">
-                                {mappings.length > 0 ? Math.round((mappings.filter(m => m.status === 'SESSIONS_EXHAUSTED' || m.status === 'TERMINATED').length / mappings.length) * 100) : 0}%
+            <div className="mg-dashboard-layout">
+                {/* Dashboard Header */}
+                <div className="mg-dashboard-header">
+                    <div className="mg-dashboard-header-content">
+                        <div className="mg-dashboard-header-left">
+                            <Calendar size={32} />
+                            <div>
+                                <h1 className="mg-dashboard-title">회기 관리</h1>
+                                <p className="mg-dashboard-subtitle">상담 회기 추가 및 관리</p>
                             </div>
-                            <div className="mg-v2-stat-card-label">완료율</div>
                         </div>
                     </div>
                 </div>
 
-                {/* 메인 콘텐츠 */}
-                <div className="mg-v2-session-main-content">
-                    {/* 회기 추가 방법 선택 탭 */}
-                    <div className="mg-v2-session-tabs">
-                        <button 
-                            className={`mg-v2-tab ${activeTab === 'quick' ? 'mg-v2-tab-active' : ''}`}
-                            onClick={() => setActiveTab('quick')}
-                        >
-                            <Zap size={18} />
-                            빠른 추가
-                        </button>
-                        <button 
-                            className={`mg-v2-tab ${activeTab === 'search' ? 'mg-v2-tab-active' : ''}`}
-                            onClick={() => setActiveTab('search')}
-                        >
-                            <Users size={18} />
-                            내담자 검색
-                        </button>
-                        <button 
-                            className={`mg-v2-tab ${activeTab === 'mapping' ? 'mg-v2-tab-active' : ''}`}
-                            onClick={() => setActiveTab('mapping')}
-                        >
-                            <Calendar size={18} />
-                            전체 매핑
-                        </button>
-                    </div>
+                {/* 통계 카드 그리드 */}
+                <div className="mg-dashboard-stats">
+                    <StatCard
+                        icon={<Users />}
+                        value={clients.length}
+                        label="총 내담자"
+                    />
+                    <StatCard
+                        icon={<CheckCircle />}
+                        value={mappings.filter(m => m.status === 'ACTIVE').length}
+                        label="활성 매핑"
+                    />
+                    <StatCard
+                        icon={<Calendar />}
+                        value={mappings.reduce((sum, m) => sum + (m.usedSessions || 0), 0)}
+                        label="사용된 회기"
+                    />
+                    <StatCard
+                        icon={<TrendingUp />}
+                        value={`${mappings.length > 0 ? Math.round((mappings.filter(m => m.status === 'SESSIONS_EXHAUSTED' || m.status === 'TERMINATED').length / mappings.length) * 100) : 0}%`}
+                        label="완료율"
+                    />
+                </div>
 
-                    {/* 회기 추가 섹션 */}
-                    <div className="mg-v2-session-section">
-                        {activeTab === 'quick' && (
-                            <div className="mg-v2-section-header">
-                                <div className="mg-v2-section-header-content">
-                                    <div className="mg-v2-section-header-left">
-                                        <Zap className="mg-v2-section-icon" />
-                                        <div>
-                                            <h2 className="mg-v2-section-title">빠른 회기 추가</h2>
-                                            <p className="mg-v2-section-subtitle">최근 활성 매핑에서 바로 회기를 추가할 수 있습니다</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        
-                        {activeTab === 'search' && (
-                            <div className="mg-v2-section-header">
-                                <div className="mg-v2-section-header-content">
-                                    <div className="mg-v2-section-header-left">
-                                        <Users className="mg-v2-section-icon" />
-                                        <div>
-                                            <h2 className="mg-v2-section-title">내담자 검색 후 회기 추가</h2>
-                                            <p className="mg-v2-section-subtitle">특정 내담자를 검색해서 회기를 추가할 수 있습니다</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        
-                        {activeTab === 'mapping' && (
-                            <div className="mg-v2-section-header">
-                                <div className="mg-v2-section-header-content">
-                                    <div className="mg-v2-section-header-left">
-                                        <Calendar className="mg-v2-section-icon" />
-                                        <div>
-                                            <h2 className="mg-v2-section-title">전체 매핑에서 회기 추가</h2>
-                                            <p className="mg-v2-section-subtitle">모든 매핑을 확인하고 회기를 추가할 수 있습니다</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        
-                        {activeTab === 'quick' && (
-                            <div className="mg-v2-quick-mappings-grid">
+                {/* 메인 콘텐츠 */}
+                <div className="mg-dashboard-content">
+                    {/* 회기 추가 방법 선택 탭 */}
+                    <div className="mg-v2-card">
+                        <div className="mg-tabs">
+                            <button 
+                                className={`mg-tab ${activeTab === 'quick' ? 'mg-tab-active' : ''}`}
+                                onClick={() => setActiveTab('quick')}
+                            >
+                                <Zap size={18} />
+                                빠른 추가
+                            </button>
+                            <button 
+                                className={`mg-tab ${activeTab === 'search' ? 'mg-tab-active' : ''}`}
+                                onClick={() => setActiveTab('search')}
+                            >
+                                <Users size={18} />
+                                내담자 검색
+                            </button>
+                            <button 
+                                className={`mg-tab ${activeTab === 'mapping' ? 'mg-tab-active' : ''}`}
+                                onClick={() => setActiveTab('mapping')}
+                            >
+                                <Calendar size={18} />
+                                전체 매핑
+                            </button>
+                        </div>
+
+                        {/* 회기 추가 섹션 */}
+                        <div className="mg-v2-session-section">
+                            {activeTab === 'quick' && (
+                                <DashboardSection
+                                    title="빠른 회기 추가"
+                                    icon={<Zap size={24} />}
+                                >
+                                    <div className="mg-v2-quick-mappings-grid">
                                 {getRecentActiveMappings().map(mapping => {
                                     const clientName = mapping.client?.name || mapping.clientName || '알 수 없음';
                                     const consultantName = mapping.consultant?.name || mapping.consultantName || '알 수 없음';
@@ -449,14 +409,19 @@ const SessionManagement = () => {
                                 })}
                                 
                                 {getRecentActiveMappings().length === 0 && (
-                                    <div className="mg-v2-empty-state">
-                                        <p>활성 매핑이 없습니다.</p>
+                                    <div className="mg-empty-state">
+                                        <div className="mg-empty-state__text">활성 매핑이 없습니다.</div>
                                     </div>
                                 )}
-                            </div>
-                        )}
+                                    </div>
+                                </DashboardSection>
+                            )}
                         
                         {activeTab === 'search' && (
+                            <DashboardSection
+                                title="내담자 검색 후 회기 추가"
+                                icon={<Users size={24} />}
+                            >
                             <div className="mg-v2-search-section">
                                 <div className="mg-v2-search-form">
                                     <input
@@ -524,84 +489,82 @@ const SessionManagement = () => {
                                 {searchTerm && clients.filter(client => 
                                     client.name && client.name.toLowerCase().includes(searchTerm.toLowerCase())
                                 ).length === 0 && (
-                                    <div className="mg-v2-empty-state">
-                                        <p>검색 결과가 없습니다.</p>
+                                    <div className="mg-empty-state">
+                                        <div className="mg-empty-state__text">검색 결과가 없습니다.</div>
                                     </div>
                                 )}
                             </div>
+                            </DashboardSection>
                         )}
                         
                         {activeTab === 'mapping' && (
-                            <div className="mg-v2-mapping-section">
-                                <div className="mg-v2-mapping-filters">
-                                    <select 
-                                        className="mg-v2-input"
-                                        value={filterStatus}
-                                        onChange={(e) => setFilterStatus(e.target.value)}
-                                    >
-                                        <option value="ALL">모든 상태</option>
-                                        <option value="ACTIVE">활성</option>
-                                        <option value="PAYMENT_CONFIRMED">결제확인</option>
-                                        <option value="COMPLETED">완료</option>
-                                    </select>
-                                </div>
-                                
-                                <div className="mg-v2-mapping-grid">
-                                    {getFilteredMappings().slice(0, 20).map(mapping => (
-                                        <div key={mapping.id} className="mg-v2-mapping-card">
-                                            <div className="mg-v2-mapping-info">
-                                                <div className="mg-v2-mapping-client">
-                                                    👤 {mapping.clientName}
-                                                </div>
-                                                <div className="mg-v2-mapping-consultant">
-                                                    🤝 {mapping.consultantName}
-                                                </div>
-                                                <div className="mg-v2-mapping-sessions">
-                                                    📊 {mapping.usedSessions}/{mapping.totalSessions}회기
-                                                </div>
-                                                <div className={`mg-mapping-status mg-status-${mapping.status.toLowerCase()}`}>
-                                                    {mapping.status}
-                                                </div>
-                                            </div>
-                                            <div className="mg-v2-mapping-card-actions">
-                                                <button 
-                                                    className="mg-v2-button mg-v2-button-primary mg-v2-button-sm"
-                                                    onClick={() => handleQuickAdd(mapping)}
-                                                    disabled={mapping.status !== 'ACTIVE'}
-                                                    title={mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : ''}
-                                                >
-                                                    <Plus size={14} />
-                                                    회기 추가
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                
-                                {getFilteredMappings().length === 0 && (
-                                    <div className="mg-v2-empty-state">
-                                        <p>매핑이 없습니다.</p>
+                            <DashboardSection
+                                title="전체 매핑에서 회기 추가"
+                                icon={<Calendar size={24} />}
+                            >
+                                <div className="mg-v2-mapping-section">
+                                    <div className="mg-v2-mapping-filters">
+                                        <select 
+                                            className="mg-v2-input"
+                                            value={filterStatus}
+                                            onChange={(e) => setFilterStatus(e.target.value)}
+                                        >
+                                            <option value="ALL">모든 상태</option>
+                                            <option value="ACTIVE">활성</option>
+                                            <option value="PAYMENT_CONFIRMED">결제확인</option>
+                                            <option value="COMPLETED">완료</option>
+                                        </select>
                                     </div>
-                                )}
-                            </div>
+                                    
+                                    <div className="mg-v2-mapping-grid">
+                                        {getFilteredMappings().slice(0, 20).map(mapping => (
+                                            <div key={mapping.id} className="mg-v2-mapping-card">
+                                                <div className="mg-v2-mapping-info">
+                                                    <div className="mg-v2-mapping-client">
+                                                        👤 {mapping.clientName}
+                                                    </div>
+                                                    <div className="mg-v2-mapping-consultant">
+                                                        🤝 {mapping.consultantName}
+                                                    </div>
+                                                    <div className="mg-v2-mapping-sessions">
+                                                        📊 {mapping.usedSessions}/{mapping.totalSessions}회기
+                                                    </div>
+                                                    <div className={`mg-mapping-status mg-status-${mapping.status.toLowerCase()}`}>
+                                                        {mapping.status}
+                                                    </div>
+                                                </div>
+                                                <div className="mg-v2-mapping-card-actions">
+                                                    <MGButton
+                                                        variant="primary"
+                                                        size="small"
+                                                        onClick={() => handleQuickAdd(mapping)}
+                                                        disabled={mapping.status !== 'ACTIVE'}
+                                                        title={mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : ''}
+                                                    >
+                                                        <Plus size={14} />
+                                                        회기 추가
+                                                    </MGButton>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    {getFilteredMappings().length === 0 && (
+                                        <div className="mg-empty-state">
+                                            <div className="mg-empty-state__text">매핑이 없습니다.</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </DashboardSection>
                         )}
+                    </div>
                     </div>
 
                     {/* 최근 회기 추가 요청 섹션 */}
-                    <div className="mg-v2-session-section">
-                        <div className="mg-v2-section-header">
-                            <div className="mg-v2-section-header-content">
-                                <div className="mg-v2-section-header-left">
-                                    <Calendar className="mg-v2-section-icon" />
-                                    <div>
-                                        <h2 className="mg-v2-section-title">최근 회기 추가 요청</h2>
-                                        <p className="mg-v2-section-subtitle">
-                                            최근 회기 추가 요청 내역을 확인할 수 있습니다
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <DashboardSection
+                        title="최근 회기 추가 요청"
+                        icon={<Calendar size={24} />}
+                    >
                         
                         <div className="mg-v2-recent-requests">
                             {getRecentSessionExtensionRequests().map(request => (
@@ -696,11 +659,11 @@ const SessionManagement = () => {
                         </div>
                         
                         {getRecentSessionExtensionRequests().length === 0 && (
-                            <div className="mg-v2-empty-state">
-                                <p>최근 회기 추가 요청이 없습니다.</p>
+                            <div className="mg-empty-state">
+                                <div className="mg-empty-state__text">최근 회기 추가 요청이 없습니다.</div>
                             </div>
                         )}
-                    </div>
+                    </DashboardSection>
                 </div>
 
                 {/* 회기 추가 요청 모달 */}

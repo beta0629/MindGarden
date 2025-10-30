@@ -1711,6 +1711,31 @@ public class AdminServiceImpl implements AdminService {
             }
         }
         
+        // 🚀 실시간 통계 업데이트 (프로시저 통계 + 실시간 대시보드 통계)
+        try {
+            if (savedMapping.getConsultant() != null && savedMapping.getClient() != null) {
+                realTimeStatisticsService.updateStatisticsOnMappingChange(
+                    savedMapping.getConsultant().getId(), 
+                    savedMapping.getClient().getId(), 
+                    savedMapping.getBranchCode()
+                );
+                
+                // 패키지 가격 변경 시 재무 통계도 업데이트
+                if (packageChanged && savedMapping.getPackagePrice() != null) {
+                    realTimeStatisticsService.updateFinancialStatisticsOnPayment(
+                        savedMapping.getBranchCode(), 
+                        savedMapping.getPackagePrice(), 
+                        LocalDate.now()
+                    );
+                }
+                
+                log.info("✅ 매핑 수정시 실시간 통계 업데이트 완료: mappingId={}", id);
+            }
+        } catch (Exception e) {
+            log.error("❌ 매핑 수정시 실시간 통계 업데이트 실패: mappingId={}, error={}", id, e.getMessage(), e);
+            // 통계 업데이트 실패해도 매핑 수정은 완료되도록 예외는 발생시키지 않음
+        }
+        
         log.info("✅ 매핑 정보 수정 완료: id={}, packageName={}, packagePrice={}, totalSessions={}", 
                 savedMapping.getId(), savedMapping.getPackageName(), 
                 savedMapping.getPackagePrice(), savedMapping.getTotalSessions());

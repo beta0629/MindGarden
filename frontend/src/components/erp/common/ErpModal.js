@@ -51,18 +51,26 @@ const ErpModal = ({
   };
 
   // MindGarden 디자인 시스템의 mg-v2-modal 클래스 활용
+  // size에 따라 스타일 적용 (CSS에 정의된 클래스 사용)
+  const sizeClass = size === 'lg' || size === 'xl' ? 'mg-v2-modal-large' : '';
+  
   const modalClasses = [
-    'mg-v2-modal-content',
-    size !== 'md' && `mg-v2-modal-${size}`,
+    'mg-v2-modal',
+    sizeClass,
     className
   ].filter(Boolean).join(' ');
+  
+  // size에 따른 인라인 스타일 (small과 medium은 CSS 변수로 제어)
+  const modalStyle = size === 'sm' ? { maxWidth: '400px', width: '90vw' } : 
+                     size === 'md' ? { maxWidth: '600px', width: '90vw' } : 
+                     {};
 
   // ReactDOM.createPortal을 사용하여 document.body에 렌더링
   return ReactDOM.createPortal(
     <div className="mg-v2-modal-overlay" onClick={handleOverlayClick}>
-      <div className={modalClasses}>
+      <div className={modalClasses} style={modalStyle} onClick={(e) => e.stopPropagation()}>
         <div className="mg-v2-modal-header">
-          <h3 className="mg-h4">{title}</h3>
+          <h3 className="mg-v2-modal-title" style={{ margin: 0 }}>{title}</h3>
           {showCloseButton && (
             <button
               className="mg-v2-modal-close"

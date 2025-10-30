@@ -1024,6 +1024,11 @@ body {
   padding: var(--spacing-lg);
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .mg-system-tool-card:hover {
@@ -1037,10 +1042,21 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-sm);
   background: transparent;
   border: none;
-  padding: 0;
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+/* MGButton fullWidth 적용 시 */
+.mg-system-tool-card .mg-button--full-width {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .mg-system-tool-icon {
@@ -9846,8 +9862,55 @@ body {
 
 .mg-v2-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: var(--spacing-md);
+    justify-items: stretch;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* 데스크탑에서 그리드 최대 너비 제한 및 정렬 개선 */
+@media (min-width: 769px) {
+    .mg-v2-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    .mg-v2-dashboard-stat-card {
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        margin: 0;
+    }
+    
+    .mg-system-tool-card {
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* 데스크탑에서 DashboardSection 컨텐츠 영역 정렬 */
+@media (min-width: 769px) {
+    .dashboard-section-content {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: visible;
+    }
+    
+    .dashboard-section-content .mg-v2-stats-grid {
+        width: 100%;
+        max-width: 100%;
+    }
 }
 
 .mg-v2-stat-item {
@@ -11595,6 +11658,9 @@ body {
     padding: var(--spacing-lg);
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 }
 
 .mg-v2-dashboard-stats {
@@ -13114,12 +13180,25 @@ body {
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     margin-bottom: var(--spacing-md);
+    text-align: center;
+    width: 100%;
 }
 
 .mg-v2-system-tool-icon {
     font-size: 24px;
     color: var(--color-primary);
     margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mg-v2-system-tool-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
 }
 
 .mg-v2-system-tool-label {
@@ -13127,6 +13206,8 @@ body {
     color: var(--color-text-primary);
     font-weight: 500;
     margin-bottom: var(--spacing-xs);
+    text-align: center;
+    width: 100%;
 }
 
 .mg-v2-table {

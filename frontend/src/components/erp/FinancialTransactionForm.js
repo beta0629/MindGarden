@@ -108,46 +108,52 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
     >
 
         {error && (
-          <div className="financial-transaction-error">
+          <div className="mg-v2-form-error" style={{ 
+            padding: 'var(--spacing-sm)', 
+            marginBottom: 'var(--spacing-md)',
+            backgroundColor: 'var(--status-error-border)',
+            color: 'var(--status-error-dark)',
+            borderRadius: 'var(--radius-sm)'
+          }}>
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
           {/* 거래 유형 */}
-          <div className="financial-transaction-form-group">
-            <label className="financial-transaction-label">
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">
               거래 유형
             </label>
-            <div className="financial-transaction-radio-group">
-              <label className="financial-transaction-radio-label">
+            <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', cursor: 'pointer' }}>
                 <input
                   type="radio"
                   name="transactionType"
                   value="INCOME"
                   checked={formData.transactionType === 'INCOME'}
                   onChange={handleInputChange}
-                  className="financial-transaction-radio-input"
+                  style={{ cursor: 'pointer' }}
                 />
-                <span className="financial-transaction-radio-label-text">💚 수입</span>
+                <span>💚 수입</span>
               </label>
-              <label className="financial-transaction-radio-label">
+              <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', cursor: 'pointer' }}>
                 <input
                   type="radio"
                   name="transactionType"
                   value="EXPENSE"
                   checked={formData.transactionType === 'EXPENSE'}
                   onChange={handleInputChange}
-                  className="financial-transaction-radio-input"
+                  style={{ cursor: 'pointer' }}
                 />
-                <span className="financial-transaction-radio-label-text">❤️ 지출</span>
+                <span>❤️ 지출</span>
               </label>
             </div>
           </div>
 
           {/* 카테고리 */}
-          <div className="financial-transaction-form-group">
-            <label className="financial-transaction-label">
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-form-label">
               카테고리
             </label>
             <select
@@ -156,7 +162,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               onChange={handleInputChange}
               required
               disabled={loadingCodes}
-              className="financial-transaction-select"
+              className="mg-v2-form-select"
             >
               <option key="category-default" value="">카테고리를 선택하세요</option>
               {currentCategories.map(category => (
@@ -166,7 +172,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               ))}
             </select>
             {loadingCodes && (
-              <div className="financial-transaction-loading">
+              <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: 'var(--spacing-xs)' }}>
                 공통 코드 로딩 중...
               </div>
             )}
@@ -183,7 +189,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               onChange={handleInputChange}
               required
               disabled={!formData.category || loadingCodes}
-              className="financial-transaction-select"
+              className="mg-v2-form-select"
             >
               <option key="subcategory-default" value="">세부 카테고리를 선택하세요</option>
               {filteredSubcategories.map(subcategory => (
@@ -193,7 +199,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               ))}
             </select>
             {!formData.category && (
-              <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: '5px' }}>
+              <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: 'var(--spacing-xs)' }}>
                 먼저 카테고리를 선택해주세요
               </div>
             )}
@@ -213,7 +219,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               min="0"
               step="1"
               placeholder="금액을 입력하세요"
-              className="financial-transaction-select"
+              className="mg-v2-form-input"
             />
           </div>
 
@@ -228,7 +234,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               value={formData.transactionDate}
               onChange={handleInputChange}
               required
-              className="financial-transaction-select"
+              className="mg-v2-form-input"
             />
           </div>
 
@@ -243,27 +249,44 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               onChange={handleInputChange}
               rows="3"
               placeholder="거래에 대한 추가 설명을 입력하세요"
-              className="financial-transaction-select"
+              className="mg-v2-form-textarea"
+            />
+          </div>
+
+          {/* 세금 포함 */}
+          <div className="mg-v2-form-group">
+            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                name="taxIncluded"
                 checked={formData.taxIncluded}
                 onChange={handleInputChange}
-                className="financial-transaction-checkbox"
+                style={{ cursor: 'pointer' }}
               />
-              <span className="financial-transaction-checkbox-label">세금 포함</span>
+              <span>세금 포함</span>
+            </label>
           </div>
 
           {/* 버튼들 */}
-          <div className="financial-transaction-buttons">
+          <div style={{ 
+            display: 'flex', 
+            gap: 'var(--spacing-sm)', 
+            justifyContent: 'flex-end',
+            marginTop: 'var(--spacing-lg)',
+            paddingTop: 'var(--spacing-md)',
+            borderTop: '1px solid var(--color-border-light)'
+          }}>
             <button
               type="button"
               onClick={onClose}
-              className="financial-transaction-cancel-btn"
+              className="mg-v2-btn mg-v2-btn--secondary"
             >
               취소
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="mg-btn mg-btn--primary"
+              className="mg-v2-btn mg-v2-btn--primary"
             >
               {loading ? '등록 중...' : '등록하기'}
             </button>

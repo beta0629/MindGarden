@@ -173,7 +173,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--droplet-bg, rgba(255, 255, 255, 0.7));
   border-radius: inherit;
   backdrop-filter: blur(2px);
 }
@@ -191,7 +191,7 @@
   }
   
   .mg-button__processing-overlay {
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--droplet-bg-dark, rgba(0, 0, 0, 0.8));
   }
 }
 

@@ -3,6 +3,8 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
+import notificationManager from '../../utils/notification';
+import ConfirmModal from '../common/ConfirmModal';
 import SimpleLayout from '../layout/SimpleLayout';
 import FinancialCalendarView from './FinancialCalendarView';
 import './ErpCommon.css';
@@ -38,6 +40,15 @@ const FinancialManagement = () => {
   // 선택된 거래 상세 정보 모달
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  
+  // 컨펌 모달 상태
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'default',
+    onConfirm: null
+  });
   
   // 대시보드 통계 상태
   const [dashboardStats, setDashboardStats] = useState({
@@ -230,28 +241,32 @@ const FinancialManagement = () => {
 
   // 거래 삭제 핸들러
   const handleDeleteTransaction = async (transaction) => {
-    if (!window.confirm(`정말 이 거래를 삭제하시겠습니까?\n거래 번호: #${transaction.id}\n금액: ${transaction.amount.toLocaleString()}원`)) {
-      return;
-    }
-    
-    try {
-      const response = await fetch(`/api/erp/finance/transactions/${transaction.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        alert('거래가 성공적으로 삭제되었습니다.');
-        loadData(); // 데이터 새로고침
-      } else {
-        alert('거래 삭제에 실패했습니다: ' + result.message);
+    setConfirmModal({
+      isOpen: true,
+      title: '거래 삭제 확인',
+      message: `정말 이 거래를 삭제하시겠습니까?\n거래 번호: #${transaction.id}\n금액: ${transaction.amount.toLocaleString()}원`,
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/erp/finance/transactions/${transaction.id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            notificationManager.success('거래가 성공적으로 삭제되었습니다.');
+            loadData(); // 데이터 새로고침
+          } else {
+            notificationManager.error('거래 삭제에 실패했습니다: ' + result.message);
+          }
+        } catch (error) {
+          console.error('거래 삭제 실패:', error);
+          notificationManager.error('거래 삭제 중 오류가 발생했습니다.');
+        }
       }
-    } catch (error) {
-      console.error('거래 삭제 실패:', error);
-      alert('거래 삭제 중 오류가 발생했습니다.');
-    }
+    });
   };
   
   // 거래 상세 보기 핸들러
@@ -263,7 +278,7 @@ const FinancialManagement = () => {
   // 거래 수정 핸들러
   const handleEditTransaction = (transaction) => {
     // TODO: 거래 수정 모달 열기
-    alert('거래 수정 기능은 준비중입니다.');
+    notificationManager.info('거래 수정 기능은 준비중입니다.');
   };
 
   const handlePageChange = (newPage) => {
@@ -830,6 +845,16 @@ const FinancialManagement = () => {
           }}
         />
       )}
+
+      {/* 컨펌 모달 */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+      />
     </SimpleLayout>
   );
 };

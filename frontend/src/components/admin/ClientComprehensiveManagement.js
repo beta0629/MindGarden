@@ -72,7 +72,12 @@ const ClientComprehensiveManagement = () => {
                 apiGet('/api/common-codes/USER_GRADE')
             ]);
             
-            setUserStatusOptions(userStatusResponse.data || []);
+            // API 응답이 배열이거나 { data: [...] } 형태일 수 있음
+            const statusOptions = Array.isArray(userStatusResponse) 
+                ? userStatusResponse 
+                : (userStatusResponse?.data || userStatusResponse || []);
+            
+            setUserStatusOptions(statusOptions);
         } catch (error) {
             console.error('공통 코드 로드 실패:', error);
             // 오류 시 기본값 사용

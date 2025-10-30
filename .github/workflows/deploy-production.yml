@@ -158,7 +158,7 @@ jobs:
         strip_components: 3
         overwrite: true
         
-    - name: 📤 매핑 수정 프로시저 업로드 (DELIMITER 제거 버전)
+    - name: 📤 매핑 수정 프로시저 업로드
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -166,7 +166,7 @@ jobs:
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
         port: 22
         timeout: 120s
-        source: "sql/mapping_update_procedures_mysql_no_delimiter.sql"
+        source: "sql/mapping_update_procedures_mysql.sql"
         target: "/tmp/mapping_update_procedures_mysql.sql"
         strip_components: 1
         overwrite: true

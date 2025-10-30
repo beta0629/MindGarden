@@ -587,6 +587,25 @@ export const getMappingStatusKoreanName = async (status) => {
 };
 
 /**
+ * 매칭 상태 한글명 조회 (동기 버전 - 기본값만 사용)
+ */
+export const getMappingStatusKoreanNameSync = (status) => {
+    const defaultMappingStatusMap = {
+        'PENDING_PAYMENT': '결제 대기',
+        'PAYMENT_CONFIRMED': '결제 확인',
+        'ACTIVE': '활성',
+        'INACTIVE': '비활성',
+        'SUSPENDED': '일시정지',
+        'TERMINATED': '종료됨',
+        'SESSIONS_EXHAUSTED': '회기 소진',
+        'PENDING': '대기',
+        'COMPLETED': '완료'
+    };
+    
+    return defaultMappingStatusMap[status] || status;
+};
+
+/**
  * 전문분야 코드를 한글명으로 변환 (백엔드 로직과 동일)
  */
 export const getSpecialtyKoreanName = (code) => {

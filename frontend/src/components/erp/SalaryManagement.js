@@ -14,6 +14,7 @@ import SalaryExportModal from '../common/SalaryExportModal';
 import SalaryPrintComponent from '../common/SalaryPrintComponent';
 import SalaryConfigModal from './SalaryConfigModal';
 import { SALARY_CSS_CLASSES, SALARY_MESSAGES } from '../../constants/salaryConstants';
+import { getStatusLabel } from '../../utils/colorUtils';
 import './SalaryManagement.css';
 
 const SalaryManagement = () => {
@@ -616,7 +617,7 @@ const SalaryManagement = () => {
                                 <div className="calculation-header">
                                     <h4>{calculation.calculationPeriod}</h4>
                                     <span className={`status status-${calculation.status.toLowerCase()}`}>
-                                        {calculation.status}
+                                        {getStatusLabel(calculation.status)}
                                     </span>
                                 </div>
                                 <div className="calculation-details">

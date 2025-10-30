@@ -7,6 +7,7 @@ import { sessionManager } from '../../utils/sessionManager';
 import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
 import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
+import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
 import './CommonDashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
@@ -122,7 +123,7 @@ const CommonDashboard = ({ user: propUser }) => {
           
           recentActivities.push({
             type: 'schedule',
-            title: `${schedule.consultantName} 상담사와의 상담 일정 ${schedule.status === 'CONFIRMED' ? '확정' : '등록'}`,
+            title: `${schedule.consultantName} 상담사와의 상담 일정 ${getStatusLabel(schedule.status)}`,
             time: timeAgo,
             details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
           });
@@ -329,7 +330,7 @@ const CommonDashboard = ({ user: propUser }) => {
           if (displayName !== '내담자' || schedule.clientId) {
             recentActivities.push({
               type: 'schedule',
-              title: `${displayName}과의 상담 일정 ${schedule.status === 'CONFIRMED' ? '확정' : '등록'}`,
+              title: `${displayName}과의 상담 일정 ${get定性Label(schedule.status)}`,
               time: timeAgo,
               details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
             });

@@ -6,6 +6,7 @@ import { getCodeLabel } from '../../utils/commonCodeUtils';
 import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
 import SimpleLayout from '../layout/SimpleLayout';
+import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
 import './ErpCommon.css';
 
@@ -605,7 +606,7 @@ const FinancialManagement = () => {
                               </td>
                               <td>
                                 <span className={`erp-status ${transaction.status?.toLowerCase()}`}>
-                                  {transaction.status}
+                                  {getStatusLabel(transaction.status)}
                                 </span>
                               </td>
                               <td>{formatDate(transaction.transactionDate)}</td>

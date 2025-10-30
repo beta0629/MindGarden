@@ -5,6 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
+import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 
 /**
  * 상담일지 작성 화면
@@ -572,7 +573,7 @@ const ConsultationRecordScreen = () => {
                 backgroundColor: client.status === 'ACTIVE' ? '#28a745' : '#6c757d',
                 color: '#fff'
               }}>
-                {client.status === 'ACTIVE' ? '활성' : '비활성'}
+                {getUserStatusKoreanNameSync(client.status)}
               </span>
             </span>
           </div>

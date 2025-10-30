@@ -13,7 +13,7 @@ import MappingCard from './MappingCard';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SessionExtensionModal from './mapping/SessionExtensionModal';
-import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate } from '../../utils/codeHelper';
+import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/mindgarden-design-system.css';
 
 /**
@@ -195,13 +195,15 @@ const SessionManagement = () => {
     // 상태 표시 함수
     const getStatusDisplay = (status) => {
         const statusMap = {
-            'PENDING': { text: '대기중', color: 'var(--warning-600)' },
-            'PAYMENT_CONFIRMED': { text: '입금확인', color: 'var(--info-600)' },
-            'ADMIN_APPROVED': { text: '관리자승인', color: 'var(--success-600)' },
-            'COMPLETED': { text: '완료', color: 'var(--success-600)' },
-            'REJECTED': { text: '거부됨', color: 'var(--danger-600)' }
+            'PENDING': { color: 'var(--warning-600)' },
+            'PAYMENT_CONFIRMED': { color: 'var(--info-600)' },
+            'ADMIN_APPROVED': { color: 'var(--success-600)' },
+            'COMPLETED': { color: 'var(--success-600)' },
+            'REJECTED': { color: 'var(--danger-600)' }
         };
-        return statusMap[status] || { text: status, color: 'var(--gray-600)' };
+        const config = statusMap[status] || { color: 'var(--gray-600)' };
+        const text = getMappingStatusKoreanNameSync(status);
+        return { text, ...config };
     };
 
     // 입금 확인 처리
@@ -530,7 +532,7 @@ const SessionManagement = () => {
                                                         📊 {mapping.usedSessions}/{mapping.totalSessions}회기
                                                     </div>
                                                     <div className={`mg-mapping-status mg-status-${mapping.status.toLowerCase()}`}>
-                                                        {mapping.status}
+                                                        {getMappingStatusKoreanNameSync(mapping.status)}
                                                     </div>
                                                 </div>
                                                 <div className="mg-v2-mapping-card-actions">

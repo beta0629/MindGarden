@@ -8,6 +8,7 @@ import { getPackageOptions } from '../../utils/commonCodeUtils';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import { getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import { 
     MAPPING_CREATION_STEPS, 
     MAPPING_CREATION_STEP_LABELS,
@@ -498,7 +499,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                     notificationManager.success(
                         `🎉 매칭이 완료되었습니다!\n📋 상담사: ${consultantName}\n` +
                         `👤 내담자: ${ clientName }\n📦 패키지: ${ packageName }\n` +
-                        `✅ 상태: ${ result.data?.status || 'ACTIVE' }`
+                        `✅ 상태: ${ getMappingStatusKoreanNameSync(result.data?.status || 'ACTIVE') }`
                     );
                     
                     setStep(4);

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Info, XCircle, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
 import UnifiedLoading from '../../common/UnifiedLoading';
+import { getMappingStatusKoreanNameSync, getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 
 /**
  * 매칭 상세보기 모달 컴포넌트
@@ -53,32 +54,38 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
     const getStatusBadge = (status) => {
         const statusConfig = {
-            'ACTIVE': { label: '활성', className: 'status-active' },
-            'PENDING_PAYMENT': { label: '입금대기', className: 'status-pending' },
-            'PAYMENT_CONFIRMED': { label: '입금확인', className: 'status-confirmed' },
-            'TERMINATED': { label: '종료', className: 'status-terminated' },
-            'SESSIONS_EXHAUSTED': { label: '회기소진', className: 'status-exhausted' }
+            'ACTIVE': { className: 'status-active' },
+            'PENDING_PAYMENT': { className: 'status-pending' },
+            'PAYMENT_CONFIRMED': { className: 'status-confirmed' },
+            'TERMINATED': { className: 'status-terminated' },
+            'SESSIONS_EXHAUSTED': { className: 'status-exhausted' },
+            'INACTIVE': { className: 'status-inactive' },
+            'SUSPENDED': { className: 'status-suspended' }
         };
         
-        const config = statusConfig[status] || { label: status || '알 수 없음', className: 'status-default' };
+        const config = statusConfig[status] || { className: 'status-default' };
+        const label = getMappingStatusKoreanNameSync(status);
+        
         return (
             <span className={`mg-v2-badge ${config.className}`}>
-                {config.label}
+                {label}
             </span>
         );
     };
 
     const getPaymentStatusBadge = (paymentStatus) => {
         const statusConfig = {
-            'PENDING': { label: '결제대기', className: 'payment-pending' },
-            'APPROVED': { label: '결제완료', className: 'payment-approved' },
-            'REJECTED': { label: '결제거부', className: 'payment-rejected' }
+            'PENDING': { className: 'payment-pending' },
+            'APPROVED': { className: 'payment-approved' },
+            'REJECTED': { className: 'payment-rejected' }
         };
         
-        const config = statusConfig[paymentStatus] || { label: paymentStatus || '알 수 없음', className: 'payment-default' };
+        const config = statusConfig[paymentStatus] || { className: 'payment-default' };
+        const label = getUserStatusKoreanNameSync(paymentStatus) || '알 수 없음';
+        
         return (
             <span className={`mg-v2-badge ${config.className}`}>
-                {config.label}
+                {label}
             </span>
         );
     };

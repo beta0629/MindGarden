@@ -5,6 +5,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { WELCOME_SECTION_CSS } from '../../constants/css';
 import { DASHBOARD_MESSAGES } from '../../constants/dashboard';
 import WeatherCard from './WeatherCard';
+import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
 import './WelcomeSection.css';
 
@@ -152,7 +153,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                         {consultation.consultantName} 상담사
                       </div>
                       <div className={`consultation-status-badge consultation-status-badge--${consultation.status.toLowerCase()}`}>
-                        {consultation.status === 'CONFIRMED' ? '확정' : consultation.status === 'BOOKED' ? '예약' : consultation.status}
+                        {getStatusLabel(consultation.status)}
                       </div>
                     </div>
                   ))}
@@ -201,7 +202,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                             {consultation.startTime} - {consultation.endTime}
                           </div>
                           <div className={`consultation-status consultation-status--${consultation.status.toLowerCase()}`}>
-                            {consultation.status === 'CONFIRMED' ? '확정' : consultation.status === 'BOOKED' ? '예약' : consultation.status}
+                            {getStatusLabel(consultation.status)}
                           </div>
                         </div>
                         <div className="consultation-consultant">

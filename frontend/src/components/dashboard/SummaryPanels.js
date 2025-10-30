@@ -4,6 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { SUMMARY_PANELS_CSS } from '../../constants/css';
 import { DASHBOARD_ICONS, DASHBOARD_LABELS, DASHBOARD_MESSAGES } from '../../constants/dashboard';
 import { RoleUtils } from '../../constants/roles';
+import { getStatusLabel } from '../../utils/colorUtils';
 import './SummaryPanels.css';
 
 const SummaryPanels = ({ user, consultationData }) => {
@@ -83,7 +84,7 @@ const SummaryPanels = ({ user, consultationData }) => {
                             className="summary-schedule-status"
                             data-status={schedule.status}
                           >
-                            {schedule.status === 'CONFIRMED' ? '확정' : schedule.status === 'BOOKED' ? '예약' : schedule.status}
+                            {getStatusLabel(schedule.status)}
                           </div>
                         </div>
                       ))}

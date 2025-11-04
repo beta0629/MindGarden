@@ -778,13 +778,33 @@ public class OAuth2Controller {
                     // 웹 클라이언트인 경우 기존 로직 사용
                     // 사용자 역할에 따른 리다이렉트 (공통 유틸리티 사용)
                     String frontendUrl = getFrontendBaseUrl(request);
-                    String redirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
+                    String baseRedirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
+                    
+                    // provider 정보 가져오기
+                    String provider = "KAKAO";
+                    
+                    // 사용자 정보를 URL 파라미터로 전달 (세션 복원용)
+                    String redirectUrl = baseRedirectUrl + "?" +
+                        "oauth=success" +
+                        "&userId=" + user.getId() +
+                        "&email=" + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8) +
+                        "&name=" + URLEncoder.encode(user.getName(), StandardCharsets.UTF_8) +
+                        "&nickname=" + URLEncoder.encode(user.getNickname() != null ? user.getNickname() : "", StandardCharsets.UTF_8) +
+                        "&role=" + user.getRole() +
+                        "&profileImage=" + URLEncoder.encode(user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "", StandardCharsets.UTF_8) +
+                        "&provider=" + provider;
                     
                     // 세션 쿠키 설정을 명시적으로 추가
-        return ResponseEntity.status(302)
-            .header("Location", redirectUrl)
-            .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; SameSite=None; Max-Age=3600; HttpOnly=false", session.getId()))
-            .build();
+                    String sessionId = session.getId();
+                    String cookieValue = String.format("JSESSIONID=%s; Path=/; SameSite=None; Max-Age=3600; Secure; HttpOnly=false", sessionId);
+                    
+                    log.info("세션 쿠키 설정: {}", cookieValue);
+                    log.info("리다이렉트 URL: {}", redirectUrl);
+                    
+                    return ResponseEntity.status(302)
+                        .header("Location", redirectUrl)
+                        .header("Set-Cookie", cookieValue)
+                        .build();
                 }
             } else if (response.isRequiresSignup()) {
                 // 간편 회원가입이 필요한 경우

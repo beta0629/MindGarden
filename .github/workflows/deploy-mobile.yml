@@ -91,6 +91,11 @@ jobs:
         NODE_BINARY: ${{ env.NODE_BINARY }}
       run: |
         cd mobile/android
+        
+        echo "현재 디렉토리: $(pwd)"
+        echo "디렉토리 구조:"
+        ls -la | head -20
+        
         # Gradle wrapper 디렉토리 생성
         mkdir -p gradle/wrapper
         
@@ -106,25 +111,42 @@ jobs:
         zipStoreBase=GRADLE_USER_HOME
         zipStorePath=wrapper/dists
         EOF
+        else
+          echo "✅ gradle-wrapper.properties 존재"
+          cat gradle/wrapper/gradle-wrapper.properties
         fi
         
         # gradle-wrapper.jar 파일 확인 및 생성
         if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
           echo "⚠️ gradle-wrapper.jar 없음, 다운로드 시도..."
+          # Gradle wrapper JAR 다운로드 (Gradle 9.0.0)
           curl -L "https://raw.githubusercontent.com/gradle/gradle/v9.0.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar || {
-            echo "⚠️ 직접 다운로드 실패, Gradle wrapper 초기화 시도..."
-            # Gradle wrapper 초기화
-            GRADLE_VERSION=$(grep -oP 'gradle-\K[0-9.]+' gradle/wrapper/gradle-wrapper.properties 2>/dev/null | head -1 || echo "9.0.0")
-            curl -L "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip
-            unzip -q /tmp/gradle.zip -d /tmp/
-            cp /tmp/gradle-${GRADLE_VERSION}/lib/gradle-wrapper-*.jar gradle/wrapper/gradle-wrapper.jar 2>/dev/null || echo "⚠️ 복사 실패"
-            rm -rf /tmp/gradle.zip /tmp/gradle-${GRADLE_VERSION}
+            echo "⚠️ GitHub에서 다운로드 실패, Maven Central에서 다운로드 시도..."
+            curl -L "https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/9.0.0/gradle-wrapper-9.0.0.jar" -o gradle/wrapper/gradle-wrapper.jar || {
+              echo "⚠️ Maven Central에서도 실패, Gradle 배포 사이트에서 다운로드 시도..."
+              curl -L "https://services.gradle.org/distributions/gradle-9.0.0-bin.zip" -o /tmp/gradle.zip
+              unzip -q /tmp/gradle.zip -d /tmp/
+              cp /tmp/gradle-9.0.0/lib/gradle-wrapper-*.jar gradle/wrapper/gradle-wrapper.jar 2>/dev/null || echo "⚠️ 복사 실패"
+              rm -rf /tmp/gradle.zip /tmp/gradle-9.0.0
+            }
           }
+        else
+          echo "✅ gradle-wrapper.jar 존재"
         fi
         
         # 파일 확인
         echo "Gradle wrapper 파일 확인:"
         ls -la gradle/wrapper/ || echo "⚠️ gradle/wrapper 디렉토리 없음"
+        
+        # 파일 크기 확인
+        if [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+          JAR_SIZE=$(stat -f%z gradle/wrapper/gradle-wrapper.jar 2>/dev/null || stat -c%s gradle/wrapper/gradle-wrapper.jar 2>/dev/null || echo "0")
+          echo "gradle-wrapper.jar 크기: ${JAR_SIZE} bytes"
+          if [ "$JAR_SIZE" -lt 1000 ]; then
+            echo "⚠️ JAR 파일이 너무 작음, 다운로드 실패로 보임"
+            exit 1
+          fi
+        fi
         
         chmod +x gradlew
         ./gradlew assembleRelease --stacktrace

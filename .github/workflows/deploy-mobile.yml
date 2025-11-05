@@ -150,7 +150,19 @@ jobs:
         fi
         
         chmod +x gradlew
-        ./gradlew assembleRelease --stacktrace
+        
+        # 빌드 최적화 옵션 추가
+        ./gradlew assembleRelease \
+          --stacktrace \
+          --no-daemon \
+          --max-workers=2 \
+          --build-cache \
+          --parallel \
+          || {
+            echo "⚠️ 첫 번째 빌드 실패, 재시도..."
+            ./gradlew clean
+            ./gradlew assembleRelease --stacktrace --no-daemon
+          }
         
     - name: 📦 Android AAB 빌드 (Google Play 업로드용)
       env:

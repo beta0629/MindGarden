@@ -124,6 +124,8 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
+    // Hermes 또는 JSC 선택 (gradle.properties에서 읽기)
+    def hermesEnabled = project.findProperty('hermesEnabled') ?: 'true'
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {

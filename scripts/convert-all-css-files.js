@@ -162,9 +162,9 @@ function convertFile(filePath) {
 
 // CSS 파일 찾기
 const directories = [
-  '/Users/mind/mindGarden/frontend/src/components/admin',
-  '/Users/mind/mindGarden/frontend/src/components/schedule',
-  '/Users/mind/mindGarden/frontend/src/components/common',
+  path.join(__dirname, '../frontend/src/components/admin'),
+  path.join(__dirname, '../frontend/src/components/schedule'),
+  path.join(__dirname, '../frontend/src/components/common'),
 ];
 
 console.log('🎨 모든 CSS 파일의 하드코딩을 변수로 변환합니다...\n');

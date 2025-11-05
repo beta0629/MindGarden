@@ -28,8 +28,9 @@ react {
     //   Reads NODE_BINARY from gradle.properties if present; falls back to 'node'
     //nodeExecutableAndArgs = ["/Users/mind/.nvm/versions/node/v22.14.0/bin/node"]
 
-    // NODE_BINARY 경로 설정 (GitHub Actions에서는 환경변수 사용)
-    // nodeExecutableAndArgs = ["/Users/mind/.nvm/versions/node/v22.14.0/bin/node"]
+    // NODE_BINARY 경로 설정 (GitHub Actions에서는 환경변수 NODE_BINARY 사용)
+    // 로컬 개발 시 필요하면 환경변수 또는 gradle.properties에서 설정
+    // nodeExecutableAndArgs = System.getenv("NODE_BINARY") ? [System.getenv("NODE_BINARY")] : ["node"]
     autolinkLibrariesWithApp()
     //
     //   The command to run when bundling. By default is 'bundle'

@@ -45,6 +45,8 @@ application-prod.yml
 application-production.yml
 application-*.yml
 *.properties
+# Android local.properties는 각 개발자 환경에 따라 달라지므로 제외
+mobile/android/local.properties
 
 # Environment variables - 보안상 중요
 .env

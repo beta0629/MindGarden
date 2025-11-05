@@ -67,6 +67,29 @@ jobs:
         cd mobile
         npm ci
         
+    - name: 🔧 패치 적용 확인
+      run: |
+        cd mobile
+        echo "패치 파일 확인:"
+        ls -la patches/ || echo "⚠️ patches 디렉토리 없음"
+        echo ""
+        echo "postinstall 실행 (패치 적용):"
+        npm run postinstall || echo "⚠️ postinstall 실패"
+        echo ""
+        echo "react-native-gesture-handler 패치 확인:"
+        if [ -f "patches/react-native-gesture-handler+2.29.0.patch" ]; then
+          echo "✅ 패치 파일 존재"
+          # 패치가 적용되었는지 확인 (build.gradle 파일 확인)
+          if grep -q "rootProject.projectDir" node_modules/react-native-gesture-handler/android/build.gradle 2>/dev/null; then
+            echo "✅ 패치 적용 확인됨 (rootProject.projectDir 사용)"
+          else
+            echo "⚠️ 패치 적용 확인 실패 - 수동 적용 시도..."
+            npx patch-package react-native-gesture-handler || echo "⚠️ 수동 적용 실패"
+          fi
+        else
+          echo "⚠️ 패치 파일 없음"
+        fi
+        
     - name: 🔧 Android SDK 설정
       uses: android-actions/setup-android@v3
       with:

@@ -32,28 +32,13 @@ allprojects {
 }
 
 // 서브프로젝트에 기본 Android 설정 적용 (react-native-gesture-handler 등)
-// 각 서브프로젝트의 build.gradle이 로드되기 전에 설정
+// beforeEvaluate만 사용하여 프로젝트 평가 전에 설정 주입
 subprojects { subproject ->
     subproject.beforeEvaluate {
-        // Android 관련 설정을 미리 정의
+        // ext 속성으로 설정값 노출 (서브프로젝트의 build.gradle에서 사용 가능)
         subproject.ext.compileSdkVersion = rootProject.ext.compileSdkVersion
         subproject.ext.buildToolsVersion = rootProject.ext.buildToolsVersion
-    }
-    
-    // 평가 후에도 설정이 없으면 적용
-    subproject.afterEvaluate {
-        try {
-            if (subproject.hasProperty('android') && subproject.android != null) {
-                if (!subproject.android.hasProperty('compileSdkVersion') || subproject.android.compileSdkVersion == null) {
-                    subproject.android.compileSdkVersion = rootProject.ext.compileSdkVersion
-                }
-                if (!subproject.android.hasProperty('buildToolsVersion') || subproject.android.buildToolsVersion == null) {
-                    subproject.android.buildToolsVersion = rootProject.ext.buildToolsVersion
-                }
-            }
-        } catch (Exception e) {
-            // 이미 평가된 프로젝트인 경우 무시
-            // println "Warning: Could not set Android SDK version for ${subproject.name}: ${e.message}"
-        }
+        subproject.ext.minSdkVersion = rootProject.ext.minSdkVersion
+        subproject.ext.targetSdkVersion = rootProject.ext.targetSdkVersion
     }
 }

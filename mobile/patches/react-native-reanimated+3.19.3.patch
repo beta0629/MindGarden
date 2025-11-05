@@ -533,3 +533,43 @@ index 0000000..e102f43
 +      throw GradleScriptException("[Reanimated] Unknown JS runtime ${JS_RUNTIME}.")
 +    }
 +}
+diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
+index bb61ff7..772d0ce 100644
+--- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
++++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
+@@ -10,7 +10,18 @@ find_package(fbjni REQUIRED CONFIG)
+ find_package(ReactAndroid REQUIRED CONFIG)
+ 
+ if(${JS_RUNTIME} STREQUAL "hermes")
+-  find_package(hermes-engine REQUIRED CONFIG)
++  # React Native 0.82+ uses ReactAndroid prefab for Hermes
++  # Try to find hermes-engine prefab first, fallback to ReactAndroid::hermes if not found
++  find_package(hermes-engine CONFIG QUIET)
++  if(NOT hermes-engine_FOUND)
++    # React Native 0.82+ provides Hermes through ReactAndroid prefab
++    # Check if ReactAndroid::hermes is available
++    if(TARGET ReactAndroid::hermes)
++      message(STATUS "Using ReactAndroid::hermes instead of hermes-engine::libhermes")
++    else()
++      message(WARNING "Hermes prefab not found, but continuing...")
++    endif()
++  endif()
+ endif()
+ 
+ add_library(worklets SHARED ${WORKLETS_COMMON_CPP_SOURCES}
+@@ -57,7 +68,14 @@ else()
+ endif()
+ 
+ if(${JS_RUNTIME} STREQUAL "hermes")
+-  target_link_libraries(worklets hermes-engine::libhermes)
++  # Try to link hermes-engine::libhermes first, fallback to ReactAndroid::hermes
++  if(TARGET hermes-engine::libhermes)
++    target_link_libraries(worklets hermes-engine::libhermes)
++  elseif(TARGET ReactAndroid::hermes)
++    target_link_libraries(worklets ReactAndroid::hermes)
++  else()
++    message(FATAL_ERROR "Hermes library not found. Neither hermes-engine::libhermes nor ReactAndroid::hermes is available.")
++  endif()
+ 
+   if(${HERMES_ENABLE_DEBUGGER})
+     string(APPEND CMAKE_CXX_FLAGS " -DHERMES_ENABLE_DEBUGGER=1")

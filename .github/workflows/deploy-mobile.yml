@@ -130,6 +130,22 @@ jobs:
       with:
         node-version: '20'
         
+    - name: 📁 mobile 디렉토리 확인
+      run: |
+        echo "현재 디렉토리: $(pwd)"
+        echo "디렉토리 구조:"
+        ls -la
+        echo "mobile 폴더 확인:"
+        if [ -d "mobile" ]; then
+          echo "✅ mobile 디렉토리 확인됨"
+          ls -la mobile/
+        else
+          echo "❌ mobile 디렉토리가 없습니다!"
+          echo "전체 디렉토리 구조:"
+          find . -maxdepth 2 -type d | head -20
+          exit 1
+        fi
+        
     - name: 📦 의존성 설치
       run: |
         cd mobile

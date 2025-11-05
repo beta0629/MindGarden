@@ -1,0 +1,134 @@
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
+
+platform :ios, min_ios_version_supported
+prepare_react_native_project!
+
+linkage = ENV['USE_FRAMEWORKS']
+if linkage != nil
+  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+  use_frameworks! :linkage => linkage.to_sym
+end
+
+target 'MindGardenMobile' do
+  config = use_native_modules!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  use_modular_headers!
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false,
+      # :ccache_enabled => true
+    )
+    
+    # 모든 타겟의 deployment target을 최소 15.1로 설정 및 Xcode 26.0.1 호환성 설정
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 15.1
+          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+        end
+        # Xcode 26.0.1 호환성: Explicitly Built Modules 비활성화 (모듈 충돌 방지)
+        if target.name.include?('React-Runtime') || target.name.include?('react_runtime') || 
+           target.name.include?('ReactCommon') || target.name.include?('React-RCTRuntime')
+          config.build_settings['DEFINES_MODULE'] = 'NO'
+        end
+      end
+    end
+    
+    # react_runtime 모듈 중복 정의 문제 해결 (Xcode 26.0.1 호환성)
+    react_runtime_dir = File.join(installer.sandbox.root, 'Headers/Public/react_runtime')
+    jsitooling_modulemap = File.join(react_runtime_dir, 'React-jsitooling.modulemap')
+    runtimecore_modulemap = File.join(react_runtime_dir, 'React-RuntimeCore.modulemap')
+    
+    # React-jsitooling.modulemap 수정: Xcode 26.0.1 호환성
+    # 두 modulemap이 같은 디렉터리를 커버하여 충돌 발생
+    # 해결: jsitooling.modulemap을 explicit headers로 변경 (umbrella 제거)
+    if File.exist?(jsitooling_modulemap)
+      content = File.read(jsitooling_modulemap)
+      # umbrella header를 제거하고 빈 모듈로 변경 (다른 Pods가 찾을 수 있도록 파일은 유지)
+      # 단, 실제 내용은 최소화하여 충돌 방지
+      new_content = <<~MODULEMAP
+        module react_runtime_jsitooling {
+          // Umbrella removed to avoid conflict with React-RuntimeCore
+          // This module is disabled for Xcode 26.0.1 compatibility
+          export *
+        }
+      MODULEMAP
+      File.write(jsitooling_modulemap, new_content)
+      puts "✅ Fixed React-jsitooling.modulemap (removed umbrella to avoid conflict)"
+    end
+    
+    # React-RuntimeCore.modulemap도 확인하여 exclude 제대로 설정
+    if File.exist?(runtimecore_modulemap)
+      content = File.read(runtimecore_modulemap)
+      # exclude가 없으면 추가
+      unless content.include?('exclude header "React-jsitooling-umbrella.h"')
+        content = content.gsub(/umbrella header/, "umbrella header\n  exclude header \"React-jsitooling-umbrella.h\"")
+      end
+      File.write(runtimecore_modulemap, content)
+      puts "✅ Fixed React-RuntimeCore.modulemap exclude"
+    end
+    
+    # ReactCommon 모듈 중복 정의 문제 해결 (Xcode 26.0.1 호환성)
+    reactcommon_dir = File.join(installer.sandbox.root, 'Headers/Public/ReactCommon')
+    reactcommon_modulemap = File.join(reactcommon_dir, 'ReactCommon.modulemap')
+    react_runtimeapple_modulemap = File.join(reactcommon_dir, 'React-RuntimeApple.modulemap')
+    
+    # ReactCommon.modulemap 수정: inferred submodules 제거 및 exclude 추가
+    if File.exist?(reactcommon_modulemap)
+      content = File.read(reactcommon_modulemap)
+      original_content = content.dup
+      
+      # inferred submodules 제거
+      if content.include?('module * { export * }')
+        content = content.gsub(/module \* \{ export \* \}/, '')
+      end
+      
+      # React-RuntimeApple-umbrella.h를 exclude에 추가 (디렉터리 충돌 방지)
+      unless content.include?('exclude header "React-RuntimeApple-umbrella.h"')
+        if content.include?('exclude header "React-RuntimeApple-umbrella.h"')
+          # 이미 있음
+        elsif content.include?('exclude header')
+          # 기존 exclude 뒤에 추가
+          content = content.gsub(/(exclude header "[^"]+")/, "\\1\n  exclude header \"React-RuntimeApple-umbrella.h\"")
+        else
+          # exclude가 없으면 umbrella header 뒤에 추가
+          content = content.gsub(/umbrella header/, "umbrella header\n  exclude header \"React-RuntimeApple-umbrella.h\"")
+        end
+      end
+      
+      if content != original_content
+        File.write(reactcommon_modulemap, content)
+        puts "✅ Fixed ReactCommon.modulemap (removed inferred submodules and added exclude)"
+      end
+    end
+    
+    # React-RuntimeApple.modulemap 수정: umbrella 제거로 디렉터리 충돌 방지
+    if File.exist?(react_runtimeapple_modulemap)
+      content = File.read(react_runtimeapple_modulemap)
+      # umbrella header를 제거하고 빈 모듈로 변경 (디렉터리 충돌 방지)
+      # 다른 Pods가 찾을 수 있도록 파일은 유지하되, 실제 내용은 최소화
+      new_content = <<~MODULEMAP
+        module ReactCommonRuntimeApple {
+          // Umbrella removed to avoid conflict with ReactCommon
+          // This module is disabled for Xcode 26.0.1 compatibility
+          export *
+        }
+      MODULEMAP
+      File.write(react_runtimeapple_modulemap, new_content)
+      puts "✅ Fixed React-RuntimeApple.modulemap (removed umbrella to avoid conflict)"
+    end
+  end
+end

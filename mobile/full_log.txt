@@ -1,0 +1,17 @@
+--------- beginning of main
+10-31 13:11:54.763   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:11:54.783  1056  1199 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-31 13:11:54.787  1056  1199 D SatelliteController: getCarrierRoamingNtnConnectType: Falling back to global carrier config connect type: 0
+10-31 13:11:57.779   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:12:00.786   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:12:03.798   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:12:04.788  1056  1199 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-31 13:12:04.789  1056  1199 D SatelliteController: getCarrierRoamingNtnConnectType: Falling back to global carrier config connect type: 0
+10-31 13:12:06.807   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:12:09.814   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:12:12.833   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:12:14.792  1056  1199 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-31 13:12:14.796  1056  1199 D SatelliteController: getCarrierRoamingNtnConnectType: Falling back to global carrier config connect type: 0
+10-31 13:12:15.841   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:12:18.847   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:12:21.856   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]

@@ -1,0 +1,53 @@
+/**
+ * 매칭 관련 상수 정의
+ * 하드코딩 금지 - 모든 매칭 관련 상수는 여기서 관리
+ */
+
+// 기본 매칭 설정값
+export const DEFAULT_MAPPING_CONFIG = {
+  TOTAL_SESSIONS: 10,
+  PACKAGE_NAME: '기본 10회기 패키지',
+  PACKAGE_PRICE: 500000,
+  PAYMENT_METHOD: '신용카드',
+  RESPONSIBILITY: '정신건강 상담',
+  MIN_SESSIONS: 1,
+  MAX_SESSIONS: 1000,
+};
+
+// 결제 방법 옵션
+export const PAYMENT_METHODS = {
+  CARD: '신용카드',
+  BANK_TRANSFER: '계좌이체',
+  CASH: '현금',
+};
+
+// 결제 방법 배열 (UI에서 사용)
+export const PAYMENT_METHOD_OPTIONS = [
+  PAYMENT_METHODS.CARD,
+  PAYMENT_METHODS.BANK_TRANSFER,
+  PAYMENT_METHODS.CASH,
+];
+
+// 결제 방법 코드 매핑 (서버와의 통신용)
+export const PAYMENT_METHOD_CODE_MAP = {
+  [PAYMENT_METHODS.CARD]: 'CARD',
+  [PAYMENT_METHODS.BANK_TRANSFER]: 'BANK_TRANSFER',
+  [PAYMENT_METHODS.CASH]: 'CASH',
+};
+
+// 매칭 상태
+export const MAPPING_STATUS = {
+  PENDING_PAYMENT: 'PENDING_PAYMENT',
+  PAYMENT_CONFIRMED: 'PAYMENT_CONFIRMED',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+};
+
+export default {
+  DEFAULT_MAPPING_CONFIG,
+  PAYMENT_METHODS,
+  PAYMENT_METHOD_OPTIONS,
+  PAYMENT_METHOD_CODE_MAP,
+  MAPPING_STATUS,
+};
+

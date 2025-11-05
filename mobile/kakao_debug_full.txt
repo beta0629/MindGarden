@@ -1,0 +1,9 @@
+--------- beginning of main
+10-31 13:24:46.086  1026  1148 W AlarmManager: Unrecognized alarm listener com.android.networkstack.android.net.ip.IpClientLinkObserver$Dhcp6PdPreferredPrefixAlarmListener@fb6a257
+10-31 13:24:46.087  1026  1148 D ApfFilter: (wlan0): Adding RA fe80::2 -> ff02::1 1800s fec0::/64 86400s/14400s 
+10-31 13:24:46.299  1225  1225 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.libs.gmscorelogger.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentDirectBootAwareApiService }
+10-31 13:24:47.930   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:24:50.938   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:24:53.943   687   832 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+10-31 13:24:55.017  1056  1199 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+10-31 13:24:55.018  1056  1199 D SatelliteController: getCarrierRoamingNtnConnectType: Falling back to global carrier config connect type: 0

@@ -1,0 +1,172 @@
+# Fastlane configuration for MindGarden Mobile App
+# iOS와 Android 자동 배포 설정
+
+default_platform(:ios)
+
+platform :ios do
+  desc "iOS 앱을 TestFlight에 배포"
+  lane :beta do
+    # 인증서 및 프로비저닝 프로필 설정
+    setup_ci if ENV['CI']
+
+    # 앱스토어 커넥트 인증
+    app_store_connect_api_key(
+      key_id: ENV['APP_STORE_CONNECT_PRIVATE_KEY_ID'],
+      issuer_id: ENV['APP_STORE_CONNECT_ISSUER_ID'],
+      key_content: ENV['APP_STORE_CONNECT_PRIVATE_KEY'],
+      is_key_content_base64: true
+    )
+
+    # 빌드 번호 증가
+    increment_build_number(
+      build_number: latest_testflight_build_number + 1,
+      xcodeproj: "ios/MindGarden.xcodeproj"
+    )
+
+    # iOS 빌드
+    build_app(
+      scheme: "MindGarden",
+      workspace: "ios/MindGarden.xcworkspace",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          "com.mindgarden.mobile" => "MindGarden AppStore"
+        }
+      }
+    )
+
+    # TestFlight 업로드
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      changelog: "MindGarden 모바일 앱 베타 버전 배포"
+    )
+  end
+
+  desc "iOS 앱을 App Store에 배포"
+  lane :release do
+    # 인증서 및 프로비저닝 프로필 설정
+    setup_ci if ENV['CI']
+
+    # 앱스토어 커넥트 인증
+    app_store_connect_api_key(
+      key_id: ENV['APP_STORE_CONNECT_PRIVATE_KEY_ID'],
+      issuer_id: ENV['APP_STORE_CONNECT_ISSUER_ID'],
+      key_content: ENV['APP_STORE_CONNECT_PRIVATE_KEY'],
+      is_key_content_base64: true
+    )
+
+    # 버전 및 빌드 번호 설정
+    increment_version_number(
+      version_number: ENV['RELEASE_VERSION'],
+      xcodeproj: "ios/MindGarden.xcodeproj"
+    )
+
+    increment_build_number(
+      build_number: ENV['BUILD_NUMBER'],
+      xcodeproj: "ios/MindGarden.xcodeproj"
+    )
+
+    # iOS 빌드
+    build_app(
+      scheme: "MindGarden",
+      workspace: "ios/MindGarden.xcworkspace",
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          "com.mindgarden.mobile" => "MindGarden AppStore"
+        }
+      }
+    )
+
+    # App Store 업로드
+    upload_to_app_store(
+      force: true,
+      reject_if_possible: true,
+      skip_metadata: false,
+      skip_screenshots: true,
+      skip_binary_upload: false,
+      automatic_release: false,
+      submission_information: {
+        add_id_info_uses_idfa: false,
+        export_compliance_encryption_updated: false,
+        export_compliance_uses_encryption: false
+      }
+    )
+  end
+end
+
+platform :android do
+  desc "Android 앱을 Google Play Beta에 배포"
+  lane :beta do
+    # Google Play 서비스 계정 키 파일 설정
+    ENV['SUPPLY_JSON_KEY_DATA'] = ENV['GOOGLE_PLAY_SERVICE_ACCOUNT_JSON']
+
+    # 버전 코드 증가
+    increment_version_code(
+      gradle_file_path: "android/app/build.gradle"
+    )
+
+    # Android 빌드
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: "android",
+      properties: {
+        "android.injected.signing.store.file" => ENV['ANDROID_KEYSTORE_FILE'],
+        "android.injected.signing.store.password" => ENV['ANDROID_KEYSTORE_PASSWORD'],
+        "android.injected.signing.key.alias" => ENV['ANDROID_KEY_ALIAS'],
+        "android.injected.signing.key.password" => ENV['ANDROID_KEY_PASSWORD']
+      }
+    )
+
+    # Google Play Beta 트랙에 업로드
+    upload_to_play_store(
+      track: "beta",
+      aab: "android/app/build/outputs/bundle/release/app-release.aab",
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Android 앱을 Google Play 프로덕션에 배포"
+  lane :release do
+    # Google Play 서비스 계정 키 파일 설정
+    ENV['SUPPLY_JSON_KEY_DATA'] = ENV['GOOGLE_PLAY_SERVICE_ACCOUNT_JSON']
+
+    # 버전 코드 및 이름 설정
+    increment_version_code(
+      gradle_file_path: "android/app/build.gradle"
+    )
+
+    increment_version_name(
+      version_name: ENV['RELEASE_VERSION'],
+      gradle_file_path: "android/app/build.gradle"
+    )
+
+    # Android 빌드
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: "android",
+      properties: {
+        "android.injected.signing.store.file" => ENV['ANDROID_KEYSTORE_FILE'],
+        "android.injected.signing.store.password" => ENV['ANDROID_KEYSTORE_PASSWORD'],
+        "android.injected.signing.key.alias" => ENV['ANDROID_KEY_ALIAS'],
+        "android.injected.signing.key.password" => ENV['ANDROID_KEY_PASSWORD']
+      }
+    )
+
+    # Google Play 프로덕션 트랙에 업로드
+    upload_to_play_store(
+      track: "production",
+      aab: "android/app/build/outputs/bundle/release/app-release.aab",
+      rollout: "0.1", # 10% 점진적 출시
+      skip_upload_metadata: false,
+      skip_upload_changelogs: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false
+    )
+  end
+end

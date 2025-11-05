@@ -91,15 +91,41 @@ jobs:
         NODE_BINARY: ${{ env.NODE_BINARY }}
       run: |
         cd mobile/android
-        # Gradle wrapper 파일 확인 및 생성
-        if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-          echo "⚠️ gradle-wrapper.jar 없음, 생성 시도..."
-          mkdir -p gradle/wrapper
-          # Gradle wrapper 다운로드
-          GRADLE_VERSION=$(grep distributionUrl gradle/wrapper/gradle-wrapper.properties 2>/dev/null | cut -d'/' -f5 | cut -d'-' -f1 || echo "8.3")
-          echo "Gradle 버전: $GRADLE_VERSION"
-          curl -L "https://raw.githubusercontent.com/gradle/gradle/v${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar || echo "⚠️ 다운로드 실패"
+        # Gradle wrapper 디렉토리 생성
+        mkdir -p gradle/wrapper
+        
+        # gradle-wrapper.properties 파일 확인 및 생성
+        if [ ! -f "gradle/wrapper/gradle-wrapper.properties" ]; then
+          echo "⚠️ gradle-wrapper.properties 없음, 생성..."
+          cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-9.0.0-bin.zip
+        networkTimeout=10000
+        validateDistributionUrl=true
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+        EOF
         fi
+        
+        # gradle-wrapper.jar 파일 확인 및 생성
+        if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+          echo "⚠️ gradle-wrapper.jar 없음, 다운로드 시도..."
+          curl -L "https://raw.githubusercontent.com/gradle/gradle/v9.0.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar || {
+            echo "⚠️ 직접 다운로드 실패, Gradle wrapper 초기화 시도..."
+            # Gradle wrapper 초기화
+            GRADLE_VERSION=$(grep -oP 'gradle-\K[0-9.]+' gradle/wrapper/gradle-wrapper.properties 2>/dev/null | head -1 || echo "9.0.0")
+            curl -L "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip
+            unzip -q /tmp/gradle.zip -d /tmp/
+            cp /tmp/gradle-${GRADLE_VERSION}/lib/gradle-wrapper-*.jar gradle/wrapper/gradle-wrapper.jar 2>/dev/null || echo "⚠️ 복사 실패"
+            rm -rf /tmp/gradle.zip /tmp/gradle-${GRADLE_VERSION}
+          }
+        fi
+        
+        # 파일 확인
+        echo "Gradle wrapper 파일 확인:"
+        ls -la gradle/wrapper/ || echo "⚠️ gradle/wrapper 디렉토리 없음"
+        
         chmod +x gradlew
         ./gradlew assembleRelease --stacktrace
         

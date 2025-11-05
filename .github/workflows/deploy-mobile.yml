@@ -38,7 +38,7 @@ jobs:
         ls -la
         echo "mobile 폴더 확인:"
         if [ -d "mobile" ]; then
-          if [ -f "mobile/.git" ]; then
+          if [ -f "mobile/.git" ] || [ -d "mobile/.git" ]; then
             echo "✅ mobile 서브모듈 디렉토리 확인됨"
             cd mobile
             git submodule update --init --recursive || true
@@ -141,7 +141,7 @@ jobs:
         ls -la
         echo "mobile 폴더 확인:"
         if [ -d "mobile" ]; then
-          if [ -f "mobile/.git" ]; then
+          if [ -f "mobile/.git" ] || [ -d "mobile/.git" ]; then
             echo "✅ mobile 서브모듈 디렉토리 확인됨"
             cd mobile
             git submodule update --init --recursive || true

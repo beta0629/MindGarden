@@ -28,34 +28,31 @@ jobs:
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
       with:
-        submodules: recursive
         fetch-depth: 0
         
-    - name: 📁 mobile 서브모듈 체크아웃
+    - name: 📁 mobile 폴더 확인 및 체크아웃
       run: |
         echo "현재 디렉토리: $(pwd)"
         echo "디렉토리 구조:"
         ls -la
         echo "mobile 폴더 확인:"
         if [ -d "mobile" ]; then
-          if [ -f "mobile/.git" ] || [ -d "mobile/.git" ]; then
-            echo "✅ mobile 서브모듈 디렉토리 확인됨"
-            cd mobile
-            git submodule update --init --recursive || true
-            cd ..
-          else
-            echo "✅ mobile 일반 폴더 확인됨"
-          fi
-          ls -la mobile/
+          echo "✅ mobile 디렉토리 확인됨"
+          ls -la mobile/ | head -20
         else
           echo "❌ mobile 디렉토리가 없습니다!"
-          echo "서브모듈 초기화 시도..."
-          git submodule update --init --recursive || true
+          echo "서브모듈 체크아웃 시도..."
+          # .gitmodules 파일이 있으면 서브모듈 체크아웃 시도
+          if [ -f ".gitmodules" ]; then
+            git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패"
+          fi
           if [ -d "mobile" ]; then
-            echo "✅ 서브모듈 초기화 성공"
-            ls -la mobile/
+            echo "✅ mobile 디렉토리 확인됨 (서브모듈 체크아웃 성공)"
+            ls -la mobile/ | head -20
           else
-            echo "❌ 서브모듈 초기화 실패"
+            echo "❌ mobile 디렉토리를 찾을 수 없습니다!"
+            echo "전체 디렉토리 구조:"
+            find . -maxdepth 2 -type d | head -20
             exit 1
           fi
         fi
@@ -131,34 +128,31 @@ jobs:
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
       with:
-        submodules: recursive
         fetch-depth: 0
         
-    - name: 📁 mobile 서브모듈 체크아웃
+    - name: 📁 mobile 폴더 확인 및 체크아웃
       run: |
         echo "현재 디렉토리: $(pwd)"
         echo "디렉토리 구조:"
         ls -la
         echo "mobile 폴더 확인:"
         if [ -d "mobile" ]; then
-          if [ -f "mobile/.git" ] || [ -d "mobile/.git" ]; then
-            echo "✅ mobile 서브모듈 디렉토리 확인됨"
-            cd mobile
-            git submodule update --init --recursive || true
-            cd ..
-          else
-            echo "✅ mobile 일반 폴더 확인됨"
-          fi
-          ls -la mobile/
+          echo "✅ mobile 디렉토리 확인됨"
+          ls -la mobile/ | head -20
         else
           echo "❌ mobile 디렉토리가 없습니다!"
-          echo "서브모듈 초기화 시도..."
-          git submodule update --init --recursive || true
+          echo "서브모듈 체크아웃 시도..."
+          # .gitmodules 파일이 있으면 서브모듈 체크아웃 시도
+          if [ -f ".gitmodules" ]; then
+            git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패"
+          fi
           if [ -d "mobile" ]; then
-            echo "✅ 서브모듈 초기화 성공"
-            ls -la mobile/
+            echo "✅ mobile 디렉토리 확인됨 (서브모듈 체크아웃 성공)"
+            ls -la mobile/ | head -20
           else
-            echo "❌ 서브모듈 초기화 실패"
+            echo "❌ mobile 디렉토리를 찾을 수 없습니다!"
+            echo "전체 디렉토리 구조:"
+            find . -maxdepth 2 -type d | head -20
             exit 1
           fi
         fi

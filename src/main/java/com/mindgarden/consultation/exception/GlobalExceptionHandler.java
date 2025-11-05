@@ -12,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -139,11 +140,36 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * NoResourceFoundException 처리
+     * React Native Metro 번들러의 hot-update 파일 등 정적 리소스 요청 무시
+     * HTTP 404 Not Found 응답 (조용히 처리)
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException e, HttpServletRequest request) {
+        String resourcePath = request.getRequestURI();
+        
+        // React Native Metro 번들러의 hot-update 파일은 조용히 무시
+        if (resourcePath != null && (resourcePath.contains("hot-update") || resourcePath.endsWith(".hot-update.json"))) {
+            // Metro 번들러 파일은 백엔드에서 처리하지 않음 (조용히 무시)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        
+        // 기타 정적 리소스는 경고 로그만 남기고 조용히 처리
+        log.debug("Static resource not found: {}", resourcePath);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+    
+    /**
      * Exception 처리 (기타 모든 예외)
      * HTTP 500 Internal Server Error 응답
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception e, HttpServletRequest request) {
+        // NoResourceFoundException은 이미 처리되므로 여기서는 제외
+        if (e instanceof NoResourceFoundException) {
+            return handleNoResourceFound((NoResourceFoundException) e, request);
+        }
+        
         log.error("Unexpected error occurred: {}", e.getMessage(), e);
         
         ErrorResponse error = ErrorResponse.of(

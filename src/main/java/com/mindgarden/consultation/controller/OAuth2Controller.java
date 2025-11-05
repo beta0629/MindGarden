@@ -12,6 +12,7 @@ import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.OAuth2FactoryService;
 import com.mindgarden.consultation.service.OAuth2Service;
+import com.mindgarden.consultation.service.UserSessionService;
 import com.mindgarden.consultation.util.DashboardRedirectUtil;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +49,7 @@ public class OAuth2Controller {
     private final UserRepository userRepository;
     private final com.mindgarden.consultation.service.CacheService cacheService;
     private final com.mindgarden.consultation.service.JwtService jwtService;
+    private final UserSessionService userSessionService;
     
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
     private String kakaoClientId;
@@ -410,21 +413,30 @@ public class OAuth2Controller {
                             "&profileImage=" + URLEncoder.encode(user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "", StandardCharsets.UTF_8) +
                             "&sessionId=" + sessionId;
                         
-                        // HTML 페이지 생성 (Deep Link 열기)
+                        log.info("생성된 Deep Link URL (네이버): {}", deepLinkUrl);
+                        log.info("Deep Link 세션 ID: {}", sessionId);
+                        
+                        // HTML 페이지 생성 (iOS Safari 보안 정책으로 버튼 포함, 자동 시도도 함께)
                         String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>" +
                             "<title>로그인 처리 중...</title>" +
                             "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
                             "<style>body{font-family:Arial,sans-serif;text-align:center;padding:50px;background:#f5f5f5;}" +
-                            "h1{color:#333;}</style>" +
+                            "h1{color:#333;}button{background:#03C75A;color:white;border:none;padding:15px 30px;font-size:16px;border-radius:5px;cursor:pointer;margin-top:20px;}" +
+                            "button:hover{background:#02B350;}</style>" +
                             "</head><body>" +
                             "<h1>로그인 처리 중...</h1>" +
-                            "<p>잠시 후 앱으로 이동합니다.</p>" +
+                            "<p>아래 버튼을 눌러 앱을 열어주세요.</p>" +
+                            "<button id='openAppBtn' onclick=\"window.location.href='" + deepLinkUrl.replace("'", "\\'") + "'\">앱 열기</button>" +
                             "<script>" +
+                            "var deepLink = '" + deepLinkUrl.replace("'", "\\'") + "';" +
+                            "// 자동 시도 (실패할 수 있음)" +
                             "setTimeout(function(){" +
-                            "  var deepLink = '" + deepLinkUrl.replace("'", "\\'") + "';" +
                             "  window.location.href = deepLink;" +
-                            "  setTimeout(function(){window.location.href='intent://oauth/callback?success=true&provider=NAVER#Intent;scheme=mindgarden;package=com.mindgardenmobile;end';}, 500);" +
                             "}, 1000);" +
+                            "// 버튼 클릭으로도 시도" +
+                            "document.getElementById('openAppBtn').addEventListener('click', function(){" +
+                            "  window.location.href = deepLink;" +
+                            "});" +
                             "</script>" +
                             "</body></html>";
                         
@@ -752,21 +764,30 @@ public class OAuth2Controller {
                             "&profileImage=" + URLEncoder.encode(user.getProfileImageUrl() != null ? user.getProfileImageUrl() : "", StandardCharsets.UTF_8) +
                             "&sessionId=" + sessionId;
                         
-                        // HTML 페이지 생성 (Deep Link 열기)
+                        log.info("생성된 Deep Link URL (카카오): {}", deepLinkUrl);
+                        log.info("Deep Link 세션 ID: {}", sessionId);
+                        
+                        // HTML 페이지 생성 (iOS Safari 보안 정책으로 버튼 포함, 자동 시도도 함께)
                         String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>" +
                             "<title>로그인 처리 중...</title>" +
                             "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
                             "<style>body{font-family:Arial,sans-serif;text-align:center;padding:50px;background:#f5f5f5;}" +
-                            "h1{color:#333;}</style>" +
+                            "h1{color:#333;}button{background:#FEE500;color:#000;border:none;padding:15px 30px;font-size:16px;border-radius:5px;cursor:pointer;margin-top:20px;font-weight:bold;}" +
+                            "button:hover{background:#FDD835;}</style>" +
                             "</head><body>" +
                             "<h1>로그인 처리 중...</h1>" +
-                            "<p>잠시 후 앱으로 이동합니다.</p>" +
+                            "<p>아래 버튼을 눌러 앱을 열어주세요.</p>" +
+                            "<button id='openAppBtn' onclick=\"window.location.href='" + deepLinkUrl.replace("'", "\\'") + "'\">앱 열기</button>" +
                             "<script>" +
+                            "var deepLink = '" + deepLinkUrl.replace("'", "\\'") + "';" +
+                            "// 자동 시도 (실패할 수 있음)" +
                             "setTimeout(function(){" +
-                            "  var deepLink = '" + deepLinkUrl.replace("'", "\\'") + "';" +
                             "  window.location.href = deepLink;" +
-                            "  setTimeout(function(){window.location.href='intent://oauth/callback?success=true&provider=KAKAO#Intent;scheme=mindgarden;package=com.mindgardenmobile;end';}, 500);" +
                             "}, 1000);" +
+                            "// 버튼 클릭으로도 시도" +
+                            "document.getElementById('openAppBtn').addEventListener('click', function(){" +
+                            "  window.location.href = deepLink;" +
+                            "});" +
                             "</script>" +
                             "</body></html>";
                         
@@ -980,6 +1001,173 @@ public class OAuth2Controller {
             
         } catch (Exception e) {
             log.error("SpringSecurity 인증 컨텍스트 설정 실패: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 네이티브 SDK 로그인 (모바일 앱 전용)
+     * Deep Link 없이 accessToken으로 직접 로그인
+     */
+    @PostMapping("/social-login")
+    public ResponseEntity<Map<String, Object>> socialLoginWithAccessToken(
+            @RequestBody Map<String, Object> requestBody,
+            HttpServletRequest request,
+            HttpServletResponse response,
+            HttpSession session) {
+        try {
+            String provider = (String) requestBody.get("provider");
+            String accessToken = (String) requestBody.get("accessToken");
+            
+            // userId는 Long 또는 String으로 올 수 있으므로 안전하게 처리
+            String userIdStr = null;
+            Object userIdObj = requestBody.get("userId");
+            if (userIdObj != null) {
+                if (userIdObj instanceof Long) {
+                    userIdStr = String.valueOf((Long) userIdObj);
+                } else if (userIdObj instanceof String) {
+                    userIdStr = (String) userIdObj;
+                } else {
+                    userIdStr = String.valueOf(userIdObj);
+                }
+            }
+            
+            String email = (String) requestBody.get("email");
+            String nickname = (String) requestBody.get("nickname");
+            String profileImage = (String) requestBody.get("profileImage");
+            
+            log.info("네이티브 SDK 로그인 요청: provider={}, userId={}, email={}", 
+                    provider, userIdStr, email);
+            
+            if (provider == null || accessToken == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "provider와 accessToken이 필요합니다."
+                ));
+            }
+            
+            // OAuth2 서비스 가져오기
+            OAuth2Service oauth2Service = oauth2FactoryService.getOAuth2Service(provider);
+            if (oauth2Service == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "지원하지 않는 소셜 플랫폼입니다."
+                ));
+            }
+            
+            // accessToken으로 사용자 정보 조회
+            SocialUserInfo socialUserInfo = oauth2Service.getUserInfo(accessToken);
+            socialUserInfo.setProvider(provider);
+            socialUserInfo.setAccessToken(accessToken);
+            socialUserInfo.normalizeData();
+            
+            // 기존 사용자 확인
+            Long existingUserId = oauth2Service.findExistingUserByProviderId(
+                socialUserInfo.getProviderUserId());
+            
+            if (existingUserId == null) {
+                // 이메일로도 확인
+                var userOptional = userRepository.findByEmail(socialUserInfo.getEmail());
+                existingUserId = userOptional.map(User::getId).orElse(null);
+            }
+            
+            if (existingUserId == null) {
+                // 신규 사용자 - 회원가입 필요
+                return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "requiresSignup", true,
+                    "socialUserInfo", Map.of(
+                        "email", socialUserInfo.getEmail(),
+                        "nickname", socialUserInfo.getNickname() != null ? socialUserInfo.getNickname() : "",
+                        "provider", provider,
+                        "socialId", socialUserInfo.getProviderUserId()
+                    ),
+                    "message", "간편 회원가입이 필요합니다."
+                ));
+            }
+            
+            // 기존 사용자 로그인
+            User user = userRepository.findById(existingUserId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            
+            // 세션에 사용자 정보 저장 (다른 메서드와 동일한 방식 사용)
+            SessionUtils.setCurrentUser(session, user);
+            
+            // 세션 저장 확인 (iOS 디버깅용)
+            User savedUser = SessionUtils.getCurrentUser(session);
+            log.info("🍎 iOS - 세션에 사용자 저장 확인: sessionId={}, savedUser={}", 
+                    session.getId(), savedUser != null ? savedUser.getEmail() : "null");
+            
+            // SecurityContext 설정
+            setSpringSecurityAuthentication(user);
+            
+            // 세션에 SecurityContext 저장 (명시적으로 - 다른 메서드와 동일)
+            session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+            
+            // 세션 무효화 시간 설정 (1시간)
+            session.setMaxInactiveInterval(3600);
+            
+            // UserSession 엔티티 생성 (데이터베이스에 저장하여 SessionBasedAuthenticationFilter에서 조회 가능하도록)
+            // 모바일 앱은 중복 로그인 체크를 우회하여 항상 새 세션을 생성
+            try {
+                String clientIp = request.getRemoteAddr();
+                String userAgent = request.getHeader("User-Agent");
+                
+                // 모바일 앱인지 확인 (User-Agent로 판단)
+                boolean isMobileApp = userAgent != null && (
+                    userAgent.contains("MindGardenMobile") || 
+                    userAgent.contains("ReactNative") ||
+                    userAgent.contains("okhttp") || // Android
+                    userAgent.contains("CFNetwork") // iOS
+                );
+                
+                if (isMobileApp) {
+                    // 모바일 앱: 기존 세션을 비활성화하지 않고 새 세션만 생성
+                    // (중복 로그인 체크 로직 우회)
+                    userSessionService.createSession(user, session.getId(), clientIp, userAgent, "SOCIAL", provider);
+                    log.info("🍎 iOS - UserSession 엔티티 생성 완료 (모바일 앱): sessionId={}, userId={}", session.getId(), user.getId());
+                } else {
+                    // 웹: 기존 로직 사용 (중복 로그인 체크 포함)
+                    userSessionService.createSession(user, session.getId(), clientIp, userAgent, "SOCIAL", provider);
+                    log.info("✅ UserSession 엔티티 생성 완료 (웹): sessionId={}, userId={}", session.getId(), user.getId());
+                }
+            } catch (Exception e) {
+                log.warn("⚠️ UserSession 엔티티 생성 실패 (무시): sessionId={}, error={}", session.getId(), e.getMessage());
+            }
+            
+            // JWT 토큰 생성 (선택사항)
+            String jwtToken = jwtService.generateToken(user.getEmail());
+            String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+            
+            log.info("네이티브 SDK 로그인 성공: userId={}, email={}, role={}, sessionId={}", 
+                    user.getId(), user.getEmail(), user.getRole(), session.getId());
+            
+            // iOS 모바일 앱: Set-Cookie 헤더로 JSESSIONID를 명시적으로 설정
+            // (Spring이 자동으로 설정하지만, iOS에서는 명시적으로 설정하는 것이 더 안전)
+            response.setHeader("Set-Cookie", 
+                String.format("JSESSIONID=%s; Path=/; HttpOnly; SameSite=Lax", session.getId()));
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "user", Map.of(
+                    "id", user.getId(),
+                    "email", user.getEmail(),
+                    "name", user.getName(),
+                    "nickname", user.getNickname() != null ? user.getNickname() : "",
+                    "role", user.getRole().name(),
+                    "profileImageUrl", user.getProfileImageUrl() != null ? user.getProfileImageUrl() : ""
+                ),
+                "accessToken", jwtToken,
+                "refreshToken", refreshToken,
+                "sessionId", session.getId(),
+                "message", "로그인 성공"
+            ));
+            
+        } catch (Exception e) {
+            log.error("네이티브 SDK 로그인 오류:", e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "로그인 처리 중 오류가 발생했습니다: " + e.getMessage()
+            ));
         }
     }
 }

@@ -76,8 +76,30 @@ public class UserSessionServiceImpl implements UserSessionService {
     @Transactional(readOnly = true)
     public UserSession getActiveSession(String sessionId) {
         try {
-            Optional<UserSession> session = userSessionRepository.findActiveSessionBySessionId(sessionId, LocalDateTime.now());
-            return session.orElse(null);
+            LocalDateTime now = LocalDateTime.now();
+            log.info("🔍 활성 세션 조회 시작: sessionId={}, 현재 시간={}", sessionId, now);
+            
+            Optional<UserSession> session = userSessionRepository.findActiveSessionBySessionId(sessionId, now);
+            
+            if (session.isPresent()) {
+                UserSession userSession = session.get();
+                log.info("✅ 활성 세션 조회 성공: sessionId={}, userId={}, isActive={}, expiresAt={}, now={}", 
+                        sessionId, userSession.getUser().getId(), userSession.getIsActive(), 
+                        userSession.getExpiresAt(), now);
+                return userSession;
+            } else {
+                log.warn("⚠️ 활성 세션 조회 실패: sessionId={}, 현재 시간={} - 세션을 찾을 수 없음", sessionId, now);
+                // 디버깅: 모든 세션 조회 (활성/비활성 포함)
+                List<UserSession> allSessions = userSessionRepository.findBySessionId(sessionId);
+                if (!allSessions.isEmpty()) {
+                    UserSession firstSession = allSessions.get(0);
+                    log.warn("🔍 세션은 존재하지만 활성 조건 불일치: sessionId={}, isActive={}, expiresAt={}, now={}", 
+                            sessionId, firstSession.getIsActive(), firstSession.getExpiresAt(), now);
+                } else {
+                    log.warn("🔍 세션 자체가 존재하지 않음: sessionId={}", sessionId);
+                }
+                return null;
+            }
         } catch (Exception e) {
             log.error("❌ 활성 세션 조회 실패: sessionId={}, error={}", sessionId, e.getMessage(), e);
             return null;

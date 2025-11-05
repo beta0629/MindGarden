@@ -28,9 +28,9 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     List<UserSession> findActiveSessionsByUserId(@Param("userId") Long userId, @Param("now") LocalDateTime now);
     
     /**
-     * 세션 ID로 활성 세션 조회
+     * 세션 ID로 활성 세션 조회 (user를 함께 로드하여 LAZY 로딩 문제 방지)
      */
-    @Query("SELECT us FROM UserSession us WHERE us.sessionId = :sessionId AND us.isActive = true AND us.expiresAt > :now")
+    @Query("SELECT us FROM UserSession us JOIN FETCH us.user WHERE us.sessionId = :sessionId AND us.isActive = true AND us.expiresAt > :now")
     Optional<UserSession> findActiveSessionBySessionId(@Param("sessionId") String sessionId, @Param("now") LocalDateTime now);
     
     /**

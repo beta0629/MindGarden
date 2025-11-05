@@ -214,9 +214,12 @@ public class SystemNotificationController {
     @GetMapping("/unread-count")
     public ResponseEntity<?> getUnreadCount(HttpSession session) {
         try {
+            log.info("📢 읽지 않은 공지 수 조회 요청 - 세션 ID: {}", session != null ? session.getId() : "null");
+            
             User currentUser = SessionUtils.getCurrentUser(session);
             
             if (currentUser == null) {
+                log.warn("⚠️ 읽지 않은 공지 수 조회 실패 - 세션에 사용자 정보 없음");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다."

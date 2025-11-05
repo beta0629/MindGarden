@@ -50,7 +50,12 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             // CORS 설정
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
+            // SessionBasedAuthenticationFilter를 Spring Security 필터 체인에 추가
+            // (UsernamePasswordAuthenticationFilter 이전에 실행되도록 설정)
+            .addFilterBefore(sessionBasedAuthenticationFilter, 
+                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         
         // 환경별 보안 설정
         if (isProductionEnvironment()) {
@@ -79,6 +84,9 @@ public class SecurityConfig {
                     .requestMatchers("/api/auth/**").permitAll() // 인증 관련 API는 허용
                     .requestMatchers("/api/common-codes/**").permitAll() // 공통코드는 허용
                     .requestMatchers("/api/admin/css-themes/**").permitAll() // CSS 테마는 허용
+                    .requestMatchers("/api/system-notifications/**").authenticated() // 시스템 알림 API는 인증 필요
+                    .requestMatchers("/api/consultation-messages/**").authenticated() // 상담 메시지 API는 인증 필요
+                    .requestMatchers("/api/client/**").authenticated() // 클라이언트 API는 인증 필요
                     .requestMatchers("/api/admin/**").authenticated() // 관리자 API는 인증 필요
                     .requestMatchers("/api/erp/**").authenticated() // ERP API는 인증 필요
                     .requestMatchers("/api/schedules/**").authenticated() // 스케줄 API는 인증 필요

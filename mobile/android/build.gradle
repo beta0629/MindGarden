@@ -30,3 +30,17 @@ allprojects {
         ndkVersion = rootProject.ext.ndkVersion
     }
 }
+
+// 서브프로젝트에 기본 Android 설정 적용 (react-native-gesture-handler 등)
+// 평가 전에 설정을 적용하기 위해 beforeEvaluate 사용
+subprojects { subproject ->
+    subproject.beforeEvaluate {
+        // 프로젝트가 Android 플러그인을 사용하는 경우에만 적용
+        if (subproject.plugins.hasPlugin('com.android.library') || subproject.plugins.hasPlugin('com.android.application')) {
+            subproject.android {
+                compileSdkVersion rootProject.ext.compileSdkVersion
+                buildToolsVersion rootProject.ext.buildToolsVersion
+            }
+        }
+    }
+}

@@ -534,10 +534,10 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..772d0ce 100644
+index bb61ff7..acfc758 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-@@ -10,7 +10,18 @@ find_package(fbjni REQUIRED CONFIG)
+@@ -10,7 +10,14 @@ find_package(fbjni REQUIRED CONFIG)
  find_package(ReactAndroid REQUIRED CONFIG)
  
  if(${JS_RUNTIME} STREQUAL "hermes")
@@ -547,29 +547,43 @@ index bb61ff7..772d0ce 100644
 +  find_package(hermes-engine CONFIG QUIET)
 +  if(NOT hermes-engine_FOUND)
 +    # React Native 0.82+ provides Hermes through ReactAndroid prefab
-+    # Check if ReactAndroid::hermes is available
-+    if(TARGET ReactAndroid::hermes)
-+      message(STATUS "Using ReactAndroid::hermes instead of hermes-engine::libhermes")
-+    else()
-+      message(WARNING "Hermes prefab not found, but continuing...")
-+    endif()
++    # In RN 0.82+, Hermes is included in ReactAndroid::reactnative, so we don't need to link it separately
++    message(STATUS "hermes-engine prefab not found, but ReactAndroid::reactnative should include Hermes")
 +  endif()
  endif()
  
  add_library(worklets SHARED ${WORKLETS_COMMON_CPP_SOURCES}
-@@ -57,7 +68,14 @@ else()
+@@ -57,14 +64,30 @@ else()
  endif()
  
  if(${JS_RUNTIME} STREQUAL "hermes")
 -  target_link_libraries(worklets hermes-engine::libhermes)
-+  # Try to link hermes-engine::libhermes first, fallback to ReactAndroid::hermes
++  # React Native 0.82+ includes Hermes in ReactAndroid::reactnative
++  # Only link Hermes explicitly if it's available as a separate prefab
 +  if(TARGET hermes-engine::libhermes)
 +    target_link_libraries(worklets hermes-engine::libhermes)
++    message(STATUS "Linking hermes-engine::libhermes")
 +  elseif(TARGET ReactAndroid::hermes)
 +    target_link_libraries(worklets ReactAndroid::hermes)
++    message(STATUS "Linking ReactAndroid::hermes")
 +  else()
-+    message(FATAL_ERROR "Hermes library not found. Neither hermes-engine::libhermes nor ReactAndroid::hermes is available.")
++    # React Native 0.82+: Hermes is included in ReactAndroid::reactnative
++    # No need to link separately
++    message(STATUS "Hermes prefab not found, but ReactAndroid::reactnative should include Hermes")
 +  endif()
  
    if(${HERMES_ENABLE_DEBUGGER})
      string(APPEND CMAKE_CXX_FLAGS " -DHERMES_ENABLE_DEBUGGER=1")
+     if(ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
+-      target_link_libraries(worklets ReactAndroid::hermestooling)
++      if(TARGET ReactAndroid::hermestooling)
++        target_link_libraries(worklets ReactAndroid::hermestooling)
++      endif()
+     else()
+-      target_link_libraries(worklets ReactAndroid::hermes_executor)
++      if(TARGET ReactAndroid::hermes_executor)
++        target_link_libraries(worklets ReactAndroid::hermes_executor)
++      endif()
+     endif()
+   endif()
+ elseif(${JS_RUNTIME} STREQUAL "jsc")

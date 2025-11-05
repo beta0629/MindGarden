@@ -534,10 +534,10 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..acfc758 100644
+index bb61ff7..b11c541 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-@@ -10,7 +10,14 @@ find_package(fbjni REQUIRED CONFIG)
+@@ -10,7 +10,23 @@ find_package(fbjni REQUIRED CONFIG)
  find_package(ReactAndroid REQUIRED CONFIG)
  
  if(${JS_RUNTIME} STREQUAL "hermes")
@@ -548,12 +548,21 @@ index bb61ff7..acfc758 100644
 +  if(NOT hermes-engine_FOUND)
 +    # React Native 0.82+ provides Hermes through ReactAndroid prefab
 +    # In RN 0.82+, Hermes is included in ReactAndroid::reactnative, so we don't need to link it separately
-+    message(STATUS "hermes-engine prefab not found, but ReactAndroid::reactnative should include Hermes")
++    # But we still need to add Hermes header include paths
++    message(STATUS "hermes-engine prefab not found, adding Hermes header paths manually")
++    # Add Hermes header include paths for React Native 0.82+
++    # Hermes headers are typically in ReactCommon/hermes or sdks/hermes
++    if(EXISTS "${REACT_NATIVE_DIR}/ReactCommon/hermes")
++      target_include_directories(worklets PRIVATE "${REACT_NATIVE_DIR}/ReactCommon/hermes")
++    endif()
++    if(EXISTS "${JS_RUNTIME_DIR}/include")
++      target_include_directories(worklets PRIVATE "${JS_RUNTIME_DIR}/include")
++    endif()
 +  endif()
  endif()
  
  add_library(worklets SHARED ${WORKLETS_COMMON_CPP_SOURCES}
-@@ -57,14 +64,30 @@ else()
+@@ -57,14 +73,30 @@ else()
  endif()
  
  if(${JS_RUNTIME} STREQUAL "hermes")

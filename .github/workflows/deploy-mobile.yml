@@ -38,8 +38,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: mobile/package-lock.json
         
     - name: 📦 의존성 설치
       run: |

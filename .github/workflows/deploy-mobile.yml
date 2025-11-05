@@ -89,6 +89,7 @@ jobs:
     - name: 🏗️ Android Release 빌드
       env:
         NODE_BINARY: ${{ env.NODE_BINARY }}
+        GRADLE_OPTS: -Xmx4096m -XX:MaxMetaspaceSize=1024m
       run: |
         cd mobile/android
         

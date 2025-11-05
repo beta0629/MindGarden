@@ -20,18 +20,13 @@ buildscript {
 
 apply plugin: "com.facebook.react.rootproject"
 
-// 모든 서브프로젝트에 기본 Android 설정 적용
-subprojects {
-    afterEvaluate { project ->
-        if (project.hasProperty("android")) {
-            android {
-                if (!project.android.hasProperty('compileSdkVersion') || project.android.compileSdkVersion == null) {
-                    compileSdkVersion rootProject.ext.compileSdkVersion
-                }
-                if (!project.android.hasProperty('buildToolsVersion') || project.android.buildToolsVersion == null) {
-                    buildToolsVersion rootProject.ext.buildToolsVersion
-                }
-            }
-        }
+// 모든 프로젝트에 ext 속성 노출 (서브프로젝트에서 접근 가능하도록)
+allprojects {
+    ext {
+        compileSdkVersion = rootProject.ext.compileSdkVersion
+        buildToolsVersion = rootProject.ext.buildToolsVersion
+        minSdkVersion = rootProject.ext.minSdkVersion
+        targetSdkVersion = rootProject.ext.targetSdkVersion
+        ndkVersion = rootProject.ext.ndkVersion
     }
 }

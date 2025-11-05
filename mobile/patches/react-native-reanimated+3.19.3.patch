@@ -1,3 +1,25 @@
+diff --git a/node_modules/react-native-reanimated/Common/cpp/reanimated/LayoutAnimations/LayoutAnimationsProxy.h b/node_modules/react-native-reanimated/Common/cpp/reanimated/LayoutAnimations/LayoutAnimationsProxy.h
+index cc09908..bb20abe 100644
+--- a/node_modules/react-native-reanimated/Common/cpp/reanimated/LayoutAnimations/LayoutAnimationsProxy.h
++++ b/node_modules/react-native-reanimated/Common/cpp/reanimated/LayoutAnimations/LayoutAnimationsProxy.h
+@@ -50,7 +50,7 @@ struct LayoutAnimationsProxy
+   mutable std::unordered_map<Tag, int> leastRemoved;
+   mutable std::vector<Tag> finishedAnimationTags_;
+   std::shared_ptr<LayoutAnimationsManager> layoutAnimationsManager_;
+-  ContextContainer::Shared contextContainer_;
++  std::shared_ptr<const ContextContainer> contextContainer_;
+   SharedComponentDescriptorRegistry componentDescriptorRegistry_;
+   jsi::Runtime &uiRuntime_;
+   const std::shared_ptr<UIScheduler> uiScheduler_;
+@@ -63,7 +63,7 @@ struct LayoutAnimationsProxy
+   LayoutAnimationsProxy(
+       std::shared_ptr<LayoutAnimationsManager> layoutAnimationsManager,
+       SharedComponentDescriptorRegistry componentDescriptorRegistry,
+-      ContextContainer::Shared contextContainer,
++      std::shared_ptr<const ContextContainer> contextContainer,
+       jsi::Runtime &uiRuntime,
+       const std::shared_ptr<UIScheduler> uiScheduler
+ #ifdef ANDROID
 diff --git a/node_modules/react-native-reanimated/android/build.gradle b/node_modules/react-native-reanimated/android/build.gradle
 index e102f43..57eda3e 100644
 --- a/node_modules/react-native-reanimated/android/build.gradle
@@ -534,7 +556,7 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..e500de7 100644
+index bb61ff7..2d21533 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 @@ -10,7 +10,29 @@ find_package(fbjni REQUIRED CONFIG)
@@ -661,23 +683,46 @@ index bb61ff7..e500de7 100644
  if(${IS_NEW_ARCHITECTURE_ENABLED})
    target_include_directories(
      worklets
-@@ -57,14 +165,30 @@ else()
+@@ -57,14 +165,53 @@ else()
  endif()
  
  if(${JS_RUNTIME} STREQUAL "hermes")
 -  target_link_libraries(worklets hermes-engine::libhermes)
-+  # React Native 0.82+ includes Hermes in ReactAndroid::reactnative
-+  # Only link Hermes explicitly if it's available as a separate prefab
-+  if(TARGET hermes-engine::libhermes)
-+    target_link_libraries(worklets hermes-engine::libhermes)
-+    message(STATUS "Linking hermes-engine::libhermes")
-+  elseif(TARGET ReactAndroid::hermes)
++  # React Native 0.82+: hermes-android AAR provides hermesvm prefab
++  # Try to find and link Hermes library
++  set(HERMES_LINKED FALSE)
++  
++  # Try hermesvm prefab (React Native 0.82+)
++  find_package(hermesvm CONFIG QUIET)
++  if(hermesvm_FOUND AND TARGET hermesvm::hermesvm)
++    target_link_libraries(worklets hermesvm::hermesvm)
++    message(STATUS "Linking hermesvm::hermesvm")
++    set(HERMES_LINKED TRUE)
++  endif()
++  
++  # Try hermes-engine prefab (legacy)
++  if(NOT HERMES_LINKED)
++    find_package(hermes-engine CONFIG QUIET)
++    if(hermes-engine_FOUND AND TARGET hermes-engine::libhermes)
++      target_link_libraries(worklets hermes-engine::libhermes)
++      message(STATUS "Linking hermes-engine::libhermes")
++      set(HERMES_LINKED TRUE)
++    endif()
++  endif()
++  
++  # Try ReactAndroid::hermes (older React Native versions)
++  if(NOT HERMES_LINKED AND TARGET ReactAndroid::hermes)
 +    target_link_libraries(worklets ReactAndroid::hermes)
 +    message(STATUS "Linking ReactAndroid::hermes")
-+  else()
-+    # React Native 0.82+: Hermes is included in ReactAndroid::reactnative
-+    # No need to link separately
-+    message(STATUS "Hermes prefab not found, but ReactAndroid::reactnative should include Hermes")
++    set(HERMES_LINKED TRUE)
++  endif()
++  
++  # React Native 0.82+: Hermes might be included in ReactAndroid::reactnative
++  # But we still need explicit linking for react-native-reanimated
++  if(NOT HERMES_LINKED)
++    message(WARNING "Hermes library not found, linking might fail. ReactAndroid::reactnative might include Hermes.")
++    # Try to link ReactAndroid::reactnative which should include Hermes
++    # This is already linked, but we need explicit Hermes symbols
 +  endif()
  
    if(${HERMES_ENABLE_DEBUGGER})

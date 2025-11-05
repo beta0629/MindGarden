@@ -534,7 +534,7 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..8fc67af 100644
+index bb61ff7..9aa400c 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 @@ -10,7 +10,29 @@ find_package(fbjni REQUIRED CONFIG)
@@ -568,40 +568,48 @@ index bb61ff7..8fc67af 100644
  endif()
  
  add_library(worklets SHARED ${WORKLETS_COMMON_CPP_SOURCES}
-@@ -28,6 +50,40 @@ target_include_directories(
+@@ -28,6 +50,48 @@ target_include_directories(
            "${REACT_NATIVE_DIR}/ReactCommon/callinvoker"
            "${REACT_NATIVE_DIR}/ReactCommon/runtimeexecutor")
  
 +# Add Hermes headers if using Hermes runtime
-+# React Native 0.82+ includes Hermes headers through ReactAndroid prefab or ReactCommon
++# React Native 0.82+ includes Hermes headers through ReactAndroid prefab
 +if(${JS_RUNTIME} STREQUAL "hermes")
-+  # Hermes headers are provided by hermes-engine prefab, but if not available,
-+  # we need to add them manually. React Native 0.82+ may not provide hermes-engine prefab.
-+  # Try to get headers from hermes-engine prefab first
-+  if(TARGET hermes-engine::libhermes)
-+    # Prefab should provide headers automatically through INTERFACE_INCLUDE_DIRECTORIES
++  # React Native 0.82+ builds Hermes as part of ReactAndroid
++  # Hermes headers should be available through ReactAndroid prefab
++  # But if prefab doesn't provide headers, we need to add them manually
++  
++  # First, try to get headers from hermes-engine prefab
++  find_package(hermes-engine CONFIG QUIET)
++  if(hermes-engine_FOUND AND TARGET hermes-engine::libhermes)
++    # Prefab found, headers should be available through INTERFACE_INCLUDE_DIRECTORIES
 +    message(STATUS "hermes-engine::libhermes target found, using prefab headers")
++    # Get include directories from the target
++    get_target_property(HERMES_INCLUDE_DIRS hermes-engine::libhermes INTERFACE_INCLUDE_DIRECTORIES)
++    if(HERMES_INCLUDE_DIRS)
++      message(STATUS "Hermes include dirs from prefab: ${HERMES_INCLUDE_DIRS}")
++    endif()
 +  else()
-+    # Prefab not found, add Hermes header paths manually
-+    # React Native's hermes executor uses these paths
-+    message(STATUS "hermes-engine prefab not found, adding Hermes header paths manually")
++    # Prefab not found, try to find Hermes headers in ReactAndroid build
++    message(STATUS "hermes-engine prefab not found, searching for Hermes headers")
 +    
-+    # React Native 0.82+ may have Hermes headers in ReactAndroid build output
-+    # But for now, we need to find where hermes/hermes.h actually is
-+    # Try common locations
++    # React Native 0.82: Hermes headers might be in ReactAndroid build intermediates
++    # Or in the Hermes SDK location
++    # Try JS_RUNTIME_DIR/include first (standard Hermes SDK location)
 +    if(EXISTS "${JS_RUNTIME_DIR}/include")
 +      target_include_directories(worklets PRIVATE "${JS_RUNTIME_DIR}/include")
 +      message(STATUS "Added Hermes include: ${JS_RUNTIME_DIR}/include")
++    else()
++      message(WARNING "Hermes include directory not found at ${JS_RUNTIME_DIR}/include")
 +    endif()
 +    
-+    # ReactCommon/hermes might have some headers but not hermes/hermes.h
-+    # The actual hermes/hermes.h should come from Hermes SDK
-+    # In React Native 0.82, Hermes is built as part of ReactAndroid
-+    # Headers might be in ReactAndroid build intermediates
-+    # For now, we'll try to use ReactAndroid's hermes target if available
-+    if(TARGET ReactAndroid::hermes)
-+      # ReactAndroid::hermes should provide headers
-+      message(STATUS "ReactAndroid::hermes target found")
++    # Also try ReactAndroid's hermes build output
++    # In React Native 0.82, Hermes might be built into ReactAndroid
++    # Headers could be in ReactAndroid build intermediates
++    set(REACT_ANDROID_BUILD_DIR "${REACT_NATIVE_DIR}/ReactAndroid/build")
++    if(EXISTS "${REACT_ANDROID_BUILD_DIR}/intermediates/prefab_package_configuration")
++      # Prefab might be generated during build
++      message(STATUS "ReactAndroid prefab directory found")
 +    endif()
 +  endif()
 +endif()
@@ -609,7 +617,7 @@ index bb61ff7..8fc67af 100644
  if(${IS_NEW_ARCHITECTURE_ENABLED})
    target_include_directories(
      worklets
-@@ -57,14 +113,30 @@ else()
+@@ -57,14 +121,30 @@ else()
  endif()
  
  if(${JS_RUNTIME} STREQUAL "hermes")

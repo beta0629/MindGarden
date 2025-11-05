@@ -534,7 +534,7 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..0787aa3 100644
+index bb61ff7..e500de7 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 @@ -10,7 +10,29 @@ find_package(fbjni REQUIRED CONFIG)
@@ -568,7 +568,7 @@ index bb61ff7..0787aa3 100644
  endif()
  
  add_library(worklets SHARED ${WORKLETS_COMMON_CPP_SOURCES}
-@@ -28,6 +50,91 @@ target_include_directories(
+@@ -28,6 +50,92 @@ target_include_directories(
            "${REACT_NATIVE_DIR}/ReactCommon/callinvoker"
            "${REACT_NATIVE_DIR}/ReactCommon/runtimeexecutor")
  
@@ -602,38 +602,38 @@ index bb61ff7..0787aa3 100644
 +      message(WARNING "Hermes include directory not found at ${JS_RUNTIME_DIR}/include")
 +    endif()
 +    
-+    # 2. Try to find hermes-android prefab in CMAKE_FIND_ROOT_PATH
-+    # CMAKE_FIND_ROOT_PATH is set by Android Gradle Plugin for prefab
-+    # hermes-android AAR provides prefab with headers in prefab/modules/hermes-engine/include
++    # 2. Try to find hermes-android prefab
++    # React Native 0.82: hermes-android AAR provides prefab with module name "hermesvm"
++    # Headers are at: prefab/modules/hermesvm/include/hermes/hermes.h
++    # Try CMAKE_FIND_ROOT_PATH first
++    set(HERMES_INCLUDE_FOUND FALSE)
 +    foreach(ROOT_PATH ${CMAKE_FIND_ROOT_PATH})
++      # Try hermesvm module (actual module name in hermes-android AAR)
++      set(PREFAB_HERMESVM_DIR "${ROOT_PATH}/prefab/modules/hermesvm")
++      if(EXISTS "${PREFAB_HERMESVM_DIR}/include")
++        target_include_directories(worklets PRIVATE "${PREFAB_HERMESVM_DIR}/include")
++        message(STATUS "Added Hermes include from hermesvm prefab: ${PREFAB_HERMESVM_DIR}/include")
++        set(HERMES_INCLUDE_FOUND TRUE)
++        break()
++      endif()
++      # Also try hermes-engine (legacy name, might exist in some versions)
 +      set(PREFAB_HERMES_DIR "${ROOT_PATH}/prefab/modules/hermes-engine")
 +      if(EXISTS "${PREFAB_HERMES_DIR}/include")
 +        target_include_directories(worklets PRIVATE "${PREFAB_HERMES_DIR}/include")
-+        message(STATUS "Added Hermes include from prefab: ${PREFAB_HERMES_DIR}/include")
-+        break()
-+      endif()
-+      # Also try without the prefab/modules path (direct in root)
-+      if(EXISTS "${ROOT_PATH}/include/hermes")
-+        target_include_directories(worklets PRIVATE "${ROOT_PATH}/include")
-+        message(STATUS "Added Hermes include: ${ROOT_PATH}/include")
++        message(STATUS "Added Hermes include from hermes-engine prefab: ${PREFAB_HERMES_DIR}/include")
++        set(HERMES_INCLUDE_FOUND TRUE)
 +        break()
 +      endif()
 +    endforeach()
 +    
-+    # 3. Try Gradle cache location (where hermes-android AAR is extracted)
-+    # React Native 0.82: hermes-android is in Gradle cache
-+    # Similar to how react-android and jsi prefabs are found
-+    # Look in Gradle cache transforms directory
-+    file(GLOB HERMES_PREFAB_DIRS "${CMAKE_FIND_ROOT_PATH}/prefab/modules/hermes-engine/include")
-+    if(HERMES_PREFAB_DIRS)
-+      list(GET HERMES_PREFAB_DIRS 0 HERMES_INCLUDE)
-+      target_include_directories(worklets PRIVATE "${HERMES_INCLUDE}")
-+      message(STATUS "Added Hermes include from prefab: ${HERMES_INCLUDE}")
-+    else()
-+      # Try to find in Gradle cache (similar to react-android prefab path)
-+      # react-android is at: /home/runner/.gradle/caches/.../transformed/react-android-*/prefab/modules/...
-+      # hermes-android should be similar
++    # 3. If not found in CMAKE_FIND_ROOT_PATH, try Gradle cache
++    if(NOT HERMES_INCLUDE_FOUND)
++      # hermes-android AAR is at: .../transformed/hermes-android-*/prefab/modules/hermesvm/include
 +      set(GRADLE_CACHE_PATTERNS
++        "$ENV{HOME}/.gradle/caches/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermesvm/include"
++        "/root/.gradle/caches/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermesvm/include"
++        "/home/runner/.gradle/caches/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermesvm/include"
++        # Also try hermes-engine (legacy)
 +        "$ENV{HOME}/.gradle/caches/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermes-engine/include"
 +        "/root/.gradle/caches/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermes-engine/include"
 +        "/home/runner/.gradle/caches/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermes-engine/include"
@@ -644,6 +644,7 @@ index bb61ff7..0787aa3 100644
 +          list(GET HERMES_TRANSFORMS 0 HERMES_INCLUDE)
 +          target_include_directories(worklets PRIVATE "${HERMES_INCLUDE}")
 +          message(STATUS "Added Hermes include from Gradle cache: ${HERMES_INCLUDE}")
++          set(HERMES_INCLUDE_FOUND TRUE)
 +          break()
 +        endif()
 +      endforeach()
@@ -660,7 +661,7 @@ index bb61ff7..0787aa3 100644
  if(${IS_NEW_ARCHITECTURE_ENABLED})
    target_include_directories(
      worklets
-@@ -57,14 +164,30 @@ else()
+@@ -57,14 +165,30 @@ else()
  endif()
  
  if(${JS_RUNTIME} STREQUAL "hermes")

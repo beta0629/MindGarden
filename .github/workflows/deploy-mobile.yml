@@ -31,13 +31,34 @@ jobs:
         submodules: recursive
         fetch-depth: 0
         
-    - name: 📁 디렉토리 확인
+    - name: 📁 mobile 서브모듈 체크아웃
       run: |
         echo "현재 디렉토리: $(pwd)"
         echo "디렉토리 구조:"
         ls -la
         echo "mobile 폴더 확인:"
-        ls -la mobile/ || echo "mobile 폴더 없음"
+        if [ -d "mobile" ]; then
+          if [ -f "mobile/.git" ]; then
+            echo "✅ mobile 서브모듈 디렉토리 확인됨"
+            cd mobile
+            git submodule update --init --recursive || true
+            cd ..
+          else
+            echo "✅ mobile 일반 폴더 확인됨"
+          fi
+          ls -la mobile/
+        else
+          echo "❌ mobile 디렉토리가 없습니다!"
+          echo "서브모듈 초기화 시도..."
+          git submodule update --init --recursive || true
+          if [ -d "mobile" ]; then
+            echo "✅ 서브모듈 초기화 성공"
+            ls -la mobile/
+          else
+            echo "❌ 서브모듈 초기화 실패"
+            exit 1
+          fi
+        fi
       
     - name: ☕ Java 17 설정 (Android 빌드용)
       uses: actions/setup-java@v4
@@ -124,6 +145,35 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
+        
+    - name: 📁 mobile 서브모듈 체크아웃
+      run: |
+        echo "현재 디렉토리: $(pwd)"
+        echo "디렉토리 구조:"
+        ls -la
+        echo "mobile 폴더 확인:"
+        if [ -d "mobile" ]; then
+          if [ -f "mobile/.git" ]; then
+            echo "✅ mobile 서브모듈 디렉토리 확인됨"
+            cd mobile
+            git submodule update --init --recursive || true
+            cd ..
+          else
+            echo "✅ mobile 일반 폴더 확인됨"
+          fi
+          ls -la mobile/
+        else
+          echo "❌ mobile 디렉토리가 없습니다!"
+          echo "서브모듈 초기화 시도..."
+          git submodule update --init --recursive || true
+          if [ -d "mobile" ]; then
+            echo "✅ 서브모듈 초기화 성공"
+            ls -la mobile/
+          else
+            echo "❌ 서브모듈 초기화 실패"
+            exit 1
+          fi
+        fi
       
     - name: 📦 Node.js 20 설정
       uses: actions/setup-node@v4

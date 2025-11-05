@@ -28,7 +28,7 @@ Xcode에서 직접 빌드하면 더 자세한 오류 메시지와 해결 방법�
 
 1. **Xcode 열기**:
    ```bash
-   open /Users/mind/mindGarden/mobile/ios/MindGardenMobile.xcworkspace
+   open mobile/ios  # 프로젝트 루트에서 실행/MindGardenMobile.xcworkspace
    ```
 
 2. **Clean Build Folder**:

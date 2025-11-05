@@ -5,7 +5,7 @@
 앱을 실행한 터미널(Metro Bundler가 실행 중인 터미널)에서 로그를 확인할 수 있습니다.
 
 ```bash
-cd /Users/mind/mindGarden/mobile
+cd mobile  # 프로젝트 루트에서 실행
 npm start
 ```
 

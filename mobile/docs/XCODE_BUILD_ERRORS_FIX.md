@@ -8,7 +8,7 @@
 # 1. Xcode에서 Clean Build Folder (⌘ + Shift + K)
 
 # 2. 터미널에서 전체 클린
-cd /Users/mind/mindGarden/mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 
 # Derived Data 삭제
 rm -rf ~/Library/Developer/Xcode/DerivedData/MindGardenMobile-*
@@ -22,7 +22,7 @@ pod deintegrate
 pod install
 
 # 3. node_modules 재설치 (필요한 경우)
-cd /Users/mind/mindGarden/mobile
+cd mobile  # 프로젝트 루트에서 실행
 rm -rf node_modules
 npm install
 
@@ -37,7 +37,7 @@ npm start -- --reset-cache
 # Xcode 완전 종료 (⌘ + Q)
 
 # 프로젝트 다시 열기
-open /Users/mind/mindGarden/mobile/ios/MindGardenMobile.xcworkspace
+open mobile/ios  # 프로젝트 루트에서 실행/MindGardenMobile.xcworkspace
 ```
 
 ### 3. Swift 버전 및 iOS Deployment Target 확인
@@ -52,14 +52,14 @@ Xcode에서:
 
 #### KakaoSDK 관련 오류
 ```bash
-cd /Users/mind/mindGarden/mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 export LANG=en_US.UTF-8
 pod install
 ```
 
 #### React Native 모듈 오류
 ```bash
-cd /Users/mind/mindGarden/mobile
+cd mobile  # 프로젝트 루트에서 실행
 npm install
 cd ios
 pod install
@@ -77,7 +77,7 @@ Xcode에서:
 
 ```bash
 # Pods 재설치
-cd /Users/mind/mindGarden/mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 export LANG=en_US.UTF-8
 pod deintegrate
 pod install
@@ -113,7 +113,7 @@ pod install
 
 ```bash
 # 1. 프로젝트 폴더로 이동
-cd /Users/mind/mindGarden/mobile
+cd mobile  # 프로젝트 루트에서 실행
 
 # 2. node_modules 삭제
 rm -rf node_modules
@@ -170,7 +170,7 @@ open MindGardenMobile.xcworkspace
 
 ### 터미널에서 빌드 (더 자세한 로그)
 ```bash
-cd /Users/mind/mindGarden/mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 xcodebuild -workspace MindGardenMobile.xcworkspace \
   -scheme MindGardenMobile \
   -configuration Debug \

@@ -30,14 +30,14 @@
 ## 다음 단계
 
 ### Xcode에서 직접 빌드
-1. Xcode 열기: `open /Users/mind/mindGarden/mobile/ios/MindGardenMobile.xcworkspace`
+1. Xcode 열기: `open mobile/ios  # 프로젝트 루트에서 실행/MindGardenMobile.xcworkspace`
 2. Product → Clean Build Folder (⇧⌘K)
 3. Product → Build (⌘B)
 4. 오류 발생 시 Xcode의 오류 메시지 확인
 
 ### React Native CLI로 빌드
 ```bash
-cd /Users/mind/mindGarden/mobile
+cd mobile  # 프로젝트 루트에서 실행
 npm run ios
 ```
 

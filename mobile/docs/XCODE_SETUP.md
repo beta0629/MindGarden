@@ -37,7 +37,7 @@ sudo gem install cocoapods
 
 ### 3.1 디렉토리 이동
 ```bash
-cd mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 ```
 
 ### 3.2 Pod 설치
@@ -69,7 +69,7 @@ cp mobile/ios/GoogleService-Info.plist.template mobile/ios/MindGardenMobile/Goog
 
 ```bash
 # 터미널에서 열기
-open mobile/ios/MindGardenMobile.xcworkspace
+open mobile/ios  # 프로젝트 루트에서 실행/MindGardenMobile.xcworkspace
 
 # 또는 Finder에서 직접 열기
 # mobile/ios/MindGardenMobile.xcworkspace 파일을 더블클릭
@@ -131,14 +131,14 @@ open mobile/ios/MindGardenMobile.xcworkspace
 터미널에서 Metro 번들러를 먼저 실행:
 
 ```bash
-cd mobile
+cd mobile  # 프로젝트 루트에서 실행
 npm start
 ```
 
 또는
 
 ```bash
-cd mobile
+cd mobile  # 프로젝트 루트에서 실행
 yarn start
 ```
 
@@ -148,14 +148,14 @@ yarn start
 
 ### 7.3 터미널에서 실행 (선택사항)
 ```bash
-cd mobile
+cd mobile  # 프로젝트 루트에서 실행
 npm run ios
 ```
 
 또는 특정 시뮬레이터 지정:
 
 ```bash
-cd mobile
+cd mobile  # 프로젝트 루트에서 실행
 npx react-native run-ios --simulator="iPhone 15 Pro"
 ```
 
@@ -163,7 +163,7 @@ npx react-native run-ios --simulator="iPhone 15 Pro"
 
 ### 8.1 Pod 설치 오류
 ```bash
-cd mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 pod deintegrate
 pod install
 ```
@@ -176,7 +176,7 @@ pod install
    ```
 3. **Pod 재설치**:
    ```bash
-   cd mobile/ios
+   cd mobile  # 프로젝트 루트에서 실행/ios
    pod deintegrate
    pod install
    ```
@@ -190,13 +190,13 @@ xcrun simctl boot "iPhone 15 Pro"
 
 ### 8.4 Metro Bundler 캐시 초기화
 ```bash
-cd mobile
+cd mobile  # 프로젝트 루트에서 실행
 npm start -- --reset-cache
 ```
 
 ### 8.5 Node_modules 재설치
 ```bash
-cd mobile
+cd mobile  # 프로젝트 루트에서 실행
 rm -rf node_modules
 npm install
 cd ios
@@ -236,15 +236,15 @@ pod install
 
 ```bash
 # iOS 빌드 클린
-cd mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 xcodebuild clean -workspace MindGardenMobile.xcworkspace -scheme MindGardenMobile
 
 # Pod 업데이트
-cd mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 pod update
 
 # 모든 캐시 삭제
-cd mobile
+cd mobile  # 프로젝트 루트에서 실행
 rm -rf node_modules
 rm -rf ios/Pods
 rm -rf ios/build

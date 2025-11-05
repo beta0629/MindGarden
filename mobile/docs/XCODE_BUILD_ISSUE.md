@@ -27,7 +27,7 @@ error: Redefinition of module 'react_runtime'
 React Native 0.82.1은 비교적 최신이지만, Xcode 26.0.1과의 호환성 문제가 있을 수 있습니다.
 
 ```bash
-cd /Users/mind/mindGarden/mobile
+cd mobile  # 프로젝트 루트에서 실행
 npm install react-native@latest
 cd ios && pod install
 ```

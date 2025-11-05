@@ -23,7 +23,7 @@
 
 ### 1. Xcode 열기
 ```bash
-open /Users/mind/mindGarden/mobile/ios/MindGardenMobile.xcworkspace
+open mobile/ios  # 프로젝트 루트에서 실행/MindGardenMobile.xcworkspace
 ```
 
 ### 2. Signing & Capabilities 설정
@@ -44,7 +44,7 @@ open /Users/mind/mindGarden/mobile/ios/MindGardenMobile.xcworkspace
 
 ### 1. Metro Bundler 실행
 ```bash
-cd /Users/mind/mindGarden/mobile
+cd mobile  # 프로젝트 루트에서 실행
 npm start
 ```
 
@@ -56,7 +56,7 @@ npm start
 
 ### 3. 터미널에서 실행 (선택사항)
 ```bash
-cd /Users/mind/mindGarden/mobile
+cd mobile  # 프로젝트 루트에서 실행
 npm run ios
 ```
 
@@ -66,7 +66,7 @@ npm run ios
 
 ```bash
 # Bundle Identifier 확인
-cd /Users/mind/mindGarden/mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 grep "PRODUCT_BUNDLE_IDENTIFIER.*com.mindgarden" MindGardenMobile.xcodeproj/project.pbxproj
 ```
 

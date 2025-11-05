@@ -91,7 +91,7 @@ source ~/.zshrc
 
 - [ ] **Metro Bundler 실행**
   ```bash
-  cd /Users/mind/mindGarden/mobile
+  cd mobile  # 프로젝트 루트에서 실행
   npm start
   ```
 
@@ -104,7 +104,7 @@ source ~/.zshrc
 
 ### 1. Xcode 열기
 ```bash
-open /Users/mind/mindGarden/mobile/ios/MindGardenMobile.xcworkspace
+open mobile/ios  # 프로젝트 루트에서 실행/MindGardenMobile.xcworkspace
 ```
 
 ### 2. Bundle Identifier 수정
@@ -117,7 +117,7 @@ open /Users/mind/mindGarden/mobile/ios/MindGardenMobile.xcworkspace
 ### 4. 실행
 ```bash
 # 터미널 1: Metro Bundler
-cd /Users/mind/mindGarden/mobile
+cd mobile  # 프로젝트 루트에서 실행
 npm start
 
 # Xcode에서 ⌘ + R 또는 Run 버튼 클릭
@@ -129,7 +129,7 @@ npm start
 
 2. **Pod 재설치가 필요한 경우**:
    ```bash
-   cd /Users/mind/mindGarden/mobile/ios
+   cd mobile  # 프로젝트 루트에서 실행/ios
    pod deintegrate
    pod install
    ```

@@ -14,7 +14,7 @@
 터미널에서 다음 명령어 실행:
 
 ```bash
-cd /Users/mind/mindGarden/mobile
+cd mobile  # 프로젝트 루트에서 실행
 adb logcat | grep -E "🔗|📊|✅|❌"
 ```
 

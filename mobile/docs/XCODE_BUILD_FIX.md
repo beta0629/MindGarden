@@ -18,7 +18,7 @@ rm -rf ~/Library/Developer/Xcode/DerivedData/MindGardenMobile-*
 
 ### 3. Pod 재설치
 ```bash
-cd /Users/mind/mindGarden/mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 
 # UTF-8 인코딩 설정
 export LANG=en_US.UTF-8
@@ -46,7 +46,7 @@ source ~/.zshrc
 
 ### Pods 폴더 확인
 ```bash
-cd /Users/mind/mindGarden/mobile/ios
+cd mobile  # 프로젝트 루트에서 실행/ios
 ls -la Pods/ | grep -i kakao
 ```
 
@@ -58,7 +58,7 @@ ls -la Pods/ | grep -i kakao
 ### Workspace 파일 확인
 `.xcworkspace` 파일을 열어야 합니다 (`.xcodeproj`가 아님):
 ```bash
-open /Users/mind/mindGarden/mobile/ios/MindGardenMobile.xcworkspace
+open mobile/ios  # 프로젝트 루트에서 실행/MindGardenMobile.xcworkspace
 ```
 
 ## 단계별 체크리스트
@@ -74,7 +74,7 @@ open /Users/mind/mindGarden/mobile/ios/MindGardenMobile.xcworkspace
 
 1. **node_modules 재설치**:
    ```bash
-   cd /Users/mind/mindGarden/mobile
+   cd mobile  # 프로젝트 루트에서 실행
    rm -rf node_modules
    npm install
    cd ios
@@ -83,7 +83,7 @@ open /Users/mind/mindGarden/mobile/ios/MindGardenMobile.xcworkspace
 
 2. **전체 클린 빌드**:
    ```bash
-   cd /Users/mind/mindGarden/mobile/ios
+   cd mobile  # 프로젝트 루트에서 실행/ios
    rm -rf build
    rm -rf Pods
    rm -rf ~/Library/Developer/Xcode/DerivedData/MindGardenMobile-*

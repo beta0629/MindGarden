@@ -556,7 +556,7 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..2d21533 100644
+index bb61ff7..22fc53f 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 @@ -10,7 +10,29 @@ find_package(fbjni REQUIRED CONFIG)
@@ -683,7 +683,7 @@ index bb61ff7..2d21533 100644
  if(${IS_NEW_ARCHITECTURE_ENABLED})
    target_include_directories(
      worklets
-@@ -57,14 +165,53 @@ else()
+@@ -57,14 +165,68 @@ else()
  endif()
  
  if(${JS_RUNTIME} STREQUAL "hermes")
@@ -718,11 +718,26 @@ index bb61ff7..2d21533 100644
 +  endif()
 +  
 +  # React Native 0.82+: Hermes might be included in ReactAndroid::reactnative
-+  # But we still need explicit linking for react-native-reanimated
++  # But react-native-reanimated needs explicit Hermes symbols for createHermesRuntime
++  # Try to find and link hermes-android AAR library directly
 +  if(NOT HERMES_LINKED)
-+    message(WARNING "Hermes library not found, linking might fail. ReactAndroid::reactnative might include Hermes.")
-+    # Try to link ReactAndroid::reactnative which should include Hermes
-+    # This is already linked, but we need explicit Hermes symbols
++    # Look for libhermes.so in Gradle cache (hermes-android AAR)
++    set(GRADLE_CACHE_BASE "/home/runner/.gradle/caches")
++    if(EXISTS "${GRADLE_CACHE_BASE}")
++      file(GLOB HERMES_LIBS "${GRADLE_CACHE_BASE}/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermesvm/lib/*/libhermesvm.so")
++      if(HERMES_LIBS)
++        list(GET HERMES_LIBS 0 HERMES_LIB)
++        get_filename_path("${HERMES_LIB}" HERMES_LIB_DIR)
++        target_link_directories(worklets PRIVATE "${HERMES_LIB_DIR}")
++        target_link_libraries(worklets hermesvm)
++        message(STATUS "Linking hermesvm library from: ${HERMES_LIB_DIR}")
++        set(HERMES_LINKED TRUE)
++      endif()
++    endif()
++  endif()
++  
++  if(NOT HERMES_LINKED)
++    message(WARNING "Hermes library not found. ReactAndroid::reactnative might include Hermes, but react-native-reanimated needs explicit Hermes symbols.")
 +  endif()
  
    if(${HERMES_ENABLE_DEBUGGER})

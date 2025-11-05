@@ -42,12 +42,25 @@ jobs:
           if [ -f "mobile/.git" ] || [ -d "mobile/.git" ]; then
             echo "📦 mobile이 서브모듈로 감지됨"
             # 서브모듈 내용 체크아웃
-            git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패, 직접 체크아웃 시도..."
-            # 서브모듈 체크아웃 실패 시 직접 체크아웃
+            git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패"
+            
+            # 서브모듈 내용이 없으면 직접 체크아웃 시도
             if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
               echo "⚠️ 서브모듈 내용이 없음, 직접 체크아웃 시도..."
               cd mobile
-              git checkout -f HEAD || echo "⚠️ 직접 체크아웃 실패"
+              # 서브모듈의 실제 저장소 URL 확인
+              if [ -f ".git" ]; then
+                SUBMODULE_URL=$(cat .git | sed 's|^gitdir: ||' | sed 's|/\.git$||' | sed 's|^\.\./\.\./||')
+                echo "서브모듈 경로: $SUBMODULE_URL"
+              fi
+              # 서브모듈의 커밋 해시 확인
+              COMMIT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "")
+              if [ -n "$COMMIT_HASH" ]; then
+                echo "서브모듈 커밋 해시: $COMMIT_HASH"
+                # 실제 저장소에서 해당 커밋 체크아웃
+                git fetch origin || true
+                git checkout -f $COMMIT_HASH || git checkout -f HEAD || echo "⚠️ 직접 체크아웃 실패"
+              fi
               cd ..
             fi
           fi
@@ -59,6 +72,11 @@ jobs:
           # android/ios 폴더 확인
           if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
             echo "❌ mobile/android 또는 mobile/ios 폴더가 없습니다!"
+            echo "mobile 폴더 상세 정보:"
+            if [ -f "mobile/.git" ]; then
+              echo "mobile/.git 내용:"
+              cat mobile/.git
+            fi
             echo "전체 디렉토리 구조:"
             find . -maxdepth 3 -type d | head -30
             exit 1
@@ -161,12 +179,25 @@ jobs:
           if [ -f "mobile/.git" ] || [ -d "mobile/.git" ]; then
             echo "📦 mobile이 서브모듈로 감지됨"
             # 서브모듈 내용 체크아웃
-            git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패, 직접 체크아웃 시도..."
-            # 서브모듈 체크아웃 실패 시 직접 체크아웃
+            git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패"
+            
+            # 서브모듈 내용이 없으면 직접 체크아웃 시도
             if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
               echo "⚠️ 서브모듈 내용이 없음, 직접 체크아웃 시도..."
               cd mobile
-              git checkout -f HEAD || echo "⚠️ 직접 체크아웃 실패"
+              # 서브모듈의 실제 저장소 URL 확인
+              if [ -f ".git" ]; then
+                SUBMODULE_URL=$(cat .git | sed 's|^gitdir: ||' | sed 's|/\.git$||' | sed 's|^\.\./\.\./||')
+                echo "서브모듈 경로: $SUBMODULE_URL"
+              fi
+              # 서브모듈의 커밋 해시 확인
+              COMMIT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "")
+              if [ -n "$COMMIT_HASH" ]; then
+                echo "서브모듈 커밋 해시: $COMMIT_HASH"
+                # 실제 저장소에서 해당 커밋 체크아웃
+                git fetch origin || true
+                git checkout -f $COMMIT_HASH || git checkout -f HEAD || echo "⚠️ 직접 체크아웃 실패"
+              fi
               cd ..
             fi
           fi
@@ -178,6 +209,11 @@ jobs:
           # android/ios 폴더 확인
           if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
             echo "❌ mobile/android 또는 mobile/ios 폴더가 없습니다!"
+            echo "mobile 폴더 상세 정보:"
+            if [ -f "mobile/.git" ]; then
+              echo "mobile/.git 내용:"
+              cat mobile/.git
+            fi
             echo "전체 디렉토리 구조:"
             find . -maxdepth 3 -type d | head -30
             exit 1

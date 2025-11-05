@@ -26,7 +26,7 @@ react {
     /* Bundling */
     //   Ensure Node binary path is fixed when Android Studio doesn't inherit shell env
     //   Reads NODE_BINARY from gradle.properties if present; falls back to 'node'
-    //nodeExecutableAndArgs = ["/Users/mind/.nvm/versions/node/v22.14.0/bin/node"]
+    //   로컬 개발 시 필요하면 환경변수 또는 gradle.properties에서 설정
 
     // NODE_BINARY 경로 설정 (GitHub Actions에서는 환경변수 NODE_BINARY 사용)
     // 로컬 개발 시 필요하면 환경변수 또는 gradle.properties에서 설정

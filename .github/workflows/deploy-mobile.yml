@@ -151,17 +151,16 @@ jobs:
         
         chmod +x gradlew
         
-        # 빌드 최적화 옵션 추가
+        # 빌드 실행 (메모리 부족 방지를 위해 --no-daemon, --max-workers 제한)
+        echo "Gradle 빌드 시작..."
         ./gradlew assembleRelease \
           --stacktrace \
           --no-daemon \
           --max-workers=2 \
-          --build-cache \
-          --parallel \
           || {
-            echo "⚠️ 첫 번째 빌드 실패, 재시도..."
-            ./gradlew clean
-            ./gradlew assembleRelease --stacktrace --no-daemon
+            echo "⚠️ 첫 번째 빌드 실패, clean 후 재시도..."
+            ./gradlew clean --no-daemon
+            ./gradlew assembleRelease --stacktrace --no-daemon --max-workers=2
           }
         
     - name: 📦 Android AAB 빌드 (Google Play 업로드용)

@@ -534,7 +534,7 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..679fa3d 100644
+index bb61ff7..78add96 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 @@ -10,7 +10,29 @@ find_package(fbjni REQUIRED CONFIG)
@@ -568,7 +568,7 @@ index bb61ff7..679fa3d 100644
  endif()
  
  add_library(worklets SHARED ${WORKLETS_COMMON_CPP_SOURCES}
-@@ -28,6 +50,39 @@ target_include_directories(
+@@ -28,6 +50,55 @@ target_include_directories(
            "${REACT_NATIVE_DIR}/ReactCommon/callinvoker"
            "${REACT_NATIVE_DIR}/ReactCommon/runtimeexecutor")
  
@@ -589,7 +589,12 @@ index bb61ff7..679fa3d 100644
 +    # Last resort: try common Hermes header locations
 +    message(STATUS "Searching for Hermes headers in common locations")
 +    
-+    # Try JS_RUNTIME_DIR/include (standard Hermes SDK location)
++    # React Native 0.82: hermes-android AAR provides prefab with headers
++    # Prefab is usually in CMAKE_FIND_ROOT_PATH/prefab/modules/hermes-engine
++    # But we need to find the actual header location
++    # Try multiple possible locations
++    
++    # 1. JS_RUNTIME_DIR/include (Hermes SDK standard location)
 +    if(EXISTS "${JS_RUNTIME_DIR}/include")
 +      target_include_directories(worklets PRIVATE "${JS_RUNTIME_DIR}/include")
 +      message(STATUS "Added Hermes include: ${JS_RUNTIME_DIR}/include")
@@ -597,7 +602,18 @@ index bb61ff7..679fa3d 100644
 +      message(WARNING "Hermes include directory not found at ${JS_RUNTIME_DIR}/include")
 +    endif()
 +    
-+    # Try ReactCommon/hermes (might have some headers)
++    # 2. Try to find hermes-android prefab in CMAKE_FIND_ROOT_PATH
++    # CMAKE_FIND_ROOT_PATH is set by Android Gradle Plugin for prefab
++    foreach(ROOT_PATH ${CMAKE_FIND_ROOT_PATH})
++      set(PREFAB_HERMES_DIR "${ROOT_PATH}/prefab/modules/hermes-engine")
++      if(EXISTS "${PREFAB_HERMES_DIR}/include")
++        target_include_directories(worklets PRIVATE "${PREFAB_HERMES_DIR}/include")
++        message(STATUS "Added Hermes include from prefab: ${PREFAB_HERMES_DIR}/include")
++        break()
++      endif()
++    endforeach()
++    
++    # 3. Try ReactCommon/hermes (might have some headers, but not hermes/hermes.h)
 +    if(EXISTS "${REACT_NATIVE_DIR}/ReactCommon/hermes")
 +      target_include_directories(worklets PRIVATE "${REACT_NATIVE_DIR}/ReactCommon/hermes")
 +      message(STATUS "Added ReactCommon/hermes include")
@@ -608,7 +624,7 @@ index bb61ff7..679fa3d 100644
  if(${IS_NEW_ARCHITECTURE_ENABLED})
    target_include_directories(
      worklets
-@@ -57,14 +112,30 @@ else()
+@@ -57,14 +128,30 @@ else()
  endif()
  
  if(${JS_RUNTIME} STREQUAL "hermes")

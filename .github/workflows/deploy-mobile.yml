@@ -153,14 +153,17 @@ jobs:
         
         # 빌드 실행 (메모리 부족 방지를 위해 --no-daemon, --max-workers 제한)
         echo "Gradle 빌드 시작..."
+        echo "⚠️ 상세 오류 로그를 위해 --info 옵션 추가"
         ./gradlew assembleRelease \
           --stacktrace \
+          --info \
           --no-daemon \
           --max-workers=2 \
           || {
             echo "⚠️ 첫 번째 빌드 실패, clean 후 재시도..."
-            ./gradlew clean --no-daemon
-            ./gradlew assembleRelease --stacktrace --no-daemon --max-workers=2
+            echo "⚠️ 실패한 주요 오류 메시지:"
+            ./gradlew assembleRelease --stacktrace --no-daemon --max-workers=2 2>&1 | grep -A 20 "FAILURE\|Error\|Exception" | head -50 || true
+            exit 1
           }
         
     - name: 📦 Android AAB 빌드 (Google Play 업로드용)

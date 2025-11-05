@@ -30,74 +30,26 @@ jobs:
       with:
         fetch-depth: 0
         
-    - name: 📁 mobile 폴더 확인 및 체크아웃
+    - name: 📁 mobile 폴더 확인
       run: |
         echo "현재 디렉토리: $(pwd)"
-        echo "디렉토리 구조:"
-        ls -la
         echo "mobile 폴더 확인:"
+        if [ ! -d "mobile" ]; then
+          echo "❌ mobile 디렉토리가 없습니다!"
+          exit 1
+        fi
         
-        # mobile 폴더가 서브모듈인지 확인
-        if [ -d "mobile" ]; then
-          # mobile 폴더가 비어있거나 서브모듈인 경우
-          MOBILE_CONTENT=$(ls -A mobile 2>/dev/null | wc -l)
-          if [ "$MOBILE_CONTENT" -eq 0 ] || [ -f "mobile/.git" ] || [ -d "mobile/.git" ]; then
-            echo "📦 mobile이 서브모듈로 감지됨 또는 비어있음"
-            
-            # 서브모듈 커밋 해시 확인 (메인 저장소에서)
-            MOBILE_COMMIT=$(git ls-tree HEAD mobile | awk '{print $3}')
-            echo "서브모듈 커밋 해시: $MOBILE_COMMIT"
-            
-            # mobile 폴더를 삭제
-            rm -rf mobile
-            
-            # 서브모듈의 실제 저장소 위치 확인 (.git/modules/mobile)
-            if [ -d ".git/modules/mobile" ]; then
-              echo "✅ 서브모듈 저장소 발견: .git/modules/mobile"
-              cd .git/modules/mobile
-              git checkout -f $MOBILE_COMMIT 2>/dev/null || git checkout -f HEAD 2>/dev/null || echo "⚠️ 서브모듈 체크아웃 실패"
-              cd ../../..
-              
-              # worktree를 사용하여 mobile 폴더에 체크아웃
-              git worktree add ../mobile-worktree $MOBILE_COMMIT 2>/dev/null || true
-              if [ -d "../mobile-worktree" ]; then
-                cp -r ../mobile-worktree/* mobile/ 2>/dev/null || true
-                rm -rf ../mobile-worktree
-                git worktree prune 2>/dev/null || true
-              fi
-            fi
-            
-            # 여전히 실패하면 서브모듈을 별도 저장소로 클론 시도
-            if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
-              echo "⚠️ 서브모듈 체크아웃 실패, 별도 저장소에서 클론 시도..."
-              # mobile 폴더가 같은 저장소 내에 있는 경우를 대비
-              # GitHub Actions에서는 서브모듈의 실제 저장소 URL을 알 수 없으므로
-              # 메인 저장소의 특정 커밋에서 mobile 폴더를 추출 시도
-              git show $MOBILE_COMMIT:mobile/ 2>/dev/null || echo "⚠️ 서브모듈 내용 추출 실패"
-              
-              echo "❌ mobile 폴더를 체크아웃할 수 없습니다."
-              echo "ℹ️ mobile 폴더가 서브모듈로 관리되고 있지만, .gitmodules 파일이 없어 체크아웃이 불가능합니다."
-              echo "ℹ️ 해결 방법: mobile 폴더를 서브모듈이 아닌 일반 폴더로 변경하세요."
-              echo "ℹ️ 또는 .gitmodules 파일을 생성하여 서브모듈을 등록하세요."
-            fi
-          fi
-          
-          # mobile 폴더 내용 확인
-          echo "mobile 폴더 내용:"
-          ls -la mobile/ | head -20
-          
-          # android/ios 폴더 확인
-          if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
-            echo "❌ mobile/android 또는 mobile/ios 폴더가 없습니다!"
-            echo "mobile 폴더 상세 정보:"
-            if [ -f "mobile/.git" ]; then
-              echo "mobile/.git 내용:"
-              cat mobile/.git
-            fi
-            echo "전체 디렉토리 구조:"
-            find . -maxdepth 3 -type d | head -30
-            exit 1
-          fi
+        echo "✅ mobile 디렉토리 확인됨"
+        echo "mobile 폴더 내용:"
+        ls -la mobile/ | head -20
+        
+        # android/ios 폴더 확인
+        if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
+          echo "❌ mobile/android 또는 mobile/ios 폴더가 없습니다!"
+          exit 1
+        fi
+        
+        echo "✅ mobile/android 또는 mobile/ios 폴더 확인됨"
         else
           echo "❌ mobile 디렉토리가 없습니다!"
           echo "서브모듈 체크아웃 시도..."
@@ -184,74 +136,26 @@ jobs:
       with:
         fetch-depth: 0
         
-    - name: 📁 mobile 폴더 확인 및 체크아웃
+    - name: 📁 mobile 폴더 확인
       run: |
         echo "현재 디렉토리: $(pwd)"
-        echo "디렉토리 구조:"
-        ls -la
         echo "mobile 폴더 확인:"
+        if [ ! -d "mobile" ]; then
+          echo "❌ mobile 디렉토리가 없습니다!"
+          exit 1
+        fi
         
-        # mobile 폴더가 서브모듈인지 확인
-        if [ -d "mobile" ]; then
-          # mobile 폴더가 비어있거나 서브모듈인 경우
-          MOBILE_CONTENT=$(ls -A mobile 2>/dev/null | wc -l)
-          if [ "$MOBILE_CONTENT" -eq 0 ] || [ -f "mobile/.git" ] || [ -d "mobile/.git" ]; then
-            echo "📦 mobile이 서브모듈로 감지됨 또는 비어있음"
-            
-            # 서브모듈 커밋 해시 확인 (메인 저장소에서)
-            MOBILE_COMMIT=$(git ls-tree HEAD mobile | awk '{print $3}')
-            echo "서브모듈 커밋 해시: $MOBILE_COMMIT"
-            
-            # mobile 폴더를 삭제
-            rm -rf mobile
-            
-            # 서브모듈의 실제 저장소 위치 확인 (.git/modules/mobile)
-            if [ -d ".git/modules/mobile" ]; then
-              echo "✅ 서브모듈 저장소 발견: .git/modules/mobile"
-              cd .git/modules/mobile
-              git checkout -f $MOBILE_COMMIT 2>/dev/null || git checkout -f HEAD 2>/dev/null || echo "⚠️ 서브모듈 체크아웃 실패"
-              cd ../../..
-              
-              # worktree를 사용하여 mobile 폴더에 체크아웃
-              git worktree add ../mobile-worktree $MOBILE_COMMIT 2>/dev/null || true
-              if [ -d "../mobile-worktree" ]; then
-                cp -r ../mobile-worktree/* mobile/ 2>/dev/null || true
-                rm -rf ../mobile-worktree
-                git worktree prune 2>/dev/null || true
-              fi
-            fi
-            
-            # 여전히 실패하면 서브모듈을 별도 저장소로 클론 시도
-            if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
-              echo "⚠️ 서브모듈 체크아웃 실패, 별도 저장소에서 클론 시도..."
-              # mobile 폴더가 같은 저장소 내에 있는 경우를 대비
-              # GitHub Actions에서는 서브모듈의 실제 저장소 URL을 알 수 없으므로
-              # 메인 저장소의 특정 커밋에서 mobile 폴더를 추출 시도
-              git show $MOBILE_COMMIT:mobile/ 2>/dev/null || echo "⚠️ 서브모듈 내용 추출 실패"
-              
-              echo "❌ mobile 폴더를 체크아웃할 수 없습니다."
-              echo "ℹ️ mobile 폴더가 서브모듈로 관리되고 있지만, .gitmodules 파일이 없어 체크아웃이 불가능합니다."
-              echo "ℹ️ 해결 방법: mobile 폴더를 서브모듈이 아닌 일반 폴더로 변경하세요."
-              echo "ℹ️ 또는 .gitmodules 파일을 생성하여 서브모듈을 등록하세요."
-            fi
-          fi
-          
-          # mobile 폴더 내용 확인
-          echo "mobile 폴더 내용:"
-          ls -la mobile/ | head -20
-          
-          # android/ios 폴더 확인
-          if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
-            echo "❌ mobile/android 또는 mobile/ios 폴더가 없습니다!"
-            echo "mobile 폴더 상세 정보:"
-            if [ -f "mobile/.git" ]; then
-              echo "mobile/.git 내용:"
-              cat mobile/.git
-            fi
-            echo "전체 디렉토리 구조:"
-            find . -maxdepth 3 -type d | head -30
-            exit 1
-          fi
+        echo "✅ mobile 디렉토리 확인됨"
+        echo "mobile 폴더 내용:"
+        ls -la mobile/ | head -20
+        
+        # android/ios 폴더 확인
+        if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
+          echo "❌ mobile/android 또는 mobile/ios 폴더가 없습니다!"
+          exit 1
+        fi
+        
+        echo "✅ mobile/android 또는 mobile/ios 폴더 확인됨"
         else
           echo "❌ mobile 디렉토리가 없습니다!"
           echo "서브모듈 체크아웃 시도..."

@@ -534,7 +534,7 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..ebac519 100644
+index bb61ff7..f985e0b 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 @@ -10,7 +10,29 @@ find_package(fbjni REQUIRED CONFIG)
@@ -568,7 +568,33 @@ index bb61ff7..ebac519 100644
  endif()
  
  add_library(worklets SHARED ${WORKLETS_COMMON_CPP_SOURCES}
-@@ -57,14 +79,30 @@ else()
+@@ -28,6 +50,25 @@ target_include_directories(
+           "${REACT_NATIVE_DIR}/ReactCommon/callinvoker"
+           "${REACT_NATIVE_DIR}/ReactCommon/runtimeexecutor")
+ 
++# Add Hermes headers if using Hermes runtime
++# React Native 0.82+ includes Hermes headers through ReactAndroid prefab or ReactCommon
++if(${JS_RUNTIME} STREQUAL "hermes")
++  # Hermes headers might be in ReactAndroid prefab, but if not, add common paths
++  # React Native's hermes executor uses these paths
++  if(EXISTS "${REACT_NATIVE_DIR}/ReactCommon/hermes")
++    target_include_directories(worklets PRIVATE "${REACT_NATIVE_DIR}/ReactCommon/hermes")
++  endif()
++  # Some React Native versions have Hermes in sdks/hermes
++  if(EXISTS "${JS_RUNTIME_DIR}/include")
++    target_include_directories(worklets PRIVATE "${JS_RUNTIME_DIR}/include")
++  endif()
++  # ReactAndroid might provide Hermes headers through prefab
++  if(TARGET ReactAndroid::hermes)
++    # Prefab should provide headers automatically
++    message(STATUS "ReactAndroid::hermes target found, headers should be available")
++  endif()
++endif()
++
+ if(${IS_NEW_ARCHITECTURE_ENABLED})
+   target_include_directories(
+     worklets
+@@ -57,14 +98,30 @@ else()
  endif()
  
  if(${JS_RUNTIME} STREQUAL "hermes")

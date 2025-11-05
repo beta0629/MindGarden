@@ -50,18 +50,6 @@ jobs:
         fi
         
         echo "✅ mobile/android 또는 mobile/ios 폴더 확인됨"
-        else
-          echo "❌ mobile 디렉토리가 없습니다!"
-          echo "서브모듈 체크아웃 시도..."
-          git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패"
-          if [ -d "mobile" ]; then
-            echo "✅ mobile 디렉토리 확인됨"
-            ls -la mobile/ | head -20
-          else
-            echo "❌ mobile 디렉토리를 찾을 수 없습니다!"
-            exit 1
-          fi
-        fi
       
     - name: ☕ Java 17 설정 (Android 빌드용)
       uses: actions/setup-java@v4
@@ -99,14 +87,19 @@ jobs:
         fi
         
     - name: 🏗️ Android Release 빌드
+      env:
+        NODE_BINARY: ${{ env.NODE_BINARY }}
       run: |
         cd mobile/android
-        ./gradlew assembleRelease
+        chmod +x gradlew
+        ./gradlew assembleRelease --stacktrace
         
     - name: 📦 Android AAB 빌드 (Google Play 업로드용)
+      env:
+        NODE_BINARY: ${{ env.NODE_BINARY }}
       run: |
         cd mobile/android
-        ./gradlew bundleRelease
+        ./gradlew bundleRelease --stacktrace
         
     - name: 📤 빌드 아티팩트 업로드
       uses: actions/upload-artifact@v4
@@ -156,18 +149,6 @@ jobs:
         fi
         
         echo "✅ mobile/android 또는 mobile/ios 폴더 확인됨"
-        else
-          echo "❌ mobile 디렉토리가 없습니다!"
-          echo "서브모듈 체크아웃 시도..."
-          git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패"
-          if [ -d "mobile" ]; then
-            echo "✅ mobile 디렉토리 확인됨"
-            ls -la mobile/ | head -20
-          else
-            echo "❌ mobile 디렉토리를 찾을 수 없습니다!"
-            exit 1
-          fi
-        fi
       
     - name: 📦 Node.js 20 설정
       uses: actions/setup-node@v4

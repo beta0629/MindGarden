@@ -28,8 +28,8 @@ react {
     //   Reads NODE_BINARY from gradle.properties if present; falls back to 'node'
     //nodeExecutableAndArgs = ["/Users/mind/.nvm/versions/node/v22.14.0/bin/node"]
 
-    // NODE_BINARY 경로를 절대 경로로 직접 설정 (Android Studio 재시작 없이도 작동)
-    nodeExecutableAndArgs = ["/Users/mind/.nvm/versions/node/v22.14.0/bin/node"]
+    // NODE_BINARY 경로 설정 (GitHub Actions에서는 환경변수 사용)
+    // nodeExecutableAndArgs = ["/Users/mind/.nvm/versions/node/v22.14.0/bin/node"]
     autolinkLibrariesWithApp()
     //
     //   The command to run when bundling. By default is 'bundle'

@@ -36,23 +36,42 @@ jobs:
         echo "디렉토리 구조:"
         ls -la
         echo "mobile 폴더 확인:"
+        
+        # mobile 폴더가 서브모듈인지 확인 (빈 디렉토리 또는 .git 파일만 있는 경우)
         if [ -d "mobile" ]; then
-          echo "✅ mobile 디렉토리 확인됨"
+          if [ -f "mobile/.git" ] || [ -d "mobile/.git" ]; then
+            echo "📦 mobile이 서브모듈로 감지됨"
+            # 서브모듈 내용 체크아웃
+            git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패, 직접 체크아웃 시도..."
+            # 서브모듈 체크아웃 실패 시 직접 체크아웃
+            if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
+              echo "⚠️ 서브모듈 내용이 없음, 직접 체크아웃 시도..."
+              cd mobile
+              git checkout -f HEAD || echo "⚠️ 직접 체크아웃 실패"
+              cd ..
+            fi
+          fi
+          
+          # mobile 폴더 내용 확인
+          echo "mobile 폴더 내용:"
           ls -la mobile/ | head -20
+          
+          # android/ios 폴더 확인
+          if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
+            echo "❌ mobile/android 또는 mobile/ios 폴더가 없습니다!"
+            echo "전체 디렉토리 구조:"
+            find . -maxdepth 3 -type d | head -30
+            exit 1
+          fi
         else
           echo "❌ mobile 디렉토리가 없습니다!"
           echo "서브모듈 체크아웃 시도..."
-          # .gitmodules 파일이 있으면 서브모듈 체크아웃 시도
-          if [ -f ".gitmodules" ]; then
-            git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패"
-          fi
+          git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패"
           if [ -d "mobile" ]; then
-            echo "✅ mobile 디렉토리 확인됨 (서브모듈 체크아웃 성공)"
+            echo "✅ mobile 디렉토리 확인됨"
             ls -la mobile/ | head -20
           else
             echo "❌ mobile 디렉토리를 찾을 수 없습니다!"
-            echo "전체 디렉토리 구조:"
-            find . -maxdepth 2 -type d | head -20
             exit 1
           fi
         fi
@@ -136,23 +155,42 @@ jobs:
         echo "디렉토리 구조:"
         ls -la
         echo "mobile 폴더 확인:"
+        
+        # mobile 폴더가 서브모듈인지 확인 (빈 디렉토리 또는 .git 파일만 있는 경우)
         if [ -d "mobile" ]; then
-          echo "✅ mobile 디렉토리 확인됨"
+          if [ -f "mobile/.git" ] || [ -d "mobile/.git" ]; then
+            echo "📦 mobile이 서브모듈로 감지됨"
+            # 서브모듈 내용 체크아웃
+            git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패, 직접 체크아웃 시도..."
+            # 서브모듈 체크아웃 실패 시 직접 체크아웃
+            if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
+              echo "⚠️ 서브모듈 내용이 없음, 직접 체크아웃 시도..."
+              cd mobile
+              git checkout -f HEAD || echo "⚠️ 직접 체크아웃 실패"
+              cd ..
+            fi
+          fi
+          
+          # mobile 폴더 내용 확인
+          echo "mobile 폴더 내용:"
           ls -la mobile/ | head -20
+          
+          # android/ios 폴더 확인
+          if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
+            echo "❌ mobile/android 또는 mobile/ios 폴더가 없습니다!"
+            echo "전체 디렉토리 구조:"
+            find . -maxdepth 3 -type d | head -30
+            exit 1
+          fi
         else
           echo "❌ mobile 디렉토리가 없습니다!"
           echo "서브모듈 체크아웃 시도..."
-          # .gitmodules 파일이 있으면 서브모듈 체크아웃 시도
-          if [ -f ".gitmodules" ]; then
-            git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패"
-          fi
+          git submodule update --init --recursive mobile || echo "⚠️ 서브모듈 체크아웃 실패"
           if [ -d "mobile" ]; then
-            echo "✅ mobile 디렉토리 확인됨 (서브모듈 체크아웃 성공)"
+            echo "✅ mobile 디렉토리 확인됨"
             ls -la mobile/ | head -20
           else
             echo "❌ mobile 디렉토리를 찾을 수 없습니다!"
-            echo "전체 디렉토리 구조:"
-            find . -maxdepth 2 -type d | head -20
             exit 1
           fi
         fi

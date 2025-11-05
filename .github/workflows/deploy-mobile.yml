@@ -39,6 +39,18 @@ jobs:
       with:
         node-version: '20'
         
+    - name: 📁 mobile 디렉토리 확인
+      run: |
+        if [ ! -d "mobile" ]; then
+          echo "❌ mobile 디렉토리가 없습니다!"
+          echo "현재 디렉토리: $(pwd)"
+          echo "디렉토리 목록:"
+          ls -la
+          exit 1
+        fi
+        echo "✅ mobile 디렉토리 확인됨"
+        ls -la mobile/
+        
     - name: 📦 의존성 설치
       run: |
         cd mobile
@@ -98,6 +110,9 @@ jobs:
     steps:
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
       
     - name: 📦 Node.js 20 설정
       uses: actions/setup-node@v4

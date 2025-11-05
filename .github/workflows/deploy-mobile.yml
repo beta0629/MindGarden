@@ -91,6 +91,15 @@ jobs:
         NODE_BINARY: ${{ env.NODE_BINARY }}
       run: |
         cd mobile/android
+        # Gradle wrapper 파일 확인 및 생성
+        if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+          echo "⚠️ gradle-wrapper.jar 없음, 생성 시도..."
+          mkdir -p gradle/wrapper
+          # Gradle wrapper 다운로드
+          GRADLE_VERSION=$(grep distributionUrl gradle/wrapper/gradle-wrapper.properties 2>/dev/null | cut -d'/' -f5 | cut -d'-' -f1 || echo "8.3")
+          echo "Gradle 버전: $GRADLE_VERSION"
+          curl -L "https://raw.githubusercontent.com/gradle/gradle/v${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar || echo "⚠️ 다운로드 실패"
+        fi
         chmod +x gradlew
         ./gradlew assembleRelease --stacktrace
         

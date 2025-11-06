@@ -890,3 +890,31 @@ index bb61ff7..4192bc7 100644
      endif()
    endif()
  elseif(${JS_RUNTIME} STREQUAL "jsc")
+diff --git a/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/ReanimatedModule.java b/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/ReanimatedModule.java
+index 14d252c..79a0977 100644
+--- a/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/ReanimatedModule.java
++++ b/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/ReanimatedModule.java
+@@ -10,7 +10,6 @@ import com.facebook.react.bridge.UIManagerListener;
+ import com.facebook.react.fabric.FabricUIManager;
+ import com.facebook.react.module.annotations.ReactModule;
+ import com.facebook.react.uimanager.UIManagerModule;
+-import com.facebook.react.uimanager.UIManagerModuleListener;
+ import com.swmansion.worklets.WorkletsModule;
+ import java.util.ArrayList;
+ import java.util.Objects;
+diff --git a/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/UIManagerModuleListener.java b/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/UIManagerModuleListener.java
+new file mode 100644
+index 0000000..4163fea
+--- /dev/null
++++ b/node_modules/react-native-reanimated/android/src/main/java/com/swmansion/reanimated/UIManagerModuleListener.java
+@@ -0,0 +1,10 @@
++package com.swmansion.reanimated;
++
++import com.facebook.react.uimanager.UIManagerModule;
++
++// UIManagerModuleListener is removed in React Native 0.82+ (New Architecture only)
++// Create a dummy interface for compatibility with react-native-reanimated 3.19.3
++public interface UIManagerModuleListener {
++  void willDispatchViewUpdates(UIManagerModule uiManager);
++}
++

@@ -47,7 +47,7 @@ const MGButton = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handlePress = useCallback(async () => {
+  const handlePress = useCallback(async (event) => {
     // 이미 처리 중이거나 비활성화된 경우 무시
     if (isProcessing || disabled || loading) {
       return;
@@ -59,9 +59,14 @@ const MGButton = ({
     }
 
     try {
+      // 이벤트 객체 유지 (비동기에서도 사용 가능)
+      if (event && typeof event.persist === 'function') {
+        event.persist();
+      }
+
       // onPress 핸들러 실행
       if (onPress) {
-        const result = onPress();
+        const result = onPress(event);
         // Promise인 경우 await, 아닌 경우 즉시 처리
         if (result && typeof result.then === 'function') {
           await result;

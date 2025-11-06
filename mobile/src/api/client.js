@@ -181,15 +181,27 @@ apiClient.interceptors.response.use(
       });
       
       // 네트워크 오류인 경우 추가 정보
-      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-        console.error(`${platformIcon} ${platformName} - 네트워크 연결 실패:`, {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.code === 'ECONNABORTED' || !error.response) {
+        const errorDetails = {
           baseUrl,
           errorCode: error.code,
           message: error.message,
-          hint: Platform.OS === 'android' 
-            ? '서버가 실행 중인지 확인하세요. Android 에뮬레이터는 10.0.2.2를 사용합니다.'
-            : '서버가 실행 중인지, 올바른 IP 주소를 사용하는지 확인하세요',
-        });
+          fullUrl: error.config?.url ? `${baseUrl}${error.config.url}` : 'unknown',
+        };
+        
+        if (Platform.OS === 'ios') {
+          errorDetails.hint = [
+            '1. 백엔드 서버가 실행 중인지 확인하세요 (http://localhost:8080)',
+            '2. iPhone과 Mac이 같은 Wi-Fi 네트워크에 연결되어 있는지 확인하세요',
+            '3. Mac의 IP 주소가 192.168.0.71인지 확인하세요 (ifconfig 명령어로 확인)',
+            '4. 방화벽이 8080 포트를 막고 있지 않은지 확인하세요',
+            '5. 개발 환경에서는 http://192.168.0.71:8080을 사용합니다',
+          ].join('\n');
+        } else {
+          errorDetails.hint = '서버가 실행 중인지 확인하세요. Android 에뮬레이터는 10.0.2.2를 사용합니다.';
+        }
+        
+        console.error(`${platformIcon} ${platformName} - 네트워크 연결 실패:`, errorDetails);
       }
     }
 

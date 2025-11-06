@@ -556,7 +556,7 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..22fc53f 100644
+index bb61ff7..0ca75f9 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 @@ -10,7 +10,29 @@ find_package(fbjni REQUIRED CONFIG)
@@ -683,7 +683,7 @@ index bb61ff7..22fc53f 100644
  if(${IS_NEW_ARCHITECTURE_ENABLED})
    target_include_directories(
      worklets
-@@ -57,14 +165,68 @@ else()
+@@ -57,14 +165,137 @@ else()
  endif()
  
  if(${JS_RUNTIME} STREQUAL "hermes")
@@ -692,12 +692,41 @@ index bb61ff7..22fc53f 100644
 +  # Try to find and link Hermes library
 +  set(HERMES_LINKED FALSE)
 +  
-+  # Try hermesvm prefab (React Native 0.82+)
-+  find_package(hermesvm CONFIG QUIET)
-+  if(hermesvm_FOUND AND TARGET hermesvm::hermesvm)
-+    target_link_libraries(worklets hermesvm::hermesvm)
-+    message(STATUS "Linking hermesvm::hermesvm")
++  # First, try to locate hermes-android AAR prefab directory and add it to CMAKE_PREFIX_PATH
++  # This allows find_package(hermesvm) to work correctly
++  set(GRADLE_CACHE_BASES
++    "$ENV{HOME}/.gradle/caches"
++    "/root/.gradle/caches"
++    "/home/runner/.gradle/caches")
++  
++  foreach(GRADLE_CACHE_BASE ${GRADLE_CACHE_BASES})
++    if(EXISTS "${GRADLE_CACHE_BASE}")
++      file(GLOB HERMES_PREFAB_DIRS "${GRADLE_CACHE_BASE}/*/transforms/*/transformed/hermes-android-*/prefab")
++      if(HERMES_PREFAB_DIRS)
++        list(GET HERMES_PREFAB_DIRS 0 HERMES_PREFAB_ROOT)
++        list(APPEND CMAKE_PREFIX_PATH "${HERMES_PREFAB_ROOT}")
++        message(STATUS "Added hermes-android prefab to CMAKE_PREFIX_PATH: ${HERMES_PREFAB_ROOT}")
++        break()
++      endif()
++    endif()
++  endforeach()
++  
++  # React Native 0.82+: ReactAndroid::reactnative includes Hermes, but we need explicit linking
++  # First try ReactAndroid::hermesvm (React Native 0.82+)
++  if(NOT HERMES_LINKED AND TARGET ReactAndroid::hermesvm)
++    target_link_libraries(worklets ReactAndroid::hermesvm)
++    message(STATUS "Linking ReactAndroid::hermesvm")
 +    set(HERMES_LINKED TRUE)
++  endif()
++  
++  # Try hermesvm prefab (React Native 0.82+) - now with updated CMAKE_PREFIX_PATH
++  if(NOT HERMES_LINKED)
++    find_package(hermesvm CONFIG QUIET)
++    if(hermesvm_FOUND AND TARGET hermesvm::hermesvm)
++      target_link_libraries(worklets hermesvm::hermesvm)
++      message(STATUS "Linking hermesvm::hermesvm")
++      set(HERMES_LINKED TRUE)
++    endif()
 +  endif()
 +  
 +  # Try hermes-engine prefab (legacy)
@@ -719,25 +748,65 @@ index bb61ff7..22fc53f 100644
 +  
 +  # React Native 0.82+: Hermes might be included in ReactAndroid::reactnative
 +  # But react-native-reanimated needs explicit Hermes symbols for createHermesRuntime
-+  # Try to find and link hermes-android AAR library directly
++  # Try to find and link hermes-android AAR library directly from Gradle cache
 +  if(NOT HERMES_LINKED)
-+    # Look for libhermes.so in Gradle cache (hermes-android AAR)
-+    set(GRADLE_CACHE_BASE "/home/runner/.gradle/caches")
-+    if(EXISTS "${GRADLE_CACHE_BASE}")
-+      file(GLOB HERMES_LIBS "${GRADLE_CACHE_BASE}/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermesvm/lib/*/libhermesvm.so")
-+      if(HERMES_LIBS)
-+        list(GET HERMES_LIBS 0 HERMES_LIB)
-+        get_filename_path("${HERMES_LIB}" HERMES_LIB_DIR)
-+        target_link_directories(worklets PRIVATE "${HERMES_LIB_DIR}")
-+        target_link_libraries(worklets hermesvm)
-+        message(STATUS "Linking hermesvm library from: ${HERMES_LIB_DIR}")
-+        set(HERMES_LINKED TRUE)
++    # React Native 0.82.1: hermes-android AAR structure is:
++    # .../transformed/hermes-android-0.82.1-release/prefab/modules/hermesvm/libs/android.${ANDROID_ABI}/libhermesvm.so
++    set(GRADLE_CACHE_BASES
++      "$ENV{HOME}/.gradle/caches"
++      "/root/.gradle/caches"
++      "/home/runner/.gradle/caches")
++    
++    # Try to find libhermesvm.so with ABI-specific path
++    foreach(GRADLE_CACHE_BASE ${GRADLE_CACHE_BASES})
++      if(EXISTS "${GRADLE_CACHE_BASE}")
++        # Try pattern: */transformed/hermes-android-*/prefab/modules/hermesvm/libs/android.*/libhermesvm.so
++        file(GLOB HERMES_LIBS "${GRADLE_CACHE_BASE}/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermesvm/libs/android.*/libhermesvm.so")
++        if(HERMES_LIBS)
++          # Find the one matching current ABI
++          foreach(HERMES_LIB ${HERMES_LIBS})
++            if(HERMES_LIB MATCHES "android\\.${ANDROID_ABI}/libhermesvm\\.so")
++              get_filename_path("${HERMES_LIB}" HERMES_LIB_DIR)
++              target_link_directories(worklets PRIVATE "${HERMES_LIB_DIR}")
++              target_link_libraries(worklets hermesvm)
++              message(STATUS "Linking hermesvm library from: ${HERMES_LIB_DIR} (ABI: ${ANDROID_ABI})")
++              set(HERMES_LINKED TRUE)
++              break()
++            endif()
++          endforeach()
++          # If no ABI match found, use the first one (better than nothing)
++          if(NOT HERMES_LINKED)
++            list(GET HERMES_LIBS 0 HERMES_LIB)
++            get_filename_path("${HERMES_LIB}" HERMES_LIB_DIR)
++            target_link_directories(worklets PRIVATE "${HERMES_LIB_DIR}")
++            target_link_libraries(worklets hermesvm)
++            message(STATUS "Linking hermesvm library from: ${HERMES_LIB_DIR} (fallback, no ABI match)")
++            set(HERMES_LINKED TRUE)
++          endif()
++          break()
++        endif()
++        
++        # Fallback: try old pattern without ABI-specific path
++        if(NOT HERMES_LINKED)
++          file(GLOB HERMES_LIBS "${GRADLE_CACHE_BASE}/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermesvm/lib/*/libhermesvm.so")
++          if(HERMES_LIBS)
++            list(GET HERMES_LIBS 0 HERMES_LIB)
++            get_filename_path("${HERMES_LIB}" HERMES_LIB_DIR)
++            target_link_directories(worklets PRIVATE "${HERMES_LIB_DIR}")
++            target_link_libraries(worklets hermesvm)
++            message(STATUS "Linking hermesvm library from: ${HERMES_LIB_DIR} (legacy pattern)")
++            set(HERMES_LINKED TRUE)
++            break()
++          endif()
++        endif()
 +      endif()
-+    endif()
++    endforeach()
 +  endif()
 +  
++  # Last resort: Try to use ReactAndroid::reactnative which includes Hermes in RN 0.82+
++  # But we still need explicit Hermes symbols, so this will likely fail
 +  if(NOT HERMES_LINKED)
-+    message(WARNING "Hermes library not found. ReactAndroid::reactnative might include Hermes, but react-native-reanimated needs explicit Hermes symbols.")
++    message(FATAL_ERROR "Hermes library (hermesvm) not found. ReactAndroid::reactnative includes Hermes but react-native-reanimated needs explicit Hermes symbols (makeHermesRuntime). Please ensure hermes-android AAR is properly included in the build.")
 +  endif()
  
    if(${HERMES_ENABLE_DEBUGGER})

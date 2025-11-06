@@ -1860,7 +1860,7 @@ const styles = StyleSheet.create({
   },
   clientItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     backgroundColor: COLORS.gray50,
     borderRadius: BORDER_RADIUS.md,
@@ -1868,6 +1868,7 @@ const styles = StyleSheet.create({
   },
   clientInfo: {
     flex: 1,
+    paddingRight: SPACING.lg,
   },
   clientName: {
     fontSize: TYPOGRAPHY.fontSize.base,
@@ -2347,6 +2348,7 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     marginTop: SPACING.xs,
     marginBottom: SPACING.xs,
+    flexWrap: 'wrap',
   },
   sessionInfoText: {
     ...TYPOGRAPHY.body2,
@@ -2363,8 +2365,9 @@ const styles = StyleSheet.create({
   },
   clientItemActions: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: SPACING.xs,
+    flexShrink: 0,
   },
   extendSessionButton: {
     paddingHorizontal: SPACING.sm,

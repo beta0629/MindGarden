@@ -556,7 +556,7 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..0ca75f9 100644
+index bb61ff7..4cae5ca 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 @@ -10,7 +10,29 @@ find_package(fbjni REQUIRED CONFIG)
@@ -766,7 +766,7 @@ index bb61ff7..0ca75f9 100644
 +          # Find the one matching current ABI
 +          foreach(HERMES_LIB ${HERMES_LIBS})
 +            if(HERMES_LIB MATCHES "android\\.${ANDROID_ABI}/libhermesvm\\.so")
-+              get_filename_path("${HERMES_LIB}" HERMES_LIB_DIR)
++              get_filename_component(HERMES_LIB_DIR "${HERMES_LIB}" DIRECTORY)
 +              target_link_directories(worklets PRIVATE "${HERMES_LIB_DIR}")
 +              target_link_libraries(worklets hermesvm)
 +              message(STATUS "Linking hermesvm library from: ${HERMES_LIB_DIR} (ABI: ${ANDROID_ABI})")
@@ -777,7 +777,7 @@ index bb61ff7..0ca75f9 100644
 +          # If no ABI match found, use the first one (better than nothing)
 +          if(NOT HERMES_LINKED)
 +            list(GET HERMES_LIBS 0 HERMES_LIB)
-+            get_filename_path("${HERMES_LIB}" HERMES_LIB_DIR)
++            get_filename_component(HERMES_LIB_DIR "${HERMES_LIB}" DIRECTORY)
 +            target_link_directories(worklets PRIVATE "${HERMES_LIB_DIR}")
 +            target_link_libraries(worklets hermesvm)
 +            message(STATUS "Linking hermesvm library from: ${HERMES_LIB_DIR} (fallback, no ABI match)")
@@ -791,7 +791,7 @@ index bb61ff7..0ca75f9 100644
 +          file(GLOB HERMES_LIBS "${GRADLE_CACHE_BASE}/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermesvm/lib/*/libhermesvm.so")
 +          if(HERMES_LIBS)
 +            list(GET HERMES_LIBS 0 HERMES_LIB)
-+            get_filename_path("${HERMES_LIB}" HERMES_LIB_DIR)
++            get_filename_component(HERMES_LIB_DIR "${HERMES_LIB}" DIRECTORY)
 +            target_link_directories(worklets PRIVATE "${HERMES_LIB_DIR}")
 +            target_link_libraries(worklets hermesvm)
 +            message(STATUS "Linking hermesvm library from: ${HERMES_LIB_DIR} (legacy pattern)")

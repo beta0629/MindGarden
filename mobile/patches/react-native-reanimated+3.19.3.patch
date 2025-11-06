@@ -556,7 +556,7 @@ index 0000000..e102f43
 +    }
 +}
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
-index bb61ff7..4cae5ca 100644
+index bb61ff7..4192bc7 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 +++ b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 @@ -10,7 +10,29 @@ find_package(fbjni REQUIRED CONFIG)
@@ -683,7 +683,7 @@ index bb61ff7..4cae5ca 100644
  if(${IS_NEW_ARCHITECTURE_ENABLED})
    target_include_directories(
      worklets
-@@ -57,14 +165,137 @@ else()
+@@ -57,14 +165,143 @@ else()
  endif()
  
  if(${JS_RUNTIME} STREQUAL "hermes")
@@ -704,7 +704,13 @@ index bb61ff7..4cae5ca 100644
 +      file(GLOB HERMES_PREFAB_DIRS "${GRADLE_CACHE_BASE}/*/transforms/*/transformed/hermes-android-*/prefab")
 +      if(HERMES_PREFAB_DIRS)
 +        list(GET HERMES_PREFAB_DIRS 0 HERMES_PREFAB_ROOT)
-+        list(APPEND CMAKE_PREFIX_PATH "${HERMES_PREFAB_ROOT}")
++        # Set CMAKE_PREFIX_PATH to include hermes-android prefab directory
++        # Use set() instead of list(APPEND) to ensure it works even if CMAKE_PREFIX_PATH is cached
++        if(CMAKE_PREFIX_PATH)
++          set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${HERMES_PREFAB_ROOT}")
++        else()
++          set(CMAKE_PREFIX_PATH "${HERMES_PREFAB_ROOT}")
++        endif()
 +        message(STATUS "Added hermes-android prefab to CMAKE_PREFIX_PATH: ${HERMES_PREFAB_ROOT}")
 +        break()
 +      endif()

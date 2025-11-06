@@ -22,6 +22,12 @@ apply plugin: "com.facebook.react.rootproject"
 
 // 모든 프로젝트에 ext 속성 노출 (서브프로젝트에서 접근 가능하도록)
 allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://devrepo.kakao.com/nexus/content/groups/public/' }
+    }
+    
     ext {
         compileSdkVersion = rootProject.ext.compileSdkVersion
         buildToolsVersion = rootProject.ext.buildToolsVersion

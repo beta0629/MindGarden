@@ -70,25 +70,35 @@ const SimpleLayout = ({
     if (!user?.role) return;
     
     let route;
+    let navigatorName;
     switch (user.role) {
       case 'CLIENT':
       case 'ROLE_CLIENT':
         route = CLIENT_SCREENS.MESSAGES;
+        navigatorName = 'ClientTabs';
         break;
       case 'CONSULTANT':
       case 'ROLE_CONSULTANT':
         route = CONSULTANT_SCREENS.MESSAGES;
+        navigatorName = 'ConsultantTabs';
         break;
       case 'ADMIN':
       case 'SUPER_ADMIN':
       case 'BRANCH_SUPER_ADMIN':
         route = ADMIN_SCREENS.MESSAGES;
+        navigatorName = 'AdminTabs';
         break;
       default:
         route = CLIENT_SCREENS.MESSAGES;
+        navigatorName = 'ClientTabs';
     }
     
-    if (route) {
+    if (route && navigatorName) {
+      // 중첩된 네비게이터로 이동
+      navigation.navigate(navigatorName, {
+        screen: route,
+      });
+    } else if (route) {
       navigation.navigate(route);
     }
   };

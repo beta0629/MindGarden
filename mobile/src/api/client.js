@@ -158,17 +158,39 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // iOS 디버깅: 에러 상세 정보 로깅
-    if (Platform.OS === 'ios' && __DEV__) {
-      console.log('🍎 iOS - API 에러 발생:', {
+    // iOS/Android 디버깅: 에러 상세 정보 로깅
+    if (__DEV__) {
+      const baseUrl = getApiBaseUrl();
+      const fullUrl = error.config?.url ? `${baseUrl}${error.config.url}` : 'unknown';
+      const platformIcon = Platform.OS === 'ios' ? '🍎' : '🤖';
+      const platformName = Platform.OS === 'ios' ? 'iOS' : 'Android';
+      
+      console.log(`${platformIcon} ${platformName} - API 에러 발생:`, {
         url: error.config?.url,
+        fullUrl,
+        baseUrl,
         method: error.config?.method,
         status: error.response?.status,
         statusText: error.response?.statusText,
         message: error.message,
+        errorCode: error.code,
         hasResponse: !!error.response,
         hasRequest: !!error.request,
+        responseData: error.response?.data,
+        requestHeaders: error.config?.headers,
       });
+      
+      // 네트워크 오류인 경우 추가 정보
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        console.error(`${platformIcon} ${platformName} - 네트워크 연결 실패:`, {
+          baseUrl,
+          errorCode: error.code,
+          message: error.message,
+          hint: Platform.OS === 'android' 
+            ? '서버가 실행 중인지 확인하세요. Android 에뮬레이터는 10.0.2.2를 사용합니다.'
+            : '서버가 실행 중인지, 올바른 IP 주소를 사용하는지 확인하세요',
+        });
+      }
     }
 
     // 401 에러 시 토큰 갱신 시도
@@ -232,16 +254,69 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     return response;
   } catch (error) {
     // 에러 상세 정보 로깅
+    const baseUrl = apiBaseUrl;
+    const fullUrl = `${baseUrl}${endpoint}`;
     const errorMessage = error?.response?.status 
       ? `GET 요청 오류 [${error.response.status}]: ${endpoint}`
       : `GET 요청 오류: ${endpoint}`;
-    console.error(errorMessage, {
-      endpoint,
-      params,
-      status: error?.response?.status,
-      statusText: error?.response?.statusText,
-      data: error?.response?.data,
-    });
+    
+    // 네트워크 오류와 서버 오류 구분
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.message?.includes('Network')) {
+      console.error('🌐 네트워크 연결 오류:', {
+        endpoint,
+        fullUrl,
+        baseUrl,
+        errorCode: error.code,
+        message: error.message,
+        hint: '서버가 실행 중인지 확인하세요',
+      });
+    } else if (error?.response) {
+      // 서버에서 응답을 받았지만 오류 상태
+      const status = error.response.status;
+      const statusText = error.response.statusText;
+      const responseData = error.response.data;
+      
+      // 404 에러에 대한 명확한 안내
+      if (status === 404) {
+        console.warn(`⚠️ 404 Not Found: ${endpoint}`, {
+          endpoint,
+          fullUrl,
+          status,
+          statusText,
+          message: '백엔드 API 엔드포인트가 존재하지 않거나 경로가 잘못되었습니다.',
+          hint: '백엔드 서버에 해당 API가 구현되어 있는지 확인하세요',
+          responseData,
+        });
+      } else {
+        // 404가 아닌 다른 서버 오류
+        console.error(errorMessage, {
+          endpoint,
+          fullUrl,
+          status,
+          statusText,
+          data: responseData,
+          headers: error.response.headers,
+        });
+      }
+    } else if (error.message) {
+      // 에러 메시지는 있지만 response는 없는 경우 (타임아웃 등)
+      console.error(`GET 요청 오류: ${endpoint}`, {
+        endpoint,
+        fullUrl,
+        error: error.message,
+        errorCode: error.code,
+        hint: '요청 타임아웃이거나 서버 응답 형식이 잘못되었을 수 있습니다',
+      });
+    } else {
+      // 알 수 없는 오류
+      console.error(`GET 요청 오류: ${endpoint}`, {
+        endpoint,
+        fullUrl,
+        error: error.message,
+        errorCode: error.code,
+        stack: error.stack,
+      });
+    }
     throw error;
   }
 };

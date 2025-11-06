@@ -43,45 +43,126 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // 대시보드 데이터 로드
+  // 대시보드 데이터 로드 (웹과 동일한 방식: 여러 개별 API 호출)
   const loadDashboardData = useCallback(async () => {
     if (!user?.id) return;
 
     try {
       setIsLoading(true);
 
-      // 관리자 대시보드 데이터 조회
-      const response = await apiGet(DASHBOARD_API.ADMIN);
+      // 웹과 동일한 방식: 여러 API를 병렬로 호출하여 데이터 수집
+      // 각 API 호출을 안전하게 래핑하는 헬퍼 함수
+      const safeApiGet = async (url, apiName) => {
+        try {
+          return await apiGet(url);
+        } catch (err) {
+          // 에러 발생 시 조용히 기본값 반환 (콘솔에만 로그)
+          if (__DEV__) {
+            console.warn(`${apiName} 로드 실패 (기본값 사용):`, err?.message || err?.data?.message || '알 수 없는 오류');
+          }
+          return null;
+        }
+      };
 
-      if (response?.success && response?.data) {
-        setDashboardData(response.data);
-      } else {
-        // API가 없거나 실패 시 기본값 설정 (조용히 처리)
-        console.log('📊 대시보드 API 응답 없음, 기본값 사용');
-        setDashboardData({
-          totalUsers: 0,
-          totalConsultants: 0,
-          totalClients: 0,
-          totalMappings: 0,
-          activeMappings: 0,
-          todaySchedules: 0,
-          pendingMessages: 0,
-          pendingRecords: 0,
-          systemHealth: 'GOOD',
+      // 웹과 동일한 API 호출 패턴
+      const [consultantsRes, clientsRes, mappingsRes, todayStatsRes] = await Promise.all([
+        safeApiGet(`/api/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`, '상담사 통계'),
+        safeApiGet('/api/admin/clients/with-mapping-info', '클라이언트 통계'),
+        safeApiGet('/api/admin/mappings', '매핑 통계'),
+        safeApiGet(`/api/schedules/today/statistics?userRole=${user.role}`, '오늘의 일정 통계'),
+      ]);
+
+      // 디버깅: API 응답 구조 확인
+      if (__DEV__) {
+        console.log('📊 API 응답 구조 확인:', {
+          consultantsRes,
+          clientsRes,
+          mappingsRes,
+          todayStatsRes,
+        });
+      }
+
+      // 데이터 추출 및 합산 (웹과 동일한 로직)
+      // apiGet은 이미 response.data를 반환하므로, 웹의 consultantsData와 동일한 구조
+      let totalConsultants = 0;
+      let totalClients = 0;
+      let totalMappings = 0;
+      let activeMappings = 0;
+      let todaySchedules = 0;
+
+      // 웹: consultantsData.count
+      // 앱: consultantsRes는 이미 파싱된 데이터이므로 consultantsRes.count
+      if (consultantsRes) {
+        totalConsultants = consultantsRes.count || 0;
+        if (__DEV__) {
+          console.log('📊 상담사 통계:', { count: consultantsRes.count, full: consultantsRes });
+        }
+      }
+
+      // 웹: clientsData.count
+      // 앱: clientsRes는 이미 파싱된 데이터이므로 clientsRes.count
+      if (clientsRes) {
+        totalClients = clientsRes.count || 0;
+        if (__DEV__) {
+          console.log('📊 클라이언트 통계:', { count: clientsRes.count, full: clientsRes });
+        }
+      }
+
+      // 웹: mappingsData.count, mappingsData.data 배열에서 activeMappings 필터링
+      // 앱: mappingsRes는 이미 파싱된 데이터이므로 mappingsRes.count, mappingsRes.data 배열
+      if (mappingsRes) {
+        totalMappings = mappingsRes.count || 0;
+        if (Array.isArray(mappingsRes.data)) {
+          activeMappings = mappingsRes.data.filter(m => m.status === 'ACTIVE').length;
+        }
+        if (__DEV__) {
+          console.log('📊 매핑 통계:', { 
+            count: mappingsRes.count, 
+            dataLength: mappingsRes.data?.length,
+            activeMappings,
+            full: mappingsRes 
+          });
+        }
+      }
+
+      // 웹: todayStatsRes는 별도로 처리하지 않음 (loadTodayStats에서 처리)
+      // 앱: todayStatsRes는 이미 파싱된 데이터
+      if (todayStatsRes) {
+        todaySchedules = todayStatsRes.totalToday || 0;
+      }
+
+      // 총 사용자 = 상담사 + 내담자 (웹과 동일한 계산 방식)
+      const totalUsers = totalConsultants + totalClients;
+
+      // 통계 데이터 설정
+      setDashboardData({
+        totalUsers, // 상담사 + 내담자
+        totalConsultants,
+        totalClients,
+        totalMappings,
+        activeMappings,
+        todaySchedules,
+        pendingMessages: 0, // 별도 API 필요
+        pendingRecords: 0, // 별도 API 필요
+        systemHealth: 'GOOD',
+      });
+
+      if (__DEV__) {
+        console.log('📊 최종 대시보드 데이터:', {
+          totalUsers,
+          totalConsultants,
+          totalClients,
+          totalMappings,
+          activeMappings,
+          todaySchedules,
         });
       }
     } catch (error) {
-      // 백엔드 API가 구현되지 않았거나 오류가 발생해도 조용히 기본값으로 처리
-      // 사용자에게는 빈 대시보드를 표시하되 오류 메시지는 표시하지 않음
+      // 예상치 못한 오류 발생 시 기본값으로 처리
       if (__DEV__) {
-        // 개발 환경에서만 상세 로그 출력
-        console.log('📊 대시보드 API 호출 실패 (기본값 사용):', {
-          status: error.status,
-          message: error.message,
-        });
+        console.error('📊 대시보드 데이터 로드 실패:', error);
       }
       
-      // 에러 시에도 기본값 표시 (사용자가 빈 대시보드를 볼 수 있도록)
       setDashboardData({
         totalUsers: 0,
         totalConsultants: 0,
@@ -97,7 +178,7 @@ const AdminDashboard = () => {
       setIsLoading(false);
       setRefreshing(false);
     }
-  }, [user?.id]);
+  }, [user?.id, user?.role]);
 
   useEffect(() => {
     loadDashboardData();

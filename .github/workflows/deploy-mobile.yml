@@ -62,6 +62,11 @@ jobs:
       with:
         node-version: '20'
         
+    - name: 🔧 NODE_BINARY 환경 변수 설정
+      run: |
+        echo "NODE_BINARY=$(which node)" >> $GITHUB_ENV
+        echo "✅ NODE_BINARY 설정: $(which node)"
+        
     - name: 📦 의존성 설치
       run: |
         cd mobile
@@ -111,7 +116,6 @@ jobs:
         
     - name: 🏗️ Android Release 빌드
       env:
-        NODE_BINARY: ${{ env.NODE_BINARY }}
         GRADLE_OPTS: -Xmx4096m -XX:MaxMetaspaceSize=1024m
       run: |
         cd mobile/android
@@ -190,8 +194,6 @@ jobs:
           }
         
     - name: 📦 Android AAB 빌드 (Google Play 업로드용)
-      env:
-        NODE_BINARY: ${{ env.NODE_BINARY }}
       run: |
         cd mobile/android
         ./gradlew bundleRelease --stacktrace

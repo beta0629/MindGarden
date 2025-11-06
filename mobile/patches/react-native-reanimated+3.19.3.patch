@@ -555,6 +555,66 @@ index 0000000..e102f43
 +      throw GradleScriptException("[Reanimated] Unknown JS runtime ${JS_RUNTIME}.")
 +    }
 +}
+diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/reanimated/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/reanimated/CMakeLists.txt
+index c61b03a..b5a6ba8 100644
+--- a/node_modules/react-native-reanimated/android/src/main/cpp/reanimated/CMakeLists.txt
++++ b/node_modules/react-native-reanimated/android/src/main/cpp/reanimated/CMakeLists.txt
+@@ -36,3 +36,55 @@ if(ReactAndroid_VERSION_MINOR GREATER_EQUAL 76)
+ else()
+   target_link_libraries(reanimated ReactAndroid::react_nativemodule_core)
+ endif()
++
++# React Native 0.82+: worklets links hermesvm, but we need to ensure the library path
++# is available for reanimated as well. Add the same hermesvm library directories.
++if(${JS_RUNTIME} STREQUAL "hermes")
++  # Try to find hermesvm library directories from Gradle cache
++  set(GRADLE_CACHE_BASES
++    "$ENV{HOME}/.gradle/caches"
++    "/root/.gradle/caches"
++    "/home/runner/.gradle/caches")
++  
++  set(HERMES_LIB_DIR_FOUND FALSE)
++  foreach(GRADLE_CACHE_BASE ${GRADLE_CACHE_BASES})
++    if(EXISTS "${GRADLE_CACHE_BASE}")
++      # Try pattern: */transformed/hermes-android-*/prefab/modules/hermesvm/libs/android.*/libhermesvm.so
++      file(GLOB HERMES_LIBS "${GRADLE_CACHE_BASE}/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermesvm/libs/android.*/libhermesvm.so")
++      if(HERMES_LIBS)
++        # Find the one matching current ABI
++        foreach(HERMES_LIB ${HERMES_LIBS})
++          if(HERMES_LIB MATCHES "android\\.${ANDROID_ABI}/libhermesvm\\.so")
++            get_filename_component(HERMES_LIB_DIR "${HERMES_LIB}" DIRECTORY)
++            target_link_directories(reanimated PRIVATE "${HERMES_LIB_DIR}")
++            message(STATUS "reanimated: Added hermesvm library directory: ${HERMES_LIB_DIR} (ABI: ${ANDROID_ABI})")
++            set(HERMES_LIB_DIR_FOUND TRUE)
++            break()
++          endif()
++        endforeach()
++        # If no ABI match found, use the first one
++        if(NOT HERMES_LIB_DIR_FOUND)
++          list(GET HERMES_LIBS 0 HERMES_LIB)
++          get_filename_component(HERMES_LIB_DIR "${HERMES_LIB}" DIRECTORY)
++          target_link_directories(reanimated PRIVATE "${HERMES_LIB_DIR}")
++          message(STATUS "reanimated: Added hermesvm library directory: ${HERMES_LIB_DIR} (fallback)")
++          set(HERMES_LIB_DIR_FOUND TRUE)
++        endif()
++        break()
++      endif()
++      
++      # Fallback: try old pattern
++      if(NOT HERMES_LIB_DIR_FOUND)
++        file(GLOB HERMES_LIBS "${GRADLE_CACHE_BASE}/*/transforms/*/transformed/hermes-android-*/prefab/modules/hermesvm/lib/*/libhermesvm.so")
++        if(HERMES_LIBS)
++          list(GET HERMES_LIBS 0 HERMES_LIB)
++          get_filename_component(HERMES_LIB_DIR "${HERMES_LIB}" DIRECTORY)
++          target_link_directories(reanimated PRIVATE "${HERMES_LIB_DIR}")
++          message(STATUS "reanimated: Added hermesvm library directory: ${HERMES_LIB_DIR} (legacy)")
++          set(HERMES_LIB_DIR_FOUND TRUE)
++          break()
++        endif()
++      endif()
++    endif()
++  endforeach()
++endif()
 diff --git a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt b/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt
 index bb61ff7..4192bc7 100644
 --- a/node_modules/react-native-reanimated/android/src/main/cpp/worklets/CMakeLists.txt

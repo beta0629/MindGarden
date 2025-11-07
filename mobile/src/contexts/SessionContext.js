@@ -11,9 +11,10 @@
  */
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiGet } from '../api/client';
 import { AUTH_API } from '../api/endpoints';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import SessionManager from '../services/SessionManager';
 
 // 세션 상태 타입 정의
 const SessionState = {
@@ -94,10 +95,10 @@ export const SessionProvider = ({ children }) => {
   useEffect(() => {
     const loadSession = async () => {
       try {
-        const [userJson, token] = await AsyncStorage.multiGet(['user', 'accessToken']);
-        const user = userJson[1] ? JSON.parse(userJson[1]) : null;
-        
-        if (user && token[1]) {
+        await SessionManager.init();
+        const { user, accessToken } = SessionManager.getState();
+
+        if (user && accessToken) {
           dispatch({ type: SessionActionTypes.SET_USER, payload: user });
           dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
         }
@@ -110,52 +111,54 @@ export const SessionProvider = ({ children }) => {
   }, []);
 
   // 세션 체크 함수
-  const checkSession = useCallback(async (force = false) => {
-    try {
-      const token = await AsyncStorage.getItem('accessToken');
-      if (!token && !force) {
-        return false;
-      }
+  const checkSession = useCallback(
+    async (force = false) => {
+      try {
+        await SessionManager.init();
+        const { accessToken } = SessionManager.getState();
 
-      dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
+        if (!accessToken && !force) {
+          return false;
+        }
 
-      const response = await apiGet(AUTH_API.GET_CURRENT_USER);
-      
-      if (response && response.user) {
-        // 사용자 정보 저장
-        await AsyncStorage.setItem('user', JSON.stringify(response.user));
-        dispatch({ type: SessionActionTypes.SET_USER, payload: response.user });
-        dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
-        return true;
-      } else {
-        // 세션 없음
+        dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
+
+        const response = await apiGet(AUTH_API.GET_CURRENT_USER);
+
+        if (response && response.user) {
+          await SessionManager.setSession({ user: response.user });
+          dispatch({ type: SessionActionTypes.SET_USER, payload: response.user });
+          dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
+          return true;
+        }
+
         await logout();
         return false;
+      } catch (error) {
+        console.error('세션 체크 실패:', error);
+        if (error.status === 401 || error.status === 403) {
+          await logout();
+        }
+        return false;
+      } finally {
+        dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
       }
-    } catch (error) {
-      console.error('세션 체크 실패:', error);
-      if (error.status === 401 || error.status === 403) {
-        await logout();
-      }
-      return false;
-    } finally {
-      dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
-    }
-  }, [logout]);
+    },
+    [logout]
+  );
 
   // 로그인 함수
   const login = useCallback(async () => {
-    // AsyncStorage에서 사용자 정보를 읽어서 Context 업데이트
     try {
-      const userJson = await AsyncStorage.getItem('user');
-      const user = userJson ? JSON.parse(userJson) : null;
-      
+      await SessionManager.init();
+      const { user } = SessionManager.getState();
+
       if (user) {
         dispatch({ type: SessionActionTypes.SET_USER, payload: user });
         dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
         return { success: true, user };
       }
-      
+
       return { success: false };
     } catch (error) {
       console.error('로그인 처리 오류:', error);
@@ -166,29 +169,25 @@ export const SessionProvider = ({ children }) => {
   // 로그아웃 함수
   const logout = useCallback(async () => {
     try {
-      // 로그아웃 API 호출 (선택적)
       try {
         const { apiPost } = await import('../api/client');
-        const { AUTH_API } = await import('../api/endpoints');
-        await apiPost(AUTH_API.LOGOUT);
+        const { AUTH_API: AUTH_ENDPOINTS } = await import('../api/endpoints');
+        await apiPost(AUTH_ENDPOINTS.LOGOUT);
       } catch (apiError) {
-        // API 호출 실패는 무시 (오프라인 상황 등)
         console.log('로그아웃 API 호출 실패 (무시됨):', apiError);
       }
-      
-      // 저장소 정리
-      await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user', 'fcm_token']);
-      
-      // Context 정리
+
+      await SessionManager.clearSession({ reason: 'manual-logout', broadcast: true });
+      await AsyncStorage.removeItem('fcm_token');
       dispatch({ type: SessionActionTypes.CLEAR_SESSION });
-      
+
       console.log('✅ 로그아웃 완료');
       return true;
     } catch (error) {
       console.error('로그아웃 실패:', error);
-      // 에러가 발생해도 로컬 세션은 정리
       try {
-        await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user', 'fcm_token']);
+        await SessionManager.clearSession({ reason: 'manual-logout-fallback', broadcast: true });
+        await AsyncStorage.removeItem('fcm_token');
         dispatch({ type: SessionActionTypes.CLEAR_SESSION });
       } catch (cleanupError) {
         console.error('세션 정리 실패:', cleanupError);

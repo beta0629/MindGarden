@@ -2,10 +2,42 @@ import { Linking, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiGet, apiPost } from '../api/client';
 import { AUTH_API } from '../api/endpoints';
+import SessionManager from '../services/SessionManager';
 import { STRINGS } from '../constants/strings';
 import { login as kakaoSDKLogin, getProfile as getKakaoProfile, logout as kakaoSDKLogout, unlink as kakaoSDKUnlink } from '@react-native-seoul/kakao-login';
 import NaverLogin from '@react-native-seoul/naver-login';
 import { getNaverLoginConfig } from '../config/environments';
+
+const persistSession = async ({ user, accessToken, refreshToken, sessionId }) => {
+  const payload = {};
+
+  if (user !== undefined) {
+    payload.user = user;
+  }
+  if (accessToken !== undefined) {
+    payload.accessToken = accessToken;
+  }
+  if (refreshToken !== undefined) {
+    payload.refreshToken = refreshToken;
+  }
+  if (sessionId !== undefined) {
+    payload.sessionId = sessionId;
+  }
+
+  if (Object.keys(payload).length === 0) {
+    return;
+  }
+
+  await SessionManager.setSession(payload);
+};
+
+const debugSessionId = (label) => {
+  if (!__DEV__) {
+    return;
+  }
+  const currentSession = SessionManager.getState().sessionId;
+  console.log(`${label}:`, currentSession ? `${currentSession.substring(0, 10)}... (길이: ${currentSession.length})` : '없음');
+};
 
 /**
  * 네이버 SDK 초기화 (앱 시작 시 한 번만 호출)
@@ -82,28 +114,17 @@ export const kakaoLogin = async () => {
     });
     
     if (response?.success && response?.user) {
-      // 사용자 정보 저장
-      await AsyncStorage.setItem('user', JSON.stringify(response.user));
-      
-      // 세션 ID 저장 (응답 인터셉터에서 이미 저장했을 수 있지만, 명시적으로 다시 저장)
-      const sessionId = response.sessionId;
-      if (sessionId) {
-        await AsyncStorage.setItem('sessionId', sessionId);
-        
-        // iOS 디버깅: 세션 저장 확인
-        if (Platform.OS === 'ios') {
-          const savedSessionId = await AsyncStorage.getItem('sessionId');
-          console.log(`${platform} - ✅ 카카오 세션 ID 저장 완료:`, savedSessionId ? `${savedSessionId.substring(0, 10)}... (길이: ${savedSessionId.length})` : '저장 실패');
-          console.log(`${platform} - 📊 응답에서 받은 sessionId:`, sessionId ? `${sessionId.substring(0, 10)}... (길이: ${sessionId.length})` : '없음');
-          console.log(`${platform} - 📊 AsyncStorage에 저장된 sessionId:`, savedSessionId ? `${savedSessionId.substring(0, 10)}... (길이: ${savedSessionId.length})` : '없음');
-        }
-      } else {
-        // iOS 디버깅: 세션 ID가 없음
-        if (Platform.OS === 'ios') {
-          console.warn(`${platform} - ⚠️ 카카오 응답에 sessionId가 없습니다! response:`, JSON.stringify(response, null, 2));
-        }
+      await persistSession({
+        user: response.user,
+        accessToken: response.accessToken ?? null,
+        refreshToken: response.refreshToken ?? null,
+        sessionId: response.sessionId ?? null,
+      });
+
+      if (Platform.OS === 'ios') {
+        debugSessionId(`${platform} - 📊 카카오 세션 ID 저장 상태`);
       }
-      
+
       return {
         success: true,
         user: response.user,
@@ -219,28 +240,17 @@ export const naverLogin = async () => {
       });
       
       if (response?.success && response?.user) {
-        // 사용자 정보 저장
-        await AsyncStorage.setItem('user', JSON.stringify(response.user));
-        
-        // 세션 ID 저장 (응답 인터셉터에서 이미 저장했을 수 있지만, 명시적으로 다시 저장)
-        const sessionId = response.sessionId;
-        if (sessionId) {
-          await AsyncStorage.setItem('sessionId', sessionId);
-          
-          // iOS 디버깅: 세션 저장 확인
-          if (Platform.OS === 'ios') {
-            const savedSessionId = await AsyncStorage.getItem('sessionId');
-            console.log(`${platform} - ✅ 네이버 세션 ID 저장 완료:`, savedSessionId ? `${savedSessionId.substring(0, 10)}... (길이: ${savedSessionId.length})` : '저장 실패');
-            console.log(`${platform} - 📊 응답에서 받은 sessionId:`, sessionId ? `${sessionId.substring(0, 10)}... (길이: ${sessionId.length})` : '없음');
-            console.log(`${platform} - 📊 AsyncStorage에 저장된 sessionId:`, savedSessionId ? `${savedSessionId.substring(0, 10)}... (길이: ${savedSessionId.length})` : '없음');
-          }
-        } else {
-          // iOS 디버깅: 세션 ID가 없음
-          if (Platform.OS === 'ios') {
-            console.warn(`${platform} - ⚠️ 네이버 응답에 sessionId가 없습니다! response:`, JSON.stringify(response, null, 2));
-          }
+        await persistSession({
+          user: response.user,
+          accessToken: response.accessToken ?? null,
+          refreshToken: response.refreshToken ?? null,
+          sessionId: response.sessionId ?? null,
+        });
+
+        if (Platform.OS === 'ios') {
+          debugSessionId(`${platform} - 📊 네이버 세션 ID 저장 상태`);
         }
-        
+
         return {
           success: true,
           user: response.user,
@@ -292,9 +302,9 @@ export const socialLogout = async (provider) => {
     // 백엔드 로그아웃 API 호출 (선택 사항, 세션 기반이므로 필요 없을 수도 있음)
     await apiPost(AUTH_API.LOGOUT);
     
-    // 로컬 저장소에서 토큰 및 사용자 정보 제거
-    await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user', 'sessionId', 'oauth_state']);
-    
+    await SessionManager.clearSession({ reason: `social-logout-${provider}`, broadcast: true });
+    await AsyncStorage.removeItem('oauth_state');
+
     return { success: true };
   } catch (error) {
     console.error(`❌ Social Logout Failed (${provider}):`, error);
@@ -319,7 +329,8 @@ export const socialUnlink = async (provider) => {
     const response = await apiPost('/api/auth/social/unlink', { provider });
     
     if (response.success) {
-      await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user', 'sessionId', 'oauth_state']);
+      await SessionManager.clearSession({ reason: `social-unlink-${provider}`, broadcast: true });
+      await AsyncStorage.removeItem('oauth_state');
       return { success: true };
     } else {
       throw new Error(response.message || '소셜 계정 연결 해제에 실패했습니다.');
@@ -460,31 +471,13 @@ export const handleOAuthCallback = async (url) => {
       }
       
       if (finalSessionId) {
-        // 세션 ID 정규화 (공백 제거 등)
         finalSessionId = finalSessionId.trim();
-        await AsyncStorage.setItem('sessionId', finalSessionId);
+        await SessionManager.setSession({ sessionId: finalSessionId });
         console.log(`${logPrefix} - ✅ Deep Link에서 받은 세션 ID 저장:`, finalSessionId);
         console.log(`${logPrefix} - 세션 ID 길이:`, finalSessionId.length);
-        
-        // iOS 전용: 저장 확인 (즉시 확인)
+
         if (isIOS) {
-          const savedSessionId = await AsyncStorage.getItem('sessionId');
-          if (savedSessionId === finalSessionId) {
-            console.log(`${logPrefix} - ✅ 세션 ID 저장 확인 완료`);
-            console.log(`${logPrefix} - 저장된 세션 ID 전체:`, savedSessionId);
-          } else {
-            console.error(`${logPrefix} - ❌ 세션 ID 저장 실패!`);
-            console.error(`${logPrefix} - 저장하려던 값:`, finalSessionId);
-            console.error(`${logPrefix} - 실제 저장된 값:`, savedSessionId);
-            // 재시도
-            await AsyncStorage.setItem('sessionId', finalSessionId);
-            const retrySaved = await AsyncStorage.getItem('sessionId');
-            if (retrySaved === finalSessionId) {
-              console.log(`${logPrefix} - ✅ 재시도 후 세션 ID 저장 성공`);
-            } else {
-              console.error(`${logPrefix} - ❌ 재시도 후에도 실패`);
-            }
-          }
+          debugSessionId(`${logPrefix} - 📦 세션 ID 저장 확인`);
         }
       } else {
         console.error(`${logPrefix} - ❌ sessionId를 찾을 수 없습니다!`);
@@ -500,8 +493,7 @@ export const handleOAuthCallback = async (url) => {
       
       // iOS 전용: AsyncStorage에서 저장된 세션 ID 확인
       if (isIOS) {
-        const storedSessionId = await AsyncStorage.getItem('sessionId');
-        console.log(`${logPrefix} - 📦 AsyncStorage의 세션 ID:`, storedSessionId ? `${storedSessionId.substring(0, 10)}...` : '없음');
+        debugSessionId(`${logPrefix} - 📦 현재 SessionManager 세션 ID`);
       }
       
       const response = await apiPost(AUTH_API.OAUTH2_CALLBACK, {
@@ -520,17 +512,11 @@ export const handleOAuthCallback = async (url) => {
         // 세션 ID 저장 (API 응답에서 받은 것 우선, 없으면 Deep Link에서 받은 것 사용)
         const finalSessionId = response.sessionId || requestSessionId;
         if (finalSessionId) {
-          await AsyncStorage.setItem('sessionId', finalSessionId);
+          await SessionManager.setSession({ sessionId: finalSessionId });
           console.log(`${logPrefix} - ✅ 최종 세션 ID 저장:`, finalSessionId);
-          
-          // iOS 전용: 저장 확인
+
           if (isIOS) {
-            const savedSessionId = await AsyncStorage.getItem('sessionId');
-            if (savedSessionId === finalSessionId) {
-              console.log(`${logPrefix} - ✅ 최종 세션 ID 저장 확인 완료`);
-            } else {
-              console.error(`${logPrefix} - ❌ 최종 세션 ID 저장 실패! 저장된 값:`, savedSessionId);
-            }
+            debugSessionId(`${logPrefix} - ✅ 최종 세션 ID 저장 확인`);
           }
         } else {
           console.error(`${logPrefix} - ❌ 최종 세션 ID가 없습니다!`);
@@ -540,7 +526,7 @@ export const handleOAuthCallback = async (url) => {
         let finalUser = response.user;
         
         if (finalUser) {
-          await AsyncStorage.setItem('user', JSON.stringify(finalUser));
+          await SessionManager.setSession({ user: finalUser });
           console.log('✅ 소셜 로그인 사용자 정보 저장 완료:', finalUser);
         } else {
           // 백엔드에서 user 정보를 반환하지 않았지만 userId가 있으면
@@ -552,7 +538,7 @@ export const handleOAuthCallback = async (url) => {
             const userResponse = await apiGet(AUTH_API.GET_CURRENT_USER);
             if (userResponse && userResponse.user) {
               finalUser = userResponse.user;
-              await AsyncStorage.setItem('user', JSON.stringify(finalUser));
+              await SessionManager.setSession({ user: finalUser });
               console.log('✅ 현재 사용자 정보 조회 및 저장 완료:', finalUser);
             } else {
               console.warn('⚠️ GET_CURRENT_USER 응답에 사용자 정보가 없습니다.');
@@ -576,7 +562,7 @@ export const handleOAuthCallback = async (url) => {
                 role: role,
                 profileImageUrl: profileImage || ''
               };
-              await AsyncStorage.setItem('user', JSON.stringify(finalUser));
+              await SessionManager.setSession({ user: finalUser });
               console.log('✅ Deep Link 정보로 사용자 객체 생성 및 저장:', finalUser);
             }
           }

@@ -13,7 +13,7 @@
  * - UI는 Presentational 컴포넌트에 위임
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, Modal, FlatList, TextInput } from 'react-native';
 import { Users, Link, Unlink, Plus, Search, Filter, X } from 'lucide-react-native';
 import SimpleLayout from '../../components/layout/SimpleLayout';
@@ -31,6 +31,7 @@ import { STRINGS } from '../../constants/strings';
 import NotificationService from '../../services/NotificationService';
 // Presentational 컴포넌트들
 import MappingStats from '../../components/admin/MappingManagement/MappingStats';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const MappingManagement = () => {
   const { user } = useSession();
@@ -83,6 +84,14 @@ const MappingManagement = () => {
     paymentAmount: 0
   });
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+
+  const insets = useSafeAreaInsets();
+
+  const modalOverlayStyle = useMemo(
+    () => [styles.modalOverlay, { paddingBottom: Math.max(insets.bottom, SPACING['2xl']) }],
+    [insets.bottom]
+  );
+
 
   // 데이터 로드
   const loadData = useCallback(async () => {
@@ -954,7 +963,7 @@ const MappingManagement = () => {
         transparent={true}
         onRequestClose={handleCloseAddMappingModal}
       >
-        <View style={styles.modalOverlay}>
+        <View style={modalOverlayStyle}>
           <View style={styles.modalContent}>
             {/* 모달 헤더 */}
             <View style={styles.modalHeader}>
@@ -1104,7 +1113,7 @@ const MappingManagement = () => {
         transparent={true}
         onRequestClose={handleClosePaymentInfoModal}
       >
-        <View style={styles.modalOverlay}>
+        <View style={modalOverlayStyle}>
           <View style={styles.paymentModalContent}>
             {/* 모달 헤더 */}
             <View style={styles.modalHeader}>
@@ -1412,7 +1421,7 @@ const MappingManagement = () => {
         transparent={true}
         onRequestClose={handleCloseSessionStatusModal}
       >
-        <View style={styles.modalOverlay}>
+        <View style={modalOverlayStyle}>
           <View style={styles.paymentModalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>세션 상태</Text>
@@ -1546,7 +1555,7 @@ const MappingManagement = () => {
         statusBarTranslucent={true}
         onRequestClose={handleCloseSessionExtensionModal}
       >
-        <View style={styles.modalOverlay}>
+        <View style={modalOverlayStyle}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>세션 추가</Text>
@@ -1676,7 +1685,7 @@ const MappingManagement = () => {
         statusBarTranslucent={true}
         onRequestClose={handleClosePaymentConfirmationModal}
       >
-        <View style={styles.modalOverlay}>
+        <View style={modalOverlayStyle}>
           <View style={styles.paymentModalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{STRINGS.MAPPING.CONFIRM_PAYMENT_TITLE}</Text>

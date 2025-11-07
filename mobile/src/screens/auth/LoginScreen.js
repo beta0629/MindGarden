@@ -10,7 +10,6 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet,
 import { MessageCircle } from 'lucide-react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 // import { Picker } from '@react-native-picker/picker'; // 지점 선택 UI 제거로 더 이상 필요 없음
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../api/client';
 import { AUTH_API, BRANCH_API } from '../../api/endpoints';
@@ -21,6 +20,7 @@ import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS, SHADOWS, SIZES } from '../.
 import { kakaoLogin, naverLogin } from '../../utils/socialLogin';
 import NotificationService from '../../services/NotificationService';
 import { SMS_CONFIG } from '../../constants/common';
+import SessionManager from '../../services/SessionManager';
 
 const LoginScreen = () => {
   const { login } = useSession();
@@ -65,20 +65,19 @@ const LoginScreen = () => {
       user: user ? `존재 (ID: ${user.id})` : '없음'
     });
     
+    await SessionManager.setSession(
+      {
+        accessToken: accessToken || null,
+        refreshToken: refreshToken || null,
+        user: user || null,
+      },
+      { persist: true }
+    );
+
     if (accessToken && refreshToken) {
-      await AsyncStorage.multiSet([
-        ['accessToken', accessToken],
-        ['refreshToken', refreshToken],
-        ['user', JSON.stringify(user)],
-      ]);
-      console.log('✅ 토큰 저장 완료');
+      console.log('✅ 토큰 저장 완료 (SessionManager)');
     } else {
-      console.warn('⚠️ Access token or refresh token is missing for login success.');
-      // 토큰이 없어도 사용자 정보는 저장 (일부 API는 토큰 대신 쿠키 사용)
-      if (user) {
-        await AsyncStorage.setItem('user', JSON.stringify(user));
-        console.log('✅ 사용자 정보만 저장 (토큰 없음)');
-      }
+      console.warn('⚠️ Access/Refresh token 누락 - SessionManager에 사용자 정보만 저장');
     }
     
     const loginResult = await login();

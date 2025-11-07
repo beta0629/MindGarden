@@ -32,6 +32,7 @@ import ScheduleCalendarView from '../../components/admin/SessionManagement/Sched
 import DateZoomModal from '../../components/admin/SessionManagement/DateZoomModal';
 import ScheduleDetailModal from '../../components/admin/SessionManagement/ScheduleDetailModal';
 import ConsultantFilter from '../../components/admin/SessionManagement/ConsultantFilter';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // 세션 검증 유틸
 import { canCreateSchedule, getSessionStatus, filterSchedulableMappings } from '../../utils/sessionValidation';
@@ -152,6 +153,24 @@ const SessionManagement = () => {
   // 스케줄 상태 옵션 (동적 로드)
   const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
   const [loadingStatusOptions, setLoadingStatusOptions] = useState(false);
+
+  const insets = useSafeAreaInsets();
+
+  const bottomSheetOverlayStyle = useMemo(
+    () => [styles.modalOverlay, { paddingBottom: Math.max(insets.bottom, SPACING['2xl']) }],
+    [insets.bottom]
+  );
+
+  const centeredModalOverlayStyle = useMemo(
+    () => [
+      styles.paymentModalOverlay,
+      {
+        paddingTop: Math.max(insets.top, SPACING.lg),
+        paddingBottom: insets.bottom + SPACING.lg,
+      },
+    ],
+    [insets.bottom, insets.top]
+  );
 
   // 상담사 목록 로드
   const loadConsultantsForFilter = useCallback(async () => {
@@ -3225,7 +3244,7 @@ const SessionManagement = () => {
         statusBarTranslucent={true}
         onRequestClose={() => setShowMappingModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={bottomSheetOverlayStyle}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{STRINGS.SESSION.SELECT_MAPPING}</Text>
@@ -3348,7 +3367,7 @@ const SessionManagement = () => {
         statusBarTranslucent={true}
         onRequestClose={() => setShowDateTimeModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={bottomSheetOverlayStyle}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{STRINGS.SESSION.SELECT_DATE_TIME}</Text>
@@ -3628,7 +3647,7 @@ const SessionManagement = () => {
         statusBarTranslucent={true}
         onRequestClose={handleCloseSessionExtensionModal}
       >
-        <View style={styles.modalOverlay}>
+        <View style={bottomSheetOverlayStyle}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>세션 추가</Text>
@@ -3779,7 +3798,7 @@ const SessionManagement = () => {
         transparent={true}
         onRequestClose={handleCloseNewMappingModal}
       >
-        <View style={styles.modalOverlay}>
+        <View style={bottomSheetOverlayStyle}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>신규 매칭 생성</Text>
@@ -3909,7 +3928,7 @@ const SessionManagement = () => {
         statusBarTranslucent={true}
         onRequestClose={handleClosePaymentInfoModalForMapping}
       >
-        <View style={styles.modalOverlay}>
+        <View style={centeredModalOverlayStyle}>
           <View style={styles.paymentModalContent}>
             {/* 모달 헤더 */}
             <View style={styles.modalHeader}>
@@ -4214,7 +4233,7 @@ const SessionManagement = () => {
         presentationStyle="overFullScreen"
         statusBarTranslucent={true}
       >
-        <View style={styles.paymentModalOverlay}>
+        <View style={centeredModalOverlayStyle}>
           <View style={styles.paymentModalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
@@ -4463,7 +4482,7 @@ const SessionManagement = () => {
         presentationStyle="overFullScreen"
         statusBarTranslucent={true}
       >
-        <View style={styles.paymentModalOverlay}>
+        <View style={centeredModalOverlayStyle}>
           <View style={styles.paymentModalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>매핑 정보 수정</Text>

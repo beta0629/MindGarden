@@ -71,16 +71,21 @@ const LoginScreen = () => {
       refreshToken: refreshToken ? `존재 (길이: ${refreshToken.length})` : '없음',
       user: user ? `존재 (ID: ${user.id})` : '없음'
     });
+
+    // 이전 세션 ID가 남아 있으면 서버에서 오래된 세션으로 요청을 인지할 수 있으므로 선제적으로 초기화
+    await SessionManager.setSession({ sessionId: null }, { persist: true, broadcast: false });
     
-    await SessionManager.setSession(
-      {
-        accessToken: accessToken || null,
-        refreshToken: refreshToken || null,
-        user: user || null,
-        sessionId: sessionId || null,
-      },
-      { persist: true }
-    );
+    const sessionPayload = {
+      accessToken: accessToken || null,
+      refreshToken: refreshToken || null,
+      user: user || null,
+    };
+
+    if (sessionId) {
+      sessionPayload.sessionId = sessionId;
+    }
+
+    await SessionManager.setSession(sessionPayload, { persist: true });
 
     if (accessToken && refreshToken) {
       console.log('✅ 토큰 저장 완료 (SessionManager)');
@@ -142,13 +147,15 @@ const LoginScreen = () => {
       console.log('📥 중복 로그인 확인 응답:', response);
 
       if (response?.success && response?.user) {
-        await SessionManager.setSession({ sessionId: response.sessionId || null });
+        if (response.sessionId) {
+          await SessionManager.setSession({ sessionId: response.sessionId });
+        }
         closeDuplicateLoginModal();
         await handleLoginSuccess(
           response.user,
           response.accessToken || response.token || null,
           response.refreshToken || null,
-          response.sessionId || null
+          response.sessionId
         );
       } else {
         NotificationService.error(
@@ -224,7 +231,7 @@ const LoginScreen = () => {
           response.user,
           response.accessToken,
           response.refreshToken,
-          response.sessionId || null
+          response.sessionId
         );
       } else if (response && response.requiresConfirmation) {
         console.log('🔔 중복 로그인 확인 필요:', response.message);
@@ -437,7 +444,7 @@ const LoginScreen = () => {
           response.user,
           response.accessToken,
           response.refreshToken,
-          response.sessionId || null
+          response.sessionId
         );
       } else {
         console.error('❌ SMS 인증 로그인 실패:', response.message);

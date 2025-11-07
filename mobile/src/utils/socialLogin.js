@@ -20,7 +20,7 @@ const persistSession = async ({ user, accessToken, refreshToken, sessionId }) =>
   if (refreshToken !== undefined) {
     payload.refreshToken = refreshToken;
   }
-  if (sessionId !== undefined) {
+  if (sessionId) {
     payload.sessionId = sessionId;
   }
 
@@ -118,7 +118,7 @@ export const kakaoLogin = async () => {
         user: response.user,
         accessToken: response.accessToken ?? null,
         refreshToken: response.refreshToken ?? null,
-        sessionId: response.sessionId ?? null,
+        sessionId: response.sessionId,
       });
 
       if (Platform.OS === 'ios') {
@@ -244,7 +244,7 @@ export const naverLogin = async () => {
           user: response.user,
           accessToken: response.accessToken ?? null,
           refreshToken: response.refreshToken ?? null,
-          sessionId: response.sessionId ?? null,
+          sessionId: response.sessionId,
         });
 
         if (Platform.OS === 'ios') {

@@ -6117,17 +6117,22 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     borderLeftWidth: 4,
     borderLeftColor: COLORS.success,
+    alignItems: 'flex-start',
+    gap: SPACING.xs,
   },
   successTitle: {
     ...TYPOGRAPHY.h3,
     color: COLORS.successDark,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
     marginBottom: SPACING.xs,
+    lineHeight: TYPOGRAPHY.fontSize.lg * TYPOGRAPHY.lineHeight.normal,
+    width: '100%',
   },
   successText: {
     ...TYPOGRAPHY.body2,
     color: COLORS.successDark,
-    lineHeight: TYPOGRAPHY.lineHeight.relaxed,
+    lineHeight: TYPOGRAPHY.fontSize.base * TYPOGRAPHY.lineHeight.relaxed,
+    width: '100%',
   },
   infoValue: {
     ...TYPOGRAPHY.body1,

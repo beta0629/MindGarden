@@ -28,6 +28,7 @@ const SimpleLayout = ({
   loadingVariant = 'default',
   showBackButton = true, // 기본적으로 뒤로가기 버튼 표시
   showLogo = true, // 로고 표시 여부
+  scrollableContent = true,
 }) => {
   const navigation = useNavigation();
   const { user } = useSession();
@@ -235,10 +236,14 @@ const SimpleLayout = ({
       {/* 컨텐츠 */}
       {loading ? (
         <UnifiedLoading text={loadingText} size="large" variant={loadingVariant} type="fullscreen" />
-      ) : (
+      ) : scrollableContent ? (
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
           {children}
         </ScrollView>
+      ) : (
+        <View style={[styles.content, styles.contentNoScroll]}>
+          {children}
+        </View>
       )}
     </SafeAreaView>
   );
@@ -357,6 +362,10 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: SPACING.screen.horizontal, // 화면 좌우 여백
     paddingVertical: SPACING.screen.vertical, // 화면 상하 여백
+  },
+  contentNoScroll: {
+    paddingHorizontal: SPACING.screen.horizontal,
+    paddingVertical: SPACING.screen.vertical,
   },
 });
 

@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ScrollView } from 'react-native';
 import { MessageSquare, Search, Filter, Users, User, X } from 'lucide-react-native';
 import SimpleLayout from '../../components/layout/SimpleLayout';
 import UnifiedLoading from '../../components/UnifiedLoading';
@@ -21,7 +21,7 @@ import { ADMIN_SCREENS } from '../../constants/navigation';
 
 const AdminMessages = () => {
   const { user } = useSession();
-  const { unreadCount } = useNotification();
+  const { unreadCount, loadUnreadCount, markMessageAsRead: markMessageAsReadRemote } = useNotification();
   
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
@@ -49,6 +49,58 @@ const AdminMessages = () => {
 
   // 전체 메시지 데이터 (한 번만 로드)
   const [allMessages, setAllMessages] = useState([]);
+
+  const getMessageKey = useCallback(
+    (message, fallbackIndex = 0) => {
+      if (!message) {
+        return `message-${fallbackIndex}`;
+      }
+
+      const candidateKeys = [
+        message.id,
+        message.messageId,
+        message.uuid,
+        message._id,
+        message.localId,
+        message.key,
+      ].find((value) => value !== undefined && value !== null && value !== '');
+
+      if (candidateKeys !== undefined) {
+        return `message-${String(candidateKeys)}`;
+      }
+
+      const composedKey = [
+        message.senderId || message.sender?.id || 'sender',
+        message.receiverId || message.receiver?.id || 'receiver',
+        message.createdAt || message.sentAt || message.updatedAt || fallbackIndex,
+      ].join('-');
+
+      return `message-${String(composedKey)}`;
+    },
+    []
+  );
+
+  const dedupeMessages = useCallback(
+    (items) => {
+      if (!Array.isArray(items)) {
+        return [];
+      }
+
+      const seen = new Set();
+      const uniqueMessages = [];
+
+      items.forEach((message, index) => {
+        const key = getMessageKey(message, index);
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueMessages.push(message);
+        }
+      });
+
+      return uniqueMessages;
+    },
+    [getMessageKey]
+  );
   
   // 메시지 로드 (클라이언트 사이드 페이지네이션)
   const loadMessages = useCallback(async (pageNum = 0, append = false) => {
@@ -83,19 +135,21 @@ const AdminMessages = () => {
             const dateB = new Date(b.createdAt || 0);
             return dateB - dateA; // 내림차순
           });
-          
-          setAllMessages(sortedMessages);
-          
+
+          const dedupedMessages = dedupeMessages(sortedMessages);
+
+          setAllMessages(dedupedMessages);
+
           // 첫 페이지만 표시
-          const firstPageMessages = sortedMessages.slice(0, PAGE_SIZE);
+          const firstPageMessages = dedupedMessages.slice(0, PAGE_SIZE);
           setMessages(firstPageMessages);
-          setHasMore(sortedMessages.length > PAGE_SIZE);
+          setHasMore(dedupedMessages.length > PAGE_SIZE);
           
           if (__DEV__) {
             console.log('📊 초기 로드 완료:', {
-              total: sortedMessages.length,
+              total: dedupedMessages.length,
               displayed: firstPageMessages.length,
-              hasMore: sortedMessages.length > PAGE_SIZE
+              hasMore: dedupedMessages.length > PAGE_SIZE
             });
           }
         } else {
@@ -121,22 +175,23 @@ const AdminMessages = () => {
         }
         
         if (nextPageMessages.length > 0) {
-          setMessages(prev => {
-            const updated = [...prev, ...nextPageMessages];
+          setMessages((prev) => {
+            const combined = [...prev, ...nextPageMessages];
+            const dedupedCombined = dedupeMessages(combined);
             const hasMoreData = endIndex < allMessages.length;
             setHasMore(hasMoreData);
-            
+
             if (__DEV__) {
               console.log('📊 추가 로드 완료:', {
                 prevCount: prev.length,
                 newCount: nextPageMessages.length,
-                updatedCount: updated.length,
+                updatedCount: dedupedCombined.length,
                 total: allMessages.length,
-                hasMore: hasMoreData
+                hasMore: hasMoreData,
               });
             }
-            
-            return updated;
+
+            return dedupedCombined;
           });
         } else {
           setHasMore(false);
@@ -160,7 +215,7 @@ const AdminMessages = () => {
       setLoadingMore(false);
       setRefreshing(false);
     }
-  }, [allMessages.length, PAGE_SIZE]);
+  }, [allMessages.length, PAGE_SIZE, dedupeMessages]);
 
   // 데이터 로드
   useEffect(() => {
@@ -207,22 +262,43 @@ const AdminMessages = () => {
         });
       }
     }
-  }, [page, loadingMore, hasMore, allMessages.length, messages.length, loadMessages]);
+  }, [page, loadingMore, hasMore, allMessages.length, messages.length, loadMessages, dedupeMessages]);
 
   // 메시지 필터링
-  const filteredMessages = messages.filter(message => {
-    const matchesSearch = message.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.senderName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         message.receiverName?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+  const filteredMessages = messages.filter((message) => {
+    const lowercaseSearch = searchTerm.toLowerCase();
+    const matchesSearch =
+      message.title?.toLowerCase().includes(lowercaseSearch) ||
+      message.content?.toLowerCase().includes(lowercaseSearch) ||
+      message.senderName?.toLowerCase().includes(lowercaseSearch) ||
+      message.receiverName?.toLowerCase().includes(lowercaseSearch);
+
     const matchesType = filterType === 'ALL' || message.messageType === filterType;
-    const matchesStatus = filterStatus === 'ALL' || 
-                         (filterStatus === 'UNREAD' && !message.isRead) ||
-                         (filterStatus === 'READ' && message.isRead);
-    
+    const matchesStatus =
+      filterStatus === 'ALL' ||
+      (filterStatus === 'UNREAD' && !message.isRead) ||
+      (filterStatus === 'READ' && message.isRead);
+
     return matchesSearch && matchesType && matchesStatus;
   });
+
+  const markMessageAsReadLocally = useCallback((messageId) => {
+    if (!messageId) {
+      return;
+    }
+
+    setMessages((prevMessages) =>
+      prevMessages.map((item) =>
+        item.id === messageId ? { ...item, isRead: true } : item
+      )
+    );
+
+    setAllMessages((prevAllMessages) =>
+      prevAllMessages.map((item) =>
+        item.id === messageId ? { ...item, isRead: true } : item
+      )
+    );
+  }, []);
 
   // 메시지 상세 보기
   const handleMessageClick = async (message) => {
@@ -250,6 +326,17 @@ const AdminMessages = () => {
         }
         
         setSelectedMessage(normalizedMessage);
+        markMessageAsReadLocally(message.id);
+        if (typeof markMessageAsReadRemote === 'function') {
+          try {
+            await markMessageAsReadRemote(message.id);
+          } catch (remoteError) {
+            console.warn('⚠️ 메시지 읽음 상태 동기화 실패:', remoteError?.message);
+          }
+        }
+        if (typeof loadUnreadCount === 'function') {
+          loadUnreadCount();
+        }
       } else {
         // 실패 시 기존 데이터 사용 (정규화 포함)
         const normalizedMessage = {
@@ -259,6 +346,17 @@ const AdminMessages = () => {
           content: message.content || message.message || message.body || '',
         };
         setSelectedMessage(normalizedMessage);
+        markMessageAsReadLocally(message.id);
+        if (typeof markMessageAsReadRemote === 'function') {
+          try {
+            await markMessageAsReadRemote(message.id);
+          } catch (remoteError) {
+            console.warn('⚠️ 메시지 읽음 상태 동기화 실패:', remoteError?.message);
+          }
+        }
+        if (typeof loadUnreadCount === 'function') {
+          loadUnreadCount();
+        }
       }
     } catch (error) {
       console.error('❌ 메시지 상세 조회 오류:', error);
@@ -270,6 +368,17 @@ const AdminMessages = () => {
         content: message.content || message.message || message.body || '',
       };
       setSelectedMessage(normalizedMessage);
+      markMessageAsReadLocally(message.id);
+      if (typeof markMessageAsReadRemote === 'function') {
+        try {
+          await markMessageAsReadRemote(message.id);
+        } catch (remoteError) {
+          console.warn('⚠️ 메시지 읽음 상태 동기화 실패:', remoteError?.message);
+        }
+      }
+      if (typeof loadUnreadCount === 'function') {
+        loadUnreadCount();
+      }
     }
   };
 
@@ -298,210 +407,202 @@ const AdminMessages = () => {
   }
 
   return (
-    <SimpleLayout title={STRINGS.ADMIN.MESSAGES || '메시지 관리'}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        onScroll={({ nativeEvent }) => {
-          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-          const paddingToBottom = 100; // 트리거 거리 증가
-          const isNearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
-          
+    <SimpleLayout title={STRINGS.ADMIN.MESSAGES || '메시지 관리'} scrollableContent={false}>
+      <FlatList
+        data={filteredMessages}
+        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item, index) => getMessageKey(item, index)}
+        contentContainerStyle={[
+          styles.contentContainer,
+          filteredMessages.length === 0 && styles.contentContainerEmpty,
+        ]}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        onEndReached={() => {
           if (__DEV__) {
-            if (isNearBottom) {
-              console.log('📜 스크롤 하단 근처 도달:', {
-                layoutHeight: layoutMeasurement.height,
-                contentOffsetY: contentOffset.y,
-                contentHeight: contentSize.height,
-                distance: contentSize.height - (layoutMeasurement.height + contentOffset.y)
-              });
-            }
+            console.log('📜 onEndReached 호출', { hasMore, loadingMore });
           }
-          
-          // 스크롤이 하단 근처에 도달하면 더 많은 메시지 로드
-          if (isNearBottom) {
+          if (hasMore && !loadingMore) {
             loadMoreMessages();
           }
         }}
-        scrollEventThrottle={200}
-      >
-        {/* 헤더 정보 */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>
-            전체 메시지 {messages.length}개
-            {unreadCount > 0 && ` · 읽지 않음 ${unreadCount}개`}
-          </Text>
-        </View>
-
-        {/* 필터 및 검색 */}
-        <View style={styles.filtersCard}>
-          {/* 검색 */}
-          <View style={styles.searchContainer}>
-            <Search size={SIZES.ICON.SM} color={COLORS.gray500} style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="제목, 내용, 발신자, 수신자로 검색..."
-              placeholderTextColor={COLORS.gray400}
-              value={searchTerm}
-              onChangeText={setSearchTerm}
-            />
-          </View>
-
-          {/* 필터 */}
-          <View style={styles.filterRow}>
-            <View style={styles.filterContainer}>
-              <Filter size={SIZES.ICON.SM} color={COLORS.gray500} style={styles.filterIcon} />
-              <Text style={styles.filterLabel}>유형:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-                {Object.entries(MESSAGE_TYPES).map(([value, { label, color }]) => (
-                  <TouchableOpacity
-                    key={value}
-                    style={[
-                      styles.filterChip,
-                      filterType === value && { backgroundColor: color, borderColor: color },
-                    ]}
-                    onPress={() => setFilterType(value)}
-                  >
-                    <Text
-                      style={[
-                        styles.filterChipText,
-                        filterType === value && { color: COLORS.white },
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+        onEndReachedThreshold={0.4}
+        ListHeaderComponent={() => (
+          <View style={styles.listHeaderContainer}>
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>
+                전체 메시지 {allMessages.length}개
+                {unreadCount > 0 && ` · 읽지 않음 ${unreadCount}개`}
+              </Text>
+              {filteredMessages.length !== messages.length && (
+                <Text style={styles.headerSubtitle}>
+                  필터 적용: 현재 {filteredMessages.length}개 표시 중
+                </Text>
+              )}
             </View>
 
-            <View style={styles.filterContainer}>
-              <Text style={styles.filterLabel}>상태:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-                {['ALL', 'UNREAD', 'READ'].map((value) => (
-                  <TouchableOpacity
-                    key={value}
-                    style={[
-                      styles.filterChip,
-                      filterStatus === value && { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-                    ]}
-                    onPress={() => setFilterStatus(value)}
-                  >
-                    <Text
-                      style={[
-                        styles.filterChipText,
-                        filterStatus === value && { color: COLORS.white },
-                      ]}
-                    >
-                      {value === 'ALL' ? '전체' : value === 'UNREAD' ? '읽지 않음' : '읽음'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+            <View style={styles.filtersCard}>
+              <View style={styles.searchContainer}>
+                <Search size={SIZES.ICON.SM} color={COLORS.gray500} style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="제목, 내용, 발신자, 수신자로 검색..."
+                  placeholderTextColor={COLORS.gray400}
+                  value={searchTerm}
+                  onChangeText={setSearchTerm}
+                />
+              </View>
+
+              <View style={styles.filterRow}>
+                <View style={styles.filterContainer}>
+                  <Filter size={SIZES.ICON.SM} color={COLORS.gray500} style={styles.filterIcon} />
+                  <Text style={styles.filterLabel}>유형:</Text>
+                  <View style={styles.filterChipsRow}>
+                    {Object.entries(MESSAGE_TYPES).map(([value, { label, color }]) => (
+                      <TouchableOpacity
+                        key={value}
+                        style={[
+                          styles.filterChip,
+                          filterType === value && { backgroundColor: color, borderColor: color },
+                        ]}
+                        onPress={() => setFilterType(value)}
+                      >
+                        <Text
+                          style={[
+                            styles.filterChipText,
+                            filterType === value && { color: COLORS.white },
+                          ]}
+                        >
+                          {label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.filterContainer}>
+                  <Text style={styles.filterLabel}>상태:</Text>
+                  <View style={styles.filterChipsRow}>
+                    {['ALL', 'UNREAD', 'READ'].map((value) => (
+                      <TouchableOpacity
+                        key={value}
+                        style={[
+                          styles.filterChip,
+                          filterStatus === value && { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+                        ]}
+                        onPress={() => setFilterStatus(value)}
+                      >
+                        <Text
+                          style={[
+                            styles.filterChipText,
+                            filterStatus === value && { color: COLORS.white },
+                          ]}
+                        >
+                          {value === 'ALL' ? '전체' : value === 'UNREAD' ? '읽지 않음' : '읽음'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-
-        {/* 메시지 목록 */}
-        {filteredMessages.length === 0 ? (
-          <View style={styles.emptyState}>
-            <MessageSquare size={48} color={COLORS.gray400} />
-            <Text style={styles.emptyText}>메시지가 없습니다.</Text>
-          </View>
-        ) : (
-          <View style={styles.messagesList}>
-            {filteredMessages.map((message) => (
-              <TouchableOpacity
-                key={message.id}
+        )}
+        ListEmptyComponent={
+          !loading ? (
+            <View style={styles.emptyState}>
+              <MessageSquare size={48} color={COLORS.gray400} />
+              <Text style={styles.emptyText}>메시지가 없습니다.</Text>
+            </View>
+          ) : null
+        }
+        renderItem={({ item: message }) => (
+          <TouchableOpacity
+            style={[
+              styles.messageCard,
+              !message.isRead && styles.messageCardUnread,
+            ]}
+            onPress={() => handleMessageClick(message)}
+          >
+            <View style={styles.messageHeader}>
+              <View
                 style={[
-                  styles.messageCard,
-                  !message.isRead && styles.messageCardUnread,
+                  styles.badge,
+                  !message.isRead ? styles.badgePrimary : styles.badgeSecondary,
                 ]}
-                onPress={() => handleMessageClick(message)}
               >
-                {/* 상단: 상태 + 유형 배지 */}
-                <View style={styles.messageHeader}>
-                  <View style={[
-                    styles.badge,
-                    !message.isRead ? styles.badgePrimary : styles.badgeSecondary,
-                  ]}>
-                    <Text style={[
-                      styles.badgeText,
-                      !message.isRead && styles.badgeTextPrimary,
-                    ]}>
-                      {!message.isRead ? '읽지 않음' : '읽음'}
-                    </Text>
-                  </View>
-                  <View style={[
-                    styles.badge,
-                    { backgroundColor: getMessageTypeColor(message.messageType) },
-                  ]}>
-                    <Text style={styles.badgeTextWhite}>
-                      {MESSAGE_TYPES[message.messageType]?.label || '일반'}
-                    </Text>
-                  </View>
-                  {message.isImportant && (
-                    <View style={[styles.badge, styles.badgeWarning]}>
-                      <Text style={styles.badgeTextWhite}>중요</Text>
-                    </View>
-                  )}
-                  {message.isUrgent && (
-                    <View style={[styles.badge, styles.badgeDanger]}>
-                      <Text style={styles.badgeTextWhite}>긴급</Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* 제목 */}
-                <Text style={[
-                  styles.messageTitle,
-                  !message.isRead && styles.messageTitleUnread,
-                ]}>
-                  {message.title}
+                <Text
+                  style={[
+                    styles.badgeText,
+                    !message.isRead && styles.badgeTextPrimary,
+                  ]}
+                >
+                  {!message.isRead ? '읽지 않음' : '읽음'}
                 </Text>
-
-                {/* 발신자/수신자 */}
-                <View style={styles.messageParticipants}>
-                  <View style={styles.participant}>
-                    <User size={14} color={COLORS.gray500} />
-                    <Text style={styles.participantText}>발신: {message.senderName}</Text>
-                  </View>
-                  <View style={styles.participant}>
-                    <Users size={14} color={COLORS.gray500} />
-                    <Text style={styles.participantText}>수신: {message.receiverName}</Text>
-                  </View>
-                </View>
-
-                {/* 날짜 */}
-                <Text style={styles.messageDate}>
-                  {new Date(message.createdAt).toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+              </View>
+              <View
+                style={[
+                  styles.badge,
+                  { backgroundColor: getMessageTypeColor(message.messageType) },
+                ]}
+              >
+                <Text style={styles.badgeTextWhite}>
+                  {MESSAGE_TYPES[message.messageType]?.label || '일반'}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+              </View>
+              {message.isImportant && (
+                <View style={[styles.badge, styles.badgeWarning]}>
+                  <Text style={styles.badgeTextWhite}>중요</Text>
+                </View>
+              )}
+              {message.isUrgent && (
+                <View style={[styles.badge, styles.badgeDanger]}>
+                  <Text style={styles.badgeTextWhite}>긴급</Text>
+                </View>
+              )}
+            </View>
+
+            <Text
+              style={[
+                styles.messageTitle,
+                !message.isRead && styles.messageTitleUnread,
+              ]}
+            >
+              {message.title}
+            </Text>
+
+            <View style={styles.messageParticipants}>
+              <View style={styles.participant}>
+                <User size={14} color={COLORS.gray500} />
+                <Text style={styles.participantText}>발신: {message.senderName}</Text>
+              </View>
+              <View style={styles.participant}>
+                <Users size={14} color={COLORS.gray500} />
+                <Text style={styles.participantText}>수신: {message.receiverName}</Text>
+              </View>
+            </View>
+
+            <Text style={styles.messageDate}>
+              {new Date(message.createdAt).toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+          </TouchableOpacity>
         )}
-        
-        {/* 더 보기 로딩 인디케이터 */}
-        {loadingMore && (
+        ListFooterComponent={
           <View style={styles.loadMoreContainer}>
-            <Text style={styles.loadMoreText}>더 많은 메시지를 불러오는 중...</Text>
+            {loadingMore ? (
+              <Text style={styles.loadMoreText}>더 많은 메시지를 불러오는 중...</Text>
+            ) : !hasMore && messages.length > 0 ? (
+              <Text style={styles.loadMoreText}>모든 메시지를 불러왔습니다.</Text>
+            ) : null}
           </View>
-        )}
-        
-        {/* 더 이상 없음 표시 */}
-        {!hasMore && messages.length > 0 && (
-          <View style={styles.loadMoreContainer}>
-            <Text style={styles.loadMoreText}>모든 메시지를 불러왔습니다.</Text>
-          </View>
-        )}
-      </ScrollView>
+        }
+      />
 
       {/* 메시지 상세 모달 */}
       <Modal
@@ -587,12 +688,21 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: SPACING.md,
   },
+  contentContainerEmpty: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   header: {
     marginBottom: SPACING.md,
   },
   headerTitle: {
     fontSize: TYPOGRAPHY.fontSize.base,
     color: COLORS.gray600,
+  },
+  headerSubtitle: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    color: COLORS.gray500,
+    marginTop: SPACING.xs,
   },
   filtersCard: {
     backgroundColor: COLORS.white,
@@ -635,8 +745,14 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
     marginRight: SPACING.xs,
   },
-  filterScroll: {
-    flex: 1,
+  listHeaderContainer: {
+    width: '100%',
+  },
+  filterChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+    marginTop: SPACING.xs,
   },
   filterChip: {
     paddingHorizontal: SPACING.md,

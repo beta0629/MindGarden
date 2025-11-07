@@ -123,6 +123,24 @@ export const NotificationProvider = ({ children }) => {
     setUnreadCount(totalUnread);
   }, [unreadMessageCount, unreadSystemCount]);
 
+  const markMessageAsRead = useCallback(async (messageId) => {
+    if (!messageId || !isLoggedInRef.current || !userRef.current?.id) {
+      return;
+    }
+
+    try {
+      const endpoint = `/api/consultation-messages/${messageId}/read`;
+      const response = await apiGet(endpoint);
+
+      if (response?.success) {
+        await loadUnreadMessageCount();
+      }
+    } catch (error) {
+      // 서브시스템 오류는 조용히 로깅
+      console.warn('⚠️ 메시지 읽음 처리 실패:', error?.response?.status || error?.message);
+    }
+  }, [loadUnreadMessageCount]);
+
   // 로그인 상태 변경 시 알림 카운트 로드
   useEffect(() => {
     if (isLoggedIn && user?.id) {
@@ -150,6 +168,7 @@ export const NotificationProvider = ({ children }) => {
         loadUnreadCount,
         loadUnreadMessageCount,
         loadUnreadSystemCount,
+      markMessageAsRead,
       }}
     >
       {children}

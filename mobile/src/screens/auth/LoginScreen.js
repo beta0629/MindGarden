@@ -11,8 +11,8 @@ import { MessageCircle } from 'lucide-react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 // import { Picker } from '@react-native-picker/picker'; // 지점 선택 UI 제거로 더 이상 필요 없음
 import { useSession } from '../../contexts/SessionContext';
-import { apiPost, apiGet } from '../../api/client';
-import { AUTH_API, BRANCH_API } from '../../api/endpoints';
+import { apiPost } from '../../api/client';
+import { AUTH_API } from '../../api/endpoints';
 // NavigationService는 더 이상 필요 없음 (AppNavigator에서 자동 처리)
 import { STACK_SCREENS, AUTH_SCREENS } from '../../constants/navigation';
 import { STRINGS } from '../../constants/strings';
@@ -21,6 +21,7 @@ import { kakaoLogin, naverLogin } from '../../utils/socialLogin';
 import NotificationService from '../../services/NotificationService';
 import { SMS_CONFIG } from '../../constants/common';
 import SessionManager from '../../services/SessionManager';
+import DuplicateLoginModal from '../../components/auth/DuplicateLoginModal';
 
 const LoginScreen = () => {
   const { login } = useSession();
@@ -38,6 +39,12 @@ const LoginScreen = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [duplicateLoginState, setDuplicateLoginState] = useState({
+    visible: false,
+    message: '',
+    loginData: null,
+  });
+  const [isConfirmingDuplicateLogin, setIsConfirmingDuplicateLogin] = useState(false);
 
   useEffect(() => {
     // loadBranches(); // 지점 선택 UI 제거로 더 이상 필요 없음
@@ -58,7 +65,7 @@ const LoginScreen = () => {
   }, [countdown]);
 
   // 로그인 성공 후 처리 로직
-  const handleLoginSuccess = async (user, accessToken, refreshToken) => {
+  const handleLoginSuccess = async (user, accessToken, refreshToken, sessionId = null) => {
     console.log('🔑 토큰 확인:', {
       accessToken: accessToken ? `존재 (길이: ${accessToken.length})` : '없음',
       refreshToken: refreshToken ? `존재 (길이: ${refreshToken.length})` : '없음',
@@ -70,6 +77,7 @@ const LoginScreen = () => {
         accessToken: accessToken || null,
         refreshToken: refreshToken || null,
         user: user || null,
+        sessionId: sessionId || null,
       },
       { persist: true }
     );
@@ -78,6 +86,10 @@ const LoginScreen = () => {
       console.log('✅ 토큰 저장 완료 (SessionManager)');
     } else {
       console.warn('⚠️ Access/Refresh token 누락 - SessionManager에 사용자 정보만 저장');
+    }
+
+    if (sessionId) {
+      console.log('🔐 세션 ID 저장 완료:', sessionId);
     }
     
     const loginResult = await login();
@@ -88,6 +100,68 @@ const LoginScreen = () => {
       NotificationService.success(STRINGS.AUTH.LOGIN_SUCCESS, { title: STRINGS.COMMON.SUCCESS });
     } else {
       NotificationService.error(STRINGS.AUTH.LOGIN_ERROR, { title: STRINGS.AUTH.LOGIN_FAILED });
+    }
+  };
+
+  const openDuplicateLoginModal = (message, loginData) => {
+    setDuplicateLoginState({
+      visible: true,
+      message: message || STRINGS.AUTH.DUPLICATE_LOGIN_MESSAGE,
+      loginData,
+    });
+  };
+
+  const closeDuplicateLoginModal = () => {
+    setDuplicateLoginState({
+      visible: false,
+      message: '',
+      loginData: null,
+    });
+  };
+
+  const handleConfirmDuplicateLogin = async () => {
+    if (!duplicateLoginState.loginData) {
+      console.warn('⚠️ 중복 로그인 확인 요청 데이터가 없습니다.');
+      return;
+    }
+
+    setIsConfirmingDuplicateLogin(true);
+    try {
+      const payload = {
+        email: duplicateLoginState.loginData.email,
+        password: duplicateLoginState.loginData.password,
+        confirmTerminate: true,
+      };
+
+      console.log('🔔 기존 세션 종료 후 로그인 시도:', {
+        email: payload.email,
+        confirmTerminate: payload.confirmTerminate,
+      });
+
+      const response = await apiPost(AUTH_API.CONFIRM_DUPLICATE_LOGIN, payload);
+      console.log('📥 중복 로그인 확인 응답:', response);
+
+      if (response?.success && response?.user) {
+        await SessionManager.setSession({ sessionId: response.sessionId || null });
+        closeDuplicateLoginModal();
+        await handleLoginSuccess(
+          response.user,
+          response.accessToken || response.token || null,
+          response.refreshToken || null,
+          response.sessionId || null
+        );
+      } else {
+        NotificationService.error(
+          response?.message || STRINGS.AUTH.LOGIN_FAILED,
+          { title: STRINGS.AUTH.DUPLICATE_LOGIN }
+        );
+      }
+    } catch (error) {
+      console.error('❌ 중복 로그인 확인 처리 오류:', error);
+      const errorMessage = error?.message || STRINGS.AUTH.LOGIN_ERROR;
+      NotificationService.error(errorMessage, { title: STRINGS.AUTH.DUPLICATE_LOGIN });
+    } finally {
+      setIsConfirmingDuplicateLogin(false);
     }
   };
 
@@ -146,10 +220,15 @@ const LoginScreen = () => {
 
       if (response && response.success) {
         console.log('✅ 로그인 성공:', { user: response.user?.email, role: response.user?.role });
-        await handleLoginSuccess(response.user, response.accessToken, response.refreshToken);
+        await handleLoginSuccess(
+          response.user,
+          response.accessToken,
+          response.refreshToken,
+          response.sessionId || null
+        );
       } else if (response && response.requiresConfirmation) {
         console.log('🔔 중복 로그인 확인 필요:', response.message);
-        NotificationService.warning(response.message, { title: STRINGS.AUTH.DUPLICATE_LOGIN });
+        openDuplicateLoginModal(response.message, loginData);
       } else {
         console.log('❌ 로그인 실패:', response?.message || '알 수 없는 오류');
         NotificationService.error(response?.message || STRINGS.AUTH.LOGIN_FAILED, { title: STRINGS.AUTH.LOGIN_FAILED });
@@ -209,7 +288,12 @@ const LoginScreen = () => {
         setIsLoading(false);
         return;
       } else if (result.success && result.user) {
-        await handleLoginSuccess(result.user, result.accessToken, result.refreshToken);
+        await handleLoginSuccess(
+          result.user,
+          result.accessToken,
+          result.refreshToken,
+          result.sessionId || null
+        );
       } else if (result.requiresSignup) {
         NotificationService.warning(STRINGS.AUTH.SOCIAL.SIGNUP_REQUIRED, { title: STRINGS.AUTH.LOGIN_FAILED });
         // TODO: 회원가입 화면으로 이동 또는 모달 표시
@@ -242,7 +326,12 @@ const LoginScreen = () => {
         setIsLoading(false);
         return;
       } else if (result.success && result.user) {
-        await handleLoginSuccess(result.user, result.accessToken, result.refreshToken);
+        await handleLoginSuccess(
+          result.user,
+          result.accessToken,
+          result.refreshToken,
+          result.sessionId || null
+        );
       } else if (result.requiresSignup) {
         NotificationService.warning(STRINGS.AUTH.SOCIAL.SIGNUP_REQUIRED, { title: STRINGS.AUTH.LOGIN_FAILED });
         // TODO: 회원가입 화면으로 이동 또는 모달 표시
@@ -344,7 +433,12 @@ const LoginScreen = () => {
 
       if (response.success) {
         console.log('✅ SMS 인증 로그인 성공:', response);
-        await handleLoginSuccess(response.user, response.accessToken, response.refreshToken);
+        await handleLoginSuccess(
+          response.user,
+          response.accessToken,
+          response.refreshToken,
+          response.sessionId || null
+        );
       } else {
         console.error('❌ SMS 인증 로그인 실패:', response.message);
         NotificationService.error(response.message || STRINGS.AUTH.LOGIN_ERROR, { title: STRINGS.AUTH.LOGIN_FAILED });
@@ -369,13 +463,14 @@ const LoginScreen = () => {
   };
 
   return (
-    <KeyboardAwareScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      enableOnAndroid
-      enableAutomaticScroll
-    >
-      <View style={styles.loginCard}>
+    <>
+      <KeyboardAwareScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        enableOnAndroid
+        enableAutomaticScroll
+      >
+        <View style={styles.loginCard}>
         <View style={styles.header}>
           <Text style={styles.title}>{STRINGS.AUTH.LOGIN_TITLE}</Text>
           <Text style={styles.subtitle}>{STRINGS.AUTH.LOGIN_SUBTITLE}</Text>
@@ -612,8 +707,16 @@ const LoginScreen = () => {
           </View>
         )}
 
-      </View>
-    </KeyboardAwareScrollView>
+        </View>
+      </KeyboardAwareScrollView>
+      <DuplicateLoginModal
+        visible={duplicateLoginState.visible}
+        message={duplicateLoginState.message}
+        onConfirm={handleConfirmDuplicateLogin}
+        onCancel={closeDuplicateLoginModal}
+        isProcessing={isConfirmingDuplicateLogin}
+      />
+    </>
   );
 };
 

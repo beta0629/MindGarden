@@ -12,6 +12,7 @@ export const AUTH_API = {
   LOGOUT: '/api/auth/logout',
   REFRESH_TOKEN: '/api/auth/refresh-token',
   GET_CURRENT_USER: '/api/auth/current-user',
+  CONFIRM_DUPLICATE_LOGIN: '/api/auth/confirm-duplicate-login',
   OAUTH2_CALLBACK: '/api/auth/oauth2/callback',
   SOCIAL_LOGIN: '/api/auth/social-login', // 소셜 로그인 엔드포인트 (레거시)
   // OAuth2 인증 URL 생성 (웹과 동일)

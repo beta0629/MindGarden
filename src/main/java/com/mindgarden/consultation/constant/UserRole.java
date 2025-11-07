@@ -93,7 +93,7 @@ public enum UserRole {
     
     // 스케줄러 등록 권한 확인 (지점 관리자만 가능)
     public boolean canRegisterScheduler() {
-        return this == ADMIN || this == BRANCH_SUPER_ADMIN || this == BRANCH_MANAGER;
+        return this == ADMIN || this == BRANCH_SUPER_ADMIN;
     }
     
     // 스케줄러 상담사 조회 권한 확인 (지점 관리자만 가능)

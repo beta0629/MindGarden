@@ -373,7 +373,13 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     public boolean canRegisterScheduler(UserRole userRole) {
         try {
             log.debug("스케줄러 등록 권한 확인: 역할={}", userRole);
-            return hasPermission(userRole.name(), "ACCESS_SCHEDULE_MANAGEMENT");
+            boolean hasPermission = hasPermission(userRole.name(), "ACCESS_SCHEDULE_MANAGEMENT");
+            if (!hasPermission) {
+                boolean fallback = userRole != null && userRole.canRegisterScheduler();
+                log.debug("권한 매핑 미존재 - 기본 롤 권한 fallback 적용: fallback={}", fallback);
+                return fallback;
+            }
+            return true;
         } catch (Exception e) {
             log.error("스케줄러 등록 권한 확인 실패: 역할={}", userRole, e);
             return false;

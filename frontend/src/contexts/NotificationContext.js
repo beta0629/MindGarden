@@ -5,6 +5,34 @@ import { apiGet } from '../utils/ajax';
 
 const NotificationContext = createContext();
 
+const PUBLIC_PATHS = [
+  '/',
+  '/landing',
+  '/login',
+  '/register',
+  '/tablet/register',
+  '/forgot-password',
+  '/reset-password'
+];
+
+const PUBLIC_PREFIXES = [
+  '/login/',
+  '/register/',
+  '/tablet/register/',
+  '/auth/oauth2/'
+];
+
+const isPublicRoute = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  const path = window.location.pathname || '';
+  if (PUBLIC_PATHS.includes(path)) {
+    return true;
+  }
+  return PUBLIC_PREFIXES.some(prefix => path.startsWith(prefix));
+};
+
 export const useNotification = () => {
   const context = useContext(NotificationContext);
   if (!context) {
@@ -34,7 +62,7 @@ export const NotificationProvider = ({ children }) => {
 
   // 읽지 않은 메시지 개수 로드
   const loadUnreadMessageCount = async () => {
-    if (!isLoggedIn || !user?.id) {
+    if (!isLoggedIn || !user?.id || isPublicRoute()) {
       console.log('📨 메시지 개수 로드 스킵 - 로그인 정보 없음');
       setUnreadMessageCount(0);
       return;
@@ -78,7 +106,7 @@ export const NotificationProvider = ({ children }) => {
 
   // 읽지 않은 시스템 공지 개수 로드
   const loadUnreadSystemCount = async () => {
-    if (!isLoggedIn || !user?.id) {
+    if (!isLoggedIn || !user?.id || isPublicRoute()) {
       console.log('📢 시스템 공지 개수 로드 스킵 - 로그인 정보 없음');
       setUnreadSystemCount(0);
       return;
@@ -110,7 +138,7 @@ export const NotificationProvider = ({ children }) => {
   // 통합 읽지 않은 개수 로드
   const loadUnreadCount = async () => {
     // 로그인하지 않으면 스킵
-    if (!isLoggedIn || !user?.id) {
+    if (!isLoggedIn || !user?.id || isPublicRoute()) {
       console.log('📊 통합 읽지 않은 개수 로드 스킵 - 로그인 정보 없음');
       return;
     }
@@ -122,7 +150,7 @@ export const NotificationProvider = ({ children }) => {
 
   // 메시지 목록 로드
   const loadNotifications = async () => {
-    if (!isLoggedIn || !user?.id) {
+    if (!isLoggedIn || !user?.id || isPublicRoute()) {
       setNotifications([]);
       return;
     }
@@ -157,7 +185,7 @@ export const NotificationProvider = ({ children }) => {
 
   // 시스템 공지 목록 로드
   const loadSystemNotifications = async () => {
-    if (!isLoggedIn || !user?.id) {
+    if (!isLoggedIn || !user?.id || isPublicRoute()) {
       console.log('📢 시스템 공지 목록 로드 스킵 - 로그인 정보 없음');
       setSystemNotifications([]);
       return;
@@ -233,7 +261,7 @@ export const NotificationProvider = ({ children }) => {
   // 알림 새로고침
   const refreshNotifications = () => {
     // 로그인하지 않으면 스킵
-    if (!isLoggedIn || !user?.id) {
+    if (!isLoggedIn || !user?.id || isPublicRoute()) {
       console.log('📨 알림 새로고침 스킵 - 로그인 정보 없음');
       return;
     }
@@ -248,6 +276,16 @@ export const NotificationProvider = ({ children }) => {
     if (!isLoggedIn || !user?.id) {
       console.log('📨 NotificationContext: 로그인하지 않음 - 알림 로드 스킵');
       // 알림 카운트 초기화
+      setUnreadCount(0);
+      setUnreadMessageCount(0);
+      setUnreadSystemCount(0);
+      setNotifications([]);
+      setSystemNotifications([]);
+      return;
+    }
+
+    if (isPublicRoute()) {
+      console.log('📨 NotificationContext: 공개 페이지 - 알림 로드 스킵');
       setUnreadCount(0);
       setUnreadMessageCount(0);
       setUnreadSystemCount(0);

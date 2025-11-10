@@ -3,6 +3,23 @@
 /* 공통 스타일 import */
 @import '../common/index.css';
 
+:root {
+  --tablet-register-max-width: 520px;
+  --tablet-register-section-padding: var(--spacing-xl);
+  --tablet-register-card-gap: var(--spacing-lg);
+  --tablet-register-card-shadow: var(--shadow-medium);
+  --tablet-social-kakao-bg: var(--mypage-kakao-bg);
+  --tablet-social-kakao-hover: var(--mypage-kakao-bg-hover);
+  --tablet-social-kakao-text: var(--mypage-kakao-color);
+  --tablet-social-naver-bg: var(--mypage-naver-bg);
+  --tablet-social-naver-hover: var(--mypage-naver-bg-hover);
+  --tablet-social-naver-text: var(--mypage-naver-color);
+  --tablet-social-google-bg: var(--mypage-google-color);
+  --tablet-social-google-text: var(--color-white);
+  --tablet-social-facebook-bg: #1877F2;
+  --tablet-social-facebook-text: var(--color-white);
+}
+
 /* 테블릿 레이아웃 */
 .tablet-layout {
   min-height: 100vh;
@@ -147,7 +164,7 @@
 }
 
 .tablet-container {
-  background: white;
+  background: var(--color-surface);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -161,7 +178,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: white;
+  background: var(--color-surface);
   border-top: 1px solid var(--gray-200);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
@@ -206,6 +223,60 @@
 .tablet-page {
   min-height: 100vh;
   background: var(--gray-50);
+}
+
+.tablet-register-page {
+  padding: var(--spacing-xxl) 0;
+}
+
+.tablet-register-page .tablet-container {
+  max-width: var(--tablet-register-max-width);
+  margin: 0 auto;
+}
+
+.tablet-register-page .register-container {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--tablet-register-card-shadow);
+  padding: var(--tablet-register-section-padding);
+}
+
+.tablet-register-page .register-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tablet-register-card-gap);
+}
+
+.tablet-register-page .form-row {
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.tablet-register-page .form-container {
+  max-width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .tablet-register-page .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .tablet-register-page {
+    padding: var(--spacing-xl) 0;
+  }
+
+  .tablet-register-page .register-container {
+    padding: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .tablet-register-page .register-container {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+  }
 }
 
 /* 테블릿 폼 스타일 */
@@ -271,7 +342,7 @@
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s ease;
-  background: white;
+  background: var(--color-surface);
 }
 
 .tablet-layout .form-input:focus,
@@ -349,7 +420,7 @@
   width: 100%;
   padding: 0.875rem;
   background: var(--primary-500);
-  color: white;
+  color: var(--color-white);
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -366,7 +437,7 @@
 .register-button:hover {
   background: var(--primary-600);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-medium);
 }
 
 .login-button:disabled,
@@ -404,7 +475,7 @@
 }
 
 .divider span {
-  background: white;
+  background: var(--color-surface);
   padding: 0 1rem;
   color: var(--gray-500);
   font-size: 0.875rem;
@@ -428,7 +499,7 @@
   padding: 0.875rem;
   border: 2px solid var(--gray-200);
   border-radius: 8px;
-  background: white;
+  background: var(--color-surface);
   color: var(--gray-700);
   font-weight: 600;
   cursor: pointer;
@@ -440,50 +511,51 @@
   border-color: var(--gray-300);
   background: var(--gray-50);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-medium);
 }
 
 .social-button.kakao {
-  border-color: #FEE500;
-  color: #000;
+  border-color: var(--tablet-social-kakao-bg);
+  color: var(--tablet-social-kakao-text);
 }
 
 .social-button.kakao:hover {
-  background: #FEE500;
-  border-color: #FEE500;
+  background: var(--tablet-social-kakao-bg);
+  border-color: var(--tablet-social-kakao-bg);
+  color: var(--tablet-social-kakao-text);
 }
 
 .social-button.naver {
-  border-color: #03C75A;
-  color: #03C75A;
+  border-color: var(--tablet-social-naver-bg);
+  color: var(--tablet-social-naver-bg);
 }
 
 .social-button.naver:hover {
-  background: #03C75A;
-  color: white;
-  border-color: #03C75A;
+  background: var(--tablet-social-naver-bg);
+  color: var(--tablet-social-naver-text);
+  border-color: var(--tablet-social-naver-bg);
 }
 
 .social-button.google {
-  border-color: #4285F4;
-  color: #4285F4;
+  border-color: var(--tablet-social-google-bg);
+  color: var(--tablet-social-google-bg);
 }
 
 .social-button.google:hover {
-  background: #4285F4;
-  color: white;
-  border-color: #4285F4;
+  background: var(--tablet-social-google-bg);
+  color: var(--tablet-social-google-text);
+  border-color: var(--tablet-social-google-bg);
 }
 
 .social-button.facebook {
-  border-color: #1877F2;
-  color: #1877F2;
+  border-color: var(--tablet-social-facebook-bg);
+  color: var(--tablet-social-facebook-bg);
 }
 
 .social-button.facebook:hover {
-  background: #1877F2;
-  color: white;
-  border-color: #1877F2;
+  background: var(--tablet-social-facebook-bg);
+  color: var(--tablet-social-facebook-text);
+  border-color: var(--tablet-social-facebook-bg);
 }
 
 /* 링크 */
@@ -714,7 +786,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: white;
+  background: var(--color-surface);
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   z-index: 1001;
@@ -839,7 +911,7 @@
   width: 100%;
   padding: 1rem 2rem;
   background: var(--color-primary-500);
-  color: white;
+  color: var(--color-white);
   border: none;
   border-radius: 12px;
   font-size: 1rem;
@@ -1815,24 +1887,48 @@ html {
 }
 
 .social-login-button.kakao {
-  border-color: #FEE500;
-  color: #000;
+  border-color: var(--tablet-social-kakao-bg);
+  color: var(--tablet-social-kakao-text);
 }
 
 .social-login-button.kakao:hover {
-  background: #FEE500;
+  background: var(--tablet-social-kakao-bg);
   transform: translateY(-2px);
   box-shadow: var(--shadow-medium);
 }
 
 .social-login-button.naver {
-  border-color: #03C75A;
-  color: #03C75A;
+  border-color: var(--tablet-social-naver-bg);
+  color: var(--tablet-social-naver-bg);
 }
 
 .social-login-button.naver:hover {
-  background: #03C75A;
-  color: white;
+  background: var(--tablet-social-naver-bg);
+  color: var(--tablet-social-naver-text);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+.social-login-button.google {
+  border-color: var(--tablet-social-google-bg);
+  color: var(--tablet-social-google-bg);
+}
+
+.social-login-button.google:hover {
+  background: var(--tablet-social-google-bg);
+  color: var(--tablet-social-google-text);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+.social-login-button.facebook {
+  border-color: var(--tablet-social-facebook-bg);
+  color: var(--tablet-social-facebook-bg);
+}
+
+.social-login-button.facebook:hover {
+  background: var(--tablet-social-facebook-bg);
+  color: var(--tablet-social-facebook-text);
   transform: translateY(-2px);
   box-shadow: var(--shadow-medium);
 }

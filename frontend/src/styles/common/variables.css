@@ -8,6 +8,13 @@
   --color-primary: #B8E6B8;        /* 부드러운 민트 그린 */
   --color-primary-light: #D4F0D4;  /* 밝은 민트 */
   --color-primary-dark: #9CD69C;   /* 진한 민트 */
+  /* Design System primary scale (theme provider가 주입하는 토큰과 연결) */
+  --primary-50: var(--color-primary-light, var(--mint-green));
+  --primary-100: var(--color-primary-light, var(--mint-green));
+  --primary-400: var(--color-primary, var(--mint-green));
+  --primary-500: var(--color-primary-main, var(--mint-green));
+  --primary-600: var(--color-primary-hover, var(--olive-green));
+  --primary-700: var(--color-primary-active, var(--olive-green));
   
   /* 역할별 대시보드 색상 */
   /* 상담사/관리자 대시보드 (기본 파란색) */
@@ -56,6 +63,18 @@
   --color-warning: #FFE0B2;        /* 부드러운 오렌지 */
   --color-error: #FFCDD2;          /* 부드러운 레드 */
   --color-info: #BBDEFB;           /* 부드러운 블루 */
+
+  /* 상태 색상 확장 팔레트 (에러/경고 텍스트 가시성) */
+  --color-red-50: #FEF2F2;
+  --color-red-200: #FECACA;
+  --color-red-500: #EF4444;
+  --color-red-600: #DC2626;
+  --color-red-700: #B91C1C;
+  --red-50: var(--color-red-50);
+  --red-200: var(--color-red-200);
+  --red-500: var(--color-red-500);
+  --red-600: var(--color-red-600);
+  --red-700: var(--color-red-700);
   
   /* 파스텔 톤 단색 */
   --gradient-primary: var(--color-primary);

@@ -112,7 +112,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
       if (redirected) {
-        return null; // 리다이렉트됨
+      return null; // 리다이렉트됨
       }
       
       // 401 오류는 로그인되지 않은 상태로 정상적인 상황이므로 조용히 처리

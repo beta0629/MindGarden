@@ -84,6 +84,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/auth/**").permitAll() // 인증 관련 API는 허용
                     .requestMatchers("/api/common-codes/**").permitAll() // 공통코드는 허용
                     .requestMatchers("/api/admin/css-themes/**").permitAll() // CSS 테마는 허용
+                    .requestMatchers("/register", "/tablet/register", "/auth/register").permitAll() // 회원가입 페이지는 공개
                     .requestMatchers("/api/system-notifications/**").authenticated() // 시스템 알림 API는 인증 필요
                     .requestMatchers("/api/consultation-messages/**").authenticated() // 상담 메시지 API는 인증 필요
                     .requestMatchers("/api/client/**").authenticated() // 클라이언트 API는 인증 필요

@@ -17,6 +17,7 @@ const TabletRegister = () => {
     phone: '',
     gender: '',
     birthDate: '',
+    branchCode: '',
     agreeTerms: false,
     agreePrivacy: false
   });
@@ -27,10 +28,42 @@ const TabletRegister = () => {
   const [errors, setErrors] = useState({});
   const [genderOptions, setGenderOptions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [branches, setBranches] = useState([]);
+  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
 
   // OAuth2 설정 가져오기
   useEffect(() => {
     getOAuth2Config();
+  }, []);
+
+  // 지점 목록 로드
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        setIsLoadingBranches(true);
+        const response = await apiGet('/api/auth/branches');
+        if (response?.branches?.length) {
+          setBranches(response.branches);
+          setErrors(prev => ({
+            ...prev,
+            branchCode: ''
+          }));
+        } else {
+          setBranches([]);
+        }
+      } catch (error) {
+        console.error('지점 목록 로드 실패:', error);
+        setBranches([]);
+        setErrors(prev => ({
+          ...prev,
+          branchCode: '지점 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+        }));
+      } finally {
+        setIsLoadingBranches(false);
+      }
+    };
+
+    loadBranches();
   }, []);
 
   // 성별 코드 로드
@@ -129,6 +162,10 @@ const TabletRegister = () => {
       newErrors.phone = '휴대폰 번호를 입력해주세요.';
     }
 
+    if (!formData.branchCode) {
+      newErrors.branchCode = '지점을 선택해주세요.';
+    }
+
     if (!formData.agreeTerms) {
       newErrors.agreeTerms = '이용약관에 동의해주세요.';
     }
@@ -169,36 +206,13 @@ const TabletRegister = () => {
     }
   };
 
-  const kakaoLogin = () => {
-    if (!oauth2Config?.kakao?.clientId) {
-      notificationManager.show('카카오 OAuth2 설정이 없습니다.', 'info');
-      return;
-    }
-
-    const clientId = oauth2Config.kakao.clientId;
-    const redirectUri = encodeURIComponent(oauth2Config.kakao.redirectUri);
-    const scope = oauth2Config.kakao.scope;
-
-    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
-    window.location.href = kakaoAuthUrl;
-  };
-
-  const naverLogin = () => {
-    if (!oauth2Config?.naver?.clientId) {
-      notificationManager.show('네이버 OAuth2 설정이 없습니다.', 'info');
-      return;
-    }
-
-    const clientId = oauth2Config.naver.clientId;
-    const redirectUri = encodeURIComponent(oauth2Config.naver.redirectUri);
-    const state = Math.random().toString(36).substring(2, 15);
-
-    // state를 세션에 저장 (보안을 위해)
-    sessionStorage.setItem('naver_oauth_state', state);
-
-    const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&state=${state}`;
-    window.location.href = naverAuthUrl;
-  };
+  /*
+   * 소셜 회원가입 기능은 현재 미사용 상태입니다.
+   * 추후 재활성화 시 아래 구현을 복원하세요.
+   *
+   * const kakaoLogin = () => { ... };
+   * const naverLogin = () => { ... };
+   */
 
   return (
     <CommonPageTemplate>
@@ -406,6 +420,33 @@ const TabletRegister = () => {
                         </div>
                       </div>
                     </div>
+                
+                <div className="form-group">
+                  <label htmlFor="branchCode" className="form-label">지점 선택 *</label>
+                  {isLoadingBranches ? (
+                    <div className="form-input">
+                      지점 목록을 불러오는 중입니다...
+                    </div>
+                  ) : (
+                    <select
+                      id="branchCode"
+                      name="branchCode"
+                      className={`form-select ${errors.branchCode ? 'error' : ''}`}
+                      value={formData.branchCode}
+                      onChange={handleInputChange}
+                      required
+                      disabled={branches.length === 0}
+                    >
+                      <option value="">지점을 선택하세요</option>
+                      {branches.map((branch) => (
+                        <option key={branch.branchCode} value={branch.branchCode}>
+                          {branch.branchName} ({branch.branchCode})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {errors.branchCode && <span className="error-message">{errors.branchCode}</span>}
+                </div>
                     
                     <div className="form-group">
                       <label htmlFor="birthDate" className="form-label">생년월일</label>
@@ -473,23 +514,31 @@ const TabletRegister = () => {
                     <span>또는</span>
                   </div>
                   
+                  {/* 소셜 회원가입 기능은 현재 비활성화 상태입니다.
                   <div className="social-signup">
                     <button className="social-button kakao" onClick={kakaoLogin}>
                       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2Z" fill="#FEE500"/>
-                        <path d="M10 6C7.79086 6 6 7.79086 6 10C6 12.2091 7.79086 14 10 14C12.2091 14 14 12.2091 14 10C14 7.79086 12.2091 6 10 6Z" fill="#FEE500"/>
+                        <path
+                          d="M10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2Z"
+                          fill="currentColor"
+                        />
+                        <path
+                          d="M10 6C7.79086 6 6 7.79086 6 10C6 12.2091 7.79086 14 10 14C12.2091 14 14 12.2091 14 10C14 7.79086 12.2091 6 10 6Z"
+                          fill="currentColor"
+                        />
                       </svg>
                       카카오로 회원가입
                     </button>
                     
                     <button className="social-button naver" onClick={naverLogin}>
                       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <rect width="20" height="20" rx="2" fill="#03C75A"/>
-                        <path d="M6 6L14 14M14 6L6 14" stroke="white" strokeWidth="2"/>
+                        <rect width="20" height="20" rx="2" fill="currentColor"/>
+                        <path d="M6 6L14 14M14 6L6 14" stroke="var(--color-white)" strokeWidth="2"/>
                       </svg>
                       네이버로 회원가입
                     </button>
                   </div>
+                  */}
                   
                   <div className="login-link">
                     <p>이미 계정이 있으신가요? <a href="/login" className="link">로그인</a></p>

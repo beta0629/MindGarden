@@ -9,6 +9,8 @@ import com.mindgarden.consultation.dto.AuthRequest;
 import com.mindgarden.consultation.dto.AuthResponse;
 import com.mindgarden.consultation.dto.BranchLoginRequest;
 import com.mindgarden.consultation.dto.BranchLoginResponse;
+import com.mindgarden.consultation.dto.RegisterRequest;
+import com.mindgarden.consultation.entity.Branch;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.UserSocialAccount;
 import com.mindgarden.consultation.repository.UserRepository;
@@ -16,12 +18,14 @@ import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AuthService;
 import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
+import com.mindgarden.consultation.service.UserService;
 import com.mindgarden.consultation.service.UserSessionService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,6 +50,7 @@ public class AuthController {
     private final BranchService branchService;
     private final UserSessionService userSessionService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final UserService userService;
     
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
@@ -172,6 +177,105 @@ public class AuthController {
         }
     }
     
+    /**
+     * 공개 회원가입
+     */
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        log.info("📥 공개 회원가입 요청: email={}", request.getEmail());
+
+        if (!StringUtils.hasText(request.getEmail()) ||
+            !StringUtils.hasText(request.getPassword()) ||
+            !StringUtils.hasText(request.getConfirmPassword()) ||
+            !StringUtils.hasText(request.getName()) ||
+            !StringUtils.hasText(request.getPhone())) {
+            log.warn("⚠️ 회원가입 필수 항목 누락: {}", request);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "필수 입력 항목이 누락되었습니다."
+            ));
+        }
+
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "비밀번호와 비밀번호 확인이 일치하지 않습니다."
+            ));
+        }
+
+        if (!Boolean.TRUE.equals(request.getAgreeTerms()) || !Boolean.TRUE.equals(request.getAgreePrivacy())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "이용약관과 개인정보처리방침에 동의해야 회원가입이 가능합니다."
+            ));
+        }
+
+        String email = request.getEmail().trim().toLowerCase();
+        if (userRepository.existsByEmailAll(email)) {
+            return ResponseEntity.status(409).body(Map.of(
+                "success", false,
+                "message", "이미 사용 중인 이메일입니다."
+            ));
+        }
+
+        try {
+            User user = new User();
+            user.setUsername(generateUniqueUsername(email));
+            user.setEmail(email);
+            user.setPassword(request.getPassword());
+            user.setName(encryptionUtil.safeEncrypt(request.getName().trim()));
+
+            if (StringUtils.hasText(request.getNickname())) {
+                user.setNickname(encryptionUtil.safeEncrypt(request.getNickname().trim()));
+            }
+
+            if (StringUtils.hasText(request.getGender())) {
+                user.setGender(encryptionUtil.safeEncrypt(request.getGender()));
+            }
+
+            if (request.getBirthDate() != null) {
+                user.setBirthDate(request.getBirthDate());
+            }
+
+            if (StringUtils.hasText(request.getPhone())) {
+                String sanitizedPhone = request.getPhone().replaceAll("[^0-9]", "");
+                user.setPhone(sanitizedPhone);
+            }
+
+            user.setRole(UserRole.CLIENT);
+            user.setIsActive(true);
+            user.setIsEmailVerified(false);
+            user.setIsSocialAccount(false);
+
+            if (StringUtils.hasText(request.getBranchCode())) {
+                Branch branch = branchService.getBranchByCode(request.getBranchCode().trim());
+                user.setBranch(branch);
+                user.setBranchCode(branch.getBranchCode());
+            }
+
+            User registeredUser = userService.registerUser(user);
+
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("success", true);
+            responseBody.put("message", "회원가입이 완료되었습니다.");
+            responseBody.put("userId", registeredUser.getId());
+
+            return ResponseEntity.status(201).body(responseBody);
+        } catch (IllegalArgumentException ex) {
+            log.warn("⚠️ 회원가입 검증 실패: {}", ex.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", ex.getMessage()
+            ));
+        } catch (Exception ex) {
+            log.error("❌ 회원가입 처리 중 오류: {}", ex.getMessage(), ex);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "회원가입 처리 중 오류가 발생했습니다. 다시 시도해주세요."
+            ));
+        }
+    }
+
     /**
      * CSRF 토큰 조회
      */
@@ -1508,5 +1612,20 @@ public class AuthController {
                 "message", "지점 매핑 중 오류가 발생했습니다: " + e.getMessage()
             ));
         }
+    }
+
+    private String generateUniqueUsername(String email) {
+        String localPart = email.split("@")[0];
+        String base = localPart.replaceAll("[^a-zA-Z0-9]", "");
+        if (!StringUtils.hasText(base)) {
+            base = "user";
+        }
+
+        String candidate = base.toLowerCase();
+        int suffix = 1;
+        while (userRepository.findByUsername(candidate).isPresent()) {
+            candidate = String.format("%s%d", base.toLowerCase(), suffix++);
+        }
+        return candidate;
     }
 }

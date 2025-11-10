@@ -139,6 +139,7 @@ class SessionManager {
                                    currentPath === '/landing' || 
                                    currentPath === '/' ||
                                    currentPath.startsWith('/register') ||
+                                   currentPath.startsWith('/tablet/register') ||
                                    currentPath.startsWith('/forgot-password') ||
                                    currentPath.startsWith('/reset-password') ||
                                    currentPath.startsWith('/auth/oauth2/callback');

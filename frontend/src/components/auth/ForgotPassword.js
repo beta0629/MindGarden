@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate, Link } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
-import UnifiedHeader from '../common/UnifiedHeader';
-import SimpleLayout from '../layout/SimpleLayout';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import ENV from '../../constants/environment';
 import './AuthPageCommon.css';
 
 const ForgotPassword = () => {
@@ -67,230 +63,103 @@ const ForgotPassword = () => {
       description="마인드가든 비밀번호를 재설정하세요"
       bodyClass="tablet-page"
     >
-      <div className="tablet-page">
-        <UnifiedHeader />
-        
-        <main className="tablet-main">
-          <div className="tablet-container">
-            <div className="forgot-password-form-container">
-              {!isEmailSent ? (
-                <>
-                  {/* 헤더 */}
-                  <div className="forgot-password-header">
-                    <div className="forgot-password-icon">
-                      🔑
-                    </div>
-                    <h1 className="forgot-password-title">
-                      비밀번호 찾기
-                    </h1>
-                    <p className="forgot-password-description">
-                      가입하신 이메일 주소를 입력하시면<br />
-                      비밀번호 재설정 링크를 발송해드립니다
-                    </p>
+      <div className="mg-auth-page">
+        <main className="mg-auth-section">
+          <div className="mg-auth-card">
+            {!isEmailSent ? (
+              <>
+                <div className="mg-auth-header">
+                  <div className="mg-auth-icon" aria-hidden="true">
+                    🔑
                   </div>
-
-                  {/* 폼 */}
-                  <form onSubmit={handleSubmit}>
-                    <div className="forgot-password-form-group">
-                      <label className="forgot-password-label">
-                        이메일 주소
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        placeholder="example@email.com"
-                        disabled={isLoading}
-                        className="forgot-password-input"
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#667eea';
-                          e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = '#e2e8f0';
-                          e.target.style.boxShadow = 'none';
-                        }}
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="mg-v2-submit-btn"
-                      disabled={isLoading || !formData.email}
-                    >
-                      {isLoading ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                          <div style={{
-                            width: '16px',
-                            height: '16px',
-                            border: '2px solid transparent',
-                            borderTop: '2px solid white',
-                            borderRadius: '50%',
-                            animation: 'spin 1s linear infinite'
-                          }} />
-                          발송 중...
-                        </div>
-                      ) : (
-                        '비밀번호 재설정 링크 발송'
-                      )}
-                    </button>
-                  </form>
-
-                  {/* 하단 링크 */}
-                  <div style={{
-                    textAlign: 'center',
-                    marginTop: '32px',
-                    paddingTop: '24px',
-                    borderTop: '1px solid #e2e8f0'
-                  }}>
-                    <Link
-                      to="/login"
-                      style={{
-                        color: '#667eea',
-                        textDecoration: 'none',
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '500',
-                        transition: 'color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.color = '#5a67d8';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.color = '#667eea';
-                      }}
-                    >
-                      ← 로그인 페이지로 돌아가기
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                /* 이메일 발송 완료 화면 */
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    backgroundColor: 'var(--color-success, #28A745)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 'var(--font-size-xxl)',
-                    margin: '0 auto 24px',
-                    color: 'white'
-                  }}>
-                    ✉️
-                  </div>
-                  
-                  <h1 style={{
-                    fontSize: 'var(--font-size-xxl)',
-                    fontWeight: '700',
-                    color: '#2d3748',
-                    marginBottom: '16px'
-                  }}>
-                    이메일을 확인해주세요
-                  </h1>
-                  
-                  <p style={{
-                    fontSize: 'var(--font-size-base)',
-                    color: '#718096',
-                    lineHeight: '1.6',
-                    marginBottom: '32px'
-                  }}>
-                    <strong style={{ color: '#2d3748' }}>{formData.email}</strong><br />
-                    위 이메일 주소로 비밀번호 재설정 링크를 발송했습니다.<br />
-                    이메일을 확인하여 비밀번호를 재설정해주세요.
+                  <h1 className="mg-auth-title">비밀번호 찾기</h1>
+                  <p className="mg-auth-description">
+                    가입하신 이메일 주소를 입력하시면<br />
+                    비밀번호 재설정 링크를 발송해드립니다.
                   </p>
-
-                  <div style={{
-                    backgroundColor: 'var(--color-bg-primary, #FAFAFA)',
-                    padding: '20px',
-                    borderRadius: '12px',
-                    marginBottom: '32px',
-                    border: '1px solid #e2e8f0'
-                  }}>
-                    <p style={{
-                      fontSize: 'var(--font-size-sm)',
-                      color: '#4a5568',
-                      lineHeight: '1.5',
-                      margin: 0
-                    }}>
-                      💡 <strong>안내사항</strong><br />
-                      • 이메일이 오지 않았다면 스팸함을 확인해주세요<br />
-                      • 링크는 24시간 후에 만료됩니다<br />
-                      • 링크는 한 번만 사용 가능합니다
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
-                    <button
-                      onClick={() => setIsEmailSent(false)}
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '500',
-                        color: '#667eea',
-                        background: 'transparent',
-                        border: '2px solid #667eea',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = '#667eea';
-                        e.target.style.color = 'white';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = 'transparent';
-                        e.target.style.color = '#667eea';
-                      }}
-                    >
-                      다른 이메일로 다시 발송
-                    </button>
-                    
-                    <Link
-                      to="/login"
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: '12px',
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '500',
-                        color: '#718096',
-                        textDecoration: 'none',
-                        textAlign: 'center',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        transition: 'all 0.2s ease',
-                        fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = '#f7fafc';
-                        e.target.style.borderColor = '#cbd5e0';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = 'transparent';
-                        e.target.style.borderColor = '#e2e8f0';
-                      }}
-                    >
-                      로그인 페이지로 돌아가기
-                    </Link>
-                  </div>
                 </div>
-              )}
-            </div>
+
+                <form className="mg-auth-form" onSubmit={handleSubmit} noValidate>
+                  <div className="mg-auth-form-group">
+                    <label className="mg-auth-label" htmlFor="forgotEmail">
+                      이메일 주소
+                    </label>
+                    <input
+                      id="forgotEmail"
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="example@email.com"
+                      disabled={isLoading}
+                      className="mg-auth-input"
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="mg-auth-primary-btn"
+                    disabled={isLoading || !formData.email}
+                  >
+                    {isLoading ? (
+                      <span className="mg-auth-btn-content">
+                        <span className="mg-auth-spinner" aria-hidden="true" />
+                        <span>발송 중...</span>
+                      </span>
+                    ) : (
+                      '비밀번호 재설정 링크 발송'
+                    )}
+                  </button>
+                </form>
+
+                <div className="mg-auth-footer">
+                  <Link className="mg-auth-link" to="/login">
+                    ← 로그인 페이지로 돌아가기
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="mg-auth-success">
+                <div className="mg-auth-success-icon" aria-hidden="true">
+                  ✉️
+                </div>
+                <h2 className="mg-auth-title">이메일을 확인해주세요</h2>
+                <p className="mg-auth-success-message">
+                  <strong>{formData.email}</strong> 주소로 비밀번호 재설정 링크를 발송했습니다.
+                  <br />
+                  메일함을 확인해 비밀번호 변경을 완료해주세요.
+                </p>
+
+                <div className="mg-auth-hint">
+                  <p>
+                    💡 <strong>안내사항</strong>
+                  </p>
+                  <ul>
+                    <li>이메일이 보이지 않으면 스팸함을 확인해주세요.</li>
+                    <li>재설정 링크는 24시간 후 만료됩니다.</li>
+                    <li>링크는 한 번만 사용할 수 있습니다.</li>
+                  </ul>
+                </div>
+
+                <div className="mg-auth-success-actions">
+                  <button
+                    type="button"
+                    className="mg-auth-secondary-btn"
+                    onClick={() => setIsEmailSent(false)}
+                    disabled={isLoading}
+                  >
+                    다른 이메일로 다시 발송
+                  </button>
+                  <Link className="mg-auth-outline-btn" to="/login">
+                    로그인 페이지로 돌아가기
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </main>
-
-        {/* 스피너 애니메이션 CSS */}
-        <style jsx>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     </CommonPageTemplate>
   );

@@ -72,6 +72,42 @@
   - `scheduler`: 배치/PL-SQL 호출, 정산/집계, 데이터 동기화
 - 메시징: 주문 이벤트 등은 Kafka/Event Bridge를 활용한 비동기 처리 고려
 - 파일 스토리지: 테넌트별 S3/Blob 구조, 썸네일/서명/계약서 저장
+- **ORM/데이터 접근 스택**
+  - Hibernate/JPA + QueryDSL: 타입 안전한 쿼리, 동적 필터, `Specification` 지원
+  - MultiTenancy 전략: `TenantIdentifierResolver` + Hibernate Filter로 `tenant_id`/`branch_id` 자동 주입
+  - Connection Pool: HikariCP (기본 `maximumPoolSize=40`, 환경별 조정)
+  - 캐시: 2차 캐시(Ehcache/Redis), Batch Fetch, EntityGraph로 N+1 최소화
+  - 감사: `Envers` 또는 커스텀 Audit 테이블로 변경 이력 기록
+  - PL/SQL과의 연계: 정산/통계 등 대용량 처리는 Stored Procedure 호출로 분리
+
+### 2.5 인증·세션·SSO 아키텍처
+
+- **통합 Identity Hub**
+  - `auth_user` 테이블에 모든 사용자 계정(직원/소비자)을 중앙화 저장
+  - 소셜 로그인(Kakao/Naver) 매핑은 `auth_user_social` 테이블로 관리
+  - MFA, 기기 등록, 접근 정책을 단일 Auth 서비스에서 제어
+- **Single Sign-On 흐름**
+
+  ```
+  [Client] ── 로그인 요청 → Auth Server(Spring Security + OAuth2)
+              ├─ 카카오/네이버 OAuth2 Redirect
+              └─ 자체 ID/PW (bcrypt + MFA)
+            ← AccessToken(JWT) + RefreshToken + (필요 시) Session Cookie
+  ```
+
+  - AccessToken/RefreshToken payload에 `tenantId`, `branchId`, `role`, `permissions` 포함
+  - 웹은 HttpOnly/SameSite Cookie, 모바일/파트너 API는 Bearer Token으로 동일한 Auth 서버 사용
+  - Refresh Token/세션 정보는 Redis/DB에 저장하여 세션 파기, 기기 관리, 동시 로그인 제어
+- **RBAC + 정책 엔진**
+  - `role_permissions` 테이블로 기본 권한 관리 (HQ_ADMIN, BRANCH_MANAGER, STAFF 등)
+  - 업종별·지점별 세부 정책은 `policy_rules`(조건부 접근)로 확장하여 20% 커스터마이징 대응
+  - API Gateway/Backend에서 JWT 검증 후 `TenantContext`에 주입, 서비스 계층에서 정책 평가
+- **보안·감사 로깅**
+  - `SecurityAlertService`로 로그인 실패, 비정상 접속, 다중 로그인 시도, MFA 실패 등 이벤트 알림
+  - `AuditLoggingFilter`가 로그인/로그아웃/토큰 재발급을 중앙 감사 로그에 기록 (SIEM 연동)
+- **확장성**
+  - 향후 파트너/HQ 시스템 연계를 위해 Auth 서버를 OIDC Provider 모드로 구성 (SAML/OIDC 지원)
+  - 서드파티 앱에 OAuth Client 발급, Scope/Rate Limit 정책을 운영 포털에서 관리 예정
 
 ## 3. 배포 및 운영 아키텍처
 

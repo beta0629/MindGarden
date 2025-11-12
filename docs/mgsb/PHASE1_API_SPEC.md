@@ -222,26 +222,99 @@
 
 - 상태 전이: `PENDING → APPROVED → COMPLETED` 또는 `PENDING → REJECTED`
 
-### 3.2 수강 등록/관리
+### 3.2 반/강좌 및 수강 등록 관리
 
-- `POST /api/admin/enrollments`
-- `PUT /api/admin/enrollments/{id}`: 상태 전이 (ACTIVE ↔ PAUSED ↔ COMPLETED, CANCELLED)
-- `POST /api/admin/enrollments/{id}/attendance`: 출석 기록 (`status`: PRESENT/ABSENT/LATE)
+- **반 목록 조회:** `GET /api/admin/classes?courseId=&status=ACTIVE`
+- **반 생성:** `POST /api/admin/classes`
 
-### 3.3 회원 CRM
+  ```json
+  {
+    "name": "중등 심화반 A",
+    "courseId": "uuid",
+    "teacherId": "uuid",
+    "schedule": [
+      {"dayOfWeek": "TUE", "startTime": "18:00", "endTime": "20:00", "room": "301"},
+      {"dayOfWeek": "FRI", "startTime": "18:00", "endTime": "20:00", "room": "301"}
+    ],
+    "capacity": 12,
+    "options": {
+      "seatMap": "3x4",
+      "color": "#37B26C"
+    }
+  }
+  ```
+
+- **반 수정:** `PUT /api/admin/classes/{id}`
+- **학생 배정:** `POST /api/admin/classes/{classId}/enrollments`
+- **수강 등록 관리:**  
+  - `POST /api/admin/enrollments` (반 배정 포함)  
+  - `PUT /api/admin/enrollments/{id}` (ACTIVE ↔ PAUSED ↔ COMPLETED, CANCELLED)  
+  - `GET /api/admin/enrollments/{id}/history` (배정/청구/출결 히스토리)
+
+- **에러 코드 예시:** `409 class_full`, `409 already_assigned`, `422 invalid_schedule`
+
+### 3.3 출결/시간표
+
+- `GET /api/admin/schedule?from=2025-12-01&to=2025-12-07`: 시간표/강의 캘린더
+- `POST /api/admin/attendance`
+
+  ```json
+  {
+    "classId": "uuid",
+    "scheduleId": "uuid",
+    "records": [
+      {"memberId": "uuid", "status": "PRESENT", "timestamp": "2025-12-01T18:03:00+09:00"},
+      {"memberId": "uuid", "status": "ABSENT", "reason": "사전 통보"}
+    ],
+    "notifyParents": true
+  }
+  ```
+
+- `PUT /api/admin/attendance/{attendanceId}`: 상태/메모 수정, 감사 로그 기록
+- `GET /api/admin/attendance/export?classId=&month=`: 월별 출결 보고서
+- **상태:** `PRESENT | ABSENT | LATE | EXCUSED`
+
+### 3.4 회원 CRM
 
 - `GET /api/admin/members?stage=lead|student`
 - `GET /api/admin/members/{id}`: 기본 정보 + 상담 이력 + 결제 히스토리
 - `POST /api/admin/members/{id}/notes`: 메모 생성 (`visibility`: PRIVATE/TEAM)
 
-### 3.4 결제/정산
+### 3.5 청구/결제
+
+- **청구 스케줄 관리:**  
+  - `POST /api/admin/billing/schedules`
+
+    ```json
+    {
+      "name": "월초 청구",
+      "startDate": "2026-01-01",
+      "cycle": "MONTHLY",           // 또는 WEEKLY
+      "dayOfMonth": 1,
+      "graceDays": 3,
+      "target": {
+        "classIds": ["uuid1", "uuid2"],
+        "memberTags": ["장기수강", "형제할인"]
+      }
+    }
+    ```
+
+  - `GET /api/admin/billing/schedules`
+  - `DELETE /api/admin/billing/schedules/{id}`
+- **청구서/Invoice:**  
+  - `GET /api/admin/invoices?status=INVOICED|PAID|OVERDUE`
+  - `POST /api/admin/invoices/{invoiceId}/remind` (미납 리마인드)
+  - `POST /api/admin/invoices/{invoiceId}/cancel`
+- **에러 코드:** `409 invoice_already_paid`, `422 billing_cycle_invalid`
+
+### 3.6 결제/정산
 
 - `GET /api/admin/payments?from=2025-11-01&to=2025-11-30`
   - 응답 항목: 결제일시, 금액, 수단, 상태, PG 승인번호
 - `GET /api/admin/settlements/{batchId}/report`: CSV/PDF 다운로드 (`Content-Type`)
 - `POST /api/admin/settlements/{batchId}/retry`: 부분 실패 건 재처리
 
-### 3.5 알림/마케팅
+### 3.7 알림/마케팅
 
 - 템플릿 목록: `GET /api/admin/notifications/templates?type=SMS`
 - 발송:

@@ -5,27 +5,32 @@
 ### 1.1 소비자 플로우
 
 1. 홈 → 학원 검색/카테고리 → 학원 상세 → 상담 예약
-2. 예약 확인 → 상담 진행 → 수강 등록 → 결제
-3. 결제 완료 → 마이 페이지(수강 내역, 결제 내역, 영수증 다운로드)
+2. 예약 확인 → 상담 진행 → 수강 등록/반 배정 안내 → 결제
+3. 결제 완료 → 마이 페이지(수강 내역, 청구서·영수증 다운로드)
 4. 일정/알림 확인 → 재등록 유도(추천 강좌/프로모션)
 
 **시퀀스 다이어그램 요약:**
 
 - 소비자 → `AcademyService` → `ReservationService` → `NotificationService`
 - 결제 단계에서 `PaymentGateway`와 ERP `SettlementBatch` 대기열로 이벤트 전달
+- 월별 청구 스케줄이 존재하면 `BillingService`로 Invoice 생성 이벤트 전달
 
 ### 1.2 관리자/스태프 플로우
 
 1. 로그인 → 대시보드(금일 일정/알림) → 예약 승인/조정
-2. 상담 기록 입력 → 수강 등록 → 결제 처리(현장 결제 입력 또는 온라인 결제 승인)
-3. 수강생 관리 → 출결 기록 → 학부모 알림 발송
-4. 결제 내역 검토 → 정산 리포트 확인 → 회계 처리
+2. 상담 기록 입력 → 수강 등록 → 반(Class)/강좌 배정 → 결제 처리(현장 결제 입력 또는 온라인 결제 승인)
+3. 수강생 관리 → 출결 기록(모바일/태블릿) → 학부모 알림 발송
+4. 월별 청구 스케줄 생성 → 자동 청구서 발송 → 미납/완납 상태 모니터링
+5. 결제 내역 검토 → 정산 리포트(수강료/강사/HQ) 확인 → 회계 처리
 
 **상태 전이:**
 
 - 예약: `PENDING → APPROVED → COMPLETED`, 예외 `→ CANCELLED`
 - 수강 등록: `DRAFT → ACTIVE → COMPLETED` (필요 시 `PAUSED`)
+- 반 배정: `UNASSIGNED → ASSIGNED → COMPLETED`
 - 출결: `PRESENT|ABSENT|LATE`, 자동 알림 발송 트리거
+- 청구/결제: `SCHEDULED → INVOICED → PAID`, 예외 `OVERDUE`, `CANCELLED`
+- 정산: `QUEUED → PROCESSING → SETTLED`, 예외 `ON_HOLD`
 
 ### 1.3 HQ(본사) 모니터링 플로우
 
@@ -47,7 +52,9 @@
 
 - 대시보드: 실적, 알림, 주요 지표
 - 예약/수강 관리: 캘린더 뷰, 상태별 필터, 상세 패널
+- 반/강좌 관리: 반 리스트, 시간표, 강사 배정, 좌석/정원 관리
 - 회원 CRM: 회원 목록, 상세 정보, 상담 이력, 메모
+- 청구 스케줄러: 월별 청구 템플릿, 자동 발송 일정, 미납 알림
 - 결제/정산: 결제 내역 테이블, 정산 리포트 다운로드
 - 알림 센터: 발송 템플릿, 알림 스케줄, 발송 결과 로그
 
@@ -66,6 +73,8 @@
 | 예약 | APPROVED | 알림 + 일정 확정 | 수강 등록 화면 이동 |
 | 결제 | PROCESSING | Progress Bar/Spinner | 타임아웃 30초, 취소 버튼 |
 | 결제 | FAILED | 에러 모달, 재시도 | 고객센터 안내 |
+| 청구 | SCHEDULED | 스케줄 카드, 남은 일시 표시 | 발송 전 수정 가능 |
+| 청구 | INVOICED | 청구서 발송 완료 배지 | 미납 시 N일 후 리마인드 |
 | 정산 | RUNNING | 관리자 화면에 진행률 표시 | 완료 시 보고서 링크 |
 | 알림 | QUEUED | 발송 리스트에 보류 표시 | 스케줄링 시간 도달 대기 |
 
@@ -77,7 +86,10 @@
 | CON-002 | 상담 예약 중복 | 동일 시간 예약 | `422 duplicate_reservation` |
 | PAY-001 | 결제 승인 | 유효 카드 정보 | `200 OK`, 영수증 URL |
 | PAY-004 | 결제 금액 불일치 | 클라이언트 조작 | `409 price_mismatch`, 로그 남김 |
+| BILL-002 | 청구 스케줄 실행 | 월1일 스케줄 | 청구서 생성, 학부모 이메일/SMS |
+| BILL-003 | 청구 미납 알림 | D+3 미납 | `overdue` 상태, 리마인드 발송 |
 | ADM-003 | 예약 승인 | 상태 변경 요청 | 캘린더 업데이트, 알림 발송 |
+| ADM-006 | 반 배정 변경 | 강좌/시간 변경 | 강사/학생에게 변경 알림 |
 | ADM-007 | 정산 리포트 다운로드 | 완료된 배치 ID | CSV/PDF 파일 수신 |
 | NOT-002 | 알림 발송 실패 | 잘못된 번호 포함 | 실패 대상만 재처리 큐 등록 |
 
@@ -92,6 +104,10 @@
   - 마이 페이지 데이터 (`GET /api/consumer/me`, `GET /api/consumer/orders`)
 - 관리자 포털
   - 예약/수강 관리 (`GET/PUT /api/admin/reservations`, `POST /api/admin/enrollments`)
+  - 반/강좌 관리 (`GET/POST /api/admin/classes`, `PUT /api/admin/classes/{id}`)
+  - 시간표 조회 (`GET /api/admin/schedule?from=&to=`)
+  - 출결 기록 (`POST /api/admin/attendance`, `PUT /api/admin/attendance/{id}`)
+  - 청구/결제 관리 (`POST /api/admin/billing/schedules`, `GET /api/admin/invoices`)
   - 회원 관리 (`GET /api/admin/members`, `POST /api/admin/members/{id}/notes`)
   - 결제/정산 리포트 (`GET /api/admin/settlements`)
   - 알림 발송 (`POST /api/admin/notifications`)

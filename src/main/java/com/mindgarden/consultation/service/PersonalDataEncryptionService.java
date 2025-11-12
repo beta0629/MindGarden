@@ -5,26 +5,60 @@ import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 개인정보 암호화 서비스
  * 
+ * ⚠️ 보안 개선: 하드코딩된 키 제거, 환경변수 기반 키 관리로 변경
+ * 
  * @author MindGarden
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2024-12-19
  */
+@Slf4j
 @Service
 public class PersonalDataEncryptionService {
     
     private static final String ALGORITHM = "AES";
     private static final String TRANSFORMATION = "AES/ECB/PKCS5Padding";
-    private static final String ENCRYPTION_KEY = "MindGarden2024PersonalDataEncryptionKey12345678901234567890"; // 32 bytes
+    
+    @Value("${encryption.personal-data.key:}")
+    private String encryptionKey;
     
     private final SecretKey secretKey;
     
-    public PersonalDataEncryptionService() {
-        this.secretKey = new SecretKeySpec(ENCRYPTION_KEY.getBytes(StandardCharsets.UTF_8), ALGORITHM);
+    public PersonalDataEncryptionService(@Value("${encryption.personal-data.key:}") String encryptionKey) {
+        if (encryptionKey == null || encryptionKey.trim().isEmpty()) {
+            throw new IllegalStateException(
+                "암호화 키가 설정되지 않았습니다. " +
+                "환경변수 PERSONAL_DATA_ENCRYPTION_KEY를 설정해주세요. " +
+                "보안상 하드코딩된 키는 사용할 수 없습니다."
+            );
+        }
+        
+        if (encryptionKey.length() < 32) {
+            throw new IllegalStateException(
+                "암호화 키는 최소 32자 이상이어야 합니다. " +
+                "현재 키 길이: " + encryptionKey.length()
+            );
+        }
+        
+        this.encryptionKey = encryptionKey;
+        // 키를 32바이트로 맞춤 (SHA-256 해시 사용 권장)
+        byte[] keyBytes = encryptionKey.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            // 키가 짧은 경우 반복하여 32바이트로 확장 (임시 조치)
+            byte[] extendedKey = new byte[32];
+            System.arraycopy(keyBytes, 0, extendedKey, 0, Math.min(keyBytes.length, 32));
+            this.secretKey = new SecretKeySpec(extendedKey, ALGORITHM);
+        } else {
+            this.secretKey = new SecretKeySpec(keyBytes, 0, 32, ALGORITHM);
+        }
+        
+        log.info("✅ PersonalDataEncryptionService 초기화 완료 (환경변수 기반 키 사용)");
     }
     
     /**

@@ -107,6 +107,9 @@ jwt:
 # 개인정보 암호화 설정
 encryption:
   personal-data:
+    active-key-id: ${PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID:}
+    key-versions: ${PERSONAL_DATA_ENCRYPTION_KEYS:}
+    iv-versions: ${PERSONAL_DATA_ENCRYPTION_IVS:}
     key: ${PERSONAL_DATA_ENCRYPTION_KEY:}
     iv: ${PERSONAL_DATA_ENCRYPTION_IV:}
     algorithm: AES-256

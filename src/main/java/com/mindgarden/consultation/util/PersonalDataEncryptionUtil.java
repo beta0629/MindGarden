@@ -1,35 +1,31 @@
 package com.mindgarden.consultation.util;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.Base64;
+import java.util.Collection;
 import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 /**
  * 개인정보 암호화/복호화 유틸리티
  * 
  * @author MindGarden
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2024-12-19
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class PersonalDataEncryptionUtil {
 
-    @Value("${encryption.personal-data.key:}")
-    private String encryptionKey;
-    
-    @Value("${encryption.personal-data.iv:}")
-    private String encryptionIv;
-    
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
-    private static final String KEY_ALGORITHM = "AES";
-    
+    private static final String VERSION_DELIMITER = "::";
+
+    private final PersonalDataEncryptionKeyProvider keyProvider;
+
     /**
      * 개인정보 암호화
      * 
@@ -41,26 +37,19 @@ public class PersonalDataEncryptionUtil {
             return plainText;
         }
         
-        if (encryptionKey == null || encryptionKey.trim().isEmpty()) {
-            throw new IllegalArgumentException("암호화 키가 설정되지 않았습니다.");
-        }
-        
-        if (encryptionIv == null || encryptionIv.trim().isEmpty()) {
-            throw new IllegalArgumentException("암호화 IV가 설정되지 않았습니다.");
-        }
-        
         try {
-            // 키와 IV 생성
-            SecretKeySpec secretKey = generateKey();
-            IvParameterSpec iv = generateIv();
-            
-            // 암호화
+            PersonalDataEncryptionKeyProvider.KeyMaterial keyMaterial = keyProvider.getActiveKey();
+            if (keyMaterial == null) {
+                throw new IllegalStateException("활성 암호화 키를 찾을 수 없습니다.");
+            }
+
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv);
-            
+            cipher.init(Cipher.ENCRYPT_MODE, keyMaterial.getSecretKey(), keyMaterial.getIv());
+
             byte[] encryptedBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(encryptedBytes);
-            
+            String cipherText = Base64.getEncoder().encodeToString(encryptedBytes);
+            return keyMaterial.getKeyId() + VERSION_DELIMITER + cipherText;
+
         } catch (Exception e) {
             log.error("개인정보 암호화 실패: {}", e.getMessage(), e);
             throw new RuntimeException("개인정보 암호화에 실패했습니다.", e);
@@ -79,27 +68,14 @@ public class PersonalDataEncryptionUtil {
         }
         
         try {
-            // Base64 디코딩 시도
-            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
-            
-            // 키와 IV 생성
-            SecretKeySpec secretKey = generateKey();
-            IvParameterSpec iv = generateIv();
-            
-            // 복호화
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
-            
-            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
-            
-            return new String(decryptedBytes, StandardCharsets.UTF_8);
-            
-        } catch (IllegalArgumentException e) {
-            // Base64 디코딩 실패 - 평문 데이터로 판단
-            log.debug("Base64 디코딩 실패, 평문 데이터로 처리: {}", encryptedText);
-            return encryptedText;
+            if (encryptedText.contains(VERSION_DELIMITER)) {
+                return decryptWithVersionedCipher(encryptedText);
+            }
+
+            // legacy data (Base64 without version)
+            return decryptWithFallbackKeys(encryptedText);
+
         } catch (Exception e) {
-            // 복호화 실패 - 평문 데이터로 판단
             log.debug("복호화 실패, 평문 데이터로 처리: {}", encryptedText);
             return encryptedText;
         }
@@ -157,28 +133,9 @@ public class PersonalDataEncryptionUtil {
     /**
      * 암호화 키 생성
      */
-    private SecretKeySpec generateKey() throws Exception {
-        // SHA-256으로 키 해시 생성하여 32바이트 키 생성
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(encryptionKey.getBytes(StandardCharsets.UTF_8));
-        return new SecretKeySpec(hash, KEY_ALGORITHM);
-    }
-    
-    /**
-     * 초기화 벡터(IV) 생성
-     */
-    private IvParameterSpec generateIv() throws Exception {
-        // SHA-256으로 IV 해시 생성하여 16바이트 IV 생성
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(encryptionIv.getBytes(StandardCharsets.UTF_8));
-        byte[] ivBytes = new byte[16];
-        System.arraycopy(hash, 0, ivBytes, 0, 16);
-        return new IvParameterSpec(ivBytes);
-    }
-    
     /**
      * 암호화된 데이터인지 확인
-     * 
+     *
      * @param text 확인할 텍스트
      * @return 암호화된 데이터 여부
      */
@@ -186,19 +143,40 @@ public class PersonalDataEncryptionUtil {
         if (text == null || text.trim().isEmpty()) {
             return false;
         }
-        
+
+        if (text.contains(VERSION_DELIMITER)) {
+            String version = extractKeyVersion(text);
+            return StringUtils.hasText(version) && keyProvider.hasKey(version);
+        }
+
+        // legacy format: Base64 string (may fail)
         try {
-            // Base64 디코딩 시도
             Base64.getDecoder().decode(text);
             return true;
         } catch (IllegalArgumentException e) {
             return false;
         }
     }
-    
+
     /**
-     * 안전한 암호화 (이미 암호화된 경우 재암호화하지 않음)
-     * 
+     * 지정된 텍스트가 활성 키로 암호화 되었는지 확인
+     */
+    public boolean isEncryptedWithActiveKey(String text) {
+        if (!isEncrypted(text)) {
+            return false;
+        }
+
+        String version = extractKeyVersion(text);
+        if (!StringUtils.hasText(version)) {
+            return false;
+        }
+
+        return keyProvider.getActiveKeyId().equals(version);
+    }
+
+    /**
+     * 안전한 암호화 (이미 암호화된 경우 활성 키 사용 여부에 따라 재암호화)
+     *
      * @param text 암호화할 텍스트
      * @return 암호화된 텍스트
      */
@@ -206,18 +184,13 @@ public class PersonalDataEncryptionUtil {
         if (text == null || text.trim().isEmpty()) {
             return text;
         }
-        
-        // 이미 암호화된 경우 그대로 반환
-        if (isEncrypted(text)) {
-            return text;
-        }
-        
-        return encrypt(text);
+
+        return ensureActiveKeyEncryption(text);
     }
-    
+
     /**
      * 안전한 복호화 (암호화되지 않은 경우 그대로 반환)
-     * 
+     *
      * @param text 복호화할 텍스트
      * @return 복호화된 텍스트
      */
@@ -232,5 +205,79 @@ public class PersonalDataEncryptionUtil {
         }
         
         return decrypt(text);
+    }
+
+    /**
+     * 활성 키로 암호화되도록 보장한다. (필요 시 재암호화 수행)
+     */
+    public String ensureActiveKeyEncryption(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return text;
+        }
+
+        if (!isEncrypted(text)) {
+            return encrypt(text);
+        }
+
+        if (isEncryptedWithActiveKey(text)) {
+            return text;
+        }
+
+        String decrypted = decrypt(text);
+        return encrypt(decrypted);
+    }
+
+    /**
+     * 암호화 데이터에서 키 버전을 추출한다.
+     */
+    public String extractKeyVersion(String encryptedText) {
+        if (!StringUtils.hasText(encryptedText) || !encryptedText.contains(VERSION_DELIMITER)) {
+            return null;
+        }
+        int delimiterIndex = encryptedText.indexOf(VERSION_DELIMITER);
+        if (delimiterIndex <= 0) {
+            return null;
+        }
+        return encryptedText.substring(0, delimiterIndex);
+    }
+
+    public String getActiveKeyId() {
+        return keyProvider.getActiveKeyId();
+    }
+
+    private String decryptWithVersionedCipher(String encryptedText) throws Exception {
+        int delimiterIndex = encryptedText.indexOf(VERSION_DELIMITER);
+        String keyId = encryptedText.substring(0, delimiterIndex);
+        String cipherPayload = encryptedText.substring(delimiterIndex + VERSION_DELIMITER.length());
+
+        PersonalDataEncryptionKeyProvider.KeyMaterial keyMaterial = keyProvider.getKey(keyId);
+        if (keyMaterial == null) {
+            log.warn("⚠️ 암호화 키를 찾을 수 없습니다. keyId={}", keyId);
+            return decryptWithFallbackKeys(cipherPayload);
+        }
+
+        return decryptWithMaterial(cipherPayload, keyMaterial);
+    }
+
+    private String decryptWithFallbackKeys(String cipherText) throws Exception {
+        Collection<PersonalDataEncryptionKeyProvider.KeyMaterial> candidates = keyProvider.getAllKeysByPriority();
+        for (PersonalDataEncryptionKeyProvider.KeyMaterial material : candidates) {
+            try {
+                return decryptWithMaterial(cipherText, material);
+            } catch (Exception e) {
+                log.debug("암호화 키({})로 복호화 실패: {}", material.getKeyId(), e.getMessage());
+            }
+        }
+        log.debug("복호화 가능한 키를 찾지 못했습니다. 평문으로 간주합니다.");
+        return cipherText;
+    }
+
+    private String decryptWithMaterial(String cipherPayload, PersonalDataEncryptionKeyProvider.KeyMaterial material)
+        throws Exception {
+        Cipher cipher = Cipher.getInstance(ALGORITHM);
+        cipher.init(Cipher.DECRYPT_MODE, material.getSecretKey(), material.getIv());
+        byte[] encryptedBytes = Base64.getDecoder().decode(cipherPayload);
+        byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+        return new String(decryptedBytes, StandardCharsets.UTF_8);
     }
 }

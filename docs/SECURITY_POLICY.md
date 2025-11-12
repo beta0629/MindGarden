@@ -51,6 +51,16 @@ PERSONAL_DATA_ENCRYPTION_KEY=<32자 이상의 암호화 키>
 PERSONAL_DATA_ENCRYPTION_IV=<16자 IV>
 ```
 
+**다중 키/로테이션 설정:**
+```bash
+# 활성 키 ID 지정
+PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID=v2
+
+# 키/IV 목록 (쉼표 구분, 항목은 keyId:Base64EncodedValue)
+PERSONAL_DATA_ENCRYPTION_KEYS=v2:Q29vbFNlY3JldEtleTIzIT8=,v1:QmFja3VwS2V5MTIzIT8=
+PERSONAL_DATA_ENCRYPTION_IVS=v2:Q29vbElWMjMxMjM=,v1:QmFja3VwSXYxMjM=
+```
+
 ### 3.2 개인정보 접근 제어
 
 **접근 로깅:**
@@ -314,6 +324,8 @@ PERSONAL_DATA_ENCRYPTION_IV=<16자 IV>
 - [ ] 개인정보보호법 준수 기능 완성
 - [ ] 보안 모니터링 시스템 구축
 - [ ] 보안 정책 문서화 완료
+- [x] 암호화 키 로테이션 메커니즘 구현
+- [ ] 암호화 키 로테이션 운영 절차 수립 (운영팀 매뉴얼)
 
 ### 12.2 중기 계획 (6개월)
 

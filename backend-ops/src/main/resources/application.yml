@@ -1,0 +1,49 @@
+server:
+  port: 7080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: mindgarden-ops-backend
+  profiles:
+    active: local
+    group:
+      staging: staging
+      prod: prod
+  main:
+    banner-mode: off
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.mindgarden.ops: DEBUG
+
+security:
+  jwt:
+    secret: ${SECURITY_JWT_SECRET:local-dev-secret-change-me-please-use-a-stronger-one}
+    issuer: ${SECURITY_JWT_ISSUER:mindgarden-ops}
+    expires-in-seconds: ${SECURITY_JWT_EXPIRES:3600}
+  ops:
+    username: ${OPS_ADMIN_USERNAME:ops-admin}
+    password: ${OPS_ADMIN_PASSWORD:change-me}
+    default-role: ${OPS_ADMIN_ROLE:HQ_ADMIN}

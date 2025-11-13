@@ -1,0 +1,696 @@
+openapi: 3.0.3
+info:
+  title: MindGarden Ops Portal API
+  version: 0.1.0
+servers:
+  - url: https://ops-api.m-garden.co.kr/api/v1
+    description: Production
+  - url: https://ops-api.staging.m-garden.co.kr/api/v1
+    description: Staging
+paths:
+  /onboarding/requests/pending:
+    get:
+      summary: Pending onboarding requests
+      tags: [Onboarding]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OnboardingRequest'
+  /onboarding/requests/{id}/decision:
+    post:
+      summary: Decide onboarding request
+      tags: [Onboarding]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingDecision'
+      responses:
+        "200":
+          description: Updated request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingRequest'
+  /onboarding/requests:
+    post:
+      summary: Create onboarding request
+      tags: [Onboarding]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingCreate'
+      responses:
+        "200":
+          description: Created request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingRequest'
+  /onboarding/requests/{id}:
+    get:
+      summary: Get onboarding request detail
+      tags: [Onboarding]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingRequest'
+  /plans:
+    get:
+      summary: List pricing plans
+      tags: [Pricing]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PricingPlan'
+    post:
+      summary: Create pricing plan
+      tags: [Pricing]
+      parameters:
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ActorRole'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricingPlanCreate'
+      responses:
+        "200":
+          description: Created plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingPlan'
+  /plans/addons:
+    get:
+      summary: List pricing addons
+      tags: [Pricing]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PricingAddon'
+    post:
+      summary: Create pricing addon
+      tags: [Pricing]
+      parameters:
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ActorRole'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricingAddonCreate'
+      responses:
+        "200":
+          description: Created addon
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingAddon'
+  /plans/{planId}:
+    patch:
+      summary: Update pricing plan
+      tags: [Pricing]
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ActorRole'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricingPlanUpdate'
+      responses:
+        "200":
+          description: Updated plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingPlan'
+    delete:
+      summary: Deactivate pricing plan
+      tags: [Pricing]
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ActorRole'
+      responses:
+        "204":
+          description: Deactivated
+  /plans/{planId}/addons:
+    post:
+      summary: Attach addon to plan
+      tags: [Pricing]
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ActorRole'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanAddonAttach'
+      responses:
+        "200":
+          description: Attached
+  /plans/addons/{addonId}:
+    patch:
+      summary: Update pricing addon
+      tags: [Pricing]
+      parameters:
+        - name: addonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ActorRole'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricingAddonUpdate'
+      responses:
+        "200":
+          description: Updated addon
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingAddon'
+    delete:
+      summary: Deactivate pricing addon
+      tags: [Pricing]
+      parameters:
+        - name: addonId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ActorRole'
+      responses:
+        "204":
+          description: Deactivated
+  /auth/login:
+    post:
+      summary: Ops admin login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        "200":
+          description: JWT token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /feature-flags:
+    get:
+      summary: List feature flags
+      tags: [FeatureFlag]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeatureFlag'
+    post:
+      summary: Create feature flag
+      tags: [FeatureFlag]
+      parameters:
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ActorRole'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureFlagCreate'
+      responses:
+        "200":
+          description: Created flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlag'
+  /feature-flags/{flagId}/toggle:
+    post:
+      summary: Toggle feature flag state
+      tags: [FeatureFlag]
+      parameters:
+        - name: flagId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/ActorId'
+        - $ref: '#/components/parameters/ActorRole'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatureFlagToggle'
+      responses:
+        "200":
+          description: Updated flag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureFlag'
+  /audit:
+    get:
+      summary: List recent audit logs
+      tags: [Audit]
+      parameters:
+        - name: eventType
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLog'
+  /dashboard/metrics:
+    get:
+      summary: Dashboard metrics snapshot
+      tags: [Dashboard]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardMetrics'
+components:
+  parameters:
+    ActorId:
+      name: X-Actor-Id
+      in: header
+      required: true
+      schema:
+        type: string
+    ActorRole:
+      name: X-Actor-Role
+      in: header
+      required: false
+      schema:
+        type: string
+        default: HQ_ADMIN
+  schemas:
+    OnboardingRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        tenantName:
+          type: string
+        requestedBy:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, IN_REVIEW, APPROVED, REJECTED, ON_HOLD]
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        checklistJson:
+          type: string
+        decidedBy:
+          type: string
+          nullable: true
+        decisionAt:
+          type: string
+          format: date-time
+          nullable: true
+        decisionNote:
+          type: string
+          nullable: true
+    OnboardingDecision:
+      type: object
+      required: [status, actorId]
+      properties:
+        status:
+          type: string
+          enum: [APPROVED, REJECTED, ON_HOLD]
+        actorId:
+          type: string
+        note:
+          type: string
+          nullable: true
+    PricingPlan:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        planCode:
+          type: string
+        displayName:
+          type: string
+        displayNameKo:
+          type: string
+          nullable: true
+        baseFee:
+          type: number
+          format: double
+        currency:
+          type: string
+        description:
+          type: string
+          nullable: true
+        descriptionKo:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+    PricingPlanCreate:
+      type: object
+      required: [planCode, displayName, baseFee, currency]
+      properties:
+        planCode:
+          type: string
+        displayName:
+          type: string
+        displayNameKo:
+          type: string
+          nullable: true
+        baseFee:
+          type: number
+          format: double
+        currency:
+          type: string
+        description:
+          type: string
+          nullable: true
+        descriptionKo:
+          type: string
+          nullable: true
+    PricingPlanUpdate:
+      type: object
+      required: [displayName, baseFee, currency]
+      properties:
+        displayName:
+          type: string
+        displayNameKo:
+          type: string
+          nullable: true
+        baseFee:
+          type: number
+          format: double
+        currency:
+          type: string
+        description:
+          type: string
+          nullable: true
+        descriptionKo:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+    PricingAddon:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        addonCode:
+          type: string
+        displayName:
+          type: string
+        displayNameKo:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        categoryKo:
+          type: string
+          nullable: true
+        feeType:
+          type: string
+          enum: [FLAT, USAGE, PERCENTAGE]
+        unitPrice:
+          type: number
+          format: double
+        unit:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+    OnboardingCreate:
+      type: object
+      required: [tenantId, tenantName, requestedBy, riskLevel]
+      properties:
+        tenantId:
+          type: string
+        tenantName:
+          type: string
+        requestedBy:
+          type: string
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        checklistJson:
+          type: string
+          nullable: true
+    PricingAddonCreate:
+      type: object
+      required: [addonCode, displayName, feeType, unitPrice]
+      properties:
+        addonCode:
+          type: string
+        displayName:
+          type: string
+        displayNameKo:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        categoryKo:
+          type: string
+          nullable: true
+        feeType:
+          type: string
+          enum: [FLAT, USAGE, PERCENTAGE]
+        unitPrice:
+          type: number
+          format: double
+        unit:
+          type: string
+          nullable: true
+    PricingAddonUpdate:
+      type: object
+      required: [displayName, feeType, unitPrice]
+      properties:
+        displayName:
+          type: string
+        displayNameKo:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        categoryKo:
+          type: string
+          nullable: true
+        feeType:
+          type: string
+          enum: [FLAT, USAGE, PERCENTAGE]
+        unitPrice:
+          type: number
+          format: double
+        unit:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        actorId:
+          type: string
+        actorRole:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    PlanAddonAttach:
+      type: object
+      required: [addonCode]
+      properties:
+        addonCode:
+          type: string
+        notes:
+          type: string
+          nullable: true
+    FeatureFlagCreate:
+      type: object
+      required: [flagKey]
+      properties:
+        flagKey:
+          type: string
+        description:
+          type: string
+          nullable: true
+        targetScope:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+    FeatureFlagToggle:
+      type: object
+      required: [state]
+      properties:
+        state:
+          type: string
+          enum: [DISABLED, SHADOW, ENABLED]
+    FeatureFlag:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          properties:
+            flagKey:
+              type: string
+            description:
+              type: string
+              nullable: true
+            state:
+              type: string
+            targetScope:
+              type: string
+              nullable: true
+            expiresAt:
+              type: string
+              format: date-time
+              nullable: true
+    AuditLog:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          properties:
+            eventType:
+              type: string
+            entityType:
+              type: string
+            entityId:
+              type: string
+            actorId:
+              type: string
+            actorRole:
+              type: string
+            action:
+              type: string
+            metadataJson:
+              type: string
+              nullable: true
+    DashboardMetrics:
+      type: object
+      properties:
+        pendingOnboarding:
+          type: integer
+        activePlans:
+          type: integer
+        activeAddons:
+          type: integer
+        activeFeatureFlags:
+          type: integer
+        totalAuditEvents:
+          type: integer

@@ -90,6 +90,7 @@
 
 - **확장성:** 테넌트 증가 대비 수평 확장 구조, 테넌트별 리소스 한도 관리
 - **보안 및 규제 준수:** 테넌트/사용자 데이터 격리, 접근 제어, 로그 감사, 국내 개인정보보호법 준수
+- **로그 격리:** Logback MDC 기반 `tenantId`/`branchId` 강제 주입, ELK/OpenSearch 인덱스를 테넌트 단위로 분리, 민감 필드 마스킹 및 보존 기간 정책화
 - **결제 게이트웨이:** 반복 결제, 가상계좌, 간편결제 등 국내 결제 수단을 지원 가능한 PG 선정
 - **운영/유지보수:** 공통 코드·디자인 시스템 재사용, 설정 기반 커스터마이징, 자동화된 테스트·배포 파이프라인 확보
 - **코어 데이터 성능:** PL/SQL 사용 시 코드 품질 관리, DB 락/경쟁 상태 감시, 장애 대응 절차 마련
@@ -115,6 +116,7 @@
 - 무중단 배포 전략 도입 (Blue/Green, Canary) 및 배포 헬스체크 자동화
 - 세션/토큰 모니터링 대시보드화, 이상 탐지 시 자동 알림 체계 구축
 - PL/SQL 정산·통계 배치 상태를 KPI와 연동하여 실시간 감시
+- 요금제 운영 표준화: 기본 요금제(Starter/Standard/Premium) 한도 정의, 애드온 패키지(`AI Advanced Pack`, `HQ Analytics Pack`, `Security Compliance Pack`) 관리 프로세스 수립
 
 ### 11.2 업종 확장 준비
 - 학원 외 업종(미용, 서비스, 배달 등)의 **공통 5대 흐름** 정의 및 모듈 설계
@@ -129,8 +131,43 @@
 - 운영 로그 요약 및 알림 자동화(Slack/대시보드)
 - 내부 운영 지원 챗봇 PoC → 단계별 고객 FAQ 챗봇 확장
 - AI 인사이트 대시보드(정산/예약 요약, 리포트 자동 생성)
+- 테넌트별 AI 사용량·과금 체계 구축: `tenant_ai_subscription`, `tenant_ai_usage_daily`, `tenant_ai_invoice_monthly` 모델 도입 및 PL/SQL 청구 배치 구현, MindGarden 수수료(30~40%/고급 50%) 정책 반영
+- 온보딩 체크리스트 분리: 테넌트 개별 설정(모델 선택, API 키, 한도/알림)과 MindGarden 공통 정책(가격표, 수수료율, 보안 표준, 침해 대응) 구분 관리
 
 ### 11.4 DevOps 및 품질
 - SecurityAlert/AuditLog 시각화 대시보드 구축, SIEM 연동
 - 자동화 테스트 고도화: Spin-up 환경에서 E2E·성능·회귀 테스트 주기화
 - API 문서(Swagger/OpenAPI) 자동 배포 및 형상 관리 체계 확립
+- API Gateway Rate Limiting, 서드파티 연동 승인 워크플로우, GitOps 기반 IaC 운영
+
+### 11.5 확장 대비 기반 체계
+- Observability 통합(메트릭·로그·트레이싱) 및 테넌트별 KPI 대시보드
+- Kafka/EventBridge 기반 이벤트 스트림과 DLQ/재처리 정책 수립
+- DR/백업/복구 시나리오 정기 검증, 다국어·다국가(i18n, 환율/세금) 대비 로드맵
+- 데이터 레이크/BI 파이프라인 도입, 테넌트/HQ용 분석 리포트 자동화
+- 운영 데이터 테이블/모듈: `tenant_ai_subscription`, `tenant_ai_usage_daily`, `tenant_ai_invoice_monthly`, `pricing_plan`, `tenant_role`, `feature_flag` 등
+
+### 11.6 운영 거버넌스 & 입점사 관리 포털
+- MVP: 테넌트 온보딩 체크리스트, 요금제·애드온 승인, 기본 관제 대시보드
+- V2: 권한/보안 감사 모듈, Runbook·알림 연계, AI 사용량·청구 리포트
+- V3: Workflow 엔진 연동, 외부 시스템 커넥터(ERP, 고객지원, 문서 관리), 자동화 승인 루프
+- 운영 데이터 테이블: `tenant_onboarding_task`, `pricing_change_request`, `feature_flag_audit`, `incident_report`, `operator_notification` 등으로 변경 이력 추적
+
+### 11.7 내부 운영 모바일 앱 (필수 메뉴)
+- Phase A: React Native 기반 MVP (알림 승인, 주요 KPI 뷰, 테넌트 온보딩 승인)
+- Phase B: 배포 상태 모니터링, 배치 재시작 요청, AI 사용량 경보 처리
+- Phase C: 오프라인 사고 보고, 현장 이슈 트래킹, 운영 챗봇 연동
+- 보안 정책: MDM 등록 기기 + 2차 인증(OTP/PUSH), 데이터 암호화 저장, 분실 기기 원격 잠금/삭제
+
+### 11.8 Zero-Touch Onboarding & Billing Automation
+- Phase 1: 가입→결제→테넌트 생성 자동화 (요금제/역할/브랜딩 기본값, 샘플 데이터, API Key 발급)
+- Phase 2: 결제 실패 재시도·자동 알림, AI 사용량·요금 과금 자동 트리거, 세금계산서 발행 연동
+- Phase 3: Workflow Engine 기반 승인·롤백 규칙, 이벤트 스트림을 통한 실시간 관제와 자동 티켓 생성
+- 목표: “결제하면 즉시 사용” 경험을 제공하며, 운영 개입 없는 SaaS 활성화 달성
+
+### 11.9 최소 입력(로그인 제외) 자동화 로드맵
+- Step 1: 업종/규모 선택만으로 요금제·권한·메뉴 자동 매핑 (템플릿 확장, Feature Flag 연동)
+- Step 2: 최초 결제 시 정기 과금·세금 정보 저장, 이후 결제·세금계산서·영수증 자동 처리
+- Step 3: 샘플 데이터/AI 초안/체크리스트 제공으로 추가 입력 없이 즉시 운영 가능하게 구성
+- Step 4: 운영 포털 원클릭 승인 및 이벤트 기반 자동 롤백/제한으로 완전 무인화 달성
+- KPI: 가입→활성화까지 평균 수동 입력 필드 0개(로그인 제외), 온보딩 소요 시간 5분 이내

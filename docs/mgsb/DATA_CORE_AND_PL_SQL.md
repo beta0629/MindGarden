@@ -26,6 +26,25 @@ Tenant (tenant_id PK)
            ├─ Invoice (invoice_id PK) ── Payment (payment_id PK)
            └─ SettlementResult (settlement_id PK)
 
+RoleTemplate (role_template_id PK)
+ ├─ RoleTemplatePermission (role_template_id FK, permission_code)
+ └─ RoleTemplateMapping (role_template_id FK, business_type)
+
+TenantRole (tenant_role_id PK, tenant_id FK, role_template_id FK)
+ ├─ RolePermission (tenant_role_id FK, permission_code, policy_json)
+ └─ UserRoleAssignment (assignment_id PK, tenant_role_id FK, user_id FK)
+
+PricingPlan (plan_id PK)
+ ├─ PricingPlanFeature (plan_id FK, feature_code)
+ └─ PricingAddon (addon_id PK)
+      └─ PricingAddonFeature (addon_id FK, feature_code)
+
+TenantSubscription (subscription_id PK, tenant_id FK, plan_id FK)
+ ├─ SubscriptionAddon (subscription_id FK, addon_id FK)
+ ├─ TenantAIService (tenant_ai_id PK, model_code, addon_id FK)
+ └─ SubscriptionInvoice (invoice_id PK, subscription_id FK)
+      └─ SubscriptionInvoiceLine (line_id PK, invoice_id FK, charge_type, amount)
+
 AuthUser (auth_user_id PK) ─┬─ StaffAccount (1:1 via auth_user_id)
                             └─ ConsumerAccount (1:1 via auth_user_id)
 
@@ -52,6 +71,28 @@ SecurityEvent (event_id PK)
 | `invoice` | `invoice_id`, `tenant_id`, `consumer_id`, `amount`, `status`, `due_date` | 청구서 |
 | `payment` | `payment_id`, `invoice_id`, `order_id`, `amount`, `method`, `pg_tx_id` | 결제 |
 | `settlement_result` | `settlement_id`, `tenant_id`, `period`, `gross_amount`, `royalty_amount`, `teacher_payout` | 정산 결과 |
+| `pricing_plan` | `plan_id`, `plan_code`, `name`, `base_fee`, `limits_json`, `is_active`, `display_order` | Starter/Standard/Premium 등 기본 요금제 정의 |
+| `pricing_plan_feature` | `plan_id`, `feature_code`, `feature_level`, `included_flag` | 요금제별 제공 기능/한도 세부 정보 |
+| `pricing_addon` | `addon_id`, `addon_code`, `name`, `category`, `fee_model`, `metadata_json` | AI Advanced Pack, Security Compliance Pack 등 선택 애드온 |
+| `pricing_addon_feature` | `addon_id`, `feature_code`, `feature_level`, `notes` | 애드온으로 추가 제공되는 기능/한도 |
+| `tenant_subscription` | `subscription_id`, `tenant_id`, `plan_id`, `status`, `effective_from`, `effective_to`, `billing_cycle` | 테넌트별 활성 요금제 |
+| `subscription_addon` | `subscription_id`, `addon_id`, `activated_at`, `deactivated_at`, `approval_user_id` | 테넌트가 활성화한 애드온 내역 |
+| `tenant_ai_service` | `tenant_ai_id`, `subscription_id`, `model_code`, `pricing_ref`, `status`, `usage_limit` | 테넌트별 AI 모델 선택 상태 |
+| `tenant_ai_usage_daily` | `usage_id`, `tenant_id`, `model_code`, `metric`, `amount`, `usage_date` | 일별 AI 사용량 집계 |
+| `subscription_invoice` | `invoice_id`, `subscription_id`, `billing_period`, `total_amount`, `status`, `due_date` | 요금제 청구서 헤더 |
+| `subscription_invoice_line` | `line_id`, `invoice_id`, `charge_type`, `description`, `quantity`, `unit_price`, `amount`, `tax_amount` | 청구 내역 라인 (기본 요금/애드온/초과 사용) |
+| `role_template` | `role_template_id`, `template_code`, `name`, `business_type`, `description` | 업종별 기본 역할 템플릿 (예: 학생, 교사, 원장) |
+| `role_template_permission` | `role_template_id`, `permission_code`, `scope`, `default_flag` | 템플릿에 포함된 권한 목록 |
+| `role_template_mapping` | `role_template_id`, `business_type`, `priority`, `is_default` | 업종별 템플릿 자동 매핑(학원, 미용 등) |
+| `tenant_role` | `tenant_role_id`, `tenant_id`, `role_template_id`, `name`, `description`, `is_active` | 테넌트 커스텀 역할 (템플릿 기반 복제) |
+| `role_permission` | `tenant_role_id`, `permission_code`, `policy_json`, `granted_by` | 테넌트 역할에 부여된 권한/정책 |
+| `user_role_assignment` | `assignment_id`, `user_id`, `tenant_role_id`, `branch_id`, `effective_from`, `effective_to` | 사용자 역할/지점 배정 기록 |
+| `ops_onboarding_request` | `id`, `tenant_id`, `tenant_name`, `requested_by`, `status`, `risk_level`, `checklist_json`, `decided_by`, `decision_at`, `decision_note`, `created_at`, `updated_at` | 내부 운영 포털 온보딩 요청 |
+| `ops_pricing_plan` | `id`, `plan_code`, `display_name`, `base_fee`, `currency`, `description`, `active`, `created_at`, `updated_at` | 운영용 요금제 메타데이터 |
+| `ops_pricing_addon` | `id`, `addon_code`, `display_name`, `category`, `fee_type`, `unit_price`, `unit`, `active`, `created_at`, `updated_at` | 운영용 애드온 메타데이터 |
+| `ops_plan_addon` | `id`, `plan_id`, `addon_id`, `notes`, `created_at`, `updated_at` | 요금제-애드온 매핑 |
+| `ops_feature_flag` | `id`, `flag_key`, `description`, `state`, `target_scope`, `expires_at`, `created_at`, `updated_at` | 운영 포털 Feature Flag |
+| `ops_audit_log` | `id`, `event_type`, `entity_type`, `entity_id`, `actor_id`, `actor_role`, `action`, `metadata_json`, `created_at`, `updated_at` | 운영 감사 로그 |
 | `audit_log` | `audit_id`, `tenant_id`, `user_id`, `action`, `resource`, `metadata` | 감사 로그 |
 | `security_event` | `event_id`, `severity`, `category`, `details` | 보안 이벤트/알림 |
 
@@ -68,6 +109,25 @@ SecurityEvent (event_id PK)
 | **공지/알림** | `notification_template`, `notification_log`, `notification_status` |
 
 > 추후 업종 확장(미용, 배달 등)은 `tenant.business_type`에 따라 모듈 테이블(`salon_booking`, `delivery_order`)을 플러그인 형태로 추가하고, 공통 인증/정산 테이블과 연결합니다.
+
+### 1.4 테넌트 역할 템플릿 & RBAC 구조
+
+- **목적:** 업종/테넌트에 따라 `학생`, `학부모`, `강사`, `사무원`, `원장`, `HQ 관리자` 등 역할 구성을 유연하게 유지하면서도 플랫폼 차원에서 표준 RBAC/ABAC 정책을 강제
+- **구성요소:**
+  - `role_template`: MindGarden HQ가 업종별 기본 역할 세트를 정의 (예: 학원 비즈니스 → 학생, 학부모, 강사, 사무원, 관리자, 원장)
+  - `role_template_permission`: 각 템플릿이 보유한 기본 권한 코드(메뉴, API, 데이터 범위)와 기본 스코프(자기 자신, 지점, 전체)
+  - `role_template_mapping`: 테넌트 가입 시 업종(`business_type`)에 따라 자동으로 추천되는 템플릿 목록과 우선순위
+  - `tenant_role`: 테넌트가 템플릿을 복제/커스터마이징하여 사용하는 실제 역할. 이름/설명/활성 상태 관리
+  - `role_permission`: 테넌트 커스텀 권한. 정책 JSON(`policy_json`) 필드에 ABAC 조건(예: 본인 지점 데이터만 접근)을 저장
+  - `user_role_assignment`: 사용자와 역할의 배정 이력. 지점/유효 기간/승인자 등 메타데이터 기록
+- **운영 정책:**
+  - 테넌트가 기본 템플릿을 수정하면 변경 이력을 감사 로그에 기록하고, HQ가 검토할 수 있는 승인 워크플로우 제공
+  - 민감 리소스(로그, AI 과금, 결제 설정 등)는 HQ가 제공한 “필수 권한” 플래그를 통해 삭제/수정 불가하도록 잠금
+  - 멀티롤 지원: 한 사용자가 `교사`+`사무원` 등 다중 역할을 가질 수 있으며, 세션 시 `active_role`을 선택하도록 UX 제공
+  - ABAC 확장: 권한 정책에 `branch_id`, `tenant_id`, `role_level`, `business_type` 등을 조건으로 사용해 세밀한 접근 제어 구현
+  - 역할 변경 시 API/Notification을 통해 테넌트 관리자에게 알림 전송, `user_role_assignment`에 이력 남김
+- 내부 운영 포털(Ops) 모듈 테이블은 Flyway(`V1__init_ops_tables.sql`)로 관리하며, MindGarden 핵심 DB와 동일 클러스터에 위치시키되 `ops_*` 네임스페이스를 사용한다.
+- 감사 로그/Feature Flag 등 운영 데이터도 중앙 DB에서 관리하며, 추후 데이터 마트로 전송 시 CDC(예: Debezium) 연동을 검토한다.
 
 ## 2. PL/SQL 기반 처리 흐름
 

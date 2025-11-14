@@ -2,7 +2,7 @@
 
 ## 1. 환경 준비
 - [ ] **Repository 구성**: `frontend-ops`(React/TypeScript), `backend-ops`(Spring Boot) 레포지토리 생성 및 CI/CD 파이프라인 연동 (GitHub Actions + ArgoCD)
-- [ ] **환경 분리**: Dev → Staging → Prod Namespace/IaC 정의, 내부 전용 도메인(`ops.mindgarden.internal`) 및 VPN/Access 설정
+- [ ] **환경 분리**: Dev → Staging → Prod Namespace/IaC 정의, 내부 전용 도메인(`ops.e-trinity.co.kr`) 및 VPN/Access 설정
 - [ ] **인증/권한 연동**: 공용 Identity Hub(OIDC) 클라이언트 등록, 운영 전용 RBAC/ABAC 스코프 정의, MFA/기기 등록 정책 적용
 - [ ] **데이터 소스 연결**: 중앙 DB/Redis/ELK 접근 권한 설정, 운영 전용 API Gateway(`internal-api`) 엔드포인트 구성
 - [ ] **Design System 확장**: MindGarden Design System v2.0 Admin용 컴포넌트/토큰 추가, Storybook 문서화

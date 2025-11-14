@@ -14,12 +14,16 @@ MindGarden SaaS 상용화를 위한 **외부 온보딩 신청 → 정기 결제 
 
 | 단계 | 주체 | 설명 | 관련 문서/시스템 |
 | --- | --- | --- | --- |
-| 1. 랜딩 & 상품 소개 | 입점사/지점 담당자 | 요금제 소개, FAQ, 데모 신청 | (추가 예정) `LANDING_PAGE_PLAN.md` |
-| 2. 온보딩 신청 + 결제 등록 | 입점사/지점 담당자 | 폼 입력, 요금제/애드온 선택, 카드 정보 입력(PG 토큰화) | `ONBOARDING_REGISTRATION_PLAN.md` |
+| 1. 랜딩 & 상품 소개 | 입점사/지점 담당자 | 요금제 소개, FAQ, 데모 신청 (`https://e-trinity.co.kr` 내 랜딩) | (추가 예정) `LANDING_PAGE_PLAN.md` |
+| 2. 온보딩 신청 + 결제 등록 | 입점사/지점 담당자 | 폼 입력, 요금제/애드온 선택, 카드 정보 입력(PG 토큰화) (`https://apply.e-trinity.co.kr/onboarding`) | `ONBOARDING_REGISTRATION_PLAN.md` |
 | 3. 신청/결제 데이터 저장 | 백엔드 | `POST /onboarding/requests`, `POST /billing/subscribe` 등 API 처리 | API 스펙 (추가 예정) |
 | 4. 운영팀 승인 | HQ 운영팀 | `/onboarding` 화면에서 심사/결정, 알림 발송 | Ops 포털 |
 | 5. 테넌트 활성화 & 결제 개시 | 시스템 | 승인 시 테넌트 생성, 구독 상태 Active, 정기 결제 배치 시작 | `BILLING_DOMAIN_DESIGN.md` |
 | 6. 운영/정산 | HQ 운영팀 & 시스템 | 결제 실패 재처리, 영수증 발행, 정산 리포트 | Billing 도메인 문서, 결제 배치 |
+
+> **도메인 분리 원칙**  
+> - Trinity 코퍼레이트 웹/온보딩: `e-trinity.co.kr`, `apply.e-trinity.co.kr`  
+> - MindGarden 서비스(테넌트/소비자): `m-garden.co.kr`, `app.m-garden.co.kr`, `{tenant}.m-garden.co.kr`
 
 ※ 향후 단계: 고객 앱과의 연동, SSO 기반 로그인, 결제 실패 알림/대시보드, 구독 변경/취소 UI 등.
 

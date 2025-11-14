@@ -66,8 +66,9 @@
 
 | 구분 | 목적 | 도메인 예시 | 비고 |
 | --- | --- | --- | --- |
-| 마케팅/랜딩 | 브랜드 소개, 세일즈 랜딩, 문서 링크 | `https://m-garden.co.kr` | 기존 도메인 유지, SEO/콘텐츠 중심 |
-| 테넌트/소비자 웹앱 | 실제 서비스 이용(예약, 정산, 대시보드) | `https://app.m-garden.co.kr` (테넌트 공용) 또는 `https://{tenant}.m-garden.co.kr` (선택적 커스텀) | 커스텀 도메인은 `CNAME`/TLS 자동 발급(Let's Encrypt) 지원 |
+| 코퍼레이트 홈페이지/랜딩 | Trinity 브랜드 소개, 제품·문서 허브 | `https://e-trinity.co.kr` | MindGarden 제품·문서 링크 연결 지점 |
+| 온보딩 신청 | 입점사 신청, 결제 수단 등록 | `https://apply.e-trinity.co.kr/onboarding` | Trinity 홈페이지 하위 경로 또는 서브도메인 |
+| 테넌트/소비자 웹앱 | 실제 서비스 이용(예약, 정산, 대시보드) | `https://app.m-garden.co.kr` 또는 `https://{tenant}.m-garden.co.kr` | MindGarden 서비스 도메인 유지, 테넌트별 커스텀 가능 |
 | 운영 포털(내부) | HQ 운영, 승인/관제/배포 제어 | `https://ops.e-trinity.co.kr` | VPN 또는 IP ACL + MFA 필수, 내부 DNS 등록 |
 | API Gateway | 외부 공개 API/웹훅 | `https://api.m-garden.co.kr` | Rate Limiting, WAF, 인증(SaaS 토큰) 적용 |
 | 모바일 백엔드 | 앱 전용 엔드포인트(버전 관리) | `https://mobile-api.m-garden.co.kr` | 앱 스토어 심사 대비 안정적 버전 유지 |
@@ -75,7 +76,7 @@
 
 - **TLS/보안 정책**: 모든 서브도메인은 TLS 1.2 이상, HSTS, WAF 적용. 내부 도메인(`ops`, `dev`)은 사설 CA + VPN 조합 또는 Public TLS + 인증 게이트웨이.
 - **DNS/IaC 관리**: Route53/Cloud DNS 등 IaC(Terraform)로 레코드 일괄 관리, 새 테넌트 커스텀 도메인은 Self-Service + 검증(CNAME) 방식 제공.
-- **리디렉션 규칙**: `m-garden.co.kr` → 랜딩, `www.m-garden.co.kr` → 동일, 로그인/로그아웃 후 `app` 도메인으로 이동.
+- **리디렉션 규칙**: `e-trinity.co.kr` → 코퍼레이트 랜딩, `www.e-trinity.co.kr` → 동일, 온보딩 CTA는 `apply.e-trinity.co.kr`로 연결. MindGarden 서비스 진입 시에는 `app.m-garden.co.kr` 또는 테넌트 서브도메인으로 이동.
 - **쿠키/세션**: 소비자/테넌트 앱은 `app.m-garden.co.kr` 도메인 기준으로 쿠키 설정(SameSite=None, Secure). 운영 포털은 별도 도메인으로 격리해 세션 혼선을 방지.
 
 ### 2.4 대내·대외 애플리케이션 분리 전략
@@ -84,11 +85,11 @@
   - 대상: 입점사(테넌트) 관리자/직원, 소비자
   - 목적: 매출/정산, 상담·예약, 출결, 알림 등 비즈니스 운영
   - 접근: 공개 인터넷, 멀티테넌시 기반 RBAC/ABAC, 표준 릴리스 주기(안정성 우선)
-  - 배포: `app.mindgarden.com`, `tenant.mindgarden.com` 등 테넌트 전용 서브도메인
+  - 배포: `app.m-garden.co.kr`, `tenant.m-garden.co.kr` 등 테넌트 전용 서브도메인
 - **내부(대내) 운영 포털**
   - 대상: MindGarden HQ 운영팀, SRE/플랫폼 엔지니어, 보안/CS
   - 목적: 테넌트 온보딩 승인, 요금제/애드온/플래그 관리, 관제, 감사, 배포 제어
-  - 접근: 별도 서브도메인(예: `ops.mindgarden.internal`), VPN/VPC 또는 IP 제한, HQ 전용 RBAC
+  - 접근: 별도 서브도메인(예: `ops.e-trinity.co.kr`), VPN/VPC 또는 IP 제한, HQ 전용 RBAC
   - 배포: 독립 CI/CD 파이프라인, 빠른 기능 추가 가능(Feature Flag 기반 실험)
 - **내부 운영 모바일 앱 (필수 메뉴)**
   - 대상: 현장 관리자, 온콜 엔지니어, HQ 임원 등 모바일로 필수 지표를 확인해야 하는 사용자

@@ -6,8 +6,8 @@ import "../styles/globals.css";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 
 export const metadata: Metadata = {
-  title: "MindGarden Ops Portal",
-  description: "MindGarden internal operations console",
+  title: "Trinity Ops Portal",
+  description: "Trinity internal operations console",
   robots: {
     index: false,
     follow: false
@@ -29,7 +29,7 @@ export default function RootLayout({
         <div className="layout">
           <header className="layout__header">
             <div className="layout__brand">
-              <Link href="/dashboard">MindGarden Ops Portal</Link>
+              <Link href="/dashboard">Trinity Ops Portal</Link>
             </div>
             <nav className="layout__nav">
               <Link href="/dashboard">대시보드</Link>

@@ -8,8 +8,8 @@
 | 번호 | 항목 | 작업 내용 | 담당 | 일정 | 비고 |
 | --- | --- | --- | --- | --- | --- |
 | ENV-01 | 레포지토리/CI | `frontend-ops`, `backend-ops` 레포 생성, GitHub Actions + ArgoCD 파이프라인 초기화 |  |  | 파이프라인 템플릿: build → test → docker → deploy |
-| ENV-02 | 환경 분리/도메인 | Dev/Staging/Prod Namespace 정의, `ops.m-garden.co.kr` DNS/Terraform, VPN/IP ACL 설정 |  |  | Terraform 스크립트 및 VPN 정책 문서 필요 |
-| ENV-03 | 인증/권한 | Identity Hub 운영 클라이언트 등록, RBAC/ABAC 스코프 문서화, MFA/기기 등록 정책 반영 |  |  | OIDC Redirect URI: `https://ops.m-garden.co.kr/auth/callback` |
+| ENV-02 | 환경 분리/도메인 | Dev/Staging/Prod Namespace 정의, `ops.e-trinity.co.kr` DNS/Terraform, VPN/IP ACL 설정 |  |  | Terraform 스크립트 및 VPN 정책 문서 필요 |
+| ENV-03 | 인증/권한 | Identity Hub 운영 클라이언트 등록, RBAC/ABAC 스코프 문서화, MFA/기기 등록 정책 반영 |  |  | OIDC Redirect URI: `https://ops.e-trinity.co.kr/auth/callback` |
 | ENV-04 | 데이터 소스 | 중앙 DB/Redis/ELK 접근 권한 승인, `internal-api` Gateway 엔드포인트 설계 |  |  | DB 계정/Secret, API Gateway Rate Limit 설정 포함 |
 | ENV-05 | Design System | Admin 컴포넌트/토큰 목록 정의, Storybook 확장, 접근성 가이드 업데이트 |  |  | `design-system` 브랜치 파생, 토큰 명세 공유 |
 | ENV-06 | Feature Flag | `feature_flag` 테이블 스키마 확정, 관리 도구(LaunchDarkly/자체) 도입 결정 |  |  | 초기 플래그: `ops-dashboard`, `ops-approval`, `ops-automation` |

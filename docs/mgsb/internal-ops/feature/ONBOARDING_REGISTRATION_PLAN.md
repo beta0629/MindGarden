@@ -39,7 +39,7 @@
 ---
 
 ## 4. 사용자 시나리오 (확장)
-1. 입점사 담당자가 MindGarden 외부 URL (예: `https://apply.m-garden.co.kr/onboarding`)에 접속한다.
+1. 입점사 담당자가 MindGarden 외부 URL (예: `https://apply.e-trinity.co.kr/onboarding`)에 접속한다.
 2. 회사/지점 기본 정보, 담당자 정보, 필요 체크리스트를 입력한다.
 3. **요금제와 애드온을 선택하고, 결제 수단(카드)을 등록한다.**  
    - 첫 결제(선결제 또는 승인 보류)는 정책에 따라 진행

@@ -26,7 +26,7 @@
    - `mg-ops-dev`, `mg-ops-staging`, `mg-ops-prod`
    - RBAC: Dev는 개발자 접근, Staging/Prod는 운영팀 승인 필요
 2. **DNS/Terraform**
-   - Route53/Cloud DNS에 `ops.m-garden.co.kr` 생성, ACM/TLS 인증서 발급
+   - Route53/Cloud DNS에 `ops.e-trinity.co.kr` 생성, ACM/TLS 인증서 발급
    - Terraform 모듈: `infrastructure/dns/ops-domain.tf`
 3. **접근 제어**
    - VPN 게이트웨이 설정(혹은 Zero Trust Proxy), IP 화이트리스트 정의
@@ -40,7 +40,7 @@
 ## 3. Authentication & Authorization (ENV-03)
 1. **Identity Hub 설정**
    - 새 OIDC 클라이언트: `mindgarden-ops-portal`
-   - Redirect URI: `https://ops.m-garden.co.kr/auth/callback`
+   - Redirect URI: `https://ops.e-trinity.co.kr/auth/callback`
    - 스코프: `openid profile email tenant.admin` 등 운영 전용
 2. **RBAC/ABAC 정책**
    - 역할: `HQ_MASTER`, `HQ_ADMIN`, `SRE`, `SECURITY`, `CS`

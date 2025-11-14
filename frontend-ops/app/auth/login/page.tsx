@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export const metadata: Metadata = {
-  title: "MindGarden Ops Portal – 로그인"
+  title: "Trinity Ops Portal – 로그인"
 };
 
 interface LoginPageProps {

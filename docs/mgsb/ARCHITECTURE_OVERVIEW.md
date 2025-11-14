@@ -68,7 +68,7 @@
 | --- | --- | --- | --- |
 | 마케팅/랜딩 | 브랜드 소개, 세일즈 랜딩, 문서 링크 | `https://m-garden.co.kr` | 기존 도메인 유지, SEO/콘텐츠 중심 |
 | 테넌트/소비자 웹앱 | 실제 서비스 이용(예약, 정산, 대시보드) | `https://app.m-garden.co.kr` (테넌트 공용) 또는 `https://{tenant}.m-garden.co.kr` (선택적 커스텀) | 커스텀 도메인은 `CNAME`/TLS 자동 발급(Let's Encrypt) 지원 |
-| 운영 포털(내부) | HQ 운영, 승인/관제/배포 제어 | `https://ops.m-garden.co.kr` | VPN 또는 IP ACL + MFA 필수, 내부 DNS 등록 |
+| 운영 포털(내부) | HQ 운영, 승인/관제/배포 제어 | `https://ops.e-trinity.co.kr` | VPN 또는 IP ACL + MFA 필수, 내부 DNS 등록 |
 | API Gateway | 외부 공개 API/웹훅 | `https://api.m-garden.co.kr` | Rate Limiting, WAF, 인증(SaaS 토큰) 적용 |
 | 모바일 백엔드 | 앱 전용 엔드포인트(버전 관리) | `https://mobile-api.m-garden.co.kr` | 앱 스토어 심사 대비 안정적 버전 유지 |
 | 스테이징/Dev | QA/개발 테스트 | `https://staging.m-garden.co.kr`, `https://dev.m-garden.co.kr` | 테스트 데이터, 샌드박스 연동, VPN 접근 |

@@ -1,6 +1,6 @@
-# MindGarden Ops Portal – Frontend
+# Trinity Ops Portal – Frontend
 
-내부 운영 포털 프런트엔드. Next.js(App Router) + TypeScript 기반으로 구성되며, MindGarden Design System v2.0 Admin 확장을 사용합니다.
+Trinity 내부 운영 포털 프런트엔드. Next.js(App Router) + TypeScript 기반으로 구성되며, MindGarden Design System v2.0 Admin 확장을 사용합니다.
 
 ## 요구 사항
 - Node.js 18 LTS 이상

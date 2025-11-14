@@ -21,14 +21,14 @@ MG_DB_URL=jdbc:postgresql://<prod-host>:5432/mindgarden_ops_db
 MG_DB_USERNAME=<user>
 MG_DB_PASSWORD=<password>
 MG_JWT_SECRET=<32자리 이상 키>
-MG_JWT_ISSUER=https://identity.m-garden.co.kr/realms/mindgarden
+MG_JWT_ISSUER=https://identity.e-trinity.co.kr/realms/trinity-ops
 ```
 
 ### 3.2 systemd 서비스 예시
 `/etc/systemd/system/mindgarden-ops.service`
 ```
 [Unit]
-Description=MindGarden Ops Portal Backend
+Description=Trinity Ops Portal Backend
 After=network.target
 
 [Service]
@@ -51,7 +51,7 @@ WantedBy=multi-user.target
 ## 4. Frontend (Next.js)
 ### 4.1 환경 변수 (`.env.production`)
 ```
-NEXT_PUBLIC_OPS_API_BASE_URL=https://ops-api.m-garden.co.kr/api/v1
+NEXT_PUBLIC_OPS_API_BASE_URL=https://ops-api.e-trinity.co.kr/api/v1
 NEXT_PUBLIC_OPS_API_TOKEN=<서버 간 통신용 토큰>
 NEXT_PUBLIC_OPS_ACTOR_ID=ops-service-account
 NEXT_PUBLIC_OPS_ACTOR_ROLE=HQ_ADMIN

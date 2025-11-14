@@ -1,6 +1,6 @@
-# MindGarden Ops Portal – Backend
+# Trinity Ops Portal – Backend
 
-Spring Boot 기반 내부 운영 포털 백엔드. JWT 기반 인증과 RBAC/ABAC를 적용할 예정이며, `internal-api` 게이트웨이를 통해서만 접근 가능합니다.
+Spring Boot 기반 Trinity 내부 운영 포털 백엔드. JWT 기반 인증과 RBAC/ABAC를 적용할 예정이며, `internal-api` 게이트웨이를 통해서만 접근 가능합니다.
 
 ## 요구 사항
 - JDK 17 (Temurin 권장)

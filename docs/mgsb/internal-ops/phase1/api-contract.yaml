@@ -1,11 +1,11 @@
 openapi: 3.0.3
 info:
-  title: MindGarden Ops Portal API
+  title: Trinity Ops Portal API
   version: 0.1.0
 servers:
-  - url: https://ops-api.m-garden.co.kr/api/v1
+  - url: https://ops-api.e-trinity.co.kr/api/v1
     description: Production
-  - url: https://ops-api.staging.m-garden.co.kr/api/v1
+  - url: https://ops-api.staging.e-trinity.co.kr/api/v1
     description: Staging
 paths:
   /onboarding/requests/pending:

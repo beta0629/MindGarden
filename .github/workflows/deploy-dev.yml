@@ -127,9 +127,16 @@ jobs:
         port: 22
         timeout: 120s
         source: "target/consultation-management-system-1.0.0.jar"
-        target: "/var/www/mindgarden-dev/"
-        strip_components: 1
+        target: "/var/www/mindgarden-dev/app.jar"
         overwrite: true
+        
+    - name: 📤 프론트엔드 파일 압축 (개발 서버)
+      run: |
+        echo "📦 프론트엔드 파일 압축 중..."
+        cd frontend/build
+        tar -czf ../../frontend-build.tar.gz .
+        cd ../..
+        ls -lh frontend-build.tar.gz
         
     - name: 📤 프론트엔드 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
@@ -139,10 +146,26 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 120s
-        source: "frontend/build/*"
-        target: "/var/www/html-dev/"
-        strip_components: 2
+        source: "frontend-build.tar.gz"
+        target: "/tmp/frontend-build.tar.gz"
         overwrite: true
+        
+    - name: 📤 프론트엔드 파일 압축 해제 (개발 서버)
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        script: |
+          echo "📦 프론트엔드 파일 압축 해제 중..."
+          sudo rm -rf /var/www/html-dev/*
+          sudo tar -xzf /tmp/frontend-build.tar.gz -C /var/www/html-dev/
+          sudo chown -R www-data:www-data /var/www/html-dev
+          sudo chmod -R 755 /var/www/html-dev
+          rm -f /tmp/frontend-build.tar.gz
+          echo "✅ 프론트엔드 파일 업로드 완료"
         
     - name: 📤 Nginx 설정 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7

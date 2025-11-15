@@ -172,14 +172,19 @@ jobs:
         script: |
           cd /var/www/mindgarden-dev
           
-          # JAR 파일 확인 및 권한 설정
-          if [ -f app.jar ]; then
-            chmod +x app.jar
+          # JAR 파일명 변경 (운영과 동일)
+          if [ -f consultation-management-system-1.0.0.jar ]; then
+            mv consultation-management-system-1.0.0.jar app.jar
+            echo "✅ JAR 파일명 변경 완료: app.jar"
+          elif [ -f app.jar ]; then
             echo "✅ JAR 파일 확인 완료: app.jar"
           else
-            echo "❌ JAR 파일이 없습니다: app.jar"
+            echo "❌ JAR 파일이 없습니다"
             exit 1
           fi
+          
+          # 권한 설정
+          chmod +x app.jar
           
           # systemd 서비스 파일 설정 (없으면)
           if [ ! -f /etc/systemd/system/mindgarden-dev.service ]; then

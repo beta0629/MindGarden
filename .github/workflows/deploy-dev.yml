@@ -40,6 +40,18 @@ jobs:
     - name: 🏗️ 백엔드 빌드
       run: mvn clean package -DskipTests
       
+    - name: 🔍 백엔드 빌드 결과 확인
+      run: |
+        echo "🔍 백엔드 빌드 결과 확인..."
+        if [ -f target/consultation-management-system-1.0.0.jar ]; then
+          ls -lh target/consultation-management-system-1.0.0.jar
+          echo "✅ JAR 파일 생성됨"
+        else
+          echo "❌ JAR 파일 없음!"
+          ls -la target/ 2>/dev/null || echo "target 디렉토리 없음"
+          exit 1
+        fi
+        
     - name: 📦 프론트엔드 의존성 설치
       run: |
         cd frontend
@@ -49,6 +61,22 @@ jobs:
       run: |
         cd frontend
         npm run build:ci
+        
+    - name: 🔍 프론트엔드 빌드 결과 확인
+      run: |
+        echo "🔍 프론트엔드 빌드 결과 확인..."
+        if [ -d frontend/build ]; then
+          FILE_COUNT=$(find frontend/build -type f 2>/dev/null | wc -l)
+          if [ "$FILE_COUNT" -gt 0 ]; then
+            echo "✅ frontend/build 디렉토리 생성됨: $FILE_COUNT 개 파일"
+          else
+            echo "❌ frontend/build 디렉토리가 비어있음!"
+            exit 1
+          fi
+        else
+          echo "❌ frontend/build 디렉토리 없음!"
+          exit 1
+        fi
         
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@v1.1.0

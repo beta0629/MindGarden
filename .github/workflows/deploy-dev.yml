@@ -2,9 +2,9 @@ name: 🧪 MindGarden 개발 서버 배포
 
 on:
   push:
-    branches: [ main, develop ]
-    # main과 develop 브랜치 모두 개발 서버에 배포
-    # 운영 배포는 main 브랜치에서만 별도로 실행됨
+    branches: [ develop ]
+    # develop 브랜치에 push하면 자동으로 개발 서버에 배포
+    # main 브랜치는 운영 배포용이므로 개발 배포에서 제외
   workflow_dispatch:
     # 수동 실행 가능
 

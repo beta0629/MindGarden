@@ -1,10 +1,11 @@
 name: 🚀 MindGarden 운영 배포
 
 on:
-  push:
-    branches: [ main ]
-    # develop 브랜치에서는 실행되지 않음 (개발 서버 배포만 실행)
+  # 운영 배포는 수동 실행만 가능 (자동 배포 비활성화)
+  # push:
+  #   branches: [ main ]
   workflow_dispatch:
+    # 수동 실행만 가능 - 실수로 운영 배포되는 것 방지
 
 jobs:
   deploy:

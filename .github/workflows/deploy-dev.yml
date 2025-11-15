@@ -88,54 +88,6 @@ jobs:
             tar -czf frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz frontend/
           fi
           
-    - name: 🔍 빌드 파일 확인 (실패 시 즉시 중단)
-      run: |
-        echo "📦 빌드 파일 확인 중..."
-        pwd
-        echo ""
-        echo "=== 백엔드 JAR 파일 ==="
-        if [ ! -f target/consultation-management-system-1.0.0.jar ]; then
-          echo "❌ JAR 파일 없음!"
-          echo "target 디렉토리 내용:"
-          ls -la target/ 2>/dev/null || echo "target 디렉토리 자체가 없음"
-          echo ""
-          echo "전체 디렉토리 구조:"
-          find . -name "*.jar" -type f 2>/dev/null | head -10
-          exit 1
-        fi
-        ls -lh target/consultation-management-system-1.0.0.jar
-        echo "✅ JAR 파일 존재: $(du -h target/consultation-management-system-1.0.0.jar | cut -f1)"
-        echo ""
-        echo "=== 프론트엔드 빌드 디렉토리 ==="
-        if [ ! -d frontend/build ]; then
-          echo "❌ frontend/build 디렉토리 없음!"
-          echo "frontend 디렉토리 내용:"
-          ls -la frontend/ 2>/dev/null || echo "frontend 디렉토리 자체가 없음"
-          exit 1
-        fi
-        FILE_COUNT=$(find frontend/build -type f 2>/dev/null | wc -l)
-        if [ "$FILE_COUNT" -eq 0 ]; then
-          echo "❌ frontend/build 디렉토리가 비어있음!"
-          exit 1
-        fi
-        echo "✅ frontend/build 디렉토리 존재: $FILE_COUNT 개 파일"
-        find frontend/build -type f | head -5
-        
-    - name: 🔍 SCP 전 최종 파일 확인
-      run: |
-        echo "🔍 SCP 전 최종 파일 확인..."
-        pwd
-        echo ""
-        echo "=== 백엔드 파일 ==="
-        ls -la target/consultation-management-system-1.0.0.jar
-        echo "절대 경로: $(pwd)/target/consultation-management-system-1.0.0.jar"
-        echo ""
-        echo "=== 프론트엔드 파일 ==="
-        ls -ld frontend/build
-        echo "파일 개수: $(find frontend/build -type f | wc -l)"
-        echo "샘플 파일:"
-        find frontend/build -type f | head -3
-        
     - name: 📤 백엔드 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:

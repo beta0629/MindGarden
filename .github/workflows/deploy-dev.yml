@@ -178,6 +178,9 @@ jobs:
             echo "📝 systemd 서비스 파일 설정 중..."
             if [ -f /tmp/mindgarden-dev.service ]; then
               sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+              sudo systemctl daemon-reload
+              sudo systemctl enable mindgarden-dev.service
+              echo "✅ systemd 서비스 파일 설정 완료"
             elif [ -f /tmp/config/systemd/mindgarden-dev.service ]; then
               sudo cp /tmp/config/systemd/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
               sudo systemctl daemon-reload

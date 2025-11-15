@@ -50,31 +50,6 @@ jobs:
         cd frontend
         npm run build:ci
         
-    - name: 🔍 빌드 파일 확인
-      run: |
-        echo "📦 백엔드 빌드 파일 확인:"
-        if [ -f target/consultation-management-system-1.0.0.jar ]; then
-          ls -lh target/consultation-management-system-1.0.0.jar
-          echo "✅ JAR 파일 존재 확인"
-        else
-          echo "❌ JAR 파일 없음: target/consultation-management-system-1.0.0.jar"
-          echo "📋 target 디렉토리 내용:"
-          ls -la target/ || echo "target 디렉토리 없음"
-          exit 1
-        fi
-        echo ""
-        echo "📦 프론트엔드 빌드 파일 확인:"
-        if [ -d frontend/build ]; then
-          ls -lh frontend/build/ | head -20
-          echo ""
-          echo "📦 프론트엔드 빌드 파일 개수:"
-          find frontend/build -type f | wc -l
-          echo "✅ 프론트엔드 빌드 디렉토리 존재 확인"
-        else
-          echo "❌ 빌드 디렉토리 없음: frontend/build"
-          exit 1
-        fi
-        
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@v1.1.0
       with:
@@ -84,9 +59,8 @@ jobs:
         port: 22
         timeout: 30s
         script: |
-          echo "✅ 개발 서버 SSH 연결 테스트 성공: $(date)"
+          echo "SSH 연결 테스트 성공: $(date)"
           echo "서버 정보: $(uname -a)"
-          echo "현재 디렉토리: $(pwd)"
           
     - name: 🚀 개발 서버 배포 준비
       uses: appleboy/ssh-action@v1.1.0
@@ -98,41 +72,21 @@ jobs:
         timeout: 120s
         command_timeout: 30m
         script: |
-          # 배포 디렉토리 생성 (없으면 생성)
-          mkdir -p /var/www/mindgarden-dev
+          # 배포 디렉토리로 이동
           cd /var/www/mindgarden-dev
           
-          # 서비스 중지 (있으면)
-          if systemctl is-active --quiet mindgarden-dev.service 2>/dev/null; then
-            echo "🛑 기존 서비스 중지 중..."
-            sudo systemctl stop mindgarden-dev.service || true
-          fi
+          # 서비스 중지
+          sudo systemctl stop mindgarden-dev.service || true
           
           # 백업 생성
           if [ -f app.jar ]; then
-            BACKUP_DIR="/var/www/mindgarden-dev/backups"
-            mkdir -p $BACKUP_DIR
-            cp app.jar $BACKUP_DIR/app.jar.backup.$(date +%Y%m%d_%H%M%S)
-            echo "✅ 백엔드 백업 완료"
+            cp app.jar app.jar.backup.$(date +%Y%m%d_%H%M%S)
           fi
           
+          # 프론트엔드 백업
           if [ -d frontend ]; then
-            BACKUP_DIR="/var/www/mindgarden-dev/backups"
-            mkdir -p $BACKUP_DIR
-            tar -czf $BACKUP_DIR/frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz frontend/ 2>/dev/null || true
-            echo "✅ 프론트엔드 백업 완료"
+            tar -czf frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz frontend/
           fi
-          
-    - name: 🔍 SCP 전 파일 재확인
-      run: |
-        echo "🔍 SCP 전 파일 재확인:"
-        pwd
-        ls -la target/consultation-management-system-1.0.0.jar || echo "❌ JAR 파일 없음"
-        ls -la frontend/build/ | head -5 || echo "❌ 빌드 디렉토리 없음"
-        echo ""
-        echo "📋 전체 파일 경로 확인:"
-        find . -name "consultation-management-system-1.0.0.jar" 2>/dev/null || echo "❌ JAR 파일을 찾을 수 없음"
-        find . -path "*/frontend/build/*" -type f | head -5 || echo "❌ 빌드 파일을 찾을 수 없음"
           
     - name: 📤 백엔드 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7

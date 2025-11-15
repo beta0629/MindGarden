@@ -114,7 +114,11 @@ public class OAuth2Controller {
             }
             
             // 모든 설정이 없으면 기본값 (개발환경)
-            String defaultUrl = "http://localhost:3000";
+            // 환경 변수에서 가져오거나 기본값 사용
+            String defaultUrl = System.getenv("FRONTEND_BASE_URL");
+            if (defaultUrl == null || defaultUrl.trim().isEmpty()) {
+                defaultUrl = "http://localhost:3000";
+            }
             log.warn("프론트엔드 URL이 설정되지 않음, 기본값 사용: {}", defaultUrl);
             return defaultUrl;
         }

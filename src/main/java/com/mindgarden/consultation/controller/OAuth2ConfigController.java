@@ -60,7 +60,7 @@ public class OAuth2ConfigController {
         // 디버깅: 실제 필드 값 확인
         log.info("DEBUG - kakaoRedirectUri 필드 값: '{}'", kakaoRedirectUri);
         log.info("DEBUG - kakaoRedirectUri 길이: {}", kakaoRedirectUri.length());
-        log.info("DEBUG - kakaoRedirectUri equals check: {}", kakaoRedirectUri.equals("http://localhost:8080/api/auth/kakao/callback"));
+        // 디버깅 로그는 제거 (하드코딩된 URL 비교 제거)
         
         // 동적 baseUrl을 사용해서 리다이렉트 URI 생성
         String dynamicKakaoRedirectUri = baseUrl + "/api/auth/kakao/callback";

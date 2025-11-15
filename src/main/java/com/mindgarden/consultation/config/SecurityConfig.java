@@ -1,5 +1,6 @@
 package com.mindgarden.consultation.config;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
@@ -151,15 +152,33 @@ public class SecurityConfig {
                 configuration.setAllowedOrigins(List.of("http://m-garden.co.kr", "https://m-garden.co.kr"));
             }
         } else {
-            // 개발 환경: localhost 허용
-            configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://127.0.0.1:3000",
-                "http://localhost:3001",
-                "http://127.0.0.1:3001",
-                "http://localhost:8080",
-                "http://127.0.0.1:8080"
-            ));
+            // 개발 환경: 환경 변수에서 허용할 Origin 가져오기
+            String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+            if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
+                List<String> origins = Arrays.asList(allowedOrigins.split(","));
+                configuration.setAllowedOrigins(origins);
+                log.info("CORS 허용 Origin (환경 변수): {}", origins);
+            } else {
+                // 환경 변수가 없으면 기본값 (로컬 개발용)
+                String frontendUrl = System.getenv("FRONTEND_BASE_URL");
+                String backendUrl = System.getenv("SERVER_BASE_URL");
+                List<String> defaultOrigins = new ArrayList<>();
+                
+                if (frontendUrl != null && !frontendUrl.trim().isEmpty()) {
+                    defaultOrigins.add(frontendUrl);
+                } else {
+                    defaultOrigins.add("http://localhost:3000");
+                }
+                
+                if (backendUrl != null && !backendUrl.trim().isEmpty()) {
+                    defaultOrigins.add(backendUrl);
+                } else {
+                    defaultOrigins.add("http://localhost:8080");
+                }
+                
+                configuration.setAllowedOrigins(defaultOrigins);
+                log.info("CORS 허용 Origin (기본값): {}", defaultOrigins);
+            }
         }
         
         // 허용할 HTTP 메서드 설정

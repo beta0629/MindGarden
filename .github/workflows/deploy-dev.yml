@@ -50,6 +50,17 @@ jobs:
         cd frontend
         npm run build:ci
         
+    - name: 🔍 빌드 파일 확인
+      run: |
+        echo "📦 백엔드 빌드 파일 확인:"
+        ls -lh target/consultation-management-system-*.jar || echo "❌ JAR 파일 없음"
+        echo ""
+        echo "📦 프론트엔드 빌드 파일 확인:"
+        ls -lh frontend/build/ | head -20 || echo "❌ 빌드 디렉토리 없음"
+        echo ""
+        echo "📦 프론트엔드 빌드 파일 개수:"
+        find frontend/build -type f | wc -l || echo "0"
+        
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@v1.1.0
       with:
@@ -106,7 +117,7 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 120s
-        source: "target/consultation-management-system-1.0.0.jar"
+        source: "target/consultation-management-system-*.jar"
         target: "/var/www/mindgarden-dev/"
         strip_components: 1
         overwrite: true

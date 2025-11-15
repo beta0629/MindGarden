@@ -86,20 +86,27 @@ sudo certbot --nginx -d dev.m-garden.co.kr
 
 ---
 
-### 방법 2: Webroot 방식 사용
+### 방법 2: Webroot 방식 사용 (권장)
 
-Nginx 플러그인이 작동하지 않는 경우:
+Nginx 플러그인이 작동하지 않는 경우, Webroot 방식을 사용하세요:
 
 ```bash
-# 1. 디렉토리 생성
+# 1. 디렉토리 생성 및 권한 설정
 sudo mkdir -p /var/www/html-dev/.well-known/acme-challenge
 sudo chown -R www-data:www-data /var/www/html-dev
+sudo chmod -R 755 /var/www/html-dev
 
-# 2. Webroot 방식으로 인증서 발급
+# 2. Webroot 방식으로 인증서 발급 (Nginx 플러그인 사용 안 함)
 sudo certbot certonly --webroot -w /var/www/html-dev -d dev.m-garden.co.kr
 
-# 3. Nginx 설정에 수동으로 SSL 설정 추가
+# 3. 인증서 발급 확인
+sudo certbot certificates
+
+# 4. 인증서 발급 후 Nginx 설정에 SSL 추가
+sudo certbot --nginx -d dev.m-garden.co.kr
 ```
+
+**참고**: Webroot 방식은 Nginx를 중지할 필요가 없고, HTTP만 사용하므로 더 안전합니다.
 
 ---
 

@@ -88,46 +88,38 @@ jobs:
             tar -czf frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz frontend/
           fi
           
-    - name: 🔍 빌드 파일 확인 및 SCP 테스트
+    - name: 🔍 빌드 파일 확인 (실패 시 즉시 중단)
       run: |
         echo "📦 빌드 파일 확인 중..."
+        pwd
         echo ""
         echo "=== 백엔드 JAR 파일 ==="
-        if [ -f target/consultation-management-system-1.0.0.jar ]; then
-          ls -lh target/consultation-management-system-1.0.0.jar
-          echo "✅ JAR 파일 존재"
-          echo "파일 크기: $(du -h target/consultation-management-system-1.0.0.jar | cut -f1)"
-          echo "파일 타입: $(file target/consultation-management-system-1.0.0.jar)"
-        else
-          echo "❌ JAR 파일 없음"
+        if [ ! -f target/consultation-management-system-1.0.0.jar ]; then
+          echo "❌ JAR 파일 없음!"
           echo "target 디렉토리 내용:"
-          ls -la target/ || echo "target 디렉토리 자체가 없음"
+          ls -la target/ 2>/dev/null || echo "target 디렉토리 자체가 없음"
+          echo ""
+          echo "전체 디렉토리 구조:"
+          find . -name "*.jar" -type f 2>/dev/null | head -10
           exit 1
         fi
+        ls -lh target/consultation-management-system-1.0.0.jar
+        echo "✅ JAR 파일 존재: $(du -h target/consultation-management-system-1.0.0.jar | cut -f1)"
         echo ""
         echo "=== 프론트엔드 빌드 디렉토리 ==="
-        if [ -d frontend/build ]; then
-          ls -ld frontend/build
-          echo "✅ frontend/build 디렉토리 존재"
-          FILE_COUNT=$(find frontend/build -type f | wc -l)
-          echo "파일 개수: $FILE_COUNT"
-          if [ "$FILE_COUNT" -eq 0 ]; then
-            echo "❌ frontend/build 디렉토리가 비어있음!"
-            exit 1
-          fi
-          echo "샘플 파일 목록:"
-          find frontend/build -type f | head -5
-        else
-          echo "❌ frontend/build 디렉토리 없음"
+        if [ ! -d frontend/build ]; then
+          echo "❌ frontend/build 디렉토리 없음!"
+          echo "frontend 디렉토리 내용:"
+          ls -la frontend/ 2>/dev/null || echo "frontend 디렉토리 자체가 없음"
           exit 1
         fi
-        echo ""
-        echo "=== SCP 테스트 (tar 생성) ==="
-        echo "백엔드 파일 tar 테스트:"
-        tar -czf /tmp/test-backend.tar.gz target/consultation-management-system-1.0.0.jar 2>&1 && echo "✅ 백엔드 tar 생성 성공" || echo "❌ 백엔드 tar 생성 실패"
-        echo "프론트엔드 파일 tar 테스트:"
-        tar -czf /tmp/test-frontend.tar.gz -C frontend/build . 2>&1 && echo "✅ 프론트엔드 tar 생성 성공" || echo "❌ 프론트엔드 tar 생성 실패"
-        ls -lh /tmp/test-*.tar.gz 2>/dev/null || echo "tar 파일 없음"
+        FILE_COUNT=$(find frontend/build -type f 2>/dev/null | wc -l)
+        if [ "$FILE_COUNT" -eq 0 ]; then
+          echo "❌ frontend/build 디렉토리가 비어있음!"
+          exit 1
+        fi
+        echo "✅ frontend/build 디렉토리 존재: $FILE_COUNT 개 파일"
+        find frontend/build -type f | head -5
         
     - name: 📤 백엔드 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7

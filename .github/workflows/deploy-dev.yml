@@ -196,25 +196,12 @@ jobs:
             fi
           fi
           
-          # 환경 변수 파일 생성/업데이트 (없으면)
+          # 환경 변수 파일 확인 (없으면 경고만)
           if [ ! -f /etc/mindgarden/dev.env ]; then
-            echo "📝 환경 변수 파일 생성 중..."
-            sudo mkdir -p /etc/mindgarden
-            sudo tee /etc/mindgarden/dev.env > /dev/null << 'ENVEOF'
-# 개발 서버 환경 변수
-DB_HOST=beta0629.cafe24.com
-DB_PORT=3306
-DB_NAME=mind_garden
-DB_USERNAME=mindgarden_dev
-DB_PASSWORD=MindGardenDev2025!@#
-JWT_SECRET=dev-jwt-secret-key-change-me
-PERSONAL_DATA_ENCRYPTION_KEY=dev-encryption-key-32-chars-long
-PERSONAL_DATA_ENCRYPTION_IV=dev-iv-16-chars
-SERVER_PORT=8080
-FRONTEND_BASE_URL=http://dev.m-garden.co.kr
-ENVEOF
-            sudo chmod 600 /etc/mindgarden/dev.env
-            echo "✅ 환경 변수 파일 생성 완료"
+            echo "⚠️ 환경 변수 파일이 없습니다: /etc/mindgarden/dev.env"
+            echo "⚠️ 수동으로 생성해야 합니다"
+          else
+            echo "✅ 환경 변수 파일 존재 확인"
           fi
           
           # 서비스 재시작

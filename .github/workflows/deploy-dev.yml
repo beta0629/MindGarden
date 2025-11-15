@@ -186,12 +186,6 @@ jobs:
           # JAR 파일명 변경 (운영과 동일)
           if [ -f consultation-management-system-1.0.0.jar ]; then
             mv consultation-management-system-1.0.0.jar app.jar
-            echo "✅ JAR 파일명 변경 완료: app.jar"
-          elif [ -f app.jar ]; then
-            echo "✅ JAR 파일 확인 완료: app.jar"
-          else
-            echo "❌ JAR 파일이 없습니다"
-            exit 1
           fi
           
           # 권한 설정

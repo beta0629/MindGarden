@@ -6,6 +6,9 @@ on:
   #   branches: [ main ]
   workflow_dispatch:
     # 수동 실행만 가능 - 실수로 운영 배포되는 것 방지
+  push:
+    branches: [ test-production-deploy ]
+    # 테스트용 임시 브랜치 - 운영 배포 테스트 후 제거 필요
 
 jobs:
   deploy:

@@ -123,6 +123,17 @@ jobs:
             echo "✅ 프론트엔드 백업 완료"
           fi
           
+    - name: 🔍 SCP 전 파일 재확인
+      run: |
+        echo "🔍 SCP 전 파일 재확인:"
+        pwd
+        ls -la target/consultation-management-system-1.0.0.jar || echo "❌ JAR 파일 없음"
+        ls -la frontend/build/ | head -5 || echo "❌ 빌드 디렉토리 없음"
+        echo ""
+        echo "📋 전체 파일 경로 확인:"
+        find . -name "consultation-management-system-1.0.0.jar" 2>/dev/null || echo "❌ JAR 파일을 찾을 수 없음"
+        find . -path "*/frontend/build/*" -type f | head -5 || echo "❌ 빌드 파일을 찾을 수 없음"
+          
     - name: 📤 백엔드 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:

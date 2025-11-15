@@ -88,7 +88,7 @@ jobs:
             tar -czf frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz frontend/
           fi
           
-    - name: 🔍 빌드 파일 확인
+    - name: 🔍 빌드 파일 확인 및 SCP 테스트
       run: |
         echo "📦 빌드 파일 확인 중..."
         echo ""
@@ -96,6 +96,8 @@ jobs:
         if [ -f target/consultation-management-system-1.0.0.jar ]; then
           ls -lh target/consultation-management-system-1.0.0.jar
           echo "✅ JAR 파일 존재"
+          echo "파일 크기: $(du -h target/consultation-management-system-1.0.0.jar | cut -f1)"
+          echo "파일 타입: $(file target/consultation-management-system-1.0.0.jar)"
         else
           echo "❌ JAR 파일 없음"
           echo "target 디렉토리 내용:"
@@ -107,16 +109,25 @@ jobs:
         if [ -d frontend/build ]; then
           ls -ld frontend/build
           echo "✅ frontend/build 디렉토리 존재"
-          echo "파일 개수: $(find frontend/build -type f | wc -l)"
+          FILE_COUNT=$(find frontend/build -type f | wc -l)
+          echo "파일 개수: $FILE_COUNT"
+          if [ "$FILE_COUNT" -eq 0 ]; then
+            echo "❌ frontend/build 디렉토리가 비어있음!"
+            exit 1
+          fi
+          echo "샘플 파일 목록:"
+          find frontend/build -type f | head -5
         else
           echo "❌ frontend/build 디렉토리 없음"
           exit 1
         fi
         echo ""
-        echo "=== 설정 파일들 ==="
-        ls -lh config/nginx/dev.m-garden.co.kr.conf || echo "❌ Nginx 설정 파일 없음"
-        ls -lh src/main/resources/application-dev.yml || echo "❌ application-dev.yml 없음"
-        ls -lh config/systemd/mindgarden-dev.service || echo "❌ systemd 서비스 파일 없음"
+        echo "=== SCP 테스트 (tar 생성) ==="
+        echo "백엔드 파일 tar 테스트:"
+        tar -czf /tmp/test-backend.tar.gz target/consultation-management-system-1.0.0.jar 2>&1 && echo "✅ 백엔드 tar 생성 성공" || echo "❌ 백엔드 tar 생성 실패"
+        echo "프론트엔드 파일 tar 테스트:"
+        tar -czf /tmp/test-frontend.tar.gz -C frontend/build . 2>&1 && echo "✅ 프론트엔드 tar 생성 성공" || echo "❌ 프론트엔드 tar 생성 실패"
+        ls -lh /tmp/test-*.tar.gz 2>/dev/null || echo "tar 파일 없음"
         
     - name: 📤 백엔드 파일 업로드 (개발 서버)
       continue-on-error: true

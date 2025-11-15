@@ -107,7 +107,8 @@ jobs:
         port: 22
         timeout: 120s
         source: "target/consultation-management-system-1.0.0.jar"
-        target: "/var/www/mindgarden-dev/app.jar"
+        target: "/var/www/mindgarden-dev/"
+        strip_components: 1
         overwrite: true
         
     - name: 📤 프론트엔드 파일 업로드 (개발 서버)
@@ -118,8 +119,9 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 120s
-        source: "frontend/build"
-        target: "/var/www/html-dev"
+        source: "frontend/build/*"
+        target: "/var/www/html-dev/"
+        strip_components: 2
         overwrite: true
         
     - name: 📤 Nginx 설정 파일 업로드 (개발 서버)

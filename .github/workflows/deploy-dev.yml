@@ -91,8 +91,29 @@ jobs:
     - name: 🔍 빌드 파일 확인
       run: |
         echo "📦 빌드 파일 확인 중..."
-        ls -lh target/consultation-management-system-1.0.0.jar || echo "❌ JAR 파일 없음"
-        ls -ld frontend/build || echo "❌ frontend/build 디렉토리 없음"
+        echo ""
+        echo "=== 백엔드 JAR 파일 ==="
+        if [ -f target/consultation-management-system-1.0.0.jar ]; then
+          ls -lh target/consultation-management-system-1.0.0.jar
+          echo "✅ JAR 파일 존재"
+        else
+          echo "❌ JAR 파일 없음"
+          echo "target 디렉토리 내용:"
+          ls -la target/ || echo "target 디렉토리 자체가 없음"
+          exit 1
+        fi
+        echo ""
+        echo "=== 프론트엔드 빌드 디렉토리 ==="
+        if [ -d frontend/build ]; then
+          ls -ld frontend/build
+          echo "✅ frontend/build 디렉토리 존재"
+          echo "파일 개수: $(find frontend/build -type f | wc -l)"
+        else
+          echo "❌ frontend/build 디렉토리 없음"
+          exit 1
+        fi
+        echo ""
+        echo "=== 설정 파일들 ==="
         ls -lh config/nginx/dev.m-garden.co.kr.conf || echo "❌ Nginx 설정 파일 없음"
         ls -lh src/main/resources/application-dev.yml || echo "❌ application-dev.yml 없음"
         ls -lh config/systemd/mindgarden-dev.service || echo "❌ systemd 서비스 파일 없음"

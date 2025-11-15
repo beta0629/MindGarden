@@ -123,7 +123,8 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/nginx/dev.m-garden.co.kr.conf"
-        target: "/tmp/dev.m-garden.co.kr.conf"
+        target: "/tmp/"
+        strip_components: 1
         overwrite: true
         
     - name: 📤 개발 서버 설정 파일 업로드
@@ -135,7 +136,8 @@ jobs:
         port: 22
         timeout: 120s
         source: "src/main/resources/application-dev.yml"
-        target: "/var/www/mindgarden-dev/application-dev.yml"
+        target: "/var/www/mindgarden-dev/"
+        strip_components: 2
         overwrite: true
         
     - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
@@ -147,7 +149,8 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/systemd/mindgarden-dev.service"
-        target: "/tmp/mindgarden-dev.service"
+        target: "/tmp/"
+        strip_components: 1
         overwrite: true
         
     - name: 🔄 개발 서버 서비스 재시작
@@ -175,6 +178,8 @@ jobs:
             echo "📝 systemd 서비스 파일 설정 중..."
             if [ -f /tmp/mindgarden-dev.service ]; then
               sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+            elif [ -f /tmp/config/systemd/mindgarden-dev.service ]; then
+              sudo cp /tmp/config/systemd/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
               sudo systemctl daemon-reload
               sudo systemctl enable mindgarden-dev.service
               echo "✅ systemd 서비스 파일 설정 완료"
@@ -217,6 +222,9 @@ jobs:
           if [ -f /tmp/dev.m-garden.co.kr.conf ]; then
             echo "🌐 Nginx 설정 업데이트 중..."
             sudo cp /tmp/dev.m-garden.co.kr.conf /etc/nginx/sites-available/dev.m-garden.co.kr.conf
+          elif [ -f /tmp/config/nginx/dev.m-garden.co.kr.conf ]; then
+            echo "🌐 Nginx 설정 업데이트 중 (경로 수정)..."
+            sudo cp /tmp/config/nginx/dev.m-garden.co.kr.conf /etc/nginx/sites-available/dev.m-garden.co.kr.conf
             sudo ln -sf /etc/nginx/sites-available/dev.m-garden.co.kr.conf /etc/nginx/sites-enabled/
             
             # 프론트엔드 디렉토리 권한 설정

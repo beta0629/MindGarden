@@ -53,13 +53,27 @@ jobs:
     - name: 🔍 빌드 파일 확인
       run: |
         echo "📦 백엔드 빌드 파일 확인:"
-        ls -lh target/consultation-management-system-*.jar || echo "❌ JAR 파일 없음"
+        if [ -f target/consultation-management-system-1.0.0.jar ]; then
+          ls -lh target/consultation-management-system-1.0.0.jar
+          echo "✅ JAR 파일 존재 확인"
+        else
+          echo "❌ JAR 파일 없음: target/consultation-management-system-1.0.0.jar"
+          echo "📋 target 디렉토리 내용:"
+          ls -la target/ || echo "target 디렉토리 없음"
+          exit 1
+        fi
         echo ""
         echo "📦 프론트엔드 빌드 파일 확인:"
-        ls -lh frontend/build/ | head -20 || echo "❌ 빌드 디렉토리 없음"
-        echo ""
-        echo "📦 프론트엔드 빌드 파일 개수:"
-        find frontend/build -type f | wc -l || echo "0"
+        if [ -d frontend/build ]; then
+          ls -lh frontend/build/ | head -20
+          echo ""
+          echo "📦 프론트엔드 빌드 파일 개수:"
+          find frontend/build -type f | wc -l
+          echo "✅ 프론트엔드 빌드 디렉토리 존재 확인"
+        else
+          echo "❌ 빌드 디렉토리 없음: frontend/build"
+          exit 1
+        fi
         
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@v1.1.0

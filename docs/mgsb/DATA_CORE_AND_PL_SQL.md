@@ -2,7 +2,7 @@
 
 ## 1. 데이터 도메인 개요 (중앙화 원칙)
 
-- **핵심 엔터티:** 테넌트, 지점, 사용자(직원/소비자), 인증/계정, 상품/서비스, 반/강좌, 주문/수강, 청구/결제, 정산, 출결, 공통 코드, 감사 로그
+- **핵심 엔터티:** 테넌트, 지점, 사용자(직원/소비자), 인증/계정, 상품/서비스, 반/강좌, 주문/수강, 청구/결제, 정산, 출결, 공통 코드, 감사 로그, 컴포넌트 카탈로그
 - **중앙화 원칙:**
   - 모든 데이터는 **중앙 데이터 코어**(공동 DB 클러스터)에 저장하며, 업종별 확장은 모듈 테이블을 추가하는 방식으로 일관성을 유지한다.
   - 테넌트 식별자(`tenant_id`)를 통한 파티셔닝 전략으로 멀티테넌시를 구현하되, HQ/HQ-Admin은 `tenant_id=NULL` 상태에서 전체 데이터 접근 권한을 가진다.
@@ -39,8 +39,15 @@ PricingPlan (plan_id PK)
  └─ PricingAddon (addon_id PK)
       └─ PricingAddonFeature (addon_id FK, feature_code)
 
+ComponentCatalog (component_id PK)
+ ├─ ComponentFeature (component_id FK, feature_code, dependency_json)
+ ├─ ComponentPricing (component_id FK, pricing_type, fee_amount, usage_unit)
+ └─ ComponentDependency (component_id FK, required_component_id FK)
+
 TenantSubscription (subscription_id PK, tenant_id FK, plan_id FK)
  ├─ SubscriptionAddon (subscription_id FK, addon_id FK)
+ ├─ TenantComponent (tenant_component_id PK, tenant_id FK, component_id FK)
+ │   └─ ComponentUsageDaily (usage_id PK, tenant_component_id FK, metric, amount, usage_date)
  ├─ TenantAIService (tenant_ai_id PK, model_code, addon_id FK)
  └─ SubscriptionInvoice (invoice_id PK, subscription_id FK)
       └─ SubscriptionInvoiceLine (line_id PK, invoice_id FK, charge_type, amount)
@@ -95,6 +102,12 @@ SecurityEvent (event_id PK)
 | `ops_audit_log` | `id`, `event_type`, `entity_type`, `entity_id`, `actor_id`, `actor_role`, `action`, `metadata_json`, `created_at`, `updated_at` | 운영 감사 로그 |
 | `audit_log` | `audit_id`, `tenant_id`, `user_id`, `action`, `resource`, `metadata` | 감사 로그 |
 | `security_event` | `event_id`, `severity`, `category`, `details` | 보안 이벤트/알림 |
+| `component_catalog` | `component_id`, `component_code`, `name`, `category`, `description`, `is_core`, `is_active`, `version`, `display_order`, `icon_url`, `documentation_url` | 컴포넌트 메타데이터 (상담, 예약, 결제, 정산, 알림, CRM, 출결, 통계 등) |
+| `component_feature` | `component_id`, `feature_code`, `feature_name`, `dependency_json`, `required_components_json`, `conflicts_with_json`, `notes` | 컴포넌트별 제공 기능 및 의존성 정의 |
+| `component_pricing` | `component_id`, `pricing_type`, `fee_amount`, `currency`, `usage_unit`, `usage_limit`, `overage_rate`, `is_included_in_plan`, `pricing_plan_ids_json`, `metadata_json` | 컴포넌트별 과금 정책 (기본 포함/애드온, 월정액/Usage 기반) |
+| `component_dependency` | `component_id`, `required_component_id`, `dependency_type`, `is_optional`, `notes` | 컴포넌트 간 의존성 관계 |
+| `tenant_component` | `tenant_component_id`, `tenant_id`, `component_id`, `subscription_id`, `status`, `activated_at`, `deactivated_at`, `activated_by`, `deactivated_by`, `feature_flags_json`, `settings_json` | 테넌트별 활성화된 컴포넌트 목록 및 활성화 이력 |
+| `component_usage_daily` | `usage_id`, `tenant_component_id`, `tenant_id`, `component_id`, `metric`, `amount`, `usage_date`, `metadata_json` | 컴포넌트별 일별 사용량 추적 (API 호출 수, 사용자 수, 데이터 저장량 등) |
 
 ### 1.3 ERD 스냅샷 (업종 공통 + 학원 모듈)
 
@@ -107,10 +120,45 @@ SecurityEvent (event_id PK)
 | **정산** | `settlement_result` → `settlement_detail` (강사/본사/지점 분배 상세) |
 | **출결** | `attendance`는 `class_enrollment`와 `class_schedule` 사이 다대다 역할 (복합 PK 구성) |
 | **공지/알림** | `notification_template`, `notification_log`, `notification_status` |
+| **컴포넌트 카탈로그** | `component_catalog` 1:N `component_feature`, `component_pricing`, `component_dependency` |
+| **테넌트 컴포넌트** | `tenant` 1:N `tenant_component` (활성화된 컴포넌트); `tenant_component` 1:N `component_usage_daily` |
+| **컴포넌트-구독 연계** | `tenant_subscription` 1:N `tenant_component`; `component_catalog` ↔ `pricing_addon` 연계 가능 |
 
-> 추후 업종 확장(미용, 배달 등)은 `tenant.business_type`에 따라 모듈 테이블(`salon_booking`, `delivery_order`)을 플러그인 형태로 추가하고, 공통 인증/정산 테이블과 연결합니다.
+> 추후 업종 확장(미용, 배달 등)은 `tenant.business_type`에 따라 모듈 테이블(`salon_booking`, `delivery_order`)을 플러그인 형태로 추가하고, 공통 인증/정산 테이블과 연결합니다. 컴포넌트 기반 모듈화 전략을 통해 섹션별 컴포넌트를 카탈로그화하고, 테넌트별로 필요한 컴포넌트만 선택하여 활성화할 수 있습니다.
 
-### 1.4 테넌트 역할 템플릿 & RBAC 구조
+### 1.4 컴포넌트 카탈로그 & 모듈화 구조
+
+- **목적:** 현재 MindGarden의 섹션별 컴포넌트 모듈화 강점을 살려, 입점 사용자가 DB에 등록되어 필요한 컴포넌트만 선택하여 사용하고, 기본 세팅 외 컴포넌트는 애드온 방식으로 과금하는 시스템 구축
+- **구성요소:**
+  - `component_catalog`: MindGarden HQ가 제공하는 컴포넌트 메타데이터 (상담, 예약, 결제, 정산, 알림, CRM, 출결, 통계, AI 인사이트, 외부 연동 등)
+  - `component_feature`: 각 컴포넌트가 제공하는 기능 코드 및 의존성 정의 (필수 컴포넌트, 선택 컴포넌트, 충돌 방지)
+  - `component_pricing`: 컴포넌트별 과금 정책 (기본 요금제 포함 여부, 애드온 월정액, Usage 기반 과금)
+  - `component_dependency`: 컴포넌트 간 의존성 관계 (예: 통계 컴포넌트는 결제 컴포넌트 필수)
+  - `tenant_component`: 테넌트별 활성화된 컴포넌트 목록 및 활성화 이력, Feature Flag 설정
+  - `component_usage_daily`: 컴포넌트별 사용량 추적 (API 호출 수, 사용자 수, 데이터 저장량 등) - Usage 기반 과금 시 필요
+- **운영 정책:**
+  - **기본 컴포넌트**: 상담, 예약, 결제, 기본 알림 등 핵심 기능은 기본 요금제에 포함 (`is_core=true`)
+  - **애드온 컴포넌트**: 고급 통계, AI 인사이트, 외부 연동 등은 선택 애드온으로 제공 (`is_core=false`)
+  - 컴포넌트 활성화 시 의존성 검증: 필수 컴포넌트가 없으면 활성화 불가, 충돌 컴포넌트 동시 활성화 방지
+  - 컴포넌트 비활성화 시 데이터 보존 정책: 관련 데이터 보관 기간, 접근 제한 설정
+  - 컴포넌트별 사용량 추적: Usage 기반 과금 컴포넌트는 일별 사용량 집계 후 월말 청구
+  - 컴포넌트 버전 관리: `component_catalog.version` 필드로 컴포넌트 업그레이드 추적
+  - Feature Flag 연동: `tenant_component.feature_flags_json`에 컴포넌트별 Feature Flag 저장
+- **과금 연계:**
+  - 컴포넌트 활성화 시 `tenant_component.subscription_id`에 연결하여 과금 대상 관리
+  - 월정액 컴포넌트: `component_pricing.pricing_type='MONTHLY'` → `subscription_invoice_line`에 자동 추가
+  - Usage 기반 컴포넌트: `component_usage_daily` 집계 → 월말 `subscription_invoice_line` 계산
+  - 컴포넌트-애드온 매핑: 기존 `pricing_addon`과 `component_catalog`를 연계하여 통합 관리 가능
+- **테넌트 온보딩 연계:**
+  - 테넌트 온보딩 시 기본 컴포넌트 세트 자동 활성화 (상담, 예약, 결제, 기본 알림)
+  - 선택 애드온 컴포넌트는 온보딩 UI에서 선택 → 승인 → 활성화 프로세스
+  - 컴포넌트 선택에 따라 메뉴 구조, 권한 템플릿, Feature Flag 자동 설정
+- **확장성:**
+  - 새로운 컴포넌트 추가 시 `component_catalog`에 등록만 하면 테넌트가 선택 가능
+  - 업종별 컴포넌트 조합: 학원(상담+예약+결제+출결), 요식업(상담+예약+결제+주문관리) 등
+  - 컴포넌트별 독립 배포 및 업그레이드 가능 (마이크로서비스 아키텍처 확장 가능)
+
+### 1.5 테넌트 역할 템플릿 & RBAC 구조
 
 - **목적:** 업종/테넌트에 따라 `학생`, `학부모`, `강사`, `사무원`, `원장`, `HQ 관리자` 등 역할 구성을 유연하게 유지하면서도 플랫폼 차원에서 표준 RBAC/ABAC 정책을 강제
 - **구성요소:**

@@ -13,6 +13,7 @@
 | **T1.5** | 2026 Q1~Q2 | **외부 온보딩 + 자동결제 상용화** | 공개 신청 페이지, 요금제 선택, PG 정기결제 |
 | **T2** | 2026 Q2 | 학원 Phase 2 + AI 기반 운영 인사이트 | 출결 모바일 앱, AI 이탈 예측, HQ 정책 엔진 |
 | **T3** | 2026 Q3 | 업종 확장 (미용/서비스) | 공통 5대 흐름 패턴화, POS/ERP 확장 |
+| **T3.5** | 2026 Q3~Q4 | **컴포넌트 기반 모듈화 & 애드온 과금** | 컴포넌트 카탈로그, 테넌트별 선택 활성화, 컴포넌트 단위 과금 |
 | **T4** | 2026 Q4 | 플랫폼 고도화 & SaaS 상용화 | 파트너 API, 마켓플레이스, Data-as-a-Service |
 
 ## 2. 상세 로드맵
@@ -55,6 +56,17 @@
 - [ ] 고객 FAQ 챗봇 (예약/결제/정산 FAQ, 역할별 응답)  
 - [ ] 웰니스/콘텐츠 AI 고도화: 업종별 맞춤 컨텐츠 생성
 
+### T3.5 (2026 Q3~Q4) — 컴포넌트 기반 모듈화 & 애드온 과금 시스템
+- [ ] 컴포넌트 카탈로그 DB 설계 (`component_catalog`, `tenant_component`, `component_feature`)
+- [ ] 섹션별 컴포넌트 메타데이터 등록 (상담, 예약, 결제, 정산, 알림, CRM 등)
+- [ ] 테넌트 온보딩 시 컴포넌트 선택 UI 구현 (기본 세팅 + 선택 애드온)
+- [ ] 컴포넌트 활성화/비활성화 API 및 Feature Flag 연동
+- [ ] 컴포넌트별 사용량 추적 및 과금 계산 로직 구현
+- [ ] 애드온 과금 시스템 통합 (컴포넌트 단위 월정액/Usage 기반)
+- [ ] 컴포넌트 의존성 관리 (필수 컴포넌트, 선택 컴포넌트, 충돌 방지)
+- [ ] 운영 포털 컴포넌트 관리 UI (카탈로그 관리, 테넌트별 활성화 현황)
+- [ ] 테넌트 대시보드에 "내 컴포넌트" 관리 페이지 추가
+
 ### T4 (2026 Q4) — 플랫폼 고도화 & 상용화
 - [ ] 파트너 API/마켓플레이스 공개, OAuth Client 발급 로직
 - [ ] Data-as-a-Service (정산/운영 데이터 외부 제공)
@@ -78,6 +90,11 @@
 
 - 로드맵은 분기 리뷰(OKR/캠프 미팅)에서 실적과 계획을 재조정한다.
 - 문서 위치: `docs/mgsb/PLATFORM_ROADMAP.md` (본 문서)
-- 관련 문서: `SYSTEM_EXPANSION_PLAN.md`, `ARCHITECTURE_OVERVIEW.md`, `DATA_CORE_AND_PL_SQL.md`, `IDENTITY_AND_SSO.md`
+- 관련 문서: 
+  - `SYSTEM_EXPANSION_PLAN.md`: 시스템 확장 계획 (11.10 컴포넌트 모듈화)
+  - `ARCHITECTURE_OVERVIEW.md`: 아키텍처 개요
+  - `DATA_CORE_AND_PL_SQL.md`: 데이터 모델 설계 (1.4 컴포넌트 카탈로그)
+  - `IDENTITY_AND_SSO.md`: 인증 및 SSO
+  - `COMPONENT_MODULARIZATION_IMPLEMENTATION_GUIDE.md`: **구현 난이도 평가 및 개발 가이드** (신규)
 
 

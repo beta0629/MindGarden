@@ -225,9 +225,6 @@ jobs:
           if [ -f /tmp/dev.m-garden.co.kr.conf ]; then
             echo "🌐 Nginx 설정 업데이트 중..."
             sudo cp /tmp/dev.m-garden.co.kr.conf /etc/nginx/sites-available/dev.m-garden.co.kr.conf
-          elif [ -f /tmp/config/nginx/dev.m-garden.co.kr.conf ]; then
-            echo "🌐 Nginx 설정 업데이트 중 (경로 수정)..."
-            sudo cp /tmp/config/nginx/dev.m-garden.co.kr.conf /etc/nginx/sites-available/dev.m-garden.co.kr.conf
             sudo ln -sf /etc/nginx/sites-available/dev.m-garden.co.kr.conf /etc/nginx/sites-enabled/
             
             # 프론트엔드 디렉토리 권한 설정

@@ -129,39 +129,74 @@ sudo systemctl reload nginx
 
 ---
 
-## 6. SSL 인증서 설정
+## 6. SSL 인증서 설정 (Let's Encrypt 무료 인증서)
 
-### 6.1 Let's Encrypt 인증서 발급
+운영 서버와 동일하게 Let's Encrypt 무료 SSL 인증서를 사용합니다.
+
+### 6.1 Certbot 설치
 
 ```bash
-# Certbot 설치
+# Certbot 설치 (이미 설치되어 있을 수 있음)
+apt update
 apt install -y certbot python3-certbot-nginx
+```
 
-# 인증서 발급 (Nginx 플러그인 사용)
+### 6.2 Let's Encrypt 인증서 발급
+
+**중요**: DNS 서브도메인 설정이 완료되고 전파된 후에 실행해야 합니다.
+
+```bash
+# Nginx 플러그인을 사용한 자동 설정 (권장)
 sudo certbot --nginx -d dev.m-garden.co.kr
 
-# 또는 수동으로
-sudo certbot certonly --nginx -d dev.m-garden.co.kr
+# 인증서 발급 과정:
+# 1. 이메일 주소 입력 (인증서 만료 알림용)
+# 2. 이용약관 동의
+# 3. Let's Encrypt가 도메인 소유권 확인
+# 4. Nginx 설정 자동 업데이트 (HTTPS 활성화)
 ```
 
-### 6.2 인증서 자동 갱신 설정
+**참고**: 운영 서버(`m-garden.co.kr`)와 동일한 방식으로 발급됩니다.
+
+### 6.3 인증서 발급 확인
 
 ```bash
-# Certbot 자동 갱신 테스트
+# 발급된 인증서 확인
+sudo certbot certificates
+
+# 인증서 파일 위치 확인
+ls -la /etc/letsencrypt/live/dev.m-garden.co.kr/
+```
+
+인증서 파일:
+- `fullchain.pem`: 인증서 체인 (Nginx에서 사용)
+- `privkey.pem`: 개인키 (Nginx에서 사용)
+
+### 6.4 인증서 자동 갱신 설정
+
+Let's Encrypt 인증서는 90일마다 만료되므로 자동 갱신이 필요합니다.
+
+**Certbot은 자동으로 갱신 스크립트를 설정합니다:**
+
+```bash
+# 자동 갱신 테스트 (실제 갱신은 하지 않음)
 sudo certbot renew --dry-run
 
-# Cron 작업 확인 (자동 설정됨)
+# Certbot 타이머 상태 확인
 sudo systemctl status certbot.timer
+
+# 수동 갱신 (필요한 경우)
+sudo certbot renew
 ```
 
-### 6.3 인증서 경로 확인
+**자동 갱신 확인:**
+- Certbot은 `/etc/cron.d/certbot` 또는 systemd timer로 자동 갱신 설정
+- 운영 서버와 동일한 방식으로 자동 갱신됨
 
+**인증서 경로:**
 Let's Encrypt 인증서는 다음 경로에 저장됩니다:
-
-```
-/etc/letsencrypt/live/dev.m-garden.co.kr/fullchain.pem
-/etc/letsencrypt/live/dev.m-garden.co.kr/privkey.pem
-```
+- `/etc/letsencrypt/live/dev.m-garden.co.kr/fullchain.pem`
+- `/etc/letsencrypt/live/dev.m-garden.co.kr/privkey.pem`
 
 ---
 

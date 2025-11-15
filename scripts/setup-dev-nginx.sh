@@ -227,8 +227,11 @@ echo ""
 echo "📝 다음 단계:"
 echo "1. DNS 서브도메인 A 레코드 추가: dev.m-garden.co.kr → [서버 IP]"
 echo "2. DNS 전파 확인: nslookup dev.m-garden.co.kr"
-echo "3. SSL 인증서 발급: sudo certbot --nginx -d dev.m-garden.co.kr"
-echo "4. 브라우저에서 접속 확인: http://dev.m-garden.co.kr"
+echo "3. Let's Encrypt SSL 인증서 발급 (운영 서버와 동일):"
+echo "   sudo certbot --nginx -d dev.m-garden.co.kr"
+echo "4. 브라우저에서 접속 확인: https://dev.m-garden.co.kr"
+echo ""
+echo "💡 참고: 운영 서버(m-garden.co.kr)와 동일하게 Let's Encrypt 무료 인증서를 사용합니다."
 
 ENDSSH
 

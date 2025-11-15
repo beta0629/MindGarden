@@ -117,7 +117,7 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 120s
-        source: "target/consultation-management-system-*.jar"
+        source: "target/consultation-management-system-1.0.0.jar"
         target: "/var/www/mindgarden-dev/"
         strip_components: 1
         overwrite: true

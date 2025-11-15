@@ -150,6 +150,19 @@ jobs:
         strip_components: 2
         overwrite: true
         
+    - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "config/systemd/mindgarden-dev.service"
+        target: "/tmp/"
+        strip_components: 1
+        overwrite: true
+        
     - name: 🔄 개발 서버 서비스 재시작
       uses: appleboy/ssh-action@v1.1.0
       with:
@@ -170,31 +183,17 @@ jobs:
           # 권한 설정
           chmod +x app.jar
           
-          # systemd 서비스 파일 생성 (없으면)
+          # systemd 서비스 파일 설정 (없으면)
           if [ ! -f /etc/systemd/system/mindgarden-dev.service ]; then
-            echo "📝 systemd 서비스 파일 생성 중..."
-            sudo bash -c "cat > /etc/systemd/system/mindgarden-dev.service" << 'SYSTEMD_EOF'
-[Unit]
-Description=MindGarden Development Server
-After=network.target mysql.service
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/var/www/mindgarden-dev
-EnvironmentFile=/etc/mindgarden/dev.env
-ExecStart=/usr/bin/java -jar /var/www/mindgarden-dev/app.jar --spring.profiles.active=dev
-Restart=on-failure
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-SYSTEMD_EOF
-            sudo systemctl daemon-reload
-            sudo systemctl enable mindgarden-dev.service
-            echo "✅ systemd 서비스 파일 생성 완료"
+            echo "📝 systemd 서비스 파일 설정 중..."
+            if [ -f /tmp/mindgarden-dev.service ]; then
+              sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+              sudo systemctl daemon-reload
+              sudo systemctl enable mindgarden-dev.service
+              echo "✅ systemd 서비스 파일 설정 완료"
+            else
+              echo "⚠️ systemd 서비스 파일이 업로드되지 않음"
+            fi
           fi
           
           # 환경 변수 파일 생성/업데이트 (없으면)

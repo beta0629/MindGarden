@@ -5,18 +5,18 @@
 2. **Settings** 탭 클릭
 3. 왼쪽 메뉴에서 **Secrets and variables** > **Actions** 클릭
 
-## 🔐 추가할 Secrets
+## 🔐 운영 서버 Secrets (기존)
 
-### 1. SERVER_HOST
-- **Name:** `SERVER_HOST`
+### 1. PRODUCTION_HOST
+- **Name:** `PRODUCTION_HOST`
 - **Value:** `beta74.cafe24.com`
 
-### 2. SERVER_USER  
-- **Name:** `SERVER_USER`
+### 2. PRODUCTION_USER  
+- **Name:** `PRODUCTION_USER`
 - **Value:** `root`
 
-### 3. SERVER_SSH_KEY
-- **Name:** `SERVER_SSH_KEY`
+### 3. PRODUCTION_SSH_KEY
+- **Name:** `PRODUCTION_SSH_KEY`
 - **Value:** 아래 명령어로 출력되는 SSH 개인키 전체 내용
 
 ```bash
@@ -24,6 +24,57 @@ cat ~/.ssh/mindgarden_github_actions
 ```
 
 **⚠️ 중요:** SSH 개인키 전체를 복사해서 붙여넣으세요 (-----BEGIN 부터 -----END 까지 모든 내용)
+
+---
+
+## 🧪 개발 서버 Secrets (신규)
+
+### 1. DEV_SERVER_HOST
+- **Name:** `DEV_SERVER_HOST`
+- **Value:** `beta0629.cafe24.com`
+
+### 2. DEV_SERVER_USER  
+- **Name:** `DEV_SERVER_USER`
+- **Value:** `root`
+
+### 3. DEV_SERVER_SSH_KEY
+- **Name:** `DEV_SERVER_SSH_KEY`
+- **Value:** 개발 서버 SSH 개인키 전체 내용
+
+**개발 서버 SSH 키 생성 방법:**
+
+1. **로컬 PC에서 SSH 키 생성** (또는 기존 키 사용):
+```bash
+ssh-keygen -t rsa -b 4096 -C "github-actions-dev" -f ~/.ssh/github_actions_dev
+```
+
+2. **공개키를 개발 서버에 등록**:
+```bash
+# 개발 서버에 접속
+ssh root@beta0629.cafe24.com
+
+# authorized_keys에 공개키 추가
+echo "공개키 내용" >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+또는 로컬에서:
+```bash
+ssh-copy-id -i ~/.ssh/github_actions_dev.pub root@beta0629.cafe24.com
+```
+
+3. **개인키를 GitHub Secrets에 등록**:
+```bash
+# 로컬 PC에서 개인키 내용 확인
+cat ~/.ssh/github_actions_dev
+```
+
+출력된 전체 내용(-----BEGIN 부터 -----END 까지)을 복사하여 GitHub Secrets의 `DEV_SERVER_SSH_KEY`에 등록합니다.
+
+**⚠️ 중요:** 
+- 개인키 전체를 복사해야 합니다
+- 줄바꿈 문자도 포함해야 합니다
+- 공개키가 아닌 **개인키**를 등록해야 합니다
 
 ## 🧪 테스트 방법
 

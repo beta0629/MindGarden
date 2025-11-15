@@ -1,0 +1,254 @@
+name: 🧪 MindGarden 개발 서버 배포
+
+on:
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: 🏗️ 개발 서버 빌드 및 배포
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: ☕ Java 17 설정
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: 📦 Node.js 18 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: 🔧 Maven 캐시 설정
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 🏗️ 백엔드 빌드
+      run: mvn clean package -DskipTests
+      
+    - name: 📦 프론트엔드 의존성 설치
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: 🏗️ 프론트엔드 빌드
+      run: |
+        cd frontend
+        npm run build:ci
+        
+    - name: 🔍 개발 서버 SSH 연결 테스트
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 30s
+        script: |
+          echo "✅ 개발 서버 SSH 연결 테스트 성공: $(date)"
+          echo "서버 정보: $(uname -a)"
+          echo "현재 디렉토리: $(pwd)"
+          
+    - name: 🚀 개발 서버 배포 준비
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 30m
+        script: |
+          # 배포 디렉토리 생성 (없으면 생성)
+          mkdir -p /var/www/mindgarden-dev
+          cd /var/www/mindgarden-dev
+          
+          # 서비스 중지 (있으면)
+          if systemctl is-active --quiet mindgarden-dev.service 2>/dev/null; then
+            echo "🛑 기존 서비스 중지 중..."
+            sudo systemctl stop mindgarden-dev.service || true
+          fi
+          
+          # 백업 생성
+          if [ -f app.jar ]; then
+            BACKUP_DIR="/var/www/mindgarden-dev/backups"
+            mkdir -p $BACKUP_DIR
+            cp app.jar $BACKUP_DIR/app.jar.backup.$(date +%Y%m%d_%H%M%S)
+            echo "✅ 백엔드 백업 완료"
+          fi
+          
+          if [ -d frontend ]; then
+            BACKUP_DIR="/var/www/mindgarden-dev/backups"
+            mkdir -p $BACKUP_DIR
+            tar -czf $BACKUP_DIR/frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz frontend/ 2>/dev/null || true
+            echo "✅ 프론트엔드 백업 완료"
+          fi
+          
+    - name: 📤 백엔드 파일 업로드 (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "target/consultation-management-system-1.0.0.jar"
+        target: "/var/www/mindgarden-dev/"
+        strip_components: 1
+        overwrite: true
+        
+    - name: 📤 프론트엔드 파일 업로드 (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "frontend/build/*"
+        target: "/var/www/html-dev/"
+        strip_components: 2
+        overwrite: true
+        
+    - name: 📤 개발 서버 설정 파일 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "src/main/resources/application-dev.yml"
+        target: "/var/www/mindgarden-dev/"
+        strip_components: 2
+        overwrite: true
+        
+    - name: 🔄 개발 서버 서비스 재시작
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        command_timeout: 5m
+        script: |
+          cd /var/www/mindgarden-dev
+          
+          # JAR 파일명 변경
+          if [ -f consultation-management-system-1.0.0.jar ]; then
+            mv consultation-management-system-1.0.0.jar app.jar
+          fi
+          
+          # 권한 설정
+          chmod +x app.jar
+          
+          # systemd 서비스 파일 생성 (없으면)
+          if [ ! -f /etc/systemd/system/mindgarden-dev.service ]; then
+            echo "📝 systemd 서비스 파일 생성 중..."
+            sudo tee /etc/systemd/system/mindgarden-dev.service > /dev/null << 'EOF'
+[Unit]
+Description=MindGarden Development Server
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/mindgarden-dev
+EnvironmentFile=/etc/mindgarden/dev.env
+ExecStart=/usr/bin/java -jar /var/www/mindgarden-dev/app.jar --spring.profiles.active=dev
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+            sudo systemctl daemon-reload
+            sudo systemctl enable mindgarden-dev.service
+            echo "✅ systemd 서비스 파일 생성 완료"
+          fi
+          
+          # 환경 변수 파일 생성/업데이트 (없으면)
+          if [ ! -f /etc/mindgarden/dev.env ]; then
+            echo "📝 환경 변수 파일 생성 중..."
+            sudo mkdir -p /etc/mindgarden
+            sudo tee /etc/mindgarden/dev.env > /dev/null << 'ENVEOF'
+# 개발 서버 환경 변수
+DB_HOST=beta0629.cafe24.com
+DB_PORT=3306
+DB_NAME=mind_garden
+DB_USERNAME=mindgarden_dev
+DB_PASSWORD=MindGardenDev2025!@#
+JWT_SECRET=dev-jwt-secret-key-change-me
+PERSONAL_DATA_ENCRYPTION_KEY=dev-encryption-key-32-chars-long
+PERSONAL_DATA_ENCRYPTION_IV=dev-iv-16-chars
+SERVER_PORT=8080
+FRONTEND_BASE_URL=http://dev.m-garden.co.kr
+ENVEOF
+            sudo chmod 600 /etc/mindgarden/dev.env
+            echo "✅ 환경 변수 파일 생성 완료"
+          fi
+          
+          # 서비스 재시작
+          echo "🔄 개발 서버 서비스 재시작..."
+          sudo systemctl daemon-reload
+          sudo systemctl stop mindgarden-dev.service || true
+          sleep 5
+          sudo systemctl start mindgarden-dev.service
+          sleep 15
+          
+          # 서비스 상태 확인
+          echo "🔍 서비스 상태 확인..."
+          sudo systemctl status mindgarden-dev.service --no-pager | head -15
+          
+          # 서비스 활성화 상태 확인
+          if sudo systemctl is-active --quiet mindgarden-dev.service; then
+            echo "✅ 개발 서버 서비스 정상 시작됨"
+          else
+            echo "❌ 서비스 시작 실패 - 재시도..."
+            sudo systemctl restart mindgarden-dev.service
+            sleep 15
+            sudo systemctl status mindgarden-dev.service --no-pager | head -15
+          fi
+          
+    - name: 🏥 개발 서버 헬스체크
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 30s
+        script: |
+          echo "🏥 개발 서버 헬스체크 시작..."
+          sleep 5
+          
+          # Health Check (최대 3회 재시도)
+          for i in {1..3}; do
+            if curl -f -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+              echo "✅ 개발 서버 헬스체크 성공 (시도 $i)"
+              curl -s http://localhost:8080/actuator/health | head -5
+              exit 0
+            else
+              echo "⏳ 헬스체크 대기 중... (시도 $i/3)"
+              sleep 10
+            fi
+          done
+          
+          echo "⚠️ 헬스체크 실패 - 서비스 로그 확인 필요"
+          sudo journalctl -u mindgarden-dev.service --no-pager -n 50
+          exit 1
+

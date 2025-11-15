@@ -1,0 +1,337 @@
+name: 📱 MindGarden 모바일 앱 빌드
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/deploy-mobile.yml'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: '빌드할 플랫폼 (android, ios, both)'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - android
+          - ios
+          - both
+
+jobs:
+  build-android:
+    name: 🤖 Android 빌드
+    runs-on: ubuntu-latest
+    if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' || (github.event.inputs.platform == '' && github.event_name == 'push')
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 📁 mobile 폴더 확인
+      run: |
+        echo "현재 디렉토리: $(pwd)"
+        echo "mobile 폴더 확인:"
+        if [ ! -d "mobile" ]; then
+          echo "❌ mobile 디렉토리가 없습니다!"
+          exit 1
+        fi
+        
+        echo "✅ mobile 디렉토리 확인됨"
+        echo "mobile 폴더 내용:"
+        ls -la mobile/ | head -20
+        
+        # android/ios 폴더 확인
+        if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
+          echo "❌ mobile/android 또는 mobile/ios 폴더가 없습니다!"
+          exit 1
+        fi
+        
+        echo "✅ mobile/android 또는 mobile/ios 폴더 확인됨"
+      
+    - name: ☕ Java 17 설정 (Android 빌드용)
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: 📦 Node.js 20 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: 🔧 NODE_BINARY 환경 변수 설정
+      run: |
+        echo "NODE_BINARY=$(which node)" >> $GITHUB_ENV
+        echo "✅ NODE_BINARY 설정: $(which node)"
+        
+    - name: 📦 의존성 설치
+      run: |
+        cd mobile
+        npm ci
+        
+    - name: 🔧 패치 적용 확인
+      run: |
+        cd mobile
+        echo "패치 파일 확인:"
+        ls -la patches/ || echo "⚠️ patches 디렉토리 없음"
+        echo ""
+        echo "postinstall 실행 (패치 적용):"
+        npm run postinstall || echo "⚠️ postinstall 실패"
+        echo ""
+        echo "react-native-gesture-handler 패치 확인:"
+        if [ -f "patches/react-native-gesture-handler+2.29.0.patch" ]; then
+          echo "✅ 패치 파일 존재"
+          # 패치가 적용되었는지 확인 (build.gradle 파일 확인)
+          if grep -q "rootProject.projectDir" node_modules/react-native-gesture-handler/android/build.gradle 2>/dev/null; then
+            echo "✅ 패치 적용 확인됨 (rootProject.projectDir 사용)"
+          else
+            echo "⚠️ 패치 적용 확인 실패 - 수동 적용 시도..."
+            npx patch-package react-native-gesture-handler || echo "⚠️ 수동 적용 실패"
+          fi
+        else
+          echo "⚠️ 패치 파일 없음"
+        fi
+        
+    - name: 🔧 Android SDK 설정
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: 33
+        build-tools: 33.0.0
+        target: android-33
+        
+    - name: 🔐 릴리즈 키스토어 설정 (선택사항)
+      if: env.ANDROID_KEYSTORE_BASE64 != ''
+      env:
+        ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      run: |
+        if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > mobile/android/app/my-release-key.keystore
+          echo "✅ 키스토어 파일 생성 완료"
+        else
+          echo "ℹ️ 키스토어가 설정되지 않음 - Debug 빌드로 진행"
+        fi
+        
+    - name: 🏗️ Android Release 빌드
+      env:
+        GRADLE_OPTS: -Xmx4096m -XX:MaxMetaspaceSize=1024m
+      run: |
+        cd mobile/android
+        
+        echo "현재 디렉토리: $(pwd)"
+        echo "디렉토리 구조:"
+        ls -la | head -20
+        
+        # Gradle wrapper 디렉토리 생성
+        mkdir -p gradle/wrapper
+        
+        # gradle-wrapper.properties 파일 확인 및 생성
+        if [ ! -f "gradle/wrapper/gradle-wrapper.properties" ]; then
+          echo "⚠️ gradle-wrapper.properties 없음, 생성..."
+          cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-9.0.0-bin.zip
+        networkTimeout=10000
+        validateDistributionUrl=true
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+        EOF
+        else
+          echo "✅ gradle-wrapper.properties 존재"
+          cat gradle/wrapper/gradle-wrapper.properties
+        fi
+        
+        # gradle-wrapper.jar 파일 확인 및 생성
+        if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+          echo "⚠️ gradle-wrapper.jar 없음, 다운로드 시도..."
+          # Gradle wrapper JAR 다운로드 (Gradle 9.0.0)
+          curl -L "https://raw.githubusercontent.com/gradle/gradle/v9.0.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar || {
+            echo "⚠️ GitHub에서 다운로드 실패, Maven Central에서 다운로드 시도..."
+            curl -L "https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/9.0.0/gradle-wrapper-9.0.0.jar" -o gradle/wrapper/gradle-wrapper.jar || {
+              echo "⚠️ Maven Central에서도 실패, Gradle 배포 사이트에서 다운로드 시도..."
+              curl -L "https://services.gradle.org/distributions/gradle-9.0.0-bin.zip" -o /tmp/gradle.zip
+              unzip -q /tmp/gradle.zip -d /tmp/
+              cp /tmp/gradle-9.0.0/lib/gradle-wrapper-*.jar gradle/wrapper/gradle-wrapper.jar 2>/dev/null || echo "⚠️ 복사 실패"
+              rm -rf /tmp/gradle.zip /tmp/gradle-9.0.0
+            }
+          }
+        else
+          echo "✅ gradle-wrapper.jar 존재"
+        fi
+        
+        # 파일 확인
+        echo "Gradle wrapper 파일 확인:"
+        ls -la gradle/wrapper/ || echo "⚠️ gradle/wrapper 디렉토리 없음"
+        
+        # 파일 크기 확인
+        if [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+          JAR_SIZE=$(stat -f%z gradle/wrapper/gradle-wrapper.jar 2>/dev/null || stat -c%s gradle/wrapper/gradle-wrapper.jar 2>/dev/null || echo "0")
+          echo "gradle-wrapper.jar 크기: ${JAR_SIZE} bytes"
+          if [ "$JAR_SIZE" -lt 1000 ]; then
+            echo "⚠️ JAR 파일이 너무 작음, 다운로드 실패로 보임"
+            exit 1
+          fi
+        fi
+        
+        chmod +x gradlew
+        
+        # 빌드 실행 (메모리 부족 방지를 위해 --no-daemon, --max-workers 제한)
+        echo "Gradle 빌드 시작..."
+        echo "⚠️ 상세 오류 로그를 위해 --info 옵션 추가"
+        ./gradlew assembleRelease \
+          --stacktrace \
+          --info \
+          --no-daemon \
+          --max-workers=2 \
+          || {
+            echo "⚠️ 첫 번째 빌드 실패, clean 후 재시도..."
+            echo "⚠️ 실패한 주요 오류 메시지:"
+            ./gradlew assembleRelease --stacktrace --no-daemon --max-workers=2 2>&1 | grep -A 20 "FAILURE\|Error\|Exception" | head -50 || true
+            exit 1
+          }
+        
+    - name: 📦 Android AAB 빌드 (Google Play 업로드용)
+      run: |
+        cd mobile/android
+        ./gradlew bundleRelease --stacktrace
+        
+    - name: 📤 빌드 아티팩트 업로드
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-release
+        path: |
+          mobile/android/app/build/outputs/apk/release/app-release.apk
+          mobile/android/app/build/outputs/bundle/release/app-release.aab
+        retention-days: 30
+        
+    - name: 📋 빌드 정보 출력
+      run: |
+        echo "📱 Android 빌드 완료"
+        echo "APK 위치: mobile/android/app/build/outputs/apk/release/app-release.apk"
+        echo "AAB 위치: mobile/android/app/build/outputs/bundle/release/app-release.aab"
+        ls -lh mobile/android/app/build/outputs/apk/release/ || true
+        ls -lh mobile/android/app/build/outputs/bundle/release/ || true
+
+  build-ios:
+    name: 🍎 iOS 빌드
+    runs-on: macos-latest
+    if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' || (github.event.inputs.platform == '' && github.event_name == 'push')
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 📁 mobile 폴더 확인
+      run: |
+        echo "현재 디렉토리: $(pwd)"
+        echo "mobile 폴더 확인:"
+        if [ ! -d "mobile" ]; then
+          echo "❌ mobile 디렉토리가 없습니다!"
+          exit 1
+        fi
+        
+        echo "✅ mobile 디렉토리 확인됨"
+        echo "mobile 폴더 내용:"
+        ls -la mobile/ | head -20
+        
+        # android/ios 폴더 확인
+        if [ ! -d "mobile/android" ] && [ ! -d "mobile/ios" ]; then
+          echo "❌ mobile/android 또는 mobile/ios 폴더가 없습니다!"
+          exit 1
+        fi
+        
+        echo "✅ mobile/android 또는 mobile/ios 폴더 확인됨"
+      
+    - name: 📦 Node.js 20 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: 📦 의존성 설치
+      run: |
+        cd mobile
+        npm ci
+        
+    - name: 🍎 CocoaPods 설치
+      run: |
+        cd mobile/ios
+        sudo gem install cocoapods
+        pod install
+        
+    - name: 🏗️ iOS Archive 빌드
+      run: |
+        cd mobile/ios
+        xcodebuild -workspace MindGardenMobile.xcworkspace \
+          -scheme MindGardenMobile \
+          -configuration Release \
+          -sdk iphoneos \
+          -archivePath build/MindGardenMobile.xcarchive \
+          archive \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
+          
+    - name: 📦 IPA 생성
+      run: |
+        cd mobile/ios
+        xcodebuild -exportArchive \
+          -archivePath build/MindGardenMobile.xcarchive \
+          -exportPath build \
+          -exportOptionsPlist ExportOptions.plist || echo "ExportOptions.plist 없음 - IPA 생성 건너뜀"
+          
+    - name: 📤 빌드 아티팩트 업로드
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-release
+        path: |
+          mobile/ios/build/MindGardenMobile.xcarchive
+          mobile/ios/build/*.ipa
+        retention-days: 30
+        
+    - name: 📋 빌드 정보 출력
+      run: |
+        echo "🍎 iOS 빌드 완료"
+        echo "Archive 위치: mobile/ios/build/MindGardenMobile.xcarchive"
+        ls -lh mobile/ios/build/ || true
+
+  notify:
+    name: 📢 빌드 완료 알림
+    runs-on: ubuntu-latest
+    needs: [build-android, build-ios]
+    if: always()
+    
+    steps:
+    - name: 📥 빌드 아티팩트 다운로드
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*-release'
+        merge-multiple: true
+        path: artifacts
+        
+    - name: 📋 빌드 요약
+      run: |
+        echo "## 📱 모바일 앱 빌드 완료" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🤖 Android" >> $GITHUB_STEP_SUMMARY
+        if [ -d "artifacts/android-release" ]; then
+          echo "✅ Android 빌드 성공" >> $GITHUB_STEP_SUMMARY
+          ls -lh artifacts/android-release/ >> $GITHUB_STEP_SUMMARY || true
+        else
+          echo "⚠️ Android 빌드 실패 또는 건너뜀" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🍎 iOS" >> $GITHUB_STEP_SUMMARY
+        if [ -d "artifacts/ios-release" ]; then
+          echo "✅ iOS 빌드 성공" >> $GITHUB_STEP_SUMMARY
+          ls -lh artifacts/ios-release/ >> $GITHUB_STEP_SUMMARY || true
+        else
+          echo "⚠️ iOS 빌드 실패 또는 건너뜀" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📥 빌드 파일은 GitHub Actions의 Artifacts에서 다운로드할 수 있습니다." >> $GITHUB_STEP_SUMMARY
+

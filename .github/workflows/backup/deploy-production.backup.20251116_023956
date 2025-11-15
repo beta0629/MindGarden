@@ -3,7 +3,6 @@ name: 🚀 MindGarden 운영 배포
 on:
   push:
     branches: [ main ]
-    # develop 브랜치에서는 실행되지 않음 (개발 서버 배포만 실행)
   workflow_dispatch:
 
 jobs:

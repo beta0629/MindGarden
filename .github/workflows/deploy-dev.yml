@@ -130,8 +130,6 @@ jobs:
         ls -lh /tmp/test-*.tar.gz 2>/dev/null || echo "tar 파일 없음"
         
     - name: 📤 백엔드 파일 업로드 (개발 서버)
-      continue-on-error: true
-      id: backend_upload
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
@@ -144,17 +142,7 @@ jobs:
         strip_components: 1
         overwrite: true
         
-    - name: 🔍 백엔드 업로드 결과 확인
-      if: steps.backend_upload.outcome == 'failure'
-      run: |
-        echo "❌ 백엔드 파일 업로드 실패!"
-        echo "파일 확인:"
-        ls -la target/consultation-management-system-1.0.0.jar || echo "파일 없음"
-        exit 1
-        
     - name: 📤 프론트엔드 파일 업로드 (개발 서버)
-      continue-on-error: true
-      id: frontend_upload
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
@@ -166,15 +154,6 @@ jobs:
         target: "/var/www/html-dev/"
         strip_components: 2
         overwrite: true
-        
-    - name: 🔍 프론트엔드 업로드 결과 확인
-      if: steps.frontend_upload.outcome == 'failure'
-      run: |
-        echo "❌ 프론트엔드 파일 업로드 실패!"
-        echo "디렉토리 확인:"
-        ls -la frontend/build/ | head -10 || echo "디렉토리 없음"
-        echo "파일 개수: $(find frontend/build -type f 2>/dev/null | wc -l)"
-        exit 1
         
     - name: 📤 Nginx 설정 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7

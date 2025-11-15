@@ -120,6 +120,14 @@ jobs:
           fi
           
     - name: 📤 백엔드 파일 업로드 (개발 서버)
+      run: |
+        echo "=========================================="
+        echo "🔍 백엔드 파일 업로드 시작"
+        echo "파일 확인:"
+        ls -la target/consultation-management-system-1.0.0.jar || echo "❌ 파일 없음!"
+        echo "=========================================="
+        
+    - name: 📤 백엔드 파일 업로드 SCP (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
@@ -133,6 +141,15 @@ jobs:
         overwrite: true
         
     - name: 📤 프론트엔드 파일 업로드 (개발 서버)
+      run: |
+        echo "=========================================="
+        echo "🔍 프론트엔드 파일 업로드 시작"
+        echo "디렉토리 확인:"
+        ls -ld frontend/build || echo "❌ 디렉토리 없음!"
+        echo "파일 개수: $(find frontend/build -type f 2>/dev/null | wc -l)"
+        echo "=========================================="
+        
+    - name: 📤 프론트엔드 파일 업로드 SCP (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}

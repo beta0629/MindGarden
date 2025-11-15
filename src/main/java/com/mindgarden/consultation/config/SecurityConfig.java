@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -300,10 +299,9 @@ public class SecurityConfig {
     }
     
     /**
-     * RestTemplate Bean (prod 프로파일에서만 사용)
+     * RestTemplate Bean (모든 프로파일에서 사용)
      */
     @Bean
-    @Profile("prod")
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }

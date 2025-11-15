@@ -11,8 +11,8 @@ spring:
   # 데이터베이스 설정
   datasource:
     url: jdbc:mysql://localhost:3306/mind_garden?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    username: ${DB_USERNAME:mindgarden_dev}
+    password: ${DB_PASSWORD:}  # 필수: 환경 변수로 설정 (개발 서버 예시: export DB_PASSWORD="MindGardenDev2025!@#")
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 문자셋 설정 추가
     connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"

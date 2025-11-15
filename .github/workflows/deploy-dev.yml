@@ -88,6 +88,15 @@ jobs:
             tar -czf frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz frontend/
           fi
           
+    - name: 🔍 빌드 파일 확인
+      run: |
+        echo "📦 빌드 파일 확인 중..."
+        ls -lh target/consultation-management-system-1.0.0.jar || echo "❌ JAR 파일 없음"
+        ls -ld frontend/build || echo "❌ frontend/build 디렉토리 없음"
+        ls -lh config/nginx/dev.m-garden.co.kr.conf || echo "❌ Nginx 설정 파일 없음"
+        ls -lh src/main/resources/application-dev.yml || echo "❌ application-dev.yml 없음"
+        ls -lh config/systemd/mindgarden-dev.service || echo "❌ systemd 서비스 파일 없음"
+        
     - name: 📤 백엔드 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:
@@ -123,8 +132,7 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/nginx/dev.m-garden.co.kr.conf"
-        target: "/tmp/"
-        strip_components: 1
+        target: "/tmp/dev.m-garden.co.kr.conf"
         overwrite: true
         
     - name: 📤 개발 서버 설정 파일 업로드
@@ -136,8 +144,7 @@ jobs:
         port: 22
         timeout: 120s
         source: "src/main/resources/application-dev.yml"
-        target: "/var/www/mindgarden-dev/"
-        strip_components: 2
+        target: "/var/www/mindgarden-dev/application-dev.yml"
         overwrite: true
         
     - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
@@ -149,8 +156,7 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/systemd/mindgarden-dev.service"
-        target: "/tmp/"
-        strip_components: 1
+        target: "/tmp/mindgarden-dev.service"
         overwrite: true
         
     - name: 🔄 개발 서버 서비스 재시작

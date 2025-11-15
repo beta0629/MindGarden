@@ -38,7 +38,10 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
         
     - name: 🏗️ 백엔드 빌드
-      run: mvn clean package -DskipTests
+      run: |
+        mvn clean package -DskipTests
+        echo "빌드 완료. 결과 확인:"
+        ls -lh target/consultation-management-system-1.0.0.jar || echo "JAR 파일 없음!"
       
     - name: 🔍 백엔드 빌드 결과 확인
       run: |

@@ -28,6 +28,18 @@ else
 fi
 
 echo ""
+echo "📦 Certbot 설치 확인 중..."
+if ! command -v certbot &> /dev/null; then
+    echo "📦 Certbot 설치 중..."
+    apt update
+    apt install -y certbot python3-certbot-nginx
+    echo "✅ Certbot 설치 완료"
+else
+    echo "✅ Certbot 이미 설치됨"
+    certbot --version
+fi
+
+echo ""
 echo "📝 Nginx 설정 파일 생성 중..."
 
 # 설정 파일 생성

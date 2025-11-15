@@ -135,11 +135,18 @@ sudo systemctl reload nginx
 
 ### 6.1 Certbot 설치
 
+**중요**: Certbot이 설치되어 있지 않으면 먼저 설치해야 합니다.
+
 ```bash
-# Certbot 설치 (이미 설치되어 있을 수 있음)
+# Certbot 설치
 apt update
 apt install -y certbot python3-certbot-nginx
+
+# 설치 확인
+certbot --version
 ```
+
+**참고**: `scripts/setup-dev-nginx.sh` 스크립트를 실행하면 자동으로 Certbot도 설치됩니다.
 
 ### 6.2 Let's Encrypt 인증서 발급
 

@@ -121,6 +121,21 @@ jobs:
         echo "✅ frontend/build 디렉토리 존재: $FILE_COUNT 개 파일"
         find frontend/build -type f | head -5
         
+    - name: 🔍 SCP 전 최종 파일 확인
+      run: |
+        echo "🔍 SCP 전 최종 파일 확인..."
+        pwd
+        echo ""
+        echo "=== 백엔드 파일 ==="
+        ls -la target/consultation-management-system-1.0.0.jar
+        echo "절대 경로: $(pwd)/target/consultation-management-system-1.0.0.jar"
+        echo ""
+        echo "=== 프론트엔드 파일 ==="
+        ls -ld frontend/build
+        echo "파일 개수: $(find frontend/build -type f | wc -l)"
+        echo "샘플 파일:"
+        find frontend/build -type f | head -3
+        
     - name: 📤 백엔드 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:

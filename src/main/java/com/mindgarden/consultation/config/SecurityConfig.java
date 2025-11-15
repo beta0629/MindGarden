@@ -157,7 +157,7 @@ public class SecurityConfig {
             if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
                 List<String> origins = Arrays.asList(allowedOrigins.split(","));
                 configuration.setAllowedOrigins(origins);
-                log.info("CORS 허용 Origin (환경 변수): {}", origins);
+                // CORS 허용 Origin 설정 완료 (환경 변수 사용)
             } else {
                 // 환경 변수가 없으면 기본값 (로컬 개발용)
                 String frontendUrl = System.getenv("FRONTEND_BASE_URL");

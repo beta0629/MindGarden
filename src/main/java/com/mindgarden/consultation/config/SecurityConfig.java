@@ -177,7 +177,7 @@ public class SecurityConfig {
                 }
                 
                 configuration.setAllowedOrigins(defaultOrigins);
-                log.info("CORS 허용 Origin (기본값): {}", defaultOrigins);
+                // log는 @Slf4j가 없어서 제거 (필요시 추가)
             }
         }
         

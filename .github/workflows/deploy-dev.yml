@@ -118,14 +118,6 @@ jobs:
         ls -lh src/main/resources/application-dev.yml || echo "❌ application-dev.yml 없음"
         ls -lh config/systemd/mindgarden-dev.service || echo "❌ systemd 서비스 파일 없음"
         
-    - name: 🔍 백엔드 파일 최종 확인
-      run: |
-        echo "📦 백엔드 파일 최종 확인..."
-        pwd
-        ls -la target/consultation-management-system-1.0.0.jar
-        file target/consultation-management-system-1.0.0.jar
-        du -h target/consultation-management-system-1.0.0.jar
-        
     - name: 📤 백엔드 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:
@@ -138,14 +130,6 @@ jobs:
         target: "/var/www/mindgarden-dev/"
         strip_components: 1
         overwrite: true
-        debug: true
-        
-    - name: 🔍 프론트엔드 파일 최종 확인
-      run: |
-        echo "📦 프론트엔드 파일 최종 확인..."
-        ls -la frontend/build/ | head -20
-        find frontend/build -type f | head -10
-        echo "파일 개수: $(find frontend/build -type f | wc -l)"
         
     - name: 📤 프론트엔드 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
@@ -159,7 +143,6 @@ jobs:
         target: "/var/www/html-dev/"
         strip_components: 2
         overwrite: true
-        debug: true
         
     - name: 📤 Nginx 설정 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7

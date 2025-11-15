@@ -173,7 +173,7 @@ jobs:
           # systemd 서비스 파일 생성 (없으면)
           if [ ! -f /etc/systemd/system/mindgarden-dev.service ]; then
             echo "📝 systemd 서비스 파일 생성 중..."
-            sudo tee /etc/systemd/system/mindgarden-dev.service > /dev/null << 'SYSTEMDEOF'
+            sudo bash -c "cat > /etc/systemd/system/mindgarden-dev.service" << 'SYSTEMD_EOF'
 [Unit]
 Description=MindGarden Development Server
 After=network.target mysql.service
@@ -191,7 +191,7 @@ StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
-SYSTEMDEOF
+SYSTEMD_EOF
             sudo systemctl daemon-reload
             sudo systemctl enable mindgarden-dev.service
             echo "✅ systemd 서비스 파일 생성 완료"

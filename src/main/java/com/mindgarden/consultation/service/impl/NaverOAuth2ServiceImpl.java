@@ -115,6 +115,11 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             params.add("state", "naver_oauth_state"); // 보안을 위한 state 값
             params.add("redirect_uri", redirectUri);
             
+            log.info("네이버 액세스 토큰 획득 시도: client_id={}, redirect_uri={}, code={}", 
+                    clientId, redirectUri, code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null");
+            log.debug("네이버 토큰 요청 파라미터: grant_type={}, client_id={}, redirect_uri={}", 
+                     "authorization_code", clientId, redirectUri);
+            
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(

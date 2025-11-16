@@ -8,7 +8,7 @@ import DashboardSection from '../layout/DashboardSection';
 import StatisticsDashboard from './StatisticsDashboard';
 import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
-import ClientCard from './ClientCard';
+import ClientCard from '../ui/Card/ClientCard';
 import MappingCard from './MappingCard';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';

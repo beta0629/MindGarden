@@ -174,19 +174,6 @@ jobs:
         target: "/tmp/dev.m-garden.co.kr.conf"
         overwrite: true
         
-    - name: 📤 개발 서버 설정 파일 업로드
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.DEV_SERVER_HOST }}
-        username: ${{ secrets.DEV_SERVER_USER }}
-        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
-        port: 22
-        timeout: 120s
-        source: "src/main/resources/application-dev.yml"
-        target: "/var/www/mindgarden-dev/"
-        strip_components: 2
-        overwrite: true
-        
     - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:

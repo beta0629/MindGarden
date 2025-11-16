@@ -162,6 +162,18 @@ jobs:
         strip_components: 2
         overwrite: true
         
+    - name: 📤 개발 서버 환경 변수 파일 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "dev.env"
+        target: "/tmp/dev.env"
+        overwrite: true
+        
     - name: 📤 Nginx 설정 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
       with:
@@ -224,12 +236,18 @@ jobs:
             fi
           fi
           
-          # 환경 변수 파일 확인 (없으면 경고만)
-          if [ ! -f /etc/mindgarden/dev.env ]; then
+          # 환경 변수 파일 업데이트 (업로드된 경우)
+          if [ -f /tmp/dev.env ]; then
+            echo "📝 환경 변수 파일 업데이트 중..."
+            sudo mkdir -p /etc/mindgarden
+            sudo cp /tmp/dev.env /etc/mindgarden/dev.env
+            sudo chmod 600 /etc/mindgarden/dev.env
+            echo "✅ 환경 변수 파일 업데이트 완료"
+          elif [ ! -f /etc/mindgarden/dev.env ]; then
             echo "⚠️ 환경 변수 파일이 없습니다: /etc/mindgarden/dev.env"
             echo "⚠️ 수동으로 생성해야 합니다"
           else
-            echo "✅ 환경 변수 파일 존재 확인"
+            echo "✅ 환경 변수 파일 존재 확인 (업데이트 없음)"
           fi
           
           # 서비스 재시작

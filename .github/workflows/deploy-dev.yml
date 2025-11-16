@@ -174,24 +174,24 @@ jobs:
           if [ ! -f /etc/systemd/system/mindgarden-dev.service ]; then
             echo "📝 systemd 서비스 파일 생성 중..."
             sudo tee /etc/systemd/system/mindgarden-dev.service > /dev/null << 'EOF'
-[Unit]
-Description=MindGarden Development Server
-After=network.target mysql.service
+            [Unit]
+            Description=MindGarden Development Server
+            After=network.target mysql.service
 
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/var/www/mindgarden-dev
-EnvironmentFile=/etc/mindgarden/dev.env
-ExecStart=/usr/bin/java -jar /var/www/mindgarden-dev/app.jar --spring.profiles.active=dev
-Restart=on-failure
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
+            [Service]
+            Type=simple
+            User=root
+            WorkingDirectory=/var/www/mindgarden-dev
+            EnvironmentFile=/etc/mindgarden/dev.env
+            ExecStart=/usr/bin/java -jar /var/www/mindgarden-dev/app.jar --spring.profiles.active=dev
+            Restart=on-failure
+            RestartSec=10
+            StandardOutput=journal
+            StandardError=journal
 
-[Install]
-WantedBy=multi-user.target
-EOF
+            [Install]
+            WantedBy=multi-user.target
+            EOF
             sudo systemctl daemon-reload
             sudo systemctl enable mindgarden-dev.service
             echo "✅ systemd 서비스 파일 생성 완료"
@@ -202,18 +202,18 @@ EOF
             echo "📝 환경 변수 파일 생성 중..."
             sudo mkdir -p /etc/mindgarden
             sudo tee /etc/mindgarden/dev.env > /dev/null << 'ENVEOF'
-# 개발 서버 환경 변수
-DB_HOST=beta0629.cafe24.com
-DB_PORT=3306
-DB_NAME=mind_garden
-DB_USERNAME=mindgarden_dev
-DB_PASSWORD=MindGardenDev2025!@#
-JWT_SECRET=dev-jwt-secret-key-change-me
-PERSONAL_DATA_ENCRYPTION_KEY=dev-encryption-key-32-chars-long
-PERSONAL_DATA_ENCRYPTION_IV=dev-iv-16-chars
-SERVER_PORT=8080
-FRONTEND_BASE_URL=http://dev.m-garden.co.kr
-ENVEOF
+            # 개발 서버 환경 변수
+            DB_HOST=beta0629.cafe24.com
+            DB_PORT=3306
+            DB_NAME=mind_garden
+            DB_USERNAME=mindgarden_dev
+            DB_PASSWORD=MindGardenDev2025!@#
+            JWT_SECRET=dev-jwt-secret-key-change-me
+            PERSONAL_DATA_ENCRYPTION_KEY=dev-encryption-key-32-chars-long
+            PERSONAL_DATA_ENCRYPTION_IV=dev-iv-16-chars
+            SERVER_PORT=8080
+            FRONTEND_BASE_URL=http://dev.m-garden.co.kr
+            ENVEOF
             sudo chmod 600 /etc/mindgarden/dev.env
             echo "✅ 환경 변수 파일 생성 완료"
           fi

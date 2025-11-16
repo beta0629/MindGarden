@@ -27,7 +27,7 @@
 # application-dev.yml 및 application-local.yml
 spring:
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:mind_garden}?...
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:core_solution}?...
     username: ${DB_USERNAME:mindgarden_dev}
     password: ${DB_PASSWORD:}  # 필수: 환경 변수로 설정
 ```
@@ -40,7 +40,7 @@ spring:
 # 데이터베이스 접속 정보 (로컬 PC에서 실행 시)
 export DB_HOST=your-dev-db-host  # 개발 서버 DB 호스트 주소
 export DB_PORT=3306
-export DB_NAME=mind_garden
+export DB_NAME=core_solution
 export DB_USERNAME=mindgarden_dev
 export DB_PASSWORD="MindGardenDev2025!@#"  # 실제 비밀번호로 변경
 
@@ -80,7 +80,7 @@ WantedBy=multi-user.target
 # 데이터베이스 설정
 DB_HOST=your-dev-db-host
 DB_PORT=3306
-DB_NAME=mind_garden
+DB_NAME=core_solution
 DB_USERNAME=mindgarden_dev
 DB_PASSWORD=MindGardenDev2025!@#
 
@@ -136,14 +136,14 @@ curl http://localhost:8080/actuator/info
 
 ```sql
 -- 데이터베이스 생성 (필요한 경우)
-CREATE DATABASE IF NOT EXISTS mind_garden 
+CREATE DATABASE IF NOT EXISTS core_solution 
 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 개발 서버 전용 사용자 생성
 CREATE USER IF NOT EXISTS 'mindgarden_dev'@'%' IDENTIFIED BY 'MindGardenDev2025!@#';
 
 -- 권한 부여
-GRANT ALL PRIVILEGES ON mind_garden.* TO 'mindgarden_dev'@'%';
+GRANT ALL PRIVILEGES ON core_solution.* TO 'mindgarden_dev'@'%';
 
 -- 권한 새로고침
 FLUSH PRIVILEGES;

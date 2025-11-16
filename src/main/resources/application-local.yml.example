@@ -14,7 +14,7 @@ isDev: true  # 개발 모드 활성화
 spring:
   # 데이터베이스 설정 (개발 서버 DB 사용)
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:mind_garden}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:core_solution}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
     username: ${DB_USERNAME:mindgarden_dev}
     password: ${DB_PASSWORD:}  # 필수: 환경 변수로 설정 (예: export DB_PASSWORD="MindGardenDev2025!@#")
     driver-class-name: com.mysql.cj.jdbc.Driver

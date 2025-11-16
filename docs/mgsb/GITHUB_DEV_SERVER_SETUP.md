@@ -226,7 +226,7 @@ curl http://beta0629.cafe24.com:8080/actuator/health
    ```
 2. DB 연결 테스트:
    ```bash
-   mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' mind_garden -e "SELECT 1"
+   mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SELECT 1"
    ```
 
 ---

@@ -18,6 +18,6 @@ MODIFY COLUMN status ENUM(
 -- 2. 변경사항 확인
 SELECT COLUMN_TYPE 
 FROM INFORMATION_SCHEMA.COLUMNS 
-WHERE TABLE_SCHEMA = 'mind_garden' 
+WHERE TABLE_SCHEMA = 'core_solution' 
   AND TABLE_NAME = 'consultant_client_mappings' 
   AND COLUMN_NAME = 'status';

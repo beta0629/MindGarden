@@ -1,4 +1,5 @@
-# 통합 상담관리 시스템 설정 파일
+# 통합 상담관리 시스템 설정 파일 (템플릿)
+# 이 파일을 복사하여 application.yml을 만들고 환경에 맞게 수정하세요.
 # Spring Boot 3.x + Hibernate 6.x + MySQL 8.x
 
 spring:
@@ -9,58 +10,24 @@ spring:
     name: consultation-management-system
   
   # 데이터베이스 설정
-  # 기본값: 개발서버 DB (beta0629.cafe24.com)
-  # 로컬 DB 사용: 환경 변수 DB_HOST=localhost 설정
-  # 운영서버 DB 사용: 환경 변수 DB_HOST=beta74.cafe24.com 설정
   datasource:
-    url: jdbc:mysql://${DB_HOST:beta0629.cafe24.com}:${DB_PORT:3306}/${DB_NAME:mind_garden}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true&useServerPrepStmts=true
-    username: ${DB_USERNAME:mindgarden_dev}
-    password: ${DB_PASSWORD:}  # 필수: 환경 변수로 설정 (예: export DB_PASSWORD="MindGardenDev2025!@#")
+    url: jdbc:mysql://localhost:3306/mind_garden?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 문자셋 설정 추가
     connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
-    # HikariCP 연결 풀 설정 (안정적인 데이터베이스 연결)
-    hikari:
-      # 연결 풀 크기 설정
-      minimum-idle: 5                    # 최소 유휴 연결 수
-      maximum-pool-size: 20              # 최대 연결 풀 크기
-      auto-commit: true                  # 자동 커밋
-      # 연결 타임아웃 설정
-      connection-timeout: 30000          # 연결 대기 타임아웃 (30초)
-      validation-timeout: 5000           # 유효성 검사 타임아웃 (5초)
-      idle-timeout: 600000               # 유휴 연결 타임아웃 (10분)
-      max-lifetime: 1800000              # 연결 최대 수명 (30분)
-      # 연결 유효성 검사
-      connection-test-query: SELECT 1    # 연결 유효성 검사 쿼리
-      # 연결 누수 감지
-      leak-detection-threshold: 60000    # 연결 누수 감지 임계값 (60초)
-      # 연결 풀 이름 (로그에서 식별 용이)
-      pool-name: MindGardenHikariPool
-      # 재시도 설정
-      initialization-fail-timeout: 1     # 초기화 실패 시 즉시 실패 (1ms)
-      # 연결 등록 정보
-      register-mbeans: true              # JMX 모니터링 활성화
   
   # JPA 설정
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true  # SQL 로그 활성화
-    # 데이터소스 연결 관리
-    open-in-view: false  # OSIV 비활성화 (연결 누수 방지)
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         use_sql_comments: true
-        # 연결 관리 및 성능 최적화
-        connection:
-          provider_disables_autocommit: false
-        # JDBC 배치 처리 및 성능 최적화
-        jdbc:
-          batch_size: 20
-          batch_versioned_data: true
-          fetch_size: 50  # 배치 페치 크기
         # 로그 레벨 분리 설정
         logging:
           level:
@@ -69,6 +36,10 @@ spring:
             org.hibernate.engine.transaction.internal: DEBUG      # 트랜잭션
             org.hibernate.resource.transaction: DEBUG             # 트랜잭션 리소스
             org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR  # SQL 예외만
+        # SQL 예외 상세 로깅
+        jdbc:
+          batch_size: 20
+          batch_versioned_data: true
         # 스키마 업데이트 로깅
         hbm2ddl:
           auto: update
@@ -220,9 +191,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
-  prometheus:
-    metrics:
-      export:
+  metrics:
+    export:
+      prometheus:
         enabled: true
 
 # 파일 업로드 설정
@@ -267,3 +238,4 @@ openai:
     key: ${OPENAI_API_KEY:}  # 환경 변수로 설정 필수
     url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
   model: ${OPENAI_MODEL:gpt-3.5-turbo}  # gpt-3.5-turbo 또는 gpt-4
+

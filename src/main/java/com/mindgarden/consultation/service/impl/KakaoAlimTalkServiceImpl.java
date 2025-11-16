@@ -2,6 +2,7 @@ package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,7 +175,10 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             
             for (CommonCode code : templateCodes) {
                 if (templateCode.equals(code.getCodeValue())) {
-                    String template = code.getCodeLabel(); // 템플릿 내용
+                    // 템플릿 내용은 codeDescription에 저장됨 (codeLabel은 짧은 제목만)
+                    String template = code.getCodeDescription() != null && !code.getCodeDescription().isEmpty() 
+                        ? code.getCodeDescription() 
+                        : code.getCodeLabel(); // fallback
                     
                     // 파라미터 치환
                     String message = template;
@@ -304,11 +308,32 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
         try {
             // ALIMTALK_TEMPLATE 그룹 확인 및 생성
             List<CommonCode> templateCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("ALIMTALK_TEMPLATE");
+            // 기존 데이터 중 code_label이 100자 초과하는 경우 삭제하고 재생성
+            if (!templateCodes.isEmpty()) {
+                for (CommonCode code : templateCodes) {
+                    try {
+                        if (code.getCodeLabel() != null && code.getCodeLabel().length() > 100) {
+                            log.warn("⚠️ 잘못된 code_label 데이터 삭제: {} (길이: {})", code.getCodeValue(), code.getCodeLabel().length());
+                            commonCodeRepository.delete(code);
+                        }
+                    } catch (Exception e) {
+                        log.error("⚠️ 기존 코드 삭제 중 오류 (무시하고 계속): {}", code.getCodeValue(), e);
+                    }
+                }
+                // 삭제 후 다시 확인
+                try {
+                    templateCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("ALIMTALK_TEMPLATE");
+                } catch (Exception e) {
+                    log.error("⚠️ 템플릿 코드 조회 중 오류 (빈 리스트로 계속):", e);
+                    templateCodes = new ArrayList<>();
+                }
+            }
             if (templateCodes.isEmpty()) {
                 log.info("🔧 ALIMTALK_TEMPLATE 공통 코드 그룹 생성 중...");
                 
                 // 상담 예약 확정 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "CONSULTATION_CONFIRMED", 
+                    "상담 확정 알림",
                     "[마인드가든] 상담이 확정되었습니다.\n\n" +
                     "📅 상담일: #{consultationDate}\n" +
                     "⏰ 시간: #{consultationTime}\n" +
@@ -319,6 +344,7 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                 
                 // 상담 리마인더 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "CONSULTATION_REMINDER", 
+                    "상담 리마인더",
                     "[마인드가든] 1시간 후 상담이 예정되어 있습니다.\n\n" +
                     "⏰ 상담시간: #{consultationTime}\n" +
                     "👩‍⚕️ 상담사: #{consultantName}\n\n" +
@@ -328,6 +354,7 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                 
                 // 환불 완료 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "REFUND_COMPLETED", 
+                    "환불 완료 알림",
                     "[마인드가든] 환불이 완료되었습니다.\n\n" +
                     "💰 환불 회기: #{refundSessions}회\n" +
                     "💳 환불 금액: #{refundAmount}원\n\n" +
@@ -337,6 +364,7 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                 
                 // 일정 변경 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "SCHEDULE_CHANGED", 
+                    "일정 변경 알림",
                     "[마인드가든] 상담 일정이 변경되었습니다.\n\n" +
                     "👩‍⚕️ 상담사: #{consultantName}\n" +
                     "📅 변경 전: #{oldDateTime}\n" +
@@ -347,6 +375,7 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                 
                 // 결제 완료 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "PAYMENT_COMPLETED", 
+                    "결제 완료 알림",
                     "[마인드가든] 결제가 완료되었습니다.\n\n" +
                     "💳 결제 금액: #{paymentAmount}원\n" +
                     "📦 패키지: #{packageName}\n" +
@@ -363,10 +392,10 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             if (configCodes.isEmpty()) {
                 log.info("🔧 ALIMTALK_CONFIG 공통 코드 그룹 생성 중...");
                 
-                createCommonCode("ALIMTALK_CONFIG", "ENABLED", "활성화", "{\"value\":true}", 1);
-                createCommonCode("ALIMTALK_CONFIG", "FALLBACK_TO_SMS", "SMS 대체 발송", "{\"value\":true}", 2);
-                createCommonCode("ALIMTALK_CONFIG", "MAX_RETRY_COUNT", "최대 재시도 횟수", "{\"value\":3}", 3);
-                createCommonCode("ALIMTALK_CONFIG", "TIMEOUT_SECONDS", "타임아웃 시간", "{\"value\":30}", 4);
+                createCommonCode("ALIMTALK_CONFIG", "ENABLED", "활성화", null, "{\"value\":true}", 1);
+                createCommonCode("ALIMTALK_CONFIG", "FALLBACK_TO_SMS", "SMS 대체 발송", null, "{\"value\":true}", 2);
+                createCommonCode("ALIMTALK_CONFIG", "MAX_RETRY_COUNT", "최대 재시도 횟수", null, "{\"value\":3}", 3);
+                createCommonCode("ALIMTALK_CONFIG", "TIMEOUT_SECONDS", "타임아웃 시간", null, "{\"value\":30}", 4);
                 
                 log.info("✅ ALIMTALK_CONFIG 공통 코드 생성 완료");
             }
@@ -378,13 +407,40 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     
     /**
      * 공통 코드 생성 헬퍼 메서드
+     * @param codeGroup 코드 그룹
+     * @param codeValue 코드 값
+     * @param codeLabel 짧은 제목 (100자 이하)
+     * @param codeDescription 긴 템플릿 내용 (codeLabel이 길면 여기에 저장)
+     * @param extraData 추가 데이터
+     * @param sortOrder 정렬 순서
      */
-    private void createCommonCode(String codeGroup, String codeValue, String codeLabel, String extraData, int sortOrder) {
+    private void createCommonCode(String codeGroup, String codeValue, String codeLabel, String codeDescription, String extraData, int sortOrder) {
         try {
+            // codeLabel이 null이거나 비어있으면 codeValue 사용
+            if (codeLabel == null || codeLabel.trim().isEmpty()) {
+                codeLabel = codeValue.replace("_", " ");
+            }
+            
+            // codeLabel이 100자 초과하면 자동으로 잘라서 저장
+            String finalCodeLabel = codeLabel;
+            if (codeLabel != null && codeLabel.length() > 100) {
+                finalCodeLabel = codeLabel.substring(0, 97) + "...";
+                // 원본 내용은 codeDescription에 저장
+                if (codeDescription == null || codeDescription.trim().isEmpty()) {
+                    codeDescription = codeLabel;
+                }
+            }
+            
+            // 최종 검증: 항상 100자 이하로 보장
+            if (finalCodeLabel != null && finalCodeLabel.length() > 100) {
+                finalCodeLabel = finalCodeLabel.substring(0, 100);
+            }
+            
             CommonCode commonCode = new CommonCode();
             commonCode.setCodeGroup(codeGroup);
             commonCode.setCodeValue(codeValue);
-            commonCode.setCodeLabel(codeLabel);
+            commonCode.setCodeLabel(finalCodeLabel); // 항상 100자 이하
+            commonCode.setCodeDescription(codeDescription);
             commonCode.setExtraData(extraData);
             commonCode.setSortOrder(sortOrder);
             commonCode.setIsActive(true);
@@ -392,10 +448,12 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             commonCode.setUpdatedAt(LocalDateTime.now());
             
             commonCodeRepository.save(commonCode);
-            log.debug("📝 알림톡 공통 코드 생성: {}:{} = {}", codeGroup, codeValue, codeLabel);
+            log.debug("📝 알림톡 공통 코드 생성: {}:{} = {} (길이: {})", codeGroup, codeValue, finalCodeLabel, finalCodeLabel.length());
             
         } catch (Exception e) {
-            log.error("❌ 알림톡 공통 코드 생성 실패: {}:{}", codeGroup, codeValue, e);
+            log.error("❌ 알림톡 공통 코드 생성 실패: {}:{} (codeLabel 길이: {})", codeGroup, codeValue, 
+                codeLabel != null ? codeLabel.length() : 0, e);
+            // 예외 발생해도 서버 시작은 계속되도록 함
         }
     }
     

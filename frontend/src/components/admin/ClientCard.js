@@ -1,1 +1,1 @@
-../ui/Card/ClientCard.js
+export { default } from '../ui/Card/ClientCard.js';

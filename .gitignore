@@ -93,3 +93,7 @@ hs_err_pid*
 
 # Spring Boot
 spring.log
+
+# Node.js
+node_modules/
+package-lock.json

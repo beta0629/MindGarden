@@ -137,7 +137,8 @@ jobs:
         strip_components: 1
         overwrite: true
         
-    - name: 📤 개발 서버 설정 파일 업로드
+    - name: 📤 개발 서버 설정 파일 업로드 (옵션)
+      if: ${{ hashFiles('src/main/resources/application-dev.yml') != '' }}
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}

@@ -16,5 +16,9 @@
     "java.project.sourcePaths": [
         "src/main/java"
     ],
-    "java.project.outputPath": "target/classes"
+    "java.project.outputPath": "target/classes",
+
+    // Windows에서 PowerShell 확장 임시 스크립트 인코딩 오류 피하기 위해
+    // 워크스페이스 기본 터미널을 cmd로 고정
+    "terminal.integrated.defaultProfile.windows": "Command Prompt"
 }

@@ -290,7 +290,87 @@ public class OAuth2Controller {
                 log.info("네이버 콜백 - state 없음, 세션에서 확인: clientType={}", savedClientType);
             }
             
-            SocialLoginResponse response = oauth2FactoryService.authenticateWithProvider("NAVER", code);
+            // 콜백 요청의 scheme과 host를 사용해서 redirect_uri 동적 생성
+            // 인증 URL 생성 시 사용한 redirect_uri와 일치시켜야 함
+            String callbackRedirectUri = null;
+            try {
+                String requestScheme = request.getScheme();
+                String requestHost = request.getHeader("Host");
+                if (requestHost != null && !requestHost.isEmpty()) {
+                    // 포트가 포함된 경우와 아닌 경우 모두 처리
+                    if (requestHost.contains(":")) {
+                        callbackRedirectUri = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                    } else {
+                        int port = request.getServerPort();
+                        if (port == 80 || port == 443) {
+                            callbackRedirectUri = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                        } else {
+                            callbackRedirectUri = requestScheme + "://" + requestHost + ":" + port + "/api/auth/naver/callback";
+                        }
+                    }
+                    log.info("네이버 콜백 - 동적 redirect_uri 생성: {}", callbackRedirectUri);
+                }
+            } catch (Exception e) {
+                log.warn("네이버 콜백 - redirect_uri 동적 생성 실패, 기본값 사용", e);
+            }
+            
+            // redirectUri를 전달하기 위해 NaverOAuth2ServiceImpl 직접 호출
+            SocialLoginResponse response;
+            try {
+                OAuth2Service naverService = oauth2FactoryService.getOAuth2Service("NAVER");
+                if (callbackRedirectUri != null && naverService instanceof com.mindgarden.consultation.service.impl.NaverOAuth2ServiceImpl) {
+                    com.mindgarden.consultation.service.impl.NaverOAuth2ServiceImpl naverServiceImpl = 
+                        (com.mindgarden.consultation.service.impl.NaverOAuth2ServiceImpl) naverService;
+                    String accessToken = naverServiceImpl.getAccessToken(code, callbackRedirectUri);
+                    SocialUserInfo socialUserInfo = naverServiceImpl.getUserInfo(accessToken);
+                    socialUserInfo.setProvider("NAVER");
+                    socialUserInfo.setAccessToken(accessToken);
+                    socialUserInfo.normalizeData();
+                    
+                    // 기존 사용자 확인
+                    Long existingUserId = naverServiceImpl.findExistingUserByProviderId(socialUserInfo.getProviderUserId());
+                    if (existingUserId == null && socialUserInfo.getEmail() != null) {
+                        existingUserId = naverServiceImpl.findExistingUserByProviderId(socialUserInfo.getEmail());
+                    }
+                    
+                    if (existingUserId != null) {
+                        User existingUser = userRepository.findById(existingUserId).orElse(null);
+                        if (existingUser != null) {
+                            response = SocialLoginResponse.builder()
+                                .success(true)
+                                .requiresSignup(false)
+                                .userInfo(SocialLoginResponse.UserInfo.builder()
+                                    .id(existingUser.getId())
+                                    .email(existingUser.getEmail())
+                                    .name(existingUser.getName())
+                                    .nickname(existingUser.getNickname())
+                                    .role(existingUser.getRole() != null ? existingUser.getRole().name() : null)
+                                    .profileImageUrl(existingUser.getProfileImageUrl())
+                                    .branch(existingUser.getBranch())
+                                    .branchCode(existingUser.getBranchCode())
+                                    .build())
+                                .build();
+                        } else {
+                            response = SocialLoginResponse.builder()
+                                .success(false)
+                                .message("사용자를 찾을 수 없습니다.")
+                                .build();
+                        }
+                    } else {
+                        response = SocialLoginResponse.builder()
+                            .success(true)
+                            .requiresSignup(true)
+                            .socialUserInfo(socialUserInfo)
+                            .build();
+                    }
+                } else {
+                    // 기본 방식 사용
+                    response = oauth2FactoryService.authenticateWithProvider("NAVER", code);
+                }
+            } catch (Exception e) {
+                log.error("네이버 OAuth2 인증 처리 중 오류", e);
+                response = oauth2FactoryService.authenticateWithProvider("NAVER", code);
+            }
             
             log.info("네이버 OAuth2 응답: success={}, requiresSignup={}, message={}", 
                 response.isSuccess(), response.isRequiresSignup(), response.getMessage());

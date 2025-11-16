@@ -103,6 +103,19 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
 
     @Override
     public String getAccessToken(String code) {
+        return getAccessToken(code, redirectUri);
+    }
+    
+    /**
+     * 인증 코드로 액세스 토큰 획득 (redirectUri 지정 가능)
+     * 
+     * @param code 인증 코드
+     * @param redirectUri 리다이렉트 URI (null이면 기본값 사용)
+     * @return 액세스 토큰
+     */
+    public String getAccessToken(String code, String redirectUri) {
+        String redirectUriToUse = (redirectUri != null && !redirectUri.isEmpty()) ? redirectUri : this.redirectUri;
+        
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.set("Content-Type", "application/x-www-form-urlencoded");
@@ -113,12 +126,12 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             params.add("client_secret", clientSecret);
             params.add("code", code);
             params.add("state", "naver_oauth_state"); // 보안을 위한 state 값
-            params.add("redirect_uri", redirectUri);
+            params.add("redirect_uri", redirectUriToUse);
             
             log.info("네이버 액세스 토큰 획득 시도: client_id={}, redirect_uri={}, code={}", 
-                    clientId, redirectUri, code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null");
+                    clientId, redirectUriToUse, code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null");
             log.debug("네이버 토큰 요청 파라미터: grant_type={}, client_id={}, redirect_uri={}", 
-                     "authorization_code", clientId, redirectUri);
+                     "authorization_code", clientId, redirectUriToUse);
             
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
             

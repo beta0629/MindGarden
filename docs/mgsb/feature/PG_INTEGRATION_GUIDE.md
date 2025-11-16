@@ -6,7 +6,7 @@
 ---
 
 ## 1. 목적
-- MindGarden SaaS 온보딩/정기 결제 흐름을 위해 PG(Payment Gateway) 연동 전략과 기술 요소를 정리한다.
+- 코어(Core) 솔루션 SaaS 온보딩/정기 결제 흐름을 위해 PG(Payment Gateway) 연동 전략과 기술 요소를 정리한다.
 - 카드 정보를 직접 저장하지 않고 토큰화 기반으로 안전하게 결제를 처리한다.
 - 초기 MVP에서는 단일 PG(Stripe 또는 토스페이먼츠)로 시작하고, 향후 다중 PG·다중 통화 지원을 대비한다.
 
@@ -16,8 +16,8 @@
 - **토큰화 지원**: 카드 번호 대신 결제 토큰 사용 (PCI 부담 최소화)
 - **정기 결제 API**: Subscription 관리, Webhook(Invoice/Payment) 제공
 - **해외/국내 결제 범위**: 향후 해외 확장 대비 (국내 PG + Stripe 조합 고려)
-- **수수료 구조**: MindGarden 커미션 모델과의 궁합
-- **정산 주기**: MindGarden 정산 계획과 일치 여부
+- **수수료 구조**: 코어(Core) 솔루션 커미션 모델과의 궁합
+- **정산 주기**: 코어(Core) 솔루션 정산 계획과 일치 여부
 - **개발 Kit**: JS SDK, Webhook 보안, Sandbox 환경 등 개발 생산성
 
 ---
@@ -48,8 +48,8 @@ sequenceDiagram
 
 ### 4.1 공개 온보딩 페이지
 - Next.js(App Router) → PG JS SDK 로드 (Stripe Elements, 토스페이먼츠 인증결제 등)
-- 카드 입력 Form과 MindGarden 요금제 선택 Form 분리, 결제 완료 시 **PaymentMethod Token** 획득
-- **Security**: 카드 정보는 PG Iframe/Hosted Field에서 처리, MindGarden 서버로 전송 금지
+- 카드 입력 Form과 코어(Core) 솔루션 요금제 선택 Form 분리, 결제 완료 시 **PaymentMethod Token** 획득
+- **Security**: 카드 정보는 PG Iframe/Hosted Field에서 처리, 코어(Core) 솔루션 서버로 전송 금지
 - 네트워크 실패 대비 재시도 UX 제공
 
 ### 4.2 저장 데이터
@@ -69,7 +69,7 @@ sequenceDiagram
 | `POST /api/v1/billing/payments/webhook` | PG Webhook 수신 |
 
 ### 5.2 처리 순서
-1. **토큰 저장**: PG API로 토큰 유효성 확인, MindGarden `ops_payment_method`에 저장
+1. **토큰 저장**: PG API로 토큰 유효성 확인, `ops_payment_method`에 저장
 2. **결제 준비**: Setup Intent/Billing Key 생성하여 정기 결제 준비 상태 진입
 3. **첫 결제**: 온보딩 승인 시 첫 결제 API 호출 → 성공 시 구독 ACTIVE
 4. **Webhook**: 결제 성공/실패, 환불, 구독 변경 이벤트 수신 → 감사 로그, 알림 발송

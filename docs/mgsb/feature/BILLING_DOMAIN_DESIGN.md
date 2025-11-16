@@ -6,7 +6,7 @@
 ---
 
 ## 1. 목적
-- MindGarden SaaS의 자동 결제 및 구독 관리를 위한 도메인 구조, 데이터 모델, 상태 머신, API, 배치 로직을 정의한다.
+- 코어(Core) 솔루션 SaaS의 자동 결제 및 구독 관리를 위한 도메인 구조, 데이터 모델, 상태 머신, API, 배치 로직을 정의한다.
 - 외부 온보딩 흐름과 연계되어 **결제 정보 수집 → 구독 활성화 → 정기 결제 → 정산/영수** 과정을 안정적으로 운영하기 위한 기준을 마련한다.
 
 ---
@@ -14,7 +14,7 @@
 ## 2. 범위
 - 초기 MVP 대상: 월 정기 결제(Subscription) + 선결제(Prepaid Add-on) 병행
 - PG 연동은 토큰화 기반(카드 정보 미보관)으로 설계
-- 테넌트/지점 단위 과금 지원, MindGarden 수수료(커미션) 계산 포함
+- 테넌트/지점 단위 과금 지원, 코어(Core) 솔루션 수수료(커미션) 계산 포함
 - 향후 확장: 다중 PG, 복수 통화, Usage 기반 과금(토큰/건수) 등
 
 ---
@@ -23,7 +23,7 @@
 
 | 테이블 | 설명 | 비고 |
 | --- | --- | --- |
-| `ops_subscription` | 테넌트별 구독 기본 정보 (요금제, 시작/종료일, 결제 주기) | MindGarden HQ 통합 |
+| `ops_subscription` | 테넌트별 구독 기본 정보 (요금제, 시작/종료일, 결제 주기) | 코어(Core) 솔루션 HQ 통합 |
 | `ops_subscription_cycle` | 구독 청구 주기별 기록 (청구일, 금액, 상태) | 결제 실패/재시도 관리 |
 | `ops_subscription_payment` | 실제 결제 내역 (PG 결제 ID, 금액, 수수료, MindGarden 수익) | PG 연동 |
 | `ops_payment_method` | 결제 수단 토큰, PG Provider, 만료일 | 민감 정보 → 암호화/토큰화 |
@@ -98,9 +98,9 @@ stateDiagram-v2
 
 ---
 
-## 8. MindGarden 수익/커미션 정책
-- `ops_subscription_payment`에 PG 수수료, MindGarden 커미션 금액, 정산 대상 금액 컬럼 분리
-- MindGarden 커미션율은 요금제/애드온 별로 상이 → Pricing Plan/Addon 테이블 연계
+## 8. 코어(Core) 솔루션 수익/커미션 정책
+- `ops_subscription_payment`에 PG 수수료, 코어(Core) 솔루션 커미션 금액, 정산 대상 금액 컬럼 분리
+- 커미션율은 요금제/애드온 별로 상이 → Pricing Plan/Addon 테이블 연계
 - HQ 대시보드에서 커미션 누적, 환불/조정 이력 관리
 
 ---

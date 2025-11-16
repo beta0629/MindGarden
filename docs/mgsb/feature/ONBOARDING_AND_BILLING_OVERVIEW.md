@@ -6,7 +6,7 @@
 ---
 
 ## 1. 목적
-MindGarden SaaS 상용화를 위한 **외부 온보딩 신청 → 정기 결제 → 운영 승인 → 테넌트 활성화**까지의 전 과정을 한눈에 정리하고, 각 단계별 세부 문서 및 구현 계획을 연결한다.
+코어(Core) 솔루션 SaaS 상용화를 위한 **외부 온보딩 신청 → 정기 결제 → 운영 승인 → 테넌트 활성화**까지의 전 과정을 한눈에 정리하고, 각 단계별 세부 문서 및 구현 계획을 연결한다.
 
 ---
 
@@ -23,7 +23,7 @@ MindGarden SaaS 상용화를 위한 **외부 온보딩 신청 → 정기 결제 
 
 > **도메인 분리 원칙**  
 > - Trinity 코퍼레이트 웹/온보딩: `e-trinity.co.kr`, `apply.e-trinity.co.kr`  
-> - MindGarden 서비스(테넌트/소비자): `m-garden.co.kr`, `app.m-garden.co.kr`, `{tenant}.m-garden.co.kr`
+> - 코어(Core) 솔루션 서비스(테넌트/소비자): `core-solution.co.kr` 및 하위 서브도메인(추후 설계에 따라 구성)
 
 ※ 향후 단계: 고객 앱과의 연동, SSO 기반 로그인, 결제 실패 알림/대시보드, 구독 변경/취소 UI 등.
 
@@ -48,7 +48,7 @@ MindGarden SaaS 상용화를 위한 **외부 온보딩 신청 → 정기 결제 
 
 ### 3.4 인증/보안
 - 초기: 임시 관리자 계정(OPS_ADMIN) 및 JWT
-- 단계적 전환: MindGarden SSO(OIDC), HttpOnly/Secure 쿠키, 권한/역할 연계
+- 단계적 전환: 코어(Core) 솔루션 SSO(OIDC), HttpOnly/Secure 쿠키, 권한/역할 연계
 - 결제 정보: PG 토큰 방식, PCI DSS 준수
 
 ---

@@ -74,3 +74,4 @@ echo "   5. Add secret 클릭"
 echo ""
 echo "✅ 개발 서버 SSH 키 설정 완료!"
 
+

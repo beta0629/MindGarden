@@ -89,12 +89,4 @@ public class DevelopmentConfig implements WebMvcConfigurer {
             System.out.println("🚀 ========================================");
         }
     }
-    
-    /**
-     * RestTemplate Bean
-     */
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
 }

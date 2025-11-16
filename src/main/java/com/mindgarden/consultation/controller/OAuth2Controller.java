@@ -63,7 +63,7 @@ public class OAuth2Controller {
     @Value("${spring.security.oauth2.client.registration.naver.client-id:dummy}")
     private String naverClientId;
     
-    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri}")
+    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:http://dev.m-garden.co.kr/api/auth/naver/callback}")
     private String naverRedirectUri;
     
     @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")

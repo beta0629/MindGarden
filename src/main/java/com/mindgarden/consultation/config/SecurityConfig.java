@@ -124,9 +124,9 @@ public class SecurityConfig {
         boolean isProdProfile = "prod".equals(activeProfile) || "prod".equals(envProfile) || 
                                "production".equals(activeProfile) || "production".equals(envProfile);
         
-        // 추가: 운영 서버 도메인 체크 (beta74.cafe24.com)
-        boolean isProdDomain = System.getenv("SERVER_DOMAIN") != null && 
-                              System.getenv("SERVER_DOMAIN").contains("cafe24.com");
+        // 추가: 운영 서버 도메인 체크 (배포 서버만 명시적으로 prod로 인식)
+        String serverDomain = System.getenv("SERVER_DOMAIN");
+        boolean isProdDomain = "beta74.cafe24.com".equalsIgnoreCase(serverDomain);
         
         return isProdProfile || isProdDomain;
     }

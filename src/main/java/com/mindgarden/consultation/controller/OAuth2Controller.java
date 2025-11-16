@@ -211,6 +211,9 @@ public class OAuth2Controller {
                 }
             }
             
+            log.info("네이버 OAuth2 인증 URL 생성: client_id={}, redirect_uri={}, state={}", 
+                    naverClientId, callbackUrl, state);
+            
             String authUrl = "https://nid.naver.com/oauth2.0/authorize?" +
                     "response_type=code" +
                     "&client_id=" + naverClientId +

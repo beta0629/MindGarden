@@ -51,17 +51,12 @@ if (-not $env:JAVA_HOME) {
     }
 }
 
-# JAR 파일 확인 및 실행
-if (Test-Path "target\consultation-management-system-1.0.0.jar") {
-    Write-Host "`nFound JAR file, starting server..." -ForegroundColor Green
-    java -jar "target\consultation-management-system-1.0.0.jar"
+# 개발 환경에서는 항상 Maven Wrapper로 실행 (소스 수정사항 즉시 반영)
+Write-Host "`nStarting server via Maven Wrapper (mvnw.cmd)..." -ForegroundColor Yellow
+if (Test-Path ".\mvnw.cmd") {
+    .\mvnw.cmd spring-boot:run -Dspring.profiles.active=local
 } else {
-    Write-Host "`nJAR file not found. Trying Maven Wrapper..." -ForegroundColor Yellow
-    if (Test-Path ".\mvnw.cmd") {
-        .\mvnw.cmd spring-boot:run -Dspring.profiles.active=local
-    } else {
-        Write-Host "ERROR: Maven Wrapper (mvnw.cmd) not found!" -ForegroundColor Red
-        exit 1
-    }
+    Write-Host "ERROR: Maven Wrapper (mvnw.cmd) not found!" -ForegroundColor Red
+    exit 1
 }
 

@@ -2,10 +2,8 @@ package com.mindgarden.consultation.config;
 
 import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -88,13 +86,5 @@ public class DevelopmentConfig implements WebMvcConfigurer {
             System.out.println("🚀 보안: 개발용으로 완화됨");
             System.out.println("🚀 ========================================");
         }
-    }
-    
-    /**
-     * RestTemplate Bean
-     */
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
     }
 }

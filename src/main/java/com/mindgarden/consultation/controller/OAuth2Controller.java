@@ -54,7 +54,7 @@ public class OAuth2Controller {
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
     private String kakaoClientId;
     
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:http://dev.m-garden.co.kr/api/auth/kakao/callback}")
     private String kakaoRedirectUri;
     
     @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email}")

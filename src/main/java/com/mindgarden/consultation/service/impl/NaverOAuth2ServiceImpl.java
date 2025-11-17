@@ -130,6 +130,9 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             
             log.info("네이버 액세스 토큰 획득 시도: client_id={}, redirect_uri={}, code={}", 
                     clientId, redirectUriToUse, code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null");
+            log.info("네이버 토큰 요청 전체 파라미터: grant_type={}, client_id={}, client_secret={}, redirect_uri={}, code={}, state={}", 
+                     "authorization_code", clientId, clientSecret != null ? clientSecret.substring(0, Math.min(5, clientSecret.length())) + "..." : "null", 
+                     redirectUriToUse, code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null", "naver_oauth_state");
             log.debug("네이버 토큰 요청 파라미터: grant_type={}, client_id={}, redirect_uri={}", 
                      "authorization_code", clientId, redirectUriToUse);
             

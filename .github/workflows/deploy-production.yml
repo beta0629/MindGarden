@@ -160,6 +160,17 @@ jobs:
             tar -czf frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz frontend/
           fi
           
+          # /tmp/ 디렉토리의 기존 SQL 파일 및 디렉토리 정리
+          echo "🧹 /tmp/ 디렉토리 정리 중..."
+          rm -rf /tmp/production_all_missing_procedures.sql
+          rm -rf /tmp/mapping_update_procedures_mysql.sql
+          rm -rf /tmp/production_mapping_procedures.sql
+          rm -rf /tmp/business_time_procedures_final.sql
+          rm -rf /tmp/update_all_role_menus.sql
+          rm -f /tmp/*.sql
+          rm -f /tmp/*_proc.log
+          echo "✅ /tmp/ 디렉토리 정리 완료"
+          
     - name: 📤 백엔드 파일 업로드
       if: steps.changed-files.outputs.backend_changed == 'true'
       uses: appleboy/scp-action@v0.1.7

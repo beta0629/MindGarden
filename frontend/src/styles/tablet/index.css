@@ -465,13 +465,7 @@
 }
 
 .divider::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--gray-200);
+  display: none; /* 가로선 제거 */
 }
 
 .divider span {
@@ -1847,13 +1841,7 @@ html {
 }
 
 .login-divider::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--color-neutral);
+  display: none; /* 가로선 제거 */
 }
 
 .login-divider span {

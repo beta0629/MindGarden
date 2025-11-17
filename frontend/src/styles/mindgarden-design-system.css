@@ -12380,6 +12380,8 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 10001; /* mg-v2-modal-overlay(10000)보다 높게 설정 */
 }
 
 .mg-v2-modal-body {
@@ -12469,7 +12471,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000; /* SocialSignupModal(9999)보다 높게 설정 */
 }
 
 .mg-v2-modal-title {

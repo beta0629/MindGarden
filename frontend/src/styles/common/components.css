@@ -454,7 +454,7 @@
     background: white;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    z-index: 1001;
+    z-index: var(--z-modal-confirm, 10010);
     width: 90%;
     max-width: 500px;
     max-height: 90vh;

@@ -12,7 +12,7 @@
 - 기존 상담 메시지 시스템과 차별화된 1:1 대화 기능
 
 ### 1.2 범위
-- **포함:** 1:1 DM, 그룹 DM(향후), 실시간 알림, 읽음 상태 표시
+- **포함:** 1:1 DM, 그룹 DM(향후), 실시간 알림, 읽음 상태 표시, **입력 중 표시(Typing Indicator)**
 - **제외:** 파일 첨부(초기), 음성/영상 통화(향후), 이모지/스티커(향후)
 
 ### 1.3 비즈니스 가치
@@ -175,6 +175,21 @@ POST /api/dm/block                      # 사용자 차단
 DELETE /api/dm/block/{id}               # 차단 해제
 ```
 
+#### 5.1.4 WebSocket 이벤트 타입
+```
+클라이언트 → 서버:
+- MESSAGE: 메시지 전송
+- TYPING_START: 입력 시작 (상대방에게 알림)
+- TYPING_STOP: 입력 중지 (상대방에게 알림)
+- READ: 메시지 읽음 처리
+
+서버 → 클라이언트:
+- MESSAGE: 새 메시지 수신
+- TYPING: 상대방 입력 중 표시
+- READ: 상대방이 메시지를 읽음
+- ERROR: 에러 발생
+```
+
 ### 5.2 Phase 2: Redis Pub/Sub 도입
 
 #### 5.2.1 Redis Pub/Sub 구조
@@ -211,6 +226,13 @@ public class RedisMessagePublisher {
 - 대화방 목록: Redis 캐시 (5분 TTL)
 - 읽지 않은 메시지 수: Redis 캐시 (1분 TTL)
 - 최근 메시지: Redis 캐시 (10분 TTL)
+- **입력 중 상태**: Redis 캐시 (5초 TTL, 자동 만료)
+
+#### 5.3.3 입력 중 표시 최적화
+- **Debounce 처리**: 500ms 간격으로 이벤트 전송 (과도한 이벤트 방지)
+- **자동 해제**: 3초 동안 입력이 없으면 자동으로 입력 중 해제
+- **Redis TTL**: 입력 중 상태를 Redis에 저장하고 5초 후 자동 만료
+- **메모리 효율**: 입력 중 상태는 메모리 사용량이 매우 적음 (~100 bytes/사용자)
 
 #### 5.3.3 데이터베이스 최적화
 - 메시지 아카이빙: 6개월 이상 된 메시지는 별도 테이블로 이동
@@ -227,6 +249,8 @@ class DmWebSocketManager {
         this.ws = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
+        this.typingTimeout = null;
+        this.isTyping = false;
     }
     
     connect(userId) {
@@ -252,6 +276,47 @@ class DmWebSocketManager {
             }));
         }
     }
+    
+    // 입력 중 표시 전송 (인스타그램/카카오톡 스타일)
+    sendTypingIndicator(conversationId, isTyping) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({
+                type: 'TYPING',
+                conversationId,
+                isTyping: isTyping
+            }));
+        }
+    }
+    
+    // 입력 시작 시 자동으로 입력 중 표시 전송
+    handleInputStart(conversationId) {
+        if (!this.isTyping) {
+            this.isTyping = true;
+            this.sendTypingIndicator(conversationId, true);
+        }
+        
+        // 3초 후 자동으로 입력 중 해제 (타이핑이 멈추면)
+        clearTimeout(this.typingTimeout);
+        this.typingTimeout = setTimeout(() => {
+            this.handleInputStop(conversationId);
+        }, 3000);
+    }
+    
+    // 입력 중지 시 입력 중 표시 해제
+    handleInputStop(conversationId) {
+        if (this.isTyping) {
+            this.isTyping = false;
+            this.sendTypingIndicator(conversationId, false);
+        }
+        clearTimeout(this.typingTimeout);
+    }
+    
+    // 입력 중 표시 수신 처리
+    handleTypingIndicator(data) {
+        const { conversationId, userId, isTyping } = data;
+        // UI에 입력 중 표시 업데이트
+        this.onTypingIndicatorReceived(conversationId, userId, isTyping);
+    }
 }
 ```
 
@@ -259,7 +324,8 @@ class DmWebSocketManager {
 - **DmConversationList**: 대화방 목록
 - **DmChatWindow**: 채팅 창
 - **DmMessageItem**: 메시지 아이템
-- **DmInputBox**: 메시지 입력 박스
+- **DmInputBox**: 메시지 입력 박스 (입력 중 표시 포함)
+- **DmTypingIndicator**: "상대방이 입력 중입니다..." 표시 컴포넌트
 - **DmNotificationBadge**: 읽지 않은 메시지 배지
 
 ### 6.3 상태 관리
@@ -278,6 +344,7 @@ class DmWebSocketManager {
 - **초당 메시지 수**: 모니터링 및 알림
 - **사용자당 초당 메시지**: 최대 10개 (Rate Limiting)
 - **배치 처리**: 100개 단위로 DB 저장
+- **입력 중 이벤트**: Debounce 처리로 초당 최대 2회 전송 (과도한 이벤트 방지)
 
 ### 7.3 데이터베이스 부하 관리
 - **읽기 최적화**: 인덱스 활용, 캐싱
@@ -325,6 +392,11 @@ class DmWebSocketManager {
 - [ ] 실시간 메시지 전송 로직
 - [ ] 연결 관리 (연결/해제)
 - [ ] 에러 처리 및 재연결 로직
+- [ ] **입력 중 표시(Typing Indicator) 기능**
+  - [ ] 입력 시작/중지 이벤트 처리
+  - [ ] 상대방에게 입력 중 상태 전송
+  - [ ] 자동 해제 로직 (3초 후)
+  - [ ] UI에 입력 중 표시 컴포넌트
 
 #### Week 3: 프론트엔드 구현
 - [ ] WebSocket 클라이언트 구현
@@ -332,6 +404,11 @@ class DmWebSocketManager {
 - [ ] 채팅 창 UI
 - [ ] 메시지 전송/수신 기능
 - [ ] 읽음 상태 표시
+- [ ] **입력 중 표시 UI 구현**
+  - [ ] 입력 시작/중지 이벤트 감지
+  - [ ] "상대방이 입력 중입니다..." 표시
+  - [ ] 애니메이션 효과 (점 3개 깜빡임)
+  - [ ] 자동 해제 처리
 
 ### Phase 2: Redis Pub/Sub 도입 (1-2주, 선택적)
 
@@ -380,6 +457,10 @@ class DmWebSocketManager {
 - [ ] 대화방 목록 컴포넌트
 - [ ] 채팅 창 컴포넌트
 - [ ] 메시지 입력 컴포넌트
+- [ ] **입력 중 표시 컴포넌트** (인스타그램/카카오톡 스타일)
+  - [ ] 입력 시작/중지 이벤트 처리
+  - [ ] "상대방이 입력 중입니다..." UI
+  - [ ] 애니메이션 효과
 - [ ] 읽지 않은 메시지 배지
 - [ ] 실시간 알림 통합
 - [ ] 반응형 디자인 적용

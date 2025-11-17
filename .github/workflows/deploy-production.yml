@@ -133,19 +133,18 @@ jobs:
         strip_components: 1
         overwrite: true
         
-    # PL/SQL 프로시저 업로드는 필요할 때만 수동으로 실행
-    # - name: 📤 PL/SQL 프로시저 업로드
-    #   uses: appleboy/scp-action@v0.1.7
-    #   with:
-    #     host: ${{ secrets.PRODUCTION_HOST }}
-    #     username: ${{ secrets.PRODUCTION_USER }}
-    #     key: ${{ secrets.PRODUCTION_SSH_KEY }}
-    #     port: 22
-    #     timeout: 120s
-    #     source: "sql/production_all_missing_procedures.sql"
-    #     target: "/tmp/"
-    #     strip_components: 1
-    #     overwrite: true
+    - name: 📤 PL/SQL 프로시저 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "sql/production_all_missing_procedures.sql"
+        target: "/tmp/production_all_missing_procedures.sql"
+        strip_components: 0
+        overwrite: true
         
     - name: 📤 메뉴 업데이트 SQL 업로드
       uses: appleboy/scp-action@v0.1.7
@@ -170,7 +169,7 @@ jobs:
         timeout: 120s
         source: "sql/mapping_update_procedures_mysql.sql"
         target: "/tmp/mapping_update_procedures_mysql.sql"
-        strip_components: 1
+        strip_components: 0
         overwrite: true
         
     # 메시지 권한 SQL 업로드 - 권한 오류로 주석 처리

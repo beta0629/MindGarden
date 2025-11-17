@@ -259,12 +259,13 @@ jobs:
           # 권한 설정
           chmod +x app.jar
           
-          # 간단한 서비스 재시작
+          # 서비스 재시작
           echo "🔄 서비스 재시작..."
           sudo systemctl stop mindgarden.service || true
           sleep 5
           sudo systemctl start mindgarden.service
-          sleep 10
+          echo "⏳ 애플리케이션 시작 대기 중 (30초)..."
+          sleep 30
           
           # 서비스 상태 확인
           echo "🔍 서비스 상태 확인..."

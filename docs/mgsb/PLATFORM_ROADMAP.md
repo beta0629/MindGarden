@@ -47,6 +47,11 @@
 - [ ] 소비자 포털 예약/결제 UX AB 테스트, 접근성 개선
 - [ ] 운영 로그 요약/알림: GPT 기반 로그 요약→Slack/대시보드 통합  
 - [ ] 내부 운영 지원 챗봇 PoC: 테넌트/운영 관련 Q&A
+- [ ] **커뮤니티 DM 기능 구현** (WebSocket 기반 실시간 메시징)
+  - [ ] DM 대화방 및 메시지 기능 (Phase 1: WebSocket 직접 구현)
+  - [ ] 실시간 알림 및 읽음 상태 표시
+  - [ ] 사용자 차단 기능
+  - [ ] 서버 과부하 모니터링 및 최적화
 
 ### T3 (2026 Q3) — 업종 확장 (미용/서비스)
 - [ ] 미용/서비스 업종 5대 흐름 정의 및 모듈 설계
@@ -96,5 +101,6 @@
   - `DATA_CORE_AND_PL_SQL.md`: 데이터 모델 설계 (1.4 컴포넌트 카탈로그)
   - `IDENTITY_AND_SSO.md`: 인증 및 SSO
   - `COMPONENT_MODULARIZATION_IMPLEMENTATION_GUIDE.md`: **구현 난이도 평가 및 개발 가이드** (신규)
+  - `DM_FEATURE_IMPLEMENTATION_PLAN.md`: **DM 기능 구현 계획** (신규, 2025-11-17)
 
 

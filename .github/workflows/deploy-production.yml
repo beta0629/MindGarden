@@ -392,6 +392,40 @@ jobs:
             echo "⚠️ 매핑 수정 프로시저 파일을 찾을 수 없습니다"
           fi
           
+          # 매핑 프로시저 (운영용) 배포
+          echo "🔧 매핑 프로시저 (운영용) 배포 시작..."
+          if [ -f /tmp/production_mapping_procedures.sql ]; then
+            echo "📋 매핑 프로시저 (운영용) 파일 확인됨"
+            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/production_mapping_procedures.sql 2>&1 | tee /tmp/production_mapping_proc.log || true
+            
+            if [ ${PIPESTATUS[0]} -eq 0 ]; then
+              echo "✅ 매핑 프로시저 (운영용) 배포 완료"
+            else
+              echo "⚠️ 매핑 프로시저 (운영용) 배포 중 오류 발생 (계속 진행)"
+              cat /tmp/production_mapping_proc.log | tail -20 || true
+            fi
+            rm -f /tmp/production_mapping_procedures.sql /tmp/production_mapping_proc.log
+          else
+            echo "⚠️ 매핑 프로시저 (운영용) 파일을 찾을 수 없습니다"
+          fi
+          
+          # 업무 시간 프로시저 배포
+          echo "🔧 업무 시간 프로시저 배포 시작..."
+          if [ -f /tmp/business_time_procedures_final.sql ]; then
+            echo "📋 업무 시간 프로시저 파일 확인됨"
+            mysql -h localhost -u mindgarden -p'mindgarden2025' mind_garden < /tmp/business_time_procedures_final.sql 2>&1 | tee /tmp/business_time_proc.log || true
+            
+            if [ ${PIPESTATUS[0]} -eq 0 ]; then
+              echo "✅ 업무 시간 프로시저 배포 완료"
+            else
+              echo "⚠️ 업무 시간 프로시저 배포 중 오류 발생 (계속 진행)"
+              cat /tmp/business_time_proc.log | tail -20 || true
+            fi
+            rm -f /tmp/business_time_procedures_final.sql /tmp/business_time_proc.log
+          else
+            echo "⚠️ 업무 시간 프로시저 파일을 찾을 수 없습니다"
+          fi
+          
           # PL/SQL 프로시저 등록
           echo "🔧 PL/SQL 프로시저 등록 시작..."
           if [ -f /tmp/production_all_missing_procedures.sql ]; then

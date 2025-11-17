@@ -170,12 +170,26 @@ public class OAuth2Controller {
                     requestScheme = request.getScheme();
                 }
                 
-                String requestHost = request.getHeader("X-Forwarded-Host");
-                if (requestHost == null || requestHost.isEmpty()) {
-                    requestHost = request.getHeader("Host");
-                }
-                if (requestHost == null || requestHost.isEmpty()) {
-                    requestHost = request.getServerName();
+                // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
+                String requestHost = request.getHeader("Host");
+                // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
+                if (requestHost != null && requestHost.contains("localhost") && !requestHost.contains(":8080")) {
+                    // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
+                    requestHost = request.getServerName() + ":" + request.getServerPort();
+                } else if (requestHost == null || requestHost.isEmpty()) {
+                    // Host 헤더가 없으면 X-Forwarded-Host 확인
+                    String forwardedHost = request.getHeader("X-Forwarded-Host");
+                    if (forwardedHost != null && !forwardedHost.isEmpty()) {
+                        // X-Forwarded-Host가 백엔드 포트를 포함하는 경우만 사용
+                        if (forwardedHost.contains(":8080")) {
+                            requestHost = forwardedHost;
+                        } else {
+                            // 아니면 실제 서버 주소 사용
+                            requestHost = request.getServerName() + ":" + request.getServerPort();
+                        }
+                    } else {
+                        requestHost = request.getServerName() + ":" + request.getServerPort();
+                    }
                 }
                 
                 if (requestHost != null && !requestHost.isEmpty()) {
@@ -260,12 +274,26 @@ public class OAuth2Controller {
                     requestScheme = request.getScheme();
                 }
                 
-                String requestHost = request.getHeader("X-Forwarded-Host");
-                if (requestHost == null || requestHost.isEmpty()) {
-                    requestHost = request.getHeader("Host");
-                }
-                if (requestHost == null || requestHost.isEmpty()) {
-                    requestHost = request.getServerName();
+                // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
+                String requestHost = request.getHeader("Host");
+                // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
+                if (requestHost != null && requestHost.contains("localhost") && !requestHost.contains(":8080")) {
+                    // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
+                    requestHost = request.getServerName() + ":" + request.getServerPort();
+                } else if (requestHost == null || requestHost.isEmpty()) {
+                    // Host 헤더가 없으면 X-Forwarded-Host 확인
+                    String forwardedHost = request.getHeader("X-Forwarded-Host");
+                    if (forwardedHost != null && !forwardedHost.isEmpty()) {
+                        // X-Forwarded-Host가 백엔드 포트를 포함하는 경우만 사용
+                        if (forwardedHost.contains(":8080")) {
+                            requestHost = forwardedHost;
+                        } else {
+                            // 아니면 실제 서버 주소 사용
+                            requestHost = request.getServerName() + ":" + request.getServerPort();
+                        }
+                    } else {
+                        requestHost = request.getServerName() + ":" + request.getServerPort();
+                    }
                 }
                 
                 if (requestHost != null && !requestHost.isEmpty()) {
@@ -389,17 +417,37 @@ public class OAuth2Controller {
             String callbackRedirectUri = null;
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+                // 단, 로컬 환경(localhost)에서는 실제 요청 Host를 우선 사용
                 String requestScheme = request.getHeader("X-Forwarded-Proto");
                 if (requestScheme == null || requestScheme.isEmpty()) {
                     requestScheme = request.getScheme();
                 }
                 
-                String requestHost = request.getHeader("X-Forwarded-Host");
-                if (requestHost == null || requestHost.isEmpty()) {
-                    requestHost = request.getHeader("Host");
+                // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
+                String requestHost = request.getHeader("Host");
+                // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
+                if (requestHost != null && requestHost.contains("localhost") && !requestHost.contains(":8080")) {
+                    // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
+                    requestHost = request.getServerName() + ":" + request.getServerPort();
+                } else if (requestHost == null || requestHost.isEmpty()) {
+                    // Host 헤더가 없으면 X-Forwarded-Host 확인
+                    String forwardedHost = request.getHeader("X-Forwarded-Host");
+                    if (forwardedHost != null && !forwardedHost.isEmpty()) {
+                        // X-Forwarded-Host가 백엔드 포트를 포함하는 경우만 사용
+                        if (forwardedHost.contains(":8080")) {
+                            requestHost = forwardedHost;
+                        } else {
+                            // 아니면 실제 서버 주소 사용
+                            requestHost = request.getServerName() + ":" + request.getServerPort();
+                        }
+                    }
                 }
                 if (requestHost == null || requestHost.isEmpty()) {
                     requestHost = request.getServerName();
+                    int port = request.getServerPort();
+                    if (port != 80 && port != 443) {
+                        requestHost = requestHost + ":" + port;
+                    }
                 }
                 
                 if (requestHost != null && !requestHost.isEmpty()) {
@@ -797,17 +845,37 @@ public class OAuth2Controller {
             String actualRedirectUri = null;
             try {
                 // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+                // 단, 로컬 환경(localhost)에서는 실제 요청 Host를 우선 사용
                 String requestScheme = request.getHeader("X-Forwarded-Proto");
                 if (requestScheme == null || requestScheme.isEmpty()) {
                     requestScheme = request.getScheme();
                 }
                 
-                String requestHost = request.getHeader("X-Forwarded-Host");
-                if (requestHost == null || requestHost.isEmpty()) {
-                    requestHost = request.getHeader("Host");
+                // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
+                String requestHost = request.getHeader("Host");
+                // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
+                if (requestHost != null && requestHost.contains("localhost") && !requestHost.contains(":8080")) {
+                    // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
+                    requestHost = request.getServerName() + ":" + request.getServerPort();
+                } else if (requestHost == null || requestHost.isEmpty()) {
+                    // Host 헤더가 없으면 X-Forwarded-Host 확인
+                    String forwardedHost = request.getHeader("X-Forwarded-Host");
+                    if (forwardedHost != null && !forwardedHost.isEmpty()) {
+                        // X-Forwarded-Host가 백엔드 포트를 포함하는 경우만 사용
+                        if (forwardedHost.contains(":8080")) {
+                            requestHost = forwardedHost;
+                        } else {
+                            // 아니면 실제 서버 주소 사용
+                            requestHost = request.getServerName() + ":" + request.getServerPort();
+                        }
+                    }
                 }
                 if (requestHost == null || requestHost.isEmpty()) {
                     requestHost = request.getServerName();
+                    int port = request.getServerPort();
+                    if (port != 80 && port != 443) {
+                        requestHost = requestHost + ":" + port;
+                    }
                 }
                 
                 if (requestHost != null && !requestHost.isEmpty()) {

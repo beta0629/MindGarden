@@ -143,20 +143,36 @@ public class OAuth2Controller {
                 log.info("카카오 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
             
-            // 콜백 URL 동적 생성 (모바일 클라이언트인 경우 Host 헤더 사용)
-            String callbackUrl = kakaoRedirectUri;
-            if ("mobile".equals(client)) {
-                // 모바일 클라이언트인 경우 요청 Host 헤더 확인
-                try {
-                    String requestHost = request.getHeader("Host");
-                    if (requestHost != null && !requestHost.isEmpty() && !requestHost.contains("localhost")) {
-                        String protocol = request.getScheme();
-                        callbackUrl = protocol + "://" + requestHost + "/api/auth/kakao/callback";
-                        log.info("카카오 OAuth2 - 모바일 클라이언트 동적 redirect URI: {}", callbackUrl);
-                    }
-                } catch (Exception e) {
-                    log.warn("카카오 OAuth2 - 요청 Host 파싱 실패, 기본 redirect URI 사용", e);
+            // 콜백 URL 동적 생성 (항상 요청의 scheme과 host 사용)
+            String callbackUrl = null;
+            try {
+                String requestScheme = request.getScheme();
+                String requestHost = request.getHeader("Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    requestHost = request.getServerName();
                 }
+                if (requestHost != null && !requestHost.isEmpty()) {
+                    // 포트가 포함된 경우와 아닌 경우 모두 처리
+                    if (requestHost.contains(":")) {
+                        callbackUrl = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                    } else {
+                        int port = request.getServerPort();
+                        if (port == 80 || port == 443) {
+                            callbackUrl = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                        } else {
+                            callbackUrl = requestScheme + "://" + requestHost + ":" + port + "/api/auth/kakao/callback";
+                        }
+                    }
+                    log.info("카카오 OAuth2 - 동적 redirect URI 생성: {}", callbackUrl);
+                }
+            } catch (Exception e) {
+                log.error("카카오 OAuth2 - redirect URI 동적 생성 실패", e);
+            }
+            
+            if (callbackUrl == null || callbackUrl.isEmpty()) {
+                // 폴백: 설정값 사용
+                callbackUrl = kakaoRedirectUri;
+                log.warn("카카오 OAuth2 - 동적 생성 실패, 설정값 사용: {}", callbackUrl);
             }
             
             String authUrl = "https://kauth.kakao.com/oauth/authorize?" +
@@ -195,20 +211,36 @@ public class OAuth2Controller {
                 log.info("네이버 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
             
-            // 콜백 URL 동적 생성 (모바일 클라이언트인 경우 Host 헤더 사용)
-            String callbackUrl = naverRedirectUri;
-            if ("mobile".equals(client)) {
-                // 모바일 클라이언트인 경우 요청 Host 헤더 확인
-                try {
-                    String requestHost = request.getHeader("Host");
-                    if (requestHost != null && !requestHost.isEmpty() && !requestHost.contains("localhost")) {
-                        String protocol = request.getScheme();
-                        callbackUrl = protocol + "://" + requestHost + "/api/auth/naver/callback";
-                        log.info("네이버 OAuth2 - 모바일 클라이언트 동적 redirect URI: {}", callbackUrl);
-                    }
-                } catch (Exception e) {
-                    log.warn("네이버 OAuth2 - 요청 Host 파싱 실패, 기본 redirect URI 사용", e);
+            // 콜백 URL 동적 생성 (항상 요청의 scheme과 host 사용)
+            String callbackUrl = null;
+            try {
+                String requestScheme = request.getScheme();
+                String requestHost = request.getHeader("Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    requestHost = request.getServerName();
                 }
+                if (requestHost != null && !requestHost.isEmpty()) {
+                    // 포트가 포함된 경우와 아닌 경우 모두 처리
+                    if (requestHost.contains(":")) {
+                        callbackUrl = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                    } else {
+                        int port = request.getServerPort();
+                        if (port == 80 || port == 443) {
+                            callbackUrl = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                        } else {
+                            callbackUrl = requestScheme + "://" + requestHost + ":" + port + "/api/auth/naver/callback";
+                        }
+                    }
+                    log.info("네이버 OAuth2 - 동적 redirect URI 생성: {}", callbackUrl);
+                }
+            } catch (Exception e) {
+                log.error("네이버 OAuth2 - redirect URI 동적 생성 실패", e);
+            }
+            
+            if (callbackUrl == null || callbackUrl.isEmpty()) {
+                // 폴백: 설정값 사용
+                callbackUrl = naverRedirectUri;
+                log.warn("네이버 OAuth2 - 동적 생성 실패, 설정값 사용: {}", callbackUrl);
             }
             
             log.info("네이버 OAuth2 인증 URL 생성: client_id={}, redirect_uri={}, state={}", 

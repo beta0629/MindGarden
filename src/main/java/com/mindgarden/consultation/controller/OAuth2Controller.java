@@ -54,7 +54,7 @@ public class OAuth2Controller {
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
     private String kakaoClientId;
     
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${KAKAO_REDIRECT_URI:https://dev.m-garden.co.kr/api/auth/kakao/callback}}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${KAKAO_REDIRECT_URI:}}")
     private String kakaoRedirectUri;
     
     @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email}")
@@ -63,13 +63,13 @@ public class OAuth2Controller {
     @Value("${spring.security.oauth2.client.registration.naver.client-id:dummy}")
     private String naverClientId;
     
-    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${NAVER_REDIRECT_URI:https://dev.m-garden.co.kr/api/auth/naver/callback}}")
+    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${NAVER_REDIRECT_URI:}}")
     private String naverRedirectUri;
     
     @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")
     private String naverScope;
     
-    @Value("${frontend.base-url:${FRONTEND_BASE_URL:http://m-garden.co.kr}}")
+    @Value("${frontend.base-url:${FRONTEND_BASE_URL:}}")
     private String frontendBaseUrl;
     
     @PostConstruct
@@ -113,14 +113,32 @@ public class OAuth2Controller {
                 return envFrontendUrl;
             }
             
-            // 모든 설정이 없으면 기본값 (개발환경)
-            // 환경 변수에서 가져오거나 기본값 사용
-            String defaultUrl = System.getenv("FRONTEND_BASE_URL");
-            if (defaultUrl == null || defaultUrl.trim().isEmpty()) {
-                defaultUrl = "http://localhost:3000";
+            // 모든 설정이 없으면 요청의 scheme과 host로 동적 생성
+            try {
+                String requestScheme = request.getHeader("X-Forwarded-Proto");
+                if (requestScheme == null || requestScheme.isEmpty()) {
+                    requestScheme = request.getScheme();
+                }
+                
+                String requestHost = request.getHeader("X-Forwarded-Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    requestHost = request.getHeader("Host");
+                }
+                if (requestHost == null || requestHost.isEmpty()) {
+                    requestHost = request.getServerName();
+                }
+                
+                if (requestHost != null && !requestHost.isEmpty()) {
+                    String dynamicUrl = requestScheme + "://" + requestHost;
+                    log.warn("프론트엔드 URL이 설정되지 않음, 동적 생성: {}", dynamicUrl);
+                    return dynamicUrl;
+                }
+            } catch (Exception e) {
+                log.error("프론트엔드 URL 동적 생성 실패", e);
             }
-            log.warn("프론트엔드 URL이 설정되지 않음, 기본값 사용: {}", defaultUrl);
-            return defaultUrl;
+            
+            log.error("프론트엔드 URL을 생성할 수 없습니다. FRONTEND_BASE_URL 환경 변수를 설정하세요.");
+            return ""; // 빈 문자열 반환 (에러 처리 필요)
         }
         
         return frontendBaseUrl;
@@ -143,27 +161,49 @@ public class OAuth2Controller {
                 log.info("카카오 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
             
-            // 콜백 URL 동적 생성 (항상 요청의 scheme과 host 사용)
+            // 콜백 URL 동적 생성 (항상 요청의 scheme과 host 사용, 프록시 헤더 고려)
             String callbackUrl = null;
             try {
-                String requestScheme = request.getScheme();
-                String requestHost = request.getHeader("Host");
+                // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+                String requestScheme = request.getHeader("X-Forwarded-Proto");
+                if (requestScheme == null || requestScheme.isEmpty()) {
+                    requestScheme = request.getScheme();
+                }
+                
+                String requestHost = request.getHeader("X-Forwarded-Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    requestHost = request.getHeader("Host");
+                }
                 if (requestHost == null || requestHost.isEmpty()) {
                     requestHost = request.getServerName();
                 }
+                
                 if (requestHost != null && !requestHost.isEmpty()) {
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
                     if (requestHost.contains(":")) {
                         callbackUrl = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
                     } else {
-                        int port = request.getServerPort();
-                        if (port == 80 || port == 443) {
-                            callbackUrl = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                        // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
+                        String forwardedPort = request.getHeader("X-Forwarded-Port");
+                        if (forwardedPort != null && !forwardedPort.isEmpty()) {
+                            int port = Integer.parseInt(forwardedPort);
+                            if (port == 80 || port == 443) {
+                                callbackUrl = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                            } else {
+                                callbackUrl = requestScheme + "://" + requestHost + ":" + port + "/api/auth/kakao/callback";
+                            }
                         } else {
-                            callbackUrl = requestScheme + "://" + requestHost + ":" + port + "/api/auth/kakao/callback";
+                            int port = request.getServerPort();
+                            if (port == 80 || port == 443) {
+                                callbackUrl = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                            } else {
+                                callbackUrl = requestScheme + "://" + requestHost + ":" + port + "/api/auth/kakao/callback";
+                            }
                         }
                     }
-                    log.info("카카오 OAuth2 - 동적 redirect URI 생성: {}", callbackUrl);
+                    log.info("카카오 OAuth2 - 동적 redirect URI 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})", 
+                            callbackUrl, request.getScheme(), request.getHeader("Host"), 
+                            request.getHeader("X-Forwarded-Proto"), request.getHeader("X-Forwarded-Host"));
                 }
             } catch (Exception e) {
                 log.error("카카오 OAuth2 - redirect URI 동적 생성 실패", e);
@@ -211,27 +251,49 @@ public class OAuth2Controller {
                 log.info("네이버 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
             
-            // 콜백 URL 동적 생성 (항상 요청의 scheme과 host 사용)
+            // 콜백 URL 동적 생성 (항상 요청의 scheme과 host 사용, 프록시 헤더 고려)
             String callbackUrl = null;
             try {
-                String requestScheme = request.getScheme();
-                String requestHost = request.getHeader("Host");
+                // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+                String requestScheme = request.getHeader("X-Forwarded-Proto");
+                if (requestScheme == null || requestScheme.isEmpty()) {
+                    requestScheme = request.getScheme();
+                }
+                
+                String requestHost = request.getHeader("X-Forwarded-Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    requestHost = request.getHeader("Host");
+                }
                 if (requestHost == null || requestHost.isEmpty()) {
                     requestHost = request.getServerName();
                 }
+                
                 if (requestHost != null && !requestHost.isEmpty()) {
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
                     if (requestHost.contains(":")) {
                         callbackUrl = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
                     } else {
-                        int port = request.getServerPort();
-                        if (port == 80 || port == 443) {
-                            callbackUrl = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                        // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
+                        String forwardedPort = request.getHeader("X-Forwarded-Port");
+                        if (forwardedPort != null && !forwardedPort.isEmpty()) {
+                            int port = Integer.parseInt(forwardedPort);
+                            if (port == 80 || port == 443) {
+                                callbackUrl = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                            } else {
+                                callbackUrl = requestScheme + "://" + requestHost + ":" + port + "/api/auth/naver/callback";
+                            }
                         } else {
-                            callbackUrl = requestScheme + "://" + requestHost + ":" + port + "/api/auth/naver/callback";
+                            int port = request.getServerPort();
+                            if (port == 80 || port == 443) {
+                                callbackUrl = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                            } else {
+                                callbackUrl = requestScheme + "://" + requestHost + ":" + port + "/api/auth/naver/callback";
+                            }
                         }
                     }
-                    log.info("네이버 OAuth2 - 동적 redirect URI 생성: {}", callbackUrl);
+                    log.info("네이버 OAuth2 - 동적 redirect URI 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})", 
+                            callbackUrl, request.getScheme(), request.getHeader("Host"), 
+                            request.getHeader("X-Forwarded-Proto"), request.getHeader("X-Forwarded-Host"));
                 }
             } catch (Exception e) {
                 log.error("네이버 OAuth2 - redirect URI 동적 생성 실패", e);
@@ -322,28 +384,50 @@ public class OAuth2Controller {
                 log.info("네이버 콜백 - state 없음, 세션에서 확인: clientType={}", savedClientType);
             }
             
-            // 콜백 요청의 scheme과 host를 사용해서 redirect_uri 동적 생성 (필수)
+            // 콜백 요청의 scheme과 host를 사용해서 redirect_uri 동적 생성 (필수, 프록시 헤더 고려)
             // 인증 URL 생성 시 사용한 redirect_uri와 일치시켜야 함
             String callbackRedirectUri = null;
             try {
-                String requestScheme = request.getScheme();
-                String requestHost = request.getHeader("Host");
+                // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+                String requestScheme = request.getHeader("X-Forwarded-Proto");
+                if (requestScheme == null || requestScheme.isEmpty()) {
+                    requestScheme = request.getScheme();
+                }
+                
+                String requestHost = request.getHeader("X-Forwarded-Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    requestHost = request.getHeader("Host");
+                }
                 if (requestHost == null || requestHost.isEmpty()) {
                     requestHost = request.getServerName();
                 }
+                
                 if (requestHost != null && !requestHost.isEmpty()) {
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
                     if (requestHost.contains(":")) {
                         callbackRedirectUri = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
                     } else {
-                        int port = request.getServerPort();
-                        if (port == 80 || port == 443) {
-                            callbackRedirectUri = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                        // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
+                        String forwardedPort = request.getHeader("X-Forwarded-Port");
+                        if (forwardedPort != null && !forwardedPort.isEmpty()) {
+                            int port = Integer.parseInt(forwardedPort);
+                            if (port == 80 || port == 443) {
+                                callbackRedirectUri = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                            } else {
+                                callbackRedirectUri = requestScheme + "://" + requestHost + ":" + port + "/api/auth/naver/callback";
+                            }
                         } else {
-                            callbackRedirectUri = requestScheme + "://" + requestHost + ":" + port + "/api/auth/naver/callback";
+                            int port = request.getServerPort();
+                            if (port == 80 || port == 443) {
+                                callbackRedirectUri = requestScheme + "://" + requestHost + "/api/auth/naver/callback";
+                            } else {
+                                callbackRedirectUri = requestScheme + "://" + requestHost + ":" + port + "/api/auth/naver/callback";
+                            }
                         }
                     }
-                    log.info("네이버 콜백 - 동적 redirect_uri 생성: {}", callbackRedirectUri);
+                    log.info("네이버 콜백 - 동적 redirect_uri 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})", 
+                            callbackRedirectUri, request.getScheme(), request.getHeader("Host"), 
+                            request.getHeader("X-Forwarded-Proto"), request.getHeader("X-Forwarded-Host"));
                 }
             } catch (Exception e) {
                 log.error("네이버 콜백 - redirect_uri 동적 생성 실패", e);
@@ -709,27 +793,49 @@ public class OAuth2Controller {
                 log.info("카카오 콜백 - state 없음, 세션에서 확인: clientType={}", savedClientType);
             }
             
-            // 동적 redirectUri 계산 (항상 동적으로 생성)
+            // 동적 redirectUri 계산 (항상 동적으로 생성, 프록시 헤더 고려)
             String actualRedirectUri = null;
             try {
-                String requestScheme = request.getScheme();
-                String requestHost = request.getHeader("Host");
+                // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+                String requestScheme = request.getHeader("X-Forwarded-Proto");
+                if (requestScheme == null || requestScheme.isEmpty()) {
+                    requestScheme = request.getScheme();
+                }
+                
+                String requestHost = request.getHeader("X-Forwarded-Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    requestHost = request.getHeader("Host");
+                }
                 if (requestHost == null || requestHost.isEmpty()) {
                     requestHost = request.getServerName();
                 }
+                
                 if (requestHost != null && !requestHost.isEmpty()) {
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
                     if (requestHost.contains(":")) {
                         actualRedirectUri = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
                     } else {
-                        int port = request.getServerPort();
-                        if (port == 80 || port == 443) {
-                            actualRedirectUri = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                        // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
+                        String forwardedPort = request.getHeader("X-Forwarded-Port");
+                        if (forwardedPort != null && !forwardedPort.isEmpty()) {
+                            int port = Integer.parseInt(forwardedPort);
+                            if (port == 80 || port == 443) {
+                                actualRedirectUri = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                            } else {
+                                actualRedirectUri = requestScheme + "://" + requestHost + ":" + port + "/api/auth/kakao/callback";
+                            }
                         } else {
-                            actualRedirectUri = requestScheme + "://" + requestHost + ":" + port + "/api/auth/kakao/callback";
+                            int port = request.getServerPort();
+                            if (port == 80 || port == 443) {
+                                actualRedirectUri = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                            } else {
+                                actualRedirectUri = requestScheme + "://" + requestHost + ":" + port + "/api/auth/kakao/callback";
+                            }
                         }
                     }
-                    log.info("카카오 콜백 - 동적 redirect_uri 생성: {}", actualRedirectUri);
+                    log.info("카카오 콜백 - 동적 redirect_uri 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})", 
+                            actualRedirectUri, request.getScheme(), request.getHeader("Host"), 
+                            request.getHeader("X-Forwarded-Proto"), request.getHeader("X-Forwarded-Host"));
                 }
             } catch (Exception e) {
                 log.error("카카오 콜백 - redirect_uri 동적 생성 실패", e);

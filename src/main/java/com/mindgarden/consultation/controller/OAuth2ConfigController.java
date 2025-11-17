@@ -86,7 +86,7 @@ public class OAuth2ConfigController {
     /**
      * 요청에서 baseUrl을 동적으로 생성
      * 1. 환경변수 우선 사용
-     * 2. 요청 헤더에서 동적 생성
+     * 2. 요청 헤더에서 동적 생성 (프록시 헤더 고려)
      */
     private String getBaseUrlFromRequest(HttpServletRequest request) {
         // 1. 환경변수가 설정되어 있으면 우선 사용
@@ -94,13 +94,29 @@ public class OAuth2ConfigController {
             return oauth2BaseUrl;
         }
         
-        // 2. 요청에서 동적으로 생성
-        String scheme = request.getScheme();
-        String serverName = request.getServerName();
-        int serverPort = request.getServerPort();
+        // 2. 요청에서 동적으로 생성 (프록시 헤더 고려)
+        // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
+        String scheme = request.getHeader("X-Forwarded-Proto");
+        if (scheme == null || scheme.isEmpty()) {
+            scheme = request.getScheme();
+        }
+        
+        String serverName = request.getHeader("X-Forwarded-Host");
+        if (serverName == null || serverName.isEmpty()) {
+            serverName = request.getHeader("Host");
+        }
+        if (serverName == null || serverName.isEmpty()) {
+            serverName = request.getServerName();
+        }
+        
+        // 포트 제거 (X-Forwarded-Host에 포트가 포함되어 있을 수 있음)
+        if (serverName != null && serverName.contains(":")) {
+            serverName = serverName.split(":")[0];
+        }
         
         // 개발 환경 (localhost) - 환경변수가 없으면 현재 요청 기준으로 생성
         if ("localhost".equals(serverName) || "127.0.0.1".equals(serverName)) {
+            int serverPort = request.getServerPort();
             // 개발 환경에서도 실제 포트 사용
             if (serverPort == 80 || serverPort == 443) {
                 return scheme + "://" + serverName;
@@ -109,11 +125,16 @@ public class OAuth2ConfigController {
             }
         }
         
-        // 운영 환경 (실제 도메인)
-        if (serverPort == 80 || serverPort == 443) {
+        // 운영/개발 환경 (실제 도메인) - 포트는 scheme에 따라 결정
+        if ("https".equals(scheme)) {
             return scheme + "://" + serverName;
         } else {
-            return scheme + "://" + serverName + ":" + serverPort;
+            int serverPort = request.getServerPort();
+            if (serverPort == 80 || serverPort == 443) {
+                return scheme + "://" + serverName;
+            } else {
+                return scheme + "://" + serverName + ":" + serverPort;
+            }
         }
     }
 }

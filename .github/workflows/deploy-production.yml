@@ -15,6 +15,8 @@ jobs:
     steps:
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 전체 히스토리 필요 (변경 감지용)
       
     - name: ☕ Java 17 설정
       uses: actions/setup-java@v4
@@ -48,6 +50,70 @@ jobs:
       run: |
         cd frontend
         npm run build:ci
+        
+    - name: 🔍 변경된 파일 감지
+      id: changed-files
+      run: |
+        echo "🔍 변경된 파일 감지 중..."
+        
+        # 이전 커밋과 비교 (main 브랜치의 마지막 배포 커밋)
+        # 또는 workflow_dispatch의 경우 모든 파일이 변경된 것으로 간주
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          # 수동 실행 시: 모든 파일이 변경된 것으로 간주 (전체 배포)
+          echo "📋 수동 실행: 모든 파일 배포"
+          echo "backend_changed=true" >> $GITHUB_OUTPUT
+          echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          echo "config_changed=true" >> $GITHUB_OUTPUT
+          echo "sql_procedures_changed=true" >> $GITHUB_OUTPUT
+        else
+          # 자동 실행 시: 변경된 파일만 감지
+          git diff --name-only HEAD~1 HEAD > /tmp/changed_files.txt || echo "" > /tmp/changed_files.txt
+          
+          # 백엔드 변경 감지 (Java 소스, pom.xml 등)
+          if grep -qE "^(src/|pom\.xml|\.github/workflows/deploy-production\.yml)" /tmp/changed_files.txt; then
+            echo "✅ 백엔드 변경 감지됨"
+            echo "backend_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️ 백엔드 변경 없음 - 업로드 스킵"
+            echo "backend_changed=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # 프론트엔드 변경 감지
+          if grep -qE "^frontend/" /tmp/changed_files.txt; then
+            echo "✅ 프론트엔드 변경 감지됨"
+            echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵"
+            echo "frontend_changed=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # 설정 파일 변경 감지
+          if grep -qE "^deployment/application-production\.yml" /tmp/changed_files.txt; then
+            echo "✅ 설정 파일 변경 감지됨"
+            echo "config_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️ 설정 파일 변경 없음 - 업로드 스킵"
+            echo "config_changed=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # SQL 프로시저 변경 감지
+          if grep -qE "^sql/.*\.sql$" /tmp/changed_files.txt; then
+            echo "✅ SQL 프로시저 변경 감지됨"
+            echo "sql_procedures_changed=true" >> $GITHUB_OUTPUT
+            # 변경된 SQL 파일 목록 저장
+            grep -E "^sql/.*\.sql$" /tmp/changed_files.txt > /tmp/changed_sql_files.txt || true
+          else
+            echo "⏭️ SQL 프로시저 변경 없음 - 업로드 스킵"
+            echo "sql_procedures_changed=false" >> $GITHUB_OUTPUT
+          fi
+        fi
+        
+        echo ""
+        echo "📋 변경 감지 결과:"
+        echo "  백엔드: ${{ steps.changed-files.outputs.backend_changed }}"
+        echo "  프론트엔드: ${{ steps.changed-files.outputs.frontend_changed }}"
+        echo "  설정 파일: ${{ steps.changed-files.outputs.config_changed }}"
+        echo "  SQL 프로시저: ${{ steps.changed-files.outputs.sql_procedures_changed }}"
         
     - name: 🔍 SSH 연결 테스트
       uses: appleboy/ssh-action@v1.1.0
@@ -95,6 +161,7 @@ jobs:
           fi
           
     - name: 📤 백엔드 파일 업로드
+      if: steps.changed-files.outputs.backend_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -107,7 +174,12 @@ jobs:
         strip_components: 1
         overwrite: true
         
+    - name: ⏭️ 백엔드 파일 업로드 스킵
+      if: steps.changed-files.outputs.backend_changed != 'true'
+      run: echo "⏭️ 백엔드 변경 없음 - 업로드 스킵됨"
+        
     - name: 📤 프론트엔드 파일 업로드
+      if: steps.changed-files.outputs.frontend_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -120,7 +192,12 @@ jobs:
         strip_components: 2
         overwrite: true
         
+    - name: ⏭️ 프론트엔드 파일 업로드 스킵
+      if: steps.changed-files.outputs.frontend_changed != 'true'
+      run: echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵됨"
+        
     - name: 📤 설정 파일 업로드
+      if: steps.changed-files.outputs.config_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -133,7 +210,12 @@ jobs:
         strip_components: 1
         overwrite: true
         
+    - name: ⏭️ 설정 파일 업로드 스킵
+      if: steps.changed-files.outputs.config_changed != 'true'
+      run: echo "⏭️ 설정 파일 변경 없음 - 업로드 스킵됨"
+        
     - name: 📤 PL/SQL 프로시저 업로드
+      if: steps.changed-files.outputs.sql_procedures_changed == 'true' && contains(fromJSON('["sql/production_all_missing_procedures.sql"]'), 'sql/production_all_missing_procedures.sql')
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -147,6 +229,7 @@ jobs:
         overwrite: true
         
     - name: 📤 메뉴 업데이트 SQL 업로드
+      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -160,6 +243,7 @@ jobs:
         overwrite: true
         
     - name: 📤 매핑 수정 프로시저 업로드
+      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -173,6 +257,7 @@ jobs:
         overwrite: true
         
     - name: 📤 매핑 프로시저 (운영용) 업로드
+      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -186,6 +271,7 @@ jobs:
         overwrite: true
         
     - name: 📤 업무 시간 프로시저 업로드
+      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -242,6 +328,7 @@ jobs:
     #       echo "✅ SQL 파일 권한 설정 완료"
         
     - name: 🔧 프론트엔드 파일 권한 설정
+      if: steps.changed-files.outputs.frontend_changed == 'true'
       uses: appleboy/ssh-action@v1.1.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -265,6 +352,7 @@ jobs:
     # sudo mysql -u root -p'!QAZ2wsx#EDC4rfv' mindgarden < /tmp/update_all_role_menus.sql
         
     - name: 🔄 서비스 재시작
+      if: steps.changed-files.outputs.backend_changed == 'true' || steps.changed-files.outputs.config_changed == 'true'
       uses: appleboy/ssh-action@v1.1.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}

@@ -290,12 +290,15 @@ public class OAuth2Controller {
                 log.info("네이버 콜백 - state 없음, 세션에서 확인: clientType={}", savedClientType);
             }
             
-            // 콜백 요청의 scheme과 host를 사용해서 redirect_uri 동적 생성
+            // 콜백 요청의 scheme과 host를 사용해서 redirect_uri 동적 생성 (필수)
             // 인증 URL 생성 시 사용한 redirect_uri와 일치시켜야 함
             String callbackRedirectUri = null;
             try {
                 String requestScheme = request.getScheme();
                 String requestHost = request.getHeader("Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    requestHost = request.getServerName();
+                }
                 if (requestHost != null && !requestHost.isEmpty()) {
                     // 포트가 포함된 경우와 아닌 경우 모두 처리
                     if (requestHost.contains(":")) {
@@ -311,7 +314,16 @@ public class OAuth2Controller {
                     log.info("네이버 콜백 - 동적 redirect_uri 생성: {}", callbackRedirectUri);
                 }
             } catch (Exception e) {
-                log.warn("네이버 콜백 - redirect_uri 동적 생성 실패, 기본값 사용", e);
+                log.error("네이버 콜백 - redirect_uri 동적 생성 실패", e);
+            }
+            
+            if (callbackRedirectUri == null || callbackRedirectUri.isEmpty()) {
+                log.error("네이버 콜백 - redirect_uri를 생성할 수 없습니다. 요청 정보: scheme={}, host={}, serverName={}", 
+                         request.getScheme(), request.getHeader("Host"), request.getServerName());
+                String frontendUrl = getFrontendBaseUrl(request);
+                return ResponseEntity.status(302)
+                    .header("Location", frontendUrl + "/login?error=" + URLEncoder.encode("시스템오류", StandardCharsets.UTF_8) + "&provider=NAVER")
+                    .build();
             }
             
             // redirectUri를 전달하기 위해 NaverOAuth2ServiceImpl 직접 호출
@@ -665,19 +677,39 @@ public class OAuth2Controller {
                 log.info("카카오 콜백 - state 없음, 세션에서 확인: clientType={}", savedClientType);
             }
             
-            // 동적 redirectUri 계산 (모바일 클라이언트인 경우)
-            String actualRedirectUri = kakaoRedirectUri;
-            if ("mobile".equals(savedClientType)) {
-                try {
-                    String requestHost = request.getHeader("Host");
-                    if (requestHost != null && !requestHost.isEmpty() && !requestHost.contains("localhost")) {
-                        String protocol = request.getScheme();
-                        actualRedirectUri = protocol + "://" + requestHost + "/api/auth/kakao/callback";
-                        log.info("카카오 콜백 - 모바일 클라이언트 동적 redirect URI: {}", actualRedirectUri);
-                    }
-                } catch (Exception e) {
-                    log.warn("카카오 콜백 - 요청 Host 파싱 실패, 기본 redirect URI 사용", e);
+            // 동적 redirectUri 계산 (항상 동적으로 생성)
+            String actualRedirectUri = null;
+            try {
+                String requestScheme = request.getScheme();
+                String requestHost = request.getHeader("Host");
+                if (requestHost == null || requestHost.isEmpty()) {
+                    requestHost = request.getServerName();
                 }
+                if (requestHost != null && !requestHost.isEmpty()) {
+                    // 포트가 포함된 경우와 아닌 경우 모두 처리
+                    if (requestHost.contains(":")) {
+                        actualRedirectUri = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                    } else {
+                        int port = request.getServerPort();
+                        if (port == 80 || port == 443) {
+                            actualRedirectUri = requestScheme + "://" + requestHost + "/api/auth/kakao/callback";
+                        } else {
+                            actualRedirectUri = requestScheme + "://" + requestHost + ":" + port + "/api/auth/kakao/callback";
+                        }
+                    }
+                    log.info("카카오 콜백 - 동적 redirect_uri 생성: {}", actualRedirectUri);
+                }
+            } catch (Exception e) {
+                log.error("카카오 콜백 - redirect_uri 동적 생성 실패", e);
+            }
+            
+            if (actualRedirectUri == null || actualRedirectUri.isEmpty()) {
+                log.error("카카오 콜백 - redirect_uri를 생성할 수 없습니다. 요청 정보: scheme={}, host={}, serverName={}", 
+                         request.getScheme(), request.getHeader("Host"), request.getServerName());
+                String frontendUrl = getFrontendBaseUrl(request);
+                return ResponseEntity.status(302)
+                    .header("Location", frontendUrl + "/login?error=" + URLEncoder.encode("시스템오류", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                    .build();
             }
             
             // redirectUri를 전달하여 인증 처리

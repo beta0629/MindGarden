@@ -48,6 +48,13 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
             JwtService jwtService) {
         super(userRepository, clientRepository, userSocialAccountRepository, jwtService);
         this.restTemplate = restTemplate;
+        
+        // 초기화 시 로깅으로 값 확인
+        log.info("카카오 OAuth2 설정 로드: clientId={}, clientSecret={} (길이: {}), redirectUri={}", 
+                clientId != null ? clientId.substring(0, Math.min(10, clientId.length())) + "..." : "null",
+                clientSecret != null ? (clientSecret.length() > 5 ? clientSecret.substring(0, 5) + "..." : "***") : "null",
+                clientSecret != null ? clientSecret.length() : 0,
+                redirectUri);
     }
 
     @Override

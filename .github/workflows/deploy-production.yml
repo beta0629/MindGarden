@@ -42,7 +42,7 @@ jobs:
     - name: 📦 프론트엔드 의존성 설치
       run: |
         cd frontend
-        npm ci
+        npm install
         
     - name: 🏗️ 프론트엔드 빌드
       run: |
@@ -416,28 +416,62 @@ jobs:
         script: |
           echo "🏥 헬스체크 시작..."
           
-          # 30초 대기 후 헬스체크
-          sleep 30
+          # 60초 대기 후 헬스체크 (애플리케이션 초기화 시간 확보)
+          echo "⏳ 애플리케이션 초기화 대기 중 (60초)..."
+          sleep 60
           
           # 서비스 상태 확인
+          echo "🔍 서비스 상태 확인..."
           if sudo systemctl is-active --quiet mindgarden.service; then
             echo "✅ 서비스 정상 실행 중"
           else
             echo "❌ 서비스 실행 실패"
-            sudo systemctl status mindgarden.service --no-pager
+            echo "📋 서비스 상태 상세:"
+            sudo systemctl status mindgarden.service --no-pager -l
+            echo ""
+            echo "📋 최근 서비스 로그:"
+            sudo journalctl -u mindgarden.service --no-pager -n 50
             exit 1
           fi
           
-          # HTTP 헬스체크
-          if curl -f -s http://localhost:8080/actuator/health > /dev/null; then
-            echo "✅ HTTP 헬스체크 통과"
+          # 포트 리스닝 확인
+          echo "🔍 포트 8080 리스닝 확인..."
+          if netstat -tlnp 2>/dev/null | grep -q ":8080 " || ss -tlnp 2>/dev/null | grep -q ":8080 "; then
+            echo "✅ 포트 8080 리스닝 중"
           else
-            echo "❌ HTTP 헬스체크 실패"
-            curl -v http://localhost:8080/actuator/health || true
+            echo "❌ 포트 8080 리스닝 안 됨"
+            echo "📋 서비스 로그 확인:"
+            sudo journalctl -u mindgarden.service --no-pager -n 100 | tail -50
           fi
           
+          # HTTP 헬스체크 (재시도 3회)
+          echo "🔍 HTTP 헬스체크 시작..."
+          for i in {1..3}; do
+            if curl -f -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+              echo "✅ HTTP 헬스체크 통과 (시도 $i)"
+              curl -s http://localhost:8080/actuator/health | head -10
+              break
+            else
+              echo "⏳ HTTP 헬스체크 재시도 중... (시도 $i/3)"
+              if [ $i -lt 3 ]; then
+                sleep 10
+              else
+                echo "❌ HTTP 헬스체크 실패 (3회 시도 후 실패)"
+                echo "📋 서비스 로그 최근 100줄:"
+                sudo journalctl -u mindgarden.service --no-pager -n 100 | tail -50
+                echo ""
+                echo "📋 애플리케이션 로그 확인:"
+                if [ -f /var/www/mindgarden/logs/mindgarden-prod.log ]; then
+                  tail -50 /var/www/mindgarden/logs/mindgarden-prod.log
+                fi
+                echo ""
+                echo "⚠️ HTTP 헬스체크 실패했지만 배포는 계속 진행됩니다."
+              fi
+            fi
+          done
+          
           # 프론트엔드 확인
-          if curl -f -s http://localhost/login > /dev/null; then
+          if curl -f -s http://localhost/login > /dev/null 2>&1; then
             echo "✅ 프론트엔드 정상 접근"
           else
             echo "❌ 프론트엔드 접근 실패"

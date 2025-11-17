@@ -292,6 +292,7 @@
 }
 
 .login-divider::before {
+  display: none; /* 가로선 제거 */
   content: '';
   position: absolute;
   top: 50%;

@@ -116,7 +116,7 @@ body {
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 9999;
+  z-index: var(--z-toast, 20001);
 }
 
 .toast {
@@ -155,7 +155,7 @@ body {
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  z-index: 1001;
+  z-index: var(--z-modal-confirm, 10010);
   width: 400px;
   max-width: 90vw;
 }
@@ -224,7 +224,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-toast, 20001);
   backdrop-filter: blur(4px);
 }
 

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -31,13 +32,13 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
 
     private final RestTemplate restTemplate;
 
-    @Value("${spring.security.oauth2.client.registration.naver.client-id:dummy}")
+    @Value("${spring.security.oauth2.client.registration.naver.client-id:${NAVER_CLIENT_ID:dummy}}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.registration.naver.client-secret:dummy}")
+    @Value("${spring.security.oauth2.client.registration.naver.client-secret:${NAVER_CLIENT_SECRET:dummy}}")
     private String clientSecret;
 
-    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri}")
+    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${NAVER_REDIRECT_URI:}}")
     private String redirectUri;
     
     public NaverOAuth2ServiceImpl(
@@ -48,6 +49,16 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             JwtService jwtService) {
         super(userRepository, clientRepository, userSocialAccountRepository, jwtService);
         this.restTemplate = restTemplate;
+    }
+    
+    @PostConstruct
+    public void init() {
+        // 의존성 주입 완료 후 로깅으로 값 확인
+        log.info("네이버 OAuth2 설정 로드: clientId={}, clientSecret={} (길이: {}), redirectUri={}", 
+                clientId != null ? clientId.substring(0, Math.min(10, clientId.length())) + "..." : "null",
+                clientSecret != null ? (clientSecret.length() > 5 ? clientSecret.substring(0, 5) + "..." : "***") : "null",
+                clientSecret != null ? clientSecret.length() : 0,
+                redirectUri);
     }
 
     @Override
@@ -103,6 +114,19 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
 
     @Override
     public String getAccessToken(String code) {
+        return getAccessToken(code, redirectUri);
+    }
+    
+    /**
+     * 인증 코드로 액세스 토큰 획득 (redirectUri 지정 가능)
+     * 
+     * @param code 인증 코드
+     * @param redirectUri 리다이렉트 URI (null이면 기본값 사용)
+     * @return 액세스 토큰
+     */
+    public String getAccessToken(String code, String redirectUri) {
+        String redirectUriToUse = (redirectUri != null && !redirectUri.isEmpty()) ? redirectUri : this.redirectUri;
+        
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.set("Content-Type", "application/x-www-form-urlencoded");
@@ -113,7 +137,34 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             params.add("client_secret", clientSecret);
             params.add("code", code);
             params.add("state", "naver_oauth_state"); // 보안을 위한 state 값
-            params.add("redirect_uri", redirectUri);
+            params.add("redirect_uri", redirectUriToUse);
+            
+            log.info("네이버 액세스 토큰 획득 시도: client_id={}, redirect_uri={}, code={}", 
+                    clientId, redirectUriToUse, code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null");
+            log.info("네이버 토큰 요청 전체 파라미터: grant_type={}, client_id={}, client_secret={}, redirect_uri={}, code={}, state={}", 
+                     "authorization_code", clientId, clientSecret != null ? clientSecret.substring(0, Math.min(5, clientSecret.length())) + "..." : "null", 
+                     redirectUriToUse, code != null ? code.substring(0, Math.min(10, code.length())) + "..." : "null", "naver_oauth_state");
+            log.debug("네이버 토큰 요청 파라미터: grant_type={}, client_id={}, redirect_uri={}", 
+                     "authorization_code", clientId, redirectUriToUse);
+            
+            // 실제 전송되는 요청 URL과 파라미터 로깅
+            StringBuilder requestUrl = new StringBuilder("https://nid.naver.com/oauth2.0/token");
+            StringBuilder paramLog = new StringBuilder();
+            params.forEach((key, values) -> {
+                if (values != null && !values.isEmpty()) {
+                    String value = values.get(0);
+                    // client_secret은 일부만 로깅
+                    if ("client_secret".equals(key)) {
+                        value = value != null && value.length() > 5 ? value.substring(0, 5) + "..." : value;
+                    }
+                    // code는 일부만 로깅
+                    if ("code".equals(key)) {
+                        value = value != null && value.length() > 10 ? value.substring(0, 10) + "..." : value;
+                    }
+                    paramLog.append(key).append("=").append(value).append("&");
+                }
+            });
+            log.info("네이버 토큰 요청 URL: {}, 파라미터: {}", requestUrl.toString(), paramLog.toString());
             
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
             
@@ -124,9 +175,25 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
                 Map.class
             );
             
+            log.info("네이버 토큰 응답 상태: {}, 헤더: {}", response.getStatusCode(), response.getHeaders());
+            
             Map<String, Object> tokenInfo = response.getBody();
             
-            if (tokenInfo == null || !tokenInfo.containsKey("access_token")) {
+            if (tokenInfo == null) {
+                log.error("네이버 토큰 응답이 null 입니다. status={}", response.getStatusCode());
+                throw new RuntimeException("네이버 액세스 토큰을 가져올 수 없습니다.");
+            }
+            
+            if (tokenInfo.containsKey("error")) {
+                String error = (String) tokenInfo.getOrDefault("error", "");
+                String errorDescription = (String) tokenInfo.getOrDefault("error_description", "");
+                log.error("네이버 OAuth2 에러 응답: error={}, description={}, raw={}", 
+                        error, errorDescription, tokenInfo);
+                throw new RuntimeException("네이버 액세스 토큰을 가져올 수 없습니다. (" + error + ": " + errorDescription + ")");
+            }
+            
+            if (!tokenInfo.containsKey("access_token")) {
+                log.error("네이버 토큰 응답에 access_token이 없습니다: {}", tokenInfo);
                 throw new RuntimeException("네이버 액세스 토큰을 가져올 수 없습니다.");
             }
             

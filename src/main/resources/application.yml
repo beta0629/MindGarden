@@ -246,9 +246,9 @@ consultation:
       max-components: 12
       default-layout: "grid"
 
-# 프론트엔드 설정 (기본값)
+# 프론트엔드 설정 (환경 변수 사용)
 frontend:
-  base-url: http://localhost:3000
+  base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
 
 # SMS 인증 설정 (비용 절약을 위해 사용 여부 제어)
 sms:

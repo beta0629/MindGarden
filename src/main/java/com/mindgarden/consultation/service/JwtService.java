@@ -128,12 +128,34 @@ public class JwtService {
         try {
             // Base64로 디코딩 시도
             byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+            // 키 길이가 32바이트(256비트) 미만이면 패딩
+            if (keyBytes.length < 32) {
+                keyBytes = padKey(keyBytes, 32);
+            }
             return Keys.hmacShaKeyFor(keyBytes);
         } catch (Exception e) {
             // Base64 디코딩 실패 시 일반 문자열을 UTF-8 바이트로 변환
             byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
+            // 키 길이가 32바이트(256비트) 미만이면 패딩
+            if (keyBytes.length < 32) {
+                keyBytes = padKey(keyBytes, 32);
+            }
             return Keys.hmacShaKeyFor(keyBytes);
         }
+    }
+    
+    /**
+     * 키를 지정된 길이로 패딩 (반복 패턴 사용)
+     */
+    private byte[] padKey(byte[] key, int targetLength) {
+        if (key.length >= targetLength) {
+            return key;
+        }
+        byte[] padded = new byte[targetLength];
+        for (int i = 0; i < targetLength; i++) {
+            padded[i] = key[i % key.length];
+        }
+        return padded;
     }
     
     /**

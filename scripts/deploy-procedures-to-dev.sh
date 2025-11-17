@@ -9,7 +9,7 @@ SSH_KEY="$HOME/.ssh/github_actions_dev"
 DB_HOST="beta0629.cafe24.com"
 DB_USER="mindgarden_dev"
 DB_PASSWORD="MindGardenDev2025!@#"
-DB_NAME="mind_garden"
+DB_NAME="core_solution"
 
 echo "🚀 개발 서버 프로시저 배포 시작..."
 echo "서버: $DEV_SERVER"
@@ -98,4 +98,5 @@ ENDSSH
 
 echo ""
 echo "✅ 개발 서버 프로시저 배포 완료!"
+
 

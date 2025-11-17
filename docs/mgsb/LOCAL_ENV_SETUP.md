@@ -38,7 +38,7 @@ copy src\main\resources\application-local.yml.example src\main\resources\applica
 # .env.local
 DB_HOST=your-dev-db-host          # 개발 서버 DB 호스트 주소
 DB_PORT=3306
-DB_NAME=mind_garden
+DB_NAME=core_solution
 DB_USERNAME=mindgarden_dev
 DB_PASSWORD=MindGardenDev2025!@#  # 실제 비밀번호로 변경
 ```
@@ -109,7 +109,7 @@ mvn spring-boot:run
 # ~/.zshrc 또는 ~/.bashrc에 추가
 export DB_HOST=your-dev-db-host
 export DB_PORT=3306
-export DB_NAME=mind_garden
+export DB_NAME=core_solution
 export DB_USERNAME=mindgarden_dev
 export DB_PASSWORD=MindGardenDev2025!@#
 
@@ -122,7 +122,7 @@ source ~/.zshrc
 2. 사용자 변수 또는 시스템 변수에 추가:
    - `DB_HOST=your-dev-db-host`
    - `DB_PORT=3306`
-   - `DB_NAME=mind_garden`
+   - `DB_NAME=core_solution`
    - `DB_USERNAME=mindgarden_dev`
    - `DB_PASSWORD=MindGardenDev2025!@#`
 
@@ -139,7 +139,7 @@ source ~/.zshrc
 1. Run → Edit Configurations
 2. Environment variables에 추가:
    ```
-   DB_HOST=your-dev-db-host;DB_PORT=3306;DB_NAME=mind_garden;DB_USERNAME=mindgarden_dev;DB_PASSWORD=MindGardenDev2025!@#
+   DB_HOST=your-dev-db-host;DB_PORT=3306;DB_NAME=core_solution;DB_USERNAME=mindgarden_dev;DB_PASSWORD=MindGardenDev2025!@#
    ```
 
 #### VS Code
@@ -155,7 +155,7 @@ source ~/.zshrc
       "env": {
         "DB_HOST": "your-dev-db-host",
         "DB_PORT": "3306",
-        "DB_NAME": "mind_garden",
+        "DB_NAME": "core_solution",
         "DB_USERNAME": "mindgarden_dev",
         "DB_PASSWORD": "MindGardenDev2025!@#"
       }

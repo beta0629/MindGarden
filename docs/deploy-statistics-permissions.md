@@ -13,7 +13,7 @@ ssh root@beta74.cafe24.com
 ### 2. 데이터베이스 접속
 ```bash
 cd /home/mindgarden
-mysql -u mindgarden -p mind_garden
+mysql -u mindgarden -p core_solution
 # 비밀번호 입력
 ```
 

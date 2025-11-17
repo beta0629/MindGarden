@@ -5,14 +5,14 @@
 -- 1. status 컬럼 정의 확인
 SELECT COLUMN_TYPE 
 FROM INFORMATION_SCHEMA.COLUMNS 
-WHERE TABLE_SCHEMA = 'mind_garden' 
+WHERE TABLE_SCHEMA = 'core_solution' 
   AND TABLE_NAME = 'consultant_client_mappings' 
   AND COLUMN_NAME = 'status';
 
 -- 2. deposit_confirmed 컬럼 확인
 SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT
 FROM INFORMATION_SCHEMA.COLUMNS 
-WHERE TABLE_SCHEMA = 'mind_garden' 
+WHERE TABLE_SCHEMA = 'core_solution' 
   AND TABLE_NAME = 'consultant_client_mappings' 
   AND COLUMN_NAME = 'deposit_confirmed';
 

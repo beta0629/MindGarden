@@ -978,7 +978,7 @@ body {
   position: fixed;
   top: var(--spacing-lg);
   right: var(--spacing-lg);
-  z-index: 9999;
+  z-index: var(--z-toast, 20001);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
@@ -1934,7 +1934,7 @@ body {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  z-index: 99999 !important;
+  z-index: var(--z-modal-backdrop, 10001) !important;
   animation: fadeIn 0.3s ease-out !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -12380,6 +12380,8 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: var(--z-modal-content, 10002); /* mg-v2-modal-overlay보다 높게 설정 */
 }
 
 .mg-v2-modal-body {
@@ -12469,7 +12471,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: var(--z-modal, 10000); /* 기본 모달 레벨 */
 }
 
 .mg-v2-modal-title {
@@ -13616,7 +13618,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: var(--z-toast, 20001);
 }
 
 /* Past Events Styling */
@@ -14904,7 +14906,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-toast, 20001);
   border-radius: inherit;
 }
 
@@ -14985,7 +14987,7 @@ body {
 
 /* 중첩 모달 */
 .mg-v2-modal-overlay--nested {
-  z-index: 10001;
+  z-index: var(--z-modal-content, 10002);
 }
 
 /* 폼 입력 그룹 (input + button) */
@@ -15228,7 +15230,7 @@ body {
    모달 개선
    ============================================ */
 .mg-v2-modal-overlay--high-z {
-    z-index: 9999;
+    z-index: var(--z-modal-backdrop, 10001);
 }
 
 .mg-v2-modal--scrollable {

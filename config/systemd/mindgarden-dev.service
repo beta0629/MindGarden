@@ -1,0 +1,19 @@
+[Unit]
+Description=MindGarden Development Server
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/mindgarden-dev
+EnvironmentFile=/etc/mindgarden/dev.env
+ExecStart=/usr/bin/java -jar /var/www/mindgarden-dev/app.jar --spring.profiles.active=dev
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+
+

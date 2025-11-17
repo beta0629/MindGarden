@@ -4,7 +4,7 @@
 
 DB_USER="${DB_USER:-mindgarden}"
 DB_PASS="${DB_PASS:-mindgarden2025}"
-DB_NAME="${DB_NAME:-mind_garden}"
+DB_NAME="${DB_NAME:-core_solution}"
 SQL_FILE="${1:-/tmp/mapping_update_procedures_mysql.sql}"
 
 echo "🔧 매핑 수정 프로시저 배포 시작..."

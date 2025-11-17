@@ -31,13 +31,13 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
 
     private final RestTemplate restTemplate;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id:${KAKAO_CLIENT_ID:dummy}}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-secret:dummy}")
+    @Value("${spring.security.oauth2.client.registration.kakao.client-secret:${KAKAO_CLIENT_SECRET:dummy}}")
     private String clientSecret;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${KAKAO_REDIRECT_URI:}}")
     private String redirectUri;
     
     public KakaoOAuth2ServiceImpl(
@@ -48,6 +48,13 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
             JwtService jwtService) {
         super(userRepository, clientRepository, userSocialAccountRepository, jwtService);
         this.restTemplate = restTemplate;
+        
+        // 초기화 시 로깅으로 값 확인
+        log.info("카카오 OAuth2 설정 로드: clientId={}, clientSecret={} (길이: {}), redirectUri={}", 
+                clientId != null ? clientId.substring(0, Math.min(10, clientId.length())) + "..." : "null",
+                clientSecret != null ? (clientSecret.length() > 5 ? clientSecret.substring(0, 5) + "..." : "***") : "null",
+                clientSecret != null ? clientSecret.length() : 0,
+                redirectUri);
     }
 
     @Override

@@ -1,10 +1,10 @@
 package com.mindgarden.consultation.config;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -124,9 +124,9 @@ public class SecurityConfig {
         boolean isProdProfile = "prod".equals(activeProfile) || "prod".equals(envProfile) || 
                                "production".equals(activeProfile) || "production".equals(envProfile);
         
-        // 추가: 운영 서버 도메인 체크 (beta74.cafe24.com)
-        boolean isProdDomain = System.getenv("SERVER_DOMAIN") != null && 
-                              System.getenv("SERVER_DOMAIN").contains("cafe24.com");
+        // 추가: 운영 서버 도메인 체크 (배포 서버만 명시적으로 prod로 인식)
+        String serverDomain = System.getenv("SERVER_DOMAIN");
+        boolean isProdDomain = "beta74.cafe24.com".equalsIgnoreCase(serverDomain);
         
         return isProdProfile || isProdDomain;
     }
@@ -151,15 +151,33 @@ public class SecurityConfig {
                 configuration.setAllowedOrigins(List.of("http://m-garden.co.kr", "https://m-garden.co.kr"));
             }
         } else {
-            // 개발 환경: localhost 허용
-            configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://127.0.0.1:3000",
-                "http://localhost:3001",
-                "http://127.0.0.1:3001",
-                "http://localhost:8080",
-                "http://127.0.0.1:8080"
-            ));
+            // 개발 환경: 환경 변수에서 허용할 Origin 가져오기
+            String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+            if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
+                List<String> origins = Arrays.asList(allowedOrigins.split(","));
+                configuration.setAllowedOrigins(origins);
+                // CORS 허용 Origin 설정 완료 (환경 변수 사용)
+            } else {
+                // 환경 변수가 없으면 기본값 (로컬 개발용)
+                String frontendUrl = System.getenv("FRONTEND_BASE_URL");
+                String backendUrl = System.getenv("SERVER_BASE_URL");
+                List<String> defaultOrigins = new ArrayList<>();
+                
+                if (frontendUrl != null && !frontendUrl.trim().isEmpty()) {
+                    defaultOrigins.add(frontendUrl);
+                } else {
+                    defaultOrigins.add("http://localhost:3000");
+                }
+                
+                if (backendUrl != null && !backendUrl.trim().isEmpty()) {
+                    defaultOrigins.add(backendUrl);
+                } else {
+                    defaultOrigins.add("http://localhost:8080");
+                }
+                
+                configuration.setAllowedOrigins(defaultOrigins);
+                // log는 @Slf4j가 없어서 제거 (필요시 추가)
+            }
         }
         
         // 허용할 HTTP 메서드 설정
@@ -281,10 +299,9 @@ public class SecurityConfig {
     }
     
     /**
-     * RestTemplate Bean (prod 프로파일에서만 사용)
+     * RestTemplate Bean (모든 프로파일에서 사용)
      */
     @Bean
-    @Profile("prod")
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }

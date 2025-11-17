@@ -81,3 +81,4 @@ echo "   1. DNS가 올바른 서버를 가리키는지 확인"
 echo "   2. 방화벽에서 HTTP(80) 포트가 열려있는지 확인"
 echo "   3. Nginx 로그 확인: sudo tail -f /var/log/nginx/dev.m-garden.co.kr.error.log"
 
+

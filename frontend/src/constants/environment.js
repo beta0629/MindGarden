@@ -20,9 +20,10 @@ const getBaseUrl = () => {
     return window.location.origin;
   }
   
-  // 개발 환경에서는 강제로 백엔드 서버 사용
-  console.log('🔧 API_BASE_URL fallback to localhost:8080');
-  return 'http://localhost:8080';
+  // 개발 환경에서는 환경 변수 또는 현재 도메인 사용
+  const devUrl = process.env.REACT_APP_API_BASE_URL || window.location.origin;
+  console.log('🔧 API_BASE_URL fallback:', devUrl);
+  return devUrl;
 };
 
 const getFrontendUrl = () => {

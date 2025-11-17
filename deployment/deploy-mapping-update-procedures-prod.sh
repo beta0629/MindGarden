@@ -45,7 +45,7 @@ echo "운영 데이터베이스에 프로시저 배포 중..."
 # DB 정보 (기본값)
 DB_USER="mindgarden"
 DB_PASS="mindgarden2025"
-DB_NAME="mind_garden"
+DB_NAME="core_solution"
 
 # 기존 프로시저 확인
 echo "기존 프로시저 확인 중..."

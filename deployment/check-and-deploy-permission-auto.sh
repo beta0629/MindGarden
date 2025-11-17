@@ -50,7 +50,7 @@ fi
 # 명시적으로 기본값 사용 (환경변수가 이미 설정되어 있어도 무시)
 DB_USER="mindgarden"
 DB_PASS="mindgarden2025"
-DB_NAME="mind_garden"
+DB_NAME="core_solution"
 
 echo "📋 DB 정보:"
 echo "   - 사용자: $DB_USER"

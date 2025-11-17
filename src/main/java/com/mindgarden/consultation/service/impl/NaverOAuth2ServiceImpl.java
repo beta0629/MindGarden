@@ -31,10 +31,10 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
 
     private final RestTemplate restTemplate;
 
-    @Value("${spring.security.oauth2.client.registration.naver.client-id:dummy}")
+    @Value("${spring.security.oauth2.client.registration.naver.client-id:${NAVER_CLIENT_ID:dummy}}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.registration.naver.client-secret:dummy}")
+    @Value("${spring.security.oauth2.client.registration.naver.client-secret:${NAVER_CLIENT_SECRET:dummy}}")
     private String clientSecret;
 
     @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${NAVER_REDIRECT_URI:}}")

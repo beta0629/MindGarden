@@ -31,10 +31,10 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
 
     private final RestTemplate restTemplate;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id:${KAKAO_CLIENT_ID:dummy}}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-secret:dummy}")
+    @Value("${spring.security.oauth2.client.registration.kakao.client-secret:${KAKAO_CLIENT_SECRET:dummy}}")
     private String clientSecret;
 
     @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${KAKAO_REDIRECT_URI:}}")

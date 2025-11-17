@@ -142,8 +142,8 @@ jobs:
         port: 22
         timeout: 120s
         source: "sql/production_all_missing_procedures.sql"
-        target: "/tmp/production_all_missing_procedures.sql"
-        strip_components: 0
+        target: "/tmp/"
+        strip_components: 1
         overwrite: true
         
     - name: 📤 메뉴 업데이트 SQL 업로드
@@ -168,8 +168,8 @@ jobs:
         port: 22
         timeout: 120s
         source: "sql/mapping_update_procedures_mysql.sql"
-        target: "/tmp/mapping_update_procedures_mysql.sql"
-        strip_components: 0
+        target: "/tmp/"
+        strip_components: 1
         overwrite: true
         
     - name: 📤 매핑 프로시저 (운영용) 업로드
@@ -181,8 +181,8 @@ jobs:
         port: 22
         timeout: 120s
         source: "sql/production_mapping_procedures.sql"
-        target: "/tmp/production_mapping_procedures.sql"
-        strip_components: 0
+        target: "/tmp/"
+        strip_components: 1
         overwrite: true
         
     - name: 📤 업무 시간 프로시저 업로드
@@ -194,8 +194,8 @@ jobs:
         port: 22
         timeout: 120s
         source: "sql/business_time_procedures_final.sql"
-        target: "/tmp/business_time_procedures_final.sql"
-        strip_components: 0
+        target: "/tmp/"
+        strip_components: 1
         overwrite: true
         
     # 메시지 권한 SQL 업로드 - 권한 오류로 주석 처리

@@ -171,7 +171,7 @@ public class OAuth2Controller {
                 }
                 
                 // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
-                String requestHost = request.getHeader("Host");
+                    String requestHost = request.getHeader("Host");
                 // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
                 if (requestHost != null && requestHost.contains("localhost") && !requestHost.contains(":8080")) {
                     // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
@@ -218,10 +218,10 @@ public class OAuth2Controller {
                     log.info("카카오 OAuth2 - 동적 redirect URI 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})", 
                             callbackUrl, request.getScheme(), request.getHeader("Host"), 
                             request.getHeader("X-Forwarded-Proto"), request.getHeader("X-Forwarded-Host"));
-                }
-            } catch (Exception e) {
+                    }
+                } catch (Exception e) {
                 log.error("카카오 OAuth2 - redirect URI 동적 생성 실패", e);
-            }
+                }
             
             if (callbackUrl == null || callbackUrl.isEmpty()) {
                 // 폴백: 설정값 사용
@@ -275,7 +275,7 @@ public class OAuth2Controller {
                 }
                 
                 // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
-                String requestHost = request.getHeader("Host");
+                    String requestHost = request.getHeader("Host");
                 // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
                 if (requestHost != null && requestHost.contains("localhost") && !requestHost.contains(":8080")) {
                     // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
@@ -322,10 +322,10 @@ public class OAuth2Controller {
                     log.info("네이버 OAuth2 - 동적 redirect URI 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})", 
                             callbackUrl, request.getScheme(), request.getHeader("Host"), 
                             request.getHeader("X-Forwarded-Proto"), request.getHeader("X-Forwarded-Host"));
-                }
-            } catch (Exception e) {
+                    }
+                } catch (Exception e) {
                 log.error("네이버 OAuth2 - redirect URI 동적 생성 실패", e);
-            }
+                }
             
             if (callbackUrl == null || callbackUrl.isEmpty()) {
                 // 폴백: 설정값 사용
@@ -852,7 +852,7 @@ public class OAuth2Controller {
                 }
                 
                 // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
-                String requestHost = request.getHeader("Host");
+                    String requestHost = request.getHeader("Host");
                 // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
                 if (requestHost != null && requestHost.contains("localhost") && !requestHost.contains(":8080")) {
                     // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
@@ -904,8 +904,8 @@ public class OAuth2Controller {
                     log.info("카카오 콜백 - 동적 redirect_uri 생성: {} (scheme={}, host={}, forwardedProto={}, forwardedHost={})", 
                             actualRedirectUri, request.getScheme(), request.getHeader("Host"), 
                             request.getHeader("X-Forwarded-Proto"), request.getHeader("X-Forwarded-Host"));
-                }
-            } catch (Exception e) {
+                    }
+                } catch (Exception e) {
                 log.error("카카오 콜백 - redirect_uri 동적 생성 실패", e);
             }
             

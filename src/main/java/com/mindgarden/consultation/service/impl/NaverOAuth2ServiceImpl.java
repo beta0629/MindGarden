@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -48,8 +49,11 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             JwtService jwtService) {
         super(userRepository, clientRepository, userSocialAccountRepository, jwtService);
         this.restTemplate = restTemplate;
-        
-        // 초기화 시 로깅으로 값 확인
+    }
+    
+    @PostConstruct
+    public void init() {
+        // 의존성 주입 완료 후 로깅으로 값 확인
         log.info("네이버 OAuth2 설정 로드: clientId={}, clientSecret={} (길이: {}), redirectUri={}", 
                 clientId != null ? clientId.substring(0, Math.min(10, clientId.length())) + "..." : "null",
                 clientSecret != null ? (clientSecret.length() > 5 ? clientSecret.substring(0, 5) + "..." : "***") : "null",

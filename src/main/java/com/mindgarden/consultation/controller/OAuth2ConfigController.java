@@ -130,10 +130,10 @@ public class OAuth2ConfigController {
             return scheme + "://" + serverName;
         } else {
             int serverPort = request.getServerPort();
-            if (serverPort == 80 || serverPort == 443) {
-                return scheme + "://" + serverName;
-            } else {
-                return scheme + "://" + serverName + ":" + serverPort;
+        if (serverPort == 80 || serverPort == 443) {
+            return scheme + "://" + serverName;
+        } else {
+            return scheme + "://" + serverName + ":" + serverPort;
             }
         }
     }

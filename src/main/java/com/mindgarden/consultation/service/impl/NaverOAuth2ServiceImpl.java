@@ -136,6 +136,25 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             log.debug("네이버 토큰 요청 파라미터: grant_type={}, client_id={}, redirect_uri={}", 
                      "authorization_code", clientId, redirectUriToUse);
             
+            // 실제 전송되는 요청 URL과 파라미터 로깅
+            StringBuilder requestUrl = new StringBuilder("https://nid.naver.com/oauth2.0/token");
+            StringBuilder paramLog = new StringBuilder();
+            params.forEach((key, values) -> {
+                if (values != null && !values.isEmpty()) {
+                    String value = values.get(0);
+                    // client_secret은 일부만 로깅
+                    if ("client_secret".equals(key)) {
+                        value = value != null && value.length() > 5 ? value.substring(0, 5) + "..." : value;
+                    }
+                    // code는 일부만 로깅
+                    if ("code".equals(key)) {
+                        value = value != null && value.length() > 10 ? value.substring(0, 10) + "..." : value;
+                    }
+                    paramLog.append(key).append("=").append(value).append("&");
+                }
+            });
+            log.info("네이버 토큰 요청 URL: {}, 파라미터: {}", requestUrl.toString(), paramLog.toString());
+            
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -144,6 +163,8 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
                 entity,
                 Map.class
             );
+            
+            log.info("네이버 토큰 응답 상태: {}, 헤더: {}", response.getStatusCode(), response.getHeaders());
             
             Map<String, Object> tokenInfo = response.getBody();
             

@@ -274,10 +274,18 @@ jobs:
           # 서비스 활성화 상태 확인
           if sudo systemctl is-active --quiet mindgarden.service; then
             echo "✅ 서비스 정상 시작됨"
+            # 서비스 상태 상세 출력
+            sudo systemctl status mindgarden.service --no-pager -l | head -20
           else
             echo "❌ 서비스 시작 실패 - 재시도..."
+            echo "📋 서비스 상태 상세:"
+            sudo systemctl status mindgarden.service --no-pager -l
+            echo ""
+            echo "📋 서비스 로그:"
+            sudo journalctl -u mindgarden.service --no-pager -n 30
             sudo systemctl restart mindgarden.service
-            sleep 10
+            sleep 30
+            echo "⏳ 재시작 후 대기 완료"
           fi
           
           # 데이터베이스 스키마 업데이트는 별도 워크플로우에서 수동 실행

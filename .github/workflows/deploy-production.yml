@@ -133,6 +133,18 @@ jobs:
         strip_components: 1
         overwrite: true
         
+    - name: 📤 Nginx 설정 파일 업로드 (운영 서버 - 통합 설정)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "config/nginx/core-solution-prod.conf"
+        target: "/tmp/core-solution-prod.conf"
+        overwrite: true
+        
     # PL/SQL 프로시저 업로드는 필요할 때만 수동으로 실행
     # - name: 📤 PL/SQL 프로시저 업로드
     #   uses: appleboy/scp-action@v0.1.7
@@ -277,6 +289,23 @@ jobs:
             echo "❌ 서비스 시작 실패 - 재시도..."
             sudo systemctl restart mindgarden.service
             sleep 10
+          fi
+          
+          # Nginx 설정 업데이트 (통합 설정 파일)
+          if [ -f /tmp/core-solution-prod.conf ]; then
+            echo "🌐 Nginx 통합 설정 업데이트 중..."
+            sudo cp /tmp/core-solution-prod.conf /etc/nginx/sites-available/core-solution
+            sudo ln -sf /etc/nginx/sites-available/core-solution /etc/nginx/sites-enabled/core-solution
+            echo "✅ 통합 설정 파일 적용 완료"
+            
+            # Nginx 설정 테스트
+            if sudo nginx -t; then
+              sudo systemctl reload nginx
+              echo "✅ Nginx 설정 업데이트 완료"
+            else
+              echo "⚠️ Nginx 설정 오류 - 수동 확인 필요"
+              sudo nginx -t
+            fi
           fi
           
           # 데이터베이스 스키마 업데이트는 별도 워크플로우에서 수동 실행

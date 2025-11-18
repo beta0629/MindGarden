@@ -221,21 +221,19 @@ jobs:
           # 시작 스크립트 생성 (항상 업데이트)
           echo "📝 시작 스크립트 생성 중..."
           sudo mkdir -p /opt/mindgarden
-          sudo tee /opt/mindgarden/start.sh > /dev/null << 'EOF'
-#!/bin/bash
-set -e
-source /etc/mindgarden/dev.env
-export DB_PASSWORD
-export DB_USERNAME
-export DB_HOST
-export DB_NAME
-export DB_PORT
-export JWT_SECRET
-export PERSONAL_DATA_ENCRYPTION_KEY
-export PERSONAL_DATA_ENCRYPTION_IV
-cd /var/www/mindgarden-dev
-exec /usr/bin/java -jar app.jar --spring.profiles.active=dev
-EOF
+          sudo bash -c 'echo "#!/bin/bash" > /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "set -e" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "source /etc/mindgarden/dev.env" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_PASSWORD" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_USERNAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_HOST" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_NAME" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export DB_PORT" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export JWT_SECRET" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export PERSONAL_DATA_ENCRYPTION_KEY" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "export PERSONAL_DATA_ENCRYPTION_IV" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "cd /var/www/mindgarden-dev" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "exec /usr/bin/java -jar app.jar --spring.profiles.active=dev" >> /opt/mindgarden/start.sh'
           sudo chmod +x /opt/mindgarden/start.sh
           echo "✅ 시작 스크립트 생성 완료"
           
@@ -254,25 +252,23 @@ EOF
           else
             echo "⚠️ systemd 서비스 파일이 업로드되지 않음 - 기본 설정 사용"
             # 기본 서비스 파일 생성
-            sudo tee /etc/systemd/system/mindgarden-dev.service > /dev/null << 'EOFSERVICE'
-[Unit]
-Description=MindGarden Development Server
-After=network.target mysql.service
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/var/www/mindgarden-dev
-ExecStart=/opt/mindgarden/start.sh
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=mindgarden-dev
-
-[Install]
-WantedBy=multi-user.target
-EOFSERVICE
+            sudo bash -c 'echo "[Unit]" > /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Description=MindGarden Development Server" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "After=network.target mysql.service" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "[Service]" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Type=simple" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "User=root" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "WorkingDirectory=/var/www/mindgarden-dev" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "ExecStart=/opt/mindgarden/start.sh" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Restart=always" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "RestartSec=10" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "StandardOutput=journal" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "StandardError=journal" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "SyslogIdentifier=mindgarden-dev" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "[Install]" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "WantedBy=multi-user.target" >> /etc/systemd/system/mindgarden-dev.service'
             sudo systemctl daemon-reload
             sudo systemctl enable mindgarden-dev.service
             echo "✅ 기본 systemd 서비스 파일 생성 완료"

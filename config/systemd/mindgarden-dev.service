@@ -6,12 +6,16 @@ After=network.target mysql.service
 Type=simple
 User=root
 WorkingDirectory=/var/www/mindgarden-dev
-EnvironmentFile=/etc/mindgarden/dev.env
-ExecStart=/usr/bin/java -jar /var/www/mindgarden-dev/app.jar --spring.profiles.active=dev
-Restart=on-failure
+ExecStart=/opt/mindgarden/start.sh
+Restart=always
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
+SyslogIdentifier=mindgarden-dev
+
+# 로그 설정
+StandardOutput=append:/var/log/mindgarden/dev.log
+StandardError=append:/var/log/mindgarden/dev-error.log
 
 [Install]
 WantedBy=multi-user.target

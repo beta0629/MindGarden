@@ -218,22 +218,64 @@ jobs:
           # 권한 설정
           chmod +x app.jar
           
-          # systemd 서비스 파일 설정 (없으면)
-          if [ ! -f /etc/systemd/system/mindgarden-dev.service ]; then
-            echo "📝 systemd 서비스 파일 설정 중..."
-            if [ -f /tmp/mindgarden-dev.service ]; then
-              sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
-              sudo systemctl daemon-reload
-              sudo systemctl enable mindgarden-dev.service
-              echo "✅ systemd 서비스 파일 설정 완료"
-            elif [ -f /tmp/config/systemd/mindgarden-dev.service ]; then
-              sudo cp /tmp/config/systemd/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
-              sudo systemctl daemon-reload
-              sudo systemctl enable mindgarden-dev.service
-              echo "✅ systemd 서비스 파일 설정 완료"
-            else
-              echo "⚠️ systemd 서비스 파일이 업로드되지 않음"
-            fi
+          # 시작 스크립트 생성 (항상 업데이트)
+          echo "📝 시작 스크립트 생성 중..."
+          sudo mkdir -p /opt/mindgarden
+          sudo tee /opt/mindgarden/start.sh > /dev/null <<'SCRIPT_EOF'
+#!/bin/bash
+set -e
+source /etc/mindgarden/dev.env
+export DB_PASSWORD
+export DB_USERNAME
+export DB_HOST
+export DB_NAME
+export DB_PORT
+export JWT_SECRET
+export PERSONAL_DATA_ENCRYPTION_KEY
+export PERSONAL_DATA_ENCRYPTION_IV
+cd /var/www/mindgarden-dev
+exec /usr/bin/java -jar app.jar --spring.profiles.active=dev
+SCRIPT_EOF
+          sudo chmod +x /opt/mindgarden/start.sh
+          echo "✅ 시작 스크립트 생성 완료"
+          
+          # systemd 서비스 파일 설정 (항상 업데이트)
+          echo "📝 systemd 서비스 파일 설정 중..."
+          if [ -f /tmp/mindgarden-dev.service ]; then
+            sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+            sudo systemctl daemon-reload
+            sudo systemctl enable mindgarden-dev.service
+            echo "✅ systemd 서비스 파일 설정 완료"
+          elif [ -f /tmp/config/systemd/mindgarden-dev.service ]; then
+            sudo cp /tmp/config/systemd/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+            sudo systemctl daemon-reload
+            sudo systemctl enable mindgarden-dev.service
+            echo "✅ systemd 서비스 파일 설정 완료"
+          else
+            echo "⚠️ systemd 서비스 파일이 업로드되지 않음 - 기본 설정 사용"
+            # 기본 서비스 파일 생성
+            sudo tee /etc/systemd/system/mindgarden-dev.service > /dev/null <<'SERVICE_EOF'
+[Unit]
+Description=MindGarden Development Server
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/mindgarden-dev
+ExecStart=/opt/mindgarden/start.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mindgarden-dev
+
+[Install]
+WantedBy=multi-user.target
+SERVICE_EOF
+            sudo systemctl daemon-reload
+            sudo systemctl enable mindgarden-dev.service
+            echo "✅ 기본 systemd 서비스 파일 생성 완료"
           fi
           
           # 환경 변수 파일 업데이트 (업로드된 경우)

@@ -260,16 +260,39 @@ jobs:
           
           # 서비스 상태 확인
           echo "🔍 서비스 상태 확인..."
-          sudo systemctl status mindgarden-dev.service --no-pager | head -15
+          sudo systemctl status mindgarden-dev.service --no-pager | head -20
           
           # 서비스 활성화 상태 확인
           if sudo systemctl is-active --quiet mindgarden-dev.service; then
             echo "✅ 개발 서버 서비스 정상 시작됨"
           else
+            echo "❌ 서비스 시작 실패 - 로그 확인..."
+            echo "=========================================="
+            echo "📋 최근 서비스 로그 (최근 100줄):"
+            echo "=========================================="
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 100 || true
+            echo "=========================================="
+            echo "📋 애플리케이션 에러 로그:"
+            echo "=========================================="
+            sudo tail -100 /var/log/mindgarden/dev-error.log 2>/dev/null || echo "에러 로그 파일 없음"
+            echo "=========================================="
+            echo "📋 JAR 파일 확인:"
+            echo "=========================================="
+            ls -lh /var/www/mindgarden-dev/app.jar || echo "JAR 파일 없음!"
+            echo "=========================================="
+            echo "📋 환경 변수 파일 확인:"
+            echo "=========================================="
+            sudo test -f /etc/mindgarden/dev.env && echo "환경 변수 파일 존재" || echo "환경 변수 파일 없음!"
+            echo "=========================================="
             echo "❌ 서비스 시작 실패 - 재시도..."
             sudo systemctl restart mindgarden-dev.service
             sleep 15
-            sudo systemctl status mindgarden-dev.service --no-pager | head -15
+            sudo systemctl status mindgarden-dev.service --no-pager | head -20
+            echo "=========================================="
+            echo "📋 재시작 후 로그:"
+            echo "=========================================="
+            sudo journalctl -u mindgarden-dev.service --no-pager -n 50 || true
+            exit 1
           fi
           
           # Nginx 설정 업데이트 (설정 파일이 업로드된 경우)

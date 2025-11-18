@@ -120,11 +120,12 @@ public class TenantRole extends BaseEntity {
     
     /**
      * 역할 템플릿 (참조)
-     * Note: @Builder에서 제외 (관계 필드, setter로 설정)
+     * Note: 순환 참조 문제로 제거 (RoleTemplate이 TenantRole을 참조함)
+     * roleTemplateId를 통해 Repository에서 조회하여 사용
      */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_template_id", referencedColumnName = "role_template_id", insertable = false, updatable = false)
-    private RoleTemplate roleTemplate;
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "role_template_id", referencedColumnName = "role_template_id", insertable = false, updatable = false)
+    // private RoleTemplate roleTemplate;
     
     /**
      * 역할 권한 목록

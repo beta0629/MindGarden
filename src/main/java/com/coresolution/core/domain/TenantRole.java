@@ -21,7 +21,7 @@ import java.util.List;
 @Entity
 @Table(name = "tenant_roles")
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)

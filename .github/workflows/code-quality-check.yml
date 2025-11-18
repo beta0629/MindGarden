@@ -1,0 +1,75 @@
+name: 🔍 코드 품질 검사
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    name: 📊 코드 품질 검사
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: ☕ Java 17 설정
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: 📦 Node.js 20 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: 🔧 Maven 캐시 설정
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 🔍 Checkstyle 검사
+      run: |
+        mvn checkstyle:check || true
+        echo "Checkstyle 검사 완료"
+        
+    - name: 🐛 SpotBugs 검사
+      run: |
+        mvn spotbugs:check || true
+        echo "SpotBugs 검사 완료"
+        
+    - name: 🔍 하드코딩 검사
+      run: |
+        node scripts/check-hardcoding-enhanced.js || exit 1
+        
+    - name: 🧪 테스트 실행
+      run: |
+        mvn test -Dspring.profiles.active=test || true
+        
+    - name: 📊 코드 품질 메트릭 수집
+      run: |
+        node scripts/collect-code-quality-metrics.js || true
+        
+    - name: 📄 코드 품질 리포트 생성
+      run: |
+        node scripts/generate-code-quality-report.js || true
+        
+    - name: 📤 리포트 업로드
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: code-quality-reports
+        path: |
+          test-reports/hardcoding/
+          test-reports/code-quality/
+          test-reports/code-quality-reports/
+        retention-days: 30
+

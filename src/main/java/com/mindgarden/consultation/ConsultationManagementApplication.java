@@ -18,7 +18,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling
-@EnableAspectJAutoProxy
+@EnableAspectJAutoProxy(proxyTargetClass = false)
 public class ConsultationManagementApplication {
 
     public static void main(String[] args) {

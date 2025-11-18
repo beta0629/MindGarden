@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-11-18T01:23:39.747Z",
+  "metrics": {
+    "codeCoverage": {
+      "testReports": 12,
+      "note": "JaCoCo 리포트를 통한 상세 커버리지는 별도 설정 필요"
+    },
+    "codeComplexity": null,
+    "technicalDebt": null,
+    "hardcoding": {
+      "errors": 2,
+      "warnings": 3487,
+      "totalFiles": 1101
+    },
+    "testCount": 15,
+    "fileCount": 1158,
+    "lineCount": 265741
+  }
+}

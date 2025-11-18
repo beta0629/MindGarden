@@ -46,6 +46,12 @@ public abstract class BaseEntity {
     @Column(name = "version", nullable = false)
     private Long version = 0L;
     
+    /**
+     * 테넌트 ID (Multi-tenant 지원)
+     */
+    @Column(name = "tenant_id", length = 36)
+    private String tenantId;
+    
     // 생성자
     public BaseEntity() {
         this.createdAt = LocalDateTime.now();
@@ -101,6 +107,14 @@ public abstract class BaseEntity {
     
     public void setVersion(Long version) {
         this.version = version;
+    }
+    
+    public String getTenantId() {
+        return tenantId;
+    }
+    
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
     
     // 비즈니스 메서드

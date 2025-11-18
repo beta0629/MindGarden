@@ -88,6 +88,12 @@ public class Branch extends BaseEntity {
     // === 기본 정보 ===
     
     /**
+     * 테넌트 ID (Multi-tenant 지원)
+     */
+    @Column(name = "tenant_id", length = 36)
+    private String tenantId;
+    
+    /**
      * 지점 코드 (고유 식별자)
      */
     @NotBlank(message = "지점 코드는 필수입니다")

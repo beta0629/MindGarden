@@ -1,0 +1,111 @@
+name: 🔍 개발 서버 로그 확인
+
+on:
+  workflow_dispatch:
+    # 수동 실행 가능
+
+jobs:
+  check-logs:
+    name: 📋 개발 서버 로그 확인
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔍 개발 서버 로그 확인
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        script: |
+          echo "=========================================="
+          echo "📋 개발 서버 로그 확인"
+          echo "=========================================="
+          echo ""
+          
+          # 서비스 상태 확인
+          echo "🔍 서비스 상태:"
+          echo "=========================================="
+          sudo systemctl status mindgarden-dev.service --no-pager | head -30 || true
+          echo ""
+          
+          # 최근 서비스 로그 (최근 100줄)
+          echo "📋 최근 서비스 로그 (최근 100줄):"
+          echo "=========================================="
+          sudo journalctl -u mindgarden-dev.service --no-pager -n 100 || true
+          echo ""
+          
+          # 애플리케이션 에러 로그
+          echo "📋 애플리케이션 에러 로그:"
+          echo "=========================================="
+          sudo tail -100 /var/log/mindgarden/dev-error.log 2>/dev/null || echo "에러 로그 파일 없음"
+          echo ""
+          
+          # 애플리케이션 일반 로그
+          echo "📋 애플리케이션 일반 로그:"
+          echo "=========================================="
+          sudo tail -100 /var/log/mindgarden/dev.log 2>/dev/null || echo "로그 파일 없음"
+          echo ""
+          
+          # JAR 파일 확인
+          echo "📋 JAR 파일 확인:"
+          echo "=========================================="
+          ls -lh /var/www/mindgarden-dev/app.jar 2>/dev/null || echo "JAR 파일 없음!"
+          echo ""
+          
+          # 환경 변수 파일 확인
+          echo "📋 환경 변수 파일 확인:"
+          echo "=========================================="
+          if sudo test -f /etc/mindgarden/dev.env; then
+            echo "✅ 환경 변수 파일 존재"
+            echo "파일 크기: $(sudo ls -lh /etc/mindgarden/dev.env | awk '{print $5}')"
+            echo "파일 권한: $(sudo ls -l /etc/mindgarden/dev.env | awk '{print $1}')"
+          else
+            echo "❌ 환경 변수 파일 없음: /etc/mindgarden/dev.env"
+          fi
+          echo ""
+          
+          # Java 버전 확인
+          echo "📋 Java 버전 확인:"
+          echo "=========================================="
+          /usr/bin/java -version 2>&1 || echo "Java 없음!"
+          echo ""
+          
+          # 포트 사용 확인
+          echo "📋 포트 8080 사용 확인:"
+          echo "=========================================="
+          sudo netstat -tlnp | grep 8080 || echo "포트 8080 사용 안 함"
+          echo ""
+          
+          # 데이터베이스 연결 테스트 (환경 변수 파일이 있는 경우)
+          if sudo test -f /etc/mindgarden/dev.env; then
+            echo "📋 데이터베이스 연결 테스트:"
+            echo "=========================================="
+            source /etc/mindgarden/dev.env
+            if [ -n "$DB_HOST" ] && [ -n "$DB_NAME" ]; then
+              echo "DB_HOST: $DB_HOST"
+              echo "DB_NAME: $DB_NAME"
+              echo "DB_USERNAME: $DB_USERNAME"
+              # MySQL 클라이언트가 있으면 연결 테스트
+              if command -v mysql &> /dev/null; then
+                timeout 5 mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1" "$DB_NAME" 2>&1 | head -5 || echo "데이터베이스 연결 실패"
+              else
+                echo "MySQL 클라이언트 없음"
+              fi
+            else
+              echo "데이터베이스 환경 변수 없음"
+            fi
+            echo ""
+          fi
+          
+          # systemd 서비스 파일 확인
+          echo "📋 systemd 서비스 파일 확인:"
+          echo "=========================================="
+          sudo cat /etc/systemd/system/mindgarden-dev.service 2>/dev/null || echo "서비스 파일 없음"
+          echo ""
+          
+          echo "=========================================="
+          echo "✅ 로그 확인 완료"
+          echo "=========================================="
+

@@ -21,11 +21,28 @@ import java.util.List;
 @Entity
 @Table(name = "tenant_roles")
 @Data
-@Builder(toBuilder = true)
 @NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class TenantRole extends BaseEntity {
+    
+    // 관계 필드를 제외한 생성자 (Builder용)
+    @lombok.Builder(toBuilder = true, builderMethodName = "builder", buildMethodName = "build")
+    public TenantRole(String tenantRoleId, String tenantId, String roleTemplateId,
+                      String name, String nameKo, String nameEn,
+                      String description, String descriptionKo, String descriptionEn,
+                      Boolean isActive, Integer displayOrder) {
+        this.tenantRoleId = tenantRoleId;
+        this.tenantId = tenantId;
+        this.roleTemplateId = roleTemplateId;
+        this.name = name;
+        this.nameKo = nameKo;
+        this.nameEn = nameEn;
+        this.description = description;
+        this.descriptionKo = descriptionKo;
+        this.descriptionEn = descriptionEn;
+        this.isActive = isActive != null ? isActive : true;
+        this.displayOrder = displayOrder != null ? displayOrder : 0;
+    }
     
     /**
      * 테넌트 역할 UUID (고유 식별자)
@@ -85,18 +102,17 @@ public class TenantRole extends BaseEntity {
      * 활성화 여부
      */
     @Column(name = "is_active")
-    @Builder.Default
     private Boolean isActive = true;
     
     /**
      * 표시 순서
      */
     @Column(name = "display_order")
-    @Builder.Default
     private Integer displayOrder = 0;
     
     /**
      * 테넌트 (참조)
+     * Note: @Builder에서 제외 (관계 필드, setter로 설정)
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false)
@@ -104,6 +120,7 @@ public class TenantRole extends BaseEntity {
     
     /**
      * 역할 템플릿 (참조)
+     * Note: @Builder에서 제외 (관계 필드, setter로 설정)
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_template_id", referencedColumnName = "role_template_id", insertable = false, updatable = false)
@@ -111,6 +128,7 @@ public class TenantRole extends BaseEntity {
     
     /**
      * 역할 권한 목록
+     * Note: @Builder에서 제외 (관계 필드, setter로 설정)
      */
     @OneToMany(mappedBy = "tenantRole", fetch = FetchType.LAZY)
     private List<RolePermission> permissions;

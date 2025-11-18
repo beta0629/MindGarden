@@ -174,7 +174,19 @@ jobs:
         target: "/tmp/dev.env"
         overwrite: true
         
-    - name: 📤 Nginx 설정 파일 업로드 (개발 서버)
+    - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 통합 설정)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "config/nginx/core-solution-dev.conf"
+        target: "/tmp/core-solution-dev.conf"
+        overwrite: true
+        
+    - name: 📤 Nginx 설정 파일 업로드 (개발 서버 - 기존 도메인)
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
@@ -333,23 +345,33 @@ jobs:
             exit 1
           fi
           
-          # Nginx 설정 업데이트 (설정 파일이 업로드된 경우)
+          # Nginx 설정 업데이트 (통합 설정 파일 우선)
+          if [ -f /tmp/core-solution-dev.conf ]; then
+            echo "🌐 Nginx 통합 설정 업데이트 중..."
+            sudo cp /tmp/core-solution-dev.conf /etc/nginx/sites-available/core-solution-dev
+            sudo ln -sf /etc/nginx/sites-available/core-solution-dev /etc/nginx/sites-enabled/core-solution-dev
+            echo "✅ 통합 설정 파일 적용 완료"
+          fi
+          
+          # 기존 도메인 설정 업데이트 (하위 호환성)
           if [ -f /tmp/dev.m-garden.co.kr.conf ]; then
-            echo "🌐 Nginx 설정 업데이트 중..."
+            echo "🌐 Nginx 기존 도메인 설정 업데이트 중..."
             sudo cp /tmp/dev.m-garden.co.kr.conf /etc/nginx/sites-available/dev.m-garden.co.kr.conf
-            sudo ln -sf /etc/nginx/sites-available/dev.m-garden.co.kr.conf /etc/nginx/sites-enabled/
-            
-            # 프론트엔드 디렉토리 권한 설정
-            sudo chown -R www-data:www-data /var/www/html-dev
-            sudo chmod -R 755 /var/www/html-dev
-            
-            # Nginx 설정 테스트
-            if sudo nginx -t; then
-              sudo systemctl reload nginx
-              echo "✅ Nginx 설정 업데이트 완료"
-            else
-              echo "⚠️ Nginx 설정 오류 - 수동 확인 필요"
-            fi
+            sudo ln -sf /etc/nginx/sites-available/dev.m-garden.co.kr.conf /etc/nginx/sites-enabled/dev.m-garden.co.kr.conf
+            echo "✅ 기존 도메인 설정 파일 적용 완료"
+          fi
+          
+          # 프론트엔드 디렉토리 권한 설정
+          sudo chown -R www-data:www-data /var/www/html-dev
+          sudo chmod -R 755 /var/www/html-dev
+          
+          # Nginx 설정 테스트
+          if sudo nginx -t; then
+            sudo systemctl reload nginx
+            echo "✅ Nginx 설정 업데이트 완료"
+          else
+            echo "⚠️ Nginx 설정 오류 - 수동 확인 필요"
+            sudo nginx -t
           fi
           
     - name: 🏥 개발 서버 헬스체크

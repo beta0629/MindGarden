@@ -221,7 +221,7 @@ jobs:
           # 시작 스크립트 생성 (항상 업데이트)
           echo "📝 시작 스크립트 생성 중..."
           sudo mkdir -p /opt/mindgarden
-          sudo bash -c 'cat > /opt/mindgarden/start.sh << "EOFSCRIPT"
+          sudo tee /opt/mindgarden/start.sh > /dev/null << 'EOF'
 #!/bin/bash
 set -e
 source /etc/mindgarden/dev.env
@@ -235,7 +235,7 @@ export PERSONAL_DATA_ENCRYPTION_KEY
 export PERSONAL_DATA_ENCRYPTION_IV
 cd /var/www/mindgarden-dev
 exec /usr/bin/java -jar app.jar --spring.profiles.active=dev
-EOFSCRIPT'
+EOF
           sudo chmod +x /opt/mindgarden/start.sh
           echo "✅ 시작 스크립트 생성 완료"
           
@@ -254,7 +254,7 @@ EOFSCRIPT'
           else
             echo "⚠️ systemd 서비스 파일이 업로드되지 않음 - 기본 설정 사용"
             # 기본 서비스 파일 생성
-            sudo bash -c 'cat > /etc/systemd/system/mindgarden-dev.service << "EOFSERVICE"
+            sudo tee /etc/systemd/system/mindgarden-dev.service > /dev/null << 'EOFSERVICE'
 [Unit]
 Description=MindGarden Development Server
 After=network.target mysql.service
@@ -272,7 +272,7 @@ SyslogIdentifier=mindgarden-dev
 
 [Install]
 WantedBy=multi-user.target
-EOFSERVICE'
+EOFSERVICE
             sudo systemctl daemon-reload
             sudo systemctl enable mindgarden-dev.service
             echo "✅ 기본 systemd 서비스 파일 생성 완료"

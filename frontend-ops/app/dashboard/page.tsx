@@ -1,8 +1,67 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchDashboardMetrics } from "@/services/dashboardService";
 
-export default async function DashboardPage() {
-  const metrics = await fetchDashboardMetrics();
+interface DashboardMetrics {
+  pendingOnboarding: number;
+  activeOnboarding: number;
+  onHoldOnboarding: number;
+  activePlans: number;
+  activeAddons: number;
+  activeFeatureFlags: number;
+  totalAuditEvents: number;
+}
+
+export default function DashboardPage() {
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadMetrics = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchDashboardMetrics();
+        setMetrics(data);
+      } catch (err) {
+        console.error("대시보드 메트릭 로드 실패:", err);
+        setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMetrics();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="panel">
+        <header className="panel__header">
+          <h1>로딩 중...</h1>
+        </header>
+        <div className="loading-message">
+          <p>데이터를 불러오는 중입니다...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !metrics) {
+    return (
+      <section className="panel">
+        <header className="panel__header">
+          <h1>오류 발생</h1>
+        </header>
+        <div className="error-message">
+          <p>{error || "데이터를 불러올 수 없습니다."}</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="panel">
@@ -91,4 +150,3 @@ function MetricCard({
     </article>
   );
 }
-

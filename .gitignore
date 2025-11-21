@@ -64,6 +64,10 @@ config/examples/
 config/shell-scripts/
 deployment/*template*
 
+# Exception: Java source files should not be ignored even if they contain "template" in the name
+!src/**/*Template.java
+!src/**/*Template*.java
+
 # API Keys and Secrets
 **/api-keys/
 **/secrets/

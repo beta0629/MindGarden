@@ -94,16 +94,16 @@ jobs:
     - name: 🔍 Trinity 프론트엔드 빌드 결과 확인
       run: |
         echo "🔍 Trinity 프론트엔드 빌드 결과 확인..."
-        if [ -d frontend-trinity/.next ]; then
-          FILE_COUNT=$(find frontend-trinity/.next -type f 2>/dev/null | wc -l)
+        if [ -d frontend-trinity/out ]; then
+          FILE_COUNT=$(find frontend-trinity/out -type f 2>/dev/null | wc -l)
           if [ "$FILE_COUNT" -gt 0 ]; then
-            echo "✅ frontend-trinity/.next 디렉토리 생성됨: $FILE_COUNT 개 파일"
+            echo "✅ frontend-trinity/out 디렉토리 생성됨: $FILE_COUNT 개 파일"
           else
-            echo "❌ frontend-trinity/.next 디렉토리가 비어있음!"
+            echo "❌ frontend-trinity/out 디렉토리가 비어있음!"
             exit 1
           fi
         else
-          echo "❌ frontend-trinity/.next 디렉토리 없음!"
+          echo "❌ frontend-trinity/out 디렉토리 없음!"
           exit 1
         fi
         
@@ -193,8 +193,8 @@ jobs:
         echo "=========================================="
         echo "🔍 Trinity 프론트엔드 파일 업로드 시작"
         echo "디렉토리 확인:"
-        ls -ld frontend-trinity/.next || echo "❌ 디렉토리 없음!"
-        echo "파일 개수: $(find frontend-trinity/.next -type f 2>/dev/null | wc -l)"
+        ls -ld frontend-trinity/out || echo "❌ 디렉토리 없음!"
+        echo "파일 개수: $(find frontend-trinity/out -type f 2>/dev/null | wc -l)"
         echo "=========================================="
         
     - name: 📤 Trinity 프론트엔드 파일 업로드 SCP (개발 서버)
@@ -205,7 +205,7 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 120s
-        source: "frontend-trinity/.next/*"
+        source: "frontend-trinity/out/*"
         target: "/var/www/html-trinity/"
         strip_components: 2
         overwrite: true

@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: "standalone",
+  output: "export",
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
+  },
   // CSP는 일단 제거하고 테스트 (토스페이먼츠 SDK 로드 확인 후 재적용)
   // async headers() {
   //   return [

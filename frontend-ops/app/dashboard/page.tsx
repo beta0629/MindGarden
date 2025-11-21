@@ -3,16 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchDashboardMetrics } from "@/services/dashboardService";
-
-interface DashboardMetrics {
-  pendingOnboarding: number;
-  activeOnboarding: number;
-  onHoldOnboarding: number;
-  activePlans: number;
-  activeAddons: number;
-  activeFeatureFlags: number;
-  totalAuditEvents: number;
-}
+import { DashboardMetrics } from "@/types/dashboard";
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);

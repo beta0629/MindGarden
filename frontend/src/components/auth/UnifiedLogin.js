@@ -137,7 +137,7 @@ const UnifiedLogin = () => {
         const data = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
           ? responseData.data
           : responseData;
-        if (data.success && data.isMultiTenant) {
+        if (data.isMultiTenant) {
           // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
           await loadAccessibleTenants();
           setShowTenantSelection(true);

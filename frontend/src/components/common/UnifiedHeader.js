@@ -132,7 +132,7 @@ const UnifiedHeader = ({
         const data = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
           ? responseData.data
           : responseData;
-        if (data.success && data.isMultiTenant) {
+        if (data.isMultiTenant) {
           setIsMultiTenant(true);
           await loadAccessibleTenants();
         } else {

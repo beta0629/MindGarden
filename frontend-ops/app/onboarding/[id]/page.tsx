@@ -9,12 +9,8 @@ import ChecklistDisplay from "@/components/onboarding/ChecklistDisplay";
 import { fetchOnboardingDetail } from "@/services/onboardingService";
 import { OnboardingRequest } from "@/types/onboarding";
 
-// 정적 빌드를 위한 generateStaticParams
-// output: export 모드에서는 동적 라우트를 사용하려면 반드시 필요
-export async function generateStaticParams(): Promise<{ id: string }[]> {
-  // 빈 배열 반환 - 실제 페이지는 클라이언트 사이드에서 동적으로 처리
-  return [];
-}
+// output: export 모드에서는 클라이언트 컴포넌트와 generateStaticParams()를 동시에 사용할 수 없음
+// generateStaticParams()는 제거하고 클라이언트 사이드 라우팅으로 처리
 
 export default function OnboardingDetailPage() {
   const params = useParams();

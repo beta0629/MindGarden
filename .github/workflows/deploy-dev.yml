@@ -81,6 +81,32 @@ jobs:
           exit 1
         fi
         
+    - name: 📦 Trinity 프론트엔드 의존성 설치
+      run: |
+        cd frontend-trinity
+        npm ci
+        
+    - name: 🏗️ Trinity 프론트엔드 빌드
+      run: |
+        cd frontend-trinity
+        npm run build
+        
+    - name: 🔍 Trinity 프론트엔드 빌드 결과 확인
+      run: |
+        echo "🔍 Trinity 프론트엔드 빌드 결과 확인..."
+        if [ -d frontend-trinity/.next ]; then
+          FILE_COUNT=$(find frontend-trinity/.next -type f 2>/dev/null | wc -l)
+          if [ "$FILE_COUNT" -gt 0 ]; then
+            echo "✅ frontend-trinity/.next 디렉토리 생성됨: $FILE_COUNT 개 파일"
+          else
+            echo "❌ frontend-trinity/.next 디렉토리가 비어있음!"
+            exit 1
+          fi
+        else
+          echo "❌ frontend-trinity/.next 디렉토리 없음!"
+          exit 1
+        fi
+        
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@v1.1.0
       with:
@@ -159,6 +185,28 @@ jobs:
         timeout: 120s
         source: "frontend/build/*"
         target: "/var/www/html-dev/"
+        strip_components: 2
+        overwrite: true
+        
+    - name: 📤 Trinity 프론트엔드 파일 업로드 (개발 서버)
+      run: |
+        echo "=========================================="
+        echo "🔍 Trinity 프론트엔드 파일 업로드 시작"
+        echo "디렉토리 확인:"
+        ls -ld frontend-trinity/.next || echo "❌ 디렉토리 없음!"
+        echo "파일 개수: $(find frontend-trinity/.next -type f 2>/dev/null | wc -l)"
+        echo "=========================================="
+        
+    - name: 📤 Trinity 프론트엔드 파일 업로드 SCP (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "frontend-trinity/.next/*"
+        target: "/var/www/html-trinity/"
         strip_components: 2
         overwrite: true
         
@@ -364,6 +412,11 @@ jobs:
           # 프론트엔드 디렉토리 권한 설정
           sudo chown -R www-data:www-data /var/www/html-dev
           sudo chmod -R 755 /var/www/html-dev
+          
+          # Trinity 프론트엔드 디렉토리 생성 및 권한 설정
+          sudo mkdir -p /var/www/html-trinity
+          sudo chown -R www-data:www-data /var/www/html-trinity
+          sudo chmod -R 755 /var/www/html-trinity
           
           # Nginx 설정 테스트
           if sudo nginx -t; then

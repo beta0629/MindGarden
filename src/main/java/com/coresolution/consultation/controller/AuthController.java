@@ -66,19 +66,43 @@ public class AuthController extends BaseApiController {
     }
 
     @GetMapping("/current-user")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getCurrentUser(HttpSession session) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCurrentUser(
+            HttpSession session,
+            org.springframework.security.core.Authentication authentication) {
         log.info("🔍 /api/auth/current-user API 호출 시작");
+        
         User sessionUser = SessionUtils.getCurrentUser(session);
         log.info("🔍 세션 사용자 조회 결과: {}", sessionUser != null ? sessionUser.getEmail() : "null");
         
-        if (sessionUser == null) {
-            log.warn("❌ 세션에 사용자 정보 없음");
+        // JWT 인증 사용자 확인 (Trinity, Ops Portal 등)
+        User currentUser = null;
+        if (sessionUser != null) {
+            currentUser = sessionUser;
+        } else if (authentication != null && authentication.isAuthenticated()) {
+            // JWT 인증된 사용자 처리
+            String username = authentication.getName();
+            log.info("🔍 JWT 인증 사용자 확인: username={}", username);
+            
+            // 데이터베이스에서 사용자 조회
+            currentUser = userRepository.findByEmail(username).orElse(null);
+            
+            if (currentUser == null) {
+                // 데이터베이스에 없는 경우 (Ops Portal 전용 계정 등)
+                // JWT 토큰 정보로 임시 사용자 정보 생성
+                log.info("🔍 데이터베이스에 사용자 없음 - JWT 토큰 정보 사용: username={}", username);
+                // JWT 인증만으로는 사용자 정보를 반환할 수 없으므로 null 처리
+                // 필요시 JWT 토큰에서 actorRole 등을 추출하여 반환할 수 있음
+            }
+        }
+        
+        if (currentUser == null) {
+            log.warn("❌ 세션 또는 JWT 인증 정보 없음");
             throw new org.springframework.security.access.AccessDeniedException("인증이 필요합니다.");
         }
         
-        log.info("🔍 데이터베이스에서 사용자 정보 조회 시작: userId={}", sessionUser.getId());
+        log.info("🔍 데이터베이스에서 사용자 정보 조회 시작: userId={}", currentUser.getId());
         // 세션에 저장된 사용자 ID로 데이터베이스에서 최신 정보 조회
-        User user = userRepository.findById(sessionUser.getId()).orElse(sessionUser);
+        User user = userRepository.findById(currentUser.getId()).orElse(currentUser);
         log.info("🔍 사용자 정보 조회 완료: email={}, role={}, branchCode={}", 
                 user.getEmail(), user.getRole(), user.getBranchCode());
         

@@ -125,8 +125,12 @@ public class SecurityConfig {
                     .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
                 )
                 
-                // 모든 요청 허용 (개발 편의성)
-                .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
+                // 개발 환경: 대부분 허용하되 @PreAuthorize는 여전히 작동
+                // Ops Portal API는 JWT 인증 필요
+                .authorizeHttpRequests(authz -> authz
+                    .requestMatchers("/api/v1/ops/**").authenticated() // Ops Portal API는 인증 필요
+                    .anyRequest().permitAll() // 나머지는 허용
+                );
         }
         
         return http.build();

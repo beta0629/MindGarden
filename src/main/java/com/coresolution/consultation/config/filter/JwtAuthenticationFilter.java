@@ -70,7 +70,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         // JWT 토큰에서 actorRole 추출하여 권한 부여
                         String actorRole = jwtService.extractActorRole(token);
                         authorities = createAuthoritiesFromActorRole(username, actorRole);
-                        log.debug("JWT 인증 성공 (토큰 기반): username={}, actorRole={}, authorities={}", 
+                        log.info("JWT 인증 성공 (토큰 기반): username={}, actorRole={}, authorities={}", 
                             username, actorRole, authorities);
                     }
                     
@@ -101,7 +101,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            log.warn("JWT 인증 처리 중 오류 발생: {}", e.getMessage());
+            log.error("JWT 인증 처리 중 오류 발생: {}", e.getMessage(), e);
         } finally {
             // 요청 종료 시 TenantContext 정리 (메모리 누수 방지)
             // 주의: TenantContextFilter에서도 정리하므로 중복 정리는 문제 없음

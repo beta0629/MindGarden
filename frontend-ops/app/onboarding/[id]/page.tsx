@@ -9,10 +9,11 @@ interface Props {
   params: { id: string };
 }
 
-// 정적 빌드를 위한 generateStaticParams (빈 배열 반환 - 런타임에 동적 처리)
-export async function generateStaticParams() {
-  // output: export 모드에서는 빈 배열 반환
-  // 실제 페이지는 런타임에 클라이언트 사이드 라우팅으로 처리
+// 정적 빌드를 위한 generateStaticParams
+// output: export 모드에서는 동적 라우트를 사용하려면 반드시 필요
+export async function generateStaticParams(): Promise<{ id: string }[]> {
+  // 빈 배열 반환 - 실제 페이지는 클라이언트 사이드에서 동적으로 처리
+  // Next.js 14.1.0에서는 빈 배열도 허용하지만, 타입을 명시적으로 지정
   return [];
 }
 

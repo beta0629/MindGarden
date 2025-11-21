@@ -74,14 +74,21 @@ public class MultiTenantController extends BaseApiController {
     @GetMapping("/check-multi")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkMultiTenantUser(HttpSession session) {
         User user = SessionUtils.getCurrentUser(session);
+        
+        // 로그인하지 않은 사용자에 대해서는 빈 데이터 반환 (403 오류 방지)
         if (user == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
+            log.debug("멀티 테넌트 확인: 로그인하지 않은 사용자");
+            Map<String, Object> data = new HashMap<>();
+            data.put("isMultiTenant", false);
+            data.put("isAuthenticated", false);
+            return success(data);
         }
         
         boolean isMultiTenant = multiTenantUserService.isMultiTenantUser(user.getId());
         
         Map<String, Object> data = new HashMap<>();
         data.put("isMultiTenant", isMultiTenant);
+        data.put("isAuthenticated", true);
         
         return success(data);
     }

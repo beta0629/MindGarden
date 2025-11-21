@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import Header from "../../../components/Header";
 import Button from "../../../components/Button";
 import { TRINITY_CONSTANTS } from "../../../constants/trinity";
@@ -16,6 +15,7 @@ export default function OnboardingCallbackPage() {
   const [status, setStatus] = useState<"success" | "fail" | "processing" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [defaultRiskLevel, setDefaultRiskLevel] = useState<string>("LOW"); // 기본 위험도
 
   // URL 파라미터 추출
   const statusParam = searchParams.get("status");

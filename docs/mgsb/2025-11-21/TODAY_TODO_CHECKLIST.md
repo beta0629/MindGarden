@@ -8,6 +8,37 @@
 
 ## ✅ 완료된 작업 (2025-11-21)
 
+### 인증 및 CORS 문제 해결 ✅
+- [x] **AuthController.getCurrentUser() 개선**
+  - [x] JWT 인증 사용자 지원 추가 (Trinity, Ops Portal 등)
+  - [x] 로그인하지 않은 사용자에 대해 403 대신 200 OK와 빈 데이터 반환
+- [x] **AuthController.getCsrfToken() 개선**
+  - [x] 개발 환경에서 CSRF 비활성화 시 빈 토큰 반환 (500 오류 방지)
+- [x] **AuthController.getSessionInfo() 개선**
+  - [x] 로그인하지 않은 사용자에 대해 403 대신 200 OK와 빈 데이터 반환
+  - [x] `isAuthenticated` 플래그 추가
+- [x] **MultiTenantController.checkMultiTenantUser() 개선**
+  - [x] 로그인하지 않은 사용자에 대해 403 대신 200 OK와 빈 데이터 반환
+  - [x] `isAuthenticated` 플래그 추가
+- [x] **SecurityConfig CORS 설정 개선**
+  - [x] 개발 환경에서 모든 Origin 허용 (`*`)
+  - [x] "Invalid CORS request" 오류 방지
+
+### Ops Portal 공개 엔드포인트 접근 허용 ✅
+- [x] **SecurityConfig 공개 엔드포인트 설정**
+  - [x] `/api/v1/ops/plans/active` - 활성화된 요금제 목록 (공개)
+  - [x] `/api/v1/ops/plans/code/**` - plan_code로 요금제 조회 (공개)
+  - [x] `/api/v1/ops/plans/*` - plan_id로 요금제 조회 (공개)
+- [x] **Trinity 온보딩 페이지에서 요금제 정보 조회 가능하도록 수정**
+  - [x] 로그인하지 않은 상태에서도 요금제 목록 조회 가능
+
+### GitHub Actions 워크플로우 YAML 구문 오류 수정 ✅
+- [x] **deploy-backend-dev.yml 수정**
+  - [x] 158번째 줄의 heredoc(`<< EOF`) 구문을 echo로 변경
+  - [x] YAML 파서가 heredoc 내용을 파싱하려고 해서 발생한 오류 해결
+  - [x] systemd 서비스 파일 생성 로직을 echo를 여러 번 사용하도록 변경
+- [x] **YAML 구문 검증 성공**
+
 ### 온보딩 시스템 개선
 - [x] **이메일 중복 확인 로직 개선**
   - [x] 멀티 테넌트 지원 (같은 이메일이 여러 테넌트에 속할 수 있음)
@@ -139,6 +170,43 @@
   - Consultation 모듈 Controller 표준화 내역 추가
   - 전체 진행 상황 업데이트
 
+#### 오후 작업 내역
+
+#### 13:00 - 인증 및 CORS 문제 해결 ✅
+- **AuthController.getCurrentUser() 개선**
+  - JWT 인증 사용자 지원 추가 (Trinity, Ops Portal 등)
+  - 세션 사용자가 없을 경우 JWT 토큰에서 사용자 정보 추출
+  - 로그인하지 않은 사용자에 대해 403 대신 200 OK와 빈 데이터 반환
+- **AuthController.getCsrfToken() 개선**
+  - 개발 환경에서 CSRF 비활성화 시 빈 토큰 반환 (500 오류 방지)
+  - CSRF가 비활성화된 경우에도 정상 응답
+- **AuthController.getSessionInfo() 개선**
+  - 로그인하지 않은 사용자에 대해 403 대신 200 OK와 빈 데이터 반환
+  - `isAuthenticated` 플래그 추가
+- **MultiTenantController.checkMultiTenantUser() 개선**
+  - 로그인하지 않은 사용자에 대해 403 대신 200 OK와 빈 데이터 반환
+  - `isAuthenticated` 플래그 추가
+- **SecurityConfig CORS 설정 개선**
+  - 개발 환경에서 모든 Origin 허용 (`*`)
+  - "Invalid CORS request" 오류 방지
+  - 환경 변수 `CORS_ALLOWED_ORIGINS`가 없어도 정상 동작
+
+#### 14:00 - Ops Portal 공개 엔드포인트 접근 허용 ✅
+- **SecurityConfig 공개 엔드포인트 설정**
+  - `/api/v1/ops/plans/active` - 활성화된 요금제 목록 (공개)
+  - `/api/v1/ops/plans/code/**` - plan_code로 요금제 조회 (공개)
+  - `/api/v1/ops/plans/*` - plan_id로 요금제 조회 (공개)
+- **Trinity 온보딩 페이지에서 요금제 정보 조회 가능하도록 수정**
+  - 로그인하지 않은 상태에서도 요금제 목록 조회 가능
+- **개발/운영 환경 모두 적용**
+
+#### 15:00 - GitHub Actions 워크플로우 YAML 구문 오류 수정 ✅
+- **deploy-backend-dev.yml 수정**
+  - 158번째 줄의 heredoc(`<< EOF`) 구문을 echo로 변경
+  - YAML 파서가 heredoc 내용을 파싱하려고 해서 발생한 오류 해결
+  - systemd 서비스 파일 생성 로직을 echo를 여러 번 사용하도록 변경
+- **YAML 구문 검증 성공**
+
 ---
 
 ## 🎯 오늘 목표
@@ -146,8 +214,11 @@
 1. ✅ 온보딩 시스템 개선 완료
 2. ✅ 멀티 테넌트 권한 체크 개선 완료
 3. ✅ Controller 표준화 완료 (Consultation 모듈 약 30개)
-4. [ ] PG SDK 연동 테스트
-5. [ ] 온보딩 시스템 검증
+4. ✅ 인증 및 CORS 문제 해결 완료
+5. ✅ Ops Portal 공개 엔드포인트 접근 허용 완료
+6. ✅ GitHub Actions 워크플로우 YAML 구문 오류 수정 완료
+7. [ ] PG SDK 연동 테스트
+8. [ ] 온보딩 시스템 검증
 
 ---
 
@@ -156,9 +227,9 @@
 ```
 오늘 목표 달성률: ████████████████████ 100% ✅
 
-완료: 3/5 작업
-진행 중: 0/5 작업
-대기: 2/5 작업
+완료: 6/8 작업
+진행 중: 0/8 작업
+대기: 2/8 작업
 
 온보딩 시스템:
 - 이메일 중복 확인: ████████████████████ 100% ✅
@@ -169,6 +240,18 @@
 Controller 표준화:
 - Consultation 모듈: ████████████████████ 100% ✅
 - 전체 Controller: ████████████████████ 100% ✅
+
+인증 및 CORS:
+- JWT 인증 지원: ████████████████████ 100% ✅
+- CSRF 토큰 처리: ████████████████████ 100% ✅
+- 세션 확인 API: ████████████████████ 100% ✅
+- CORS 설정: ████████████████████ 100% ✅
+
+Ops Portal:
+- 공개 엔드포인트: ████████████████████ 100% ✅
+
+CI/CD:
+- 워크플로우 YAML: ████████████████████ 100% ✅
 ```
 
 ---
@@ -224,5 +307,5 @@ Controller 표준화:
 
 ---
 
-**마지막 업데이트**: 2025-11-21
+**마지막 업데이트**: 2025-11-21 오후 (인증/CORS 문제 해결, Ops Portal 공개 엔드포인트, GitHub Actions YAML 수정)
 

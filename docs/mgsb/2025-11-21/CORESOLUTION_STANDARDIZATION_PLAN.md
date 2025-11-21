@@ -5,8 +5,8 @@
 CoreSolution 플랫폼 전반에 걸쳐 표준화가 필요한 부분을 식별하고, 체계적으로 표준화를 진행하여 유지보수성과 확장성을 향상시킵니다.
 
 **작성일**: 2025-11-21  
-**버전**: 1.2.0  
-**상태**: Phase 0 완료 ✅, Phase 1 완료 ✅ (전체 Controller 표준화 완료)
+**버전**: 1.3.0  
+**상태**: Phase 0 완료 ✅, Phase 1 완료 ✅ (전체 Controller 표준화 완료), 인증/CORS 개선 완료 ✅
 
 **위치**: `docs/mgsb/2025-11-21/CORESOLUTION_STANDARDIZATION_PLAN.md`
 
@@ -466,6 +466,55 @@ CoreSolution 플랫폼 전반에 걸쳐 표준화가 필요한 부분을 식별�
 **결과**: 로깅 패턴이 잘 구성되어 있음. 민감한 정보 마스킹 및 로깅 일관성 개선이 주요 개선 사항.
 
 **CoreSolution 표준화 전체 완료** ✅
+
+### Phase 7: 인증 및 CORS 개선 ✅ 완료 (2025-11-21)
+
+#### Phase 7.1: 인증 API 개선 ✅ 완료 (2025-11-21)
+- [x] AuthController.getCurrentUser() 개선 ✅
+  - [x] JWT 인증 사용자 지원 추가 (Trinity, Ops Portal 등)
+  - [x] 세션 사용자가 없을 경우 JWT 토큰에서 사용자 정보 추출
+  - [x] 로그인하지 않은 사용자에 대해 403 대신 200 OK와 빈 데이터 반환
+- [x] AuthController.getCsrfToken() 개선 ✅
+  - [x] 개발 환경에서 CSRF 비활성화 시 빈 토큰 반환 (500 오류 방지)
+  - [x] CSRF가 비활성화된 경우에도 정상 응답
+- [x] AuthController.getSessionInfo() 개선 ✅
+  - [x] 로그인하지 않은 사용자에 대해 403 대신 200 OK와 빈 데이터 반환
+  - [x] `isAuthenticated` 플래그 추가
+- [x] MultiTenantController.checkMultiTenantUser() 개선 ✅
+  - [x] 로그인하지 않은 사용자에 대해 403 대신 200 OK와 빈 데이터 반환
+  - [x] `isAuthenticated` 플래그 추가
+
+**완료 시간**: 약 1시간
+
+#### Phase 7.2: CORS 설정 개선 ✅ 완료 (2025-11-21)
+- [x] SecurityConfig CORS 설정 개선 ✅
+  - [x] 개발 환경에서 모든 Origin 허용 (`*`)
+  - [x] "Invalid CORS request" 오류 방지
+  - [x] 환경 변수 `CORS_ALLOWED_ORIGINS`가 없어도 정상 동작
+
+**완료 시간**: 약 30분
+
+#### Phase 7.3: Ops Portal 공개 엔드포인트 접근 허용 ✅ 완료 (2025-11-21)
+- [x] SecurityConfig 공개 엔드포인트 설정 ✅
+  - [x] `/api/v1/ops/plans/active` - 활성화된 요금제 목록 (공개)
+  - [x] `/api/v1/ops/plans/code/**` - plan_code로 요금제 조회 (공개)
+  - [x] `/api/v1/ops/plans/*` - plan_id로 요금제 조회 (공개)
+- [x] Trinity 온보딩 페이지에서 요금제 정보 조회 가능하도록 수정 ✅
+  - [x] 로그인하지 않은 상태에서도 요금제 목록 조회 가능
+- [x] 개발/운영 환경 모두 적용 ✅
+
+**완료 시간**: 약 30분
+
+#### Phase 7.4: CI/CD 워크플로우 개선 ✅ 완료 (2025-11-21)
+- [x] GitHub Actions 워크플로우 YAML 구문 오류 수정 ✅
+  - [x] deploy-backend-dev.yml의 heredoc(`<< EOF`) 구문을 echo로 변경
+  - [x] YAML 파서가 heredoc 내용을 파싱하려고 해서 발생한 오류 해결
+  - [x] systemd 서비스 파일 생성 로직을 echo를 여러 번 사용하도록 변경
+- [x] YAML 구문 검증 성공 ✅
+
+**완료 시간**: 약 30분
+
+**Phase 7 전체 완료** ✅
 
 ---
 

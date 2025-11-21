@@ -107,6 +107,32 @@ jobs:
           exit 1
         fi
         
+    - name: 📦 Ops 프론트엔드 의존성 설치
+      run: |
+        cd frontend-ops
+        npm ci
+        
+    - name: 🏗️ Ops 프론트엔드 빌드
+      run: |
+        cd frontend-ops
+        ESLINT_NO_DEV_ERRORS=true npm run build
+        
+    - name: 🔍 Ops 프론트엔드 빌드 결과 확인
+      run: |
+        echo "🔍 Ops 프론트엔드 빌드 결과 확인..."
+        if [ -d frontend-ops/out ]; then
+          FILE_COUNT=$(find frontend-ops/out -type f 2>/dev/null | wc -l)
+          if [ "$FILE_COUNT" -gt 0 ]; then
+            echo "✅ frontend-ops/out 디렉토리 생성됨: $FILE_COUNT 개 파일"
+          else
+            echo "❌ frontend-ops/out 디렉토리가 비어있음!"
+            exit 1
+          fi
+        else
+          echo "❌ frontend-ops/out 디렉토리 없음!"
+          exit 1
+        fi
+        
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@v1.1.0
       with:
@@ -207,6 +233,28 @@ jobs:
         timeout: 120s
         source: "frontend-trinity/out/*"
         target: "/var/www/html-trinity/"
+        strip_components: 2
+        overwrite: true
+        
+    - name: 📤 Ops 프론트엔드 파일 업로드 (개발 서버)
+      run: |
+        echo "=========================================="
+        echo "🔍 Ops 프론트엔드 파일 업로드 시작"
+        echo "디렉토리 확인:"
+        ls -ld frontend-ops/out || echo "❌ 디렉토리 없음!"
+        echo "파일 개수: $(find frontend-ops/out -type f 2>/dev/null | wc -l)"
+        echo "=========================================="
+        
+    - name: 📤 Ops 프론트엔드 파일 업로드 SCP (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "frontend-ops/out/*"
+        target: "/var/www/html-ops/"
         strip_components: 2
         overwrite: true
         

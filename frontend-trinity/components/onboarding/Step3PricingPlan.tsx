@@ -54,11 +54,11 @@ export default function Step3PricingPlan({
           <div className={COMPONENT_CSS.ONBOARDING.GRID}>
             {pricingPlans.map((plan) => (
               <button
-                key={plan.id}
+                key={plan.planId || plan.id || plan.planCode}
                 type="button"
-                onClick={() => handlePlanSelect(plan.id)}
+                onClick={() => handlePlanSelect(plan.planId || plan.id || plan.planCode || "")}
                 className={`${COMPONENT_CSS.PRICING.CARD} ${
-                  formData.planId === plan.id
+                  formData.planId === (plan.planId || plan.id || plan.planCode)
                     ? "trinity-onboarding__grid-button--active"
                     : ""
                 } ${(plan as any).isPopular ? COMPONENT_CSS.PRICING.CARD_POPULAR : ""}`}
@@ -67,7 +67,7 @@ export default function Step3PricingPlan({
                   {plan.name}
                 </div>
                 <div className={COMPONENT_CSS.PRICING.PRICE}>
-                  {formatPrice(plan.price, plan.currency)}
+                  {formatPrice(plan.baseFee, plan.currency)}
                   <span className={COMPONENT_CSS.ONBOARDING.SMALL_TEXT}>
                     /월
                   </span>

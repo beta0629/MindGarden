@@ -380,10 +380,8 @@ export const SessionProvider = ({ children }) => {
       
       console.log('✅ 중앙 세션 로그아웃 완료');
       
-      // 로그인 페이지로 리다이렉트
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, CONSTANTS.NOTIFICATION_CONSTANTS.MAX_STORED_NOTIFICATIONS);
+      // 로그인 페이지로 즉시 리다이렉트 (sessionManager에서 처리하므로 여기서는 스킵)
+      // sessionManager.logout()에서 이미 리다이렉트 처리함
       return true;
     } catch (error) {
       console.error('❌ 중앙 세션 로그아웃 실패:', error);

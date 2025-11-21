@@ -366,6 +366,23 @@ class SessionManager {
             this.notifyListeners();
             
             console.log('✅ 클라이언트 로그아웃 완료');
+            
+            // 로그인 페이지로 리다이렉트
+            const currentPath = window.location.pathname;
+            const isPublicPage = currentPath === '/login' || 
+                               currentPath.startsWith('/login/') || 
+                               currentPath === '/landing' || 
+                               currentPath === '/' ||
+                               currentPath.startsWith('/register') ||
+                               currentPath.startsWith('/tablet/register') ||
+                               currentPath.startsWith('/forgot-password') ||
+                               currentPath.startsWith('/reset-password') ||
+                               currentPath.startsWith('/auth/oauth2/callback');
+            
+            if (!isPublicPage) {
+                console.log('🔍 로그인 페이지로 리다이렉트');
+                window.location.href = '/login';
+            }
         }
     }
     

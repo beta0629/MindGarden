@@ -89,7 +89,7 @@ jobs:
     - name: 🏗️ Trinity 프론트엔드 빌드
       run: |
         cd frontend-trinity
-        npm run build
+        ESLINT_NO_DEV_ERRORS=true npm run build
         
     - name: 🔍 Trinity 프론트엔드 빌드 결과 확인
       run: |

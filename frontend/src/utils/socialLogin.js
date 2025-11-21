@@ -122,16 +122,19 @@ export const kakaoLogin = async () => {
     const data = await response.json();
     console.log('백엔드에서 받은 카카오 인증 URL:', data);
     
-    if (data.success && data.authUrl) {
+    // ApiResponse 래퍼 처리: data.data.authUrl 또는 data.authUrl
+    const authUrl = (data.data && data.data.authUrl) || data.authUrl;
+    
+    if (data.success && authUrl) {
       const state = generateRandomState();
       sessionStorage.set('oauth_state', state);
       
       // state 파라미터 추가하여 리다이렉트
-      const authUrl = `${data.authUrl}&state=${state}`;
-      console.log('최종 카카오 OAuth2 인증 URL:', authUrl);
+      const finalAuthUrl = `${authUrl}&state=${state}`;
+      console.log('최종 카카오 OAuth2 인증 URL:', finalAuthUrl);
       console.log('=== 카카오 로그인 완료 ===');
       
-      window.location.href = authUrl;
+      window.location.href = finalAuthUrl;
     } else {
       console.error('백엔드 응답 데이터 구조 오류:', data);
       throw new Error('백엔드에서 인증 URL을 받지 못했습니다.');
@@ -158,17 +161,21 @@ export const naverLogin = async () => {
     const data = await response.json();
     console.log('백엔드에서 받은 네이버 인증 URL:', data);
     
-    if (data.success && data.authUrl) {
+    // ApiResponse 래퍼 처리: data.data.authUrl 또는 data.authUrl
+    const authUrl = (data.data && data.data.authUrl) || data.authUrl;
+    
+    if (data.success && authUrl) {
       const state = generateRandomState();
       sessionStorage.set('oauth_state', state);
       
       // state 파라미터 추가하여 리다이렉트
-      const authUrl = `${data.authUrl}&state=${state}`;
-      console.log('최종 네이버 OAuth2 인증 URL:', authUrl);
+      const finalAuthUrl = `${authUrl}&state=${state}`;
+      console.log('최종 네이버 OAuth2 인증 URL:', finalAuthUrl);
       console.log('=== 네이버 로그인 완료 ===');
       
-      window.location.href = authUrl;
+      window.location.href = finalAuthUrl;
     } else {
+      console.error('백엔드 응답 데이터 구조 오류:', data);
       throw new Error('백엔드에서 인증 URL을 받지 못했습니다.');
     }
   } catch (error) {

@@ -77,7 +77,7 @@ export default function Step3PricingPlan({
                     {plan.description}
                   </p>
                 )}
-                {formData.planId === plan.id && (
+                {formData.planId === (plan.planId || plan.id || plan.planCode) && (
                   <div className={COMPONENT_CSS.ONBOARDING.SUCCESS_TEXT}>
                     ✓ 선택됨
                   </div>

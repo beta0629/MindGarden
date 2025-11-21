@@ -29,7 +29,13 @@ interface Step1BasicInfoProps {
   sendEmailVerificationCode: (email: string) => void;
   verifyEmailCode: (email: string, code: string) => void;
   validateEmailFormat: (email: string) => { valid: boolean; error?: string };
-  checkEmailDuplicate: (email: string) => Promise<{ isDuplicate: boolean }>;
+  checkEmailDuplicate: (email: string) => Promise<{ 
+    email: string; 
+    isDuplicate: boolean; 
+    available: boolean;
+    message: string;
+    status: string | null;
+  }>;
   setError: (error: string | null) => void;
   setEmailFormatError: (error: string | null) => void;
 }
@@ -143,8 +149,7 @@ export default function Step1BasicInfo({
       const result = await checkEmailDuplicate(formData.contactEmail);
       if (result.isDuplicate) {
         // 백엔드에서 반환한 메시지 사용 (예: "승인 대기 중입니다.")
-        const errorMessage = (result as { message?: string }).message || "이미 사용 중인 이메일입니다. 다른 이메일을 사용해주세요.";
-        setEmailDuplicateError(errorMessage);
+        setEmailDuplicateError(result.message || "이미 사용 중인 이메일입니다. 다른 이메일을 사용해주세요.");
         setEmailDuplicateChecked(false);
       } else {
         setEmailDuplicateChecked(true);

@@ -169,6 +169,7 @@ export const COMPONENT_CSS = {
     ERROR: 'trinity-onboarding__error',
     CATEGORY_SECTION: 'trinity-onboarding__category-section',
     TEXT_SECONDARY: 'trinity-onboarding__text-secondary',
+    GRID: 'trinity-onboarding__grid',
     GRID_2COL: 'trinity-onboarding__grid-2col',
     MESSAGE: 'trinity-onboarding__message',
     MESSAGE_ERROR: 'trinity-onboarding__message--error',

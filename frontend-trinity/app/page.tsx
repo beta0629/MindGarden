@@ -131,8 +131,8 @@ export default function HomePage() {
                 
                 return (
                   <PricingCard
-                    key={plan.planId}
-                    id={plan.planId}
+                    key={plan.planId || plan.id || plan.planCode}
+                    id={plan.planId || plan.id || plan.planCode || ""}
                     name={plan.nameKo || plan.name || plan.displayNameKo || plan.displayName || plan.planCode}
                     price={Number(plan.baseFee)}
                     currency={plan.currency || DEFAULT_CURRENCY}

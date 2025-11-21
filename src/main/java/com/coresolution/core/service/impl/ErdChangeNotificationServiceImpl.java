@@ -2,8 +2,8 @@ package com.coresolution.core.service.impl;
 
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.ErdChangeNotificationService;
-import com.mindgarden.consultation.dto.EmailRequest;
-import com.mindgarden.consultation.service.EmailService;
+import com.coresolution.consultation.dto.EmailRequest;
+import com.coresolution.consultation.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

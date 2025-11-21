@@ -317,17 +317,12 @@ export const apiUpload = async (endpoint, formData, options = {}) => {
 // 인증 관련 API
 export const authAPI = {
   login: async (data) => {
-    // curl과 동일한 방식으로 직접 요청
+    // CSRF 토큰을 포함한 로그인 요청
     try {
-      console.log('🔐 직접 fetch 로그인 시도:', data);
-      const response = await fetch(`${API_BASE_URL}${AUTH_API.LOGIN}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data),
-        credentials: 'include' // 세션 쿠키 포함
-      });
+      console.log('🔐 CSRF 토큰 포함 로그인 시도:', data);
+      
+      // csrfTokenManager를 사용하여 CSRF 토큰 자동 포함
+      const response = await csrfTokenManager.post(AUTH_API.LOGIN, data);
       
       const responseData = await response.json();
       

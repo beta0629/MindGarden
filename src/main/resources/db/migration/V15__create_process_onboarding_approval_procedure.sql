@@ -13,7 +13,7 @@ DELIMITER //
 -- ============================================
 CREATE PROCEDURE ProcessOnboardingApproval(
     IN p_request_id BIGINT,
-    IN p_tenant_id VARCHAR(36),
+    IN p_tenant_id VARCHAR(64),
     IN p_tenant_name VARCHAR(255),
     IN p_business_type VARCHAR(50),
     IN p_approved_by VARCHAR(100),

@@ -59,7 +59,8 @@ const ADMIN_ROUTES = {
     COMPLIANCE: '/admin/compliance',
     COMPLIANCE_DASHBOARD: '/admin/compliance/dashboard',
     COMPLIANCE_DESTRUCTION: '/admin/compliance/destruction',
-    ERP_FINANCIAL: '/admin/erp/financial'
+    ERP_FINANCIAL: '/admin/erp/financial',
+    DASHBOARDS: '/admin/dashboards'
 };
 
 const AdminDashboard = ({ user: propUser }) => {
@@ -1042,6 +1043,14 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         <h3>시스템 공지 관리</h3>
                         <p className="mg-management-description">전체/상담사/내담자 공지를 관리합니다</p>
+                    </div>
+                    
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.DASHBOARDS)}>
+                        <div className="mg-management-icon">
+                            <LayoutDashboard />
+                        </div>
+                        <h3>대시보드 관리</h3>
+                        <p className="mg-management-description">역할별 대시보드를 관리합니다</p>
                     </div>
                     
                     <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SYSTEM_CONFIG)}>

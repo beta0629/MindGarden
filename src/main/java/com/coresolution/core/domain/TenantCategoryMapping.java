@@ -1,6 +1,6 @@
 package com.coresolution.core.domain;
 
-import com.mindgarden.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

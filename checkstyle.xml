@@ -109,6 +109,46 @@
 
         <!-- 주석 검사 -->
         <module name="CommentsIndentation"/>
+
+        <!-- DTO 표준화 검사: Deprecated DTO 사용 금지 -->
+        <!-- PaymentRequest → PaymentCreateRequest -->
+        <module name="RegexpSingleline">
+            <property name="format" value="import\s+com\.coresolution\.consultation\.dto\.PaymentRequest;"/>
+            <property name="message" value="[DTO 표준화] PaymentRequest는 Deprecated입니다. PaymentCreateRequest를 사용하세요."/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSingleline">
+            <property name="format" value="\bPaymentRequest\b"/>
+            <property name="message" value="[DTO 표준화] PaymentRequest는 Deprecated입니다. PaymentCreateRequest를 사용하세요."/>
+            <property name="ignoreComments" value="true"/>
+            <property name="ignorePattern" value="PaymentCreateRequest|@Deprecated|deprecated"/>
+        </module>
+
+        <!-- EmailRequest → EmailSendRequest -->
+        <module name="RegexpSingleline">
+            <property name="format" value="import\s+com\.coresolution\.consultation\.dto\.EmailRequest;"/>
+            <property name="message" value="[DTO 표준화] EmailRequest는 Deprecated입니다. EmailSendRequest를 사용하세요."/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSingleline">
+            <property name="format" value="\bEmailRequest\b"/>
+            <property name="message" value="[DTO 표준화] EmailRequest는 Deprecated입니다. EmailSendRequest를 사용하세요."/>
+            <property name="ignoreComments" value="true"/>
+            <property name="ignorePattern" value="EmailSendRequest|@Deprecated|deprecated"/>
+        </module>
+
+        <!-- AuthRequest → LoginRequest -->
+        <module name="RegexpSingleline">
+            <property name="format" value="import\s+com\.coresolution\.consultation\.dto\.AuthRequest;"/>
+            <property name="message" value="[DTO 표준화] AuthRequest는 Deprecated입니다. LoginRequest를 사용하세요."/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSingleline">
+            <property name="format" value="\bAuthRequest\b"/>
+            <property name="message" value="[DTO 표준화] AuthRequest는 Deprecated입니다. LoginRequest를 사용하세요."/>
+            <property name="ignoreComments" value="true"/>
+            <property name="ignorePattern" value="LoginRequest|@Deprecated|deprecated"/>
+        </module>
     </module>
 </module>
 

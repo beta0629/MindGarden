@@ -1,5 +1,6 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.ErdDiagramHistoryResponse;
 import com.coresolution.core.dto.ErdDiagramResponse;
 import com.coresolution.core.service.ErdGenerationService;
@@ -9,7 +10,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,10 @@ import java.util.List;
  * ERD 조회 API 컨트롤러
  * 테넌트 포털에서 사용하는 ERD 조회 API
  * 
+ * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
+ * 
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2025-01-XX
  */
 @Slf4j
@@ -34,7 +36,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
 @Tag(name = "테넌트 ERD", description = "테넌트 포털 ERD 조회 API")
-public class ErdController {
+public class ErdController extends BaseApiController {
     
     private final ErdGenerationService erdGenerationService;
     private final ErdHistoryService erdHistoryService;
@@ -47,13 +49,13 @@ public class ErdController {
             description = "테넌트의 ERD 목록을 조회합니다. 공개된 ERD만 조회됩니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = ErdDiagramResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
-            @ApiResponse(responseCode = "403", description = "권한 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @GetMapping
-    public ResponseEntity<List<ErdDiagramResponse>> getTenantErds(
+    public ResponseEntity<ApiResponse<List<ErdDiagramResponse>>> getTenantErds(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId) {
         
         log.debug("테넌트 ERD 목록 조회 요청: tenantId={}", tenantId);
@@ -63,7 +65,8 @@ public class ErdController {
         
         List<ErdDiagramResponse> erds = erdGenerationService.getTenantErds(tenantId);
         
-        return ResponseEntity.ok(erds);
+        log.debug("✅ 테넌트 ERD 목록 조회 완료: tenantId={}, count={}", tenantId, erds.size());
+        return success(erds);
     }
     
     /**
@@ -74,13 +77,13 @@ public class ErdController {
             description = "특정 ERD의 상세 정보를 조회합니다. Mermaid 코드와 텍스트 ERD를 포함합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = ErdDiagramResponse.class))),
-            @ApiResponse(responseCode = "404", description = "ERD를 찾을 수 없음"),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (다른 테넌트의 ERD)")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "ERD를 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (다른 테넌트의 ERD)")
     })
     @GetMapping("/{diagramId}")
-    public ResponseEntity<ErdDiagramResponse> getErdDetail(
+    public ResponseEntity<ApiResponse<ErdDiagramResponse>> getErdDetail(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "ERD 다이어그램 ID", required = true) @PathVariable String diagramId) {
         
@@ -101,7 +104,8 @@ public class ErdController {
             throw new IllegalArgumentException("공개되지 않은 ERD입니다");
         }
         
-        return ResponseEntity.ok(erd);
+        log.debug("✅ ERD 상세 조회 완료: tenantId={}, diagramId={}", tenantId, diagramId);
+        return success(erd);
     }
     
     /**
@@ -112,12 +116,12 @@ public class ErdController {
             description = "ERD의 변경 이력을 조회합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = ErdDiagramHistoryResponse.class))),
-            @ApiResponse(responseCode = "404", description = "ERD를 찾을 수 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "ERD를 찾을 수 없음")
     })
     @GetMapping("/{diagramId}/history")
-    public ResponseEntity<List<ErdDiagramHistoryResponse>> getErdHistory(
+    public ResponseEntity<ApiResponse<List<ErdDiagramHistoryResponse>>> getErdHistory(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "ERD 다이어그램 ID", required = true) @PathVariable String diagramId) {
         
@@ -134,7 +138,8 @@ public class ErdController {
         
         List<ErdDiagramHistoryResponse> history = erdHistoryService.getHistoryByDiagramId(diagramId);
         
-        return ResponseEntity.ok(history);
+        log.debug("✅ ERD 변경 이력 조회 완료: tenantId={}, diagramId={}, count={}", tenantId, diagramId, history.size());
+        return success(history);
     }
     
     // ==================== Private Helper Methods ====================

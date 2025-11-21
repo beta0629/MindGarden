@@ -32,6 +32,16 @@ public class OnboardingService {
     }
 
     @Transactional(readOnly = true)
+    public List<OnboardingRequest> findByStatus(OnboardingStatus status) {
+        return repository.findByStatusOrderByCreatedAtDesc(status);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OnboardingRequest> findAll() {
+        return repository.findAllByOrderByCreatedAtDesc();
+    }
+
+    @Transactional(readOnly = true)
     public OnboardingRequest getById(UUID id) {
         return repository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("요청을 찾을 수 없습니다."));

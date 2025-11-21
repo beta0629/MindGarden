@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
-import { getDashboardPath } from '../../utils/session';
+import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import UnifiedModal from './modals/UnifiedModal';
 import SimpleHamburgerMenu from '../layout/SimpleHamburgerMenu';
+import { API_BASE_URL } from '../../constants/api';
+import notificationManager from '../../utils/notification';
 import '../../styles/main.css';
 
 /**
@@ -50,6 +52,10 @@ const UnifiedHeader = ({
   const location = useLocation();
   const user = sessionManager.getUser();
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
+  const [isMultiTenant, setIsMultiTenant] = useState(false);
+  const [accessibleTenants, setAccessibleTenants] = useState([]);
+  const [showTenantSwitchModal, setShowTenantSwitchModal] = useState(false);
+  const [isLoadingTenants, setIsLoadingTenants] = useState(false);
 
   // 로고 클릭 핸들러
   const handleLogoClick = () => {
@@ -81,16 +87,20 @@ const UnifiedHeader = ({
   };
 
   // 백 버튼 클릭 핸들러
-  const handleBackClick = () => {
+  const handleBackClick = async () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      // 브라우저 히스토리가 없으면 적절한 대시보드로 이동
-      if (user?.role) {
-        const dashboardPath = getDashboardPath(user.role);
-        navigate(dashboardPath);
-      } else {
-        navigate('/');
+      // 브라우저 히스토리가 없으면 동적 대시보드로 이동
+      try {
+        const authResponse = {
+          user: user,
+          currentTenantRole: sessionManager.getCurrentTenantRole()
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
+      } catch (error) {
+        console.error('대시보드 리다이렉트 실패:', error);
+        navigate('/dashboard', { replace: true });
       }
     }
   };
@@ -100,6 +110,130 @@ const UnifiedHeader = ({
     if (user?.role) {
       navigate(`/${user.role.toLowerCase()}/mypage`);
     }
+  };
+
+  // 멀티 테넌트 사용자 확인
+  useEffect(() => {
+    if (user?.id) {
+      checkMultiTenantUser();
+    }
+  }, [user?.id]);
+
+  // 멀티 테넌트 사용자 확인
+  const checkMultiTenantUser = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/tenant/check-multi`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.isMultiTenant) {
+          setIsMultiTenant(true);
+          await loadAccessibleTenants();
+        } else {
+          setIsMultiTenant(false);
+        }
+      }
+    } catch (error) {
+      console.error('멀티 테넌트 확인 오류:', error);
+    }
+  };
+
+  // 접근 가능한 테넌트 목록 로드
+  const loadAccessibleTenants = async () => {
+    try {
+      setIsLoadingTenants(true);
+      const response = await fetch(`${API_BASE_URL}/api/auth/tenant/accessible`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // 백엔드 응답 구조에 맞게 변환
+          const tenants = (data.tenants || []).map(tenant => ({
+            tenantId: tenant.tenantId,
+            tenantName: tenant.name,
+            businessType: tenant.businessType,
+            status: tenant.status
+          }));
+          setAccessibleTenants(tenants);
+        }
+      }
+    } catch (error) {
+      console.error('테넌트 목록 로드 오류:', error);
+    } finally {
+      setIsLoadingTenants(false);
+    }
+  };
+
+  // 테넌트 전환 핸들러
+  const handleTenantSwitch = async (tenantId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/tenant/switch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ tenantId })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // 세션 정보 갱신
+          const currentUser = sessionManager.getUser();
+          if (currentUser) {
+            currentUser.tenantId = tenantId;
+            const selectedTenant = accessibleTenants.find(t => t.tenantId === tenantId);
+            if (selectedTenant) {
+              // 역할 정보는 유지 (같은 사용자이므로)
+            }
+            sessionManager.setUser(currentUser, sessionManager.getSessionInfo());
+          }
+          
+          setShowTenantSwitchModal(false);
+          notificationManager.show('테넌트가 전환되었습니다.', 'success');
+          
+          // 페이지 새로고침하여 새로운 테넌트 컨텍스트 적용
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        } else {
+          throw new Error(data.message || '테넌트 전환 실패');
+        }
+      } else {
+        throw new Error('테넌트 전환 API 호출 실패');
+      }
+    } catch (error) {
+      console.error('❌ 테넌트 전환 오류:', error);
+      notificationManager.show('테넌트 전환 중 오류가 발생했습니다.', 'error');
+    }
+  };
+
+  // 테넌트 전환 버튼 렌더링
+  const renderTenantSwitchButton = () => {
+    if (!isMultiTenant || accessibleTenants.length <= 1) {
+      return null;
+    }
+
+    const currentTenant = accessibleTenants.find(t => t.tenantId === user?.tenantId);
+    const currentTenantName = currentTenant?.tenantName || '현재 테넌트';
+
+    return (
+      <button
+        className="mg-header__tenant-switch"
+        onClick={() => setShowTenantSwitchModal(true)}
+        title="테넌트 전환"
+        aria-label="테넌트 전환"
+      >
+        <i className="bi bi-building"></i>
+        <span className="mg-header__tenant-name">{currentTenantName}</span>
+        <i className="bi bi-chevron-down"></i>
+      </button>
+    );
   };
 
   // 로고 렌더링
@@ -159,6 +293,9 @@ const UnifiedHeader = ({
 
     return (
       <div className="mg-header__user-menu">
+        {/* 테넌트 전환 버튼 (멀티 테넌트 사용자인 경우) */}
+        {renderTenantSwitchButton()}
+        
         {/* 알림 아이콘 */}
         {notificationAction}
         
@@ -249,6 +386,71 @@ const UnifiedHeader = ({
           isOpen={isHamburgerOpen}
           onClose={() => setIsHamburgerOpen(false)}
         />
+      )}
+
+      {/* 테넌트 전환 모달 */}
+      {showTenantSwitchModal && (
+        <UnifiedModal
+          isOpen={showTenantSwitchModal}
+          onClose={() => setShowTenantSwitchModal(false)}
+          title="테넌트 전환"
+          size="medium"
+        >
+          <div className="tenant-switch-modal">
+            <p className="tenant-switch-modal__description">
+              접근 가능한 테넌트를 선택하세요
+            </p>
+            
+            {isLoadingTenants ? (
+              <div className="tenant-switch-modal__loading">
+                <span>테넌트 목록을 불러오는 중...</span>
+              </div>
+            ) : (
+              <div className="tenant-switch-modal__list">
+                {accessibleTenants.map((tenant) => (
+                  <button
+                    key={tenant.tenantId}
+                    type="button"
+                    onClick={() => handleTenantSwitch(tenant.tenantId)}
+                    className={`tenant-switch-modal__item ${
+                      user?.tenantId === tenant.tenantId ? 'tenant-switch-modal__item--current' : ''
+                    }`}
+                  >
+                    <div className="tenant-switch-modal__item-content">
+                      <div className="tenant-switch-modal__item-name">
+                        {tenant.tenantName}
+                        {user?.tenantId === tenant.tenantId && (
+                          <span className="tenant-switch-modal__item-badge">현재</span>
+                        )}
+                      </div>
+                      <div className="tenant-switch-modal__item-meta">
+                        <span className="tenant-switch-modal__item-type">{tenant.businessType}</span>
+                        {tenant.status && (
+                          <span className={`tenant-switch-modal__item-status tenant-switch-modal__item-status--${tenant.status.toLowerCase()}`}>
+                            {tenant.status}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {user?.tenantId === tenant.tenantId && (
+                      <div className="tenant-switch-modal__item-check">✓</div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            <div className="tenant-switch-modal__actions">
+              <button
+                type="button"
+                onClick={() => setShowTenantSwitchModal(false)}
+                className="tenant-switch-modal__cancel-button"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </UnifiedModal>
       )}
     </>
   );

@@ -54,7 +54,7 @@ type UpdateAddonPayload = Pick<
 export async function createPricingPlan(
   payload: CreatePlanPayload
 ): Promise<PricingPlan> {
-  return clientApiFetch<PricingPlan>("/plans", {
+  return clientApiFetch<PricingPlan>("/ops/plans", {
     method: "POST",
     body: JSON.stringify(payload)
   });
@@ -64,14 +64,14 @@ export async function updatePricingPlan(
   planId: string,
   payload: UpdatePlanPayload
 ): Promise<PricingPlan> {
-  return clientApiFetch<PricingPlan>(`/plans/${planId}`, {
+  return clientApiFetch<PricingPlan>(`/ops/plans/${planId}`, {
     method: "PATCH",
     body: JSON.stringify(payload)
   });
 }
 
 export async function deactivatePricingPlan(planId: string): Promise<void> {
-  await clientApiFetch(`/plans/${planId}`, {
+  await clientApiFetch(`/ops/plans/${planId}`, {
     method: "DELETE"
   });
 }
@@ -79,7 +79,7 @@ export async function deactivatePricingPlan(planId: string): Promise<void> {
 export async function createPricingAddon(
   payload: CreateAddonPayload
 ): Promise<PricingAddon> {
-  return clientApiFetch<PricingAddon>("/plans/addons", {
+  return clientApiFetch<PricingAddon>("/ops/plans/addons", {
     method: "POST",
     body: JSON.stringify(payload)
   });
@@ -89,14 +89,14 @@ export async function updatePricingAddon(
   addonId: string,
   payload: UpdateAddonPayload
 ): Promise<PricingAddon> {
-  return clientApiFetch<PricingAddon>(`/plans/addons/${addonId}`, {
+  return clientApiFetch<PricingAddon>(`/ops/plans/addons/${addonId}`, {
     method: "PATCH",
     body: JSON.stringify(payload)
   });
 }
 
 export async function deactivatePricingAddon(addonId: string): Promise<void> {
-  await clientApiFetch(`/plans/addons/${addonId}`, {
+  await clientApiFetch(`/ops/plans/addons/${addonId}`, {
     method: "DELETE"
   });
 }
@@ -105,7 +105,7 @@ export async function attachAddonToPlan(
   planId: string,
   payload: PlanAddonAttachPayload
 ): Promise<void> {
-  await clientApiFetch(`/plans/${planId}/addons`, {
+  await clientApiFetch(`/ops/plans/${planId}/addons`, {
     method: "POST",
     body: JSON.stringify(payload)
   });

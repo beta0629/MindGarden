@@ -12,7 +12,7 @@ import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallbac
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../constants/session';
-import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
+import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
 import { TABLET_LOGIN_CSS } from '../../constants/css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -116,8 +116,12 @@ const TabletLogin = () => {
               refreshToken: result.refreshToken || 'existing_session_refresh_token'
             });
             
-            const dashboardPath = getDashboardPath(result.user.role);
-            navigate(dashboardPath, { replace: true });
+            // 동적 대시보드 라우팅
+            const authResponse = {
+              user: result.user,
+              currentTenantRole: result.currentTenantRole || null
+            };
+            await redirectToDynamicDashboard(authResponse, navigate);
           }
         }
         // 401 등은 조용히 처리 (로그인 페이지 유지)
@@ -186,7 +190,12 @@ const TabletLogin = () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // 공통 리다이렉션 함수 사용
-        redirectToDashboardWithFallback(result.user.role, navigate);
+        // 동적 대시보드 라우팅
+        const authResponse = {
+          user: result.user,
+          currentTenantRole: result.currentTenantRole || null
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
       } else if (result.requiresConfirmation) {
         // 중복 로그인 확인 요청
         setIsLoading(false);
@@ -338,8 +347,19 @@ const TabletLogin = () => {
           
           // 역할에 따른 리다이렉트
           const userRole = data.user.role;
-          const dashboardPath = getDashboardPath(userRole);
-          window.location.href = dashboardPath;
+          // 동적 대시보드 라우팅 (window.location 사용)
+          try {
+            const authResponse = {
+              user: { role: userRole },
+              currentTenantRole: null
+            };
+            // navigate가 없으므로 직접 경로 계산
+            const legacyPath = getLegacyDashboardPath(userRole);
+            window.location.href = legacyPath;
+          } catch (error) {
+            console.error('대시보드 리다이렉트 실패:', error);
+            window.location.href = '/dashboard';
+          }
         }
       } else {
         console.error('❌ SMS 인증 로그인 실패:', data.message);
@@ -537,9 +557,13 @@ const TabletLogin = () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // 역할에 따른 대시보드로 리다이렉트
-        const dashboardPath = getDashboardPath(response.userInfo.role);
-        console.log('✅ 간편 회원가입 성공, 대시보드로 이동:', dashboardPath);
-        navigate(dashboardPath, { replace: true });
+        // 동적 대시보드 라우팅
+        const authResponse = {
+          user: response.userInfo,
+          currentTenantRole: response.currentTenantRole || null
+        };
+        console.log('✅ 간편 회원가입 성공, 동적 대시보드로 이동');
+        await redirectToDynamicDashboard(authResponse, navigate);
       } else {
         console.log('❌ 간편 회원가입 - 세션 설정 실패');
         notificationManager.show('세션 설정에 실패했습니다.', 'info');

@@ -5,7 +5,8 @@ import SimpleLayout from '../layout/SimpleLayout';
 import TabletBottomNavigation from '../layout/TabletBottomNavigation';
 import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
-import { getDashboardPath } from '../../utils/session';
+import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
+import { sessionManager } from '../../utils/sessionManager';
 import notificationManager from '../../utils/notification';
 import '../../styles/main.css';
 import './Homepage.css';
@@ -111,8 +112,16 @@ const TabletHomepage = () => {
     switch (menuItem) {
       case PROFILE_MENU_ITEMS.DASHBOARD:
         // 사용자 역할에 따른 대시보드로 이동
-        const dashboardPath = user?.role ? getDashboardPath(user.role) : '/dashboard';
-        navigate(dashboardPath);
+        // 동적 대시보드 라우팅
+        if (user?.role) {
+          const authResponse = {
+            user: user,
+            currentTenantRole: sessionManager.getCurrentTenantRole()
+          };
+          await redirectToDynamicDashboard(authResponse, navigate);
+        } else {
+          navigate('/dashboard');
+        }
         break;
       case PROFILE_MENU_ITEMS.PROFILE:
         navigate('/mypage');

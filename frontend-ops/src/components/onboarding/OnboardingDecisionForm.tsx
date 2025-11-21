@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { decideOnboarding } from "@/services/onboardingClient";
+import { decideOnboarding, retryOnboardingApproval } from "@/services/onboardingClient";
 import { OnboardingStatus } from "@/types/shared";
+import MGButton from "@/components/ui/MGButton";
 
 const DECISION_OPTIONS: OnboardingStatus[] = [
   "APPROVED",
@@ -48,6 +49,35 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
     });
   };
 
+  const handleRetry = () => {
+    setError(null);
+    setSuccess(null);
+
+    startTransition(async () => {
+      try {
+        const updated = await retryOnboardingApproval(requestId, note.trim().length ? note.trim() : undefined);
+        // 재시도 후 업데이트된 상태 확인
+        if (updated.status === "APPROVED") {
+          setSuccess("재시도 성공: 프로시저가 성공적으로 실행되었습니다. 상태가 APPROVED로 변경되었습니다.");
+        } else if (updated.status === "ON_HOLD") {
+          setError(`재시도 실패: 프로시저 실행 중 오류가 발생했습니다. 상태가 ON_HOLD로 유지되었습니다.${updated.decisionNote ? "\n오류 내용: " + updated.decisionNote.split("\n").pop() : ""}`);
+        } else {
+          setSuccess(`재시도 완료: 상태가 ${updated.status}로 변경되었습니다.`);
+        }
+        // 상태 업데이트
+        setStatus(updated.status);
+        // 페이지 새로고침하여 최신 정보 표시
+        setTimeout(() => {
+          router.refresh();
+        }, 1000);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "재시도 처리 중 오류가 발생했습니다."
+        );
+      }
+    });
+  };
+
   return (
     <form className="form-card" onSubmit={handleSubmit}>
       <h2>결정 기록</h2>
@@ -80,9 +110,31 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
         </label>
       </div>
       <div className="form-footer">
-        <button type="submit" className="primary-button" disabled={isPending}>
-          {isPending ? "저장 중..." : "결정 저장"}
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <MGButton
+            type="submit"
+            variant="primary"
+            loading={isPending}
+            loadingText="저장 중..."
+            preventDoubleClick={true}
+            clickDelay={1000}
+          >
+            결정 저장
+          </MGButton>
+          {initialStatus === "ON_HOLD" && (
+            <MGButton
+              type="button"
+              variant="success"
+              onClick={handleRetry}
+              loading={isPending}
+              loadingText="재시도 중..."
+              preventDoubleClick={true}
+              clickDelay={2000}
+            >
+              프로시저 재시도
+            </MGButton>
+          )}
+        </div>
         {error && <p className="form-feedback form-feedback--error">{error}</p>}
         {success && (
           <p className="form-feedback form-feedback--success">{success}</p>

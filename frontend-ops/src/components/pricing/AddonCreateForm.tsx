@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createPricingAddon } from "@/services/pricingClient";
 import { FEE_TYPE_OPTIONS } from "@/constants/pricing";
 import { FeeType } from "@/types/sharedPricing";
+import MGButton from "@/components/ui/MGButton";
 
 export function AddonCreateForm() {
   const router = useRouter();
@@ -166,9 +167,16 @@ export function AddonCreateForm() {
         </label>
       </div>
       <div className="form-footer">
-        <button type="submit" className="primary-button" disabled={isPending}>
-          {isPending ? "생성 중..." : "애드온 생성"}
-        </button>
+        <MGButton
+          type="submit"
+          variant="primary"
+          loading={isPending}
+          loadingText="생성 중..."
+          preventDoubleClick={true}
+          clickDelay={1000}
+        >
+          애드온 생성
+        </MGButton>
         {feedback && (
           <p
             className={`form-feedback ${

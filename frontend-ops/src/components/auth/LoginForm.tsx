@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import MGButton from "@/components/ui/MGButton";
 
 interface LoginFormProps {
   redirectTo: string;
@@ -85,9 +86,16 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
       </div>
 
       <div className="form-footer">
-        <button type="submit" className="primary-button" disabled={isPending}>
-          {isPending ? "로그인 중..." : "로그인"}
-        </button>
+        <MGButton
+          type="submit"
+          variant="primary"
+          loading={isPending}
+          loadingText="로그인 중..."
+          preventDoubleClick={false}
+          disabled={isPending}
+        >
+          로그인
+        </MGButton>
         {feedback && (
           <p className="form-feedback form-feedback--error">{feedback}</p>
         )}

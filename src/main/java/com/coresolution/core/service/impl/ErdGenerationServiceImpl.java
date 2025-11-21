@@ -1,24 +1,24 @@
 package com.coresolution.core.service.impl;
 
-import com.coresolution.core.domain.ErdDiagram;
-import com.coresolution.core.dto.ErdDiagramResponse;
-import com.coresolution.core.model.SchemaTable;
-import com.coresolution.core.repository.ErdDiagramRepository;
-import com.coresolution.core.domain.ErdDiagramHistory;
-import com.coresolution.core.service.ErdGenerationService;
-import com.coresolution.core.service.ErdMetadataService;
-import com.coresolution.core.service.MermaidErdService;
-import com.coresolution.core.service.SchemaService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.coresolution.core.domain.ErdDiagram;
+import com.coresolution.core.domain.ErdDiagramHistory;
+import com.coresolution.core.dto.ErdDiagramResponse;
+import com.coresolution.core.model.SchemaTable;
+import com.coresolution.core.repository.ErdDiagramRepository;
+import com.coresolution.core.service.ErdGenerationService;
+import com.coresolution.core.service.ErdMetadataService;
+import com.coresolution.core.service.MermaidErdService;
+import com.coresolution.core.service.SchemaService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * ERD 생성 서비스 구현체
@@ -30,13 +30,27 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Transactional
-@RequiredArgsConstructor
 public class ErdGenerationServiceImpl implements ErdGenerationService {
     
     private final SchemaService schemaService;
     private final MermaidErdService mermaidErdService;
     private final ErdDiagramRepository erdDiagramRepository;
     private final ErdMetadataService erdMetadataService;
+    
+    /**
+     * 의존성 주입 (SchemaService는 지연 주입하여 순환 참조 방지)
+     */
+    @Autowired
+    public ErdGenerationServiceImpl(
+            @Lazy SchemaService schemaService,
+            MermaidErdService mermaidErdService,
+            ErdDiagramRepository erdDiagramRepository,
+            ErdMetadataService erdMetadataService) {
+        this.schemaService = schemaService;
+        this.mermaidErdService = mermaidErdService;
+        this.erdDiagramRepository = erdDiagramRepository;
+        this.erdMetadataService = erdMetadataService;
+    }
     
     @Value("${spring.datasource.schema:core_solution}")
     private String defaultSchemaName;

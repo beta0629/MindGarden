@@ -28,8 +28,17 @@ const PackageSelector = ({
     const loadPackageOptions = async () => {
         try {
             setLoading(true);
-            const response = await apiGet('/api/common-codes/PACKAGE');
-            const data = response?.data || response || [];
+            // 표준화된 API 사용 (하위 호환성 유지)
+            const { getCommonCodes } = await import('../../utils/commonCodeApi');
+            let data = [];
+            try {
+                const codes = await getCommonCodes('PACKAGE');
+                data = codes || [];
+            } catch (error) {
+                // 하위 호환성: 기존 API 사용
+                const response = await apiGet('/api/common-codes/PACKAGE');
+                data = response?.data || response || [];
+            }
             
             if (Array.isArray(data)) {
                 const options = data.map(pkg => {

@@ -42,19 +42,43 @@ const SocialSignupModal = ({
   const loadBranches = async () => {
     try {
       setIsLoadingBranches(true);
-      const response = await fetch('/api/auth/branches', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
+      
+      // 학원 시스템 회원가입 모드인 경우 테넌트별 지점 목록 조회
+      if (socialUser?.isAcademySignup && socialUser?.tenantId) {
+        const { API_BASE_URL } = require('../../constants/api');
+        const response = await fetch(
+          `${API_BASE_URL}/api/v1/academy/registration/branches?tenantId=${socialUser.tenantId}`,
+          {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('지점 목록을 불러오는데 실패했습니다.');
         }
-      });
 
-      if (!response.ok) {
-        throw new Error('지점 목록을 불러오는데 실패했습니다.');
+        const data = await response.json();
+        setBranches(data.success ? (data.data || []) : []);
+      } else {
+        // 일반 회원가입 모드
+        const response = await fetch('/api/auth/branches', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('지점 목록을 불러오는데 실패했습니다.');
+        }
+
+        const data = await response.json();
+        setBranches(data.branches || []);
       }
-
-      const data = await response.json();
-      setBranches(data.branches || []);
     } catch (error) {
       console.error('지점 목록 조회 오류:', error);
       setErrors(prev => ({ ...prev, branch: '지점 목록을 불러오는데 실패했습니다.' }));
@@ -249,7 +273,27 @@ const SocialSignupModal = ({
         marketingConsent: privacyConsents.marketing
       };
       
-      const response = await userAPI.socialSignup(signupData);
+      // 학원 시스템 회원가입 모드인 경우 테넌트 정보 포함
+      let response;
+      if (socialUser.isAcademySignup && socialUser.tenantId) {
+        console.log('🎓 학원 시스템 SNS 회원가입 요청:', { tenantId: socialUser.tenantId });
+        const { API_BASE_URL } = require('../../constants/api');
+        const academySignupResponse = await fetch(
+          `${API_BASE_URL}/api/v1/academy/registration/social-signup?tenantId=${socialUser.tenantId}`,
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(signupData)
+          }
+        );
+        response = await academySignupResponse.json();
+      } else {
+        // 일반 회원가입
+        response = await userAPI.socialSignup(signupData);
+      }
       
       if (response.success) {
         // 지점 매핑이 필요한 경우 (기존 사용자)

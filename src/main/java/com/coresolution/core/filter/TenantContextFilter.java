@@ -1,10 +1,10 @@
 package com.coresolution.core.filter;
 
 import com.coresolution.core.context.TenantContextHolder;
-import com.mindgarden.consultation.entity.Branch;
-import com.mindgarden.consultation.entity.User;
-import com.mindgarden.consultation.repository.BranchRepository;
-import com.mindgarden.consultation.utils.SessionUtils;
+import com.coresolution.consultation.entity.Branch;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.BranchRepository;
+import com.coresolution.consultation.utils.SessionUtils;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

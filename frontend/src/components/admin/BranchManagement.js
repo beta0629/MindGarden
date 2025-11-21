@@ -10,7 +10,8 @@ import { Modal } from '../common/Modal';
 import { LoadingBar } from '../common/LoadingBar';
 import { showAlert } from '../../utils/alert';
 import { useSession } from '../../contexts/SessionContext';
-import { getDashboardPath } from '../../utils/session';
+import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
+import { sessionManager } from '../../utils/sessionManager';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import './BranchManagement.css';
 
@@ -38,7 +39,12 @@ const BranchManagement = () => {
             
             if (!hasPermissionResult) {
                 showAlert('접근 권한이 없습니다.', 'error');
-                navigate(getDashboardPath(user?.role || 'ADMIN'));
+                // 동적 대시보드 라우팅
+                const authResponse = {
+                  user: user,
+                  currentTenantRole: sessionManager.getCurrentTenantRole()
+                };
+                await redirectToDynamicDashboard(authResponse, navigate);
                 return;
             }
         };

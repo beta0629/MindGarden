@@ -5,6 +5,7 @@ import { initializeDynamicThemeSystem } from './utils/designSystemHelper';
 import unifiedLayoutManager from './utils/unifiedLayoutSystem';
 import TabletHomepage from './components/homepage/Homepage';
 import TabletLogin from './components/auth/TabletLogin';
+import UnifiedLogin from './components/auth/UnifiedLogin';
 import TabletRegister from './components/auth/TabletRegister';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
@@ -47,6 +48,10 @@ import AdvancedDesignSample from './pages/AdvancedDesignSample';
 import MindGardenDesignSystemShowcase from './pages/MindGardenDesignSystemShowcase';
 import ComponentTestPage from './pages/ComponentTestPage';
 import SimpleLayout from './components/layout/SimpleLayout';
+import AcademyDashboard from './components/academy/AcademyDashboard';
+import AcademyRegister from './components/academy/AcademyRegister';
+import DynamicDashboard from './components/dashboard/DynamicDashboard';
+import DashboardManagement from './components/admin/DashboardManagement';
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
@@ -85,6 +90,7 @@ import WellnessNotificationList from './components/wellness/WellnessNotification
 import WellnessNotificationDetail from './components/wellness/WellnessNotificationDetail';
 import WellnessManagement from './components/admin/WellnessManagement';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
+import TenantProfile from './components/tenant/TenantProfile';
 import { SessionProvider, useSession } from './contexts/SessionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -103,6 +109,8 @@ import UnifiedNotifications from './components/notifications/UnifiedNotification
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
 import AdminMessages from './components/admin/AdminMessages';
 import SystemConfigManagement from './components/admin/SystemConfigManagement';
+import OnboardingRequest from './components/onboarding/OnboardingRequest';
+import OnboardingStatus from './components/onboarding/OnboardingStatus';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -301,30 +309,32 @@ function AppContent() {
             <Route path="/test/modal" element={<UnifiedModalTest />} />
             <Route path="/test/loading" element={<UnifiedLoadingTest />} />
             <Route path="/test/header" element={<UnifiedHeaderTest />} />
-            <Route path="/login" element={<TabletLogin />} />
+            {/* Phase 3: 통합 로그인 시스템 */}
+            <Route path="/login" element={<UnifiedLogin />} />
+            <Route path="/login/tablet" element={<TabletLogin />} />
             <Route path="/register" element={<TabletRegister />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/oauth2/callback" element={<OAuth2Callback />} />
             
-            {/* 지점별 로그인 라우트 */}
+            {/* 지점별 로그인 라우트 (레거시) */}
             <Route path="/login/branch" element={<BranchLogin />} />
             <Route path="/login/branch/:branchCode" element={<BranchSpecificLogin />} />
             <Route path="/login/headquarters" element={<HeadquartersLogin />} />
             
-            {/* 일반 대시보드 라우트 */}
-            <Route path="/dashboard" element={<CommonDashboard user={user} />} />
+            {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
+            <Route path="/dashboard" element={<DynamicDashboard user={user} />} />
             
-            {/* 역할별 대시보드 라우트 */}
-            <Route path="/client/dashboard" element={<ClientDashboard />} />
-            <Route path="/consultant/dashboard" element={<CommonDashboard user={user} />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard user={user} />} />
-            <Route path="/super_admin/dashboard" element={<AdminDashboard user={user} />} />
-            <Route path="/hq_admin/dashboard" element={<AdminDashboard user={user} />} />
-            <Route path="/super_hq_admin/dashboard" element={<AdminDashboard user={user} />} />
-            <Route path="/hq_master/dashboard" element={<HQDashboard user={user} />} />
-            <Route path="/branch_super_admin/dashboard" element={<Navigate to="/super_admin/dashboard" replace />} />
-            <Route path="/branch_manager/dashboard" element={<AdminDashboard user={user} />} />
+            {/* 역할별 대시보드 라우트 - 동적 대시보드로 통합 (하위 호환성 유지) */}
+            <Route path="/client/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/consultant/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/admin/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/super_admin/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/hq_admin/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/super_hq_admin/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/hq_master/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/branch_super_admin/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/branch_manager/dashboard" element={<DynamicDashboard user={user} />} />
             <Route path="/client/mypage" element={<MyPage />} />
             <Route path="/consultant/mypage" element={<MyPage />} />
             <Route path="/admin/mypage" element={<MyPage />} />
@@ -382,6 +392,14 @@ function AppContent() {
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             
+            {/* 테넌트 프로필/설정 라우트 */}
+            <Route path="/tenant/profile" element={<TenantProfile />} />
+            <Route path="/tenant/settings" element={<TenantProfile />} />
+            
+            {/* 온보딩 관련 라우트 */}
+            <Route path="/onboarding/request" element={<OnboardingRequest />} />
+            <Route path="/onboarding/status" element={<OnboardingStatus />} />
+            
             {/* 상담 내역 및 리포트 라우트 (모든 사용자) */}
             <Route path="/consultation-history" element={<ConsultationHistory />} />
             <Route path="/consultation-report" element={<ConsultationReport />} />
@@ -414,12 +432,18 @@ function AppContent() {
             <Route path="/admin/sessions" element={<SessionManagement />} />
             <Route path="/admin/accounts" element={<AccountManagement />} />
             <Route path="/admin/user-management" element={<UserManagement />} />
+            <Route path="/admin/dashboards" element={<DashboardManagement />} />
             <Route path="/admin/system-notifications" element={<SystemNotificationManagement />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
             <Route path="/admin/messages" element={<AdminMessages />} />
+            
+            {/* 학원 시스템 라우트 */}
+            <Route path="/academy" element={<AcademyDashboard />} />
+            <Route path="/admin/academy" element={<AcademyDashboard />} />
+            <Route path="/academy/register" element={<AcademyRegister />} />
             <Route path="/hq/branch-management" element={<BranchManagement />} />
             <Route path="/hq/branches" element={<BranchManagement />} />
-            <Route path="/hq/dashboard" element={<HQDashboard />} />
+            <Route path="/hq/dashboard" element={<DynamicDashboard user={user} />} />
             <Route path="/hq/erp/branch-financial" element={<BranchFinancialManagement />} />
             <Route path="/hq/erp/consolidated" element={<ConsolidatedFinancial />} />
             <Route path="/hq/erp/reports" element={<FinancialReports />} />

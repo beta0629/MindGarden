@@ -10,5 +10,7 @@ import java.util.UUID;
 public interface OnboardingRequestRepository extends JpaRepository<OnboardingRequest, UUID> {
     List<OnboardingRequest> findByStatusOrderByCreatedAtDesc(OnboardingStatus status);
 
+    List<OnboardingRequest> findAllByOrderByCreatedAtDesc();
+
     long countByStatus(OnboardingStatus status);
 }

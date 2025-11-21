@@ -1,0 +1,18 @@
+/**
+ * 학원 시스템 - 데이터 테이블 스타일
+ */
+
+.academy-data-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.academy-table-row-clickable {
+  cursor: pointer;
+  transition: background-color var(--transition-normal, 0.2s);
+}
+
+.academy-table-row-clickable:hover {
+  background-color: var(--color-hover, rgba(0, 123, 255, 0.1));
+}
+

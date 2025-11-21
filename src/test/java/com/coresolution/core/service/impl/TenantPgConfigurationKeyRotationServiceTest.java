@@ -5,7 +5,7 @@ import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
-import com.mindgarden.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

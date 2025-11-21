@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { AlertTriangle, XCircle, Check } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
-import { getDashboardPath } from '../../utils/session';
+import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 
@@ -48,13 +48,33 @@ const DuplicateLoginModal = () => {
         // 성공 알림
         notificationManager.show('로그인에 성공했습니다.', 'success');
         
-        // 역할에 따른 대시보드로 리다이렉트
-        const userRole = response.user.role;
-        console.log('🎯 중복 로그인 성공 후 리다이렉트:', userRole);
+        // 동적 대시보드 라우팅
+        const authResponse = {
+          user: response.user,
+          currentTenantRole: response.currentTenantRole || null
+        };
+        console.log('🎯 중복 로그인 성공 후 동적 대시보드 리다이렉트');
         
-        setTimeout(() => {
-          const dashboardPath = getDashboardPath(userRole);
-          window.location.href = dashboardPath;
+        setTimeout(async () => {
+          try {
+            // window.location을 사용해야 하므로 navigate 없이 처리
+            const { getCurrentUserDashboard, getDynamicDashboardPath } = await import('../../utils/dashboardUtils');
+            const dashboard = await getCurrentUserDashboard(
+              response.user.tenantId,
+              response.currentTenantRole?.tenantRoleId
+            );
+            if (dashboard) {
+              const dashboardPath = getDynamicDashboardPath(dashboard);
+              window.location.href = dashboardPath;
+            } else {
+              // 레거시 폴백
+              const { getLegacyDashboardPath } = await import('../../utils/dashboardUtils');
+              window.location.href = getLegacyDashboardPath(response.user.role);
+            }
+          } catch (error) {
+            console.error('대시보드 리다이렉트 실패:', error);
+            window.location.href = '/dashboard';
+          }
         }, 1000); // 1초 후 리다이렉트
       } else {
         console.log('❌ 중복 로그인 확인 후 로그인 실패:', response?.message);

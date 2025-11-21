@@ -10,6 +10,7 @@ import {
 import { FEE_TYPE_OPTIONS } from "@/constants/pricing";
 import { PricingAddon } from "@/types/pricing";
 import { FeeType } from "@/types/sharedPricing";
+import MGButton from "@/components/ui/MGButton";
 
 interface Props {
   addon: PricingAddon;
@@ -235,21 +236,27 @@ export function AddonEditForm({ addon, onClose }: Props) {
       </div>
 
       <div className="form-footer">
-        <button
+        <MGButton
           type="button"
-          className="ghost-button"
+          variant="danger"
           onClick={handleDeactivate}
-          disabled={isPending}
+          loading={isPending}
+          loadingText="비활성화 중..."
+          preventDoubleClick={true}
+          clickDelay={2000}
         >
           비활성화
-        </button>
-        <button
+        </MGButton>
+        <MGButton
           type="submit"
-          className="primary-button"
-          disabled={isPending}
+          variant="primary"
+          loading={isPending}
+          loadingText="저장 중..."
+          preventDoubleClick={true}
+          clickDelay={1000}
         >
-          {isPending ? "저장 중..." : "변경 사항 저장"}
-        </button>
+          변경 사항 저장
+        </MGButton>
       </div>
 
       {feedback && (

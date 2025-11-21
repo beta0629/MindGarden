@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import MGButton from "@/components/ui/MGButton";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -21,14 +22,17 @@ export function LogoutButton() {
   };
 
   return (
-    <button
+    <MGButton
       type="button"
-      className="ghost-button"
+      variant="outline"
       onClick={handleLogout}
-      disabled={isPending}
+      loading={isPending}
+      loadingText="로그아웃 중..."
+      preventDoubleClick={true}
+      clickDelay={1000}
     >
-      {isPending ? "로그아웃 중..." : "로그아웃"}
-    </button>
+      로그아웃
+    </MGButton>
   );
 }
 

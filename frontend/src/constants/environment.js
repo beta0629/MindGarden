@@ -20,10 +20,10 @@ const getBaseUrl = () => {
     return window.location.origin;
   }
   
-  // 개발 환경에서는 환경 변수 또는 현재 도메인 사용
-  const devUrl = process.env.REACT_APP_API_BASE_URL || window.location.origin;
-  console.log('🔧 API_BASE_URL fallback:', devUrl);
-  return devUrl;
+  // 개발 환경에서는 프록시를 사용하므로 빈 문자열 (상대 경로 사용)
+  // package.json의 "proxy": "http://localhost:8080" 설정 활용
+  console.log('🔧 개발 환경: 프록시 사용 (상대 경로)');
+  return '';
 };
 
 const getFrontendUrl = () => {

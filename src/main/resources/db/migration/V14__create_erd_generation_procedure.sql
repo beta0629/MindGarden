@@ -12,7 +12,7 @@ DELIMITER //
 -- ERD 생성 프로시저 (온보딩 승인 시 호출)
 -- ============================================
 CREATE PROCEDURE GenerateErdOnOnboardingApproval(
-    IN p_tenant_id VARCHAR(36),
+    IN p_tenant_id VARCHAR(64),
     IN p_tenant_name VARCHAR(255),
     IN p_business_type VARCHAR(50),
     IN p_approved_by VARCHAR(100),

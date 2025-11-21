@@ -1,0 +1,329 @@
+package com.coresolution.consultation.entity;
+
+import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * 상담사-내담자 매핑 엔티티
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2024-12-19
+ */
+@Entity
+@Table(name = "consultant_client_mappings", indexes = {
+    @Index(name = "idx_mapping_consultant", columnList = "consultant_id"),
+    @Index(name = "idx_mapping_client", columnList = "client_id"),
+    @Index(name = "idx_mapping_status", columnList = "status"),
+    @Index(name = "idx_mapping_start_date", columnList = "start_date"),
+    @Index(name = "idx_mapping_payment_status", columnList = "payment_status"),
+    @Index(name = "idx_mapping_remaining_sessions", columnList = "remaining_sessions")
+})
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ConsultantClientMapping extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "consultant_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private User consultant;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private User client;
+
+    @Column(name = "start_date", nullable = false)
+    private LocalDateTime startDate;
+
+    @Column(name = "end_date")
+    private LocalDateTime endDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 50, nullable = false)
+    private MappingStatus status = MappingStatus.PENDING_PAYMENT; // TEST WARNING
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", length = 50, nullable = false)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+
+    @Column(name = "total_sessions", nullable = false)
+    private Integer totalSessions = 0; // 총 회기 수
+
+    @Column(name = "remaining_sessions", nullable = false)
+    private Integer remainingSessions = 0; // 남은 회기 수
+
+    @Column(name = "used_sessions")
+    private Integer usedSessions = 0; // 사용된 회기 수
+
+    @Column(name = "package_name", length = 100)
+    private String packageName; // 패키지명 (예: "10회기 패키지", "20회기 패키지")
+
+    @Column(name = "package_price")
+    private Long packagePrice; // 패키지 가격
+
+    @Column(name = "payment_amount")
+    private Long paymentAmount; // 실제 결제 금액
+
+    @Column(name = "payment_date")
+    private LocalDateTime paymentDate; // 결제일
+
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod; // 결제 방법 (CARD, BANK_TRANSFER, CASH 등)
+
+    @Column(name = "payment_reference", length = 200)
+    private String paymentReference; // 결제 참조번호
+
+    @Column(name = "deposit_confirmed")
+    private Boolean depositConfirmed = false; // 입금 확인 여부
+
+    @Column(name = "admin_approval_date")
+    private LocalDateTime adminApprovalDate; // 관리자 승인일
+
+    @Column(name = "approved_by", length = 100)
+    private String approvedBy; // 승인한 관리자
+
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+
+    @Column(name = "responsibility", length = 500)
+    private String responsibility;
+
+    @Column(name = "special_considerations", columnDefinition = "TEXT")
+    private String specialConsiderations;
+
+    @Column(name = "assigned_by", length = 100)
+    private String assignedBy;
+
+    @Column(name = "assigned_at")
+    private LocalDateTime assignedAt;
+
+    @Column(name = "termination_reason", length = 500)
+    private String terminationReason;
+
+    @Column(name = "terminated_by", length = 100)
+    private String terminatedBy;
+
+    @Column(name = "terminated_at")
+    private LocalDateTime terminatedAt;
+
+    @Column(name = "branch_code", length = 20)
+    private String branchCode; // 지점코드
+    
+    // 할인 관련 필드
+    @Column(name = "discount_code", length = 50)
+    private String discountCode; // 할인 코드
+    
+    @Column(name = "discount_amount")
+    private Long discountAmount; // 할인 금액
+    
+    @Column(name = "original_amount")
+    private Long originalAmount; // 원래 금액
+    
+    @Column(name = "final_amount")
+    private Long finalAmount; // 최종 금액
+    
+    @Column(name = "discount_applied_at")
+    private LocalDateTime discountAppliedAt; // 할인 적용일
+
+    /**
+     * 매핑 상태 enum
+     */
+    public enum MappingStatus {
+        PENDING_PAYMENT,        // 결제 대기
+        PAYMENT_CONFIRMED,      // 결제 확인됨 (미수금 상태)
+        DEPOSIT_PENDING,        // 입금 대기
+        DEPOSIT_CONFIRMED,      // 입금 확인됨
+        ACTIVE,                 // 활성 (승인 후)
+        INACTIVE,               // 비활성
+        SUSPENDED,              // 중단
+        TERMINATED,             // 종료
+        SESSIONS_EXHAUSTED      // 회기 소진
+    }
+
+    /**
+     * 결제 상태 enum
+     */
+    public enum PaymentStatus {
+        PENDING,                    // 대기
+        CONFIRMED,                  // 확인됨 (기존 호환성)
+        PAY,                        // 결제 확인됨 (미수금 상태) - 최단
+        DEP,                        // 입금 확인됨 (현금 수입) - 최단
+        APPROVED,                   // 승인됨 (기존 호환성)
+        REJECTED,                   // 거부됨
+        REFUNDED                    // 환불됨
+    }
+
+    /**
+     * 결제 확인 처리 (미수금 상태)
+     */
+    public void confirmPayment(String paymentMethod, String paymentReference) {
+        this.paymentStatus = PaymentStatus.CONFIRMED;
+        this.paymentMethod = paymentMethod;
+        this.paymentReference = paymentReference;
+        this.paymentDate = LocalDateTime.now();
+        this.status = MappingStatus.PAYMENT_CONFIRMED;
+    }
+    
+    /**
+     * 입금 확인 처리 (현금 수입)
+     */
+    public void confirmDeposit(String depositReference) {
+        if (this.paymentStatus != PaymentStatus.CONFIRMED && this.paymentStatus != PaymentStatus.PAY) {
+            throw new IllegalStateException("결제 확인이 완료되지 않았습니다. 현재 상태: " + this.paymentStatus);
+        }
+        this.paymentStatus = PaymentStatus.APPROVED;  // APPROVED 상태로 변경 (입금 확인됨)
+        this.paymentReference = this.paymentReference + " (입금: " + depositReference + ")";
+        this.depositConfirmed = true;  // 입금 확인 플래그 설정
+        this.status = MappingStatus.DEPOSIT_PENDING;  // DEPOSIT_PENDING 상태로 변경 (관리자 승인 대기)
+    }
+
+    /**
+     * 관리자 승인 (입금 확인 후 활성화)
+     */
+    public void approveByAdmin(String adminName) {
+        if (this.status != MappingStatus.DEPOSIT_PENDING) {
+            throw new IllegalStateException("입금 확인이 완료되지 않았습니다. 현재 상태: " + this.status);
+        }
+        if (this.paymentStatus != PaymentStatus.APPROVED) {
+            throw new IllegalStateException("결제 승인이 완료되지 않았습니다.");
+        }
+        this.status = MappingStatus.ACTIVE;  // 최종 승인 후 활성화
+        this.adminApprovalDate = LocalDateTime.now();
+        this.approvedBy = adminName;
+        this.startDate = LocalDateTime.now();
+    }
+
+    /**
+     * 회기 사용
+     */
+    public void useSession() {
+        if (this.remainingSessions <= 0) {
+            throw new IllegalStateException("사용 가능한 회기가 없습니다.");
+        }
+        this.remainingSessions--;
+        this.usedSessions++;
+        
+        // 모든 회기 소진 시 자동 종료
+        if (this.remainingSessions <= 0) {
+            this.status = MappingStatus.SESSIONS_EXHAUSTED;
+            this.endDate = LocalDateTime.now();
+        }
+    }
+
+    /**
+     * 회기 추가 (연장)
+     */
+    public void addSessions(Integer additionalSessions, String packageName, Long packagePrice) {
+        this.totalSessions += additionalSessions;
+        this.remainingSessions += additionalSessions;
+        this.packageName = packageName;
+        this.packagePrice = packagePrice;
+        
+        // 상태를 다시 활성으로 변경
+        if (this.status == MappingStatus.SESSIONS_EXHAUSTED) {
+            this.status = MappingStatus.ACTIVE;
+            this.endDate = null;
+        }
+    }
+
+    /**
+     * 매핑 활성화
+     */
+    public void activate() {
+        if (this.paymentStatus != PaymentStatus.APPROVED) {
+            throw new IllegalStateException("관리자 승인이 필요합니다.");
+        }
+        this.status = MappingStatus.ACTIVE;
+        this.startDate = LocalDateTime.now();
+    }
+
+    /**
+     * 매핑 비활성화
+     */
+    public void deactivate() {
+        this.status = MappingStatus.INACTIVE;
+        this.endDate = LocalDateTime.now();
+    }
+
+    /**
+     * 매핑 중단
+     */
+    public void suspend(String reason) {
+        this.status = MappingStatus.SUSPENDED;
+        this.notes = reason;
+    }
+
+    /**
+     * 매핑 종료
+     */
+    public void terminate(String reason, String terminatedBy) {
+        this.status = MappingStatus.TERMINATED;
+        this.terminationReason = reason;
+        this.terminatedBy = terminatedBy;
+        this.terminatedAt = LocalDateTime.now();
+        this.endDate = LocalDateTime.now();
+    }
+
+    /**
+     * 상담사 변경 (이전)
+     */
+    public void transferToNewConsultant(String reason, String transferredBy) {
+        this.status = MappingStatus.TERMINATED;
+        this.terminationReason = reason;
+        this.terminatedBy = transferredBy;
+        this.terminatedAt = LocalDateTime.now();
+        this.endDate = LocalDateTime.now();
+    }
+
+    /**
+     * 스케줄 작성 가능 여부 확인
+     */
+    public boolean canCreateSchedule() {
+        return this.status == MappingStatus.ACTIVE && this.remainingSessions > 0;
+    }
+
+    /**
+     * 남은 회기 수 확인
+     */
+    public Integer getRemainingSessions() {
+        return Math.max(0, this.remainingSessions);
+    }
+
+    /**
+     * 진행률 계산 (백분율)
+     */
+    public Double getProgressPercentage() {
+        if (this.totalSessions == 0) return 0.0;
+        return ((double) this.usedSessions / this.totalSessions) * 100;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.assignedAt == null) {
+            this.assignedAt = LocalDateTime.now();
+        }
+        if (this.status == null) {
+            this.status = MappingStatus.PENDING_PAYMENT;
+        }
+        if (this.paymentStatus == null) {
+            this.paymentStatus = PaymentStatus.PENDING;
+        }
+    }
+}

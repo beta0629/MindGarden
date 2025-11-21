@@ -1,0 +1,14 @@
+/**
+ * Trinity 홈페이지 통합 스타일
+ * MindGarden 구조를 따름
+ */
+
+@import './main.css';
+@import './components/header.css';
+@import './components/hero.css';
+@import './components/section.css';
+@import './components/card.css';
+@import './components/pricing.css';
+@import './components/footer.css';
+@import './components/onboarding.css';
+

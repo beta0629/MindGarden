@@ -1,10 +1,10 @@
-package com.mindgarden.consultation.integration;
+package com.coresolution.consultation.integration;
 
-import com.mindgarden.consultation.entity.User;
-import com.mindgarden.consultation.entity.UserPasskey;
-import com.mindgarden.consultation.repository.UserPasskeyRepository;
-import com.mindgarden.consultation.repository.UserRepository;
-import com.mindgarden.consultation.service.PasskeyService;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.UserPasskey;
+import com.coresolution.consultation.repository.UserPasskeyRepository;
+import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.PasskeyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @version 1.0.0
  * @since 2025-01-XX
  */
-@SpringBootTest(classes = com.mindgarden.consultation.ConsultationManagementApplication.class)
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("Passkey 인증 통합 테스트")

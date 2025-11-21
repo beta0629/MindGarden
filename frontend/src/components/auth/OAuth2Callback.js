@@ -5,9 +5,11 @@ import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY } from '../../constants/session';
-import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
+import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import SocialSignupModal from './SocialSignupModal';
 import AccountIntegrationModal from './AccountIntegrationModal';
+import TenantSelection from './TenantSelection';
+import { API_BASE_URL } from '../../constants/api';
 
 const OAuth2Callback = () => {
   const navigate = useNavigate();
@@ -17,6 +19,8 @@ const OAuth2Callback = () => {
   const [error, setError] = useState(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showIntegrationModal, setShowIntegrationModal] = useState(false);
+  const [showTenantSelection, setShowTenantSelection] = useState(false);
+  const [accessibleTenants, setAccessibleTenants] = useState([]);
   const [socialUserData, setSocialUserData] = useState(null);
 
   useEffect(() => {
@@ -100,6 +104,36 @@ const OAuth2Callback = () => {
         if (requiresSignup === 'true') {
           console.log('📝 OAuth2 회원가입 필요:', { provider, email, name, nickname });
           
+          // 학원 시스템 회원가입 모드 확인
+          const academyTenantId = sessionStorage.getItem('academy_tenant_id');
+          const academySignupMode = sessionStorage.getItem('academy_signup_mode') === 'true';
+          
+          if (academySignupMode && academyTenantId) {
+            console.log('🎓 학원 시스템 회원가입 모드:', { tenantId: academyTenantId });
+            // 학원 시스템 회원가입 모드: 테넌트 정보 포함
+            const userData = {
+              provider: provider,
+              providerUserId: providerUserId,
+              email: email,
+              name: name,
+              nickname: nickname,
+              profileImageUrl: profileImageUrl,
+              tenantId: academyTenantId,
+              isAcademySignup: true
+            };
+            
+            setSocialUserData(userData);
+            setShowSignupModal(true);
+            setIsProcessing(false);
+            
+            // sessionStorage 정리
+            sessionStorage.removeItem('academy_tenant_id');
+            sessionStorage.removeItem('academy_signup_mode');
+            
+            return;
+          }
+          
+          // 일반 회원가입 모드
           // 성공 메시지 표시
           notificationManager.show(`${provider} 소셜 로그인 성공! 회원가입을 완료해주세요.`, 'success');
           
@@ -166,23 +200,75 @@ const OAuth2Callback = () => {
           });
           console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
           
+          // 멀티 테넌트 사용자 확인
+          const checkMultiTenantAndRedirect = async (userRole) => {
+            try {
+              const response = await fetch(`${API_BASE_URL}/api/auth/tenant/check-multi`, {
+                credentials: 'include'
+              });
+              
+              if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.isMultiTenant) {
+                  // 멀티 테넌트 사용자: 테넌트 목록 로드
+                  const tenantsResponse = await fetch(`${API_BASE_URL}/api/auth/tenant/accessible`, {
+                    credentials: 'include'
+                  });
+                  
+                  if (tenantsResponse.ok) {
+                    const tenantsData = await tenantsResponse.json();
+                    if (tenantsData.success) {
+                      const tenants = (tenantsData.tenants || []).map(tenant => ({
+                        tenantId: tenant.tenantId,
+                        tenantName: tenant.name,
+                        businessType: tenant.businessType,
+                        status: tenant.status,
+                        tenantRole: tenant.tenantRole || null
+                      }));
+                      setAccessibleTenants(tenants);
+                      setShowTenantSelection(true);
+                      setIsProcessing(false);
+                      return;
+                    }
+                  }
+                }
+              }
+              
+              // 단일 테넌트 사용자: 동적 대시보드로
+              const authResponse = {
+                success: true,
+                user: userInfo,
+                currentTenantRole: null // TODO: 세션에서 역할 정보 가져오기
+              };
+              await redirectToDynamicDashboard(authResponse, navigate);
+            } catch (error) {
+              console.error('멀티 테넌트 확인 오류:', error);
+              // 오류 시에도 동적 대시보드로 이동
+              const authResponse = {
+                success: true,
+                user: userInfo,
+                currentTenantRole: null
+              };
+              await redirectToDynamicDashboard(authResponse, navigate);
+            }
+          };
+
           // 공통 리다이렉트 함수 사용
           const redirectToDashboard = (userRole) => {
             if (userRole) {
               console.log('🎯 대시보드 리다이렉트 시작:', userRole);
               console.log('🎯 사용자 정보:', userInfo);
               
-              // 공통 리다이렉트 함수 호출
-              redirectToDashboardWithFallback(userRole, navigate);
+              // 멀티 테넌트 확인 후 리다이렉트
+              checkMultiTenantAndRedirect(userRole);
             } else {
               console.log('🎯 기본 대시보드로 리다이렉트');
-              const defaultPath = getDashboardPath('CLIENT');
-              navigate(defaultPath, { replace: true });
+              checkMultiTenantAndRedirect('CLIENT');
             }
           };
 
           if (loginSuccess) {
-            console.log('✅ 중앙 세션 로그인 성공, 대시보드로 리다이렉트 시작');
+            console.log('✅ 중앙 세션 로그인 성공, 멀티 테넌트 확인 후 대시보드로 리다이렉트 시작');
             redirectToDashboard(role);
           } else {
             console.error('❌ OAuth2 중앙 세션 로그인 실패, 재시도...');
@@ -254,6 +340,21 @@ const OAuth2Callback = () => {
     );
   }
   
+  // 테넌트 선택 화면 표시
+  if (showTenantSelection) {
+    return (
+      <TenantSelection
+        tenants={accessibleTenants}
+        onSelect={null} // TenantSelection에서 직접 처리
+        onCancel={async () => {
+          setShowTenantSelection(false);
+          await sessionManager.logout();
+          navigate('/login');
+        }}
+      />
+    );
+  }
+
   // SocialSignupModal 또는 AccountIntegrationModal 렌더링
   if ((showSignupModal || showIntegrationModal) && socialUserData) {
     return (
@@ -274,13 +375,11 @@ const OAuth2Callback = () => {
           isOpen={showIntegrationModal}
           onClose={() => setShowIntegrationModal(false)}
           socialUserInfo={socialUserData}
-          onIntegrationSuccess={(response) => {
+          onIntegrationSuccess={async (response) => {
             console.log('계정 통합 성공:', response);
             setShowIntegrationModal(false);
-            // 통합 성공 후 대시보드로 이동
-            const userRole = response?.user?.role || 'CLIENT';
-            const dashboardPath = getDashboardPath(userRole);
-            navigate(dashboardPath || '/dashboard');
+            // 통합 성공 후 동적 대시보드로 이동
+            await redirectToDynamicDashboard(response, navigate);
           }}
         />
       </>

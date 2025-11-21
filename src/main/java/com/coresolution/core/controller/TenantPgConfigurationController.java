@@ -1,21 +1,21 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.dto.*;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.core.security.TenantAccessControlService;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,8 +26,10 @@ import java.util.List;
  * 테넌트 PG 설정 API 컨트롤러
  * 테넌트 포털에서 사용하는 PG 설정 관리 API
  * 
+ * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
+ * 
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2025-01-XX
  */
 @Slf4j
@@ -36,7 +38,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
 @Tag(name = "테넌트 PG 설정", description = "테넌트 포털 PG 설정 관리 API")
-public class TenantPgConfigurationController {
+public class TenantPgConfigurationController extends BaseApiController {
     
     private final TenantPgConfigurationService pgConfigurationService;
     private final TenantAccessControlService accessControlService;
@@ -49,13 +51,13 @@ public class TenantPgConfigurationController {
             description = "테넌트의 PG 설정 목록을 조회합니다. 상태 및 승인 상태로 필터링 가능합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
-            @ApiResponse(responseCode = "403", description = "권한 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @GetMapping
-    public ResponseEntity<List<TenantPgConfigurationResponse>> getConfigurations(
+    public ResponseEntity<ApiResponse<List<TenantPgConfigurationResponse>>> getConfigurations(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 상태 (필터)") @RequestParam(required = false) PgConfigurationStatus status,
             @Parameter(description = "승인 상태 (필터)") @RequestParam(required = false) ApprovalStatus approvalStatus) {
@@ -69,7 +71,7 @@ public class TenantPgConfigurationController {
         List<TenantPgConfigurationResponse> configurations = 
                 pgConfigurationService.getConfigurations(tenantId, status, approvalStatus);
         
-        return ResponseEntity.ok(configurations);
+        return success(configurations);
     }
     
     /**
@@ -80,12 +82,12 @@ public class TenantPgConfigurationController {
             description = "특정 PG 설정의 상세 정보와 변경 이력을 조회합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = TenantPgConfigurationDetailResponse.class))),
-            @ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @GetMapping("/{configId}")
-    public ResponseEntity<TenantPgConfigurationDetailResponse> getConfigurationDetail(
+    public ResponseEntity<ApiResponse<TenantPgConfigurationDetailResponse>> getConfigurationDetail(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
         
@@ -97,7 +99,11 @@ public class TenantPgConfigurationController {
         TenantPgConfigurationDetailResponse response = 
                 pgConfigurationService.getConfigurationDetail(tenantId, configId);
         
-        return ResponseEntity.ok(response);
+        if (response == null) {
+            throw new EntityNotFoundException("PG 설정을 찾을 수 없습니다: " + configId);
+        }
+        
+        return success(response);
     }
     
     /**
@@ -108,13 +114,13 @@ public class TenantPgConfigurationController {
             description = "새로운 PG 설정을 생성합니다. 생성 후 승인 대기 상태가 됩니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "생성 성공",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공",
                     content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (필수 필드 누락 등)"),
-            @ApiResponse(responseCode = "409", description = "이미 활성화된 PG 설정 존재")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (필수 필드 누락 등)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 활성화된 PG 설정 존재")
     })
     @PostMapping
-    public ResponseEntity<TenantPgConfigurationResponse> createConfiguration(
+    public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> createConfiguration(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Valid @RequestBody TenantPgConfigurationRequest request) {
         
@@ -132,7 +138,7 @@ public class TenantPgConfigurationController {
         TenantPgConfigurationResponse response = 
                 pgConfigurationService.createConfiguration(tenantId, request, requestedBy);
         
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return created("PG 설정이 생성되었습니다.", response);
     }
     
     /**
@@ -143,12 +149,12 @@ public class TenantPgConfigurationController {
             description = "기존 PG 설정을 수정합니다. 수정 시 재승인이 필요합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "수정 성공",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공",
                     content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
-            @ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @PutMapping("/{configId}")
-    public ResponseEntity<TenantPgConfigurationResponse> updateConfiguration(
+    public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> updateConfiguration(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
             @Valid @RequestBody TenantPgConfigurationRequest request) {
@@ -161,7 +167,7 @@ public class TenantPgConfigurationController {
         TenantPgConfigurationResponse response = 
                 pgConfigurationService.updateConfiguration(tenantId, configId, request);
         
-        return ResponseEntity.ok(response);
+        return updated("PG 설정이 수정되었습니다.", response);
     }
     
     /**
@@ -172,11 +178,11 @@ public class TenantPgConfigurationController {
             description = "PG 설정을 삭제합니다. (소프트 삭제)"
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @DeleteMapping("/{configId}")
-    public ResponseEntity<Void> deleteConfiguration(
+    public ResponseEntity<ApiResponse<Void>> deleteConfiguration(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
         
@@ -187,7 +193,7 @@ public class TenantPgConfigurationController {
         
         pgConfigurationService.deleteConfiguration(tenantId, configId);
         
-        return ResponseEntity.noContent().build();
+        return deleted("PG 설정이 삭제되었습니다.");
     }
     
     /**
@@ -198,12 +204,12 @@ public class TenantPgConfigurationController {
             description = "PG 설정의 연결을 테스트합니다. API Key와 Secret Key를 사용하여 실제 PG 서버와의 연결을 확인합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "테스트 완료",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "테스트 완료",
                     content = @Content(schema = @Schema(implementation = ConnectionTestResponse.class))),
-            @ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @PostMapping("/{configId}/test-connection")
-    public ResponseEntity<ConnectionTestResponse> testConnection(
+    public ResponseEntity<ApiResponse<ConnectionTestResponse>> testConnection(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
         
@@ -215,7 +221,7 @@ public class TenantPgConfigurationController {
         ConnectionTestResponse response = 
                 pgConfigurationService.testConnection(tenantId, configId);
         
-        return ResponseEntity.ok(response);
+        return success(response);
     }
     
 }

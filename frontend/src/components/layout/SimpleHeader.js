@@ -3,7 +3,8 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { getRoleDisplayName, getRoleDisplayNameEn } from '../../utils/roleHelper';
-import { getDashboardPath } from '../../utils/session';
+import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
+import { sessionManager } from '../../utils/sessionManager';
 import SimpleHamburgerMenu from './SimpleHamburgerMenu';
 import ConfirmModal from '../common/ConfirmModal';
 import { 
@@ -77,15 +78,19 @@ const SimpleHeader = () => {
   };
 
   // 뒤로가기 버튼 클릭 핸들러
-  const handleBackClick = () => {
+  const handleBackClick = async () => {
     // 브라우저 히스토리가 있으면 뒤로가기, 없으면 적절한 대시보드로 이동
     if (window.history.length > 1) {
       navigate(-1);
     } else {
       // 사용자 역할에 따른 기본 대시보드로 이동
       if (user?.role) {
-        const dashboardPath = getDashboardPath(user.role);
-        navigate(dashboardPath);
+        // 동적 대시보드 라우팅
+        const authResponse = {
+          user: user,
+          currentTenantRole: sessionManager.getCurrentTenantRole()
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
       } else {
         navigate('/');
       }

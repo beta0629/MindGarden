@@ -26,10 +26,20 @@ export const loadCodeGroupMetadata = async () => {
     }
     
     try {
-        const response = await apiGet('/api/common-codes/groups/list');
-        if (response && response.length > 0) {
+        // 표준화된 API 사용 (하위 호환성 유지)
+        const { getCodeGroups } = await import('./commonCodeApi');
+        let groups = [];
+        try {
+            groups = await getCodeGroups();
+        } catch (error) {
+            // 하위 호환성: 기존 API 사용
+            const response = await apiGet('/api/common-codes/groups/list');
+            groups = Array.isArray(response) ? response : [];
+        }
+        
+        if (groups && groups.length > 0) {
             // 문자열 배열을 메타데이터 형태로 변환
-            groupMetadataCache = response.map(groupCode => ({
+            groupMetadataCache = groups.map(groupCode => ({
                 codeGroup: groupCode,
                 koreanName: getCodeGroupKoreanNameSync(groupCode),
                 icon: getCodeGroupIconSync(groupCode)

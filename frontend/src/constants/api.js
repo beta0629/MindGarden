@@ -277,6 +277,37 @@ export const BRANCH_API = {
   BRANCH_STATISTICS: '/api/branches'
 };
 
+// 온보딩 관련 API
+export const ONBOARDING_API = {
+  CREATE_REQUEST: '/api/v1/onboarding/requests',
+  GET_REQUEST: '/api/v1/onboarding/requests',
+  GET_REQUEST_BY_ID: '/api/v1/onboarding/requests',
+  GET_PENDING_REQUESTS: '/api/v1/onboarding/requests/pending',
+  GET_REQUEST_COUNT: '/api/v1/onboarding/requests/count',
+  DECISION: '/api/v1/onboarding/requests',
+  RETRY: '/api/v1/onboarding/requests'
+};
+
+// 업종 카테고리 관련 API
+export const BUSINESS_CATEGORY_API = {
+  ROOT: '/api/business-categories/root',
+  ALL: '/api/business-categories',
+  ITEMS: '/api/business-categories/items',
+  ITEM_BY_BUSINESS_TYPE: '/api/business-categories/items/by-business-type',
+  VALIDATE: '/api/business-categories/validate',
+  TREE: '/api/business-categories/tree'
+};
+
+// 공통 코드 관련 API
+export const COMMON_CODE_API = {
+  BASE: '/api/v1/common-codes',
+  BY_GROUP: '/api/v1/common-codes',
+  GROUPS: '/api/common-codes/groups',
+  GROUP_ACTIVE: '/api/common-codes/group',
+  CORE_GROUPS: '/api/common-codes/core/groups',
+  TENANT_GROUPS: '/api/common-codes/tenant/groups'
+};
+
 // 전체 API 엔드포인트 객체
 export const API_ENDPOINTS = {
   AUTH: AUTH_API,
@@ -290,6 +321,9 @@ export const API_ENDPOINTS = {
   NOTIFICATION: NOTIFICATION_API,
   SEARCH: SEARCH_API,
   BRANCH: BRANCH_API,
+  ONBOARDING: ONBOARDING_API,
+  BUSINESS_CATEGORY: BUSINESS_CATEGORY_API,
+  COMMON_CODE: COMMON_CODE_API,
   BRANCHES: '/api/branches' // 기존 컴포넌트 호환성을 위해 추가
 };
 

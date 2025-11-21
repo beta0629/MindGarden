@@ -1,6 +1,8 @@
 package com.coresolution.core.controller.ops;
 
+import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.ErdDiagram;
+import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.CustomErdGenerationRequest;
 import com.coresolution.core.dto.ErdDiagramResponse;
 import com.coresolution.core.dto.ErdValidationReport;
@@ -9,11 +11,11 @@ import com.coresolution.core.service.ErdHistoryService;
 import com.coresolution.core.service.ErdValidationService;
 import com.coresolution.core.service.ErdValidationReportService;
 import com.coresolution.core.service.SchemaService;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +43,10 @@ import java.util.List;
  * - ERD 버전 비교
  * </p>
  *
+ * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
+ *
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2025-01-XX
  */
 @Slf4j
@@ -51,7 +55,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
 @Tag(name = "HQ 운영 포털 ERD 관리", description = "HQ 운영 포털 ERD 관리 API (관리자 전용)")
-public class ErdOpsController {
+public class ErdOpsController extends BaseApiController {
 
     private final ErdGenerationService erdGenerationService;
     private final ErdHistoryService erdHistoryService;
@@ -67,12 +71,12 @@ public class ErdOpsController {
             description = "HQ 운영 포털에서 모든 ERD 목록을 조회합니다. 테넌트 ID, ERD 타입, 활성 상태로 필터링 가능합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = ErdDiagramResponse.class))),
-            @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 또는 OPS 역할 필요)")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 또는 OPS 역할 필요)")
     })
     @GetMapping
-    public ResponseEntity<List<ErdDiagramResponse>> getAllErds(
+    public ResponseEntity<ApiResponse<List<ErdDiagramResponse>>> getAllErds(
             @Parameter(description = "테넌트 ID (필터)") @RequestParam(required = false) String tenantId,
             @Parameter(description = "ERD 타입 (필터)") @RequestParam(required = false) ErdDiagram.DiagramType diagramType,
             @Parameter(description = "활성 상태 (필터)") @RequestParam(required = false) Boolean isActive,
@@ -110,9 +114,9 @@ public class ErdOpsController {
                     .toList();
         }
 
-        return ResponseEntity.ok(erds);
+        return success(erds);
     }
-
+    
     /**
      * ERD 상세 조회
      */
@@ -121,19 +125,22 @@ public class ErdOpsController {
             description = "특정 ERD의 상세 정보를 조회합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "404", description = "ERD를 찾을 수 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "ERD를 찾을 수 없음")
     })
     @GetMapping("/{diagramId}")
-    public ResponseEntity<ErdDiagramResponse> getErdDetail(
+    public ResponseEntity<ApiResponse<ErdDiagramResponse>> getErdDetail(
             @Parameter(description = "ERD 다이어그램 ID", required = true) @PathVariable String diagramId) {
 
         log.debug("HQ 운영 포털 ERD 상세 조회 요청: diagramId={}", diagramId);
 
         ErdDiagramResponse erd = erdGenerationService.getErd(diagramId);
-        return ResponseEntity.ok(erd);
+        if (erd == null) {
+            throw new EntityNotFoundException("ERD를 찾을 수 없습니다: " + diagramId);
+        }
+        return success(erd);
     }
-
+    
     /**
      * 전체 시스템 ERD 수동 생성
      */
@@ -142,11 +149,11 @@ public class ErdOpsController {
             description = "HQ 운영 포털에서 전체 시스템 ERD를 수동으로 생성합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "생성 성공"),
-            @ApiResponse(responseCode = "403", description = "권한 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "생성 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @PostMapping("/generate/full-system")
-    public ResponseEntity<ErdDiagramResponse> generateFullSystemErd(
+    public ResponseEntity<ApiResponse<ErdDiagramResponse>> generateFullSystemErd(
             @Parameter(description = "스키마 이름") @RequestParam(required = false) String schemaName,
             Authentication authentication) {
 
@@ -156,9 +163,9 @@ public class ErdOpsController {
         String createdBy = authentication != null ? authentication.getName() : "ops-user";
         ErdDiagramResponse erd = erdGenerationService.generateFullSystemErd(schemaName, createdBy);
 
-        return ResponseEntity.ok(erd);
+        return created("전체 시스템 ERD가 생성되었습니다.", erd);
     }
-
+    
     /**
      * 테넌트 ERD 수동 생성
      */
@@ -167,11 +174,11 @@ public class ErdOpsController {
             description = "HQ 운영 포털에서 특정 테넌트의 ERD를 수동으로 생성합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "생성 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (테넌트 ID 누락 등)")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "생성 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (테넌트 ID 누락 등)")
     })
     @PostMapping("/generate/tenant/{tenantId}")
-    public ResponseEntity<ErdDiagramResponse> generateTenantErd(
+    public ResponseEntity<ApiResponse<ErdDiagramResponse>> generateTenantErd(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "스키마 이름") @RequestParam(required = false) String schemaName,
             Authentication authentication) {
@@ -182,9 +189,9 @@ public class ErdOpsController {
         String createdBy = authentication != null ? authentication.getName() : "ops-user";
         ErdDiagramResponse erd = erdGenerationService.generateTenantErd(tenantId, schemaName, createdBy);
 
-        return ResponseEntity.ok(erd);
+        return created("테넌트 ERD가 생성되었습니다.", erd);
     }
-
+    
     /**
      * 모듈 ERD 수동 생성
      */
@@ -193,11 +200,11 @@ public class ErdOpsController {
             description = "HQ 운영 포털에서 특정 모듈의 ERD를 수동으로 생성합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "생성 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (모듈 타입 누락 등)")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "생성 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (모듈 타입 누락 등)")
     })
     @PostMapping("/generate/module/{moduleType}")
-    public ResponseEntity<ErdDiagramResponse> generateModuleErd(
+    public ResponseEntity<ApiResponse<ErdDiagramResponse>> generateModuleErd(
             @Parameter(description = "모듈 타입", required = true) @PathVariable String moduleType,
             @Parameter(description = "스키마 이름") @RequestParam(required = false) String schemaName,
             Authentication authentication) {
@@ -208,9 +215,9 @@ public class ErdOpsController {
         String createdBy = authentication != null ? authentication.getName() : "ops-user";
         ErdDiagramResponse erd = erdGenerationService.generateModuleErd(moduleType, schemaName, createdBy);
 
-        return ResponseEntity.ok(erd);
+        return created("모듈 ERD가 생성되었습니다.", erd);
     }
-
+    
     /**
      * 커스텀 ERD 수동 생성
      */
@@ -219,11 +226,11 @@ public class ErdOpsController {
             description = "HQ 운영 포털에서 특정 테이블 목록을 선택하여 커스텀 ERD를 생성합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "생성 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (테이블 목록 누락 등)")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "생성 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (테이블 목록 누락 등)")
     })
     @PostMapping("/generate/custom")
-    public ResponseEntity<ErdDiagramResponse> generateCustomErd(
+    public ResponseEntity<ApiResponse<ErdDiagramResponse>> generateCustomErd(
             @Valid @RequestBody CustomErdGenerationRequest request,
             Authentication authentication) {
 
@@ -239,9 +246,9 @@ public class ErdOpsController {
                 createdBy
         );
 
-        return ResponseEntity.ok(erd);
+        return created("커스텀 ERD가 생성되었습니다.", erd);
     }
-
+    
     /**
      * ERD 검증 실행
      */
@@ -250,18 +257,18 @@ public class ErdOpsController {
             description = "특정 ERD를 검증하여 스키마와의 일치 여부를 확인합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "검증 완료"),
-            @ApiResponse(responseCode = "404", description = "ERD를 찾을 수 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "검증 완료"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "ERD를 찾을 수 없음")
     })
     @PostMapping("/{diagramId}/validate")
-    public ResponseEntity<ErdValidationReport> validateErd(
+    public ResponseEntity<ApiResponse<ErdValidationReport>> validateErd(
             @Parameter(description = "ERD 다이어그램 ID", required = true) @PathVariable String diagramId,
             @Parameter(description = "스키마 이름") @RequestParam(required = false) String schemaName) {
 
         log.info("HQ 운영 포털 ERD 검증 요청: diagramId={}, schemaName={}", diagramId, schemaName);
 
         ErdValidationReport report = erdValidationService.validateErd(diagramId, schemaName);
-        return ResponseEntity.ok(report);
+        return success(report);
     }
 
     /**
@@ -386,17 +393,17 @@ public class ErdOpsController {
             description = "커스텀 ERD 생성 시 선택할 수 있는 테이블 목록을 조회합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "403", description = "권한 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @GetMapping("/tables")
-    public ResponseEntity<List<String>> getTableNames(
+    public ResponseEntity<ApiResponse<List<String>>> getTableNames(
             @Parameter(description = "스키마 이름") @RequestParam(required = false) String schemaName) {
 
         log.debug("HQ 운영 포털 테이블 목록 조회 요청: schemaName={}", schemaName);
 
         List<String> tableNames = schemaService.getTableNames(schemaName);
-        return ResponseEntity.ok(tableNames);
+        return success(tableNames);
     }
 
     /**
@@ -407,11 +414,11 @@ public class ErdOpsController {
             description = "두 ERD 버전을 비교하여 변경사항을 확인합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "비교 완료"),
-            @ApiResponse(responseCode = "404", description = "ERD 또는 버전을 찾을 수 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비교 완료"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "ERD 또는 버전을 찾을 수 없음")
     })
     @GetMapping("/{diagramId}/compare")
-    public ResponseEntity<String> compareVersions(
+    public ResponseEntity<ApiResponse<String>> compareVersions(
             @Parameter(description = "ERD 다이어그램 ID", required = true) @PathVariable String diagramId,
             @Parameter(description = "시작 버전", required = true) @RequestParam Integer fromVersion,
             @Parameter(description = "종료 버전", required = true) @RequestParam Integer toVersion) {
@@ -420,7 +427,7 @@ public class ErdOpsController {
                 diagramId, fromVersion, toVersion);
 
         String comparison = erdHistoryService.compareVersions(diagramId, fromVersion, toVersion);
-        return ResponseEntity.ok(comparison);
+        return success(comparison);
     }
 }
 

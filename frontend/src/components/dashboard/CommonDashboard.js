@@ -5,7 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { authAPI, apiGet } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
-import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
+import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/dashboardUtils';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
@@ -610,9 +610,13 @@ const CommonDashboard = ({ user: propUser }) => {
         // 역할별 리다이렉션 체크 (CLIENT, CONSULTANT만 CommonDashboard 사용)
         if (dashboardUser?.role && !['CLIENT', 'CONSULTANT'].includes(dashboardUser.role)) {
           console.log('🎯 관리자 역할 감지, 적절한 대시보드로 리다이렉션:', dashboardUser.role);
-          const dashboardPath = getDashboardPath(dashboardUser.role);
-          console.log('🎯 리다이렉션 경로:', dashboardPath);
-          redirectToDashboardWithFallback(dashboardUser.role, navigate);
+          // 동적 대시보드 라우팅
+          const authResponse = {
+            user: dashboardUser,
+            currentTenantRole: sessionManager.getCurrentTenantRole()
+          };
+          console.log('🎯 동적 대시보드 리다이렉션');
+          await redirectToDynamicDashboard(authResponse, navigate);
           return;
         }
         

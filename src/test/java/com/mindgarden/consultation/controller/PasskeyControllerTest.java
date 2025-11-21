@@ -1,7 +1,7 @@
-package com.mindgarden.consultation.controller;
+package com.coresolution.consultation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mindgarden.consultation.service.PasskeyService;
+import com.coresolution.consultation.service.PasskeyService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

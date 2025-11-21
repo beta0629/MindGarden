@@ -1,5 +1,10 @@
 package com.coresolution.core.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.ErdDiagramResponse;
@@ -18,10 +23,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 /**
  * ERD 컨트롤러 통합 테스트
  * 테넌트 포털 ERD 조회 API 테스트
@@ -30,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @version 1.0.0
  * @since 2025-01-XX
  */
-@SpringBootTest(classes = com.mindgarden.consultation.ConsultationManagementApplication.class)
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @AutoConfigureMockMvc(addFilters = false)  // 필터 비활성화 (테스트 환경)
 @ActiveProfiles("test")
 @Transactional
@@ -62,7 +63,7 @@ class ErdControllerIntegrationTest {
         Tenant testTenant = Tenant.builder()
                 .tenantId(testTenantId)
                 .name("테스트 테넌트")
-                .businessType(Tenant.BusinessType.ACADEMY)
+                .businessType("ACADEMY")
                 .status(Tenant.TenantStatus.ACTIVE)
                 .build();
         tenantRepository.save(testTenant);
@@ -162,7 +163,7 @@ class ErdControllerIntegrationTest {
         Tenant otherTenant = Tenant.builder()
                 .tenantId(otherTenantId)
                 .name("다른 테스트 테넌트")
-                .businessType(Tenant.BusinessType.ACADEMY)
+                .businessType("ACADEMY")
                 .status(Tenant.TenantStatus.ACTIVE)
                 .build();
         tenantRepository.save(otherTenant);
@@ -244,7 +245,7 @@ class ErdControllerIntegrationTest {
         Tenant newTenant = Tenant.builder()
                 .tenantId(newTenantId)
                 .name("새 테스트 테넌트")
-                .businessType(Tenant.BusinessType.ACADEMY)
+                .businessType("ACADEMY")
                 .status(Tenant.TenantStatus.ACTIVE)
                 .build();
         tenantRepository.save(newTenant);

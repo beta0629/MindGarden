@@ -1,16 +1,16 @@
 package com.coresolution.core.service.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import com.coresolution.core.model.SchemaTable;
 import com.coresolution.core.repository.SchemaRepository;
 import com.coresolution.core.service.SchemaService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 데이터베이스 스키마 조회 서비스 구현체
@@ -22,13 +22,21 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
 public class SchemaServiceImpl implements SchemaService {
     
     private final SchemaRepository schemaRepository;
     
     @Value("${spring.datasource.schema:core_solution}")
     private String defaultSchemaName;
+    
+    /**
+     * SchemaRepository 지연 주입 (순환 참조 방지)
+     */
+    @Autowired
+    @Lazy
+    public SchemaServiceImpl(SchemaRepository schemaRepository) {
+        this.schemaRepository = schemaRepository;
+    }
     
     @Override
     public List<SchemaTable> getAllTables(String schemaName) {

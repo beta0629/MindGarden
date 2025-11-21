@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @version 1.0.0
  * @since 2025-01-XX
  */
-@SpringBootTest(classes = com.mindgarden.consultation.ConsultationManagementApplication.class)
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("온보딩 승인 서비스 통합 테스트")

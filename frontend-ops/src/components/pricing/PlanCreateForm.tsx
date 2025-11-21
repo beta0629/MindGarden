@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { createPricingPlan } from "@/services/pricingClient";
+import MGButton from "@/components/ui/MGButton";
 
 const DEFAULT_CURRENCY = "KRW";
 
@@ -149,9 +150,16 @@ export function PlanCreateForm() {
         </label>
       </div>
       <div className="form-footer">
-        <button type="submit" className="primary-button" disabled={isPending}>
-          {isPending ? "생성 중..." : "요금제 생성"}
-        </button>
+        <MGButton
+          type="submit"
+          variant="primary"
+          loading={isPending}
+          loadingText="생성 중..."
+          preventDoubleClick={true}
+          clickDelay={1000}
+        >
+          요금제 생성
+        </MGButton>
         {feedback && (
           <p
             className={`form-feedback ${

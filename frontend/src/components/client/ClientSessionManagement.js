@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
-import { getDashboardPath } from '../../utils/session';
+import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
+import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import SimpleLayout from '../layout/SimpleLayout';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -58,12 +59,16 @@ const ClientSessionManagement = () => {
     }
   };
 
-  const handleMenuAction = (action) => {
+  const handleMenuAction = async (action) => {
     setIsMenuOpen(false);
     switch (action) {
       case 'dashboard':
-        const dashboardPath = getDashboardPath(user?.role);
-        navigate(dashboardPath || '/dashboard');
+        // 동적 대시보드 라우팅
+        const authResponse = {
+          user: user,
+          currentTenantRole: sessionManager.getCurrentTenantRole()
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
         break;
       case 'session-management':
         navigate('/client/session-management');

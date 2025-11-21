@@ -1,6 +1,7 @@
 package com.coresolution.core.domain;
 
-import com.mindgarden.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +26,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "features", "subscriptions"})
 public class PricingPlan extends BaseEntity {
     
     /**

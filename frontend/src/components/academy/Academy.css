@@ -1,0 +1,322 @@
+/**
+ * 학원 시스템 공통 CSS
+ * 인라인 스타일 금지, CSS 변수 사용
+ * 
+ * @author CoreSolution
+ * @version 1.0.0
+ * @since 2025-11-19
+ */
+
+/* ==================== 공통 스타일 ==================== */
+
+.academy-course-list,
+.academy-class-list,
+.academy-enrollment-list,
+.academy-attendance-list {
+  width: 100%;
+}
+
+/* ==================== 필터 스타일 ==================== */
+
+.academy-filters {
+  display: flex;
+  gap: var(--spacing-md, 12px);
+  margin-bottom: var(--spacing-lg, 20px);
+  flex-wrap: wrap;
+}
+
+.academy-filter-select {
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: var(--radius-md, 4px);
+  font-size: var(--font-size-base, 14px);
+  background-color: var(--color-background, #fff);
+  color: var(--color-text, #333);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.academy-filter-select:hover {
+  border-color: var(--color-primary, #007bff);
+}
+
+.academy-filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary, #007bff);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* ==================== 액션 버튼 스타일 ==================== */
+
+.academy-actions {
+  display: flex;
+  gap: var(--spacing-xs, 4px);
+  justify-content: flex-end;
+}
+
+/* ==================== 로딩/에러 상태 ==================== */
+
+.academy-loading,
+.academy-error {
+  padding: var(--spacing-xl, 24px);
+  text-align: center;
+  color: var(--color-text-secondary, #666);
+}
+
+.academy-error {
+  color: var(--color-danger, #dc3545);
+}
+
+/* ==================== 폼 스타일 ==================== */
+
+.academy-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, 12px);
+}
+
+.academy-form-row {
+  display: flex;
+  gap: var(--spacing-md, 12px);
+  flex-wrap: wrap;
+}
+
+.academy-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs, 4px);
+  flex: 1;
+  min-width: 200px;
+}
+
+.academy-form-label {
+  font-size: var(--font-size-sm, 12px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text, #333);
+}
+
+.academy-form-input,
+.academy-form-select,
+.academy-form-textarea {
+  padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: var(--radius-md, 4px);
+  font-size: var(--font-size-base, 14px);
+  background-color: var(--color-background, #fff);
+  color: var(--color-text, #333);
+  transition: border-color 0.2s ease;
+}
+
+.academy-form-input:focus,
+.academy-form-select:focus,
+.academy-form-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #007bff);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.academy-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.academy-form-actions {
+  display: flex;
+  gap: var(--spacing-md, 12px);
+  justify-content: flex-end;
+  margin-top: var(--spacing-lg, 20px);
+}
+
+/* ==================== 대시보드 스타일 ==================== */
+
+.academy-dashboard {
+  width: 100%;
+  padding: var(--spacing-lg, 20px);
+}
+
+.academy-header {
+  margin-bottom: var(--spacing-xl, 24px);
+}
+
+.academy-header h1 {
+  font-size: var(--font-size-2xl, 24px);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text, #333);
+  margin-bottom: var(--spacing-md, 12px);
+}
+
+.academy-tabs {
+  display: flex;
+  gap: var(--spacing-sm, 8px);
+  border-bottom: 2px solid var(--color-border, #ddd);
+}
+
+.academy-tab {
+  padding: var(--spacing-sm, 8px) var(--spacing-lg, 20px);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: var(--font-size-base, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+}
+
+.academy-tab:hover {
+  color: var(--color-primary, #007bff);
+}
+
+.academy-tab.active {
+  color: var(--color-primary, #007bff);
+  border-bottom-color: var(--color-primary, #007bff);
+}
+
+.academy-content {
+  margin-top: var(--spacing-lg, 20px);
+}
+
+/* ==================== SNS 간편 회원가입 스타일 ==================== */
+
+.academy-social-signup {
+  margin-bottom: var(--spacing-xl, 24px);
+  padding: var(--spacing-lg, 20px);
+  background-color: var(--color-background-light, #f8f9fa);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--color-border, #e0e0e0);
+}
+
+.academy-social-signup-title {
+  font-size: var(--font-size-lg, 18px);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text, #333);
+  margin-bottom: var(--spacing-xs, 4px);
+  text-align: center;
+}
+
+.academy-social-signup-description {
+  font-size: var(--font-size-sm, 12px);
+  color: var(--color-text-secondary, #666);
+  text-align: center;
+  margin-bottom: var(--spacing-md, 12px);
+}
+
+.academy-social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, 8px);
+  margin-bottom: var(--spacing-md, 12px);
+}
+
+.academy-social-button {
+  width: 100%;
+  padding: var(--spacing-md, 12px);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--font-size-base, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm, 8px);
+  transition: all 0.2s ease;
+}
+
+.academy-social-button-kakao {
+  background-color: #FEE500;
+  color: #000;
+  border: 1px solid #FEE500;
+}
+
+.academy-social-button-kakao:hover {
+  background-color: #FDD835;
+  border-color: #FDD835;
+}
+
+.academy-social-button-naver {
+  background-color: #03C75A;
+  color: #fff;
+  border: 1px solid #03C75A;
+}
+
+.academy-social-button-naver:hover {
+  background-color: #02B350;
+  border-color: #02B350;
+}
+
+.academy-social-button-google {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid var(--color-border, #ddd);
+}
+
+.academy-social-button-google:hover {
+  background-color: var(--color-background-light, #f8f9fa);
+  border-color: var(--color-primary, #007bff);
+}
+
+.academy-social-icon {
+  font-weight: var(--font-weight-bold, 700);
+}
+
+.academy-social-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: var(--spacing-lg, 20px) 0;
+  color: var(--color-text-secondary, #666);
+  font-size: var(--font-size-sm, 12px);
+}
+
+.academy-social-divider::before,
+.academy-social-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--color-border, #ddd);
+}
+
+.academy-social-divider span {
+  padding: 0 var(--spacing-md, 12px);
+}
+
+/* ==================== 반응형 ==================== */
+
+@media (max-width: 768px) {
+  .academy-dashboard {
+    padding: var(--spacing-md, 12px);
+  }
+  
+  .academy-filters {
+    flex-direction: column;
+  }
+  
+  .academy-filter-select {
+    width: 100%;
+  }
+  
+  .academy-form-row {
+    flex-direction: column;
+  }
+  
+  .academy-form-group {
+    min-width: 100%;
+  }
+  
+  .academy-actions {
+    flex-direction: column;
+  }
+  
+  .academy-form-actions {
+    flex-direction: column;
+  }
+  
+  .academy-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .academy-tab {
+    flex: 1;
+    min-width: 100px;
+  }
+}
+

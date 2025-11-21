@@ -15,12 +15,12 @@ import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.ErdGenerationService;
 import com.coresolution.core.service.OnboardingApprovalService;
 import com.coresolution.core.service.TenantPgConfigurationService;
-import com.mindgarden.consultation.dto.PaymentRequest;
-import com.mindgarden.consultation.dto.PaymentResponse;
-import com.mindgarden.consultation.entity.Payment;
-import com.mindgarden.consultation.repository.PaymentRepository;
-import com.mindgarden.consultation.service.PaymentService;
-import com.mindgarden.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.dto.PaymentRequest;
+import com.coresolution.consultation.dto.PaymentResponse;
+import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.repository.PaymentRepository;
+import com.coresolution.consultation.service.PaymentService;
+import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,7 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @version 1.0.0
  * @since 2025-01-XX
  */
-@SpringBootTest(classes = com.mindgarden.consultation.ConsultationManagementApplication.class)
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("전체 시스템 통합 테스트")
@@ -90,7 +90,7 @@ class FullSystemIntegrationTest {
         testTenant = Tenant.builder()
                 .tenantId(testTenantId)
                 .name("전체 시스템 테스트 테넌트")
-                .businessType(Tenant.BusinessType.ACADEMY)
+                .businessType("ACADEMY")
                 .status(Tenant.TenantStatus.ACTIVE)
                 .contactEmail("system-test@example.com")
                 .build();
@@ -256,7 +256,7 @@ class FullSystemIntegrationTest {
         Tenant tenant2 = Tenant.builder()
                 .tenantId(tenantId2)
                 .name("테스트 테넌트 2")
-                .businessType(Tenant.BusinessType.ACADEMY)
+                .businessType("ACADEMY")
                 .status(Tenant.TenantStatus.ACTIVE)
                 .contactEmail("tenant2@example.com")
                 .build();

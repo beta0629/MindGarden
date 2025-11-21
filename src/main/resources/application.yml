@@ -8,6 +8,10 @@ spring:
   application:
     name: consultation-management-system
   
+  # 빈 정의 오버라이딩 허용 (레거시 Repository와의 호환성을 위해)
+  main:
+    allow-bean-definition-overriding: true
+  
   # 데이터베이스 설정
   datasource:
     url: jdbc:mysql://localhost:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true
@@ -119,6 +123,7 @@ encryption:
 payment:
   toss:
     secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
+    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET:}
     base-url: ${PAYMENT_TOSS_BASE_URL:https://api.tosspayments.com}
     simulation-mode: ${PAYMENT_TOSS_SIMULATION_MODE:true}
     test-payment-url: ${PAYMENT_TOSS_TEST_URL:https://checkout.tosspayments.com/v1/test/}
@@ -237,3 +242,19 @@ openai:
     key: ${OPENAI_API_KEY:}  # 환경 변수로 설정 필수
     url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
   model: ${OPENAI_MODEL:gpt-3.5-turbo}  # gpt-3.5-turbo 또는 gpt-4
+
+# 온보딩 자동 승인 설정
+onboarding:
+  auto-approval:
+    enabled: ${ONBOARDING_AUTO_APPROVAL_ENABLED:true}  # 자동 승인 활성화 여부
+    allowed-risk-levels: ${ONBOARDING_AUTO_APPROVAL_RISK_LEVELS:LOW}  # 허용 위험도 (쉼표로 구분: LOW,MEDIUM)
+    allowed-business-types: ${ONBOARDING_AUTO_APPROVAL_BUSINESS_TYPES:}  # 허용 업종 (쉼표로 구분, 비어있으면 모든 업종 허용)
+    require-payment-method: ${ONBOARDING_AUTO_APPROVAL_REQUIRE_PAYMENT:false}  # 결제 수단 필수 여부 (false: 선택 사항)
+    require-subscription: ${ONBOARDING_AUTO_APPROVAL_REQUIRE_SUBSCRIPTION:false}  # 구독 필수 여부 (false: 선택 사항)
+
+# Ops Portal 관리자 계정 설정
+ops:
+  admin:
+    username: ${OPS_ADMIN_USERNAME:superadmin@mindgarden.com}  # Ops Portal 관리자 아이디
+    password: ${OPS_ADMIN_PASSWORD:admin123}  # Ops Portal 관리자 비밀번호
+    role: ${OPS_ADMIN_ROLE:HQ_ADMIN}  # Ops Portal 관리자 역할

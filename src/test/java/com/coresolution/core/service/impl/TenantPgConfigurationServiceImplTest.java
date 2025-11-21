@@ -26,7 +26,7 @@ import com.coresolution.core.dto.TenantPgConfigurationResponse;
 import com.coresolution.core.repository.TenantPgConfigurationHistoryRepository;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.core.service.PgConnectionTestService;
-import com.mindgarden.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

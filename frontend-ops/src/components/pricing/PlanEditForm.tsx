@@ -8,6 +8,7 @@ import {
   updatePricingPlan
 } from "@/services/pricingClient";
 import { PricingPlan } from "@/types/pricing";
+import MGButton from "@/components/ui/MGButton";
 
 interface Props {
   plan: PricingPlan;
@@ -219,23 +220,29 @@ export function PlanEditForm({ plan, onClose }: Props) {
 
       <div className="form-footer">
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          <button
+          <MGButton
             type="button"
-            className="ghost-button"
+            variant="danger"
             onClick={handleDeactivate}
-            disabled={isPending}
+            loading={isPending}
+            loadingText="비활성화 중..."
+            preventDoubleClick={true}
+            clickDelay={2000}
           >
             비활성화
-          </button>
+          </MGButton>
         </div>
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          <button
+          <MGButton
             type="submit"
-            className="primary-button"
-            disabled={isPending}
+            variant="primary"
+            loading={isPending}
+            loadingText="저장 중..."
+            preventDoubleClick={true}
+            clickDelay={1000}
           >
-            {isPending ? "저장 중..." : "변경 사항 저장"}
-          </button>
+            변경 사항 저장
+          </MGButton>
         </div>
       </div>
       {feedback && (

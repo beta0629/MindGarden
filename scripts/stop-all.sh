@@ -43,13 +43,23 @@ fi
 echo -e "${YELLOW}   🔍 실행 중인 프로세스 검색...${NC}"
 RUNNING_BACKEND=$(pgrep -f "spring-boot:run\|consultation-management-system.*\.jar" || true)
 RUNNING_FRONTEND=$(pgrep -f "react-scripts.*start\|npm.*start" | grep -v grep || true)
+RUNNING_TRINITY=$(pgrep -f "next dev.*3001\|next dev.*trinity" || true)
+RUNNING_OPS=$(pgrep -f "next dev.*4300\|next dev.*ops" || true)
 
 if [ ! -z "$RUNNING_BACKEND" ]; then
     echo -e "${RED}   ⚠️  실행 중인 백엔드 프로세스 발견: $RUNNING_BACKEND${NC}"
 fi
 
 if [ ! -z "$RUNNING_FRONTEND" ]; then
-    echo -e "${RED}   ⚠️  실행 중인 프론트엔드 프로세스 발견: $RUNNING_FRONTEND${NC}"
+    echo -e "${RED}   ⚠️  실행 중인 프론트엔드 1 (MindGarden) 프로세스 발견: $RUNNING_FRONTEND${NC}"
+fi
+
+if [ ! -z "$RUNNING_TRINITY" ]; then
+    echo -e "${RED}   ⚠️  실행 중인 프론트엔드 2 (Trinity) 프로세스 발견: $RUNNING_TRINITY${NC}"
+fi
+
+if [ ! -z "$RUNNING_OPS" ]; then
+    echo -e "${RED}   ⚠️  실행 중인 프론트엔드 3 (Ops Portal) 프로세스 발견: $RUNNING_OPS${NC}"
 fi
 
 echo -e "${GREEN}✅ 1단계 완료: 프로세스 확인됨${NC}"
@@ -67,7 +77,25 @@ echo
 # 3단계: 프론트엔드 종료
 # ===============================================
 echo -e "${YELLOW}🛑 3단계: 프론트엔드 시스템 종료${NC}"
+echo -e "${YELLOW}   3-1. 프론트엔드 1 (MindGarden) 종료...${NC}"
 ./scripts/stop-frontend.sh
+echo -e "${YELLOW}   3-2. 프론트엔드 2 (Trinity) 종료...${NC}"
+./scripts/stop-trinity.sh 2>/dev/null || true
+echo -e "${YELLOW}   3-3. 프론트엔드 3 (Ops Portal) 종료...${NC}"
+# Ops Portal 종료 (포트 4300)
+if lsof -i:4300 > /dev/null 2>&1; then
+    lsof -t -i:4300 | xargs kill -TERM 2>/dev/null || true
+    sleep 2
+    if lsof -i:4300 > /dev/null 2>&1; then
+        lsof -t -i:4300 | xargs kill -KILL 2>/dev/null || true
+    fi
+fi
+# Ops Portal 프로세스 종료
+if [ ! -z "$RUNNING_OPS" ]; then
+    echo "$RUNNING_OPS" | xargs kill -TERM 2>/dev/null || true
+    sleep 2
+    echo "$RUNNING_OPS" | xargs kill -KILL 2>/dev/null || true
+fi
 echo -e "${GREEN}✅ 3단계 완료: 프론트엔드 종료됨${NC}"
 echo
 
@@ -87,7 +115,7 @@ if lsof -i:8080 > /dev/null 2>&1; then
     fi
 fi
 
-# 포트 3000 정리
+# 포트 3000 정리 (프론트엔드 1 - MindGarden)
 if lsof -i:3000 > /dev/null 2>&1; then
     echo -e "${YELLOW}   🔄 포트 3000 정리 중...${NC}"
     lsof -t -i:3000 | xargs kill -TERM 2>/dev/null || true
@@ -95,6 +123,28 @@ if lsof -i:3000 > /dev/null 2>&1; then
     if lsof -i:3000 > /dev/null 2>&1; then
         echo -e "${RED}   ⚠️  포트 3000 강제 정리...${NC}"
         lsof -t -i:3000 | xargs kill -KILL 2>/dev/null || true
+    fi
+fi
+
+# 포트 3001 정리 (프론트엔드 2 - Trinity)
+if lsof -i:3001 > /dev/null 2>&1; then
+    echo -e "${YELLOW}   🔄 포트 3001 정리 중...${NC}"
+    lsof -t -i:3001 | xargs kill -TERM 2>/dev/null || true
+    sleep 2
+    if lsof -i:3001 > /dev/null 2>&1; then
+        echo -e "${RED}   ⚠️  포트 3001 강제 정리...${NC}"
+        lsof -t -i:3001 | xargs kill -KILL 2>/dev/null || true
+    fi
+fi
+
+# 포트 4300 정리 (프론트엔드 3 - Ops Portal)
+if lsof -i:4300 > /dev/null 2>&1; then
+    echo -e "${YELLOW}   🔄 포트 4300 정리 중...${NC}"
+    lsof -t -i:4300 | xargs kill -TERM 2>/dev/null || true
+    sleep 2
+    if lsof -i:4300 > /dev/null 2>&1; then
+        echo -e "${RED}   ⚠️  포트 4300 강제 정리...${NC}"
+        lsof -t -i:4300 | xargs kill -KILL 2>/dev/null || true
     fi
 fi
 
@@ -189,10 +239,26 @@ else
     lsof -i:3000
 fi
 
+if ! lsof -i:3001 > /dev/null 2>&1; then
+    echo -e "${GREEN}   ✅ 포트 3001: 사용 가능${NC}"
+else
+    echo -e "${RED}   ❌ 포트 3001: 아직 사용 중${NC}"
+    lsof -i:3001
+fi
+
+if ! lsof -i:4300 > /dev/null 2>&1; then
+    echo -e "${GREEN}   ✅ 포트 4300: 사용 가능${NC}"
+else
+    echo -e "${RED}   ❌ 포트 4300: 아직 사용 중${NC}"
+    lsof -i:4300
+fi
+
 # 프로세스 상태 확인
 echo -e "${YELLOW}   🔍 프로세스 상태 확인...${NC}"
 FINAL_BACKEND_CHECK=$(pgrep -f "spring-boot:run\|consultation-management-system.*\.jar" || true)
 FINAL_FRONTEND_CHECK=$(pgrep -f "react-scripts.*start\|npm.*start" | grep -v grep || true)
+FINAL_TRINITY_CHECK=$(pgrep -f "next dev.*3001\|next dev.*trinity" || true)
+FINAL_OPS_CHECK=$(pgrep -f "next dev.*4300\|next dev.*ops" || true)
 
 if [ -z "$FINAL_BACKEND_CHECK" ]; then
     echo -e "${GREEN}   ✅ 백엔드 프로세스: 모두 종료됨${NC}"
@@ -201,9 +267,21 @@ else
 fi
 
 if [ -z "$FINAL_FRONTEND_CHECK" ]; then
-    echo -e "${GREEN}   ✅ 프론트엔드 프로세스: 모두 종료됨${NC}"
+    echo -e "${GREEN}   ✅ 프론트엔드 1 (MindGarden) 프로세스: 모두 종료됨${NC}"
 else
-    echo -e "${RED}   ❌ 프론트엔드 프로세스: 일부 실행 중 ($FINAL_FRONTEND_CHECK)${NC}"
+    echo -e "${RED}   ❌ 프론트엔드 1 프로세스: 일부 실행 중 ($FINAL_FRONTEND_CHECK)${NC}"
+fi
+
+if [ -z "$FINAL_TRINITY_CHECK" ]; then
+    echo -e "${GREEN}   ✅ 프론트엔드 2 (Trinity) 프로세스: 모두 종료됨${NC}"
+else
+    echo -e "${RED}   ❌ 프론트엔드 2 프로세스: 일부 실행 중 ($FINAL_TRINITY_CHECK)${NC}"
+fi
+
+if [ -z "$FINAL_OPS_CHECK" ]; then
+    echo -e "${GREEN}   ✅ 프론트엔드 3 (Ops Portal) 프로세스: 모두 종료됨${NC}"
+else
+    echo -e "${RED}   ❌ 프론트엔드 3 프로세스: 일부 실행 중 ($FINAL_OPS_CHECK)${NC}"
 fi
 
 # 디스크 공간 확인
@@ -248,8 +326,10 @@ echo -e "${NC}"
 
 echo -e "${CYAN}📋 종료 작업 요약:${NC}"
 echo -e "${GREEN}   ✅ 모든 백엔드 프로세스 종료${NC}"
-echo -e "${GREEN}   ✅ 모든 프론트엔드 프로세스 종료${NC}"
-echo -e "${GREEN}   ✅ 포트 8080, 3000 정리${NC}"
+echo -e "${GREEN}   ✅ 모든 프론트엔드 1 (MindGarden) 프로세스 종료${NC}"
+echo -e "${GREEN}   ✅ 모든 프론트엔드 2 (Trinity) 프로세스 종료${NC}"
+echo -e "${GREEN}   ✅ 모든 프론트엔드 3 (Ops Portal) 프로세스 종료${NC}"
+echo -e "${GREEN}   ✅ 포트 8080, 3000, 3001, 4300 정리${NC}"
 echo -e "${GREEN}   ✅ 메모리 정리 및 최적화${NC}"
 echo -e "${GREEN}   ✅ 임시 파일 정리${NC}"
 echo -e "${GREEN}   ✅ 시스템 헬스체크 완료${NC}"

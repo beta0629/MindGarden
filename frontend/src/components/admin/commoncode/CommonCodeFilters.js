@@ -23,18 +23,28 @@ const CommonCodeFilters = ({
     const loadActiveStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await fetch('/api/common-codes/STATUS');
-            if (response.ok) {
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    setActiveStatusOptions(data.map(code => ({
-                        value: code.codeValue,
-                        label: code.codeLabel,
-                        icon: code.icon,
-                        color: code.colorCode,
-                        description: code.codeDescription
-                    })));
+            // 표준화된 API 사용 (하위 호환성 유지)
+            const { getCommonCodes } = await import('../../../utils/commonCodeApi');
+            let codes = [];
+            try {
+                codes = await getCommonCodes('STATUS');
+            } catch (error) {
+                // 하위 호환성: 기존 API 사용
+                const response = await fetch('/api/common-codes/STATUS');
+                if (response.ok) {
+                    const data = await response.json();
+                    codes = Array.isArray(data) ? data : [];
                 }
+            }
+            
+            if (codes && codes.length > 0) {
+                setActiveStatusOptions(codes.map(code => ({
+                    value: code.codeValue,
+                    label: code.koreanName || code.codeLabel, // 한글명 우선
+                    icon: code.icon,
+                    color: code.colorCode,
+                    description: code.codeDescription
+                })));
             }
         } catch (error) {
             console.error('활성 상태 코드 로드 실패:', error);

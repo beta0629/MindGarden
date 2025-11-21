@@ -1,12 +1,13 @@
 package com.coresolution.core.config;
 
 import com.coresolution.core.service.ErdGenerationService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 /**
@@ -21,10 +22,9 @@ import org.springframework.context.annotation.Profile;
  */
 @Slf4j
 @Configuration
-@RequiredArgsConstructor
 public class FlywayErdAutoGenerationHook {
 
-    private final ErdGenerationService erdGenerationService;
+    private ErdGenerationService erdGenerationService;
 
     @Value("${spring.datasource.schema:core_solution}")
     private String defaultSchemaName;
@@ -34,6 +34,15 @@ public class FlywayErdAutoGenerationHook {
 
     @Value("${erd.auto-generation.trigger-on-migration:true}")
     private boolean triggerOnMigration;
+
+    /**
+     * ErdGenerationService 지연 주입 (순환 참조 방지)
+     */
+    @Autowired
+    @Lazy
+    public void setErdGenerationService(ErdGenerationService erdGenerationService) {
+        this.erdGenerationService = erdGenerationService;
+    }
 
     /**
      * Flyway 마이그레이션 전략 커스터마이징

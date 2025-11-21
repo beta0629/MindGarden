@@ -4,7 +4,7 @@ import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.ConnectionTestResponse;
 import com.coresolution.core.service.impl.*;
-import com.mindgarden.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @version 1.0.0
  * @since 2025-01-XX
  */
-@SpringBootTest(classes = com.mindgarden.consultation.ConsultationManagementApplication.class)
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("연결 테스트 서비스 통합 테스트")

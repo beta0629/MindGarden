@@ -1,3 +1,5 @@
+import notificationManager from "@/utils/notification";
+
 type ClientRuntimeConfig = {
   apiBaseUrl: string;
   apiToken: string;
@@ -30,6 +32,33 @@ export async function clientApiFetch<T>(
 
   if (!response.ok) {
     const body = await safeParseJson(response);
+    
+    // 403 Forbidden (권한 없음) 처리
+    if (response.status === 403) {
+      const errorMessage = (body as { message?: string })?.message || "접근 권한이 없습니다.";
+      // 공통 알림 표시
+      notificationManager.error(errorMessage);
+      const error = new Error(errorMessage);
+      (error as any).status = 403;
+      (error as any).body = body;
+      throw error;
+    }
+    
+    // 401 Unauthorized 처리
+    if (response.status === 401) {
+      const errorMessage = (body as { message?: string })?.message || "인증이 필요합니다.";
+      notificationManager.error(errorMessage);
+      const error = new Error(errorMessage);
+      (error as any).status = 401;
+      (error as any).body = body;
+      throw error;
+    }
+    
+    // 기타 오류 처리
+    const errorMessage = (body as { message?: string })?.message || 
+      `API 요청 실패 (${response.status} ${response.statusText})`;
+    notificationManager.error(errorMessage);
+    
     throw new Error(
       `API 요청 실패 (${response.status} ${response.statusText}): ${JSON.stringify(
         body

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toggleFeatureFlag } from "@/services/featureFlagClient";
 import { FeatureFlag } from "@/types/featureFlag";
 import { FeatureFlagState } from "@/types/shared";
+import MGButton from "@/components/ui/MGButton";
 
 interface Props {
   featureFlags: FeatureFlag[];
@@ -74,19 +75,19 @@ export function FeatureFlagTable({ featureFlags }: Props) {
                   <td>
                     <div className="flag-actions">
                       {STATE_OPTIONS.map((stateOption) => (
-                        <button
+                        <MGButton
                           key={stateOption}
                           type="button"
-                          className={`ghost-button ${
-                            flag.state === stateOption
-                              ? "ghost-button--active"
-                              : ""
-                          }`}
+                          variant={flag.state === stateOption ? "primary" : "outline"}
+                          size="small"
                           onClick={() => handleToggle(flag.id, stateOption)}
-                          disabled={isPending && updatingId === flag.id}
+                          loading={isPending && updatingId === flag.id}
+                          loadingText="변경 중..."
+                          preventDoubleClick={true}
+                          clickDelay={1000}
                         >
                           {stateOption}
-                        </button>
+                        </MGButton>
                       ))}
                     </div>
                   </td>

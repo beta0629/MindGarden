@@ -4,7 +4,7 @@ import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.ConnectionTestResponse;
 import com.coresolution.core.service.PgConnectionTestService;
-import com.mindgarden.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;

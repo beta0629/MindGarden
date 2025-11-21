@@ -1,0 +1,513 @@
+/**
+ * Onboarding 컴포넌트 스타일
+ */
+
+.trinity-onboarding {
+  min-height: 100vh;
+  background-color: var(--bg-secondary);
+}
+
+.trinity-onboarding__form {
+  max-width: 42rem;
+  margin: var(--spacing-xxl) auto;
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-xl);
+}
+
+.trinity-onboarding__title {
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  color: var(--text-primary);
+}
+
+.trinity-onboarding__progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xl);
+}
+
+.trinity-onboarding__progress-item {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.trinity-onboarding__progress-number {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-semibold);
+  background-color: #e5e7eb;
+  color: #6b7280;
+}
+
+.trinity-onboarding__progress-item--active .trinity-onboarding__progress-number {
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.trinity-onboarding__progress-line {
+  flex: 1;
+  height: 2px;
+  background-color: #e5e7eb;
+  margin: 0 var(--spacing-sm);
+}
+
+.trinity-onboarding__progress-item--active .trinity-onboarding__progress-line {
+  background-color: var(--color-primary);
+}
+
+.trinity-onboarding__progress-item--active ~ .trinity-onboarding__progress-item .trinity-onboarding__progress-line {
+  background-color: #e5e7eb;
+}
+
+.trinity-onboarding__progress-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.trinity-onboarding__progress-label {
+  flex: 1;
+  text-align: center;
+}
+
+.trinity-onboarding__progress-label--current {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+.trinity-onboarding__step-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+}
+
+.trinity-onboarding__step-description {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.trinity-onboarding__grid-button-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.trinity-onboarding__grid-button-title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.trinity-onboarding__grid-button-price {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.trinity-onboarding__field {
+  margin-bottom: var(--spacing-lg);
+}
+
+.trinity-onboarding__label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+}
+
+.trinity-onboarding__input {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid #d1d5db;
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-md);
+  transition: border-color var(--transition-fast);
+}
+
+.trinity-onboarding__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.trinity-onboarding__button {
+  width: 100%;
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-lg);
+  font-weight: var(--font-weight-semibold);
+  transition: background-color var(--transition-fast);
+  border: none;
+  cursor: pointer;
+}
+
+.trinity-onboarding__button:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.trinity-onboarding__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trinity-onboarding__button--secondary {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.trinity-onboarding__button--secondary:hover {
+  background-color: #d1d5db;
+}
+
+.trinity-onboarding__buttons {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.trinity-onboarding__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.trinity-onboarding__grid-button {
+  padding: var(--spacing-md);
+  border: 2px solid #e5e7eb;
+  border-radius: var(--border-radius-lg);
+  background-color: var(--bg-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.trinity-onboarding__grid-button:hover {
+  border-color: #d1d5db;
+}
+
+.trinity-onboarding__grid-button--active {
+  border-color: var(--color-primary);
+  background-color: #eff6ff;
+}
+
+.trinity-onboarding__success {
+  background-color: #d1fae5;
+  border: 1px solid #6ee7b7;
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.trinity-onboarding__success-text {
+  color: #065f46;
+  margin-bottom: var(--spacing-sm);
+}
+
+.trinity-onboarding__success-detail {
+  font-size: var(--font-size-sm);
+  color: #047857;
+}
+
+/* 에러 메시지 */
+.trinity-onboarding__error {
+  color: var(--color-danger, #ff3b30);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: var(--border-radius-md);
+}
+
+/* 카테고리 섹션 */
+.trinity-onboarding__category-section {
+  margin-top: var(--spacing-xl);
+}
+
+/* 보조 텍스트 */
+.trinity-onboarding__text-secondary {
+  color: var(--text-secondary, #666);
+  margin-top: var(--spacing-md);
+}
+
+/* 모노스페이스 폰트 (카드 번호 등) */
+.trinity-onboarding__input--monospace {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* 그리드 레이아웃 (2열) */
+.trinity-onboarding__grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+/* 로딩/빈 상태 메시지 */
+.trinity-onboarding__message {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary, #666);
+}
+
+.trinity-onboarding__message--error {
+  color: var(--color-danger, #d32f2f);
+}
+
+.trinity-onboarding__message--warning {
+  color: var(--color-warning, #ff9800);
+  font-size: var(--font-size-sm, 0.9rem);
+}
+
+/* 재시도 버튼 */
+.trinity-onboarding__retry-button {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-primary, #1976d2);
+  color: var(--text-inverse, white);
+  border: none;
+  border-radius: var(--border-radius-sm, 4px);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.trinity-onboarding__retry-button:hover {
+  background-color: var(--color-primary-dark, #1565c0);
+}
+
+/* 작은 텍스트 */
+.trinity-onboarding__small-text {
+  color: var(--text-secondary, #666);
+  font-size: var(--font-size-sm);
+}
+
+/* 인라인 스타일 대체용 클래스 */
+.trinity-onboarding__flex-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.trinity-onboarding__flex-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.trinity-onboarding__email-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.trinity-onboarding__email-separator {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.trinity-onboarding__email-domain-select {
+  flex: 1;
+  min-width: 150px;
+}
+
+.trinity-onboarding__custom-domain-wrapper {
+  margin-top: 0.5rem;
+}
+
+.trinity-onboarding__custom-domain-hint {
+  display: block;
+  margin-top: 0.25rem;
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.trinity-onboarding__error-box {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 0.25rem;
+}
+
+.trinity-onboarding__error-text {
+  color: #dc3545;
+  font-size: 0.8125rem;
+  display: block;
+}
+
+.trinity-onboarding__success-text {
+  color: #28a745;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.trinity-onboarding__verification-timer {
+  display: inline-block;
+}
+
+.trinity-onboarding__verification-timer--warning {
+  color: #856404;
+}
+
+.trinity-onboarding__payment-option-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.trinity-onboarding__payment-option-label--active {
+  background-color: #f5f5f5;
+}
+
+.trinity-onboarding__payment-info-box {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+}
+
+.trinity-onboarding__payment-info-text {
+  color: #666;
+  margin-top: 0.5rem;
+  display: block;
+  font-size: 0.875rem;
+}
+
+/* 결제 옵션 관련 스타일 */
+.trinity-onboarding__payment-option-title {
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.trinity-onboarding__payment-option-content {
+  flex: 1;
+}
+
+.trinity-onboarding__payment-option-description {
+  display: block;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.trinity-onboarding__radio-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* 완료 페이지 스타일 */
+.trinity-onboarding__completion-info {
+  margin-top: 1.5rem;
+}
+
+.trinity-onboarding__info-item {
+  margin-bottom: 0.5rem;
+}
+
+.trinity-onboarding__completion-buttons {
+  margin-top: 2rem;
+}
+
+/* 이메일 입력 관련 스타일 */
+.trinity-onboarding__email-input-local {
+  flex: 1;
+}
+
+.trinity-onboarding__custom-domain-input {
+  width: 100%;
+}
+
+.trinity-onboarding__email-actions {
+  margin-top: 0.5rem;
+}
+
+.trinity-onboarding__email-error-box {
+  margin-top: 0.5rem;
+}
+
+.trinity-onboarding__email-verification {
+  margin-top: 0.5rem;
+}
+
+/* 이메일 인증 섹션 */
+.trinity-onboarding__verification-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.trinity-onboarding__verification-button-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.trinity-onboarding__verification-timer-wrapper {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  background-color: #e7f3ff;
+  border-radius: 0.375rem;
+  border: 1px solid #b3d9ff;
+}
+
+.trinity-onboarding__verification-timer-wrapper--warning {
+  background-color: #fff3cd;
+  border-color: #ffc107;
+}
+
+.trinity-onboarding__verification-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0066cc;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
+.trinity-onboarding__verification-timer-wrapper--warning .trinity-onboarding__verification-timer {
+  color: #856404;
+}
+
+.trinity-onboarding__verification-code-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.trinity-onboarding__verification-code-input {
+  flex: 1;
+  min-width: 180px;
+  max-width: 250px;
+  font-size: 1.125rem;
+  text-align: center;
+  letter-spacing: 0.25em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+

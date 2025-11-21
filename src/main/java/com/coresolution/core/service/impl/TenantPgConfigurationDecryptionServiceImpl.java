@@ -5,7 +5,7 @@ import com.coresolution.core.dto.PgConfigurationKeysResponse;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.TenantPgConfigurationDecryptionService;
-import com.mindgarden.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

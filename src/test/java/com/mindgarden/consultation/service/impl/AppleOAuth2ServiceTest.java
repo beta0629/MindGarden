@@ -1,10 +1,10 @@
-package com.mindgarden.consultation.service.impl;
+package com.coresolution.consultation.service.impl;
 
-import com.mindgarden.consultation.dto.SocialUserInfo;
-import com.mindgarden.consultation.repository.ClientRepository;
-import com.mindgarden.consultation.repository.UserRepository;
-import com.mindgarden.consultation.repository.UserSocialAccountRepository;
-import com.mindgarden.consultation.service.JwtService;
+import com.coresolution.consultation.dto.SocialUserInfo;
+import com.coresolution.consultation.repository.ClientRepository;
+import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.repository.UserSocialAccountRepository;
+import com.coresolution.consultation.service.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

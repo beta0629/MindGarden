@@ -58,6 +58,13 @@ echo -e "${YELLOW}   1-1. 백엔드 프로세스 종료...${NC}"
 
 echo -e "${YELLOW}   1-2. 프론트엔드 프로세스 종료...${NC}"
 ./scripts/stop-frontend.sh
+./scripts/stop-trinity.sh 2>/dev/null || true
+# Ops Portal 종료 (포트 4300)
+if lsof -i:4300 > /dev/null 2>&1; then
+    lsof -t -i:4300 | xargs kill -TERM 2>/dev/null || true
+    sleep 1
+    lsof -t -i:4300 | xargs kill -KILL 2>/dev/null || true
+fi
 
 echo -e "${GREEN}✅ 1단계 완료: 모든 기존 프로세스 종료됨${NC}"
 echo
@@ -102,9 +109,99 @@ echo -e "${GREEN}✅ 2단계 완료: 환경 확인됨${NC}"
 echo
 
 # ===============================================
+# 2-4단계: 표준화 검증 (2025-11-20 표준화 작업)
+# ===============================================
+echo -e "${YELLOW}🔍 2-4단계: 표준화 검증${NC}"
+
+VALIDATION_ERROR=0
+VALIDATION_WARNING=0
+
+# DTO 표준화 검증
+echo -e "${YELLOW}   2-4-1. DTO 표준화 검증 중...${NC}"
+if [ -f "scripts/validate-dto-standardization.js" ]; then
+  if command -v node >/dev/null 2>&1; then
+    node scripts/validate-dto-standardization.js
+    if [ $? -ne 0 ]; then
+      echo -e "${RED}   ❌ DTO 표준화 검증 실패${NC}"
+      VALIDATION_ERROR=$((VALIDATION_ERROR + 1))
+    else
+      echo -e "${GREEN}   ✅ DTO 표준화 검증 통과${NC}"
+    fi
+  else
+    echo -e "${YELLOW}   ⚠️ node가 설치되지 않았습니다. DTO 검증을 건너뜁니다.${NC}"
+  fi
+else
+  echo -e "${YELLOW}   ⚠️ DTO 검증 스크립트가 없습니다. 건너뜁니다.${NC}"
+fi
+
+# 동적 시스템 검증 (하드코딩 및 동적 시스템 사용 확인)
+echo -e "${YELLOW}   2-4-2. 동적 시스템 검증 중 (하드코딩 및 동적 시스템 사용 확인)...${NC}"
+if [ -f "scripts/validate-dynamic-system.js" ]; then
+  if command -v node >/dev/null 2>&1; then
+    node scripts/validate-dynamic-system.js
+    if [ $? -ne 0 ]; then
+      echo -e "${RED}   ❌ 동적 시스템 검증 실패${NC}"
+      VALIDATION_ERROR=$((VALIDATION_ERROR + 1))
+    else
+      echo -e "${GREEN}   ✅ 동적 시스템 검증 통과${NC}"
+    fi
+  else
+    echo -e "${YELLOW}   ⚠️ node가 설치되지 않았습니다. 동적 시스템 검증을 건너뜁니다.${NC}"
+  fi
+else
+  echo -e "${YELLOW}   ⚠️ 동적 시스템 검증 스크립트가 없습니다. 건너뜁니다.${NC}"
+fi
+
+# Checkstyle 검증 (Maven validate phase)
+echo -e "${YELLOW}   2-4-3. Checkstyle 검증 중...${NC}"
+if [ -f "pom.xml" ] && command -v mvn >/dev/null 2>&1; then
+  mvn validate -q
+  if [ $? -ne 0 ]; then
+    echo -e "${RED}   ❌ Checkstyle 검증 실패${NC}"
+    echo -e "${YELLOW}   💡 상세 확인: mvn checkstyle:check${NC}"
+    VALIDATION_ERROR=$((VALIDATION_ERROR + 1))
+  else
+    echo -e "${GREEN}   ✅ Checkstyle 검증 통과${NC}"
+  fi
+else
+  echo -e "${YELLOW}   ⚠️ Maven이 설치되지 않았거나 pom.xml이 없습니다. Checkstyle 검증을 건너뜁니다.${NC}"
+fi
+
+# 검증 결과 확인
+if [ $VALIDATION_ERROR -eq 0 ]; then
+  echo -e "${GREEN}✅ 2-4단계 완료: 표준화 검증 통과${NC}"
+else
+  echo -e "${RED}❌ 2-4단계 실패: $VALIDATION_ERROR 개의 표준화 검증이 실패했습니다.${NC}"
+  echo -e "${YELLOW}💡 해결 방법:${NC}"
+  echo -e "   1. DTO 표준화 검증: node scripts/validate-dto-standardization.js"
+  echo -e "   2. 동적 시스템 검증: node scripts/validate-dynamic-system.js"
+  echo -e "   3. Checkstyle 검증: mvn checkstyle:check"
+  echo -e "   4. 검증 통과 후 서버를 다시 실행하세요.${NC}"
+  echo ""
+  echo -e "${YELLOW}⚠️  서버 실행을 중단합니다.${NC}"
+  exit 1
+fi
+echo
+
+# ===============================================
 # 3단계: 백엔드 빌드 및 실행
 # ===============================================
 echo -e "${YELLOW}🔨 3단계: 백엔드 빌드 및 실행${NC}"
+
+# 환경 변수 로드 (.env.local 파일이 있으면) - 먼저 로드
+if [ -f ".env.local" ]; then
+    echo -e "${YELLOW}   📋 환경 변수 로드 중...${NC}"
+    set -a
+    source .env.local
+    set +a
+    
+    echo -e "${GREEN}   ✅ 환경 변수 로드 완료${NC}"
+    echo -e "${BLUE}      DB_HOST: ${DB_HOST:-미설정}${NC}"
+    echo -e "${BLUE}      DB_USERNAME: ${DB_USERNAME:-미설정}${NC}"
+    echo -e "${BLUE}      DB_PASSWORD: ${DB_PASSWORD:+설정됨}${NC}"
+else
+    echo -e "${YELLOW}   ⚠️  .env.local 파일이 없습니다. 환경 변수를 수동으로 설정하세요.${NC}"
+fi
 
 echo -e "${YELLOW}   3-1. Maven 빌드 시작...${NC}"
 mvn clean package -DskipTests
@@ -122,23 +219,34 @@ JAR_FILE="target/consultation-management-system-1.0.0.jar"
 if [ "$BACKEND_PROFILE" = "local" ]; then
     # 로컬 개발 모드
     echo -e "${BLUE}   🔧 개발 모드로 백엔드 실행 (Hot Reload 지원)${NC}"
-    mvn spring-boot:run -Dspring-boot.run.profiles=local > logs/backend.log 2>&1 &
+    
+    # 환경 변수를 Maven 프로세스에 전달하여 실행 (환경 변수는 이미 로드됨)
+    # 백그라운드 실행 시에도 환경 변수가 전달되도록 export 유지
+    (
+        # 서브셸에서 환경 변수 export 후 실행
+        export DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD
+        mvn spring-boot:run -Dspring-boot.run.profiles=local > logs/backend.log 2>&1
+    ) &
+    BACKEND_PID=$!
 else
     # 프로덕션 모드
     echo -e "${BLUE}   🏭 프로덕션 모드로 백엔드 실행${NC}"
-    nohup java -jar -Dspring.profiles.active=$BACKEND_PROFILE $JAR_FILE > logs/backend.log 2>&1 &
+    (
+        export DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD
+        nohup java -jar -Dspring.profiles.active=$BACKEND_PROFILE $JAR_FILE > logs/backend.log 2>&1
+    ) &
+    BACKEND_PID=$!
 fi
 
-BACKEND_PID=$!
 echo -e "${GREEN}   ✅ 백엔드 서버 시작됨 (PID: $BACKEND_PID)${NC}"
 
 echo -e "${GREEN}✅ 3단계 완료: 백엔드 실행됨${NC}"
 echo
 
 # ===============================================
-# 4단계: 프론트엔드 빌드 및 실행
+# 4단계: 프론트엔드 1 (MindGarden) 빌드 및 실행
 # ===============================================
-echo -e "${YELLOW}⚛️  4단계: 프론트엔드 빌드 및 실행${NC}"
+echo -e "${YELLOW}⚛️  4단계: 프론트엔드 1 (MindGarden) 빌드 및 실행${NC}"
 
 cd frontend
 
@@ -168,15 +276,111 @@ if [ "$FRONTEND_MODE" = "build" ]; then
         exit 1
     fi
 else
-    # 개발 모드
-    echo -e "${YELLOW}   4-2. 프론트엔드 개발 서버 시작...${NC}"
-    npm start > ../logs/frontend.log 2>&1 &
+    # 개발 모드 - 포트 3000
+    echo -e "${YELLOW}   4-2. 프론트엔드 1 (MindGarden) 개발 서버 시작 (포트 3000)...${NC}"
+    PORT=3000 npm start > ../logs/frontend.log 2>&1 &
     FRONTEND_PID=$!
-    echo -e "${GREEN}   ✅ 프론트엔드 서버 시작됨 (PID: $FRONTEND_PID)${NC}"
+    echo -e "${GREEN}   ✅ 프론트엔드 1 서버 시작됨 (PID: $FRONTEND_PID, 포트: 3000)${NC}"
 fi
 
 cd ..
-echo -e "${GREEN}✅ 4단계 완료: 프론트엔드 실행됨${NC}"
+echo -e "${GREEN}✅ 4단계 완료: 프론트엔드 1 실행됨${NC}"
+echo
+
+# ===============================================
+# 4-2단계: 프론트엔드 2 (Trinity) 빌드 및 실행
+# ===============================================
+echo -e "${YELLOW}🏠 4-2단계: 프론트엔드 2 (Trinity) 빌드 및 실행${NC}"
+
+cd frontend-trinity
+
+if [ ! -d "node_modules" ]; then
+    echo -e "${YELLOW}   4-2-1. npm 의존성 설치...${NC}"
+    npm install > ../logs/trinity-install.log 2>&1
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}   ✅ npm 의존성 설치 성공!${NC}"
+    else
+        echo -e "${RED}   ❌ npm 의존성 설치 실패!${NC}"
+        echo -e "${YELLOW}   💡 로그 확인: tail -f logs/trinity-install.log${NC}"
+        exit 1
+    fi
+else
+    echo -e "${GREEN}   ✅ node_modules 확인됨${NC}"
+fi
+
+if [ "$FRONTEND_MODE" = "build" ]; then
+    # 프로덕션 빌드
+    echo -e "${YELLOW}   4-2-2. Trinity 프로덕션 빌드...${NC}"
+    npm run build > ../logs/trinity-build.log 2>&1
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}   ✅ Trinity 빌드 성공!${NC}"
+        BUILD_SIZE=$(du -sh .next 2>/dev/null | cut -f1 || echo "N/A")
+        echo -e "${BLUE}   📊 빌드 크기: ${BUILD_SIZE}${NC}"
+    else
+        echo -e "${RED}   ❌ Trinity 빌드 실패!${NC}"
+        echo -e "${YELLOW}   💡 로그 확인: tail -f logs/trinity-build.log${NC}"
+        exit 1
+    fi
+else
+    # 개발 모드 - 포트 3001
+    echo -e "${YELLOW}   4-2-2. 프론트엔드 2 (Trinity) 개발 서버 시작 (포트 3001)...${NC}"
+    npm run dev:trinity > ../logs/trinity.log 2>&1 &
+    TRINITY_PID=$!
+    echo -e "${GREEN}   ✅ 프론트엔드 2 서버 시작됨 (PID: $TRINITY_PID, 포트: 3001)${NC}"
+fi
+
+cd ..
+echo -e "${GREEN}✅ 4-2단계 완료: 프론트엔드 2 실행됨${NC}"
+echo
+
+# ===============================================
+# 4-3단계: 프론트엔드 3 (Ops Portal) 빌드 및 실행
+# ===============================================
+echo -e "${YELLOW}🔧 4-3단계: 프론트엔드 3 (Ops Portal) 빌드 및 실행${NC}"
+
+cd frontend-ops
+
+if [ ! -d "node_modules" ]; then
+    echo -e "${YELLOW}   4-3-1. npm 의존성 설치...${NC}"
+    npm install > ../logs/ops-install.log 2>&1
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}   ✅ npm 의존성 설치 성공!${NC}"
+    else
+        echo -e "${RED}   ❌ npm 의존성 설치 실패!${NC}"
+        echo -e "${YELLOW}   💡 로그 확인: tail -f logs/ops-install.log${NC}"
+        exit 1
+    fi
+else
+    echo -e "${GREEN}   ✅ node_modules 확인됨${NC}"
+fi
+
+if [ "$FRONTEND_MODE" = "build" ]; then
+    # 프로덕션 빌드
+    echo -e "${YELLOW}   4-3-2. Ops Portal 프로덕션 빌드...${NC}"
+    npm run build > ../logs/ops-build.log 2>&1
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}   ✅ Ops Portal 빌드 성공!${NC}"
+        BUILD_SIZE=$(du -sh .next 2>/dev/null | cut -f1 || echo "N/A")
+        echo -e "${BLUE}   📊 빌드 크기: ${BUILD_SIZE}${NC}"
+    else
+        echo -e "${RED}   ❌ Ops Portal 빌드 실패!${NC}"
+        echo -e "${YELLOW}   💡 로그 확인: tail -f logs/ops-build.log${NC}"
+        exit 1
+    fi
+else
+    # 개발 모드 - 포트 4300
+    echo -e "${YELLOW}   4-3-2. 프론트엔드 3 (Ops Portal) 개발 서버 시작 (포트 4300)...${NC}"
+    npm run dev > ../logs/ops.log 2>&1 &
+    OPS_PID=$!
+    echo -e "${GREEN}   ✅ 프론트엔드 3 서버 시작됨 (PID: $OPS_PID, 포트: 4300)${NC}"
+fi
+
+cd ..
+echo -e "${GREEN}✅ 4-3단계 완료: 프론트엔드 3 실행됨${NC}"
 echo
 
 # ===============================================
@@ -200,15 +404,45 @@ for i in {1..30}; do
 done
 
 if [ "$FRONTEND_MODE" = "dev" ]; then
-    echo -e "${YELLOW}   5-2. 프론트엔드 서버 헬스체크...${NC}"
+    echo -e "${YELLOW}   5-2. 프론트엔드 1 (MindGarden) 서버 헬스체크...${NC}"
     for i in {1..30}; do
         if curl -f http://localhost:3000 > /dev/null 2>&1; then
-            echo -e "${GREEN}   ✅ 프론트엔드 서버 정상 작동!${NC}"
+            echo -e "${GREEN}   ✅ 프론트엔드 1 서버 정상 작동!${NC}"
             break
         fi
         if [ $i -eq 30 ]; then
-            echo -e "${RED}   ❌ 프론트엔드 서버 헬스체크 실패!${NC}"
+            echo -e "${RED}   ❌ 프론트엔드 1 서버 헬스체크 실패!${NC}"
             echo -e "${YELLOW}   💡 로그 확인: tail -f logs/frontend.log${NC}"
+            exit 1
+        fi
+        echo -n "."
+        sleep 2
+    done
+    
+    echo -e "${YELLOW}   5-3. 프론트엔드 2 (Trinity) 서버 헬스체크...${NC}"
+    for i in {1..30}; do
+        if curl -f http://localhost:3001 > /dev/null 2>&1; then
+            echo -e "${GREEN}   ✅ 프론트엔드 2 서버 정상 작동!${NC}"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            echo -e "${RED}   ❌ 프론트엔드 2 서버 헬스체크 실패!${NC}"
+            echo -e "${YELLOW}   💡 로그 확인: tail -f logs/trinity.log${NC}"
+            exit 1
+        fi
+        echo -n "."
+        sleep 2
+    done
+    
+    echo -e "${YELLOW}   5-4. 프론트엔드 3 (Ops Portal) 서버 헬스체크...${NC}"
+    for i in {1..30}; do
+        if curl -f http://localhost:4300 > /dev/null 2>&1; then
+            echo -e "${GREEN}   ✅ 프론트엔드 3 서버 정상 작동!${NC}"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            echo -e "${RED}   ❌ 프론트엔드 3 서버 헬스체크 실패!${NC}"
+            echo -e "${YELLOW}   💡 로그 확인: tail -f logs/ops.log${NC}"
             exit 1
         fi
         echo -n "."
@@ -233,16 +467,22 @@ echo -e "${GREEN}   ✅ 백엔드 API: http://localhost:8080${NC}"
 echo -e "${BLUE}   📊 Actuator: http://localhost:8080/actuator/health${NC}"
 
 if [ "$FRONTEND_MODE" = "dev" ]; then
-    echo -e "${GREEN}   ✅ 프론트엔드: http://localhost:3000${NC}"
+    echo -e "${GREEN}   ✅ 프론트엔드 1 (MindGarden): http://localhost:3000${NC}"
+    echo -e "${GREEN}   ✅ 프론트엔드 2 (Trinity): http://localhost:3001${NC}"
+    echo -e "${GREEN}   ✅ 프론트엔드 3 (Ops Portal): http://localhost:4300${NC}"
 elif [ "$FRONTEND_MODE" = "build" ]; then
-    echo -e "${BLUE}   📁 프론트엔드 빌드: frontend/build/${NC}"
+    echo -e "${BLUE}   📁 프론트엔드 1 빌드: frontend/build/${NC}"
+    echo -e "${BLUE}   📁 프론트엔드 2 빌드: frontend-trinity/.next/${NC}"
+    echo -e "${BLUE}   📁 프론트엔드 3 빌드: frontend-ops/.next/${NC}"
 fi
 
 echo
 echo -e "${CYAN}📋 로그 파일:${NC}"
 echo -e "${BLUE}   - 백엔드: logs/backend.log${NC}"
 if [ "$FRONTEND_MODE" = "dev" ]; then
-    echo -e "${BLUE}   - 프론트엔드: logs/frontend.log${NC}"
+    echo -e "${BLUE}   - 프론트엔드 1: logs/frontend.log${NC}"
+    echo -e "${BLUE}   - 프론트엔드 2: logs/trinity.log${NC}"
+    echo -e "${BLUE}   - 프론트엔드 3: logs/ops.log${NC}"
 fi
 
 echo
@@ -259,8 +499,16 @@ echo -e "${YELLOW}   - 백엔드만: ./scripts/restart-backend.sh${NC}"
 
 # 프로세스 정보 저장
 echo "BACKEND_PID=$BACKEND_PID" > .mindgarden_pids
-if [ "$FRONTEND_MODE" = "dev" ] && [ ! -z "$FRONTEND_PID" ]; then
-    echo "FRONTEND_PID=$FRONTEND_PID" >> .mindgarden_pids
+if [ "$FRONTEND_MODE" = "dev" ]; then
+    if [ ! -z "$FRONTEND_PID" ]; then
+        echo "FRONTEND_PID=$FRONTEND_PID" >> .mindgarden_pids
+    fi
+    if [ ! -z "$TRINITY_PID" ]; then
+        echo "TRINITY_PID=$TRINITY_PID" >> .mindgarden_pids
+    fi
+    if [ ! -z "$OPS_PID" ]; then
+        echo "OPS_PID=$OPS_PID" >> .mindgarden_pids
+    fi
 fi
 
 echo

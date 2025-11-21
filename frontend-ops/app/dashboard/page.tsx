@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { fetchDashboardMetrics } from "@/services/dashboardService";
 
 export default async function DashboardPage() {
@@ -14,7 +15,22 @@ export default async function DashboardPage() {
           label="온보딩 대기"
           value={metrics.pendingOnboarding}
           description="승인 또는 심사 대기 중인 테넌트 수"
+          href="/onboarding?status=PENDING"
         />
+        <MetricCard
+          label="활성 온보딩"
+          value={metrics.activeOnboarding}
+          description="승인되어 활성화된 테넌트 수"
+          href="/onboarding?status=APPROVED"
+        />
+        {metrics.onHoldOnboarding > 0 && (
+          <MetricCard
+            label="보류 중 온보딩"
+            value={metrics.onHoldOnboarding}
+            description="자동 승인 시도했으나 프로시저 실패로 보류된 테넌트 수"
+            href="/onboarding?status=ON_HOLD"
+          />
+        )}
         <MetricCard
           label="활성 요금제"
           value={metrics.activePlans}
@@ -43,19 +59,35 @@ export default async function DashboardPage() {
 function MetricCard({
   label,
   value,
-  description
+  description,
+  href
 }: {
   label: string;
   value: number;
   description: string;
+  href?: string;
 }) {
-  return (
-    <article className="metric-card">
+  const cardContent = (
+    <>
       <span className="metric-card__label">{label}</span>
       <strong className="metric-card__value">
         {value.toLocaleString("ko-KR")}
       </strong>
       <p className="metric-card__description">{description}</p>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="metric-card metric-card--clickable">
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return (
+    <article className="metric-card">
+      {cardContent}
     </article>
   );
 }

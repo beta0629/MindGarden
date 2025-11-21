@@ -2,6 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGButton from '../common/MGButton';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import {
+    getCommonCodes,
+    getCommonCodeById,
+    createCommonCode,
+    updateCommonCode,
+    deleteCommonCode,
+    toggleCommonCodeStatus,
+    getCodeGroups
+} from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import { 
     loadCodeGroupMetadata, 
@@ -160,15 +169,22 @@ const CommonCodeManagement = () => {
     const loadCodeGroups = useCallback(async() => {
         try {
             setLoading(true);
-            const response = await apiGet('/api/common-codes/groups/list');
-            if (response && response.length > 0) {
-                // 권한에 따라 코드 그룹 필터링
-                const filteredGroups = response.filter(groupCode => {
-                    return hasCodeGroupPermission(groupCode);
-                });
-                setCodeGroups(filteredGroups);
+            // 표준화된 API 사용
+            const groups = await getCodeGroups();
+            if (groups && groups.length > 0) {
+                setCodeGroups(groups);
             } else {
-                notificationManager.error('코드그룹 목록을 불러오는데 실패했습니다.');
+                // 하위 호환성: 기존 API 사용
+                const response = await apiGet('/api/common-codes/groups/list');
+                if (response && response.length > 0) {
+                    // 권한에 따라 코드 그룹 필터링
+                    const filteredGroups = response.filter(groupCode => {
+                        return hasCodeGroupPermission(groupCode);
+                    });
+                    setCodeGroups(filteredGroups);
+                } else {
+                    notificationManager.error('코드그룹 목록을 불러오는데 실패했습니다.');
+                }
             }
         } catch (error) {
             console.error('코드그룹 로드 오류:', error);
@@ -182,16 +198,25 @@ const CommonCodeManagement = () => {
     const loadGroupCodes = useCallback(async (groupName) => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/common-codes/${groupName}`);
-            if (response && response.length > 0) {
-                setGroupCodes(response);
-            } else { notificationManager.error(`${groupName } 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+            // 표준화된 API 사용
+            const codes = await getCommonCodes(groupName);
+            if (codes && codes.length > 0) {
+                setGroupCodes(codes);
+            } else {
+                // 하위 호환성: 기존 API 사용
+                const response = await apiGet(`/api/common-codes/${groupName}`);
+                if (response && response.length > 0) {
+                    setGroupCodes(response);
+                } else {
+                    notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+                }
             }
         } catch (error) {
             console.error('그룹 코드 로드 오류:', error);
             if (error.response?.status === 403) {
                 notificationManager.error('해당 코드 그룹에 대한 접근 권한이 없습니다.');
-            } else { notificationManager.error(`${groupName } 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+            } else {
+                notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
             }
         } finally {
             setLoading(false);
@@ -410,12 +435,25 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            const response = await apiPost(`/api/admin/common-codes?userRole=${user?.role || ''}`, {
-                ...newCodeData,
-                codeGroup: selectedGroup
-            });
-
-            if (response.success) {
+            // 표준화된 API 사용
+            const codeData = {
+                codeGroup: selectedGroup,
+                codeValue: newCodeData.codeValue,
+                codeLabel: newCodeData.codeLabel,
+                koreanName: newCodeData.koreanName || newCodeData.codeLabel, // 한글명 필수
+                codeDescription: newCodeData.codeDescription,
+                sortOrder: newCodeData.sortOrder,
+                isActive: newCodeData.isActive,
+                parentCodeGroup: newCodeData.parentCodeGroup,
+                parentCodeValue: newCodeData.parentCodeValue,
+                extraData: newCodeData.extraData,
+                icon: newCodeData.icon,
+                colorCode: newCodeData.colorCode
+            };
+            
+            const createdCode = await createCommonCode(codeData);
+            
+            if (createdCode) {
                 notificationManager.success('새 코드가 추가되었습니다!');
                 setShowAddForm(false);
                 setNewCodeData({
@@ -434,14 +472,14 @@ const CommonCodeManagement = () => {
                 });
                 loadGroupCodes(selectedGroup);
             } else {
-                notificationManager.error(response.message || '코드 추가에 실패했습니다.');
+                notificationManager.error('코드 추가에 실패했습니다.');
             }
         } catch (error) {
             console.error('코드 추가 오류:', error);
             if (error.response?.status === 403) {
                 notificationManager.error('해당 코드 그룹에 대한 생성 권한이 없습니다.');
             } else {
-                notificationManager.error('코드 추가에 실패했습니다.');
+                notificationManager.error(error.message || '코드 추가에 실패했습니다.');
             }
         } finally {
             setLoading(false);
@@ -459,20 +497,16 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            const response = await apiDelete(`/api/common-codes/${codeId}`);
-            
-            if (response.success) {
-                notificationManager.success('코드가 삭제되었습니다!');
-                loadGroupCodes(selectedGroup);
-            } else {
-                notificationManager.error(response.message || '코드 삭제에 실패했습니다.');
-            }
+            // 표준화된 API 사용
+            await deleteCommonCode(codeId);
+            notificationManager.success('코드가 삭제되었습니다!');
+            loadGroupCodes(selectedGroup);
         } catch (error) {
             console.error('코드 삭제 오류:', error);
             if (error.response?.status === 403) {
                 notificationManager.error('해당 코드 그룹에 대한 삭제 권한이 없습니다.');
             } else {
-                notificationManager.error('코드 삭제에 실패했습니다.');
+                notificationManager.error(error.message || '코드 삭제에 실패했습니다.');
             }
         } finally {
             setLoading(false);
@@ -483,20 +517,16 @@ const CommonCodeManagement = () => {
     const handleToggleStatus = async (codeId, currentStatus) => {
         try {
             setLoading(true);
-            const response = await apiPost(`/api/common-codes/${codeId}/toggle-status`);
-            
-            if (response.success) {
-                notificationManager.success('코드 상태가 변경되었습니다!');
-                loadGroupCodes(selectedGroup);
-            } else {
-                notificationManager.error(response.message || '코드 상태 변경에 실패했습니다.');
-            }
+            // 표준화된 API 사용
+            await toggleCommonCodeStatus(codeId);
+            notificationManager.success('코드 상태가 변경되었습니다!');
+            loadGroupCodes(selectedGroup);
         } catch (error) {
             console.error('코드 상태 토글 오류:', error);
             if (error.response?.status === 403) {
                 notificationManager.error('해당 코드 그룹에 대한 상태 변경 권한이 없습니다.');
             } else {
-                notificationManager.error('코드 상태 변경에 실패했습니다.');
+                notificationManager.error(error.message || '코드 상태 변경에 실패했습니다.');
             }
         } finally {
             setLoading(false);
@@ -534,30 +564,37 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            const response = await apiPut(`/api/common-codes/${editingCode.id}`, newCodeData);
-
-            if (response.success) {
-                notificationManager.success('코드가 수정되었습니다!');
-                setShowAddForm(false);
-                setEditingCode(null);
-                setNewCodeData({
-                    codeGroup: '',
-                    codeValue: '',
-                    codeLabel: '',
-                    codeDescription: '',
-                    sortOrder: 0,
-                    isActive: true,
-                    parentCodeGroup: '',
-                    parentCodeValue: '',
-                    extraData: '',
-                    icon: '',
-                    colorCode: '',
-                    koreanName: ''
-                });
-                loadGroupCodes(selectedGroup);
-            } else {
-                notificationManager.error(response.message || '코드 수정에 실패했습니다.');
-            }
+            // 표준화된 API 사용
+            const updateData = {
+                codeLabel: newCodeData.codeLabel,
+                koreanName: newCodeData.koreanName || newCodeData.codeLabel, // 한글명 필수
+                codeDescription: newCodeData.codeDescription,
+                sortOrder: newCodeData.sortOrder,
+                isActive: newCodeData.isActive,
+                extraData: newCodeData.extraData,
+                icon: newCodeData.icon,
+                colorCode: newCodeData.colorCode
+            };
+            
+            await updateCommonCode(editingCode.id, updateData);
+            notificationManager.success('코드가 수정되었습니다!');
+            setShowAddForm(false);
+            setEditingCode(null);
+            setNewCodeData({
+                codeGroup: '',
+                codeValue: '',
+                codeLabel: '',
+                codeDescription: '',
+                sortOrder: 0,
+                isActive: true,
+                parentCodeGroup: '',
+                parentCodeValue: '',
+                extraData: '',
+                icon: '',
+                colorCode: '',
+                koreanName: ''
+            });
+            loadGroupCodes(selectedGroup);
         } catch (error) {
             console.error('코드 수정 오류:', error);
             if (error.response?.status === 403) {

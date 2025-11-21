@@ -1,12 +1,13 @@
 package com.coresolution.core.repository;
 
-import com.coresolution.core.model.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import com.coresolution.core.model.SchemaColumn;
+import com.coresolution.core.model.SchemaForeignKey;
+import com.coresolution.core.model.SchemaIndex;
+import com.coresolution.core.model.SchemaTable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 데이터베이스 스키마 정보 조회 Repository
@@ -18,10 +19,16 @@ import java.util.List;
  */
 @Slf4j
 @Repository
-@RequiredArgsConstructor
 public class SchemaRepository {
     
     private final JdbcTemplate jdbcTemplate;
+    
+    /**
+     * JdbcTemplate 생성자 주입
+     */
+    public SchemaRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
     
     /**
      * 테이블 목록 조회

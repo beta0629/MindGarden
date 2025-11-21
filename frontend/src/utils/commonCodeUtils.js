@@ -1,7 +1,9 @@
 import { apiGet } from './ajax';
+import { getCommonCodes as getCommonCodesStandard } from './commonCodeApi';
 
 /**
  * 공통 코드 관련 유틸리티 함수들
+ * 표준화된 API 사용 (하위 호환성 유지)
  */
 
 // 공통 코드 캐시
@@ -9,6 +11,8 @@ const codeCache = new Map();
 
 /**
  * 공통 코드 그룹의 모든 코드를 가져옵니다
+ * 표준화된 API 사용 (하위 호환성 유지)
+ * 
  * @param {string} groupCode - 코드 그룹명
  * @param {boolean} useCache - 캐시 사용 여부 (기본값: true)
  * @returns {Promise<Array>} 공통 코드 배열
@@ -20,14 +24,25 @@ export const getCommonCodes = async (groupCode, useCache = true) => {
             return codeCache.get(groupCode);
         }
 
-        const response = await apiGet(`/api/common-codes/${groupCode}`);
+        // 표준화된 API 사용
+        let codes = [];
+        try {
+            codes = await getCommonCodesStandard(groupCode);
+        } catch (error) {
+            console.warn('표준화된 API 조회 실패, 기존 API 사용:', error);
+            // 하위 호환성: 기존 API 사용
+            const response = await apiGet(`/api/common-codes/${groupCode}`);
+            if (Array.isArray(response)) {
+                codes = response;
+            }
+        }
         
-        if (Array.isArray(response)) {
+        if (codes && codes.length > 0) {
             // 캐시에 저장
             if (useCache) {
-                codeCache.set(groupCode, response);
+                codeCache.set(groupCode, codes);
             }
-            return response;
+            return codes;
         }
         
         return [];
@@ -163,6 +178,7 @@ export const getPackageOptions = async () => {
                 // SINGLE_ 패키지는 코드값 그대로 사용 (SINGLE_30000, SINGLE_35000 등)
                 label = code.codeValue;
             } else {
+                // 한글명 우선 사용 (표준화된 API)
                 label = code.koreanName || code.codeLabel;
             }
             

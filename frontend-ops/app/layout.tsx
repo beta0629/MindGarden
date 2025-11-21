@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 
 import "../styles/globals.css";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { GlobalNotification } from "@/components/common/GlobalNotification";
 
 export const metadata: Metadata = {
   title: "Trinity Ops Portal",
@@ -55,6 +56,7 @@ export default function RootLayout({
           </header>
           <main className="layout__content">{children}</main>
         </div>
+        <GlobalNotification />
       </body>
     </html>
   );

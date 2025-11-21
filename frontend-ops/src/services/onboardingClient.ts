@@ -14,3 +14,16 @@ export async function decideOnboarding(
   });
 }
 
+export async function retryOnboardingApproval(
+  id: string,
+  note?: string
+): Promise<OnboardingRequest> {
+  return clientApiFetch<OnboardingRequest>(`/onboarding/requests/${id}/retry`, {
+    method: "POST",
+    body: JSON.stringify({
+      actorId: process.env.NEXT_PUBLIC_OPS_ACTOR_ID ?? "SYSTEM_RETRY",
+      note: note
+    })
+  });
+}
+

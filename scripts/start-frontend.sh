@@ -34,15 +34,50 @@ echo -e "${BLUE}📂 프로젝트 루트: ${PROJECT_ROOT}${NC}"
 cd frontend
 echo -e "${BLUE}📂 프론트엔드 디렉토리: $(pwd)${NC}"
 
-# 기존 프론트엔드 프로세스 종료 (포트 3000)
+# 포트 3000 정리 (프론트엔드 포트)
+echo -e "${YELLOW}🧹 포트 충돌 방지: 포트 3000 정리 중...${NC}"
+if lsof -i:3000 > /dev/null 2>&1; then
+    echo -e "${YELLOW}   포트 3000을 사용하는 프로세스 종료...${NC}"
+    PIDS=$(lsof -t -i:3000 2>/dev/null || true)
+    if [ ! -z "$PIDS" ]; then
+        for PID in $PIDS; do
+            PROCESS_NAME=$(ps -p $PID -o command= 2>/dev/null | head -1 || echo "unknown")
+            echo -e "${BLUE}      프로세스 종료: PID $PID${NC}"
+            kill -TERM $PID 2>/dev/null || true
+        done
+        sleep 2
+        # 강제 종료
+        REMAINING=$(lsof -t -i:3000 2>/dev/null || true)
+        if [ ! -z "$REMAINING" ]; then
+            for PID in $REMAINING; do
+                kill -KILL $PID 2>/dev/null || true
+            done
+            sleep 1
+        fi
+    fi
+    echo -e "${GREEN}   ✅ 포트 3000 정리 완료${NC}"
+else
+    echo -e "${GREEN}   ✅ 포트 3000 사용 가능${NC}"
+fi
+
+# 기존 프론트엔드 프로세스 종료
 echo -e "${YELLOW}🔄 기존 프론트엔드 프로세스 확인 및 종료...${NC}"
-if lsof -t -i:3000 > /dev/null 2>&1; then
-    echo -e "${RED}⚠️  포트 3000을 사용하는 프로세스를 종료합니다...${NC}"
-    lsof -t -i:3000 | xargs kill -TERM 2>/dev/null || true
-    sleep 3
+REACT_PIDS=$(pgrep -f "react-scripts.*start\|npm.*start" 2>/dev/null | grep -v grep || true)
+if [ ! -z "$REACT_PIDS" ]; then
+    echo -e "${RED}⚠️  기존 프론트엔드 프로세스를 종료합니다...${NC}"
+    for PID in $REACT_PIDS; do
+        kill -TERM $PID 2>/dev/null || true
+    done
+    sleep 2
+    # 강제 종료
+    for PID in $REACT_PIDS; do
+        if ps -p $PID > /dev/null 2>&1; then
+            kill -KILL $PID 2>/dev/null || true
+        fi
+    done
     echo -e "${GREEN}✅ 기존 프로세스 종료 완료${NC}"
 else
-    echo -e "${GREEN}✅ 포트 3000이 사용 가능합니다${NC}"
+    echo -e "${GREEN}✅ 실행 중인 프론트엔드 프로세스가 없습니다${NC}"
 fi
 
 # Node.js 버전 확인

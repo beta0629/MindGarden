@@ -1,6 +1,6 @@
 package com.coresolution.core.domain;
 
-import com.mindgarden.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,10 +30,13 @@ public class TenantSubscription extends BaseEntity {
      * 구독 상태 열거형
      */
     public enum SubscriptionStatus {
+        DRAFT("초안"),
+        PENDING_ACTIVATION("활성화 대기"),
         INACTIVE("비활성"),
         ACTIVE("활성"),
         SUSPENDED("일시정지"),
-        CANCELLED("취소");
+        CANCELLED("취소"),
+        TERMINATED("종료");
         
         private final String description;
         
@@ -72,9 +75,9 @@ public class TenantSubscription extends BaseEntity {
     private String subscriptionId;
     
     /**
-     * 테넌트 ID
+     * 테넌트 ID (온보딩 중이면 null, 승인 후 업데이트)
      */
-    @Column(name = "tenant_id", length = 36, nullable = false)
+    @Column(name = "tenant_id", length = 36, nullable = true)
     private String tenantId;
     
     /**
@@ -84,12 +87,12 @@ public class TenantSubscription extends BaseEntity {
     private String planId;
     
     /**
-     * 상태 (INACTIVE, ACTIVE, SUSPENDED, CANCELLED)
+     * 상태 (DRAFT, PENDING_ACTIVATION, ACTIVE, SUSPENDED, CANCELLED, TERMINATED)
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     @Builder.Default
-    private SubscriptionStatus status = SubscriptionStatus.INACTIVE;
+    private SubscriptionStatus status = SubscriptionStatus.DRAFT;
     
     /**
      * 유효 시작일

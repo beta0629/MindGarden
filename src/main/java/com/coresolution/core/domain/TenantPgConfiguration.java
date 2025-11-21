@@ -3,7 +3,7 @@ package com.coresolution.core.domain;
 import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.domain.enums.PgProvider;
-import com.mindgarden.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -77,9 +77,10 @@ public class TenantPgConfiguration extends BaseEntity {
     private String secretKeyEncrypted;
     
     /**
-     * Merchant ID
+     * Merchant ID (상점 아이디, MID)
+     * 토스페이먼츠에서 발급하는 상점 아이디입니다. 최대 길이는 14자입니다.
      */
-    @Column(name = "merchant_id", length = 255)
+    @Column(name = "merchant_id", length = 14)
     private String merchantId;
     
     /**

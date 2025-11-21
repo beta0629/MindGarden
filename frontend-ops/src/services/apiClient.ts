@@ -2,7 +2,8 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { getMockResponse } from "@/services/mockApi";
-import { HTTP_STATUS_UNAUTHORIZED } from "@/constants/httpStatus";
+import { HTTP_STATUS_UNAUTHORIZED, HTTP_STATUS_FORBIDDEN } from "@/constants/httpStatus";
+import notificationManager from "@/utils/notification";
 
 const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
@@ -44,9 +45,11 @@ export async function apiFetch<T>(
   }
 
   if (shouldUseMock(config)) {
+    console.log("[apiFetch] Mock API 사용:", { path, url, reason: "shouldUseMock=true" });
     return getMockResponse<T>({ path, options });
-    }
+  }
 
+  console.log("[apiFetch] 실제 API 호출:", { url, path, apiBaseUrl: config.apiBaseUrl });
   const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
@@ -54,6 +57,32 @@ export async function apiFetch<T>(
       return getMockResponse<T>({ path, options });
     }
     const body = await safeParseJson(response);
+    
+    // 403 Forbidden (권한 없음) 처리
+    if (response.status === HTTP_STATUS_FORBIDDEN) {
+      const errorMessage = (body as { message?: string })?.message || "접근 권한이 없습니다.";
+      // 서버 사이드에서는 알림을 표시할 수 없으므로 에러만 throw
+      const error = new Error(errorMessage);
+      (error as any).status = HTTP_STATUS_FORBIDDEN;
+      (error as any).body = body;
+      throw error;
+    }
+    
+    // 404 Not Found 처리
+    if (response.status === 404) {
+      const bodyMessage = (body as { message?: string })?.message;
+      // "no-body"인 경우 더 명확한 메시지 제공
+      const errorMessage = bodyMessage && bodyMessage !== "no-body"
+        ? bodyMessage
+        : `API 엔드포인트를 찾을 수 없습니다: ${url}`;
+      const error = new Error(errorMessage);
+      (error as any).status = 404;
+      (error as any).body = body;
+      (error as any).url = url;
+      (error as any).path = path;
+      throw error;
+    }
+    
     throw new Error(
       `API 요청 실패 (${response.status} ${response.statusText}): ${JSON.stringify(
         body
@@ -92,16 +121,23 @@ function resolveServerRuntimeConfig(): ServerRuntimeConfig {
 }
 
 function shouldUseMock(config: ServerRuntimeConfig): boolean {
-  if (
+  const useMock = 
     process.env.NEXT_PUBLIC_OPS_API_USE_MOCK === "true" ||
     config.apiToken.includes("placeholder") ||
     config.apiToken === "dummy" ||
     config.apiToken.trim() === "" ||
-    !config.apiToken.includes(".")
-  ) {
-    return true;
+    !config.apiToken.includes(".");
+  
+  if (useMock) {
+    console.log("[shouldUseMock] Mock 사용 결정:", {
+      NEXT_PUBLIC_OPS_API_USE_MOCK: process.env.NEXT_PUBLIC_OPS_API_USE_MOCK,
+      apiTokenLength: config.apiToken.length,
+      apiTokenPreview: config.apiToken.substring(0, 20) + "...",
+      apiBaseUrl: config.apiBaseUrl
+    });
   }
-  return false;
+  
+  return useMock;
 }
 
 async function safeParseJson(response: Response): Promise<unknown> {

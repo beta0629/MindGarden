@@ -33,7 +33,7 @@ chmod +x ../config/shell-scripts/check-hardcode.sh
 `.env.local` 파일에 최소 아래 값을 설정해야 합니다.
 
 ```bash
-NEXT_PUBLIC_OPS_API_BASE_URL=http://localhost:7080/api/v1
+NEXT_PUBLIC_OPS_API_BASE_URL=http://localhost:8080/api/v1
 NEXT_PUBLIC_OPS_API_USE_MOCK=true # (선택, Mock 데이터 사용 시)
 ```
 

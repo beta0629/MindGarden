@@ -1,6 +1,7 @@
 package com.coresolution.core.domain;
 
-import com.mindgarden.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,6 +23,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "category"})
 public class BusinessCategoryItem extends BaseEntity {
     
     /**

@@ -1,7 +1,7 @@
 package com.coresolution.core.listener;
 
 import com.coresolution.core.context.TenantContextHolder;
-import com.mindgarden.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.BaseEntity;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import lombok.extern.slf4j.Slf4j;

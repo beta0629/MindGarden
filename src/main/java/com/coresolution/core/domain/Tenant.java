@@ -1,6 +1,6 @@
 package com.coresolution.core.domain;
 
-import com.mindgarden.consultation.entity.BaseEntity;
+import com.coresolution.consultation.entity.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -58,27 +58,6 @@ public class Tenant extends BaseEntity {
         }
     }
     
-    /**
-     * 업종 타입 열거형
-     */
-    public enum BusinessType {
-        CONSULTATION("상담"),
-        ACADEMY("학원"),
-        FOOD_SERVICE("요식업"),
-        RETAIL("소매"),
-        SERVICE("서비스");
-        
-        private final String description;
-        
-        BusinessType(String description) {
-            this.description = description;
-        }
-        
-        public String getDescription() {
-            return description;
-        }
-    }
-    
     // === 기본 정보 ===
     
     /**
@@ -98,12 +77,13 @@ public class Tenant extends BaseEntity {
     private String name;
     
     /**
-     * 업종 타입
+     * 업종 타입 (동적으로 business_categories 테이블에서 조회)
+     * business_category_items.business_type과 매핑됨
      */
-    @NotNull(message = "업종 타입은 필수입니다")
-    @Enumerated(EnumType.STRING)
+    @NotBlank(message = "업종 타입은 필수입니다")
+    @Size(max = 50, message = "업종 타입은 50자 이하여야 합니다")
     @Column(name = "business_type", nullable = false, length = 50)
-    private BusinessType businessType;
+    private String businessType;
     
     /**
      * 테넌트 상태

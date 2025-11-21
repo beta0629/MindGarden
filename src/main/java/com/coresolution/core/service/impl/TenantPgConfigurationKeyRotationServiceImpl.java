@@ -3,7 +3,7 @@ package com.coresolution.core.service.impl;
 import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.core.service.TenantPgConfigurationKeyRotationService;
-import com.mindgarden.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

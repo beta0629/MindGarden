@@ -1,0 +1,26 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "react/forbid-dom-props": ["error", {
+      "forbid": ["style"]
+    }],
+    "no-magic-numbers": ["warn", {
+      "ignore": [0, 1, -1, 2, 3, 4, 5, 10, 100, 1000],
+      "ignoreArrayIndexes": true,
+      "ignoreDefaultValues": true,
+      "detectObjects": false
+    }],
+    "no-literal-string": "off"
+  },
+  "plugins": ["react"],
+  "overrides": [
+    {
+      "files": ["**/*.tsx", "**/*.jsx"],
+      "rules": {
+        "react/forbid-dom-props": ["error", {
+          "forbid": ["style"]
+        }]
+      }
+    }
+  ]
+}

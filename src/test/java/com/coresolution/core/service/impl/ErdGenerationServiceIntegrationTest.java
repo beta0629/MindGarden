@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @version 1.0.0
  * @since 2025-01-XX
  */
-@SpringBootTest(classes = com.mindgarden.consultation.ConsultationManagementApplication.class)
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("ERD 생성 서비스 통합 테스트")
@@ -56,7 +56,7 @@ class ErdGenerationServiceIntegrationTest {
         Tenant testTenant = Tenant.builder()
                 .tenantId(testTenantId)
                 .name("테스트 테넌트")
-                .businessType(Tenant.BusinessType.ACADEMY)
+                .businessType("ACADEMY")
                 .status(Tenant.TenantStatus.ACTIVE)
                 .build();
         tenantRepository.save(testTenant);

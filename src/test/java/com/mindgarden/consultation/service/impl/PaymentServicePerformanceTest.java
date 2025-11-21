@@ -1,4 +1,4 @@
-package com.mindgarden.consultation.service.impl;
+package com.coresolution.consultation.service.impl;
 
 import com.coresolution.core.context.TenantContext;
 import com.coresolution.core.domain.Tenant;
@@ -8,10 +8,10 @@ import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.core.repository.TenantRepository;
-import com.mindgarden.consultation.dto.PaymentRequest;
-import com.mindgarden.consultation.dto.PaymentResponse;
-import com.mindgarden.consultation.service.PaymentService;
-import com.mindgarden.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.dto.PaymentRequest;
+import com.coresolution.consultation.dto.PaymentResponse;
+import com.coresolution.consultation.service.PaymentService;
+import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @version 1.0.0
  * @since 2025-01-XX
  */
-@SpringBootTest(classes = com.mindgarden.consultation.ConsultationManagementApplication.class)
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("PaymentService 성능 테스트")
@@ -73,7 +73,7 @@ class PaymentServicePerformanceTest {
         testTenant = Tenant.builder()
                 .tenantId(testTenantId)
                 .name("성능 테스트 테넌트")
-                .businessType(Tenant.BusinessType.ACADEMY)
+                .businessType("ACADEMY")
                 .status(Tenant.TenantStatus.ACTIVE)
                 .contactEmail("perf-test@example.com")
                 .build();

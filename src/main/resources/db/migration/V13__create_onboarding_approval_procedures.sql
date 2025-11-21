@@ -12,7 +12,7 @@ DELIMITER //
 -- 1. 테넌트 생성 또는 활성화 프로시저
 -- ============================================
 CREATE PROCEDURE CreateOrActivateTenant(
-    IN p_tenant_id VARCHAR(36),
+    IN p_tenant_id VARCHAR(64),
     IN p_tenant_name VARCHAR(255),
     IN p_business_type VARCHAR(50),
     IN p_approved_by VARCHAR(100),

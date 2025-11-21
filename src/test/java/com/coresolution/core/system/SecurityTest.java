@@ -9,7 +9,7 @@ import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.TenantPgConfigurationService;
-import com.mindgarden.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @version 1.0.0
  * @since 2025-01-XX
  */
-@SpringBootTest(classes = com.mindgarden.consultation.ConsultationManagementApplication.class)
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("보안 테스트")
@@ -69,7 +69,7 @@ class SecurityTest {
         testTenant1 = Tenant.builder()
                 .tenantId(testTenantId1)
                 .name("보안 테스트 테넌트 1")
-                .businessType(Tenant.BusinessType.ACADEMY)
+                .businessType("ACADEMY")
                 .status(Tenant.TenantStatus.ACTIVE)
                 .contactEmail("security-test1@example.com")
                 .build();
@@ -80,7 +80,7 @@ class SecurityTest {
         testTenant2 = Tenant.builder()
                 .tenantId(testTenantId2)
                 .name("보안 테스트 테넌트 2")
-                .businessType(Tenant.BusinessType.ACADEMY)
+                .businessType("ACADEMY")
                 .status(Tenant.TenantStatus.ACTIVE)
                 .contactEmail("security-test2@example.com")
                 .build();

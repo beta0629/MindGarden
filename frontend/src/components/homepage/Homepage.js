@@ -133,7 +133,7 @@ const TabletHomepage = () => {
         try {
           await logout();
           notificationManager.success(MESSAGES.LOGOUT_SUCCESS);
-          navigate('/');
+          // logout() 함수에서 이미 로그인 페이지로 리다이렉트하므로 navigate 불필요
         } catch (error) {
           console.error('로그아웃 실패:', error);
           notificationManager.error(MESSAGES.LOGOUT_ERROR);

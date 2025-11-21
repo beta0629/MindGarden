@@ -154,25 +154,23 @@ jobs:
             echo "✅ systemd 서비스 파일 설정 완료"
           else
             echo "⚠️ systemd 서비스 파일이 업로드되지 않음 - 기본 설정 사용"
-            sudo bash -c 'cat > /etc/systemd/system/mindgarden-dev.service << EOF
-[Unit]
-Description=MindGarden Development Server
-After=network.target mysql.service
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/var/www/mindgarden-dev
-ExecStart=/opt/mindgarden/start.sh
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=mindgarden-dev
-
-[Install]
-WantedBy=multi-user.target
-EOF'
+            sudo bash -c 'echo "[Unit]" > /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Description=MindGarden Development Server" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "After=network.target mysql.service" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "[Service]" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Type=simple" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "User=root" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "WorkingDirectory=/var/www/mindgarden-dev" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "ExecStart=/opt/mindgarden/start.sh" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "Restart=always" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "RestartSec=10" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "StandardOutput=journal" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "StandardError=journal" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "SyslogIdentifier=mindgarden-dev" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "[Install]" >> /etc/systemd/system/mindgarden-dev.service'
+            sudo bash -c 'echo "WantedBy=multi-user.target" >> /etc/systemd/system/mindgarden-dev.service'
             sudo systemctl daemon-reload
             sudo systemctl enable mindgarden-dev.service
             echo "✅ 기본 systemd 서비스 파일 생성 완료"

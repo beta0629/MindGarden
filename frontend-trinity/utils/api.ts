@@ -215,8 +215,7 @@ export async function getPublicOnboardingRequest(
 // ============================================
 
 export interface PricingPlan {
-  id?: string;
-  planId?: string;
+  id?: string; // 하위 호환성을 위한 별칭 (planId와 동일)
   planId: string;
   planCode: string;
   name: string; // 백엔드 필드명과 일치 (필수)

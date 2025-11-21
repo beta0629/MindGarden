@@ -25,7 +25,11 @@ export async function clientApiFetch<T>(
     ...(options.headers ?? {})
   };
 
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  // path가 이미 /api/로 시작하는지 확인
+  const apiPath = path.startsWith("/api/") ? path : `/api/v1${path.startsWith("/") ? path : `/${path}`}`;
+  const fullUrl = apiBaseUrl ? `${apiBaseUrl}${apiPath}` : apiPath;
+
+  const response = await fetch(fullUrl, {
     ...options,
     headers
   });
@@ -87,14 +91,13 @@ function resolveClientRuntimeConfig(): ClientRuntimeConfig {
     process.env.NEXT_PUBLIC_OPS_ACTOR_ROLE ??
     "HQ_ADMIN";
 
+  // 환경 변수나 쿠키에서 API Base URL 가져오기
+  // 없으면 상대 경로 사용 (같은 도메인의 /api/v1 사용)
   const apiBaseUrl =
     ENV_API_BASE_URL || cookieMap.get("ops_api_base_url") || "";
 
-  if (!apiBaseUrl) {
-    throw new Error(
-      "NEXT_PUBLIC_OPS_API_BASE_URL가 설정되지 않았습니다. .env.local 파일을 확인하세요."
-    );
-  }
+  // apiBaseUrl이 없으면 빈 문자열 반환 (상대 경로 사용)
+  // 이렇게 하면 Nginx가 같은 도메인의 /api/ 경로를 백엔드로 프록시할 수 있음
 
   return {
     apiBaseUrl,

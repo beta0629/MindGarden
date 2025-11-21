@@ -6,7 +6,8 @@
  * @version 1.0.0
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+// 환경 변수가 없으면 상대 경로 사용 (프로덕션 환경에서 Nginx 프록시 사용)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -22,7 +23,9 @@ async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  // API_BASE_URL이 비어있으면 상대 경로 사용 (프로덕션)
+  // API_BASE_URL이 있으면 절대 경로 사용 (로컬 개발)
+  const url = API_BASE_URL ? `${API_BASE_URL}${endpoint}` : endpoint;
   
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',

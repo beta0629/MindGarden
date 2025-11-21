@@ -153,7 +153,13 @@ export async function checkEmailDuplicate(email: string): Promise<{
     `/api/v1/onboarding/email-check?email=${encodeURIComponent(email)}`
   );
   if (response && response.success && response.data) {
-    return response.data;
+    return response.data as { 
+      email: string; 
+      isDuplicate: boolean; 
+      available: boolean;
+      message: string;
+      status: string | null;
+    };
   }
   console.warn('이메일 중복 확인 응답 형식 오류:', response);
   throw new Error('이메일 중복 확인에 실패했습니다.');

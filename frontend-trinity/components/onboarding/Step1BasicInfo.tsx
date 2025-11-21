@@ -143,7 +143,8 @@ export default function Step1BasicInfo({
       const result = await checkEmailDuplicate(formData.contactEmail);
       if (result.isDuplicate) {
         // 백엔드에서 반환한 메시지 사용 (예: "승인 대기 중입니다.")
-        setEmailDuplicateError(result.message || "이미 사용 중인 이메일입니다. 다른 이메일을 사용해주세요.");
+        const errorMessage = (result as { message?: string }).message || "이미 사용 중인 이메일입니다. 다른 이메일을 사용해주세요.";
+        setEmailDuplicateError(errorMessage);
         setEmailDuplicateChecked(false);
       } else {
         setEmailDuplicateChecked(true);

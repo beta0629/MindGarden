@@ -156,6 +156,7 @@ export const COMPONENT_CSS = {
     CONTAINER: 'trinity-onboarding',
     FORM: 'trinity-onboarding__form',
     STEP: 'trinity-onboarding__step',
+    TITLE: 'trinity-onboarding__title',
     PROGRESS: 'trinity-onboarding__progress',
     PROGRESS_ITEM: 'trinity-onboarding__progress-item',
     PROGRESS_ITEM_ACTIVE: 'trinity-onboarding__progress-item--active',

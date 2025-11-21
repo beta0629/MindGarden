@@ -9,6 +9,13 @@ interface Props {
   params: { id: string };
 }
 
+// 정적 빌드를 위한 generateStaticParams (빈 배열 반환 - 런타임에 동적 처리)
+export async function generateStaticParams() {
+  // output: export 모드에서는 빈 배열 반환
+  // 실제 페이지는 런타임에 클라이언트 사이드 라우팅으로 처리
+  return [];
+}
+
 export default async function OnboardingDetailPage({ params }: Props) {
   try {
     console.log("[OnboardingDetailPage] 상세 페이지 로드:", { id: params.id });
@@ -79,7 +86,7 @@ export default async function OnboardingDetailPage({ params }: Props) {
         </div>
 
         <OnboardingDecisionForm
-          requestId={detail.id}
+          requestId={String(detail.id)}
           initialStatus={detail.status}
         />
       </section>

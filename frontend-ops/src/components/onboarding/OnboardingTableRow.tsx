@@ -32,7 +32,7 @@ export default function OnboardingTableRow({ request }: OnboardingTableRowProps)
       <td>
         <Link
           className="ghost-button"
-          href={`/onboarding/${request.id}`}
+          href={`/onboarding/${String(request.id)}`}
         >
           {ONBOARDING_MESSAGES.VIEW_DETAIL}
         </Link>

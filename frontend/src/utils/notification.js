@@ -24,12 +24,22 @@ class NotificationManager {
     async loadNotificationTypes() {
         try {
             const response = await cachedApiCall(
-                '/api/common-codes/NOTIFICATION_TYPE',
+                '/api/v1/common-codes?codeGroup=NOTIFICATION_TYPE',
                 {},
                 CACHE_CONFIG.COMMON_CODES.ttl
             );
-            if (response && response.length > 0) {
-                this.notificationTypes = response.map(code => ({
+            // ApiResponse 래퍼 처리: response.data.codes 또는 response.codes
+            let codes = [];
+            if (response && response.data && response.data.codes) {
+                codes = response.data.codes;
+            } else if (response && response.codes) {
+                codes = response.codes;
+            } else if (Array.isArray(response)) {
+                codes = response;
+            }
+            
+            if (codes && codes.length > 0) {
+                this.notificationTypes = codes.map(code => ({
                     code: code.codeValue,
                     name: code.codeLabel,
                     icon: code.icon,

@@ -134,6 +134,9 @@ public class AuthController extends BaseApiController {
         userInfo.put("nickname", decryptedNickname);
         userInfo.put("role", user.getRole());
         
+        // 테넌트 정보 추가
+        userInfo.put("tenantId", user.getTenantId());
+        
         // 지점 정보 추가 (공통코드 기반)
         userInfo.put("branchId", user.getBranch() != null ? user.getBranch().getId() : null);
         userInfo.put("branchCode", user.getBranchCode());

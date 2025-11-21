@@ -1,7 +1,7 @@
-import { apiFetch } from "@/services/apiClient";
+import { clientApiFetch } from "@/services/clientApi";
 import { FeatureFlag } from "@/types/featureFlag";
 
 export async function fetchFeatureFlags(): Promise<FeatureFlag[]> {
-  return apiFetch<FeatureFlag[]>("/ops/feature-flags");
+  return clientApiFetch<FeatureFlag[]>("/ops/feature-flags");
 }
 

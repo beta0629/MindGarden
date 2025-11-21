@@ -1,4 +1,4 @@
-import { apiFetch } from "@/services/apiClient";
+import { clientApiFetch } from "@/services/clientApi";
 import { OnboardingRequest } from "@/types/onboarding";
 
 /**
@@ -8,7 +8,7 @@ import { OnboardingRequest } from "@/types/onboarding";
  */
 export async function fetchPendingOnboarding(): Promise<OnboardingRequest[]> {
   try {
-    const response = await apiFetch<OnboardingRequest[]>("/onboarding/requests/pending");
+    const response = await clientApiFetch<OnboardingRequest[]>("/onboarding/requests/pending");
     return Array.isArray(response) ? response : [];
   } catch (error) {
     console.error("[fetchPendingOnboarding] 온보딩 요청 조회 실패:", error);
@@ -40,7 +40,7 @@ export async function fetchAllOnboarding(status?: string): Promise<OnboardingReq
       fullUrl: `http://localhost:8080/api/v1${path}`
     });
     
-    const response = await apiFetch<{
+    const response = await clientApiFetch<{
       success: boolean;
       data?: {
         content?: OnboardingRequest[];
@@ -127,7 +127,7 @@ export async function fetchOnboardingDetail(
     
     console.log("[fetchOnboardingDetail] API 호출:", { path, id });
     
-    const response = await apiFetch<OnboardingRequest | {
+    const response = await clientApiFetch<OnboardingRequest | {
       success: boolean;
       data?: OnboardingRequest;
       message?: string;

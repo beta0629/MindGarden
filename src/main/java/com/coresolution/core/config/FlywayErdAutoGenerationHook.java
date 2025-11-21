@@ -47,9 +47,12 @@ public class FlywayErdAutoGenerationHook {
     /**
      * Flyway 마이그레이션 전략 커스터마이징
      * 마이그레이션 완료 후 ERD 자동 생성
+     * 
+     * 주의: 개발 서버(dev 프로파일)에서는 ERD 자동 생성을 비활성화하여
+     * jpaSharedEM_entityManagerFactory 빈 초기화 순환 참조 문제를 방지합니다.
      */
     @Bean
-    @Profile("!test") // 테스트 환경에서는 비활성화
+    @Profile("!test & !dev") // 테스트 환경과 개발 서버에서는 비활성화
     public FlywayMigrationStrategy flywayMigrationStrategy() {
         return flyway -> {
             // 기본 마이그레이션 실행
@@ -70,6 +73,19 @@ public class FlywayErdAutoGenerationHook {
                     // ERD 생성 실패가 마이그레이션을 막지 않도록 예외를 로깅만 하고 계속 진행
                 }
             }
+        };
+    }
+    
+    /**
+     * 개발 서버용 Flyway 마이그레이션 전략 (ERD 자동 생성 없음)
+     */
+    @Bean
+    @Profile("dev")
+    public FlywayMigrationStrategy flywayMigrationStrategyForDev() {
+        return flyway -> {
+            // 기본 마이그레이션만 실행 (ERD 자동 생성 없음)
+            flyway.migrate();
+            log.info("✅ Flyway 마이그레이션 완료 (개발 서버 - ERD 자동 생성 비활성화)");
         };
     }
 }

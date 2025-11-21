@@ -99,7 +99,13 @@ public class SecurityConfig {
                 
                 // API 엔드포인트별 권한 설정
                 .authorizeHttpRequests(authz -> authz
-                    .requestMatchers("/api/auth/**").permitAll() // 인증 관련 API는 허용
+                    .requestMatchers("/api/auth/**").permitAll()
+                    // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
+                    .requestMatchers(
+                        "/api/v1/ops/plans/active",           // 활성화된 요금제 목록 (공개)
+                        "/api/v1/ops/plans/code/**",          // plan_code로 요금제 조회 (공개)
+                        "/api/v1/ops/plans/*"                 // plan_id로 요금제 조회 (공개, 단 DELETE 제외)
+                    ).permitAll() // 인증 관련 API는 허용
                     .requestMatchers("/api/v1/auth/**").permitAll() // Ops Portal 인증 API는 허용
                     .requestMatchers("/api/common-codes/**").permitAll() // 공통코드는 허용
                     .requestMatchers("/api/admin/css-themes/**").permitAll() // CSS 테마는 허용
@@ -126,9 +132,16 @@ public class SecurityConfig {
                 )
                 
                 // 개발 환경: 대부분 허용하되 @PreAuthorize는 여전히 작동
-                // Ops Portal API는 JWT 인증 필요
+                // Ops Portal API는 JWT 인증 필요 (단, 공개 엔드포인트 제외)
                 .authorizeHttpRequests(authz -> authz
-                    .requestMatchers("/api/v1/ops/**").authenticated() // Ops Portal API는 인증 필요
+                    // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
+                    .requestMatchers(
+                        "/api/v1/ops/plans/active",           // 활성화된 요금제 목록 (공개)
+                        "/api/v1/ops/plans/code/**",          // plan_code로 요금제 조회 (공개)
+                        "/api/v1/ops/plans/*"                 // plan_id로 요금제 조회 (공개, 단 DELETE 제외)
+                    ).permitAll()
+                    // 나머지 Ops Portal API는 인증 필요
+                    .requestMatchers("/api/v1/ops/**").authenticated()
                     .anyRequest().permitAll() // 나머지는 허용
                 );
         }

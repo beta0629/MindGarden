@@ -315,16 +315,28 @@ public class AuthController extends BaseApiController {
     @GetMapping("/session-info")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSessionInfo(HttpSession session) {
         User user = SessionUtils.getCurrentUser(session);
+        
+        // 로그인하지 않은 사용자에 대해서는 빈 데이터 반환 (403 오류 방지)
         if (user == null) {
-            throw new org.springframework.security.access.AccessDeniedException("인증이 필요합니다.");
+            log.debug("세션 정보 조회: 로그인하지 않은 사용자");
+            Map<String, Object> emptySessionInfo = new HashMap<>();
+            emptySessionInfo.put("id", null);
+            emptySessionInfo.put("email", null);
+            emptySessionInfo.put("name", null);
+            emptySessionInfo.put("role", null);
+            emptySessionInfo.put("sessionId", session.getId());
+            emptySessionInfo.put("isAuthenticated", false);
+            return success(emptySessionInfo);
         }
         
+        log.debug("세션 정보 조회: userId={}, email={}", user.getId(), user.getEmail());
         Map<String, Object> sessionInfo = new HashMap<>();
         sessionInfo.put("id", user.getId());
         sessionInfo.put("email", user.getEmail());
         sessionInfo.put("name", user.getName());
         sessionInfo.put("role", user.getRole());
         sessionInfo.put("sessionId", session.getId());
+        sessionInfo.put("isAuthenticated", true);
         
         return success(sessionInfo);
     }

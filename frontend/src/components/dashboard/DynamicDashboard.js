@@ -58,13 +58,34 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     setError(null);
 
     try {
-      const tenantId = currentUser.tenantId;
-      const tenantRoleId = currentUser.currentTenantRoleId || 
-                          currentUser.tenantRole?.tenantRoleId ||
+      // 사용자 정보에 tenantId가 없으면 최신 정보 다시 로드 시도
+      let userWithTenant = currentUser;
+      if (!currentUser.tenantId) {
+        console.warn('⚠️ 사용자 정보에 tenantId가 없음, 최신 정보 다시 로드 시도');
+        try {
+          // sessionManager를 통해 최신 사용자 정보 가져오기
+          await sessionManager.checkSession(true);
+          const latestUser = sessionManager.getUser();
+          if (latestUser && latestUser.tenantId) {
+            userWithTenant = latestUser;
+            console.log('✅ 최신 사용자 정보 로드 완료, tenantId:', latestUser.tenantId);
+          }
+        } catch (reloadError) {
+          console.warn('⚠️ 최신 사용자 정보 로드 실패:', reloadError);
+        }
+      }
+
+      const tenantId = userWithTenant.tenantId;
+      const tenantRoleId = userWithTenant.currentTenantRoleId || 
+                          userWithTenant.tenantRole?.tenantRoleId ||
                           null;
 
       if (!tenantId) {
-        throw new Error('테넌트 정보가 없습니다.');
+        // tenantId가 없어도 기본 대시보드 표시 (에러 대신 경고)
+        console.warn('⚠️ 테넌트 정보가 없어 기본 대시보드를 사용합니다.');
+        setDashboard(null);
+        setIsLoading(false);
+        return;
       }
 
       const dashboardData = await getCurrentUserDashboard(tenantId, tenantRoleId);

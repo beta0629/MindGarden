@@ -30,8 +30,7 @@ import { LOGIN_SESSION_CHECK_DELAY } from '../../constants/session';
 // import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 import csrfTokenManager from '../../utils/csrfTokenManager';
-import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
-import { COMPONENT_CSS } from '../../constants/css-variables';
+import { TABLET_LOGIN_CONSTANTS, COMPONENT_CSS } from '../../constants/css-variables';
 import '../../styles/auth/UnifiedLogin.css';
 
 const UnifiedLogin = () => {

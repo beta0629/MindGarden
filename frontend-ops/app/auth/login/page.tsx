@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -24,7 +24,7 @@ function parseCookie(cookieString: string): Map<string, string> {
   return map;
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -58,5 +58,19 @@ export default function LoginPage() {
     <main className="layout__content">
       <LoginForm redirectTo={redirectTo} />
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main className="layout__content">
+        <div className="loading-message">
+          <p>로딩 중...</p>
+        </div>
+      </main>
+    }>
+      <LoginPageContent />
+    </Suspense>
   );
 }

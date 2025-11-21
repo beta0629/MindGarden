@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchAllOnboarding } from "@/services/onboardingService";
 import { OnboardingStatus } from "@/types/shared";
@@ -8,7 +8,7 @@ import { OnboardingRequest } from "@/types/onboarding";
 import OnboardingPageHeader from "@/components/onboarding/OnboardingPageHeader";
 import OnboardingTable from "@/components/onboarding/OnboardingTable";
 
-export default function OnboardingPage() {
+function OnboardingPageContent() {
   const searchParams = useSearchParams();
   const statusFilter = (searchParams?.get("status") || undefined) as OnboardingStatus | undefined;
   
@@ -74,5 +74,22 @@ export default function OnboardingPage() {
         statusFilter={statusFilter} 
       />
     </section>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <section className="panel">
+        <header className="panel__header">
+          <h1>로딩 중...</h1>
+        </header>
+        <div className="loading-message">
+          <p>데이터를 불러오는 중입니다...</p>
+        </div>
+      </section>
+    }>
+      <OnboardingPageContent />
+    </Suspense>
   );
 }

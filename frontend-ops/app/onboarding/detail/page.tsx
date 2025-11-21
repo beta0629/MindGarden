@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -9,7 +9,7 @@ import ChecklistDisplay from "@/components/onboarding/ChecklistDisplay";
 import { fetchOnboardingDetail } from "@/services/onboardingService";
 import { OnboardingRequest } from "@/types/onboarding";
 
-export default function OnboardingDetailPage() {
+function OnboardingDetailPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams?.get("id");
@@ -192,3 +192,19 @@ function formatDate(value?: string | null) {
   });
 }
 
+export default function OnboardingDetailPage() {
+  return (
+    <Suspense fallback={
+      <section className="panel">
+        <header className="panel__header">
+          <h1>로딩 중...</h1>
+        </header>
+        <div className="loading-message">
+          <p>데이터를 불러오는 중입니다...</p>
+        </div>
+      </section>
+    }>
+      <OnboardingDetailPageContent />
+    </Suspense>
+  );
+}

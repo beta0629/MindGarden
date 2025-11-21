@@ -173,20 +173,17 @@ public class SecurityConfig {
             } else {
                 configuration.setAllowedOrigins(List.of("http://m-garden.co.kr", "https://m-garden.co.kr"));
             }
-        } else {
-            // 개발 환경: 환경 변수에서 허용할 Origin 가져오기
-            String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
-            if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
-                List<String> origins = Arrays.asList(allowedOrigins.split(","));
-                configuration.setAllowedOrigins(origins);
-                // CORS 허용 Origin 설정 완료 (환경 변수 사용)
             } else {
-                // 개발 환경: 모든 localhost 포트 허용 (편의성 우선)
-                configuration.setAllowedOriginPatterns(Arrays.asList(
-                    "http://localhost:*",
-                    "http://127.0.0.1:*"
-                ));
-            }
+                // 개발 환경: 환경 변수에서 허용할 Origin 가져오기
+                String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+                if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
+                    List<String> origins = Arrays.asList(allowedOrigins.split(","));
+                    configuration.setAllowedOrigins(origins);
+                    // CORS 허용 Origin 설정 완료 (환경 변수 사용)
+                } else {
+                    // 개발 환경: 모든 Origin 허용 (편의성 우선)
+                    configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+                }
         }
         
         // 허용할 HTTP 메서드 설정

@@ -95,9 +95,12 @@ public class AuthController extends BaseApiController {
             }
         }
         
+        // 인증되지 않은 사용자에 대해서는 null 반환 (Trinity 온보딩 등에서 사용)
+        // 403 오류 대신 200 OK와 null 데이터 반환하여 프론트엔드에서 처리 가능하도록
         if (currentUser == null) {
-            log.warn("❌ 세션 또는 JWT 인증 정보 없음");
-            throw new org.springframework.security.access.AccessDeniedException("인증이 필요합니다.");
+            log.info("ℹ️ 인증되지 않은 사용자 - null 반환 (온보딩 등에서 정상 동작)");
+            Map<String, Object> emptyUserInfo = new HashMap<>();
+            return success(emptyUserInfo);
         }
         
         log.info("🔍 데이터베이스에서 사용자 정보 조회 시작: userId={}", currentUser.getId());
@@ -266,9 +269,16 @@ public class AuthController extends BaseApiController {
         // Spring Security에서 CSRF 토큰 가져오기
         CsrfToken csrfToken = (CsrfToken) request.getAttribute("_csrf");
         
+        // 개발 환경에서 CSRF가 비활성화된 경우 빈 토큰 반환
         if (csrfToken == null) {
-            log.warn("⚠️ CSRF 토큰이 없습니다.");
-            throw new RuntimeException("CSRF 토큰을 찾을 수 없습니다.");
+            log.info("ℹ️ CSRF 토큰이 없습니다 (개발 환경 또는 CSRF 비활성화)");
+            Map<String, Object> data = Map.of(
+                "token", "",
+                "headerName", "X-XSRF-TOKEN",
+                "parameterName", "_csrf",
+                "disabled", true
+            );
+            return success("CSRF가 비활성화되어 있습니다 (개발 환경)", data);
         }
         
         log.info("✅ CSRF 토큰 조회 성공");

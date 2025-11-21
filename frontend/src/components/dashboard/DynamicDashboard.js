@@ -33,19 +33,34 @@ const DASHBOARD_COMPONENTS = {
 
 const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   const navigate = useNavigate();
-  const { user: sessionUser } = useSession();
+  const { user: sessionUser, isLoading: sessionLoading } = useSession();
   const [dashboard, setDashboard] = useState(propDashboard);
   const [isLoading, setIsLoading] = useState(!propDashboard);
   const [error, setError] = useState(null);
   
   const currentUser = propUser || sessionUser || sessionManager.getUser();
 
+  // 인증 체크: 사용자가 없으면 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    // 세션이 로딩 중이면 대기
+    if (sessionLoading) {
+      return;
+    }
+
+    // 사용자 정보가 없으면 로그인 페이지로 리다이렉트
+    if (!currentUser || !currentUser.id) {
+      console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
+      navigate('/login', { replace: true });
+      return;
+    }
+  }, [currentUser, sessionLoading, navigate]);
+
   useEffect(() => {
     // propDashboard가 없으면 조회
-    if (!propDashboard && currentUser) {
+    if (!propDashboard && currentUser && currentUser.id) {
       loadDashboard();
     }
-  }, [currentUser]);
+  }, [currentUser, propDashboard]);
 
   const loadDashboard = async () => {
     if (!currentUser) {

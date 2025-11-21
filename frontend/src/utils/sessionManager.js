@@ -368,6 +368,9 @@ class SessionManager {
             console.log('✅ 클라이언트 로그아웃 완료');
             
             // 로그인 페이지로 리다이렉트
+            window.location.href = '/login';
+            
+            // 로그인 페이지로 리다이렉트
             const currentPath = window.location.pathname;
             const isPublicPage = currentPath === '/login' || 
                                currentPath.startsWith('/login/') || 

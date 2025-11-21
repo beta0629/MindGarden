@@ -1,27 +1,58 @@
-import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 import { LoginForm } from "@/components/auth/LoginForm";
 
-export const metadata: Metadata = {
-  title: "Trinity Ops Portal – 로그인"
-};
+function parseCookie(cookieString: string): Map<string, string> {
+  const map = new Map<string, string>();
+  if (!cookieString) {
+    return map;
+  }
 
-interface LoginPageProps {
-  searchParams?: {
-    redirect?: string;
-  };
+  cookieString.split(";").forEach((entry) => {
+    const [rawKey, ...rawValue] = entry.trim().split("=");
+    if (!rawKey) {
+      return;
+    }
+    const key = decodeURIComponent(rawKey);
+    const value = decodeURIComponent(rawValue.join("="));
+    map.set(key, value);
+  });
+
+  return map;
 }
 
-export default function LoginPage({ searchParams }: LoginPageProps) {
-  const cookieStore = cookies();
-  const token = cookieStore.get("ops_token")?.value ?? null;
-  const redirectTo = searchParams?.redirect ?? "/dashboard";
+export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
-  if (token) {
-    redirect(redirectTo);
+  useEffect(() => {
+    setMounted(true);
+    
+    // 클라이언트 사이드에서 쿠키 읽기
+    const cookieMap = parseCookie(typeof document !== "undefined" ? document.cookie ?? "" : "");
+    const token = cookieMap.get("ops_token") ?? null;
+    const redirectTo = searchParams?.get("redirect") ?? "/dashboard";
+
+    if (token) {
+      router.push(redirectTo);
+    }
+  }, [searchParams, router]);
+
+  if (!mounted) {
+    return (
+      <main className="layout__content">
+        <div className="loading-message">
+          <p>로딩 중...</p>
+        </div>
+      </main>
+    );
   }
+
+  const redirectTo = searchParams?.get("redirect") ?? "/dashboard";
 
   return (
     <main className="layout__content">
@@ -29,4 +60,3 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
     </main>
   );
 }
-

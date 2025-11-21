@@ -1,31 +1,57 @@
+"use client";
+
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { useEffect, useState } from "react";
 
 import "../styles/globals.css";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { GlobalNotification } from "@/components/common/GlobalNotification";
 
-export const metadata: Metadata = {
-  title: "Trinity Ops Portal",
-  description: "Trinity internal operations console",
-  robots: {
-    index: false,
-    follow: false
+// output: export 모드에서는 metadata를 사용할 수 없으므로 제거
+// export const metadata: Metadata = { ... };
+
+function parseCookie(cookieString: string): Map<string, string> {
+  const map = new Map<string, string>();
+  if (!cookieString) {
+    return map;
   }
-};
+
+  cookieString.split(";").forEach((entry) => {
+    const [rawKey, ...rawValue] = entry.trim().split("=");
+    if (!rawKey) {
+      return;
+    }
+    const key = decodeURIComponent(rawKey);
+    const value = decodeURIComponent(rawValue.join("="));
+    map.set(key, value);
+  });
+
+  return map;
+}
 
 export default function RootLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = cookies();
-  const actorId = cookieStore.get("ops_actor_id")?.value ?? null;
-  const actorRole = cookieStore.get("ops_actor_role")?.value ?? null;
+  const [actorId, setActorId] = useState<string | null>(null);
+  const [actorRole, setActorRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    // 클라이언트 사이드에서 쿠키 읽기
+    const cookieMap = parseCookie(typeof document !== "undefined" ? document.cookie ?? "" : "");
+    setActorId(cookieMap.get("ops_actor_id") ?? null);
+    setActorRole(cookieMap.get("ops_actor_role") ?? null);
+  }, []);
 
   return (
     <html lang="ko">
+      <head>
+        <title>Trinity Ops Portal</title>
+        <meta name="description" content="Trinity internal operations console" />
+        <meta name="robots" content="noindex, nofollow" />
+      </head>
       <body>
         <div className="layout">
           <header className="layout__header">

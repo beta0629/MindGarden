@@ -14,15 +14,17 @@ export const fetchUserPermissions = async (setUserPermissions = null) => {
         console.log('🔍 사용자 권한 목록 조회 중...');
         const response = await apiGet('/api/permissions/my-permissions');
         
-        if (response && response.success && response.data) {
-            const permissions = response.data.permissions || [];
+        // apiGet이 이미 ApiResponse 래퍼를 처리하므로, response는 직접 data입니다
+        if (response && typeof response === 'object') {
+            // response가 { permissions: [...], userRole: '...', permissionCount: ... } 형태
+            const permissions = response.permissions || [];
             console.log('✅ 사용자 권한 조회 완료:', permissions);
             if (setUserPermissions) {
                 setUserPermissions(permissions);
             }
             return permissions;
         } else {
-            console.warn('⚠️ 권한 조회 실패:', response?.message || 'Unknown error');
+            console.warn('⚠️ 권한 조회 실패: 응답 형식이 올바르지 않음', response);
             if (setUserPermissions) {
                 setUserPermissions([]);
             }

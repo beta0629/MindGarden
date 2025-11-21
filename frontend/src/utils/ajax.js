@@ -108,6 +108,8 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       ...options
     });
 
+    const jsonData = await response.json();
+    
     if (!response.ok) {
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
@@ -129,7 +131,13 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       }
     }
 
-    return await response.json();
+    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+    if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
+      return jsonData.data;
+    }
+    
+    // ApiResponse 래퍼가 없으면 그대로 반환
+    return jsonData;
   } catch (error) {
     console.error('GET 요청 오류:', error);
     
@@ -184,6 +192,8 @@ export const apiPost = async (endpoint, data = {}, options = {}) => {
       headers: { ...getDefaultHeaders(), ...options.headers }
     });
 
+    const jsonData = await response.json();
+    
     if (!response.ok) {
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
@@ -194,7 +204,13 @@ export const apiPost = async (endpoint, data = {}, options = {}) => {
       handleError(new Error('POST 요청 실패'), response.status);
     }
 
-    return await response.json();
+    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+    if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
+      return jsonData.data;
+    }
+    
+    // ApiResponse 래퍼가 없으면 그대로 반환
+    return jsonData;
   } catch (error) {
     console.error('POST 요청 오류:', error);
     throw error;
@@ -209,6 +225,8 @@ export const apiPut = async (endpoint, data = {}, options = {}) => {
       headers: { ...getDefaultHeaders(), ...options.headers }
     });
 
+    const jsonData = await response.json();
+    
     if (!response.ok) {
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
@@ -219,7 +237,13 @@ export const apiPut = async (endpoint, data = {}, options = {}) => {
       handleError(new Error('PUT 요청 실패'), response.status);
     }
 
-    return await response.json();
+    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+    if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
+      return jsonData.data;
+    }
+    
+    // ApiResponse 래퍼가 없으면 그대로 반환
+    return jsonData;
   } catch (error) {
     console.error('PUT 요청 오류:', error);
     throw error;
@@ -266,6 +290,8 @@ export const apiDelete = async (endpoint, options = {}) => {
       headers: { ...getDefaultHeaders(), ...options.headers }
     });
 
+    const jsonData = await response.json();
+    
     if (!response.ok) {
       // 세션 체크 및 리다이렉트
       const redirected = await checkSessionAndRedirect(response);
@@ -276,7 +302,13 @@ export const apiDelete = async (endpoint, options = {}) => {
       handleError(new Error('DELETE 요청 실패'), response.status);
     }
 
-    return await response.json();
+    // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+    if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
+      return jsonData.data;
+    }
+    
+    // ApiResponse 래퍼가 없으면 그대로 반환
+    return jsonData;
   } catch (error) {
     console.error('DELETE 요청 오류:', error);
     throw error;

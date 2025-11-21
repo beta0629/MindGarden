@@ -67,8 +67,12 @@ class CsrfTokenManager {
             });
             
             if (response.ok) {
-                const data = await response.json();
-                this.token = data.token;
+                const responseData = await response.json();
+                // ApiResponse 래퍼 처리: { success: true, data: { token: '...' } } 형태면 data 추출
+                const data = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
+                    ? responseData.data
+                    : responseData;
+                this.token = data.token || data;
                 // 토큰을 30분간 유효하다고 가정 (실제로는 서버에서 만료 시간을 알려줘야 함)
                 this.tokenExpiry = Date.now() + (30 * 60 * 1000);
                 console.log('✅ CSRF 토큰 갱신 완료');

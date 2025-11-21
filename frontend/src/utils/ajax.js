@@ -325,10 +325,13 @@ export const authAPI = {
       const response = await csrfTokenManager.post(AUTH_API.LOGIN, data);
       
       const responseData = await response.json();
+      console.log('🔐 로그인 응답 원본:', responseData);
       
       if (!response.ok) {
         // requiresConfirmation이 있는 경우는 정상 응답으로 처리
-        if (responseData.requiresConfirmation) {
+        // ApiResponse 래퍼 처리: responseData.data.requiresConfirmation 또는 responseData.requiresConfirmation
+        const requiresConfirmation = (responseData.data && responseData.data.requiresConfirmation) || responseData.requiresConfirmation;
+        if (requiresConfirmation) {
           console.log('🔔 중복 로그인 확인 요청 응답:', responseData);
           return responseData;
         }

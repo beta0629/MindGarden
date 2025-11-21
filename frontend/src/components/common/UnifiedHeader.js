@@ -127,7 +127,11 @@ const UnifiedHeader = ({
       });
       
       if (response.ok) {
-        const data = await response.json();
+        const responseData = await response.json();
+        // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+        const data = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
+          ? responseData.data
+          : responseData;
         if (data.success && data.isMultiTenant) {
           setIsMultiTenant(true);
           await loadAccessibleTenants();

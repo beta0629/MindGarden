@@ -132,7 +132,11 @@ const UnifiedLogin = () => {
       });
       
       if (response.ok) {
-        const data = await response.json();
+        const responseData = await response.json();
+        // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+        const data = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
+          ? responseData.data
+          : responseData;
         if (data.success && data.isMultiTenant) {
           // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
           await loadAccessibleTenants();

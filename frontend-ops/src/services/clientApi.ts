@@ -42,12 +42,16 @@ export async function clientApiFetch<T>(
     headers
   });
 
+  const jsonData = await safeParseJson(response);
+  
   if (!response.ok) {
-    const body = await safeParseJson(response);
+    // ApiResponse 래퍼 처리
+    const body = (jsonData as { success?: boolean; data?: any; error?: any; message?: string }) || jsonData;
+    const errorData = body.error || body;
     
     // 403 Forbidden (권한 없음) 처리
     if (response.status === 403) {
-      const errorMessage = (body as { message?: string })?.message || "접근 권한이 없습니다.";
+      const errorMessage = errorData.message || body.message || "접근 권한이 없습니다.";
       // 공통 알림 표시
       notificationManager.error(errorMessage);
       const error = new Error(errorMessage);
@@ -58,7 +62,7 @@ export async function clientApiFetch<T>(
     
     // 401 Unauthorized 처리
     if (response.status === 401) {
-      const errorMessage = (body as { message?: string })?.message || "인증이 필요합니다.";
+      const errorMessage = errorData.message || body.message || "인증이 필요합니다.";
       notificationManager.error(errorMessage);
       const error = new Error(errorMessage);
       (error as any).status = 401;
@@ -67,7 +71,7 @@ export async function clientApiFetch<T>(
     }
     
     // 기타 오류 처리
-    const errorMessage = (body as { message?: string })?.message || 
+    const errorMessage = errorData.message || body.message || 
       `API 요청 실패 (${response.status} ${response.statusText})`;
     notificationManager.error(errorMessage);
     
@@ -78,7 +82,13 @@ export async function clientApiFetch<T>(
     );
   }
 
-  return (await response.json()) as T;
+  // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+  if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
+    return (jsonData as { success: boolean; data: T }).data;
+  }
+  
+  // ApiResponse 래퍼가 없으면 그대로 반환
+  return jsonData as T;
 }
 
 function resolveClientRuntimeConfig(): ClientRuntimeConfig {

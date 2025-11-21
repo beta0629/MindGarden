@@ -156,7 +156,11 @@ class SessionManager {
             }
             
             if (userResponse.ok) {
-                const newUser = await userResponse.json();
+                const userResponseData = await userResponse.json();
+                // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+                const newUser = (userResponseData && typeof userResponseData === 'object' && 'success' in userResponseData && 'data' in userResponseData)
+                    ? userResponseData.data
+                    : userResponseData;
                 
                 // 기존 사용자 정보가 있으면 role 정보 보존
                 if (this.user && this.user.role && !newUser.role) {
@@ -180,7 +184,11 @@ class SessionManager {
                             }
                         });
                         if (sessionResponse.ok) {
-                            this.sessionInfo = await sessionResponse.json();
+                            const sessionResponseData = await sessionResponse.json();
+                            // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+                            this.sessionInfo = (sessionResponseData && typeof sessionResponseData === 'object' && 'success' in sessionResponseData && 'data' in sessionResponseData)
+                                ? sessionResponseData.data
+                                : sessionResponseData;
                             console.log('✅ 세션 정보도 로드 완료:', this.sessionInfo);
                         }
                     } catch (sessionError) {

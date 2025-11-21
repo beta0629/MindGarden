@@ -40,30 +40,29 @@ async function apiRequest<T>(
     credentials: 'include', // 세션 쿠키 포함
   });
 
+  const jsonData = await response.json();
+  
   if (!response.ok) {
-    let errorData: any = {};
-    try {
-      const text = await response.text();
-      if (text) {
-        errorData = JSON.parse(text);
-      }
-    } catch (e) {
-      // JSON 파싱 실패 시 빈 객체 사용
-      errorData = {};
-    }
-    
+    // ApiResponse 래퍼 처리
+    const errorData = (jsonData as ApiResponse<any>)?.error || jsonData;
     const errorMessage = errorData.message || errorData.error || errorData.details || `API 요청 실패: ${response.status} ${response.statusText}`;
     console.error('API Error:', {
       status: response.status,
       statusText: response.statusText,
       endpoint,
       errorData,
-      fullError: JSON.stringify(errorData, null, 2), // 전체 에러 응답 출력
+      fullError: JSON.stringify(jsonData, null, 2), // 전체 에러 응답 출력
     });
     throw new Error(errorMessage);
   }
 
-  return response.json();
+  // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출
+  if (jsonData && typeof jsonData === 'object' && 'success' in jsonData && 'data' in jsonData) {
+    return (jsonData as ApiResponse<T>).data as T;
+  }
+  
+  // ApiResponse 래퍼가 없으면 그대로 반환
+  return jsonData as T;
 }
 
 /**

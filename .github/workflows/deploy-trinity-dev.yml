@@ -1,0 +1,81 @@
+name: 🌟 Trinity 프론트엔드 개발 서버 배포
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'frontend-trinity/**'
+      - '.github/workflows/deploy-trinity-dev.yml'
+  workflow_dispatch:
+    # 수동 실행 가능
+
+jobs:
+  deploy-trinity:
+    name: 🏗️ Trinity 프론트엔드 빌드 및 배포
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: 📦 Node.js 18 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend-trinity/package-lock.json
+        
+    - name: 📦 Trinity 프론트엔드 의존성 설치
+      run: |
+        cd frontend-trinity
+        npm ci
+        
+    - name: 🏗️ Trinity 프론트엔드 빌드
+      run: |
+        cd frontend-trinity
+        ESLINT_NO_DEV_ERRORS=true npm run build
+        
+    - name: 🔍 Trinity 프론트엔드 빌드 결과 확인
+      run: |
+        echo "🔍 Trinity 프론트엔드 빌드 결과 확인..."
+        if [ -d frontend-trinity/out ]; then
+          FILE_COUNT=$(find frontend-trinity/out -type f 2>/dev/null | wc -l)
+          if [ "$FILE_COUNT" -gt 0 ]; then
+            echo "✅ frontend-trinity/out 디렉토리 생성됨: $FILE_COUNT 개 파일"
+          else
+            echo "❌ frontend-trinity/out 디렉토리가 비어있음!"
+            exit 1
+          fi
+        else
+          echo "❌ frontend-trinity/out 디렉토리 없음!"
+          exit 1
+        fi
+        
+    - name: 📤 Trinity 프론트엔드 파일 업로드 SCP (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "frontend-trinity/out/*"
+        target: "/var/www/html-trinity/"
+        strip_components: 2
+        overwrite: true
+        
+    - name: 🔄 Trinity 프론트엔드 배포 완료
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 30s
+        script: |
+          # Trinity 프론트엔드 디렉토리 생성 및 권한 설정
+          sudo mkdir -p /var/www/html-trinity
+          sudo chown -R www-data:www-data /var/www/html-trinity
+          sudo chmod -R 755 /var/www/html-trinity
+          echo "✅ Trinity 프론트엔드 배포 완료"
+

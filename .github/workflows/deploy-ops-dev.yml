@@ -1,0 +1,81 @@
+name: 🔧 Ops 프론트엔드 개발 서버 배포
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'frontend-ops/**'
+      - '.github/workflows/deploy-ops-dev.yml'
+  workflow_dispatch:
+    # 수동 실행 가능
+
+jobs:
+  deploy-ops:
+    name: 🏗️ Ops 프론트엔드 빌드 및 배포
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: 📦 Node.js 18 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend-ops/package-lock.json
+        
+    - name: 📦 Ops 프론트엔드 의존성 설치
+      run: |
+        cd frontend-ops
+        npm ci
+        
+    - name: 🏗️ Ops 프론트엔드 빌드
+      run: |
+        cd frontend-ops
+        ESLINT_NO_DEV_ERRORS=true npm run build
+        
+    - name: 🔍 Ops 프론트엔드 빌드 결과 확인
+      run: |
+        echo "🔍 Ops 프론트엔드 빌드 결과 확인..."
+        if [ -d frontend-ops/out ]; then
+          FILE_COUNT=$(find frontend-ops/out -type f 2>/dev/null | wc -l)
+          if [ "$FILE_COUNT" -gt 0 ]; then
+            echo "✅ frontend-ops/out 디렉토리 생성됨: $FILE_COUNT 개 파일"
+          else
+            echo "❌ frontend-ops/out 디렉토리가 비어있음!"
+            exit 1
+          fi
+        else
+          echo "❌ frontend-ops/out 디렉토리 없음!"
+          exit 1
+        fi
+        
+    - name: 📤 Ops 프론트엔드 파일 업로드 SCP (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "frontend-ops/out/*"
+        target: "/var/www/html-ops/"
+        strip_components: 2
+        overwrite: true
+        
+    - name: 🔄 Ops 프론트엔드 배포 완료
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 30s
+        script: |
+          # Ops 프론트엔드 디렉토리 생성 및 권한 설정
+          sudo mkdir -p /var/www/html-ops
+          sudo chown -R www-data:www-data /var/www/html-ops
+          sudo chmod -R 755 /var/www/html-ops
+          echo "✅ Ops 프론트엔드 배포 완료"
+

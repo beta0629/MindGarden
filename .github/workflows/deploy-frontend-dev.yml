@@ -1,0 +1,80 @@
+name: 🎨 Frontend (CoreSolution) 개발 서버 배포
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend-dev.yml'
+  workflow_dispatch:
+    # 수동 실행 가능
+
+jobs:
+  deploy-frontend:
+    name: 🏗️ 프론트엔드 빌드 및 배포
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: 📦 Node.js 18 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: 📦 프론트엔드 의존성 설치
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: 🏗️ 프론트엔드 빌드
+      run: |
+        cd frontend
+        npm run build:ci
+        
+    - name: 🔍 프론트엔드 빌드 결과 확인
+      run: |
+        echo "🔍 프론트엔드 빌드 결과 확인..."
+        if [ -d frontend/build ]; then
+          FILE_COUNT=$(find frontend/build -type f 2>/dev/null | wc -l)
+          if [ "$FILE_COUNT" -gt 0 ]; then
+            echo "✅ frontend/build 디렉토리 생성됨: $FILE_COUNT 개 파일"
+          else
+            echo "❌ frontend/build 디렉토리가 비어있음!"
+            exit 1
+          fi
+        else
+          echo "❌ frontend/build 디렉토리 없음!"
+          exit 1
+        fi
+        
+    - name: 📤 프론트엔드 파일 업로드 SCP (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "frontend/build/*"
+        target: "/var/www/html-dev/"
+        strip_components: 2
+        overwrite: true
+        
+    - name: 🔄 프론트엔드 배포 완료
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 30s
+        script: |
+          # 프론트엔드 디렉토리 권한 설정
+          sudo chown -R www-data:www-data /var/www/html-dev
+          sudo chmod -R 755 /var/www/html-dev
+          echo "✅ 프론트엔드 배포 완료"
+

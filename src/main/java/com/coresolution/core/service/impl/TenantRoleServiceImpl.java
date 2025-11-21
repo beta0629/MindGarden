@@ -1,5 +1,10 @@
 package com.coresolution.core.service.impl;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import com.coresolution.core.constant.RoleConstants;
 import com.coresolution.core.domain.RolePermission;
 import com.coresolution.core.domain.RoleTemplate;
 import com.coresolution.core.domain.RoleTemplatePermission;
@@ -12,15 +17,10 @@ import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.TenantRoleService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 테넌트 역할 서비스 구현체
@@ -83,7 +83,7 @@ public class TenantRoleServiceImpl implements TenantRoleService {
         if (request.getNameKo() != null) {
             tenantRoleRepository.findByTenantIdAndNameKo(tenantId, request.getNameKo())
                     .ifPresent(role -> {
-                        throw new RuntimeException("이미 존재하는 역할명입니다: " + request.getNameKo());
+                        throw new RuntimeException(RoleConstants.formatError(RoleConstants.ERROR_ROLE_NAME_DUPLICATE, request.getNameKo()));
                     });
         }
         
@@ -132,7 +132,7 @@ public class TenantRoleServiceImpl implements TenantRoleService {
         
         // 템플릿 조회
         RoleTemplate template = roleTemplateRepository.findByRoleTemplateIdAndIsDeletedFalse(roleTemplateId)
-                .orElseThrow(() -> new RuntimeException("템플릿을 찾을 수 없습니다: " + roleTemplateId));
+                .orElseThrow(() -> new RuntimeException(RoleConstants.formatError(RoleConstants.ERROR_TEMPLATE_NOT_FOUND, roleTemplateId)));
         
         // 템플릿 기반 역할 생성
         String tenantRoleId = UUID.randomUUID().toString();
@@ -177,10 +177,10 @@ public class TenantRoleServiceImpl implements TenantRoleService {
         accessControlService.validateTenantAccess(tenantId);
         
         TenantRole role = tenantRoleRepository.findByTenantRoleIdAndIsDeletedFalse(tenantRoleId)
-                .orElseThrow(() -> new RuntimeException("역할을 찾을 수 없습니다: " + tenantRoleId));
+                .orElseThrow(() -> new RuntimeException(RoleConstants.formatError(RoleConstants.ERROR_ROLE_NOT_FOUND, tenantRoleId)));
         
         if (!role.getTenantId().equals(tenantId)) {
-            throw new RuntimeException("접근 권한이 없습니다.");
+            throw new RuntimeException(RoleConstants.ERROR_ACCESS_DENIED);
         }
         
         // 역할명 중복 확인 (변경하는 경우)
@@ -188,7 +188,7 @@ public class TenantRoleServiceImpl implements TenantRoleService {
             tenantRoleRepository.findByTenantIdAndNameKo(tenantId, request.getNameKo())
                     .ifPresent(existingRole -> {
                         if (!existingRole.getTenantRoleId().equals(tenantRoleId)) {
-                            throw new RuntimeException("이미 존재하는 역할명입니다: " + request.getNameKo());
+                            throw new RuntimeException(RoleConstants.formatError(RoleConstants.ERROR_ROLE_NAME_DUPLICATE, request.getNameKo()));
                         }
                     });
         }
@@ -216,17 +216,17 @@ public class TenantRoleServiceImpl implements TenantRoleService {
         accessControlService.validateTenantAccess(tenantId);
         
         TenantRole role = tenantRoleRepository.findByTenantRoleIdAndIsDeletedFalse(tenantRoleId)
-                .orElseThrow(() -> new RuntimeException("역할을 찾을 수 없습니다: " + tenantRoleId));
+                .orElseThrow(() -> new RuntimeException(RoleConstants.formatError(RoleConstants.ERROR_ROLE_NOT_FOUND, tenantRoleId)));
         
         if (!role.getTenantId().equals(tenantId)) {
-            throw new RuntimeException("접근 권한이 없습니다.");
+            throw new RuntimeException(RoleConstants.ERROR_ACCESS_DENIED);
         }
         
         // 사용자 할당 확인
         Long activeUserCount = userRoleAssignmentRepository.countActiveAssignmentsByTenantRoleId(
                 tenantRoleId, LocalDate.now());
         if (activeUserCount > 0) {
-            throw new RuntimeException("할당된 사용자가 있어 삭제할 수 없습니다. 먼저 사용자 역할을 해제해주세요.");
+            throw new RuntimeException(RoleConstants.ERROR_ROLE_HAS_USERS);
         }
         
         // 소프트 삭제

@@ -1,12 +1,15 @@
 package com.coresolution.core.service.impl;
 
+import com.coresolution.core.constant.DashboardConstants;
+import com.coresolution.core.constant.RoleConstants;
+import com.coresolution.core.domain.RoleTemplate;
 import com.coresolution.core.domain.TenantDashboard;
 import com.coresolution.core.domain.TenantRole;
 import com.coresolution.core.dto.TenantDashboardRequest;
 import com.coresolution.core.dto.TenantDashboardResponse;
+import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.repository.TenantDashboardRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
-import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.TenantDashboardService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -59,10 +63,10 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         accessControlService.validateTenantAccess(tenantId);
         
         TenantDashboard dashboard = dashboardRepository.findByDashboardIdAndIsDeletedFalse(dashboardId)
-                .orElseThrow(() -> new RuntimeException("대시보드를 찾을 수 없습니다: " + dashboardId));
+                .orElseThrow(() -> new RuntimeException(MessageFormat.format(DashboardConstants.ERROR_DASHBOARD_NOT_FOUND, dashboardId)));
         
         if (!dashboard.getTenantId().equals(tenantId)) {
-            throw new RuntimeException("접근 권한이 없습니다.");
+            throw new RuntimeException(DashboardConstants.ERROR_ACCESS_DENIED);
         }
         
         return toResponse(dashboard);
@@ -77,16 +81,16 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         
         // 역할 존재 확인
         TenantRole role = tenantRoleRepository.findByTenantRoleIdAndIsDeletedFalse(request.getTenantRoleId())
-                .orElseThrow(() -> new RuntimeException("역할을 찾을 수 없습니다: " + request.getTenantRoleId()));
+                .orElseThrow(() -> new RuntimeException(RoleConstants.formatError(RoleConstants.ERROR_ROLE_NOT_FOUND, request.getTenantRoleId())));
         
         if (!role.getTenantId().equals(tenantId)) {
-            throw new RuntimeException("접근 권한이 없습니다.");
+            throw new RuntimeException(RoleConstants.ERROR_ACCESS_DENIED);
         }
         
         // 중복 확인 (같은 역할에 대시보드가 이미 있는지)
         dashboardRepository.findByTenantIdAndTenantRoleId(tenantId, request.getTenantRoleId())
                 .ifPresent(existing -> {
-                    throw new RuntimeException("해당 역할에 이미 대시보드가 존재합니다.");
+                    throw new RuntimeException(DashboardConstants.ERROR_DASHBOARD_ALREADY_EXISTS);
                 });
         
         // 대시보드 생성
@@ -119,10 +123,10 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         accessControlService.validateTenantAccess(tenantId);
         
         TenantDashboard dashboard = dashboardRepository.findByDashboardIdAndIsDeletedFalse(dashboardId)
-                .orElseThrow(() -> new RuntimeException("대시보드를 찾을 수 없습니다: " + dashboardId));
+                .orElseThrow(() -> new RuntimeException(MessageFormat.format(DashboardConstants.ERROR_DASHBOARD_NOT_FOUND, dashboardId)));
         
         if (!dashboard.getTenantId().equals(tenantId)) {
-            throw new RuntimeException("접근 권한이 없습니다.");
+            throw new RuntimeException(DashboardConstants.ERROR_ACCESS_DENIED);
         }
         
         // 대시보드 정보 업데이트 (이름 등)
@@ -140,15 +144,15 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             dashboardRepository.findByTenantIdAndTenantRoleId(tenantId, request.getTenantRoleId())
                     .ifPresent(existing -> {
                         if (!existing.getDashboardId().equals(dashboardId)) {
-                            throw new RuntimeException("해당 역할에 이미 대시보드가 존재합니다.");
+                            throw new RuntimeException(DashboardConstants.ERROR_DASHBOARD_ALREADY_EXISTS);
                         }
                     });
             
             TenantRole role = tenantRoleRepository.findByTenantRoleIdAndIsDeletedFalse(request.getTenantRoleId())
-                    .orElseThrow(() -> new RuntimeException("역할을 찾을 수 없습니다: " + request.getTenantRoleId()));
+                    .orElseThrow(() -> new RuntimeException(RoleConstants.formatError(RoleConstants.ERROR_ROLE_NOT_FOUND, request.getTenantRoleId())));
             
             if (!role.getTenantId().equals(tenantId)) {
-                throw new RuntimeException("접근 권한이 없습니다.");
+                throw new RuntimeException(RoleConstants.ERROR_ACCESS_DENIED);
             }
             
             dashboard.setTenantRoleId(request.getTenantRoleId());
@@ -167,15 +171,15 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         accessControlService.validateTenantAccess(tenantId);
         
         TenantDashboard dashboard = dashboardRepository.findByDashboardIdAndIsDeletedFalse(dashboardId)
-                .orElseThrow(() -> new RuntimeException("대시보드를 찾을 수 없습니다: " + dashboardId));
+                .orElseThrow(() -> new RuntimeException(MessageFormat.format(DashboardConstants.ERROR_DASHBOARD_NOT_FOUND, dashboardId)));
         
         if (!dashboard.getTenantId().equals(tenantId)) {
-            throw new RuntimeException("접근 권한이 없습니다.");
+            throw new RuntimeException(DashboardConstants.ERROR_ACCESS_DENIED);
         }
         
         // 기본 대시보드는 삭제 불가 (필수 대시보드)
         if (dashboard.getIsDefault() != null && dashboard.getIsDefault()) {
-            throw new RuntimeException("기본 대시보드는 삭제할 수 없습니다. 비활성화만 가능합니다.");
+            throw new RuntimeException(DashboardConstants.ERROR_DEFAULT_DASHBOARD_CANNOT_DELETE);
         }
         
         // 소프트 삭제
@@ -192,21 +196,49 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         accessControlService.validateTenantAccess(tenantId);
         
         // 업종별 기본 역할 템플릿 조회
-        List<com.coresolution.core.domain.RoleTemplate> templates = roleTemplateRepository
+        List<RoleTemplate> templates = roleTemplateRepository
                 .findByBusinessTypeAndActive(businessType);
         
         // 학원(ACADEMY) 기준 기본 역할: 학생(STUDENT), 선생님(TEACHER), 관리자(ADMIN)
         // 다른 업종도 동일한 패턴으로 확장 가능
-        String[] defaultRoleCodes = {"STUDENT", "TEACHER", "ADMIN"};
-        String[] defaultRoleNames = {"학생", "선생님", "관리자"};
-        String[] defaultDashboardNames = {"학생 대시보드", "선생님 대시보드", "관리자 대시보드"};
+        String[] defaultRoleCodes;
+        String[] defaultRoleNames;
+        String[] defaultDashboardNames;
         
         // 업종별 기본 역할 코드 매핑 (확장 가능)
-        if (!"ACADEMY".equalsIgnoreCase(businessType)) {
+        if (DashboardConstants.BUSINESS_TYPE_ACADEMY.equalsIgnoreCase(businessType)) {
+            defaultRoleCodes = new String[]{
+                DashboardConstants.ROLE_CODE_STUDENT,
+                DashboardConstants.ROLE_CODE_TEACHER,
+                DashboardConstants.ROLE_CODE_ADMIN
+            };
+            defaultRoleNames = new String[]{
+                DashboardConstants.ROLE_NAME_STUDENT,
+                DashboardConstants.ROLE_NAME_TEACHER,
+                DashboardConstants.ROLE_NAME_ADMIN
+            };
+            defaultDashboardNames = new String[]{
+                DashboardConstants.DASHBOARD_NAME_STUDENT,
+                DashboardConstants.DASHBOARD_NAME_TEACHER,
+                DashboardConstants.DASHBOARD_NAME_ADMIN
+            };
+        } else {
             // 상담소(CONSULTATION) 등 다른 업종의 경우
-            defaultRoleCodes = new String[]{"CLIENT", "CONSULTANT", "ADMIN"};
-            defaultRoleNames = new String[]{"내담자", "상담사", "관리자"};
-            defaultDashboardNames = new String[]{"내담자 대시보드", "상담사 대시보드", "관리자 대시보드"};
+            defaultRoleCodes = new String[]{
+                DashboardConstants.ROLE_CODE_CLIENT,
+                DashboardConstants.ROLE_CODE_CONSULTANT,
+                DashboardConstants.ROLE_CODE_ADMIN
+            };
+            defaultRoleNames = new String[]{
+                DashboardConstants.ROLE_NAME_CLIENT,
+                DashboardConstants.ROLE_NAME_CONSULTANT,
+                DashboardConstants.ROLE_NAME_ADMIN
+            };
+            defaultDashboardNames = new String[]{
+                DashboardConstants.DASHBOARD_NAME_CLIENT,
+                DashboardConstants.DASHBOARD_NAME_CONSULTANT,
+                DashboardConstants.DASHBOARD_NAME_ADMIN
+            };
         }
         
         List<TenantDashboardResponse> createdDashboards = new java.util.ArrayList<>();
@@ -218,7 +250,7 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             String dashboardName = defaultDashboardNames[i];
             
             // 템플릿 코드로 역할 템플릿 찾기
-            com.coresolution.core.domain.RoleTemplate template = templates.stream()
+            RoleTemplate template = templates.stream()
                     .filter(t -> roleCode.equals(t.getTemplateCode()))
                     .findFirst()
                     .orElse(null);
@@ -258,7 +290,7 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                     .dashboardName(dashboardName)
                     .dashboardNameKo(dashboardName)
                     .dashboardNameEn(roleCode + " Dashboard")
-                    .description(roleName + "용 기본 대시보드입니다.")
+                    .description(MessageFormat.format(DashboardConstants.DASHBOARD_DESCRIPTION_TEMPLATE, roleName))
                     .dashboardType(roleCode)
                     .isDefault(true) // 기본 대시보드
                     .isActive(true)

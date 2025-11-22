@@ -12,7 +12,7 @@
  * @since 2025-01-XX
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import CommonPageTemplate from '../common/CommonPageTemplate';
@@ -55,7 +55,7 @@ const UnifiedLogin = () => {
   const [showTenantSelection, setShowTenantSelection] = useState(false);
   const [accessibleTenants, setAccessibleTenants] = useState([]);
   const [isMultiTenant, setIsMultiTenant] = useState(false);
-  const [sessionChecked, setSessionChecked] = useState(false); // 세션 체크 완료 여부
+  const sessionCheckedRef = useRef(false); // 세션 체크 완료 여부 (ref 사용으로 리렌더링 방지)
 
   // 툴팁 상태
   const [tooltip, setTooltip] = useState({
@@ -72,14 +72,23 @@ const UnifiedLogin = () => {
     }, 6000);
   };
 
+  // 컴포넌트 마운트 시 한 번만 실행
   useEffect(() => {
     getOAuth2Config();
     checkOAuthCallback();
+    
     // 세션 체크는 한 번만 실행 (무한 루프 방지)
-    if (!sessionChecked) {
+    if (!sessionCheckedRef.current && !isLoading) {
       checkExistingSession();
     }
-  }, [location.pathname]); // location.search 대신 location.pathname만 사용하여 URL 파라미터 변경 시 재실행 방지
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 빈 의존성 배열: 마운트 시 한 번만 실행
+
+  // OAuth 콜백은 location.search 변경 시에만 체크
+  useEffect(() => {
+    checkOAuthCallback();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   // OAuth2 설정 가져오기
   const getOAuth2Config = async () => {
@@ -106,31 +115,47 @@ const UnifiedLogin = () => {
     }
   };
 
-  // 기존 세션 확인 (한 번만 실행)
+  // 기존 세션 확인 (한 번만 실행, 직접 API 호출로 SessionContext 우회)
   const checkExistingSession = async () => {
     // 이미 체크했거나 로딩 중이면 스킵
-    if (sessionChecked || isLoading || tooltip.show) {
+    if (sessionCheckedRef.current || isLoading || tooltip.show) {
       return;
     }
 
     // 세션 체크 시작 표시
-    setSessionChecked(true);
+    sessionCheckedRef.current = true;
 
     try {
+      // SessionContext의 checkSession을 우회하여 직접 API 호출 (무한 루프 방지)
       await new Promise(resolve => setTimeout(resolve, LOGIN_SESSION_CHECK_DELAY));
-      const isLoggedIn = await checkSession();
       
-      if (isLoggedIn) {
-        const user = sessionManager.getUser();
-        if (user) {
+      const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+        credentials: 'include',
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const responseData = await response.json();
+        // ApiResponse 래퍼 처리
+        const userData = (responseData && typeof responseData === 'object' && 'success' in responseData && 'data' in responseData)
+          ? responseData.data
+          : responseData;
+        
+        if (userData && userData.id) {
+          // 사용자 정보가 있으면 sessionManager에 설정
+          sessionManager.setUser(userData);
+          
           // 멀티 테넌트 사용자 확인
-          await checkMultiTenantAndRedirect(user);
+          await checkMultiTenantAndRedirect(userData);
         }
       }
     } catch (error) {
       console.error('세션 확인 오류:', error);
       // 오류 발생 시에도 체크 완료로 표시 (무한 루프 방지)
-      setSessionChecked(true);
+      sessionCheckedRef.current = true;
     }
   };
 

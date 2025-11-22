@@ -90,15 +90,32 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
         }
       }
 
+      // 관리자 역할인 경우 기존 관리자 대시보드로 리다이렉트 (동적 대시보드 조회 없이)
+      const userRole = userWithTenant.role;
+      const adminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'];
+      if (userRole && adminRoles.includes(userRole)) {
+        console.log('🎯 관리자 역할 감지, 기존 관리자 대시보드로 리다이렉트:', userRole);
+        const { getLegacyDashboardPath } = await import('../../utils/dashboardUtils');
+        const legacyPath = getLegacyDashboardPath(userRole);
+        navigate(legacyPath, { replace: true });
+        setIsLoading(false);
+        return;
+      }
+
       const tenantId = userWithTenant.tenantId;
       const tenantRoleId = userWithTenant.currentTenantRoleId || 
                           userWithTenant.tenantRole?.tenantRoleId ||
                           null;
 
       if (!tenantId) {
-        // tenantId가 없어도 기본 대시보드 표시 (에러 대신 경고)
-        console.warn('⚠️ 테넌트 정보가 없어 기본 대시보드를 사용합니다.');
-        setDashboard(null);
+        // tenantId가 없으면 역할 기반 라우팅으로 폴백
+        console.warn('⚠️ 테넌트 정보가 없어 역할 기반 라우팅으로 폴백합니다.');
+        const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+        const authResponse = {
+          user: userWithTenant,
+          currentTenantRole: sessionManager.getCurrentTenantRole()
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
         setIsLoading(false);
         return;
       }
@@ -108,9 +125,16 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
       if (dashboardData) {
         setDashboard(dashboardData);
       } else {
-        // 대시보드가 없으면 기본 대시보드 사용
-        console.warn('⚠️ 대시보드를 찾을 수 없어 기본 대시보드를 사용합니다.');
-        setDashboard(null);
+        // 대시보드가 없으면 역할 기반 라우팅으로 폴백
+        console.warn('⚠️ 대시보드를 찾을 수 없어 역할 기반 라우팅으로 폴백합니다.');
+        const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+        const authResponse = {
+          user: userWithTenant,
+          currentTenantRole: sessionManager.getCurrentTenantRole()
+        };
+        await redirectToDynamicDashboard(authResponse, navigate);
+        setIsLoading(false);
+        return;
       }
     } catch (err) {
       console.error('❌ 대시보드 로드 실패:', err);

@@ -501,6 +501,18 @@ class SessionManager {
         return this.user !== null;
     }
     
+    // 현재 테넌트 역할 정보 반환
+    getCurrentTenantRole() {
+        if (!this.user) {
+            return null;
+        }
+        
+        // 사용자 정보에서 currentTenantRole 또는 tenantRole 추출
+        return this.user.currentTenantRole || 
+               this.user.tenantRole || 
+               (this.user.currentTenantRoleId ? { tenantRoleId: this.user.currentTenantRoleId } : null);
+    }
+    
     // 프로필 수정 시작 (세션 체크 일시 중지)
     startProfileEditing() {
         this.isProfileEditing = true;

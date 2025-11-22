@@ -15,20 +15,22 @@ import { API_BASE_URL } from '../constants/api';
  */
 export const getCurrentUserDashboard = async (tenantId, tenantRoleId = null) => {
   try {
-    let url;
+    let endpoint;
     
     if (tenantRoleId) {
       // 역할 ID가 있으면 역할별 대시보드 조회
-      url = `${API_BASE_URL}/api/v1/tenant/dashboards/by-role/${tenantRoleId}`;
+      endpoint = `/api/v1/tenant/dashboards/by-role/${tenantRoleId}`;
     } else {
       // 역할 ID가 없으면 현재 사용자 대시보드 조회
-      url = `${API_BASE_URL}/api/v1/tenant/dashboards/current`;
+      endpoint = `/api/v1/tenant/dashboards/current`;
     }
     
-    const response = await apiGet(url);
+    const response = await apiGet(endpoint);
     
-    if (response.success && response.data) {
-      return response.data;
+    // apiGet이 이미 ApiResponse 래퍼를 처리하여 data를 반환하므로
+    // response가 있으면 그대로 반환
+    if (response) {
+      return response;
     }
     
     return null;

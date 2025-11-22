@@ -108,13 +108,26 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
         return;
       }
 
-      const dashboardData = await getCurrentUserDashboard(tenantId, tenantRoleId);
+      try {
+        const dashboardData = await getCurrentUserDashboard(tenantId, tenantRoleId);
 
-      if (dashboardData) {
-        setDashboard(dashboardData);
-      } else {
-        // 대시보드가 없으면 역할 기반 라우팅으로 폴백
-        console.warn('⚠️ 대시보드를 찾을 수 없어 역할 기반 라우팅으로 폴백합니다.');
+        if (dashboardData) {
+          setDashboard(dashboardData);
+        } else {
+          // 대시보드가 없으면 역할 기반 라우팅으로 폴백
+          console.warn('⚠️ 대시보드를 찾을 수 없어 역할 기반 라우팅으로 폴백합니다.');
+          const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+          const authResponse = {
+            user: userWithTenant,
+            currentTenantRole: sessionManager.getCurrentTenantRole()
+          };
+          await redirectToDynamicDashboard(authResponse, navigate);
+          setIsLoading(false);
+          return;
+        }
+      } catch (dashboardError) {
+        // 404 등 대시보드 조회 실패 시 역할 기반 라우팅으로 폴백
+        console.warn('⚠️ 대시보드 조회 실패, 역할 기반 라우팅으로 폴백:', dashboardError);
         const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
         const authResponse = {
           user: userWithTenant,

@@ -268,8 +268,14 @@ const AdminDashboard = ({ user: propUser }) => {
 
             if (mappingsRes.ok) {
                 const mappingsData = await mappingsRes.json();
-                totalMappings = mappingsData.count || 0;
-                activeMappings = (mappingsData.data || []).filter(m => m.status === 'ACTIVE').length;
+                // ApiResponse 래퍼 처리
+                const mappings = (mappingsData && typeof mappingsData === 'object' && 'success' in mappingsData && 'data' in mappingsData)
+                    ? mappingsData.data
+                    : mappingsData;
+                totalMappings = mappingsData.count || mappings?.count || 0;
+                // mappings.data가 배열인지 확인
+                const mappingsList = Array.isArray(mappings?.data) ? mappings.data : (Array.isArray(mappings) ? mappings : []);
+                activeMappings = mappingsList.filter(m => m.status === 'ACTIVE').length;
             }
 
             if (ratingRes.ok) {
@@ -356,9 +362,13 @@ const AdminDashboard = ({ user: propUser }) => {
                 console.log('🔍 API 응답 데이터:', data);
                 
                 if (data.success && data.data) {
-                    const count = data.data.length;
-                    const totalAmount = data.data.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
-                    const oldestHours = Math.max(...data.data.map(mapping => mapping.hoursElapsed || 0), 0);
+                    // data.data가 배열인지 확인
+                    const pendingList = Array.isArray(data.data) ? data.data : [];
+                    const count = pendingList.length;
+                    const totalAmount = pendingList.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
+                    const oldestHours = pendingList.length > 0 
+                        ? Math.max(...pendingList.map(mapping => mapping.hoursElapsed || 0), 0)
+                        : 0;
                     
                     console.log('🔍 계산된 통계:', { count, totalAmount, oldestHours });
                     

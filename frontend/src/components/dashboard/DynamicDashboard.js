@@ -175,13 +175,27 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   }
 
   // 대시보드 타입에 따라 적절한 컴포넌트 선택
-  const dashboardType = dashboard?.dashboardType || currentUser?.role || 'DEFAULT';
-  const componentName = getDashboardComponentName(dashboardType);
-  const DashboardComponent = DASHBOARD_COMPONENTS[componentName] || CommonDashboard;
+  // 관리자 역할인 경우 AdminDashboard 컴포넌트 사용
+  const userRole = currentUser?.role;
+  const adminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'];
+  const isAdmin = userRole && adminRoles.includes(userRole);
+  
+  let DashboardComponent;
+  if (isAdmin) {
+    // 관리자는 AdminDashboard 컴포넌트 사용 (동적 대시보드 데이터는 전달)
+    DashboardComponent = AdminDashboard;
+  } else {
+    // 일반 사용자는 대시보드 타입에 따라 컴포넌트 선택
+    const dashboardType = dashboard?.dashboardType || currentUser?.role || 'DEFAULT';
+    const componentName = getDashboardComponentName(dashboardType);
+    DashboardComponent = DASHBOARD_COMPONENTS[componentName] || CommonDashboard;
+  }
 
   console.log('🎯 동적 대시보드 렌더링:', {
-    dashboardType,
-    componentName,
+    userRole,
+    isAdmin,
+    dashboardType: dashboard?.dashboardType,
+    componentName: isAdmin ? 'AdminDashboard' : getDashboardComponentName(dashboard?.dashboardType || currentUser?.role || 'DEFAULT'),
     hasDashboard: !!dashboard,
     user: currentUser
   });

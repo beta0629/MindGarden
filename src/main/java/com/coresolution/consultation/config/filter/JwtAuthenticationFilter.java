@@ -39,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserService userService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         
         String requestPath = request.getRequestURI();
@@ -132,7 +132,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } else {
                 if (isOpsApi && !requestPath.startsWith("/api/v1/ops/auth/login") && 
                     !requestPath.startsWith("/api/v1/ops/plans/")) {
-                    log.debug("JWT 토큰 없음 (인증 필요 경로): path={}", requestPath);
+                    log.warn("JWT 토큰 없음 (인증 필요 경로): path={}, Authorization header={}", 
+                        requestPath, authHeader);
+                    // 현재 SecurityContext 상태 확인
+                    org.springframework.security.core.Authentication currentAuth = 
+                        SecurityContextHolder.getContext().getAuthentication();
+                    if (currentAuth != null) {
+                        log.warn("현재 SecurityContext 인증 정보: principal={}, authorities={}", 
+                            currentAuth.getPrincipal(), currentAuth.getAuthorities());
+                    } else {
+                        log.warn("SecurityContext에 인증 정보 없음");
+                    }
                 }
             }
         } catch (Exception e) {

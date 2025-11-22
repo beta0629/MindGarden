@@ -40,7 +40,17 @@ public class DashboardOpsController extends BaseApiController {
      */
     @GetMapping("/metrics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMetrics() {
-        log.debug("대시보드 메트릭 조회 요청");
+        // 인증 정보 확인
+        org.springframework.security.core.Authentication auth = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        
+        if (auth != null) {
+            log.info("대시보드 메트릭 조회 요청: principal={}, authorities={}", 
+                auth.getPrincipal(), auth.getAuthorities());
+        } else {
+            log.warn("대시보드 메트릭 조회 요청: 인증 정보 없음");
+        }
+        
         Map<String, Object> metrics = dashboardService.getMetrics();
         return success(metrics);
     }

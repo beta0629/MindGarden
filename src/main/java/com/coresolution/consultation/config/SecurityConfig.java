@@ -118,7 +118,20 @@ public class SecurityConfig {
                     .requestMatchers("/api/schedules/**").authenticated() // 스케줄 API는 인증 필요
                     .requestMatchers("/api/payments/**").authenticated() // 결제 API는 인증 필요
                     .requestMatchers("/api/consultant/**").authenticated() // 상담사 API는 인증 필요
+                    // Ops Portal API는 인증 필요 (공개 엔드포인트 제외)
+                    .requestMatchers(
+                        "/api/v1/ops/plans/active",           // 활성화된 요금제 목록 (공개)
+                        "/api/v1/ops/plans/code/**",          // plan_code로 요금제 조회 (공개)
+                        "/api/v1/ops/plans/*"                 // plan_id로 요금제 조회 (공개, 단 DELETE 제외)
+                    ).permitAll()
+                    .requestMatchers("/api/v1/ops/auth/**").permitAll() // Ops Portal 인증 API는 허용
+                    .requestMatchers("/api/v1/ops/**").authenticated() // 나머지 Ops Portal API는 인증 필요
                     .anyRequest().permitAll() // 나머지는 허용
+                )
+                // 인증/권한 오류 처리 핸들러 설정
+                .exceptionHandling(ex -> ex
+                    .authenticationEntryPoint(customAuthenticationEntryPoint())
+                    .accessDeniedHandler(customAccessDeniedHandler())
                 );
         } else {
             // 개발 환경: 편의성 우선 (운영 환경과 분리)
@@ -140,9 +153,16 @@ public class SecurityConfig {
                         "/api/v1/ops/plans/code/**",          // plan_code로 요금제 조회 (공개)
                         "/api/v1/ops/plans/*"                 // plan_id로 요금제 조회 (공개, 단 DELETE 제외)
                     ).permitAll()
+                    // Ops Portal 인증 API는 허용
+                    .requestMatchers("/api/v1/ops/auth/**").permitAll()
                     // 나머지 Ops Portal API는 인증 필요
                     .requestMatchers("/api/v1/ops/**").authenticated()
                     .anyRequest().permitAll() // 나머지는 허용
+                )
+                // 인증/권한 오류 처리 핸들러 설정
+                .exceptionHandling(ex -> ex
+                    .authenticationEntryPoint(customAuthenticationEntryPoint())
+                    .accessDeniedHandler(customAccessDeniedHandler())
                 );
         }
         

@@ -123,6 +123,7 @@ const ErpStatsGridWidget = ({ widget, user }) => {
             if (stat.icon) {
               if (typeof stat.icon === 'string') {
                 // 문자열인 경우 lucide-react에서 찾기
+                // eslint-disable-next-line import/namespace
                 const IconComponent = LucideIcons[stat.icon];
                 iconComponent = IconComponent ? <IconComponent size={24} /> : null;
               } else {

@@ -42,6 +42,22 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   
   const currentUser = propUser || sessionUser || sessionManager.getUser();
 
+  // dashboardConfig 기반 위젯 렌더링 (early return 전에 호출해야 함)
+  const dashboardConfig = useMemo(() => {
+    if (!dashboard?.dashboardConfig) {
+      return null;
+    }
+    
+    try {
+      return typeof dashboard.dashboardConfig === 'string' 
+        ? JSON.parse(dashboard.dashboardConfig)
+        : dashboard.dashboardConfig;
+    } catch (err) {
+      console.error('❌ dashboardConfig JSON 파싱 실패:', err);
+      return null;
+    }
+  }, [dashboard?.dashboardConfig]);
+
   // 인증 체크: 사용자가 없으면 로그인 페이지로 리다이렉트
   useEffect(() => {
     // 세션이 로딩 중이면 대기
@@ -204,22 +220,6 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     hasDashboardConfig: !!dashboard?.dashboardConfig,
     user: currentUser
   });
-
-  // dashboardConfig 기반 위젯 렌더링
-  const dashboardConfig = useMemo(() => {
-    if (!dashboard?.dashboardConfig) {
-      return null;
-    }
-    
-    try {
-      return typeof dashboard.dashboardConfig === 'string' 
-        ? JSON.parse(dashboard.dashboardConfig)
-        : dashboard.dashboardConfig;
-    } catch (err) {
-      console.error('❌ dashboardConfig JSON 파싱 실패:', err);
-      return null;
-    }
-  }, [dashboard?.dashboardConfig]);
 
   // dashboardConfig가 있으면 위젯 기반 렌더링, 없으면 기존 컴포넌트 렌더링
   if (dashboardConfig && dashboardConfig.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0) {

@@ -89,6 +89,7 @@ const ErpManagementGridWidget = ({ widget, user }) => {
                 {action.icon && (() => {
                   // 문자열인 경우 lucide-react에서 찾기
                   if (typeof action.icon === 'string') {
+                    // eslint-disable-next-line import/namespace
                     const IconComponent = LucideIcons[action.icon];
                     return IconComponent ? <IconComponent size={24} /> : null;
                   }

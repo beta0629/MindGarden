@@ -34,9 +34,10 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`[Ops Auth] 로그인 시도: username=${username}, backend=${DEFAULT_API_BASE_URL}/ops/auth/login`);
+    const backendUrl = `${DEFAULT_API_BASE_URL}/ops/auth/login`;
+    console.log(`[Ops Auth] 로그인 시도: username=${username}, backend=${backendUrl}`);
 
-    const backendResponse = await fetch(`${DEFAULT_API_BASE_URL}/ops/auth/login`, {
+    const backendResponse = await fetch(backendUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({ username, password })
     });
 
-    console.log(`[Ops Auth] 백엔드 응답: status=${backendResponse.status}, ok=${backendResponse.ok}`);
+    console.log(`[Ops Auth] 백엔드 응답: status=${backendResponse.status}, ok=${backendResponse.ok}, url=${backendUrl}`);
 
     let data: any = null;
     try {
@@ -63,12 +64,26 @@ export async function POST(request: Request) {
     }
 
     if (!backendResponse.ok) {
-      console.error(`[Ops Auth] 백엔드 오류: status=${backendResponse.status}, message=${data?.message}`);
+      // ApiResponse 래퍼 처리
+      let errorMessage = "로그인에 실패했습니다. 입력 정보를 다시 확인해주세요.";
+      
+      if (data) {
+        // ApiResponse 형태: { success: false, message: "...", error: {...} }
+        if (data.success === false && data.message) {
+          errorMessage = data.message;
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else if (data.error && typeof data.error === 'object' && 'message' in data.error) {
+          errorMessage = (data.error as { message: string }).message;
+        } else if (typeof data === 'string') {
+          errorMessage = data;
+        }
+      }
+      
+      console.error(`[Ops Auth] 백엔드 오류: status=${backendResponse.status}, message=${errorMessage}, data=`, JSON.stringify(data));
       return NextResponse.json(
         {
-          message:
-            data?.message ??
-            "로그인에 실패했습니다. 입력 정보를 다시 확인해주세요."
+          message: errorMessage
         },
         { status: backendResponse.status }
       );

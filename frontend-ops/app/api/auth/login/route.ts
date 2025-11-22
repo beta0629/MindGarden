@@ -89,8 +89,15 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!data || !data.token) {
-      console.error(`[Ops Auth] 토큰 없음: data=`, data);
+    // ApiResponse 래퍼 처리: { success: true, data: {...} } 형태면 data 추출
+    let responseData = data;
+    if (data && typeof data === 'object' && 'success' in data && 'data' in data && data.success) {
+      responseData = data.data;
+      console.log(`[Ops Auth] ApiResponse 래퍼 처리: data=`, responseData);
+    }
+    
+    if (!responseData || !responseData.token) {
+      console.error(`[Ops Auth] 토큰 없음: responseData=`, responseData, `original data=`, data);
       return NextResponse.json(
         {
           message: "로그인 응답을 해석할 수 없습니다. 관리자에게 문의하세요."
@@ -102,20 +109,20 @@ export async function POST(request: Request) {
     const maxAge = 60 * 60; // 1 hour
     const response = NextResponse.json({ success: true });
 
-    response.cookies.set("ops_token", data.token, {
+    response.cookies.set("ops_token", responseData.token, {
       ...COOKIE_SETTINGS,
       maxAge
     });
-    response.cookies.set("ops_actor_id", data.actorId || username, {
+    response.cookies.set("ops_actor_id", responseData.actorId || username, {
       ...COOKIE_SETTINGS,
       maxAge
     });
-    response.cookies.set("ops_actor_role", data.actorRole || "HQ_ADMIN", {
+    response.cookies.set("ops_actor_role", responseData.actorRole || "HQ_ADMIN", {
       ...COOKIE_SETTINGS,
       maxAge
     });
 
-    console.log(`[Ops Auth] 로그인 성공: actorId=${data.actorId || username}, role=${data.actorRole || "HQ_ADMIN"}`);
+    console.log(`[Ops Auth] 로그인 성공: actorId=${responseData.actorId || username}, role=${responseData.actorRole || "HQ_ADMIN"}`);
 
     return response;
   } catch (error: any) {

@@ -64,28 +64,43 @@ export async function POST(request: Request) {
     }
 
     if (!backendResponse.ok) {
-      // ApiResponse 래퍼 처리
+      // ErrorResponse 또는 ApiResponse 래퍼 처리
       let errorMessage = "로그인에 실패했습니다. 입력 정보를 다시 확인해주세요.";
       
       if (data) {
-        // ApiResponse 형태: { success: false, message: "...", error: {...} }
+        // ErrorResponse 형태: { success: false, message: "...", errorCode: "...", status: 401/400/... }
         if (data.success === false && data.message) {
           errorMessage = data.message;
-        } else if (data.message) {
+        } 
+        // ApiResponse 형태: { success: false, message: "...", error: {...} }
+        else if (data.message && !data.errorCode) {
           errorMessage = data.message;
-        } else if (data.error && typeof data.error === 'object' && 'message' in data.error) {
-          errorMessage = (data.error as { message: string }).message;
-        } else if (typeof data === 'string') {
+        }
+        // 중첩된 error 객체 처리
+        else if (data.error && typeof data.error === 'object') {
+          if ('message' in data.error) {
+            errorMessage = (data.error as { message: string }).message;
+          } else if (typeof data.error === 'string') {
+            errorMessage = data.error;
+          }
+        }
+        // 문자열 직접 전달
+        else if (typeof data === 'string') {
           errorMessage = data;
         }
       }
       
       console.error(`[Ops Auth] 백엔드 오류: status=${backendResponse.status}, message=${errorMessage}, data=`, JSON.stringify(data));
+      
+      // 400 Bad Request의 경우 백엔드 응답 상태 그대로 전달
+      // 401 Unauthorized는 401로 전달 (로그인 실패)
+      const statusCode = backendResponse.status === 401 ? 401 : backendResponse.status;
+      
       return NextResponse.json(
         {
           message: errorMessage
         },
-        { status: backendResponse.status }
+        { status: statusCode }
       );
     }
 

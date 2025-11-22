@@ -1,19 +1,20 @@
 name: 🧪 MindGarden 개발 서버 배포 (통합 - 모든 프로젝트)
 
-# ⚠️ 주의: 이 워크플로우는 모든 프로젝트를 한 번에 배포합니다.
-# 더 빠른 배포를 원하시면 다음 분리된 워크플로우를 사용하세요:
-# - deploy-backend-dev.yml: 백엔드만 배포
-# - deploy-frontend-dev.yml: CoreSolution 프론트엔드만 배포
-# - deploy-trinity-dev.yml: Trinity 프론트엔드만 배포
-# - deploy-ops-dev.yml: Ops 프론트엔드만 배포
+# ⚠️ DEPRECATED: 이 워크플로우는 더 이상 사용되지 않습니다.
+# 개별 워크플로우를 사용하세요:
+# - deploy-backend-dev.yml: 백엔드만 배포 (src/** 또는 pom.xml 변경 시)
+# - deploy-frontend-dev.yml: CoreSolution 프론트엔드만 배포 (frontend/** 변경 시)
+# - deploy-trinity-dev.yml: Trinity 프론트엔드만 배포 (frontend-trinity/** 변경 시)
+# - deploy-ops-dev.yml: Ops 프론트엔드만 배포 (frontend-ops/** 변경 시)
+#
+# 이 워크플로우는 비활성화되었습니다. 수동 실행만 가능합니다.
 
 on:
-  push:
-    branches: [ develop ]
-    # develop 브랜치에 push하면 자동으로 개발 서버에 배포
-    # main 브랜치는 운영 배포용이므로 개발 배포에서 제외
+  # push 트리거 제거 (개별 워크플로우 사용)
+  # push:
+  #   branches: [ develop ]
   workflow_dispatch:
-    # 수동 실행 가능
+    # 수동 실행만 가능 (모든 프로젝트를 한 번에 배포하고 싶을 때만 사용)
 
 jobs:
   deploy:

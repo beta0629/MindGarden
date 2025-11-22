@@ -121,11 +121,15 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       if (response.status === 401) {
         return null;
       }
+      // 404 오류는 리소스가 없을 수 있으므로 조용히 null 반환 (에러 throw 안 함)
+      if (response.status === 404) {
+        return null;
+      }
       // 500 오류도 서버 오류이므로 에러 처리
       if (response.status >= 500) {
         handleError(new Error('서버 오류'), response.status);
       }
-      // 4xx 오류는 클라이언트 오류이므로 에러 처리
+      // 기타 4xx 오류는 클라이언트 오류이므로 에러 처리
       if (response.status >= 400) {
         handleError(new Error('요청 오류'), response.status);
       }

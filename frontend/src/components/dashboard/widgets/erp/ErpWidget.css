@@ -1,0 +1,134 @@
+/* ERP Widget Styles */
+
+/* Statistics Grid Widget */
+.widget-erp-stats-grid .erp-stats-grid {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+}
+
+.erp-stats-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.erp-stats-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.erp-stats-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.erp-stats-grid-5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.erp-stats-grid-6 {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+@media (max-width: 1200px) {
+  .erp-stats-grid-4,
+  .erp-stats-grid-5,
+  .erp-stats-grid-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .erp-stats-grid-2,
+  .erp-stats-grid-3,
+  .erp-stats-grid-4,
+  .erp-stats-grid-5,
+  .erp-stats-grid-6 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .erp-stats-grid-2,
+  .erp-stats-grid-3,
+  .erp-stats-grid-4,
+  .erp-stats-grid-5,
+  .erp-stats-grid-6 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Management Grid Widget */
+.widget-erp-management-grid .erp-management-grid {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+}
+
+.erp-management-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.erp-management-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.erp-management-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.erp-management-card {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.erp-management-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.erp-management-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: var(--mg-color-primary-light, #e3f2fd);
+  color: var(--mg-color-primary, #007bff);
+  margin-bottom: 0.75rem;
+}
+
+.erp-management-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: var(--mg-color-text-primary, #333);
+}
+
+.erp-management-description {
+  font-size: 0.875rem;
+  color: var(--mg-color-text-secondary, #666);
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 1200px) {
+  .erp-management-grid-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .erp-management-grid-2,
+  .erp-management-grid-3,
+  .erp-management-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .erp-management-grid-2,
+  .erp-management-grid-3,
+  .erp-management-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+

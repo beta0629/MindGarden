@@ -72,27 +72,61 @@
 
 ---
 
-### 2. 동적 대시보드 시스템 (우선순위: 중간)
+### 2. 메타 시스템 기반 자동화 (우선순위: 높음) 🔥
 
-#### 현재 상태
-- ✅ Phase 1-2 완료 (UI 구현 및 레거시 코드 정리)
-- ⏳ Phase 3 대기 중 (테스트 및 검증)
+#### 현재 상태 (2025-11-22)
+- ✅ Phase 1 완료: 대시보드 설정 JSON 스키마 문서화
+- ✅ Phase 1 완료: DynamicDashboard.js 확장 (dashboard_config 기반 위젯 동적 생성)
+- ✅ Phase 1 완료: 백엔드 dashboardConfig 검증 로직 추가
+- ✅ Phase 2 완료: business_rule_mappings 테이블 생성 (V38)
+- ✅ Phase 2 완료: BusinessRuleEngine 서비스 구현
+- ✅ Phase 2 완료: 기본 비즈니스 규칙 삽입 (V39)
+- ✅ Phase 2 완료: AdminRoleUtils 메타 시스템 어댑터 생성
+- 🚧 Phase 1 진행 중: 기존 MindGarden 컴포넌트 위젯화 (AdminDashboard, CommonDashboard, ClientDashboard)
+- ⏳ Phase 1 대기: 기존 섹션 컴포넌트 위젯화 (SummaryPanels, RecentActivities, WelcomeSection 등)
 
 #### 다음 단계
-1. **시스템 재부팅 후 테스트 실행**
-   - 테스트 체크리스트 사용
-   - 모든 시나리오 검증
-   - 에러 케이스 확인
 
-2. **성능 최적화 (Phase 4)**
-   - 대시보드 정보 캐싱
-   - 컴포넌트 지연 로딩
+**Phase 1: 대시보드 레이아웃 메타 시스템 확장 (진행 중)**
+1. **기존 컴포넌트 위젯화** (예상 시간: 1-2주)
+   - AdminDashboard.js → 위젯 기반으로 변환
+   - CommonDashboard.js → 위젯 기반으로 변환
+   - ClientDashboard.js → 위젯 기반으로 변환
+   - SummaryPanels → Statistics Widget
+   - RecentActivities → Table Widget
+   - WelcomeSection → Custom Widget
+   - QuickActions → Custom Widget
+
+2. **대시보드 관리 UI 개선** (예상 시간: 1주)
+   - 드래그 앤 드롭 레이아웃 편집기 (향후 구현)
+   - 위젯 추가/제거/설정 UI
+
+**Phase 2: 비즈니스 로직 메타화 (완료)**
+- ✅ business_rule_mappings 테이블 생성
+- ✅ BusinessRuleEngine 서비스 구현
+- ✅ 기본 비즈니스 규칙 삽입
+- ✅ AdminRoleUtils 어댑터 생성
+
+**Phase 3: 역할/권한 시스템 메타화 강화 (예정)**
+1. TenantRole metadata_json 활용 강화
+2. 하드코딩된 권한 체크를 RolePermission 기반으로 전환
+
+**Phase 4: 공통코드 시스템 메타화 (예정)**
+1. CodeGroupMetadata 확장
+2. 하드코딩된 매핑 제거
+
+**Phase 5: 동적 SQL 생성 (예정)**
+1. CriteriaBuilder 또는 QueryDSL 기반 동적 쿼리 생성
+2. 복잡한 필터링 시나리오에서 성능 개선
+3. 메모리 필터링 → DB 쿼리로 전환
 
 #### 참고 문서
+- `docs/mgsb/2025-11-22/META_SYSTEM_DASHBOARD_SCHEMA.md` ⭐
 - `docs/mgsb/DYNAMIC_DASHBOARD_NEXT_STEPS.md`
 - `docs/mgsb/DYNAMIC_DASHBOARD_TEST_CHECKLIST.md`
 - `docs/mgsb/DYNAMIC_DASHBOARD_DEVELOPER_GUIDE.md`
 - `docs/mgsb/DYNAMIC_DASHBOARD_ADMIN_GUIDE.md`
+- `docs/mgsb/TENANT_DASHBOARD_MANAGEMENT_SYSTEM.md`
 
 ---
 
@@ -124,13 +158,24 @@ Phase 5: ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 Phase 6: ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 ```
 
-### 동적 대시보드 시스템
+### 메타 시스템 기반 자동화 (2025-11-22 업데이트)
 ```
-Phase 1: ████████████████████ 100% ✅
-Phase 2: ████████████████████ 100% ✅
-Phase 3: ░░░░░░░░░░░░░░░░░░░░   0% ⏳ (시스템 재부팅 대기)
-Phase 4: ░░░░░░░░░░░░░░░░░░░░   0% ⏳
-Phase 5: ████████████████████ 100% ✅ (문서화 완료)
+Phase 1 (대시보드 레이아웃):
+  - JSON 스키마 문서화: ████████████████████ 100% ✅
+  - DynamicDashboard.js 확장: ████████████████████ 100% ✅
+  - 백엔드 검증 로직: ████████████████████ 100% ✅
+  - 기존 컴포넌트 위젯화: ░░░░░░░░░░░░░░░░░░░░   0% ⏳ (진행 예정)
+  - 드래그 앤 드롭 편집기: ░░░░░░░░░░░░░░░░░░░░   0% ⏳ (향후 구현)
+
+Phase 2 (비즈니스 로직 메타화):
+  - business_rule_mappings 테이블: ████████████████████ 100% ✅
+  - BusinessRuleEngine 구현: ████████████████████ 100% ✅
+  - 기본 규칙 삽입: ████████████████████ 100% ✅
+  - AdminRoleUtils 어댑터: ████████████████████ 100% ✅
+
+Phase 3 (역할/권한 메타화): ░░░░░░░░░░░░░░░░░░░░   0% ⏳
+Phase 4 (공통코드 메타화): ░░░░░░░░░░░░░░░░░░░░   0% ⏳
+Phase 5 (동적 SQL 생성): ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 ```
 
 ---
@@ -205,7 +250,8 @@ Phase 5: ████████████████████ 100% ✅ (
 - [공통코드 표준화 계획](./COMMON_CODE_STANDARDIZATION_PLAN.md)
 - [공통코드 사용 원칙](./COMMON_CODE_USAGE_PRINCIPLES.md)
 
-### 동적 대시보드 관련
+### 메타 시스템 및 동적 대시보드 관련
+- [메타 시스템 대시보드 스키마](./2025-11-22/META_SYSTEM_DASHBOARD_SCHEMA.md) ⭐ (2025-11-22)
 - [동적 대시보드 다음 단계](./DYNAMIC_DASHBOARD_NEXT_STEPS.md)
 - [동적 대시보드 테스트 체크리스트](./DYNAMIC_DASHBOARD_TEST_CHECKLIST.md)
 - [동적 대시보드 개발자 가이드](./DYNAMIC_DASHBOARD_DEVELOPER_GUIDE.md)
@@ -248,6 +294,6 @@ Phase 5: ████████████████████ 100% ✅ (
 
 ---
 
-**마지막 업데이트**: 2025-01-XX  
-**다음 리뷰 예정일**: 2025-01-XX (주간 회의)
+**마지막 업데이트**: 2025-11-22 (메타 시스템 도입 시작)  
+**다음 리뷰 예정일**: 2025-11-29 (주간 회의)
 

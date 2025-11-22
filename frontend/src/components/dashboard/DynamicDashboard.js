@@ -7,7 +7,7 @@
  * @since 2025-01-XX
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -15,6 +15,8 @@ import { getCurrentUserDashboard, getDashboardComponentName } from '../../utils/
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import notificationManager from '../../utils/notification';
+import DashboardGrid from '../layout/DashboardGrid';
+import { getWidgetComponent } from './widgets/WidgetRegistry';
 
 // 대시보드 컴포넌트 동적 import
 import CommonDashboard from './CommonDashboard';
@@ -199,14 +201,216 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     dashboardType: dashboard?.dashboardType,
     componentName: isAdmin ? 'AdminDashboard' : getDashboardComponentName(dashboard?.dashboardType || currentUser?.role || 'DEFAULT'),
     hasDashboard: !!dashboard,
+    hasDashboardConfig: !!dashboard?.dashboardConfig,
     user: currentUser
   });
 
+  // dashboardConfig 기반 위젯 렌더링
+  const dashboardConfig = useMemo(() => {
+    if (!dashboard?.dashboardConfig) {
+      return null;
+    }
+    
+    try {
+      return typeof dashboard.dashboardConfig === 'string' 
+        ? JSON.parse(dashboard.dashboardConfig)
+        : dashboard.dashboardConfig;
+    } catch (err) {
+      console.error('❌ dashboardConfig JSON 파싱 실패:', err);
+      return null;
+    }
+  }, [dashboard?.dashboardConfig]);
+
+  // dashboardConfig가 있으면 위젯 기반 렌더링, 없으면 기존 컴포넌트 렌더링
+  if (dashboardConfig && dashboardConfig.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0) {
+    // 업종 정보 추출 (dashboard 또는 user에서)
+    const businessType = dashboard?.businessType || 
+                        dashboard?.categoryCode || 
+                        currentUser?.tenant?.businessType || 
+                        currentUser?.tenant?.categoryCode ||
+                        null;
+    return renderWidgetBasedDashboard(dashboardConfig, currentUser, businessType);
+  }
+
+  // 기존 컴포넌트 기반 렌더링 (하위 호환성)
   return (
     <DashboardComponent 
       user={currentUser}
       dashboard={dashboard}
     />
+  );
+};
+
+/**
+ * 위젯 기반 대시보드 렌더링
+ * @param {Object} dashboardConfig - 대시보드 설정 JSON
+ * @param {Object} user - 사용자 정보
+ * @param {string} businessType - 업종 타입 (선택적)
+ */
+const renderWidgetBasedDashboard = (dashboardConfig, user, businessType = null) => {
+  const { layout, widgets, theme, refresh } = dashboardConfig;
+  
+  // 레이아웃 설정
+  const layoutType = layout?.type || 'grid';
+  const columns = layout?.columns || 3;
+  const gap = layout?.gap || 'md';
+  
+  // 위젯 필터링 (visibility 조건 확인)
+  const visibleWidgets = widgets.filter(widget => {
+    if (!widget.visibility) {
+      return true; // visibility 설정이 없으면 항상 표시
+    }
+    
+    // 역할 기반 필터링
+    if (widget.visibility.roles && widget.visibility.roles.length > 0) {
+      const userRole = user?.role || user?.currentTenantRole?.roleName;
+      if (!userRole || !widget.visibility.roles.includes(userRole)) {
+        return false;
+      }
+    }
+    
+    // 조건 기반 필터링 (향후 구현)
+    if (widget.visibility.conditions && widget.visibility.conditions.length > 0) {
+      // TODO: 조건 평가 로직 구현
+    }
+    
+    return true;
+  });
+  
+  // 위젯 정렬 (position 기반)
+  const sortedWidgets = [...visibleWidgets].sort((a, b) => {
+    const posA = a.position || { row: 0, col: 0 };
+    const posB = b.position || { row: 0, col: 0 };
+    
+    if (posA.row !== posB.row) {
+      return posA.row - posB.row;
+    }
+    return posA.col - posB.col;
+  });
+  
+  // 위젯 렌더링
+  const renderWidget = (widget) => {
+    // 업종 정보를 전달하여 특화 위젯 필터링
+    const WidgetComponent = getWidgetComponent(widget.type, businessType);
+    
+    if (!WidgetComponent) {
+      console.warn(`⚠️ 지원되지 않는 위젯 타입: ${widget.type}`);
+      return (
+        <div key={widget.id} className="widget-error">
+          <p>지원되지 않는 위젯 타입: {widget.type}</p>
+        </div>
+      );
+    }
+    
+    const widgetStyle = {};
+    if (widget.size) {
+      if (widget.size.width) widgetStyle.width = widget.size.width;
+      if (widget.size.height) widgetStyle.height = widget.size.height;
+      if (widget.size.minWidth) widgetStyle.minWidth = widget.size.minWidth;
+      if (widget.size.minHeight) widgetStyle.minHeight = widget.size.minHeight;
+      if (widget.size.maxWidth) widgetStyle.maxWidth = widget.size.maxWidth;
+      if (widget.size.maxHeight) widgetStyle.maxHeight = widget.size.maxHeight;
+    }
+    
+    // Grid 레이아웃의 경우 span 적용
+    const gridColumnSpan = layoutType === 'grid' && widget.position?.span 
+      ? `span ${widget.position.span}` 
+      : undefined;
+    
+    return (
+      <div 
+        key={widget.id} 
+        style={widgetStyle}
+        className={gridColumnSpan ? `grid-col-span-${widget.position.span}` : ''}
+      >
+        <WidgetComponent widget={widget} user={user} />
+      </div>
+    );
+  };
+  
+  // 레이아웃별 렌더링
+  const renderLayout = () => {
+    switch (layoutType) {
+      case 'grid':
+        return (
+          <DashboardGrid cols={columns} gap={gap}>
+            {sortedWidgets.map(renderWidget)}
+          </DashboardGrid>
+        );
+      
+      case 'list':
+        return (
+          <div className="dashboard-list" style={{ display: 'flex', flexDirection: 'column', gap: `var(--spacing-${gap})` }}>
+            {sortedWidgets.map(renderWidget)}
+          </div>
+        );
+      
+      case 'masonry':
+        // Masonry 레이아웃은 향후 구현
+        return (
+          <div className="dashboard-masonry" style={{ columnCount: columns, columnGap: `var(--spacing-${gap})` }}>
+            {sortedWidgets.map(renderWidget)}
+          </div>
+        );
+      
+      case 'custom':
+        const customCss = layout?.css || '';
+        return (
+          <div className={customCss}>
+            {sortedWidgets.map(renderWidget)}
+          </div>
+        );
+      
+      default:
+        return (
+          <DashboardGrid cols={columns} gap={gap}>
+            {sortedWidgets.map(renderWidget)}
+          </DashboardGrid>
+        );
+    }
+  };
+  
+  // 테마 적용
+  const themeStyle = {};
+  if (theme) {
+    if (theme.primaryColor) {
+      themeStyle['--primary-color'] = theme.primaryColor;
+    }
+    if (theme.secondaryColor) {
+      themeStyle['--secondary-color'] = theme.secondaryColor;
+    }
+    if (theme.fontSize) {
+      themeStyle['--font-size'] = theme.fontSize;
+    }
+  }
+  
+  // 자동 새로고침 설정
+  useEffect(() => {
+    if (refresh?.enabled && refresh?.interval) {
+      const interval = setInterval(() => {
+        // 위젯별 새로고침은 각 위젯 컴포넌트에서 처리
+        // 여기서는 전체 새로고침만 처리
+        window.location.reload();
+      }, refresh.interval);
+      
+      return () => clearInterval(interval);
+    }
+  }, [refresh]);
+  
+  return (
+    <SimpleLayout>
+      <div className="widget-based-dashboard" style={themeStyle}>
+        <div className="dashboard-header">
+          <h1>{dashboard?.dashboardName || '대시보드'}</h1>
+          {dashboard?.description && (
+            <p className="dashboard-description">{dashboard.description}</p>
+          )}
+        </div>
+        <div className="dashboard-content">
+          {renderLayout()}
+        </div>
+      </div>
+    </SimpleLayout>
   );
 };
 

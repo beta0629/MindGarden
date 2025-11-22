@@ -12,6 +12,9 @@ import com.coresolution.core.repository.TenantDashboardRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.TenantDashboardService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -93,6 +96,11 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                     throw new RuntimeException(DashboardConstants.ERROR_DASHBOARD_ALREADY_EXISTS);
                 });
         
+        // dashboardConfig 검증
+        if (request.getDashboardConfig() != null && !request.getDashboardConfig().trim().isEmpty()) {
+            validateDashboardConfig(request.getDashboardConfig());
+        }
+        
         // 대시보드 생성
         String dashboardId = UUID.randomUUID().toString();
         TenantDashboard dashboard = TenantDashboard.builder()
@@ -137,7 +145,13 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         if (request.getDashboardType() != null) dashboard.setDashboardType(request.getDashboardType());
         if (request.getIsActive() != null) dashboard.setIsActive(request.getIsActive());
         if (request.getDisplayOrder() != null) dashboard.setDisplayOrder(request.getDisplayOrder());
-        if (request.getDashboardConfig() != null) dashboard.setDashboardConfig(request.getDashboardConfig());
+        if (request.getDashboardConfig() != null) {
+            // dashboardConfig 검증
+            if (!request.getDashboardConfig().trim().isEmpty()) {
+                validateDashboardConfig(request.getDashboardConfig());
+            }
+            dashboard.setDashboardConfig(request.getDashboardConfig());
+        }
         
         // 역할 변경 시 중복 확인
         if (request.getTenantRoleId() != null && !request.getTenantRoleId().equals(dashboard.getTenantRoleId())) {
@@ -351,6 +365,100 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                 .displayOrder(dashboard.getDisplayOrder())
                 .dashboardConfig(dashboard.getDashboardConfig())
                 .build();
+    }
+    
+    /**
+     * dashboardConfig JSON 스키마 검증
+     * 
+     * @param dashboardConfig JSON 문자열
+     * @throws IllegalArgumentException 스키마 검증 실패 시
+     */
+    private void validateDashboardConfig(String dashboardConfig) {
+        if (dashboardConfig == null || dashboardConfig.trim().isEmpty()) {
+            return; // null 또는 빈 문자열은 허용 (기본 설정 사용)
+        }
+        
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode config = mapper.readTree(dashboardConfig);
+            
+            // 필수 필드 검증
+            if (!config.has("version")) {
+                throw new IllegalArgumentException("dashboardConfig에 version 필드가 없습니다.");
+            }
+            
+            if (!config.has("layout")) {
+                throw new IllegalArgumentException("dashboardConfig에 layout 필드가 없습니다.");
+            }
+            
+            JsonNode layout = config.get("layout");
+            if (!layout.has("type")) {
+                throw new IllegalArgumentException("dashboardConfig.layout에 type 필드가 없습니다.");
+            }
+            
+            String layoutType = layout.get("type").asText();
+            if (!isValidLayoutType(layoutType)) {
+                throw new IllegalArgumentException("지원되지 않는 layout.type: " + layoutType);
+            }
+            
+            // 위젯 검증
+            if (config.has("widgets") && config.get("widgets").isArray()) {
+                for (JsonNode widget : config.get("widgets")) {
+                    validateWidget(widget);
+                }
+            }
+            
+            log.debug("dashboardConfig 검증 완료");
+            
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("dashboardConfig JSON 파싱 실패: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 레이아웃 타입 검증
+     */
+    private boolean isValidLayoutType(String layoutType) {
+        return layoutType != null && (
+            "grid".equalsIgnoreCase(layoutType) ||
+            "list".equalsIgnoreCase(layoutType) ||
+            "masonry".equalsIgnoreCase(layoutType) ||
+            "custom".equalsIgnoreCase(layoutType)
+        );
+    }
+    
+    /**
+     * 위젯 검증
+     */
+    private void validateWidget(JsonNode widget) {
+        if (!widget.has("id")) {
+            throw new IllegalArgumentException("위젯에 id 필드가 없습니다.");
+        }
+        if (!widget.has("type")) {
+            throw new IllegalArgumentException("위젯에 type 필드가 없습니다.");
+        }
+        if (!widget.has("position")) {
+            throw new IllegalArgumentException("위젯에 position 필드가 없습니다.");
+        }
+        
+        JsonNode position = widget.get("position");
+        if (!position.has("row") || !position.has("col")) {
+            throw new IllegalArgumentException("위젯 position에 row 또는 col 필드가 없습니다.");
+        }
+        
+        // 타입 검증
+        int row = position.get("row").asInt();
+        int col = position.get("col").asInt();
+        if (row < 0 || col < 0) {
+            throw new IllegalArgumentException("위젯 position의 row와 col은 0 이상이어야 합니다.");
+        }
+        
+        if (position.has("span")) {
+            int span = position.get("span").asInt();
+            if (span < 1 || span > 12) {
+                throw new IllegalArgumentException("위젯 position의 span은 1-12 사이여야 합니다.");
+            }
+        }
     }
 }
 

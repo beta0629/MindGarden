@@ -6,6 +6,7 @@ import com.coresolution.core.dto.TenantDashboardResponse;
 import com.coresolution.core.service.TenantDashboardService;
 import com.coresolution.core.service.UserRoleQueryService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.core.context.TenantContextHolder;
@@ -131,6 +132,8 @@ public class TenantDashboardController extends BaseApiController {
     
     /**
      * 현재 사용자의 역할에 맞는 대시보드 조회
+     * 역할이나 대시보드가 없을 경우 404를 반환하되, 프론트엔드에서 조용히 처리할 수 있도록 함
+     * 관리자 역할이 UserRoleAssignment에 없을 경우 User의 role 필드를 확인하여 폴백 처리
      */
     @GetMapping("/current")
     public ResponseEntity<ApiResponse<TenantDashboardResponse>> getCurrentUserDashboard(HttpSession session) {
@@ -151,6 +154,16 @@ public class TenantDashboardController extends BaseApiController {
             userRoleQueryService.getPrimaryRole(currentUser, tenantId);
         
         if (primaryRole.isEmpty()) {
+            // UserRoleAssignment에 역할이 없는 경우, User의 role 필드를 확인
+            if (currentUser.getRole() != null && AdminRoleUtils.isAdmin(currentUser)) {
+                log.info("⚠️ UserRoleAssignment에 역할이 없지만 User.role이 관리자임: userId={}, role={}, tenantId={}", 
+                        currentUser.getId(), currentUser.getRole(), tenantId);
+                // 관리자인 경우 기본 관리자 대시보드를 찾거나 null 반환 (프론트엔드에서 레거시 라우팅으로 처리)
+                // 여기서는 404를 반환하여 프론트엔드에서 레거시 라우팅으로 폴백하도록 함
+                throw new EntityNotFoundException("활성 역할을 찾을 수 없습니다. 관리자 역할이 UserRoleAssignment에 등록되지 않았을 수 있습니다.");
+            }
+            log.warn("⚠️ 활성 역할을 찾을 수 없음: userId={}, tenantId={}, userRole={}", 
+                    currentUser.getId(), tenantId, currentUser.getRole());
             throw new EntityNotFoundException("활성 역할을 찾을 수 없습니다.");
         }
         
@@ -158,6 +171,8 @@ public class TenantDashboardController extends BaseApiController {
         TenantDashboardResponse dashboard = dashboardService.getDashboardByRole(tenantId, tenantRoleId);
         
         if (dashboard == null) {
+            log.warn("⚠️ 대시보드를 찾을 수 없음: tenantId={}, tenantRoleId={}", 
+                    tenantId, tenantRoleId);
             throw new EntityNotFoundException("대시보드를 찾을 수 없습니다.");
         }
         

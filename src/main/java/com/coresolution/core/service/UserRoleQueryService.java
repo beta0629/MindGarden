@@ -5,6 +5,7 @@ import com.coresolution.core.domain.UserRoleAssignment;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.constant.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class UserRoleQueryService {
     
     private final UserRoleAssignmentRepository assignmentRepository;
@@ -51,27 +51,87 @@ public class UserRoleQueryService {
     
     /**
      * 사용자의 테넌트별 주요 역할 조회 (가장 최근 할당된 역할)
+     * UserRoleAssignment가 없을 경우 User의 role 필드를 기반으로 TenantRole을 찾음
      * 
      * @param user 사용자
      * @param tenantId 테넌트 ID
      * @return 주요 역할 할당 (Optional)
      */
+    @Transactional(readOnly = true)
     public Optional<UserRoleAssignment> getPrimaryRole(User user, String tenantId) {
         List<UserRoleAssignment> roles = getActiveRoles(user, tenantId);
         
-        if (roles.isEmpty()) {
-            return Optional.empty();
+        if (!roles.isEmpty()) {
+            // 가장 최근 할당된 역할 반환
+            return roles.stream()
+                .sorted((a1, a2) -> {
+                    if (a1.getEffectiveFrom() == null && a2.getEffectiveFrom() == null) return 0;
+                    if (a1.getEffectiveFrom() == null) return 1;
+                    if (a2.getEffectiveFrom() == null) return -1;
+                    return a2.getEffectiveFrom().compareTo(a1.getEffectiveFrom());
+                })
+                .findFirst();
         }
         
-        // 가장 최근 할당된 역할 반환
-        return roles.stream()
-            .sorted((a1, a2) -> {
-                if (a1.getEffectiveFrom() == null && a2.getEffectiveFrom() == null) return 0;
-                if (a1.getEffectiveFrom() == null) return 1;
-                if (a2.getEffectiveFrom() == null) return -1;
-                return a2.getEffectiveFrom().compareTo(a1.getEffectiveFrom());
-            })
-            .findFirst();
+        // UserRoleAssignment가 없을 경우 User의 role 필드를 기반으로 TenantRole 찾기
+        if (user.getRole() != null) {
+            log.debug("UserRoleAssignment가 없음. User.role 기반으로 TenantRole 찾기: userId={}, role={}, tenantId={}", 
+                    user.getId(), user.getRole(), tenantId);
+            
+            // UserRole enum을 한글 역할명으로 매핑
+            String roleNameKo = mapUserRoleToRoleNameKo(user.getRole());
+            
+            // 해당 테넌트에서 역할명으로 TenantRole 찾기
+            Optional<TenantRole> tenantRole = tenantRoleRepository.findByTenantIdAndNameKo(tenantId, roleNameKo);
+            
+            if (tenantRole.isPresent()) {
+                log.info("✅ TenantRole 찾음: tenantId={}, roleNameKo={}, tenantRoleId={}", 
+                        tenantId, roleNameKo, tenantRole.get().getTenantRoleId());
+                // TenantRole을 찾았지만 UserRoleAssignment는 없으므로 Optional.empty() 반환
+                // (동적 생성은 별도 서비스에서 처리)
+            } else {
+                log.warn("⚠️ TenantRole을 찾을 수 없음: tenantId={}, roleNameKo={}", tenantId, roleNameKo);
+            }
+        }
+        
+        return Optional.empty();
+    }
+    
+    /**
+     * UserRole enum을 한글 역할명으로 매핑
+     * 
+     * @param userRole UserRole enum
+     * @return 한글 역할명
+     */
+    private String mapUserRoleToRoleNameKo(UserRole userRole) {
+        if (userRole == null) {
+            return null;
+        }
+        
+        switch (userRole) {
+            case ADMIN:
+                return "관리자";
+            case BRANCH_SUPER_ADMIN:
+                return "지점 수퍼 관리자";
+            case BRANCH_ADMIN:
+                return "지점 관리자";
+            case BRANCH_MANAGER:
+                return "지점장";
+            case HQ_ADMIN:
+                return "본사 관리자";
+            case SUPER_HQ_ADMIN:
+                return "본사 고급 관리자";
+            case HQ_MASTER:
+                return "본사 총관리자";
+            case HQ_SUPER_ADMIN:
+                return "본사 최고관리자";
+            case CONSULTANT:
+                return "상담사";
+            case CLIENT:
+                return "내담자";
+            default:
+                return "관리자"; // 기본값
+        }
     }
     
     /**

@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -119,6 +121,44 @@ public class GlobalExceptionHandler {
         );
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+    
+    /**
+     * BadCredentialsException 처리 (인증 실패)
+     * HTTP 401 Unauthorized 응답
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException e, HttpServletRequest request) {
+        log.warn("Bad credentials: path={}, message={}", request.getRequestURI(), e.getMessage());
+        
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage() != null ? e.getMessage() : "아이디 또는 비밀번호가 올바르지 않습니다.",
+            "BAD_CREDENTIALS",
+            HttpStatus.UNAUTHORIZED.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+    
+    /**
+     * AuthenticationException 처리 (기타 인증 오류)
+     * HTTP 401 Unauthorized 응답
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException e, HttpServletRequest request) {
+        log.warn("Authentication failed: path={}, message={}", request.getRequestURI(), e.getMessage());
+        
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage() != null ? e.getMessage() : "인증에 실패했습니다.",
+            "AUTHENTICATION_FAILED",
+            HttpStatus.UNAUTHORIZED.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
     
     /**

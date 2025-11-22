@@ -57,10 +57,6 @@ import PermissionWidget from './admin/PermissionWidget';
 import StatisticsGridWidget from './admin/StatisticsGridWidget';
 import ManagementGridWidget from './admin/ManagementGridWidget';
 
-// ERP 공통 위젯 (ERP 기능이 활성화된 테넌트에서 사용)
-import ErpStatsGridWidget from './erp/ErpStatsGridWidget';
-import ErpManagementGridWidget from './erp/ErpManagementGridWidget';
-
 // 학원 특화 위젯 (학원 업종에서만 사용)
 // import AcademyScheduleWidget from './academy/AcademyScheduleWidget';
 // import AcademyAttendanceWidget from './academy/AcademyAttendanceWidget';

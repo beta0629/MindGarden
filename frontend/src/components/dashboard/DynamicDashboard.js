@@ -229,7 +229,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
                         currentUser?.tenant?.businessType || 
                         currentUser?.tenant?.categoryCode ||
                         null;
-    return renderWidgetBasedDashboard(dashboardConfig, currentUser, businessType);
+    return <WidgetBasedDashboard dashboardConfig={dashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
   }
 
   // 기존 컴포넌트 기반 렌더링 (하위 호환성)
@@ -242,12 +242,14 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 };
 
 /**
- * 위젯 기반 대시보드 렌더링
- * @param {Object} dashboardConfig - 대시보드 설정 JSON
- * @param {Object} user - 사용자 정보
- * @param {string} businessType - 업종 타입 (선택적)
+ * 위젯 기반 대시보드 컴포넌트
+ * @param {Object} props
+ * @param {Object} props.dashboardConfig - 대시보드 설정 JSON
+ * @param {Object} props.dashboard - 대시보드 정보
+ * @param {Object} props.user - 사용자 정보
+ * @param {string} props.businessType - 업종 타입 (선택적)
  */
-const renderWidgetBasedDashboard = (dashboardConfig, user, businessType = null) => {
+const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType = null }) => {
   const { layout, widgets, theme, refresh } = dashboardConfig;
   
   // 레이아웃 설정

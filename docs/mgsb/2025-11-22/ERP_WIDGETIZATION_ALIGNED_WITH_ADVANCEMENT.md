@@ -509,3 +509,5 @@ const ErpFinancialDataWidget = ({ widget, user }) => {
 **마지막 업데이트**: 2025-11-22  
 **다음 리뷰 예정일**: Phase 1 완료 후
 
+
+

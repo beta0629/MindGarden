@@ -504,3 +504,5 @@
 - [위젯 아키텍처](./WIDGET_ARCHITECTURE.md)
 - [대시보드 설정 JSON 스키마](./META_SYSTEM_DASHBOARD_SCHEMA.md)
 
+
+

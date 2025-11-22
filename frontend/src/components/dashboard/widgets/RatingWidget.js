@@ -200,3 +200,5 @@ const RatingWidget = ({ widget, user }) => {
 
 export default RatingWidget;
 
+
+

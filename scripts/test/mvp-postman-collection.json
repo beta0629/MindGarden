@@ -1,0 +1,236 @@
+{
+  "info": {
+    "name": "MVP 온보딩 플로우 테스트",
+    "description": "1월 심사/발표를 위한 최소 기능 테스트",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "mvp-test"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "tenantId",
+      "value": "test-consultation-{{$timestamp}}",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "admin@consultation-{{$timestamp}}.com",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "test1234",
+      "type": "string"
+    },
+    {
+      "key": "requestId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. 온보딩 요청 생성",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200 || pm.response.code === 201) {",
+              "    const response = pm.response.json();",
+              "    if (response.data && response.data.id) {",
+              "        pm.collectionVariables.set('requestId', response.data.id);",
+              "        pm.test('온보딩 요청 생성 성공', function () {",
+              "            pm.expect(response.data.id).to.exist;",
+              "            pm.expect(response.data.status).to.eql('PENDING');",
+              "        });",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tenantId\": \"{{tenantId}}\",\n  \"tenantName\": \"테스트 상담소 {{$timestamp}}\",\n  \"requestedBy\": \"{{email}}\",\n  \"businessType\": \"CONSULTATION\",\n  \"checklistJson\": \"{\\\"adminPassword\\\": \\\"{{password}}\\\"}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/onboarding/requests",
+          "host": ["{{baseUrl}}"],
+          "path": ["onboarding", "requests"]
+        }
+      }
+    },
+    {
+      "name": "2. 온보딩 승인",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('온보딩 승인 성공', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.success).to.be.true;",
+              "    pm.expect(response.data.status).to.eql('APPROVED');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"APPROVED\",\n  \"decidedBy\": \"system-admin\",\n  \"decisionNote\": \"MVP 테스트 승인\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/onboarding/requests/{{requestId}}/decide",
+          "host": ["{{baseUrl}}"],
+          "path": ["onboarding", "requests", "{{requestId}}", "decide"]
+        }
+      }
+    },
+    {
+      "name": "3. 테넌트 확인",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('테넌트 확인 성공', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.data.status).to.eql('ACTIVE');",
+              "    pm.expect(response.data.settingsJson).to.exist;",
+              "    ",
+              "    const features = response.data.settingsJson.features;",
+              "    if (features) {",
+              "        pm.expect(features.consultation).to.exist;",
+              "        pm.expect(features.academy).to.exist;",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/tenants/{{tenantId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["tenants", "{{tenantId}}"]
+        }
+      }
+    },
+    {
+      "name": "4. 관리자 계정 로그인",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    if (response.data && response.data.token) {",
+              "        pm.collectionVariables.set('token', response.data.token);",
+              "        pm.test('관리자 로그인 성공', function () {",
+              "            pm.expect(response.data.token).to.exist;",
+              "            pm.expect(response.data.user.role).to.eql('ADMIN');",
+              "        });",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "5. 대시보드 조회",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('대시보드 조회 성공', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.data).to.be.an('array');",
+              "    pm.expect(response.data.length).to.be.greaterThan(0);",
+              "    ",
+              "    if (response.data.length > 0) {",
+              "        const dashboard = response.data[0];",
+              "        pm.expect(dashboard.dashboardConfig).to.exist;",
+              "        pm.expect(dashboard.dashboardConfig.widgets).to.be.an('array');",
+              "        pm.expect(dashboard.dashboardConfig.widgets.length).to.be.greaterThanOrEqual(3);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/dashboards",
+          "host": ["{{baseUrl}}"],
+          "path": ["dashboards"]
+        }
+      }
+    }
+  ]
+}
+

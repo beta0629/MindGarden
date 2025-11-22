@@ -186,3 +186,5 @@ const ActivityListWidget = ({ widget, user }) => {
 
 export default ActivityListWidget;
 
+
+

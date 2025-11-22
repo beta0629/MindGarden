@@ -153,3 +153,5 @@ const HealingCardWidget = ({ widget, user }) => {
 
 export default HealingCardWidget;
 
+
+

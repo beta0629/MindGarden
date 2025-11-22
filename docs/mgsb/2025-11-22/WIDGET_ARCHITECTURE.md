@@ -325,3 +325,5 @@ export const getWidgetComponent = (widgetType, businessType = null) => {
 - [MindGarden 재사용성 검토](../2025-11-21/MINDGARDEN_REUSABILITY_REVIEW.md)
 - [메타 시스템 도입 계획](../MASTER_TODO_AND_IMPROVEMENTS.md)
 
+
+

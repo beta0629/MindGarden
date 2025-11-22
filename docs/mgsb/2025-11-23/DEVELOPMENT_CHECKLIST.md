@@ -379,3 +379,5 @@ SELECT * FROM common_codes WHERE code_group IN ('RISK_LEVEL', 'ONBOARDING_STATUS
 **마지막 업데이트**: 2025-11-23  
 **다음 리뷰 예정일**: 2025-11-30 (주간 회의)
 
+
+

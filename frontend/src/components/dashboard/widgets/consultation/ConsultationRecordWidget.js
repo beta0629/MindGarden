@@ -156,3 +156,5 @@ const ConsultationRecordWidget = ({ widget, user }) => {
 
 export default ConsultationRecordWidget;
 
+
+

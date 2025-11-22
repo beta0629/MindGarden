@@ -134,3 +134,5 @@ INSERT INTO business_rule_mappings (
     '주문 상태 전이: PENDING → CONFIRMED (요식업)'
 );
 
+
+

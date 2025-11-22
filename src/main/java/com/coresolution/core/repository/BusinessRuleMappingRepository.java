@@ -41,3 +41,5 @@ public interface BusinessRuleMappingRepository extends JpaRepository<BusinessRul
         String tenantId);
 }
 
+
+

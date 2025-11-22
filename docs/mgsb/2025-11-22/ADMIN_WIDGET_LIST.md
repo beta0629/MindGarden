@@ -311,3 +311,5 @@ COMMON_WIDGETS = {
 - [위젯 사용 예시](./WIDGET_USAGE_EXAMPLES.md)
 - [대시보드 설정 JSON 스키마](./META_SYSTEM_DASHBOARD_SCHEMA.md)
 
+
+

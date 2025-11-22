@@ -303,3 +303,5 @@ const ConsultationSummaryWidget = ({ widget, user }) => {
 
 export default ConsultationSummaryWidget;
 
+
+

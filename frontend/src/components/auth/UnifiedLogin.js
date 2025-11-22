@@ -223,44 +223,13 @@ const UnifiedLogin = () => {
       // ApiResponse 래퍼 처리: result.data 또는 result 직접 사용
       const loginData = result.data || result;
       
-      if (result.success && loginData.user) {
-        // sessionManager에 사용자 정보 설정 (세션 기반이므로 토큰 없음)
-        sessionManager.setUser(loginData.user, {
-          sessionId: loginData.sessionId
-        });
-        
-        showTooltip('로그인에 성공했습니다.', 'success');
-        
-        // 백엔드에서 반환한 멀티 테넌트 정보 확인
-        if (loginData.isMultiTenant && loginData.requiresTenantSelection && loginData.accessibleTenants) {
-          // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
-          console.log('🔄 멀티 테넌트 사용자 감지:', loginData.accessibleTenants);
-          setAccessibleTenants(loginData.accessibleTenants);
-          setIsMultiTenant(true);
-          setShowTenantSelection(true);
-          setIsLoading(false);
-          return;
-        }
-        
-        // 단일 테넌트 사용자: redirect 파라미터 확인 후 리다이렉트
-        const searchParams = new URLSearchParams(location.search);
-        const redirectPath = searchParams.get('redirect');
-        
-        if (redirectPath) {
-          // redirect 파라미터가 있으면 해당 경로로 이동
-          navigate(redirectPath, { replace: true });
-        } else {
-          // redirect 파라미터가 없으면 동적 대시보드로 이동
-        await new Promise(resolve => setTimeout(resolve, 300));
-        const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-        await redirectToDynamicDashboard(loginData, navigate);
-        }
-      } else if (loginData.requiresConfirmation || result.data?.requiresConfirmation) {
+      // 중복 로그인 확인 요청 체크 (성공 체크보다 먼저)
+      if (loginData.requiresConfirmation || result.data?.requiresConfirmation || result.requiresConfirmation) {
         // 중복 로그인 확인 요청
         setIsLoading(false);
         const modalData = {
           isOpen: true,
-          message: (result.data?.message || result.message) || '다른 기기에서 로그인되어 있습니다. 계속하시겠습니까?',
+          message: (result.data?.message || result.message || loginData.message) || '다른 기기에서 로그인되어 있습니다. 계속하시겠습니까?',
           onConfirm: async () => {
             try {
               const confirmResult = await csrfTokenManager.post('/api/auth/confirm-duplicate-login', {
@@ -313,6 +282,41 @@ const UnifiedLogin = () => {
           }
         };
         setDuplicateLoginModal(modalData);
+        return;
+      }
+      
+      if (result.success && loginData.user) {
+        // sessionManager에 사용자 정보 설정 (세션 기반이므로 토큰 없음)
+        sessionManager.setUser(loginData.user, {
+          sessionId: loginData.sessionId
+        });
+        
+        showTooltip('로그인에 성공했습니다.', 'success');
+        
+        // 백엔드에서 반환한 멀티 테넌트 정보 확인
+        if (loginData.isMultiTenant && loginData.requiresTenantSelection && loginData.accessibleTenants) {
+          // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
+          console.log('🔄 멀티 테넌트 사용자 감지:', loginData.accessibleTenants);
+          setAccessibleTenants(loginData.accessibleTenants);
+          setIsMultiTenant(true);
+          setShowTenantSelection(true);
+          setIsLoading(false);
+          return;
+        }
+        
+        // 단일 테넌트 사용자: redirect 파라미터 확인 후 리다이렉트
+        const searchParams = new URLSearchParams(location.search);
+        const redirectPath = searchParams.get('redirect');
+        
+        if (redirectPath) {
+          // redirect 파라미터가 있으면 해당 경로로 이동
+          navigate(redirectPath, { replace: true });
+        } else {
+          // redirect 파라미터가 없으면 동적 대시보드로 이동
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+        await redirectToDynamicDashboard(loginData, navigate);
+        }
       } else {
         console.log('❌ 로그인 실패:', result.message);
         setIsLoading(false);

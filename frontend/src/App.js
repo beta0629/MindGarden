@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
 import { initializeDynamicThemeSystem } from './utils/designSystemHelper';
@@ -13,10 +13,7 @@ import OAuth2Callback from './components/auth/OAuth2Callback';
 import BranchLogin from './components/auth/BranchLogin';
 import BranchSpecificLogin from './components/auth/BranchSpecificLogin';
 import HeadquartersLogin from './components/auth/HeadquartersLogin';
-import CommonDashboard from './components/dashboard/CommonDashboard';
-import ClientDashboard from './components/client/ClientDashboard';
-import AdminDashboard from './components/admin/AdminDashboard';
-import HQDashboard from './components/hq/HQDashboard';
+// 대시보드 컴포넌트는 DynamicDashboard에서 동적으로 로드됨
 import MyPage from './components/mypage/MyPage';
 import ConsultantSchedule from './components/consultant/ConsultantSchedule';
 import ConsultationRecordScreen from './components/consultant/ConsultationRecordScreen';
@@ -39,9 +36,9 @@ import MappingManagement from './components/admin/MappingManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';
 import StatisticsDashboard from './components/admin/StatisticsDashboard';
-import ScheduleList from './components/common/ScheduleList';
+// ScheduleList는 현재 사용되지 않음
 import ComingSoon from './components/common/ComingSoon';
-import PaymentManagement from './components/super-admin/PaymentManagement';
+// PaymentManagement는 현재 사용되지 않음
 import MindGardenDesignSample from './pages/MindGardenDesignSample';
 import PremiumDesignSample from './pages/PremiumDesignSample';
 import AdvancedDesignSample from './pages/AdvancedDesignSample';
@@ -55,7 +52,7 @@ import DashboardManagement from './components/admin/DashboardManagement';
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
-import IntegrationTest from './components/test/IntegrationTest';
+// IntegrationTest는 현재 사용되지 않음
 import AccountManagement from './components/admin/AccountManagement';
 import UserManagement from './components/admin/UserManagement';
 import PermissionManagement from './components/admin/PermissionManagement';
@@ -125,6 +122,7 @@ function QueryParamHandler({ children, onLoginSuccess }) {
       // URL에서 쿼리 파라미터 제거
       const cleanUrl = location.pathname;
       if (window.history && window.history.replaceState) {
+        // eslint-disable-next-line no-restricted-globals
         window.history.replaceState({}, document.title, cleanUrl);
       }
       
@@ -143,6 +141,7 @@ function AppContent() {
   const { user, sessionInfo, isLoading, checkSession, logout, branchMappingModal, setBranchMappingModal, handleBranchMappingSuccess } = useSession();
   
   // 공개 경로 정의 (인증 없이 접근 가능)
+  // eslint-disable-next-line no-unused-vars
   const publicPaths = [
     '/login',
     '/register', 
@@ -173,7 +172,8 @@ function AppContent() {
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
   
-  // 중복 로그인 알림 상태
+  // 중복 로그인 알림 상태 (향후 사용 예정)
+  // eslint-disable-next-line no-unused-vars
   const [showDuplicateLoginAlert, setShowDuplicateLoginAlert] = React.useState(false);
 
   // 개발 환경에서만 로그 출력 (무한루프 방지를 위해 임시 비활성화)
@@ -237,6 +237,7 @@ function AppContent() {
 
   // 중복 로그인 이벤트 리스너
   useEffect(() => {
+    // eslint-disable-next-line no-unused-vars
     const handleDuplicateLoginEvent = (event) => {
       
       // UnifiedNotification을 통해 중복 로그인 알림 표시
@@ -271,18 +272,21 @@ function AppContent() {
     };
   }, []);
 
-  // 중복 로그인 알림 핸들러
+  // 중복 로그인 알림 핸들러 (향후 사용 예정)
+  // eslint-disable-next-line no-unused-vars
   const handleDuplicateLoginConfirm = useCallback(() => {
     setShowDuplicateLoginAlert(false);
     duplicateLoginManager.forceLogout();
   }, []);
 
+  // eslint-disable-next-line no-unused-vars
   const handleDuplicateLoginCancel = useCallback(() => {
     setShowDuplicateLoginAlert(false);
     // 취소 시에도 강제 로그아웃 (보안상 필요)
     duplicateLoginManager.forceLogout();
   }, []);
 
+  // eslint-disable-next-line no-unused-vars
   const handleLogout = useCallback(() => {
     logout();
   }, [logout]);
@@ -291,7 +295,7 @@ function AppContent() {
     // 세션 재확인 전에 잠시 대기 (백엔드 세션 설정 완료 대기)
     setTimeout(() => {
       checkSession();
-    }, 1000); // 1초 대기
+    }, 1000); // eslint-disable-line no-magic-numbers
   }, []); // checkSession 의존성 제거 (무한루프 방지)
 
   if (isLoading) {

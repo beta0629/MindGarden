@@ -73,17 +73,19 @@ class DuplicateLoginManager {
             this.isChecking = true;
             this.lastCheckTime = new Date();
 
+            // ajax.get은 ApiResponse 래퍼에서 data를 추출해서 반환
+            // 따라서 response는 { hasDuplicateLogin: boolean, message: string } 형태
             const response = await ajax.get('/api/auth/check-duplicate-login');
             
-            if (response && response.success) {
-                if (response.hasDuplicateLogin) {
-                    console.warn('⚠️ 중복 로그인 감지됨');
+            if (response && typeof response === 'object') {
+                if (response.hasDuplicateLogin === true) {
+                    console.warn('⚠️ 중복 로그인 감지됨:', response.message);
                     this.handleDuplicateLogin();
                 } else {
                     console.debug('✅ 중복 로그인 없음');
                 }
             } else {
-                console.warn('중복 로그인 체크 실패:', response.message);
+                console.warn('중복 로그인 체크 실패: 응답 형식 오류', response);
                 // 체크 실패 시 다음 체크까지 대기 시간을 늘림 (서버 부하 방지)
                 if (this.checkInterval) {
                     clearInterval(this.checkInterval);

@@ -1,36 +1,30 @@
-name: 🚀 CoreSolution 백엔드 개발 서버 배포
+name: 🚀 Onboarding 개발 서버 배포
 
 on:
   push:
     branches: [ develop ]
     paths:
-      # 코어솔루션 관련 Java 코드 (온보딩 제외)
-      - 'src/main/java/com/coresolution/core/domain/**'
-      - '!src/main/java/com/coresolution/core/domain/onboarding/**'
-      - 'src/main/java/com/coresolution/core/repository/**'
-      - '!src/main/java/com/coresolution/core/repository/onboarding/**'
-      - 'src/main/java/com/coresolution/core/service/**'
-      - '!src/main/java/com/coresolution/core/service/Onboarding*.java'
-      - '!src/main/java/com/coresolution/core/service/impl/Onboarding*.java'
-      - 'src/main/java/com/coresolution/core/controller/**'
-      - '!src/main/java/com/coresolution/core/controller/Onboarding*.java'
-      - 'src/main/java/com/coresolution/core/controller/dto/**'
-      - '!src/main/java/com/coresolution/core/controller/dto/Onboarding*.java'
-      - 'src/main/java/com/coresolution/core/dto/**'
-      - 'src/main/java/com/coresolution/core/security/**'
-      - 'src/main/java/com/coresolution/core/context/**'
-      - 'src/main/java/com/coresolution/core/constant/**'
-      - 'src/main/java/com/coresolution/core/config/**'
-      # 기타 백엔드 코드
-      - 'src/main/java/com/coresolution/consultation/**'
-      - 'pom.xml'
-      - '.github/workflows/deploy-backend-dev.yml'
+      # 온보딩 관련 Java 코드
+      - 'src/main/java/com/coresolution/core/service/Onboarding*.java'
+      - 'src/main/java/com/coresolution/core/service/impl/Onboarding*.java'
+      - 'src/main/java/com/coresolution/core/domain/onboarding/**'
+      - 'src/main/java/com/coresolution/core/repository/onboarding/**'
+      - 'src/main/java/com/coresolution/core/controller/Onboarding*.java'
+      - 'src/main/java/com/coresolution/core/controller/dto/Onboarding*.java'
+      # 온보딩 관련 마이그레이션
+      - 'src/main/resources/db/migration/V*__*.sql'
+      # 온보딩 관련 테스트
+      - 'src/test/java/com/coresolution/core/integration/MvpOnboardingFlowIntegrationTest.java'
+      - 'src/test/java/com/coresolution/core/service/OnboardingServiceTest.java'
+      - 'src/test/java/com/coresolution/core/service/impl/OnboardingApprovalServiceIntegrationTest.java'
+      # 워크플로우 파일
+      - '.github/workflows/deploy-onboarding-dev.yml'
   workflow_dispatch:
     # 수동 실행 가능
 
 jobs:
-  deploy-backend:
-    name: 🏗️ 코어솔루션 백엔드 빌드 및 배포
+  deploy-onboarding:
+    name: 🏗️ 온보딩 백엔드 빌드 및 배포
     runs-on: ubuntu-latest
     
     steps:

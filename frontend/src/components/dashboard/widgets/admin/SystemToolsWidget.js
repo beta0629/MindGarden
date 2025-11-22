@@ -10,7 +10,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Widget.css';
+import '../Widget.css';
 
 const SystemToolsWidget = ({ widget, user }) => {
   const navigate = useNavigate();

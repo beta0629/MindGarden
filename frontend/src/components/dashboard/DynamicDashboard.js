@@ -90,18 +90,6 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
         }
       }
 
-      // 관리자 역할인 경우 기존 관리자 대시보드로 리다이렉트 (동적 대시보드 조회 없이)
-      const userRole = userWithTenant.role;
-      const adminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'];
-      if (userRole && adminRoles.includes(userRole)) {
-        console.log('🎯 관리자 역할 감지, 기존 관리자 대시보드로 리다이렉트:', userRole);
-        const { getLegacyDashboardPath } = await import('../../utils/dashboardUtils');
-        const legacyPath = getLegacyDashboardPath(userRole);
-        navigate(legacyPath, { replace: true });
-        setIsLoading(false);
-        return;
-      }
-
       const tenantId = userWithTenant.tenantId;
       const tenantRoleId = userWithTenant.currentTenantRoleId || 
                           userWithTenant.tenantRole?.tenantRoleId ||

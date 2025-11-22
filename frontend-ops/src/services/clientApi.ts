@@ -60,10 +60,27 @@ export async function clientApiFetch<T>(
       throw error;
     }
     
-    // 401 Unauthorized 처리
+    // 401 Unauthorized 처리 - 로그인 페이지로 리다이렉트
     if (response.status === 401) {
-      const errorMessage = errorData.message || body.message || "인증이 필요합니다.";
+      const errorMessage = errorData.message || body.message || "인증이 필요합니다. 로그인해주세요.";
       notificationManager.error(errorMessage);
+      
+      // 쿠키 삭제
+      if (typeof document !== "undefined") {
+        document.cookie = "ops_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = "ops_actor_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = "ops_actor_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      }
+      
+      // 로그인 페이지로 리다이렉트
+      if (typeof window !== "undefined") {
+        const currentPath = window.location.pathname;
+        const loginUrl = currentPath !== "/auth/login" 
+          ? `/auth/login?redirect=${encodeURIComponent(currentPath)}`
+          : "/auth/login";
+        window.location.href = loginUrl;
+      }
+      
       const error = new Error(errorMessage);
       (error as any).status = 401;
       (error as any).body = body;

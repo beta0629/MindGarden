@@ -23,6 +23,10 @@ import com.coresolution.core.service.OnboardingApprovalService;
 import com.coresolution.core.service.OnboardingService;
 import com.coresolution.core.service.TenantDashboardService;
 import com.coresolution.core.service.TenantIdGenerator;
+import com.coresolution.core.service.UserRoleAssignmentService;
+import com.coresolution.core.dto.UserRoleAssignmentRequest;
+import com.coresolution.core.repository.TenantRoleRepository;
+import com.coresolution.core.domain.TenantRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,6 +65,8 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
     private final CommonCodeService commonCodeService;
+    private final UserRoleAssignmentService userRoleAssignmentService;
+    private final TenantRoleRepository tenantRoleRepository;
     
     @Override
     @Transactional(readOnly = true)
@@ -566,6 +572,15 @@ public class OnboardingServiceImpl implements OnboardingService {
             
             log.info("테넌트 관리자 계정 생성 완료: tenantId={}, email={}, userId={}", 
                 tenantId, requestedBy, adminUser.getId());
+            
+            // 관리자 역할 할당 (UserRoleAssignment 생성)
+            try {
+                assignAdminRoleToUser(adminUser, tenantId, request.getTenantName());
+            } catch (Exception e) {
+                log.error("관리자 역할 할당 실패: userId={}, tenantId={}, error={}", 
+                    adminUser.getId(), tenantId, e.getMessage(), e);
+                // 역할 할당 실패는 계정 생성을 중단하지 않음 (경고만)
+            }
                 
         } catch (JsonProcessingException e) {
             log.error("checklistJson 파싱 실패: requestId={}, error={}", 
@@ -575,6 +590,51 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.error("테넌트 관리자 계정 생성 중 오류 발생: requestId={}, tenantId={}, error={}", 
                 request.getId(), tenantId, e.getMessage(), e);
             throw e;
+        }
+    }
+    
+    /**
+     * 관리자 사용자에게 관리자 역할 할당
+     * 
+     * @param adminUser 관리자 사용자
+     * @param tenantId 테넌트 ID
+     * @param tenantName 테넌트 이름
+     */
+    private void assignAdminRoleToUser(User adminUser, String tenantId, String tenantName) {
+        log.info("관리자 역할 할당 시작: userId={}, tenantId={}", adminUser.getId(), tenantId);
+        
+        // "관리자" TenantRole 찾기
+        Optional<TenantRole> adminRole = tenantRoleRepository.findByTenantIdAndNameKo(tenantId, "관리자");
+        
+        if (adminRole.isEmpty()) {
+            log.warn("관리자 TenantRole을 찾을 수 없음: tenantId={}, nameKo=관리자", tenantId);
+            log.warn("역할 템플릿이 아직 적용되지 않았을 수 있습니다. 나중에 수동으로 역할을 할당해주세요.");
+            return;
+        }
+        
+        TenantRole role = adminRole.get();
+        log.info("관리자 TenantRole 찾음: tenantRoleId={}, nameKo={}", role.getTenantRoleId(), role.getNameKo());
+        
+        // UserRoleAssignment 생성
+        UserRoleAssignmentRequest assignmentRequest = UserRoleAssignmentRequest.builder()
+                .tenantId(tenantId)
+                .tenantRoleId(role.getTenantRoleId())
+                .branchId(null) // 전체 브랜치
+                .effectiveFrom(java.time.LocalDate.now())
+                .effectiveTo(null) // 무기한
+                .assignmentReason("온보딩 시 자동 생성된 관리자 계정")
+                .build();
+        
+        try {
+            userRoleAssignmentService.assignRole(adminUser.getId(), assignmentRequest, "system");
+            log.info("관리자 역할 할당 완료: userId={}, tenantRoleId={}", adminUser.getId(), role.getTenantRoleId());
+        } catch (RuntimeException e) {
+            // 이미 할당된 경우 무시
+            if (e.getMessage() != null && e.getMessage().contains("이미 할당된 역할")) {
+                log.info("관리자 역할이 이미 할당됨: userId={}, tenantRoleId={}", adminUser.getId(), role.getTenantRoleId());
+            } else {
+                throw e;
+            }
         }
     }
     

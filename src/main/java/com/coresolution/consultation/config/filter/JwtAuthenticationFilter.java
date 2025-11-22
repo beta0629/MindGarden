@@ -42,6 +42,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         
+        String requestPath = request.getRequestURI();
+        
+        // Ops Portal API 요청인 경우 상세 로깅
+        boolean isOpsApi = requestPath.startsWith("/api/v1/ops/");
+        
         try {
             // Authorization 헤더에서 JWT 토큰 추출
             String authHeader = request.getHeader("Authorization");
@@ -49,59 +54,89 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 token = authHeader.substring(7);
+                if (isOpsApi) {
+                    log.debug("JWT 토큰 발견: path={}, tokenLength={}", requestPath, token.length());
+                }
+            } else {
+                if (isOpsApi) {
+                    log.debug("JWT 토큰 없음: path={}, Authorization header={}", requestPath, authHeader);
+                }
             }
             
             // 토큰이 있고 유효한 경우
-            if (token != null && jwtService.isTokenValid(token)) {
-                String username = jwtService.extractUsername(token);
+            if (token != null) {
+                boolean isValid = jwtService.isTokenValid(token);
+                if (isOpsApi) {
+                    log.debug("JWT 토큰 유효성 검사: path={}, isValid={}", requestPath, isValid);
+                }
                 
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    // 데이터베이스에서 사용자 정보 동적 조회 (SSO 로그인 지원)
-                    User user = userService.findByEmail(username).orElse(null);
+                if (isValid) {
+                    String username = jwtService.extractUsername(token);
                     
-                    Collection<GrantedAuthority> authorities;
-                    if (user != null) {
-                        // 데이터베이스에서 조회한 사용자 정보 기반으로 권한 부여
-                        authorities = createAuthoritiesFromUser(user);
-                        log.debug("JWT 인증 성공 (DB 조회): username={}, userRole={}, authorities={}", 
-                            username, user.getRole(), authorities);
+                    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                        // 데이터베이스에서 사용자 정보 동적 조회 (SSO 로그인 지원)
+                        User user = userService.findByEmail(username).orElse(null);
+                        
+                        Collection<GrantedAuthority> authorities;
+                        if (user != null) {
+                            // 데이터베이스에서 조회한 사용자 정보 기반으로 권한 부여
+                            authorities = createAuthoritiesFromUser(user);
+                            log.info("JWT 인증 성공 (DB 조회): path={}, username={}, userRole={}, authorities={}", 
+                                requestPath, username, user.getRole(), authorities);
+                        } else {
+                            // 사용자가 데이터베이스에 없는 경우 (Ops Portal 전용 계정 등)
+                            // JWT 토큰에서 actorRole 추출하여 권한 부여
+                            String actorRole = jwtService.extractActorRole(token);
+                            authorities = createAuthoritiesFromActorRole(username, actorRole);
+                            log.info("JWT 인증 성공 (토큰 기반): path={}, username={}, actorRole={}, authorities={}", 
+                                requestPath, username, actorRole, authorities);
+                        }
+                        
+                        // username을 principal로 사용
+                        UsernamePasswordAuthenticationToken authentication = 
+                            new UsernamePasswordAuthenticationToken(username, null, authorities);
+                        
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        log.info("Spring Security 컨텍스트에 인증 정보 설정 완료: path={}, username={}, authorities={}", 
+                            requestPath, username, authorities);
+                        
+                        // Phase 3: JWT 토큰에서 tenantId, branchId 추출하여 TenantContextHolder 설정
+                        try {
+                            String tenantId = jwtService.extractTenantId(token);
+                            Long branchId = jwtService.extractBranchId(token);
+                            
+                            if (tenantId != null && !tenantId.isEmpty()) {
+                                TenantContextHolder.setTenantId(tenantId);
+                                log.debug("Tenant context set from JWT token: {}", tenantId);
+                            }
+                            
+                            if (branchId != null) {
+                                TenantContextHolder.setBranchId(branchId.toString());
+                                log.debug("Branch context set from JWT token: {}", branchId);
+                            }
+                        } catch (Exception e) {
+                            log.warn("JWT 토큰에서 테넌트 정보 추출 실패: {}", e.getMessage());
+                            // 테넌트 정보 추출 실패해도 인증은 계속 진행
+                        }
                     } else {
-                        // 사용자가 데이터베이스에 없는 경우 (Ops Portal 전용 계정 등)
-                        // JWT 토큰에서 actorRole 추출하여 권한 부여
-                        String actorRole = jwtService.extractActorRole(token);
-                        authorities = createAuthoritiesFromActorRole(username, actorRole);
-                        log.info("JWT 인증 성공 (토큰 기반): username={}, actorRole={}, authorities={}", 
-                            username, actorRole, authorities);
-                    }
-                    
-                    // username을 principal로 사용
-                    UsernamePasswordAuthenticationToken authentication = 
-                        new UsernamePasswordAuthenticationToken(username, null, authorities);
-                    
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    
-                    // Phase 3: JWT 토큰에서 tenantId, branchId 추출하여 TenantContextHolder 설정
-                    try {
-                        String tenantId = jwtService.extractTenantId(token);
-                        Long branchId = jwtService.extractBranchId(token);
-                        
-                        if (tenantId != null && !tenantId.isEmpty()) {
-                            TenantContextHolder.setTenantId(tenantId);
-                            log.debug("Tenant context set from JWT token: {}", tenantId);
+                        if (isOpsApi) {
+                            log.debug("JWT 인증 스킵: path={}, username={}, alreadyAuthenticated={}", 
+                                requestPath, username, SecurityContextHolder.getContext().getAuthentication() != null);
                         }
-                        
-                        if (branchId != null) {
-                            TenantContextHolder.setBranchId(branchId.toString());
-                            log.debug("Branch context set from JWT token: {}", branchId);
-                        }
-                    } catch (Exception e) {
-                        log.warn("JWT 토큰에서 테넌트 정보 추출 실패: {}", e.getMessage());
-                        // 테넌트 정보 추출 실패해도 인증은 계속 진행
                     }
+                } else {
+                    if (isOpsApi) {
+                        log.warn("JWT 토큰이 유효하지 않음: path={}", requestPath);
+                    }
+                }
+            } else {
+                if (isOpsApi && !requestPath.startsWith("/api/v1/ops/auth/login") && 
+                    !requestPath.startsWith("/api/v1/ops/plans/")) {
+                    log.debug("JWT 토큰 없음 (인증 필요 경로): path={}", requestPath);
                 }
             }
         } catch (Exception e) {
-            log.error("JWT 인증 처리 중 오류 발생: {}", e.getMessage(), e);
+            log.error("JWT 인증 처리 중 오류 발생: path={}, error={}", requestPath, e.getMessage(), e);
         } finally {
             // 요청 종료 시 TenantContext 정리 (메모리 누수 방지)
             // 주의: TenantContextFilter에서도 정리하므로 중복 정리는 문제 없음

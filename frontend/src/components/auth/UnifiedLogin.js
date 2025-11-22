@@ -55,6 +55,7 @@ const UnifiedLogin = () => {
   const [showTenantSelection, setShowTenantSelection] = useState(false);
   const [accessibleTenants, setAccessibleTenants] = useState([]);
   const [isMultiTenant, setIsMultiTenant] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false); // 세션 체크 완료 여부
 
   // 툴팁 상태
   const [tooltip, setTooltip] = useState({
@@ -74,8 +75,11 @@ const UnifiedLogin = () => {
   useEffect(() => {
     getOAuth2Config();
     checkOAuthCallback();
-    checkExistingSession();
-  }, [location]);
+    // 세션 체크는 한 번만 실행 (무한 루프 방지)
+    if (!sessionChecked) {
+      checkExistingSession();
+    }
+  }, [location.pathname]); // location.search 대신 location.pathname만 사용하여 URL 파라미터 변경 시 재실행 방지
 
   // OAuth2 설정 가져오기
   const getOAuth2Config = async () => {
@@ -102,11 +106,15 @@ const UnifiedLogin = () => {
     }
   };
 
-  // 기존 세션 확인
+  // 기존 세션 확인 (한 번만 실행)
   const checkExistingSession = async () => {
-    if (isLoading || tooltip.show) {
+    // 이미 체크했거나 로딩 중이면 스킵
+    if (sessionChecked || isLoading || tooltip.show) {
       return;
     }
+
+    // 세션 체크 시작 표시
+    setSessionChecked(true);
 
     try {
       await new Promise(resolve => setTimeout(resolve, LOGIN_SESSION_CHECK_DELAY));
@@ -121,6 +129,8 @@ const UnifiedLogin = () => {
       }
     } catch (error) {
       console.error('세션 확인 오류:', error);
+      // 오류 발생 시에도 체크 완료로 표시 (무한 루프 방지)
+      setSessionChecked(true);
     }
   };
 

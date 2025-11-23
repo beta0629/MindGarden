@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -35,7 +34,6 @@ public class OpsAuthController extends BaseApiController {
     
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final ObjectMapper objectMapper;
     
     @Value("${ops.admin.username:superadmin@mindgarden.com}")
     private String opsAdminUsername;
@@ -64,20 +62,16 @@ public class OpsAuthController extends BaseApiController {
      * @since 2025-11-23
      */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> login(@RequestBody String requestBody) {
-        log.debug("Ops Portal 로그인 요청 본문 (raw): {}", requestBody);
-        
-        // JSON 파싱
-        LoginRequest request;
-        try {
-            request = objectMapper.readValue(requestBody, LoginRequest.class);
-        } catch (Exception e) {
-            log.error("Ops Portal 로그인 요청 파싱 실패: {}", e.getMessage(), e);
-            throw new IllegalArgumentException("요청 데이터 형식이 올바르지 않습니다: " + e.getMessage());
+    public ResponseEntity<ApiResponse<Map<String, Object>>> login(@RequestBody LoginRequest request) {
+        if (request == null) {
+            log.error("Ops Portal 로그인 요청: request가 null입니다.");
+            throw new IllegalArgumentException("요청 데이터가 없습니다.");
         }
         
         String username = request.getUsername();
         String password = request.getPassword();
+        
+        log.debug("Ops Portal 로그인 요청: username={}, password={}", username, password != null ? "***" : null);
         
         if (username == null || password == null) {
             throw new IllegalArgumentException("아이디와 비밀번호를 모두 입력해주세요.");

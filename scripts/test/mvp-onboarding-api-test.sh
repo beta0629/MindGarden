@@ -45,12 +45,12 @@ echo "  ✅ 온보딩 요청 생성 성공 (ID: ${REQUEST_ID})"
 
 # Step 2: 온보딩 승인
 echo "2. 온보딩 승인..."
-APPROVE_RESPONSE=$(curl -s -X PUT "${BASE_URL}/onboarding/requests/${REQUEST_ID}/decide" \
+APPROVE_RESPONSE=$(curl -s -X POST "${BASE_URL}/onboarding/requests/${REQUEST_ID}/decision" \
   -H "Content-Type: application/json" \
   -d "{
     \"status\": \"APPROVED\",
-    \"decidedBy\": \"system-admin\",
-    \"decisionNote\": \"MVP 테스트 승인\"
+    \"actorId\": \"system-admin\",
+    \"note\": \"MVP 테스트 승인\"
   }")
 
 SUCCESS=$(echo ${APPROVE_RESPONSE} | jq -r '.success')

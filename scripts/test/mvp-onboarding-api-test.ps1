@@ -104,23 +104,28 @@ Start-Sleep -Seconds 2
 # Step 3: 테넌트 확인
 Write-Host "3. 테넌트 확인..." -ForegroundColor Yellow
 try {
-    $tenantResponse = Invoke-RestMethod -Uri "$BaseUrl/tenants/$tenantId" `
-        -Method Get
+    $tenantListHeaders = @{
+        "Authorization" = "Bearer $opsToken"
+        "X-Actor-Id" = $opsActorId
+        "X-Actor-Role" = $opsActorRole
+    }
     
-    $tenantStatus = $tenantResponse.data.status
-    $settingsJson = $tenantResponse.data.settingsJson
+    $tenantListResponse = Invoke-RestMethod -Uri "$BaseUrl/ops/tenants" `
+        -Method Get `
+        -Headers $tenantListHeaders
     
+    $tenant = $tenantListResponse.data | Where-Object { $_.tenantId -eq $tenantId } | Select-Object -First 1
+    
+    if (-not $tenant) {
+        Write-Host "  ❌ 테넌트를 찾을 수 없음: $tenantId" -ForegroundColor Red
+        exit 1
+    }
+    
+    $tenantStatus = $tenant.status
     Write-Host "  ✅ 테넌트 확인 성공 (상태: $tenantStatus)" -ForegroundColor Green
     
-    # settings_json features 확인
-    if ($settingsJson) {
-        $features = $settingsJson.features
-        if ($features) {
-            Write-Host "  ✅ settings_json features 확인:" -ForegroundColor Green
-            Write-Host "    - consultation: $($features.consultation)" -ForegroundColor Cyan
-            Write-Host "    - academy: $($features.academy)" -ForegroundColor Cyan
-        }
-    }
+    # settings_json은 목록 API에 포함되지 않으므로 별도 확인 생략
+    # 실제로는 DB에서 직접 확인하거나 별도 API가 필요함
 } catch {
     Write-Host "  ❌ 테넌트 확인 실패: $_" -ForegroundColor Red
     exit 1

@@ -95,11 +95,17 @@ sleep 2
 
 # Step 3: 테넌트 확인
 echo "3. 테넌트 확인..."
-TENANT_RESPONSE=$(curl -s "${BASE_URL}/tenants/${TENANT_ID}")
+TENANT_LIST_RESPONSE=$(curl -s "${BASE_URL}/ops/tenants" \
+  -H "Authorization: Bearer ${OPS_TOKEN}" \
+  -H "X-Actor-Id: ${OPS_ACTOR_ID}" \
+  -H "X-Actor-Role: ${OPS_ACTOR_ROLE}")
 
-TENANT_STATUS=$(echo ${TENANT_RESPONSE} | jq -r '.data.status')
-CONSULTATION_ENABLED=$(echo ${TENANT_RESPONSE} | jq -r '.data.settingsJson.features.consultation // false')
-ACADEMY_ENABLED=$(echo ${TENANT_RESPONSE} | jq -r '.data.settingsJson.features.academy // false')
+TENANT_STATUS=$(echo ${TENANT_LIST_RESPONSE} | jq -r ".data[] | select(.tenantId == \"${TENANT_ID}\") | .status")
+
+if [ -z "${TENANT_STATUS}" ] || [ "${TENANT_STATUS}" = "null" ]; then
+  echo "  ❌ 테넌트를 찾을 수 없음: ${TENANT_ID}"
+  exit 1
+fi
 
 if [ "${TENANT_STATUS}" != "ACTIVE" ]; then
   echo "  ❌ 테넌트 상태가 ACTIVE가 아님: ${TENANT_STATUS}"
@@ -107,9 +113,7 @@ if [ "${TENANT_STATUS}" != "ACTIVE" ]; then
 fi
 
 echo "  ✅ 테넌트 확인 성공 (상태: ${TENANT_STATUS})"
-echo "  ✅ settings_json features 확인:"
-echo "    - consultation: ${CONSULTATION_ENABLED}"
-echo "    - academy: ${ACADEMY_ENABLED}"
+# settings_json은 목록 API에 포함되지 않으므로 별도 확인 생략
 
 # Step 4: 관리자 계정 로그인
 echo "4. 관리자 계정 로그인..."

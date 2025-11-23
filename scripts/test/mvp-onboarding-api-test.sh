@@ -91,28 +91,51 @@ fi
 echo "  ✅ 온보딩 승인 성공"
 
 # 잠시 대기 (프로시저 실행 시간)
-sleep 2
+echo "  ⏳ 테넌트 생성 대기 중..."
+sleep 5
 
-# Step 3: 테넌트 확인
+# Step 3: 테넌트 확인 (재시도 로직 포함)
 echo "3. 테넌트 확인..."
-TENANT_LIST_RESPONSE=$(curl -s "${BASE_URL}/ops/tenants" \
-  -H "Authorization: Bearer ${OPS_TOKEN}" \
-  -H "X-Actor-Id: ${OPS_ACTOR_ID}" \
-  -H "X-Actor-Role: ${OPS_ACTOR_ROLE}")
+MAX_RETRIES=5
+RETRY_DELAY=3
+TENANT_STATUS=""
 
-TENANT_STATUS=$(echo ${TENANT_LIST_RESPONSE} | jq -r ".data[] | select(.tenantId == \"${TENANT_ID}\") | .status")
+for i in $(seq 1 ${MAX_RETRIES}); do
+  TENANT_LIST_RESPONSE=$(curl -s "${BASE_URL}/ops/tenants" \
+    -H "Authorization: Bearer ${OPS_TOKEN}" \
+    -H "X-Actor-Id: ${OPS_ACTOR_ID}" \
+    -H "X-Actor-Role: ${OPS_ACTOR_ROLE}")
 
-if [ -z "${TENANT_STATUS}" ] || [ "${TENANT_STATUS}" = "null" ]; then
-  echo "  ❌ 테넌트를 찾을 수 없음: ${TENANT_ID}"
+  TENANT_STATUS=$(echo ${TENANT_LIST_RESPONSE} | jq -r ".data[] | select(.tenantId == \"${TENANT_ID}\") | .status")
+
+  if [ -n "${TENANT_STATUS}" ] && [ "${TENANT_STATUS}" != "null" ]; then
+    if [ "${TENANT_STATUS}" = "ACTIVE" ]; then
+      echo "  ✅ 테넌트 확인 성공 (상태: ${TENANT_STATUS}, 시도: ${i}/${MAX_RETRIES})"
+      break
+    else
+      echo "  ⚠️  테넌트 상태가 ACTIVE가 아님: ${TENANT_STATUS} (시도: ${i}/${MAX_RETRIES})"
+      if [ ${i} -lt ${MAX_RETRIES} ]; then
+        sleep ${RETRY_DELAY}
+      fi
+    fi
+  else
+    if [ ${i} -lt ${MAX_RETRIES} ]; then
+      echo "  ⏳ 테넌트를 찾을 수 없음. 재시도 중... (${i}/${MAX_RETRIES})"
+      sleep ${RETRY_DELAY}
+    else
+      echo "  ❌ 테넌트를 찾을 수 없음: ${TENANT_ID} (최대 재시도 횟수 초과)"
+      echo "  📋 현재 테넌트 목록:"
+      echo ${TENANT_LIST_RESPONSE} | jq -r '.data[]? | "    - \(.tenantId) (\(.tenantName))"' || echo "    (테넌트 목록이 비어있음)"
+      exit 1
+    fi
+  fi
+done
+
+if [ -z "${TENANT_STATUS}" ] || [ "${TENANT_STATUS}" = "null" ] || [ "${TENANT_STATUS}" != "ACTIVE" ]; then
+  echo "  ❌ 테넌트 확인 실패 (최대 재시도 횟수 초과)"
   exit 1
 fi
 
-if [ "${TENANT_STATUS}" != "ACTIVE" ]; then
-  echo "  ❌ 테넌트 상태가 ACTIVE가 아님: ${TENANT_STATUS}"
-  exit 1
-fi
-
-echo "  ✅ 테넌트 확인 성공 (상태: ${TENANT_STATUS})"
 # settings_json은 목록 API에 포함되지 않으므로 별도 확인 생략
 
 # Step 4: 관리자 계정 로그인

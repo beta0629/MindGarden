@@ -99,36 +99,59 @@ try {
 }
 
 # 잠시 대기 (프로시저 실행 시간)
-Start-Sleep -Seconds 2
+Write-Host "  ⏳ 테넌트 생성 대기 중..." -ForegroundColor Yellow
+Start-Sleep -Seconds 5
 
-# Step 3: 테넌트 확인
+# Step 3: 테넌트 확인 (재시도 로직 포함)
 Write-Host "3. 테넌트 확인..." -ForegroundColor Yellow
-try {
-    $tenantListHeaders = @{
-        "Authorization" = "Bearer $opsToken"
-        "X-Actor-Id" = $opsActorId
-        "X-Actor-Role" = $opsActorRole
+$tenantListHeaders = @{
+    "Authorization" = "Bearer $opsToken"
+    "X-Actor-Id" = $opsActorId
+    "X-Actor-Role" = $opsActorRole
+}
+
+$maxRetries = 5
+$retryDelay = 3
+$tenant = $null
+
+for ($i = 1; $i -le $maxRetries; $i++) {
+    try {
+        $tenantListResponse = Invoke-RestMethod -Uri "$BaseUrl/ops/tenants" `
+            -Method Get `
+            -Headers $tenantListHeaders
+        
+        $tenant = $tenantListResponse.data | Where-Object { $_.tenantId -eq $tenantId } | Select-Object -First 1
+        
+        if ($tenant) {
+            $tenantStatus = $tenant.status
+            Write-Host "  ✅ 테넌트 확인 성공 (상태: $tenantStatus, 시도: $i/$maxRetries)" -ForegroundColor Green
+            break
+        } else {
+            if ($i -lt $maxRetries) {
+                Write-Host "  ⏳ 테넌트를 찾을 수 없음. 재시도 중... ($i/$maxRetries)" -ForegroundColor Yellow
+                Start-Sleep -Seconds $retryDelay
+            } else {
+                Write-Host "  ❌ 테넌트를 찾을 수 없음: $tenantId (최대 재시도 횟수 초과)" -ForegroundColor Red
+                Write-Host "  📋 현재 테넌트 목록:" -ForegroundColor Yellow
+                if ($tenantListResponse.data) {
+                    $tenantListResponse.data | ForEach-Object {
+                        Write-Host "    - $($_.tenantId) ($($_.tenantName))" -ForegroundColor Gray
+                    }
+                } else {
+                    Write-Host "    (테넌트 목록이 비어있음)" -ForegroundColor Gray
+                }
+                exit 1
+            }
+        }
+    } catch {
+        if ($i -lt $maxRetries) {
+            Write-Host "  ⚠️  테넌트 확인 실패. 재시도 중... ($i/$maxRetries): $_" -ForegroundColor Yellow
+            Start-Sleep -Seconds $retryDelay
+        } else {
+            Write-Host "  ❌ 테넌트 확인 실패 (최대 재시도 횟수 초과): $_" -ForegroundColor Red
+            exit 1
+        }
     }
-    
-    $tenantListResponse = Invoke-RestMethod -Uri "$BaseUrl/ops/tenants" `
-        -Method Get `
-        -Headers $tenantListHeaders
-    
-    $tenant = $tenantListResponse.data | Where-Object { $_.tenantId -eq $tenantId } | Select-Object -First 1
-    
-    if (-not $tenant) {
-        Write-Host "  ❌ 테넌트를 찾을 수 없음: $tenantId" -ForegroundColor Red
-        exit 1
-    }
-    
-    $tenantStatus = $tenant.status
-    Write-Host "  ✅ 테넌트 확인 성공 (상태: $tenantStatus)" -ForegroundColor Green
-    
-    # settings_json은 목록 API에 포함되지 않으므로 별도 확인 생략
-    # 실제로는 DB에서 직접 확인하거나 별도 API가 필요함
-} catch {
-    Write-Host "  ❌ 테넌트 확인 실패: $_" -ForegroundColor Red
-    exit 1
 }
 
 # Step 4: 관리자 계정 로그인

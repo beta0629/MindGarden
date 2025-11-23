@@ -27,8 +27,10 @@ REQUEST_RESPONSE=$(curl -s -X POST "${BASE_URL}/onboarding/requests" \
     \"tenantId\": \"${TENANT_ID}\",
     \"tenantName\": \"${TENANT_NAME}\",
     \"requestedBy\": \"${EMAIL}\",
+    \"riskLevel\": \"LOW\",
     \"businessType\": \"${BUSINESS_TYPE}\",
-    \"checklistJson\": \"{\\\"adminPassword\\\": \\\"${PASSWORD}\\\"}\"
+    \"checklistJson\": \"{\\\"adminPassword\\\": \\\"${PASSWORD}\\\"}\",
+    \"adminPassword\": \"${PASSWORD}\"
   }")
 
 REQUEST_ID=$(echo ${REQUEST_RESPONSE} | jq -r '.data.id')

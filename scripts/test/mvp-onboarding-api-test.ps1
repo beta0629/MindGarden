@@ -26,9 +26,11 @@ $requestBody = @{
     tenantId = $tenantId
     tenantName = $tenantName
     requestedBy = $email
+    riskLevel = "LOW"
     businessType = $BusinessType
     checklistJson = "{`"adminPassword`": `"$password`"}"
-} | ConvertTo-Json
+    adminPassword = $password
+} | ConvertTo-Json -Depth 10
 
 try {
     $requestResponse = Invoke-RestMethod -Uri "$BaseUrl/onboarding/requests" `
@@ -47,13 +49,13 @@ try {
 Write-Host "2. 온보딩 승인..." -ForegroundColor Yellow
 $approveBody = @{
     status = "APPROVED"
-    decidedBy = "system-admin"
-    decisionNote = "MVP 테스트 승인"
+    actorId = "system-admin"
+    note = "MVP 테스트 승인"
 } | ConvertTo-Json
 
 try {
-    $approveResponse = Invoke-RestMethod -Uri "$BaseUrl/onboarding/requests/$requestId/decide" `
-        -Method Put `
+    $approveResponse = Invoke-RestMethod -Uri "$BaseUrl/onboarding/requests/$requestId/decision" `
+        -Method Post `
         -ContentType "application/json" `
         -Body $approveBody
     

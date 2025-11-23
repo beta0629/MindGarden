@@ -78,34 +78,51 @@ public class PlSqlInitializer {
             
             log.info("📄 SQL 파일 크기: {} bytes", sqlContent.length());
             
-            // DELIMITER 제거
-            sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+//", "");
-            sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+;", "");
-            sqlContent = sqlContent.replaceAll("END\\s+//", "END");
-            
-            // 주석 제거 (선택적)
+            // DELIMITER 제거 및 프로시저 전체를 하나의 문장으로 처리
+            // 주석 제거
             sqlContent = sqlContent.replaceAll("--[^\n]*", "");
             
-            // DROP과 CREATE 분리
+            // DELIMITER 관련 제거
+            sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+//", "");
+            sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+;", "");
+            sqlContent = sqlContent.replaceAll("END\\s+//", "END;");
+            
+            // DROP과 CREATE 분리 (세미콜론이 아닌 CREATE PROCEDURE 기준으로)
             String dropStatement = null;
             String createStatement = null;
             
-            // DROP 문 추출
+            // DROP 문 추출 (DELIMITER // 이후의 DROP)
             if (sqlContent.contains("DROP PROCEDURE")) {
                 int dropStart = sqlContent.indexOf("DROP PROCEDURE");
-                int dropEnd = sqlContent.indexOf(";", dropStart);
+                // DROP PROCEDURE IF EXISTS CreateOrActivateTenant // 형태
+                // // 까지 찾거나, CREATE PROCEDURE 전까지
+                int dropEnd = sqlContent.indexOf("CREATE PROCEDURE", dropStart);
                 if (dropEnd > dropStart) {
-                    dropStatement = sqlContent.substring(dropStart, dropEnd + 1).trim();
+                    dropStatement = sqlContent.substring(dropStart, dropEnd).trim();
+                    // // 제거
+                    dropStatement = dropStatement.replaceAll("//", "").trim();
+                    if (!dropStatement.endsWith(";")) {
+                        dropStatement += ";";
+                    }
                 }
             }
             
-            // CREATE 문 추출 (DROP 이후)
+            // CREATE 문 추출 (CREATE PROCEDURE부터 END;까지)
             if (sqlContent.contains("CREATE PROCEDURE")) {
                 int createStart = sqlContent.indexOf("CREATE PROCEDURE");
-                createStatement = sqlContent.substring(createStart).trim();
-                // 마지막 세미콜론 제거 (프로시저 끝)
-                if (createStatement.endsWith(";")) {
-                    createStatement = createStatement.substring(0, createStatement.length() - 1).trim();
+                // END; 까지 찾기
+                int endIndex = sqlContent.lastIndexOf("END;");
+                if (endIndex > createStart) {
+                    createStatement = sqlContent.substring(createStart, endIndex + 4).trim();
+                } else {
+                    // END;가 없으면 END 까지
+                    int endIndex2 = sqlContent.lastIndexOf("END");
+                    if (endIndex2 > createStart) {
+                        createStatement = sqlContent.substring(createStart, endIndex2 + 3).trim();
+                        if (!createStatement.endsWith(";")) {
+                            createStatement += ";";
+                        }
+                    }
                 }
             }
             

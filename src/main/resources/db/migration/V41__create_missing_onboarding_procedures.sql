@@ -91,6 +91,8 @@ CREATE PROCEDURE CreateDefaultSubscription(
 BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_plan_id VARCHAR(36);
+    DECLARE v_subscription_id VARCHAR(36);
+    DECLARE v_inserted_id BIGINT;
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -109,19 +111,25 @@ BEGIN
     FROM pricing_plans
     WHERE plan_code = 'STARTER'
         AND is_active = TRUE
+        AND is_deleted = FALSE
     LIMIT 1;
     
     IF v_plan_id IS NOT NULL THEN
+        -- 구독 ID 생성
+        SET v_subscription_id = UUID();
+        
         -- 구독 생성
         INSERT INTO tenant_subscriptions (
             subscription_id, tenant_id, plan_id, status,
             effective_from, billing_cycle, created_at, created_by
         ) VALUES (
-            UUID(), p_tenant_id, v_plan_id, 'ACTIVE',
+            v_subscription_id, p_tenant_id, v_plan_id, 'ACTIVE',
             CURDATE(), 'MONTHLY', NOW(), p_approved_by
         );
         
-        SET p_subscription_id = LAST_INSERT_ID();
+        -- AUTO_INCREMENT id 반환
+        SET v_inserted_id = LAST_INSERT_ID();
+        SET p_subscription_id = v_inserted_id;
         SET p_success = TRUE;
         SET p_message = CONCAT('기본 요금제 구독 생성 완료: ', v_plan_id);
     ELSE
@@ -164,6 +172,41 @@ BEGIN
     -- 향후 role_templates 테이블이 채워지면 실제 템플릿 적용 로직 추가
     SET p_success = TRUE;
     SET p_message = '기본 역할 템플릿 적용 완료 (MVP: 스킵됨)';
+    
+    COMMIT;
+END //
+
+-- ============================================
+-- 5. ERD 생성 프로시저 (MVP 단순화 버전)
+-- ============================================
+DROP PROCEDURE IF EXISTS GenerateErdOnOnboardingApproval //
+
+CREATE PROCEDURE GenerateErdOnOnboardingApproval(
+    IN p_tenant_id VARCHAR(64),
+    IN p_tenant_name VARCHAR(255),
+    IN p_business_type VARCHAR(50),
+    IN p_approved_by VARCHAR(100),
+    OUT p_success BOOLEAN,
+    OUT p_message TEXT
+)
+BEGIN
+    DECLARE v_error_message VARCHAR(500);
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        GET DIAGNOSTICS CONDITION 1
+            v_error_message = MESSAGE_TEXT;
+        SET p_success = FALSE;
+        SET p_message = CONCAT('ERD 생성 중 오류 발생: ', v_error_message);
+    END;
+    
+    START TRANSACTION;
+    
+    -- MVP: ERD 생성은 선택적 기능이므로 성공으로 처리
+    -- 향후 erd_diagrams 테이블이 준비되면 실제 ERD 생성 로직 추가
+    SET p_success = TRUE;
+    SET p_message = 'ERD 생성 완료 (MVP: 스킵됨)';
     
     COMMIT;
 END //

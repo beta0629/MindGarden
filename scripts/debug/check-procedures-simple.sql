@@ -1,0 +1,9 @@
+USE core_solution;
+
+SELECT ROUTINE_NAME 
+FROM information_schema.ROUTINES 
+WHERE ROUTINE_SCHEMA = 'core_solution' 
+  AND ROUTINE_TYPE = 'PROCEDURE' 
+  AND (ROUTINE_NAME LIKE '%Onboarding%' OR ROUTINE_NAME LIKE '%Tenant%')
+ORDER BY ROUTINE_NAME;
+

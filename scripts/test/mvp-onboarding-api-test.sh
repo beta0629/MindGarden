@@ -4,7 +4,7 @@
 
 set -e
 
-BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
+BASE_URL="${BASE_URL:-https://ops.dev.e-trinity.co.kr/api/v1}"
 BUSINESS_TYPE="${BUSINESS_TYPE:-CONSULTATION}"
 OPS_USERNAME="${OPS_USERNAME:-superadmin@mindgarden.com}"
 OPS_PASSWORD="${OPS_PASSWORD:-admin123}"
@@ -23,19 +23,18 @@ echo ""
 
 # Step 1: 온보딩 요청 생성
 echo "1. 온보딩 요청 생성..."
-REQUEST_RESPONSE=$(curl -s -X POST "${BASE_URL}/onboarding/requests" \
+REQUEST_RESPONSE=$(curl -s -k -X POST "${BASE_URL}/onboarding/requests" \
   -H "Content-Type: application/json" \
   -d "{
-    \"tenantId\": \"${TENANT_ID}\",
+    \"tenantId\": null,
     \"tenantName\": \"${TENANT_NAME}\",
     \"requestedBy\": \"${EMAIL}\",
     \"riskLevel\": \"LOW\",
     \"businessType\": \"${BUSINESS_TYPE}\",
-    \"checklistJson\": \"{\\\"adminPassword\\\": \\\"${PASSWORD}\\\"}\",
-    \"adminPassword\": \"${PASSWORD}\"
+    \"checklistJson\": \"{\\\"adminPassword\\\": \\\"${PASSWORD}\\\"}\"
   }")
 
-REQUEST_ID=$(echo ${REQUEST_RESPONSE} | jq -r '.data.id')
+REQUEST_ID=$(echo ${REQUEST_RESPONSE} | jq -r '.id // .data.id // empty')
 
 if [ -z "${REQUEST_ID}" ] || [ "${REQUEST_ID}" = "null" ]; then
   echo "  ❌ 온보딩 요청 생성 실패"
@@ -47,7 +46,7 @@ echo "  ✅ 온보딩 요청 생성 성공 (ID: ${REQUEST_ID})"
 
 # Step 1.5: Ops Portal 로그인 (승인 API 인증 필요)
 echo "1.5. Ops Portal 로그인..."
-OPS_LOGIN_RESPONSE=$(curl -s -X POST "${BASE_URL}/ops/auth/login" \
+OPS_LOGIN_RESPONSE=$(curl -s -k -X POST "${BASE_URL}/ops/auth/login" \
   -H "Content-Type: application/json" \
   -d "{
     \"username\": \"${OPS_USERNAME}\",
@@ -69,7 +68,7 @@ echo "  ✅ Ops Portal 로그인 성공"
 
 # Step 2: 온보딩 승인
 echo "2. 온보딩 승인..."
-APPROVE_RESPONSE=$(curl -s -X POST "${BASE_URL}/onboarding/requests/${REQUEST_ID}/decision" \
+APPROVE_RESPONSE=$(curl -s -k -X POST "${BASE_URL}/onboarding/requests/${REQUEST_ID}/decision" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${OPS_TOKEN}" \
   -H "X-Actor-Id: ${OPS_ACTOR_ID}" \
@@ -80,7 +79,7 @@ APPROVE_RESPONSE=$(curl -s -X POST "${BASE_URL}/onboarding/requests/${REQUEST_ID
     \"note\": \"MVP 테스트 승인\"
   }")
 
-SUCCESS=$(echo ${APPROVE_RESPONSE} | jq -r '.success')
+SUCCESS=$(echo ${APPROVE_RESPONSE} | jq -r '.success // .status // empty')
 
 if [ "${SUCCESS}" != "true" ]; then
   echo "  ❌ 온보딩 승인 실패"
@@ -101,11 +100,16 @@ RETRY_DELAY=3
 TENANT_STATUS=""
 
 for i in $(seq 1 ${MAX_RETRIES}); do
-  TENANT_LIST_RESPONSE=$(curl -s "${BASE_URL}/ops/tenants" \
+  TENANT_LIST_RESPONSE=$(curl -s -k "${BASE_URL}/ops/tenants" \
     -H "Authorization: Bearer ${OPS_TOKEN}" \
     -H "X-Actor-Id: ${OPS_ACTOR_ID}" \
     -H "X-Actor-Role: ${OPS_ACTOR_ROLE}")
 
+  # 승인 후 생성된 tenantId 확인
+  CREATED_TENANT_ID=$(echo ${APPROVE_RESPONSE} | jq -r '.tenantId // empty')
+  if [ -n "${CREATED_TENANT_ID}" ] && [ "${CREATED_TENANT_ID}" != "null" ]; then
+    TENANT_ID="${CREATED_TENANT_ID}"
+  fi
   TENANT_STATUS=$(echo ${TENANT_LIST_RESPONSE} | jq -r ".data[] | select(.tenantId == \"${TENANT_ID}\") | .status")
 
   if [ -n "${TENANT_STATUS}" ] && [ "${TENANT_STATUS}" != "null" ]; then
@@ -140,7 +144,7 @@ fi
 
 # Step 4: 관리자 계정 로그인
 echo "4. 관리자 계정 로그인..."
-LOGIN_RESPONSE=$(curl -s -X POST "${BASE_URL}/auth/login" \
+LOGIN_RESPONSE=$(curl -s -k -X POST "${BASE_URL}/auth/login" \
   -H "Content-Type: application/json" \
   -d "{
     \"email\": \"${EMAIL}\",
@@ -161,7 +165,7 @@ echo "  ✅ 관리자 로그인 성공 (역할: ${USER_ROLE})"
 
 # Step 5: 대시보드 조회
 echo "5. 대시보드 조회..."
-DASHBOARD_RESPONSE=$(curl -s "${BASE_URL}/dashboards" \
+DASHBOARD_RESPONSE=$(curl -s -k "${BASE_URL}/dashboards" \
   -H "Authorization: Bearer ${TOKEN}")
 
 DASHBOARD_COUNT=$(echo ${DASHBOARD_RESPONSE} | jq -r '.data | length')

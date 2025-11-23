@@ -3,6 +3,7 @@ package com.coresolution.core.controller;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.consultation.service.JwtService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +45,15 @@ public class OpsAuthController extends BaseApiController {
     private String opsAdminRole;
     
     /**
+     * Ops Portal 로그인 요청 DTO
+     */
+    @Data
+    public static class LoginRequest {
+        private String username;
+        private String password;
+    }
+    
+    /**
      * Ops Portal 로그인
      * POST /api/v1/ops/auth/login
      * 
@@ -51,9 +61,9 @@ public class OpsAuthController extends BaseApiController {
      * @return JWT 토큰 및 사용자 정보
      */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> login(@RequestBody Map<String, String> request) {
-        String username = request.get("username");
-        String password = request.get("password");
+    public ResponseEntity<ApiResponse<Map<String, Object>>> login(@RequestBody LoginRequest request) {
+        String username = request.getUsername();
+        String password = request.getPassword();
         
         if (username == null || password == null) {
             throw new IllegalArgumentException("아이디와 비밀번호를 모두 입력해주세요.");

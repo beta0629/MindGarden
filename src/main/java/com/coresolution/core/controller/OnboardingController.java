@@ -18,9 +18,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.*;
+import com.coresolution.core.util.OpsPermissionUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -336,10 +336,12 @@ public class OnboardingController extends BaseApiController {
      * 관리자 또는 OPS 역할만 접근 가능
      */
     @PostMapping("/requests/{id}/decision")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
     public ResponseEntity<ApiResponse<OnboardingRequest>> decide(
             @PathVariable Long id,
             @RequestBody @Valid OnboardingDecisionRequest payload) {
+        // 인증 정보 확인 및 권한 체크
+        com.coresolution.core.util.OpsPermissionUtils.requireAdminOrOps();
+        
         log.info("온보딩 요청 결정: id={}, status={}, actorId={}", 
             id, payload.status(), payload.actorId());
         
@@ -447,10 +449,12 @@ public class OnboardingController extends BaseApiController {
      * 관리자 또는 OPS 역할만 접근 가능
      */
     @PostMapping("/requests/{id}/retry")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
     public ResponseEntity<ApiResponse<OnboardingRequest>> retryApproval(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> payload) {
+        // 인증 정보 확인 및 권한 체크
+        com.coresolution.core.util.OpsPermissionUtils.requireAdminOrOps();
+        
         log.info("온보딩 승인 프로세스 재시도: id={}", id);
         
         String actorId = payload != null && payload.containsKey("actorId") 

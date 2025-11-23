@@ -24,9 +24,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.coresolution.core.util.OpsPermissionUtils;
 import jakarta.validation.Valid;
 
 import java.io.File;
@@ -53,7 +53,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/ops/erd")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
 @Tag(name = "HQ 운영 포털 ERD 관리", description = "HQ 운영 포털 ERD 관리 API (관리자 전용)")
 public class ErdOpsController extends BaseApiController {
 
@@ -81,7 +80,7 @@ public class ErdOpsController extends BaseApiController {
             @Parameter(description = "ERD 타입 (필터)") @RequestParam(required = false) ErdDiagram.DiagramType diagramType,
             @Parameter(description = "활성 상태 (필터)") @RequestParam(required = false) Boolean isActive,
             @Parameter(description = "검색어 (ERD 이름, 설명)") @RequestParam(required = false) String search) {
-
+        OpsPermissionUtils.requireAdminOrOps();
         log.debug("HQ 운영 포털 ERD 목록 조회 요청: tenantId={}, diagramType={}, isActive={}, search={}",
                 tenantId, diagramType, isActive, search);
 
@@ -131,7 +130,7 @@ public class ErdOpsController extends BaseApiController {
     @GetMapping("/{diagramId}")
     public ResponseEntity<ApiResponse<ErdDiagramResponse>> getErdDetail(
             @Parameter(description = "ERD 다이어그램 ID", required = true) @PathVariable String diagramId) {
-
+        OpsPermissionUtils.requireAdminOrOps();
         log.debug("HQ 운영 포털 ERD 상세 조회 요청: diagramId={}", diagramId);
 
         ErdDiagramResponse erd = erdGenerationService.getErd(diagramId);
@@ -156,7 +155,7 @@ public class ErdOpsController extends BaseApiController {
     public ResponseEntity<ApiResponse<ErdDiagramResponse>> generateFullSystemErd(
             @Parameter(description = "스키마 이름") @RequestParam(required = false) String schemaName,
             Authentication authentication) {
-
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("HQ 운영 포털 전체 시스템 ERD 수동 생성 요청: schemaName={}, user={}",
                 schemaName, authentication != null ? authentication.getName() : "unknown");
 
@@ -182,7 +181,7 @@ public class ErdOpsController extends BaseApiController {
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "스키마 이름") @RequestParam(required = false) String schemaName,
             Authentication authentication) {
-
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("HQ 운영 포털 테넌트 ERD 수동 생성 요청: tenantId={}, schemaName={}, user={}",
                 tenantId, schemaName, authentication != null ? authentication.getName() : "unknown");
 
@@ -208,7 +207,7 @@ public class ErdOpsController extends BaseApiController {
             @Parameter(description = "모듈 타입", required = true) @PathVariable String moduleType,
             @Parameter(description = "스키마 이름") @RequestParam(required = false) String schemaName,
             Authentication authentication) {
-
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("HQ 운영 포털 모듈 ERD 수동 생성 요청: moduleType={}, schemaName={}, user={}",
                 moduleType, schemaName, authentication != null ? authentication.getName() : "unknown");
 
@@ -233,7 +232,7 @@ public class ErdOpsController extends BaseApiController {
     public ResponseEntity<ApiResponse<ErdDiagramResponse>> generateCustomErd(
             @Valid @RequestBody CustomErdGenerationRequest request,
             Authentication authentication) {
-
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("HQ 운영 포털 커스텀 ERD 수동 생성 요청: tableNames={}, name={}, user={}",
                 request.getTableNames(), request.getName(), authentication != null ? authentication.getName() : "unknown");
 
@@ -264,7 +263,7 @@ public class ErdOpsController extends BaseApiController {
     public ResponseEntity<ApiResponse<ErdValidationReport>> validateErd(
             @Parameter(description = "ERD 다이어그램 ID", required = true) @PathVariable String diagramId,
             @Parameter(description = "스키마 이름") @RequestParam(required = false) String schemaName) {
-
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("HQ 운영 포털 ERD 검증 요청: diagramId={}, schemaName={}", diagramId, schemaName);
 
         ErdValidationReport report = erdValidationService.validateErd(diagramId, schemaName);
@@ -399,7 +398,7 @@ public class ErdOpsController extends BaseApiController {
     @GetMapping("/tables")
     public ResponseEntity<ApiResponse<List<String>>> getTableNames(
             @Parameter(description = "스키마 이름") @RequestParam(required = false) String schemaName) {
-
+        OpsPermissionUtils.requireAdminOrOps();
         log.debug("HQ 운영 포털 테이블 목록 조회 요청: schemaName={}", schemaName);
 
         List<String> tableNames = schemaService.getTableNames(schemaName);
@@ -422,7 +421,7 @@ public class ErdOpsController extends BaseApiController {
             @Parameter(description = "ERD 다이어그램 ID", required = true) @PathVariable String diagramId,
             @Parameter(description = "시작 버전", required = true) @RequestParam Integer fromVersion,
             @Parameter(description = "종료 버전", required = true) @RequestParam Integer toVersion) {
-
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("HQ 운영 포털 ERD 버전 비교 요청: diagramId={}, fromVersion={}, toVersion={}",
                 diagramId, fromVersion, toVersion);
 

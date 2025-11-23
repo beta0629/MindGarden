@@ -11,9 +11,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.coresolution.core.util.OpsPermissionUtils;
 
 import java.util.List;
 
@@ -42,8 +42,8 @@ public class PricingPlanOpsController extends BaseApiController {
      * Trinity 직원만 접근 가능
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
     public ResponseEntity<ApiResponse<List<PricingPlan>>> getPlans() {
+        OpsPermissionUtils.requireAdminOrOps();
         log.debug("모든 요금제 목록 조회");
         List<PricingPlan> plans = pricingPlanService.findAllPlans();
         return success(plans);
@@ -94,8 +94,8 @@ public class PricingPlanOpsController extends BaseApiController {
      * TODO: PricingAddon 엔티티 구현 후 실제 데이터 반환하도록 수정 필요
      */
     @GetMapping("/addons")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
     public ResponseEntity<ApiResponse<List<?>>> getAddons() {
+        OpsPermissionUtils.requireAdminOrOps();
         log.debug("모든 애드온 목록 조회 (임시: 빈 배열 반환)");
         // TODO: PricingAddon 엔티티 및 서비스 구현 후 실제 데이터 반환
         return success(List.of());
@@ -107,10 +107,10 @@ public class PricingPlanOpsController extends BaseApiController {
      * Trinity 직원만 접근 가능
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
     public ResponseEntity<ApiResponse<PricingPlan>> createPlan(
             @RequestBody @Valid PricingPlanCreateRequest request,
             Authentication authentication) {
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("요금제 생성 요청: planCode={}, displayName={}", request.planCode(), request.displayName());
         
         String createdBy = authentication != null && authentication.getName() != null 
@@ -127,11 +127,11 @@ public class PricingPlanOpsController extends BaseApiController {
      * Trinity 직원만 접근 가능
      */
     @PutMapping("/{planId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
     public ResponseEntity<ApiResponse<PricingPlan>> updatePlan(
             @PathVariable String planId,
             @RequestBody @Valid PricingPlanUpdateRequest request,
             Authentication authentication) {
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("요금제 수정 요청: planId={}", planId);
         
         String updatedBy = authentication != null && authentication.getName() != null 
@@ -148,10 +148,10 @@ public class PricingPlanOpsController extends BaseApiController {
      * Trinity 직원만 접근 가능
      */
     @DeleteMapping("/{planId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
     public ResponseEntity<ApiResponse<Void>> deactivatePlan(
             @PathVariable String planId,
             Authentication authentication) {
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("요금제 비활성화 요청: planId={}", planId);
         
         String deletedBy = authentication != null && authentication.getName() != null 

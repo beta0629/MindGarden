@@ -15,8 +15,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.coresolution.core.util.OpsPermissionUtils;
 
 import java.util.List;
 
@@ -34,7 +34,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/ops/pg-configurations")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
 @Tag(name = "운영 포털 PG 설정", description = "운영 포털 PG 설정 승인/관리 API (관리자 전용)")
 public class TenantPgConfigurationOpsController extends BaseApiController {
     
@@ -56,7 +55,7 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     public ResponseEntity<ApiResponse<List<TenantPgConfigurationResponse>>> getPendingApprovals(
             @Parameter(description = "테넌트 ID (필터)") @RequestParam(required = false) String tenantId,
             @Parameter(description = "PG Provider (필터)") @RequestParam(required = false) PgProvider pgProvider) {
-        
+        OpsPermissionUtils.requireAdminOrOps();
         log.debug("승인 대기 목록 조회 요청: tenantId={}, pgProvider={}", tenantId, pgProvider);
         
         List<TenantPgConfigurationResponse> configurations = 
@@ -82,7 +81,7 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> approveConfiguration(
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
             @Valid @RequestBody PgConfigurationApproveRequest request) {
-        
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("PG 설정 승인 요청: configId={}, approvedBy={}", configId, request.getApprovedBy());
         
         TenantPgConfigurationResponse response = 
@@ -108,7 +107,7 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> rejectConfiguration(
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
             @Valid @RequestBody PgConfigurationRejectRequest request) {
-        
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("PG 설정 거부 요청: configId={}, rejectedBy={}", configId, request.getRejectedBy());
         
         TenantPgConfigurationResponse response = 
@@ -133,7 +132,7 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     @PostMapping("/{configId}/activate")
     public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> activateConfiguration(
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
-        
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("PG 설정 활성화 요청: configId={}", configId);
         
         String activatedBy = getCurrentUserId();
@@ -159,7 +158,7 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     @PostMapping("/{configId}/deactivate")
     public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> deactivateConfiguration(
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
-        
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("PG 설정 비활성화 요청: configId={}", configId);
         
         String deactivatedBy = getCurrentUserId();
@@ -185,7 +184,7 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     @GetMapping("/{configId}/history")
     public ResponseEntity<ApiResponse<TenantPgConfigurationDetailResponse>> getConfigurationHistory(
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
-        
+        OpsPermissionUtils.requireAdminOrOps();
         log.debug("PG 설정 변경 이력 조회 요청: configId={}", configId);
         
         TenantPgConfigurationDetailResponse response = 
@@ -214,7 +213,7 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     @PostMapping("/{configId}/test-connection")
     public ResponseEntity<ApiResponse<ConnectionTestResponse>> testConnection(
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
-        
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("PG 연결 테스트 요청 (운영 포털): configId={}", configId);
         
         ConnectionTestResponse response = 

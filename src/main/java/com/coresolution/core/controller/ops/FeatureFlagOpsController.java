@@ -11,8 +11,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.coresolution.core.util.OpsPermissionUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -32,7 +32,6 @@ import java.util.List;
 @RequestMapping("/api/v1/ops/feature-flags")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasRole('ADMIN') or hasRole('OPS')")
 public class FeatureFlagOpsController extends BaseApiController {
     
     private final FeatureFlagService featureFlagService;
@@ -43,6 +42,7 @@ public class FeatureFlagOpsController extends BaseApiController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<FeatureFlag>>> getAll() {
+        OpsPermissionUtils.requireAdminOrOps();
         log.debug("모든 Feature Flag 목록 조회");
         List<FeatureFlag> flags = featureFlagService.findAll();
         return success(flags);
@@ -54,6 +54,7 @@ public class FeatureFlagOpsController extends BaseApiController {
      */
     @GetMapping("/enabled")
     public ResponseEntity<ApiResponse<List<FeatureFlag>>> getEnabled() {
+        OpsPermissionUtils.requireAdminOrOps();
         log.debug("활성화된 Feature Flag 목록 조회");
         List<FeatureFlag> flags = featureFlagService.findAllEnabled();
         return success(flags);
@@ -65,6 +66,7 @@ public class FeatureFlagOpsController extends BaseApiController {
      */
     @GetMapping("/key/{flagKey}")
     public ResponseEntity<ApiResponse<FeatureFlag>> getByFlagKey(@PathVariable String flagKey) {
+        OpsPermissionUtils.requireAdminOrOps();
         log.debug("Feature Flag 조회: flagKey={}", flagKey);
         FeatureFlag flag = featureFlagService.findByFlagKey(flagKey)
             .orElseThrow(() -> new EntityNotFoundException("Feature Flag를 찾을 수 없습니다: " + flagKey));
@@ -77,6 +79,7 @@ public class FeatureFlagOpsController extends BaseApiController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<FeatureFlag>> create(@RequestBody @Valid FeatureFlagCreateRequest request) {
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("Feature Flag 생성 요청: flagKey={}", request.flagKey());
         
         Instant expiresAt = null;
@@ -106,6 +109,7 @@ public class FeatureFlagOpsController extends BaseApiController {
     public ResponseEntity<ApiResponse<FeatureFlag>> toggle(
             @PathVariable Long flagId,
             @RequestBody @Valid FeatureFlagToggleRequest request) {
+        OpsPermissionUtils.requireAdminOrOps();
         log.info("Feature Flag 상태 변경 요청: flagId={}, state={}", flagId, request.state());
         
         FeatureFlag updated = featureFlagService.toggle(flagId, request.state());

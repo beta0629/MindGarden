@@ -5,7 +5,9 @@
 -- 작성일: 2025-01-23
 -- ============================================
 
-DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS CreateOrActivateTenant //
 
 -- ============================================
 -- 테넌트 생성 또는 활성화 프로시저
@@ -193,5 +195,7 @@ BEGIN
     END IF;
     
     COMMIT;
-END;
+END //
+
+DELIMITER ;
 

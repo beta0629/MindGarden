@@ -6,13 +6,19 @@ import java.util.Map;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/health")
 public class SystemHealthController {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @GetMapping("/actuator")
     public ResponseEntity<Map<String, Object>> actuatorHealth() {
@@ -70,6 +76,140 @@ public class SystemHealthController {
         } catch (Exception e) {
             response.put("status", "error");
             response.put("message", "데이터베이스 연결 확인 중 오류 발생: " + e.getMessage());
+            response.put("timestamp", System.currentTimeMillis());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
+     * 안전장치 3: 프로시저 상태 확인 엔드포인트
+     * 필수 프로시저들의 존재 여부를 확인
+     */
+    @GetMapping("/procedures")
+    public ResponseEntity<Map<String, Object>> checkProceduresHealth() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // 필수 프로시저 목록
+            String[] requiredProcedures = {
+                "CreateOrActivateTenant",
+                "ProcessOnboardingApproval",
+                "GenerateErdOnOnboardingApproval",
+                "SetupTenantCategoryMapping"
+            };
+            
+            Map<String, Boolean> procedureStatus = new HashMap<>();
+            int existingCount = 0;
+            
+            for (String procedureName : requiredProcedures) {
+                try {
+                    Boolean exists = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) > 0 FROM information_schema.ROUTINES " +
+                        "WHERE ROUTINE_SCHEMA = DATABASE() " +
+                        "AND ROUTINE_NAME = ? " +
+                        "AND ROUTINE_TYPE = 'PROCEDURE'",
+                        Boolean.class,
+                        procedureName
+                    );
+                    
+                    boolean procedureExists = Boolean.TRUE.equals(exists);
+                    procedureStatus.put(procedureName, procedureExists);
+                    
+                    if (procedureExists) {
+                        existingCount++;
+                        log.debug("✅ 프로시저 존재: {}", procedureName);
+                    } else {
+                        log.warn("❌ 프로시저 누락: {}", procedureName);
+                    }
+                } catch (Exception e) {
+                    log.error("프로시저 확인 중 오류: {} - {}", procedureName, e.getMessage());
+                    procedureStatus.put(procedureName, false);
+                }
+            }
+            
+            boolean allProceduresExist = existingCount == requiredProcedures.length;
+            
+            response.put("status", allProceduresExist ? "healthy" : "degraded");
+            response.put("message", allProceduresExist ? 
+                "모든 필수 프로시저가 정상적으로 설치되어 있습니다" : 
+                String.format("일부 프로시저가 누락되었습니다 (%d/%d)", existingCount, requiredProcedures.length));
+            response.put("procedures", procedureStatus);
+            response.put("existingCount", existingCount);
+            response.put("requiredCount", requiredProcedures.length);
+            response.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("프로시저 상태 확인 중 오류 발생", e);
+            response.put("status", "error");
+            response.put("message", "프로시저 상태 확인 중 오류 발생: " + e.getMessage());
+            response.put("timestamp", System.currentTimeMillis());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
+     * 안전장치 4: CreateOrActivateTenant 프로시저 상세 확인
+     */
+    @GetMapping("/procedures/create-or-activate-tenant")
+    public ResponseEntity<Map<String, Object>> checkCreateOrActivateTenantProcedure() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            String procedureName = "CreateOrActivateTenant";
+            
+            // 프로시저 존재 여부
+            Boolean exists = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) > 0 FROM information_schema.ROUTINES " +
+                "WHERE ROUTINE_SCHEMA = DATABASE() " +
+                "AND ROUTINE_NAME = ? " +
+                "AND ROUTINE_TYPE = 'PROCEDURE'",
+                Boolean.class,
+                procedureName
+            );
+            
+            if (Boolean.TRUE.equals(exists)) {
+                // 프로시저 상세 정보
+                Map<String, Object> procedureInfo = jdbcTemplate.queryForMap(
+                    "SELECT " +
+                    "ROUTINE_NAME, " +
+                    "CREATED, " +
+                    "LAST_ALTERED, " +
+                    "ROUTINE_DEFINITION " +
+                    "FROM information_schema.ROUTINES " +
+                    "WHERE ROUTINE_SCHEMA = DATABASE() " +
+                    "AND ROUTINE_NAME = ? " +
+                    "AND ROUTINE_TYPE = 'PROCEDURE'",
+                    procedureName
+                );
+                
+                String definition = (String) procedureInfo.get("ROUTINE_DEFINITION");
+                boolean hasRequiredKeywords = definition != null && 
+                    definition.toUpperCase().contains("DECLARE") &&
+                    definition.toUpperCase().contains("BEGIN") &&
+                    definition.toUpperCase().contains("END") &&
+                    definition.toUpperCase().contains("TRANSACTION");
+                
+                response.put("status", "healthy");
+                response.put("exists", true);
+                response.put("procedureName", procedureInfo.get("ROUTINE_NAME"));
+                response.put("created", procedureInfo.get("CREATED"));
+                response.put("lastAltered", procedureInfo.get("LAST_ALTERED"));
+                response.put("hasRequiredStructure", hasRequiredKeywords);
+                response.put("definitionLength", definition != null ? definition.length() : 0);
+                response.put("message", "프로시저가 정상적으로 설치되어 있습니다");
+            } else {
+                response.put("status", "error");
+                response.put("exists", false);
+                response.put("message", "프로시저가 존재하지 않습니다. Flyway 마이그레이션 또는 Java 코드 백업 메커니즘이 필요합니다.");
+            }
+            
+            response.put("timestamp", System.currentTimeMillis());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("CreateOrActivateTenant 프로시저 확인 중 오류 발생", e);
+            response.put("status", "error");
+            response.put("message", "프로시저 확인 중 오류 발생: " + e.getMessage());
             response.put("timestamp", System.currentTimeMillis());
             return ResponseEntity.status(500).body(response);
         }

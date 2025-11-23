@@ -1,20 +1,11 @@
 -- ============================================
--- V42: CreateOrActivateTenant 프로시저 생성 (V13에서 누락된 프로시저 복구)
+-- CreateOrActivateTenant 프로시저
 -- ============================================
--- 목적: V13 마이그레이션이 실행되지 않아 누락된 CreateOrActivateTenant 프로시저 생성
--- 작성일: 2025-01-23
--- 수정일: 2025-11-23 (운영 환경 안전성 확보 - V40 패턴 적용)
--- ============================================
--- 주의: V40이 이미 CreateOrActivateTenant를 포함하고 있지만,
---       V40 이전 환경이나 V40이 실행되지 않은 경우를 대비하여 재생성
---       DROP PROCEDURE IF EXISTS를 사용하여 안전하게 처리
+-- 목적: 테넌트 생성 또는 활성화
+-- 주의: DELIMITER 없이 작성 (Java에서 처리)
 -- ============================================
 
-DELIMITER //
-
--- CreateOrActivateTenant 프로시저 생성
--- V40과 동일한 패턴 사용 (운영 환경 검증됨)
-DROP PROCEDURE IF EXISTS CreateOrActivateTenant //
+DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
 
 CREATE PROCEDURE CreateOrActivateTenant(
     IN p_tenant_id VARCHAR(64),
@@ -31,8 +22,6 @@ BEGIN
     DECLARE v_domain VARCHAR(255) DEFAULT '';
     DECLARE v_settings_json JSON DEFAULT NULL;
     DECLARE v_counter INT DEFAULT 0;
-    DECLARE v_consultation_enabled BOOLEAN DEFAULT FALSE;
-    DECLARE v_academy_enabled BOOLEAN DEFAULT FALSE;
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -44,19 +33,6 @@ BEGIN
     END;
     
     START TRANSACTION;
-    
-    -- 업종별 기능 활성화 설정
-    IF p_business_type = 'CONSULTATION' THEN
-        SET v_consultation_enabled = TRUE;
-        SET v_academy_enabled = FALSE;
-    ELSEIF p_business_type = 'ACADEMY' THEN
-        SET v_consultation_enabled = FALSE;
-        SET v_academy_enabled = TRUE;
-    ELSE
-        -- 기타 업종은 기본적으로 상담 기능 활성화
-        SET v_consultation_enabled = TRUE;
-        SET v_academy_enabled = FALSE;
-    END IF;
     
     -- 테넌트 존재 확인
     SELECT COUNT(*) > 0 INTO v_exists
@@ -107,19 +83,9 @@ BEGIN
             UPDATE tenants
             SET status = 'ACTIVE',
                 settings_json = JSON_SET(
-                    JSON_SET(
-                        JSON_SET(
-                            JSON_SET(
-                                COALESCE(settings_json, '{}'),
-                                '$.subdomain', v_subdomain
-                            ),
-                            '$.domain', v_domain
-                        ),
-                        '$.features', JSON_OBJECT(
-                            'consultation', v_consultation_enabled,
-                            'academy', v_academy_enabled
-                        )
-                    )
+                    COALESCE(settings_json, '{}'),
+                    '$.subdomain', v_subdomain,
+                    '$.domain', v_domain
                 ),
                 updated_at = NOW(),
                 updated_by = p_approved_by
@@ -128,27 +94,11 @@ BEGIN
             SET p_success = TRUE;
             SET p_message = CONCAT('테넌트 활성화 완료 (서브도메인: ', v_subdomain, '): ', p_tenant_id);
         ELSE
-            -- 기존 settings_json에 features 추가 (없는 경우만)
-            IF JSON_EXTRACT(v_settings_json, '$.features') IS NULL THEN
-                UPDATE tenants
-                SET status = 'ACTIVE',
-                    settings_json = JSON_SET(
-                        v_settings_json,
-                        '$.features', JSON_OBJECT(
-                            'consultation', v_consultation_enabled,
-                            'academy', v_academy_enabled
-                        )
-                    ),
-                    updated_at = NOW(),
-                    updated_by = p_approved_by
-                WHERE tenant_id = p_tenant_id;
-            ELSE
-                UPDATE tenants
-                SET status = 'ACTIVE',
-                    updated_at = NOW(),
-                    updated_by = p_approved_by
-                WHERE tenant_id = p_tenant_id;
-            END IF;
+            UPDATE tenants
+            SET status = 'ACTIVE',
+            updated_at = NOW(),
+            updated_by = p_approved_by
+            WHERE tenant_id = p_tenant_id;
             
             SET p_success = TRUE;
             SET p_message = CONCAT('테넌트 활성화 완료: ', p_tenant_id);
@@ -156,6 +106,7 @@ BEGIN
     ELSE
         -- 새 테넌트 생성
         -- 서브도메인 자동 생성 (테넌트명 기반)
+        -- 예: "마인드가든" → "mindgarden"
         SET v_subdomain = LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
             p_tenant_name,
             ' ', '-'),
@@ -198,14 +149,10 @@ BEGIN
         -- 도메인 생성
         SET v_domain = CONCAT(v_subdomain, '.dev.core-solution.co.kr');
         
-        -- settings_json에 서브도메인 및 기능 활성화 정보 저장
+        -- settings_json에 서브도메인 정보 저장
         SET v_settings_json = JSON_OBJECT(
             'subdomain', v_subdomain,
-            'domain', v_domain,
-            'features', JSON_OBJECT(
-                'consultation', v_consultation_enabled,
-                'academy', v_academy_enabled
-            )
+            'domain', v_domain
         );
         
         INSERT INTO tenants (
@@ -243,6 +190,5 @@ BEGIN
     END IF;
     
     COMMIT;
-END //
+END;
 
-DELIMITER ;

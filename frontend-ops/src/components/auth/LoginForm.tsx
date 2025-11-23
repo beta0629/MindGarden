@@ -21,7 +21,9 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
     startTransition(async () => {
       try {
-        const response = await fetch("/api/auth/login", {
+        // 백엔드 API 직접 호출
+        const apiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL || "/api/v1";
+        const response = await fetch(`${apiBaseUrl}/ops/auth/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -29,14 +31,42 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           body: JSON.stringify({ username, password })
         });
 
-        const body = await response.json();
-
-        if (!response.ok) {
-          setFeedback(
-            body?.message ?? "로그인에 실패했습니다. 입력 정보를 다시 확인하세요."
-          );
+        let body: any;
+        try {
+          body = await response.json();
+        } catch (e) {
+          setFeedback("서버 응답을 읽을 수 없습니다.");
           return;
         }
+
+        if (!response.ok) {
+          // ApiResponse 래퍼 처리
+          let errorMessage = body?.message || "로그인에 실패했습니다. 입력 정보를 다시 확인하세요.";
+          if (body?.success === false && body?.data?.message) {
+            errorMessage = body.data.message;
+          } else if (body?.data?.message) {
+            errorMessage = body.data.message;
+          }
+          setFeedback(errorMessage);
+          return;
+        }
+
+        // ApiResponse 래퍼 처리: { success: true, data: {...} } 형태면 data 추출
+        let responseData = body;
+        if (body && typeof body === 'object' && 'success' in body && 'data' in body && body.success) {
+          responseData = body.data;
+        }
+
+        if (!responseData || !responseData.token) {
+          setFeedback("로그인 응답을 해석할 수 없습니다. 관리자에게 문의하세요.");
+          return;
+        }
+
+        // 쿠키에 토큰 저장
+        const maxAge = 60 * 60; // 1 hour
+        document.cookie = `ops_token=${responseData.token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `ops_actor_id=${responseData.actorId || username}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `ops_actor_role=${responseData.actorRole || "HQ_ADMIN"}; path=/; max-age=${maxAge}; SameSite=Lax`;
 
         router.replace(redirectTo || "/dashboard");
         router.refresh();

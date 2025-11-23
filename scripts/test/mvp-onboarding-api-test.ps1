@@ -47,18 +47,49 @@ try {
     exit 1
 }
 
+# Step 1.5: Ops Portal 로그인 (승인 API 인증 필요)
+Write-Host "1.5. Ops Portal 로그인..." -ForegroundColor Yellow
+$opsLoginBody = @{
+    username = $OpsUsername
+    password = $OpsPassword
+} | ConvertTo-Json
+
+try {
+    $opsLoginResponse = Invoke-RestMethod -Uri "$BaseUrl/ops/auth/login" `
+        -Method Post `
+        -ContentType "application/json" `
+        -Body $opsLoginBody
+    
+    $opsToken = $opsLoginResponse.data.token
+    $opsActorId = $opsLoginResponse.data.actorId
+    $opsActorRole = $opsLoginResponse.data.actorRole
+    
+    Write-Host "  ✅ Ops Portal 로그인 성공" -ForegroundColor Green
+} catch {
+    Write-Host "  ❌ Ops Portal 로그인 실패: $_" -ForegroundColor Red
+    Write-Host "  ⚠️  승인 API는 인증이 필요합니다." -ForegroundColor Yellow
+    exit 1
+}
+
 # Step 2: 온보딩 승인
 Write-Host "2. 온보딩 승인..." -ForegroundColor Yellow
 $approveBody = @{
     status = "APPROVED"
-    actorId = "system-admin"
+    actorId = $opsActorId
     note = "MVP 테스트 승인"
 } | ConvertTo-Json
+
+$approveHeaders = @{
+    "Authorization" = "Bearer $opsToken"
+    "X-Actor-Id" = $opsActorId
+    "X-Actor-Role" = $opsActorRole
+}
 
 try {
     $approveResponse = Invoke-RestMethod -Uri "$BaseUrl/onboarding/requests/$requestId/decision" `
         -Method Post `
         -ContentType "application/json" `
+        -Headers $approveHeaders `
         -Body $approveBody
     
     Write-Host "  ✅ 온보딩 승인 성공" -ForegroundColor Green

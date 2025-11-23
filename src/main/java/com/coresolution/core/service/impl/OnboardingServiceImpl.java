@@ -276,10 +276,16 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
             
             if (success == null || !success) {
-                log.error("온보딩 승인 프로세스 실패: {}", message);
+                String errorMessage = (message != null && !message.trim().isEmpty()) 
+                    ? message 
+                    : "온보딩 승인 프로세스 중 알 수 없는 오류가 발생했습니다. (상세 오류 정보 없음)";
+                log.error("온보딩 승인 프로세스 실패: requestId={}, tenantId={}, message={}", 
+                    requestId, tenantId, errorMessage);
+                log.error("온보딩 승인 프로세스 실패 상세: success={}, message={}, approvalResult={}", 
+                    success, message, approvalResult);
                 // 승인 프로세스 실패 시 상태를 ON_HOLD로 변경
                 request.setStatus(OnboardingStatus.ON_HOLD);
-                request.setDecisionNote(note != null ? note + "\n[시스템 오류] " + message : "[시스템 오류] " + message);
+                request.setDecisionNote(note != null ? note + "\n[시스템 오류] " + errorMessage : "[시스템 오류] " + errorMessage);
             } else {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
                 

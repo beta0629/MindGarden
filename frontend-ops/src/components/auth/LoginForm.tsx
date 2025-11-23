@@ -21,6 +21,15 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
     startTransition(async () => {
       try {
+        // 입력값 trim 처리
+        const trimmedUsername = username.trim();
+        const trimmedPassword = password.trim();
+        
+        if (!trimmedUsername || !trimmedPassword) {
+          setFeedback("아이디와 비밀번호를 모두 입력해주세요.");
+          return;
+        }
+        
         // 백엔드 API 직접 호출
         const apiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL || "/api/v1";
         const response = await fetch(`${apiBaseUrl}/ops/auth/login`, {
@@ -28,7 +37,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username: trimmedUsername, password: trimmedPassword })
         });
 
         let body: any;
@@ -64,12 +73,15 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
         // 쿠키에 토큰 저장
         const maxAge = 60 * 60; // 1 hour
-        document.cookie = `ops_token=${responseData.token}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `ops_actor_id=${responseData.actorId || username}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `ops_actor_role=${responseData.actorRole || "HQ_ADMIN"}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        const cookieOptions = `path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `ops_token=${responseData.token}; ${cookieOptions}`;
+        document.cookie = `ops_actor_id=${responseData.actorId || trimmedUsername}; ${cookieOptions}`;
+        document.cookie = `ops_actor_role=${responseData.actorRole || "HQ_ADMIN"}; ${cookieOptions}`;
 
-        router.replace(redirectTo || "/dashboard");
-        router.refresh();
+        // 쿠키가 설정된 후 전체 페이지 리로드를 통해 대시보드로 이동
+        // router.replace()는 쿠키를 즉시 읽지 못할 수 있으므로 window.location 사용
+        const redirectPath = redirectTo || "/dashboard";
+        window.location.href = redirectPath;
       } catch (error) {
         setFeedback(
           error instanceof Error

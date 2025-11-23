@@ -71,9 +71,17 @@ public class OpsAuthController extends BaseApiController {
         String username = request.getUsername();
         String password = request.getPassword();
         
+        // 입력값 trim 처리
+        if (username != null) {
+            username = username.trim();
+        }
+        if (password != null) {
+            password = password.trim();
+        }
+        
         log.debug("Ops Portal 로그인 요청: username={}, password={}", username, password != null ? "***" : null);
         
-        if (username == null || password == null) {
+        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
             throw new IllegalArgumentException("아이디와 비밀번호를 모두 입력해주세요.");
         }
         

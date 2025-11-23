@@ -113,28 +113,8 @@ public class OnboardingController extends BaseApiController {
     @GetMapping("/requests/pending")
     public ResponseEntity<ApiResponse<List<OnboardingRequest>>> getPendingRequests() {
         // 인증 정보 확인 및 권한 체크
-        org.springframework.security.core.Authentication auth = 
-            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        OpsPermissionUtils.requireAdminOrOps();
         
-        if (auth == null) {
-            log.warn("대기 중인 온보딩 요청 목록 조회: 인증 정보 없음");
-            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("인증이 필요합니다.");
-        }
-        
-        // 권한 체크: ADMIN 또는 OPS 역할이 있어야 함
-        boolean hasAdminRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        boolean hasOpsRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_OPS"));
-        
-        if (!hasAdminRole && !hasOpsRole) {
-            log.warn("대기 중인 온보딩 요청 목록 조회: 권한 없음 - principal={}, authorities={}", 
-                auth.getPrincipal(), auth.getAuthorities());
-            throw new org.springframework.security.access.AccessDeniedException("접근 권한이 없습니다.");
-        }
-        
-        log.debug("대기 중인 온보딩 요청 목록 조회: principal={}, authorities={}", 
-            auth.getPrincipal(), auth.getAuthorities());
         List<OnboardingRequest> requests = onboardingService.findPending();
         return success(requests);
     }
@@ -146,28 +126,8 @@ public class OnboardingController extends BaseApiController {
     @GetMapping("/requests/{id}")
     public ResponseEntity<ApiResponse<OnboardingRequest>> getRequest(@PathVariable Long id) {
         // 인증 정보 확인 및 권한 체크
-        org.springframework.security.core.Authentication auth = 
-            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        OpsPermissionUtils.requireAdminOrOps();
         
-        if (auth == null) {
-            log.warn("온보딩 요청 상세 조회: id={}, 인증 정보 없음", id);
-            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("인증이 필요합니다.");
-        }
-        
-        // 권한 체크: ADMIN 또는 OPS 역할이 있어야 함
-        boolean hasAdminRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        boolean hasOpsRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_OPS"));
-        
-        if (!hasAdminRole && !hasOpsRole) {
-            log.warn("온보딩 요청 상세 조회: 권한 없음 - id={}, principal={}, authorities={}", 
-                id, auth.getPrincipal(), auth.getAuthorities());
-            throw new org.springframework.security.access.AccessDeniedException("접근 권한이 없습니다.");
-        }
-        
-        log.debug("온보딩 요청 상세 조회: id={}, principal={}, authorities={}", 
-            id, auth.getPrincipal(), auth.getAuthorities());
         OnboardingRequest request = onboardingService.getById(id);
         if (request == null) {
             throw new EntityNotFoundException("온보딩 요청을 찾을 수 없습니다: " + id);
@@ -340,7 +300,7 @@ public class OnboardingController extends BaseApiController {
             @PathVariable Long id,
             @RequestBody @Valid OnboardingDecisionRequest payload) {
         // 인증 정보 확인 및 권한 체크
-        com.coresolution.core.util.OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireAdminOrOps();
         
         log.info("온보딩 요청 결정: id={}, status={}, actorId={}", 
             id, payload.status(), payload.actorId());
@@ -365,28 +325,7 @@ public class OnboardingController extends BaseApiController {
             @RequestParam(required = false) OnboardingStatus status,
             @PageableDefault(size = 20) Pageable pageable) {
         // 인증 정보 확인 및 권한 체크
-        org.springframework.security.core.Authentication auth = 
-            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        
-        if (auth == null) {
-            log.warn("상태별 온보딩 요청 목록 조회: 인증 정보 없음 - status={}", status);
-            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("인증이 필요합니다.");
-        }
-        
-        // 권한 체크: ADMIN 또는 OPS 역할이 있어야 함
-        boolean hasAdminRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        boolean hasOpsRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_OPS"));
-        
-        if (!hasAdminRole && !hasOpsRole) {
-            log.warn("상태별 온보딩 요청 목록 조회: 권한 없음 - status={}, principal={}, authorities={}", 
-                status, auth.getPrincipal(), auth.getAuthorities());
-            throw new org.springframework.security.access.AccessDeniedException("접근 권한이 없습니다.");
-        }
-        
-        log.debug("상태별 온보딩 요청 목록 조회: status={}, page={}, size={}, principal={}, authorities={}", 
-            status, pageable.getPageNumber(), pageable.getPageSize(), auth.getPrincipal(), auth.getAuthorities());
+        OpsPermissionUtils.requireAdminOrOps();
         
         Page<OnboardingRequest> requests;
         if (status != null) {
@@ -407,28 +346,7 @@ public class OnboardingController extends BaseApiController {
     public ResponseEntity<ApiResponse<Long>> getRequestCount(
             @RequestParam(required = false) OnboardingStatus status) {
         // 인증 정보 확인 및 권한 체크
-        org.springframework.security.core.Authentication auth = 
-            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        
-        if (auth == null) {
-            log.warn("상태별 온보딩 요청 개수 조회: 인증 정보 없음 - status={}", status);
-            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("인증이 필요합니다.");
-        }
-        
-        // 권한 체크: ADMIN 또는 OPS 역할이 있어야 함
-        boolean hasAdminRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        boolean hasOpsRole = auth.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_OPS"));
-        
-        if (!hasAdminRole && !hasOpsRole) {
-            log.warn("상태별 온보딩 요청 개수 조회: 권한 없음 - status={}, principal={}, authorities={}", 
-                status, auth.getPrincipal(), auth.getAuthorities());
-            throw new org.springframework.security.access.AccessDeniedException("접근 권한이 없습니다.");
-        }
-        
-        log.debug("상태별 온보딩 요청 개수 조회: status={}, principal={}, authorities={}", 
-            status, auth.getPrincipal(), auth.getAuthorities());
+        OpsPermissionUtils.requireAdminOrOps();
         
         long count;
         if (status != null) {
@@ -453,7 +371,7 @@ public class OnboardingController extends BaseApiController {
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> payload) {
         // 인증 정보 확인 및 권한 체크
-        com.coresolution.core.util.OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireAdminOrOps();
         
         log.info("온보딩 승인 프로세스 재시도: id={}", id);
         

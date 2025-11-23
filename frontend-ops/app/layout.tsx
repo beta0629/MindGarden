@@ -60,6 +60,7 @@ export default function RootLayout({
             </div>
             <nav className="layout__nav">
               <Link href="/dashboard">대시보드</Link>
+              <Link href="/tenants">테넌트</Link>
               <Link href="/onboarding">온보딩</Link>
               <Link href="/pricing">요금제</Link>
               <Link href="/feature-flags">Feature Flag</Link>

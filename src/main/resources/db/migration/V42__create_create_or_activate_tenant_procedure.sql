@@ -60,7 +60,7 @@ BEGIN
             SET v_subdomain = REPLACE(v_subdomain, '상담', 'consultation');
             SET v_subdomain = REPLACE(v_subdomain, '학원', 'academy');
             -- 영문/숫자/하이픈만 남기기 (MySQL 8.0+ REGEXP_REPLACE 사용)
-            SET v_subdomain = REGEXP_REPLACE(v_subdomain, '[^a-z0-9\\-]', '');
+            SET v_subdomain = REGEXP_REPLACE(v_subdomain, '[^a-z0-9-]', '');
             IF LENGTH(v_subdomain) > 63 THEN
                 SET v_subdomain = LEFT(v_subdomain, 63);
             END IF;

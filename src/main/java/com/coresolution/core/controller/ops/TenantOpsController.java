@@ -45,6 +45,17 @@ public class TenantOpsController extends BaseApiController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTenants() {
+        // 인증 정보 확인
+        org.springframework.security.core.Authentication auth = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        
+        if (auth != null) {
+            log.info("Ops Portal 테넌트 목록 조회 요청: principal={}, authorities={}", 
+                auth.getPrincipal(), auth.getAuthorities());
+        } else {
+            log.warn("Ops Portal 테넌트 목록 조회 요청: 인증 정보 없음");
+        }
+        
         log.info("Ops Portal 테넌트 목록 조회 요청");
         
         List<Tenant> tenants = tenantRepository.findAllActive();
@@ -74,6 +85,17 @@ public class TenantOpsController extends BaseApiController {
     @GetMapping("/{tenantId}/admins")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTenantAdmins(
             @PathVariable String tenantId) {
+        // 인증 정보 확인
+        org.springframework.security.core.Authentication auth = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        
+        if (auth != null) {
+            log.info("Ops Portal 테넌트 관리자 계정 조회 요청: tenantId={}, principal={}, authorities={}", 
+                tenantId, auth.getPrincipal(), auth.getAuthorities());
+        } else {
+            log.warn("Ops Portal 테넌트 관리자 계정 조회 요청: tenantId={}, 인증 정보 없음", tenantId);
+        }
+        
         log.info("Ops Portal 테넌트 관리자 계정 조회 요청: tenantId={}", tenantId);
         
         // 테넌트 존재 확인

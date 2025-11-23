@@ -3,7 +3,9 @@
 
 param(
     [string]$BaseUrl = "http://localhost:8080/api/v1",
-    [string]$BusinessType = "CONSULTATION"
+    [string]$BusinessType = "CONSULTATION",
+    [string]$OpsUsername = "superadmin@mindgarden.com",
+    [string]$OpsPassword = "admin123"
 )
 
 $ErrorActionPreference = "Stop"

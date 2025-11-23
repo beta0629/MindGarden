@@ -6,6 +6,8 @@ set -e
 
 BASE_URL="${BASE_URL:-http://localhost:8080/api/v1}"
 BUSINESS_TYPE="${BUSINESS_TYPE:-CONSULTATION}"
+OPS_USERNAME="${OPS_USERNAME:-superadmin@mindgarden.com}"
+OPS_PASSWORD="${OPS_PASSWORD:-admin123}"
 
 # 타임스탬프 생성
 TIMESTAMP=$(date +%s%3N)
@@ -43,13 +45,38 @@ fi
 
 echo "  ✅ 온보딩 요청 생성 성공 (ID: ${REQUEST_ID})"
 
+# Step 1.5: Ops Portal 로그인 (승인 API 인증 필요)
+echo "1.5. Ops Portal 로그인..."
+OPS_LOGIN_RESPONSE=$(curl -s -X POST "${BASE_URL}/ops/auth/login" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"username\": \"${OPS_USERNAME}\",
+    \"password\": \"${OPS_PASSWORD}\"
+  }")
+
+OPS_TOKEN=$(echo ${OPS_LOGIN_RESPONSE} | jq -r '.data.token // empty')
+OPS_ACTOR_ID=$(echo ${OPS_LOGIN_RESPONSE} | jq -r '.data.actorId // empty')
+OPS_ACTOR_ROLE=$(echo ${OPS_LOGIN_RESPONSE} | jq -r '.data.actorRole // empty')
+
+if [ -z "${OPS_TOKEN}" ]; then
+  echo "  ❌ Ops Portal 로그인 실패"
+  echo "  응답: ${OPS_LOGIN_RESPONSE}"
+  echo "  ⚠️  승인 API는 인증이 필요합니다."
+  exit 1
+fi
+
+echo "  ✅ Ops Portal 로그인 성공"
+
 # Step 2: 온보딩 승인
 echo "2. 온보딩 승인..."
 APPROVE_RESPONSE=$(curl -s -X POST "${BASE_URL}/onboarding/requests/${REQUEST_ID}/decision" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${OPS_TOKEN}" \
+  -H "X-Actor-Id: ${OPS_ACTOR_ID}" \
+  -H "X-Actor-Role: ${OPS_ACTOR_ROLE}" \
   -d "{
     \"status\": \"APPROVED\",
-    \"actorId\": \"system-admin\",
+    \"actorId\": \"${OPS_ACTOR_ID}\",
     \"note\": \"MVP 테스트 승인\"
   }")
 

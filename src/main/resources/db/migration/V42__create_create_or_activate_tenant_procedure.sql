@@ -3,12 +3,12 @@
 -- ============================================
 -- 목적: V13 마이그레이션이 실행되지 않아 누락된 CreateOrActivateTenant 프로시저 생성
 -- 작성일: 2025-01-23
--- 수정일: 2025-11-23 (재배포)
+-- 수정일: 2025-11-23 (재배포 - DELIMITER 제거)
 -- ============================================
+-- 주의: Flyway는 DELIMITER를 지원하지 않으므로 제거했습니다.
+--       Flyway가 자동으로 프로시저를 감지하여 처리합니다.
 
-DELIMITER //
-
-DROP PROCEDURE IF EXISTS CreateOrActivateTenant //
+DROP PROCEDURE IF EXISTS CreateOrActivateTenant;
 
 -- ============================================
 -- 테넌트 생성 또는 활성화 프로시저
@@ -196,7 +196,5 @@ BEGIN
     END IF;
     
     COMMIT;
-END //
-
-DELIMITER ;
+END;
 

@@ -297,6 +297,10 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             
             // 기본 대시보드 생성
             String dashboardId = UUID.randomUUID().toString();
+            
+            // 기본 위젯 설정 생성 (MVP용)
+            String defaultConfig = createDefaultDashboardConfig(roleCode);
+            
             TenantDashboard dashboard = TenantDashboard.builder()
                     .dashboardId(dashboardId)
                     .tenantId(tenantId)
@@ -309,7 +313,7 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                     .isDefault(true) // 기본 대시보드
                     .isActive(true)
                     .displayOrder(i + 1)
-                    .dashboardConfig(null) // 기본 설정은 나중에 추가 가능
+                    .dashboardConfig(defaultConfig) // 기본 위젯 설정
                     .build();
             
             TenantDashboard saved = dashboardRepository.save(dashboard);
@@ -459,6 +463,85 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                 throw new IllegalArgumentException("위젯 position의 span은 1-12 사이여야 합니다.");
             }
         }
+    }
+    
+    /**
+     * 기본 대시보드 설정 생성 (MVP용)
+     * 역할별 기본 위젯 3-5개 포함
+     */
+    private String createDefaultDashboardConfig(String roleCode) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            com.fasterxml.jackson.databind.node.ObjectNode config = mapper.createObjectNode();
+            
+            // 버전 및 레이아웃 설정
+            config.put("version", "1.0");
+            com.fasterxml.jackson.databind.node.ObjectNode layout = mapper.createObjectNode();
+            layout.put("type", "grid");
+            layout.put("columns", 3);
+            layout.put("gap", "md");
+            layout.put("responsive", true);
+            config.set("layout", layout);
+            
+            // 기본 위젯 배열
+            com.fasterxml.jackson.databind.node.ArrayNode widgets = mapper.createArrayNode();
+            
+            // 역할별 기본 위젯 설정
+            if ("ADMIN".equalsIgnoreCase(roleCode) || "관리자".equals(roleCode)) {
+                // 관리자: 환영, 통계, 활동 목록
+                widgets.add(createWidget(mapper, "welcome", 0, 0, 3, "환영합니다", "welcome"));
+                widgets.add(createWidget(mapper, "summary-statistics", 1, 0, 3, "통계 요약", "summary-statistics"));
+                widgets.add(createWidget(mapper, "activity-list", 2, 0, 3, "최근 활동", "activity-list"));
+            } else if ("STUDENT".equalsIgnoreCase(roleCode) || "학생".equals(roleCode)) {
+                // 학생: 일정, 알림
+                widgets.add(createWidget(mapper, "schedule", 0, 0, 2, "내 일정", "schedule"));
+                widgets.add(createWidget(mapper, "notification", 0, 2, 1, "알림", "notification"));
+            } else if ("TEACHER".equalsIgnoreCase(roleCode) || "선생님".equals(roleCode)) {
+                // 선생님: 일정, 통계
+                widgets.add(createWidget(mapper, "schedule", 0, 0, 2, "일정", "schedule"));
+                widgets.add(createWidget(mapper, "summary-statistics", 0, 2, 1, "통계", "summary-statistics"));
+            } else {
+                // 기본: 환영, 통계
+                widgets.add(createWidget(mapper, "welcome", 0, 0, 2, "환영합니다", "welcome"));
+                widgets.add(createWidget(mapper, "summary-statistics", 0, 2, 1, "통계", "summary-statistics"));
+            }
+            
+            config.set("widgets", widgets);
+            
+            // 테마 설정
+            com.fasterxml.jackson.databind.node.ObjectNode theme = mapper.createObjectNode();
+            theme.put("mode", "light");
+            theme.put("primaryColor", "#007bff");
+            config.set("theme", theme);
+            
+            return mapper.writeValueAsString(config);
+        } catch (JsonProcessingException e) {
+            log.error("기본 대시보드 설정 생성 실패: roleCode={}", roleCode, e);
+            // 실패 시 최소 설정 반환
+            return "{\"version\":\"1.0\",\"layout\":{\"type\":\"grid\",\"columns\":3},\"widgets\":[]}";
+        }
+    }
+    
+    /**
+     * 위젯 객체 생성 헬퍼 메서드
+     */
+    private com.fasterxml.jackson.databind.node.ObjectNode createWidget(
+            ObjectMapper mapper, String type, int row, int col, int span, String title, String id) {
+        com.fasterxml.jackson.databind.node.ObjectNode widget = mapper.createObjectNode();
+        widget.put("id", id + "-" + UUID.randomUUID().toString().substring(0, 8));
+        widget.put("type", type);
+        
+        com.fasterxml.jackson.databind.node.ObjectNode position = mapper.createObjectNode();
+        position.put("row", row);
+        position.put("col", col);
+        position.put("span", span);
+        widget.set("position", position);
+        
+        com.fasterxml.jackson.databind.node.ObjectNode config = mapper.createObjectNode();
+        config.put("title", title);
+        widget.set("config", config);
+        
+        return widget;
     }
 }
 

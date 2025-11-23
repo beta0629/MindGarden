@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ public class OpsAuthController extends BaseApiController {
     
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final ObjectMapper objectMapper;
     
     @Value("${ops.admin.username:superadmin@mindgarden.com}")
     private String opsAdminUsername;
@@ -62,7 +64,18 @@ public class OpsAuthController extends BaseApiController {
      * @since 2025-11-23
      */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> login(@RequestBody String requestBody) {
+        log.debug("Ops Portal 로그인 요청 본문 (raw): {}", requestBody);
+        
+        // JSON 파싱
+        LoginRequest request;
+        try {
+            request = objectMapper.readValue(requestBody, LoginRequest.class);
+        } catch (Exception e) {
+            log.error("Ops Portal 로그인 요청 파싱 실패: {}", e.getMessage(), e);
+            throw new IllegalArgumentException("요청 데이터 형식이 올바르지 않습니다: " + e.getMessage());
+        }
+        
         String username = request.getUsername();
         String password = request.getPassword();
         

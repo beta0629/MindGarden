@@ -219,15 +219,40 @@ export default function OnboardingPage() {
             )}
 
             {step === 3 && (
-              <Step3PricingPlan
-                formData={formData}
-                setFormData={setFormData}
-                pricingPlans={pricingPlans}
-                loading={loading}
-              />
+              <>
+                <Step3PricingPlan
+                  formData={formData}
+                  setFormData={setFormData}
+                  pricingPlans={pricingPlans}
+                  loading={loading}
+                />
+                {/* PG 결제 프로세스 안내 메시지 */}
+                <div style={{
+                  backgroundColor: '#fff3cd',
+                  border: '1px solid #ffc107',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  marginTop: '20px'
+                }}>
+                  <p style={{
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    color: '#856404',
+                    marginBottom: '10px'
+                  }}>
+                    ⚠️ PG사 결제 프로세스는 추후 진행 예정입니다
+                  </p>
+                  <p style={{ color: '#856404', lineHeight: '1.6', fontSize: '14px' }}>
+                    현재는 결제 수단 등록 없이 바로 온보딩 등록이 가능합니다.
+                    <br />
+                    온보딩 승인 후 서비스 이용 시점에 결제 수단을 등록하실 수 있습니다.
+                  </p>
+                </div>
+              </>
             )}
 
-            {step === 4 && (
+            {/* Step 4는 일단 숨김 (추후 활성화 가능) */}
+            {false && step === 4 && (
               <Step4Payment
                 formData={formData}
                 setFormData={setFormData}
@@ -260,11 +285,14 @@ export default function OnboardingPage() {
                   </button>
                 )}
                 <button
-                  type={step < 4 ? "button" : "submit"}
+                  type={step === 3 ? "submit" : step < 4 ? "button" : "submit"}
                   onClick={() => {
-                    if (step < 4) {
+                    if (step < 3) {
                       setStep(step + 1);
-                            }
+                    } else if (step === 3) {
+                      // step 3에서 바로 제출 (step 4 결제 단계 건너뛰기)
+                      // handleSubmit이 자동으로 호출됨
+                    }
                   }}
                   className={COMPONENT_CSS.ONBOARDING.BUTTON}
                   disabled={
@@ -276,9 +304,11 @@ export default function OnboardingPage() {
                 >
                   {loading 
                     ? TRINITY_CONSTANTS.MESSAGES.PROCESSING 
-                    : step < 4 
-                      ? TRINITY_CONSTANTS.MESSAGES.NEXT 
-                      : TRINITY_CONSTANTS.MESSAGES.SUBMIT}
+                    : step === 3
+                      ? TRINITY_CONSTANTS.MESSAGES.SUBMIT
+                      : step < 4 
+                        ? TRINITY_CONSTANTS.MESSAGES.NEXT 
+                        : TRINITY_CONSTANTS.MESSAGES.SUBMIT}
                 </button>
               </div>
             )}

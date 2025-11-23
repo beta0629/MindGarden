@@ -59,6 +59,7 @@ public class OpsAuthController extends BaseApiController {
      * 
      * @param request 로그인 요청 (username, password)
      * @return JWT 토큰 및 사용자 정보
+     * @since 2025-11-23
      */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<Map<String, Object>>> login(@RequestBody LoginRequest request) {

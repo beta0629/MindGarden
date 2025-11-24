@@ -148,7 +148,7 @@ class OnboardingServiceTest {
         approvalResult.put("success", true);
         approvalResult.put("message", "온보딩 승인 완료");
         when(approvalService.processOnboardingApproval(
-            anyLong(), anyString(), anyString(), anyString(), anyString(), anyString()
+            anyLong(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString()
         )).thenReturn(approvalResult);
         
         // When
@@ -166,7 +166,7 @@ class OnboardingServiceTest {
         assertThat(result.getDecisionNote()).isEqualTo("테스트 승인");
         verify(repository, atLeastOnce()).save(any(OnboardingRequest.class));
         verify(approvalService, times(1)).processOnboardingApproval(
-            anyLong(), anyString(), anyString(), anyString(), anyString(), anyString()
+            anyLong(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString()
         );
     }
     

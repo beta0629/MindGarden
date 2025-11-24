@@ -58,7 +58,9 @@ class OnboardingApprovalServiceIntegrationTest {
                 testTenantName,
                 testBusinessType,
                 testApprovedBy,
-                decisionNote
+                decisionNote,
+                "test@example.com",  // contactEmail
+                null  // adminPasswordHash (테스트에서는 null)
         );
         
         // Then
@@ -89,7 +91,9 @@ class OnboardingApprovalServiceIntegrationTest {
                 testTenantName,
                 testBusinessType,
                 testApprovedBy,
-                "테스트"
+                "테스트",
+                "test@example.com",  // contactEmail
+                null  // adminPasswordHash (테스트에서는 null)
         );
         
         // Then
@@ -114,7 +118,9 @@ class OnboardingApprovalServiceIntegrationTest {
                 testTenantName,
                 testBusinessType,
                 testApprovedBy,
-                null // decisionNote는 nullable
+                null, // decisionNote는 nullable
+                "test@example.com",  // contactEmail
+                null  // adminPasswordHash (테스트에서는 null)
         );
         
         assertThat(result).isNotNull();

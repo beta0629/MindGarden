@@ -63,12 +63,48 @@ fi
 echo -e "${BLUE}   포트 8080, 3000 정리 중...${NC}"
 if command -v lsof >/dev/null 2>&1; then
     # macOS/Linux
-    lsof -ti:8080 | xargs kill -9 2>/dev/null || true
-    lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+    PIDS_8080=$(lsof -ti:8080 2>/dev/null || true)
+    PIDS_3000=$(lsof -ti:3000 2>/dev/null || true)
+    
+    if [ ! -z "$PIDS_8080" ]; then
+        echo "$PIDS_8080" | while read pid; do
+            kill $pid 2>/dev/null || true
+            sleep 1
+            kill -9 $pid 2>/dev/null || true
+        done
+    fi
+    
+    if [ ! -z "$PIDS_3000" ]; then
+        echo "$PIDS_3000" | while read pid; do
+            kill $pid 2>/dev/null || true
+            sleep 1
+            kill -9 $pid 2>/dev/null || true
+        done
+    fi
 elif command -v netstat >/dev/null 2>&1; then
-    # Windows (Git Bash)
-    netstat -ano | grep ":8080" | awk '{print $5}' | xargs kill -9 2>/dev/null || true
-    netstat -ano | grep ":3000" | awk '{print $5}' | xargs kill -9 2>/dev/null || true
+    # Windows (Git Bash) - 더 안전한 방법
+    PIDS_8080=$(netstat -ano 2>/dev/null | grep ":8080" | grep LISTENING | awk '{print $5}' | sort -u || true)
+    PIDS_3000=$(netstat -ano 2>/dev/null | grep ":3000" | grep LISTENING | awk '{print $5}' | sort -u || true)
+    
+    if [ ! -z "$PIDS_8080" ]; then
+        for pid in $PIDS_8080; do
+            if [ ! -z "$pid" ] && [ "$pid" != "0" ]; then
+                kill $pid 2>/dev/null || true
+                sleep 1
+                kill -9 $pid 2>/dev/null || true
+            fi
+        done
+    fi
+    
+    if [ ! -z "$PIDS_3000" ]; then
+        for pid in $PIDS_3000; do
+            if [ ! -z "$pid" ] && [ "$pid" != "0" ]; then
+                kill $pid 2>/dev/null || true
+                sleep 1
+                kill -9 $pid 2>/dev/null || true
+            fi
+        done
+    fi
 fi
 sleep 2
 

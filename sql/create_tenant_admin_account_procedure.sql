@@ -11,6 +11,8 @@ DELIMITER //
 -- ============================================
 -- 테넌트 관리자 계정 생성 프로시저
 -- ============================================
+DROP PROCEDURE IF EXISTS CreateTenantAdminAccount //
+
 CREATE PROCEDURE CreateTenantAdminAccount(
     IN p_tenant_id VARCHAR(64),
     IN p_contact_email VARCHAR(100),
@@ -102,19 +104,28 @@ BEGIN
             
             SET v_user_id = LAST_INSERT_ID();
             
-            -- 관리자 역할 할당 (tenant_roles에서 "관리자" 역할 찾기)
-            -- role_name이 "관리자"이거나 role_code가 "ADMIN"인 역할 찾기
+            -- 관리자 역할 할당 (tenant_roles에서 "원장" 또는 "관리자" 역할 찾기)
+            -- CONSULTATION 업종: "원장" 역할이 관리자 역할
+            -- ACADEMY 업종: "관리자" 역할이 관리자 역할
             SET @v_admin_role_id = NULL;
-            SELECT id INTO @v_admin_role_id
+            SELECT tenant_role_id INTO @v_admin_role_id
             FROM tenant_roles
             WHERE tenant_id = p_tenant_id
                 AND (
-                    role_name = '관리자' 
-                    OR role_code = 'ADMIN'
-                    OR (role_name LIKE '%관리자%' AND is_default = TRUE)
+                    name = '원장'
+                    OR name = '관리자'
+                    OR name_ko = '원장'
+                    OR name_ko = '관리자'
+                    OR name LIKE '%관리자%'
+                    OR name_ko LIKE '%관리자%'
                 )
                 AND (is_deleted IS NULL OR is_deleted = FALSE)
-            ORDER BY is_default DESC, created_at ASC
+                AND (is_active IS NULL OR is_active = TRUE)
+            ORDER BY 
+                CASE WHEN name = '원장' OR name_ko = '원장' THEN 1
+                     WHEN name = '관리자' OR name_ko = '관리자' THEN 2
+                     ELSE 3 END,
+                created_at ASC
             LIMIT 1;
             
             -- 역할 할당 (역할이 있는 경우에만)

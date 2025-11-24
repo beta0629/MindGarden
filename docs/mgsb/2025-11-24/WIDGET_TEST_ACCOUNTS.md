@@ -42,14 +42,14 @@
 
 **상담소 테넌트**:
 ```
-URL: http://beta0629.cafe24.com:8080/login
+URL: https://dev.core-solution.co.kr/login
 이메일: test-consultation-1763988242@example.com
 비밀번호: Test1234!@#
 ```
 
 **학원 테넌트**:
 ```
-URL: http://beta0629.cafe24.com:8080/login
+URL: https://dev.core-solution.co.kr/login
 이메일: test-academy-1763988263@example.com
 비밀번호: Test1234!@#
 ```
@@ -60,7 +60,7 @@ URL: http://beta0629.cafe24.com:8080/login
 
 로그인 후 다음 경로로 접속합니다.
 
-**URL**: `http://beta0629.cafe24.com:8080/admin/dashboards`
+**URL**: `https://dev.core-solution.co.kr/admin/dashboards`
 
 ---
 

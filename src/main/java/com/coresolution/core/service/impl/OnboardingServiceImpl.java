@@ -420,11 +420,12 @@ public class OnboardingServiceImpl implements OnboardingService {
                     }
                 }
                 
-                // 온보딩 승인 후 관리자 계정 생성
+                // 온보딩 승인 후 관리자 계정 생성 (별도 트랜잭션에서 실행)
                 if (tenantOpt.isPresent()) {
+                    // 별도 트랜잭션에서 관리자 계정 생성
                     try {
                         log.info("관리자 계정 생성 시작: tenantId={}, requestedBy={}", tenantId, request.getRequestedBy());
-                        createTenantAdminAccount(request, tenantOpt.get());
+                        createTenantAdminAccountInNewTransaction(request, tenantOpt.get());
                         log.info("관리자 계정 생성 완료: tenantId={}", tenantId);
                     } catch (Exception e) {
                         log.error("테넌트 관리자 계정 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
@@ -717,11 +718,19 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
     
     /**
-     * 온보딩 승인 후 테넌트 관리자 계정 생성
+     * 온보딩 승인 후 테넌트 관리자 계정 생성 (별도 트랜잭션에서 실행)
      * checklistJson에서 adminPassword를 가져와서 ADMIN 역할의 사용자 계정 생성
      * 별도 트랜잭션에서 실행하여 롤백 방지
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
+    private void createTenantAdminAccountInNewTransaction(OnboardingRequest request, Tenant tenant) {
+        createTenantAdminAccount(request, tenant);
+    }
+    
+    /**
+     * 온보딩 승인 후 테넌트 관리자 계정 생성
+     * checklistJson에서 adminPassword를 가져와서 ADMIN 역할의 사용자 계정 생성
+     */
     private void createTenantAdminAccount(OnboardingRequest request, Tenant tenant) {
         String tenantId = tenant.getTenantId();
         if (request.getChecklistJson() == null || request.getChecklistJson().isEmpty()) {

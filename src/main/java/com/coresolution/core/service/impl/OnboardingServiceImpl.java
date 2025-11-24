@@ -11,10 +11,12 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.core.constant.OnboardingConstants;
+import com.coresolution.core.domain.RoleTemplate;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.domain.onboarding.RiskLevel;
+import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.billing.TenantSubscriptionRepository;
 import com.coresolution.core.repository.onboarding.OnboardingRequestRepository;
@@ -69,6 +71,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final CommonCodeService commonCodeService;
     private final UserRoleAssignmentService userRoleAssignmentService;
     private final TenantRoleRepository tenantRoleRepository;
+    private final RoleTemplateRepository roleTemplateRepository;
     private final OnboardingPreValidationService preValidationService;
     private final OnboardingErrorHandlingService errorHandlingService;
     
@@ -682,6 +685,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     
     /**
      * 관리자 사용자에게 관리자 역할 할당
+     * 업종별 DIRECTOR 역할을 관리자 역할로 할당
      * 
      * @param adminUser 관리자 사용자
      * @param tenantId 테넌트 ID
@@ -690,17 +694,75 @@ public class OnboardingServiceImpl implements OnboardingService {
     private void assignAdminRoleToUser(User adminUser, String tenantId, String tenantName) {
         log.info("관리자 역할 할당 시작: userId={}, tenantId={}", adminUser.getId(), tenantId);
         
-        // "관리자" TenantRole 찾기
-        Optional<TenantRole> adminRole = tenantRoleRepository.findByTenantIdAndNameKo(tenantId, "관리자");
+        // 테넌트의 업종 조회
+        Optional<Tenant> tenantOpt = tenantRepository.findByTenantId(tenantId);
+        if (tenantOpt.isEmpty()) {
+            log.error("테넌트를 찾을 수 없음: tenantId={}", tenantId);
+            return;
+        }
         
-        if (adminRole.isEmpty()) {
-            log.warn("관리자 TenantRole을 찾을 수 없음: tenantId={}, nameKo=관리자", tenantId);
+        String businessType = tenantOpt.get().getBusinessType();
+        if (businessType == null || businessType.trim().isEmpty()) {
+            log.warn("테넌트의 업종 정보가 없음: tenantId={}", tenantId);
+            return;
+        }
+        
+        // 업종별 DIRECTOR 템플릿 코드 결정
+        String directorTemplateCode;
+        if ("CONSULTATION".equals(businessType)) {
+            directorTemplateCode = "CONSULTATION_DIRECTOR";
+        } else if ("ACADEMY".equals(businessType)) {
+            directorTemplateCode = "ACADEMY_DIRECTOR";
+        } else {
+            log.warn("지원하지 않는 업종: businessType={}, tenantId={}", businessType, tenantId);
+            return;
+        }
+        
+        // RoleTemplate 조회
+        Optional<RoleTemplate> templateOpt = roleTemplateRepository.findByTemplateCodeAndIsDeletedFalse(directorTemplateCode);
+        if (templateOpt.isEmpty()) {
+            log.error("DIRECTOR 템플릿을 찾을 수 없음: templateCode={}, tenantId={}", directorTemplateCode, tenantId);
+            return;
+        }
+        
+        RoleTemplate template = templateOpt.get();
+        log.info("DIRECTOR 템플릿 찾음: templateCode={}, roleTemplateId={}", directorTemplateCode, template.getRoleTemplateId());
+        
+        // TenantRole 조회 (재시도 로직 포함)
+        List<TenantRole> adminRoles = java.util.Collections.emptyList();
+        int maxRetries = 10;
+        int retryDelay = 500;
+        
+        for (int retry = 0; retry < maxRetries; retry++) {
+            adminRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(tenantId, template.getRoleTemplateId());
+            if (!adminRoles.isEmpty()) {
+                log.debug("관리자 TenantRole 찾음: roleTemplateId={}, retry={}/{}", 
+                    template.getRoleTemplateId(), retry + 1, maxRetries);
+                break;
+            }
+            
+            if (retry < maxRetries - 1) {
+                log.debug("관리자 TenantRole 대기 중: roleTemplateId={}, retry={}/{}", 
+                    template.getRoleTemplateId(), retry + 1, maxRetries);
+                try {
+                    Thread.sleep(retryDelay);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+        
+        if (adminRoles.isEmpty()) {
+            log.warn("관리자 TenantRole을 찾을 수 없음: tenantId={}, templateCode={}, roleTemplateId={}", 
+                tenantId, directorTemplateCode, template.getRoleTemplateId());
             log.warn("역할 템플릿이 아직 적용되지 않았을 수 있습니다. 나중에 수동으로 역할을 할당해주세요.");
             return;
         }
         
-        TenantRole role = adminRole.get();
-        log.info("관리자 TenantRole 찾음: tenantRoleId={}, nameKo={}", role.getTenantRoleId(), role.getNameKo());
+        TenantRole role = adminRoles.get(0);
+        log.info("관리자 TenantRole 찾음: tenantRoleId={}, nameKo={}, templateCode={}", 
+            role.getTenantRoleId(), role.getNameKo(), directorTemplateCode);
         
         // UserRoleAssignment 생성
         UserRoleAssignmentRequest assignmentRequest = UserRoleAssignmentRequest.builder()

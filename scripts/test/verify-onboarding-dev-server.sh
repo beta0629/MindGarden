@@ -26,7 +26,7 @@ DB_USER="${DB_USERNAME:-mindgarden_dev}"
 DB_PASS="${DB_PASSWORD:-MindGardenDev2025!@#}"
 
 # API 정보
-API_BASE_URL="${SERVER_BASE_URL:-http://dev.m-garden.co.kr}"
+API_BASE_URL="${SERVER_BASE_URL:-https://dev.m-garden.co.kr}"
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}개발 서버 온보딩 전체 사이클 검증${NC}"

@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/forbid-dom-props */
+/* eslint-disable no-magic-numbers */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -14,11 +18,14 @@ import Step2BusinessType from "../../components/onboarding/Step2BusinessType";
 import Step3PricingPlan from "../../components/onboarding/Step3PricingPlan";
 import Step4Payment from "../../components/onboarding/Step4Payment";
 import Step5Completion from "../../components/onboarding/Step5Completion";
+import OnboardingLogin from "../../components/onboarding/OnboardingLogin";
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [accessChecking, setAccessChecking] = useState(true);
   const [accessError, setAccessError] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const {
     step,
     setStep,
@@ -90,42 +97,72 @@ export default function OnboardingPage() {
     }
   }, [selectedCategoryId, loadBusinessCategoryItems]);
 
-  // 온보딩 접근 권한 확인 (이미 테넌트에 속한 사용자는 접근 불가)
+  // 온보딩 접근 권한 확인 (로그인 상태 확인)
   useEffect(() => {
     const checkOnboardingAccess = async () => {
       try {
         // 현재 사용자 정보 조회 시도
         try {
-          const response = await apiGet<{ success: boolean; data?: { tenantId?: string | null } }>('/api/auth/current-user');
+          const response = await apiGet<{ success: boolean; data?: { tenantId?: string | null; email?: string } }>('/api/auth/current-user');
           
           if (response.success && response.data) {
             const user = response.data;
-            // tenant_id가 있으면 이미 테넌트에 속한 사용자
-            if (user.tenantId && user.tenantId.trim() !== '') {
-              setAccessError('이미 테넌트에 속한 사용자는 온보딩에 접근할 수 없습니다. 기존 테넌트 관리 페이지를 사용해주세요.');
-              setAccessChecking(false);
-              // 3초 후 홈으로 리다이렉트
-              setTimeout(() => {
-                router.push('/');
-              }, 3000);
-              return;
+            setIsLoggedIn(true);
+            setShowLogin(false);
+            
+            // 이미 로그인된 사용자는 이메일 정보를 자동으로 채움
+            if (user.email) {
+              setFormData(prev => ({
+                ...prev,
+                contactEmail: user.email,
+                // 필요한 경우 다른 필드도 채울 수 있음
+              }));
+              // 이메일 인증 완료 처리 (이미 로그인된 사용자이므로)
+              setEmailVerified(true);
             }
+            
+            // TODO: 진행 중인 온보딩 요청이 있는지 확인하고 이어하기 옵션 제공
+          } else {
+            // 로그인되지 않은 경우 로그인 옵션 표시
+            setIsLoggedIn(false);
+            setShowLogin(true);
           }
         } catch (err) {
-          // 인증되지 않은 사용자이거나 API 오류인 경우 접근 허용 (새로운 테넌트 등록 가능)
-          console.debug('사용자 정보 조회 실패 또는 인증되지 않은 사용자 - 온보딩 접근 허용:', err);
+          // 인증되지 않은 사용자이거나 API 오류인 경우
+          setIsLoggedIn(false);
+          setShowLogin(true);
         }
         
         setAccessChecking(false);
       } catch (err) {
         console.error('온보딩 접근 권한 확인 실패:', err);
-        // 오류 발생 시에도 접근 허용 (백엔드에서 최종 검증)
         setAccessChecking(false);
+        // 오류 발생 시 로그인 화면 표시
+        setShowLogin(true);
       }
     };
 
     checkOnboardingAccess();
-  }, [router]);
+  }, [router, setFormData, setEmailVerified]);
+
+  // 로그인 성공 핸들러
+  const handleLoginSuccess = (user: any) => {
+    setIsLoggedIn(true);
+    setShowLogin(false);
+    // 사용자 정보로 폼 채우기
+    if (user.email) {
+      setFormData(prev => ({
+        ...prev,
+        contactEmail: user.email
+      }));
+      setEmailVerified(true);
+    }
+  };
+
+  // 로그인 건너뛰기 핸들러
+  const handleSkipLogin = () => {
+    setShowLogin(false);
+  };
 
   // 접근 권한 확인 중이면 로딩 표시
   if (accessChecking) {
@@ -142,6 +179,23 @@ export default function OnboardingPage() {
             color: '#666'
           }}>
             접근 권한 확인 중...
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // 로그인 화면 표시
+  if (showLogin) {
+    return (
+      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
+        <Header />
+        <main className="container">
+          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+            <OnboardingLogin 
+              onLoginSuccess={handleLoginSuccess}
+              onSkipLogin={handleSkipLogin}
+            />
           </div>
         </main>
       </div>

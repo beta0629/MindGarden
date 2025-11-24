@@ -136,7 +136,13 @@ function checkDirectory(dirPath, extensions = ['.java', '.js', '.jsx', '.ts', '.
     
     files.forEach(file => {
         const filePath = path.join(dirPath, file);
-        const stat = fs.statSync(filePath);
+        let stat;
+        try {
+            stat = fs.statSync(filePath);
+        } catch (err) {
+            // 파일 접근 오류 시 무시 (예: 깨진 심볼릭 링크, 삭제된 파일 등)
+            return;
+        }
         
         if (stat.isDirectory()) {
             // node_modules, .git 등 제외

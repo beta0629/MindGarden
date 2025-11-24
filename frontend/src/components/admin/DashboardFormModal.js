@@ -130,13 +130,28 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     if (formData.dashboardConfig) {
       try {
         const parsed = JSON.parse(formData.dashboardConfig);
-        setParsedConfig(parsed);
+        // 기본 구조 보장
+        setParsedConfig({
+          version: parsed.version || '1.0',
+          layout: parsed.layout || { type: 'grid', columns: 3, gap: 'md' },
+          widgets: parsed.widgets || []
+        });
       } catch (error) {
         console.error('대시보드 설정 파싱 실패:', error);
-        setParsedConfig({ widgets: [] });
+        // 파싱 실패 시 기본 구조 설정
+        setParsedConfig({
+          version: '1.0',
+          layout: { type: 'grid', columns: 3, gap: 'md' },
+          widgets: []
+        });
       }
     } else {
-      setParsedConfig({ widgets: [] });
+      // 빈 설정일 때 기본 구조 설정
+      setParsedConfig({
+        version: '1.0',
+        layout: { type: 'grid', columns: 3, gap: 'md' },
+        widgets: []
+      });
     }
   }, [formData.dashboardConfig]);
 
@@ -159,10 +174,15 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
   // 위젯 변경 핸들러
   const handleWidgetsChange = (newWidgets) => {
-    if (!parsedConfig) return;
+    // parsedConfig가 없으면 기본 구조 생성
+    const currentConfig = parsedConfig || {
+      version: '1.0',
+      layout: { type: 'grid', columns: 3, gap: 'md' },
+      widgets: []
+    };
     
     const updatedConfig = {
-      ...parsedConfig,
+      ...currentConfig,
       widgets: newWidgets
     };
     
@@ -181,14 +201,19 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
   // 위젯 설정 저장
   const handleWidgetConfigSave = (updatedWidget) => {
-    if (!parsedConfig) return;
+    // parsedConfig가 없으면 기본 구조 생성
+    const currentConfig = parsedConfig || {
+      version: '1.0',
+      layout: { type: 'grid', columns: 3, gap: 'md' },
+      widgets: []
+    };
     
-    const updatedWidgets = parsedConfig.widgets.map(w =>
+    const updatedWidgets = currentConfig.widgets.map(w =>
       w.id === updatedWidget.id ? updatedWidget : w
     );
     
     const updatedConfig = {
-      ...parsedConfig,
+      ...currentConfig,
       widgets: updatedWidgets
     };
     
@@ -203,12 +228,17 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
   // 위젯 삭제
   const handleWidgetDelete = (widgetId) => {
-    if (!parsedConfig) return;
+    // parsedConfig가 없으면 기본 구조 생성
+    const currentConfig = parsedConfig || {
+      version: '1.0',
+      layout: { type: 'grid', columns: 3, gap: 'md' },
+      widgets: []
+    };
     
-    const updatedWidgets = parsedConfig.widgets.filter(w => w.id !== widgetId);
+    const updatedWidgets = currentConfig.widgets.filter(w => w.id !== widgetId);
     
     const updatedConfig = {
-      ...parsedConfig,
+      ...currentConfig,
       widgets: updatedWidgets
     };
     
@@ -518,17 +548,110 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 </label>
               </div>
 
-              {/* 대시보드 설정 (JSON) */}
+              {/* 대시보드 설정 */}
               <div className="form-group">
-                <label htmlFor="dashboardConfig" className="form-label">
-                  대시보드 설정 (JSON)
+                <label className="form-label">
+                  위젯 설정
                 </label>
-                <textarea
-                  id="dashboardConfig"
-                  value={formData.dashboardConfig}
-                  onChange={(e) => handleChange('dashboardConfig', e.target.value)}
-                  className={`form-input ${errors.dashboardConfig ? 'error' : ''}`}
-                  placeholder={`{
+                
+                {/* 편집 모드 전환 탭 */}
+                <div className="edit-mode-tabs" style={{
+                  display: 'flex',
+                  gap: '8px',
+                  marginBottom: '16px',
+                  borderBottom: '2px solid #e0e0e0'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setEditMode('visual')}
+                    className={`edit-mode-tab ${editMode === 'visual' ? 'active' : ''}`}
+                    style={{
+                      padding: '10px 20px',
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      borderBottom: editMode === 'visual' ? '3px solid #007bff' : '3px solid transparent',
+                      color: editMode === 'visual' ? '#007bff' : '#666',
+                      fontWeight: editMode === 'visual' ? '600' : '400',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    🎨 시각적 편집
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditMode('json')}
+                    className={`edit-mode-tab ${editMode === 'json' ? 'active' : ''}`}
+                    style={{
+                      padding: '10px 20px',
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      borderBottom: editMode === 'json' ? '3px solid #007bff' : '3px solid transparent',
+                      color: editMode === 'json' ? '#007bff' : '#666',
+                      fontWeight: editMode === 'json' ? '600' : '400',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    📝 JSON 편집
+                  </button>
+                </div>
+
+                {/* 시각적 편집 모드 */}
+                {editMode === 'visual' ? (
+                  <div className="visual-editor-container" style={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    backgroundColor: '#fafafa',
+                    minHeight: '400px'
+                  }}>
+                    {parsedConfig ? (
+                      <>
+                        <DashboardWidgetEditor
+                          widgets={parsedConfig.widgets || []}
+                          onWidgetsChange={handleWidgetsChange}
+                          onWidgetConfig={handleWidgetConfig}
+                          onWidgetDelete={handleWidgetDelete}
+                        />
+                        <div style={{ marginTop: '24px' }}>
+                          <DashboardLayoutEditor
+                            widgets={parsedConfig.widgets || []}
+                            onWidgetsChange={handleWidgetsChange}
+                            onWidgetConfig={handleWidgetConfig}
+                            onWidgetDelete={handleWidgetDelete}
+                            columns={parsedConfig.layout?.columns || 3}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ 
+                        textAlign: 'center', 
+                        padding: '40px',
+                        color: '#999'
+                      }}>
+                        <p>위젯 설정을 불러오는 중...</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* JSON 편집 모드 */
+                  <div className="json-editor-container">
+                    <textarea
+                      id="dashboardConfig"
+                      value={formData.dashboardConfig}
+                      onChange={(e) => {
+                        handleChange('dashboardConfig', e.target.value);
+                        // JSON 변경 시 parsedConfig 동기화 시도
+                        try {
+                          const parsed = JSON.parse(e.target.value);
+                          setParsedConfig(parsed);
+                        } catch (error) {
+                          // JSON 파싱 실패 시 무시 (에러는 validate에서 처리)
+                        }
+                      }}
+                      className={`form-input ${errors.dashboardConfig ? 'error' : ''}`}
+                      placeholder={`{
   "version": "1.0",
   "layout": {
     "type": "grid",
@@ -542,41 +665,45 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     }
   ]
 }`}
-                  rows="12"
-                  disabled={loading}
-                />
-                {errors.dashboardConfig && (
-                  <span className="form-error">{errors.dashboardConfig}</span>
-                )}
-                <div className="form-help" style={{ marginTop: '8px' }}>
-                  <p style={{ marginBottom: '8px', fontWeight: '500' }}>
-                    📝 <strong>JSON이란?</strong> 데이터를 표현하는 텍스트 형식입니다. 위젯의 배치와 설정을 저장합니다.
-                  </p>
-                  <p style={{ marginBottom: '8px' }}>
-                    <strong>작성 방법:</strong>
-                  </p>
-                  <ul style={{ marginLeft: '20px', marginBottom: '8px', lineHeight: '1.6' }}>
-                    <li>중괄호 <code>{`{}`}</code>로 시작하고 끝나야 합니다</li>
-                    <li>각 항목은 쉼표 <code>,</code>로 구분합니다</li>
-                    <li>문자열은 큰따옴표 <code>"</code>로 감싸야 합니다</li>
-                    <li>위의 예시를 복사해서 수정하시면 쉽습니다</li>
-                  </ul>
-                  <p style={{ marginBottom: '4px', color: '#666', fontSize: '0.9em' }}>
-                    💡 <strong>팁:</strong> 시각적 편집기(드래그 앤 드롭)를 사용하면 JSON을 직접 작성할 필요가 없습니다.
-                  </p>
-                  <details style={{ marginTop: '8px' }}>
-                    <summary style={{ cursor: 'pointer', color: '#007bff', fontSize: '0.9em' }}>
-                      📋 자세한 예시 보기
-                    </summary>
-                    <pre style={{ 
-                      marginTop: '8px', 
-                      padding: '12px', 
-                      backgroundColor: '#f5f5f5', 
-                      borderRadius: '4px', 
-                      fontSize: '0.85em',
-                      overflow: 'auto',
-                      maxHeight: '300px'
-                    }}>
+                      rows="12"
+                      disabled={loading}
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: '13px'
+                      }}
+                    />
+                    {errors.dashboardConfig && (
+                      <span className="form-error">{errors.dashboardConfig}</span>
+                    )}
+                    <div className="form-help" style={{ marginTop: '8px' }}>
+                      <p style={{ marginBottom: '8px', fontWeight: '500' }}>
+                        📝 <strong>JSON이란?</strong> 데이터를 표현하는 텍스트 형식입니다. 위젯의 배치와 설정을 저장합니다.
+                      </p>
+                      <p style={{ marginBottom: '8px' }}>
+                        <strong>작성 방법:</strong>
+                      </p>
+                      <ul style={{ marginLeft: '20px', marginBottom: '8px', lineHeight: '1.6' }}>
+                        <li>중괄호 <code>{`{}`}</code>로 시작하고 끝나야 합니다</li>
+                        <li>각 항목은 쉼표 <code>,</code>로 구분합니다</li>
+                        <li>문자열은 큰따옴표 <code>"</code>로 감싸야 합니다</li>
+                        <li>위의 예시를 복사해서 수정하시면 쉽습니다</li>
+                      </ul>
+                      <p style={{ marginBottom: '4px', color: '#666', fontSize: '0.9em' }}>
+                        💡 <strong>팁:</strong> 시각적 편집 모드로 전환하면 드래그 앤 드롭으로 쉽게 편집할 수 있습니다.
+                      </p>
+                      <details style={{ marginTop: '8px' }}>
+                        <summary style={{ cursor: 'pointer', color: '#007bff', fontSize: '0.9em' }}>
+                          📋 자세한 예시 보기
+                        </summary>
+                        <pre style={{ 
+                          marginTop: '8px', 
+                          padding: '12px', 
+                          backgroundColor: '#f5f5f5', 
+                          borderRadius: '4px', 
+                          fontSize: '0.85em',
+                          overflow: 'auto',
+                          maxHeight: '300px'
+                        }}>
 {`{
   "version": "1.0",
   "layout": {
@@ -605,9 +732,11 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     }
   ]
 }`}
-                    </pre>
-                  </details>
-                </div>
+                        </pre>
+                      </details>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* 액션 버튼 */}
@@ -632,6 +761,19 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
           )}
         </div>
       </div>
+
+      {/* 위젯 설정 모달 */}
+      {showWidgetConfigModal && selectedWidget && (
+        <WidgetConfigModal
+          isOpen={showWidgetConfigModal}
+          onClose={() => {
+            setShowWidgetConfigModal(false);
+            setSelectedWidget(null);
+          }}
+          widget={selectedWidget}
+          onSave={handleWidgetConfigSave}
+        />
+      )}
     </div>,
     portalTarget
   );

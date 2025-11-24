@@ -378,9 +378,41 @@ public class OnboardingServiceImpl implements OnboardingService {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
                 
                 // 테넌트 조회 (관리자 계정 생성에 필요)
-                Optional<Tenant> tenantOpt = tenantRepository.findByTenantId(tenantId);
+                // PL/SQL 프로시저에서 생성된 테넌트가 JPA 컨텍스트에 보이기까지 시간이 걸릴 수 있음
+                Optional<Tenant> tenantOpt = Optional.empty();
+                int maxRetries = 10;
+                int retryDelay = 500; // 0.5초 지연
+                
+                for (int retry = 0; retry < maxRetries; retry++) {
+                    // EntityManager 캐시 비우기
+                    if (entityManager != null) {
+                        try {
+                            entityManager.flush();
+                            entityManager.clear();
+                        } catch (Exception e) {
+                            log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
+                        }
+                    }
+                    
+                    tenantOpt = tenantRepository.findByTenantId(tenantId);
+                    if (tenantOpt.isPresent()) {
+                        log.info("테넌트 조회 성공: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
+                        break;
+                    }
+                    
+                    if (retry < maxRetries - 1) {
+                        log.debug("테넌트 조회 대기 중: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
+                        try {
+                            Thread.sleep(retryDelay);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                }
+                
                 if (tenantOpt.isEmpty()) {
-                    log.error("테넌트를 찾을 수 없음: tenantId={}", tenantId);
+                    log.error("테넌트를 찾을 수 없음: tenantId={}, maxRetries={}", tenantId, maxRetries);
                 } else {
                     // 온보딩 승인 후 관리자 계정 생성
                     try {

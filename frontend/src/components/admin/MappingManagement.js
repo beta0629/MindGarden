@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Link2, Plus } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
+import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { 
@@ -79,8 +80,8 @@ const MappingManagement = () => {
         try {
             console.log('🌐 API 호출 시작:', MAPPING_API_ENDPOINTS.LIST);
             
-            // 직접 fetch 사용
-            const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || window.location.origin}/api/admin/mappings`, {
+            // 직접 fetch 사용 (API_BASE_URL 상수 사용)
+            const response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'},

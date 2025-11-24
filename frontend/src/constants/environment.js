@@ -12,12 +12,20 @@ const getBaseUrl = () => {
   // 환경변수가 있으면 사용
   if (process.env.REACT_APP_API_BASE_URL) {
     console.log('🔧 API_BASE_URL from env:', process.env.REACT_APP_API_BASE_URL);
-    return process.env.REACT_APP_API_BASE_URL;
+    const envUrl = process.env.REACT_APP_API_BASE_URL.trim();
+    // 빈 문자열이면 상대 경로 사용
+    if (envUrl === '' || envUrl === '""' || envUrl === "''") {
+      console.log('🔧 환경변수가 빈 문자열 - 상대 경로 사용');
+      return '';
+    }
+    return envUrl;
   }
   
-  // 운영 환경에서는 현재 도메인 사용
+  // 운영 환경에서는 Nginx 프록시를 사용하므로 상대 경로 사용
+  // Nginx가 /api 경로를 백엔드로 프록시하므로 빈 문자열 반환
   if (process.env.NODE_ENV === 'production') {
-    return window.location.origin;
+    console.log('🔧 프로덕션 환경: Nginx 프록시 사용 (상대 경로)');
+    return '';
   }
   
   // 개발 환경에서는 프록시를 사용하므로 빈 문자열 (상대 경로 사용)

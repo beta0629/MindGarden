@@ -49,6 +49,7 @@ export function generateUUID() {
  * @returns {string} 콜백 URL
  */
 export function generateCallbackUrl(status, customerKey, tenantId) {
+  // 프론트엔드 콜백 URL이므로 window.location.origin 사용 (정상)
   const baseUrl = window.location.origin;
   const params = new URLSearchParams({
     status,

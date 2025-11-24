@@ -67,12 +67,6 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           responseData = body.data;
         }
 
-        // ApiResponse 래퍼 처리: { success: true, data: {...} } 형태면 data 추출
-        let responseData = body;
-        if (body && typeof body === 'object' && 'success' in body && 'data' in body && body.success) {
-          responseData = body.data;
-        }
-
         if (!responseData || !responseData.token) {
           setFeedback("로그인 응답을 해석할 수 없습니다. 관리자에게 문의하세요.");
           return;

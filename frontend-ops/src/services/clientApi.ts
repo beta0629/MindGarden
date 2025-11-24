@@ -147,15 +147,13 @@ function resolveClientRuntimeConfig(): ClientRuntimeConfig {
     "HQ_ADMIN";
 
   // 환경 변수나 쿠키에서 API Base URL 가져오기
-  // 없으면 상대 경로 사용 (같은 도메인의 /api/v1 사용)
+  // 없으면 빈 문자열 반환 (상대 경로 사용)
+  // 이렇게 하면 Nginx가 같은 도메인의 /api/ 경로를 백엔드로 프록시할 수 있음
   const apiBaseUrl =
     ENV_API_BASE_URL || cookieMap.get("ops_api_base_url") || "";
 
-  // apiBaseUrl이 없으면 빈 문자열 반환 (상대 경로 사용)
-  // 이렇게 하면 Nginx가 같은 도메인의 /api/ 경로를 백엔드로 프록시할 수 있음
-
   return {
-    apiBaseUrl,
+    apiBaseUrl, // 빈 문자열이면 상대 경로 사용
     apiToken,
     actorId,
     actorRole

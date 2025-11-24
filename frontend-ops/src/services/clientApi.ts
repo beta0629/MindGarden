@@ -60,6 +60,8 @@ export async function clientApiFetch<T>(
     const errorData = body.error || body;
     
     // 403 Forbidden (권한 없음) 처리
+    // 403은 권한 문제이므로 로그인 페이지로 리다이렉트하지 않음
+    // 사용자는 이미 로그인되어 있지만 해당 리소스에 접근 권한이 없는 경우
     if (response.status === 403) {
       const errorMessage = errorData.message || body.message || "접근 권한이 없습니다.";
       // 공통 알림 표시
@@ -67,6 +69,7 @@ export async function clientApiFetch<T>(
       const error = new Error(errorMessage);
       (error as any).status = 403;
       (error as any).body = body;
+      // 403 오류는 리다이렉트하지 않고 에러만 throw
       throw error;
     }
     

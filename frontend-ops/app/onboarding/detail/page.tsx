@@ -53,8 +53,11 @@ function OnboardingDetailPageContent() {
             return;
           }
           // 403 Forbidden (권한 없음) 처리
+          // 403은 권한 문제이므로 로그인 페이지로 리다이렉트하지 않음
+          // 에러 메시지만 표시하고 현재 페이지에 머무름
           else if ((err as any).status === 403 || err.message.includes("403") || err.message.includes("권한")) {
-            setError(err.message || "접근 권한이 없습니다.");
+            setError(err.message || "접근 권한이 없습니다. 관리자에게 문의하세요.");
+            // 403 오류는 리다이렉트하지 않음
           } else {
             setError(err.message || "알 수 없는 오류가 발생했습니다.");
           }

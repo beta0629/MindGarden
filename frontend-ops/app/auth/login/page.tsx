@@ -37,7 +37,9 @@ function LoginPageContent() {
     const token = cookieMap.get("ops_token") ?? null;
     const redirectTo = searchParams?.get("redirect") ?? "/dashboard";
 
-    if (token) {
+    // 토큰이 있고 redirect 파라미터가 없거나 대시보드인 경우에만 리다이렉트
+    // 403 오류로 인한 리다이렉트는 무한 루프 방지를 위해 제외
+    if (token && (!redirectTo || redirectTo === "/dashboard" || !redirectTo.includes("/onboarding/detail"))) {
       router.push(redirectTo);
     }
   }, [searchParams, router]);

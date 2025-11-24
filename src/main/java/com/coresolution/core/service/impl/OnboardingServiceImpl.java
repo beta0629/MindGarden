@@ -377,15 +377,21 @@ public class OnboardingServiceImpl implements OnboardingService {
             } else {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
                 
-                // 온보딩 승인 후 관리자 계정 생성
-                try {
-                    log.info("관리자 계정 생성 시작: tenantId={}, requestedBy={}", tenantId, request.getRequestedBy());
-                    createTenantAdminAccount(request, tenantId);
-                    log.info("관리자 계정 생성 완료: tenantId={}", tenantId);
-                } catch (Exception e) {
-                    log.error("테넌트 관리자 계정 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
-                    log.error("테넌트 관리자 계정 생성 실패 상세:", e);
-                    // 관리자 계정 생성 실패는 온보딩 프로세스를 중단하지 않음 (경고만)
+                // 테넌트 조회 (관리자 계정 생성에 필요)
+                Optional<Tenant> tenantOpt = tenantRepository.findByTenantId(tenantId);
+                if (tenantOpt.isEmpty()) {
+                    log.error("테넌트를 찾을 수 없음: tenantId={}", tenantId);
+                } else {
+                    // 온보딩 승인 후 관리자 계정 생성
+                    try {
+                        log.info("관리자 계정 생성 시작: tenantId={}, requestedBy={}", tenantId, request.getRequestedBy());
+                        createTenantAdminAccount(request, tenantOpt.get());
+                        log.info("관리자 계정 생성 완료: tenantId={}", tenantId);
+                    } catch (Exception e) {
+                        log.error("테넌트 관리자 계정 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+                        log.error("테넌트 관리자 계정 생성 실패 상세:", e);
+                        // 관리자 계정 생성 실패는 온보딩 프로세스를 중단하지 않음 (경고만)
+                    }
                 }
                 
                 // 온보딩 승인 후 구독의 tenant_id 업데이트
@@ -597,7 +603,8 @@ public class OnboardingServiceImpl implements OnboardingService {
      * 별도 트랜잭션에서 실행하여 롤백 방지
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    private void createTenantAdminAccount(OnboardingRequest request, String tenantId) {
+    private void createTenantAdminAccount(OnboardingRequest request, Tenant tenant) {
+        String tenantId = tenant.getTenantId();
         if (request.getChecklistJson() == null || request.getChecklistJson().isEmpty()) {
             log.debug("checklistJson이 없어 관리자 계정 생성 스킵: requestId={}", request.getId());
             return;
@@ -671,25 +678,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             
             log.info("테넌트 관리자 계정 생성 완료: tenantId={}, email={}, userId={}", 
                 tenantId, requestedBy, adminUser.getId());
-            
-            // EntityManager 캐시 비우기 (REQUIRES_NEW 트랜잭션에서 최신 데이터 조회)
-            if (entityManager != null) {
-                try {
-                    entityManager.flush();
-                    entityManager.clear();
-                    log.debug("EntityManager 캐시 비우기 완료: tenantId={}", tenantId);
-                } catch (Exception e) {
-                    log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
-                }
-            }
-            
-            // 테넌트 조회 (역할 할당에 필요)
-            Optional<Tenant> tenantOpt = tenantRepository.findByTenantId(tenantId);
-            if (tenantOpt.isEmpty()) {
-                log.error("테넌트를 찾을 수 없음: tenantId={}", tenantId);
-                return;
-            }
-            Tenant tenant = tenantOpt.get();
             
             // 관리자 역할 할당 (UserRoleAssignment 생성)
             try {

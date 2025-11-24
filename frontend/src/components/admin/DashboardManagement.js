@@ -33,15 +33,33 @@ const DashboardManagement = () => {
   const loadDashboards = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiGet(`${API_BASE_URL}/api/v1/tenant/dashboards`);
+      const response = await apiGet(`/api/v1/tenant/dashboards`);
       
-      if (response && response.success && response.data) {
-        const dashboardList = Array.isArray(response.data) ? response.data : [];
-        setDashboards(dashboardList);
-        console.log('✅ 대시보드 목록 로드 성공:', dashboardList.length, '개');
-      } else {
-        console.warn('⚠️ 대시보드 목록 응답 형식 오류:', response);
-        setDashboards([]);
+      // apiGet은 ApiResponse 래퍼를 처리하여 data를 반환하거나, 직접 배열을 반환할 수 있음
+      let dashboardList = [];
+      
+      if (response) {
+        if (response.success && response.data) {
+          // ApiResponse 형식: { success: true, data: [...] }
+          dashboardList = Array.isArray(response.data) ? response.data : [];
+        } else if (Array.isArray(response)) {
+          // 직접 배열 형식 (apiGet이 이미 data를 추출한 경우)
+          dashboardList = response;
+        } else if (response.data && Array.isArray(response.data)) {
+          // data 필드에 배열이 있는 경우
+          dashboardList = response.data;
+        }
+      }
+      
+      setDashboards(dashboardList);
+      console.log('✅ 대시보드 목록 로드 성공:', dashboardList.length, '개');
+      if (dashboardList.length > 0) {
+        console.log('📋 대시보드 목록:', dashboardList.map(d => ({
+          id: d.dashboardId,
+          name: d.dashboardNameKo || d.dashboardName,
+          roleId: d.tenantRoleId,
+          roleName: d.roleNameKo || d.roleName
+        })));
       }
     } catch (error) {
       console.error('❌ 대시보드 목록 로드 실패:', error);
@@ -92,7 +110,7 @@ const DashboardManagement = () => {
     try {
       setLoading(true);
       const response = await csrfTokenManager.put(
-        `${API_BASE_URL}/api/v1/tenant/dashboards/${dashboard.dashboardId}`,
+        `/api/v1/tenant/dashboards/${dashboard.dashboardId}`,
         {
           ...dashboard,
           isActive: !dashboard.isActive
@@ -146,7 +164,7 @@ const DashboardManagement = () => {
     try {
       setLoading(true);
       const response = await csrfTokenManager.delete(
-        `${API_BASE_URL}/api/v1/tenant/dashboards/${dashboard.dashboardId}`
+        `/api/v1/tenant/dashboards/${dashboard.dashboardId}`
       );
 
       if (response.ok) {

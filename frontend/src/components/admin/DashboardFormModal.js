@@ -531,15 +531,21 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   value={formData.tenantRoleId}
                   onChange={(e) => handleChange('tenantRoleId', e.target.value)}
                   className={`form-input ${errors.tenantRoleId ? 'error' : ''}`}
-                  disabled={isEditMode || loading}
+                  disabled={isEditMode || loading || loadingRoles}
                   required
                 >
                   <option value="">역할을 선택해주세요</option>
-                  {tenantRoles.map(role => (
-                    <option key={role.tenantRoleId} value={role.tenantRoleId}>
-                      {role.nameKo || role.name || role.tenantRoleId}
+                  {tenantRoles.length === 0 && !loadingRoles ? (
+                    <option value="" disabled>
+                      생성 가능한 역할이 없습니다. (모든 역할에 대시보드가 이미 존재합니다)
                     </option>
-                  ))}
+                  ) : (
+                    tenantRoles.map(role => (
+                      <option key={role.tenantRoleId} value={role.tenantRoleId}>
+                        {role.nameKo || role.name || role.tenantRoleId}
+                      </option>
+                    ))
+                  )}
                 </select>
                 {errors.tenantRoleId && (
                   <span className="form-error">{errors.tenantRoleId}</span>

@@ -335,7 +335,8 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                     log.debug("선택된 템플릿이 없어 기본 설정 사용: roleName={}", roleName);
                 }
             } else {
-                defaultConfig = createDefaultDashboardConfig(roleCode);
+                // 메타 시스템: RoleTemplate의 default_widgets_json에서 가져오기
+                defaultConfig = getDefaultDashboardConfigFromTemplate(template, roleCode);
                 log.debug("템플릿 선택 정보가 없어 기본 설정 사용: roleName={}", roleName);
             }
             
@@ -697,8 +698,62 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
     }
     
     /**
-     * 기본 대시보드 설정 생성 (MVP용)
+     * 메타 시스템: RoleTemplate에서 기본 위젯 설정 가져오기
+     * DB 메타데이터 기반으로 관리자 생성 시 기본 위젯 자동 설정
+     * 
+     * @param template 역할 템플릿
+     * @param roleCode 역할 코드 (fallback용)
+     * @return 대시보드 설정 JSON
+     */
+    private String getDefaultDashboardConfigFromTemplate(RoleTemplate template, String roleCode) {
+        // 메타 시스템: RoleTemplate의 default_widgets_json에서 가져오기
+        if (template != null && template.getDefaultWidgetsJson() != null && !template.getDefaultWidgetsJson().trim().isEmpty()) {
+            try {
+                // JSON 유효성 검사
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.readTree(template.getDefaultWidgetsJson());
+                
+                // 위젯 ID 자동 생성 (각 위젯에 고유 ID 부여)
+                com.fasterxml.jackson.databind.node.ObjectNode config = 
+                    (com.fasterxml.jackson.databind.node.ObjectNode) mapper.readTree(template.getDefaultWidgetsJson());
+                
+                if (config.has("widgets") && config.get("widgets").isArray()) {
+                    com.fasterxml.jackson.databind.node.ArrayNode widgets = 
+                        (com.fasterxml.jackson.databind.node.ArrayNode) config.get("widgets");
+                    
+                    // 각 위젯에 고유 ID 부여
+                    for (int i = 0; i < widgets.size(); i++) {
+                        com.fasterxml.jackson.databind.node.ObjectNode widget = 
+                            (com.fasterxml.jackson.databind.node.ObjectNode) widgets.get(i);
+                        
+                        if (!widget.has("id") || widget.get("id").asText().isEmpty()) {
+                            String widgetType = widget.has("type") ? widget.get("type").asText() : "widget";
+                            widget.put("id", widgetType + "-" + UUID.randomUUID().toString().substring(0, 8));
+                        }
+                    }
+                }
+                
+                log.info("✅ 메타 시스템: RoleTemplate에서 기본 위젯 설정 로드: templateCode={}, roleCode={}", 
+                    template.getTemplateCode(), roleCode);
+                return mapper.writeValueAsString(config);
+            } catch (Exception e) {
+                log.warn("⚠️ RoleTemplate의 default_widgets_json 파싱 실패, fallback 사용: templateCode={}, error={}", 
+                    template.getTemplateCode(), e.getMessage());
+                // fallback: 기존 하드코딩된 메서드 사용
+                return createDefaultDashboardConfig(roleCode);
+            }
+        } else {
+            log.debug("RoleTemplate에 default_widgets_json이 없음, fallback 사용: templateCode={}, roleCode={}", 
+                template != null ? template.getTemplateCode() : "null", roleCode);
+            // fallback: 기존 하드코딩된 메서드 사용
+            return createDefaultDashboardConfig(roleCode);
+        }
+    }
+    
+    /**
+     * 기본 대시보드 설정 생성 (MVP용, Fallback)
      * 역할별 기본 위젯 3-5개 포함
+     * 메타 시스템: 이 메서드는 RoleTemplate에 default_widgets_json이 없을 때만 사용됨
      */
     private String createDefaultDashboardConfig(String roleCode) {
         try {

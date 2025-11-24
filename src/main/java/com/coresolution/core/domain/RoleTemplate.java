@@ -110,6 +110,13 @@ public class RoleTemplate extends BaseEntity {
     private Boolean isAdminRole = false;
     
     /**
+     * 기본 위젯 설정 (JSON) - 메타 시스템
+     * 역할별 기본 대시보드 위젯 설정을 DB에서 관리
+     */
+    @Column(name = "default_widgets_json", columnDefinition = "JSON")
+    private String defaultWidgetsJson;
+    
+    /**
      * 템플릿 권한 목록
      */
     @OneToMany(mappedBy = "roleTemplate", fetch = FetchType.LAZY)

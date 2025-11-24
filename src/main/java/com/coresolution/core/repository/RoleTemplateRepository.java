@@ -37,7 +37,7 @@ public interface RoleTemplateRepository extends JpaRepository<RoleTemplate, Long
     /**
      * business_type과 관리자 역할 여부로 조회
      */
-    @Query("SELECT rt FROM RoleTemplate rt WHERE rt.businessType = ?1 AND rt.isAdminRole = true AND rt.isActive = true AND rt.isDeleted = false ORDER BY rt.displayOrder ASC")
+    @Query("SELECT rt FROM RoleTemplate rt WHERE rt.businessType = ?1 AND rt.isAdminRole = TRUE AND rt.isActive = TRUE AND rt.isDeleted = FALSE ORDER BY rt.displayOrder ASC")
     List<RoleTemplate> findByBusinessTypeAndAdminRole(String businessType);
     
     /**

@@ -75,6 +75,9 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final OnboardingPreValidationService preValidationService;
     private final OnboardingErrorHandlingService errorHandlingService;
     
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+    
     @Override
     @Transactional(readOnly = true)
     public List<OnboardingRequest> findPending() {
@@ -729,14 +732,25 @@ public class OnboardingServiceImpl implements OnboardingService {
         log.info("DIRECTOR 템플릿 찾음: templateCode={}, roleTemplateId={}", directorTemplateCode, template.getRoleTemplateId());
         
         // TenantRole 조회 (재시도 로직 포함)
+        // PL/SQL 프로시저에서 생성된 역할이 Java 트랜잭션에 보이기까지 시간이 걸릴 수 있음
         List<TenantRole> adminRoles = java.util.Collections.emptyList();
-        int maxRetries = 10;
-        int retryDelay = 500;
+        int maxRetries = 20; // 재시도 횟수 증가
+        int retryDelay = 1000; // 1초 지연
         
         for (int retry = 0; retry < maxRetries; retry++) {
+            // EntityManager 캐시를 비워서 최신 데이터 조회
+            if (entityManager != null) {
+                try {
+                    entityManager.flush();
+                    entityManager.clear();
+                } catch (Exception e) {
+                    log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
+                }
+            }
+            
             adminRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(tenantId, template.getRoleTemplateId());
             if (!adminRoles.isEmpty()) {
-                log.debug("관리자 TenantRole 찾음: roleTemplateId={}, retry={}/{}", 
+                log.info("관리자 TenantRole 찾음: roleTemplateId={}, retry={}/{}", 
                     template.getRoleTemplateId(), retry + 1, maxRetries);
                 break;
             }

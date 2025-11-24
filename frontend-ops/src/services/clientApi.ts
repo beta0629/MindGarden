@@ -16,6 +16,15 @@ export async function clientApiFetch<T>(
   const { apiBaseUrl, apiToken, actorId, actorRole } =
     resolveClientRuntimeConfig();
 
+  // 토큰이 없으면 에러 로그 출력
+  if (!apiToken || apiToken.trim() === "") {
+    console.error("[clientApiFetch] 토큰이 없습니다:", {
+      path,
+      apiToken: apiToken ? "존재하지만 빈 문자열" : "null/undefined",
+      cookieMap: typeof document !== "undefined" ? document.cookie : "N/A"
+    });
+  }
+
   const headers: HeadersInit = {
     Authorization: `Bearer ${apiToken}`,
     "X-Actor-Id": actorId,
@@ -39,7 +48,8 @@ export async function clientApiFetch<T>(
 
   const response = await fetch(fullUrl, {
     ...options,
-    headers
+    headers,
+    credentials: "include" // 쿠키 포함 (SameSite=Lax 쿠키 전송)
   });
 
   const jsonData = await safeParseJson(response);

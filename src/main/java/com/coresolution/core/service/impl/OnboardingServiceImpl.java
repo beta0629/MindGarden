@@ -710,26 +710,39 @@ public class OnboardingServiceImpl implements OnboardingService {
             return;
         }
         
-        // 업종별 DIRECTOR 템플릿 코드 결정
-        String directorTemplateCode;
-        if ("CONSULTATION".equals(businessType)) {
-            directorTemplateCode = "CONSULTATION_DIRECTOR";
-        } else if ("ACADEMY".equals(businessType)) {
-            directorTemplateCode = "ACADEMY_DIRECTOR";
-        } else {
-            log.warn("지원하지 않는 업종: businessType={}, tenantId={}", businessType, tenantId);
+        // 메타데이터 기반 관리자 역할 찾기
+        // 각 업종의 display_order=1인 역할을 관리자 역할로 간주
+        // (테넌트 관리자가 나중에 역할을 변경할 수 있으므로 메타데이터 기반으로 처리)
+        List<RoleTemplate> templates = roleTemplateRepository.findByBusinessTypeAndActive(businessType);
+        if (templates.isEmpty()) {
+            log.error("업종별 역할 템플릿을 찾을 수 없음: businessType={}, tenantId={}", businessType, tenantId);
             return;
         }
         
-        // RoleTemplate 조회
-        Optional<RoleTemplate> templateOpt = roleTemplateRepository.findByTemplateCodeAndIsDeletedFalse(directorTemplateCode);
-        if (templateOpt.isEmpty()) {
-            log.error("DIRECTOR 템플릿을 찾을 수 없음: templateCode={}, tenantId={}", directorTemplateCode, tenantId);
-            return;
+        // display_order=1인 템플릿 찾기 (관리자 역할)
+        Optional<RoleTemplate> adminTemplateOpt = templates.stream()
+                .filter(t -> t.getDisplayOrder() != null && t.getDisplayOrder() == 1)
+                .findFirst();
+        
+        if (adminTemplateOpt.isEmpty()) {
+            log.warn("관리자 역할 템플릿을 찾을 수 없음 (display_order=1): businessType={}, tenantId={}", businessType, tenantId);
+            // 대체 방법: 첫 번째 템플릿 사용
+            adminTemplateOpt = templates.stream()
+                    .min((t1, t2) -> {
+                        Integer o1 = t1.getDisplayOrder() != null ? t1.getDisplayOrder() : Integer.MAX_VALUE;
+                        Integer o2 = t2.getDisplayOrder() != null ? t2.getDisplayOrder() : Integer.MAX_VALUE;
+                        return o1.compareTo(o2);
+                    });
+            
+            if (adminTemplateOpt.isEmpty()) {
+                log.error("업종별 역할 템플릿이 없음: businessType={}, tenantId={}", businessType, tenantId);
+                return;
+            }
         }
         
-        RoleTemplate template = templateOpt.get();
-        log.info("DIRECTOR 템플릿 찾음: templateCode={}, roleTemplateId={}", directorTemplateCode, template.getRoleTemplateId());
+        RoleTemplate template = adminTemplateOpt.get();
+        log.info("관리자 역할 템플릿 찾음 (메타데이터 기반): templateCode={}, roleTemplateId={}, displayOrder={}", 
+            template.getTemplateCode(), template.getRoleTemplateId(), template.getDisplayOrder());
         
         // TenantRole 조회 (재시도 로직 포함)
         // PL/SQL 프로시저에서 생성된 역할이 Java 트랜잭션에 보이기까지 시간이 걸릴 수 있음
@@ -769,14 +782,14 @@ public class OnboardingServiceImpl implements OnboardingService {
         
         if (adminRoles.isEmpty()) {
             log.warn("관리자 TenantRole을 찾을 수 없음: tenantId={}, templateCode={}, roleTemplateId={}", 
-                tenantId, directorTemplateCode, template.getRoleTemplateId());
+                tenantId, template.getTemplateCode(), template.getRoleTemplateId());
             log.warn("역할 템플릿이 아직 적용되지 않았을 수 있습니다. 나중에 수동으로 역할을 할당해주세요.");
             return;
         }
         
         TenantRole role = adminRoles.get(0);
         log.info("관리자 TenantRole 찾음: tenantRoleId={}, nameKo={}, templateCode={}", 
-            role.getTenantRoleId(), role.getNameKo(), directorTemplateCode);
+            role.getTenantRoleId(), role.getNameKo(), template.getTemplateCode());
         
         // UserRoleAssignment 생성
         UserRoleAssignmentRequest assignmentRequest = UserRoleAssignmentRequest.builder()

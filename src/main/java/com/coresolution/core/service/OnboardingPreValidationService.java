@@ -1,6 +1,6 @@
 package com.coresolution.core.service;
 
-import com.coresolution.core.domain.OnboardingRequest;
+import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import java.util.Map;
 
 /**

@@ -1,6 +1,7 @@
 package com.coresolution.core.service.impl;
 
-import com.coresolution.core.domain.OnboardingRequest;
+import com.coresolution.core.domain.Tenant;
+import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.OnboardingPreValidationService;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 온보딩 사전 검증 서비스 구현체
@@ -61,8 +63,8 @@ public class OnboardingPreValidationServiceImpl implements OnboardingPreValidati
         
         // 3. 중복 테넌트명 검증 (경고만)
         if (request.getTenantName() != null && !request.getTenantName().trim().isEmpty()) {
-            boolean exists = tenantRepository.existsByTenantNameIgnoreCase(request.getTenantName());
-            if (exists) {
+            Optional<Tenant> existingTenant = tenantRepository.findByNameAndIsDeletedFalse(request.getTenantName().trim());
+            if (existingTenant.isPresent()) {
                 warnings.put("tenantName", "동일한 테넌트명이 이미 존재합니다.");
             }
         }

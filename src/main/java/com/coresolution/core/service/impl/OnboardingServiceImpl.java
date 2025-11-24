@@ -39,6 +39,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -595,8 +596,9 @@ public class OnboardingServiceImpl implements OnboardingService {
     /**
      * 온보딩 승인 후 테넌트 관리자 계정 생성 (재시도 로직 포함)
      * PL/SQL 프로시저에서 생성된 테넌트를 조회하기 위해 재시도 로직 포함
+     * 트랜잭션 격리 수준을 READ_COMMITTED로 설정하여 다른 트랜잭션의 커밋된 데이터를 볼 수 있도록 함
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
     private void createTenantAdminAccountWithRetry(OnboardingRequest request, String tenantId) {
         // 테넌트 조회 (재시도 로직 포함)
         // PL/SQL 프로시저에서 생성된 테넌트가 JPA 컨텍스트에 보이기까지 시간이 걸릴 수 있음

@@ -8,6 +8,7 @@ import com.coresolution.core.service.UserRoleQueryService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.context.TenantContext;
@@ -37,6 +38,7 @@ public class TenantDashboardController extends BaseApiController {
     
     private final TenantDashboardService dashboardService;
     private final UserRoleQueryService userRoleQueryService;
+    private final UserRepository userRepository;
     
     /**
      * 대시보드 목록 조회
@@ -50,12 +52,18 @@ public class TenantDashboardController extends BaseApiController {
         // TenantContextHolder에 tenantId가 없으면 세션의 User 정보에서 가져오기
         if (tenantId == null) {
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser != null && currentUser.getTenantId() != null) {
-                tenantId = currentUser.getTenantId();
-                TenantContext.setTenantId(tenantId);
-                log.debug("Tenant ID set from user session: {}", tenantId);
+            if (currentUser != null) {
+                // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
+                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                if (dbUser.getTenantId() != null) {
+                    tenantId = dbUser.getTenantId();
+                    TenantContext.setTenantId(tenantId);
+                    log.debug("Tenant ID set from user database: {}", tenantId);
+                } else {
+                    throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
+                }
             } else {
-                throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+                throw new IllegalArgumentException("로그인이 필요합니다.");
             }
         }
         
@@ -79,12 +87,18 @@ public class TenantDashboardController extends BaseApiController {
         // TenantContextHolder에 tenantId가 없으면 세션의 User 정보에서 가져오기
         if (tenantId == null) {
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser != null && currentUser.getTenantId() != null) {
-                tenantId = currentUser.getTenantId();
-                TenantContext.setTenantId(tenantId);
-                log.debug("Tenant ID set from user session: {}", tenantId);
+            if (currentUser != null) {
+                // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
+                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                if (dbUser.getTenantId() != null) {
+                    tenantId = dbUser.getTenantId();
+                    TenantContext.setTenantId(tenantId);
+                    log.debug("Tenant ID set from user database: {}", tenantId);
+                } else {
+                    throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
+                }
             } else {
-                throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+                throw new IllegalArgumentException("로그인이 필요합니다.");
             }
         }
         
@@ -163,12 +177,18 @@ public class TenantDashboardController extends BaseApiController {
         // TenantContextHolder에 tenantId가 없으면 세션의 User 정보에서 가져오기
         if (tenantId == null) {
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser != null && currentUser.getTenantId() != null) {
-                tenantId = currentUser.getTenantId();
-                TenantContext.setTenantId(tenantId);
-                log.debug("Tenant ID set from user session: {}", tenantId);
+            if (currentUser != null) {
+                // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
+                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                if (dbUser.getTenantId() != null) {
+                    tenantId = dbUser.getTenantId();
+                    TenantContext.setTenantId(tenantId);
+                    log.debug("Tenant ID set from user database: {}", tenantId);
+                } else {
+                    throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
+                }
             } else {
-                throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+                throw new IllegalArgumentException("로그인이 필요합니다.");
             }
         }
         
@@ -222,12 +242,18 @@ public class TenantDashboardController extends BaseApiController {
         // TenantContextHolder에 tenantId가 없으면 세션의 User 정보에서 가져오기
         if (tenantId == null) {
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser != null && currentUser.getTenantId() != null) {
-                tenantId = currentUser.getTenantId();
-                TenantContext.setTenantId(tenantId);
-                log.debug("Tenant ID set from user session: {}", tenantId);
+            if (currentUser != null) {
+                // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
+                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                if (dbUser.getTenantId() != null) {
+                    tenantId = dbUser.getTenantId();
+                    TenantContext.setTenantId(tenantId);
+                    log.debug("Tenant ID set from user database: {}", tenantId);
+                } else {
+                    throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
+                }
             } else {
-                throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+                throw new IllegalArgumentException("로그인이 필요합니다.");
             }
         }
         

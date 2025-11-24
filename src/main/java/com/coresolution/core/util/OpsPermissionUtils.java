@@ -37,14 +37,21 @@ public class OpsPermissionUtils {
             throw new AuthenticationCredentialsNotFoundException("인증이 필요합니다.");
         }
         
+        // 상세 로깅 추가
+        log.debug("권한 체크 시작: principal={}, authorities={}", 
+            auth.getPrincipal(), auth.getAuthorities());
+        
         boolean hasAdminRole = auth.getAuthorities().stream()
             .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         boolean hasOpsRole = auth.getAuthorities().stream()
             .anyMatch(a -> a.getAuthority().equals("ROLE_OPS"));
         
+        log.debug("권한 체크 결과: hasAdminRole={}, hasOpsRole={}, allAuthorities={}", 
+            hasAdminRole, hasOpsRole, auth.getAuthorities());
+        
         if (!hasAdminRole && !hasOpsRole) {
-            log.warn("권한 체크 실패: principal={}, authorities={}", 
-                auth.getPrincipal(), auth.getAuthorities());
+            log.warn("권한 체크 실패: principal={}, authorities={}, hasAdminRole={}, hasOpsRole={}", 
+                auth.getPrincipal(), auth.getAuthorities(), hasAdminRole, hasOpsRole);
             throw new AccessDeniedException("접근 권한이 없습니다.");
         }
         

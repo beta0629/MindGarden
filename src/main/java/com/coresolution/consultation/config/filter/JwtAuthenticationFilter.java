@@ -45,8 +45,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         String requestPath = request.getRequestURI();
         
-        // Ops Portal API 요청인 경우 상세 로깅
-        boolean isOpsApi = requestPath.startsWith("/api/v1/ops/");
+        // Ops Portal API 요청인 경우 상세 로깅 (onboarding 포함)
+        boolean isOpsApi = requestPath.startsWith("/api/v1/ops/") || 
+                          requestPath.startsWith("/api/v1/onboarding/");
         
         try {
             // Authorization 헤더에서 JWT 토큰 추출
@@ -131,6 +132,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
             } else {
+                // Ops Portal API 또는 온보딩 API인 경우 상세 로깅
                 if (isOpsApi && !requestPath.startsWith("/api/v1/ops/auth/login") && 
                     !requestPath.startsWith("/api/v1/ops/plans/")) {
                     log.warn("JWT 토큰 없음 (인증 필요 경로): path={}, Authorization header={}", 
@@ -145,6 +147,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         log.warn("SecurityContext에 인증 정보 없음");
                     }
                 }
+                // 온보딩 API인 경우에도 로깅 (isOpsApi가 true이므로 포함됨)
             }
         } catch (Exception e) {
             log.error("JWT 인증 처리 중 오류 발생: path={}, error={}", requestPath, e.getMessage(), e);

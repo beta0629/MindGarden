@@ -15,6 +15,7 @@ import com.coresolution.core.service.TenantDashboardService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,7 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
     private final TenantRoleRepository tenantRoleRepository;
     private final RoleTemplateRepository roleTemplateRepository;
     private final TenantAccessControlService accessControlService;
+    private final EntityManager entityManager;
     
     @Override
     @Transactional(readOnly = true)
@@ -295,15 +297,22 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             }
             
             // 템플릿 기반 역할이 이미 생성되었는지 확인 (재시도 로직 포함)
+            // 프로시저가 별도 트랜잭션에서 실행되므로 명시적으로 flush/clear 필요
             List<TenantRole> tenantRoles = new java.util.ArrayList<>();
-            int maxRetries = 5;
+            int maxRetries = 10;
             int retryDelay = 500; // 0.5초
             
             for (int retry = 0; retry < maxRetries; retry++) {
+                // EntityManager 캐시를 비워서 최신 데이터 조회
+                entityManager.flush();
+                entityManager.clear();
+                
                 tenantRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(
                         tenantId, template.getRoleTemplateId());
                 
                 if (!tenantRoles.isEmpty()) {
+                    log.debug("테넌트 역할 찾음: roleTemplateId={}, retry={}/{}", 
+                            template.getRoleTemplateId(), retry + 1, maxRetries);
                     break;
                 }
                 

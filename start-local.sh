@@ -114,18 +114,30 @@ echo ""
 # 백엔드 시작
 echo -e "${YELLOW}🚀 백엔드 서버 시작 중...${NC}"
 
+# 환경 변수 export (백그라운드 프로세스에 전달)
+export DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD
+
 # Maven 확인
 if command -v mvn >/dev/null 2>&1; then
     echo -e "${BLUE}   Maven으로 실행${NC}"
-    mvn spring-boot:run -Dspring.profiles.active=local > logs/backend.log 2>&1 &
+    (
+        export DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD
+        mvn spring-boot:run -Dspring.profiles.active=local > logs/backend.log 2>&1
+    ) &
     BACKEND_PID=$!
 elif [ -f "./mvnw" ]; then
     echo -e "${BLUE}   Maven Wrapper로 실행${NC}"
-    ./mvnw spring-boot:run -Dspring.profiles.active=local > logs/backend.log 2>&1 &
+    (
+        export DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD
+        ./mvnw spring-boot:run -Dspring.profiles.active=local > logs/backend.log 2>&1
+    ) &
     BACKEND_PID=$!
 elif [ -f "./mvnw.cmd" ]; then
     echo -e "${BLUE}   Maven Wrapper (Windows)로 실행${NC}"
-    cmd.exe //c "cd /d $PROJECT_ROOT && mvnw.cmd spring-boot:run -Dspring.profiles.active=local" > logs/backend.log 2>&1 &
+    (
+        export DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD
+        cmd.exe //c "cd /d $PROJECT_ROOT && mvnw.cmd spring-boot:run -Dspring.profiles.active=local" > logs/backend.log 2>&1
+    ) &
     BACKEND_PID=$!
 else
     echo -e "${RED}❌ Maven을 찾을 수 없습니다.${NC}"

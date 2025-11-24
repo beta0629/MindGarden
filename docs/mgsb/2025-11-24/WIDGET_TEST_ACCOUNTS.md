@@ -17,7 +17,7 @@
 - **업종**: CONSULTATION
 - **온보딩 요청 ID**: 71
 
-**로그인 URL**: `http://beta0629.cafe24.com:8080/login`
+**로그인 URL**: `https://dev.core-solution.co.kr/login`
 
 ---
 
@@ -30,7 +30,7 @@
 - **업종**: ACADEMY
 - **온보딩 요청 ID**: 72
 
-**로그인 URL**: `http://beta0629.cafe24.com:8080/login`
+**로그인 URL**: `https://dev.core-solution.co.kr/login`
 
 ---
 

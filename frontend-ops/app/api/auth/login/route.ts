@@ -9,7 +9,7 @@ const COOKIE_SETTINGS = {
   path: "/",
   httpOnly: false,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production"
+  secure: false // 개발 서버는 HTTPS이지만 쿠키 전송을 위해 false로 설정
 };
 
 export async function POST(request: Request) {

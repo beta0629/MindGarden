@@ -119,9 +119,19 @@ export async function clientApiFetch<T>(
 }
 
 function resolveClientRuntimeConfig(): ClientRuntimeConfig {
-  const cookieMap = parseCookie(
-    typeof document !== "undefined" ? document.cookie ?? "" : ""
-  );
+  const cookieString = typeof document !== "undefined" ? document.cookie ?? "" : "";
+  const cookieMap = parseCookie(cookieString);
+
+  // 디버깅: 쿠키 파싱 결과 확인
+  if (typeof window !== "undefined" && cookieString) {
+    console.debug("[resolveClientRuntimeConfig] 쿠키 파싱:", {
+      cookieString: cookieString.substring(0, 200),
+      hasOpsToken: cookieMap.has("ops_token"),
+      opsTokenLength: cookieMap.get("ops_token")?.length || 0,
+      opsTokenPreview: cookieMap.get("ops_token")?.substring(0, 20) || "없음",
+      allCookies: Array.from(cookieMap.keys())
+    });
+  }
 
   const apiToken =
     cookieMap.get("ops_token") ??

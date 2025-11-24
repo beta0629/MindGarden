@@ -102,8 +102,61 @@ BEGIN
             
             SET v_user_id = LAST_INSERT_ID();
             
+            -- 관리자 역할 할당 (tenant_roles에서 "관리자" 역할 찾기)
+            -- role_name이 "관리자"이거나 role_code가 "ADMIN"인 역할 찾기
+            SET @v_admin_role_id = NULL;
+            SELECT id INTO @v_admin_role_id
+            FROM tenant_roles
+            WHERE tenant_id = p_tenant_id
+                AND (
+                    role_name = '관리자' 
+                    OR role_code = 'ADMIN'
+                    OR (role_name LIKE '%관리자%' AND is_default = TRUE)
+                )
+                AND (is_deleted IS NULL OR is_deleted = FALSE)
+            ORDER BY is_default DESC, created_at ASC
+            LIMIT 1;
+            
+            -- 역할 할당 (역할이 있는 경우에만)
+            IF @v_admin_role_id IS NOT NULL THEN
+                INSERT INTO user_role_assignments (
+                    assignment_id,
+                    user_id,
+                    tenant_id,
+                    tenant_role_id,
+                    branch_id,
+                    effective_from,
+                    effective_to,
+                    is_active,
+                    assigned_by,
+                    assignment_reason,
+                    created_at,
+                    updated_at,
+                    is_deleted,
+                    version
+                ) VALUES (
+                    UUID(),
+                    v_user_id,
+                    p_tenant_id,
+                    @v_admin_role_id,
+                    NULL,  -- 전체 브랜치
+                    CURDATE(),
+                    NULL,  -- 무기한
+                    TRUE,
+                    p_approved_by,
+                    '온보딩 승인 시 자동 할당',
+                    NOW(),
+                    NOW(),
+                    FALSE,
+                    0
+                );
+                
+                SET p_message = CONCAT('관리자 계정 생성 및 역할 할당 완료: ', p_contact_email, ' (userId: ', v_user_id, ', roleId: ', @v_admin_role_id, ')');
+            ELSE
+                SET p_message = CONCAT('관리자 계정 생성 완료 (역할 할당 실패 - 역할을 찾을 수 없음): ', p_contact_email, ' (userId: ', v_user_id, ')');
+            END IF;
+            
             SET p_success = TRUE;
-            SET p_message = CONCAT('관리자 계정 생성 완료: ', p_contact_email, ' (userId: ', v_user_id, ')');
         END IF;
     END IF;
 END //

@@ -113,15 +113,33 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       // 대시보드가 있는 역할 ID 목록 생성
       let existingDashboardRoleIds = new Set();
       if (dashboardsResponse) {
-        const dashboardList = dashboardsResponse?.data || dashboardsResponse || [];
-        if (Array.isArray(dashboardList)) {
+        // apiGet은 ApiResponse 래퍼를 처리하여 data를 반환하거나, 직접 배열을 반환할 수 있음
+        let dashboardList = [];
+        
+        if (dashboardsResponse.success && dashboardsResponse.data) {
+          // ApiResponse 형식: { success: true, data: [...] }
+          dashboardList = Array.isArray(dashboardsResponse.data) ? dashboardsResponse.data : [];
+        } else if (Array.isArray(dashboardsResponse)) {
+          // 직접 배열 형식
+          dashboardList = dashboardsResponse;
+        } else if (dashboardsResponse.data && Array.isArray(dashboardsResponse.data)) {
+          // data 필드에 배열이 있는 경우
+          dashboardList = dashboardsResponse.data;
+        }
+        
+        if (dashboardList.length > 0) {
           dashboardList.forEach(dashboard => {
             if (dashboard.tenantRoleId) {
               existingDashboardRoleIds.add(dashboard.tenantRoleId);
             }
           });
           console.log('✅ 대시보드 목록 로드 성공:', dashboardList.length, '개');
+          console.log('📋 대시보드가 있는 역할 ID:', Array.from(existingDashboardRoleIds));
+        } else {
+          console.log('ℹ️ 대시보드 목록이 비어있습니다.');
         }
+      } else {
+        console.log('ℹ️ 대시보드 목록을 로드하지 못했습니다.');
       }
 
       // 역할 목록 처리

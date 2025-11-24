@@ -615,11 +615,29 @@ public class OnboardingServiceImpl implements OnboardingService {
                 }
             }
             
-            // Native Query를 사용하여 직접 조회 (JPA 필터 우회)
-            tenantOpt = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
-            if (tenantOpt.isPresent()) {
-                log.info("테넌트 조회 성공: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
-                break;
+            // Native Query를 사용하여 직접 조회 (트랜잭션 격리 수준 문제 해결)
+            try {
+                String sql = "SELECT * FROM tenants WHERE tenant_id = :tenantId AND is_deleted = 0";
+                jakarta.persistence.Query query = entityManager.createNativeQuery(sql, Tenant.class);
+                query.setParameter("tenantId", tenantId);
+                @SuppressWarnings("unchecked")
+                List<Tenant> results = query.getResultList();
+                if (!results.isEmpty()) {
+                    tenantOpt = Optional.of(results.get(0));
+                    log.info("테넌트 조회 성공 (Native Query): tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
+                    break;
+                }
+            } catch (Exception e) {
+                log.debug("Native Query 조회 실패: {}, retry={}/{}", e.getMessage(), retry + 1, maxRetries);
+            }
+            
+            // Native Query 실패 시 일반 조회 시도
+            if (tenantOpt.isEmpty()) {
+                tenantOpt = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
+                if (tenantOpt.isPresent()) {
+                    log.info("테넌트 조회 성공: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
+                    break;
+                }
             }
             
             if (retry < maxRetries - 1) {

@@ -593,7 +593,9 @@ public class OnboardingServiceImpl implements OnboardingService {
     /**
      * 온보딩 승인 후 테넌트 관리자 계정 생성
      * checklistJson에서 adminPassword를 가져와서 ADMIN 역할의 사용자 계정 생성
+     * 별도 트랜잭션에서 실행하여 롤백 방지
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void createTenantAdminAccount(OnboardingRequest request, String tenantId) {
         if (request.getChecklistJson() == null || request.getChecklistJson().isEmpty()) {
             log.debug("checklistJson이 없어 관리자 계정 생성 스킵: requestId={}", request.getId());

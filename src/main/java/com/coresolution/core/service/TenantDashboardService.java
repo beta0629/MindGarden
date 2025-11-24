@@ -1,9 +1,8 @@
 package com.coresolution.core.service;
 
+import java.util.List;
 import com.coresolution.core.dto.TenantDashboardRequest;
 import com.coresolution.core.dto.TenantDashboardResponse;
-
-import java.util.List;
 
 /**
  * 테넌트 대시보드 서비스 인터페이스
@@ -67,9 +66,27 @@ public interface TenantDashboardService {
      * @param tenantId 테넌트 ID
      * @param businessType 업종
      * @param createdBy 생성자
+     * @param dashboardTemplates 선택된 대시보드 템플릿 (역할명 -> 템플릿 ID 매핑, 선택적)
+     * @param dashboardWidgets 역할별 위젯 목록 (선택적, 템플릿 수정 시 사용)
      * @return 생성된 대시보드 목록
      */
-    List<TenantDashboardResponse> createDefaultDashboards(String tenantId, String businessType, String createdBy);
+    List<TenantDashboardResponse> createDefaultDashboards(String tenantId, String businessType, String createdBy, java.util.Map<String, String> dashboardTemplates, java.util.Map<String, java.util.List<String>> dashboardWidgets);
+    
+    /**
+     * 기본 대시보드 생성 (온보딩 시) - 오버로드 (하위 호환성)
+     * 
+     * @param tenantId 테넌트 ID
+     * @param businessType 업종
+     * @param createdBy 생성자
+     * @return 생성된 대시보드 목록
+     */
+    default List<TenantDashboardResponse> createDefaultDashboards(String tenantId, String businessType, String createdBy) {
+        return createDefaultDashboards(tenantId, businessType, createdBy, null, null);
+    }
+    
+    default List<TenantDashboardResponse> createDefaultDashboards(String tenantId, String businessType, String createdBy, java.util.Map<String, String> dashboardTemplates) {
+        return createDefaultDashboards(tenantId, businessType, createdBy, dashboardTemplates, null);
+    }
     
     /**
      * 현재 사용자의 역할에 맞는 대시보드 조회

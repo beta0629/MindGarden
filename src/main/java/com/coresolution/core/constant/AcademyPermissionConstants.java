@@ -84,6 +84,26 @@ public class AcademyPermissionConstants {
     /** 출석 통계 조회 */
     public static final String ATTENDANCE_VIEW_STATISTICS = "ACADEMY_ATTENDANCE_VIEW_STATISTICS";
     
+    // ==================== 상담 예약(Consultation) 권한 ====================
+    
+    /** 상담 예약 목록 조회 */
+    public static final String CONSULTATION_VIEW_LIST = "ACADEMY_CONSULTATION_VIEW_LIST";
+    
+    /** 상담 예약 상세 조회 */
+    public static final String CONSULTATION_VIEW_DETAIL = "ACADEMY_CONSULTATION_VIEW_DETAIL";
+    
+    /** 상담 예약 생성 */
+    public static final String CONSULTATION_CREATE = "ACADEMY_CONSULTATION_CREATE";
+    
+    /** 상담 예약 확정 */
+    public static final String CONSULTATION_CONFIRM = "ACADEMY_CONSULTATION_CONFIRM";
+    
+    /** 상담 예약 취소 */
+    public static final String CONSULTATION_CANCEL = "ACADEMY_CONSULTATION_CANCEL";
+    
+    /** 상담 예약 변경 */
+    public static final String CONSULTATION_RESCHEDULE = "ACADEMY_CONSULTATION_RESCHEDULE";
+    
     // ==================== 브랜치(지점) 권한 ====================
     
     /** 브랜치 목록 조회 */

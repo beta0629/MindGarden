@@ -1,11 +1,17 @@
 package com.coresolution.core.service.academy.impl;
 
 import com.coresolution.core.domain.academy.Attendance;
+import com.coresolution.core.domain.academy.ClassEnrollment;
 import com.coresolution.core.dto.academy.AttendanceRequest;
 import com.coresolution.core.dto.academy.AttendanceResponse;
+import com.coresolution.core.dto.academy.AttendanceStatisticsResponse;
 import com.coresolution.core.repository.academy.AttendanceRepository;
+import com.coresolution.core.repository.academy.ClassEnrollmentRepository;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.academy.AttendanceService;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,7 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -33,7 +42,10 @@ import java.util.stream.Collectors;
 public class AttendanceServiceImpl implements AttendanceService {
     
     private final AttendanceRepository attendanceRepository;
+    private final ClassEnrollmentRepository enrollmentRepository;
+    private final UserRepository userRepository;
     private final TenantAccessControlService accessControlService;
+    private final NotificationService notificationService;
     
     // ==================== AttendanceService 구현 ====================
     
@@ -262,7 +274,188 @@ public class AttendanceServiceImpl implements AttendanceService {
         return (double) presentCount / totalCount * 100.0;
     }
     
+    @Override
+    @Transactional(readOnly = true)
+    public AttendanceStatisticsResponse getAttendanceStatistics(String tenantId, String enrollmentId, LocalDate startDate, LocalDate endDate) {
+        log.debug("출결 통계 조회: tenantId={}, enrollmentId={}, startDate={}, endDate={}", 
+            tenantId, enrollmentId, startDate, endDate);
+        
+        accessControlService.validateTenantAccess(tenantId);
+        
+        // 수강 등록 정보 조회
+        ClassEnrollment enrollment = enrollmentRepository.findByEnrollmentIdAndIsDeletedFalse(enrollmentId)
+            .orElseThrow(() -> new RuntimeException("수강 등록을 찾을 수 없습니다: " + enrollmentId));
+        
+        if (!tenantId.equals(enrollment.getTenantId())) {
+            throw new RuntimeException("접근 권한이 없습니다.");
+        }
+        
+        // 기간별 출결 조회
+        LocalDate actualStartDate = startDate != null ? startDate : enrollment.getStartDate() != null ? enrollment.getStartDate() : LocalDate.now().minusMonths(1);
+        LocalDate actualEndDate = endDate != null ? endDate : LocalDate.now();
+        
+        List<Attendance> attendances = attendanceRepository.findAttendancesByDateRange(
+            tenantId, enrollmentId, actualStartDate, actualEndDate);
+        
+        // 통계 계산
+        long totalCount = attendances.size();
+        long presentCount = attendances.stream().filter(a -> a.getStatus() == Attendance.AttendanceStatus.PRESENT).count();
+        long lateCount = attendances.stream().filter(a -> a.getStatus() == Attendance.AttendanceStatus.LATE).count();
+        long earlyLeaveCount = attendances.stream().filter(a -> a.getStatus() == Attendance.AttendanceStatus.EARLY_LEAVE).count();
+        long absentCount = attendances.stream().filter(a -> a.getStatus() == Attendance.AttendanceStatus.ABSENT).count();
+        
+        // 출석률 계산
+        double attendanceRate = totalCount > 0 ? (double) presentCount / totalCount * 100.0 : 0.0;
+        
+        // 상태별 통계
+        Map<String, Long> statusCounts = new HashMap<>();
+        for (Attendance attendance : attendances) {
+            String statusName = attendance.getStatus().name();
+            statusCounts.put(statusName, statusCounts.getOrDefault(statusName, 0L) + 1);
+        }
+        
+        // 월별 출석률 계산
+        Map<String, Double> monthlyAttendanceRates = new HashMap<>();
+        Map<String, Long> monthlyTotal = new HashMap<>();
+        Map<String, Long> monthlyPresent = new HashMap<>();
+        
+        for (Attendance attendance : attendances) {
+            String monthKey = attendance.getAttendanceDate().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            monthlyTotal.put(monthKey, monthlyTotal.getOrDefault(monthKey, 0L) + 1);
+            if (attendance.getStatus() == Attendance.AttendanceStatus.PRESENT) {
+                monthlyPresent.put(monthKey, monthlyPresent.getOrDefault(monthKey, 0L) + 1);
+            }
+        }
+        
+        for (String monthKey : monthlyTotal.keySet()) {
+            long monthTotal = monthlyTotal.get(monthKey);
+            long monthPresent = monthlyPresent.getOrDefault(monthKey, 0L);
+            double monthRate = monthTotal > 0 ? (double) monthPresent / monthTotal * 100.0 : 0.0;
+            monthlyAttendanceRates.put(monthKey, monthRate);
+        }
+        
+        // 수강생 정보 조회
+        String consumerName = null;
+        if (enrollment.getConsumerId() != null) {
+            Optional<User> consumer = userRepository.findById(enrollment.getConsumerId());
+            if (consumer.isPresent()) {
+                consumerName = consumer.get().getName();
+            }
+        }
+        
+        return AttendanceStatisticsResponse.builder()
+            .enrollmentId(enrollmentId)
+            .consumerId(enrollment.getConsumerId())
+            .consumerName(consumerName)
+            .classId(enrollment.getClassId())
+            .className(null) // TODO: Class 정보 조회 필요
+            .startDate(actualStartDate)
+            .endDate(actualEndDate)
+            .totalCount(totalCount)
+            .presentCount(presentCount)
+            .lateCount(lateCount)
+            .earlyLeaveCount(earlyLeaveCount)
+            .absentCount(absentCount)
+            .attendanceRate(attendanceRate)
+            .statusCounts(statusCounts)
+            .monthlyAttendanceRates(monthlyAttendanceRates)
+            .build();
+    }
+    
+    @Override
+    public boolean sendAttendanceNotificationToParent(String tenantId, String attendanceId) {
+        log.info("학부모 알림 발송: tenantId={}, attendanceId={}", tenantId, attendanceId);
+        
+        try {
+            accessControlService.validateTenantAccess(tenantId);
+            
+            // 출결 정보 조회
+            Attendance attendance = attendanceRepository.findByAttendanceIdAndIsDeletedFalse(attendanceId)
+                .orElseThrow(() -> new RuntimeException("출결을 찾을 수 없습니다: " + attendanceId));
+            
+            if (!tenantId.equals(attendance.getTenantId())) {
+                throw new RuntimeException("접근 권한이 없습니다.");
+            }
+            
+            // 수강 등록 정보 조회
+            ClassEnrollment enrollment = enrollmentRepository.findByEnrollmentIdAndIsDeletedFalse(attendance.getEnrollmentId())
+                .orElseThrow(() -> new RuntimeException("수강 등록을 찾을 수 없습니다: " + attendance.getEnrollmentId()));
+            
+            // 수강생(학생) 정보 조회
+            if (enrollment.getConsumerId() == null) {
+                log.warn("수강생 ID가 없어 알림을 발송할 수 없습니다: enrollmentId={}", enrollment.getEnrollmentId());
+                return false;
+            }
+            
+            User student = userRepository.findById(enrollment.getConsumerId())
+                .orElseThrow(() -> new RuntimeException("수강생을 찾을 수 없습니다: " + enrollment.getConsumerId()));
+            
+            // TODO: 학부모 정보 조회 (현재는 수강생에게 직접 발송)
+            // 실제로는 학부모 계정을 별도로 관리하거나, 수강생 계정에 학부모 정보를 연결해야 함
+            User parent = student; // 임시로 수강생에게 발송
+            
+            // 알림 메시지 생성
+            String statusText = getAttendanceStatusText(attendance.getStatus());
+            String dateText = attendance.getAttendanceDate().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일"));
+            String timeText = attendance.getAttendanceTime() != null ? 
+                attendance.getAttendanceTime().format(DateTimeFormatter.ofPattern("HH:mm")) : "";
+            
+            String message = String.format(
+                "[%s] %s님의 출결 상태: %s\n날짜: %s %s",
+                "학원", 
+                student.getName() != null ? student.getName() : "학생",
+                statusText,
+                dateText,
+                timeText
+            );
+            
+            // 알림 발송 (현재는 NotificationService의 기본 타입 사용)
+            // TODO: 출결 알림 전용 NotificationType 추가 필요
+            boolean success = notificationService.sendNotification(
+                parent,
+                NotificationService.NotificationType.SCHEDULE_CHANGED, // 임시로 일정 변경 타입 사용
+                NotificationService.NotificationPriority.HIGH,
+                message
+            );
+            
+            if (success) {
+                log.info("✅ 학부모 알림 발송 성공: attendanceId={}, parentId={}", attendanceId, parent.getId());
+            } else {
+                log.warn("⚠️ 학부모 알림 발송 실패: attendanceId={}, parentId={}", attendanceId, parent.getId());
+            }
+            
+            return success;
+            
+        } catch (Exception e) {
+            log.error("학부모 알림 발송 중 오류 발생: attendanceId={}", attendanceId, e);
+            return false;
+        }
+    }
+    
     // ==================== 내부 헬퍼 메서드 ====================
+    
+    /**
+     * 출결 상태 텍스트 변환
+     */
+    private String getAttendanceStatusText(Attendance.AttendanceStatus status) {
+        if (status == null) {
+            return "미확인";
+        }
+        switch (status) {
+            case PRESENT:
+                return "출석";
+            case LATE:
+                return "지각";
+            case EARLY_LEAVE:
+                return "조퇴";
+            case ABSENT:
+                return "결석";
+            case EXCUSED:
+                return "사유결석";
+            default:
+                return "미확인";
+        }
+    }
     
     private AttendanceResponse toResponse(Attendance attendance) {
         return AttendanceResponse.builder()

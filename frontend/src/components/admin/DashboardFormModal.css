@@ -78,6 +78,60 @@
   color: var(--mg-primary, #3b82f6);
 }
 
+/* 편집 모드 선택기 */
+.edit-mode-selector {
+  display: flex;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  margin-bottom: var(--mg-spacing-md, 0.75rem);
+}
+
+.edit-mode-btn {
+  flex: 1;
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 0.75rem);
+  background: var(--mg-bg-secondary, #f9fafb);
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border-radius: var(--mg-border-radius-md, 0.5rem);
+  font-size: var(--mg-font-size-sm, 0.875rem);
+  font-weight: var(--mg-font-weight-medium, 500);
+  color: var(--mg-text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all var(--mg-animation-duration-fast, 0.2s);
+}
+
+.edit-mode-btn:hover:not(:disabled) {
+  background: var(--mg-bg-hover, #f3f4f6);
+  border-color: var(--mg-primary, #3b82f6);
+  color: var(--mg-text-primary, #1f2937);
+}
+
+.edit-mode-btn.active {
+  background: var(--mg-primary, #3b82f6);
+  border-color: var(--mg-primary, #3b82f6);
+  color: var(--mg-text-on-primary, #ffffff);
+}
+
+.edit-mode-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 위젯 편집기 컨테이너 */
+.widget-editor-container {
+  margin-bottom: var(--mg-spacing-lg, 1.5rem);
+  max-height: 400px;
+  overflow-y: auto;
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border-radius: var(--mg-border-radius-md, 0.5rem);
+  background: var(--mg-bg-primary, #ffffff);
+}
+
+.widget-layout-editor-container {
+  margin-top: var(--mg-spacing-md, 0.75rem);
+  border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
+  border-radius: var(--mg-border-radius-md, 0.5rem);
+  background: var(--mg-bg-primary, #ffffff);
+}
+
 .dashboard-form-modal-close {
   background: transparent;
   border: none;

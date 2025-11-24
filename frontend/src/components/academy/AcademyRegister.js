@@ -327,7 +327,7 @@ const AcademyRegister = () => {
                 <div className="academy-form-row">
                   <div className="academy-form-group">
                     <label className="academy-form-label">비밀번호 *</label>
-                    <div style={{ position: 'relative' }}>
+                    <div className="academy-form-input-wrapper">
                       <input
                         type={showPassword ? 'text' : 'password'}
                         name="password"
@@ -339,7 +339,7 @@ const AcademyRegister = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}
+                        className="academy-form-password-toggle"
                       >
                         {showPassword ? '👁️' : '👁️‍🗨️'}
                       </button>
@@ -348,7 +348,7 @@ const AcademyRegister = () => {
                   </div>
                   <div className="academy-form-group">
                     <label className="academy-form-label">비밀번호 확인 *</label>
-                    <div style={{ position: 'relative' }}>
+                    <div className="academy-form-input-wrapper">
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         name="confirmPassword"
@@ -360,7 +360,7 @@ const AcademyRegister = () => {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}
+                        className="academy-form-password-toggle"
                       >
                         {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
                       </button>

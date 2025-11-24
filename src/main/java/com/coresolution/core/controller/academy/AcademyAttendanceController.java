@@ -6,6 +6,7 @@ import com.coresolution.core.domain.academy.Attendance;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.academy.AttendanceRequest;
 import com.coresolution.core.dto.academy.AttendanceResponse;
+import com.coresolution.core.dto.academy.AttendanceStatisticsResponse;
 import com.coresolution.core.service.academy.AttendanceService;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
@@ -290,6 +291,79 @@ public class AcademyAttendanceController extends BaseApiController {
         statistics.put("enrollmentId", enrollmentId);
         statistics.put("attendanceRate", attendanceRate);
         return success(statistics);
+    }
+    
+    /**
+     * 출결 통계 조회
+     * GET /api/v1/academy/attendances/statistics/{enrollmentId}
+     */
+    @GetMapping("/statistics/{enrollmentId}")
+    @SuppressWarnings("unchecked")
+    public ResponseEntity<ApiResponse<AttendanceStatisticsResponse>> getAttendanceStatistics(
+            @PathVariable String enrollmentId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            HttpSession session) {
+        log.debug("출결 통계 조회 요청: enrollmentId={}, startDate={}, endDate={}", enrollmentId, startDate, endDate);
+        
+        // 동적 권한 체크
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
+            session, 
+            AcademyPermissionConstants.ATTENDANCE_VIEW_LIST, 
+            dynamicPermissionService
+        );
+        if (permissionResponse != null) {
+            return (ResponseEntity<ApiResponse<AttendanceStatisticsResponse>>) permissionResponse;
+        }
+        
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+        }
+        
+        AttendanceStatisticsResponse statistics = attendanceService.getAttendanceStatistics(
+            tenantId, enrollmentId, startDate, endDate);
+        return success(statistics);
+    }
+    
+    /**
+     * 학부모 알림 발송
+     * POST /api/v1/academy/attendances/{attendanceId}/notify-parent
+     */
+    @PostMapping("/{attendanceId}/notify-parent")
+    @SuppressWarnings("unchecked")
+    public ResponseEntity<ApiResponse<Boolean>> sendAttendanceNotificationToParent(
+            @PathVariable String attendanceId,
+            HttpSession session) {
+        log.info("학부모 알림 발송 요청: attendanceId={}", attendanceId);
+        
+        // 동적 권한 체크
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
+            session, 
+            AcademyPermissionConstants.ATTENDANCE_UPDATE, 
+            dynamicPermissionService
+        );
+        if (permissionResponse != null) {
+            return (ResponseEntity<ApiResponse<Boolean>>) permissionResponse;
+        }
+        
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+        }
+        
+        boolean success = attendanceService.sendAttendanceNotificationToParent(tenantId, attendanceId);
+        if (success) {
+            return success("학부모 알림이 발송되었습니다.", true);
+        } else {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            return ResponseEntity.ok(ApiResponse.<Boolean>builder()
+                .success(false)
+                .message("학부모 알림 발송에 실패했습니다.")
+                .data(false)
+                .build());
+        }
     }
 }
 

@@ -179,6 +179,10 @@
   gap: var(--spacing-md);
 }
 
+.trinity-onboarding__buttons--spaced {
+  margin-top: var(--spacing-lg, 1.5rem);
+}
+
 .trinity-onboarding__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -509,5 +513,366 @@
   letter-spacing: 0.25em;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/* 대시보드 템플릿 선택 스타일 */
+.trinity-onboarding__template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-md, 1rem);
+  margin-top: var(--spacing-lg, 1.5rem);
+}
+
+.trinity-onboarding__template-card {
+  position: relative;
+  padding: var(--spacing-lg, 1.5rem);
+  border: var(--border-width, 2px) solid var(--border-color, #e5e7eb);
+  border-radius: var(--border-radius-lg, 0.75rem);
+  background-color: var(--bg-primary, #ffffff);
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.2s);
+}
+
+.trinity-onboarding__template-card:hover {
+  border-color: var(--color-primary, #007bff);
+  box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
+  transform: translateY(-2px);
+}
+
+.trinity-onboarding__template-card--selected {
+  border-color: var(--color-primary, #007bff);
+  background-color: var(--bg-secondary, #f5f5f5);
+  box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 122, 255, 0.2));
+}
+
+.trinity-onboarding__template-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm, 0.5rem);
+}
+
+.trinity-onboarding__template-card-title {
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--text-primary, #1d1d1f);
+  margin: 0;
+}
+
+.trinity-onboarding__template-card-role {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-secondary, #666);
+  background-color: var(--bg-secondary, #f5f5f5);
+  padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
+  border-radius: var(--border-radius-sm, 0.375rem);
+}
+
+.trinity-onboarding__template-card-description {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-secondary, #666);
+  margin: var(--spacing-sm, 0.5rem) 0;
+  line-height: var(--line-height-normal, 1.5);
+}
+
+.trinity-onboarding__template-card-widgets {
+  margin-top: var(--spacing-sm, 0.5rem);
+  font-size: var(--font-size-xs, 0.75rem);
+}
+
+.trinity-onboarding__template-card-check {
+  position: absolute;
+  top: var(--spacing-sm, 0.5rem);
+  right: var(--spacing-sm, 0.5rem);
+  width: var(--check-size, 24px);
+  height: var(--check-size, 24px);
+  background-color: var(--color-primary, #007bff);
+  color: var(--text-inverse, #ffffff);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold, 700);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.trinity-onboarding__dashboard-preview {
+  margin-top: var(--spacing-xl, 2rem);
+  padding: var(--spacing-lg, 1.5rem);
+  background-color: var(--bg-secondary, #f5f5f5);
+  border-radius: var(--border-radius-md, 0.5rem);
+}
+
+.trinity-onboarding__selected-templates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, 0.5rem);
+  margin-top: var(--spacing-md, 1rem);
+}
+
+.trinity-onboarding__template-summary {
+  padding: var(--spacing-sm, 0.5rem);
+  font-size: var(--font-size-md, 1rem);
+  color: var(--text-primary, #1d1d1f);
+}
+
+/* 템플릿 카드 애니메이션 */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.trinity-onboarding__template-card--selected {
+  animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.trinity-onboarding__template-card {
+  animation: slideIn 0.3s ease-out;
+}
+
+.trinity-onboarding__template-card:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.trinity-onboarding__template-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.trinity-onboarding__template-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.trinity-onboarding__template-card:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+/* 체크 표시 애니메이션 */
+@keyframes checkMark {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.trinity-onboarding__template-card-check {
+  animation: checkMark 0.3s ease-out;
+}
+
+/* 기존 온보딩 요청 목록 스타일 */
+.trinity-onboarding__existing-requests {
+  margin-top: var(--spacing-lg, 1.5rem);
+}
+
+.trinity-onboarding__request-card {
+  padding: var(--spacing-md, 1rem);
+  border: var(--border-width, 1px) solid var(--border-color, #e0e0e0);
+  border-radius: var(--border-radius-lg, 0.75rem);
+  margin-bottom: var(--spacing-sm, 0.5rem);
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.2s);
+  background-color: var(--bg-primary, #ffffff);
+}
+
+.trinity-onboarding__request-card:hover {
+  background-color: var(--bg-secondary, #f5f5f5);
+  border-color: var(--color-primary, #007bff);
+}
+
+.trinity-onboarding__request-title {
+  font-size: var(--font-size-lg, 1rem);
+  font-weight: var(--font-weight-bold, 700);
+  margin-bottom: var(--spacing-xs, 0.25rem);
+  color: var(--text-primary, #1d1d1f);
+}
+
+.trinity-onboarding__request-meta {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-secondary, #666);
+  margin-bottom: var(--spacing-xs, 0.25rem);
+}
+
+.trinity-onboarding__request-status {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-secondary, #666);
+}
+
+.trinity-onboarding__new-start-button {
+  width: 100%;
+  margin-top: var(--spacing-md, 1rem);
+}
+
+/* 로딩 상태 */
+.trinity-onboarding__loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: var(--loading-container-height, 50vh);
+  font-size: var(--font-size-lg, 1.125rem);
+  color: var(--text-secondary, #666);
+}
+
+/* 접근 권한 오류 메시지 */
+.trinity-onboarding__error-message {
+  text-align: center;
+  margin-top: var(--spacing-md, 1rem);
+  color: var(--text-secondary, #666);
+}
+
+/* 위젯 편집 관련 스타일 */
+.trinity-onboarding__template-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm, 0.5rem);
+}
+
+.trinity-onboarding__button-secondary {
+  padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
+  background-color: var(--bg-secondary, #f5f5f5);
+  color: var(--text-primary, #1d1d1f);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--border-radius-sm, 0.375rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.2s);
+}
+
+.trinity-onboarding__button-secondary:hover {
+  background-color: var(--bg-tertiary, #e5e7eb);
+  border-color: var(--color-primary, #007bff);
+}
+
+.trinity-onboarding__button-primary {
+  padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
+  background-color: var(--color-primary, #007bff);
+  color: var(--text-inverse, #ffffff);
+  border: 1px solid var(--color-primary, #007bff);
+  border-radius: var(--border-radius-sm, 0.375rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.2s);
+}
+
+.trinity-onboarding__button-primary:hover {
+  background-color: var(--color-primary-dark, #0056b3);
+}
+
+.trinity-onboarding__widget-editor {
+  margin-top: var(--spacing-md, 1rem);
+  padding: var(--spacing-md, 1rem);
+  background-color: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--border-radius-md, 0.5rem);
+}
+
+.trinity-onboarding__widget-list {
+  margin-bottom: var(--spacing-md, 1rem);
+}
+
+.trinity-onboarding__label-small {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-semibold, 600);
+  margin-bottom: var(--spacing-xs, 0.25rem);
+  color: var(--text-primary, #1d1d1f);
+}
+
+.trinity-onboarding__widget-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs, 0.25rem);
+  margin-top: var(--spacing-xs, 0.25rem);
+}
+
+.trinity-onboarding__widget-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.25rem);
+  padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
+  background-color: var(--bg-secondary, #f5f5f5);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--border-radius-sm, 0.375rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-primary, #1d1d1f);
+}
+
+.trinity-onboarding__widget-tag-remove {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #666);
+  cursor: pointer;
+  font-size: var(--font-size-lg, 1.125rem);
+  line-height: 1;
+  padding: 0;
+  margin-left: var(--spacing-xs, 0.25rem);
+  transition: color var(--transition-fast, 0.2s);
+}
+
+.trinity-onboarding__widget-tag-remove:hover {
+  color: var(--color-danger, #dc3545);
+}
+
+.trinity-onboarding__widget-available {
+  margin-top: var(--spacing-md, 1rem);
+  padding-top: var(--spacing-md, 1rem);
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.trinity-onboarding__widget-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs, 0.25rem);
+  margin-top: var(--spacing-xs, 0.25rem);
+}
+
+.trinity-onboarding__widget-option {
+  padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
+  background-color: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--border-radius-sm, 0.375rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-primary, #1d1d1f);
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.2s);
+}
+
+.trinity-onboarding__widget-option:hover {
+  background-color: var(--bg-secondary, #f5f5f5);
+  border-color: var(--color-primary, #007bff);
+  color: var(--color-primary, #007bff);
+}
+
+.trinity-onboarding__widget-editor-actions {
+  display: flex;
+  gap: var(--spacing-sm, 0.5rem);
+  justify-content: flex-end;
+  margin-top: var(--spacing-md, 1rem);
+  padding-top: var(--spacing-md, 1rem);
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.trinity-onboarding__widget-preview {
+  margin-top: var(--spacing-xs, 0.25rem);
+  font-size: var(--font-size-sm, 0.875rem);
 }
 

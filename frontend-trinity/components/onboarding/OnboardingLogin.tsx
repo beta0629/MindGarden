@@ -50,19 +50,12 @@ const OnboardingLogin: React.FC<OnboardingLoginProps> = ({ onLoginSuccess, onSki
       </p>
 
       {error && (
-        <div style={{ 
-          color: '#dc3545', 
-          backgroundColor: '#f8d7da', 
-          padding: '10px', 
-          borderRadius: '4px',
-          marginBottom: '15px',
-          fontSize: '14px'
-        }}>
+        <div className={COMPONENT_CSS.ONBOARDING.ERROR}>
           {error}
         </div>
       )}
 
-      <form onSubmit={handleLogin} style={{ marginTop: '20px' }}>
+      <form onSubmit={handleLogin} className="trinity-onboarding__login-form">
         <div className={COMPONENT_CSS.ONBOARDING.FIELD}>
           <label className={COMPONENT_CSS.ONBOARDING.LABEL}>이메일</label>
           <input
@@ -87,7 +80,7 @@ const OnboardingLogin: React.FC<OnboardingLoginProps> = ({ onLoginSuccess, onSki
           />
         </div>
 
-        <div className="trinity-onboarding__buttons" style={{ marginTop: '30px' }}>
+        <div className="trinity-onboarding__buttons trinity-onboarding__buttons--spaced">
           <button
             type="button"
             onClick={onSkipLogin}

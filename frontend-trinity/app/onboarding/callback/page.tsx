@@ -238,6 +238,7 @@ export default function OnboardingCallbackPage() {
               paymentKey: paymentType === "pay" ? paymentKey : undefined,
               orderId: paymentType === "pay" ? orderId : undefined,
               amount: paymentType === "pay" ? formData.amount : undefined,
+              dashboardTemplates: formData.dashboardTemplates || {}, // 대시보드 템플릿 설정
             }),
           };
 

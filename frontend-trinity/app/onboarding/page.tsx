@@ -10,7 +10,7 @@ import Header from "../../components/Header";
 import { COMPONENT_CSS } from "../../constants/css-variables";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
 import { useOnboarding } from "../../hooks/useOnboarding";
-import { apiGet } from "../../utils/api";
+import { apiGet, getPublicOnboardingRequests, type OnboardingRequest } from "../../utils/api";
 import ProgressSteps from "../../components/onboarding/ProgressSteps";
 import ErrorMessage from "../../components/onboarding/ErrorMessage";
 import Step1BasicInfo from "../../components/onboarding/Step1BasicInfo";
@@ -18,6 +18,7 @@ import Step2BusinessType from "../../components/onboarding/Step2BusinessType";
 import Step3PricingPlan from "../../components/onboarding/Step3PricingPlan";
 import Step4Payment from "../../components/onboarding/Step4Payment";
 import Step5Completion from "../../components/onboarding/Step5Completion";
+import Step6DashboardSetup from "../../components/onboarding/Step6DashboardSetup";
 import OnboardingLogin from "../../components/onboarding/OnboardingLogin";
 
 export default function OnboardingPage() {
@@ -26,6 +27,9 @@ export default function OnboardingPage() {
   const [accessError, setAccessError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [existingRequests, setExistingRequests] = useState<OnboardingRequest[]>([]);
+  const [showExistingRequests, setShowExistingRequests] = useState(false);
+  const [loadingExistingRequests, setLoadingExistingRequests] = useState(false);
   const {
     step,
     setStep,
@@ -120,9 +124,10 @@ export default function OnboardingPage() {
               }));
               // 이메일 인증 완료 처리 (이미 로그인된 사용자이므로)
               setEmailVerified(true);
+              
+              // 진행 중인 온보딩 요청 조회
+              loadExistingOnboardingRequests(userEmail);
             }
-            
-            // TODO: 진행 중인 온보딩 요청이 있는지 확인하고 이어하기 옵션 제공
           } else {
             // 로그인되지 않은 경우 로그인 옵션 표시
             setIsLoggedIn(false);
@@ -172,15 +177,53 @@ export default function OnboardingPage() {
       <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
         <Header />
         <main className="container">
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '50vh',
-            fontSize: '18px',
-            color: '#666'
-          }}>
+          <div className="trinity-onboarding__loading-container">
             접근 권한 확인 중...
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // 기존 온보딩 요청 선택 화면 표시
+  if (showExistingRequests && existingRequests.length > 0) {
+    return (
+      <div className={COMPONENT_CSS.ONBOARDING.CONTAINER}>
+        <Header />
+        <main className="container">
+          <div className={COMPONENT_CSS.ONBOARDING.FORM}>
+            <h2 className="trinity-onboarding__title">진행 중인 온보딩</h2>
+            <p className="trinity-onboarding__description">
+              진행 중인 온보딩 요청이 있습니다. 이어서 진행하시겠습니까?
+            </p>
+            
+            <div className="trinity-onboarding__existing-requests">
+              {existingRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="trinity-onboarding__request-card"
+                  onClick={() => handleContinueExistingRequest(request)}
+                >
+                  <div className="trinity-onboarding__request-title">
+                    {request.tenantName || '테넌트 이름 없음'}
+                  </div>
+                  <div className="trinity-onboarding__request-meta">
+                    신청일: {new Date(request.createdAt).toLocaleDateString('ko-KR')}
+                  </div>
+                  <div className="trinity-onboarding__request-status">
+                    상태: 대기 중
+                  </div>
+                </div>
+              ))}
+              
+              <button
+                type="button"
+                onClick={() => setShowExistingRequests(false)}
+                className={`${COMPONENT_CSS.ONBOARDING.BUTTON_SECONDARY} trinity-onboarding__new-start-button`}
+              >
+                새로 시작하기
+              </button>
+            </div>
           </div>
         </main>
       </div>
@@ -212,7 +255,7 @@ export default function OnboardingPage() {
         <main className="container">
           <div className={COMPONENT_CSS.ONBOARDING.FORM}>
             <ErrorMessage message={accessError} />
-            <p style={{ textAlign: 'center', marginTop: '20px', color: '#666' }}>
+            <p className="trinity-onboarding__error-message">
               잠시 후 홈으로 이동합니다...
             </p>
           </div>
@@ -283,22 +326,11 @@ export default function OnboardingPage() {
                   loading={loading}
                 />
                 {/* PG 결제 프로세스 안내 메시지 */}
-                <div style={{
-                  backgroundColor: '#fff3cd',
-                  border: '1px solid #ffc107',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  marginTop: '20px'
-                }}>
-                  <p style={{
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    color: '#856404',
-                    marginBottom: '10px'
-                  }}>
+                <div className="trinity-onboarding__warning-box">
+                  <p className="trinity-onboarding__warning-title">
                     ⚠️ PG사 결제 프로세스는 추후 진행 예정입니다
                   </p>
-                  <p style={{ color: '#856404', lineHeight: '1.6', fontSize: '14px' }}>
+                  <p className="trinity-onboarding__warning-text">
                     현재는 결제 수단 등록 없이 바로 온보딩 등록이 가능합니다.
                     <br />
                     온보딩 승인 후 서비스 이용 시점에 결제 수단을 등록하실 수 있습니다.
@@ -329,7 +361,7 @@ export default function OnboardingPage() {
             )}
 
             {/* Navigation Buttons */}
-            {step < 5 && (
+            {(step < 5 || step === 6) && (
                 <div className="trinity-onboarding__buttons">
                 {step > 1 && (
                   <button
@@ -341,12 +373,15 @@ export default function OnboardingPage() {
                   </button>
                 )}
                 <button
-                  type={step === 3 ? "submit" : step < 4 ? "button" : "submit"}
+                  type={step === 3 || step === 6 ? "submit" : step < 4 ? "button" : "submit"}
                   onClick={() => {
                     if (step < 3) {
                       setStep(step + 1);
                     } else if (step === 3) {
-                      // step 3에서 바로 제출 (step 4 결제 단계 건너뛰기)
+                      // step 3에서 step 6으로 이동 (step 4, 5 건너뛰기)
+                      setStep(6);
+                    } else if (step === 6) {
+                      // step 6에서 제출
                       // handleSubmit이 자동으로 호출됨
                     }
                   }}
@@ -355,16 +390,19 @@ export default function OnboardingPage() {
                     loading || 
                     (step === 1 && (!formData.tenantName || !formData.adminPassword || !formData.adminPasswordConfirm || formData.adminPassword !== formData.adminPasswordConfirm || formData.adminPassword.length < 8)) ||
                     (step === 2 && !formData.businessType) || 
-                    (step === 3 && !formData.planId)
+                    (step === 3 && !formData.planId) ||
+                    (step === 6 && false) // Step6DashboardSetup 내부에서 검증
                   }
                 >
                   {loading 
                     ? TRINITY_CONSTANTS.MESSAGES.PROCESSING 
                     : step === 3
-                      ? TRINITY_CONSTANTS.MESSAGES.SUBMIT
-                      : step < 4 
-                        ? TRINITY_CONSTANTS.MESSAGES.NEXT 
-                        : TRINITY_CONSTANTS.MESSAGES.SUBMIT}
+                      ? TRINITY_CONSTANTS.MESSAGES.NEXT
+                      : step === 6
+                        ? TRINITY_CONSTANTS.MESSAGES.SUBMIT
+                        : step < 4 
+                          ? TRINITY_CONSTANTS.MESSAGES.NEXT 
+                          : TRINITY_CONSTANTS.MESSAGES.SUBMIT}
                 </button>
               </div>
             )}

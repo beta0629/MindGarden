@@ -1,5 +1,10 @@
 package com.coresolution.core.service.impl;
 
+import java.text.MessageFormat;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import com.coresolution.core.constant.DashboardConstants;
 import com.coresolution.core.constant.RoleConstants;
 import com.coresolution.core.domain.RoleTemplate;
@@ -15,18 +20,12 @@ import com.coresolution.core.service.TenantDashboardService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManager;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.text.MessageFormat;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import jakarta.persistence.EntityManager;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 테넌트 대시보드 서비스 구현체
@@ -210,8 +209,9 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
     
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public List<TenantDashboardResponse> createDefaultDashboards(String tenantId, String businessType, String createdBy) {
-        log.info("기본 대시보드 생성: tenantId={}, businessType={}, createdBy={}", tenantId, businessType, createdBy);
+    public List<TenantDashboardResponse> createDefaultDashboards(String tenantId, String businessType, String createdBy, java.util.Map<String, String> dashboardTemplates, java.util.Map<String, java.util.List<String>> dashboardWidgets) {
+        log.info("기본 대시보드 생성: tenantId={}, businessType={}, createdBy={}, dashboardTemplates={}", 
+            tenantId, businessType, createdBy, dashboardTemplates);
         
         accessControlService.validateTenantAccess(tenantId);
         
@@ -301,8 +301,43 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             // 기본 대시보드 생성
             String dashboardId = UUID.randomUUID().toString();
             
-            // 기본 위젯 설정 생성 (MVP용)
-            String defaultConfig = createDefaultDashboardConfig(roleCode);
+            // 기본 위젯 설정 생성 (온보딩에서 선택한 템플릿이 있으면 사용, 없으면 기본 설정)
+            String defaultConfig;
+            
+            // dashboardWidgets가 있으면 우선 사용 (템플릿 수정 시)
+            if (dashboardWidgets != null && !dashboardWidgets.isEmpty()) {
+                java.util.List<String> customWidgets = dashboardWidgets.get(roleName);
+                if (customWidgets != null && !customWidgets.isEmpty()) {
+                    defaultConfig = createDashboardConfigFromWidgets(customWidgets, roleCode, businessType);
+                    log.info("편집된 위젯 목록으로 대시보드 설정 생성: roleName={}, widgets={}", roleName, customWidgets);
+                } else if (dashboardTemplates != null && !dashboardTemplates.isEmpty()) {
+                    // dashboardWidgets가 없으면 템플릿 사용
+                    String selectedTemplateId = dashboardTemplates.get(roleName);
+                    if (selectedTemplateId != null) {
+                        defaultConfig = createDashboardConfigFromTemplate(selectedTemplateId, roleCode, businessType);
+                        log.info("선택된 템플릿으로 대시보드 설정 생성: roleName={}, templateId={}", roleName, selectedTemplateId);
+                    } else {
+                        defaultConfig = createDefaultDashboardConfig(roleCode);
+                        log.debug("선택된 템플릿이 없어 기본 설정 사용: roleName={}", roleName);
+                    }
+                } else {
+                    defaultConfig = createDefaultDashboardConfig(roleCode);
+                    log.debug("템플릿 선택 정보가 없어 기본 설정 사용: roleName={}", roleName);
+                }
+            } else if (dashboardTemplates != null && !dashboardTemplates.isEmpty()) {
+                // 역할명으로 선택된 템플릿 찾기
+                String selectedTemplateId = dashboardTemplates.get(roleName);
+                if (selectedTemplateId != null) {
+                    defaultConfig = createDashboardConfigFromTemplate(selectedTemplateId, roleCode, businessType);
+                    log.info("선택된 템플릿으로 대시보드 설정 생성: roleName={}, templateId={}", roleName, selectedTemplateId);
+                } else {
+                    defaultConfig = createDefaultDashboardConfig(roleCode);
+                    log.debug("선택된 템플릿이 없어 기본 설정 사용: roleName={}", roleName);
+                }
+            } else {
+                defaultConfig = createDefaultDashboardConfig(roleCode);
+                log.debug("템플릿 선택 정보가 없어 기본 설정 사용: roleName={}", roleName);
+            }
             
             TenantDashboard dashboard = TenantDashboard.builder()
                     .dashboardId(dashboardId)
@@ -467,6 +502,197 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             if (span < 1 || span > 12) {
                 throw new IllegalArgumentException("위젯 position의 span은 1-12 사이여야 합니다.");
             }
+        }
+    }
+    
+    /**
+     * 템플릿 ID로부터 대시보드 설정 생성
+     * 프론트엔드에서 선택한 템플릿의 위젯 목록을 기반으로 설정 생성
+     */
+    private String createDashboardConfigFromTemplate(String templateId, String roleCode, String businessType) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            com.fasterxml.jackson.databind.node.ObjectNode config = mapper.createObjectNode();
+            
+            // 버전 및 레이아웃 설정
+            config.put("version", "1.0");
+            com.fasterxml.jackson.databind.node.ObjectNode layout = mapper.createObjectNode();
+            layout.put("type", "grid");
+            layout.put("columns", 3);
+            layout.put("gap", "md");
+            layout.put("responsive", true);
+            config.set("layout", layout);
+            
+            // 템플릿 ID로부터 위젯 목록 추출
+            java.util.List<String> widgetTypes = getWidgetTypesFromTemplate(templateId);
+            
+            // 위젯 배열 생성
+            com.fasterxml.jackson.databind.node.ArrayNode widgets = mapper.createArrayNode();
+            int row = 0;
+            int col = 0;
+            int maxCols = 3;
+            
+            for (int i = 0; i < widgetTypes.size(); i++) {
+                String widgetType = widgetTypes.get(i);
+                int span = calculateWidgetSpan(widgetType, i, widgetTypes.size());
+                
+                widgets.add(createWidget(mapper, widgetType, row, col, span, getWidgetTitle(widgetType), widgetType));
+                
+                col += span;
+                if (col >= maxCols) {
+                    col = 0;
+                    row++;
+                }
+            }
+            
+            config.set("widgets", widgets);
+            
+            // 테마 설정
+            com.fasterxml.jackson.databind.node.ObjectNode theme = mapper.createObjectNode();
+            theme.put("mode", "light");
+            theme.put("primaryColor", "#007bff");
+            config.set("theme", theme);
+            
+            return mapper.writeValueAsString(config);
+        } catch (JsonProcessingException e) {
+            log.error("템플릿 기반 대시보드 설정 생성 실패: templateId={}, roleCode={}", templateId, roleCode, e);
+            return createDefaultDashboardConfig(roleCode);
+        }
+    }
+    
+    /**
+     * 위젯 목록으로부터 대시보드 설정 생성
+     */
+    private String createDashboardConfigFromWidgets(java.util.List<String> widgetTypes, String roleCode, String businessType) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            com.fasterxml.jackson.databind.node.ObjectNode config = mapper.createObjectNode();
+            
+            // 버전 및 레이아웃 설정
+            config.put("version", "1.0");
+            com.fasterxml.jackson.databind.node.ObjectNode layout = mapper.createObjectNode();
+            layout.put("type", "grid");
+            layout.put("columns", 3);
+            layout.put("gap", "md");
+            layout.put("responsive", true);
+            config.set("layout", layout);
+            
+            // 위젯 배열 생성
+            com.fasterxml.jackson.databind.node.ArrayNode widgets = mapper.createArrayNode();
+            int row = 0;
+            int col = 0;
+            int maxCols = 3;
+            
+            for (int i = 0; i < widgetTypes.size(); i++) {
+                String widgetType = widgetTypes.get(i);
+                int span = calculateWidgetSpan(widgetType, i, widgetTypes.size());
+                
+                widgets.add(createWidget(mapper, widgetType, row, col, span, getWidgetTitle(widgetType), widgetType));
+                
+                col += span;
+                if (col >= maxCols) {
+                    col = 0;
+                    row++;
+                }
+            }
+            
+            config.set("widgets", widgets);
+            
+            // 테마 설정
+            com.fasterxml.jackson.databind.node.ObjectNode theme = mapper.createObjectNode();
+            theme.put("mode", "light");
+            theme.put("primaryColor", "#007bff");
+            config.set("theme", theme);
+            
+            return mapper.writeValueAsString(config);
+        } catch (JsonProcessingException e) {
+            log.error("위젯 목록 기반 대시보드 설정 생성 실패: roleCode={}", roleCode, e);
+            return createDefaultDashboardConfig(roleCode);
+        }
+    }
+    
+    /**
+     * 템플릿 ID로부터 위젯 타입 목록 추출
+     */
+    private java.util.List<String> getWidgetTypesFromTemplate(String templateId) {
+        java.util.List<String> widgets = new java.util.ArrayList<>();
+        
+        // 템플릿별 위젯 매핑 (프론트엔드 DASHBOARD_TEMPLATES와 동일)
+        switch (templateId) {
+            case "consultation-admin":
+                widgets.add("welcome");
+                widgets.add("summary-statistics");
+                widgets.add("activity-list");
+                break;
+            case "consultation-consultant":
+                widgets.add("schedule");
+                widgets.add("consultation-record");
+                widgets.add("consultation-stats");
+                break;
+            case "consultation-client":
+                widgets.add("schedule");
+                widgets.add("notification");
+                widgets.add("consultation-record");
+                break;
+            case "academy-admin":
+                widgets.add("welcome");
+                widgets.add("summary-statistics");
+                widgets.add("schedule");
+                break;
+            case "academy-teacher":
+                widgets.add("schedule");
+                widgets.add("summary-statistics");
+                break;
+            case "academy-student":
+                widgets.add("schedule");
+                widgets.add("notification");
+                break;
+            default:
+                log.warn("알 수 없는 템플릿 ID: templateId={}, 기본 위젯 사용", templateId);
+                // 기본 위젯 사용
+                widgets.add("welcome");
+                widgets.add("summary-statistics");
+                break;
+        }
+        
+        return widgets;
+    }
+    
+    /**
+     * 위젯 제목 가져오기
+     */
+    private String getWidgetTitle(String widgetType) {
+        switch (widgetType) {
+            case "welcome":
+                return "환영합니다";
+            case "summary-statistics":
+                return "통계 요약";
+            case "activity-list":
+                return "최근 활동";
+            case "schedule":
+                return "일정";
+            case "notification":
+                return "알림";
+            case "consultation-record":
+                return "상담 기록";
+            case "consultation-stats":
+                return "상담 통계";
+            default:
+                return widgetType;
+        }
+    }
+    
+    /**
+     * 위젯 span 계산
+     */
+    private int calculateWidgetSpan(String widgetType, int index, int total) {
+        // 기본적으로 3열 그리드에서 적절한 크기 할당
+        if (total == 1) {
+            return 3; // 위젯이 1개면 전체 너비
+        } else if (total == 2) {
+            return index == 0 ? 2 : 1; // 첫 번째는 2열, 두 번째는 1열
+        } else {
+            return 1; // 3개 이상이면 각각 1열
         }
     }
     

@@ -38,6 +38,8 @@ export interface OnboardingFormData {
   paymentMethodToken: string;
   paymentMethodId: string;
   subscriptionId: string;
+  dashboardTemplates?: Record<string, string>; // 역할별 선택된 템플릿 ID
+  dashboardWidgets?: Record<string, string[]>; // 역할별 위젯 목록 (템플릿 수정 시)
 }
 
 export const useOnboarding = () => {
@@ -299,6 +301,8 @@ export const useOnboarding = () => {
           adminPassword: formData.adminPassword,
           paymentMethodId: formData.paymentMethodId,
           subscriptionId: formData.subscriptionId,
+          dashboardTemplates: formData.dashboardTemplates || {}, // 대시보드 템플릿 설정
+          dashboardWidgets: formData.dashboardWidgets || {}, // 대시보드 위젯 설정 (템플릿 수정 시)
         }),
       };
 

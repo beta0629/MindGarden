@@ -279,9 +279,10 @@ public class OnboardingServiceImpl implements OnboardingService {
                 return repository.save(request);
             }
             
-            // checklistJson에서 adminPassword 추출 및 BCrypt 해시
+            // checklistJson에서 adminPassword 및 dashboardTemplates 추출
             String contactEmail = request.getRequestedBy();  // 기본값: requestedBy
             String adminPasswordHash = null;
+            Map<String, String> dashboardTemplates = null;
             
             if (request.getChecklistJson() != null && !request.getChecklistJson().isEmpty()) {
                 try {
@@ -298,14 +299,57 @@ public class OnboardingServiceImpl implements OnboardingService {
                     } else {
                         log.warn("checklistJson에 adminPassword가 없음: requestId={}", requestId);
                     }
+                    
+                    // dashboardTemplates 추출 (역할명 -> 템플릿 ID 매핑)
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> templates = (Map<String, String>) checklist.get("dashboardTemplates");
+                    if (templates != null && !templates.isEmpty()) {
+                        dashboardTemplates = templates;
+                        log.info("대시보드 템플릿 선택 정보 발견: requestId={}, templates={}", requestId, templates);
+                    } else {
+                        log.debug("checklistJson에 dashboardTemplates가 없음 (기본 템플릿 사용): requestId={}", requestId);
+                    }
+                    
+                    // dashboardWidgets 추출 (역할명 -> 위젯 목록 매핑)
+                    @SuppressWarnings("unchecked")
+                    Map<String, java.util.List<String>> widgets = (Map<String, java.util.List<String>>) checklist.get("dashboardWidgets");
+                    if (widgets != null && !widgets.isEmpty()) {
+                        log.info("대시보드 위젯 편집 정보 발견: requestId={}, widgets={}", requestId, widgets);
+                    } else {
+                        log.debug("checklistJson에 dashboardWidgets가 없음 (템플릿 기본 위젯 사용): requestId={}", requestId);
+                    }
                 } catch (JsonProcessingException e) {
-                    log.warn("checklistJson 파싱 실패 (관리자 계정 생성 스킵): requestId={}, error={}", 
+                    log.warn("checklistJson 파싱 실패 (관리자 계정 생성 및 대시보드 템플릿 스킵): requestId={}, error={}", 
                         requestId, e.getMessage());
+                } catch (ClassCastException e) {
+                    log.warn("dashboardTemplates 형식이 올바르지 않음: requestId={}, error={}", requestId, e.getMessage());
                 }
             }
             
             final String finalContactEmail = contactEmail;
             final String finalAdminPasswordHash = adminPasswordHash;
+            final Map<String, String> finalDashboardTemplates = dashboardTemplates;
+            
+            // dashboardWidgets 추출 및 final 변수로 복사
+            Map<String, java.util.List<String>> dashboardWidgets = null;
+            if (request.getChecklistJson() != null && !request.getChecklistJson().isEmpty()) {
+                try {
+                    Map<String, Object> checklist = objectMapper.readValue(
+                        request.getChecklistJson(), 
+                        new TypeReference<Map<String, Object>>() {}
+                    );
+                    
+                    @SuppressWarnings("unchecked")
+                    Map<String, java.util.List<String>> widgets = (Map<String, java.util.List<String>>) checklist.get("dashboardWidgets");
+                    if (widgets != null && !widgets.isEmpty()) {
+                        dashboardWidgets = widgets;
+                        log.info("대시보드 위젯 편집 정보 발견: requestId={}, widgets={}", requestId, widgets);
+                    }
+                } catch (Exception e) {
+                    log.debug("dashboardWidgets 추출 실패 (무시): requestId={}, error={}", requestId, e.getMessage());
+                }
+            }
+            final Map<String, java.util.List<String>> finalDashboardWidgets = dashboardWidgets;
             
             // 에러 핸들링 및 자동 재시도로 프로시저 실행
             OnboardingErrorHandlingService.ExecutionResult executionResult = 
@@ -365,9 +409,10 @@ public class OnboardingServiceImpl implements OnboardingService {
                             // 기본 업종 조회 (공통 코드에서 동적으로 가져옴)
                             String dashboardBusinessType = getDefaultBusinessType(request.getBusinessType());
                             List<com.coresolution.core.dto.TenantDashboardResponse> dashboards = 
-                                tenantDashboardService.createDefaultDashboards(tenantId, dashboardBusinessType, actorId);
+                                tenantDashboardService.createDefaultDashboards(tenantId, dashboardBusinessType, actorId, finalDashboardTemplates, finalDashboardWidgets);
                             
-                            log.info("기본 대시보드 생성 완료: tenantId={}, count={}", tenantId, dashboards.size());
+                            log.info("기본 대시보드 생성 완료: tenantId={}, count={}, templates={}", 
+                                tenantId, dashboards.size(), finalDashboardTemplates);
                             return dashboards != null && !dashboards.isEmpty();
                         },
                         10, // 최대 10회 재시도 (트랜잭션 타이밍 문제 대응)

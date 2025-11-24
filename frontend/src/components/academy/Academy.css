@@ -95,6 +95,33 @@
   color: var(--color-text, #333);
 }
 
+/* 비밀번호 입력 필드 래퍼 */
+.academy-form-input-wrapper {
+  position: relative;
+}
+
+/* 비밀번호 표시/숨김 토글 버튼 */
+.academy-form-password-toggle {
+  position: absolute;
+  right: var(--spacing-sm, 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs, 4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg, 1.125rem);
+  color: var(--color-text-secondary, #666);
+  transition: color var(--transition-fast, 0.2s);
+}
+
+.academy-form-password-toggle:hover {
+  color: var(--color-primary, #007bff);
+}
+
 .academy-form-input,
 .academy-form-select,
 .academy-form-textarea {

@@ -3,6 +3,7 @@ package com.coresolution.core.service.academy;
 import com.coresolution.core.domain.academy.Attendance;
 import com.coresolution.core.dto.academy.AttendanceRequest;
 import com.coresolution.core.dto.academy.AttendanceResponse;
+import com.coresolution.core.dto.academy.AttendanceStatisticsResponse;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -66,5 +67,15 @@ public interface AttendanceService {
      * 출석률 계산
      */
     double calculateAttendanceRate(String tenantId, String enrollmentId);
+    
+    /**
+     * 출결 통계 조회
+     */
+    AttendanceStatisticsResponse getAttendanceStatistics(String tenantId, String enrollmentId, LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * 학부모 알림 발송 (출결 기록 시)
+     */
+    boolean sendAttendanceNotificationToParent(String tenantId, String attendanceId);
 }
 

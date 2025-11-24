@@ -17,6 +17,9 @@ import { API_BASE_URL } from '../../constants/api';
 import { sessionManager } from '../../utils/sessionManager';
 import { FaTimes } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
+import DashboardWidgetEditor from './DashboardWidgetEditor';
+import DashboardLayoutEditor from './DashboardLayoutEditor';
+import WidgetConfigModal from './WidgetConfigModal';
 import './DashboardFormModal.css';
 
 const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
@@ -37,6 +40,10 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [errors, setErrors] = useState({});
+  const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
+  const [selectedWidget, setSelectedWidget] = useState(null);
+  const [showWidgetConfigModal, setShowWidgetConfigModal] = useState(false);
+  const [parsedConfig, setParsedConfig] = useState(null);
 
   const isEditMode = !!dashboard;
 
@@ -123,6 +130,68 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         return newErrors;
       });
     }
+  };
+
+  // 위젯 변경 핸들러
+  const handleWidgetsChange = (newWidgets) => {
+    if (!parsedConfig) return;
+    
+    const updatedConfig = {
+      ...parsedConfig,
+      widgets: newWidgets
+    };
+    
+    setParsedConfig(updatedConfig);
+    setFormData(prev => ({
+      ...prev,
+      dashboardConfig: stringifyDashboardConfig(updatedConfig)
+    }));
+  };
+
+  // 위젯 설정 열기
+  const handleWidgetConfig = (widget) => {
+    setSelectedWidget(widget);
+    setShowWidgetConfigModal(true);
+  };
+
+  // 위젯 설정 저장
+  const handleWidgetConfigSave = (updatedWidget) => {
+    if (!parsedConfig) return;
+    
+    const updatedWidgets = parsedConfig.widgets.map(w =>
+      w.id === updatedWidget.id ? updatedWidget : w
+    );
+    
+    const updatedConfig = {
+      ...parsedConfig,
+      widgets: updatedWidgets
+    };
+    
+    setParsedConfig(updatedConfig);
+    setFormData(prev => ({
+      ...prev,
+      dashboardConfig: stringifyDashboardConfig(updatedConfig)
+    }));
+    setShowWidgetConfigModal(false);
+    setSelectedWidget(null);
+  };
+
+  // 위젯 삭제
+  const handleWidgetDelete = (widgetId) => {
+    if (!parsedConfig) return;
+    
+    const updatedWidgets = parsedConfig.widgets.filter(w => w.id !== widgetId);
+    
+    const updatedConfig = {
+      ...parsedConfig,
+      widgets: updatedWidgets
+    };
+    
+    setParsedConfig(updatedConfig);
+    setFormData(prev => ({
+      ...prev,
+      dashboardConfig: stringifyDashboardConfig(updatedConfig)
+    }));
   };
 
   // 유효성 검사

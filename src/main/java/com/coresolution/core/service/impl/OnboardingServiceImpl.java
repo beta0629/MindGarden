@@ -21,6 +21,8 @@ import com.coresolution.core.repository.onboarding.OnboardingRequestRepository;
 import com.coresolution.core.service.AutoApprovalService;
 import com.coresolution.core.service.OnboardingApprovalService;
 import com.coresolution.core.service.OnboardingService;
+import com.coresolution.core.service.OnboardingPreValidationService;
+import com.coresolution.core.service.OnboardingErrorHandlingService;
 import com.coresolution.core.service.TenantDashboardService;
 import com.coresolution.core.service.TenantIdGenerator;
 import com.coresolution.core.service.UserRoleAssignmentService;
@@ -67,6 +69,8 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final CommonCodeService commonCodeService;
     private final UserRoleAssignmentService userRoleAssignmentService;
     private final TenantRoleRepository tenantRoleRepository;
+    private final OnboardingPreValidationService preValidationService;
+    private final OnboardingErrorHandlingService errorHandlingService;
     
     @Override
     @Transactional(readOnly = true)
@@ -191,8 +195,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 request.getRequestedBy(), request.getTenantName());
             
             // tenant_id가 없으면 자동 생성 또는 삭제된 테넌트 복구
-            String tenantId = request.getTenantId();
-            if (tenantId == null || tenantId.trim().isEmpty()) {
+            String tenantIdValue = request.getTenantId();
+            if (tenantIdValue == null || tenantIdValue.trim().isEmpty()) {
                 // 같은 이메일로 삭제된 테넌트가 있는지 확인
                 String email = request.getRequestedBy();
                 if (email != null && !email.trim().isEmpty()) {
@@ -200,7 +204,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     if (!deletedTenants.isEmpty()) {
                         // 삭제된 테넌트가 있으면 가장 최근에 삭제된 테넌트 복구
                         Tenant deletedTenant = deletedTenants.get(0);
-                        tenantId = deletedTenant.getTenantId();
+                        tenantIdValue = deletedTenant.getTenantId();
                         
                         // 테넌트 복구 및 정보 업데이트
                         deletedTenant.setIsDeleted(false);
@@ -221,26 +225,29 @@ public class OnboardingServiceImpl implements OnboardingService {
                         tenantRepository.save(deletedTenant);
                         
                         log.info("삭제된 테넌트 복구: tenantId={}, email={}, name={}", 
-                            tenantId, email, deletedTenant.getName());
+                            tenantIdValue, email, deletedTenant.getName());
                     }
                 }
                 
                 // 삭제된 테넌트가 없으면 새로운 tenant_id 생성
-                if (tenantId == null || tenantId.trim().isEmpty()) {
+                if (tenantIdValue == null || tenantIdValue.trim().isEmpty()) {
                     // checklistJson에서 주소 정보 추출하여 지역 코드 생성
                     String regionCode = extractRegionCodeFromRequest(request);
                     
-                    tenantId = tenantIdGenerator.generateTenantId(
+                    tenantIdValue = tenantIdGenerator.generateTenantId(
                         request.getTenantName(), 
                         request.getBusinessType(),
                         regionCode
                     );
                     log.info("테넌트 ID 자동 생성: tenantName={}, businessType={}, regionCode={}, tenantId={}", 
-                        request.getTenantName(), request.getBusinessType(), regionCode, tenantId);
+                        request.getTenantName(), request.getBusinessType(), regionCode, tenantIdValue);
                 }
                 
-                request.setTenantId(tenantId);
+                request.setTenantId(tenantIdValue);
             }
+            
+            // final 변수로 복사 (람다 내에서 사용하기 위해)
+            final String tenantId = request.getTenantId() != null ? request.getTenantId() : tenantIdValue;
             
             log.info("온보딩 승인 처리 시작: requestId={}, tenantId={}, businessType={}", 
                 requestId, tenantId, request.getBusinessType());
@@ -248,29 +255,103 @@ public class OnboardingServiceImpl implements OnboardingService {
             // 기본 업종 조회 (공통 코드에서 동적으로 가져옴)
             String businessType = getDefaultBusinessType(request.getBusinessType());
             
-            Map<String, Object> approvalResult = approvalService.processOnboardingApproval(
-                requestId,
-                tenantId,
-                request.getTenantName(),
-                businessType,
-                actorId,
-                note
-            );
+            // 사전 검증 수행
+            OnboardingPreValidationService.ValidationResult validationResult = 
+                preValidationService.validateBeforeApproval(requestId);
             
-            Boolean success = (Boolean) approvalResult.get("success");
-            String message = (String) approvalResult.get("message");
+            if (!validationResult.isValid()) {
+                String validationErrors = String.join(", ", validationResult.getErrors().values());
+                String errorMessage = "온보딩 승인 전 사전 검증 실패: " + validationErrors;
+                log.error(errorMessage);
+                request.setStatus(OnboardingStatus.ON_HOLD);
+                request.setDecisionNote(note != null ? note + "\n[사전 검증 실패] " + validationErrors : "[사전 검증 실패] " + validationErrors);
+                return repository.save(request);
+            }
             
-            // 온보딩 승인 성공 시 기본 대시보드 생성
+            if (validationResult.hasWarnings()) {
+                String warnings = String.join(", ", validationResult.getWarnings().values());
+                log.warn("온보딩 승인 전 사전 검증 경고: {}", warnings);
+            }
+            
+            // 시스템 메타데이터 검증
+            OnboardingPreValidationService.ValidationResult metadataResult = 
+                preValidationService.validateSystemMetadata(businessType);
+            
+            if (!metadataResult.isValid()) {
+                String metadataErrors = String.join(", ", metadataResult.getErrors().values());
+                String errorMessage = "시스템 메타데이터 검증 실패: " + metadataErrors;
+                log.error(errorMessage);
+                request.setStatus(OnboardingStatus.ON_HOLD);
+                request.setDecisionNote(note != null ? note + "\n[메타데이터 검증 실패] " + metadataErrors : "[메타데이터 검증 실패] " + metadataErrors);
+                return repository.save(request);
+            }
+            
+            // 에러 핸들링 및 자동 재시도로 프로시저 실행
+            OnboardingErrorHandlingService.ExecutionResult executionResult = 
+                errorHandlingService.executeWithRetry(
+                    () -> {
+                        Map<String, Object> result = approvalService.processOnboardingApproval(
+                            requestId,
+                            tenantId,
+                            request.getTenantName(),
+                            businessType,
+                            actorId,
+                            note
+                        );
+                        Boolean success = (Boolean) result.get("success");
+                        return success != null && success;
+                    },
+                    5, // 최대 5회 재시도
+                    2000 // 2초 지연
+                );
+            
+            Map<String, Object> approvalResult;
+            Boolean success;
+            String message;
+            
+            if (executionResult.isSuccess()) {
+                // 재시도 성공 시 실제 프로시저 결과 조회
+                approvalResult = approvalService.processOnboardingApproval(
+                    requestId,
+                    tenantId,
+                    request.getTenantName(),
+                    businessType,
+                    actorId,
+                    note
+                );
+                success = (Boolean) approvalResult.get("success");
+                message = (String) approvalResult.get("message");
+            } else {
+                // 재시도 실패
+                success = false;
+                message = executionResult.getErrorMessage();
+                approvalResult = new java.util.HashMap<>();
+                approvalResult.put("success", false);
+                approvalResult.put("message", message);
+                log.error("온보딩 승인 프로세스 재시도 실패: requestId={}, attempts={}, error={}", 
+                    requestId, executionResult.getAttemptCount(), message);
+            }
+            
+            // 온보딩 승인 성공 시 기본 대시보드 생성 (에러 핸들링 및 자동 재시도)
             if (success != null && success) {
-                try {
-                    // 기본 업종 조회 (공통 코드에서 동적으로 가져옴)
-                    String dashboardBusinessType = getDefaultBusinessType(request.getBusinessType());
-                    List<com.coresolution.core.dto.TenantDashboardResponse> dashboards = 
-                        tenantDashboardService.createDefaultDashboards(tenantId, dashboardBusinessType, actorId);
-                    
-                    log.info("기본 대시보드 생성 완료: tenantId={}, count={}", tenantId, dashboards.size());
-                } catch (Exception e) {
-                    log.error("기본 대시보드 생성 실패: tenantId={}", tenantId, e);
+                OnboardingErrorHandlingService.ExecutionResult dashboardResult = 
+                    errorHandlingService.executeWithRetry(
+                        () -> {
+                            // 기본 업종 조회 (공통 코드에서 동적으로 가져옴)
+                            String dashboardBusinessType = getDefaultBusinessType(request.getBusinessType());
+                            List<com.coresolution.core.dto.TenantDashboardResponse> dashboards = 
+                                tenantDashboardService.createDefaultDashboards(tenantId, dashboardBusinessType, actorId);
+                            
+                            log.info("기본 대시보드 생성 완료: tenantId={}, count={}", tenantId, dashboards.size());
+                            return dashboards != null && !dashboards.isEmpty();
+                        },
+                        10, // 최대 10회 재시도 (트랜잭션 타이밍 문제 대응)
+                        500 // 0.5초 지연
+                    );
+                
+                if (!dashboardResult.isSuccess()) {
+                    log.error("기본 대시보드 생성 재시도 실패: tenantId={}, attempts={}, error={}", 
+                        tenantId, dashboardResult.getAttemptCount(), dashboardResult.getErrorMessage());
                     // 대시보드 생성 실패는 온보딩 프로세스를 중단하지 않음 (경고만)
                 }
             }

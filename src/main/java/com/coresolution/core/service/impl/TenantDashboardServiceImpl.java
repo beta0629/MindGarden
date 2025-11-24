@@ -216,12 +216,19 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         accessControlService.validateTenantAccess(tenantId);
         
         // 업종별 기본 역할 템플릿 조회 (동적 조회 - 하드코딩 제거)
+        // RoleTemplate은 시스템 메타데이터이므로 반드시 존재해야 함
         List<RoleTemplate> templates = roleTemplateRepository
                 .findByBusinessTypeAndActive(businessType);
         
         if (templates.isEmpty()) {
-            log.warn("업종별 기본 역할 템플릿이 없음: businessType={}", businessType);
-            return new java.util.ArrayList<>();
+            String errorMessage = String.format(
+                "업종별 기본 역할 템플릿이 없습니다. 시스템 메타데이터 초기화가 필요합니다: businessType=%s. " +
+                "V9__insert_initial_data.sql 마이그레이션을 실행하거나, " +
+                "role_templates 테이블에 해당 업종의 템플릿을 추가해주세요.",
+                businessType
+            );
+            log.error(errorMessage);
+            throw new IllegalStateException(errorMessage);
         }
         
         // 템플릿을 display_order로 정렬

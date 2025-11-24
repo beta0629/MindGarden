@@ -39,20 +39,13 @@ BEGIN
     IF p_tenant_id IS NULL OR p_tenant_id = '' THEN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID가 없습니다.';
-        LEAVE proc_exit;
-    END IF;
-    
-    IF p_contact_email IS NULL OR p_contact_email = '' THEN
+    ELSEIF p_contact_email IS NULL OR p_contact_email = '' THEN
         SET p_success = FALSE;
         SET p_message = '연락 이메일이 없습니다.';
-        LEAVE proc_exit;
-    END IF;
-    
-    IF p_admin_password_hash IS NULL OR p_admin_password_hash = '' THEN
+    ELSEIF p_admin_password_hash IS NULL OR p_admin_password_hash = '' THEN
         SET p_success = FALSE;
         SET p_message = '비밀번호 해시가 없습니다.';
-        LEAVE proc_exit;
-    END IF;
+    ELSE
     
     -- 이메일 정규화 (소문자 변환)
     SET p_contact_email = LOWER(TRIM(p_contact_email));
@@ -68,53 +61,51 @@ BEGIN
         AND role = 'ADMIN'
         AND (is_deleted IS NULL OR is_deleted = FALSE);
     
-    IF v_existing_user_count > 0 THEN
-        SET p_success = TRUE;
-        SET p_message = CONCAT('이미 해당 테넌트에 관리자 계정이 존재합니다: ', p_contact_email);
-        LEAVE proc_exit;
+        IF v_existing_user_count > 0 THEN
+            SET p_success = TRUE;
+            SET p_message = CONCAT('이미 해당 테넌트에 관리자 계정이 존재합니다: ', p_contact_email);
+        ELSE
+            -- 관리자 계정 생성
+            INSERT INTO users (
+                tenant_id,
+                email,
+                username,
+                password,
+                name,
+                role,
+                is_active,
+                is_email_verified,
+                is_social_account,
+                created_at,
+                updated_at,
+                created_by,
+                updated_by,
+                is_deleted,
+                version
+            ) VALUES (
+                p_tenant_id,
+                p_contact_email,
+                v_username,
+                p_admin_password_hash,  -- BCrypt 해시된 비밀번호
+                CONCAT(p_tenant_name, ' 관리자'),
+                'ADMIN',
+                TRUE,
+                TRUE,  -- 온보딩 시 이메일 인증 완료
+                FALSE,
+                NOW(),
+                NOW(),
+                p_approved_by,
+                p_approved_by,
+                FALSE,
+                0
+            );
+            
+            SET v_user_id = LAST_INSERT_ID();
+            
+            SET p_success = TRUE;
+            SET p_message = CONCAT('관리자 계정 생성 완료: ', p_contact_email, ' (userId: ', v_user_id, ')');
+        END IF;
     END IF;
-    
-    -- 관리자 계정 생성
-    INSERT INTO users (
-        tenant_id,
-        email,
-        username,
-        password,
-        name,
-        role,
-        is_active,
-        is_email_verified,
-        is_social_account,
-        created_at,
-        updated_at,
-        created_by,
-        updated_by,
-        is_deleted,
-        version
-    ) VALUES (
-        p_tenant_id,
-        p_contact_email,
-        v_username,
-        p_admin_password_hash,  -- BCrypt 해시된 비밀번호
-        CONCAT(p_tenant_name, ' 관리자'),
-        'ADMIN',
-        TRUE,
-        TRUE,  -- 온보딩 시 이메일 인증 완료
-        FALSE,
-        NOW(),
-        NOW(),
-        p_approved_by,
-        p_approved_by,
-        FALSE,
-        0
-    );
-    
-    SET v_user_id = LAST_INSERT_ID();
-    
-    SET p_success = TRUE;
-    SET p_message = CONCAT('관리자 계정 생성 완료: ', p_contact_email, ' (userId: ', v_user_id, ')');
-    
-    proc_exit: BEGIN END;
 END //
 
 DELIMITER ;

@@ -215,90 +215,31 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         
         accessControlService.validateTenantAccess(tenantId);
         
-        // 업종별 기본 역할 템플릿 조회
+        // 업종별 기본 역할 템플릿 조회 (동적 조회 - 하드코딩 제거)
         List<RoleTemplate> templates = roleTemplateRepository
                 .findByBusinessTypeAndActive(businessType);
         
-        // 학원(ACADEMY) 기준 기본 역할: 학생(STUDENT), 선생님(TEACHER), 관리자(ADMIN)
-        // 다른 업종도 동일한 패턴으로 확장 가능
-        String[] defaultRoleCodes;
-        String[] defaultRoleNames;
-        String[] defaultDashboardNames;
-        
-        // 업종별 기본 역할 코드 매핑 (확장 가능)
-        if (DashboardConstants.BUSINESS_TYPE_ACADEMY.equalsIgnoreCase(businessType)) {
-            defaultRoleCodes = new String[]{
-                DashboardConstants.ROLE_CODE_STUDENT,
-                DashboardConstants.ROLE_CODE_TEACHER,
-                DashboardConstants.ROLE_CODE_ADMIN
-            };
-            defaultRoleNames = new String[]{
-                DashboardConstants.ROLE_NAME_STUDENT,
-                DashboardConstants.ROLE_NAME_TEACHER,
-                DashboardConstants.ROLE_NAME_ADMIN
-            };
-            defaultDashboardNames = new String[]{
-                DashboardConstants.DASHBOARD_NAME_STUDENT,
-                DashboardConstants.DASHBOARD_NAME_TEACHER,
-                DashboardConstants.DASHBOARD_NAME_ADMIN
-            };
-        } else if (DashboardConstants.BUSINESS_TYPE_CONSULTATION.equalsIgnoreCase(businessType)) {
-            // 상담소(CONSULTATION) 업종의 경우 - 실제 template_code 사용
-            defaultRoleCodes = new String[]{
-                DashboardConstants.ROLE_TEMPLATE_CODE_DIRECTOR,
-                DashboardConstants.ROLE_TEMPLATE_CODE_COUNSELOR,
-                DashboardConstants.ROLE_TEMPLATE_CODE_CLIENT,
-                DashboardConstants.ROLE_TEMPLATE_CODE_STAFF
-            };
-            defaultRoleNames = new String[]{
-                "원장",
-                "상담사",
-                "내담자",
-                "사무원"
-            };
-            defaultDashboardNames = new String[]{
-                "원장 대시보드",
-                "상담사 대시보드",
-                "내담자 대시보드",
-                "사무원 대시보드"
-            };
-        } else {
-            // 기타 업종의 경우
-            defaultRoleCodes = new String[]{
-                DashboardConstants.ROLE_CODE_CLIENT,
-                DashboardConstants.ROLE_CODE_CONSULTANT,
-                DashboardConstants.ROLE_CODE_ADMIN
-            };
-            defaultRoleNames = new String[]{
-                DashboardConstants.ROLE_NAME_CLIENT,
-                DashboardConstants.ROLE_NAME_CONSULTANT,
-                DashboardConstants.ROLE_NAME_ADMIN
-            };
-            defaultDashboardNames = new String[]{
-                DashboardConstants.DASHBOARD_NAME_CLIENT,
-                DashboardConstants.DASHBOARD_NAME_CONSULTANT,
-                DashboardConstants.DASHBOARD_NAME_ADMIN
-            };
+        if (templates.isEmpty()) {
+            log.warn("업종별 기본 역할 템플릿이 없음: businessType={}", businessType);
+            return new java.util.ArrayList<>();
         }
+        
+        // 템플릿을 display_order로 정렬
+        templates.sort((t1, t2) -> {
+            Integer order1 = t1.getDisplayOrder() != null ? t1.getDisplayOrder() : 0;
+            Integer order2 = t2.getDisplayOrder() != null ? t2.getDisplayOrder() : 0;
+            return order1.compareTo(order2);
+        });
         
         List<TenantDashboardResponse> createdDashboards = new java.util.ArrayList<>();
         
-        // 각 기본 역할에 대해 대시보드 생성
-        for (int i = 0; i < defaultRoleCodes.length; i++) {
-            String roleCode = defaultRoleCodes[i];
-            String roleName = defaultRoleNames[i];
-            String dashboardName = defaultDashboardNames[i];
-            
-            // 템플릿 코드로 역할 템플릿 찾기
-            RoleTemplate template = templates.stream()
-                    .filter(t -> roleCode.equals(t.getTemplateCode()))
-                    .findFirst()
-                    .orElse(null);
-            
-            if (template == null) {
-                log.warn("기본 역할 템플릿을 찾을 수 없음: roleCode={}, businessType={}", roleCode, businessType);
-                continue;
-            }
+        // 각 기본 역할 템플릿에 대해 대시보드 생성 (동적 처리)
+        for (int i = 0; i < templates.size(); i++) {
+            RoleTemplate template = templates.get(i);
+            String roleCode = template.getTemplateCode();
+            String roleName = template.getNameKo() != null ? template.getNameKo() : 
+                            (template.getNameEn() != null ? template.getNameEn() : template.getName());
+            String dashboardName = roleName + " 대시보드";
             
             // 템플릿 기반 역할이 이미 생성되었는지 확인 (재시도 로직 포함)
             // 프로시저가 별도 트랜잭션에서 실행되므로 명시적으로 flush/clear 필요

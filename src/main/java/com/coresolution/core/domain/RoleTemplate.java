@@ -103,6 +103,13 @@ public class RoleTemplate extends BaseEntity {
     private Boolean isSystemTemplate = false;
     
     /**
+     * 관리자 역할 여부 (온보딩 시 관리자 계정에 할당되는 역할)
+     */
+    @Column(name = "is_admin_role")
+    @Builder.Default
+    private Boolean isAdminRole = false;
+    
+    /**
      * 템플릿 권한 목록
      */
     @OneToMany(mappedBy = "roleTemplate", fetch = FetchType.LAZY)
@@ -134,6 +141,13 @@ public class RoleTemplate extends BaseEntity {
      */
     public boolean isSystemTemplate() {
         return isSystemTemplate != null && isSystemTemplate;
+    }
+    
+    /**
+     * 관리자 역할 확인
+     */
+    public boolean isAdminRole() {
+        return isAdminRole != null && isAdminRole;
     }
 }
 

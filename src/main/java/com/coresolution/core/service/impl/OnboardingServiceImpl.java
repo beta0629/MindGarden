@@ -711,38 +711,32 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
         
         // 메타데이터 기반 관리자 역할 찾기
-        // 각 업종의 display_order=1인 역할을 관리자 역할로 간주
-        // (테넌트 관리자가 나중에 역할을 변경할 수 있으므로 메타데이터 기반으로 처리)
-        List<RoleTemplate> templates = roleTemplateRepository.findByBusinessTypeAndActive(businessType);
-        if (templates.isEmpty()) {
-            log.error("업종별 역할 템플릿을 찾을 수 없음: businessType={}, tenantId={}", businessType, tenantId);
-            return;
-        }
+        // is_admin_role=true인 역할을 관리자 역할로 사용 (완전한 메타데이터 기반)
+        List<RoleTemplate> adminTemplates = roleTemplateRepository.findByBusinessTypeAndAdminRole(businessType);
         
-        // display_order=1인 템플릿 찾기 (관리자 역할)
-        Optional<RoleTemplate> adminTemplateOpt = templates.stream()
-                .filter(t -> t.getDisplayOrder() != null && t.getDisplayOrder() == 1)
-                .findFirst();
-        
-        if (adminTemplateOpt.isEmpty()) {
-            log.warn("관리자 역할 템플릿을 찾을 수 없음 (display_order=1): businessType={}, tenantId={}", businessType, tenantId);
-            // 대체 방법: 첫 번째 템플릿 사용
-            adminTemplateOpt = templates.stream()
-                    .min((t1, t2) -> {
-                        Integer o1 = t1.getDisplayOrder() != null ? t1.getDisplayOrder() : Integer.MAX_VALUE;
-                        Integer o2 = t2.getDisplayOrder() != null ? t2.getDisplayOrder() : Integer.MAX_VALUE;
-                        return o1.compareTo(o2);
-                    });
+        if (adminTemplates.isEmpty()) {
+            log.warn("관리자 역할 템플릿을 찾을 수 없음 (is_admin_role=true): businessType={}, tenantId={}", businessType, tenantId);
+            // 대체 방법: display_order=1인 역할 사용 (하위 호환성)
+            List<RoleTemplate> templates = roleTemplateRepository.findByBusinessTypeAndActive(businessType);
+            Optional<RoleTemplate> fallbackTemplate = templates.stream()
+                    .filter(t -> t.getDisplayOrder() != null && t.getDisplayOrder() == 1)
+                    .findFirst();
             
-            if (adminTemplateOpt.isEmpty()) {
+            if (fallbackTemplate.isEmpty()) {
                 log.error("업종별 역할 템플릿이 없음: businessType={}, tenantId={}", businessType, tenantId);
                 return;
             }
+            
+            RoleTemplate template = fallbackTemplate.get();
+            log.warn("관리자 역할 템플릿을 fallback으로 찾음 (display_order=1): templateCode={}, roleTemplateId={}", 
+                template.getTemplateCode(), template.getRoleTemplateId());
+            // fallback 템플릿 사용
+            adminTemplates = java.util.Collections.singletonList(template);
         }
         
-        RoleTemplate template = adminTemplateOpt.get();
-        log.info("관리자 역할 템플릿 찾음 (메타데이터 기반): templateCode={}, roleTemplateId={}, displayOrder={}", 
-            template.getTemplateCode(), template.getRoleTemplateId(), template.getDisplayOrder());
+        RoleTemplate template = adminTemplates.get(0);
+        log.info("관리자 역할 템플릿 찾음 (메타데이터 기반): templateCode={}, roleTemplateId={}, isAdminRole={}", 
+            template.getTemplateCode(), template.getRoleTemplateId(), template.isAdminRole());
         
         // TenantRole 조회 (재시도 로직 포함)
         // PL/SQL 프로시저에서 생성된 역할이 Java 트랜잭션에 보이기까지 시간이 걸릴 수 있음

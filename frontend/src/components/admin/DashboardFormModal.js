@@ -239,10 +239,30 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     }
   }, [formData.dashboardConfig]);
 
-  // 역할별 기본 위젯 설정 가져오기
-  const getDefaultWidgetsForRole = (roleCode, roleName) => {
-    // 역할 코드나 이름에 따라 기본 위젯 설정
-    const roleKey = (roleCode || roleName || '').toUpperCase();
+  // 역할별 기본 위젯 설정 가져오기 (메타 시스템)
+  const getDefaultWidgetsForRole = async (role) => {
+    // 메타 시스템: RoleTemplate의 default_widgets_json 사용 (우선)
+    if (role.defaultWidgetsJson) {
+      try {
+        const config = JSON.parse(role.defaultWidgetsJson);
+        // 위젯 ID 자동 생성 (없는 경우)
+        if (config.widgets && Array.isArray(config.widgets)) {
+          config.widgets.forEach(widget => {
+            if (!widget.id) {
+              const widgetType = widget.type || 'widget';
+              widget.id = widgetType + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+            }
+          });
+        }
+        console.log('✅ 메타 시스템: RoleTemplate에서 기본 위젯 설정 로드:', role.templateCode || role.nameKo);
+        return config;
+      } catch (error) {
+        console.warn('⚠️ RoleTemplate의 default_widgets_json 파싱 실패, fallback 사용:', error);
+      }
+    }
+    
+    // Fallback: 역할 코드나 이름에 따라 기본 위젯 설정 (하드코딩)
+    const roleKey = (role.templateCode || role.roleCode || role.nameKo || role.name || '').toUpperCase();
     
     // 기본 위젯 설정
     const defaultConfig = {
@@ -256,7 +276,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       widgets: []
     };
 
-    // 역할별 기본 위젯 설정
+    // 역할별 기본 위젯 설정 (Fallback)
     if (roleKey.includes('STUDENT') || roleKey.includes('학생')) {
       // 학생: 일정, 알림
       defaultConfig.widgets = [
@@ -353,18 +373,28 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       if (field === 'tenantRoleId' && value && !isEditMode) {
         const selectedRole = tenantRoles.find(role => role.tenantRoleId === value);
         if (selectedRole) {
-          const defaultConfig = getDefaultWidgetsForRole(
-            selectedRole.roleCode || selectedRole.code,
-            selectedRole.nameKo || selectedRole.name
-          );
-          newData.dashboardConfig = stringifyDashboardConfig(defaultConfig);
-          newData.dashboardType = selectedRole.roleCode || selectedRole.code || selectedRole.nameKo || selectedRole.name;
-          newData.dashboardNameKo = (selectedRole.nameKo || selectedRole.name || '') + ' 대시보드';
-          newData.dashboardNameEn = (selectedRole.nameEn || selectedRole.name || '') + ' Dashboard';
-          
-          // parsedConfig도 업데이트
-          setParsedConfig(defaultConfig);
-          console.log('✅ 역할 선택 시 기본 위젯 자동 설정:', defaultConfig);
+          // 메타 시스템: RoleTemplate의 default_widgets_json 사용
+          getDefaultWidgetsForRole(selectedRole).then(defaultConfig => {
+            newData.dashboardConfig = stringifyDashboardConfig(defaultConfig);
+            newData.dashboardType = selectedRole.templateCode || selectedRole.roleCode || selectedRole.code || selectedRole.nameKo || selectedRole.name;
+            newData.dashboardNameKo = (selectedRole.nameKo || selectedRole.name || '') + ' 대시보드';
+            newData.dashboardNameEn = (selectedRole.nameEn || selectedRole.name || '') + ' Dashboard';
+            
+            // parsedConfig도 업데이트
+            setParsedConfig(defaultConfig);
+            console.log('✅ 역할 선택 시 기본 위젯 자동 설정 (메타 시스템):', defaultConfig);
+            
+            // formData 업데이트
+            setFormData(prev => ({
+              ...prev,
+              dashboardConfig: newData.dashboardConfig,
+              dashboardType: newData.dashboardType,
+              dashboardNameKo: newData.dashboardNameKo,
+              dashboardNameEn: newData.dashboardNameEn
+            }));
+          }).catch(error => {
+            console.error('❌ 기본 위젯 설정 로드 실패:', error);
+          });
         }
       }
 

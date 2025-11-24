@@ -247,11 +247,18 @@ public class TenantRoleServiceImpl implements TenantRoleService {
         Long userCount = userRoleAssignmentRepository.countActiveAssignmentsByTenantRoleId(
                 role.getTenantRoleId(), LocalDate.now());
         
-        // 템플릿 코드 조회 (템플릿 기반인 경우)
+        // 템플릿 코드 및 기본 위젯 설정 조회 (템플릿 기반인 경우)
         final String[] templateCode = {null};
+        final String[] defaultWidgetsJson = {null};
         if (role.getRoleTemplateId() != null) {
             roleTemplateRepository.findByRoleTemplateIdAndIsDeletedFalse(role.getRoleTemplateId())
-                    .ifPresent(template -> templateCode[0] = template.getTemplateCode());
+                    .ifPresent(template -> {
+                        templateCode[0] = template.getTemplateCode();
+                        // 메타 시스템: 기본 위젯 설정도 함께 반환
+                        if (template.getDefaultWidgetsJson() != null && !template.getDefaultWidgetsJson().trim().isEmpty()) {
+                            defaultWidgetsJson[0] = template.getDefaultWidgetsJson();
+                        }
+                    });
         }
         
         return TenantRoleResponse.builder()
@@ -259,6 +266,7 @@ public class TenantRoleServiceImpl implements TenantRoleService {
                 .tenantId(role.getTenantId())
                 .roleTemplateId(role.getRoleTemplateId())
                 .templateCode(templateCode[0])
+                .defaultWidgetsJson(defaultWidgetsJson[0])
                 .name(role.getName())
                 .nameKo(role.getNameKo())
                 .nameEn(role.getNameEn())

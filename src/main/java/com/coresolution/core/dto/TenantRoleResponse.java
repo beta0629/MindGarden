@@ -41,6 +41,12 @@ public class TenantRoleResponse {
     private String templateCode;
     
     /**
+     * 기본 위젯 설정 (JSON) - 메타 시스템
+     * RoleTemplate의 default_widgets_json (템플릿 기반인 경우만)
+     */
+    private String defaultWidgetsJson;
+    
+    /**
      * 역할명
      */
     private String name;

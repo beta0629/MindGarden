@@ -37,21 +37,24 @@ BEGIN
     
     -- business_type으로 카테고리 아이템 찾기
     -- business_category_items 테이블에서 business_type이 일치하는 활성화된 아이템 조회
-    SELECT 
-        item_id,
-        COUNT(*) 
-    INTO 
-        v_category_item_id,
-        v_category_item_count
+    SELECT COUNT(*) INTO v_category_item_count
     FROM business_category_items
     WHERE business_type = p_business_type
         AND (is_active IS NULL OR is_active = TRUE)
-        AND (is_deleted IS NULL OR is_deleted = FALSE)
-    ORDER BY display_order ASC, created_at ASC
-    LIMIT 1;
+        AND (is_deleted IS NULL OR is_deleted = FALSE);
+    
+    IF v_category_item_count > 0 THEN
+        SELECT item_id INTO v_category_item_id
+        FROM business_category_items
+        WHERE business_type = p_business_type
+            AND (is_active IS NULL OR is_active = TRUE)
+            AND (is_deleted IS NULL OR is_deleted = FALSE)
+        ORDER BY display_order ASC, created_at ASC
+        LIMIT 1;
+    END IF;
     
     -- 카테고리 아이템이 있는 경우에만 매핑 생성
-    IF v_category_item_id IS NOT NULL AND v_category_item_count > 0 THEN
+    IF v_category_item_count > 0 AND v_category_item_id IS NOT NULL THEN
         -- 기존 매핑 확인
         SELECT COUNT(*) INTO v_mapping_count
         FROM tenant_category_mappings

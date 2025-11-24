@@ -262,11 +262,11 @@ public class AcademyAttendanceController extends BaseApiController {
     
     /**
      * 출석률 계산
-     * GET /api/v1/academy/attendances/statistics/{enrollmentId}
+     * GET /api/v1/academy/attendances/rate/{enrollmentId}
      */
-    @GetMapping("/statistics/{enrollmentId}")
+    @GetMapping("/rate/{enrollmentId}")
     @SuppressWarnings("unchecked")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAttendanceStatistics(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAttendanceRate(
             @PathVariable String enrollmentId,
             HttpSession session) {
         log.debug("출석률 계산 요청: enrollmentId={}", enrollmentId);

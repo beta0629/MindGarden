@@ -672,6 +672,17 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.info("테넌트 관리자 계정 생성 완료: tenantId={}, email={}, userId={}", 
                 tenantId, requestedBy, adminUser.getId());
             
+            // EntityManager 캐시 비우기 (REQUIRES_NEW 트랜잭션에서 최신 데이터 조회)
+            if (entityManager != null) {
+                try {
+                    entityManager.flush();
+                    entityManager.clear();
+                    log.debug("EntityManager 캐시 비우기 완료: tenantId={}", tenantId);
+                } catch (Exception e) {
+                    log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
+                }
+            }
+            
             // 테넌트 조회 (역할 할당에 필요)
             Optional<Tenant> tenantOpt = tenantRepository.findByTenantId(tenantId);
             if (tenantOpt.isEmpty()) {

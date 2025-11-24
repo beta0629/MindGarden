@@ -626,9 +626,11 @@ public class OnboardingServiceImpl implements OnboardingService {
                     tenantOpt = Optional.of(results.get(0));
                     log.info("테넌트 조회 성공 (Native Query): tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
                     break;
+                } else {
+                    log.debug("Native Query 조회 결과 없음: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
                 }
             } catch (Exception e) {
-                log.debug("Native Query 조회 실패: {}, retry={}/{}", e.getMessage(), retry + 1, maxRetries);
+                log.warn("Native Query 조회 실패: tenantId={}, error={}, retry={}/{}", tenantId, e.getMessage(), retry + 1, maxRetries, e);
             }
             
             // Native Query 실패 시 일반 조회 시도

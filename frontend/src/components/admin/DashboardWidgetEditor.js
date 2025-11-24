@@ -10,7 +10,13 @@
 
 import React, { useState } from 'react';
 import MGButton from '../common/MGButton';
-import { getSupportedWidgetTypes } from '../dashboard/widgets/WidgetRegistry';
+import { 
+  getSupportedWidgetTypes,
+  getCommonWidgetTypes,
+  getConsultationWidgetTypes,
+  getAcademyWidgetTypes,
+  getErpWidgetTypes
+} from '../dashboard/widgets/WidgetRegistry';
 import { FaPlus, FaTrash, FaCog, FaGripVertical } from 'react-icons/fa';
 import './DashboardWidgetEditor.css';
 
@@ -63,7 +69,32 @@ const DashboardWidgetEditor = ({
   onWidgetConfig 
 }) => {
   const [selectedWidget, setSelectedWidget] = useState(null);
-  const availableWidgetTypes = getSupportedWidgetTypes(businessType);
+  
+  // 기본 위젯과 특화 위젯 분리
+  const commonWidgetTypes = getCommonWidgetTypes();
+  
+  // 업종별 특화 위젯 필터링 (엄격한 제어)
+  const normalizedBusinessType = businessType?.toLowerCase()?.trim();
+  
+  // 상담소 특화 위젯: 상담소 업종에서만 표시
+  const consultationWidgetTypes = normalizedBusinessType === 'consultation' 
+    ? getConsultationWidgetTypes() 
+    : [];
+  
+  // 학원 특화 위젯: 학원 업종에서만 표시
+  const academyWidgetTypes = normalizedBusinessType === 'academy' 
+    ? getAcademyWidgetTypes() 
+    : [];
+  
+  // ERP 위젯: 모든 업종에서 사용 가능 (ERP 기능 활성화 여부는 위젯 내부에서 체크)
+  const erpWidgetTypes = getErpWidgetTypes();
+  
+  // 특화 위젯 통합 (업종에 맞는 위젯만 포함)
+  const specializedWidgetTypes = [
+    ...(normalizedBusinessType === 'consultation' ? consultationWidgetTypes : []),
+    ...(normalizedBusinessType === 'academy' ? academyWidgetTypes : []),
+    ...erpWidgetTypes
+  ];
 
   // 위젯 추가
   const handleAddWidget = (widgetType) => {
@@ -118,13 +149,24 @@ const DashboardWidgetEditor = ({
 
   return (
     <div className="dashboard-widget-editor">
-      {/* 사용 가능한 위젯 목록 */}
+      {/* 기본 위젯 목록 */}
       <div className="widget-editor-section">
         <h3 className="widget-editor-section-title">
-          사용 가능한 위젯
+          기본 위젯
+          <span className="widget-section-badge" style={{
+            marginLeft: '8px',
+            padding: '2px 8px',
+            backgroundColor: '#e3f2fd',
+            color: '#1976d2',
+            borderRadius: '12px',
+            fontSize: '0.85em',
+            fontWeight: '500'
+          }}>
+            {commonWidgetTypes.length}개
+          </span>
         </h3>
         <div className="available-widgets-grid">
-          {availableWidgetTypes.map(widgetType => (
+          {commonWidgetTypes.map(widgetType => (
             <button
               key={widgetType}
               className="available-widget-item"
@@ -139,6 +181,58 @@ const DashboardWidgetEditor = ({
           ))}
         </div>
       </div>
+
+      {/* 특화 위젯 목록 */}
+      {specializedWidgetTypes.length > 0 && (
+        <div className="widget-editor-section" style={{ marginTop: '24px' }}>
+          <h3 className="widget-editor-section-title">
+            {businessType?.toLowerCase() === 'consultation' && '상담소 특화 위젯'}
+            {businessType?.toLowerCase() === 'academy' && '학원 특화 위젯'}
+            {!businessType && '특화 위젯'}
+            <span className="widget-section-badge" style={{
+              marginLeft: '8px',
+              padding: '2px 8px',
+              backgroundColor: '#fff3e0',
+              color: '#e65100',
+              borderRadius: '12px',
+              fontSize: '0.85em',
+              fontWeight: '500'
+            }}>
+              {specializedWidgetTypes.length}개
+            </span>
+          </h3>
+          <div className="available-widgets-grid">
+            {specializedWidgetTypes.map(widgetType => (
+              <button
+                key={widgetType}
+                className="available-widget-item specialized-widget-item"
+                onClick={() => handleAddWidget(widgetType)}
+                title={getWidgetTypeName(widgetType)}
+                style={{
+                  borderColor: '#ff9800',
+                  backgroundColor: '#fff8f0'
+                }}
+              >
+                <FaPlus className="widget-add-icon" />
+                <span className="widget-type-name">
+                  {getWidgetTypeName(widgetType)}
+                </span>
+                <span className="widget-specialized-badge" style={{
+                  marginLeft: '4px',
+                  padding: '1px 6px',
+                  backgroundColor: '#ff9800',
+                  color: 'white',
+                  borderRadius: '8px',
+                  fontSize: '0.75em',
+                  fontWeight: '600'
+                }}>
+                  특화
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 현재 위젯 목록 */}
       <div className="widget-editor-section">

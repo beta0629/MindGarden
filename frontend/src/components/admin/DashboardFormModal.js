@@ -54,10 +54,11 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   const [selectedWidget, setSelectedWidget] = useState(null);
   const [showWidgetConfigModal, setShowWidgetConfigModal] = useState(false);
   const [parsedConfig, setParsedConfig] = useState(null);
+  const [businessType, setBusinessType] = useState(null);
 
   const isEditMode = !!dashboard;
 
-  // 테넌트 역할 목록 로드
+  // 테넌트 정보 및 역할 목록 로드
   const loadTenantRoles = useCallback(async () => {
     setLoadingRoles(true);
     try {
@@ -69,6 +70,22 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         return;
       }
 
+      // 테넌트 정보 로드 (businessType 포함)
+      try {
+        const tenantResponse = await apiGet(`/api/tenants/${tenantId}`);
+        if (tenantResponse && tenantResponse.businessType) {
+          setBusinessType(tenantResponse.businessType);
+          console.log('✅ 테넌트 업종 정보 로드:', tenantResponse.businessType);
+        }
+      } catch (error) {
+        console.warn('⚠️ 테넌트 정보 로드 실패 (업종 정보는 사용자 정보에서 가져옴):', error);
+        // 사용자 정보에서 businessType 가져오기 시도
+        if (user?.tenant?.businessType) {
+          setBusinessType(user.tenant.businessType);
+        }
+      }
+
+      // 역할 목록 로드
       const response = await apiGet(`/api/tenants/${tenantId}/roles`);
       
       if (response && Array.isArray(response)) {
@@ -613,6 +630,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                           onWidgetsChange={handleWidgetsChange}
                           onWidgetConfig={handleWidgetConfig}
                           onWidgetDelete={handleWidgetDelete}
+                          businessType={businessType}
                         />
                         <div style={{ marginTop: '24px' }}>
                           <DashboardLayoutEditor

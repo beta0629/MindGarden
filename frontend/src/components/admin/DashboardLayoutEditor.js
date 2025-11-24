@@ -140,8 +140,8 @@ const DashboardLayoutEditor = ({
           <p>위젯이 없습니다. 위젯을 추가해주세요.</p>
         </div>
       ) : (
-        {/* react-sortablejs animation prop: 200ms (CSS 변수 --mg-sortable-animation-duration와 동일한 값) */}
         <div className={getGridContainerClass()}>
+          {/* react-sortablejs animation prop: 200ms (CSS 변수 --mg-sortable-animation-duration와 동일한 값) */}
           <ReactSortable
             list={widgetList}
             setList={handleSort}

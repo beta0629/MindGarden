@@ -22,6 +22,16 @@ import DashboardLayoutEditor from './DashboardLayoutEditor';
 import WidgetConfigModal from './WidgetConfigModal';
 import './DashboardFormModal.css';
 
+// 대시보드 설정을 JSON 문자열로 변환하는 유틸리티 함수
+const stringifyDashboardConfig = (config) => {
+  try {
+    return JSON.stringify(config, null, 2);
+  } catch (error) {
+    console.error('대시보드 설정 변환 실패:', error);
+    return '{}';
+  }
+};
+
 const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   const [formData, setFormData] = useState({
     tenantRoleId: '',
@@ -114,6 +124,21 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       setErrors({});
     }
   }, [isOpen, dashboard, loadTenantRoles]);
+
+  // dashboardConfig 변경 시 parsedConfig 업데이트
+  useEffect(() => {
+    if (formData.dashboardConfig) {
+      try {
+        const parsed = JSON.parse(formData.dashboardConfig);
+        setParsedConfig(parsed);
+      } catch (error) {
+        console.error('대시보드 설정 파싱 실패:', error);
+        setParsedConfig({ widgets: [] });
+      }
+    } else {
+      setParsedConfig({ widgets: [] });
+    }
+  }, [formData.dashboardConfig]);
 
   // 폼 데이터 변경 핸들러
   const handleChange = (field, value) => {

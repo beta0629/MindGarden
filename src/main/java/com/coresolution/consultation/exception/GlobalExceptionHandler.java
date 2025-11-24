@@ -184,11 +184,27 @@ public class GlobalExceptionHandler {
     /**
      * RuntimeException 처리
      * HTTP 500 Internal Server Error 응답
+     * 비즈니스 로직 오류의 경우 실제 메시지를 클라이언트에 전달
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException e, HttpServletRequest request) {
         log.error("Runtime error occurred: {}", e.getMessage(), e);
         
+        // 비즈니스 로직 오류 메시지가 있으면 전달 (한글 메시지 포함)
+        String errorMessage = e.getMessage();
+        if (errorMessage != null && !errorMessage.trim().isEmpty()) {
+            // 한글 메시지인 경우 그대로 전달
+            ErrorResponse error = ErrorResponse.of(
+                errorMessage,
+                "RUNTIME_ERROR",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                request.getRequestURI(),
+                request.getMethod()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+        
+        // 메시지가 없거나 비어있으면 기본 메시지 사용
         ErrorResponse error = ErrorResponse.of(
             "서버 내부 오류가 발생했습니다.",
             "INTERNAL_SERVER_ERROR",

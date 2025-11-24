@@ -71,17 +71,36 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       }
 
       // 테넌트 정보 로드 (businessType 포함)
+      // 방법 1: /api/auth/tenant/current 사용
       try {
-        const tenantResponse = await apiGet(`/api/tenants/${tenantId}`);
-        if (tenantResponse && tenantResponse.businessType) {
-          setBusinessType(tenantResponse.businessType);
-          console.log('✅ 테넌트 업종 정보 로드:', tenantResponse.businessType);
+        const tenantResponse = await apiGet(`/api/auth/tenant/current`);
+        // apiGet은 ApiResponse 래퍼를 처리하여 data를 반환
+        // 응답 구조: { tenant: { tenantId, name, businessType, status } }
+        if (tenantResponse) {
+          if (tenantResponse.tenant && tenantResponse.tenant.businessType) {
+            setBusinessType(tenantResponse.tenant.businessType);
+            console.log('✅ 테넌트 업종 정보 로드:', tenantResponse.tenant.businessType);
+          } else if (tenantResponse.businessType) {
+            // 직접 businessType이 있는 경우 (응답 구조가 다른 경우)
+            setBusinessType(tenantResponse.businessType);
+            console.log('✅ 테넌트 업종 정보 로드 (직접):', tenantResponse.businessType);
+          }
         }
       } catch (error) {
-        console.warn('⚠️ 테넌트 정보 로드 실패 (업종 정보는 사용자 정보에서 가져옴):', error);
-        // 사용자 정보에서 businessType 가져오기 시도
+        // 404나 다른 오류는 조용히 처리하고 fallback 사용
+        console.warn('⚠️ 테넌트 정보 로드 실패, 사용자 정보에서 가져오기 시도:', error.message || error);
+      }
+      
+      // 방법 2: 사용자 정보에서 businessType 가져오기 (fallback)
+      if (!businessType) {
         if (user?.tenant?.businessType) {
           setBusinessType(user.tenant.businessType);
+          console.log('✅ 사용자 정보에서 업종 정보 로드:', user.tenant.businessType);
+        } else if (user?.businessType) {
+          setBusinessType(user.businessType);
+          console.log('✅ 사용자 businessType 필드에서 업종 정보 로드:', user.businessType);
+        } else {
+          console.warn('⚠️ 업종 정보를 찾을 수 없습니다. 기본 위젯만 표시됩니다.');
         }
       }
 

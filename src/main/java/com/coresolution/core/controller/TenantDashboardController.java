@@ -121,8 +121,23 @@ public class TenantDashboardController extends BaseApiController {
         log.info("🔧 대시보드 생성 요청: dashboardName={}", request.getDashboardName());
         
         String tenantId = TenantContextHolder.getTenantId();
+        
+        // TenantContextHolder에 tenantId가 없으면 세션의 User 정보에서 가져오기
         if (tenantId == null) {
-            throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null) {
+                // 데이터베이스에서 최신 사용자 정보 조회 (tenantId 포함)
+                User dbUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+                if (dbUser.getTenantId() != null) {
+                    tenantId = dbUser.getTenantId();
+                    TenantContext.setTenantId(tenantId);
+                    log.debug("Tenant ID set from user database: {}", tenantId);
+                } else {
+                    throw new IllegalArgumentException("사용자의 테넌트 정보가 없습니다.");
+                }
+            } else {
+                throw new IllegalArgumentException("로그인이 필요합니다.");
+            }
         }
         
         User currentUser = SessionUtils.getCurrentUser(session);

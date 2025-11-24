@@ -97,9 +97,14 @@ const handleError = (error, status) => {
 // GET 요청
 export const apiGet = async (endpoint, params = {}, options = {}) => {
   try {
+    // endpoint가 이미 전체 URL인지 확인 (http:// 또는 https://로 시작)
+    const isFullUrl = endpoint.startsWith('http://') || endpoint.startsWith('https://');
+    
     // 쿼리 파라미터 생성
     const queryString = new URLSearchParams(params).toString();
-    const url = queryString ? `${API_BASE_URL}${endpoint}?${queryString}` : `${API_BASE_URL}${endpoint}`;
+    const url = isFullUrl 
+      ? (queryString ? `${endpoint}?${queryString}` : endpoint)
+      : (queryString ? `${API_BASE_URL}${endpoint}?${queryString}` : `${API_BASE_URL}${endpoint}`);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -108,7 +113,26 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       ...options
     });
 
-    const jsonData = await response.json();
+    // 응답 본문이 비어있는 경우 처리
+    let jsonData;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text();
+      if (text && text.trim()) {
+        try {
+          jsonData = JSON.parse(text);
+        } catch (parseError) {
+          console.error('JSON 파싱 오류:', parseError, 'Response text:', text);
+          throw new Error('응답 데이터를 파싱할 수 없습니다.');
+        }
+      } else {
+        // 빈 응답인 경우
+        jsonData = {};
+      }
+    } else {
+      // JSON이 아닌 경우
+      jsonData = {};
+    }
     
     if (!response.ok) {
       // 세션 체크 및 리다이렉트

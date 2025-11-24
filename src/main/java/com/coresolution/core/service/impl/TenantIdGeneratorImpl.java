@@ -170,10 +170,10 @@ public class TenantIdGeneratorImpl implements TenantIdGenerator {
     }
     
     /**
-     * 업종 코드 정규화
+     * 업종 코드 정규화 (영문 소문자로 변환)
      * - 대문자를 소문자로 변환
      * - 언더스코어를 하이픈으로 변환
-     * - 예: "ACADEMY" -> "academy", "FOOD_SERVICE" -> "food-service"
+     * - 예: "ACADEMY" -> "academy", "CONSULTATION" -> "consultation", "FOOD_SERVICE" -> "food-service"
      */
     private String normalizeBusinessType(String businessType) {
         if (businessType == null || businessType.trim().isEmpty()) {

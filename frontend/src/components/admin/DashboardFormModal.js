@@ -69,7 +69,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         return;
       }
 
-      const response = await apiGet(`${API_BASE_URL}/api/tenants/${tenantId}/roles`);
+      const response = await apiGet(`/api/tenants/${tenantId}/roles`);
       
       if (response && Array.isArray(response)) {
         setTenantRoles(response);
@@ -260,15 +260,34 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     setLoading(true);
     try {
       const url = isEditMode
-        ? `${API_BASE_URL}/api/v1/tenant/dashboards/${dashboard.dashboardId}`
-        : `${API_BASE_URL}/api/v1/tenant/dashboards`;
+        ? `/api/v1/tenant/dashboards/${dashboard.dashboardId}`
+        : `/api/v1/tenant/dashboards`;
 
       const method = isEditMode ? 'PUT' : 'POST';
 
-      const response = await csrfTokenManager[method.toLowerCase()](url, formData);
+      // 백엔드 DTO에 맞게 데이터 준비
+      const requestData = {
+        tenantRoleId: formData.tenantRoleId,
+        dashboardName: formData.dashboardName || formData.dashboardNameKo, // dashboardName이 없으면 dashboardNameKo 사용
+        dashboardNameKo: formData.dashboardNameKo,
+        dashboardNameEn: formData.dashboardNameEn || '',
+        description: formData.description || '',
+        dashboardType: formData.dashboardType,
+        isActive: formData.isActive !== undefined ? formData.isActive : true,
+        displayOrder: formData.displayOrder || 0,
+        dashboardConfig: formData.dashboardConfig || '{}'
+      };
+
+      console.log('📤 대시보드 생성 요청:', { url, method, data: requestData });
+
+      const response = await csrfTokenManager[method.toLowerCase()](url, requestData);
+
+      console.log('📥 대시보드 생성 응답:', { status: response.status, ok: response.ok });
 
       if (response.ok) {
         const result = await response.json();
+        console.log('📥 대시보드 생성 결과:', result);
+        
         if (result.success) {
           notificationManager.show(
             isEditMode ? '대시보드가 수정되었습니다.' : '대시보드가 생성되었습니다.',
@@ -279,11 +298,32 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
           }
           onClose();
         } else {
-          throw new Error(result.message || '대시보드 저장 실패');
+          // 백엔드에서 반환한 에러 메시지 사용
+          const errorMessage = result.message || result.error || '대시보드 저장 실패';
+          throw new Error(errorMessage);
         }
       } else {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || '대시보드 저장 실패');
+        // HTTP 에러 응답 처리
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ 대시보드 저장 HTTP 에러:', { status: response.status, errorData });
+        
+        // 백엔드 에러 메시지 추출
+        let errorMessage = '대시보드 저장 중 오류가 발생했습니다.';
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (response.status === 400) {
+          errorMessage = '입력한 정보를 확인해주세요.';
+        } else if (response.status === 409) {
+          errorMessage = '해당 역할에 이미 대시보드가 존재합니다.';
+        } else if (response.status === 403) {
+          errorMessage = '접근 권한이 없습니다.';
+        } else if (response.status === 404) {
+          errorMessage = '대시보드를 찾을 수 없습니다.';
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('❌ 대시보드 저장 실패:', error);
@@ -488,14 +528,86 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   value={formData.dashboardConfig}
                   onChange={(e) => handleChange('dashboardConfig', e.target.value)}
                   className={`form-input ${errors.dashboardConfig ? 'error' : ''}`}
-                  placeholder='{"widgets": [], "layout": "grid"}'
-                  rows="5"
+                  placeholder={`{
+  "version": "1.0",
+  "layout": {
+    "type": "grid",
+    "columns": 3
+  },
+  "widgets": [
+    {
+      "id": "widget-1",
+      "type": "welcome",
+      "position": { "row": 0, "col": 0, "span": 3 }
+    }
+  ]
+}`}
+                  rows="12"
                   disabled={loading}
                 />
                 {errors.dashboardConfig && (
                   <span className="form-error">{errors.dashboardConfig}</span>
                 )}
-                <small className="form-help">JSON 형식으로 입력해주세요. 향후 위젯 구성에 사용됩니다.</small>
+                <div className="form-help" style={{ marginTop: '8px' }}>
+                  <p style={{ marginBottom: '8px', fontWeight: '500' }}>
+                    📝 <strong>JSON이란?</strong> 데이터를 표현하는 텍스트 형식입니다. 위젯의 배치와 설정을 저장합니다.
+                  </p>
+                  <p style={{ marginBottom: '8px' }}>
+                    <strong>작성 방법:</strong>
+                  </p>
+                  <ul style={{ marginLeft: '20px', marginBottom: '8px', lineHeight: '1.6' }}>
+                    <li>중괄호 <code>{`{}`}</code>로 시작하고 끝나야 합니다</li>
+                    <li>각 항목은 쉼표 <code>,</code>로 구분합니다</li>
+                    <li>문자열은 큰따옴표 <code>"</code>로 감싸야 합니다</li>
+                    <li>위의 예시를 복사해서 수정하시면 쉽습니다</li>
+                  </ul>
+                  <p style={{ marginBottom: '4px', color: '#666', fontSize: '0.9em' }}>
+                    💡 <strong>팁:</strong> 시각적 편집기(드래그 앤 드롭)를 사용하면 JSON을 직접 작성할 필요가 없습니다.
+                  </p>
+                  <details style={{ marginTop: '8px' }}>
+                    <summary style={{ cursor: 'pointer', color: '#007bff', fontSize: '0.9em' }}>
+                      📋 자세한 예시 보기
+                    </summary>
+                    <pre style={{ 
+                      marginTop: '8px', 
+                      padding: '12px', 
+                      backgroundColor: '#f5f5f5', 
+                      borderRadius: '4px', 
+                      fontSize: '0.85em',
+                      overflow: 'auto',
+                      maxHeight: '300px'
+                    }}>
+{`{
+  "version": "1.0",
+  "layout": {
+    "type": "grid",
+    "columns": 3,
+    "gap": "md"
+  },
+  "widgets": [
+    {
+      "id": "widget-welcome",
+      "type": "welcome",
+      "position": { "row": 0, "col": 0, "span": 3 },
+      "config": {}
+    },
+    {
+      "id": "widget-stats",
+      "type": "summary-statistics",
+      "position": { "row": 1, "col": 0, "span": 2 },
+      "config": {}
+    },
+    {
+      "id": "widget-activity",
+      "type": "activity-list",
+      "position": { "row": 1, "col": 2, "span": 1 },
+      "config": {}
+    }
+  ]
+}`}
+                    </pre>
+                  </details>
+                </div>
               </div>
 
               {/* 액션 버튼 */}

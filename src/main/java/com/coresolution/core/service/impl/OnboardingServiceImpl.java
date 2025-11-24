@@ -377,53 +377,16 @@ public class OnboardingServiceImpl implements OnboardingService {
             } else {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
                 
-                // 테넌트 조회 (관리자 계정 생성에 필요)
-                // PL/SQL 프로시저에서 생성된 테넌트가 JPA 컨텍스트에 보이기까지 시간이 걸릴 수 있음
-                Optional<Tenant> tenantOpt = Optional.empty();
-                int maxRetries = 10;
-                int retryDelay = 500; // 0.5초 지연
-                
-                for (int retry = 0; retry < maxRetries; retry++) {
-                    // EntityManager 캐시 비우기
-                    if (entityManager != null) {
-                        try {
-                            entityManager.flush();
-                            entityManager.clear();
-                        } catch (Exception e) {
-                            log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
-                        }
-                    }
-                    
-                    tenantOpt = tenantRepository.findByTenantId(tenantId);
-                    if (tenantOpt.isPresent()) {
-                        log.info("테넌트 조회 성공: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
-                        break;
-                    }
-                    
-                    if (retry < maxRetries - 1) {
-                        log.debug("테넌트 조회 대기 중: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
-                        try {
-                            Thread.sleep(retryDelay);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
-                    }
-                }
-                
-                if (tenantOpt.isEmpty()) {
-                    log.error("테넌트를 찾을 수 없음: tenantId={}, maxRetries={}", tenantId, maxRetries);
-                } else {
-                    // 온보딩 승인 후 관리자 계정 생성
-                    try {
-                        log.info("관리자 계정 생성 시작: tenantId={}, requestedBy={}", tenantId, request.getRequestedBy());
-                        createTenantAdminAccount(request, tenantOpt.get());
-                        log.info("관리자 계정 생성 완료: tenantId={}", tenantId);
-                    } catch (Exception e) {
-                        log.error("테넌트 관리자 계정 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
-                        log.error("테넌트 관리자 계정 생성 실패 상세:", e);
-                        // 관리자 계정 생성 실패는 온보딩 프로세스를 중단하지 않음 (경고만)
-                    }
+                // 온보딩 승인 후 관리자 계정 생성 (별도 트랜잭션에서 실행)
+                // PL/SQL 프로시저에서 생성된 테넌트를 조회하기 위해 별도 트랜잭션 필요
+                try {
+                    log.info("관리자 계정 생성 시작: tenantId={}, requestedBy={}", tenantId, request.getRequestedBy());
+                    createTenantAdminAccountWithRetry(request, tenantId);
+                    log.info("관리자 계정 생성 완료: tenantId={}", tenantId);
+                } catch (Exception e) {
+                    log.error("테넌트 관리자 계정 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+                    log.error("테넌트 관리자 계정 생성 실패 상세:", e);
+                    // 관리자 계정 생성 실패는 온보딩 프로세스를 중단하지 않음 (경고만)
                 }
                 
                 // 온보딩 승인 후 구독의 tenant_id 업데이트
@@ -627,6 +590,55 @@ public class OnboardingServiceImpl implements OnboardingService {
         log.info("테넌트 생성 시점 이메일 중복 확인 (deprecated): email={}", email);
         log.info("멀티 테넌트 지원으로 인해 이메일 중복 체크 불필요 - 항상 false 반환");
         return false; // 멀티 테넌트 지원으로 항상 false 반환
+    }
+    
+    /**
+     * 온보딩 승인 후 테넌트 관리자 계정 생성 (재시도 로직 포함)
+     * PL/SQL 프로시저에서 생성된 테넌트를 조회하기 위해 재시도 로직 포함
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private void createTenantAdminAccountWithRetry(OnboardingRequest request, String tenantId) {
+        // 테넌트 조회 (재시도 로직 포함)
+        // PL/SQL 프로시저에서 생성된 테넌트가 JPA 컨텍스트에 보이기까지 시간이 걸릴 수 있음
+        Optional<Tenant> tenantOpt = Optional.empty();
+        int maxRetries = 10;
+        int retryDelay = 500; // 0.5초 지연
+        
+        for (int retry = 0; retry < maxRetries; retry++) {
+            // EntityManager 캐시 비우기
+            if (entityManager != null) {
+                try {
+                    entityManager.flush();
+                    entityManager.clear();
+                } catch (Exception e) {
+                    log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
+                }
+            }
+            
+            tenantOpt = tenantRepository.findByTenantId(tenantId);
+            if (tenantOpt.isPresent()) {
+                log.info("테넌트 조회 성공: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
+                break;
+            }
+            
+            if (retry < maxRetries - 1) {
+                log.debug("테넌트 조회 대기 중: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
+                try {
+                    Thread.sleep(retryDelay);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+        
+        if (tenantOpt.isEmpty()) {
+            log.error("테넌트를 찾을 수 없음: tenantId={}, maxRetries={}", tenantId, maxRetries);
+            return;
+        }
+        
+        // 관리자 계정 생성
+        createTenantAdminAccount(request, tenantOpt.get());
     }
     
     /**

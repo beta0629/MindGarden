@@ -671,10 +671,14 @@ public class OnboardingServiceImpl implements OnboardingService {
             
             // 관리자 역할 할당 (UserRoleAssignment 생성)
             try {
+                log.info("관리자 역할 할당 시작: userId={}, tenantId={}, email={}", 
+                    adminUser.getId(), tenantId, adminUser.getEmail());
                 assignAdminRoleToUser(adminUser, tenantId, request.getTenantName());
+                log.info("관리자 역할 할당 완료: userId={}, tenantId={}", adminUser.getId(), tenantId);
             } catch (Exception e) {
                 log.error("관리자 역할 할당 실패: userId={}, tenantId={}, error={}", 
                     adminUser.getId(), tenantId, e.getMessage(), e);
+                log.error("관리자 역할 할당 실패 상세 스택 트레이스:", e);
                 // 역할 할당 실패는 계정 생성을 중단하지 않음 (경고만)
             }
                 
@@ -715,9 +719,9 @@ public class OnboardingServiceImpl implements OnboardingService {
         
         // 메타데이터 기반 관리자 역할 찾기
         // is_admin_role=true인 역할을 관리자 역할로 사용 (완전한 메타데이터 기반)
-        log.debug("관리자 역할 템플릿 조회 시작: businessType={}, tenantId={}", businessType, tenantId);
+        log.info("관리자 역할 템플릿 조회 시작: businessType={}, tenantId={}", businessType, tenantId);
         List<RoleTemplate> adminTemplates = roleTemplateRepository.findByBusinessTypeAndAdminRole(businessType);
-        log.debug("관리자 역할 템플릿 조회 결과: count={}, businessType={}", adminTemplates.size(), businessType);
+        log.info("관리자 역할 템플릿 조회 결과: count={}, businessType={}", adminTemplates.size(), businessType);
         
         if (adminTemplates.isEmpty()) {
             log.warn("관리자 역할 템플릿을 찾을 수 없음 (is_admin_role=true): businessType={}, tenantId={}", businessType, tenantId);

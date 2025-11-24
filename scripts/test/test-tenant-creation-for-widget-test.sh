@@ -29,6 +29,7 @@ create_tenant() {
 {
   "tenantName": "${TENANT_NAME}",
   "requestedBy": "${EMAIL}",
+  "riskLevel": "LOW",
   "businessType": "${BUSINESS_TYPE}",
   "checklistJson": "{\"adminPassword\": \"${ADMIN_PASSWORD}\", \"contactPhone\": \"010-1234-5678\", \"address\": \"서울특별시 강남구\"}"
 }

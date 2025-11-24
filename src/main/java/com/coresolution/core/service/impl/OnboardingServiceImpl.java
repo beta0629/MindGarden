@@ -378,9 +378,12 @@ public class OnboardingServiceImpl implements OnboardingService {
                 
                 // 온보딩 승인 후 관리자 계정 생성
                 try {
+                    log.info("관리자 계정 생성 시작: tenantId={}, requestedBy={}", tenantId, request.getRequestedBy());
                     createTenantAdminAccount(request, tenantId);
+                    log.info("관리자 계정 생성 완료: tenantId={}", tenantId);
                 } catch (Exception e) {
                     log.error("테넌트 관리자 계정 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+                    log.error("테넌트 관리자 계정 생성 실패 상세:", e);
                     // 관리자 계정 생성 실패는 온보딩 프로세스를 중단하지 않음 (경고만)
                 }
                 
@@ -712,7 +715,9 @@ public class OnboardingServiceImpl implements OnboardingService {
         
         // 메타데이터 기반 관리자 역할 찾기
         // is_admin_role=true인 역할을 관리자 역할로 사용 (완전한 메타데이터 기반)
+        log.debug("관리자 역할 템플릿 조회 시작: businessType={}, tenantId={}", businessType, tenantId);
         List<RoleTemplate> adminTemplates = roleTemplateRepository.findByBusinessTypeAndAdminRole(businessType);
+        log.debug("관리자 역할 템플릿 조회 결과: count={}, businessType={}", adminTemplates.size(), businessType);
         
         if (adminTemplates.isEmpty()) {
             log.warn("관리자 역할 템플릿을 찾을 수 없음 (is_admin_role=true): businessType={}, tenantId={}", businessType, tenantId);

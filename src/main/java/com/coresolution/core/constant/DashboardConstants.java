@@ -23,6 +23,12 @@ public class DashboardConstants {
     public static final String ROLE_CODE_CLIENT = "CLIENT";
     public static final String ROLE_CODE_CONSULTANT = "CONSULTANT";
     
+    // 역할 템플릿 코드 상수 (상담소 - 실제 DB의 template_code와 일치)
+    public static final String ROLE_TEMPLATE_CODE_DIRECTOR = "CONSULTATION_DIRECTOR";
+    public static final String ROLE_TEMPLATE_CODE_COUNSELOR = "CONSULTATION_COUNSELOR";
+    public static final String ROLE_TEMPLATE_CODE_CLIENT = "CONSULTATION_CLIENT";
+    public static final String ROLE_TEMPLATE_CODE_STAFF = "CONSULTATION_STAFF";
+    
     // 역할명 상수 (학원)
     public static final String ROLE_NAME_STUDENT = "학생";
     public static final String ROLE_NAME_TEACHER = "선생님";

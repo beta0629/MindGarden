@@ -236,8 +236,28 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                 DashboardConstants.DASHBOARD_NAME_TEACHER,
                 DashboardConstants.DASHBOARD_NAME_ADMIN
             };
+        } else if (DashboardConstants.BUSINESS_TYPE_CONSULTATION.equalsIgnoreCase(businessType)) {
+            // 상담소(CONSULTATION) 업종의 경우 - 실제 template_code 사용
+            defaultRoleCodes = new String[]{
+                DashboardConstants.ROLE_TEMPLATE_CODE_DIRECTOR,
+                DashboardConstants.ROLE_TEMPLATE_CODE_COUNSELOR,
+                DashboardConstants.ROLE_TEMPLATE_CODE_CLIENT,
+                DashboardConstants.ROLE_TEMPLATE_CODE_STAFF
+            };
+            defaultRoleNames = new String[]{
+                "원장",
+                "상담사",
+                "내담자",
+                "사무원"
+            };
+            defaultDashboardNames = new String[]{
+                "원장 대시보드",
+                "상담사 대시보드",
+                "내담자 대시보드",
+                "사무원 대시보드"
+            };
         } else {
-            // 상담소(CONSULTATION) 등 다른 업종의 경우
+            // 기타 업종의 경우
             defaultRoleCodes = new String[]{
                 DashboardConstants.ROLE_CODE_CLIENT,
                 DashboardConstants.ROLE_CODE_CONSULTANT,

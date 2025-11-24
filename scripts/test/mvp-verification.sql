@@ -36,10 +36,41 @@ FROM tenants
 WHERE tenant_id = @TENANT_ID;
 
 -- ============================================
--- 3. 관리자 계정 생성 확인
+-- 3. 역할 생성 확인 (ApplyDefaultRoleTemplates 결과)
 -- ============================================
 SELECT 
-    '3. 관리자 계정 생성 확인' AS test_step,
+    '3. 역할 생성 확인' AS test_step,
+    tenant_role_id,
+    tenant_id,
+    role_template_id,
+    name,
+    name_ko,
+    name_en,
+    is_active,
+    display_order,
+    created_at
+FROM tenant_roles
+WHERE tenant_id = @TENANT_ID
+  AND (is_deleted IS NULL OR is_deleted = 0)
+ORDER BY display_order;
+
+-- 역할별 권한 확인
+SELECT 
+    '3-1. 역할별 권한 확인' AS test_step,
+    tr.name_ko AS role_name,
+    COUNT(rp.permission_code) AS permission_count
+FROM tenant_roles tr
+LEFT JOIN role_permissions rp ON tr.tenant_role_id = rp.tenant_role_id
+WHERE tr.tenant_id = @TENANT_ID
+  AND (tr.is_deleted IS NULL OR tr.is_deleted = 0)
+GROUP BY tr.tenant_role_id, tr.name_ko
+ORDER BY tr.display_order;
+
+-- ============================================
+-- 4. 관리자 계정 생성 확인
+-- ============================================
+SELECT 
+    '4. 관리자 계정 생성 확인' AS test_step,
     id,
     tenant_id,
     email,
@@ -56,7 +87,33 @@ WHERE tenant_id = @TENANT_ID
   AND (is_deleted IS NULL OR is_deleted = FALSE);
 
 -- ============================================
--- 4. 기본 대시보드 생성 확인
+-- 5. 역할 할당 확인 (UserRoleAssignment)
+-- ============================================
+SELECT 
+    '5. 역할 할당 확인' AS test_step,
+    ura.assignment_id,
+    ura.id AS assignment_internal_id,
+    u.id AS user_id,
+    u.email,
+    tr.name_ko AS role_name,
+    tr.tenant_role_id,
+    ura.effective_from,
+    ura.effective_to,
+    ura.is_active,
+    ura.assigned_by,
+    ura.assignment_reason,
+    ura.created_at
+FROM user_role_assignments ura
+JOIN users u ON ura.user_id = u.id
+JOIN tenant_roles tr ON ura.tenant_role_id = tr.tenant_role_id
+WHERE u.tenant_id = @TENANT_ID
+  AND u.email = @EMAIL
+  AND (ura.is_deleted IS NULL OR ura.is_deleted = 0)
+  AND ura.is_active = b'1'
+ORDER BY ura.created_at DESC;
+
+-- ============================================
+-- 6. 기본 대시보드 생성 확인
 -- ============================================
 SELECT 
     '4. 기본 대시보드 생성 확인' AS test_step,
@@ -74,10 +131,10 @@ WHERE tenant_id = @TENANT_ID
 ORDER BY created_at;
 
 -- ============================================
--- 5. 대시보드 위젯 상세 확인
+-- 7. 대시보드 위젯 상세 확인
 -- ============================================
 SELECT 
-    '5. 대시보드 위젯 상세 확인' AS test_step,
+    '7. 대시보드 위젯 상세 확인' AS test_step,
     dashboard_id,
     dashboard_name,
     JSON_EXTRACT(dashboard_config, '$.widgets') AS widgets
@@ -87,7 +144,7 @@ WHERE tenant_id = @TENANT_ID
 LIMIT 1;
 
 -- ============================================
--- 6. 기본 컴포넌트 활성화 확인
+-- 8. 기본 컴포넌트 활성화 확인
 -- ============================================
 SELECT 
     '6. 기본 컴포넌트 활성화 확인' AS test_step,
@@ -106,10 +163,10 @@ WHERE tc.tenant_id = @TENANT_ID
 ORDER BY tc.activated_at;
 
 -- ============================================
--- 7. 온보딩 요청 상태 확인
+-- 9. 온보딩 요청 상태 확인
 -- ============================================
 SELECT 
-    '7. 온보딩 요청 상태 확인' AS test_step,
+    '9. 온보딩 요청 상태 확인' AS test_step,
     id,
     tenant_id,
     tenant_name,
@@ -125,12 +182,17 @@ ORDER BY created_at DESC
 LIMIT 1;
 
 -- ============================================
--- 8. 종합 검증 요약
+-- 10. 종합 검증 요약
 -- ============================================
 SELECT 
-    '8. 종합 검증 요약' AS test_step,
+    '10. 종합 검증 요약' AS test_step,
     (SELECT COUNT(*) FROM tenants WHERE tenant_id = @TENANT_ID) AS tenant_exists,
+    (SELECT COUNT(*) FROM tenant_roles WHERE tenant_id = @TENANT_ID AND (is_deleted IS NULL OR is_deleted = 0)) AS role_count,
     (SELECT COUNT(*) FROM users WHERE tenant_id = @TENANT_ID AND role = 'ADMIN' AND (is_deleted IS NULL OR is_deleted = FALSE)) AS admin_account_exists,
+    (SELECT COUNT(*) FROM user_role_assignments ura 
+     JOIN users u ON ura.user_id = u.id 
+     WHERE u.tenant_id = @TENANT_ID AND u.email = @EMAIL 
+       AND (ura.is_deleted IS NULL OR ura.is_deleted = 0) AND ura.is_active = b'1') AS role_assignment_count,
     (SELECT COUNT(*) FROM tenant_dashboards WHERE tenant_id = @TENANT_ID AND is_default = TRUE) AS dashboard_count,
     (SELECT COUNT(*) FROM tenant_components WHERE tenant_id = @TENANT_ID AND status = 'ACTIVE') AS component_count,
     (SELECT JSON_EXTRACT(settings_json, '$.features.consultation') FROM tenants WHERE tenant_id = @TENANT_ID) AS consultation_feature_enabled,

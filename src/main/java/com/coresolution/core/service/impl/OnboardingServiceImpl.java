@@ -615,7 +615,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 }
             }
             
-            tenantOpt = tenantRepository.findByTenantId(tenantId);
+            // Native Query를 사용하여 직접 조회 (JPA 필터 우회)
+            tenantOpt = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
             if (tenantOpt.isPresent()) {
                 log.info("테넌트 조회 성공: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
                 break;

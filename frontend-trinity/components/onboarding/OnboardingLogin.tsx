@@ -2,7 +2,7 @@
 /* eslint-disable react/forbid-dom-props */
 import React, { useState } from 'react';
 import { COMPONENT_CSS } from '../../constants/css-variables';
-import { apiPost } from '../../utils/api';
+import { apiPost, ApiResponse } from '../../utils/api';
 
 interface OnboardingLoginProps {
   onLoginSuccess: (user: any) => void;
@@ -27,7 +27,7 @@ const OnboardingLogin: React.FC<OnboardingLoginProps> = ({ onLoginSuccess, onSki
 
     try {
       // Trinity 로그인 API 호출
-      const response = await apiPost('/api/auth/login', { email, password });
+      const response = await apiPost<ApiResponse<any>>('/api/auth/login', { email, password });
       if (response.success && response.data) {
         onLoginSuccess(response.data);
       } else {

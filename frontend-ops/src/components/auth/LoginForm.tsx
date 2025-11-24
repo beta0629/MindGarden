@@ -32,8 +32,8 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         
         // 정적 빌드이므로 직접 백엔드 API 호출 (nginx가 /api/를 백엔드로 프록시)
         // 환경 변수가 없거나 빈 문자열이면 상대 경로 사용 (nginx 프록시 활용)
-        const apiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL?.trim() || "";
-        const apiPath = apiBaseUrl ? `${apiBaseUrl}/ops/auth/login` : "/api/v1/ops/auth/login";
+        // 빌드 시 환경 변수가 하드코딩되지 않도록 항상 상대 경로 사용
+        const apiPath = "/api/v1/ops/auth/login";
         const response = await fetch(apiPath, {
           method: "POST",
           headers: {

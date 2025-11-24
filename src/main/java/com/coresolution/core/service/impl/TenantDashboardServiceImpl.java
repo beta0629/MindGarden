@@ -19,6 +19,7 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.MessageFormat;
@@ -206,6 +207,7 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
     }
     
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<TenantDashboardResponse> createDefaultDashboards(String tenantId, String businessType, String createdBy) {
         log.info("기본 대시보드 생성: tenantId={}, businessType={}, createdBy={}", tenantId, businessType, createdBy);
         

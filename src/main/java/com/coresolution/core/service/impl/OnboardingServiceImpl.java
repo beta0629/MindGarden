@@ -378,16 +378,61 @@ public class OnboardingServiceImpl implements OnboardingService {
             } else {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
                 
-                // 온보딩 승인 후 관리자 계정 생성 (별도 트랜잭션에서 실행)
-                // PL/SQL 프로시저에서 생성된 테넌트를 조회하기 위해 별도 트랜잭션 필요
-                try {
-                    log.info("관리자 계정 생성 시작: tenantId={}, requestedBy={}", tenantId, request.getRequestedBy());
-                    createTenantAdminAccountWithRetry(request, tenantId);
-                    log.info("관리자 계정 생성 완료: tenantId={}", tenantId);
-                } catch (Exception e) {
-                    log.error("테넌트 관리자 계정 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
-                    log.error("테넌트 관리자 계정 생성 실패 상세:", e);
-                    // 관리자 계정 생성 실패는 온보딩 프로세스를 중단하지 않음 (경고만)
+                // 테넌트 조회 (Native Query 사용, PL/SQL 프로시저 커밋 데이터 조회)
+                Optional<Tenant> tenantOpt = Optional.empty();
+                int maxRetries = 10;
+                int retryDelay = 500; // 0.5초 지연
+                
+                for (int retry = 0; retry < maxRetries; retry++) {
+                    // EntityManager 캐시 비우기
+                    if (entityManager != null) {
+                        try {
+                            entityManager.flush();
+                            entityManager.clear();
+                        } catch (Exception e) {
+                            log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
+                        }
+                    }
+                    
+                    // Native Query를 사용하여 직접 조회
+                    try {
+                        String sql = "SELECT * FROM tenants WHERE tenant_id = :tenantId AND is_deleted = 0";
+                        jakarta.persistence.Query query = entityManager.createNativeQuery(sql, Tenant.class);
+                        query.setParameter("tenantId", tenantId);
+                        @SuppressWarnings("unchecked")
+                        List<Tenant> results = query.getResultList();
+                        if (!results.isEmpty()) {
+                            tenantOpt = Optional.of(results.get(0));
+                            log.info("테넌트 조회 성공 (Native Query): tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
+                            break;
+                        }
+                    } catch (Exception e) {
+                        log.warn("Native Query 조회 실패: tenantId={}, error={}, retry={}/{}", tenantId, e.getMessage(), retry + 1, maxRetries);
+                    }
+                    
+                    if (retry < maxRetries - 1) {
+                        try {
+                            Thread.sleep(retryDelay);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                }
+                
+                // 온보딩 승인 후 관리자 계정 생성
+                if (tenantOpt.isPresent()) {
+                    try {
+                        log.info("관리자 계정 생성 시작: tenantId={}, requestedBy={}", tenantId, request.getRequestedBy());
+                        createTenantAdminAccount(request, tenantOpt.get());
+                        log.info("관리자 계정 생성 완료: tenantId={}", tenantId);
+                    } catch (Exception e) {
+                        log.error("테넌트 관리자 계정 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
+                        log.error("테넌트 관리자 계정 생성 실패 상세:", e);
+                        // 관리자 계정 생성 실패는 온보딩 프로세스를 중단하지 않음 (경고만)
+                    }
+                } else {
+                    log.error("테넌트를 찾을 수 없어 관리자 계정 생성 불가: tenantId={}, maxRetries={}", tenantId, maxRetries);
                 }
                 
                 // 온보딩 승인 후 구독의 tenant_id 업데이트

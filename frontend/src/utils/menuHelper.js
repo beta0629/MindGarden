@@ -30,18 +30,20 @@ export const loadMenuStructure = async () => {
         console.log('🔄 서버에서 메뉴 구조 로드 중...');
         const response = await apiGet('/api/menu/structure');
         
-        if (response.success && response.data) {
-            menuStructureCache = response.data;
+        // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
+        // response는 직접 메뉴 구조 데이터입니다
+        if (response && response.menus !== undefined) {
+            menuStructureCache = response;
             lastMenuCacheTime = now;
             
             console.log('✅ 메뉴 구조 로드 성공:', {
-                role: response.data.userRole,
-                totalMenus: response.data.totalMenus
+                role: response.userRole,
+                totalMenus: response.totalMenus
             });
             
             return menuStructureCache;
         } else {
-            throw new Error(response.message || '메뉴 구조 로드 실패');
+            throw new Error('메뉴 구조 로드 실패: 응답 형식이 올바르지 않습니다');
         }
         
     } catch (error) {
@@ -65,11 +67,13 @@ export const loadCommonMenus = async () => {
         console.log('📋 공통 메뉴 로드 중...');
         const response = await apiGet('/api/menu/common');
         
-        if (response.success && response.data) {
-            console.log('✅ 공통 메뉴 로드 성공:', response.data.length + '개');
-            return response.data;
+        // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
+        // response는 직접 메뉴 배열입니다
+        if (Array.isArray(response)) {
+            console.log('✅ 공통 메뉴 로드 성공:', response.length + '개');
+            return response;
         } else {
-            throw new Error(response.message || '공통 메뉴 로드 실패');
+            throw new Error('공통 메뉴 로드 실패: 응답 형식이 올바르지 않습니다');
         }
         
     } catch (error) {
@@ -86,14 +90,16 @@ export const loadRoleMenus = async () => {
         console.log('📋 역할별 메뉴 로드 중...');
         const response = await apiGet('/api/menu/by-role');
         
-        if (response.success && response.data) {
+        // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
+        // response는 직접 메뉴 데이터입니다
+        if (response && response.menus && Array.isArray(response.menus)) {
             console.log('✅ 역할별 메뉴 로드 성공:', {
                 role: response.role,
-                menus: response.data.length + '개'
+                menus: response.menus.length + '개'
             });
-            return response.data;
+            return response.menus;
         } else {
-            throw new Error(response.message || '역할별 메뉴 로드 실패');
+            throw new Error('역할별 메뉴 로드 실패: 응답 형식이 올바르지 않습니다');
         }
         
     } catch (error) {
@@ -110,14 +116,16 @@ export const checkMenuPermission = async (menuId) => {
         console.log('🔒 메뉴 권한 확인:', menuId);
         const response = await apiGet(`/api/menu/check-permission?menuId=${menuId}`);
         
-        if (response.success) {
+        // apiGet은 이미 ApiResponse의 data를 추출하여 반환하므로
+        // response는 직접 권한 데이터입니다
+        if (response && typeof response.hasPermission === 'boolean') {
             console.log('✅ 메뉴 권한 확인 완료:', {
                 menuId: response.menuId,
                 hasPermission: response.hasPermission
             });
             return response.hasPermission;
         } else {
-            throw new Error(response.message || '메뉴 권한 확인 실패');
+            throw new Error('메뉴 권한 확인 실패: 응답 형식이 올바르지 않습니다');
         }
         
     } catch (error) {

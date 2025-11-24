@@ -294,12 +294,34 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                 continue;
             }
             
-            // 템플릿 기반 역할이 이미 생성되었는지 확인
-            List<TenantRole> tenantRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(
-                    tenantId, template.getRoleTemplateId());
+            // 템플릿 기반 역할이 이미 생성되었는지 확인 (재시도 로직 포함)
+            List<TenantRole> tenantRoles = new java.util.ArrayList<>();
+            int maxRetries = 5;
+            int retryDelay = 500; // 0.5초
+            
+            for (int retry = 0; retry < maxRetries; retry++) {
+                tenantRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(
+                        tenantId, template.getRoleTemplateId());
+                
+                if (!tenantRoles.isEmpty()) {
+                    break;
+                }
+                
+                if (retry < maxRetries - 1) {
+                    log.debug("테넌트 역할 대기 중: roleTemplateId={}, retry={}/{}", 
+                            template.getRoleTemplateId(), retry + 1, maxRetries);
+                    try {
+                        Thread.sleep(retryDelay);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
             
             if (tenantRoles.isEmpty()) {
-                log.warn("테넌트 역할이 아직 생성되지 않음: roleTemplateId={}", template.getRoleTemplateId());
+                log.warn("테넌트 역할이 아직 생성되지 않음: roleTemplateId={}, tenantId={}", 
+                        template.getRoleTemplateId(), tenantId);
                 continue;
             }
             

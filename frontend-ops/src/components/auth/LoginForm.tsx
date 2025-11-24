@@ -30,8 +30,9 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           return;
         }
         
-        // Next.js API Route 사용 (서버 사이드에서 백엔드 호출)
-        const response = await fetch("/api/auth/login", {
+        // 정적 빌드이므로 직접 백엔드 API 호출 (nginx가 /api/를 백엔드로 프록시)
+        const apiBaseUrl = process.env.NEXT_PUBLIC_OPS_API_BASE_URL || "/api/v1";
+        const response = await fetch(`${apiBaseUrl}/ops/auth/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -66,15 +67,25 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           responseData = body.data;
         }
 
-        // Next.js API Route가 쿠키를 설정했으므로, 성공 응답만 확인
-        // 쿠키는 서버 사이드에서 설정되므로 클라이언트에서 별도 설정 불필요
-        if (!response.ok) {
-          // 이미 위에서 처리했지만, 추가 확인
+        // ApiResponse 래퍼 처리: { success: true, data: {...} } 형태면 data 추출
+        let responseData = body;
+        if (body && typeof body === 'object' && 'success' in body && 'data' in body && body.success) {
+          responseData = body.data;
+        }
+
+        if (!responseData || !responseData.token) {
+          setFeedback("로그인 응답을 해석할 수 없습니다. 관리자에게 문의하세요.");
           return;
         }
 
-        // 로그인 성공 - 쿠키는 Next.js API Route에서 설정됨
-        // 전체 페이지 리로드를 통해 대시보드로 이동
+        // 쿠키에 토큰 저장
+        const maxAge = 60 * 60; // 1 hour
+        const cookieOptions = `path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `ops_token=${responseData.token}; ${cookieOptions}`;
+        document.cookie = `ops_actor_id=${responseData.actorId || trimmedUsername}; ${cookieOptions}`;
+        document.cookie = `ops_actor_role=${responseData.actorRole || "HQ_ADMIN"}; ${cookieOptions}`;
+
+        // 쿠키가 설정된 후 전체 페이지 리로드를 통해 대시보드로 이동
         const redirectPath = redirectTo || "/dashboard";
         window.location.href = redirectPath;
       } catch (error) {

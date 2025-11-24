@@ -31,6 +31,10 @@ jobs:
         npm ci
         
     - name: 🏗️ Ops 프론트엔드 빌드
+      env:
+        NEXT_PUBLIC_OPS_API_BASE_URL: http://localhost:8080/api/v1
+        NEXT_PUBLIC_OPS_API_USE_MOCK: "false"
+        NODE_ENV: production
       run: |
         cd frontend-ops
         ESLINT_NO_DEV_ERRORS=true npm run build

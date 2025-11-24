@@ -104,14 +104,44 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         }
       }
 
-      // 역할 목록 로드
-      const response = await apiGet(`/api/tenants/${tenantId}/roles`);
+      // 역할 목록과 대시보드 목록을 동시에 로드
+      const [rolesResponse, dashboardsResponse] = await Promise.all([
+        apiGet(`/api/tenants/${tenantId}/roles`),
+        apiGet(`/api/v1/tenant/dashboards`).catch(() => null) // 대시보드 목록 로드 실패해도 계속 진행
+      ]);
       
-      if (response && Array.isArray(response)) {
-        setTenantRoles(response);
-        console.log('✅ 테넌트 역할 목록 로드 성공:', response.length, '개');
+      // 대시보드가 있는 역할 ID 목록 생성
+      let existingDashboardRoleIds = new Set();
+      if (dashboardsResponse) {
+        const dashboardList = dashboardsResponse?.data || dashboardsResponse || [];
+        if (Array.isArray(dashboardList)) {
+          dashboardList.forEach(dashboard => {
+            if (dashboard.tenantRoleId) {
+              existingDashboardRoleIds.add(dashboard.tenantRoleId);
+            }
+          });
+          console.log('✅ 대시보드 목록 로드 성공:', dashboardList.length, '개');
+        }
+      }
+
+      // 역할 목록 처리
+      if (rolesResponse && Array.isArray(rolesResponse)) {
+        // 생성 모드인 경우: 이미 대시보드가 있는 역할은 필터링
+        // 수정 모드인 경우: 모든 역할 표시
+        const filteredRoles = isEditMode 
+          ? rolesResponse 
+          : rolesResponse.filter(role => !existingDashboardRoleIds.has(role.tenantRoleId));
+        
+        setTenantRoles(filteredRoles);
+        console.log('✅ 테넌트 역할 목록 로드 성공:', filteredRoles.length, '개 (전체:', rolesResponse.length, '개)');
+        
+        // 생성 모드에서 필터링된 역할이 있으면 알림
+        if (!isEditMode && filteredRoles.length < rolesResponse.length) {
+          const filteredCount = rolesResponse.length - filteredRoles.length;
+          console.log(`ℹ️ ${filteredCount}개 역할은 이미 대시보드가 있어 제외되었습니다.`);
+        }
       } else {
-        console.warn('⚠️ 테넌트 역할 목록 응답 형식 오류:', response);
+        console.warn('⚠️ 테넌트 역할 목록 응답 형식 오류:', rolesResponse);
         setTenantRoles([]);
       }
     } catch (error) {
@@ -121,7 +151,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     } finally {
       setLoadingRoles(false);
     }
-  }, []);
+  }, [isEditMode, businessType]);
 
   // 모달이 열릴 때 데이터 로드
   useEffect(() => {

@@ -119,6 +119,8 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
                 .displayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0)
                 .dashboardConfig(request.getDashboardConfig())
+                .isDeleted(false) // BaseEntity 필드 명시적 설정
+                .version(0L) // BaseEntity 필드 명시적 설정
                 .build();
         
         TenantDashboard saved = dashboardRepository.save(dashboard);
@@ -367,6 +369,8 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                     .isActive(true)
                     .displayOrder(i + 1)
                     .dashboardConfig(defaultConfig) // 기본 위젯 설정
+                    .isDeleted(false) // BaseEntity 필드 명시적 설정
+                    .version(0L) // BaseEntity 필드 명시적 설정
                     .build();
             
             TenantDashboard saved = dashboardRepository.save(dashboard);

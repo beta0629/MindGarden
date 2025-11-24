@@ -41,7 +41,7 @@ const OnboardingLogin: React.FC<OnboardingLoginProps> = ({ onLoginSuccess, onSki
   };
 
   return (
-    <div className={COMPONENT_CSS.ONBOARDING.STEP_CONTAINER}>
+    <div className={COMPONENT_CSS.ONBOARDING.STEP}>
       <h3 className="trinity-onboarding__subtitle">로그인하여 시작하기</h3>
       <p className="trinity-onboarding__description">
         로그인하면 진행 중인 온보딩을 저장하고 나중에 이어서 진행할 수 있습니다.
@@ -63,7 +63,7 @@ const OnboardingLogin: React.FC<OnboardingLoginProps> = ({ onLoginSuccess, onSki
       )}
 
       <form onSubmit={handleLogin} style={{ marginTop: '20px' }}>
-        <div className={COMPONENT_CSS.ONBOARDING.FORM_GROUP}>
+        <div className={COMPONENT_CSS.ONBOARDING.FIELD}>
           <label className={COMPONENT_CSS.ONBOARDING.LABEL}>이메일</label>
           <input
             type="email"
@@ -75,7 +75,7 @@ const OnboardingLogin: React.FC<OnboardingLoginProps> = ({ onLoginSuccess, onSki
           />
         </div>
 
-        <div className={COMPONENT_CSS.ONBOARDING.FORM_GROUP}>
+        <div className={COMPONENT_CSS.ONBOARDING.FIELD}>
           <label className={COMPONENT_CSS.ONBOARDING.LABEL}>비밀번호</label>
           <input
             type="password"

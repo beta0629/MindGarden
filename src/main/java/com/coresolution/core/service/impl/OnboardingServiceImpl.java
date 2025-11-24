@@ -672,11 +672,19 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.info("테넌트 관리자 계정 생성 완료: tenantId={}, email={}, userId={}", 
                 tenantId, requestedBy, adminUser.getId());
             
+            // 테넌트 조회 (역할 할당에 필요)
+            Optional<Tenant> tenantOpt = tenantRepository.findByTenantId(tenantId);
+            if (tenantOpt.isEmpty()) {
+                log.error("테넌트를 찾을 수 없음: tenantId={}", tenantId);
+                return;
+            }
+            Tenant tenant = tenantOpt.get();
+            
             // 관리자 역할 할당 (UserRoleAssignment 생성)
             try {
                 log.info("관리자 역할 할당 시작: userId={}, tenantId={}, email={}", 
                     adminUser.getId(), tenantId, adminUser.getEmail());
-                assignAdminRoleToUser(adminUser, tenantId, request.getTenantName());
+                assignAdminRoleToUser(adminUser, tenant);
                 log.info("관리자 역할 할당 완료: userId={}, tenantId={}", adminUser.getId(), tenantId);
             } catch (Exception e) {
                 log.error("관리자 역할 할당 실패: userId={}, tenantId={}, error={}", 
@@ -701,31 +709,13 @@ public class OnboardingServiceImpl implements OnboardingService {
      * 업종별 DIRECTOR 역할을 관리자 역할로 할당
      * 
      * @param adminUser 관리자 사용자
-     * @param tenantId 테넌트 ID
-     * @param tenantName 테넌트 이름
+     * @param tenant 테넌트 엔티티
      */
-    private void assignAdminRoleToUser(User adminUser, String tenantId, String tenantName) {
+    private void assignAdminRoleToUser(User adminUser, Tenant tenant) {
+        String tenantId = tenant.getTenantId();
         log.info("관리자 역할 할당 시작: userId={}, tenantId={}", adminUser.getId(), tenantId);
         
-        // EntityManager 캐시 비우기 (REQUIRES_NEW 트랜잭션에서 최신 데이터 조회)
-        if (entityManager != null) {
-            try {
-                entityManager.flush();
-                entityManager.clear();
-                log.debug("EntityManager 캐시 비우기 완료: tenantId={}", tenantId);
-            } catch (Exception e) {
-                log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
-            }
-        }
-        
-        // 테넌트의 업종 조회
-        Optional<Tenant> tenantOpt = tenantRepository.findByTenantId(tenantId);
-        if (tenantOpt.isEmpty()) {
-            log.error("테넌트를 찾을 수 없음: tenantId={}", tenantId);
-            return;
-        }
-        
-        String businessType = tenantOpt.get().getBusinessType();
+        String businessType = tenant.getBusinessType();
         if (businessType == null || businessType.trim().isEmpty()) {
             log.warn("테넌트의 업종 정보가 없음: tenantId={}", tenantId);
             return;

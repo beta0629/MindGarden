@@ -5,18 +5,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.CommonCode;
-import com.coresolution.consultation.entity.User;
-import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.core.constant.OnboardingConstants;
-import com.coresolution.core.domain.RoleTemplate;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.domain.onboarding.RiskLevel;
-import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.billing.TenantSubscriptionRepository;
 import com.coresolution.core.repository.onboarding.OnboardingRequestRepository;
@@ -27,11 +22,6 @@ import com.coresolution.core.service.OnboardingPreValidationService;
 import com.coresolution.core.service.OnboardingErrorHandlingService;
 import com.coresolution.core.service.TenantDashboardService;
 import com.coresolution.core.service.TenantIdGenerator;
-import com.coresolution.core.service.UserRoleAssignmentService;
-import com.coresolution.core.dto.UserRoleAssignmentRequest;
-import com.coresolution.core.repository.TenantRoleRepository;
-import com.coresolution.core.domain.TenantRole;
-import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,7 +29,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +51,6 @@ public class OnboardingServiceImpl implements OnboardingService {
     
     private final OnboardingRequestRepository repository;
     private final OnboardingApprovalService approvalService;
-    private final UserRepository userRepository;
     private final AutoApprovalService autoApprovalService;
     private final TenantSubscriptionRepository subscriptionRepository;
     private final TenantIdGenerator tenantIdGenerator;
@@ -71,9 +59,6 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
     private final CommonCodeService commonCodeService;
-    private final UserRoleAssignmentService userRoleAssignmentService;
-    private final TenantRoleRepository tenantRoleRepository;
-    private final RoleTemplateRepository roleTemplateRepository;
     private final OnboardingPreValidationService preValidationService;
     private final OnboardingErrorHandlingService errorHandlingService;
     
@@ -294,6 +279,34 @@ public class OnboardingServiceImpl implements OnboardingService {
                 return repository.save(request);
             }
             
+            // checklistJson에서 adminPassword 추출 및 BCrypt 해시
+            String contactEmail = request.getRequestedBy();  // 기본값: requestedBy
+            String adminPasswordHash = null;
+            
+            if (request.getChecklistJson() != null && !request.getChecklistJson().isEmpty()) {
+                try {
+                    Map<String, Object> checklist = objectMapper.readValue(
+                        request.getChecklistJson(), 
+                        new TypeReference<Map<String, Object>>() {}
+                    );
+                    
+                    String adminPassword = (String) checklist.get("adminPassword");
+                    if (adminPassword != null && !adminPassword.trim().isEmpty()) {
+                        // BCrypt로 해시
+                        adminPasswordHash = passwordEncoder.encode(adminPassword);
+                        log.info("관리자 비밀번호 해시 완료: requestId={}", requestId);
+                    } else {
+                        log.warn("checklistJson에 adminPassword가 없음: requestId={}", requestId);
+                    }
+                } catch (JsonProcessingException e) {
+                    log.warn("checklistJson 파싱 실패 (관리자 계정 생성 스킵): requestId={}, error={}", 
+                        requestId, e.getMessage());
+                }
+            }
+            
+            final String finalContactEmail = contactEmail;
+            final String finalAdminPasswordHash = adminPasswordHash;
+            
             // 에러 핸들링 및 자동 재시도로 프로시저 실행
             OnboardingErrorHandlingService.ExecutionResult executionResult = 
                 errorHandlingService.executeWithRetry(
@@ -304,7 +317,9 @@ public class OnboardingServiceImpl implements OnboardingService {
                             request.getTenantName(),
                             businessType,
                             actorId,
-                            note
+                            note,
+                            finalContactEmail,
+                            finalAdminPasswordHash
                         );
                         Boolean success = (Boolean) result.get("success");
                         return success != null && success;
@@ -325,7 +340,9 @@ public class OnboardingServiceImpl implements OnboardingService {
                     request.getTenantName(),
                     businessType,
                     actorId,
-                    note
+                    note,
+                    finalContactEmail,
+                    finalAdminPasswordHash
                 );
                 success = (Boolean) approvalResult.get("success");
                 message = (String) approvalResult.get("message");
@@ -377,64 +394,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                 request.setDecisionNote(note != null ? note + "\n[시스템 오류] " + errorMessage : "[시스템 오류] " + errorMessage);
             } else {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
-                
-                // 테넌트 조회 (Native Query 사용, PL/SQL 프로시저 커밋 데이터 조회)
-                Optional<Tenant> tenantOpt = Optional.empty();
-                int maxRetries = 10;
-                int retryDelay = 500; // 0.5초 지연
-                
-                for (int retry = 0; retry < maxRetries; retry++) {
-                    // EntityManager 캐시 비우기
-                    if (entityManager != null) {
-                        try {
-                            entityManager.flush();
-                            entityManager.clear();
-                        } catch (Exception e) {
-                            log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
-                        }
-                    }
-                    
-                    // Native Query를 사용하여 직접 조회
-                    try {
-                        String sql = "SELECT * FROM tenants WHERE tenant_id = :tenantId AND is_deleted = 0";
-                        jakarta.persistence.Query query = entityManager.createNativeQuery(sql, Tenant.class);
-                        query.setParameter("tenantId", tenantId);
-                        @SuppressWarnings("unchecked")
-                        List<Tenant> results = query.getResultList();
-                        if (!results.isEmpty()) {
-                            tenantOpt = Optional.of(results.get(0));
-                            log.info("테넌트 조회 성공 (Native Query): tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
-                            break;
-                        }
-                    } catch (Exception e) {
-                        log.warn("Native Query 조회 실패: tenantId={}, error={}, retry={}/{}", tenantId, e.getMessage(), retry + 1, maxRetries);
-                    }
-                    
-                    if (retry < maxRetries - 1) {
-                        try {
-                            Thread.sleep(retryDelay);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
-                    }
-                }
-                
-                // 온보딩 승인 후 관리자 계정 생성 (별도 트랜잭션에서 실행)
-                if (tenantOpt.isPresent()) {
-                    // 별도 트랜잭션에서 관리자 계정 생성
-                    try {
-                        log.info("관리자 계정 생성 시작: tenantId={}, requestedBy={}", tenantId, request.getRequestedBy());
-                        createTenantAdminAccountInNewTransaction(request, tenantOpt.get());
-                        log.info("관리자 계정 생성 완료: tenantId={}", tenantId);
-                    } catch (Exception e) {
-                        log.error("테넌트 관리자 계정 생성 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
-                        log.error("테넌트 관리자 계정 생성 실패 상세:", e);
-                        // 관리자 계정 생성 실패는 온보딩 프로세스를 중단하지 않음 (경고만)
-                    }
-                } else {
-                    log.error("테넌트를 찾을 수 없어 관리자 계정 생성 불가: tenantId={}, maxRetries={}", tenantId, maxRetries);
-                }
                 
                 // 온보딩 승인 후 구독의 tenant_id 업데이트
                 // 테넌트가 생성되었으므로 checklistJson에서 subscriptionId를 찾아서 업데이트
@@ -640,327 +599,9 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
     
     /**
-     * 온보딩 승인 후 테넌트 관리자 계정 생성 (재시도 로직 포함)
-     * PL/SQL 프로시저에서 생성된 테넌트를 조회하기 위해 재시도 로직 포함
-     * 트랜잭션 격리 수준을 READ_COMMITTED로 설정하여 다른 트랜잭션의 커밋된 데이터를 볼 수 있도록 함
+     * 관리자 계정 생성은 이제 PL/SQL 프로시저에서 처리됩니다.
+     * ProcessOnboardingApproval 프로시저가 CreateTenantAdminAccount를 호출하여 관리자 계정을 생성합니다.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
-    private void createTenantAdminAccountWithRetry(OnboardingRequest request, String tenantId) {
-        // 테넌트 조회 (재시도 로직 포함)
-        // PL/SQL 프로시저에서 생성된 테넌트가 JPA 컨텍스트에 보이기까지 시간이 걸릴 수 있음
-        Optional<Tenant> tenantOpt = Optional.empty();
-        int maxRetries = 10;
-        int retryDelay = 500; // 0.5초 지연
-        
-        for (int retry = 0; retry < maxRetries; retry++) {
-            log.info("테넌트 조회 시도: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
-            
-            // EntityManager 캐시 비우기
-            if (entityManager != null) {
-                try {
-                    entityManager.flush();
-                    entityManager.clear();
-                    log.debug("EntityManager 캐시 비우기 완료: tenantId={}", tenantId);
-                } catch (Exception e) {
-                    log.warn("EntityManager 캐시 비우기 실패: tenantId={}, error={}", tenantId, e.getMessage());
-                }
-            } else {
-                log.warn("EntityManager가 null입니다: tenantId={}", tenantId);
-            }
-            
-            // Native Query를 사용하여 직접 조회 (트랜잭션 격리 수준 문제 해결)
-            try {
-                log.info("Native Query 실행 시작: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
-                String sql = "SELECT * FROM tenants WHERE tenant_id = :tenantId AND is_deleted = 0";
-                jakarta.persistence.Query query = entityManager.createNativeQuery(sql, Tenant.class);
-                query.setParameter("tenantId", tenantId);
-                @SuppressWarnings("unchecked")
-                List<Tenant> results = query.getResultList();
-                log.info("Native Query 실행 완료: tenantId={}, 결과 개수={}, retry={}/{}", tenantId, results.size(), retry + 1, maxRetries);
-                if (!results.isEmpty()) {
-                    tenantOpt = Optional.of(results.get(0));
-                    log.info("테넌트 조회 성공 (Native Query): tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
-                    break;
-                } else {
-                    log.warn("Native Query 조회 결과 없음: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
-                }
-            } catch (Exception e) {
-                log.error("Native Query 조회 실패: tenantId={}, error={}, retry={}/{}", tenantId, e.getMessage(), retry + 1, maxRetries, e);
-            }
-            
-            // Native Query 실패 시 일반 조회 시도
-            if (tenantOpt.isEmpty()) {
-                tenantOpt = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
-                if (tenantOpt.isPresent()) {
-                    log.info("테넌트 조회 성공: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
-                    break;
-                }
-            }
-            
-            if (retry < maxRetries - 1) {
-                log.debug("테넌트 조회 대기 중: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
-                try {
-                    Thread.sleep(retryDelay);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        }
-        
-        if (tenantOpt.isEmpty()) {
-            log.error("테넌트를 찾을 수 없음: tenantId={}, maxRetries={}", tenantId, maxRetries);
-            return;
-        }
-        
-        // 관리자 계정 생성
-        createTenantAdminAccount(request, tenantOpt.get());
-    }
-    
-    /**
-     * 온보딩 승인 후 테넌트 관리자 계정 생성 (별도 트랜잭션에서 실행)
-     * checklistJson에서 adminPassword를 가져와서 ADMIN 역할의 사용자 계정 생성
-     * 별도 트랜잭션에서 실행하여 롤백 방지
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED)
-    private void createTenantAdminAccountInNewTransaction(OnboardingRequest request, Tenant tenant) {
-        createTenantAdminAccount(request, tenant);
-    }
-    
-    /**
-     * 온보딩 승인 후 테넌트 관리자 계정 생성
-     * checklistJson에서 adminPassword를 가져와서 ADMIN 역할의 사용자 계정 생성
-     */
-    private void createTenantAdminAccount(OnboardingRequest request, Tenant tenant) {
-        String tenantId = tenant.getTenantId();
-        if (request.getChecklistJson() == null || request.getChecklistJson().isEmpty()) {
-            log.debug("checklistJson이 없어 관리자 계정 생성 스킵: requestId={}", request.getId());
-            return;
-        }
-        
-        try {
-            // checklistJson 파싱
-            Map<String, Object> checklist = objectMapper.readValue(
-                request.getChecklistJson(), 
-                new TypeReference<Map<String, Object>>() {}
-            );
-            
-            String adminPassword = (String) checklist.get("adminPassword");
-            if (adminPassword == null || adminPassword.trim().isEmpty()) {
-                log.warn("checklistJson에 adminPassword가 없어 관리자 계정 생성 스킵: requestId={}", request.getId());
-                return;
-            }
-            
-            String requestedBy = request.getRequestedBy();
-            if (requestedBy == null || requestedBy.trim().isEmpty()) {
-                log.warn("requestedBy가 없어 관리자 계정 생성 불가: requestId={}", request.getId());
-                return;
-            }
-            
-            String normalizedEmail = requestedBy.trim().toLowerCase();
-            
-            // 같은 테넌트에 이미 ADMIN 역할의 사용자가 있는지 확인
-            // 주의: 다른 테넌트에 계정이 있어도 상관없음 (멀티 테넌트 지원)
-            List<User> existingAdmins = userRepository.findAllByEmail(normalizedEmail).stream()
-                .filter(user -> user.getTenantId() != null && tenantId.equals(user.getTenantId()))
-                .filter(user -> user.getRole() == UserRole.ADMIN)
-                .filter(user -> user.getIsDeleted() == null || !user.getIsDeleted())
-                .toList();
-            
-            if (!existingAdmins.isEmpty()) {
-                log.info("이미 해당 테넌트에 ADMIN 계정이 존재: tenantId={}, email={}, existingAdminCount={}", 
-                    tenantId, requestedBy, existingAdmins.size());
-                return;
-            }
-            
-            // 다른 테넌트에 계정이 있는 경우 로그만 남기고 계정 생성 진행
-            List<User> otherTenantUsers = userRepository.findAllByEmail(normalizedEmail).stream()
-                .filter(user -> user.getTenantId() != null && !user.getTenantId().trim().isEmpty())
-                .filter(user -> !tenantId.equals(user.getTenantId()))
-                .filter(user -> user.getIsDeleted() == null || !user.getIsDeleted())
-                .toList();
-            
-            if (!otherTenantUsers.isEmpty()) {
-                log.info("다른 테넌트에 계정이 있지만 새 테넌트 관리자 계정 생성 진행: email={}, otherTenantIds={}, newTenantId={}", 
-                    normalizedEmail, 
-                    otherTenantUsers.stream().map(User::getTenantId).toList(), 
-                    tenantId);
-            }
-            
-            // 사용자명 생성 (이메일의 로컬 파트 사용)
-            String username = requestedBy.substring(0, requestedBy.indexOf('@'));
-            
-            // 관리자 계정 생성
-            User adminUser = new User();
-            adminUser.setTenantId(tenantId);
-            adminUser.setEmail(requestedBy.trim().toLowerCase());
-            adminUser.setUsername(username);
-            adminUser.setPassword(passwordEncoder.encode(adminPassword));
-            adminUser.setName(request.getTenantName() + " 관리자");
-            adminUser.setRole(UserRole.ADMIN);
-            adminUser.setIsActive(true);
-            adminUser.setIsEmailVerified(true);  // 온보딩 시 이메일 인증 완료
-            adminUser.setIsSocialAccount(false);
-            
-            adminUser = userRepository.save(adminUser);
-            
-            log.info("테넌트 관리자 계정 생성 완료: tenantId={}, email={}, userId={}", 
-                tenantId, requestedBy, adminUser.getId());
-            
-            // 관리자 역할 할당 (UserRoleAssignment 생성)
-            try {
-                log.info("관리자 역할 할당 시작: userId={}, tenantId={}, email={}", 
-                    adminUser.getId(), tenantId, adminUser.getEmail());
-                assignAdminRoleToUser(adminUser, tenant);
-                log.info("관리자 역할 할당 완료: userId={}, tenantId={}", adminUser.getId(), tenantId);
-            } catch (Exception e) {
-                log.error("관리자 역할 할당 실패: userId={}, tenantId={}, error={}", 
-                    adminUser.getId(), tenantId, e.getMessage(), e);
-                log.error("관리자 역할 할당 실패 상세 스택 트레이스:", e);
-                // 역할 할당 실패는 계정 생성을 중단하지 않음 (경고만)
-            }
-                
-        } catch (JsonProcessingException e) {
-            log.error("checklistJson 파싱 실패: requestId={}, error={}", 
-                request.getId(), e.getMessage(), e);
-            throw new RuntimeException("checklistJson 파싱 실패", e);
-        } catch (Exception e) {
-            log.error("테넌트 관리자 계정 생성 중 오류 발생: requestId={}, tenantId={}, error={}", 
-                request.getId(), tenantId, e.getMessage(), e);
-            throw e;
-        }
-    }
-    
-    /**
-     * 관리자 사용자에게 관리자 역할 할당
-     * 업종별 DIRECTOR 역할을 관리자 역할로 할당
-     * 
-     * @param adminUser 관리자 사용자
-     * @param tenant 테넌트 엔티티
-     */
-    private void assignAdminRoleToUser(User adminUser, Tenant tenant) {
-        String tenantId = tenant.getTenantId();
-        log.info("관리자 역할 할당 시작: userId={}, tenantId={}", adminUser.getId(), tenantId);
-        
-        String businessType = tenant.getBusinessType();
-        if (businessType == null || businessType.trim().isEmpty()) {
-            log.warn("테넌트의 업종 정보가 없음: tenantId={}", tenantId);
-            return;
-        }
-        
-        // 메타데이터 기반 관리자 역할 찾기
-        // is_admin_role=true인 역할을 관리자 역할로 사용 (완전한 메타데이터 기반)
-        log.info("관리자 역할 템플릿 조회 시작: businessType={}, tenantId={}", businessType, tenantId);
-        List<RoleTemplate> adminTemplates = roleTemplateRepository.findByBusinessTypeAndAdminRole(businessType);
-        log.info("관리자 역할 템플릿 조회 결과: count={}, businessType={}", adminTemplates.size(), businessType);
-        
-        if (adminTemplates.isEmpty()) {
-            log.warn("관리자 역할 템플릿을 찾을 수 없음 (is_admin_role=true): businessType={}, tenantId={}", businessType, tenantId);
-            // 대체 방법: display_order=1인 역할 사용 (하위 호환성)
-            List<RoleTemplate> templates = roleTemplateRepository.findByBusinessTypeAndActive(businessType);
-            Optional<RoleTemplate> fallbackTemplate = templates.stream()
-                    .filter(t -> t.getDisplayOrder() != null && t.getDisplayOrder() == 1)
-                    .findFirst();
-            
-            if (fallbackTemplate.isEmpty()) {
-                log.error("업종별 역할 템플릿이 없음: businessType={}, tenantId={}", businessType, tenantId);
-                return;
-            }
-            
-            RoleTemplate template = fallbackTemplate.get();
-            log.warn("관리자 역할 템플릿을 fallback으로 찾음 (display_order=1): templateCode={}, roleTemplateId={}", 
-                template.getTemplateCode(), template.getRoleTemplateId());
-            // fallback 템플릿 사용
-            adminTemplates = java.util.Collections.singletonList(template);
-        }
-        
-        RoleTemplate template = adminTemplates.get(0);
-        log.info("관리자 역할 템플릿 찾음 (메타데이터 기반): templateCode={}, roleTemplateId={}, isAdminRole={}", 
-            template.getTemplateCode(), template.getRoleTemplateId(), template.isAdminRole());
-        
-        // TenantRole 조회 (재시도 로직 포함)
-        // PL/SQL 프로시저에서 생성된 역할이 Java 트랜잭션에 보이기까지 시간이 걸릴 수 있음
-        List<TenantRole> adminRoles = java.util.Collections.emptyList();
-        int maxRetries = 20; // 재시도 횟수 증가
-        int retryDelay = 1000; // 1초 지연
-        
-        for (int retry = 0; retry < maxRetries; retry++) {
-            // EntityManager 캐시를 비워서 최신 데이터 조회
-            if (entityManager != null) {
-                try {
-                    entityManager.flush();
-                    entityManager.clear();
-                } catch (Exception e) {
-                    log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
-                }
-            }
-            
-            adminRoles = tenantRoleRepository.findByTenantIdAndRoleTemplateId(tenantId, template.getRoleTemplateId());
-            if (!adminRoles.isEmpty()) {
-                log.info("관리자 TenantRole 찾음: roleTemplateId={}, retry={}/{}", 
-                    template.getRoleTemplateId(), retry + 1, maxRetries);
-                break;
-            }
-            
-            if (retry < maxRetries - 1) {
-                log.debug("관리자 TenantRole 대기 중: roleTemplateId={}, retry={}/{}", 
-                    template.getRoleTemplateId(), retry + 1, maxRetries);
-                try {
-                    Thread.sleep(retryDelay);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        }
-        
-        if (adminRoles.isEmpty()) {
-            log.warn("관리자 TenantRole을 찾을 수 없음: tenantId={}, templateCode={}, roleTemplateId={}", 
-                tenantId, template.getTemplateCode(), template.getRoleTemplateId());
-            log.warn("역할 템플릿이 아직 적용되지 않았을 수 있습니다. 나중에 수동으로 역할을 할당해주세요.");
-            return;
-        }
-        
-        TenantRole role = adminRoles.get(0);
-        log.info("관리자 TenantRole 찾음: tenantRoleId={}, nameKo={}, templateCode={}", 
-            role.getTenantRoleId(), role.getNameKo(), template.getTemplateCode());
-        
-        // TenantContextHolder에 tenantId 설정 (REQUIRES_NEW 트랜잭션에서 컨텍스트가 없을 수 있음)
-        String previousTenantId = TenantContextHolder.getTenantId();
-        try {
-            TenantContextHolder.setTenantId(tenantId);
-            log.debug("TenantContextHolder 설정: tenantId={}", tenantId);
-            
-            // UserRoleAssignment 생성
-            UserRoleAssignmentRequest assignmentRequest = UserRoleAssignmentRequest.builder()
-                    .tenantId(tenantId)
-                    .tenantRoleId(role.getTenantRoleId())
-                    .branchId(null) // 전체 브랜치
-                    .effectiveFrom(java.time.LocalDate.now())
-                    .effectiveTo(null) // 무기한
-                    .assignmentReason("온보딩 시 자동 생성된 관리자 계정")
-                    .build();
-            
-            try {
-                userRoleAssignmentService.assignRole(adminUser.getId(), assignmentRequest, "system");
-                log.info("관리자 역할 할당 완료: userId={}, tenantRoleId={}", adminUser.getId(), role.getTenantRoleId());
-            } catch (RuntimeException e) {
-                // 이미 할당된 경우 무시
-                if (e.getMessage() != null && e.getMessage().contains("이미 할당된 역할")) {
-                    log.info("관리자 역할이 이미 할당됨: userId={}, tenantRoleId={}", adminUser.getId(), role.getTenantRoleId());
-                } else {
-                    throw e;
-                }
-            }
-        } finally {
-            // TenantContextHolder 복원
-            if (previousTenantId != null) {
-                TenantContextHolder.setTenantId(previousTenantId);
-            } else {
-                TenantContextHolder.clear();
-            }
-        }
-    }
     
     /**
      * 온보딩 승인 후 구독의 tenant_id 업데이트

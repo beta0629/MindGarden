@@ -22,6 +22,8 @@ public interface OnboardingApprovalService {
      * @param businessType 업종 타입
      * @param approvedBy 승인자
      * @param decisionNote 결정 노트
+     * @param contactEmail 연락 이메일 (관리자 계정 생성용)
+     * @param adminPasswordHash BCrypt 해시된 관리자 비밀번호 (관리자 계정 생성용)
      * @return 처리 결과 (success, message)
      */
     Map<String, Object> processOnboardingApproval(
@@ -30,7 +32,9 @@ public interface OnboardingApprovalService {
             String tenantName,
             String businessType,
             String approvedBy,
-            String decisionNote
+            String decisionNote,
+            String contactEmail,
+            String adminPasswordHash
     );
 }
 

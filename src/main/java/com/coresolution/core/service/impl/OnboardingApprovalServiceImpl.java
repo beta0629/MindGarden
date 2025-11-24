@@ -37,16 +37,18 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             String tenantName,
             String businessType,
             String approvedBy,
-            String decisionNote) {
+            String decisionNote,
+            String contactEmail,
+            String adminPasswordHash) {
         
-        log.info("온보딩 승인 프로세스 시작: requestId={}, tenantId={}, tenantName={}", 
-                requestId, tenantId, tenantName);
+        log.info("온보딩 승인 프로세스 시작: requestId={}, tenantId={}, tenantName={}, contactEmail={}", 
+                requestId, tenantId, tenantName, contactEmail);
         
         Map<String, Object> result = new HashMap<>();
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement cs = connection.prepareCall(
-                 "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // IN 파라미터 설정
             cs.setLong(1, requestId);
@@ -55,18 +57,20 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             cs.setString(4, businessType);
             cs.setString(5, approvedBy);
             cs.setString(6, decisionNote);
+            cs.setString(7, contactEmail);  // 추가: 연락 이메일
+            cs.setString(8, adminPasswordHash);  // 추가: BCrypt 해시된 비밀번호
             
             // OUT 파라미터 등록
-            cs.registerOutParameter(7, Types.BOOLEAN);  // p_success
-            cs.registerOutParameter(8, Types.VARCHAR); // p_message
+            cs.registerOutParameter(9, Types.BOOLEAN);  // p_success
+            cs.registerOutParameter(10, Types.VARCHAR); // p_message
             
             // 프로시저 실행
             boolean hasResult = cs.execute();
             log.debug("프로시저 실행 완료: hasResult={}", hasResult);
             
             // 결과 추출
-            Boolean success = cs.getBoolean(7);
-            String message = cs.getString(8);
+            Boolean success = cs.getBoolean(9);
+            String message = cs.getString(10);
             
             log.debug("프로시저 결과: success={}, message={}", success, message);
             

@@ -31,6 +31,7 @@ import com.coresolution.core.service.UserRoleAssignmentService;
 import com.coresolution.core.dto.UserRoleAssignmentRequest;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.domain.TenantRole;
+import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -796,25 +797,39 @@ public class OnboardingServiceImpl implements OnboardingService {
         log.info("관리자 TenantRole 찾음: tenantRoleId={}, nameKo={}, templateCode={}", 
             role.getTenantRoleId(), role.getNameKo(), template.getTemplateCode());
         
-        // UserRoleAssignment 생성
-        UserRoleAssignmentRequest assignmentRequest = UserRoleAssignmentRequest.builder()
-                .tenantId(tenantId)
-                .tenantRoleId(role.getTenantRoleId())
-                .branchId(null) // 전체 브랜치
-                .effectiveFrom(java.time.LocalDate.now())
-                .effectiveTo(null) // 무기한
-                .assignmentReason("온보딩 시 자동 생성된 관리자 계정")
-                .build();
-        
+        // TenantContextHolder에 tenantId 설정 (REQUIRES_NEW 트랜잭션에서 컨텍스트가 없을 수 있음)
+        String previousTenantId = TenantContextHolder.getTenantId();
         try {
-            userRoleAssignmentService.assignRole(adminUser.getId(), assignmentRequest, "system");
-            log.info("관리자 역할 할당 완료: userId={}, tenantRoleId={}", adminUser.getId(), role.getTenantRoleId());
-        } catch (RuntimeException e) {
-            // 이미 할당된 경우 무시
-            if (e.getMessage() != null && e.getMessage().contains("이미 할당된 역할")) {
-                log.info("관리자 역할이 이미 할당됨: userId={}, tenantRoleId={}", adminUser.getId(), role.getTenantRoleId());
+            TenantContextHolder.setTenantId(tenantId);
+            log.debug("TenantContextHolder 설정: tenantId={}", tenantId);
+            
+            // UserRoleAssignment 생성
+            UserRoleAssignmentRequest assignmentRequest = UserRoleAssignmentRequest.builder()
+                    .tenantId(tenantId)
+                    .tenantRoleId(role.getTenantRoleId())
+                    .branchId(null) // 전체 브랜치
+                    .effectiveFrom(java.time.LocalDate.now())
+                    .effectiveTo(null) // 무기한
+                    .assignmentReason("온보딩 시 자동 생성된 관리자 계정")
+                    .build();
+            
+            try {
+                userRoleAssignmentService.assignRole(adminUser.getId(), assignmentRequest, "system");
+                log.info("관리자 역할 할당 완료: userId={}, tenantRoleId={}", adminUser.getId(), role.getTenantRoleId());
+            } catch (RuntimeException e) {
+                // 이미 할당된 경우 무시
+                if (e.getMessage() != null && e.getMessage().contains("이미 할당된 역할")) {
+                    log.info("관리자 역할이 이미 할당됨: userId={}, tenantRoleId={}", adminUser.getId(), role.getTenantRoleId());
+                } else {
+                    throw e;
+                }
+            }
+        } finally {
+            // TenantContextHolder 복원
+            if (previousTenantId != null) {
+                TenantContextHolder.setTenantId(previousTenantId);
             } else {
-                throw e;
+                TenantContextHolder.clear();
             }
         }
     }

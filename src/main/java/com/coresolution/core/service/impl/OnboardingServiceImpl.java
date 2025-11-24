@@ -605,32 +605,39 @@ public class OnboardingServiceImpl implements OnboardingService {
         int retryDelay = 500; // 0.5초 지연
         
         for (int retry = 0; retry < maxRetries; retry++) {
+            log.info("테넌트 조회 시도: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
+            
             // EntityManager 캐시 비우기
             if (entityManager != null) {
                 try {
                     entityManager.flush();
                     entityManager.clear();
+                    log.debug("EntityManager 캐시 비우기 완료: tenantId={}", tenantId);
                 } catch (Exception e) {
-                    log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
+                    log.warn("EntityManager 캐시 비우기 실패: tenantId={}, error={}", tenantId, e.getMessage());
                 }
+            } else {
+                log.warn("EntityManager가 null입니다: tenantId={}", tenantId);
             }
             
             // Native Query를 사용하여 직접 조회 (트랜잭션 격리 수준 문제 해결)
             try {
+                log.info("Native Query 실행 시작: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
                 String sql = "SELECT * FROM tenants WHERE tenant_id = :tenantId AND is_deleted = 0";
                 jakarta.persistence.Query query = entityManager.createNativeQuery(sql, Tenant.class);
                 query.setParameter("tenantId", tenantId);
                 @SuppressWarnings("unchecked")
                 List<Tenant> results = query.getResultList();
+                log.info("Native Query 실행 완료: tenantId={}, 결과 개수={}, retry={}/{}", tenantId, results.size(), retry + 1, maxRetries);
                 if (!results.isEmpty()) {
                     tenantOpt = Optional.of(results.get(0));
                     log.info("테넌트 조회 성공 (Native Query): tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
                     break;
                 } else {
-                    log.debug("Native Query 조회 결과 없음: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
+                    log.warn("Native Query 조회 결과 없음: tenantId={}, retry={}/{}", tenantId, retry + 1, maxRetries);
                 }
             } catch (Exception e) {
-                log.warn("Native Query 조회 실패: tenantId={}, error={}, retry={}/{}", tenantId, e.getMessage(), retry + 1, maxRetries, e);
+                log.error("Native Query 조회 실패: tenantId={}, error={}, retry={}/{}", tenantId, e.getMessage(), retry + 1, maxRetries, e);
             }
             
             // Native Query 실패 시 일반 조회 시도

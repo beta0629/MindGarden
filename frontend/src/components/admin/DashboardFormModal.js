@@ -221,12 +221,137 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     }
   }, [formData.dashboardConfig]);
 
+  // 역할별 기본 위젯 설정 가져오기
+  const getDefaultWidgetsForRole = (roleCode, roleName) => {
+    // 역할 코드나 이름에 따라 기본 위젯 설정
+    const roleKey = (roleCode || roleName || '').toUpperCase();
+    
+    // 기본 위젯 설정
+    const defaultConfig = {
+      version: '1.0',
+      layout: {
+        type: 'grid',
+        columns: 3,
+        gap: 'md',
+        responsive: true
+      },
+      widgets: []
+    };
+
+    // 역할별 기본 위젯 설정
+    if (roleKey.includes('STUDENT') || roleKey.includes('학생')) {
+      // 학생: 일정, 알림
+      defaultConfig.widgets = [
+        {
+          id: 'schedule-' + Date.now(),
+          type: 'schedule',
+          title: '내 일정',
+          position: { x: 0, y: 0 },
+          size: { width: 2, height: 1 }
+        },
+        {
+          id: 'notification-' + Date.now(),
+          type: 'notification',
+          title: '알림',
+          position: { x: 2, y: 0 },
+          size: { width: 1, height: 1 }
+        }
+      ];
+    } else if (roleKey.includes('TEACHER') || roleKey.includes('선생님') || roleKey.includes('교사')) {
+      // 선생님: 일정, 통계
+      defaultConfig.widgets = [
+        {
+          id: 'schedule-' + Date.now(),
+          type: 'schedule',
+          title: '일정',
+          position: { x: 0, y: 0 },
+          size: { width: 2, height: 1 }
+        },
+        {
+          id: 'summary-statistics-' + Date.now(),
+          type: 'summary-statistics',
+          title: '통계',
+          position: { x: 2, y: 0 },
+          size: { width: 1, height: 1 }
+        }
+      ];
+    } else if (roleKey.includes('ADMIN') || roleKey.includes('관리자')) {
+      // 관리자: 환영, 통계, 활동 목록
+      defaultConfig.widgets = [
+        {
+          id: 'welcome-' + Date.now(),
+          type: 'welcome',
+          title: '환영합니다',
+          position: { x: 0, y: 0 },
+          size: { width: 3, height: 1 }
+        },
+        {
+          id: 'summary-statistics-' + Date.now(),
+          type: 'summary-statistics',
+          title: '통계 요약',
+          position: { x: 0, y: 1 },
+          size: { width: 3, height: 1 }
+        },
+        {
+          id: 'activity-list-' + Date.now(),
+          type: 'activity-list',
+          title: '최근 활동',
+          position: { x: 0, y: 2 },
+          size: { width: 3, height: 1 }
+        }
+      ];
+    } else {
+      // 기본: 환영, 통계
+      defaultConfig.widgets = [
+        {
+          id: 'welcome-' + Date.now(),
+          type: 'welcome',
+          title: '환영합니다',
+          position: { x: 0, y: 0 },
+          size: { width: 2, height: 1 }
+        },
+        {
+          id: 'summary-statistics-' + Date.now(),
+          type: 'summary-statistics',
+          title: '통계',
+          position: { x: 2, y: 0 },
+          size: { width: 1, height: 1 }
+        }
+      ];
+    }
+
+    return defaultConfig;
+  };
+
   // 폼 데이터 변경 핸들러
   const handleChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+
+      // 역할 선택 시 기본 위젯 자동 설정 (생성 모드에서만)
+      if (field === 'tenantRoleId' && value && !isEditMode) {
+        const selectedRole = tenantRoles.find(role => role.tenantRoleId === value);
+        if (selectedRole) {
+          const defaultConfig = getDefaultWidgetsForRole(
+            selectedRole.roleCode || selectedRole.code,
+            selectedRole.nameKo || selectedRole.name
+          );
+          newData.dashboardConfig = stringifyDashboardConfig(defaultConfig);
+          newData.dashboardType = selectedRole.roleCode || selectedRole.code || selectedRole.nameKo || selectedRole.name;
+          newData.dashboardNameKo = (selectedRole.nameKo || selectedRole.name || '') + ' 대시보드';
+          newData.dashboardNameEn = (selectedRole.nameEn || selectedRole.name || '') + ' Dashboard';
+          
+          // parsedConfig도 업데이트
+          setParsedConfig(defaultConfig);
+          console.log('✅ 역할 선택 시 기본 위젯 자동 설정:', defaultConfig);
+        }
+      }
+
+      return newData;
+    });
     
     // 에러 제거
     if (errors[field]) {

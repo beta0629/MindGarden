@@ -21,6 +21,15 @@ spring:
     # 문자셋 설정 추가
     connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
   
+  # Flyway 설정 (로컬 개발 환경 - checksum 검증 완화)
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: false  # ✅ 로컬에서는 checksum 검증 비활성화
+    clean-disabled: true
+    out-of-order: false
+  
   # 이메일 설정 (Gmail SMTP)
   mail:
     host: smtp.gmail.com

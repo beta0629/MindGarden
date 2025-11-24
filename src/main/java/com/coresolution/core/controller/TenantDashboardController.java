@@ -10,6 +10,7 @@ import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.context.TenantContext;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +46,17 @@ public class TenantDashboardController extends BaseApiController {
         log.info("🔍 대시보드 목록 조회 요청");
         
         String tenantId = TenantContextHolder.getTenantId();
+        
+        // TenantContextHolder에 tenantId가 없으면 세션의 User 정보에서 가져오기
         if (tenantId == null) {
-            throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null && currentUser.getTenantId() != null) {
+                tenantId = currentUser.getTenantId();
+                TenantContext.setTenantId(tenantId);
+                log.debug("Tenant ID set from user session: {}", tenantId);
+            } else {
+                throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+            }
         }
         
         List<TenantDashboardResponse> dashboards = dashboardService.getDashboardsByTenant(tenantId);
@@ -65,8 +75,17 @@ public class TenantDashboardController extends BaseApiController {
         log.info("🔍 대시보드 상세 조회 요청: dashboardId={}", dashboardId);
         
         String tenantId = TenantContextHolder.getTenantId();
+        
+        // TenantContextHolder에 tenantId가 없으면 세션의 User 정보에서 가져오기
         if (tenantId == null) {
-            throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null && currentUser.getTenantId() != null) {
+                tenantId = currentUser.getTenantId();
+                TenantContext.setTenantId(tenantId);
+                log.debug("Tenant ID set from user session: {}", tenantId);
+            } else {
+                throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+            }
         }
         
         TenantDashboardResponse dashboard = dashboardService.getDashboard(tenantId, dashboardId);
@@ -140,8 +159,17 @@ public class TenantDashboardController extends BaseApiController {
         log.info("🔍 현재 사용자 대시보드 조회 요청");
         
         String tenantId = TenantContextHolder.getTenantId();
+        
+        // TenantContextHolder에 tenantId가 없으면 세션의 User 정보에서 가져오기
         if (tenantId == null) {
-            throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null && currentUser.getTenantId() != null) {
+                tenantId = currentUser.getTenantId();
+                TenantContext.setTenantId(tenantId);
+                log.debug("Tenant ID set from user session: {}", tenantId);
+            } else {
+                throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+            }
         }
         
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -190,8 +218,17 @@ public class TenantDashboardController extends BaseApiController {
         log.info("🔍 역할별 대시보드 조회 요청: tenantRoleId={}", tenantRoleId);
         
         String tenantId = TenantContextHolder.getTenantId();
+        
+        // TenantContextHolder에 tenantId가 없으면 세션의 User 정보에서 가져오기
         if (tenantId == null) {
-            throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null && currentUser.getTenantId() != null) {
+                tenantId = currentUser.getTenantId();
+                TenantContext.setTenantId(tenantId);
+                log.debug("Tenant ID set from user session: {}", tenantId);
+            } else {
+                throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+            }
         }
         
         TenantDashboardResponse dashboard = dashboardService.getDashboardByRole(tenantId, tenantRoleId);

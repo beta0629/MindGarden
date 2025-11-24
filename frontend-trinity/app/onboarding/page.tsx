@@ -112,9 +112,10 @@ export default function OnboardingPage() {
             
             // 이미 로그인된 사용자는 이메일 정보를 자동으로 채움
             if (user.email) {
+              const userEmail = user.email; // 타입 가드
               setFormData(prev => ({
                 ...prev,
-                contactEmail: user.email,
+                contactEmail: userEmail,
                 // 필요한 경우 다른 필드도 채울 수 있음
               }));
               // 이메일 인증 완료 처리 (이미 로그인된 사용자이므로)
@@ -151,9 +152,10 @@ export default function OnboardingPage() {
     setShowLogin(false);
     // 사용자 정보로 폼 채우기
     if (user.email) {
+      const userEmail = user.email; // 타입 가드
       setFormData(prev => ({
         ...prev,
-        contactEmail: user.email
+        contactEmail: userEmail
       }));
       setEmailVerified(true);
     }

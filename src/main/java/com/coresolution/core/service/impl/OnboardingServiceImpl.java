@@ -707,6 +707,17 @@ public class OnboardingServiceImpl implements OnboardingService {
     private void assignAdminRoleToUser(User adminUser, String tenantId, String tenantName) {
         log.info("관리자 역할 할당 시작: userId={}, tenantId={}", adminUser.getId(), tenantId);
         
+        // EntityManager 캐시 비우기 (REQUIRES_NEW 트랜잭션에서 최신 데이터 조회)
+        if (entityManager != null) {
+            try {
+                entityManager.flush();
+                entityManager.clear();
+                log.debug("EntityManager 캐시 비우기 완료: tenantId={}", tenantId);
+            } catch (Exception e) {
+                log.debug("EntityManager 캐시 비우기 실패 (무시): {}", e.getMessage());
+            }
+        }
+        
         // 테넌트의 업종 조회
         Optional<Tenant> tenantOpt = tenantRepository.findByTenantId(tenantId);
         if (tenantOpt.isEmpty()) {

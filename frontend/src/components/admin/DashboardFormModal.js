@@ -331,6 +331,57 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
       const method = isEditMode ? 'PUT' : 'POST';
 
+      // dashboardConfig 검증 및 기본값 설정
+      let dashboardConfigValue = formData.dashboardConfig || '{}';
+      
+      // 빈 문자열이거나 빈 객체인 경우 기본 구조 생성
+      if (!dashboardConfigValue || dashboardConfigValue.trim() === '' || dashboardConfigValue.trim() === '{}') {
+        const defaultConfig = {
+          version: '1.0',
+          layout: {
+            type: 'grid',
+            columns: 3,
+            gap: 'md',
+            responsive: true
+          },
+          widgets: []
+        };
+        dashboardConfigValue = stringifyDashboardConfig(defaultConfig);
+      } else {
+        // JSON 파싱하여 검증
+        try {
+          const parsed = JSON.parse(dashboardConfigValue);
+          // version과 layout이 없으면 추가
+          if (!parsed.version || !parsed.layout) {
+            const defaultConfig = {
+              version: parsed.version || '1.0',
+              layout: parsed.layout || {
+                type: 'grid',
+                columns: 3,
+                gap: 'md',
+                responsive: true
+              },
+              widgets: parsed.widgets || []
+            };
+            dashboardConfigValue = stringifyDashboardConfig(defaultConfig);
+          }
+        } catch (e) {
+          console.error('dashboardConfig JSON 파싱 오류:', e);
+          // 파싱 실패 시 기본 구조 사용
+          const defaultConfig = {
+            version: '1.0',
+            layout: {
+              type: 'grid',
+              columns: 3,
+              gap: 'md',
+              responsive: true
+            },
+            widgets: []
+          };
+          dashboardConfigValue = stringifyDashboardConfig(defaultConfig);
+        }
+      }
+
       // 백엔드 DTO에 맞게 데이터 준비
       const requestData = {
         tenantRoleId: formData.tenantRoleId,
@@ -341,7 +392,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         dashboardType: formData.dashboardType,
         isActive: formData.isActive !== undefined ? formData.isActive : true,
         displayOrder: formData.displayOrder || 0,
-        dashboardConfig: formData.dashboardConfig || '{}'
+        dashboardConfig: dashboardConfigValue
       };
 
       console.log('📤 대시보드 생성 요청:', { url, method, data: requestData });

@@ -141,7 +141,6 @@ const DashboardLayoutEditor = ({
         </div>
       ) : (
         <div className={getGridContainerClass()}>
-          {/* react-sortablejs animation prop: 200ms (CSS 변수 --mg-sortable-animation-duration와 동일한 값) */}
           <ReactSortable
             list={widgetList}
             setList={handleSort}

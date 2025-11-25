@@ -64,6 +64,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final SessionSyncService sessionSyncService;
     private final StatisticsService statisticsService;
     private final ConsultationMessageService consultationMessageService;
+    private final com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService;
     // BaseTenantEntityServiceImpl에서 이미 주입받음 (accessControlService)
     
     public ScheduleServiceImpl(
@@ -77,7 +78,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             ConsultantAvailabilityService consultantAvailabilityService,
             SessionSyncService sessionSyncService,
             StatisticsService statisticsService,
-            ConsultationMessageService consultationMessageService) {
+            ConsultationMessageService consultationMessageService,
+            com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService) {
         super(scheduleRepository, accessControlService);
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
@@ -89,6 +91,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.sessionSyncService = sessionSyncService;
         this.statisticsService = statisticsService;
         this.consultationMessageService = consultationMessageService;
+        this.dashboardIntegrationService = dashboardIntegrationService;
     }
     
     // ==================== BaseTenantEntityServiceImpl 추상 메서드 구현 ====================
@@ -177,6 +180,28 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         } catch (Exception e) {
             log.error("❌ 예약 생성 워크플로우 자동화 실패: scheduleId={}", createdSchedule.getId(), e);
             // 알림 발송 실패해도 예약 생성은 유지
+        }
+        
+        // 🔄 대시보드 통합 처리: ERP 연동 및 위젯 새로고침
+        try {
+            // tenantId는 이미 위에서 정의됨 (122번 라인)
+            if (tenantId != null) {
+                // 매핑 ID 조회 (ERP 연동용)
+                Long mappingId = null;
+                if (schedule.getConsultantId() != null && schedule.getClientId() != null) {
+                    // TODO: 매핑 ID 조회 로직 추가
+                    // mappingId = mappingRepository.findByConsultantIdAndClientId(...)
+                }
+                
+                dashboardIntegrationService.handleScheduleCreated(
+                    createdSchedule.getId(), 
+                    tenantId, 
+                    mappingId
+                );
+            }
+        } catch (Exception e) {
+            log.error("❌ 대시보드 통합 처리 실패: scheduleId={}", createdSchedule.getId(), e);
+            // 통합 처리 실패해도 스케줄 생성은 유지
         }
         
         return createdSchedule;

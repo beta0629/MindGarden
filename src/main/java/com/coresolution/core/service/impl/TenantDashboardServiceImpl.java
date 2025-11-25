@@ -554,6 +554,9 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             theme.put("primaryColor", "#007bff");
             config.set("theme", theme);
             
+            // 카드 레이아웃 설정 (동적 카드 스타일)
+            addCardLayoutConfig(mapper, config);
+            
             return mapper.writeValueAsString(config);
         } catch (JsonProcessingException e) {
             log.error("템플릿 기반 대시보드 설정 생성 실패: templateId={}, roleCode={}", templateId, roleCode, e);
@@ -604,6 +607,9 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             theme.put("mode", "light");
             theme.put("primaryColor", "#007bff");
             config.set("theme", theme);
+            
+            // 카드 레이아웃 설정 (동적 카드 스타일)
+            addCardLayoutConfig(mapper, config);
             
             return mapper.writeValueAsString(config);
         } catch (JsonProcessingException e) {
@@ -733,6 +739,11 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                     }
                 }
                 
+                // 카드 레이아웃 설정이 없으면 추가 (동적 카드 스타일)
+                if (!config.has("cardLayout")) {
+                    addCardLayoutConfig(mapper, config);
+                }
+                
                 log.info("✅ 메타 시스템: RoleTemplate에서 기본 위젯 설정 로드: templateCode={}, roleCode={}", 
                     template.getTemplateCode(), roleCode);
                 return mapper.writeValueAsString(config);
@@ -800,6 +811,9 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             theme.put("primaryColor", "#007bff");
             config.set("theme", theme);
             
+            // 카드 레이아웃 설정 (동적 카드 스타일)
+            addCardLayoutConfig(mapper, config);
+            
             return mapper.writeValueAsString(config);
         } catch (JsonProcessingException e) {
             log.error("기본 대시보드 설정 생성 실패: roleCode={}", roleCode, e);
@@ -828,6 +842,20 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         widget.set("config", config);
         
         return widget;
+    }
+    
+    /**
+     * 카드 레이아웃 설정 추가 헬퍼 메서드 (동적 카드 스타일)
+     */
+    private void addCardLayoutConfig(ObjectMapper mapper, com.fasterxml.jackson.databind.node.ObjectNode config) {
+        com.fasterxml.jackson.databind.node.ObjectNode cardLayout = mapper.createObjectNode();
+        cardLayout.put("defaultStyle", "v2");
+        cardLayout.put("defaultVariant", "elevated");
+        cardLayout.put("defaultPadding", "md");
+        cardLayout.put("defaultBorderRadius", "md");
+        cardLayout.put("hoverEffect", true);
+        cardLayout.put("shadow", "md");
+        config.set("cardLayout", cardLayout);
     }
 }
 

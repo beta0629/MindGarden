@@ -10,9 +10,12 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantPerformanceRepository;
 import com.coresolution.consultation.repository.DailyStatisticsRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.service.PlSqlStatisticsService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StatisticsConfigService;
+import com.coresolution.consultation.service.CommonCodeService;
+import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +39,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     private final UserRepository userRepository;
     private final StatisticsConfigService statisticsConfigService;
     private final PlSqlStatisticsService plSqlStatisticsService;
+    private final CommonCodeService commonCodeService;
     
     @Override
     public void updateStatisticsOnScheduleCompletion(Schedule schedule) {
@@ -245,11 +249,12 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
         }
         stats.setCompletedConsultations(stats.getCompletedConsultations() + 1);
         
-        // 수익 계산 (기본 세션비 50,000원)
+        // 수익 계산 (메타데이터 기반 세션비)
         if (stats.getTotalRevenue() == null) {
             stats.setTotalRevenue(java.math.BigDecimal.ZERO);
         }
-        stats.setTotalRevenue(stats.getTotalRevenue().add(java.math.BigDecimal.valueOf(50000)));
+        BigDecimal sessionFee = getDefaultSessionFeeFromCommonCode();
+        stats.setTotalRevenue(stats.getTotalRevenue().add(sessionFee));
     }
     
     /**
@@ -264,7 +269,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
         performance.setCancelledSchedules(0);
         performance.setNoShowSchedules(0);
         performance.setCompletionRate(java.math.BigDecimal.valueOf(100.0));
-        performance.setTotalRevenue(java.math.BigDecimal.valueOf(50000));
+        performance.setTotalRevenue(getDefaultSessionFeeFromCommonCode());
         performance.setUniqueClients(1);
         performance.setRepeatClients(0);
         performance.setClientRetentionRate(java.math.BigDecimal.ZERO);
@@ -294,7 +299,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
         stats.setTotalConsultations(1);
         stats.setCompletedConsultations(1);
         stats.setCancelledConsultations(0);
-        stats.setTotalRevenue(java.math.BigDecimal.valueOf(50000));
+        stats.setTotalRevenue(getDefaultSessionFeeFromCommonCode());
         stats.setConsultantCount(1);
         stats.setClientCount(1);
         stats.setTotalRefunds(0);
@@ -302,5 +307,36 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
         stats.setAvgRating(java.math.BigDecimal.valueOf(4.5));
         
         return stats;
+    }
+    
+    // ==================== 세션비 조회 로직 (하드코딩 제거) ====================
+    
+    /**
+     * CommonCode에서 기본 세션비 조회
+     */
+    private BigDecimal getDefaultSessionFeeFromCommonCode() {
+        try {
+            CommonCode code = commonCodeService.getCommonCodeByGroupAndValue("SYSTEM_CONFIG", "DEFAULT_SESSION_FEE");
+            if (code != null && code.getExtraData() != null) {
+                try {
+                    // extra_data JSON에서 value 추출
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    com.fasterxml.jackson.databind.JsonNode jsonNode = mapper.readTree(code.getExtraData());
+                    if (jsonNode.has("value")) {
+                        BigDecimal defaultFee = jsonNode.get("value").decimalValue();
+                        log.debug("✅ CommonCode에서 기본 세션비 조회: {}", defaultFee);
+                        return defaultFee;
+                    }
+                } catch (Exception e) {
+                    log.warn("⚠️ CommonCode extra_data 파싱 실패: {}", code.getExtraData(), e);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ CommonCode 기본 세션비 조회 실패, Fallback 사용", e);
+        }
+        
+        // 최종 Fallback (하드코딩 제거를 위해 경고 로그 남김)
+        log.warn("⚠️ 기본 세션비를 찾을 수 없어 Fallback 값(50000) 사용. CommonCode에 SYSTEM_CONFIG.DEFAULT_SESSION_FEE를 추가하세요.");
+        return BigDecimal.valueOf(50000);
     }
 }

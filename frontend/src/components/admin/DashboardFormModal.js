@@ -15,7 +15,7 @@ import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { API_BASE_URL } from '../../constants/api';
 import { sessionManager } from '../../utils/sessionManager';
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
 import DashboardWidgetEditor from './DashboardWidgetEditor';
 import DashboardLayoutEditor from './DashboardLayoutEditor';
@@ -55,6 +55,14 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   const [showWidgetConfigModal, setShowWidgetConfigModal] = useState(false);
   const [parsedConfig, setParsedConfig] = useState(null);
   const [businessType, setBusinessType] = useState(null);
+  const [showAddRoleModal, setShowAddRoleModal] = useState(false);
+  const [roleTemplates, setRoleTemplates] = useState([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [newRoleName, setNewRoleName] = useState('');
+  const [newRoleNameEn, setNewRoleNameEn] = useState('');
+  const [newRoleDescription, setNewRoleDescription] = useState('');
+  const [assignRoleToCurrentUser, setAssignRoleToCurrentUser] = useState(false);
 
   const isEditMode = !!dashboard;
 
@@ -111,7 +119,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       ]);
       
       // 대시보드가 있는 역할 ID 목록 생성
-      let existingDashboardRoleIds = new Set();
+      const existingDashboardRoleIds = new Set();
       if (dashboardsResponse) {
         // apiGet은 ApiResponse 래퍼를 처리하여 data를 반환하거나, 직접 배열을 반환할 수 있음
         let dashboardList = [];
@@ -144,6 +152,24 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
       // 역할 목록 처리
       if (rolesResponse && Array.isArray(rolesResponse)) {
+        // 메타 데이터 확인 로그
+        rolesResponse.forEach(role => {
+          if (role.defaultWidgetsJson) {
+            console.log('✅ 메타 데이터 확인:', {
+              roleName: role.nameKo || role.name,
+              templateCode: role.templateCode,
+              hasDefaultWidgetsJson: true,
+              jsonLength: role.defaultWidgetsJson.length
+            });
+          } else {
+            console.warn('⚠️ 메타 데이터 없음:', {
+              roleName: role.nameKo || role.name,
+              templateCode: role.templateCode,
+              hasDefaultWidgetsJson: false
+            });
+          }
+        });
+        
         // 생성 모드인 경우: 이미 대시보드가 있는 역할은 필터링
         // 수정 모드인 경우: 모든 역할 표시
         const filteredRoles = isEditMode 
@@ -152,6 +178,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         
         setTenantRoles(filteredRoles);
         console.log('✅ 테넌트 역할 목록 로드 성공:', filteredRoles.length, '개 (전체:', rolesResponse.length, '개)');
+        console.log('📊 메타 데이터 포함 역할:', filteredRoles.filter(r => r.defaultWidgetsJson).length, '개');
         
         // 생성 모드에서 필터링된 역할이 있으면 알림
         if (!isEditMode && filteredRoles.length < rolesResponse.length) {
@@ -171,10 +198,152 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     }
   }, [isEditMode, businessType]);
 
+  // 역할 템플릿 목록 로드
+  const loadRoleTemplates = useCallback(async () => {
+    setLoadingTemplates(true);
+    try {
+      const user = sessionManager.getUser();
+      const tenantId = user?.tenantId;
+      
+      if (!tenantId) {
+        console.error('테넌트 ID가 없습니다.');
+        return;
+      }
+
+      const templatesResponse = await apiGet(`/api/v1/tenant/roles/templates`);
+      
+      if (templatesResponse && Array.isArray(templatesResponse)) {
+        // 업종별 필터링
+        const filteredTemplates = businessType 
+          ? templatesResponse.filter(t => t.businessType === businessType)
+          : templatesResponse;
+        
+        setRoleTemplates(filteredTemplates);
+        console.log('✅ 역할 템플릿 목록 로드 성공:', filteredTemplates.length, '개');
+      } else {
+        console.warn('⚠️ 역할 템플릿 목록 응답 형식 오류:', templatesResponse);
+        setRoleTemplates([]);
+      }
+    } catch (error) {
+      console.error('❌ 역할 템플릿 목록 로드 실패:', error);
+      notificationManager.show('역할 템플릿 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+      setRoleTemplates([]);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  }, [businessType]);
+
+  // 역할 추가 (템플릿 기반, 이름 커스터마이징 가능)
+  const handleAddRole = async () => {
+    if (!selectedTemplateId) {
+      notificationManager.show('템플릿을 선택해주세요.', 'warning');
+      return;
+    }
+
+    if (!newRoleName || newRoleName.trim() === '') {
+      notificationManager.show('역할 이름을 입력해주세요.', 'warning');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const user = sessionManager.getUser();
+      const tenantId = user?.tenantId;
+      
+      if (!tenantId) {
+        throw new Error('테넌트 ID가 없습니다.');
+      }
+
+      // 템플릿 정보 가져오기
+      const selectedTemplate = roleTemplates.find(t => t.roleTemplateId === selectedTemplateId);
+      
+      // 역할 생성 요청 데이터 (이름 커스터마이징)
+      const requestData = {
+        roleTemplateId: selectedTemplateId,
+        nameKo: newRoleName.trim(),
+        nameEn: newRoleNameEn.trim() || newRoleName.trim(),
+        name: newRoleName.trim(),
+        descriptionKo: newRoleDescription.trim() || (selectedTemplate?.descriptionKo || ''),
+        descriptionEn: selectedTemplate?.descriptionEn || '',
+        description: selectedTemplate?.description || '',
+        isActive: true,
+        displayOrder: selectedTemplate?.displayOrder || 0
+      };
+
+      const response = await csrfTokenManager.post(
+        `/api/v1/tenant/roles`,
+        requestData
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          notificationManager.show('역할이 추가되었습니다.', 'success');
+          setShowAddRoleModal(false);
+          setSelectedTemplateId('');
+          setNewRoleName('');
+          setNewRoleNameEn('');
+          setNewRoleDescription('');
+          // 역할 목록 새로고침
+          await loadTenantRoles();
+        } else {
+          throw new Error(result.message || '역할 추가 실패');
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || '역할 추가 실패');
+      }
+    } catch (error) {
+      console.error('❌ 역할 추가 실패:', error);
+      notificationManager.show(error.message || '역할 추가 중 오류가 발생했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 역할 제거
+  const handleDeleteRole = async (tenantRoleId, roleName) => {
+    if (!window.confirm(`"${roleName}" 역할을 삭제하시겠습니까?\n\n주의: 이 역할에 할당된 사용자가 있으면 삭제할 수 없습니다.`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const user = sessionManager.getUser();
+      const tenantId = user?.tenantId;
+      
+      if (!tenantId) {
+        throw new Error('테넌트 ID가 없습니다.');
+      }
+
+      const response = await csrfTokenManager.delete(`/api/v1/tenant/roles/${tenantRoleId}`);
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          notificationManager.show('역할이 삭제되었습니다.', 'success');
+          // 역할 목록 새로고침
+          await loadTenantRoles();
+        } else {
+          throw new Error(result.message || '역할 삭제 실패');
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || '역할 삭제 실패');
+      }
+    } catch (error) {
+      console.error('❌ 역할 삭제 실패:', error);
+      notificationManager.show(error.message || '역할 삭제 중 오류가 발생했습니다.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 모달이 열릴 때 데이터 로드
   useEffect(() => {
     if (isOpen) {
       loadTenantRoles();
+      loadRoleTemplates();
       
       // 수정 모드인 경우 기존 데이터 설정
       if (dashboard) {
@@ -207,7 +376,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       }
       setErrors({});
     }
-  }, [isOpen, dashboard, loadTenantRoles]);
+  }, [isOpen, dashboard, loadTenantRoles, loadRoleTemplates]);
 
   // dashboardConfig 변경 시 parsedConfig 업데이트
   useEffect(() => {
@@ -239,29 +408,74 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     }
   }, [formData.dashboardConfig]);
 
-  // 역할별 기본 위젯 설정 가져오기 (메타 시스템)
+  // 역할별 기본 위젯 설정 가져오기 (메타 시스템 우선 사용)
   const getDefaultWidgetsForRole = async (role) => {
-    // 메타 시스템: RoleTemplate의 default_widgets_json 사용 (우선)
+    console.log('🔍 역할별 기본 위젯 설정 가져오기:', {
+      roleName: role.nameKo || role.name,
+      templateCode: role.templateCode,
+      hasDefaultWidgetsJson: !!role.defaultWidgetsJson,
+      defaultWidgetsJson: role.defaultWidgetsJson ? '있음' : '없음'
+    });
+    
+    // 1. 메타 시스템: RoleTemplate의 default_widgets_json 사용 (최우선)
     if (role.defaultWidgetsJson) {
       try {
         const config = JSON.parse(role.defaultWidgetsJson);
+        
+        // 기본 구조 보장
+        if (!config.version) {
+          config.version = '1.0';
+        }
+        if (!config.layout) {
+          config.layout = {
+            type: 'grid',
+            columns: 3,
+            gap: 'md',
+            responsive: true
+          };
+        }
+        if (!config.widgets) {
+          config.widgets = [];
+        }
+        
         // 위젯 ID 자동 생성 (없는 경우)
         if (config.widgets && Array.isArray(config.widgets)) {
-          config.widgets.forEach(widget => {
+          config.widgets.forEach((widget, index) => {
             if (!widget.id) {
               const widgetType = widget.type || 'widget';
-              widget.id = widgetType + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+              widget.id = `${widgetType}-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 5)}`;
+            }
+            // position이 없으면 자동 생성
+            if (!widget.position) {
+              const row = Math.floor(index / 3);
+              const col = index % 3;
+              widget.position = {
+                row: row,
+                col: col,
+                span: 1
+              };
             }
           });
         }
-        console.log('✅ 메타 시스템: RoleTemplate에서 기본 위젯 설정 로드:', role.templateCode || role.nameKo);
+        
+        console.log('✅ 메타 시스템: RoleTemplate에서 기본 위젯 설정 로드 성공:', {
+          templateCode: role.templateCode || role.nameKo,
+          widgetCount: config.widgets?.length || 0,
+          config: config
+        });
         return config;
       } catch (error) {
-        console.warn('⚠️ RoleTemplate의 default_widgets_json 파싱 실패, fallback 사용:', error);
+        console.error('❌ RoleTemplate의 default_widgets_json 파싱 실패:', error);
+        console.warn('⚠️ Fallback 로직으로 전환');
       }
+    } else {
+      console.warn('⚠️ RoleTemplate에 default_widgets_json이 없음, Fallback 사용:', {
+        templateCode: role.templateCode,
+        roleName: role.nameKo || role.name
+      });
     }
     
-    // Fallback: 역할 코드나 이름에 따라 기본 위젯 설정 (하드코딩)
+    // 2. Fallback: 역할 코드나 이름에 따라 기본 위젯 설정 (하드코딩)
     const roleKey = (role.templateCode || role.roleCode || role.nameKo || role.name || '').toUpperCase();
     
     // 기본 위젯 설정
@@ -373,12 +587,15 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       if (field === 'tenantRoleId' && value && !isEditMode) {
         const selectedRole = tenantRoles.find(role => role.tenantRoleId === value);
         if (selectedRole) {
+          // 즉시 대시보드 이름과 타입 설정 (비동기 위젯 로드 전에)
+          newData.dashboardType = selectedRole.templateCode || selectedRole.roleCode || selectedRole.code || selectedRole.nameKo || selectedRole.name || 'DEFAULT';
+          newData.dashboardNameKo = (selectedRole.nameKo || selectedRole.name || '') + ' 대시보드';
+          newData.dashboardName = newData.dashboardNameKo;
+          newData.dashboardNameEn = (selectedRole.nameEn || selectedRole.name || '') + ' Dashboard';
+          
           // 메타 시스템: RoleTemplate의 default_widgets_json 사용
           getDefaultWidgetsForRole(selectedRole).then(defaultConfig => {
             newData.dashboardConfig = stringifyDashboardConfig(defaultConfig);
-            newData.dashboardType = selectedRole.templateCode || selectedRole.roleCode || selectedRole.code || selectedRole.nameKo || selectedRole.name;
-            newData.dashboardNameKo = (selectedRole.nameKo || selectedRole.name || '') + ' 대시보드';
-            newData.dashboardNameEn = (selectedRole.nameEn || selectedRole.name || '') + ' Dashboard';
             
             // parsedConfig도 업데이트
             setParsedConfig(defaultConfig);
@@ -390,10 +607,26 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               dashboardConfig: newData.dashboardConfig,
               dashboardType: newData.dashboardType,
               dashboardNameKo: newData.dashboardNameKo,
+              dashboardName: newData.dashboardName,
               dashboardNameEn: newData.dashboardNameEn
             }));
           }).catch(error => {
             console.error('❌ 기본 위젯 설정 로드 실패:', error);
+            // 위젯 로드 실패해도 기본 구조는 유지
+            const fallbackConfig = {
+              version: '1.0',
+              layout: { type: 'grid', columns: 3, gap: 'md', responsive: true },
+              widgets: []
+            };
+            setFormData(prev => ({
+              ...prev,
+              dashboardConfig: stringifyDashboardConfig(fallbackConfig),
+              dashboardType: newData.dashboardType,
+              dashboardNameKo: newData.dashboardNameKo,
+              dashboardName: newData.dashboardName,
+              dashboardNameEn: newData.dashboardNameEn
+            }));
+            setParsedConfig(fallbackConfig);
           });
         }
       }
@@ -465,7 +698,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     setSelectedWidget(null);
   };
 
-  // 위젯 삭제
+  // 위젯 삭제 (확인 없이 바로 삭제 - 간소화)
   const handleWidgetDelete = (widgetId) => {
     // parsedConfig가 없으면 기본 구조 생성
     const currentConfig = parsedConfig || {
@@ -486,6 +719,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       ...prev,
       dashboardConfig: stringifyDashboardConfig(updatedConfig)
     }));
+    
+    // 삭제 완료 알림 (선택적)
+    console.log('✅ 위젯 삭제 완료:', widgetId);
   };
 
   // 유효성 검사
@@ -496,12 +732,36 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       newErrors.tenantRoleId = '역할을 선택해주세요.';
     }
 
+    // 대시보드 이름 자동 생성 (역할 선택 시)
     if (!formData.dashboardNameKo && !formData.dashboardName) {
-      newErrors.dashboardNameKo = '대시보드 이름을 입력해주세요.';
+      // 역할이 선택되었으면 자동 생성 시도
+      if (formData.tenantRoleId) {
+        const selectedRole = tenantRoles.find(role => role.tenantRoleId === formData.tenantRoleId);
+        if (selectedRole) {
+          const autoName = (selectedRole.nameKo || selectedRole.name || '') + ' 대시보드';
+          setFormData(prev => ({
+            ...prev,
+            dashboardNameKo: autoName,
+            dashboardName: autoName
+          }));
+        } else {
+          newErrors.dashboardNameKo = '대시보드 이름을 입력해주세요.';
+        }
+      } else {
+        newErrors.dashboardNameKo = '역할을 먼저 선택해주세요.';
+      }
     }
 
-    if (!formData.dashboardType) {
-      newErrors.dashboardType = '대시보드 타입을 선택해주세요.';
+    // 대시보드 타입 자동 설정 (역할 선택 시)
+    if (!formData.dashboardType && formData.tenantRoleId) {
+      const selectedRole = tenantRoles.find(role => role.tenantRoleId === formData.tenantRoleId);
+      if (selectedRole) {
+        const autoType = selectedRole.templateCode || selectedRole.roleCode || selectedRole.code || 'DEFAULT';
+        setFormData(prev => ({
+          ...prev,
+          dashboardType: autoType
+        }));
+      }
     }
 
     // JSON 유효성 검사
@@ -609,10 +869,68 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         console.log('📥 대시보드 생성 결과:', result);
         
         if (result.success) {
-          notificationManager.show(
-            isEditMode ? '대시보드가 수정되었습니다.' : '대시보드가 생성되었습니다.',
-            'success'
-          );
+          // 대시보드 생성 성공 후, 역할 자동 할당 옵션이 체크되어 있으면 현재 사용자에게 역할 할당
+          if (!isEditMode && assignRoleToCurrentUser && formData.tenantRoleId) {
+            try {
+              const user = sessionManager.getUser();
+              const tenantId = user?.tenantId;
+              
+              if (user?.id && tenantId) {
+                const assignRequest = {
+                  tenantId: tenantId,
+                  tenantRoleId: formData.tenantRoleId,
+                  branchId: null, // 전체 브랜치
+                  effectiveFrom: new Date().toISOString().split('T')[0],
+                  effectiveTo: null, // 무기한
+                  assignmentReason: '대시보드 생성 시 자동 할당'
+                };
+                
+                const assignResponse = await csrfTokenManager.post(
+                  `/api/users/${user.id}/roles`,
+                  assignRequest
+                );
+                
+                if (assignResponse.ok) {
+                  const assignResult = await assignResponse.json();
+                  if (assignResult.success) {
+                    notificationManager.show(
+                      '대시보드가 생성되었고, 현재 계정에 역할이 할당되었습니다. 대시보드를 바로 확인할 수 있습니다.',
+                      'success'
+                    );
+                  } else {
+                    console.warn('⚠️ 역할 할당 실패:', assignResult.message);
+                    notificationManager.show(
+                      '대시보드가 생성되었습니다. 역할 할당은 실패했습니다. 수동으로 역할을 할당해주세요.',
+                      'warning'
+                    );
+                  }
+                } else {
+                  console.warn('⚠️ 역할 할당 HTTP 에러:', assignResponse.status);
+                  notificationManager.show(
+                    '대시보드가 생성되었습니다. 역할 할당은 실패했습니다. 수동으로 역할을 할당해주세요.',
+                    'warning'
+                  );
+                }
+              } else {
+                notificationManager.show(
+                  '대시보드가 생성되었습니다. 역할 할당을 위해 로그인 정보를 확인할 수 없습니다.',
+                  'warning'
+                );
+              }
+            } catch (assignError) {
+              console.error('❌ 역할 할당 중 오류:', assignError);
+              notificationManager.show(
+                '대시보드가 생성되었습니다. 역할 할당 중 오류가 발생했습니다. 수동으로 역할을 할당해주세요.',
+                'warning'
+              );
+            }
+          } else {
+            notificationManager.show(
+              isEditMode ? '대시보드가 수정되었습니다.' : '대시보드가 생성되었습니다.',
+              'success'
+            );
+          }
+          
           if (onSave) {
             await onSave(result.data);
           }
@@ -696,9 +1014,33 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
             <form onSubmit={handleSubmit} className="dashboard-form">
               {/* 역할 선택 */}
               <div className="form-group">
-                <label htmlFor="tenantRoleId" className="form-label">
-                  역할 <span className="required">*</span>
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label htmlFor="tenantRoleId" className="form-label" style={{ marginBottom: 0 }}>
+                    역할 <span className="required">*</span>
+                  </label>
+                  {!isEditMode && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddRoleModal(true)}
+                      className="btn btn-sm btn-primary"
+                      style={{
+                        padding: '4px 12px',
+                        fontSize: '12px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        border: '1px solid #007bff',
+                        borderRadius: '4px',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        cursor: 'pointer'
+                      }}
+                      disabled={loading || loadingRoles}
+                    >
+                      <FaPlus /> 역할 추가
+                    </button>
+                  )}
+                </div>
                 <select
                   id="tenantRoleId"
                   value={formData.tenantRoleId}
@@ -723,12 +1065,78 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 {errors.tenantRoleId && (
                   <span className="form-error">{errors.tenantRoleId}</span>
                 )}
+                {!isEditMode && formData.tenantRoleId && (
+                  <div className="form-group" style={{ marginTop: '12px' }}>
+                    <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={assignRoleToCurrentUser}
+                        onChange={(e) => setAssignRoleToCurrentUser(e.target.checked)}
+                        disabled={loading}
+                      />
+                      <span style={{ fontSize: '14px' }}>
+                        대시보드 생성 후 현재 계정에 이 역할 자동 할당
+                      </span>
+                    </label>
+                    <small className="form-help" style={{ display: 'block', marginTop: '4px', color: '#666' }}>
+                      체크하면 대시보드 생성 후 바로 확인할 수 있습니다.
+                    </small>
+                  </div>
+                )}
+                {!isEditMode && tenantRoles.length > 0 && (
+                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                    <details>
+                      <summary style={{ cursor: 'pointer', userSelect: 'none' }}>
+                        역할 관리
+                      </summary>
+                      <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+                        {tenantRoles.map(role => (
+                          <div key={role.tenantRoleId} style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            padding: '4px 0',
+                            borderBottom: '1px solid #e0e0e0'
+                          }}>
+                            <span>{role.nameKo || role.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteRole(role.tenantRoleId, role.nameKo || role.name)}
+                              className="btn btn-sm btn-danger"
+                              style={{
+                                padding: '2px 8px',
+                                fontSize: '11px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                border: '1px solid #dc3545',
+                                borderRadius: '4px',
+                                backgroundColor: '#dc3545',
+                                color: 'white',
+                                cursor: 'pointer'
+                              }}
+                              disabled={loading}
+                              title="역할 삭제"
+                            >
+                              <FaTrash /> 삭제
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  </div>
+                )}
               </div>
 
-              {/* 대시보드 이름 (한글) */}
+              {/* 대시보드 이름 (한글) - 자동 생성, 수정 가능 */}
               <div className="form-group">
                 <label htmlFor="dashboardNameKo" className="form-label">
-                  대시보드 이름 (한글) <span className="required">*</span>
+                  대시보드 이름 (한글)
+                  {!isEditMode && (
+                    <span className="form-help" style={{ marginLeft: '8px', fontSize: '12px', color: '#666' }}>
+                      (역할 선택 시 자동 생성됩니다)
+                    </span>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -736,8 +1144,8 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   value={formData.dashboardNameKo}
                   onChange={(e) => handleChange('dashboardNameKo', e.target.value)}
                   className={`form-input ${errors.dashboardNameKo ? 'error' : ''}`}
-                  placeholder="예: 학생 대시보드"
-                  disabled={loading}
+                  placeholder="역할을 선택하면 자동으로 생성됩니다"
+                  disabled={loading || (!isEditMode && !formData.tenantRoleId)}
                   required
                 />
                 {errors.dashboardNameKo && (
@@ -745,8 +1153,8 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 )}
               </div>
 
-              {/* 대시보드 이름 (영문) */}
-              <div className="form-group">
+              {/* 대시보드 이름 (영문) - 자동 생성, 선택적 */}
+              <div className="form-group" style={{ display: 'none' }}>
                 <label htmlFor="dashboardNameEn" className="form-label">
                   대시보드 이름 (영문)
                 </label>
@@ -761,10 +1169,10 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 />
               </div>
 
-              {/* 대시보드 타입 */}
-              <div className="form-group">
+              {/* 대시보드 타입 - 자동 설정, 숨김 */}
+              <div className="form-group" style={{ display: 'none' }}>
                 <label htmlFor="dashboardType" className="form-label">
-                  대시보드 타입 <span className="required">*</span>
+                  대시보드 타입
                 </label>
                 <select
                   id="dashboardType"
@@ -772,7 +1180,6 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   onChange={(e) => handleChange('dashboardType', e.target.value)}
                   className={`form-input ${errors.dashboardType ? 'error' : ''}`}
                   disabled={loading}
-                  required
                 >
                   <option value="">타입을 선택해주세요</option>
                   {dashboardTypeOptions.map(option => (
@@ -786,37 +1193,52 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 )}
               </div>
 
-              {/* 설명 */}
+              {/* 설명 - 선택적, 접기/펼치기 */}
               <div className="form-group">
-                <label htmlFor="description" className="form-label">
-                  설명
-                </label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleChange('description', e.target.value)}
-                  className="form-input"
-                  placeholder="대시보드에 대한 설명을 입력해주세요"
-                  rows="3"
-                  disabled={loading}
-                />
-              </div>
+                <details style={{ marginTop: '8px' }}>
+                  <summary style={{ 
+                    cursor: 'pointer', 
+                    color: '#666', 
+                    fontSize: '14px',
+                    userSelect: 'none'
+                  }}>
+                    고급 설정 (선택사항)
+                  </summary>
+                  <div style={{ marginTop: '16px', paddingLeft: '8px' }}>
+                    {/* 설명 */}
+                    <div className="form-group">
+                      <label htmlFor="description" className="form-label">
+                        설명
+                      </label>
+                      <textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => handleChange('description', e.target.value)}
+                        className="form-input"
+                        placeholder="대시보드에 대한 설명을 입력해주세요 (선택사항)"
+                        rows="3"
+                        disabled={loading}
+                      />
+                    </div>
 
-              {/* 표시 순서 */}
-              <div className="form-group">
-                <label htmlFor="displayOrder" className="form-label">
-                  표시 순서
-                </label>
-                <input
-                  type="number"
-                  id="displayOrder"
-                  value={formData.displayOrder}
-                  onChange={(e) => handleChange('displayOrder', parseInt(e.target.value) || 0)}
-                  className="form-input"
-                  min="0"
-                  disabled={loading}
-                />
-                <small className="form-help">숫자가 작을수록 먼저 표시됩니다.</small>
+                    {/* 표시 순서 */}
+                    <div className="form-group">
+                      <label htmlFor="displayOrder" className="form-label">
+                        표시 순서
+                      </label>
+                      <input
+                        type="number"
+                        id="displayOrder"
+                        value={formData.displayOrder}
+                        onChange={(e) => handleChange('displayOrder', parseInt(e.target.value) || 0)}
+                        className="form-input"
+                        min="0"
+                        disabled={loading}
+                      />
+                      <small className="form-help">숫자가 작을수록 먼저 표시됩니다. (기본값: 0)</small>
+                    </div>
+                  </div>
+                </details>
               </div>
 
               {/* 체크박스 그룹 */}
@@ -1070,6 +1492,155 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
           widget={selectedWidget}
           onSave={handleWidgetConfigSave}
         />
+      )}
+
+      {/* 역할 추가 모달 */}
+      {showAddRoleModal && (
+        <div className="dashboard-form-modal-overlay" onClick={() => setShowAddRoleModal(false)}>
+          <div className="dashboard-form-modal" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="dashboard-form-modal-header">
+              <div className="dashboard-form-modal-title">
+                <FaPlus className="modal-icon" />
+                <h2>역할 추가</h2>
+              </div>
+              <button
+                className="dashboard-form-modal-close"
+                onClick={() => {
+                  setShowAddRoleModal(false);
+                  setSelectedTemplateId('');
+                  setNewRoleName('');
+                  setNewRoleNameEn('');
+                  setNewRoleDescription('');
+                }}
+                type="button"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="dashboard-form-modal-body">
+              {loadingTemplates ? (
+                <div className="loading-container">
+                  <UnifiedLoading message="템플릿 목록을 불러오는 중..." />
+                </div>
+              ) : (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="roleTemplate" className="form-label">
+                      역할 템플릿 선택 <span className="required">*</span>
+                    </label>
+                    <select
+                      id="roleTemplate"
+                      value={selectedTemplateId}
+                      onChange={(e) => {
+                        setSelectedTemplateId(e.target.value);
+                        // 템플릿 선택 시 기본 이름 자동 설정
+                        const selectedTemplate = roleTemplates.find(t => t.roleTemplateId === e.target.value);
+                        if (selectedTemplate && !newRoleName) {
+                          setNewRoleName(selectedTemplate.nameKo || selectedTemplate.name || '');
+                          setNewRoleNameEn(selectedTemplate.nameEn || selectedTemplate.name || '');
+                          setNewRoleDescription(selectedTemplate.descriptionKo || selectedTemplate.description || '');
+                        }
+                      }}
+                      className="form-input"
+                      disabled={loading}
+                    >
+                      <option value="">템플릿을 선택해주세요</option>
+                      {roleTemplates.length === 0 ? (
+                        <option value="" disabled>
+                          사용 가능한 템플릿이 없습니다.
+                        </option>
+                      ) : (
+                        roleTemplates.map(template => (
+                          <option key={template.roleTemplateId} value={template.roleTemplateId}>
+                            {template.nameKo || template.name} {template.businessType ? `(${template.businessType})` : ''}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    <small className="form-help">
+                      템플릿을 선택하면 해당 템플릿의 권한과 기본 위젯 설정이 자동으로 적용됩니다.
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="newRoleName" className="form-label">
+                      역할 이름 (한글) <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="newRoleName"
+                      value={newRoleName}
+                      onChange={(e) => setNewRoleName(e.target.value)}
+                      className="form-input"
+                      placeholder="예: 원장, 상담사, 보조강사 등"
+                      disabled={loading}
+                      required
+                    />
+                    <small className="form-help">
+                      템플릿 선택 시 자동으로 채워지지만, 원하는 이름으로 변경할 수 있습니다.
+                    </small>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="newRoleNameEn" className="form-label">
+                      역할 이름 (영문)
+                    </label>
+                    <input
+                      type="text"
+                      id="newRoleNameEn"
+                      value={newRoleNameEn}
+                      onChange={(e) => setNewRoleNameEn(e.target.value)}
+                      className="form-input"
+                      placeholder="예: Director, Counselor, Assistant Teacher"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="newRoleDescription" className="form-label">
+                      설명
+                    </label>
+                    <textarea
+                      id="newRoleDescription"
+                      value={newRoleDescription}
+                      onChange={(e) => setNewRoleDescription(e.target.value)}
+                      className="form-input"
+                      placeholder="역할에 대한 설명을 입력해주세요 (선택사항)"
+                      rows="3"
+                      disabled={loading}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="dashboard-form-modal-actions" style={{ marginTop: '24px' }}>
+                <MGButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setShowAddRoleModal(false);
+                    setSelectedTemplateId('');
+                    setNewRoleName('');
+                    setNewRoleNameEn('');
+                    setNewRoleDescription('');
+                  }}
+                  disabled={loading}
+                >
+                  취소
+                </MGButton>
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  onClick={handleAddRole}
+                  disabled={loading || !selectedTemplateId || !newRoleName || loadingTemplates}
+                >
+                  {loading ? '추가 중...' : '역할 추가'}
+                </MGButton>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>,
     portalTarget

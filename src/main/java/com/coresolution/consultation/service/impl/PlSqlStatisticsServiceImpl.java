@@ -36,11 +36,18 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
         log.info("📊 일별 통계 PL/SQL 프로시저 호출: branchCode={}, statDate={}", branchCode, statDate);
         
         try {
-            // UTF-8 인코딩 설정
-            jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
-            jdbcTemplate.execute("SET character_set_client = utf8mb4");
-            jdbcTemplate.execute("SET character_set_connection = utf8mb4");
-            jdbcTemplate.execute("SET character_set_results = utf8mb4");
+            // UTF-8 인코딩 설정 (MySQL만 지원, H2는 건너뛰기)
+            try {
+                String url = dataSource.getConnection().getMetaData().getURL();
+                if (url != null && !url.startsWith("jdbc:h2:")) {
+                    jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+                    jdbcTemplate.execute("SET character_set_client = utf8mb4");
+                    jdbcTemplate.execute("SET character_set_connection = utf8mb4");
+                    jdbcTemplate.execute("SET character_set_results = utf8mb4");
+                }
+            } catch (Exception e) {
+                // 데이터베이스 타입 확인 실패 시 무시 (이미 연결된 경우)
+            }
             
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
                 .withProcedureName("UpdateDailyStatistics")

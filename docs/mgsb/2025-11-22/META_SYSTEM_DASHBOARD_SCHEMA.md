@@ -36,6 +36,18 @@
         "width": "auto",
         "height": "auto"
       },
+      "cardStyle": {
+        "style": "v2",
+        "variant": "elevated",
+        "padding": "md",
+        "borderRadius": "md",
+        "shadow": "md",
+        "hoverEffect": true,
+        "border": false,
+        "borderColor": null,
+        "backgroundColor": null,
+        "glassEffect": false
+      },
       "config": {},
       "visibility": {
         "conditions": [],
@@ -47,6 +59,14 @@
     "mode": "light",
     "primaryColor": "#007bff",
     "fontSize": "medium"
+  },
+  "cardLayout": {
+    "defaultStyle": "v2",
+    "defaultVariant": "elevated",
+    "defaultPadding": "md",
+    "defaultBorderRadius": "md",
+    "hoverEffect": true,
+    "shadow": "md"
   },
   "refresh": {
     "enabled": true,
@@ -229,6 +249,62 @@
 | `minHeight` | string | ❌ | - | 최소 높이 |
 | `maxWidth` | string | ❌ | - | 최대 너비 |
 | `maxHeight` | string | ❌ | - | 최대 높이 |
+
+### CardStyle 설정 (동적 카드 레이아웃)
+
+```json
+{
+  "cardStyle": {
+    "style": "v2",
+    "variant": "elevated",
+    "padding": "md",
+    "borderRadius": "md",
+    "shadow": "md",
+    "hoverEffect": true,
+    "border": false,
+    "borderColor": null,
+    "backgroundColor": null,
+    "glassEffect": false
+  }
+}
+```
+
+| 필드 | 타입 | 필수 | 기본값 | 설명 |
+|------|------|------|--------|------|
+| `style` | string | ❌ | "v2" | 카드 스타일: `v2`, `glass`, `flat`, `bordered`, `minimal` |
+| `variant` | string | ❌ | "elevated" | 카드 Variant: `elevated`, `outlined`, `filled`, `text` |
+| `padding` | string | ❌ | "md" | 패딩 크기: `none`, `sm`, `md`, `lg`, `xl` |
+| `borderRadius` | string | ❌ | "md" | 보더 반경: `none`, `sm`, `md`, `lg`, `full` |
+| `shadow` | string | ❌ | "md" | 그림자 크기: `none`, `sm`, `md`, `lg`, `xl` |
+| `hoverEffect` | boolean | ❌ | true | 호버 효과 활성화 |
+| `border` | boolean | ❌ | false | 테두리 표시 |
+| `borderColor` | string | ❌ | null | 테두리 색상 (CSS 색상 값) |
+| `backgroundColor` | string | ❌ | null | 배경 색상 (CSS 색상 값) |
+| `glassEffect` | boolean | ❌ | false | 글래스모피즘 효과 |
+
+### CardLayout 설정 (대시보드 기본 카드 스타일)
+
+```json
+{
+  "cardLayout": {
+    "defaultStyle": "v2",
+    "defaultVariant": "elevated",
+    "defaultPadding": "md",
+    "defaultBorderRadius": "md",
+    "hoverEffect": true,
+    "shadow": "md"
+  }
+}
+```
+
+| 필드 | 타입 | 필수 | 기본값 | 설명 |
+|------|------|------|--------|------|
+| `defaultStyle` | string | ❌ | "v2" | 기본 카드 스타일 |
+| `defaultVariant` | string | ❌ | "elevated" | 기본 카드 Variant |
+| `defaultPadding` | string | ❌ | "md" | 기본 패딩 크기 |
+| `defaultBorderRadius` | string | ❌ | "md" | 기본 보더 반경 |
+| `hoverEffect` | boolean | ❌ | true | 기본 호버 효과 |
+| `shadow` | string | ❌ | "md" | 기본 그림자 크기 |
 
 ### Visibility 설정
 

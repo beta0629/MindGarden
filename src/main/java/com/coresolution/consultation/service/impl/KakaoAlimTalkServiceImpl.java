@@ -8,6 +8,8 @@ import java.util.Map;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -174,7 +176,25 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             
             for (CommonCode code : templateCodes) {
                 if (templateCode.equals(code.getCodeValue())) {
-                    String template = code.getCodeLabel(); // 템플릿 내용
+                    String template = null;
+                    
+                    // extra_data에서 template 필드 추출 시도
+                    if (code.getExtraData() != null && !code.getExtraData().isEmpty()) {
+                        try {
+                            ObjectMapper mapper = new ObjectMapper();
+                            JsonNode jsonNode = mapper.readTree(code.getExtraData());
+                            if (jsonNode.has("template")) {
+                                template = jsonNode.get("template").asText();
+                            }
+                        } catch (Exception e) {
+                            log.warn("⚠️ extra_data에서 template 추출 실패: {}", e.getMessage());
+                        }
+                    }
+                    
+                    // extra_data에 template이 없으면 codeLabel 사용 (하위 호환성)
+                    if (template == null || template.isEmpty()) {
+                        template = code.getCodeLabel();
+                    }
                     
                     // 파라미터 치환
                     String message = template;
@@ -309,51 +329,28 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                 
                 // 상담 예약 확정 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "CONSULTATION_CONFIRMED", 
-                    "[마인드가든] 상담이 확정되었습니다.\n\n" +
-                    "📅 상담일: #{consultationDate}\n" +
-                    "⏰ 시간: #{consultationTime}\n" +
-                    "👩‍⚕️ 상담사: #{consultantName}\n\n" +
-                    "상담 10분 전에 다시 알려드리겠습니다.\n" +
-                    "감사합니다.", 
-                    "{\"category\":\"consultation\",\"priority\":\"high\"}", 1);
+                    "상담 확정 알림", 
+                    "{\"category\":\"consultation\",\"priority\":\"high\",\"template\":\"[마인드가든] 상담이 확정되었습니다.\\n\\n📅 상담일: #{consultationDate}\\n⏰ 시간: #{consultationTime}\\n👩‍⚕️ 상담사: #{consultantName}\\n\\n상담 10분 전에 다시 알려드리겠습니다.\\n감사합니다.\"}", 1);
                 
                 // 상담 리마인더 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "CONSULTATION_REMINDER", 
-                    "[마인드가든] 1시간 후 상담이 예정되어 있습니다.\n\n" +
-                    "⏰ 상담시간: #{consultationTime}\n" +
-                    "👩‍⚕️ 상담사: #{consultantName}\n\n" +
-                    "준비해주시고 시간에 맞춰 참석해주세요.\n" +
-                    "감사합니다.", 
-                    "{\"category\":\"consultation\",\"priority\":\"high\"}", 2);
+                    "상담 리마인더", 
+                    "{\"category\":\"consultation\",\"priority\":\"high\",\"template\":\"[마인드가든] 1시간 후 상담이 예정되어 있습니다.\\n\\n⏰ 상담시간: #{consultationTime}\\n👩‍⚕️ 상담사: #{consultantName}\\n\\n준비해주시고 시간에 맞춰 참석해주세요.\\n감사합니다.\"}", 2);
                 
                 // 환불 완료 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "REFUND_COMPLETED", 
-                    "[마인드가든] 환불이 완료되었습니다.\n\n" +
-                    "💰 환불 회기: #{refundSessions}회\n" +
-                    "💳 환불 금액: #{refundAmount}원\n\n" +
-                    "환불 금액은 결제하신 계좌로 2-3일 내에 입금됩니다.\n" +
-                    "감사합니다.", 
-                    "{\"category\":\"payment\",\"priority\":\"medium\"}", 3);
+                    "환불 완료 알림", 
+                    "{\"category\":\"payment\",\"priority\":\"medium\",\"template\":\"[마인드가든] 환불이 완료되었습니다.\\n\\n💰 환불 회기: #{refundSessions}회\\n💳 환불 금액: #{refundAmount}원\\n\\n환불 금액은 결제하신 계좌로 2-3일 내에 입금됩니다.\\n감사합니다.\"}", 3);
                 
                 // 일정 변경 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "SCHEDULE_CHANGED", 
-                    "[마인드가든] 상담 일정이 변경되었습니다.\n\n" +
-                    "👩‍⚕️ 상담사: #{consultantName}\n" +
-                    "📅 변경 전: #{oldDateTime}\n" +
-                    "📅 변경 후: #{newDateTime}\n\n" +
-                    "변경된 일정에 맞춰 참석해주세요.\n" +
-                    "감사합니다.", 
-                    "{\"category\":\"consultation\",\"priority\":\"medium\"}", 4);
+                    "일정 변경 알림", 
+                    "{\"category\":\"consultation\",\"priority\":\"medium\",\"template\":\"[마인드가든] 상담 일정이 변경되었습니다.\\n\\n👩‍⚕️ 상담사: #{consultantName}\\n📅 변경 전: #{oldDateTime}\\n📅 변경 후: #{newDateTime}\\n\\n변경된 일정에 맞춰 참석해주세요.\\n감사합니다.\"}", 4);
                 
                 // 결제 완료 템플릿
                 createCommonCode("ALIMTALK_TEMPLATE", "PAYMENT_COMPLETED", 
-                    "[마인드가든] 결제가 완료되었습니다.\n\n" +
-                    "💳 결제 금액: #{paymentAmount}원\n" +
-                    "📦 패키지: #{packageName}\n" +
-                    "👩‍⚕️ 상담사: #{consultantName}\n\n" +
-                    "상담 예약을 진행해주세요.\n" +
-                    "감사합니다.", 
-                    "{\"category\":\"payment\",\"priority\":\"medium\"}", 5);
+                    "결제 완료 알림", 
+                    "{\"category\":\"payment\",\"priority\":\"medium\",\"template\":\"[마인드가든] 결제가 완료되었습니다.\\n\\n💳 결제 금액: #{paymentAmount}원\\n📦 패키지: #{packageName}\\n👩‍⚕️ 상담사: #{consultantName}\\n\\n상담 예약을 진행해주세요.\\n감사합니다.\"}", 5);
                 
                 log.info("✅ ALIMTALK_TEMPLATE 공통 코드 생성 완료");
             }

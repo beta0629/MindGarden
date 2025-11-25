@@ -127,11 +127,9 @@ const DashboardWidgetEditor = ({
     onWidgetsChange([...widgets, newWidget]);
   };
 
-  // 위젯 삭제
+  // 위젯 삭제 (확인 없이 바로 삭제 - 간소화)
   const handleDeleteWidget = (widgetId) => {
-    if (window.confirm('이 위젯을 삭제하시겠습니까?')) {
-      onWidgetsChange(widgets.filter(w => w.id !== widgetId));
-    }
+    onWidgetsChange(widgets.filter(w => w.id !== widgetId));
   };
 
   // 위젯 설정 열기
@@ -263,22 +261,46 @@ const DashboardWidgetEditor = ({
                   </span>
                 </div>
                 <div className="widget-item-actions">
-                  <MGButton
-                    variant="secondary"
-                    size="small"
+                  <button
+                    type="button"
                     onClick={() => handleConfigWidget(widget)}
-                    className="widget-config-btn"
+                    className="widget-action-btn widget-config-btn"
+                    title="위젯 설정"
+                    style={{
+                      padding: '6px 12px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      backgroundColor: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      color: '#666'
+                    }}
                   >
                     <FaCog /> 설정
-                  </MGButton>
-                  <MGButton
-                    variant="danger"
-                    size="small"
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => handleDeleteWidget(widget.id)}
-                    className="widget-delete-btn"
+                    className="widget-action-btn widget-delete-btn"
+                    title="위젯 삭제"
+                    style={{
+                      padding: '6px 12px',
+                      border: '1px solid #f44336',
+                      borderRadius: '4px',
+                      backgroundColor: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      color: '#f44336'
+                    }}
                   >
                     <FaTrash /> 삭제
-                  </MGButton>
+                  </button>
                 </div>
               </div>
             ))}

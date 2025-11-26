@@ -32,15 +32,26 @@ function LoginPageContent() {
   useEffect(() => {
     setMounted(true);
     
-    // 클라이언트 사이드에서 쿠키 읽기
-    const cookieMap = parseCookie(typeof document !== "undefined" ? document.cookie ?? "" : "");
-    const token = cookieMap.get("ops_token") ?? null;
-    const redirectTo = searchParams?.get("redirect") ?? "/dashboard";
+    // 로그인 페이지 진입 시 기존 쿠키 삭제 (유효하지 않은 토큰으로 인한 무한 루프 방지)
+    const redirectTo = searchParams?.get("redirect");
+    
+    // redirect 파라미터가 있으면 인증 실패로 리다이렉트된 것이므로 쿠키 삭제
+    if (redirectTo && typeof document !== "undefined") {
+      console.log("[LoginPage] 인증 실패로 리다이렉트됨, 기존 쿠키 삭제");
+      document.cookie = "ops_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "ops_actor_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "ops_actor_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    } else {
+      // redirect 파라미터가 없으면 직접 접근이므로 토큰 확인
+      const cookieMap = parseCookie(typeof document !== "undefined" ? document.cookie ?? "" : "");
+      const token = cookieMap.get("ops_token") ?? null;
+      const defaultRedirect = "/dashboard";
 
-    // 토큰이 있고 redirect 파라미터가 없거나 대시보드인 경우에만 리다이렉트
-    // 403 오류로 인한 리다이렉트는 무한 루프 방지를 위해 제외
-    if (token && (!redirectTo || redirectTo === "/dashboard" || !redirectTo.includes("/onboarding/detail"))) {
-      router.push(redirectTo);
+      // 토큰이 있으면 대시보드로 리다이렉트
+      if (token) {
+        console.log("[LoginPage] 유효한 토큰 있음, 대시보드로 리다이렉트");
+        router.push(defaultRedirect);
+      }
     }
   }, [searchParams, router]);
 

@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Entity;
 
 @Entity
-@Table(name = "ops_onboarding_request")
+@Table(name = "onboarding_request")
 public class OnboardingRequest extends BaseEntity {
 
     @Column(nullable = false, length = 64)

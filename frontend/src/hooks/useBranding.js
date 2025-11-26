@@ -61,7 +61,7 @@ export const useBranding = (options = {}) => {
       console.debug('브랜딩 정보 로드 완료:', {
         logoType: props.logoType,
         title: props.title,
-        hasLogo: branding?.logo?.url ? true : false
+        hasLogo: Boolean(branding?.logo?.url)
       });
 
     } catch (err) {

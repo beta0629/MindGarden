@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 const DEFAULT_API_BASE_URL =
   process.env.OPS_API_BASE_URL ??
   process.env.NEXT_PUBLIC_OPS_API_BASE_URL ??
-  "http://localhost:8080/api/v1";
+  "http://localhost:8081/api/v1";
 
 const COOKIE_SETTINGS = {
   path: "/",

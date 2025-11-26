@@ -106,6 +106,7 @@ import UnifiedNotifications from './components/notifications/UnifiedNotification
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
 import AdminMessages from './components/admin/AdminMessages';
 import SystemConfigManagement from './components/admin/SystemConfigManagement';
+import CacheMonitoringDashboard from './components/admin/CacheMonitoringDashboard';
 import OnboardingRequest from './components/onboarding/OnboardingRequest';
 import OnboardingStatus from './components/onboarding/OnboardingStatus';
 
@@ -437,6 +438,7 @@ function AppContent() {
             <Route path="/admin/accounts" element={<AccountManagement />} />
             <Route path="/admin/user-management" element={<UserManagement />} />
             <Route path="/admin/dashboards" element={<DashboardManagement />} />
+            <Route path="/admin/cache-monitoring" element={<CacheMonitoringDashboard />} />
             <Route path="/admin/system-notifications" element={<SystemNotificationManagement />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
             <Route path="/admin/messages" element={<AdminMessages />} />

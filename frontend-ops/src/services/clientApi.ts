@@ -135,14 +135,17 @@ function resolveClientRuntimeConfig(): ClientRuntimeConfig {
   const cookieString = typeof document !== "undefined" ? document.cookie ?? "" : "";
   const cookieMap = parseCookie(cookieString);
 
-  // 디버깅: 쿠키 파싱 결과 확인
-  if (typeof window !== "undefined" && cookieString) {
-    console.debug("[resolveClientRuntimeConfig] 쿠키 파싱:", {
-      cookieString: cookieString.substring(0, 200),
+  // 디버깅: 쿠키 파싱 결과 확인 (항상 출력)
+  if (typeof window !== "undefined") {
+    console.log("[resolveClientRuntimeConfig] 쿠키 파싱:", {
+      hasCookieString: !!cookieString,
+      cookieStringLength: cookieString.length,
+      cookieString: cookieString,
       hasOpsToken: cookieMap.has("ops_token"),
       opsTokenLength: cookieMap.get("ops_token")?.length || 0,
-      opsTokenPreview: cookieMap.get("ops_token")?.substring(0, 20) || "없음",
-      allCookies: Array.from(cookieMap.keys())
+      opsTokenPreview: cookieMap.get("ops_token")?.substring(0, 30) || "없음",
+      allCookieKeys: Array.from(cookieMap.keys()),
+      allCookieEntries: Array.from(cookieMap.entries()).map(([k, v]) => [k, v.substring(0, 20)])
     });
   }
 

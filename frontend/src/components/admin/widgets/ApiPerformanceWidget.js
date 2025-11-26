@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FaRocket, FaTachometerAlt, FaExclamationTriangle, FaClock, FaChartArea } from 'react-icons/fa';
 import { PerformanceUtils } from '../../../utils/performanceUtils';
 import { ApiPerformanceProcessor, ApiPerformanceAnalyzer } from '../../../utils/apiPerformanceUtils';
-import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
+import { WIDGET_CONSTANTS, API_PERFORMANCE_WIDGET } from '../../../constants/widgetConstants';
 import './ApiPerformanceWidget.css';
 
 /**
@@ -10,8 +10,8 @@ import './ApiPerformanceWidget.css';
  * 실시간 API 응답 시간 및 성능 지표 표시
  */
 const ApiPerformanceWidget = ({ 
-  title = WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.DEFAULT_TITLE, 
-  refreshInterval = WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.DEFAULT_REFRESH_INTERVAL,
+  title = API_PERFORMANCE_WIDGET.DEFAULT_TITLE, 
+  refreshInterval = API_PERFORMANCE_WIDGET.DEFAULT_REFRESH_INTERVAL,
   className = "",
   ...props 
 }) => {
@@ -29,14 +29,14 @@ const ApiPerformanceWidget = ({
   });
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [selectedView, setSelectedView] = useState(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY);
+  const [selectedView, setSelectedView] = useState(API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY);
 
   // API 성능 데이터 조회
   const fetchPerformanceData = useCallback(async () => {
     setLoading(true);
     try {
-      const endpoints = WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.API_ENDPOINTS;
-      const thresholds = WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.THRESHOLDS;
+      const endpoints = API_PERFORMANCE_WIDGET.API_ENDPOINTS;
+      const thresholds = API_PERFORMANCE_WIDGET.THRESHOLDS;
       
       // 전체 성능 통계 조회
       const statsResponse = await fetch(endpoints.STATS);
@@ -96,7 +96,7 @@ const ApiPerformanceWidget = ({
           </div>
           <div className="metric-content">
             <div className="metric-label">
-              {WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.METRIC_LABELS.AVERAGE_RESPONSE_TIME}
+              {API_PERFORMANCE_WIDGET.METRIC_LABELS.AVERAGE_RESPONSE_TIME}
             </div>
             <div className="metric-value">
               {PerformanceUtils.formatDuration(performanceData.summary.averageResponseTime)}
@@ -110,7 +110,7 @@ const ApiPerformanceWidget = ({
           </div>
           <div className="metric-content">
             <div className="metric-label">
-              {WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.METRIC_LABELS.TOTAL_REQUESTS}
+              {API_PERFORMANCE_WIDGET.METRIC_LABELS.TOTAL_REQUESTS}
             </div>
             <div className="metric-value">
               {PerformanceUtils.formatNumber(performanceData.summary.totalRequests)}
@@ -124,7 +124,7 @@ const ApiPerformanceWidget = ({
           </div>
           <div className="metric-content">
             <div className="metric-label">
-              {WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.METRIC_LABELS.OVERALL_ERROR_RATE}
+              {API_PERFORMANCE_WIDGET.METRIC_LABELS.OVERALL_ERROR_RATE}
             </div>
             <div className="metric-value">
               {PerformanceUtils.formatPercentage(performanceData.summary.overallErrorRate)}
@@ -138,7 +138,7 @@ const ApiPerformanceWidget = ({
           </div>
           <div className="metric-content">
             <div className="metric-label">
-              {WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.METRIC_LABELS.SLOWEST_REQUEST}
+              {API_PERFORMANCE_WIDGET.METRIC_LABELS.SLOWEST_REQUEST}
             </div>
             <div className="metric-value">
               {PerformanceUtils.formatDuration(performanceData.summary.slowestRequest)}
@@ -158,7 +158,7 @@ const ApiPerformanceWidget = ({
       {Object.keys(performanceData.slowApis).length === 0 ? (
         <div className="no-data">
           <FaRocket />
-          <p>{WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.MESSAGES.NO_SLOW_APIS}</p>
+          <p>{API_PERFORMANCE_WIDGET.MESSAGES.NO_SLOW_APIS}</p>
         </div>
       ) : (
         Object.entries(performanceData.slowApis).slice(0, 5).map(([endpoint, stats]) => (
@@ -187,7 +187,7 @@ const ApiPerformanceWidget = ({
       {Object.keys(performanceData.errorProneApis).length === 0 ? (
         <div className="no-data">
           <FaExclamationTriangle />
-          <p>{WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.MESSAGES.NO_ERROR_APIS}</p>
+          <p>{API_PERFORMANCE_WIDGET.MESSAGES.NO_ERROR_APIS}</p>
         </div>
       ) : (
         Object.entries(performanceData.errorProneApis).slice(0, 5).map(([endpoint, stats]) => (
@@ -219,20 +219,20 @@ const ApiPerformanceWidget = ({
         </div>
         <div className="view-selector">
           <button 
-            className={`view-button ${selectedView === WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY ? 'active' : ''}`}
-            onClick={() => setSelectedView(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY)}
+            className={`view-button ${selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY ? 'active' : ''}`}
+            onClick={() => setSelectedView(API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY)}
           >
             요약
           </button>
           <button 
-            className={`view-button ${selectedView === WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW ? 'active' : ''}`}
-            onClick={() => setSelectedView(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW)}
+            className={`view-button ${selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW ? 'active' : ''}`}
+            onClick={() => setSelectedView(API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW)}
           >
             느린 API
           </button>
           <button 
-            className={`view-button ${selectedView === WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS ? 'active' : ''}`}
-            onClick={() => setSelectedView(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS)}
+            className={`view-button ${selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS ? 'active' : ''}`}
+            onClick={() => setSelectedView(API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS)}
           >
             에러 API
           </button>
@@ -240,15 +240,15 @@ const ApiPerformanceWidget = ({
       </div>
 
       <div className="widget-content">
-        {selectedView === WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY && renderSummaryView()}
-        {selectedView === WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW && renderSlowApisView()}
-        {selectedView === WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS && renderErrorProneApisView()}
+        {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY && renderSummaryView()}
+        {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW && renderSlowApisView()}
+        {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS && renderErrorProneApisView()}
       </div>
 
       <div className="widget-footer">
         {loading && (
           <div className="loading-indicator">
-            {WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.MESSAGES.LOADING}
+            {API_PERFORMANCE_WIDGET.MESSAGES.LOADING}
           </div>
         )}
         {lastUpdated && !loading && (

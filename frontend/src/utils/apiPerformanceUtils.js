@@ -7,7 +7,7 @@
  * @since 2025-11-26
  */
 
-import { WIDGET_CONSTANTS } from '../constants/widgetConstants';
+import { WIDGET_CONSTANTS, API_PERFORMANCE_WIDGET } from '../constants/widgetConstants';
 import { PerformanceUtils } from './performanceUtils';
 
 // ===== API 성능 데이터 처리 =====
@@ -104,7 +104,7 @@ export const ApiPerformanceAnalyzer = {
    * 응답 시간 성능 등급 계산
    */
   calculateResponseTimeGrade: (responseTime) => {
-    const thresholds = WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.THRESHOLDS.RESPONSE_TIME;
+    const thresholds = API_PERFORMANCE_WIDGET.THRESHOLDS.RESPONSE_TIME;
     
     if (responseTime < thresholds.EXCELLENT) return 'excellent';
     if (responseTime < thresholds.GOOD) return 'good';
@@ -116,7 +116,7 @@ export const ApiPerformanceAnalyzer = {
    * 에러율 성능 등급 계산
    */
   calculateErrorRateGrade: (errorRate) => {
-    const thresholds = WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.THRESHOLDS.ERROR_RATE;
+    const thresholds = API_PERFORMANCE_WIDGET.THRESHOLDS.ERROR_RATE;
     
     if (errorRate < thresholds.EXCELLENT) return 'excellent';
     if (errorRate < thresholds.GOOD) return 'good';
@@ -195,8 +195,8 @@ export const ApiPerformanceAnalyzer = {
     return {
       responseTimeGrade,
       errorRateGrade,
-      isSlowApi: endpointStats.averageDuration > WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.THRESHOLDS.SLOW_API_MS,
-      isErrorProne: endpointStats.errorRate > WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.THRESHOLDS.ERROR_RATE_PERCENT,
+      isSlowApi: endpointStats.averageDuration > API_PERFORMANCE_WIDGET.THRESHOLDS.SLOW_API_MS,
+      isErrorProne: endpointStats.errorRate > API_PERFORMANCE_WIDGET.THRESHOLDS.ERROR_RATE_PERCENT,
       healthScore: (responseTimeGrade === 'excellent' ? 4 : responseTimeGrade === 'good' ? 3 : responseTimeGrade === 'average' ? 2 : 1) +
                    (errorRateGrade === 'excellent' ? 4 : errorRateGrade === 'good' ? 3 : errorRateGrade === 'average' ? 2 : 1)
     };

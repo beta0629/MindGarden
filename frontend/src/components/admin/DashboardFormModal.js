@@ -185,6 +185,15 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         if (!isEditMode && filteredRoles.length < rolesResponse.length) {
           const filteredCount = rolesResponse.length - filteredRoles.length;
           console.log(`ℹ️ ${filteredCount}개 역할은 이미 대시보드가 있어 제외되었습니다.`);
+          
+          // 사용 가능한 역할이 없으면 사용자에게 알림
+          if (filteredRoles.length === 0) {
+            console.warn('⚠️ 생성 가능한 역할이 없습니다.');
+            notificationManager.show(
+              '생성 가능한 역할이 없습니다. 모든 역할에 대시보드가 이미 존재합니다. 새로운 역할을 먼저 생성해주세요.',
+              'warning'
+            );
+          }
         }
       } else {
         console.warn('⚠️ 테넌트 역할 목록 응답 형식 오류:', rolesResponse);
@@ -728,9 +737,21 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   // 유효성 검사
   const validate = () => {
     const newErrors = {};
+    console.log('🔍 유효성 검사 시작:', { formData, tenantRoles });
 
     if (!formData.tenantRoleId) {
+      console.warn('⚠️ tenantRoleId가 없음:', formData.tenantRoleId);
       newErrors.tenantRoleId = '역할을 선택해주세요.';
+    } else {
+      // 선택된 역할이 실제로 존재하는지 확인
+      const selectedRole = tenantRoles.find(role => role.tenantRoleId === formData.tenantRoleId);
+      if (!selectedRole) {
+        console.error('❌ 선택된 역할이 존재하지 않음:', { 
+          selectedId: formData.tenantRoleId, 
+          availableRoles: tenantRoles.map(r => ({ id: r.tenantRoleId, name: r.nameKo }))
+        });
+        newErrors.tenantRoleId = '선택된 역할이 유효하지 않습니다. 모달을 닫고 다시 열어주세요.';
+      }
     }
 
     // 대시보드 이름 자동 생성 (역할 선택 시)
@@ -775,14 +796,18 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+    console.log('✅ 유효성 검사 결과:', { isValid, errors: newErrors });
+    return isValid;
   };
 
   // 폼 제출 핸들러
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('🔄 대시보드 생성 시작:', { formData, tenantRoles });
 
     if (!validate()) {
+      console.error('❌ 유효성 검사 실패:', errors);
       notificationManager.show('입력한 정보를 확인해주세요.', 'warning');
       return;
     }
@@ -1054,6 +1079,10 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   {tenantRoles.length === 0 && !loadingRoles ? (
                     <option value="" disabled>
                       생성 가능한 역할이 없습니다. (모든 역할에 대시보드가 이미 존재합니다)
+                    </option>
+                  ) : tenantRoles.length === 0 && loadingRoles ? (
+                    <option value="" disabled>
+                      역할 목록을 불러오는 중...
                     </option>
                   ) : (
                     tenantRoles.map(role => (

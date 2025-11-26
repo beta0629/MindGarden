@@ -13,7 +13,6 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.BaseRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
-import com.coresolution.consultation.service.CacheService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -51,8 +50,6 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private EmailService emailService;
     
-    @Autowired
-    private CacheService cacheService;
     
     @Autowired
     private BranchService branchService;
@@ -62,8 +59,9 @@ public class UserServiceImpl implements UserService {
     public Optional<User> findById(Long id) {
         String cacheKey = "user:" + id;
         
-        // 캐시에서 조회 시도
-        Optional<User> cachedUser = cacheService.get(cacheKey, User.class);
+        // 캐시에서 조회 시도 - 캐시 서비스 임시 비활성화
+        // Optional<User> cachedUser = cacheService.get(cacheKey, User.class);
+        Optional<User> cachedUser = Optional.empty();
         if (cachedUser.isPresent()) {
             log.debug("사용자 캐시 히트: id={}", id);
             return cachedUser;
@@ -72,8 +70,8 @@ public class UserServiceImpl implements UserService {
         // 데이터베이스에서 조회
         Optional<User> user = userRepository.findById(id);
         if (user.isPresent()) {
-            // 캐시에 저장
-            cacheService.put(cacheKey, user.get());
+            // 캐시에 저장 - 캐시 서비스 임시 비활성화
+            // cacheService.put(cacheKey, user.get());
             log.debug("사용자 캐시 저장: id={}", id);
         }
         
@@ -134,9 +132,9 @@ public class UserServiceImpl implements UserService {
         
         User savedUser = userRepository.save(user);
         
-        // 캐시 무효화
-        String cacheKey = "user:" + savedUser.getId();
-        cacheService.evict(cacheKey);
+        // 캐시 무효화 - 캐시 서비스 임시 비활성화
+        // String cacheKey = "user:" + savedUser.getId();
+        // cacheService.evict(cacheKey);
         log.debug("사용자 캐시 무효화: id={}", savedUser.getId());
         
         return savedUser;

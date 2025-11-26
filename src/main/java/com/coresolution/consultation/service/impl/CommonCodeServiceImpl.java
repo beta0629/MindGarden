@@ -22,6 +22,8 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -100,8 +102,9 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     }
 
     @Override
+    @CacheEvict(value = {"tenantCodes", "coreCodes"}, allEntries = true)
     public CommonCode createCommonCode(CommonCodeDto dto) {
-        log.info("🔧 공통코드 생성: {} - {}", dto.getCodeGroup(), dto.getCodeValue());
+        log.info("🔧 공통코드 생성 (캐시 무효화): {} - {}", dto.getCodeGroup(), dto.getCodeValue());
         
         // 중복 체크
         if (commonCodeRepository.findByCodeGroupAndCodeValue(dto.getCodeGroup(), dto.getCodeValue()).isPresent()) {
@@ -417,8 +420,9 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "coreCodes", key = "#codeGroup", unless = "#result.isEmpty()")
     public List<CommonCode> getCoreCodesByGroup(String codeGroup) {
-        log.info("🔍 코어솔루션 코드 그룹별 조회: {}", codeGroup);
+        log.info("🔍 코어솔루션 코드 그룹별 조회 (캐시 적용): {}", codeGroup);
         return commonCodeRepository.findCoreCodesByGroup(codeGroup);
     }
     
@@ -433,8 +437,9 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "tenantCodes", key = "#tenantId + ':' + #codeGroup", unless = "#result.isEmpty()")
     public List<CommonCode> getTenantCodesByGroup(String tenantId, String codeGroup) {
-        log.info("🔍 테넌트별 코드 그룹별 조회: 테넌트={}, 그룹={}", tenantId, codeGroup);
+        log.info("🔍 테넌트별 코드 그룹별 조회 (캐시 적용): 테넌트={}, 그룹={}", tenantId, codeGroup);
         return commonCodeRepository.findTenantCodesByGroup(tenantId, codeGroup);
     }
     

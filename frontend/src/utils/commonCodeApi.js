@@ -300,44 +300,17 @@ export const getCodeGroups = async () => {
  * @param {string} codeGroup - 코드 그룹
  * @returns {Promise<Array>} 코어 코드 목록
  */
-export const getCoreCodes = async (codeGroup) => {
+export const getCoreCodesAPI = async (codeGroup) => {
     try {
-        const response = await apiGet(`${API_BASE}/core/groups/${codeGroup}`);
+        const response = await apiGet(`${API_BASE}?codeGroup=${codeGroup}`);
         
-        if (Array.isArray(response)) {
-            return response;
+        if (response?.data?.codes && Array.isArray(response.data.codes)) {
+            return response.data.codes;
         }
         
         return [];
     } catch (error) {
         console.error('코어 코드 조회 실패:', error);
-        return [];
-    }
-};
-
-/**
- * 테넌트 코드 조회 (독립성 보장)
- * 코어 코드 폴백 없음 - 완전한 테넌트 독립성 보장
- * @param {string} codeGroup - 코드 그룹 (선택)
- * @returns {Promise<Array>} 테넌트 코드 목록 (코어 코드 폴백 없음)
- */
-export const getTenantCodes = async (codeGroup = null) => {
-    try {
-        const url = codeGroup ? `${API_BASE}/tenant?codeGroup=${codeGroup}` : `${API_BASE}/tenant`;
-        const response = await apiGet(url);
-        
-        if (response.success && response.data) {
-            return response.data.codes || [];
-        }
-        
-        // 하위 호환성: 기존 API 형식 지원
-        if (Array.isArray(response)) {
-            return response;
-        }
-        
-        return [];
-    } catch (error) {
-        console.error('테넌트 코드 조회 실패:', error);
         return [];
     }
 };

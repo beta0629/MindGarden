@@ -68,12 +68,22 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         
         // 정적 빌드에서는 백엔드 응답에서 토큰을 받아 직접 쿠키 설정
         if (isStaticBuild) {
-          const data = body?.data || body;
-          const token = data?.token;
-          const actorId = data?.actorId || trimmedUsername;
-          const actorRole = data?.actorRole || "HQ_ADMIN";
+          console.log("[LoginForm] 전체 응답:", body);
+          
+          // 응답 구조: { success: true, data: { token, actorId, actorRole } }
+          const data = body?.data;
+          if (!data) {
+            console.error("[LoginForm] body.data가 없습니다:", body);
+            setFeedback("로그인 응답 형식이 올바르지 않습니다.");
+            return;
+          }
+          
+          const token = data.token;
+          const actorId = data.actorId || trimmedUsername;
+          const actorRole = data.actorRole || "HQ_ADMIN";
           
           if (!token) {
+            console.error("[LoginForm] 토큰이 없습니다:", data);
             setFeedback("로그인 응답에 토큰이 없습니다.");
             return;
           }
@@ -86,7 +96,16 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           document.cookie = `ops_actor_id=${encodeURIComponent(actorId)}; ${cookieOptions}`;
           document.cookie = `ops_actor_role=${actorRole}; ${cookieOptions}`;
           
-          console.log("[LoginForm] 쿠키 설정 완료:", { token: token.substring(0, 20), actorId, actorRole });
+          console.log("[LoginForm] 쿠키 설정 완료:", { 
+            token: token.substring(0, 30) + "...", 
+            actorId, 
+            actorRole,
+            cookieOptions,
+            isHttps
+          });
+          
+          // 쿠키 설정 직후 확인
+          console.log("[LoginForm] document.cookie:", document.cookie);
         }
         
         console.log("[LoginForm] 로그인 성공, 리다이렉트:", redirectPath);

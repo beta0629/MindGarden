@@ -40,19 +40,19 @@ const ApiPerformanceWidget = ({
       
       // 전체 성능 통계 조회
       const statsResponse = await fetch(endpoints.STATS);
-      let transformedStats = ApiPerformanceProcessor.transformApiStatsResponse(
+      const transformedStats = ApiPerformanceProcessor.transformApiStatsResponse(
         statsResponse.ok ? await statsResponse.json() : null
       );
 
       // 느린 API 목록 조회
       const slowApisResponse = await fetch(`${endpoints.SLOW_APIS}?thresholdMs=${thresholds.SLOW_API_MS}`);
-      let transformedSlowApis = ApiPerformanceProcessor.transformSlowApisResponse(
+      const transformedSlowApis = ApiPerformanceProcessor.transformSlowApisResponse(
         slowApisResponse.ok ? await slowApisResponse.json() : null
       );
 
       // 에러율 높은 API 목록 조회
       const errorProneResponse = await fetch(`${endpoints.ERROR_PRONE_APIS}?errorRateThreshold=${thresholds.ERROR_RATE_PERCENT}`);
-      let transformedErrorApis = ApiPerformanceProcessor.transformErrorProneApisResponse(
+      const transformedErrorApis = ApiPerformanceProcessor.transformErrorProneApisResponse(
         errorProneResponse.ok ? await errorProneResponse.json() : null
       );
 

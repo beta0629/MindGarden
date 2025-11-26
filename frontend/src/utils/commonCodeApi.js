@@ -121,29 +121,6 @@ export const getTenantCodes = async (codeGroup = null) => {
     }
 };
 
-/**
- * 코어 코드 전용 조회
- * @param {string} codeGroup - 코드 그룹
- * @returns {Promise<Array>} 코어 코드 목록
- */
-export const getCoreCodes = async (codeGroup) => {
-    try {
-        const response = await apiGet(`${API_BASE}/core/groups/${codeGroup}`);
-        
-        if (Array.isArray(response)) {
-            return response;
-        }
-        
-        if (response.success && response.data) {
-            return response.data.codes || response.data || [];
-        }
-        
-        return [];
-    } catch (error) {
-        console.error('코어 코드 조회 실패:', error);
-        return [];
-    }
-};
 
 /**
  * 공통코드 상세 조회

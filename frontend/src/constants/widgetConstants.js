@@ -352,6 +352,62 @@ export const WIDGET_THEMES = {
   MINIMAL: 'minimal'
 };
 
+// ===== 보안 모니터링 위젯 상수 =====
+export const SECURITY_WIDGET = {
+  DEFAULT_TITLE: '보안 모니터링',
+  DEFAULT_REFRESH_INTERVAL: WIDGET_CONSTANTS.REFRESH_INTERVALS.DEFAULT,
+  
+  // API 엔드포인트
+  API_ENDPOINTS: {
+    STATUS: '/api/admin/security/status',
+    STATS: '/api/admin/security/stats',
+    BLOCKED_IPS: '/api/admin/security/blocked-ips',
+    AUDIT_REPORT: '/api/admin/security/audit-report',
+    RECOMMENDATIONS: '/api/admin/security/recommendations'
+  },
+  
+  // 뷰 타입
+  VIEW_TYPES: {
+    OVERVIEW: 'overview',
+    EVENTS: 'events',
+    THREATS: 'threats'
+  },
+  
+  // 보안 상태
+  SECURITY_STATUS: {
+    SECURE: 'SECURE',
+    MONITORING: 'MONITORING',
+    WARNING: 'WARNING',
+    ALERT: 'ALERT'
+  },
+  
+  // 위협 수준
+  THREAT_LEVELS: {
+    LOW: 'LOW',
+    MEDIUM: 'MEDIUM',
+    HIGH: 'HIGH',
+    CRITICAL: 'CRITICAL'
+  },
+  
+  // 보안 점수 임계값
+  SCORE_THRESHOLDS: {
+    EXCELLENT: 90,
+    GOOD: 75,
+    AVERAGE: 50,
+    POOR: 25
+  },
+  
+  // 상태 메시지
+  MESSAGES: {
+    NO_RECENT_EVENTS: '최근 보안 이벤트가 없습니다. 시스템이 안전합니다! 🛡️',
+    LOADING: '보안 데이터 업데이트 중...',
+    ERROR: '보안 데이터 조회에 실패했습니다.',
+    SECURE_STATUS: '시스템이 안전한 상태입니다.',
+    WARNING_STATUS: '보안 위험이 감지되었습니다.',
+    ALERT_STATUS: '즉시 조치가 필요한 보안 위협이 있습니다!'
+  }
+};
+
 // WIDGET_CONSTANTS에 모든 위젯 상수 통합
 WIDGET_CONSTANTS.PERFORMANCE_WIDGET = PERFORMANCE_WIDGET;
 WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET = CACHE_MONITORING_WIDGET;
@@ -362,6 +418,7 @@ WIDGET_CONSTANTS.STATS_WIDGET = STATS_WIDGET;
 WIDGET_CONSTANTS.TABLE_WIDGET = TABLE_WIDGET;
 WIDGET_CONSTANTS.WIDGET_ICONS = WIDGET_ICONS;
 WIDGET_CONSTANTS.WIDGET_THEMES = WIDGET_THEMES;
+WIDGET_CONSTANTS.SECURITY_WIDGET = SECURITY_WIDGET;
 
 export default {
   WIDGET_CONSTANTS,
@@ -373,5 +430,6 @@ export default {
   STATS_WIDGET,
   TABLE_WIDGET,
   WIDGET_ICONS,
-  WIDGET_THEMES
+  WIDGET_THEMES,
+  SECURITY_WIDGET
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaDatabase, FaChartLine, FaClock, FaMemory, FaRefresh } from 'react-icons/fa';
+import { FaDatabase, FaChartLine, FaClock, FaMemory, FaSync } from 'react-icons/fa';
 import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import './CacheMonitoringDashboard.css';
@@ -115,7 +115,7 @@ const CacheMonitoringDashboard = () => {
             disabled={loading}
             className="refresh-button"
           >
-            <FaRefresh className={loading ? 'spinning' : ''} />
+            <FaSync className={loading ? 'spinning' : ''} />
             새로고침
           </button>
           <button

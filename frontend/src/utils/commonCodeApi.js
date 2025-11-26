@@ -12,13 +12,71 @@ import { apiGet, apiPost, apiPut, apiDelete } from './ajax';
 const API_BASE = '/api/v1/common-codes';
 
 /**
+ * 테넌트별 독립 코드 그룹 목록
+ * 이 코드 그룹들은 테넌트별로 완전히 독립적으로 관리되어야 함
+ */
+const TENANT_ISOLATED_CODE_GROUPS = [
+    'CONSULTATION_PACKAGE',
+    'PACKAGE_TYPE',
+    'PAYMENT_METHOD',
+    'SPECIALTY',
+    'CONSULTATION_TYPE',
+    'MAPPING_STATUS',
+    'RESPONSIBILITY',
+    'VACATION_TYPE',
+    'MESSAGE_TYPE',
+    'PRIORITY',
+    'COMPLETION_STATUS',
+    'FINANCIAL_CATEGORY',
+    'TAX_CATEGORY',
+    'BUDGET_CATEGORY',
+    'ITEM_CATEGORY',
+    'SALARY_TYPE',
+    'SALARY_OPTION_TYPE',
+    'SALARY_PAY_DAY'
+];
+
+/**
+ * 코어 코드 그룹 목록 (시스템 전역)
+ */
+const CORE_CODE_GROUPS = [
+    'USER_STATUS',
+    'USER_ROLE',
+    'ROLE',
+    'CODE_GROUP_TYPE',
+    'SYSTEM_STATUS',
+    'NOTIFICATION_TYPE',
+    'GENDER',
+    'BANK',
+    'ADDRESS_TYPE'
+];
+
+/**
  * 공통코드 목록 조회
  * @param {string} codeGroup - 코드 그룹 (선택)
+ * @param {boolean} forceTenant - 테넌트 코드만 조회 (기본값: 자동 판단)
  * @returns {Promise<Array>} 공통코드 목록
  */
-export const getCommonCodes = async (codeGroup = null) => {
+export const getCommonCodes = async (codeGroup = null, forceTenant = null) => {
     try {
-        const url = codeGroup ? `${API_BASE}?codeGroup=${codeGroup}` : API_BASE;
+        // forceTenant가 명시되지 않았으면 코드 그룹 타입에 따라 자동 판단
+        let useTenantApi = forceTenant;
+        if (useTenantApi === null && codeGroup) {
+            useTenantApi = TENANT_ISOLATED_CODE_GROUPS.includes(codeGroup);
+        }
+        
+        let url;
+        if (useTenantApi) {
+            // 테넌트 코드 전용 API (코어 코드 폴백 없음 - 독립성 보장)
+            url = codeGroup ? `${API_BASE}/tenant?codeGroup=${codeGroup}` : `${API_BASE}/tenant`;
+        } else if (codeGroup && CORE_CODE_GROUPS.includes(codeGroup)) {
+            // 코어 코드 전용 API
+            url = `${API_BASE}/core/groups/${codeGroup}`;
+        } else {
+            // 통합 조회 API (하위 호환성 - 시스템 전역 코드에만 사용)
+            url = codeGroup ? `${API_BASE}?codeGroup=${codeGroup}` : API_BASE;
+        }
+        
         const response = await apiGet(url);
         
         if (response.success && response.data) {
@@ -33,6 +91,56 @@ export const getCommonCodes = async (codeGroup = null) => {
         return [];
     } catch (error) {
         console.error('공통코드 목록 조회 실패:', error);
+        return [];
+    }
+};
+
+/**
+ * 테넌트 코드 전용 조회 (독립성 보장)
+ * @param {string} codeGroup - 코드 그룹
+ * @returns {Promise<Array>} 테넌트별 코드 목록 (코어 코드 폴백 없음)
+ */
+export const getTenantCodes = async (codeGroup = null) => {
+    try {
+        const url = codeGroup ? `${API_BASE}/tenant?codeGroup=${codeGroup}` : `${API_BASE}/tenant`;
+        const response = await apiGet(url);
+        
+        if (response.success && response.data) {
+            return response.data.codes || [];
+        }
+        
+        // 하위 호환성: 기존 API 형식 지원
+        if (Array.isArray(response)) {
+            return response;
+        }
+        
+        return [];
+    } catch (error) {
+        console.error('테넌트 코드 조회 실패:', error);
+        return [];
+    }
+};
+
+/**
+ * 코어 코드 전용 조회
+ * @param {string} codeGroup - 코드 그룹
+ * @returns {Promise<Array>} 코어 코드 목록
+ */
+export const getCoreCodes = async (codeGroup) => {
+    try {
+        const response = await apiGet(`${API_BASE}/core/groups/${codeGroup}`);
+        
+        if (Array.isArray(response)) {
+            return response;
+        }
+        
+        if (response.success && response.data) {
+            return response.data.codes || response.data || [];
+        }
+        
+        return [];
+    } catch (error) {
+        console.error('코어 코드 조회 실패:', error);
         return [];
     }
 };
@@ -208,14 +316,21 @@ export const getCoreCodes = async (codeGroup) => {
 };
 
 /**
- * 테넌트 코드 조회
- * @param {string} codeGroup - 코드 그룹
- * @returns {Promise<Array>} 테넌트 코드 목록
+ * 테넌트 코드 조회 (독립성 보장)
+ * 코어 코드 폴백 없음 - 완전한 테넌트 독립성 보장
+ * @param {string} codeGroup - 코드 그룹 (선택)
+ * @returns {Promise<Array>} 테넌트 코드 목록 (코어 코드 폴백 없음)
  */
-export const getTenantCodes = async (codeGroup) => {
+export const getTenantCodes = async (codeGroup = null) => {
     try {
-        const response = await apiGet(`${API_BASE}/tenant/groups/${codeGroup}`);
+        const url = codeGroup ? `${API_BASE}/tenant?codeGroup=${codeGroup}` : `${API_BASE}/tenant`;
+        const response = await apiGet(url);
         
+        if (response.success && response.data) {
+            return response.data.codes || [];
+        }
+        
+        // 하위 호환성: 기존 API 형식 지원
         if (Array.isArray(response)) {
             return response;
         }

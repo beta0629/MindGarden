@@ -1,0 +1,56 @@
+-- V53: 요금 체계 관련 코드 그룹을 TENANT 타입으로 설정
+-- 테넌트별 독립성 보장을 위한 코드 그룹 타입 설정
+
+-- 1. 실제 존재하는 코드 그룹들만 TENANT 타입으로 설정
+-- 안전한 업데이트를 위해 EXISTS 조건 사용
+UPDATE code_group_metadata cgm
+SET code_type = 'TENANT' 
+WHERE EXISTS (
+    SELECT 1 FROM common_codes cc 
+    WHERE cc.code_group = cgm.group_name
+    AND cc.code_group IN (
+        'CONSULTATION_PACKAGE',  -- 상담 패키지 (테넌트별 요금 체계)
+        'PACKAGE_TYPE',          -- 패키지 타입  
+        'PAYMENT_METHOD',        -- 결제 방법
+        'SPECIALTY',             -- 전문분야
+        'CONSULTATION_TYPE',     -- 상담 유형
+        'MAPPING_STATUS',        -- 매칭 상태
+        'RESPONSIBILITY',        -- 담당 업무
+        'CONSULTANT_GRADE'       -- 상담사 등급
+    )
+)
+AND (cgm.code_type IS NULL OR cgm.code_type != 'TENANT');
+
+-- 2. 코드 그룹 메타데이터가 없는 경우 생성 (실제 존재하는 코드 그룹만)
+INSERT INTO code_group_metadata (group_name, code_type, korean_name, description, is_active, display_order, created_at, updated_at)
+SELECT DISTINCT 
+    cc.code_group,
+    'TENANT',
+    cc.code_group,
+    CONCAT(cc.code_group, ' 코드 그룹'),
+    true,
+    100,
+    NOW(),
+    NOW()
+FROM common_codes cc
+WHERE cc.code_group IN (
+    'CONSULTATION_PACKAGE',
+    'PACKAGE_TYPE', 
+    'PAYMENT_METHOD',
+    'SPECIALTY',
+    'CONSULTATION_TYPE',
+    'MAPPING_STATUS',
+    'RESPONSIBILITY',
+    'CONSULTANT_GRADE'
+)
+AND NOT EXISTS (
+    SELECT 1 FROM code_group_metadata cgm 
+    WHERE cgm.group_name = cc.code_group
+)
+ON DUPLICATE KEY UPDATE
+    code_type = 'TENANT',
+    updated_at = NOW();
+
+-- 3. 완료 메시지
+SELECT '테넌트 코드 그룹 설정 완료' AS message;
+

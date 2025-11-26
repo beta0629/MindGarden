@@ -212,10 +212,16 @@ test_api "GET" "/api/v1/consultants" "200" "상담사 목록 조회"
 echo ""
 
 # ============================================
-# 6. 공통코드 API 테스트
+# 6. 공통코드 API 테스트 (새로운 표준 API)
 # ============================================
 echo -e "${YELLOW}📋 6. 공통코드 API 테스트${NC}"
-test_api "GET" "/api/common-codes/groups?groups=USER_ROLE,BRANCH_STATUS" "200" "공통코드 그룹별 조회"
+# 코어 코드 조회 (전역 코드)
+test_api "GET" "/api/v1/common-codes?codeGroup=USER_ROLE" "200" "코어 공통코드 조회 (USER_ROLE)"
+test_api "GET" "/api/v1/common-codes?codeGroup=USER_STATUS" "200" "코어 공통코드 조회 (USER_STATUS)"
+
+# 테넌트 코드 조회 (테넌트별 독립 코드) - 로그인된 세션으로 테스트
+test_api "GET" "/api/v1/common-codes/tenant?codeGroup=CONSULTATION_PACKAGE" "200" "테넌트 공통코드 조회 (CONSULTATION_PACKAGE)"
+test_api "GET" "/api/v1/common-codes/tenant?codeGroup=SPECIALTY" "200" "테넌트 공통코드 조회 (SPECIALTY)"
 echo ""
 
 # ============================================

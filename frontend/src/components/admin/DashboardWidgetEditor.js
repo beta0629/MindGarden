@@ -9,6 +9,7 @@
  */
 
 import React, { useState } from 'react';
+import { ReactSortable } from 'react-sortablejs';
 import MGButton from '../common/MGButton';
 import { 
   getSupportedWidgetTypes,
@@ -163,21 +164,44 @@ const DashboardWidgetEditor = ({
             {commonWidgetTypes.length}개
           </span>
         </h3>
-        <div className="available-widgets-grid">
+        <ReactSortable
+          list={commonWidgetTypes.map(type => ({ type, id: type }))}
+          setList={() => {}} // 원본은 변경하지 않음
+          group={{
+            name: 'widgets',
+            pull: 'clone', // 복사본만 드래그
+            put: false // 여기로 드롭 불가
+          }}
+          sort={false} // 정렬 불가
+          clone={(item) => ({
+            type: item.type,
+            id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          })}
+          className="available-widgets-grid"
+        >
           {commonWidgetTypes.map(widgetType => (
-            <button
+            <div
               key={widgetType}
               className="available-widget-item"
-              onClick={() => handleAddWidget(widgetType)}
+              data-widget-type={widgetType}
               title={getWidgetTypeName(widgetType)}
+              onClick={() => handleAddWidget(widgetType)}
+              style={{ cursor: 'grab' }}
             >
+              <FaGripVertical className="widget-drag-handle-icon" style={{ 
+                position: 'absolute', 
+                top: '4px', 
+                right: '4px', 
+                fontSize: '12px',
+                color: 'var(--mg-text-tertiary, #9ca3af)'
+              }} />
               <FaPlus className="widget-add-icon" />
               <span className="widget-type-name">
                 {getWidgetTypeName(widgetType)}
               </span>
-            </button>
+            </div>
           ))}
-        </div>
+        </ReactSortable>
       </div>
 
       {/* 특화 위젯 목록 */}
@@ -199,18 +223,42 @@ const DashboardWidgetEditor = ({
               {specializedWidgetTypes.length}개
             </span>
           </h3>
-          <div className="available-widgets-grid">
+          <ReactSortable
+            list={specializedWidgetTypes.map(type => ({ type, id: type }))}
+            setList={() => {}} // 원본은 변경하지 않음
+            group={{
+              name: 'widgets',
+              pull: 'clone', // 복사본만 드래그
+              put: false // 여기로 드롭 불가
+            }}
+            sort={false} // 정렬 불가
+            clone={(item) => ({
+              type: item.type,
+              id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            })}
+            className="available-widgets-grid"
+          >
             {specializedWidgetTypes.map(widgetType => (
-              <button
+              <div
                 key={widgetType}
                 className="available-widget-item specialized-widget-item"
+                data-widget-type={widgetType}
                 onClick={() => handleAddWidget(widgetType)}
                 title={getWidgetTypeName(widgetType)}
                 style={{
                   borderColor: '#ff9800',
-                  backgroundColor: '#fff8f0'
+                  backgroundColor: '#fff8f0',
+                  cursor: 'grab',
+                  position: 'relative'
                 }}
               >
+                <FaGripVertical className="widget-drag-handle-icon" style={{ 
+                  position: 'absolute', 
+                  top: '4px', 
+                  right: '4px', 
+                  fontSize: '12px',
+                  color: 'var(--mg-text-tertiary, #9ca3af)'
+                }} />
                 <FaPlus className="widget-add-icon" />
                 <span className="widget-type-name">
                   {getWidgetTypeName(widgetType)}
@@ -226,9 +274,9 @@ const DashboardWidgetEditor = ({
                 }}>
                   특화
                 </span>
-              </button>
+              </div>
             ))}
-          </div>
+          </ReactSortable>
         </div>
       )}
 

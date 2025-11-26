@@ -51,7 +51,9 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     const loadPackageOptions = async() => {
         try {
             console.log('🔍 패키지 옵션 로드 시작');
-            const codes = await getCommonCodes('CONSULTATION_PACKAGE');
+            // 테넌트 코드 전용 API 사용 (독립성 보장)
+            const { getTenantCodes } = await import('../../utils/commonCodeApi');
+            const codes = await getTenantCodes('CONSULTATION_PACKAGE');
             console.log('📋 로드된 패키지 옵션:', codes);
             
             const options = codes.map(code => ({

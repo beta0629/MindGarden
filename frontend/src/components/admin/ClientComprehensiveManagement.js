@@ -10,6 +10,7 @@ import {
     getStatusColor
 } from '../../utils/codeHelper';
 import { showError, showSuccess } from '../../utils/notification';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 // import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import MGButton from '../common/MGButton';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -67,17 +68,20 @@ const ClientComprehensiveManagement = () => {
         
         setLoadingCodes(true);
         try {
-            const [userStatusResponse, userGradeResponse] = await Promise.all([
-                apiGet('/api/common-codes/USER_STATUS'),
-                apiGet('/api/common-codes/USER_GRADE')
+            // 표준 API 사용: /api/v1/common-codes?codeGroup=USER_STATUS
+            const [userStatusCodes, userGradeCodes] = await Promise.all([
+                getCommonCodes('USER_STATUS'),
+                getCommonCodes('USER_GRADE')
             ]);
             
-            // API 응답이 배열이거나 { data: [...] } 형태일 수 있음
-            const statusOptions = Array.isArray(userStatusResponse) 
-                ? userStatusResponse 
-                : (userStatusResponse?.data || userStatusResponse || []);
+            // API 응답이 배열 형태
+            setUserStatusOptions(userStatusCodes || []);
             
-            setUserStatusOptions(statusOptions);
+            // USER_GRADE는 필요시 별도 상태로 관리할 수 있음
+            console.log('공통 코드 로드 완료:', {
+                status: userStatusCodes?.length || 0,
+                grade: userGradeCodes?.length || 0
+            });
         } catch (error) {
             console.error('공통 코드 로드 실패:', error);
             // 오류 시 기본값 사용
@@ -90,7 +94,7 @@ const ClientComprehensiveManagement = () => {
         } finally {
             setLoadingCodes(false);
         }
-    }, []);
+    }, [loadingCodes]);
 
     // 내담자 목록 로드 (통합 API 사용)
     const loadClients = useCallback(async () => {
@@ -146,7 +150,9 @@ const ClientComprehensiveManagement = () => {
             console.log('📊 상담사 목록 응답:', response);
             
             if (response && response.success) {
-                setConsultants(response.data || []);
+                // 응답 구조: { success: true, data: { consultants: [...], count: N } }
+                const consultantsList = response.data?.consultants || response.data || [];
+                setConsultants(Array.isArray(consultantsList) ? consultantsList : []);
             } else {
                 console.warn('상담사 목록 응답 실패:', response);
                 setConsultants([]);
@@ -154,6 +160,7 @@ const ClientComprehensiveManagement = () => {
         } catch (error) {
             console.error('상담사 목록 로드 실패:', error);
             setConsultants([]);
+            // 에러가 발생해도 계속 진행 (선택적 데이터)
         }
     }, []);
 

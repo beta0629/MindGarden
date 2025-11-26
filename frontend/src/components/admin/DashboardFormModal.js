@@ -19,6 +19,7 @@ import { FaTimes, FaPlus, FaTrash } from 'react-icons/fa';
 import { LayoutDashboard } from 'lucide-react';
 import DashboardWidgetEditor from './DashboardWidgetEditor';
 import DashboardLayoutEditor from './DashboardLayoutEditor';
+import Dashboard3DPreview from './Dashboard3DPreview';
 import WidgetConfigModal from './WidgetConfigModal';
 import './DashboardFormModal.css';
 
@@ -50,7 +51,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [errors, setErrors] = useState({});
-  const [editMode, setEditMode] = useState('visual'); // 'visual' or 'json'
+  const [editMode, setEditMode] = useState('visual'); // 'visual', 'json', or 'preview'
   const [selectedWidget, setSelectedWidget] = useState(null);
   const [showWidgetConfigModal, setShowWidgetConfigModal] = useState(false);
   const [parsedConfig, setParsedConfig] = useState(null);
@@ -1131,10 +1132,10 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               {/* 대시보드 이름 (한글) - 자동 생성, 수정 가능 */}
               <div className="form-group">
                 <label htmlFor="dashboardNameKo" className="form-label">
-                  대시보드 이름 (한글)
+                  대시보드 이름
                   {!isEditMode && (
-                    <span className="form-help" style={{ marginLeft: '8px', fontSize: '12px', color: '#666' }}>
-                      (역할 선택 시 자동 생성됩니다)
+                    <span className="form-help" style={{ marginLeft: '8px', fontSize: '12px', color: '#666', fontWeight: 'normal' }}>
+                      (역할 선택 시 자동 생성)
                     </span>
                   )}
                 </label>
@@ -1144,12 +1145,18 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   value={formData.dashboardNameKo}
                   onChange={(e) => handleChange('dashboardNameKo', e.target.value)}
                   className={`form-input ${errors.dashboardNameKo ? 'error' : ''}`}
-                  placeholder="역할을 선택하면 자동으로 생성됩니다"
+                  placeholder={formData.tenantRoleId ? "역할을 선택하면 자동으로 생성됩니다" : "역할을 먼저 선택해주세요"}
                   disabled={loading || (!isEditMode && !formData.tenantRoleId)}
                   required
+                  autoComplete="off"
                 />
                 {errors.dashboardNameKo && (
                   <span className="form-error">{errors.dashboardNameKo}</span>
+                )}
+                {!isEditMode && formData.tenantRoleId && !formData.dashboardNameKo && (
+                  <small className="form-help" style={{ color: '#28a745' }}>
+                    ✅ 역할 선택 시 자동으로 이름이 생성됩니다
+                  </small>
                 )}
               </div>
 
@@ -1200,9 +1207,15 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                     cursor: 'pointer', 
                     color: '#666', 
                     fontSize: '14px',
-                    userSelect: 'none'
-                  }}>
-                    고급 설정 (선택사항)
+                    userSelect: 'none',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                  onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                  >
+                    ⚙️ 고급 설정 (선택사항)
                   </summary>
                   <div style={{ marginTop: '16px', paddingLeft: '8px' }}>
                     {/* 설명 */}
@@ -1270,6 +1283,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               <div className="form-group">
                 <label className="form-label">
                   위젯 설정
+                  <span className="form-help" style={{ marginLeft: '8px', fontSize: '12px', color: '#666', fontWeight: 'normal' }}>
+                    (드래그 앤 드롭으로 쉽게 편집)
+                  </span>
                 </label>
                 
                 {/* 편집 모드 전환 탭 */}
@@ -1298,6 +1314,23 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   </button>
                   <button
                     type="button"
+                    onClick={() => setEditMode('preview')}
+                    className={`edit-mode-tab ${editMode === 'preview' ? 'active' : ''}`}
+                    style={{
+                      padding: '10px 20px',
+                      border: 'none',
+                      background: 'none',
+                      cursor: 'pointer',
+                      borderBottom: editMode === 'preview' ? '3px solid #007bff' : '3px solid transparent',
+                      color: editMode === 'preview' ? '#007bff' : '#666',
+                      fontWeight: editMode === 'preview' ? '600' : '400',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    👁️ 3D 미리보기
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setEditMode('json')}
                     className={`edit-mode-tab ${editMode === 'json' ? 'active' : ''}`}
                     style={{
@@ -1315,8 +1348,22 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   </button>
                 </div>
 
-                {/* 시각적 편집 모드 */}
-                {editMode === 'visual' ? (
+                {/* 3D 미리보기 모드 */}
+                {editMode === 'preview' ? (
+                  <div className="preview-editor-container" style={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    backgroundColor: '#fafafa',
+                    minHeight: '400px'
+                  }}>
+                    <Dashboard3DPreview
+                      dashboardConfig={parsedConfig}
+                      dashboardName={formData.dashboardNameKo || '대시보드 미리보기'}
+                    />
+                  </div>
+                ) : editMode === 'visual' ? (
+                  /* 시각적 편집 모드 */
                   <div className="visual-editor-container" style={{
                     border: '1px solid #e0e0e0',
                     borderRadius: '8px',
@@ -1326,6 +1373,23 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   }}>
                     {parsedConfig ? (
                       <>
+                        <div style={{ 
+                          marginBottom: '16px', 
+                          padding: '12px', 
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          borderRadius: '8px',
+                          color: 'white',
+                          fontSize: '14px',
+                          lineHeight: '1.6'
+                        }}>
+                          <strong>💡 사용 방법:</strong>
+                          <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
+                            <li>위젯 목록에서 <strong>드래그</strong>하여 레이아웃 영역으로 드롭하세요</li>
+                            <li>또는 위젯을 <strong>클릭</strong>하여 추가할 수 있습니다</li>
+                            <li>레이아웃 영역에서 위젯을 <strong>드래그</strong>하여 위치를 변경할 수 있습니다</li>
+                            <li>위젯의 <strong>설정</strong> 버튼을 클릭하여 세부 설정을 변경할 수 있습니다</li>
+                          </ul>
+                        </div>
                         <DashboardWidgetEditor
                           widgets={parsedConfig.widgets || []}
                           onWidgetsChange={handleWidgetsChange}

@@ -129,9 +129,11 @@ export const getGradeKoreanName = async (grade) => {
  */
 export const getPackageOptions = async () => {
     try {
-        console.log('🔍 getPackageOptions 시작');
-        const codes = await getCommonCodes('CONSULTATION_PACKAGE');
-        console.log('📋 CONSULTATION_PACKAGE 코드들:', codes);
+        console.log('🔍 getPackageOptions 시작 (테넌트 코드 전용)');
+        // 테넌트 코드 전용 API 사용 (독립성 보장)
+        const { getTenantCodes } = await import('./commonCodeApi');
+        const codes = await getTenantCodes('CONSULTATION_PACKAGE');
+        console.log('📋 CONSULTATION_PACKAGE 코드들 (테넌트별):', codes);
         
         return codes.map(code => {
             console.log(`🔧 처리 중인 코드: ${code.codeValue}`);

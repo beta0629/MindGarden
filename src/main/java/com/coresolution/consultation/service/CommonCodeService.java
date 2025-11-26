@@ -163,6 +163,11 @@ public interface CommonCodeService {
     List<CommonCode> getCurrentTenantCodesByGroup(String codeGroup);
     
     /**
+     * 현재 테넌트의 전체 코드 조회
+     */
+    CommonCodeListResponse findAllTenantCodes();
+    
+    /**
      * 테넌트별 코드 그룹과 값으로 조회
      */
     Optional<CommonCode> getTenantCodeByGroupAndValue(String tenantId, String codeGroup, String codeValue);

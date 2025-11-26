@@ -10,6 +10,7 @@ import com.coresolution.consultation.dto.CommonCodeCreateRequest;
 import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
 import com.coresolution.consultation.dto.CommonCodeResponse;
 import com.coresolution.consultation.dto.CommonCodeListResponse;
+import java.util.Collections;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.CodeGroupMetadata;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -442,10 +443,34 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     public List<CommonCode> getCurrentTenantCodesByGroup(String codeGroup) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
-            log.warn("⚠️ 테넌트 컨텍스트가 없어 코어 코드를 조회합니다: {}", codeGroup);
-            return getCoreCodesByGroup(codeGroup);
+            // 테넌트 독립성 보장: 테넌트 컨텍스트가 없으면 빈 리스트 반환 (코어 코드 폴백 없음)
+            log.warn("⚠️ 테넌트 컨텍스트가 없어 빈 리스트를 반환합니다 (독립성 보장): {}", codeGroup);
+            return Collections.emptyList();
         }
         return getTenantCodesByGroup(tenantId, codeGroup);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public CommonCodeListResponse findAllTenantCodes() {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            // 테넌트 독립성 보장: 테넌트 컨텍스트가 없으면 빈 리스트 반환
+            log.warn("⚠️ 테넌트 컨텍스트가 없어 빈 리스트를 반환합니다 (독립성 보장)");
+            return CommonCodeListResponse.builder()
+                    .codes(Collections.emptyList())
+                    .totalCount(0L)
+                    .activeCount(0L)
+                    .inactiveCount(0L)
+                    .build();
+        }
+        
+        List<CommonCode> codes = commonCodeRepository.findAllTenantCodes(tenantId);
+        List<CommonCodeResponse> responses = codes.stream()
+                .map(CommonCodeResponse::fromEntity)
+                .collect(Collectors.toList());
+        
+        return CommonCodeListResponse.of(responses);
     }
     
     @Override

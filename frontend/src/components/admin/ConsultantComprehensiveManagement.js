@@ -127,15 +127,17 @@ const ConsultantComprehensiveManagement = () => {
 
     const loadSpecialtyCodes = useCallback(async() => {
         try {
-            console.log('🔍 전문분야 코드 로딩 시작...');
-            const response = await apiGet('/api/common-codes/SPECIALTY');
-            console.log('📋 전문분야 코드 응답:', response);
+            console.log('🔍 전문분야 코드 로딩 시작 (테넌트 코드 전용)...');
+            // 테넌트 코드 전용 API 사용 (독립성 보장)
+            const { getTenantCodes } = await import('../../utils/commonCodeApi');
+            const codes = await getTenantCodes('SPECIALTY');
+            console.log('📋 전문분야 코드 응답 (테넌트별):', codes);
             
-            if (Array.isArray(response)) {
-                setSpecialtyCodes(response);
-                console.log('✅ 전문분야 코드 로딩 완료:', response.length, '개');
+            if (Array.isArray(codes) && codes.length > 0) {
+                setSpecialtyCodes(codes);
+                console.log('✅ 전문분야 코드 로딩 완료:', codes.length, '개');
             } else {
-                console.warn('⚠️ 전문분야 코드 응답이 배열이 아님:', response);
+                console.warn('⚠️ 전문분야 코드가 없거나 배열이 아님:', codes);
                 setSpecialtyCodes([]);
             }
         } catch (error) {

@@ -52,7 +52,7 @@ public class FlywayErdAutoGenerationHook {
      * jpaSharedEM_entityManagerFactory 빈 초기화 순환 참조 문제를 방지합니다.
      */
     @Bean
-    @Profile("!test & !dev") // 테스트 환경과 개발 서버에서는 비활성화
+    @Profile("!test & !dev & !local") // 테스트, 개발, 로컬 환경에서는 비활성화
     public FlywayMigrationStrategy flywayMigrationStrategy() {
         return flyway -> {
             // 기본 마이그레이션 실행

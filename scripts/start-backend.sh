@@ -242,7 +242,7 @@ for i in $(seq 1 $HEALTH_CHECK_TIMEOUT); do
     # 헬스체크 (여러 엔드포인트 시도)
     if curl -f -s -m 2 http://localhost:8080/actuator/health > /dev/null 2>&1 || \
        curl -f -s -m 2 http://localhost:8080/api/business-categories/root > /dev/null 2>&1 || \
-       curl -f -s -m 2 http://localhost:8080/api/common-codes > /dev/null 2>&1; then
+       curl -f -s -m 2 http://localhost:8080/api/v1/common-codes > /dev/null 2>&1; then
         echo -e "${GREEN}✅ 백엔드 서버가 성공적으로 시작되었습니다!${NC}"
         echo -e "${BLUE}🌐 API 서버: http://localhost:8080${NC}"
         echo -e "${BLUE}📊 Actuator: http://localhost:8080/actuator/health${NC}"

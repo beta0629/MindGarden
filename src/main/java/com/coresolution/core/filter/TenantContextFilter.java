@@ -12,7 +12,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -35,10 +35,10 @@ import java.io.IOException;
 @Slf4j
 @Component
 @Order(1) // SessionBasedAuthenticationFilter 이전에 실행
-@RequiredArgsConstructor
 public class TenantContextFilter implements Filter {
     
-    private final BranchRepository branchRepository;
+    @Autowired(required = false)
+    private BranchRepository branchRepository;
     
     /**
      * HTTP 헤더에서 tenant_id 추출 키
@@ -129,7 +129,7 @@ public class TenantContextFilter implements Filter {
                 }
                 
                 // 2-2. User의 branchCode를 통해 Branch의 tenant_id 조회 (폴백)
-                if (user.getBranchCode() != null) {
+                if (user.getBranchCode() != null && branchRepository != null) {
                     try {
                         Branch branch = branchRepository.findByBranchCodeAndIsDeletedFalse(user.getBranchCode())
                             .orElse(null);

@@ -145,11 +145,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         }
     }, [isOpen, packageOptions, paymentMethodOptions]);
 
-    // 패키지 코드 로드
+    // 패키지 코드 로드 (테넌트 코드 전용 - 독립성 보장)
     const loadPackageCodes = useCallback(async() => {
         try {
             setLoadingPackageCodes(true);
-            const response = await apiGet('/api/common-codes/CONSULTATION_PACKAGE');
+            // 테넌트 코드 전용 API 사용 (코어 코드 폴백 없음)
+            const { getTenantCodes } = await import('../../utils/commonCodeApi');
+            const response = await getTenantCodes('CONSULTATION_PACKAGE');
             if (response && response.length > 0) {
                 const options = response.map(code => {
                     let sessions = 20; // 기본값
@@ -376,22 +378,23 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
             const packageOpts = await getPackageOptions();
             setPackageOptions(packageOpts);
 
-            // 결제 방법 코드 로드
-            const paymentResponse = await apiGet('/api/common-codes/PAYMENT_METHOD');
-            if (paymentResponse && paymentResponse.length > 0) {
-                const paymentOpts = paymentResponse.map(code => ({
+            // 결제 방법 코드 로드 (테넌트 코드 전용 - 독립성 보장)
+            const { getTenantCodes } = await import('../../utils/commonCodeApi');
+            const paymentCodes = await getTenantCodes('PAYMENT_METHOD');
+            if (paymentCodes && paymentCodes.length > 0) {
+                const paymentOpts = paymentCodes.map(code => ({
                     value: code.codeValue,
-                    label: code.codeLabel
+                    label: code.codeLabel || code.koreanName
                 }));
                 setPaymentMethodOptions(paymentOpts);
             }
 
-            // 담당 업무 코드 로드
-            const responsibilityResponse = await apiGet('/api/common-codes/RESPONSIBILITY');
-            if (responsibilityResponse && responsibilityResponse.length > 0) {
-                const responsibilityOpts = responsibilityResponse.map(code => ({
+            // 담당 업무 코드 로드 (테넌트 코드 전용 - 독립성 보장)
+            const responsibilityCodes = await getTenantCodes('RESPONSIBILITY');
+            if (responsibilityCodes && responsibilityCodes.length > 0) {
+                const responsibilityOpts = responsibilityCodes.map(code => ({
                     value: code.codeValue,
-                    label: code.codeLabel
+                    label: code.codeLabel || code.koreanName
                 }));
                 setResponsibilityOptions(responsibilityOpts);
             }

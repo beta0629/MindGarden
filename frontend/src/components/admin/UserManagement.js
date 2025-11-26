@@ -35,16 +35,27 @@ const UserManagement = ({ onUpdate }) => {
     const loadRoleCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/ROLE');
-            if (response && response.length > 0) {
-                const options = response.map(code => ({
+            // 표준 API 사용: /api/v1/common-codes?codeGroup=ROLE
+            const { getCommonCodes } = await import('../../utils/commonCodeApi');
+            const codes = await getCommonCodes('ROLE');
+            
+            if (codes && Array.isArray(codes) && codes.length > 0) {
+                const options = codes.map(code => ({
                     value: code.codeValue,
-                    label: code.codeLabel,
+                    label: code.codeLabel || code.koreanName,
                     icon: code.icon,
                     color: code.colorCode,
-                    description: code.description
+                    description: code.codeDescription
                 }));
                 setRoleOptions(options);
+            } else {
+                // 실패 시 기본값 설정
+                setRoleOptions([
+                    { value: 'CLIENT', label: '내담자', icon: '👤', color: '#3b82f6', description: '상담을 받는 내담자' },
+                    { value: 'CONSULTANT', label: '상담사', icon: '👨‍⚕️', color: '#10b981', description: '상담을 제공하는 상담사' },
+                    { value: 'ADMIN', label: '관리자', icon: '👨‍💼', color: '#f59e0b', description: '시스템 관리자' },
+                    { value: 'BRANCH_SUPER_ADMIN', label: '수퍼관리자', icon: '👑', color: '#ef4444', description: '최고 관리자' }
+                ]);
             }
         } catch (error) {
             console.error('역할 코드 로드 실패:', error);
@@ -91,6 +102,12 @@ const UserManagement = ({ onUpdate }) => {
 
     // 필터링 로직
     useEffect(() => {
+        // users가 배열이 아닌 경우 빈 배열로 초기화
+        if (!Array.isArray(users)) {
+            setFilteredUsers([]);
+            return;
+        }
+
         let filtered = users;
 
         // 역할 필터

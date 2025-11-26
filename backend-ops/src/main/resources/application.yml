@@ -56,3 +56,8 @@ security:
     username: ${OPS_ADMIN_USERNAME:superadmin@mindgarden.com}
     password: ${OPS_ADMIN_PASSWORD:admin123}
     default-role: ${OPS_ADMIN_ROLE:HQ_ADMIN}
+
+# 메인 백엔드 URL (테넌트 생성 프로시저 호출용)
+main:
+  backend:
+    url: ${MAIN_BACKEND_URL:http://localhost:8080}

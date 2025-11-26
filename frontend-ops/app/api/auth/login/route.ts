@@ -5,12 +5,18 @@ const DEFAULT_API_BASE_URL =
   process.env.NEXT_PUBLIC_OPS_API_BASE_URL ??
   "http://localhost:8081/api/v1";
 
-const COOKIE_SETTINGS = {
-  path: "/",
-  httpOnly: false,
-  sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production" // production(HTTPS)에서는 true, development(HTTP)에서는 false
-};
+// 쿠키 설정은 요청별로 동적으로 생성 (HTTPS 여부 확인)
+function getCookieSettings(request: Request) {
+  const url = new URL(request.url);
+  const isHttps = url.protocol === "https:";
+  
+  return {
+    path: "/",
+    httpOnly: false,
+    sameSite: "lax" as const,
+    secure: isHttps // HTTPS면 true, HTTP면 false
+  };
+}
 
 export async function POST(request: Request) {
   try {
@@ -123,17 +129,18 @@ export async function POST(request: Request) {
 
     const maxAge = 60 * 60; // 1 hour
     const response = NextResponse.json({ success: true });
+    const cookieSettings = getCookieSettings(request);
 
     response.cookies.set("ops_token", responseData.token, {
-      ...COOKIE_SETTINGS,
+      ...cookieSettings,
       maxAge
     });
     response.cookies.set("ops_actor_id", responseData.actorId || username, {
-      ...COOKIE_SETTINGS,
+      ...cookieSettings,
       maxAge
     });
     response.cookies.set("ops_actor_role", responseData.actorRole || "HQ_ADMIN", {
-      ...COOKIE_SETTINGS,
+      ...cookieSettings,
       maxAge
     });
 

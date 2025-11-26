@@ -59,15 +59,46 @@ if [ -f "logs/frontend.pid" ]; then
     rm -f logs/frontend.pid
 fi
 
+# OPS Portal 프로세스 종료
+if [ -f "logs/ops-backend.pid" ]; then
+    OLD_PID=$(cat logs/ops-backend.pid)
+    if ps -p $OLD_PID > /dev/null 2>&1; then
+        echo -e "${BLUE}   OPS 백엔드 프로세스 종료: PID $OLD_PID${NC}"
+        kill $OLD_PID 2>/dev/null || true
+        sleep 1
+    fi
+    rm -f logs/ops-backend.pid
+fi
+
+if [ -f "logs/ops-frontend.pid" ]; then
+    OLD_PID=$(cat logs/ops-frontend.pid)
+    if ps -p $OLD_PID > /dev/null 2>&1; then
+        echo -e "${BLUE}   OPS 프론트엔드 프로세스 종료: PID $OLD_PID${NC}"
+        kill $OLD_PID 2>/dev/null || true
+        sleep 1
+    fi
+    rm -f logs/ops-frontend.pid
+fi
+
 # 포트 사용 중인 프로세스 종료
-echo -e "${BLUE}   포트 8080, 3000 정리 중...${NC}"
+echo -e "${BLUE}   포트 8080, 8081, 3000, 3001 정리 중...${NC}"
 if command -v lsof >/dev/null 2>&1; then
     # macOS/Linux
     PIDS_8080=$(lsof -ti:8080 2>/dev/null || true)
+    PIDS_8081=$(lsof -ti:8081 2>/dev/null || true)
     PIDS_3000=$(lsof -ti:3000 2>/dev/null || true)
+    PIDS_3001=$(lsof -ti:3001 2>/dev/null || true)
     
     if [ ! -z "$PIDS_8080" ]; then
         echo "$PIDS_8080" | while read pid; do
+            kill $pid 2>/dev/null || true
+            sleep 1
+            kill -9 $pid 2>/dev/null || true
+        done
+    fi
+    
+    if [ ! -z "$PIDS_8081" ]; then
+        echo "$PIDS_8081" | while read pid; do
             kill $pid 2>/dev/null || true
             sleep 1
             kill -9 $pid 2>/dev/null || true
@@ -81,10 +112,20 @@ if command -v lsof >/dev/null 2>&1; then
             kill -9 $pid 2>/dev/null || true
         done
     fi
+    
+    if [ ! -z "$PIDS_3001" ]; then
+        echo "$PIDS_3001" | while read pid; do
+            kill $pid 2>/dev/null || true
+            sleep 1
+            kill -9 $pid 2>/dev/null || true
+        done
+    fi
 elif command -v netstat >/dev/null 2>&1; then
     # Windows (Git Bash) - 더 안전한 방법
     PIDS_8080=$(netstat -ano 2>/dev/null | grep ":8080" | grep LISTENING | awk '{print $5}' | sort -u || true)
+    PIDS_8081=$(netstat -ano 2>/dev/null | grep ":8081" | grep LISTENING | awk '{print $5}' | sort -u || true)
     PIDS_3000=$(netstat -ano 2>/dev/null | grep ":3000" | grep LISTENING | awk '{print $5}' | sort -u || true)
+    PIDS_3001=$(netstat -ano 2>/dev/null | grep ":3001" | grep LISTENING | awk '{print $5}' | sort -u || true)
     
     if [ ! -z "$PIDS_8080" ]; then
         for pid in $PIDS_8080; do
@@ -96,8 +137,28 @@ elif command -v netstat >/dev/null 2>&1; then
         done
     fi
     
+    if [ ! -z "$PIDS_8081" ]; then
+        for pid in $PIDS_8081; do
+            if [ ! -z "$pid" ] && [ "$pid" != "0" ]; then
+                kill $pid 2>/dev/null || true
+                sleep 1
+                kill -9 $pid 2>/dev/null || true
+            fi
+        done
+    fi
+    
     if [ ! -z "$PIDS_3000" ]; then
         for pid in $PIDS_3000; do
+            if [ ! -z "$pid" ] && [ "$pid" != "0" ]; then
+                kill $pid 2>/dev/null || true
+                sleep 1
+                kill -9 $pid 2>/dev/null || true
+            fi
+        done
+    fi
+    
+    if [ ! -z "$PIDS_3001" ]; then
+        for pid in $PIDS_3001; do
             if [ ! -z "$pid" ] && [ "$pid" != "0" ]; then
                 kill $pid 2>/dev/null || true
                 sleep 1
@@ -177,22 +238,92 @@ echo $FRONTEND_PID > logs/frontend.pid
 echo -e "${GREEN}   ✅ 프론트엔드 시작됨 (PID: $FRONTEND_PID)${NC}"
 echo ""
 
+# OPS Portal 백엔드 시작
+echo -e "${YELLOW}🔧 OPS Portal 백엔드 시작 중...${NC}"
+
+if [ -d "backend-ops" ]; then
+    cd backend-ops
+    
+    # Gradle 확인
+    if [ -f "./gradlew" ]; then
+        echo -e "${BLUE}   Gradle Wrapper로 실행${NC}"
+        chmod +x gradlew
+        ./gradlew bootRun > ../logs/ops-backend.log 2>&1 &
+        OPS_BACKEND_PID=$!
+    elif [ -f "./gradlew.bat" ]; then
+        echo -e "${BLUE}   Gradle Wrapper (Windows)로 실행${NC}"
+        cmd.exe //c "cd /d $PROJECT_ROOT/backend-ops && gradlew.bat bootRun" > ../logs/ops-backend.log 2>&1 &
+        OPS_BACKEND_PID=$!
+    else
+        echo -e "${YELLOW}⚠️  backend-ops/gradlew를 찾을 수 없습니다. OPS 백엔드를 건너뜁니다.${NC}"
+        OPS_BACKEND_PID=""
+    fi
+    
+    cd ..
+    
+    if [ ! -z "$OPS_BACKEND_PID" ]; then
+        echo $OPS_BACKEND_PID > logs/ops-backend.pid
+        echo -e "${GREEN}   ✅ OPS 백엔드 시작됨 (PID: $OPS_BACKEND_PID, 포트: 8081)${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠️  backend-ops 디렉토리를 찾을 수 없습니다. OPS 백엔드를 건너뜁니다.${NC}"
+fi
+echo ""
+
+# OPS Portal 프론트엔드 시작
+echo -e "${YELLOW}🎨 OPS Portal 프론트엔드 시작 중...${NC}"
+
+if [ -d "frontend-ops" ]; then
+    cd frontend-ops
+    
+    # npm install (필요시)
+    if [ ! -d "node_modules" ]; then
+        echo -e "${BLUE}   npm 의존성 설치 중...${NC}"
+        npm install > ../logs/ops-frontend-install.log 2>&1
+        echo -e "${GREEN}   ✅ 의존성 설치 완료${NC}"
+    fi
+    
+    # Next.js 개발 서버 시작
+    echo -e "${BLUE}   Next.js 개발 서버 시작${NC}"
+    npm run dev > ../logs/ops-frontend.log 2>&1 &
+    OPS_FRONTEND_PID=$!
+    
+    cd ..
+    
+    echo $OPS_FRONTEND_PID > logs/ops-frontend.pid
+    echo -e "${GREEN}   ✅ OPS 프론트엔드 시작됨 (PID: $OPS_FRONTEND_PID, 포트: 3001)${NC}"
+else
+    echo -e "${YELLOW}⚠️  frontend-ops 디렉토리를 찾을 수 없습니다. OPS 프론트엔드를 건너뜁니다.${NC}"
+fi
+echo ""
+
 # 완료 메시지
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}  ✅ 서버 시작 완료!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 echo -e "${CYAN}🌐 접속 주소:${NC}"
-echo -e "${GREEN}   백엔드:  http://localhost:8080${NC}"
-echo -e "${GREEN}   프론트엔드: http://localhost:3000${NC}"
+echo -e "${GREEN}   메인 백엔드:     http://localhost:8080${NC}"
+echo -e "${GREEN}   메인 프론트엔드:   http://localhost:3000${NC}"
+if [ -f "logs/ops-backend.pid" ]; then
+    echo -e "${GREEN}   OPS 백엔드:      http://localhost:8081${NC}"
+fi
+if [ -f "logs/ops-frontend.pid" ]; then
+    echo -e "${GREEN}   OPS 프론트엔드:   http://localhost:3001${NC}"
+fi
 echo ""
 echo -e "${CYAN}📋 로그 확인:${NC}"
-echo -e "${BLUE}   백엔드:  tail -f logs/backend.log${NC}"
-echo -e "${BLUE}   프론트엔드: tail -f logs/frontend.log${NC}"
+echo -e "${BLUE}   메인 백엔드:     tail -f logs/backend.log${NC}"
+echo -e "${BLUE}   메인 프론트엔드:   tail -f logs/frontend.log${NC}"
+if [ -f "logs/ops-backend.pid" ]; then
+    echo -e "${BLUE}   OPS 백엔드:      tail -f logs/ops-backend.log${NC}"
+fi
+if [ -f "logs/ops-frontend.pid" ]; then
+    echo -e "${BLUE}   OPS 프론트엔드:   tail -f logs/ops-frontend.log${NC}"
+fi
 echo ""
 echo -e "${CYAN}🛑 종료 방법:${NC}"
 echo -e "${YELLOW}   ./stop-local.sh${NC}"
-echo -e "${YELLOW}   또는: kill \$(cat logs/backend.pid) \$(cat logs/frontend.pid)${NC}"
 echo ""
 
 # 서버 시작 대기 (선택적)
@@ -201,17 +332,37 @@ sleep 5
 
 # 프로세스 확인
 if ps -p $BACKEND_PID > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ 백엔드 프로세스 실행 중${NC}"
+    echo -e "${GREEN}✅ 메인 백엔드 프로세스 실행 중${NC}"
 else
-    echo -e "${RED}⚠️  백엔드 프로세스가 종료되었습니다. 로그를 확인하세요:${NC}"
+    echo -e "${RED}⚠️  메인 백엔드 프로세스가 종료되었습니다. 로그를 확인하세요:${NC}"
     echo -e "${BLUE}   tail -20 logs/backend.log${NC}"
 fi
 
 if ps -p $FRONTEND_PID > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ 프론트엔드 프로세스 실행 중${NC}"
+    echo -e "${GREEN}✅ 메인 프론트엔드 프로세스 실행 중${NC}"
 else
-    echo -e "${RED}⚠️  프론트엔드 프로세스가 종료되었습니다. 로그를 확인하세요:${NC}"
+    echo -e "${RED}⚠️  메인 프론트엔드 프로세스가 종료되었습니다. 로그를 확인하세요:${NC}"
     echo -e "${BLUE}   tail -20 logs/frontend.log${NC}"
+fi
+
+if [ -f "logs/ops-backend.pid" ]; then
+    OPS_BACKEND_PID=$(cat logs/ops-backend.pid)
+    if ps -p $OPS_BACKEND_PID > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ OPS 백엔드 프로세스 실행 중${NC}"
+    else
+        echo -e "${RED}⚠️  OPS 백엔드 프로세스가 종료되었습니다. 로그를 확인하세요:${NC}"
+        echo -e "${BLUE}   tail -20 logs/ops-backend.log${NC}"
+    fi
+fi
+
+if [ -f "logs/ops-frontend.pid" ]; then
+    OPS_FRONTEND_PID=$(cat logs/ops-frontend.pid)
+    if ps -p $OPS_FRONTEND_PID > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ OPS 프론트엔드 프로세스 실행 중${NC}"
+    else
+        echo -e "${RED}⚠️  OPS 프론트엔드 프로세스가 종료되었습니다. 로그를 확인하세요:${NC}"
+        echo -e "${BLUE}   tail -20 logs/ops-frontend.log${NC}"
+    fi
 fi
 
 echo ""

@@ -48,13 +48,11 @@ export async function clientApiFetch<T>(
   // path가 /로 시작하지 않으면 / 추가
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   
-  // apiBaseUrl이 있으면 그대로 사용, 없으면 상대 경로 사용
-  // 상대 경로를 사용하면 같은 도메인의 /api/v1 경로로 요청
-  const apiPath = normalizedPath.startsWith("/api/") 
-    ? normalizedPath 
-    : `/api/v1${normalizedPath}`;
-  
-  const fullUrl = apiBaseUrl ? `${apiBaseUrl}${apiPath}` : apiPath;
+  // apiBaseUrl이 있으면 path를 그대로 붙임 (apiBaseUrl에 이미 /api/v1 포함)
+  // apiBaseUrl이 없으면 상대 경로 사용 (같은 도메인의 /api/v1 경로로 요청)
+  const fullUrl = apiBaseUrl 
+    ? `${apiBaseUrl}${normalizedPath}` 
+    : (normalizedPath.startsWith("/api/") ? normalizedPath : `/api/v1${normalizedPath}`);
 
   const response = await fetch(fullUrl, {
     ...options,

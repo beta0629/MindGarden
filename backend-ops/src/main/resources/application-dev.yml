@@ -63,7 +63,7 @@ server:
 security:
   jwt:
     secret: ${JWT_SECRET:dev-jwt-secret-key-for-development-server-only}
-    issuer: ${SECURITY_JWT_ISSUER:mindgarden-ops-dev}
+    issuer: ${SECURITY_JWT_ISSUER:mindgarden-ops}
     expires-in-seconds: ${SECURITY_JWT_EXPIRES:3600}
   ops:
     username: ${OPS_ADMIN_USERNAME:superadmin@mindgarden.com}

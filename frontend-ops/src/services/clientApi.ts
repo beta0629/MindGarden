@@ -135,15 +135,15 @@ function resolveClientRuntimeConfig(): ClientRuntimeConfig {
 
   // 디버깅: 쿠키 파싱 결과 확인 (항상 출력)
   if (typeof window !== "undefined") {
+    const opsToken = cookieMap.get("ops_token");
     console.log("[resolveClientRuntimeConfig] 쿠키 파싱:", {
       hasCookieString: !!cookieString,
       cookieStringLength: cookieString.length,
-      cookieString: cookieString,
       hasOpsToken: cookieMap.has("ops_token"),
-      opsTokenLength: cookieMap.get("ops_token")?.length || 0,
-      opsTokenPreview: cookieMap.get("ops_token")?.substring(0, 30) || "없음",
-      allCookieKeys: Array.from(cookieMap.keys()),
-      allCookieEntries: Array.from(cookieMap.entries()).map(([k, v]) => [k, v.substring(0, 20)])
+      opsTokenLength: opsToken?.length || 0,
+      opsTokenPreview: opsToken?.substring(0, 30) || "없음",
+      opsTokenFull: opsToken || "없음", // 전체 토큰 출력
+      allCookieKeys: Array.from(cookieMap.keys())
     });
   }
 

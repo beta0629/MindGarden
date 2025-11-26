@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/plans")
+@RequestMapping("/api/v1/ops/plans")
 public class PricingPlanController {
 
     private final PricingPlanService pricingPlanService;

@@ -3,12 +3,12 @@ import { OnboardingRequest } from "@/types/onboarding";
 
 /**
  * 대기 중인 온보딩 요청 목록 조회
- * 백엔드: GET /api/v1/onboarding/requests/pending
+ * 백엔드: GET /api/v1/ops/onboarding/requests/pending
  * 응답: ResponseEntity<List<OnboardingRequest>> -> JSON 배열
  */
 export async function fetchPendingOnboarding(): Promise<OnboardingRequest[]> {
   try {
-    const response = await clientApiFetch<OnboardingRequest[]>("/onboarding/requests/pending");
+    const response = await clientApiFetch<OnboardingRequest[]>("/ops/onboarding/requests/pending");
     return Array.isArray(response) ? response : [];
   } catch (error) {
     console.error("[fetchPendingOnboarding] 온보딩 요청 조회 실패:", error);
@@ -18,7 +18,7 @@ export async function fetchPendingOnboarding(): Promise<OnboardingRequest[]> {
 
 /**
  * 온보딩 요청 목록 조회 (상태별 필터링 가능)
- * 백엔드: GET /api/v1/onboarding/requests?status={status}&page=0&size=50
+ * 백엔드: GET /api/v1/ops/onboarding/requests?status={status}&page=0&size=50
  * 메인 백엔드(8080): ApiResponse<Page<OnboardingRequest>> 래퍼 사용 (페이징)
  */
 export async function fetchAllOnboarding(status?: string): Promise<OnboardingRequest[]> {
@@ -31,7 +31,7 @@ export async function fetchAllOnboarding(status?: string): Promise<OnboardingReq
     }
     params.append('page', '0');
     params.append('size', '50');
-    const path = `/onboarding/requests?${params.toString()}`;
+    const path = `/ops/onboarding/requests?${params.toString()}`;
     
     console.log("[fetchAllOnboarding] API 호출:", { 
       path, 
@@ -116,14 +116,14 @@ export async function fetchAllOnboarding(status?: string): Promise<OnboardingReq
 
 /**
  * 온보딩 요청 상세 조회
- * 백엔드: GET /api/v1/onboarding/requests/{id}
+ * 백엔드: GET /api/v1/ops/onboarding/requests/{id}
  * 메인 백엔드(8080): ApiResponse<OnboardingRequest> 래퍼 사용
  */
 export async function fetchOnboardingDetail(
   id: string
 ): Promise<OnboardingRequest> {
   try {
-    const path = `/onboarding/requests/${id}`;
+    const path = `/ops/onboarding/requests/${id}`;
     
     console.log("[fetchOnboardingDetail] API 호출:", { path, id });
     

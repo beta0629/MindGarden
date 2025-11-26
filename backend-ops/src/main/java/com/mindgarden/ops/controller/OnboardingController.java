@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/onboarding")
+@RequestMapping("/api/v1/ops/onboarding")
 public class OnboardingController {
 
     private final OnboardingService onboardingService;

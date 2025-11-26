@@ -44,6 +44,6 @@ security:
     issuer: ${SECURITY_JWT_ISSUER:mindgarden-ops}
     expires-in-seconds: ${SECURITY_JWT_EXPIRES:3600}
   ops:
-    username: ${OPS_ADMIN_USERNAME:ops-admin}
-    password: ${OPS_ADMIN_PASSWORD:change-me}
+    username: ${OPS_ADMIN_USERNAME:superadmin@mindgarden.com}
+    password: ${OPS_ADMIN_PASSWORD:admin123}
     default-role: ${OPS_ADMIN_ROLE:HQ_ADMIN}

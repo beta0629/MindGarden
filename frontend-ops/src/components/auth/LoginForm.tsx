@@ -30,10 +30,8 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           return;
         }
         
-        // 정적 빌드이므로 직접 백엔드 API 호출 (nginx가 /api/를 백엔드로 프록시)
-        // 환경 변수가 없거나 빈 문자열이면 상대 경로 사용 (nginx 프록시 활용)
-        // 빌드 시 환경 변수가 하드코딩되지 않도록 항상 상대 경로 사용
-        const apiPath = "/api/v1/ops/auth/login";
+        // Next.js API 라우트를 통해 로그인 (쿠키는 서버에서 설정)
+        const apiPath = "/api/auth/login/";
         const response = await fetch(apiPath, {
           method: "POST",
           headers: {
@@ -52,36 +50,14 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         }
 
         if (!response.ok) {
-          // ApiResponse 래퍼 처리
+          // 에러 메시지 처리
           let errorMessage = body?.message || "로그인에 실패했습니다. 입력 정보를 다시 확인하세요.";
-          if (body?.success === false && body?.data?.message) {
-            errorMessage = body.data.message;
-          } else if (body?.data?.message) {
-            errorMessage = body.data.message;
-          }
           setFeedback(errorMessage);
           return;
         }
 
-        // ApiResponse 래퍼 처리: { success: true, data: {...} } 형태면 data 추출
-        let responseData = body;
-        if (body && typeof body === 'object' && 'success' in body && 'data' in body && body.success) {
-          responseData = body.data;
-        }
-
-        if (!responseData || !responseData.token) {
-          setFeedback("로그인 응답을 해석할 수 없습니다. 관리자에게 문의하세요.");
-          return;
-        }
-
-        // 쿠키에 토큰 저장
-        const maxAge = 60 * 60; // 1 hour
-        const cookieOptions = `path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `ops_token=${responseData.token}; ${cookieOptions}`;
-        document.cookie = `ops_actor_id=${responseData.actorId || trimmedUsername}; ${cookieOptions}`;
-        document.cookie = `ops_actor_role=${responseData.actorRole || "HQ_ADMIN"}; ${cookieOptions}`;
-
-        // 쿠키가 설정된 후 전체 페이지 리로드를 통해 대시보드로 이동
+        // 로그인 성공 - 쿠키는 이미 서버에서 set-cookie 헤더로 설정됨
+        // 전체 페이지 리로드를 통해 대시보드로 이동
         const redirectPath = redirectTo || "/dashboard";
         window.location.href = redirectPath;
       } catch (error) {

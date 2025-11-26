@@ -66,11 +66,42 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         // 로그인 성공
         const redirectPath = redirectTo || "/dashboard";
         
-        console.log("[LoginForm] 로그인 성공, 백엔드가 Set-Cookie 헤더로 쿠키 설정");
+        console.log("[LoginForm] 로그인 성공");
+        console.log("[LoginForm] 응답 body:", body);
+        
+        // 응답에서 토큰 추출하여 클라이언트 쪽에서 쿠키 설정
+        // (정적 빌드에서는 백엔드의 Set-Cookie가 Nginx를 통과하지 못할 수 있음)
+        const data = body?.data;
+        if (data && data.token) {
+          const token = data.token;
+          const actorId = data.actorId || trimmedUsername;
+          const actorRole = data.actorRole || "HQ_ADMIN";
+          
+          // 쿠키 설정
+          const isHttps = window.location.protocol === "https:";
+          const maxAge = 3600; // 1시간
+          const cookieOptions = `path=/; max-age=${maxAge}; samesite=lax${isHttps ? "; secure" : ""}`;
+          
+          document.cookie = `ops_token=${token}; ${cookieOptions}`;
+          document.cookie = `ops_actor_id=${encodeURIComponent(actorId)}; ${cookieOptions}`;
+          document.cookie = `ops_actor_role=${actorRole}; ${cookieOptions}`;
+          
+          console.log("[LoginForm] 클라이언트 쪽 쿠키 설정 완료:", {
+            token: token.substring(0, 30) + "...",
+            actorId,
+            actorRole,
+            isHttps,
+            cookieOptions
+          });
+        } else {
+          console.error("[LoginForm] 응답에 토큰이 없습니다:", body);
+          setFeedback("로그인 응답에 토큰이 없습니다.");
+          return;
+        }
+        
         console.log("[LoginForm] 리다이렉트:", redirectPath);
         
-        // 백엔드가 Set-Cookie 헤더로 쿠키를 설정하므로, 
-        // 짧은 지연 후 리다이렉트 (브라우저가 쿠키를 적용할 시간)
+        // 짧은 지연 후 리다이렉트 (쿠키 적용 대기)
         setTimeout(() => {
           console.log("[LoginForm] 쿠키 확인:", {
             hasCookie: document.cookie.includes("ops_token"),

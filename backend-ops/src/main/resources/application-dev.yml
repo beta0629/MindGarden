@@ -90,8 +90,3 @@ management:
       probes:
         enabled: true
 
-# 메인 백엔드 URL (테넌트 생성 프로시저 호출용)
-main:
-  backend:
-    url: ${MAIN_BACKEND_URL:http://dev.m-garden.co.kr}
-

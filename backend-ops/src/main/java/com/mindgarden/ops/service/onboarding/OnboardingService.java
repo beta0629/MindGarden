@@ -5,15 +5,15 @@ import com.mindgarden.ops.domain.onboarding.OnboardingRequest;
 import com.mindgarden.ops.domain.onboarding.OnboardingStatus;
 import com.mindgarden.ops.repository.onboarding.OnboardingRequestRepository;
 import com.mindgarden.ops.service.audit.AuditService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.Types;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -23,23 +23,12 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class OnboardingService {
 
     private final OnboardingRequestRepository repository;
     private final AuditService auditService;
-    private final RestTemplate restTemplate;
-    private final String mainBackendUrl;
-
-    public OnboardingService(
-            OnboardingRequestRepository repository, 
-            AuditService auditService,
-            RestTemplate restTemplate,
-            @Value("${main.backend.url:http://localhost:8080}") String mainBackendUrl) {
-        this.repository = repository;
-        this.auditService = auditService;
-        this.restTemplate = restTemplate;
-        this.mainBackendUrl = mainBackendUrl;
-    }
+    private final JdbcTemplate jdbcTemplate;
 
     @Transactional(readOnly = true)
     public List<OnboardingRequest> findPending() {
@@ -91,30 +80,46 @@ public class OnboardingService {
         OnboardingRequest request = repository.findById(requestId)
             .orElseThrow(() -> new IllegalArgumentException("요청을 찾을 수 없습니다."));
 
-        // 승인인 경우 메인 백엔드 API 호출하여 실제 테넌트 생성
+        // 승인인 경우 프로시저 직접 호출하여 테넌트 생성
         if (status == OnboardingStatus.APPROVED) {
             try {
-                log.info("메인 백엔드 API 호출: 테넌트 생성 프로시저 실행 - tenantId={}", request.getTenantId());
+                log.info("테넌트 생성 프로시저 실행 - tenantId={}, tenantName={}", 
+                    request.getTenantId(), request.getTenantName());
                 
-                // 메인 백엔드 API 호출
-                String url = mainBackendUrl + "/api/v1/onboarding/requests/" + requestId + "/decision";
+                // CreateOrActivateTenant 프로시저 호출
+                Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement cs = connection.prepareCall(
+                    "{CALL CreateOrActivateTenant(?, ?, ?, ?, ?, ?)}"
+                );
                 
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
+                // IN 파라미터
+                cs.setString(1, request.getTenantId());
+                cs.setString(2, request.getTenantName());
+                cs.setString(3, "CONSULTATION"); // 기본 업종
+                cs.setString(4, actorId);
                 
-                Map<String, Object> payload = new HashMap<>();
-                payload.put("status", status.name());
-                payload.put("actorId", actorId);
-                payload.put("note", note);
+                // OUT 파라미터
+                cs.registerOutParameter(5, Types.BOOLEAN); // p_success
+                cs.registerOutParameter(6, Types.VARCHAR); // p_message
                 
-                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+                cs.execute();
                 
-                restTemplate.postForObject(url, entity, Object.class);
+                boolean success = cs.getBoolean(5);
+                String message = cs.getString(6);
                 
-                log.info("✅ 메인 백엔드 API 호출 성공: 테넌트 생성 완료");
+                cs.close();
+                connection.close();
+                
+                if (success) {
+                    log.info("✅ 테넌트 생성 완료: {}", message);
+                } else {
+                    log.error("❌ 테넌트 생성 실패: {}", message);
+                    status = OnboardingStatus.ON_HOLD;
+                    note = (note != null ? note + "\n\n" : "") + "[오류] " + message;
+                }
+                
             } catch (Exception e) {
-                log.error("❌ 메인 백엔드 API 호출 실패: {}", e.getMessage(), e);
-                // 실패해도 OPS Portal의 상태는 업데이트 (수동 재시도 가능)
+                log.error("❌ 프로시저 실행 실패: {}", e.getMessage(), e);
                 status = OnboardingStatus.ON_HOLD;
                 note = (note != null ? note + "\n\n" : "") + "[오류] 테넌트 생성 실패: " + e.getMessage();
             }

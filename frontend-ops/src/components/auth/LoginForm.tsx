@@ -30,8 +30,15 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           return;
         }
         
-        // Next.js API 라우트를 통해 로그인 (쿠키는 서버에서 설정)
-        const apiPath = "/api/auth/login/";
+        // 정적 빌드(개발/운영 서버)에서는 백엔드 API 직접 호출
+        // 로컬 개발에서는 Next.js API 라우트 사용
+        const isStaticBuild = typeof window !== "undefined" && !window.location.hostname.includes("localhost");
+        const apiPath = isStaticBuild 
+          ? "/api/v1/ops/auth/login"  // 백엔드 API (Nginx 프록시)
+          : "/api/auth/login/";       // Next.js API 라우트
+        
+        console.log("[LoginForm] 로그인 API:", { apiPath, isStaticBuild });
+        
         const response = await fetch(apiPath, {
           method: "POST",
           headers: {
@@ -56,8 +63,31 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           return;
         }
 
-        // 로그인 성공 - 쿠키는 이미 서버에서 set-cookie 헤더로 설정됨
+        // 로그인 성공
         const redirectPath = redirectTo || "/dashboard";
+        
+        // 정적 빌드에서는 백엔드 응답에서 토큰을 받아 직접 쿠키 설정
+        if (isStaticBuild) {
+          const data = body?.data || body;
+          const token = data?.token;
+          const actorId = data?.actorId || trimmedUsername;
+          const actorRole = data?.actorRole || "HQ_ADMIN";
+          
+          if (!token) {
+            setFeedback("로그인 응답에 토큰이 없습니다.");
+            return;
+          }
+          
+          // 쿠키 설정 (HTTPS에서는 secure 필요)
+          const isHttps = window.location.protocol === "https:";
+          const cookieOptions = `path=/; max-age=3600; samesite=lax${isHttps ? "; secure" : ""}`;
+          
+          document.cookie = `ops_token=${token}; ${cookieOptions}`;
+          document.cookie = `ops_actor_id=${encodeURIComponent(actorId)}; ${cookieOptions}`;
+          document.cookie = `ops_actor_role=${actorRole}; ${cookieOptions}`;
+          
+          console.log("[LoginForm] 쿠키 설정 완료:", { token: token.substring(0, 20), actorId, actorRole });
+        }
         
         console.log("[LoginForm] 로그인 성공, 리다이렉트:", redirectPath);
         

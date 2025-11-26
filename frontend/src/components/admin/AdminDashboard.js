@@ -4,7 +4,7 @@ import MGButton from '../common/MGButton';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase, FaRocket } from 'react-icons/fa';
 import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, XCircle } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -61,7 +61,8 @@ const ADMIN_ROUTES = {
     COMPLIANCE_DESTRUCTION: '/admin/compliance/destruction',
     ERP_FINANCIAL: '/admin/erp/financial',
     DASHBOARDS: '/admin/dashboards',
-    CACHE_MONITORING: '/admin/cache-monitoring'
+    CACHE_MONITORING: '/admin/cache-monitoring',
+    API_PERFORMANCE: '/admin/api-performance'
 };
 
 const AdminDashboard = ({ user: propUser }) => {
@@ -1078,6 +1079,14 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         <h3>캐시 모니터링</h3>
                         <p className="mg-management-description">시스템 캐시 성능을 실시간으로 모니터링합니다</p>
+                    </div>
+                    
+                    <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.API_PERFORMANCE)}>
+                        <div className="mg-management-icon">
+                            <FaRocket />
+                        </div>
+                        <h3>API 성능 모니터링</h3>
+                        <p className="mg-management-description">API 응답 시간과 성능 지표를 실시간으로 추적합니다</p>
                     </div>
                     
                     <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.MESSAGES)}>

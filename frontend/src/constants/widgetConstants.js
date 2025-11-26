@@ -135,6 +135,62 @@ export const CACHE_MONITORING_WIDGET = {
   }
 };
 
+// ===== API 성능 모니터링 위젯 상수 =====
+export const API_PERFORMANCE_WIDGET = {
+  DEFAULT_TITLE: 'API 성능 모니터링',
+  DEFAULT_REFRESH_INTERVAL: WIDGET_CONSTANTS.REFRESH_INTERVALS.NORMAL,
+  
+  // API 엔드포인트
+  API_ENDPOINTS: {
+    STATS: '/api/admin/performance/stats',
+    SLOW_APIS: '/api/admin/performance/slow-apis',
+    ERROR_PRONE_APIS: '/api/admin/performance/error-prone-apis',
+    CLEAR_STATS: '/api/admin/performance/stats'
+  },
+  
+  // 성능 임계값
+  THRESHOLDS: {
+    SLOW_API_MS: 500,
+    ERROR_RATE_PERCENT: 5.0,
+    RESPONSE_TIME: {
+      EXCELLENT: 100,
+      GOOD: 300,
+      AVERAGE: 1000
+    },
+    ERROR_RATE: {
+      EXCELLENT: 1,
+      GOOD: 5,
+      AVERAGE: 10
+    }
+  },
+  
+  // 뷰 타입
+  VIEW_TYPES: {
+    SUMMARY: 'summary',
+    SLOW: 'slow',
+    ERRORS: 'errors'
+  },
+  
+  // 메트릭 라벨
+  METRIC_LABELS: {
+    AVERAGE_RESPONSE_TIME: '평균 응답시간',
+    TOTAL_REQUESTS: '총 요청 수',
+    OVERALL_ERROR_RATE: '전체 에러율',
+    SLOWEST_REQUEST: '가장 느린 요청'
+  },
+  
+  // 상태 메시지
+  MESSAGES: {
+    NO_SLOW_APIS: '느린 API가 없습니다! 🎉',
+    NO_ERROR_APIS: '에러율이 높은 API가 없습니다! ✅',
+    LOADING: '업데이트 중...',
+    CLEAR_CONFIRM: '모든 성능 통계를 초기화하시겠습니까?',
+    CLEAR_SUCCESS: '성능 통계가 초기화되었습니다.',
+    CLEAR_ERROR: '통계 초기화에 실패했습니다.',
+    DOWNLOAD_ERROR: '보고서 다운로드 중 오류가 발생했습니다.'
+  }
+};
+
 // ===== 대시보드 위젯 상수 =====
 export const DASHBOARD_WIDGET = {
   // 그리드 레이아웃

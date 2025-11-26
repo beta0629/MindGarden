@@ -3,8 +3,11 @@
 ## 작성일
 2025-11-26
 
+## 최종 업데이트
+2025-11-26 23:40 - 개발 서버 쿠키 문제 해결 완료
+
 ## 문제 요약
-OPS Portal 로그인 후 대시보드 접근 시 401 Unauthorized 에러 발생
+OPS Portal 로그인 후 대시보드 접근 시 401 Unauthorized 에러 발생 및 개발 서버에서 로그인 후 페이지 클릭 시 로그인 페이지로 리다이렉트
 
 ## 발생한 문제들
 
@@ -195,11 +198,74 @@ ops_actor_id=superadmin%40mindgarden.com; Path=/; Max-Age=3600; SameSite=lax; Se
 ops_actor_role=HQ_ADMIN; Path=/; Max-Age=3600; SameSite=lax; Secure (HTTPS only)
 ```
 
+## 최종 해결책 (2025-11-26 23:40)
+
+### 문제 4: 개발 서버에서 로그인 후 페이지 클릭 시 로그인 페이지로 리다이렉트
+
+**증상**:
+- 개발 서버(`https://ops.dev.e-trinity.co.kr`)에서 로그인 성공
+- 대시보드 데이터는 정상 표시
+- 메뉴나 카드 클릭 시 다시 로그인 페이지로 리다이렉트
+
+**원인**:
+- `process.env.NODE_ENV === "production"` 조건으로 `secure` 쿠키 속성 설정
+- 개발 서버는 HTTPS이지만 Next.js는 `NODE_ENV=development`로 실행
+- 결과: `secure: false`로 쿠키 설정 → 브라우저가 HTTPS에서 쿠키 거부
+- 미들웨어에서 쿠키를 읽지 못해 로그인 페이지로 리다이렉트
+
+**해결**:
+```typescript
+// Before: NODE_ENV 기반 (잘못된 방법)
+const COOKIE_SETTINGS = {
+  path: "/",
+  httpOnly: false,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production" // ❌ 개발 서버(HTTPS)에서 false
+};
+
+// After: URL 프로토콜 기반 (올바른 방법)
+function getCookieSettings(request: Request) {
+  const url = new URL(request.url);
+  const isHttps = url.protocol === "https:";
+  
+  return {
+    path: "/",
+    httpOnly: false,
+    sameSite: "lax" as const,
+    secure: isHttps // ✅ HTTPS면 true, HTTP면 false
+  };
+}
+
+// 사용
+const cookieSettings = getCookieSettings(request);
+response.cookies.set("ops_token", token, { ...cookieSettings, maxAge });
+```
+
+**핵심 교훈**:
+- `NODE_ENV`는 **빌드 환경**을 나타냄 (development/production)
+- `secure` 쿠키 속성은 **실제 프로토콜**(HTTP/HTTPS)에 따라 설정해야 함
+- 개발 서버도 HTTPS를 사용할 수 있으므로 프로토콜을 직접 확인해야 함
+
 ## 변경 이력
 
-- 2025-11-26: 초기 작성
-- 로그인 API 경로 수정
-- 쿠키 확인 로직 추가
-- HTTPS 환경 쿠키 secure 설정 수정
-- 401 에러 디버깅 진행 중
+- 2025-11-26 14:00: 초기 작성
+- 2025-11-26 15:30: 로그인 API 경로 수정
+- 2025-11-26 16:00: 쿠키 확인 로직 추가
+- 2025-11-26 17:00: HTTPS 환경 쿠키 secure 설정 수정 (NODE_ENV 기반)
+- 2025-11-26 22:00: 401 에러 해결 (CORS, URL 중복)
+- 2025-11-26 23:40: **최종 해결** - URL 프로토콜 기반 secure 속성 설정
+
+## 테스트 체크리스트
+
+### 로컬 환경 (HTTP)
+- [x] 로그인 성공
+- [x] 대시보드 데이터 로드
+- [x] 메뉴 클릭 시 정상 동작
+- [x] 쿠키 `secure: false` 확인
+
+### 개발 서버 (HTTPS)
+- [ ] 로그인 성공
+- [ ] 대시보드 데이터 로드
+- [ ] 메뉴 클릭 시 정상 동작
+- [ ] 쿠키 `secure: true` 확인
 

@@ -78,14 +78,16 @@ const getAllowedWidgetsFromRegistry = (businessType) => {
   const erpTypes = getErpWidgetTypes();
   
   const normalizedType = businessType.toUpperCase();
-  let allowedWidgets = [...commonTypes, ...erpTypes];
   
   // 업종별 특화 위젯 추가
+  let businessSpecificTypes = [];
   if (normalizedType === 'CONSULTATION') {
-    allowedWidgets.push(...getConsultationWidgetTypes());
+    businessSpecificTypes = getConsultationWidgetTypes();
   } else if (normalizedType === 'ACADEMY') {
-    allowedWidgets.push(...getAcademyWidgetTypes());
+    businessSpecificTypes = getAcademyWidgetTypes();
   }
+  
+  const allowedWidgets = [...commonTypes, ...erpTypes, ...businessSpecificTypes];
   
   // 캐시에 저장
   cacheBusinessTypeWidgets(businessType, allowedWidgets);

@@ -50,7 +50,6 @@ public class OAuth2Controller extends BaseApiController {
     private final OAuth2FactoryService oauth2FactoryService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserRepository userRepository;
-    private final com.coresolution.consultation.service.CacheService cacheService;
     private final com.coresolution.consultation.service.JwtService jwtService;
     private final com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService;
     private final UserSessionService userSessionService;
@@ -161,7 +160,7 @@ public class OAuth2Controller extends BaseApiController {
             // 모바일 클라이언트인 경우 Redis에 저장 (세션 의존성 제거)
             if ("mobile".equals(client)) {
                 String cacheKey = "oauth2_kakao_client:" + state;
-                cacheService.put(cacheKey, "mobile", 300); // 5분 TTL
+                // cacheService.put(cacheKey, "mobile", 300); // 5분 TTL - 캐시 서비스 임시 비활성화
                 log.info("카카오 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
             
@@ -265,7 +264,7 @@ public class OAuth2Controller extends BaseApiController {
             // 모바일 클라이언트인 경우 Redis에 저장 (세션 의존성 제거)
             if ("mobile".equals(client)) {
                 String cacheKey = "oauth2_naver_client:" + state;
-                cacheService.put(cacheKey, "mobile", 300); // 5분 TTL
+                // cacheService.put(cacheKey, "mobile", 300); // 5분 TTL - 캐시 서비스 임시 비활성화
                 log.info("네이버 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
             
@@ -400,10 +399,11 @@ public class OAuth2Controller extends BaseApiController {
             String savedClientType = null;
             if (state != null) {
                 String cacheKey = "oauth2_naver_client:" + state;
-                java.util.Optional<String> clientTypeOpt = cacheService.get(cacheKey, String.class);
+                // java.util.Optional<String> clientTypeOpt = cacheService.get(cacheKey, String.class); // 캐시 서비스 임시 비활성화
+                java.util.Optional<String> clientTypeOpt = java.util.Optional.empty();
                 if (clientTypeOpt.isPresent()) {
                     savedClientType = clientTypeOpt.get();
-                    cacheService.evict(cacheKey); // 사용 후 삭제
+                    // cacheService.evict(cacheKey); // 사용 후 삭제 - 캐시 서비스 임시 비활성화
                     log.info("네이버 콜백 - Redis에서 모바일 클라이언트 정보 조회: clientType={}, state={}", savedClientType, state);
                 } else {
                     // Redis에 없으면 세션에서도 확인 (기존 호환성)
@@ -823,10 +823,11 @@ public class OAuth2Controller extends BaseApiController {
             String savedClientType = null;
             if (state != null) {
                 String cacheKey = "oauth2_kakao_client:" + state;
-                java.util.Optional<String> clientTypeOpt = cacheService.get(cacheKey, String.class);
+                // java.util.Optional<String> clientTypeOpt = cacheService.get(cacheKey, String.class); // 캐시 서비스 임시 비활성화
+                java.util.Optional<String> clientTypeOpt = java.util.Optional.empty();
                 if (clientTypeOpt.isPresent()) {
                     savedClientType = clientTypeOpt.get();
-                    cacheService.evict(cacheKey); // 사용 후 삭제
+                    // cacheService.evict(cacheKey); // 사용 후 삭제 - 캐시 서비스 임시 비활성화
                     log.info("카카오 콜백 - Redis에서 모바일 클라이언트 정보 조회: clientType={}, state={}", savedClientType, state);
                 } else {
                     // Redis에 없으면 세션에서도 확인 (기존 호환성)

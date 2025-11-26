@@ -6,6 +6,7 @@ import UnifiedModal from './modals/UnifiedModal';
 import SimpleHamburgerMenu from '../layout/SimpleHamburgerMenu';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
+import { useBranding } from '../../hooks/useBranding';
 import '../../styles/main.css';
 
 /**
@@ -33,10 +34,10 @@ import '../../styles/main.css';
  * @param {object} [props.extraActions] - 추가 액션 버튼들
  */
 const UnifiedHeader = ({
-  title = '',
-  logoType = 'text', // text, image, custom
-  logoImage = '',
-  logoAlt = 'MindGarden',
+  title = '', // 빈 문자열이면 브랜딩 정보에서 가져옴
+  logoType = '', // 빈 문자열이면 브랜딩 정보에서 가져옴
+  logoImage = '', // 빈 문자열이면 브랜딩 정보에서 가져옴
+  logoAlt = '', // 빈 문자열이면 브랜딩 정보에서 가져옴
   showUserMenu = true,
   showHamburger = true,
   showBackButton = true, // 백 버튼 표시 여부
@@ -46,6 +47,7 @@ const UnifiedHeader = ({
   onLogoClick,
   extraActions = null,
   notificationAction = null, // 알림 액션
+  useBrandingInfo = true, // 브랜딩 정보 사용 여부
   ...props
 }) => {
   const navigate = useNavigate();
@@ -56,6 +58,18 @@ const UnifiedHeader = ({
   const [accessibleTenants, setAccessibleTenants] = useState([]);
   const [showTenantSwitchModal, setShowTenantSwitchModal] = useState(false);
   const [isLoadingTenants, setIsLoadingTenants] = useState(false);
+
+  // 브랜딩 정보 Hook
+  const { headerProps, isLoading: isBrandingLoading } = useBranding({
+    autoLoad: useBrandingInfo && !!user,
+    useCache: true
+  });
+
+  // 실제 사용할 props 결정 (전달받은 props 우선, 없으면 브랜딩 정보 사용)
+  const actualTitle = title || (useBrandingInfo ? headerProps.title : 'MindGarden');
+  const actualLogoType = logoType || (useBrandingInfo ? headerProps.logoType : 'text');
+  const actualLogoImage = logoImage || (useBrandingInfo ? headerProps.logoImage : '');
+  const actualLogoAlt = logoAlt || (useBrandingInfo ? headerProps.logoAlt : 'MindGarden');
 
   // 로고 클릭 핸들러
   const handleLogoClick = () => {
@@ -242,22 +256,52 @@ const UnifiedHeader = ({
 
   // 로고 렌더링
   const renderLogo = () => {
-    switch (logoType) {
+    // 브랜딩 정보 로딩 중일 때는 기본 로고 표시
+    if (useBrandingInfo && isBrandingLoading) {
+      return (
+        <div 
+          className="mg-header__logo mg-header__logo--text mg-header__logo--loading"
+          onClick={handleLogoClick}
+        >
+          <span className="mg-header__logo-text">MindGarden</span>
+          <span className="mg-header__logo-subtitle">마인드가든</span>
+        </div>
+      );
+    }
+
+    switch (actualLogoType) {
       case 'image':
         return (
-          <img 
-            src={logoImage || '/logo.png'} 
-            alt={logoAlt}
-            className="mg-header__logo mg-header__logo--image"
-            onClick={handleLogoClick}
-          />
+          <div className="mg-header__logo-container" onClick={handleLogoClick}>
+            <img 
+              src={actualLogoImage || '/logo.png'} 
+              alt={actualLogoAlt}
+              className="mg-header__logo mg-header__logo--image"
+              onError={(e) => {
+                // 이미지 로드 실패 시 텍스트 로고로 폴백
+                console.warn('로고 이미지 로드 실패, 텍스트 로고로 변경:', actualLogoImage);
+                e.target.style.display = 'none';
+                const textLogo = e.target.parentNode.querySelector('.mg-header__logo--text-fallback');
+                if (textLogo) {
+                  textLogo.style.display = 'block';
+                }
+              }}
+            />
+            <div 
+              className="mg-header__logo mg-header__logo--text mg-header__logo--text-fallback"
+              style={{ display: 'none' }}
+            >
+              <span className="mg-header__logo-text">{actualTitle}</span>
+              <span className="mg-header__logo-subtitle">마인드가든</span>
+            </div>
+          </div>
         );
       case 'custom':
         return (
           <div 
             className="mg-header__logo mg-header__logo--custom"
             onClick={handleLogoClick}
-            dangerouslySetInnerHTML={{ __html: logoImage }}
+            dangerouslySetInnerHTML={{ __html: actualLogoImage }}
           />
         );
       case 'text':
@@ -268,7 +312,7 @@ const UnifiedHeader = ({
             onClick={handleLogoClick}
           >
             <span className="mg-header__logo-text">
-              {title || 'MindGarden'}
+              {actualTitle}
             </span>
             <span className="mg-header__logo-subtitle">
               마인드가든

@@ -88,5 +88,28 @@ public class ApiResponse<T> {
             .timestamp(LocalDateTime.now())
             .build();
     }
+    
+    /**
+     * 오류 응답 생성 (메시지만)
+     */
+    public static <T> ApiResponse<T> error(String message) {
+        return ApiResponse.<T>builder()
+            .success(false)
+            .message(message)
+            .timestamp(LocalDateTime.now())
+            .build();
+    }
+    
+    /**
+     * 오류 응답 생성 (메시지 + 데이터)
+     */
+    public static <T> ApiResponse<T> error(String message, T data) {
+        return ApiResponse.<T>builder()
+            .success(false)
+            .message(message)
+            .data(data)
+            .timestamp(LocalDateTime.now())
+            .build();
+    }
 }
 

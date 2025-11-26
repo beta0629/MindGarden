@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import { getCurrentUserDashboard, getDashboardComponentName } from '../../utils/dashboardUtils';
@@ -17,6 +17,8 @@ import { sessionManager } from '../../utils/sessionManager';
 import notificationManager from '../../utils/notification';
 import DashboardGrid from '../layout/DashboardGrid';
 import { getWidgetComponent } from './widgets/WidgetRegistry';
+import WidgetCardWrapper from './widgets/WidgetCardWrapper';
+import { apiGet } from '../../utils/ajax';
 
 // 대시보드 컴포넌트 동적 import
 import CommonDashboard from './CommonDashboard';
@@ -35,12 +37,18 @@ const DASHBOARD_COMPONENTS = {
 
 const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user: sessionUser, isLoading: sessionLoading } = useSession();
   const [dashboard, setDashboard] = useState(propDashboard);
   const [isLoading, setIsLoading] = useState(!propDashboard);
   const [error, setError] = useState(null);
   
   const currentUser = propUser || sessionUser || sessionManager.getUser();
+  
+  // URL 쿼리 파라미터에서 dashboardId 확인 (관리자 미리보기용)
+  const queryParams = new URLSearchParams(location.search);
+  const dashboardIdFromQuery = queryParams.get('dashboardId');
+  const isAdminPreview = location.state?.isAdminPreview || false;
 
   // dashboardConfig 기반 위젯 렌더링 (early return 전에 호출해야 함)
   const dashboardConfig = useMemo(() => {
@@ -78,7 +86,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     if (!propDashboard && currentUser && currentUser.id) {
       loadDashboard();
     }
-  }, [currentUser, propDashboard]);
+  }, [currentUser, propDashboard, dashboardIdFromQuery]);
 
   const loadDashboard = async () => {
     if (!currentUser) {
@@ -91,6 +99,24 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     setError(null);
 
     try {
+      // 관리자 미리보기 모드: dashboardId 쿼리 파라미터로 직접 조회
+      if (dashboardIdFromQuery && isAdminPreview) {
+        console.log('🔍 관리자 미리보기 모드: dashboardId로 직접 조회', dashboardIdFromQuery);
+        try {
+          const dashboardData = await apiGet(`/api/v1/tenant/dashboards/${dashboardIdFromQuery}`);
+          if (dashboardData) {
+            setDashboard(dashboardData);
+            setIsLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error('❌ 대시보드 조회 실패:', error);
+          setError('대시보드를 불러올 수 없습니다.');
+          setIsLoading(false);
+          return;
+        }
+      }
+
       // 사용자 정보에 tenantId가 없으면 최신 정보 다시 로드 시도
       let userWithTenant = currentUser;
       if (!currentUser.tenantId) {
@@ -124,6 +150,21 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
         await redirectToDynamicDashboard(authResponse, navigate);
         setIsLoading(false);
         return;
+      }
+
+      // dashboardId 쿼리 파라미터가 있으면 해당 대시보드 직접 조회 (관리자용)
+      if (dashboardIdFromQuery) {
+        console.log('🔍 dashboardId로 직접 조회:', dashboardIdFromQuery);
+        try {
+          const dashboardData = await apiGet(`/api/v1/tenant/dashboards/${dashboardIdFromQuery}`);
+          if (dashboardData) {
+            setDashboard(dashboardData);
+            setIsLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.warn('⚠️ dashboardId로 조회 실패, 역할 기반 조회로 폴백:', error);
+        }
       }
 
       // 동적 대시보드 조회 시도 (404는 조용히 처리)
@@ -250,12 +291,22 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
  * @param {string} props.businessType - 업종 타입 (선택적)
  */
 const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType = null }) => {
-  const { layout, widgets, theme, refresh } = dashboardConfig;
+  const { layout, widgets, theme, cardLayout, refresh } = dashboardConfig;
   
   // 레이아웃 설정
   const layoutType = layout?.type || 'grid';
   const columns = layout?.columns || 3;
   const gap = layout?.gap || 'md';
+  
+  // 카드 레이아웃 기본 설정
+  const defaultCardStyle = cardLayout || {
+    style: 'v2',
+    variant: 'elevated',
+    padding: 'md',
+    borderRadius: 'md',
+    hoverEffect: true,
+    shadow: 'md'
+  };
   
   // 위젯 필터링 (visibility 조건 확인)
   const visibleWidgets = widgets.filter(widget => {
@@ -319,13 +370,22 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
       ? `span ${widget.position.span}` 
       : undefined;
     
+    // 위젯별 카드 스타일 (위젯 설정 우선, 없으면 기본값)
+    const widgetCardStyle = widget.cardStyle || defaultCardStyle;
+    
     return (
       <div 
         key={widget.id} 
         style={widgetStyle}
         className={gridColumnSpan ? `grid-col-span-${widget.position.span}` : ''}
       >
-        <WidgetComponent widget={widget} user={user} />
+        <WidgetCardWrapper 
+          widget={widget}
+          cardStyle={widgetCardStyle}
+          defaultCardStyle={defaultCardStyle}
+        >
+          <WidgetComponent widget={widget} user={user} />
+        </WidgetCardWrapper>
       </div>
     );
   };

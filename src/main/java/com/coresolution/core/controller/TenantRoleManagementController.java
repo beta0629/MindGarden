@@ -5,6 +5,8 @@ import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.TenantRoleRequest;
 import com.coresolution.core.dto.TenantRoleResponse;
 import com.coresolution.core.service.TenantRoleService;
+import com.coresolution.core.domain.RoleTemplate;
+import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.core.context.TenantContextHolder;
@@ -16,6 +18,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 /**
  * 테넌트별 역할 관리 컨트롤러
@@ -34,6 +39,7 @@ import java.util.List;
 public class TenantRoleManagementController extends BaseApiController {
     
     private final TenantRoleService tenantRoleService;
+    private final RoleTemplateRepository roleTemplateRepository;
     
     /**
      * 현재 테넌트의 역할 목록 조회
@@ -47,6 +53,41 @@ public class TenantRoleManagementController extends BaseApiController {
         
         List<TenantRoleResponse> roles = tenantRoleService.getRolesByTenant(tenantId);
         return success(roles);
+    }
+    
+    /**
+     * 역할 템플릿 목록 조회 (업종별)
+     */
+    @GetMapping("/templates")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRoleTemplates(HttpSession session) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            throw new IllegalArgumentException("테넌트 정보가 없습니다.");
+        }
+        
+        // 테넌트의 업종 정보 가져오기 (간단히 하기 위해 businessType을 파라미터로 받거나, 테넌트 정보에서 가져오기)
+        // 여기서는 모든 활성 템플릿을 반환 (업종 필터링은 프론트엔드에서)
+        List<RoleTemplate> templates = roleTemplateRepository.findAllActive();
+        
+        List<Map<String, Object>> templateList = templates.stream().map(template -> {
+            Map<String, Object> data = new HashMap<>();
+            data.put("roleTemplateId", template.getRoleTemplateId());
+            data.put("templateCode", template.getTemplateCode());
+            data.put("name", template.getName());
+            data.put("nameKo", template.getNameKo());
+            data.put("nameEn", template.getNameEn());
+            data.put("businessType", template.getBusinessType());
+            data.put("description", template.getDescription());
+            data.put("descriptionKo", template.getDescriptionKo());
+            data.put("descriptionEn", template.getDescriptionEn());
+            data.put("isSystemTemplate", template.getIsSystemTemplate());
+            data.put("displayOrder", template.getDisplayOrder());
+            data.put("defaultWidgetsJson", template.getDefaultWidgetsJson());
+            return data;
+        }).collect(Collectors.toList());
+        
+        log.info("역할 템플릿 목록 조회 완료: {}개", templateList.size());
+        return success(templateList);
     }
     
     /**

@@ -26,7 +26,13 @@ import com.coresolution.consultation.repository.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.PerformanceAlertRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.service.StatisticsService;
+import com.coresolution.consultation.service.CommonCodeService;
+import java.math.RoundingMode;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +60,8 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final FinancialTransactionRepository financialTransactionRepository;
     private final ConsultantRatingRepository consultantRatingRepository;
     private final ConsultationRecordRepository consultationRecordRepository;
+    private final ConsultantClientMappingRepository mappingRepository;
+    private final CommonCodeService commonCodeService;
 
     // ==================== 일별 통계 관리 ====================
 
@@ -87,10 +95,10 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .count();
             statistics.setCancelledConsultations((int) cancelledCount);
 
-            // 수익 계산 (완료된 스케줄의 기본 세션 비용 합계)
+            // 수익 계산 (완료된 스케줄의 세션 비용 합계 - 메타데이터 기반)
             BigDecimal totalRevenue = daySchedules.stream()
                 .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
-                .map(s -> BigDecimal.valueOf(50000)) // 기본 세션비 50,000원으로 설정
+                .map(this::getSessionFee)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             statistics.setTotalRevenue(totalRevenue);
 
@@ -247,10 +255,10 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .count();
             performance.setNoShowSchedules((int) noShowCount);
 
-            // 수익 계산 (기본 세션비 기준)
+            // 수익 계산 (메타데이터 기반 세션비)
             BigDecimal totalRevenue = consultantSchedules.stream()
                 .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
-                .map(s -> BigDecimal.valueOf(50000)) // 기본 세션비 50,000원으로 설정
+                .map(this::getSessionFee)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             performance.setTotalRevenue(totalRevenue);
 
@@ -562,10 +570,10 @@ public class StatisticsServiceImpl implements StatisticsService {
             double completionRate = todaySchedules.isEmpty() ? 0.0 : 
                 (double) completedCount / todaySchedules.size() * 100;
             
-            // 실시간 수익 (오늘 완료된 상담 기준)
+            // 실시간 수익 (오늘 완료된 상담 기준 - 메타데이터 기반)
             BigDecimal realTimeRevenue = todaySchedules.stream()
                 .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
-                .map(s -> BigDecimal.valueOf(50000)) // 기본 세션비
+                .map(this::getSessionFee)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
             // 활성 상담사 수
@@ -951,5 +959,71 @@ public class StatisticsServiceImpl implements StatisticsService {
         Map<String, Object> activity = new HashMap<>();
         activity.put("activities", new ArrayList<>());
         return activity;
+    }
+    
+    // ==================== 세션비 조회 로직 (하드코딩 제거) ====================
+    
+    /**
+     * 스케줄의 세션비 조회 (메타데이터 기반)
+     * 우선순위: 1. 매핑에서 회기당 단가 조회 → 2. CommonCode에서 기본값 조회 → 3. Fallback
+     */
+    private BigDecimal getSessionFee(Schedule schedule) {
+        // 1. 매핑에서 회기당 단가 조회
+        if (schedule.getConsultantId() != null && schedule.getClientId() != null) {
+            Optional<ConsultantClientMapping> mappingOpt = mappingRepository
+                .findByConsultantAndClient(
+                    userRepository.findById(schedule.getConsultantId()).orElse(null),
+                    userRepository.findById(schedule.getClientId()).orElse(null)
+                )
+                .stream()
+                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                .findFirst();
+            
+            if (mappingOpt.isPresent()) {
+                ConsultantClientMapping mapping = mappingOpt.get();
+                if (mapping.getPackagePrice() != null && 
+                    mapping.getTotalSessions() != null && 
+                    mapping.getTotalSessions() > 0) {
+                    
+                    BigDecimal sessionFee = BigDecimal.valueOf(mapping.getPackagePrice())
+                        .divide(BigDecimal.valueOf(mapping.getTotalSessions()), 2, RoundingMode.HALF_UP);
+                    log.debug("✅ 매핑에서 세션비 조회: scheduleId={}, sessionFee={}", 
+                        schedule.getId(), sessionFee);
+                    return sessionFee;
+                }
+            }
+        }
+        
+        // 2. CommonCode에서 기본 세션비 조회
+        return getDefaultSessionFeeFromCommonCode();
+    }
+    
+    /**
+     * CommonCode에서 기본 세션비 조회
+     */
+    private BigDecimal getDefaultSessionFeeFromCommonCode() {
+        try {
+            CommonCode code = commonCodeService.getCommonCodeByGroupAndValue("SYSTEM_CONFIG", "DEFAULT_SESSION_FEE");
+            if (code != null && code.getExtraData() != null) {
+                try {
+                    // extra_data JSON에서 value 추출
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    com.fasterxml.jackson.databind.JsonNode jsonNode = mapper.readTree(code.getExtraData());
+                    if (jsonNode.has("value")) {
+                        BigDecimal defaultFee = jsonNode.get("value").decimalValue();
+                        log.debug("✅ CommonCode에서 기본 세션비 조회: {}", defaultFee);
+                        return defaultFee;
+                    }
+                } catch (Exception e) {
+                    log.warn("⚠️ CommonCode extra_data 파싱 실패: {}", code.getExtraData(), e);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ CommonCode 기본 세션비 조회 실패, Fallback 사용", e);
+        }
+        
+        // 3. 최종 Fallback (하드코딩 제거를 위해 경고 로그 남김)
+        log.warn("⚠️ 기본 세션비를 찾을 수 없어 Fallback 값(50000) 사용. CommonCode에 SYSTEM_CONFIG.DEFAULT_SESSION_FEE를 추가하세요.");
+        return BigDecimal.valueOf(50000);
     }
 }

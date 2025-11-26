@@ -101,10 +101,15 @@ test_api "GET" "/api/v1/tenants/${TENANT_ID}/erd" "200" "ERD 목록 조회" || t
 echo ""
 
 # ============================================
-# 3. 공통코드 API 테스트
+# 3. 공통코드 API 테스트 (새로운 표준 API)
 # ============================================
 echo -e "${YELLOW}📋 3. 공통코드 API 테스트${NC}"
-test_api "GET" "/api/common-codes/groups?groups=USER_ROLE,BRANCH_STATUS" "200" "공통코드 그룹별 조회" || true
+# 코어 코드 조회 (전역 코드)
+test_api "GET" "/api/v1/common-codes?codeGroup=USER_ROLE" "200" "코어 공통코드 조회 (USER_ROLE)" || true
+test_api "GET" "/api/v1/common-codes?codeGroup=USER_STATUS" "200" "코어 공통코드 조회 (USER_STATUS)" || true
+
+# 테넌트 코드 조회 (테넌트별 독립 코드) - 인증 필요
+# test_api "GET" "/api/v1/common-codes/tenant?codeGroup=CONSULTATION_PACKAGE" "200" "테넌트 공통코드 조회" || true
 echo ""
 
 # ============================================

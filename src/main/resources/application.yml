@@ -12,15 +12,15 @@ spring:
   main:
     allow-bean-definition-overriding: true
   
-  # 데이터베이스 설정
+  # 데이터베이스 설정 (개발 서버 DB 사용)
   datasource:
-    url: jdbc:mysql://localhost:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true
-    username: ${DB_USERNAME:mindgarden_dev}
-    password: ${DB_PASSWORD:}  # 필수: 환경 변수로 설정 (개발 서버 예시: export DB_PASSWORD="MindGardenDev2025!@#")
+    # IPv4 우선 사용을 위해 IP 주소 직접 사용 (DNS 문제 해결)
+    url: jdbc:mysql://114.202.247.246:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+    username: mindgarden_dev
+    password: MindGardenDev2025!@#
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 문자셋 설정 추가
     connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
-  
   # JPA 설정
   jpa:
     hibernate:
@@ -102,35 +102,35 @@ spring:
   #             - basic
   #           client-name: Instagram
 
-# JWT 설정
+# JWT 설정 (기본값 포함)
 jwt:
-  secret: ${JWT_SECRET:}
+  secret: ${JWT_SECRET:MindGardenJWTSecretKey2025!@#$%^&*()_+}
   expiration: 3600000   # 1시간 (밀리초)
   refresh-expiration: 604800000  # 7일 (밀리초)
 
-# 개인정보 암호화 설정
+# 개인정보 암호화 설정 (기본값 포함)
 encryption:
   personal-data:
-    active-key-id: ${PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID:}
-    key-versions: ${PERSONAL_DATA_ENCRYPTION_KEYS:}
-    iv-versions: ${PERSONAL_DATA_ENCRYPTION_IVS:}
-    key: ${PERSONAL_DATA_ENCRYPTION_KEY:}
-    iv: ${PERSONAL_DATA_ENCRYPTION_IV:}
+    active-key-id: ${PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID:default}
+    key-versions: ${PERSONAL_DATA_ENCRYPTION_KEYS:MindGardenPersonalDataEncryptionKey2025!@#$%^&*()_+}
+    iv-versions: ${PERSONAL_DATA_ENCRYPTION_IVS:MindGardenPersonalDataEncryptionIV2025!@#$%^&*()_+}
+    key: ${PERSONAL_DATA_ENCRYPTION_KEY:MindGardenPersonalDataEncryptionKey2025!@#$%^&*()_+}
+    iv: ${PERSONAL_DATA_ENCRYPTION_IV:MindGardenPersonalDataEncryptionIV2025!@#$%^&*()_+}
     algorithm: AES-256
     transformation: AES/CBC/PKCS5Padding
 
 # 결제 시스템 설정
 payment:
   toss:
-    secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
-    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET:}
+    secret-key: ${PAYMENT_TOSS_SECRET_KEY:dummy-toss-secret}
+    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET:dummy-webhook-secret}
     base-url: ${PAYMENT_TOSS_BASE_URL:https://api.tosspayments.com}
     simulation-mode: ${PAYMENT_TOSS_SIMULATION_MODE:true}
     test-payment-url: ${PAYMENT_TOSS_TEST_URL:https://checkout.tosspayments.com/v1/test/}
     test-payment-key-prefix: ${PAYMENT_TOSS_TEST_KEY_PREFIX:toss_test_}
   iamport:
-    api-key: ${PAYMENT_IAMPORT_API_KEY:}
-    api-secret: ${PAYMENT_IAMPORT_API_SECRET:}
+    api-key: ${PAYMENT_IAMPORT_API_KEY:dummy-iamport-key}
+    api-secret: ${PAYMENT_IAMPORT_API_SECRET:dummy-iamport-secret}
     base-url: ${PAYMENT_IAMPORT_BASE_URL:https://api.iamport.kr}
     simulation-mode: ${PAYMENT_IAMPORT_SIMULATION_MODE:true}
 
@@ -152,6 +152,12 @@ server:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
     min-response-size: 1024
+
+# ERD 자동 생성 설정 (로컬/개발 환경에서는 비활성화)
+erd:
+  auto-generation:
+    enabled: false  # JPA 순환 참조 문제 방지를 위해 비활성화
+    trigger-on-migration: false
 
 # 로깅 설정
 logging:
@@ -230,16 +236,16 @@ sms:
   auth:
     enabled: ${SMS_AUTH_ENABLED:false}  # 기본값: 비활성화 (비용 절약)
     provider: ${SMS_PROVIDER:nhn}  # nhn, twilio, aligo 등
-    api-key: ${SMS_API_KEY:}
-    api-secret: ${SMS_API_SECRET:}
-    sender-number: ${SMS_SENDER_NUMBER:}
+    api-key: ${SMS_API_KEY:dummy-sms-key}
+    api-secret: ${SMS_API_SECRET:dummy-sms-secret}
+    sender-number: ${SMS_SENDER_NUMBER:01012345678}
     test-mode: ${SMS_TEST_MODE:true}  # 테스트 모드 (실제 SMS 발송 안함)
     mock-verification-code: ${SMS_MOCK_CODE:123456}  # 테스트용 고정 인증번호
 
 # OpenAI API 설정 (웰니스 컨텐츠 자동 생성)
 openai:
   api:
-    key: ${OPENAI_API_KEY:}  # 환경 변수로 설정 필수
+    key: ${OPENAI_API_KEY:dummy-key-for-development}  # 환경 변수로 설정 (기본값 포함)
     url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
   model: ${OPENAI_MODEL:gpt-3.5-turbo}  # gpt-3.5-turbo 또는 gpt-4
 
@@ -258,3 +264,20 @@ ops:
     username: ${OPS_ADMIN_USERNAME:superadmin@mindgarden.com}  # Ops Portal 관리자 아이디
     password: ${OPS_ADMIN_PASSWORD:admin123}  # Ops Portal 관리자 비밀번호
     role: ${OPS_ADMIN_ROLE:HQ_ADMIN}  # Ops Portal 관리자 역할
+
+# 환경변수 기본값 설정 (개발 환경용)
+personal-data:
+  encryption:
+    key: ${PERSONAL_DATA_ENCRYPTION_KEY:MindGardenPersonalDataEncryptionKey2025!@#$%^&*()_+}
+    iv: ${PERSONAL_DATA_ENCRYPTION_IV:MindGardenPersonalDataEncryptionIV2025!@#$%^&*()_+}
+
+# 이메일 설정 (개발 환경용 기본값)
+mail:
+  username: ${MAIL_USERNAME:dummy@example.com}
+  password: ${MAIL_PASSWORD:dummy-password}
+
+# 카카오 알림톡 설정 (개발 환경용 기본값)
+kakao:
+  alimtalk:
+    api-key: ${KAKAO_ALIMTALK_API_KEY:dummy-kakao-key}
+    sender-key: ${KAKAO_ALIMTALK_SENDER_KEY:dummy-sender-key}

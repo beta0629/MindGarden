@@ -12,7 +12,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -35,10 +35,10 @@ import java.io.IOException;
 @Slf4j
 @Component
 @Order(1) // SessionBasedAuthenticationFilter 이전에 실행
-@RequiredArgsConstructor
 public class TenantContextFilter implements Filter {
     
-    private final BranchRepository branchRepository;
+    @Autowired(required = false)
+    private BranchRepository branchRepository;
     
     /**
      * HTTP 헤더에서 tenant_id 추출 키
@@ -116,23 +116,34 @@ public class TenantContextFilter implements Filter {
             }
         }
         
-        // 2. 세션에서 User 정보를 통해 Branch의 tenant_id 조회 (우선순위 2)
+        // 2. 세션에서 User 정보를 통해 tenant_id 조회 (우선순위 2)
         if (session != null) {
             User user = SessionUtils.getCurrentUser(session);
-            if (user != null && user.getBranchCode() != null) {
-                try {
-                    Branch branch = branchRepository.findByBranchCodeAndIsDeletedFalse(user.getBranchCode())
-                        .orElse(null);
-                    
-                    if (branch != null && branch.getTenantId() != null) {
-                        // Branch 엔티티에서 tenant_id 조회
-                        // 세션에 tenant_id 저장 (다음 요청에서 빠르게 조회)
-                        session.setAttribute(SESSION_TENANT_ID, branch.getTenantId());
-                        log.debug("Tenant ID extracted from user branch: {}", branch.getTenantId());
-                        return branch.getTenantId();
+            if (user != null) {
+                // 2-1. User 엔티티의 tenantId 직접 확인 (최우선)
+                if (user.getTenantId() != null && !user.getTenantId().isEmpty()) {
+                    // 세션에 tenant_id 저장 (다음 요청에서 빠르게 조회)
+                    session.setAttribute(SESSION_TENANT_ID, user.getTenantId());
+                    log.debug("Tenant ID extracted from user entity: {}", user.getTenantId());
+                    return user.getTenantId();
+                }
+                
+                // 2-2. User의 branchCode를 통해 Branch의 tenant_id 조회 (폴백)
+                if (user.getBranchCode() != null && branchRepository != null) {
+                    try {
+                        Branch branch = branchRepository.findByBranchCodeAndIsDeletedFalse(user.getBranchCode())
+                            .orElse(null);
+                        
+                        if (branch != null && branch.getTenantId() != null) {
+                            // Branch 엔티티에서 tenant_id 조회
+                            // 세션에 tenant_id 저장 (다음 요청에서 빠르게 조회)
+                            session.setAttribute(SESSION_TENANT_ID, branch.getTenantId());
+                            log.debug("Tenant ID extracted from user branch: {}", branch.getTenantId());
+                            return branch.getTenantId();
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to extract tenant ID from user branch: {}", e.getMessage());
                     }
-                } catch (Exception e) {
-                    log.warn("Failed to extract tenant ID from user branch: {}", e.getMessage());
                 }
             }
             

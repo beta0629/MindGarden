@@ -1,0 +1,11 @@
+{
+  "success": false,
+  "message": "접근 권한이 없습니다.",
+  "errorCode": "ACCESS_DENIED",
+  "timestamp": "2025-11-25T17:46:01",
+  "status": 403,
+  "details": null,
+  "path": "/api/v1/tenants/test-tenant-1764060361/erd",
+  "method": "GET",
+  "stackTrace": null
+}

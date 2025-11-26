@@ -105,8 +105,29 @@ public class TenantRoleServiceImpl implements TenantRoleService {
         
         TenantRole saved = tenantRoleRepository.save(role);
         
-        // 권한 설정 (커스텀 역할인 경우)
-        if (request.getPermissions() != null && !request.getPermissions().isEmpty()) {
+        // 템플릿 기반 역할인 경우 템플릿 권한 복제
+        if (request.getRoleTemplateId() != null) {
+            roleTemplateRepository.findByRoleTemplateIdAndIsDeletedFalse(request.getRoleTemplateId())
+                    .ifPresent(template -> {
+                        if (template.getPermissions() != null) {
+                            for (RoleTemplatePermission templatePerm : template.getPermissions()) {
+                                RolePermission permission = RolePermission.builder()
+                                        .tenantRoleId(tenantRoleId)
+                                        .permissionCode(templatePerm.getPermissionCode())
+                                        .scope(templatePerm.getScope())
+                                        .policyJson(null) // 템플릿 권한은 기본 정책만, 필요시 나중에 커스터마이징
+                                        .grantedBy(createdBy)
+                                        .build();
+                                rolePermissionRepository.save(permission);
+                            }
+                            log.info("템플릿 권한 복제 완료: roleTemplateId={}, permissionCount={}", 
+                                    request.getRoleTemplateId(), template.getPermissions().size());
+                        }
+                    });
+        }
+        
+        // 권한 설정 (커스텀 역할인 경우 - 템플릿 기반이 아닐 때만)
+        if (request.getRoleTemplateId() == null && request.getPermissions() != null && !request.getPermissions().isEmpty()) {
             for (TenantRoleRequest.PermissionRequest permReq : request.getPermissions()) {
                 RolePermission permission = RolePermission.builder()
                         .tenantRoleId(tenantRoleId)

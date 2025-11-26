@@ -86,6 +86,12 @@ public interface CommonCodeRepository extends JpaRepository<CommonCode, Long> {
     @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup AND c.codeValue = :codeValue AND c.isActive = true")
     Optional<CommonCode> findTenantCodeByGroupAndValue(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup, @Param("codeValue") String codeValue);
     
+    /**
+     * 테넌트별 전체 코드 조회
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.isActive = true ORDER BY c.codeGroup ASC, c.sortOrder ASC")
+    List<CommonCode> findAllTenantCodes(@Param("tenantId") String tenantId);
+    
     // ==================== 통합 조회 (하위 호환성) ====================
     
     /**

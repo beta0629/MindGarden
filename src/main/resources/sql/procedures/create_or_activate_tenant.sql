@@ -185,8 +185,22 @@ BEGIN
             'ko'
         );
         
-        SET p_success = TRUE;
-        SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, '): ', p_tenant_id);
+        -- 새 테넌트 생성 시 기본 테넌트 코드 자동 복사
+        -- 기존 테넌트에서 기본 코드 복사 (첫 번째 활성 테넌트 사용)
+        CALL CopyDefaultTenantCodes(
+            p_tenant_id,
+            (SELECT tenant_id FROM tenants WHERE is_deleted = FALSE AND status = 'ACTIVE' LIMIT 1),
+            @copy_success,
+            @copy_message
+        );
+        
+        IF @copy_success = TRUE THEN
+            SET p_success = TRUE;
+            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사: ', @copy_message, '): ', p_tenant_id);
+        ELSE
+            SET p_success = TRUE;  -- 코드 복사 실패해도 테넌트 생성은 성공으로 처리
+            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사 실패: ', @copy_message, '): ', p_tenant_id);
+        END IF;
     END IF;
     
     COMMIT;

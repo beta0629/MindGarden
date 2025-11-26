@@ -49,6 +49,8 @@ import MappingManagementWidget from './consultation/MappingManagementWidget';
 import SessionManagementWidget from './consultation/SessionManagementWidget';
 import ScheduleRegistrationWidget from './consultation/ScheduleRegistrationWidget';
 import PendingDepositWidget from './consultation/PendingDepositWidget';
+import ClientRegistrationWidget from './consultation/ClientRegistrationWidget';
+import ConsultantRegistrationWidget from './consultation/ConsultantRegistrationWidget';
 
 // 관리자용 위젯 (관리자 역할에서만 사용)
 import SystemStatusWidget from './admin/SystemStatusWidget';
@@ -110,7 +112,9 @@ const CONSULTATION_WIDGETS = {
   'mapping-management': MappingManagementWidget,
   'session-management': SessionManagementWidget,
   'schedule-registration': ScheduleRegistrationWidget,
-  'pending-deposit': PendingDepositWidget
+  'pending-deposit': PendingDepositWidget,
+  'client-registration': ClientRegistrationWidget,
+  'consultant-registration': ConsultantRegistrationWidget
 };
 
 /**

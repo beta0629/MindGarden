@@ -9,6 +9,7 @@
  */
 
 import React, { useState } from 'react';
+import { ReactSortable } from 'react-sortablejs';
 import MGButton from '../common/MGButton';
 import { 
   getSupportedWidgetTypes,
@@ -127,11 +128,9 @@ const DashboardWidgetEditor = ({
     onWidgetsChange([...widgets, newWidget]);
   };
 
-  // 위젯 삭제
+  // 위젯 삭제 (확인 없이 바로 삭제 - 간소화)
   const handleDeleteWidget = (widgetId) => {
-    if (window.confirm('이 위젯을 삭제하시겠습니까?')) {
-      onWidgetsChange(widgets.filter(w => w.id !== widgetId));
-    }
+    onWidgetsChange(widgets.filter(w => w.id !== widgetId));
   };
 
   // 위젯 설정 열기
@@ -165,21 +164,44 @@ const DashboardWidgetEditor = ({
             {commonWidgetTypes.length}개
           </span>
         </h3>
-        <div className="available-widgets-grid">
+        <ReactSortable
+          list={commonWidgetTypes.map(type => ({ type, id: type }))}
+          setList={() => {}} // 원본은 변경하지 않음
+          group={{
+            name: 'widgets',
+            pull: 'clone', // 복사본만 드래그
+            put: false // 여기로 드롭 불가
+          }}
+          sort={false} // 정렬 불가
+          clone={(item) => ({
+            type: item.type,
+            id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          })}
+          className="available-widgets-grid"
+        >
           {commonWidgetTypes.map(widgetType => (
-            <button
+            <div
               key={widgetType}
               className="available-widget-item"
-              onClick={() => handleAddWidget(widgetType)}
+              data-widget-type={widgetType}
               title={getWidgetTypeName(widgetType)}
+              onClick={() => handleAddWidget(widgetType)}
+              style={{ cursor: 'grab' }}
             >
+              <FaGripVertical className="widget-drag-handle-icon" style={{ 
+                position: 'absolute', 
+                top: '4px', 
+                right: '4px', 
+                fontSize: '12px',
+                color: 'var(--mg-text-tertiary, #9ca3af)'
+              }} />
               <FaPlus className="widget-add-icon" />
               <span className="widget-type-name">
                 {getWidgetTypeName(widgetType)}
               </span>
-            </button>
+            </div>
           ))}
-        </div>
+        </ReactSortable>
       </div>
 
       {/* 특화 위젯 목록 */}
@@ -201,18 +223,42 @@ const DashboardWidgetEditor = ({
               {specializedWidgetTypes.length}개
             </span>
           </h3>
-          <div className="available-widgets-grid">
+          <ReactSortable
+            list={specializedWidgetTypes.map(type => ({ type, id: type }))}
+            setList={() => {}} // 원본은 변경하지 않음
+            group={{
+              name: 'widgets',
+              pull: 'clone', // 복사본만 드래그
+              put: false // 여기로 드롭 불가
+            }}
+            sort={false} // 정렬 불가
+            clone={(item) => ({
+              type: item.type,
+              id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            })}
+            className="available-widgets-grid"
+          >
             {specializedWidgetTypes.map(widgetType => (
-              <button
+              <div
                 key={widgetType}
                 className="available-widget-item specialized-widget-item"
+                data-widget-type={widgetType}
                 onClick={() => handleAddWidget(widgetType)}
                 title={getWidgetTypeName(widgetType)}
                 style={{
                   borderColor: '#ff9800',
-                  backgroundColor: '#fff8f0'
+                  backgroundColor: '#fff8f0',
+                  cursor: 'grab',
+                  position: 'relative'
                 }}
               >
+                <FaGripVertical className="widget-drag-handle-icon" style={{ 
+                  position: 'absolute', 
+                  top: '4px', 
+                  right: '4px', 
+                  fontSize: '12px',
+                  color: 'var(--mg-text-tertiary, #9ca3af)'
+                }} />
                 <FaPlus className="widget-add-icon" />
                 <span className="widget-type-name">
                   {getWidgetTypeName(widgetType)}
@@ -228,9 +274,9 @@ const DashboardWidgetEditor = ({
                 }}>
                   특화
                 </span>
-              </button>
+              </div>
             ))}
-          </div>
+          </ReactSortable>
         </div>
       )}
 
@@ -263,22 +309,46 @@ const DashboardWidgetEditor = ({
                   </span>
                 </div>
                 <div className="widget-item-actions">
-                  <MGButton
-                    variant="secondary"
-                    size="small"
+                  <button
+                    type="button"
                     onClick={() => handleConfigWidget(widget)}
-                    className="widget-config-btn"
+                    className="widget-action-btn widget-config-btn"
+                    title="위젯 설정"
+                    style={{
+                      padding: '6px 12px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      backgroundColor: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      color: '#666'
+                    }}
                   >
                     <FaCog /> 설정
-                  </MGButton>
-                  <MGButton
-                    variant="danger"
-                    size="small"
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => handleDeleteWidget(widget.id)}
-                    className="widget-delete-btn"
+                    className="widget-action-btn widget-delete-btn"
+                    title="위젯 삭제"
+                    style={{
+                      padding: '6px 12px',
+                      border: '1px solid #f44336',
+                      borderRadius: '4px',
+                      backgroundColor: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      color: '#f44336'
+                    }}
                   >
                     <FaTrash /> 삭제
-                  </MGButton>
+                  </button>
                 </div>
               </div>
             ))}

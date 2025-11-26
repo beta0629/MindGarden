@@ -2,6 +2,7 @@ package com.coresolution.consultation.config;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,8 +25,30 @@ public class PlSqlInitializer {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     
+    @Autowired
+    private DataSource dataSource;
+    
+    /**
+     * 현재 데이터베이스가 H2인지 확인
+     */
+    private boolean isH2Database() {
+        try {
+            String url = dataSource.getConnection().getMetaData().getURL();
+            return url != null && url.startsWith("jdbc:h2:");
+        } catch (Exception e) {
+            log.warn("데이터베이스 타입 확인 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+    
     @PostConstruct
     public void init() {
+        // H2 데이터베이스인 경우 프로시저 초기화 건너뛰기
+        if (isH2Database()) {
+            log.info("ℹ️ H2 데이터베이스 감지: PL/SQL 프로시저 초기화를 건너뜁니다 (테스트 환경)");
+            return;
+        }
+        
         log.info("🚀 PL/SQL 프로시저 자동 초기화 시작");
         
         try {
@@ -69,8 +92,10 @@ public class PlSqlInitializer {
             
             log.warn("⚠️ CreateOrActivateTenant 프로시저가 없습니다. Java 코드에서 생성 시도...");
             
-            // UTF-8 인코딩 설정
-            jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+            // UTF-8 인코딩 설정 (MySQL만 지원)
+            if (!isH2Database()) {
+                jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+            }
             
             // SQL 파일 읽기
             ClassPathResource resource = new ClassPathResource("sql/procedures/create_or_activate_tenant.sql");
@@ -254,8 +279,10 @@ public class PlSqlInitializer {
         try {
             log.info("🔍 상담일지 검증 프로시저 초기화 시작");
             
-            // UTF-8 인코딩 설정
-            jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+            // UTF-8 인코딩 설정 (MySQL만 지원)
+            if (!isH2Database()) {
+                jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+            }
             
             // SQL 파일 읽기 (간단한 버전 사용)
             ClassPathResource resource = new ClassPathResource("sql/simple_consultation_validation.sql");

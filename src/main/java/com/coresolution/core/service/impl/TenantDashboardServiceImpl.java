@@ -554,6 +554,9 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             theme.put("primaryColor", "#007bff");
             config.set("theme", theme);
             
+            // 카드 레이아웃 설정 (동적 카드 스타일)
+            addCardLayoutConfig(mapper, config);
+            
             return mapper.writeValueAsString(config);
         } catch (JsonProcessingException e) {
             log.error("템플릿 기반 대시보드 설정 생성 실패: templateId={}, roleCode={}", templateId, roleCode, e);
@@ -604,6 +607,9 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             theme.put("mode", "light");
             theme.put("primaryColor", "#007bff");
             config.set("theme", theme);
+            
+            // 카드 레이아웃 설정 (동적 카드 스타일)
+            addCardLayoutConfig(mapper, config);
             
             return mapper.writeValueAsString(config);
         } catch (JsonProcessingException e) {
@@ -733,6 +739,11 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                     }
                 }
                 
+                // 카드 레이아웃 설정이 없으면 추가 (동적 카드 스타일)
+                if (!config.has("cardLayout")) {
+                    addCardLayoutConfig(mapper, config);
+                }
+                
                 log.info("✅ 메타 시스템: RoleTemplate에서 기본 위젯 설정 로드: templateCode={}, roleCode={}", 
                     template.getTemplateCode(), roleCode);
                 return mapper.writeValueAsString(config);
@@ -774,10 +785,27 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             
             // 역할별 기본 위젯 설정
             if ("ADMIN".equalsIgnoreCase(roleCode) || "관리자".equals(roleCode)) {
-                // 관리자: 환영, 통계, 활동 목록
+                // 상담소 관리자: 기본 기능 위젯 포함
                 widgets.add(createWidget(mapper, "welcome", 0, 0, 3, "환영합니다", "welcome"));
-                widgets.add(createWidget(mapper, "summary-statistics", 1, 0, 3, "통계 요약", "summary-statistics"));
-                widgets.add(createWidget(mapper, "activity-list", 2, 0, 3, "최근 활동", "activity-list"));
+                widgets.add(createWidget(mapper, "summary-statistics", 1, 0, 1, "통계 요약", "summary-statistics"));
+                widgets.add(createWidget(mapper, "client-registration", 1, 1, 1, "내담자 등록", "client-registration"));
+                widgets.add(createWidget(mapper, "consultant-registration", 1, 2, 1, "상담사 등록", "consultant-registration"));
+                widgets.add(createWidget(mapper, "mapping-management", 2, 0, 2, "매칭 관리", "mapping-management"));
+                widgets.add(createWidget(mapper, "schedule-registration", 2, 2, 1, "일정 등록", "schedule-registration"));
+                widgets.add(createWidget(mapper, "session-management", 3, 0, 2, "회기 관리", "session-management"));
+                widgets.add(createWidget(mapper, "consultation-stats", 3, 2, 1, "상담 통계", "consultation-stats"));
+                widgets.add(createWidget(mapper, "activity-list", 4, 0, 3, "최근 활동", "activity-list"));
+            } else if ("CONSULTANT".equalsIgnoreCase(roleCode) || "상담사".equals(roleCode)) {
+                // 상담사: 일정, 상담 기록, 통계
+                widgets.add(createWidget(mapper, "consultation-schedule", 0, 0, 2, "내 일정", "consultation-schedule"));
+                widgets.add(createWidget(mapper, "consultation-record", 0, 2, 1, "상담 기록", "consultation-record"));
+                widgets.add(createWidget(mapper, "consultation-stats", 1, 0, 3, "상담 통계", "consultation-stats"));
+                widgets.add(createWidget(mapper, "consultant-client", 2, 0, 3, "내담자 목록", "consultant-client"));
+            } else if ("CLIENT".equalsIgnoreCase(roleCode) || "내담자".equals(roleCode)) {
+                // 내담자: 일정, 알림, 상담 기록
+                widgets.add(createWidget(mapper, "consultation-schedule", 0, 0, 2, "내 일정", "consultation-schedule"));
+                widgets.add(createWidget(mapper, "notification", 0, 2, 1, "알림", "notification"));
+                widgets.add(createWidget(mapper, "consultation-record", 1, 0, 3, "상담 기록", "consultation-record"));
             } else if ("STUDENT".equalsIgnoreCase(roleCode) || "학생".equals(roleCode)) {
                 // 학생: 일정, 알림
                 widgets.add(createWidget(mapper, "schedule", 0, 0, 2, "내 일정", "schedule"));
@@ -799,6 +827,9 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             theme.put("mode", "light");
             theme.put("primaryColor", "#007bff");
             config.set("theme", theme);
+            
+            // 카드 레이아웃 설정 (동적 카드 스타일)
+            addCardLayoutConfig(mapper, config);
             
             return mapper.writeValueAsString(config);
         } catch (JsonProcessingException e) {
@@ -828,6 +859,20 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         widget.set("config", config);
         
         return widget;
+    }
+    
+    /**
+     * 카드 레이아웃 설정 추가 헬퍼 메서드 (동적 카드 스타일)
+     */
+    private void addCardLayoutConfig(ObjectMapper mapper, com.fasterxml.jackson.databind.node.ObjectNode config) {
+        com.fasterxml.jackson.databind.node.ObjectNode cardLayout = mapper.createObjectNode();
+        cardLayout.put("defaultStyle", "v2");
+        cardLayout.put("defaultVariant", "elevated");
+        cardLayout.put("defaultPadding", "md");
+        cardLayout.put("defaultBorderRadius", "md");
+        cardLayout.put("hoverEffect", true);
+        cardLayout.put("shadow", "md");
+        config.set("cardLayout", cardLayout);
     }
 }
 

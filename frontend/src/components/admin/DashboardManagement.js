@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -15,12 +16,13 @@ import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { API_BASE_URL } from '../../constants/api';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaSearch, FaFilter, FaSync, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaSearch, FaFilter, FaSync, FaCheckCircle, FaTimesCircle, FaExternalLinkAlt } from 'react-icons/fa';
 import { LayoutDashboard, Settings, Users, Shield } from 'lucide-react';
 import DashboardFormModal from './DashboardFormModal';
 import './DashboardManagement.css';
 
 const DashboardManagement = () => {
+  const navigate = useNavigate();
   const [dashboards, setDashboards] = useState([]);
   const [filteredDashboards, setFilteredDashboards] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -239,6 +241,23 @@ const DashboardManagement = () => {
     return iconMap[type] || '📊';
   };
 
+  // 대시보드 보기 (관리자용 - 역할 할당 없이도 볼 수 있음)
+  const handleViewDashboard = (dashboard) => {
+    if (!dashboard.dashboardId) {
+      notificationManager.show('대시보드 ID가 없습니다.', 'error');
+      return;
+    }
+
+    // 쿼리 파라미터로 대시보드 ID 전달
+    // DynamicDashboard 컴포넌트가 dashboardId 쿼리 파라미터를 확인하여 해당 대시보드를 로드
+    navigate(`/dashboard?dashboardId=${dashboard.dashboardId}`, {
+      state: { 
+        dashboard: dashboard,
+        isAdminPreview: true // 관리자 미리보기 모드
+      }
+    });
+  };
+
   return (
     <SimpleLayout>
       <div className="dashboard-management-container">
@@ -394,6 +413,14 @@ const DashboardManagement = () => {
                 </div>
 
                 <div className="dashboard-card-actions">
+                  <MGButton
+                    variant="primary"
+                    onClick={() => handleViewDashboard(dashboard)}
+                    className="btn-view"
+                    title="대시보드 보기 (새 탭에서 열기: Ctrl+클릭)"
+                  >
+                    <FaExternalLinkAlt /> 보기
+                  </MGButton>
                   <MGButton
                     variant="secondary"
                     onClick={() => handleEdit(dashboard)}

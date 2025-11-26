@@ -43,9 +43,23 @@
   background: var(--mg-bg-secondary, #f9fafb);
   border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
   border-radius: var(--mg-border-radius-md, 0.5rem);
-  cursor: pointer;
+  cursor: grab;
   transition: all var(--mg-animation-duration-fast, 0.2s);
   min-height: 80px;
+  position: relative;
+}
+
+.available-widget-item:active {
+  cursor: grabbing;
+}
+
+.widget-drag-handle-icon {
+  opacity: 0.5;
+  transition: opacity var(--mg-animation-duration-fast, 0.2s);
+}
+
+.available-widget-item:hover .widget-drag-handle-icon {
+  opacity: 1;
 }
 
 .available-widget-item:hover {

@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
+import './styles/css-variables.css'; // CSS 상수 시스템
 import { initializeDynamicThemeSystem } from './utils/designSystemHelper';
 import unifiedLayoutManager from './utils/unifiedLayoutSystem';
 import TabletHomepage from './components/homepage/Homepage';
@@ -106,6 +107,10 @@ import UnifiedNotifications from './components/notifications/UnifiedNotification
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
 import AdminMessages from './components/admin/AdminMessages';
 import SystemConfigManagement from './components/admin/SystemConfigManagement';
+import BrandingManagementPage from './pages/BrandingManagementPage';
+import CacheMonitoringDashboard from './components/admin/CacheMonitoringDashboard';
+import SecurityMonitoringDashboard from './components/admin/SecurityMonitoringDashboard';
+import ApiPerformanceMonitoring from './components/admin/ApiPerformanceMonitoring';
 import OnboardingRequest from './components/onboarding/OnboardingRequest';
 import OnboardingStatus from './components/onboarding/OnboardingStatus';
 
@@ -437,8 +442,12 @@ function AppContent() {
             <Route path="/admin/accounts" element={<AccountManagement />} />
             <Route path="/admin/user-management" element={<UserManagement />} />
             <Route path="/admin/dashboards" element={<DashboardManagement />} />
+                <Route path="/admin/cache-monitoring" element={<CacheMonitoringDashboard />} />
+                <Route path="/admin/security-monitoring" element={<SecurityMonitoringDashboard />} />
+            <Route path="/admin/api-performance" element={<ApiPerformanceMonitoring />} />
             <Route path="/admin/system-notifications" element={<SystemNotificationManagement />} />
             <Route path="/admin/system-config" element={<SystemConfigManagement />} />
+            <Route path="/admin/branding" element={<BrandingManagementPage />} />
             <Route path="/admin/messages" element={<AdminMessages />} />
             
             {/* 학원 시스템 라우트 */}

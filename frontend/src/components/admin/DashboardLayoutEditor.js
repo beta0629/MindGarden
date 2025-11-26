@@ -149,6 +149,64 @@ const DashboardLayoutEditor = ({
             chosenClass="widget-chosen"
             dragClass="widget-drag"
             handle=".widget-drag-handle"
+            group={{
+              name: 'widgets',
+              pull: true, // 드래그 가능
+              put: true // 드롭 가능
+            }}
+            onAdd={(evt) => {
+              // 새로운 위젯이 드롭되었을 때
+              const widgetType = evt.item.dataset?.widgetType || evt.item.getAttribute('data-widget-type');
+              if (widgetType) {
+                // 드롭된 위치 계산
+                const dropIndex = evt.newIndex;
+                const maxRow = widgetList.length > 0 
+                  ? Math.max(...widgetList.map(w => w.position?.row || 0))
+                  : -1;
+                const widgetsInLastRow = widgetList.filter(w => (w.position?.row || 0) === maxRow);
+                const nextCol = widgetsInLastRow.length % columns;
+                const nextRow = nextCol === 0 ? maxRow + 1 : maxRow;
+
+                const newWidget = {
+                  id: evt.item.dataset?.widgetId || `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  type: widgetType,
+                  position: {
+                    row: nextRow,
+                    col: nextCol,
+                    span: 1
+                  },
+                  config: {},
+                  visibility: {
+                    roles: [],
+                    conditions: []
+                  }
+                };
+
+                // 드롭된 요소를 새 위젯으로 교체
+                const updatedList = [...widgetList];
+                if (dropIndex >= 0 && dropIndex < updatedList.length) {
+                  updatedList[dropIndex] = newWidget;
+                } else {
+                  updatedList.push(newWidget);
+                }
+                
+                // position 재계산
+                const recalculated = updatedList.map((widget, index) => {
+                  const row = Math.floor(index / columns);
+                  const col = index % columns;
+                  return {
+                    ...widget,
+                    position: {
+                      row,
+                      col,
+                      span: widget.position?.span || 1
+                    }
+                  };
+                });
+                
+                handleSort(recalculated);
+              }
+            }}
             className="sortable-widget-list"
           >
             {widgetList.map((widget) => (

@@ -410,17 +410,51 @@ public class CommonCodeController extends BaseApiController {
     // ==================== 테넌트별 코드 조회 ====================
     
     /**
-     * 테넌트별 코드 그룹별 조회
+     * 테넌트별 코드 그룹별 조회 (쿼리 파라미터 방식)
      * 현재 테넌트 컨텍스트 기반
+     * 코어 코드 폴백 없음 - 완전한 테넌트 독립성 보장
      * 
      * @param codeGroup 코드 그룹
-     * @return 테넌트별 코드 목록
+     * @return 테넌트별 코드 목록 (코어 코드 폴백 없음)
+     */
+    @GetMapping("/tenant")
+    public ResponseEntity<ApiResponse<CommonCodeListResponse>> getTenantCodes(
+            @RequestParam(required = false) String codeGroup) {
+        log.info("테넌트별 코드 조회 요청 (독립성 보장): codeGroup={}", codeGroup);
+        
+        if (codeGroup == null || codeGroup.trim().isEmpty()) {
+            // 코드 그룹이 없으면 전체 테넌트 코드 조회
+            CommonCodeListResponse response = commonCodeService.findAllTenantCodes();
+            log.info("테넌트별 전체 코드 조회 완료: {} 개", response.getTotalCount());
+            return success(response);
+        }
+        
+        // 특정 그룹의 테넌트 코드만 조회 (코어 코드 폴백 없음)
+        List<CommonCode> codes = commonCodeService.getCurrentTenantCodesByGroup(codeGroup);
+        log.info("테넌트별 코드 그룹 조회 완료 (독립성 보장): {} 개", codes.size());
+        
+        List<CommonCodeResponse> codeResponses = codes.stream()
+                .map(CommonCodeResponse::fromEntity)
+                .collect(java.util.stream.Collectors.toList());
+        
+        CommonCodeListResponse response = CommonCodeListResponse.of(codeResponses);
+        
+        return success(response);
+    }
+    
+    /**
+     * 테넌트별 코드 그룹별 조회 (경로 변수 방식 - 하위 호환성)
+     * 현재 테넌트 컨텍스트 기반
+     * 코어 코드 폴백 없음 - 완전한 테넌트 독립성 보장
+     * 
+     * @param codeGroup 코드 그룹
+     * @return 테넌트별 코드 목록 (코어 코드 폴백 없음)
      */
     @GetMapping("/tenant/groups/{codeGroup}")
     public ResponseEntity<ApiResponse<List<CommonCode>>> getTenantCodesByGroup(@PathVariable String codeGroup) {
-        log.info("테넌트별 코드 그룹 조회 요청: {}", codeGroup);
+        log.info("테넌트별 코드 그룹 조회 요청 (독립성 보장): {}", codeGroup);
         List<CommonCode> codes = commonCodeService.getCurrentTenantCodesByGroup(codeGroup);
-        log.info("테넌트별 코드 그룹 조회 완료: {} 개", codes.size());
+        log.info("테넌트별 코드 그룹 조회 완료 (독립성 보장): {} 개", codes.size());
         return success(codes);
     }
     

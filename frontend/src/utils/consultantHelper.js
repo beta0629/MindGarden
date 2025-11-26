@@ -17,14 +17,17 @@ import { apiGet } from './ajax';
  */
 export const getConsultantGradeStyles = async () => {
     try {
-        const response = await apiGet('/api/common-codes/CONSULTANT_GRADE');
-        if (response && Array.isArray(response)) {
+        // 표준 API 사용: /api/v1/common-codes?codeGroup=CONSULTANT_GRADE
+        const { getCommonCodes } = await import('./commonCodeApi');
+        const codes = await getCommonCodes('CONSULTANT_GRADE');
+        
+        if (codes && Array.isArray(codes) && codes.length > 0) {
             const gradeStyles = {};
-            response.forEach(code => {
+            codes.forEach(code => {
                 gradeStyles[code.codeValue] = {
                     color: code.colorCode || '#6b7280',
                     icon: code.icon || '⭐',
-                    label: code.codeLabel,
+                    label: code.codeLabel || code.koreanName,
                     description: code.codeDescription
                 };
             });
@@ -70,10 +73,12 @@ export const getConsultantWithStats = async (consultantId) => {
 export const getAllConsultantsWithStats = async () => {
     try {
         const response = await apiGet('/api/admin/consultants/with-stats');
-        if (response.success) {
-            return response.data || [];
+        if (response && response.success) {
+            // 응답 구조: { success: true, data: { consultants: [...], count: N } }
+            const consultantsList = response.data?.consultants || response.data || [];
+            return Array.isArray(consultantsList) ? consultantsList : [];
         }
-        console.error('전체 상담사 통계 조회 실패:', response.message);
+        console.error('전체 상담사 통계 조회 실패:', response?.message || '알 수 없는 오류');
         return [];
     } catch (error) {
         console.error('전체 상담사 통계 조회 중 오류:', error);
@@ -173,10 +178,12 @@ export const getClientWithStats = async (clientId) => {
 export const getAllClientsWithStats = async () => {
     try {
         const response = await apiGet('/api/admin/clients/with-stats');
-        if (response.success) {
-            return response.data || [];
+        if (response && response.success) {
+            // 응답 구조: { success: true, data: { clients: [...], count: N } }
+            const clientsList = response.data?.clients || response.data || [];
+            return Array.isArray(clientsList) ? clientsList : [];
         }
-        console.error('전체 내담자 통계 조회 실패:', response.message);
+        console.error('전체 내담자 통계 조회 실패:', response?.message || '알 수 없는 오류');
         return [];
     } catch (error) {
         console.error('전체 내담자 통계 조회 중 오류:', error);

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaDatabase, FaChartLine, FaClock, FaMemory, FaRefresh } from 'react-icons/fa';
+import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
+import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import './CacheMonitoringDashboard.css';
 
 const CacheMonitoringDashboard = () => {
@@ -7,16 +9,17 @@ const CacheMonitoringDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState(5000); // 5초
+  const [refreshInterval, setRefreshInterval] = useState(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.DEFAULT_REFRESH_INTERVAL);
 
   // 캐시 통계 조회
   const fetchCacheStats = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/cache/stats');
+      const response = await fetch(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.API_ENDPOINTS.STATS);
       if (response.ok) {
         const result = await response.json();
-        setCacheStats(result.data || {});
+        const transformedData = DataTransformer.transformCacheStatsToPerformanceData(result);
+        setCacheStats(transformedData.rawData || {});
         setLastUpdated(new Date());
       } else {
         console.error('캐시 통계 조회 실패:', response.status);
@@ -30,19 +33,19 @@ const CacheMonitoringDashboard = () => {
 
   // 모든 캐시 클리어
   const clearAllCaches = async () => {
-    if (!window.confirm('모든 캐시를 삭제하시겠습니까?')) return;
+    if (!window.confirm(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_CONFIRM)) return;
     
     try {
-      const response = await fetch('/api/admin/cache/all', { method: 'DELETE' });
+      const response = await fetch(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.API_ENDPOINTS.CLEAR_ALL, { method: 'DELETE' });
       if (response.ok) {
-        alert('모든 캐시가 삭제되었습니다.');
+        alert(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_SUCCESS);
         fetchCacheStats();
       } else {
-        alert('캐시 삭제에 실패했습니다.');
+        alert(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_ERROR);
       }
     } catch (error) {
       console.error('캐시 삭제 오류:', error);
-      alert('캐시 삭제 중 오류가 발생했습니다.');
+      alert(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_ERROR);
     }
   };
 
@@ -61,8 +64,23 @@ const CacheMonitoringDashboard = () => {
 
   // 캐시 효율성 계산
   const calculateEfficiency = (stats) => {
-    if (!stats || !stats.totalRequests) return 0;
-    return ((stats.hits / stats.totalRequests) * 100).toFixed(1);
+    if (!stats || typeof stats !== 'object') return 0;
+    const hits = Number(stats.hits) || 0;
+    const misses = Number(stats.misses) || 0;
+    const totalRequests = hits + misses;
+    
+    if (totalRequests === 0) return 0;
+    return PerformanceUtils.formatPercentage((hits / totalRequests) * 100, 1).replace('%', '');
+  };
+
+  // 효율성에 따른 CSS 클래스 결정
+  const getEfficiencyClass = (efficiency) => {
+    const efficiencyNum = Number(efficiency);
+    const thresholds = WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.EFFICIENCY_THRESHOLDS;
+    
+    if (efficiencyNum >= thresholds.EXCELLENT) return 'efficiency-excellent';
+    if (efficiencyNum >= thresholds.GOOD) return 'efficiency-good';
+    return 'efficiency-poor';
   };
 
   return (
@@ -87,10 +105,10 @@ const CacheMonitoringDashboard = () => {
             disabled={!autoRefresh}
             className="refresh-interval-select"
           >
-            <option value={1000}>1초</option>
-            <option value={5000}>5초</option>
-            <option value={10000}>10초</option>
-            <option value={30000}>30초</option>
+            <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.FAST}>1초</option>
+            <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.DEFAULT}>5초</option>
+            <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.NORMAL}>10초</option>
+            <option value={WIDGET_CONSTANTS.REFRESH_INTERVALS.SLOW}>30초</option>
           </select>
           <button
             onClick={fetchCacheStats}
@@ -160,12 +178,8 @@ const CacheMonitoringDashboard = () => {
 
             <div className="cache-progress-bar">
               <div 
-                className="cache-progress-fill"
-                style={{ 
-                  width: `${calculateEfficiency(stats)}%`,
-                  backgroundColor: calculateEfficiency(stats) > 80 ? '#4CAF50' : 
-                                 calculateEfficiency(stats) > 60 ? '#FF9800' : '#F44336'
-                }}
+                className={`cache-progress-fill ${getEfficiencyClass(calculateEfficiency(stats))}`}
+                style={{ width: `${calculateEfficiency(stats)}%` }}
               />
             </div>
           </div>

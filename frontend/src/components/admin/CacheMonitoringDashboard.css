@@ -227,6 +227,19 @@
   border-radius: 4px;
 }
 
+/* 효율성별 색상 클래스 */
+.cache-progress-fill.efficiency-excellent {
+  background-color: var(--success-color);
+}
+
+.cache-progress-fill.efficiency-good {
+  background-color: var(--warning-color);
+}
+
+.cache-progress-fill.efficiency-poor {
+  background-color: var(--error-color);
+}
+
 /* 데이터 없음 상태 */
 .no-cache-data {
   display: flex;

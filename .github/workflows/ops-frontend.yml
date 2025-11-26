@@ -33,4 +33,6 @@ jobs:
 
       - name: Build
         working-directory: frontend-ops
+        env:
+          BUILD_STANDALONE: "true"
         run: npm run build

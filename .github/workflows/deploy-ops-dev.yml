@@ -35,6 +35,7 @@ jobs:
         NEXT_PUBLIC_OPS_API_BASE_URL: ""
         NEXT_PUBLIC_OPS_API_USE_MOCK: "false"
         NODE_ENV: production
+        BUILD_STANDALONE: "true"
       run: |
         cd frontend-ops
         ESLINT_NO_DEV_ERRORS=true npm run build

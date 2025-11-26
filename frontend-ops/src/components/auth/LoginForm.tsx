@@ -57,9 +57,37 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         }
 
         // 로그인 성공 - 쿠키는 이미 서버에서 set-cookie 헤더로 설정됨
-        // 전체 페이지 리로드를 통해 대시보드로 이동
+        // router.push 대신 window.location.href 사용하여 전체 페이지 리로드
+        // 이렇게 하면 미들웨어가 새로운 요청에서 쿠키를 확인할 수 있음
         const redirectPath = redirectTo || "/dashboard";
-        window.location.href = redirectPath;
+        
+        // 쿠키가 설정될 때까지 대기 (최대 5초)
+        let attempts = 0;
+        const maxAttempts = 50; // 50 * 100ms = 5초
+        
+        const checkCookieAndRedirect = () => {
+          attempts++;
+          const cookies = document.cookie;
+          const hasToken = cookies.includes("ops_token");
+          
+          console.log(`[LoginForm] 쿠키 확인 시도 ${attempts}/${maxAttempts}:`, {
+            hasToken,
+            cookieLength: cookies.length,
+            cookiePreview: cookies.substring(0, 150)
+          });
+          
+          if (hasToken) {
+            console.log("[LoginForm] 쿠키 확인 완료, 리다이렉트:", redirectPath);
+            window.location.href = redirectPath;
+          } else if (attempts < maxAttempts) {
+            setTimeout(checkCookieAndRedirect, 100);
+          } else {
+            console.error("[LoginForm] 쿠키 설정 실패, 강제 리다이렉트");
+            window.location.href = redirectPath;
+          }
+        };
+        
+        checkCookieAndRedirect();
       } catch (error) {
         setFeedback(
           error instanceof Error

@@ -121,7 +121,7 @@ function MetricCard({
     <>
       <span className="metric-card__label">{label}</span>
       <strong className="metric-card__value">
-        {value.toLocaleString("ko-KR")}
+        {value !== undefined && value !== null ? value.toLocaleString("ko-KR") : "0"}
       </strong>
       <p className="metric-card__description">{description}</p>
     </>

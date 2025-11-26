@@ -9,6 +9,7 @@ import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ConsultationService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.core.annotation.RequireBusinessType;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +32,15 @@ import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 상담 관리 컨트롤러
+ * 상담 관리 컨트롤러 (상담소 전용)
  * API 설계 문서에 명시된 상담 관리 API 구현
+ * 업종별 접근 제어: CONSULTATION 업종에서만 접근 가능
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/consultations")
 @CrossOrigin(origins = "*")
+@RequireBusinessType(value = "CONSULTATION", message = "상담 관리 기능은 상담소에서만 사용할 수 있습니다.")
 public class ConsultationController extends BaseApiController {
     
     @Autowired

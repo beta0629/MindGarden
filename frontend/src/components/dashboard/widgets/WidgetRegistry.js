@@ -146,41 +146,59 @@ const WIDGET_COMPONENTS = {
 /**
  * 위젯 컴포넌트 가져오기
  * @param {string} widgetType - 위젯 타입
- * @param {string} businessType - 업종 타입 (선택적, 특화 위젯 필터링용)
+ * @param {string} businessType - 업종 타입 (필수, 특화 위젯 필터링용)
  * @returns {React.Component|null} 위젯 컴포넌트 또는 null
  */
-export const getWidgetComponent = (widgetType, businessType = null) => {
+export const getWidgetComponent = (widgetType, businessType) => {
   if (!widgetType) {
+    console.warn('위젯 타입이 필요합니다.');
+    return null;
+  }
+  
+  if (!businessType) {
+    console.warn(`업종 정보가 필요합니다. 위젯: ${widgetType}`);
     return null;
   }
   
   const normalizedType = widgetType.toLowerCase();
+  const normalizedBusinessType = businessType.toLowerCase();
   
-  // 공통 위젯은 항상 반환
+  // 공통 위젯은 모든 업종에서 사용 가능
   if (COMMON_WIDGETS[normalizedType]) {
+    console.debug(`공통 위젯 로드: ${normalizedType}`);
     return COMMON_WIDGETS[normalizedType];
   }
   
-  // 특화 위젯은 업종에 따라 필터링
-  if (businessType) {
-    const normalizedBusinessType = businessType.toLowerCase();
-    
-    if (normalizedBusinessType === 'consultation' && CONSULTATION_WIDGETS[normalizedType]) {
+  // 상담소 특화 위젯 검증
+  if (CONSULTATION_WIDGETS[normalizedType]) {
+    if (normalizedBusinessType === 'consultation') {
+      console.debug(`상담소 특화 위젯 로드: ${normalizedType}`);
       return CONSULTATION_WIDGETS[normalizedType];
-    }
-    
-    if (normalizedBusinessType === 'academy' && ACADEMY_WIDGETS[normalizedType]) {
-      return ACADEMY_WIDGETS[normalizedType];
+    } else {
+      console.warn(`상담소 전용 위젯에 접근 시도: ${normalizedType}, 현재 업종: ${businessType}`);
+      return null;
     }
   }
   
-  // ERP 위젯은 항상 사용 가능 (ERP 기능 활성화 여부는 위젯 내부에서 체크)
+  // 학원 특화 위젯 검증
+  if (ACADEMY_WIDGETS[normalizedType]) {
+    if (normalizedBusinessType === 'academy') {
+      console.debug(`학원 특화 위젯 로드: ${normalizedType}`);
+      return ACADEMY_WIDGETS[normalizedType];
+    } else {
+      console.warn(`학원 전용 위젯에 접근 시도: ${normalizedType}, 현재 업종: ${businessType}`);
+      return null;
+    }
+  }
+  
+  // ERP 위젯은 모든 업종에서 사용 가능 (ERP 기능 활성화 여부는 위젯 내부에서 체크)
   if (ERP_WIDGETS[normalizedType]) {
+    console.debug(`ERP 위젯 로드: ${normalizedType}`);
     return ERP_WIDGETS[normalizedType];
   }
   
-  // 업종 정보가 없으면 전체에서 검색 (하위 호환성)
-  return WIDGET_COMPONENTS[normalizedType] || null;
+  console.warn(`지원하지 않는 위젯 타입: ${widgetType}, 업종: ${businessType}`);
+  return null;
 };
 
 /**

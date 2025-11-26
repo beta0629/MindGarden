@@ -1,5 +1,6 @@
 package com.coresolution.core.controller.academy;
 
+import com.coresolution.core.annotation.RequireBusinessType;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.constant.AcademyPermissionConstants;
 import com.coresolution.core.domain.academy.Class;
@@ -24,8 +25,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 학원 시스템 반(Class) 관리 컨트롤러
+ * 학원 시스템 반(Class) 관리 컨트롤러 (학원 전용)
  * 동적 권한 시스템 적용, 하드코딩 금지, 상수 사용
+ * 업종별 접근 제어: ACADEMY 업종에서만 접근 가능
  * 
  * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
  * 
@@ -36,6 +38,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/academy/classes")
+@RequireBusinessType(value = "ACADEMY", message = "반 관리 기능은 학원에서만 사용할 수 있습니다.")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AcademyClassController extends BaseApiController {

@@ -19,6 +19,11 @@ import DashboardGrid from '../layout/DashboardGrid';
 import { getWidgetComponent } from './widgets/WidgetRegistry';
 import WidgetCardWrapper from './widgets/WidgetCardWrapper';
 import { apiGet } from '../../utils/ajax';
+import { 
+  filterWidgetsByBusinessType, 
+  isWidgetVisible,
+  validateWidgetAccess 
+} from '../../utils/widgetVisibilityUtils';
 
 // 대시보드 컴포넌트 동적 import
 import CommonDashboard from './CommonDashboard';
@@ -308,8 +313,29 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
     shadow: 'md'
   };
   
-  // 위젯 필터링 (visibility 조건 확인)
-  const visibleWidgets = widgets.filter(widget => {
+  // 업종별 위젯 필터링 (1차: 업종 기반)
+  const businessFilteredWidgets = businessType 
+    ? filterWidgetsByBusinessType(widgets, businessType, user?.role)
+    : widgets;
+  
+  console.debug(`업종별 위젯 필터링: ${widgets.length} → ${businessFilteredWidgets.length}개`, {
+    businessType,
+    userRole: user?.role,
+    originalCount: widgets.length,
+    filteredCount: businessFilteredWidgets.length
+  });
+  
+  // 위젯 필터링 (2차: visibility 조건 확인)
+  const visibleWidgets = businessFilteredWidgets.filter(widget => {
+    // 업종별 가시성 검증
+    if (businessType && !isWidgetVisible(widget.type, businessType, user?.role)) {
+      console.debug(`위젯 가시성 검증 실패: ${widget.type}`, {
+        businessType,
+        userRole: user?.role
+      });
+      return false;
+    }
+    
     if (!widget.visibility) {
       return true; // visibility 설정이 없으면 항상 표시
     }
@@ -318,6 +344,10 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
     if (widget.visibility.roles && widget.visibility.roles.length > 0) {
       const userRole = user?.role || user?.currentTenantRole?.roleName;
       if (!userRole || !widget.visibility.roles.includes(userRole)) {
+        console.debug(`역할 기반 필터링 실패: ${widget.type}`, {
+          requiredRoles: widget.visibility.roles,
+          userRole
+        });
         return false;
       }
     }
@@ -325,6 +355,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
     // 조건 기반 필터링 (향후 구현)
     if (widget.visibility.conditions && widget.visibility.conditions.length > 0) {
       // TODO: 조건 평가 로직 구현
+      console.debug(`조건 기반 필터링 (미구현): ${widget.type}`);
     }
     
     return true;
@@ -343,14 +374,39 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
   
   // 위젯 렌더링
   const renderWidget = (widget) => {
-    // 업종 정보를 전달하여 특화 위젯 필터링
+    // 상세 접근 권한 검증
+    const accessValidation = validateWidgetAccess(widget.type, businessType, user?.role);
+    
+    if (!accessValidation.allowed) {
+      console.warn(`위젯 접근 거부: ${widget.type}`, accessValidation);
+      return (
+        <div key={widget.id} className="widget-access-denied">
+          <div className="widget-error-content">
+            <h4>접근 제한</h4>
+            <p>{accessValidation.reason}</p>
+            <small>위젯: {widget.type} | 업종: {businessType}</small>
+          </div>
+        </div>
+      );
+    }
+    
+    // 업종 정보를 필수로 전달하여 특화 위젯 필터링
     const WidgetComponent = getWidgetComponent(widget.type, businessType);
     
     if (!WidgetComponent) {
-      console.warn(`⚠️ 지원되지 않는 위젯 타입: ${widget.type}`);
+      console.warn(`위젯 컴포넌트 로드 실패: ${widget.type}`, {
+        businessType,
+        userRole: user?.role,
+        accessValidation
+      });
+      
       return (
-        <div key={widget.id} className="widget-error">
-          <p>지원되지 않는 위젯 타입: {widget.type}</p>
+        <div key={widget.id} className="widget-load-error">
+          <div className="widget-error-content">
+            <h4>위젯 로드 실패</h4>
+            <p>위젯을 불러올 수 없습니다: {widget.type}</p>
+            <small>업종: {businessType} | 카테고리: {accessValidation.category}</small>
+          </div>
         </div>
       );
     }

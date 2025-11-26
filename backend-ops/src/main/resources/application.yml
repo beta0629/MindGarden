@@ -7,7 +7,7 @@ spring:
   application:
     name: mindgarden-ops-backend
   profiles:
-    active: local
+    active: dev
     group:
       staging: staging
       prod: prod

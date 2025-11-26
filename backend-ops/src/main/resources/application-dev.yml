@@ -26,7 +26,7 @@ spring:
   # JPA 설정
   jpa:
     hibernate:
-      ddl-auto: validate  # 개발 서버에서는 validate 사용 (스키마 변경 방지)
+      ddl-auto: update  # OPS Portal 테이블 자동 생성
     show-sql: false  # 개발 서버에서는 SQL 로그 비활성화 (성능)
     open-in-view: false
     properties:

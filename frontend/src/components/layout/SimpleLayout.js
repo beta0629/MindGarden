@@ -69,14 +69,14 @@ const SimpleLayout = ({
   return (
     <div className="simple-layout">
       <UnifiedHeader 
-        title={title || 'MindGarden'}
-        logoType="text"
+        title={title} // 빈 값이면 브랜딩 정보에서 자동으로 가져옴
         showUserMenu={true}
         showHamburger={true}
         variant="default"
         sticky={true}
         extraActions={extraActions}
         notificationAction={notificationAction}
+        useBrandingInfo={true} // 브랜딩 정보 사용 활성화
       />
       
       <main className="simple-main">

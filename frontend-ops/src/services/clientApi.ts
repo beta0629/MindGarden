@@ -21,7 +21,17 @@ export async function clientApiFetch<T>(
     console.error("[clientApiFetch] 토큰이 없습니다:", {
       path,
       apiToken: apiToken ? "존재하지만 빈 문자열" : "null/undefined",
-      cookieMap: typeof document !== "undefined" ? document.cookie : "N/A"
+      cookie: typeof document !== "undefined" ? document.cookie : "N/A",
+      actorId,
+      actorRole
+    });
+  } else {
+    console.log("[clientApiFetch] 토큰 있음:", {
+      path,
+      tokenLength: apiToken.length,
+      tokenPreview: apiToken.substring(0, 30) + "...",
+      actorId,
+      actorRole
     });
   }
 

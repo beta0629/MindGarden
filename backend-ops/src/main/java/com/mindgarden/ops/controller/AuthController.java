@@ -4,8 +4,8 @@ import com.mindgarden.ops.controller.dto.LoginRequest;
 import com.mindgarden.ops.controller.dto.LoginResponse;
 import com.mindgarden.ops.service.auth.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +30,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @RequestBody @Valid LoginRequest request,
-            HttpServletRequest httpRequest) {
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
         
         LoginResponse response = authService.login(request);
         
@@ -64,11 +65,12 @@ public class AuthController {
                 .sameSite("Lax")
                 .build();
         
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, tokenCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, actorIdCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, actorRoleCookie.toString())
-                .body(response);
+        // HttpServletResponse에 직접 Set-Cookie 헤더 추가 (여러 개 가능)
+        httpResponse.addHeader("Set-Cookie", tokenCookie.toString());
+        httpResponse.addHeader("Set-Cookie", actorIdCookie.toString());
+        httpResponse.addHeader("Set-Cookie", actorRoleCookie.toString());
+        
+        return ResponseEntity.ok(response);
     }
 }
 

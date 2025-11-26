@@ -35,7 +35,7 @@ export const getBrandingInfo = async (useCache = true) => {
 
   try {
     console.debug('브랜딩 정보 API 호출');
-    const response = await fetch(`${API_BASE_URL}/api/core/branding`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/branding`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -44,10 +44,24 @@ export const getBrandingInfo = async (useCache = true) => {
     });
 
     if (!response.ok) {
+      // 404는 브랜딩 정보가 없는 경우로 간주
+      if (response.status === 404) {
+        console.warn('브랜딩 정보가 없음, 기본값 사용');
+        const defaultBranding = createDefaultBranding();
+        brandingCache = defaultBranding;
+        cacheTimestamp = Date.now();
+        return defaultBranding;
+      }
       throw new Error(`브랜딩 정보 조회 실패: ${response.status}`);
     }
 
-    const brandingInfo = await response.json();
+    const apiResponse = await response.json();
+    
+    if (!apiResponse.success) {
+      throw new Error(apiResponse.message || '브랜딩 정보 조회 실패');
+    }
+    
+    const brandingInfo = apiResponse.data;
     
     // 캐시 업데이트
     brandingCache = brandingInfo;
@@ -69,6 +83,13 @@ export const getBrandingInfo = async (useCache = true) => {
     return defaultBranding;
   }
 };
+
+/**
+ * 브랜딩 정보 조회 (별칭 - 기존 코드 호환성)
+ * @param {boolean} useCache 
+ * @returns {Promise<Object>}
+ */
+export const fetchBrandingInfo = getBrandingInfo;
 
 /**
  * 기본 브랜딩 정보 생성 (Fallback)
@@ -174,7 +195,7 @@ export const updateBrandingInfo = async (updateData) => {
   try {
     console.debug('브랜딩 정보 업데이트 요청:', updateData);
     
-    const response = await fetch(`${API_BASE_URL}/api/core/branding`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/branding`, {
       method: 'PUT',
       credentials: 'include',
       headers: {
@@ -187,7 +208,13 @@ export const updateBrandingInfo = async (updateData) => {
       throw new Error(`브랜딩 정보 업데이트 실패: ${response.status}`);
     }
 
-    const updatedBranding = await response.json();
+    const apiResponse = await response.json();
+    
+    if (!apiResponse.success) {
+      throw new Error(apiResponse.message || '브랜딩 정보 업데이트 실패');
+    }
+    
+    const updatedBranding = apiResponse.data;
     
     // 캐시 무효화
     clearBrandingCache();
@@ -212,9 +239,9 @@ export const uploadLogo = async (logoFile) => {
     console.debug('로고 업로드 요청:', logoFile.name, logoFile.size);
     
     const formData = new FormData();
-    formData.append('logo', logoFile);
+    formData.append('file', logoFile); // 'file'로 변경 (컨트롤러와 일치)
 
-    const response = await fetch(`${API_BASE_URL}/api/core/branding/logo`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/branding/logo`, {
       method: 'POST',
       credentials: 'include',
       body: formData
@@ -224,7 +251,13 @@ export const uploadLogo = async (logoFile) => {
       throw new Error(`로고 업로드 실패: ${response.status}`);
     }
 
-    const updatedBranding = await response.json();
+    const apiResponse = await response.json();
+    
+    if (!apiResponse.success) {
+      throw new Error(apiResponse.message || '로고 업로드 실패');
+    }
+    
+    const updatedBranding = apiResponse.data;
     
     // 캐시 무효화
     clearBrandingCache();
@@ -234,6 +267,125 @@ export const uploadLogo = async (logoFile) => {
 
   } catch (error) {
     console.error('로고 업로드 오류:', error);
+    throw error;
+  }
+};
+
+/**
+ * 파비콘 업로드
+ * 
+ * @param {File} faviconFile - 파비콘 파일
+ * @returns {Promise<Object>} 업데이트된 브랜딩 정보
+ */
+export const uploadFavicon = async (faviconFile) => {
+  try {
+    console.debug('파비콘 업로드 요청:', faviconFile.name, faviconFile.size);
+    
+    const formData = new FormData();
+    formData.append('file', faviconFile);
+
+    const response = await fetch(`${API_BASE_URL}/api/admin/branding/favicon`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`파비콘 업로드 실패: ${response.status}`);
+    }
+
+    const apiResponse = await response.json();
+    
+    if (!apiResponse.success) {
+      throw new Error(apiResponse.message || '파비콘 업로드 실패');
+    }
+    
+    const updatedBranding = apiResponse.data;
+    
+    // 캐시 무효화
+    clearBrandingCache();
+    
+    console.debug('파비콘 업로드 성공:', updatedBranding);
+    return updatedBranding;
+
+  } catch (error) {
+    console.error('파비콘 업로드 오류:', error);
+    throw error;
+  }
+};
+
+/**
+ * 로고 삭제
+ * 
+ * @returns {Promise<Object>} 업데이트된 브랜딩 정보
+ */
+export const deleteLogo = async () => {
+  try {
+    console.debug('로고 삭제 요청');
+    
+    const response = await fetch(`${API_BASE_URL}/api/admin/branding/logo`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error(`로고 삭제 실패: ${response.status}`);
+    }
+
+    const apiResponse = await response.json();
+    
+    if (!apiResponse.success) {
+      throw new Error(apiResponse.message || '로고 삭제 실패');
+    }
+    
+    const updatedBranding = apiResponse.data;
+    
+    // 캐시 무효화
+    clearBrandingCache();
+    
+    console.debug('로고 삭제 성공:', updatedBranding);
+    return updatedBranding;
+
+  } catch (error) {
+    console.error('로고 삭제 오류:', error);
+    throw error;
+  }
+};
+
+/**
+ * 파비콘 삭제
+ * 
+ * @returns {Promise<Object>} 업데이트된 브랜딩 정보
+ */
+export const deleteFavicon = async () => {
+  try {
+    console.debug('파비콘 삭제 요청');
+    
+    const response = await fetch(`${API_BASE_URL}/api/admin/branding/favicon`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error(`파비콘 삭제 실패: ${response.status}`);
+    }
+
+    const apiResponse = await response.json();
+    
+    if (!apiResponse.success) {
+      throw new Error(apiResponse.message || '파비콘 삭제 실패');
+    }
+    
+    const updatedBranding = apiResponse.data;
+    
+    // 캐시 무효화
+    clearBrandingCache();
+    
+    console.debug('파비콘 삭제 성공:', updatedBranding);
+    return updatedBranding;
+
+  } catch (error) {
+    console.error('파비콘 삭제 오류:', error);
     throw error;
   }
 };

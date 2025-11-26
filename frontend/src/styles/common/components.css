@@ -92,6 +92,13 @@
 
 .btn-common.btn-loading::after {
   content: '';
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 /* 모바일 반응형 버튼 최적화 */
@@ -119,14 +126,6 @@
     word-break: keep-all;
     hyphens: none;
   }
-}
-  position: absolute;
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {

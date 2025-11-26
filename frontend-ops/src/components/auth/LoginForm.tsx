@@ -66,58 +66,18 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         // 로그인 성공
         const redirectPath = redirectTo || "/dashboard";
         
-        // 정적 빌드에서는 백엔드 응답에서 토큰을 받아 직접 쿠키 설정
-        if (isStaticBuild) {
-          console.log("[LoginForm] 전체 응답:", body);
-          
-          // 응답 구조: { success: true, data: { token, actorId, actorRole } }
-          const data = body?.data;
-          if (!data) {
-            console.error("[LoginForm] body.data가 없습니다:", body);
-            setFeedback("로그인 응답 형식이 올바르지 않습니다.");
-            return;
-          }
-          
-          const token = data.token;
-          const actorId = data.actorId || trimmedUsername;
-          const actorRole = data.actorRole || "HQ_ADMIN";
-          
-          if (!token) {
-            console.error("[LoginForm] 토큰이 없습니다:", data);
-            setFeedback("로그인 응답에 토큰이 없습니다.");
-            return;
-          }
-          
-          // 쿠키 설정 (HTTPS에서는 secure 필요)
-          const isHttps = window.location.protocol === "https:";
-          const cookieOptions = `path=/; max-age=3600; samesite=lax${isHttps ? "; secure" : ""}`;
-          
-          document.cookie = `ops_token=${token}; ${cookieOptions}`;
-          document.cookie = `ops_actor_id=${encodeURIComponent(actorId)}; ${cookieOptions}`;
-          document.cookie = `ops_actor_role=${actorRole}; ${cookieOptions}`;
-          
-          console.log("[LoginForm] 쿠키 설정 완료:", { 
-            token: token.substring(0, 30) + "...", 
-            actorId, 
-            actorRole,
-            cookieOptions,
-            isHttps
-          });
-          
-          // 쿠키 설정 직후 확인
-          console.log("[LoginForm] document.cookie:", document.cookie);
-        }
+        console.log("[LoginForm] 로그인 성공, 백엔드가 Set-Cookie 헤더로 쿠키 설정");
+        console.log("[LoginForm] 리다이렉트:", redirectPath);
         
-        console.log("[LoginForm] 로그인 성공, 리다이렉트:", redirectPath);
-        
-        // 짧은 지연 후 리다이렉트 (쿠키 적용 대기)
+        // 백엔드가 Set-Cookie 헤더로 쿠키를 설정하므로, 
+        // 짧은 지연 후 리다이렉트 (브라우저가 쿠키를 적용할 시간)
         setTimeout(() => {
           console.log("[LoginForm] 쿠키 확인:", {
             hasCookie: document.cookie.includes("ops_token"),
             cookiePreview: document.cookie.substring(0, 100)
           });
           window.location.href = redirectPath;
-        }, 500); // 500ms 지연
+        }, 300); // 300ms 지연
       } catch (error) {
         setFeedback(
           error instanceof Error

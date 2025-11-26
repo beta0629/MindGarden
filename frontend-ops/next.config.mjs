@@ -19,7 +19,7 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
+  // output: "export", // 개발 환경에서는 middleware 사용을 위해 주석 처리
   trailingSlash: true,
   images: {
     unoptimized: true
@@ -28,12 +28,14 @@ const nextConfig = {
     ignoreDuringBuilds: true
   },
   reactStrictMode: true,
-  headers: async () => [
-    {
-      source: "/(.*)",
-      headers: securityHeaders
-    }
-  ]
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: securityHeaders
+      }
+    ];
+  }
 };
 
 export default nextConfig;

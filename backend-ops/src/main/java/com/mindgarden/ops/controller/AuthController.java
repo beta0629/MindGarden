@@ -39,7 +39,7 @@ public class AuthController {
                          "https".equalsIgnoreCase(httpRequest.getHeader("X-Forwarded-Proto"));
         
         // Set-Cookie 헤더 생성
-        ResponseCookie tokenCookie = ResponseCookie.from("ops_token", response.getToken())
+        ResponseCookie tokenCookie = ResponseCookie.from("ops_token", response.token())
                 .path("/")
                 .maxAge(Duration.ofHours(1))
                 .httpOnly(false)  // JavaScript에서 접근 가능하도록
@@ -48,7 +48,7 @@ public class AuthController {
                 .build();
         
         ResponseCookie actorIdCookie = ResponseCookie.from("ops_actor_id", 
-                        URLEncoder.encode(response.getActorId(), StandardCharsets.UTF_8))
+                        URLEncoder.encode(response.actorId(), StandardCharsets.UTF_8))
                 .path("/")
                 .maxAge(Duration.ofHours(1))
                 .httpOnly(false)
@@ -56,7 +56,7 @@ public class AuthController {
                 .sameSite("Lax")
                 .build();
         
-        ResponseCookie actorRoleCookie = ResponseCookie.from("ops_actor_role", response.getActorRole())
+        ResponseCookie actorRoleCookie = ResponseCookie.from("ops_actor_role", response.actorRole())
                 .path("/")
                 .maxAge(Duration.ofHours(1))
                 .httpOnly(false)

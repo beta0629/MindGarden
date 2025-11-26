@@ -13,15 +13,24 @@ spring:
       prod: prod
   main:
     banner-mode: off
+  datasource:
+    # 로컬 환경: H2 메모리 DB 사용
+    url: jdbc:h2:mem:opsdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create-drop  # 로컬에서는 매번 새로 생성
     properties:
-      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
+      hibernate.dialect: org.hibernate.dialect.H2Dialect
+    show-sql: true
   flyway:
-    enabled: true
-    locations: classpath:db/migration
+    enabled: false  # 로컬에서는 Flyway 비활성화 (ddl-auto: create-drop 사용)
 
 management:
   endpoints:

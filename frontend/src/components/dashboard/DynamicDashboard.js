@@ -282,11 +282,12 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   const isSuperAdmin = userRole && superAdminRoles.includes(userRole); // 슈퍼 관리자
   const isAnyAdmin = userRole && allAdminRoles.includes(userRole); // 모든 관리자
 
-  console.log('역할 확인 (확장):', {
+  console.log('🚨 최종 역할 확인:', {
     userRole,
     isTenantAdmin,
     isSuperAdmin,
     isAnyAdmin,
+    businessType,
     tenantAdminRoles,
     superAdminRoles,
     userInfo: {

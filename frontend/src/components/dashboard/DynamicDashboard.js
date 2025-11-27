@@ -274,20 +274,30 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   });
 
   // 관리자 역할 확인
-  const adminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'];
-  const isAdmin = userRole && adminRoles.includes(userRole);
+  const tenantAdminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN']; // 테넌트별 관리자(원장)
+  const superAdminRoles = ['HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER']; // 슈퍼 관리자
+  const allAdminRoles = [...tenantAdminRoles, ...superAdminRoles];
+
+  const isTenantAdmin = userRole && tenantAdminRoles.includes(userRole); // 테넌트별 관리자(원장)
+  const isSuperAdmin = userRole && superAdminRoles.includes(userRole); // 슈퍼 관리자
+  const isAnyAdmin = userRole && allAdminRoles.includes(userRole); // 모든 관리자
 
   // dashboardConfig가 있으면 위젯 기반 렌더링, 없으면 기존 컴포넌트 렌더링
   // 관리자나 업종별 기본 위젯이 있는 경우 위젯 기반 렌더링
   let effectiveDashboardConfig = dashboardConfig;
 
-  // 관리자의 경우 기본 위젯 세트 생성
-  if (isAdmin && !dashboardConfig) {
+  // 테넌트별 관리자(원장)의 경우 모든 위젯 표시
+  if (isTenantAdmin && !dashboardConfig) {
     effectiveDashboardConfig = createDefaultAdminDashboardConfig();
   }
 
-  // 업종별 기본 위젯이 있는 경우 생성
-  if (!isAdmin && !dashboardConfig && businessType) {
+  // 슈퍼 관리자의 경우 모든 위젯 표시
+  if (isSuperAdmin && !dashboardConfig) {
+    effectiveDashboardConfig = createDefaultAdminDashboardConfig();
+  }
+
+  // 일반 사용자의 경우 업종별 기본 위젯 표시
+  if (!isAnyAdmin && !dashboardConfig && businessType) {
     effectiveDashboardConfig = createDefaultBusinessTypeDashboardConfig(businessType);
   }
 
@@ -586,7 +596,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
 };
 
 /**
- * 관리자용 기본 대시보드 설정 생성
+ * 관리자용 기본 대시보드 설정 생성 (테넌트별 관리자 + 슈퍼 관리자)
  * 모든 위젯(공통 + 상담 + 학원 + ERP)을 표시
  */
 const createDefaultAdminDashboardConfig = () => {

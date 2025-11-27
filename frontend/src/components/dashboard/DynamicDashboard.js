@@ -304,31 +304,21 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   // 위젯이 없는 경우 또는 빈 배열인 경우 기본 위젯 세트 생성
   const hasValidWidgets = dashboardConfig?.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0;
 
-  console.log('위젯 생성 조건 확인:', {
-    hasValidWidgets,
-    dashboardConfigExists: !!dashboardConfig,
-    widgetsArray: Array.isArray(dashboardConfig?.widgets),
-    widgetsLength: dashboardConfig?.widgets?.length,
-    isTenantAdmin,
-    isSuperAdmin,
-    businessType
-  });
-
   if (!hasValidWidgets) {
     console.log('기본 위젯 세트 생성 시작');
-    // 테넌트별 관리자(원장)의 경우 모든 위젯 표시
+
+    // 관리자 우선 처리
     if (isTenantAdmin) {
       console.log('테넌트 관리자용 위젯 생성');
       effectiveDashboardConfig = createDefaultAdminDashboardConfig();
       shouldUseWidgetDashboard = true;
     }
-    // 슈퍼 관리자의 경우 모든 위젯 표시
     else if (isSuperAdmin) {
       console.log('슈퍼 관리자용 위젯 생성');
       effectiveDashboardConfig = createDefaultAdminDashboardConfig();
       shouldUseWidgetDashboard = true;
     }
-    // 일반 사용자의 경우 업종별 기본 위젯 표시
+    // 일반 사용자는 businessType 확인 후 처리
     else if (businessType) {
       console.log(`일반 사용자용 위젯 생성: ${businessType}`);
       effectiveDashboardConfig = createDefaultBusinessTypeDashboardConfig(businessType);

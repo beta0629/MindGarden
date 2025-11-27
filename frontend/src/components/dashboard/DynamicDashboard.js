@@ -282,26 +282,36 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   const isSuperAdmin = userRole && superAdminRoles.includes(userRole); // 슈퍼 관리자
   const isAnyAdmin = userRole && allAdminRoles.includes(userRole); // 모든 관리자
 
-  // dashboardConfig가 있으면 위젯 기반 렌더링, 없으면 기존 컴포넌트 렌더링
-  // 관리자나 업종별 기본 위젯이 있는 경우 위젯 기반 렌더링
+  // 위젯 기반 대시보드 렌더링 우선 적용
   let effectiveDashboardConfig = dashboardConfig;
+  let shouldUseWidgetDashboard = false;
 
-  // 테넌트별 관리자(원장)의 경우 모든 위젯 표시
-  if (isTenantAdmin && !dashboardConfig) {
-    effectiveDashboardConfig = createDefaultAdminDashboardConfig();
+  // 위젯이 없는 경우 또는 빈 배열인 경우 기본 위젯 세트 생성
+  const hasValidWidgets = dashboardConfig?.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0;
+
+  if (!hasValidWidgets) {
+    // 테넌트별 관리자(원장)의 경우 모든 위젯 표시
+    if (isTenantAdmin) {
+      effectiveDashboardConfig = createDefaultAdminDashboardConfig();
+      shouldUseWidgetDashboard = true;
+    }
+    // 슈퍼 관리자의 경우 모든 위젯 표시
+    else if (isSuperAdmin) {
+      effectiveDashboardConfig = createDefaultAdminDashboardConfig();
+      shouldUseWidgetDashboard = true;
+    }
+    // 일반 사용자의 경우 업종별 기본 위젯 표시
+    else if (businessType) {
+      effectiveDashboardConfig = createDefaultBusinessTypeDashboardConfig(businessType);
+      shouldUseWidgetDashboard = true;
+    }
+  } else {
+    // 위젯 설정이 있는 경우에도 위젯 기반 렌더링 사용
+    shouldUseWidgetDashboard = true;
   }
 
-  // 슈퍼 관리자의 경우 모든 위젯 표시
-  if (isSuperAdmin && !dashboardConfig) {
-    effectiveDashboardConfig = createDefaultAdminDashboardConfig();
-  }
-
-  // 일반 사용자의 경우 업종별 기본 위젯 표시
-  if (!isAnyAdmin && !dashboardConfig && businessType) {
-    effectiveDashboardConfig = createDefaultBusinessTypeDashboardConfig(businessType);
-  }
-
-  if (effectiveDashboardConfig && effectiveDashboardConfig.widgets && Array.isArray(effectiveDashboardConfig.widgets) && effectiveDashboardConfig.widgets.length > 0) {
+  // 위젯 기반 렌더링
+  if (shouldUseWidgetDashboard && effectiveDashboardConfig) {
     // 업종 정보 추출 (dashboard 또는 user에서)
     let businessType = dashboard?.businessType ||
                       dashboard?.categoryCode ||

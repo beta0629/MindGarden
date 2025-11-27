@@ -396,11 +396,6 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
     return result;
   }
   
-  if (!businessType) {
-    result.reason = '업종 정보가 필요합니다.';
-    return result;
-  }
-  
   const normalizedType = widgetType.toLowerCase();
   const commonTypes = getCommonWidgetTypes();
   const consultationTypes = getConsultationWidgetTypes();
@@ -409,11 +404,22 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
   
   // 카테고리 분류
   if (commonTypes.includes(normalizedType)) {
+    // 공통 위젯은 업종 정보 없이도 허용
     result.category = 'common';
     result.allowed = true;
     result.reason = '공통 위젯입니다.';
+  } else if (erpTypes.includes(normalizedType)) {
+    // ERP 위젯도 업종 정보 없이 허용 (Feature Flag로 제어)
+    result.category = 'erp';
+    result.allowed = true;
+    result.reason = 'ERP 위젯입니다.';
   } else if (consultationTypes.includes(normalizedType)) {
+    // 상담소 특화 위젯은 업종 검증 필요
     result.category = 'consultation';
+    if (!businessType) {
+      result.reason = '업종 정보가 필요합니다. (상담소 전용)';
+      return result;
+    }
     if (businessType.toUpperCase() === 'CONSULTATION') {
       result.allowed = true;
       result.reason = '상담소 특화 위젯입니다.';
@@ -421,17 +427,18 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
       result.reason = '상담소 전용 위젯입니다.';
     }
   } else if (academyTypes.includes(normalizedType)) {
+    // 학원 특화 위젯은 업종 검증 필요
     result.category = 'academy';
+    if (!businessType) {
+      result.reason = '업종 정보가 필요합니다. (학원 전용)';
+      return result;
+    }
     if (businessType.toUpperCase() === 'ACADEMY') {
       result.allowed = true;
       result.reason = '학원 특화 위젯입니다.';
     } else {
       result.reason = '학원 전용 위젯입니다.';
     }
-  } else if (erpTypes.includes(normalizedType)) {
-    result.category = 'erp';
-    result.allowed = true;
-    result.reason = 'ERP 위젯입니다.';
   } else {
     result.reason = '지원하지 않는 위젯 타입입니다.';
     return result;

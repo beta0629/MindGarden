@@ -274,7 +274,19 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
                         dashboard?.categoryCode || 
                         currentUser?.tenant?.businessType || 
                         currentUser?.tenant?.categoryCode ||
+                        sessionManager.getUser()?.tenant?.businessType ||
+                        sessionStorage.getItem('businessType') ||
                         null;
+    
+    console.log('🔍 업종 정보 추출:', {
+      dashboardBusinessType: dashboard?.businessType,
+      dashboardCategoryCode: dashboard?.categoryCode,
+      tenantBusinessType: currentUser?.tenant?.businessType,
+      tenantCategoryCode: currentUser?.tenant?.categoryCode,
+      sessionBusinessType: sessionStorage.getItem('businessType'),
+      finalBusinessType: businessType
+    });
+    
     return <WidgetBasedDashboard dashboardConfig={dashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
   }
 

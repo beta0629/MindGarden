@@ -56,14 +56,12 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   
   const currentUser = propUser || sessionUser || sessionManager.getUser();
   
-  // currentUser 및 tenant 정보 상세 로깅
-  useEffect(() => {
-    if (currentUser) {
-      console.log('DEBUG: currentUser 정보', currentUser);
-      console.log('DEBUG: currentUser.tenant 정보', currentUser.tenant);
-      console.log('DEBUG: currentUser.tenant.businessType', currentUser.tenant?.businessType);
-    }
-  }, [currentUser]);
+  // currentUser 및 tenant 정보 상세 로깅 (useEffect 대신 즉시 로깅)
+  if (currentUser) {
+    console.log('DEBUG: currentUser 정보 (최상단)', currentUser);
+    console.log('DEBUG: currentUser.tenant 정보 (최상단)', currentUser.tenant);
+    console.log('DEBUG: currentUser.tenant.businessType (최상단)', currentUser.tenant?.businessType);
+  }
   
   // URL 쿼리 파라미터에서 dashboardId 확인 (관리자 미리보기용)
   const queryParams = new URLSearchParams(location.search);
@@ -324,48 +322,42 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   });
 
   // 위젯 기반 대시보드 렌더링 우선 적용
-  const [currentEffectiveDashboardConfig, setCurrentEffectiveDashboardConfig] = useState(null);
-  const [shouldUseWidgetDashboard, setShouldUseWidgetDashboard] = useState(false);
+  let effectiveDashboardConfig = dashboardConfig;
+  let shouldUseWidgetDashboard = false;
 
-  // useEffect를 사용하여 effectiveDashboardConfig 및 shouldUseWidgetDashboard 상태 관리
-  useEffect(() => {
-    let tempEffectiveConfig = null;
-    let tempShouldUseWidgetDashboard = false;
+  // 위젯이 없는 경우 또는 빈 배열인 경우 기본 위젯 세트 생성
+  const hasValidWidgets = dashboardConfig?.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0;
 
-    const hasValidWidgets = dashboardConfig?.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0;
-
-    if (isAnyAdmin) {
-      console.log('관리자용 위젯 생성 (모든 위젯 포함)');
-      tempEffectiveConfig = createDefaultAdminDashboardConfig(allAdminRoles);
-      tempShouldUseWidgetDashboard = true;
-    } else if (!hasValidWidgets) {
-      console.log('기본 위젯 세트 생성 시작 (비관리자)');
-      if (businessType) {
-        console.log(`일반 사용자용 위젯 생성: ${businessType}`);
-        tempEffectiveConfig = createDefaultBusinessTypeDashboardConfig(businessType);
-        tempShouldUseWidgetDashboard = true;
-      } else {
-        console.log('위젯 생성 조건 불충족: businessType 없음');
-      }
+  // 관리자는 항상 모든 위젯을 표시
+  if (isAnyAdmin) {
+    console.log('관리자용 위젯 생성 (모든 위젯 포함)');
+    effectiveDashboardConfig = createDefaultAdminDashboardConfig(allAdminRoles);
+    shouldUseWidgetDashboard = true;
+  } 
+  // 비관리자이면서 유효한 위젯 설정이 없는 경우
+  else if (!hasValidWidgets) {
+    console.log('기본 위젯 세트 생성 시작 (비관리자)');
+    if (businessType) {
+      console.log(`일반 사용자용 위젯 생성: ${businessType}`);
+      effectiveDashboardConfig = createDefaultBusinessTypeDashboardConfig(businessType);
+      shouldUseWidgetDashboard = true;
     } else {
-      console.log('기존 위젯 설정 사용');
-      tempEffectiveConfig = dashboardConfig; // 원본 대시보드 설정을 사용
-      tempShouldUseWidgetDashboard = true;
+      console.log('위젯 생성 조건 불충족: businessType 없음');
     }
+  } else {
+    console.log('기존 위젯 설정 사용');
+    effectiveDashboardConfig = dashboardConfig; // 원본 대시보드 설정을 사용
+    shouldUseWidgetDashboard = true;
+  }
 
-    setCurrentEffectiveDashboardConfig(tempEffectiveConfig);
-    setShouldUseWidgetDashboard(tempShouldUseWidgetDashboard);
-
-  }, [isAnyAdmin, businessType, dashboardConfig, allAdminRoles]); // 의존성 추가
-
-  console.log('최종 위젯 생성 결과 (상태 기반):', {
+  console.log('최종 위젯 생성 결과 (롤백 후):', {
     shouldUseWidgetDashboard,
-    effectiveConfigExists: !!currentEffectiveDashboardConfig,
-    effectiveWidgetsCount: currentEffectiveDashboardConfig?.widgets?.length
+    effectiveConfigExists: !!effectiveDashboardConfig,
+    effectiveWidgetsCount: effectiveDashboardConfig?.widgets?.length
   });
 
   // 위젯 기반 렌더링
-  if (shouldUseWidgetDashboard && currentEffectiveDashboardConfig) {
+  if (shouldUseWidgetDashboard && effectiveDashboardConfig) {
 
     console.log('🔍 업종 정보 추출:', {
       dashboardBusinessType: dashboard?.businessType,
@@ -380,7 +372,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
       isEmpty: businessType === ''
     });
     
-    return <WidgetBasedDashboard dashboardConfig={currentEffectiveDashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
+    return <WidgetBasedDashboard dashboardConfig={effectiveDashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
   }
 
   // 기존 컴포넌트 기반 렌더링 (하위 호환성)

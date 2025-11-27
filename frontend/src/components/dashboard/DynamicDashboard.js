@@ -273,22 +273,28 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     user: currentUser
   });
 
-  // 관리자 역할 확인
-  const tenantAdminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN']; // 테넌트별 관리자(원장)
-  const superAdminRoles = ['HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER']; // 슈퍼 관리자
+  // 관리자 역할 확인 (확장된 역할 목록)
+  const tenantAdminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'TENANT_ADMIN', 'OWNER', 'MANAGER']; // 테넌트별 관리자(원장)
+  const superAdminRoles = ['HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER', 'SUPER_ADMIN', 'SYSTEM_ADMIN']; // 슈퍼 관리자
   const allAdminRoles = [...tenantAdminRoles, ...superAdminRoles];
 
   const isTenantAdmin = userRole && tenantAdminRoles.includes(userRole); // 테넌트별 관리자(원장)
   const isSuperAdmin = userRole && superAdminRoles.includes(userRole); // 슈퍼 관리자
   const isAnyAdmin = userRole && allAdminRoles.includes(userRole); // 모든 관리자
 
-  console.log('역할 확인:', {
+  console.log('역할 확인 (확장):', {
     userRole,
     isTenantAdmin,
     isSuperAdmin,
     isAnyAdmin,
     tenantAdminRoles,
-    superAdminRoles
+    superAdminRoles,
+    userInfo: {
+      id: currentUser?.id,
+      email: currentUser?.email,
+      tenantId: currentUser?.tenant?.tenantId,
+      businessType: currentUser?.tenant?.businessType
+    }
   });
 
   // 위젯 기반 대시보드 렌더링 우선 적용

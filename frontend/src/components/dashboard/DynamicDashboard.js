@@ -7,7 +7,7 @@
  * @since 2025-01-XX
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -99,14 +99,16 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     }
   }, [currentUser, sessionLoading, navigate]);
 
+  // dashboardIdFromQuery가 변경될 때마다 loadDashboard 호출
   useEffect(() => {
     // propDashboard가 없으면 조회
     if (!propDashboard && currentUser && currentUser.id) {
       loadDashboard();
     }
-  }, [currentUser, propDashboard, dashboardIdFromQuery]);
+  }, [propDashboard, dashboardIdFromQuery, currentUser?.id, isAdminPreview, navigate, loadDashboard]);
 
-  const loadDashboard = async () => {
+  // loadDashboard 함수를 useCallback으로 감싸고 필요한 의존성만 명시
+  const loadDashboard = useCallback(async () => {
     if (!currentUser) {
       setError('사용자 정보가 없습니다.');
       setIsLoading(false);
@@ -149,12 +151,22 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             console.log('DEBUG: latestUser 정보', latestUser);
             console.log('DEBUG: latestUser.tenant 정보', latestUser.tenant);
             console.log('DEBUG: latestUser.tenant.businessType', latestUser.tenant?.businessType);
+            
+            // 핵심 수정: latestUser.tenant가 없으면 tenantId를 기반으로 tenant 객체 합성
+            if (!userWithTenant.tenant && userWithTenant.tenantId && typeof userWithTenant.tenantId === 'string') {
+              const inferredBusinessType = inferBusinessTypeFromTenantId(userWithTenant.tenantId);
+              userWithTenant.tenant = { 
+                tenantId: userWithTenant.tenantId,
+                businessType: inferredBusinessType
+              }; // 합성된 tenant 객체 할당
+              console.warn(`⚠️ tenantId(${userWithTenant.tenantId})에서 businessType(${inferredBusinessType}) 유추 및 tenant 객체 합성`);
+            }
           }
         } catch (reloadError) {
           console.warn('⚠️ 최신 사용자 정보 로드 실패:', reloadError);
         }
       }
-
+      
       const tenantId = userWithTenant.tenantId;
       const tenantRoleId = userWithTenant.currentTenantRoleId || 
                           userWithTenant.tenantRole?.tenantRoleId ||
@@ -213,7 +225,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentUser, propDashboard, dashboardIdFromQuery, isAdminPreview, navigate]);
 
   if (isLoading) {
     return (
@@ -299,6 +311,18 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
                     currentUser?.tenant?.categoryCode ||
                     sessionManager.getUser()?.tenant?.businessType ||
                     sessionStorage.getItem('businessType');
+
+  // 임시 방편: currentUser.tenant 정보가 없으면 tenantId에서 businessType 유추
+  if (!businessType && currentUser?.tenantId && typeof currentUser.tenantId === 'string') {
+    const tenantIdLower = currentUser.tenantId.toLowerCase();
+    if (tenantIdLower.includes('consultation')) {
+      businessType = 'CONSULTATION';
+      console.warn('⚠️ tenantId에서 businessType 유추: CONSULTATION', currentUser.tenantId);
+    } else if (tenantIdLower.includes('academy')) {
+      businessType = 'ACADEMY';
+      console.warn('⚠️ tenantId에서 businessType 유추: ACADEMY', currentUser.tenantId);
+    }
+  }
 
   // 빈 문자열이나 undefined를 null로 변환
   if (!businessType || businessType === '') {
@@ -831,6 +855,18 @@ const createDefaultBusinessTypeDashboardConfig = (businessType) => {
       shadow: 'md'
     }
   };
+};
+
+// 헬퍼 함수: tenantId에서 businessType 유추
+const inferBusinessTypeFromTenantId = (tenantId) => {
+  if (!tenantId || typeof tenantId !== 'string') return null;
+  const tenantIdLower = tenantId.toLowerCase();
+  if (tenantIdLower.includes('consultation')) {
+    return 'CONSULTATION';
+  } else if (tenantIdLower.includes('academy')) {
+    return 'ACADEMY';
+  }
+  return null;
 };
 
 export default DynamicDashboard;

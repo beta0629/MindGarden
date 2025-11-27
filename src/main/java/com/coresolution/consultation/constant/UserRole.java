@@ -35,7 +35,12 @@ public enum UserRole {
     
     // 기존 호환성을 위한 역할들
     HQ_SUPER_ADMIN("본사최고관리자"),
-    BRANCH_MANAGER("지점장");
+    BRANCH_MANAGER("지점장"),
+
+    // 새로운 역할 시스템 (업종별 역할)
+    PRINCIPAL("원장"),
+    OWNER("사장"),
+    TENANT_ADMIN("테넌트관리자");
     
     private final String displayName;
     
@@ -131,7 +136,8 @@ public enum UserRole {
     public boolean isAdmin() {
         return this == HQ_ADMIN || this == SUPER_HQ_ADMIN || this == HQ_MASTER ||
                this == BRANCH_SUPER_ADMIN || this == ADMIN ||
-               this == HQ_SUPER_ADMIN || this == BRANCH_MANAGER; // 기존 호환성
+               this == HQ_SUPER_ADMIN || this == BRANCH_MANAGER || // 기존 호환성
+               this == PRINCIPAL || this == OWNER || this == TENANT_ADMIN; // 새로운 역할
     }
     
     // 수퍼어드민 또는 일반 관리자인지 확인
@@ -171,7 +177,8 @@ public enum UserRole {
     
     // 모든 관리자 역할 목록 반환
     public static UserRole[] getAdminRoles() {
-        return new UserRole[]{ADMIN, HQ_ADMIN, SUPER_HQ_ADMIN, HQ_MASTER, BRANCH_SUPER_ADMIN};
+        return new UserRole[]{ADMIN, HQ_ADMIN, SUPER_HQ_ADMIN, HQ_MASTER, BRANCH_SUPER_ADMIN,
+                              PRINCIPAL, OWNER, TENANT_ADMIN};
     }
     
     // 상담사 역할 목록 반환
@@ -235,6 +242,16 @@ public enum UserRole {
                 case "BRANCHSUPERADMIN":
                 case "BRANCH_SUPERADMIN":
                     return BRANCH_SUPER_ADMIN;
+                case "PRINCIPAL":
+                case "원장":
+                    return PRINCIPAL;
+                case "OWNER":
+                case "사장":
+                    return OWNER;
+                case "TENANT_ADMIN":
+                case "TENANTADMIN":
+                case "테넌트관리자":
+                    return TENANT_ADMIN;
                 default:
                     // 알 수 없는 역할은 기본값으로
                     System.err.println("알 수 없는 역할: " + role + " -> CLIENT로 변환");

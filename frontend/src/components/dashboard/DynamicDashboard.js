@@ -282,6 +282,15 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   const isSuperAdmin = userRole && superAdminRoles.includes(userRole); // 슈퍼 관리자
   const isAnyAdmin = userRole && allAdminRoles.includes(userRole); // 모든 관리자
 
+  console.log('역할 확인:', {
+    userRole,
+    isTenantAdmin,
+    isSuperAdmin,
+    isAnyAdmin,
+    tenantAdminRoles,
+    superAdminRoles
+  });
+
   // 위젯 기반 대시보드 렌더링 우선 적용
   let effectiveDashboardConfig = dashboardConfig;
   let shouldUseWidgetDashboard = false;
@@ -289,26 +298,49 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   // 위젯이 없는 경우 또는 빈 배열인 경우 기본 위젯 세트 생성
   const hasValidWidgets = dashboardConfig?.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0;
 
+  console.log('위젯 생성 조건 확인:', {
+    hasValidWidgets,
+    dashboardConfigExists: !!dashboardConfig,
+    widgetsArray: Array.isArray(dashboardConfig?.widgets),
+    widgetsLength: dashboardConfig?.widgets?.length,
+    isTenantAdmin,
+    isSuperAdmin,
+    businessType
+  });
+
   if (!hasValidWidgets) {
+    console.log('기본 위젯 세트 생성 시작');
     // 테넌트별 관리자(원장)의 경우 모든 위젯 표시
     if (isTenantAdmin) {
+      console.log('테넌트 관리자용 위젯 생성');
       effectiveDashboardConfig = createDefaultAdminDashboardConfig();
       shouldUseWidgetDashboard = true;
     }
     // 슈퍼 관리자의 경우 모든 위젯 표시
     else if (isSuperAdmin) {
+      console.log('슈퍼 관리자용 위젯 생성');
       effectiveDashboardConfig = createDefaultAdminDashboardConfig();
       shouldUseWidgetDashboard = true;
     }
     // 일반 사용자의 경우 업종별 기본 위젯 표시
     else if (businessType) {
+      console.log(`일반 사용자용 위젯 생성: ${businessType}`);
       effectiveDashboardConfig = createDefaultBusinessTypeDashboardConfig(businessType);
       shouldUseWidgetDashboard = true;
+    } else {
+      console.log('위젯 생성 조건 불충족: businessType 없음');
     }
   } else {
+    console.log('기존 위젯 설정 사용');
     // 위젯 설정이 있는 경우에도 위젯 기반 렌더링 사용
     shouldUseWidgetDashboard = true;
   }
+
+  console.log('최종 위젯 생성 결과:', {
+    shouldUseWidgetDashboard,
+    effectiveConfigExists: !!effectiveDashboardConfig,
+    effectiveWidgetsCount: effectiveDashboardConfig?.widgets?.length
+  });
 
   // 위젯 기반 렌더링
   if (shouldUseWidgetDashboard && effectiveDashboardConfig) {

@@ -99,14 +99,6 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     }
   }, [currentUser, sessionLoading, navigate]);
 
-  // dashboardIdFromQuery가 변경될 때마다 loadDashboard 호출
-  useEffect(() => {
-    // propDashboard가 없으면 조회
-    if (!propDashboard && currentUser && currentUser.id) {
-      loadDashboard();
-    }
-  }, [propDashboard, dashboardIdFromQuery, currentUser?.id, isAdminPreview, navigate, loadDashboard]);
-
   // loadDashboard 함수를 useCallback으로 감싸고 필요한 의존성만 명시
   const loadDashboard = useCallback(async () => {
     if (!currentUser) {
@@ -226,6 +218,13 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
       setIsLoading(false);
     }
   }, [currentUser, propDashboard, dashboardIdFromQuery, isAdminPreview, navigate]);
+
+  useEffect(() => {
+    // propDashboard가 없으면 조회
+    if (!propDashboard && currentUser && currentUser.id) {
+      loadDashboard();
+    }
+  }, [propDashboard, dashboardIdFromQuery, currentUser?.id, isAdminPreview, navigate, loadDashboard]);
 
   if (isLoading) {
     return (

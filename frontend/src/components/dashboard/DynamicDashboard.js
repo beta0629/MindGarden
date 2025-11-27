@@ -287,7 +287,6 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     isTenantAdmin,
     isSuperAdmin,
     isAnyAdmin,
-    businessType,
     tenantAdminRoles,
     superAdminRoles,
     userInfo: {
@@ -351,18 +350,6 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 
   // 위젯 기반 렌더링
   if (shouldUseWidgetDashboard && effectiveDashboardConfig) {
-    // 업종 정보 추출 (dashboard 또는 user에서)
-    let businessType = dashboard?.businessType ||
-                      dashboard?.categoryCode ||
-                      currentUser?.tenant?.businessType ||
-                      currentUser?.tenant?.categoryCode ||
-                      sessionManager.getUser()?.tenant?.businessType ||
-                      sessionStorage.getItem('businessType');
-
-    // 빈 문자열이나 undefined를 null로 변환
-    if (!businessType || businessType === '') {
-      businessType = null;
-    }
 
     console.log('🔍 업종 정보 추출:', {
       dashboardBusinessType: dashboard?.businessType,

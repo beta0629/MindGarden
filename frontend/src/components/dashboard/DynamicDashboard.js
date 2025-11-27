@@ -610,12 +610,27 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
  * 모든 위젯(공통 + 상담 + 학원 + ERP)을 표시
  */
 const createDefaultAdminDashboardConfig = () => {
-  const allWidgetTypes = [
-    ...getCommonWidgetTypes(),
-    ...getConsultationWidgetTypes(),
-    ...getAcademyWidgetTypes(),
-    ...getErpWidgetTypes()
-  ];
+  // 관리자는 모든 위젯 타입 표시 (동적 조회)
+  const commonTypes = getCommonWidgetTypes(); // 공통 위젯
+  const consultationTypes = getConsultationWidgetTypes(); // 상담 위젯
+  const academyTypes = getAcademyWidgetTypes(); // 학원 위젯
+  const erpTypes = getErpWidgetTypes(); // ERP 위젯
+
+  // 중복 제거를 위해 Set 사용
+  const allWidgetTypes = [...new Set([
+    ...commonTypes,
+    ...consultationTypes,
+    ...academyTypes,
+    ...erpTypes
+  ])];
+
+  console.log('관리자 대시보드 위젯 구성:', {
+    common: commonTypes.length,
+    consultation: consultationTypes.length,
+    academy: academyTypes.length,
+    erp: erpTypes.length,
+    total: allWidgetTypes.length
+  });
 
   // 위젯을 그리드에 배치 (3열 기준)
   const widgets = allWidgetTypes.map((widgetType, index) => ({
@@ -671,8 +686,11 @@ const createDefaultAdminDashboardConfig = () => {
  * 공통 위젯 + 업종별 위젯 + ERP 위젯을 표시
  */
 const createDefaultBusinessTypeDashboardConfig = (businessType) => {
-  let businessWidgetTypes = [];
+  // 동적으로 위젯 타입 가져오기
+  const commonTypes = getCommonWidgetTypes();
+  const erpTypes = getErpWidgetTypes();
 
+  let businessWidgetTypes = [];
   if (businessType === 'CONSULTATION') {
     businessWidgetTypes = getConsultationWidgetTypes();
   } else if (businessType === 'ACADEMY') {
@@ -680,10 +698,17 @@ const createDefaultBusinessTypeDashboardConfig = (businessType) => {
   }
 
   const allWidgetTypes = [
-    ...getCommonWidgetTypes(),
+    ...commonTypes,
     ...businessWidgetTypes,
-    ...getErpWidgetTypes()
+    ...erpTypes
   ];
+
+  console.log(`${businessType} 대시보드 위젯 구성:`, {
+    common: commonTypes.length,
+    business: businessWidgetTypes.length,
+    erp: erpTypes.length,
+    total: allWidgetTypes.length
+  });
 
   // 위젯을 그리드에 배치 (3열 기준)
   const widgets = allWidgetTypes.map((widgetType, index) => ({

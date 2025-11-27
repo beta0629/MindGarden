@@ -56,6 +56,15 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   
   const currentUser = propUser || sessionUser || sessionManager.getUser();
   
+  // currentUser 및 tenant 정보 상세 로깅
+  useEffect(() => {
+    if (currentUser) {
+      console.log('DEBUG: currentUser 정보', currentUser);
+      console.log('DEBUG: currentUser.tenant 정보', currentUser.tenant);
+      console.log('DEBUG: currentUser.tenant.businessType', currentUser.tenant?.businessType);
+    }
+  }, [currentUser]);
+  
   // URL 쿼리 파라미터에서 dashboardId 확인 (관리자 미리보기용)
   const queryParams = new URLSearchParams(location.search);
   const dashboardIdFromQuery = queryParams.get('dashboardId');
@@ -139,6 +148,9 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
           if (latestUser && latestUser.tenantId) {
             userWithTenant = latestUser;
             console.log('✅ 최신 사용자 정보 로드 완료, tenantId:', latestUser.tenantId);
+            console.log('DEBUG: latestUser 정보', latestUser);
+            console.log('DEBUG: latestUser.tenant 정보', latestUser.tenant);
+            console.log('DEBUG: latestUser.tenant.businessType', latestUser.tenant?.businessType);
           }
         } catch (reloadError) {
           console.warn('⚠️ 최신 사용자 정보 로드 실패:', reloadError);
@@ -312,48 +324,48 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   });
 
   // 위젯 기반 대시보드 렌더링 우선 적용
-  let effectiveDashboardConfig = dashboardConfig;
-  let shouldUseWidgetDashboard = false;
+  const [currentEffectiveDashboardConfig, setCurrentEffectiveDashboardConfig] = useState(null);
+  const [shouldUseWidgetDashboard, setShouldUseWidgetDashboard] = useState(false);
 
-  // 위젯이 없는 경우 또는 빈 배열인 경우 기본 위젯 세트 생성
-  const hasValidWidgets = dashboardConfig?.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0;
+  // useEffect를 사용하여 effectiveDashboardConfig 및 shouldUseWidgetDashboard 상태 관리
+  useEffect(() => {
+    let tempEffectiveConfig = null;
+    let tempShouldUseWidgetDashboard = false;
 
-  if (!hasValidWidgets) {
-    console.log('기본 위젯 세트 생성 시작');
+    const hasValidWidgets = dashboardConfig?.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0;
 
-    // 관리자 우선 처리
-    if (isTenantAdmin) {
-      console.log('테넌트 관리자용 위젯 생성');
-      effectiveDashboardConfig = createDefaultAdminDashboardConfig();
-      shouldUseWidgetDashboard = true;
-    }
-    else if (isSuperAdmin) {
-      console.log('슈퍼 관리자용 위젯 생성');
-      effectiveDashboardConfig = createDefaultAdminDashboardConfig();
-      shouldUseWidgetDashboard = true;
-    }
-    // 일반 사용자는 businessType 확인 후 처리
-    else if (businessType) {
-      console.log(`일반 사용자용 위젯 생성: ${businessType}`);
-      effectiveDashboardConfig = createDefaultBusinessTypeDashboardConfig(businessType);
-      shouldUseWidgetDashboard = true;
+    if (isAnyAdmin) {
+      console.log('관리자용 위젯 생성 (모든 위젯 포함)');
+      tempEffectiveConfig = createDefaultAdminDashboardConfig(allAdminRoles);
+      tempShouldUseWidgetDashboard = true;
+    } else if (!hasValidWidgets) {
+      console.log('기본 위젯 세트 생성 시작 (비관리자)');
+      if (businessType) {
+        console.log(`일반 사용자용 위젯 생성: ${businessType}`);
+        tempEffectiveConfig = createDefaultBusinessTypeDashboardConfig(businessType);
+        tempShouldUseWidgetDashboard = true;
+      } else {
+        console.log('위젯 생성 조건 불충족: businessType 없음');
+      }
     } else {
-      console.log('위젯 생성 조건 불충족: businessType 없음');
+      console.log('기존 위젯 설정 사용');
+      tempEffectiveConfig = dashboardConfig; // 원본 대시보드 설정을 사용
+      tempShouldUseWidgetDashboard = true;
     }
-  } else {
-    console.log('기존 위젯 설정 사용');
-    // 위젯 설정이 있는 경우에도 위젯 기반 렌더링 사용
-    shouldUseWidgetDashboard = true;
-  }
 
-  console.log('최종 위젯 생성 결과:', {
+    setCurrentEffectiveDashboardConfig(tempEffectiveConfig);
+    setShouldUseWidgetDashboard(tempShouldUseWidgetDashboard);
+
+  }, [isAnyAdmin, businessType, dashboardConfig, allAdminRoles]); // 의존성 추가
+
+  console.log('최종 위젯 생성 결과 (상태 기반):', {
     shouldUseWidgetDashboard,
-    effectiveConfigExists: !!effectiveDashboardConfig,
-    effectiveWidgetsCount: effectiveDashboardConfig?.widgets?.length
+    effectiveConfigExists: !!currentEffectiveDashboardConfig,
+    effectiveWidgetsCount: currentEffectiveDashboardConfig?.widgets?.length
   });
 
   // 위젯 기반 렌더링
-  if (shouldUseWidgetDashboard && effectiveDashboardConfig) {
+  if (shouldUseWidgetDashboard && currentEffectiveDashboardConfig) {
 
     console.log('🔍 업종 정보 추출:', {
       dashboardBusinessType: dashboard?.businessType,
@@ -368,7 +380,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
       isEmpty: businessType === ''
     });
     
-    return <WidgetBasedDashboard dashboardConfig={dashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
+    return <WidgetBasedDashboard dashboardConfig={currentEffectiveDashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
   }
 
   // 기존 컴포넌트 기반 렌더링 (하위 호환성)
@@ -704,7 +716,7 @@ const getDashboardLayoutConfig = (widgetCount) => {
  * 관리자용 기본 대시보드 설정 생성 (테넌트별 관리자 + 슈퍼 관리자)
  * 모든 위젯(공통 + 상담 + 학원 + ERP)을 표시
  */
-const createDefaultAdminDashboardConfig = () => {
+const createDefaultAdminDashboardConfig = (allAdminRoles) => {
   // 관리자는 모든 위젯 타입 표시 (동적 조회)
   const commonTypes = getCommonWidgetTypes(); // 공통 위젯
   const consultationTypes = getConsultationWidgetTypes(); // 상담 위젯
@@ -742,7 +754,7 @@ const createDefaultAdminDashboardConfig = () => {
   // 관리자용 visibility 추가
   widgets.forEach(widget => {
     widget.visibility = {
-      roles: allAdminRoles // 모든 관리자 역할을 포함하도록 수정
+      roles: allAdminRoles // 파라미터로 받은 allAdminRoles 사용
     };
   });
 

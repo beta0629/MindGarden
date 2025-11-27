@@ -26,7 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/core/branding")
+@RequestMapping("/api/admin/branding")
 @RequiredArgsConstructor
 @Tag(name = "Branding", description = "브랜딩 관리 API")
 public class BrandingController {

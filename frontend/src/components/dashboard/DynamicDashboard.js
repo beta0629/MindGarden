@@ -19,11 +19,17 @@ import DashboardGrid from '../layout/DashboardGrid';
 import { getWidgetComponent } from './widgets/WidgetRegistry';
 import WidgetCardWrapper from './widgets/WidgetCardWrapper';
 import { apiGet } from '../../utils/ajax';
-import { 
-  filterWidgetsByBusinessType, 
+import {
+  filterWidgetsByBusinessType,
   isWidgetVisible,
-  validateWidgetAccess 
+  validateWidgetAccess
 } from '../../utils/widgetVisibilityUtils';
+import {
+  getCommonWidgetTypes,
+  getConsultationWidgetTypes,
+  getAcademyWidgetTypes,
+  getErpWidgetTypes
+} from './widgets/WidgetRegistry';
 
 // 대시보드 컴포넌트 동적 import
 import CommonDashboard from './CommonDashboard';
@@ -267,8 +273,25 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     user: currentUser
   });
 
+  // 관리자 역할 확인
+  const adminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'];
+  const isAdmin = userRole && adminRoles.includes(userRole);
+
   // dashboardConfig가 있으면 위젯 기반 렌더링, 없으면 기존 컴포넌트 렌더링
-  if (dashboardConfig && dashboardConfig.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0) {
+  // 관리자나 업종별 기본 위젯이 있는 경우 위젯 기반 렌더링
+  let effectiveDashboardConfig = dashboardConfig;
+
+  // 관리자의 경우 기본 위젯 세트 생성
+  if (isAdmin && !dashboardConfig) {
+    effectiveDashboardConfig = createDefaultAdminDashboardConfig();
+  }
+
+  // 업종별 기본 위젯이 있는 경우 생성
+  if (!isAdmin && !dashboardConfig && businessType) {
+    effectiveDashboardConfig = createDefaultBusinessTypeDashboardConfig(businessType);
+  }
+
+  if (effectiveDashboardConfig && effectiveDashboardConfig.widgets && Array.isArray(effectiveDashboardConfig.widgets) && effectiveDashboardConfig.widgets.length > 0) {
     // 업종 정보 추출 (dashboard 또는 user에서)
     let businessType = dashboard?.businessType ||
                       dashboard?.categoryCode ||
@@ -560,6 +583,135 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
       </div>
     </SimpleLayout>
   );
+};
+
+/**
+ * 관리자용 기본 대시보드 설정 생성
+ * 모든 위젯(공통 + 상담 + 학원 + ERP)을 표시
+ */
+const createDefaultAdminDashboardConfig = () => {
+  const allWidgetTypes = [
+    ...getCommonWidgetTypes(),
+    ...getConsultationWidgetTypes(),
+    ...getAcademyWidgetTypes(),
+    ...getErpWidgetTypes()
+  ];
+
+  // 위젯을 그리드에 배치 (3열 기준)
+  const widgets = allWidgetTypes.map((widgetType, index) => ({
+    id: `admin-${widgetType}-${Date.now()}`,
+    type: widgetType,
+    position: {
+      row: Math.floor(index / 3),
+      col: index % 3,
+      span: 1
+    },
+    size: {
+      width: '100%',
+      height: '300px'
+    },
+    visibility: {
+      roles: ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER']
+    },
+    config: {},
+    cardStyle: {
+      style: 'v2',
+      variant: 'elevated',
+      padding: 'md',
+      borderRadius: 'md',
+      hoverEffect: true,
+      shadow: 'md'
+    }
+  }));
+
+  return {
+    widgets,
+    layout: {
+      type: 'grid',
+      columns: 3,
+      gap: 'md'
+    },
+    theme: {
+      primaryColor: '#007bff',
+      secondaryColor: '#6c757d'
+    },
+    cardLayout: {
+      style: 'v2',
+      variant: 'elevated',
+      padding: 'md',
+      borderRadius: 'md',
+      hoverEffect: true,
+      shadow: 'md'
+    }
+  };
+};
+
+/**
+ * 업종별 기본 대시보드 설정 생성
+ * 공통 위젯 + 업종별 위젯 + ERP 위젯을 표시
+ */
+const createDefaultBusinessTypeDashboardConfig = (businessType) => {
+  let businessWidgetTypes = [];
+
+  if (businessType === 'CONSULTATION') {
+    businessWidgetTypes = getConsultationWidgetTypes();
+  } else if (businessType === 'ACADEMY') {
+    businessWidgetTypes = getAcademyWidgetTypes();
+  }
+
+  const allWidgetTypes = [
+    ...getCommonWidgetTypes(),
+    ...businessWidgetTypes,
+    ...getErpWidgetTypes()
+  ];
+
+  // 위젯을 그리드에 배치 (3열 기준)
+  const widgets = allWidgetTypes.map((widgetType, index) => ({
+    id: `${businessType.toLowerCase()}-${widgetType}-${Date.now()}`,
+    type: widgetType,
+    position: {
+      row: Math.floor(index / 3),
+      col: index % 3,
+      span: 1
+    },
+    size: {
+      width: '100%',
+      height: '300px'
+    },
+    visibility: {
+      businessTypes: [businessType]
+    },
+    config: {},
+    cardStyle: {
+      style: 'v2',
+      variant: 'elevated',
+      padding: 'md',
+      borderRadius: 'md',
+      hoverEffect: true,
+      shadow: 'md'
+    }
+  }));
+
+  return {
+    widgets,
+    layout: {
+      type: 'grid',
+      columns: 3,
+      gap: 'md'
+    },
+    theme: {
+      primaryColor: '#007bff',
+      secondaryColor: '#6c757d'
+    },
+    cardLayout: {
+      style: 'v2',
+      variant: 'elevated',
+      padding: 'md',
+      borderRadius: 'md',
+      hoverEffect: true,
+      shadow: 'md'
+    }
+  };
 };
 
 export default DynamicDashboard;

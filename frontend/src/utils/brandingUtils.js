@@ -15,7 +15,7 @@ import { API_BASE_URL } from '../constants/api';
  */
 let brandingCache = null;
 let cacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5분
+const CACHE_DURATION = 30 * 60 * 1000; // 30분
 
 /**
  * 현재 테넌트의 브랜딩 정보 조회
@@ -52,12 +52,31 @@ export const getBrandingInfo = async (useCache = true) => {
         cacheTimestamp = Date.now();
         return defaultBranding;
       }
+
+      // 500 오류 (Tenant context 없음)도 기본값 사용
+      if (response.status === 500) {
+        console.warn('테넌트 컨텍스트 없음, 기본값 사용');
+        const defaultBranding = createDefaultBranding();
+        brandingCache = defaultBranding;
+        cacheTimestamp = Date.now();
+        return defaultBranding;
+      }
+
       throw new Error(`브랜딩 정보 조회 실패: ${response.status}`);
     }
 
     const apiResponse = await response.json();
-    
+
     if (!apiResponse.success) {
+      // 테넌트 컨텍스트 오류도 기본값 사용
+      if (apiResponse.message && apiResponse.message.includes('Tenant ID is not set')) {
+        console.warn('테넌트 컨텍스트 없음, 기본값 사용');
+        const defaultBranding = createDefaultBranding();
+        brandingCache = defaultBranding;
+        cacheTimestamp = Date.now();
+        return defaultBranding;
+      }
+
       throw new Error(apiResponse.message || '브랜딩 정보 조회 실패');
     }
     
@@ -78,7 +97,7 @@ export const getBrandingInfo = async (useCache = true) => {
     
     // 기본값도 캐시에 저장 (단, 짧은 시간만)
     brandingCache = defaultBranding;
-    cacheTimestamp = Date.now() - (CACHE_DURATION - 30000); // 30초 후 재시도
+    cacheTimestamp = Date.now() - (CACHE_DURATION - 300000); // 5분 후 재시도
     
     return defaultBranding;
   }

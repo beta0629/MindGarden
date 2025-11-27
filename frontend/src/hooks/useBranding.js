@@ -50,7 +50,19 @@ export const useBranding = (options = {}) => {
 
     try {
       console.debug('브랜딩 정보 로드 시작');
-      
+
+      // 로그인 상태 및 테넌트 정보 확인
+      const currentUser = sessionManager.getUser();
+      const hasValidSession = currentUser && currentUser.tenant && currentUser.tenant.tenantId;
+
+      if (!hasValidSession) {
+        console.debug('세션 정보 없음, 브랜딩 기본값 사용');
+        const defaultProps = brandingToHeaderProps(null);
+        setHeaderProps(defaultProps);
+        setBrandingInfo(null);
+        return;
+      }
+
       const branding = await getBrandingInfo(useCache && !forceReload);
       setBrandingInfo(branding);
       

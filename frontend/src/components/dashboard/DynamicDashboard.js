@@ -361,20 +361,41 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType = null }) => {
   const { layout, widgets, theme, cardLayout, refresh } = dashboardConfig;
   
-  // 레이아웃 설정
-  const layoutType = layout?.type || 'grid';
-  const columns = layout?.columns || 3;
-  const gap = layout?.gap || 'md';
-  
-  // 카드 레이아웃 기본 설정
-  const defaultCardStyle = cardLayout || {
-    style: 'v2',
-    variant: 'elevated',
-    padding: 'md',
-    borderRadius: 'md',
-    hoverEffect: true,
-    shadow: 'md'
+  // 레이아웃 설정 (동적)
+  const getLayoutConfig = () => {
+    const defaultConfig = {
+      type: 'grid',
+      columns: 3,
+      gap: 'md'
+    };
+
+    if (!layout) return defaultConfig;
+
+    return {
+      type: layout.type || defaultConfig.type,
+      columns: layout.columns || defaultConfig.columns,
+      gap: layout.gap || defaultConfig.gap
+    };
   };
+
+  const layoutConfig = getLayoutConfig();
+  const { type: layoutType, columns, gap } = layoutConfig;
+  
+  // 카드 레이아웃 설정 (동적)
+  const getCardLayoutConfig = () => {
+    const defaultConfig = {
+      style: 'v2',
+      variant: 'elevated',
+      padding: 'md',
+      borderRadius: 'md',
+      hoverEffect: true,
+      shadow: 'md'
+    };
+
+    return cardLayout || defaultConfig;
+  };
+
+  const defaultCardStyle = getCardLayoutConfig();
   
   // 업종별 위젯 필터링 (1차: 업종 기반)
   const businessFilteredWidgets = businessType 
@@ -606,6 +627,50 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
 };
 
 /**
+ * 위젯 생성 설정 계산 (동적)
+ */
+const getWidgetCreationConfig = (widgetType, index, columns = 3) => {
+  return {
+    id: `${widgetType}-${Date.now()}-${index}`,
+    type: widgetType,
+    position: {
+      row: Math.floor(index / columns),
+      col: index % columns,
+      span: 1
+    },
+    size: {
+      width: '100%',
+      height: '300px'
+    },
+    config: {},
+    cardStyle: {
+      style: 'v2',
+      variant: 'elevated',
+      padding: 'md',
+      borderRadius: 'md',
+      hoverEffect: true,
+      shadow: 'md'
+    }
+  };
+};
+
+/**
+ * 대시보드 레이아웃 설정 계산 (동적)
+ */
+const getDashboardLayoutConfig = (widgetCount) => {
+  // 위젯 개수에 따라 동적으로 컬럼 수 결정
+  let columns = 3; // 기본 3열
+  if (widgetCount <= 4) columns = 2; // 4개 이하는 2열
+  if (widgetCount <= 2) columns = 1; // 2개 이하는 1열
+
+  return {
+    type: 'grid',
+    columns,
+    gap: 'md'
+  };
+};
+
+/**
  * 관리자용 기본 대시보드 설정 생성 (테넌트별 관리자 + 슈퍼 관리자)
  * 모든 위젯(공통 + 상담 + 학원 + ERP)을 표시
  */
@@ -629,43 +694,31 @@ const createDefaultAdminDashboardConfig = () => {
     consultation: consultationTypes.length,
     academy: academyTypes.length,
     erp: erpTypes.length,
-    total: allWidgetTypes.length
+    total: allWidgetTypes.length,
+    commonTypes,
+    consultationTypes,
+    academyTypes,
+    erpTypes
   });
 
-  // 위젯을 그리드에 배치 (3열 기준)
-  const widgets = allWidgetTypes.map((widgetType, index) => ({
-    id: `admin-${widgetType}-${Date.now()}`,
-    type: widgetType,
-    position: {
-      row: Math.floor(index / 3),
-      col: index % 3,
-      span: 1
-    },
-    size: {
-      width: '100%',
-      height: '300px'
-    },
-    visibility: {
+  // 동적 레이아웃 설정
+  const layoutConfig = getDashboardLayoutConfig(allWidgetTypes.length);
+
+  // 위젯을 동적으로 생성
+  const widgets = allWidgetTypes.map((widgetType, index) =>
+    getWidgetCreationConfig(widgetType, index, layoutConfig.columns)
+  );
+
+  // 관리자용 visibility 추가
+  widgets.forEach(widget => {
+    widget.visibility = {
       roles: ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER']
-    },
-    config: {},
-    cardStyle: {
-      style: 'v2',
-      variant: 'elevated',
-      padding: 'md',
-      borderRadius: 'md',
-      hoverEffect: true,
-      shadow: 'md'
-    }
-  }));
+    };
+  });
 
   return {
     widgets,
-    layout: {
-      type: 'grid',
-      columns: 3,
-      gap: 'md'
-    },
+    layout: layoutConfig,
     theme: {
       primaryColor: '#007bff',
       secondaryColor: '#6c757d'
@@ -707,43 +760,30 @@ const createDefaultBusinessTypeDashboardConfig = (businessType) => {
     common: commonTypes.length,
     business: businessWidgetTypes.length,
     erp: erpTypes.length,
-    total: allWidgetTypes.length
+    total: allWidgetTypes.length,
+    commonTypes,
+    businessTypes: businessWidgetTypes,
+    erpTypes
   });
 
-  // 위젯을 그리드에 배치 (3열 기준)
-  const widgets = allWidgetTypes.map((widgetType, index) => ({
-    id: `${businessType.toLowerCase()}-${widgetType}-${Date.now()}`,
-    type: widgetType,
-    position: {
-      row: Math.floor(index / 3),
-      col: index % 3,
-      span: 1
-    },
-    size: {
-      width: '100%',
-      height: '300px'
-    },
-    visibility: {
+  // 동적 레이아웃 설정
+  const layoutConfig = getDashboardLayoutConfig(allWidgetTypes.length);
+
+  // 위젯을 동적으로 생성
+  const widgets = allWidgetTypes.map((widgetType, index) =>
+    getWidgetCreationConfig(widgetType, index, layoutConfig.columns)
+  );
+
+  // 업종별 visibility 추가
+  widgets.forEach(widget => {
+    widget.visibility = {
       businessTypes: [businessType]
-    },
-    config: {},
-    cardStyle: {
-      style: 'v2',
-      variant: 'elevated',
-      padding: 'md',
-      borderRadius: 'md',
-      hoverEffect: true,
-      shadow: 'md'
-    }
-  }));
+    };
+  });
 
   return {
     widgets,
-    layout: {
-      type: 'grid',
-      columns: 3,
-      gap: 'md'
-    },
+    layout: layoutConfig,
     theme: {
       primaryColor: '#007bff',
       secondaryColor: '#6c757d'

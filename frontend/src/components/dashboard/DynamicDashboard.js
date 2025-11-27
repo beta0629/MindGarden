@@ -270,21 +270,29 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   // dashboardConfig가 있으면 위젯 기반 렌더링, 없으면 기존 컴포넌트 렌더링
   if (dashboardConfig && dashboardConfig.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0) {
     // 업종 정보 추출 (dashboard 또는 user에서)
-    const businessType = dashboard?.businessType || 
-                        dashboard?.categoryCode || 
-                        currentUser?.tenant?.businessType || 
-                        currentUser?.tenant?.categoryCode ||
-                        sessionManager.getUser()?.tenant?.businessType ||
-                        sessionStorage.getItem('businessType') ||
-                        null;
-    
+    let businessType = dashboard?.businessType ||
+                      dashboard?.categoryCode ||
+                      currentUser?.tenant?.businessType ||
+                      currentUser?.tenant?.categoryCode ||
+                      sessionManager.getUser()?.tenant?.businessType ||
+                      sessionStorage.getItem('businessType');
+
+    // 빈 문자열이나 undefined를 null로 변환
+    if (!businessType || businessType === '') {
+      businessType = null;
+    }
+
     console.log('🔍 업종 정보 추출:', {
       dashboardBusinessType: dashboard?.businessType,
       dashboardCategoryCode: dashboard?.categoryCode,
       tenantBusinessType: currentUser?.tenant?.businessType,
       tenantCategoryCode: currentUser?.tenant?.categoryCode,
-      sessionBusinessType: sessionStorage.getItem('businessType'),
-      finalBusinessType: businessType
+      sessionManagerBusinessType: sessionManager.getUser()?.tenant?.businessType,
+      sessionStorageBusinessType: sessionStorage.getItem('businessType'),
+      finalBusinessType: businessType,
+      isNull: businessType === null,
+      isUndefined: businessType === undefined,
+      isEmpty: businessType === ''
     });
     
     return <WidgetBasedDashboard dashboardConfig={dashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
@@ -403,21 +411,31 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
     }
     
     // 업종 정보를 필수로 전달하여 특화 위젯 필터링
+    console.debug(`위젯 컴포넌트 로드 시도: ${widget.type}`, {
+      businessType,
+      widgetType: widget.type,
+      accessValidation,
+      businessTypeIsNull: businessType === null,
+      businessTypeIsEmpty: businessType === ''
+    });
+
     const WidgetComponent = getWidgetComponent(widget.type, businessType);
-    
+
     if (!WidgetComponent) {
-      console.warn(`위젯 컴포넌트 로드 실패: ${widget.type}`, {
+      console.error(`위젯 컴포넌트 로드 실패: ${widget.type}`, {
         businessType,
         userRole: user?.role,
-        accessValidation
+        accessValidation,
+        widgetConfig: widget,
+        isCommonWidget: widget.type === 'welcome' || widget.type === 'summary-statistics'
       });
-      
+
       return (
         <div key={widget.id} className="widget-load-error">
           <div className="widget-error-content">
             <h4>위젯 로드 실패</h4>
             <p>위젯을 불러올 수 없습니다: {widget.type}</p>
-            <small>업종: {businessType} | 카테고리: {accessValidation.category}</small>
+            <small>업종: {businessType || '없음'} | 카테고리: {accessValidation.category}</small>
           </div>
         </div>
       );

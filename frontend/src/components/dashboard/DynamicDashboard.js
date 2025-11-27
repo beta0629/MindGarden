@@ -282,11 +282,25 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   const isSuperAdmin = userRole && superAdminRoles.includes(userRole); // 슈퍼 관리자
   const isAnyAdmin = userRole && allAdminRoles.includes(userRole); // 모든 관리자
 
+  // 업종 정보 추출 (dashboard 또는 user에서)
+  let businessType = dashboard?.businessType ||
+                    dashboard?.categoryCode ||
+                    currentUser?.tenant?.businessType ||
+                    currentUser?.tenant?.categoryCode ||
+                    sessionManager.getUser()?.tenant?.businessType ||
+                    sessionStorage.getItem('businessType');
+
+  // 빈 문자열이나 undefined를 null로 변환
+  if (!businessType || businessType === '') {
+    businessType = null;
+  }
+
   console.log('🚨 최종 역할 확인:', {
     userRole,
     isTenantAdmin,
     isSuperAdmin,
     isAnyAdmin,
+    businessType,
     tenantAdminRoles,
     superAdminRoles,
     userInfo: {

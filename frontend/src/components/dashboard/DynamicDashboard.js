@@ -742,7 +742,7 @@ const createDefaultAdminDashboardConfig = () => {
   // 관리자용 visibility 추가
   widgets.forEach(widget => {
     widget.visibility = {
-      roles: ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER']
+      roles: allAdminRoles // 모든 관리자 역할을 포함하도록 수정
     };
   });
 

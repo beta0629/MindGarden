@@ -62,10 +62,32 @@ const StatisticsWidget = ({ widget, user }) => {
   };
   
   const formatValue = (value) => {
+    // 🛡️ 안전한 값 처리
+    if (value === null || value === undefined) {
+      return '0';
+    }
+    
     if (typeof value === 'number') {
       return value.toLocaleString();
     }
-    return value;
+    
+    if (typeof value === 'string') {
+      return value;
+    }
+    
+    if (typeof value === 'object') {
+      // 객체인 경우 안전하게 처리
+      if (value.count !== undefined) return value.count;
+      if (value.total !== undefined) return value.total;
+      if (value.value !== undefined) return value.value;
+      if (value.id !== undefined) return `ID: ${value.id}`;
+      if (value.name !== undefined) return value.name;
+      
+      // 기본적으로 객체의 키 개수 반환
+      return `${Object.keys(value).length} 항목`;
+    }
+    
+    return String(value);
   };
   
   const getColorClass = () => {

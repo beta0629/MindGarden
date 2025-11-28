@@ -2,11 +2,13 @@ package com.coresolution.consultation.config;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StreamUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,6 +56,9 @@ public class PlSqlInitializer {
         try {
             // CreateOrActivateTenant 프로시저 초기화
             initializeCreateOrActivateTenantProcedure();
+            
+            // CreateDefaultTenantUsers 프로시저 초기화
+            initializeCreateDefaultTenantUsersProcedure();
             
             // 상담일지 알림 프로시저 초기화
             initializeConsultationRecordAlertProcedures();
@@ -460,6 +465,57 @@ public class PlSqlInitializer {
             }
         } catch (Exception e) {
             log.warn("⚠️ 프로시저 실행 테스트 실패 (무시 가능): {} - {}", procedureName, e.getMessage());
+        }
+    }
+    
+    /**
+     * CreateDefaultTenantUsers 프로시저 초기화
+     * 백업 메커니즘: Flyway 마이그레이션이 실패한 경우를 대비하여 Java 코드에서도 프로시저 생성 시도
+     */
+    private void initializeCreateDefaultTenantUsersProcedure() {
+        try {
+            log.info("📝 CreateDefaultTenantUsers 프로시저 초기화 시작 (백업 메커니즘)");
+            
+            // 프로시저 존재 여부 확인
+            String checkProcedureQuery = """
+                SELECT COUNT(*) FROM information_schema.routines 
+                WHERE routine_schema = DATABASE() 
+                AND routine_name = 'CreateDefaultTenantUsers' 
+                AND routine_type = 'PROCEDURE'
+                """;
+            
+            Integer procedureCount = jdbcTemplate.queryForObject(checkProcedureQuery, Integer.class);
+            
+            if (procedureCount != null && procedureCount > 0) {
+                log.info("✅ CreateDefaultTenantUsers 프로시저가 이미 존재합니다");
+                return;
+            }
+            
+            log.info("📝 CreateDefaultTenantUsers 프로시저를 생성합니다 (백업)");
+            
+            // SQL 파일 읽기
+            ClassPathResource resource = new ClassPathResource("sql/procedures/create_default_tenant_users.sql");
+            String procedureSQL = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            
+            log.info("📄 SQL 파일 크기: {} bytes", procedureSQL.length());
+            
+            if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
+                // DELIMITER 제거 및 SQL 정리
+                procedureSQL = procedureSQL.replaceAll("DELIMITER\\s+//", "")
+                                         .replaceAll("DELIMITER\\s+;", "")
+                                         .replaceAll("//", "");
+                
+                // 프로시저 생성 실행
+                jdbcTemplate.execute(procedureSQL);
+                
+                log.info("✅ CreateDefaultTenantUsers 프로시저 생성 완료 (백업)");
+                
+            } else {
+                log.warn("⚠️ CreateDefaultTenantUsers 프로시저 SQL 파일을 읽을 수 없습니다");
+            }
+            
+        } catch (Exception e) {
+            log.warn("⚠️ CreateDefaultTenantUsers 프로시저 초기화 실패 (Flyway에서 처리될 예정): {}", e.getMessage());
         }
     }
 }

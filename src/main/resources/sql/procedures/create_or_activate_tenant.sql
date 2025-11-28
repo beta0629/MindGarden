@@ -194,12 +194,27 @@ BEGIN
             @copy_message
         );
         
-        IF @copy_success = TRUE THEN
+        -- 새 테넌트 생성 시 기본 사용자 데이터 자동 생성
+        CALL CreateDefaultTenantUsers(
+            p_tenant_id,
+            p_business_type,
+            p_approved_by,
+            @user_success,
+            @user_message
+        );
+        
+        IF @copy_success = TRUE AND @user_success = TRUE THEN
             SET p_success = TRUE;
-            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사: ', @copy_message, '): ', p_tenant_id);
-        ELSE
+            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사: ', @copy_message, ', 사용자 생성: ', @user_message, '): ', p_tenant_id);
+        ELSEIF @copy_success = TRUE AND @user_success = FALSE THEN
+            SET p_success = TRUE;  -- 사용자 생성 실패해도 테넌트 생성은 성공으로 처리
+            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사: ', @copy_message, ', 사용자 생성 실패: ', @user_message, '): ', p_tenant_id);
+        ELSEIF @copy_success = FALSE AND @user_success = TRUE THEN
             SET p_success = TRUE;  -- 코드 복사 실패해도 테넌트 생성은 성공으로 처리
-            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사 실패: ', @copy_message, '): ', p_tenant_id);
+            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사 실패: ', @copy_message, ', 사용자 생성: ', @user_message, '): ', p_tenant_id);
+        ELSE
+            SET p_success = TRUE;  -- 둘 다 실패해도 테넌트 생성은 성공으로 처리
+            SET p_message = CONCAT('테넌트 생성 완료 (서브도메인: ', v_subdomain, ', 코드 복사 실패: ', @copy_message, ', 사용자 생성 실패: ', @user_message, '): ', p_tenant_id);
         END IF;
     END IF;
     

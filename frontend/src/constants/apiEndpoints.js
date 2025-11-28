@@ -61,7 +61,15 @@ export const API_ENDPOINTS = {
       CHART_DATA: '/api/admin/statistics/chart-data',
       RECENT_ACTIVITY: '/api/admin/statistics/recent-activity',
       CONSULTATION_COMPLETION: '/api/admin/statistics/consultation-completion',
-      VACATION: '/api/admin/vacation-statistics'
+      VACATION: '/api/admin/vacation-statistics',
+      REFUND: '/api/admin/refund-statistics'
+    },
+    
+    // 위젯 전용 API (새로 추가)
+    WIDGETS: {
+      TODAY_STATS: '/api/admin/today-stats',
+      PENDING_DEPOSIT_STATS: '/api/admin/pending-deposit-stats',
+      SYSTEM_STATUS: '/api/admin/system-status'
     }
   },
   

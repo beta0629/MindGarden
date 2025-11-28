@@ -274,8 +274,8 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   
   console.log('🔍 관리자 체크:', { userRole, isAdmin, adminRoles });
   
-  // 🧪 테스트: 관리자에게 간단한 위젯 하나만 표시
-  if (isAdmin) {
+  // 🧪 테스트: 관리자에게 간단한 위젯 하나만 표시 (비활성화)
+  if (false && isAdmin) {
     console.log('🧪 관리자 테스트 → 간단한 위젯 하나만 표시');
     
     const simpleTestConfig = {
@@ -481,43 +481,65 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
       // 관리자용 기본 위젯 템플릿 생성
       const defaultAdminDashboardConfig = {
         version: '1.0',
-        layout: { type: 'grid', columns: 3, gap: 'md' },
+        layout: { type: 'grid', columns: 2, gap: 'md' },
         widgets: [
           {
-            id: 'admin-stats-1',
-            type: 'statistics-grid',
-            position: { row: 1, col: 1, colspan: 3, rowspan: 1 },
+            id: 'admin-welcome',
+            type: 'message',
+            position: { row: 1, col: 1, colspan: 2, rowspan: 1 },
             config: {
-              title: '시스템 통계',
-              subtitle: '실시간 마인드가든 통계'
+              title: '🏥 마인드가든 관리자 대시보드',
+              message: '환영합니다! 효율적인 상담소 운영을 위한 통합 관리 시스템입니다.',
+              variant: 'primary'
             }
           },
           {
-            id: 'admin-management-1',
+            id: 'today-stats',
+            type: 'today-stats',
+            position: { row: 2, col: 1, colspan: 2, rowspan: 1 },
+            config: {
+              title: '📊 오늘의 현황',
+              subtitle: '실시간 상담 및 사용자 통계',
+              refreshInterval: 300000
+            }
+          },
+          {
+            id: 'system-overview',
+            type: 'system-overview',
+            position: { row: 3, col: 1, colspan: 2, rowspan: 1 },
+            config: {
+              title: '🏢 시스템 개요',
+              subtitle: '전체 시스템 현황 요약',
+              refreshInterval: 30000
+            }
+          },
+          {
+            id: 'admin-management',
             type: 'management-grid',
-            position: { row: 2, col: 1, colspan: 3, rowspan: 2 },
+            position: { row: 4, col: 1, colspan: 2, rowspan: 2 },
             config: {
-              title: '관리 기능',
+              title: '⚙️ 관리 기능',
               subtitle: '마인드가든 관리 도구',
-              columns: 4
+              columns: 3
             }
           },
           {
-            id: 'admin-system-status-1',
-            type: 'system-status',
-            position: { row: 4, col: 1, colspan: 2, rowspan: 1 },
+            id: 'admin-quick-actions',
+            type: 'quick-actions',
+            position: { row: 6, col: 1, colspan: 2, rowspan: 1 },
             config: {
-              title: '시스템 상태',
-              showDetails: true
-            }
-          },
-          {
-            id: 'admin-system-tools-1',
-            type: 'system-tools',
-            position: { row: 4, col: 3, colspan: 1, rowspan: 1 },
-            config: {
-              title: '시스템 도구',
-              compact: true
+              title: '⚡ 빠른 작업',
+              subtitle: '자주 사용하는 관리 기능',
+              columns: 3,
+              actions: [
+                { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/consultant-comprehensive' },
+                { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/client-comprehensive' },
+                { id: 'view-mappings', label: '매칭 관리', icon: 'link', url: '/admin/mapping-management' },
+                { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
+                { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' },
+                { id: 'reports', label: '통계 보고서', icon: 'chart', url: '/admin/statistics' }
+              ],
+              color: 'primary'
             }
           }
         ]
@@ -968,61 +990,29 @@ const getDashboardLayoutConfig = (widgetCount) => {
  * 모든 위젯(공통 + 상담 + 학원 + ERP)을 표시
  */
 const createDefaultAdminDashboardConfig = (allAdminRoles) => {
-  // 관리자는 모든 위젯 타입 표시 (동적 조회)
-  const commonTypes = getCommonWidgetTypes(); // 공통 위젯
-  const consultationTypes = getConsultationWidgetTypes(); // 상담 위젯
-  const academyTypes = getAcademyWidgetTypes(); // 학원 위젯
-  const erpTypes = getErpWidgetTypes(); // ERP 위젯
-
-  // 중복 제거를 위해 Set 사용
-  const allWidgetTypes = [...new Set([
-    ...commonTypes,
-    ...consultationTypes,
-    ...academyTypes,
-    ...erpTypes
-  ])];
-
-  console.log('관리자 대시보드 위젯 구성:', {
-    common: commonTypes.length,
-    consultation: consultationTypes.length,
-    academy: academyTypes.length,
-    erp: erpTypes.length,
-    total: allWidgetTypes.length,
-    commonTypes,
-    consultationTypes,
-    academyTypes,
-    erpTypes
-  });
-
-  // 동적 레이아웃 설정
-  const layoutConfig = getDashboardLayoutConfig(allWidgetTypes.length);
-
-  // 위젯을 동적으로 생성
-  const widgets = allWidgetTypes.map((widgetType, index) =>
-    getWidgetCreationConfig(widgetType, index, layoutConfig.columns)
-  );
-
-  // 관리자용 visibility 추가
-  widgets.forEach(widget => {
-    widget.visibility = {
-      roles: allAdminRoles // 파라미터로 받은 allAdminRoles 사용
-    };
-  });
+  console.log('🔧 간단한 관리자 대시보드 설정 생성');
+  
+  // 간단한 기본 위젯만 포함
+  const widgets = [
+    {
+      id: 'admin-welcome',
+      type: 'message',
+      position: { row: 1, col: 1, colspan: 2, rowspan: 1 },
+      config: {
+        title: '🏥 마인드가든 상담소 관리자',
+        message: '환영합니다! 효율적인 상담소 운영을 위한 대시보드입니다.',
+        variant: 'primary'
+      }
+    }
+  ];
 
   return {
-    widgets,
-    layout: layoutConfig,
+    version: '1.0',
+    layout: { type: 'grid', columns: 2, gap: 'md' },
+    widgets: widgets,
     theme: {
       primaryColor: '#007bff',
       secondaryColor: '#6c757d'
-    },
-    cardLayout: {
-      style: 'v2',
-      variant: 'elevated',
-      padding: 'md',
-      borderRadius: 'md',
-      hoverEffect: true,
-      shadow: 'md'
     }
   };
 };

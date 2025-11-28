@@ -61,6 +61,8 @@ import SystemToolsWidget from './admin/SystemToolsWidget';
 import PermissionWidget from './admin/PermissionWidget';
 import StatisticsGridWidget from './admin/StatisticsGridWidget';
 import ManagementGridWidget from './admin/ManagementGridWidget';
+import SystemOverviewWidget from './admin/SystemOverviewWidget';
+import TodayStatsWidget from './admin/TodayStatsWidget';
 
 // 학원 특화 위젯 (학원 업종에서만 사용)
 // import AcademyScheduleWidget from './academy/AcademyScheduleWidget';
@@ -102,7 +104,8 @@ const COMMON_WIDGETS = {
   'statistics-grid': StatisticsGridWidget,
   'management-grid': ManagementGridWidget,
   // 관리자 전용 위젯 (마인드가든 AdminDashboard 기능)
-  'system-overview': StatisticsGridWidget, // 시스템 개요는 통계 그리드 재사용
+  'system-overview': SystemOverviewWidget, // 새로 구현한 시스템 개요 위젯
+  'today-stats': TodayStatsWidget, // 새로 구현한 오늘의 통계 위젯
   'admin-stats': StatisticsGridWidget,
   'admin-management': ManagementGridWidget,
   'admin-system-status': SystemStatusWidget,

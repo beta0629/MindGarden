@@ -696,6 +696,57 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     * 매칭 통계 정보 조회 (위젯용)
+     * GET /api/admin/mappings/stats
+     */
+    @GetMapping("/mappings/stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMappingStats(HttpSession session) {
+        log.info("📊 매칭 통계 조회 API 호출");
+        
+        try {
+            // 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
+            if (permissionResponse != null) {
+                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+            }
+            
+            // 모든 매칭 조회
+            List<ConsultantClientMapping> mappings = adminService.getAllMappings();
+            
+            // 통계 계산
+            long totalMappings = mappings.size();
+            long activeMappings = mappings.stream()
+                .filter(m -> "ACTIVE".equals(m.getStatus() != null ? m.getStatus().toString() : ""))
+                .count();
+            long completedMappings = mappings.stream()
+                .filter(m -> "COMPLETED".equals(m.getStatus() != null ? m.getStatus().toString() : ""))
+                .count();
+            long pendingMappings = mappings.stream()
+                .filter(m -> "PENDING".equals(m.getStatus() != null ? m.getStatus().toString() : ""))
+                .count();
+            
+            Map<String, Object> stats = new java.util.HashMap<>();
+            stats.put("totalMappings", totalMappings);
+            stats.put("activeMappings", activeMappings);
+            stats.put("completedMappings", completedMappings);
+            stats.put("pendingMappings", pendingMappings);
+            stats.put("lastUpdated", java.time.LocalDateTime.now());
+            
+            log.info("📊 매칭 통계 조회 완료: 전체={}, 활성={}, 완료={}, 대기={}", 
+                totalMappings, activeMappings, completedMappings, pendingMappings);
+            
+            return success(stats);
+            
+        } catch (Exception e) {
+            log.error("❌ 매칭 통계 조회 실패", e);
+            Map<String, Object> errorData = new java.util.HashMap<>();
+            errorData.put("error", "매칭 통계 조회에 실패했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("매칭 통계 조회에 실패했습니다", errorData));
+        }
+    }
+
+    /**
      * 매칭 목록 조회 (중앙화 - 모든 매칭 조회)
      */
     @GetMapping("/mappings")

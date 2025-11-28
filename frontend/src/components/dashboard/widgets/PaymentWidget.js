@@ -1,206 +1,211 @@
 /**
- * Payment Widget
- * 결제 세션 정보를 표시하는 범용 위젯
- * ClientPaymentSessionsSection을 기반으로 범용화
+ * Payment Widget - 표준화된 위젯
+ * 결제 정보를 표시하는 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
- * @since 2025-11-22
+ * @version 2.0.0 (표준화 업그레이드)
+ * @since 2025-11-21
  */
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../../../utils/ajax';
-// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
+import React from 'react';
+import { useWidget } from '../../../hooks/useWidget';
+import BaseWidget from './BaseWidget';
+import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
 
 const PaymentWidget = ({ widget, user }) => {
-  const navigate = useNavigate();
-  const [paymentSessions, setPaymentSessions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [summary, setSummary] = useState({
-    total: 0,
-    active: 0,
-    expired: 0
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh,
+    formatValue
+  } = useWidget(widget, user, {
+    immediate: true,
+    cache: true,
+    retryCount: 3
   });
-  
+
   const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  const userId = user?.id || config.userId;
-  const maxItems = config.maxItems || 5;
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url && userId) {
-      loadPaymentSessions();
-      
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadPaymentSessions, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (config.paymentSessions && Array.isArray(config.paymentSessions)) {
-      setPaymentSessions(config.paymentSessions);
-      calculateSummary(config.paymentSessions);
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, [userId]);
-  
-  const loadPaymentSessions = async () => {
-    try {
-      setLoading(true);
-      
-      // 실제 API 엔드포인트: /api/admin/mappings/client?clientId={userId}
-      // ClientPaymentSessionsSection에서 사용하는 엔드포인트
-      const url = dataSource.url || `/api/admin/mappings/client?clientId=${userId}`;
-      const response = await apiGet(url);
-      
-      if (response && response.success && response.data) {
-        // 매핑 데이터에서 결제 세션 정보 추출
-        const mappings = Array.isArray(response.data) ? response.data : [];
-        
-        // ACTIVE 상태의 매핑만 필터링하여 결제 세션으로 변환
-        const activeMappings = mappings.filter(m => m.status === 'ACTIVE');
-        const sessions = activeMappings
-          .filter(mapping => mapping.paymentDate)
-          .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))
-          .slice(0, maxItems)
-          .map(mapping => ({
-            id: mapping.id,
-            title: mapping.packageName || '결제 세션',
-            packageName: mapping.packageName,
-            amount: mapping.packagePrice || 0,
-            totalSessions: mapping.totalSessions || 0,
-            usedSessions: mapping.usedSessions || 0,
-            remainingSessions: mapping.remainingSessions || 0,
-            paymentDate: mapping.paymentDate,
-            paymentMethod: mapping.paymentMethod,
-            status: mapping.paymentStatus === 'CONFIRMED' ? 'ACTIVE' : mapping.paymentStatus,
-            expiryDate: mapping.expiryDate
-          }));
-        
-        setPaymentSessions(sessions);
-        calculateSummary(sessions);
-      } else if (response && response.data) {
-        // 다른 응답 형식 지원
-        const sessions = Array.isArray(response.data) ? response.data : [];
-        setPaymentSessions(sessions.slice(0, maxItems));
-        calculateSummary(sessions);
-      } else {
-        setPaymentSessions([]);
-        calculateSummary([]);
-      }
-    } catch (err) {
-      console.error('PaymentWidget 데이터 로드 실패:', err);
-      setPaymentSessions([]);
-      calculateSummary([]);
-    } finally {
-      setLoading(false);
+
+  // 결제 상태에 따른 스타일 클래스
+  const getPaymentStatusClass = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed': case 'success': return 'payment-completed';
+      case 'pending': case 'processing': return 'payment-pending';
+      case 'failed': case 'error': return 'payment-failed';
+      case 'cancelled': case 'canceled': return 'payment-cancelled';
+      case 'refunded': return 'payment-refunded';
+      default: return 'payment-default';
     }
   };
-  
-  const calculateSummary = (sessions) => {
-    const total = sessions.length;
-    const active = sessions.filter(s => s.status === 'ACTIVE' || s.status === 'VALID').length;
-    const expired = sessions.filter(s => s.status === 'EXPIRED' || s.status === 'INVALID').length;
-    setSummary({ total, active, expired });
+
+  // 금액 포맷팅
+  const formatAmount = (amount, currency = 'KRW') => {
+    if (!amount && amount !== 0) return '-';
+    
+    return new Intl.NumberFormat('ko-KR', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0
+    }).format(amount);
   };
-  
-  const handleSessionClick = (session) => {
-    if (config.sessionUrl) {
-      navigate(config.sessionUrl.replace('{sessionId}', session.id));
-    } else {
-      navigate(`/payments/sessions/${session.id}`);
+
+  // 결제 방법 아이콘
+  const getPaymentMethodIcon = (method) => {
+    switch (method?.toLowerCase()) {
+      case 'card': case 'credit_card': return 'credit-card';
+      case 'bank': case 'bank_transfer': return 'bank';
+      case 'cash': return 'cash';
+      case 'paypal': return 'paypal';
+      case 'kakao': case 'kakaopay': return 'chat-square-text';
+      case 'naver': case 'naverpay': return 'n-circle';
+      default: return 'wallet2';
     }
   };
-  
-  const handleViewAll = () => {
-    if (config.viewAllUrl) {
-      navigate(config.viewAllUrl);
-    } else {
-      navigate('/payments/sessions');
-    }
-  };
-  
-  if (loading && paymentSessions.length === 0) {
+
+  // 결제 목록 렌더링
+  const renderPaymentList = () => {
+    if (!Array.isArray(data)) return null;
+
     return (
-      <div className="widget widget-payment">
-        <div className="mg-loading">로딩중...</div>
+      <div className="payment-list">
+        {data.map((payment, index) => (
+          <div key={index} className={`payment-item ${getPaymentStatusClass(payment.status)}`}>
+            <div className="payment-info">
+              <div className="payment-header">
+                <span className="payment-title">
+                  {payment.title || payment.description || `결제 ${index + 1}`}
+                </span>
+                <span className="payment-amount">
+                  {formatAmount(payment.amount, payment.currency)}
+                </span>
+              </div>
+              <div className="payment-details">
+                <span className="payment-method">
+                  <i className={`bi bi-${getPaymentMethodIcon(payment.method)}`}></i>
+                  {payment.method || '결제 방법'}
+                </span>
+                <span className="payment-date">
+                  {payment.date ? new Date(payment.date).toLocaleDateString('ko-KR') : '날짜 미정'}
+                </span>
+                <span className={`payment-status ${getPaymentStatusClass(payment.status)}`}>
+                  {payment.status || '상태 미정'}
+                </span>
+              </div>
+            </div>
+            <div className="payment-actions">
+              {config.showActions && (
+                <>
+                  <button className="payment-action-btn view" title="상세보기">
+                    <i className="bi bi-eye"></i>
+                  </button>
+                  {payment.status === 'completed' && (
+                    <button className="payment-action-btn receipt" title="영수증">
+                      <i className="bi bi-receipt"></i>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     );
-  }
-  
-  return (
-    <div className="widget widget-payment">
-      <div className="widget-header">
-        <div className="widget-title">
-          <i className="bi bi-credit-card"></i>
-          {config.title || '결제 세션'}
+  };
+
+  // 결제 요약 렌더링
+  const renderPaymentSummary = () => {
+    if (!hasData) return null;
+
+    let summary;
+    if (Array.isArray(data)) {
+      // 배열 데이터에서 요약 계산
+      summary = {
+        total: data.reduce((sum, payment) => sum + (payment.amount || 0), 0),
+        count: data.length,
+        completed: data.filter(p => p.status === 'completed').length,
+        pending: data.filter(p => p.status === 'pending').length
+      };
+    } else {
+      // 단일 객체 데이터
+      summary = data;
+    }
+
+    return (
+      <div className="payment-summary">
+        <div className="summary-item">
+          <div className="summary-label">총 결제액</div>
+          <div className="summary-value">
+            {formatAmount(summary.total || summary.totalAmount)}
+          </div>
         </div>
-        {config.viewAllUrl && (
-          <button className="widget-view-all" onClick={handleViewAll}>
-            전체보기 →
-          </button>
-        )}
-      </div>
-      <div className="widget-body">
-        {summary.total > 0 && (
-          <div className="payment-summary">
-            <div className="payment-summary-item">
-              <div className="payment-summary-label">전체</div>
-              <div className="payment-summary-value">{summary.total}</div>
-            </div>
-            <div className="payment-summary-item">
-              <div className="payment-summary-label">활성</div>
-              <div className="payment-summary-value text-success">{summary.active}</div>
-            </div>
-            <div className="payment-summary-item">
-              <div className="payment-summary-label">만료</div>
-              <div className="payment-summary-value text-danger">{summary.expired}</div>
-            </div>
+        {summary.count && (
+          <div className="summary-item">
+            <div className="summary-label">총 건수</div>
+            <div className="summary-value">{summary.count}건</div>
           </div>
         )}
-        
-        {paymentSessions.length > 0 ? (
-          <div className="payment-session-list">
-            {paymentSessions.map((session, index) => (
-              <div
-                key={session.id || index}
-                className="payment-session-item"
-                onClick={() => handleSessionClick(session)}
-              >
-                <div className="payment-session-info">
-                  <div className="payment-session-title">{session.title || session.packageName}</div>
-                  <div className="payment-session-details">
-                    {session.totalSessions && (
-                      <span>세션: {session.usedSessions || 0} / {session.totalSessions}</span>
-                    )}
-                    {session.amount && (
-                      <span>금액: ₩{session.amount.toLocaleString()}</span>
-                    )}
-                  </div>
-                  {session.expiryDate && (
-                    <div className="payment-session-expiry">
-                      만료일: {new Date(session.expiryDate).toLocaleDateString('ko-KR')}
-                    </div>
-                  )}
-                </div>
-                <div className={`payment-session-status status-${session.status?.toLowerCase()}`}>
-                  {session.status}
-                </div>
-              </div>
-            ))}
+        {summary.completed !== undefined && (
+          <div className="summary-item">
+            <div className="summary-label">완료</div>
+            <div className="summary-value completed">{summary.completed}건</div>
           </div>
-        ) : (
-          <div className="widget-empty">
-            <i className="bi bi-credit-card-2-front"></i>
-            <p>{config.emptyMessage || '결제 세션이 없습니다'}</p>
+        )}
+        {summary.pending !== undefined && (
+          <div className="summary-item">
+            <div className="summary-label">대기</div>
+            <div className="summary-value pending">{summary.pending}건</div>
           </div>
         )}
       </div>
-    </div>
+    );
+  };
+
+  // 결제 위젯 렌더링
+  const renderPaymentContent = () => {
+    if (isEmpty) {
+      return (
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+          표시할 결제 정보가 없습니다.
+        </div>
+      );
+    }
+    
+    if (!hasData) {
+      return null; // BaseWidget에서 빈 상태 처리
+    }
+
+    const showSummary = config.showSummary !== false; // 기본값 true
+    const showList = config.showList !== false; // 기본값 true
+
+    return (
+      <div className="payment-container">
+        {showSummary && renderPaymentSummary()}
+        {showList && renderPaymentList()}
+      </div>
+    );
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      isEmpty={isEmpty}
+      onRefresh={refresh}
+      title={widget.config?.title || WIDGET_CONSTANTS.DEFAULT_TITLES.PAYMENT}
+      subtitle={widget.config?.subtitle || ''}
+    >
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTENT}>
+        {renderPaymentContent()}
+      </div>
+    </BaseWidget>
   );
 };
 
 export default PaymentWidget;
-

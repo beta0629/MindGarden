@@ -1,90 +1,107 @@
 /**
- * Calendar Widget
+ * Calendar Widget - 표준화된 위젯
  * 캘린더를 표시하는 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0 (표준화 업그레이드)
  * @since 2025-11-21
  */
 
-import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
-import { apiGet } from '../../../utils/ajax';
+import React from 'react';
+import { useWidget } from '../../../hooks/useWidget';
+import BaseWidget from './BaseWidget';
+import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
 
 const CalendarWidget = ({ widget, user }) => {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  const view = config.view || 'month';
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadData();
-    } else {
-      setLoading(false);
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh,
+    formatValue
+  } = useWidget(widget, user, {
+    immediate: true,
+    cache: true,
+    retryCount: 3
+  });
+
+  // 캘린더 렌더링
+  const renderCalendar = () => {
+    if (isEmpty) {
+      return (
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+          표시할 일정이 없습니다.
+        </div>
+      );
     }
-  }, []);
-  
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiGet(dataSource.url, dataSource.params || {});
-      
-      if (response) {
-        // 응답에서 이벤트 배열 추출 (응답 구조에 따라 조정 필요)
-        const items = Array.isArray(response) ? response : 
-                     (response.data || response.events || []);
-        setEvents(items);
-      }
-    } catch (err) {
-      console.error('CalendarWidget 데이터 로드 실패:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  if (loading) {
+
+    // 간단한 캘린더 플레이스홀더 (실제 캘린더 라이브러리 연동 필요)
+    const today = new Date();
+    const currentMonth = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' });
+
     return (
-      <div className="widget widget-calendar">
-        <div className="widget-title">{config.title || '캘린더'}</div>
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="widget widget-calendar widget-error">
-        <div className="widget-title">{config.title || '캘린더'}</div>
-        <div className="widget-error-message">{error}</div>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="widget widget-calendar">
-      <div className="widget-header">
-        <div className="widget-title">{config.title || '캘린더'}</div>
-      </div>
-      <div className="widget-body">
+      <div className="calendar-container">
+        <div className="calendar-header">
+          <h4 className="calendar-month">{currentMonth}</h4>
+          <div className="calendar-nav">
+            <button className="nav-btn prev" title="이전 달">
+              <i className="bi bi-chevron-left"></i>
+            </button>
+            <button className="nav-btn next" title="다음 달">
+              <i className="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+        
         <div className="calendar-placeholder">
-          <p>캘린더 뷰: {view}</p>
-          <p>이벤트 수: {events.length}</p>
-          <small>캘린더 라이브러리 통합 필요 (react-big-calendar, fullcalendar 등)</small>
+          <i className="bi bi-calendar3"></i>
+          <p>📅 캘린더 위젯</p>
+          <p className="calendar-info">
+            {hasData && Array.isArray(data) ? `${data.length}개의 일정` : '일정 없음'}
+          </p>
+          {/* TODO: 실제 캘린더 라이브러리 (FullCalendar, react-calendar 등) 연동 */}
+          
+          {hasData && Array.isArray(data) && (
+            <div className="events-preview">
+              <h5>최근 일정</h5>
+              {data.slice(0, 3).map((event, index) => (
+                <div key={index} className="event-item">
+                  <div className="event-date">
+                    {event.date ? new Date(event.date).toLocaleDateString('ko-KR') : '날짜 미정'}
+                  </div>
+                  <div className="event-title">{event.title || event.name || `일정 ${index + 1}`}</div>
+                </div>
+              ))}
+              {data.length > 3 && (
+                <div className="events-more">외 {data.length - 3}개 일정...</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      isEmpty={isEmpty}
+      onRefresh={refresh}
+      title={widget.config?.title || WIDGET_CONSTANTS.DEFAULT_TITLES.CALENDAR}
+      subtitle={widget.config?.subtitle || ''}
+    >
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTENT}>
+        {renderCalendar()}
+      </div>
+    </BaseWidget>
   );
 };
 
 export default CalendarWidget;
-
-
-

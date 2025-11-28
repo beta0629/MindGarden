@@ -31,7 +31,9 @@ public class SystemMonitoringController {
      * 시스템 상태 조회
      */
     @GetMapping("/status")
-    public ResponseEntity<Map<String, Object>> getSystemStatus() {
+    public ResponseEntity<Map<String, Object>> getSystemStatus(
+            @RequestParam(required = false) String tenantId) {
+        // 시스템 상태는 전역 정보이므로 tenantId는 로깅 목적으로만 사용
         return ResponseEntity.ok(monitoringService.getSystemStatus());
     }
     
@@ -39,7 +41,9 @@ public class SystemMonitoringController {
      * 메모리 사용량 조회
      */
     @GetMapping("/memory")
-    public ResponseEntity<Map<String, Object>> getMemoryUsage() {
+    public ResponseEntity<Map<String, Object>> getMemoryUsage(
+            @RequestParam(required = false) String tenantId) {
+        // 메모리 사용량은 전역 정보이므로 tenantId는 로깅 목적으로만 사용
         return ResponseEntity.ok(monitoringService.getMemoryUsage());
     }
     
@@ -55,7 +59,9 @@ public class SystemMonitoringController {
      * 데이터베이스 상태 조회
      */
     @GetMapping("/database")
-    public ResponseEntity<Map<String, Object>> getDatabaseStatus() {
+    public ResponseEntity<Map<String, Object>> getDatabaseStatus(
+            @RequestParam(required = false) String tenantId) {
+        // 데이터베이스 상태는 전역 정보이므로 tenantId는 로깅 목적으로만 사용
         return ResponseEntity.ok(monitoringService.getDatabaseStatus());
     }
     

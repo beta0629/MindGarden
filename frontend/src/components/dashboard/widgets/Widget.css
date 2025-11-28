@@ -8,11 +8,21 @@
 
 .widget {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px var(--mg-shadow-light);
-  padding: 1rem;
-  margin-bottom: 1rem;
-  min-height: 150px;
+  border-radius: 12px;
+  box-shadow: var(--cs-shadow-md);
+  border: 1px solid var(--cs-gray-200);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  min-height: 180px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.widget:hover {
+  box-shadow: var(--cs-shadow-lg);
+  transform: translateY(-2px);
+  border-color: var(--cs-primary-200);
 }
 
 .mg-widget__header {
@@ -31,7 +41,7 @@
 .widget-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--cs-gray-800);
 }
 
 .mg-widget__body {
@@ -45,19 +55,111 @@
 .widget-error-message {
   color: var(--mg-error-500);
   padding: 0.5rem;
-  background: #f8d7da;
+  background: var(--cs-error-100);
   border-radius: 4px;
 }
 
-/* Statistics Widget */
+/* Statistics Widget - 카드 스타일 개선 */
 .widget-statistics {
   text-align: center;
 }
 
 .widget-statistics-value {
-  font-size: 2rem;
-  font-weight: bold;
+  font-size: 2.5rem;
+  font-weight: 700;
   margin: 1rem 0;
+  color: var(--cs-primary-600);
+}
+
+/* 통계 카드 그리드 */
+.mg-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+/* 개별 통계 카드 */
+.mg-stats-card,
+.widget-today-stats .mg-stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid var(--cs-primary-200);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.mg-stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--cs-primary-500), var(--cs-secondary-500));
+  border-radius: 16px 16px 0 0;
+}
+
+.mg-stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--cs-shadow-xl);
+  border-color: var(--cs-primary-300);
+}
+
+/* 통계 카드 아이콘 */
+.mg-stats-card .stat-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1rem;
+  background: linear-gradient(135deg, var(--cs-primary-500), var(--cs-primary-600));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+/* 통계 값 */
+.mg-stats-card .stat-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--cs-primary-700);
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+/* 통계 라벨 */
+.mg-stats-card .stat-label {
+  font-size: 0.875rem;
+  color: var(--cs-secondary-600);
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+/* 통계 변화율 */
+.mg-stats-card .stat-change {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.mg-stats-card .stat-change.positive {
+  background: var(--cs-success-50);
+  color: var(--cs-success-600);
+}
+
+.mg-stats-card .stat-change.negative {
+  background: var(--cs-error-50);
+  color: var(--cs-error-600);
 }
 
 .widget-statistics-color-primary {
@@ -163,7 +265,7 @@
 
 .table-pagination button {
   padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--cs-gray-300);
   background: white;
   cursor: pointer;
   border-radius: 4px;
@@ -214,7 +316,7 @@
 .form-field select {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--cs-gray-300);
   border-radius: 4px;
   font-size: 1rem;
 }
@@ -227,7 +329,7 @@
 .mg-form__error {
   color: var(--mg-error-500);
   padding: 0.5rem;
-  background: #f8d7da;
+  background: var(--cs-error-100);
   border-radius: 4px;
   margin-bottom: 1rem;
 }
@@ -235,7 +337,7 @@
 .form-success {
   color: var(--mg-success-500);
   padding: 0.5rem;
-  background: #d4edda;
+  background: var(--cs-success-100);
   border-radius: 4px;
   margin-bottom: 1rem;
 }
@@ -290,17 +392,17 @@
   justify-content: center;
   padding: 1rem;
   background: var(--mg-gray-100);
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--cs-gray-200);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
-  color: #495057;
+  color: var(--cs-gray-600);
   min-height: 80px;
 }
 
 .quick-action-btn:hover {
-  background: #e9ecef;
+  background: var(--cs-gray-200);
   border-color: var(--mg-primary-500);
   color: var(--mg-primary-500);
   transform: translateY(-2px);
@@ -316,6 +418,102 @@
   font-size: 0.9rem;
   font-weight: 500;
   text-align: center;
+}
+
+/* System Overview Widget - 카드 스타일 개선 */
+.widget-system-overview {
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--cs-shadow-md);
+  border: 1px solid var(--cs-gray-200);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  min-height: 220px;
+  transition: all 0.3s ease;
+}
+
+.widget-system-overview:hover {
+  box-shadow: var(--cs-shadow-lg);
+  transform: translateY(-2px);
+}
+
+.widget-system-overview .widget-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--cs-primary-100);
+}
+
+.widget-system-overview .widget-body {
+  min-height: 150px;
+}
+
+.system-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.system-metric {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  border: 1px solid var(--cs-primary-200);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.system-metric::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cs-primary-400), var(--cs-primary-600));
+  border-radius: 16px 16px 0 0;
+}
+
+.system-metric:hover {
+  box-shadow: var(--cs-shadow-primary);
+  transform: translateY(-3px);
+  border-color: var(--cs-primary-200);
+}
+
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--cs-primary-500), var(--cs-primary-600));
+  border-radius: 12px;
+  color: white;
+  font-size: 1.25rem;
+}
+
+.metric-content {
+  flex: 1;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: var(--cs-secondary-600);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--cs-primary-700);
+  line-height: 1.2;
 }
 
 
@@ -411,9 +609,9 @@
 
 /* 에러 알림 */
 .mg-widget--pending-deposits .mg-alert--error {
-  background-color: var(--mg-error-50, #fef2f2);
-  border: 1px solid var(--mg-error-200, #fecaca);
-  color: var(--mg-error-700, #b91c1c);
+  background-color: var(--cs-error-50);
+  border: 1px solid var(--cs-error-200);
+  color: var(--cs-error-700);
   padding: var(--mg-spacing-md);
   border-radius: var(--mg-border-radius-md);
   display: flex;
@@ -446,7 +644,7 @@
   .mg-widget--pending-deposits {
     --widget-background: var(--mg-gray-800);
     --widget-border: var(--mg-gray-700);
-    --widget-shadow: var(--mg-shadow-dark-sm, 0 1px 3px rgba(0, 0, 0, 0.3));
+    --widget-shadow: var(--cs-shadow-sm);
   }
   
   .mg-widget--pending-deposits .mg-widget__header {
@@ -765,9 +963,9 @@
 
 /* 에러 알림 */
 .mg-widget--pending-deposits .mg-alert--error {
-  background-color: var(--mg-error-50, #fef2f2);
-  border: 1px solid var(--mg-error-200, #fecaca);
-  color: var(--mg-error-700, #b91c1c);
+  background-color: var(--cs-error-50);
+  border: 1px solid var(--cs-error-200);
+  color: var(--cs-error-700);
   padding: var(--mg-spacing-md);
   border-radius: var(--mg-border-radius-md);
   display: flex;
@@ -800,7 +998,7 @@
   .mg-widget--pending-deposits {
     --widget-background: var(--mg-gray-800);
     --widget-border: var(--mg-gray-700);
-    --widget-shadow: var(--mg-shadow-dark-sm, 0 1px 3px rgba(0, 0, 0, 0.3));
+    --widget-shadow: var(--cs-shadow-sm);
   }
   
   .mg-widget--pending-deposits .mg-widget__header {
@@ -928,9 +1126,9 @@
 
 /* 에러 알림 */
 .mg-widget--vacation-stats .mg-alert--error {
-  background-color: var(--mg-error-50, #fef2f2);
-  border: 1px solid var(--mg-error-200, #fecaca);
-  color: var(--mg-error-700, #b91c1c);
+  background-color: var(--cs-error-50);
+  border: 1px solid var(--cs-error-200);
+  color: var(--cs-error-700);
   padding: var(--mg-spacing-md);
   border-radius: var(--mg-border-radius-md);
   display: flex;
@@ -963,7 +1161,7 @@
   .mg-widget--vacation-stats {
     --widget-background: var(--mg-gray-800);
     --widget-border: var(--mg-gray-700);
-    --widget-shadow: var(--mg-shadow-dark-sm, 0 1px 3px rgba(0, 0, 0, 0.3));
+    --widget-shadow: var(--cs-shadow-sm);
   }
   
   .mg-widget--vacation-stats .mg-widget__header {

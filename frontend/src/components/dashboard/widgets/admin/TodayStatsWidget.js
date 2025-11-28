@@ -27,6 +27,13 @@ const TodayStatsWidget = ({ widget, user }) => {
   const loadTodayStats = useCallback(async () => {
     if (!user?.role) {
       console.log('⚠️ TodayStatsWidget: 사용자 역할 정보 없음');
+      setLoading(false);
+      return;
+    }
+    
+    if (!user?.tenantId) {
+      console.log('⚠️ TodayStatsWidget: 테넌트 ID 정보 없음');
+      setLoading(false);
       return;
     }
     
@@ -34,9 +41,10 @@ const TodayStatsWidget = ({ widget, user }) => {
     setError(null);
     
     try {
-      console.log('🔄 TodayStatsWidget: 오늘의 통계 로드 시작');
+      console.log('🔄 TodayStatsWidget: 오늘의 통계 로드 시작', { tenantId: user.tenantId, role: user.role });
       
-      const response = await fetch(`${API_BASE_URL}/api/schedules/today/statistics?userRole=${user.role}`, {
+      // 테넌트 ID를 포함한 API 호출
+      const response = await fetch(`${API_BASE_URL}/api/schedules/today/statistics?tenantId=${user.tenantId}&userRole=${user.role}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
@@ -60,7 +68,7 @@ const TodayStatsWidget = ({ widget, user }) => {
     } finally {
       setLoading(false);
     }
-  }, [user?.role]);
+  }, [user?.role, user?.tenantId]);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {

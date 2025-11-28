@@ -1,153 +1,172 @@
 /**
- * Welcome Widget
- * 환영 메시지와 사용자 정보를 표시하는 범용 위젯
- * WelcomeSection을 기반으로 범용화 (상담소 특화 기능 제거)
+ * Welcome Widget - 표준화된 위젯
+ * 환영 메시지를 표시하는 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
- * @since 2025-11-22
+ * @version 2.0.0 (표준화 업그레이드)
+ * @since 2025-11-21
  */
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useWidget } from '../../../hooks/useWidget';
+import BaseWidget from './BaseWidget';
+import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
-import '../WelcomeSection.css';
 
 const WelcomeWidget = ({ widget, user }) => {
-  const navigate = useNavigate();
-  const [imageLoadError, setImageLoadError] = useState(false);
-  
+  // 표준화된 위젯 훅 사용 (환영 메시지는 정적이므로 API 호출 불필요)
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh,
+    formatValue
+  } = useWidget(widget, user, {
+    immediate: false, // 정적 콘텐츠이므로 API 호출 안함
+    cache: false,
+    retryCount: 0
+  });
+
   const config = widget.config || {};
   
-  // 프로필 이미지 URL 가져오기
-  const getProfileImageUrl = () => {
-    if (config.profileImageUrl && !imageLoadError) {
-      return config.profileImageUrl;
-    }
-    if (user?.profileImageUrl && !imageLoadError) {
-      return user.profileImageUrl;
-    }
-    if (user?.socialProfileImage && !imageLoadError) {
-      return user.socialProfileImage;
-    }
-    // 기본 아바타 사용
-    return config.defaultAvatar || '/default-avatar.svg';
-  };
-  
-  // 사용자 이름 가져오기
-  const getUserDisplayName = () => {
-    if (config.displayName) {
-      return config.displayName;
-    }
-    if (user?.name && !user.name.includes('==')) {
-      return user.name;
-    }
-    if (user?.nickname && !user.nickname.includes('==')) {
-      return user.nickname;
-    }
-    if (user?.username) {
-      return user.username;
-    }
-    return config.defaultName || '사용자';
-  };
-  
-  // 환영 메시지 가져오기
-  const getWelcomeMessage = () => {
-    if (config.welcomeMessage) {
-      return config.welcomeMessage;
+  // 사용자 정보 기반 개인화된 환영 메시지 생성
+  const getPersonalizedMessage = () => {
+    const userName = user?.name || user?.nickname || user?.username || '사용자';
+    const userRole = user?.role || '사용자';
+    const tenantName = user?.tenant?.name || user?.tenantName || user?.branchName || '';
+    
+    if (config.message) {
+      // 설정된 메시지가 있으면 변수 치환
+      return config.message
+        .replace('{userName}', userName)
+        .replace('{userRole}', userRole)
+        .replace('{tenantName}', tenantName);
     }
     
-    // 사용자 역할에 따른 기본 메시지
-    const roleMessages = config.roleMessages || {
-      'ADMIN': '관리자님, 환영합니다!',
-      'CLIENT': '고객님, 환영합니다!',
-      'CONSULTANT': '상담사님, 환영합니다!',
-      'default': '환영합니다!'
-    };
+    // 기본 환영 메시지
+    const timeOfDay = getTimeOfDay();
+    let greeting = `${timeOfDay}, ${userName}님!`;
     
-    const userRole = user?.role;
-    return roleMessages[userRole] || roleMessages.default;
+    if (tenantName) {
+      greeting += ` ${tenantName}에 오신 것을 환영합니다.`;
+    } else {
+      greeting += ' CoreSolution에 오신 것을 환영합니다.';
+    }
+    
+    return greeting;
   };
   
-  // 현재 시간 표시
-  const getCurrentTime = () => {
-    if (config.showTime !== false) {
-      const now = new Date();
-      return now.toLocaleTimeString('ko-KR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+  // 시간대별 인사말
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return '좋은 아침';
+    if (hour < 18) return '안녕하세요';
+    return '좋은 저녁';
+  };
+  
+  // 추가 정보 렌더링
+  const renderAdditionalInfo = () => {
+    const items = [];
+    
+    if (config.showLastLogin && user?.lastLoginAt) {
+      items.push({
+        icon: 'clock',
+        label: '마지막 로그인',
+        value: new Date(user.lastLoginAt).toLocaleString('ko-KR')
       });
     }
-    return null;
-  };
-  
-  const profileImageUrl = getProfileImageUrl();
-  const displayName = getUserDisplayName();
-  const welcomeMessage = getWelcomeMessage();
-  const currentTime = getCurrentTime();
-  
-  const handleCardClick = (action) => {
-    if (action.url) {
-      navigate(action.url);
-    } else if (action.onClick) {
-      action.onClick();
+    
+    if (config.showRole && user?.role) {
+      items.push({
+        icon: 'person-badge',
+        label: '역할',
+        value: user.role
+      });
     }
-  };
-  
-  return (
-    <div className="widget widget-welcome">
-      <div className="widget-header">
-        <div className="welcome-section-container">
-          <div className="welcome-section-profile">
-            <div className="welcome-profile-image-wrapper">
-              <img
-                src={profileImageUrl}
-                alt={displayName}
-                className="welcome-profile-image"
-                onError={() => setImageLoadError(true)}
-              />
-            </div>
-            <div className="welcome-profile-info">
-              <h2 className="welcome-title">
-                {welcomeMessage.replace('{name}', displayName)}
-              </h2>
-              {currentTime && (
-                <div className="welcome-time">{currentTime}</div>
-              )}
-            </div>
+    
+    if (config.showTenant && (user?.tenant?.name || user?.tenantName)) {
+      items.push({
+        icon: 'building',
+        label: '소속',
+        value: user?.tenant?.name || user?.tenantName
+      });
+    }
+    
+    if (items.length === 0) return null;
+    
+    return (
+      <div className="welcome-info">
+        {items.map((item, index) => (
+          <div key={index} className="welcome-info-item">
+            <i className={`bi bi-${item.icon}`}></i>
+            <span className="info-label">{item.label}:</span>
+            <span className="info-value">{item.value}</span>
           </div>
-          
-          {config.quickCards && config.quickCards.length > 0 && (
-            <div className="welcome-quick-cards">
-              {config.quickCards.map((card, index) => (
-                <div
-                  key={index}
-                  className="welcome-quick-card"
-                  onClick={() => handleCardClick(card)}
-                  style={{ cursor: card.url || card.onClick ? 'pointer' : 'default' }}
-                >
-                  {card.icon && (
-                    <div className="welcome-card-icon">
-                      <i className={`bi ${card.icon}`}></i>
-                    </div>
-                  )}
-                  <div className="welcome-card-content">
-                    <div className="welcome-card-title">{card.title}</div>
-                    {card.description && (
-                      <div className="welcome-card-description">{card.description}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
+        ))}
+      </div>
+    );
+  };
+
+  // 환영 메시지 렌더링
+  const renderWelcomeContent = () => {
+    return (
+      <div className="welcome-container">
+        <div className="welcome-header">
+          {config.icon && (
+            <div className="welcome-icon">
+              <i className={`bi bi-${config.icon}`}></i>
             </div>
           )}
+          <div className="welcome-message">
+            <h3 className="welcome-title">
+              {getPersonalizedMessage()}
+            </h3>
+            {config.subtitle && (
+              <p className="welcome-subtitle">
+                {config.subtitle}
+              </p>
+            )}
+          </div>
         </div>
+        
+        {renderAdditionalInfo()}
+        
+        {config.actions && Array.isArray(config.actions) && (
+          <div className="welcome-actions">
+            {config.actions.map((action, index) => (
+              <button
+                key={index}
+                className={`welcome-action-btn ${action.variant || 'primary'}`}
+                onClick={() => action.onClick && action.onClick()}
+              >
+                {action.icon && <i className={`bi bi-${action.icon}`}></i>}
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={false} // 정적 콘텐츠이므로 로딩 없음
+      error={null}
+      isEmpty={false}
+      onRefresh={refresh}
+      title={widget.config?.title || WIDGET_CONSTANTS.DEFAULT_TITLES.WELCOME}
+      subtitle="" // 환영 위젯은 내부에서 subtitle 처리
+    >
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTENT}>
+        {renderWelcomeContent()}
+      </div>
+    </BaseWidget>
   );
 };
 
 export default WelcomeWidget;
-
-
-

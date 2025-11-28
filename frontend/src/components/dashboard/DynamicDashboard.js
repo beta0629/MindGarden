@@ -967,29 +967,112 @@ const getDashboardLayoutConfig = (widgetCount) => {
  * 모든 위젯(공통 + 상담 + 학원 + ERP)을 표시
  */
 const createDefaultAdminDashboardConfig = (allAdminRoles) => {
-  console.log('🔧 간단한 관리자 대시보드 설정 생성');
+  console.log('🔧 관리자 대시보드 설정 생성 (확장된 위젯 포함)');
   
-  // 간단한 기본 위젯만 포함
+  // 관리자용 실용적인 위젯들 포함
   const widgets = [
     {
       id: 'admin-welcome',
       type: 'message',
-      position: { row: 1, col: 1, colspan: 2, rowspan: 1 },
+      position: { row: 1, col: 1, colspan: 3, rowspan: 1 },
       config: {
-        title: '🏥 마인드가든 상담소 관리자',
+        title: '🏥 CoreSolution 상담소 관리자',
         message: '환영합니다! 효율적인 상담소 운영을 위한 대시보드입니다.',
         variant: 'primary'
+      }
+    },
+    {
+      id: 'today-stats',
+      type: 'today-stats',
+      position: { row: 2, col: 1, colspan: 1, rowspan: 1 },
+      config: {
+        title: '📊 오늘의 현황',
+        subtitle: '실시간 상담 및 사용자 통계'
+      }
+    },
+    {
+      id: 'system-overview',
+      type: 'system-overview',
+      position: { row: 2, col: 2, colspan: 1, rowspan: 1 },
+      config: {
+        title: '🏢 시스템 개요',
+        subtitle: '전체 시스템 현황 요약'
+      }
+    },
+    {
+      id: 'consultation-stats',
+      type: 'consultation-stats',
+      position: { row: 2, col: 3, colspan: 1, rowspan: 1 },
+      config: {
+        title: '💬 상담 통계',
+        subtitle: '상담 현황 및 성과 지표',
+        dataSource: {
+          type: 'api',
+          url: '/api/v1/consultations/statistics/overall',
+          refreshInterval: 300000 // 5분마다 새로고침
+        },
+        metrics: [
+          {
+            key: 'totalConsultations',
+            label: '총 상담 수',
+            icon: 'bi-chat-dots',
+            format: 'number'
+          },
+          {
+            key: 'activeConsultations',
+            label: '진행 중인 상담',
+            icon: 'bi-clock',
+            format: 'number'
+          },
+          {
+            key: 'completedConsultations',
+            label: '완료된 상담',
+            icon: 'bi-check-circle',
+            format: 'number'
+          },
+          {
+            key: 'satisfactionRate',
+            label: '만족도',
+            icon: 'bi-star',
+            format: 'percentage'
+          }
+        ]
+      }
+    },
+    {
+      id: 'notification-widget',
+      type: 'notification',
+      position: { row: 3, col: 1, colspan: 1, rowspan: 1 },
+      config: {
+        title: '🔔 알림',
+        subtitle: '최근 알림 및 공지사항',
+        maxItems: 5,
+        showUnreadOnly: true
+      }
+    },
+    {
+      id: 'quick-actions',
+      type: 'quick-actions',
+      position: { row: 3, col: 2, colspan: 2, rowspan: 1 },
+      config: {
+        title: '⚡ 빠른 작업',
+        actions: [
+          { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/consultant-comprehensive' },
+          { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/client-comprehensive' },
+          { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
+          { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' }
+        ]
       }
     }
   ];
 
   return {
     version: '1.0',
-    layout: { type: 'grid', columns: 2, gap: 'md' },
+    layout: { type: 'grid', columns: 3, gap: 'md' },
     widgets: widgets,
     theme: {
-      primaryColor: 'var(--mg-primary-500)',
-      secondaryColor: 'var(--mg-secondary-500)'
+      primaryColor: 'var(--cs-primary-500)',
+      secondaryColor: 'var(--cs-secondary-500)'
     }
   };
 };

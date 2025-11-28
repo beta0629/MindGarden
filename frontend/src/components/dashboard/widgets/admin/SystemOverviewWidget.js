@@ -17,26 +17,75 @@ const SystemOverviewWidget = ({ widget, user }) => {
   const subtitle = config.subtitle || '전체 시스템 현황';
 
   useEffect(() => {
-    // 실제 시스템 데이터를 로드하는 함수 (현재는 목업 데이터)
+    // 실제 시스템 데이터를 로드하는 함수
     const loadSystemData = async () => {
+      if (!user?.tenantId) {
+        console.log('⚠️ SystemOverviewWidget: 테넌트 ID 정보 없음');
+        setLoading(false);
+        return;
+      }
+      
       setLoading(true);
       try {
-        // TODO: 실제 API 호출로 교체
-        // const response = await apiGet('/api/admin/system-status');
-        // setSystemData(response);
+        console.log('🔄 SystemOverviewWidget: 실제 시스템 데이터 로드 시작', { tenantId: user.tenantId });
         
-        // 현재는 목업 데이터 사용
-        setTimeout(() => {
-          setSystemData({
-            serverStatus: 'healthy',
-            dbConnections: Math.floor(Math.random() * 20) + 10,
-            activeUsers: Math.floor(Math.random() * 100) + 20,
-            systemLoad: `${Math.floor(Math.random() * 50) + 10}%`
-          });
-          setLoading(false);
-        }, 500);
+        // 테넌트 ID를 포함한 API 호출들을 병렬로 실행
+        const tenantParam = `?tenantId=${user.tenantId}`;
+        const [statusResponse, databaseResponse, memoryResponse] = await Promise.all([
+          fetch(`/api/admin/monitoring/status${tenantParam}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+          }),
+          fetch(`/api/admin/monitoring/database${tenantParam}`, {
+            method: 'GET', 
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+          }),
+          fetch(`/api/admin/monitoring/memory${tenantParam}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+          })
+        ]);
+
+        // 응답 데이터 파싱
+        const statusData = statusResponse.ok ? await statusResponse.json() : null;
+        const databaseData = databaseResponse.ok ? await databaseResponse.json() : null;
+        const memoryData = memoryResponse.ok ? await memoryResponse.json() : null;
+
+        // 실제 데이터 설정
+        setSystemData({
+          serverStatus: statusData?.status || 'unknown',
+          dbConnections: databaseData?.activeConnections || 0,
+          activeUsers: statusData?.activeUsers || 0,
+          systemLoad: memoryData?.systemLoad || '0%'
+        });
+
+        console.log('✅ SystemOverviewWidget: 실제 시스템 데이터 로드 완료', {
+          serverStatus: statusData?.status,
+          dbConnections: databaseData?.activeConnections,
+          activeUsers: statusData?.activeUsers,
+          systemLoad: memoryData?.systemLoad
+        });
+
       } catch (error) {
-        console.error('시스템 데이터 로드 실패:', error);
+        console.error('❌ SystemOverviewWidget: 시스템 데이터 로드 실패:', error);
+        
+        // 오류 시 기본값 설정
+        setSystemData({
+          serverStatus: 'error',
+          dbConnections: 0,
+          activeUsers: 0,
+          systemLoad: '0%'
+        });
+      } finally {
         setLoading(false);
       }
     };
@@ -46,7 +95,7 @@ const SystemOverviewWidget = ({ widget, user }) => {
     // 30초마다 데이터 새로고침
     const interval = setInterval(loadSystemData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.tenantId]);
 
   const getStatusColor = (status) => {
     switch (status) {

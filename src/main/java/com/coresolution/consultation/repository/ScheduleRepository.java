@@ -379,6 +379,20 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.createdAt BETWEEN ?1 AND ?2 AND s.isDeleted = false")
     long countByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
     
+    // ==================== 테넌트별 통계 메서드 ====================
+    
+    /**
+     * 테넌트별 특정 날짜 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date = :date AND s.isDeleted = false")
+    long countByTenantIdAndDate(@Param("tenantId") String tenantId, @Param("date") LocalDate date);
+    
+    /**
+     * 테넌트별 특정 날짜 특정 상태 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date = :date AND s.status = :status AND s.isDeleted = false")
+    long countByTenantIdAndDateAndStatus(@Param("tenantId") String tenantId, @Param("date") LocalDate date, @Param("status") ScheduleStatus status);
+    
     // === BaseRepository 메서드 오버라이드 ===
     // Schedule 엔티티는 branchId 필드가 없음 (branchCode만 있음)
     // findAllByTenantIdAndBranchId 메서드를 오버라이드하여 branchId를 무시하도록 함

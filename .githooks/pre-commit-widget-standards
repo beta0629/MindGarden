@@ -1,0 +1,158 @@
+#!/bin/bash
+
+# MindGarden 위젯 표준화 Pre-commit Hook
+# 
+# 위젯 파일이 표준을 준수하는지 확인
+# BaseWidget과 useWidget 사용을 강제
+#
+# @author MindGarden
+# @version 1.0.0
+# @since 2025-11-28
+
+set -e
+
+echo "🔍 MindGarden 위젯 표준화 검사 시작..."
+
+# 변경된 위젯 파일들 찾기
+WIDGET_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E "components/dashboard/widgets/.*Widget\.js$" || true)
+
+if [ -z "$WIDGET_FILES" ]; then
+  echo "✅ 위젯 파일 변경 없음"
+  exit 0
+fi
+
+echo "📂 검사 대상 위젯 파일들:"
+echo "$WIDGET_FILES" | sed 's/^/  - /'
+
+# 표준화 검사 결과
+VIOLATIONS=0
+VIOLATION_FILES=()
+
+# 각 위젯 파일 검사
+while IFS= read -r file; do
+  if [ ! -f "$file" ]; then
+    continue
+  fi
+  
+  echo "🔍 검사 중: $file"
+  
+  # BaseWidget.js는 제외
+  if [[ "$file" == *"BaseWidget.js" ]]; then
+    echo "  ⏭️ BaseWidget.js 제외"
+    continue
+  fi
+  
+  # 파일 내용 읽기
+  CONTENT=$(cat "$file")
+  
+  # 검사 항목들
+  HAS_BASE_WIDGET_IMPORT=false
+  HAS_USE_WIDGET_IMPORT=false
+  HAS_BASE_WIDGET_USAGE=false
+  HAS_USE_WIDGET_USAGE=false
+  HAS_WIDGET_CONSTANTS=false
+  
+  # BaseWidget import 검사
+  if echo "$CONTENT" | grep -q "import.*BaseWidget"; then
+    HAS_BASE_WIDGET_IMPORT=true
+  fi
+  
+  # useWidget import 검사
+  if echo "$CONTENT" | grep -q "import.*useWidget"; then
+    HAS_USE_WIDGET_IMPORT=true
+  fi
+  
+  # BaseWidget 사용 검사
+  if echo "$CONTENT" | grep -q "<BaseWidget"; then
+    HAS_BASE_WIDGET_USAGE=true
+  fi
+  
+  # useWidget 사용 검사
+  if echo "$CONTENT" | grep -q "useWidget("; then
+    HAS_USE_WIDGET_USAGE=true
+  fi
+  
+  # WIDGET_CONSTANTS 사용 검사
+  if echo "$CONTENT" | grep -q "WIDGET_CONSTANTS"; then
+    HAS_WIDGET_CONSTANTS=true
+  fi
+  
+  # 위반 사항 체크
+  FILE_VIOLATIONS=0
+  
+  if [ "$HAS_BASE_WIDGET_IMPORT" = false ]; then
+    echo "  ❌ BaseWidget import 누락"
+    FILE_VIOLATIONS=$((FILE_VIOLATIONS + 1))
+  fi
+  
+  if [ "$HAS_USE_WIDGET_IMPORT" = false ]; then
+    echo "  ❌ useWidget import 누락"
+    FILE_VIOLATIONS=$((FILE_VIOLATIONS + 1))
+  fi
+  
+  if [ "$HAS_BASE_WIDGET_USAGE" = false ]; then
+    echo "  ❌ BaseWidget 사용 안함"
+    FILE_VIOLATIONS=$((FILE_VIOLATIONS + 1))
+  fi
+  
+  if [ "$HAS_USE_WIDGET_USAGE" = false ]; then
+    echo "  ❌ useWidget 훅 사용 안함"
+    FILE_VIOLATIONS=$((FILE_VIOLATIONS + 1))
+  fi
+  
+  if [ "$HAS_WIDGET_CONSTANTS" = false ]; then
+    echo "  ⚠️ WIDGET_CONSTANTS 사용 권장"
+  fi
+  
+  # 직접 DOM 생성 금지 검사
+  if echo "$CONTENT" | grep -q 'className.*"widget'; then
+    echo "  ❌ 직접 div.widget 생성 금지 (BaseWidget 사용하세요)"
+    FILE_VIOLATIONS=$((FILE_VIOLATIONS + 1))
+  fi
+  
+  if [ $FILE_VIOLATIONS -eq 0 ]; then
+    echo "  ✅ 표준 준수"
+  else
+    echo "  ❌ $FILE_VIOLATIONS개 위반사항"
+    VIOLATIONS=$((VIOLATIONS + FILE_VIOLATIONS))
+    VIOLATION_FILES+=("$file")
+  fi
+  
+done <<< "$WIDGET_FILES"
+
+# 결과 출력
+echo ""
+echo "📊 위젯 표준화 검사 결과:"
+echo "  - 검사 파일: $(echo "$WIDGET_FILES" | wc -l)개"
+echo "  - 위반 파일: ${#VIOLATION_FILES[@]}개"
+echo "  - 총 위반사항: $VIOLATIONS개"
+
+if [ $VIOLATIONS -gt 0 ]; then
+  echo ""
+  echo "🚨 위젯 표준화 위반 발견!"
+  echo ""
+  echo "위반 파일들:"
+  for file in "${VIOLATION_FILES[@]}"; do
+    echo "  - $file"
+  done
+  
+  echo ""
+  echo "📋 해결 방법:"
+  echo "1. 자동 마이그레이션 실행:"
+  echo "   node scripts/migrate-widgets-to-standard.js"
+  echo ""
+  echo "2. 수동 수정:"
+  echo "   - BaseWidget import 추가: import BaseWidget from '../BaseWidget'"
+  echo "   - useWidget import 추가: import { useWidget } from '../../../hooks/useWidget'"
+  echo "   - BaseWidget으로 래핑: <BaseWidget>...</BaseWidget>"
+  echo "   - useWidget 훅 사용: const { data, loading, error } = useWidget(widget, user)"
+  echo ""
+  echo "3. 새 위젯 생성 시 표준 템플릿 사용:"
+  echo "   node scripts/create-standard-widget.js MyNewWidget admin"
+  echo ""
+  echo "❌ 커밋이 차단되었습니다. 위젯 표준화 후 다시 시도하세요."
+  exit 1
+fi
+
+echo "✅ 모든 위젯이 표준을 준수합니다!"
+exit 0

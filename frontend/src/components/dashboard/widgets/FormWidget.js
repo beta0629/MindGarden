@@ -1,157 +1,211 @@
 /**
- * Form Widget
+ * Form Widget - 표준화된 위젯
  * 폼을 표시하는 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0 (표준화 업그레이드)
  * @since 2025-11-21
  */
 
 import React, { useState } from 'react';
-import { apiPost, apiPut } from '../../../utils/ajax';
+import { useWidget } from '../../../hooks/useWidget';
+import BaseWidget from './BaseWidget';
+import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
 
 const FormWidget = ({ widget, user }) => {
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh,
+    formatValue
+  } = useWidget(widget, user, {
+    immediate: false, // 폼은 즉시 로드하지 않음
+    cache: false,     // 폼 데이터는 캐시하지 않음
+    retryCount: 3
+  });
+
   const [formData, setFormData] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  
+  const [submitResult, setSubmitResult] = useState(null);
+
   const config = widget.config || {};
   const fields = config.fields || [];
-  const submit = config.submit || {};
-  
-  const handleChange = (fieldName, value) => {
+  const submitUrl = config.submitUrl || '';
+
+  // 폼 필드 변경 핸들러
+  const handleFieldChange = (fieldName, value) => {
     setFormData(prev => ({
       ...prev,
       [fieldName]: value
     }));
   };
-  
+
+  // 폼 제출 핸들러
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!submitUrl) {
+      setSubmitResult({ success: false, message: '제출 URL이 설정되지 않았습니다.' });
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitResult(null);
+
     try {
-      setSubmitting(true);
-      setError(null);
-      setSuccess(false);
-      
-      const url = submit.url;
-      const method = submit.method || 'POST';
-      
-      let response;
-      if (method === 'POST') {
-        response = await apiPost(url, formData);
-      } else if (method === 'PUT') {
-        response = await apiPut(url, formData);
-      }
-      
-      if (response) {
-        setSuccess(true);
+      const response = await fetch(submitUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setSubmitResult({ success: true, message: '성공적으로 제출되었습니다.' });
         setFormData({}); // 폼 초기화
+      } else {
+        throw new Error(`제출 실패: ${response.status}`);
       }
     } catch (err) {
-      console.error('FormWidget 제출 실패:', err);
-      setError(err.message);
+      console.error('폼 제출 오류:', err);
+      setSubmitResult({ success: false, message: err.message || '제출 중 오류가 발생했습니다.' });
     } finally {
       setSubmitting(false);
     }
   };
-  
-  const renderField = (field) => {
-    const { name, type, label, required, options } = field;
+
+  // 폼 필드 렌더링
+  const renderField = (field, index) => {
+    const { name, label, type = 'text', required = false, options = [] } = field;
     const value = formData[name] || '';
-    
+
     switch (type) {
-      case 'text':
-      case 'email':
-      case 'number':
-        return (
-          <div key={name} className="form-field">
-            <label>
-              {label}
-              {required && <span className="required">*</span>}
-            </label>
-            <input
-              type={type}
-              value={value}
-              onChange={(e) => handleChange(name, e.target.value)}
-              required={required}
-            />
-          </div>
-        );
-      
-      case 'textarea':
-        return (
-          <div key={name} className="form-field">
-            <label>
-              {label}
-              {required && <span className="required">*</span>}
-            </label>
-            <textarea
-              value={value}
-              onChange={(e) => handleChange(name, e.target.value)}
-              required={required}
-            />
-          </div>
-        );
-      
       case 'select':
         return (
-          <div key={name} className="form-field">
-            <label>
+          <div key={index} className="form-field">
+            <label htmlFor={name}>
               {label}
               {required && <span className="required">*</span>}
             </label>
             <select
+              id={name}
               value={value}
-              onChange={(e) => handleChange(name, e.target.value)}
+              onChange={(e) => handleFieldChange(name, e.target.value)}
               required={required}
             >
               <option value="">선택하세요</option>
-              {options?.map((option, index) => (
-                <option key={index} value={option.value}>
-                  {option.label}
+              {options.map((option, optIndex) => (
+                <option key={optIndex} value={option.value || option}>
+                  {option.label || option}
                 </option>
               ))}
             </select>
           </div>
         );
-      
+
+      case 'textarea':
+        return (
+          <div key={index} className="form-field">
+            <label htmlFor={name}>
+              {label}
+              {required && <span className="required">*</span>}
+            </label>
+            <textarea
+              id={name}
+              value={value}
+              onChange={(e) => handleFieldChange(name, e.target.value)}
+              required={required}
+              rows={4}
+            />
+          </div>
+        );
+
       default:
-        return null;
+        return (
+          <div key={index} className="form-field">
+            <label htmlFor={name}>
+              {label}
+              {required && <span className="required">*</span>}
+            </label>
+            <input
+              type={type}
+              id={name}
+              value={value}
+              onChange={(e) => handleFieldChange(name, e.target.value)}
+              required={required}
+            />
+          </div>
+        );
     }
   };
-  
-  return (
-    <div className="widget widget-form">
-      <div className="widget-header">
-        <div className="widget-title">{config.title || '폼'}</div>
-      </div>
-      <div className="widget-body">
-        <form onSubmit={handleSubmit}>
-          {fields.map(renderField)}
-          
-          {error && (
-            <div className="form-error">{error}</div>
-          )}
-          
-          {success && (
-            <div className="form-success">제출되었습니다.</div>
-          )}
+
+  // 폼 렌더링
+  const renderForm = () => {
+    if (fields.length === 0) {
+      return (
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+          표시할 폼 필드가 없습니다.
+        </div>
+      );
+    }
+
+    return (
+      <div className="form-container">
+        <form onSubmit={handleSubmit} className="widget-form">
+          {fields.map((field, index) => renderField(field, index))}
           
           <div className="form-actions">
-            <button type="submit" disabled={submitting}>
+            <button 
+              type="submit" 
+              disabled={submitting}
+              className="submit-btn"
+            >
               {submitting ? '제출 중...' : '제출'}
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setFormData({})}
+              className="reset-btn"
+            >
+              초기화
             </button>
           </div>
         </form>
+
+        {submitResult && (
+          <div className={`form-result ${submitResult.success ? 'form-success' : 'form-error'}`}>
+            <i className={`bi bi-${submitResult.success ? 'check-circle' : 'exclamation-triangle'}`}></i>
+            <span>{submitResult.message}</span>
+          </div>
+        )}
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      isEmpty={fields.length === 0}
+      onRefresh={refresh}
+      title={widget.config?.title || WIDGET_CONSTANTS.DEFAULT_TITLES.FORM}
+      subtitle={widget.config?.subtitle || ''}
+    >
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTENT}>
+        {renderForm()}
+      </div>
+    </BaseWidget>
   );
 };
 
 export default FormWidget;
-
-
-

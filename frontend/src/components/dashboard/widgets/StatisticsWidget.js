@@ -1,157 +1,114 @@
 /**
- * Statistics Widget
+ * Statistics Widget - 표준화된 위젯
  * 통계 정보를 표시하는 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0 (표준화 업그레이드)
  * @since 2025-11-21
  */
 
-import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
-import { apiGet } from '../../../utils/ajax';
+import React from 'react';
+import { useWidget } from '../../../hooks/useWidget';
+import BaseWidget from './BaseWidget';
+import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
 
 const StatisticsWidget = ({ widget, user }) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadData();
-      
-      // 자동 새로고침 설정
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadData, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (config.value !== undefined) {
-      // 정적 값 사용
-      setData({ value: config.value });
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-  
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiGet(dataSource.url, dataSource.params || {});
-      
-      if (response) {
-        // 응답에서 value 추출 (응답 구조에 따라 조정 필요)
-        const value = response.value || response.count || response.total || response;
-        setData({ value });
-      } else {
-        setData({ value: config.value || 0 });
-      }
-    } catch (err) {
-      console.error('StatisticsWidget 데이터 로드 실패:', err);
-      setError(err.message);
-      setData({ value: config.value || 0 }); // 폴백 값
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const formatValue = (value) => {
-    // 🛡️ 안전한 값 처리
-    if (value === null || value === undefined) {
-      return '0';
-    }
-    
-    if (typeof value === 'number') {
-      return value.toLocaleString();
-    }
-    
-    if (typeof value === 'string') {
-      return value;
-    }
-    
-    if (typeof value === 'object') {
-      // 객체인 경우 안전하게 처리
-      if (value.count !== undefined) return value.count;
-      if (value.total !== undefined) return value.total;
-      if (value.value !== undefined) return value.value;
-      if (value.id !== undefined) return `ID: ${value.id}`;
-      if (value.name !== undefined) return value.name;
-      
-      // 기본적으로 객체의 키 개수 반환
-      return `${Object.keys(value).length} 항목`;
-    }
-    
-    return String(value);
-  };
-  
-  const getColorClass = () => {
-    const color = config.color || 'primary';
-    return `widget-statistics-color-${color}`;
-  };
-  
-  const renderTrend = () => {
-    if (!config.trend || !config.trend.enabled) {
-      return null;
-    }
-    
-    const { value, direction } = config.trend;
-    const trendClass = direction === 'up' ? 'trend-up' : 'trend-down';
-    const trendIcon = direction === 'up' ? '↑' : '↓';
-    
-    return (
-      <div className={`widget-statistics-trend ${trendClass}`}>
-        <span className="trend-icon">{trendIcon}</span>
-        <span className="trend-value">{value}%</span>
-      </div>
-    );
-  };
-  
-  if (loading && !data) {
-    return (
-      <div className="widget widget-statistics">
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
-  }
-  
-  if (error && !data) {
-    return (
-      <div className="widget widget-statistics widget-error">
-        <div className="widget-title">{config.title || '통계'}</div>
-        <div className="widget-error-message">{error}</div>
-      </div>
-    );
-  }
-  
-  const displayValue = data?.value !== undefined ? data.value : config.value;
-  
-  return (
-    <div className={`widget widget-statistics ${getColorClass()}`}>
-      <div className="widget-header">
-        {config.icon && (
-          <div className="widget-icon">
-            <i className={`icon-${config.icon}`}></i>
-          </div>
-        )}
-        <div className="widget-title">{config.title || '통계'}</div>
-      </div>
-      <div className="widget-body">
-        <div className="widget-statistics-value">
-          {formatValue(displayValue)}
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh,
+    formatValue
+  } = useWidget(widget, user, {
+    immediate: true,
+    cache: true,
+    retryCount: 3
+  });
+
+  // 위젯 내용 렌더링
+  const renderContent = () => {
+    if (isEmpty) {
+      return (
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+          표시할 통계가 없습니다.
         </div>
-        {renderTrend()}
+      );
+    }
+    
+    if (!hasData) {
+      return null; // BaseWidget에서 빈 상태 처리
+    }
+
+    // 단일 값 통계
+    if (typeof data === 'number' || data.value !== undefined) {
+      const value = data.value !== undefined ? data.value : data;
+      return (
+        <div className="single-stat">
+          <div className="stat-value">{formatValue(value, widget.config?.format)}</div>
+          {data.label && <div className="stat-label">{data.label}</div>}
+          {data.change && (
+            <div className={`stat-change ${data.change > 0 ? 'positive' : 'negative'}`}>
+              <i className={`bi bi-arrow-${data.change > 0 ? 'up' : 'down'}`}></i>
+              {Math.abs(data.change)}%
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 다중 통계
+    if (Array.isArray(data)) {
+      return (
+        <div className="multi-stats">
+          {data.map((stat, index) => (
+            <div key={index} className="stat-item">
+              <div className="stat-value">{formatValue(stat.value, widget.config?.format)}</div>
+              <div className="stat-label">{stat.label}</div>
+              {stat.change && (
+                <div className={`stat-change ${stat.change > 0 ? 'positive' : 'negative'}`}>
+                  <i className={`bi bi-arrow-${stat.change > 0 ? 'up' : 'down'}`}></i>
+                  {Math.abs(stat.change)}%
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // 객체 형태 통계
+    return (
+      <div className="object-stats">
+        {Object.entries(data).map(([key, value]) => (
+          <div key={key} className="stat-item">
+            <div className="stat-value">{formatValue(value, widget.config?.format)}</div>
+            <div className="stat-label">{key}</div>
+          </div>
+        ))}
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      isEmpty={isEmpty}
+      onRefresh={refresh}
+      title={widget.config?.title || WIDGET_CONSTANTS.DEFAULT_TITLES.STATISTICS}
+      subtitle={widget.config?.subtitle || ''}
+    >
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTENT}>
+        {renderContent()}
+      </div>
+    </BaseWidget>
   );
 };
 
 export default StatisticsWidget;
-
-
-

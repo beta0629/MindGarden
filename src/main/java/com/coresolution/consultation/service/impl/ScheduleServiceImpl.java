@@ -1019,6 +1019,46 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
     
     /**
+     * 테넌트별 오늘의 스케줄 통계 조회
+     */
+    @Override
+    public Map<String, Object> getTodayScheduleStatisticsByTenant(String tenantId) {
+        log.info("📊 테넌트별 오늘의 스케줄 통계 조회 - 테넌트 ID: {}", tenantId);
+        
+        LocalDate today = LocalDate.now();
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // 테넌트별 오늘의 총 상담 수
+        long totalToday = scheduleRepository.countByTenantIdAndDate(tenantId, today);
+        statistics.put("totalToday", totalToday);
+        
+        // 테넌트별 오늘의 완료된 상담 수
+        long completedToday = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, today, ScheduleStatus.COMPLETED);
+        statistics.put("completedToday", completedToday);
+        
+        // 테넌트별 오늘의 진행중인 상담 수
+        long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
+        statistics.put("inProgressToday", inProgressToday);
+        
+        // 테넌트별 오늘의 취소된 상담 수
+        long cancelledToday = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, today, ScheduleStatus.CANCELLED);
+        statistics.put("cancelledToday", cancelledToday);
+        
+        // 테넌트별 오늘의 예약된 상담 수
+        long bookedToday = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, today, ScheduleStatus.BOOKED);
+        statistics.put("bookedToday", bookedToday);
+        
+        // 테넌트별 오늘의 확인된 상담 수
+        long confirmedToday = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, today, ScheduleStatus.CONFIRMED);
+        statistics.put("confirmedToday", confirmedToday);
+        
+        log.info("📊 테넌트별 오늘의 통계 - 테넌트: {}, 총: {}, 완료: {}, 진행중: {}, 취소: {}, 예약: {}, 확인: {}", 
+                tenantId, totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday);
+        
+        return statistics;
+    }
+    
+    /**
      * 특정 상담사의 오늘의 스케줄 통계 조회
      */
     @Override

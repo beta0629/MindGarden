@@ -1,190 +1,115 @@
 /**
- * Activity List Widget
- * 최근 활동 목록을 표시하는 범용 위젯
- * RecentActivities를 기반으로 범용화
+ * Activity List Widget - 표준화된 위젯
+ * 활동 목록을 표시하는 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
- * @since 2025-11-22
+ * @version 2.0.0 (표준화 업그레이드)
+ * @since 2025-11-21
  */
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
-import { apiGet } from '../../../utils/ajax';
+import React from 'react';
+import { useWidget } from '../../../hooks/useWidget';
+import BaseWidget from './BaseWidget';
+import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
 import './Widget.css';
-import '../RecentActivities.css';
 
 const ActivityListWidget = ({ widget, user }) => {
-  const navigate = useNavigate();
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  const maxItems = config.maxItems || 5;
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadActivities();
-      
-      // 자동 새로고침 설정
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadActivities, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (config.activities && Array.isArray(config.activities)) {
-      // 정적 활동 목록 사용
-      setActivities(config.activities.slice(0, maxItems));
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-  
-  const loadActivities = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiGet(dataSource.url, dataSource.params || {});
-      
-      if (response) {
-        // 응답 구조에 따라 조정 필요
-        const activityList = response.activities || response.data || response || [];
-        setActivities(Array.isArray(activityList) ? activityList.slice(0, maxItems) : []);
-      } else {
-        setActivities([]);
-      }
-    } catch (err) {
-      console.error('ActivityListWidget 데이터 로드 실패:', err);
-      setError(err.message);
-      setActivities([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const getActivityIcon = (type) => {
-    // config에서 아이콘 매핑 가져오기
-    const iconMap = config.iconMap || {
-      'profile': 'bi-person-circle',
-      'schedule': 'bi-calendar-check',
-      'payment': 'bi-credit-card',
-      'message': 'bi-chat-dots',
-      'document': 'bi-file-text',
-      'default': 'bi-info-circle'
-    };
-    
-    return iconMap[type] || iconMap.default || 'bi-info-circle';
-  };
-  
-  const handleViewAll = () => {
-    if (config.viewAllUrl) {
-      navigate(config.viewAllUrl);
-    } else if (config.viewAllAction) {
-      // 커스텀 액션 실행
-      if (typeof config.viewAllAction === 'function') {
-        config.viewAllAction();
-      }
-    }
-  };
-  
-  const formatTime = (time) => {
-    if (!time) return '';
-    
-    // 이미 포맷된 문자열이면 그대로 반환
-    if (typeof time === 'string' && time.includes('전') || time.includes('ago')) {
-      return time;
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh,
+    formatValue
+  } = useWidget(widget, user, {
+    immediate: true,
+    cache: true,
+    retryCount: 3
+  });
+
+  // 활동 목록 렌더링
+  const renderActivityList = () => {
+    if (isEmpty) {
+      return (
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+          표시할 활동이 없습니다.
+        </div>
+      );
     }
     
-    // Date 객체나 타임스탬프인 경우 포맷팅
-    const date = new Date(time);
-    const now = new Date();
-    const diff = now - date;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    
-    if (minutes < 1) return '방금 전';
-    if (minutes < 60) return `${minutes}분 전`;
-    if (hours < 24) return `${hours}시간 전`;
-    if (days < 7) return `${days}일 전`;
-    
-    return date.toLocaleDateString('ko-KR');
-  };
-  
-  if (loading && activities.length === 0) {
+    if (!hasData || !Array.isArray(data)) {
+      return null; // BaseWidget에서 빈 상태 처리
+    }
+
     return (
-      <div className="widget widget-activity-list">
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
-  }
-  
-  if (error && activities.length === 0) {
-    return (
-      <div className="widget widget-activity-list widget-error">
-        <div className="widget-title">{config.title || '최근 활동'}</div>
-        <div className="widget-error-message">{error}</div>
-      </div>
-    );
-  }
-  
-  const displayActivities = activities.slice(0, maxItems);
-  const hasMore = activities.length > maxItems || (config.viewAllUrl || config.viewAllAction);
-  
-  return (
-    <div className="widget widget-activity-list">
-      <div className="widget-header">
-        <div className="recent-activities-header">
-          <h3 className="widget-title">
-            <i className="bi bi-clock-history"></i>
-            {config.title || '최근 활동'}
-          </h3>
-          {hasMore && (
-            <button 
-              className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
-              onClick={handleViewAll}
-            >
-              <i className="bi bi-arrow-right"></i>
-              {config.viewAllLabel || '전체보기'}
+      <div className="activity-list-container">
+        <div className="activity-list">
+          {data.map((activity, index) => (
+            <div key={index} className="activity-item">
+              <div className="activity-icon">
+                <i className={`bi bi-${activity.icon || 'circle'}`}></i>
+              </div>
+              <div className="activity-content">
+                <div className="activity-title">
+                  {activity.title || activity.name || `활동 ${index + 1}`}
+                </div>
+                {activity.description && (
+                  <div className="activity-description">
+                    {activity.description}
+                  </div>
+                )}
+                <div className="activity-meta">
+                  {activity.timestamp && (
+                    <span className="activity-time">
+                      {new Date(activity.timestamp).toLocaleString('ko-KR')}
+                    </span>
+                  )}
+                  {activity.user && (
+                    <span className="activity-user">
+                      {activity.user}
+                    </span>
+                  )}
+                  {activity.type && (
+                    <span className={`activity-type activity-type-${activity.type}`}>
+                      {activity.type}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="activity-footer">
+          <span className="activity-count">총 {data.length}개 활동</span>
+          {widget.config?.showMoreButton && (
+            <button className="show-more-btn">
+              더 보기
             </button>
           )}
         </div>
       </div>
-      <div className="widget-body">
-        <div className="recent-activities-list">
-          {displayActivities.length > 0 ? (
-            displayActivities.map((activity, index) => (
-              <div key={activity.id || index} className="recent-activities-item">
-                <div className="recent-activities-icon">
-                  <i className={`bi ${getActivityIcon(activity.type || activity.category)}`}></i>
-                </div>
-                <div className="recent-activities-content">
-                  <div className="recent-activities-title">
-                    {activity.title || activity.message || activity.description}
-                  </div>
-                  <div className="recent-activities-time">
-                    {formatTime(activity.time || activity.timestamp || activity.createdAt)}
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="no-activities">
-              <i className="bi bi-inbox"></i>
-              <p>{config.emptyMessage || '최근 활동이 없습니다'}</p>
-            </div>
-          )}
-        </div>
+    );
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      isEmpty={isEmpty}
+      onRefresh={refresh}
+      title={widget.config?.title || WIDGET_CONSTANTS.DEFAULT_TITLES.ACTIVITY_LIST}
+      subtitle={widget.config?.subtitle || ''}
+    >
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTENT}>
+        {renderActivityList()}
       </div>
-    </div>
+    </BaseWidget>
   );
 };
 
 export default ActivityListWidget;
-
-
-

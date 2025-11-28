@@ -308,6 +308,11 @@ public interface ScheduleService {
     Map<String, Object> getTodayScheduleStatistics();
     
     /**
+     * 테넌트별 오늘의 스케줄 통계 조회
+     */
+    Map<String, Object> getTodayScheduleStatisticsByTenant(String tenantId);
+    
+    /**
      * 특정 상담사의 오늘의 스케줄 통계 조회
      */
     Map<String, Object> getTodayScheduleStatisticsByConsultant(Long consultantId);

@@ -6,7 +6,9 @@ import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.jdbc.core.JdbcTemplate;
 
+import javax.sql.DataSource;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.OperatingSystemMXBean;
@@ -28,6 +30,8 @@ import java.util.Map;
 public class SystemMonitoringServiceImpl implements SystemMonitoringService {
     
     private final MeterRegistry meterRegistry;
+    private final JdbcTemplate jdbcTemplate;
+    private final DataSource dataSource;
     
     @Override
     public Map<String, Object> getSystemStatus() {
@@ -108,11 +112,78 @@ public class SystemMonitoringServiceImpl implements SystemMonitoringService {
     
     @Override
     public Map<String, Object> getDatabaseStatus() {
-        // 데이터베이스 연결 상태는 HealthIndicator를 통해 확인
-        // 여기서는 기본 정보만 제공
         Map<String, Object> db = new HashMap<>();
-        db.put("status", "UP"); // 실제로는 DataSource에서 확인 필요
-        db.put("note", "상세 정보는 /actuator/health 엔드포인트에서 확인 가능");
+        
+        try {
+            // 실제 데이터베이스 연결 상태 확인
+            log.info("🔍 데이터베이스 상태 확인 시작");
+            
+            // 1. 기본 연결 테스트
+            String connectionTest = jdbcTemplate.queryForObject("SELECT 'OK' as status", String.class);
+            db.put("status", "UP");
+            db.put("connectionTest", connectionTest);
+            
+            // 2. 활성 연결 수 조회 (MySQL)
+            try {
+                Integer activeConnections = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.processlist WHERE command != 'Sleep'", 
+                    Integer.class
+                );
+                db.put("activeConnections", activeConnections != null ? activeConnections : 0);
+                log.info("✅ 활성 DB 연결 수: {}", activeConnections);
+            } catch (Exception e) {
+                log.warn("⚠️ 활성 연결 수 조회 실패: {}", e.getMessage());
+                db.put("activeConnections", 0);
+                db.put("activeConnectionsError", e.getMessage());
+            }
+            
+            // 3. 전체 연결 수 조회
+            try {
+                Integer totalConnections = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.processlist", 
+                    Integer.class
+                );
+                db.put("totalConnections", totalConnections != null ? totalConnections : 0);
+                log.info("✅ 전체 DB 연결 수: {}", totalConnections);
+            } catch (Exception e) {
+                log.warn("⚠️ 전체 연결 수 조회 실패: {}", e.getMessage());
+                db.put("totalConnections", 0);
+                db.put("totalConnectionsError", e.getMessage());
+            }
+            
+            // 4. 데이터베이스 정보
+            try {
+                String dbVersion = jdbcTemplate.queryForObject("SELECT VERSION()", String.class);
+                db.put("version", dbVersion);
+                log.info("✅ DB 버전: {}", dbVersion);
+            } catch (Exception e) {
+                log.warn("⚠️ DB 버전 조회 실패: {}", e.getMessage());
+                db.put("versionError", e.getMessage());
+            }
+            
+            // 5. 테이블 수 조회
+            try {
+                Integer tableCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()", 
+                    Integer.class
+                );
+                db.put("tableCount", tableCount != null ? tableCount : 0);
+                log.info("✅ 테이블 수: {}", tableCount);
+            } catch (Exception e) {
+                log.warn("⚠️ 테이블 수 조회 실패: {}", e.getMessage());
+                db.put("tableCount", 0);
+                db.put("tableCountError", e.getMessage());
+            }
+            
+            log.info("✅ 데이터베이스 상태 확인 완료");
+            
+        } catch (Exception e) {
+            log.error("❌ 데이터베이스 상태 확인 실패: {}", e.getMessage(), e);
+            db.put("status", "DOWN");
+            db.put("error", e.getMessage());
+            db.put("activeConnections", 0);
+            db.put("totalConnections", 0);
+        }
         
         return db;
     }

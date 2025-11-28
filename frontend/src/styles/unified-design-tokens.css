@@ -91,6 +91,25 @@
   --cs-black: #000000;
   --cs-transparent: transparent;
   
+  /* 그림자 */
+  --cs-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --cs-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --cs-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --cs-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --cs-shadow-primary: 0 8px 20px rgba(59, 130, 246, 0.12);
+  
+  /* 회색 별칭 */
+  --cs-gray-50: var(--cs-secondary-50);
+  --cs-gray-100: var(--cs-secondary-100);
+  --cs-gray-200: var(--cs-secondary-200);
+  --cs-gray-300: var(--cs-secondary-300);
+  --cs-gray-400: var(--cs-secondary-400);
+  --cs-gray-500: var(--cs-secondary-500);
+  --cs-gray-600: var(--cs-secondary-600);
+  --cs-gray-700: var(--cs-secondary-700);
+  --cs-gray-800: var(--cs-secondary-800);
+  --cs-gray-900: var(--cs-secondary-900);
+  
   /* MindGarden 호환 변수 (CoreSolution 색상 매핑) */
   --mg-primary-50: var(--cs-primary-50);
   --mg-primary-100: var(--cs-primary-100);
@@ -4803,13 +4822,13 @@ body {
 .mg-mapping-status-title {
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-semibold, 600);
-    color: var(--dark-gray, #2F2F2F);
+    color: var(--cs-gray-800);
     margin: 0;
 }
 
 .mg-mapping-status-subtitle {
     font-size: var(--font-size-sm);
-    color: var(--medium-gray, #6B6B6B);
+    color: var(--cs-gray-600);
     margin: 0;
 }
 
@@ -4828,7 +4847,7 @@ body {
     padding: var(--spacing-xs) var(--spacing-md);
     border-radius: var(--radius-full, 50%);
     background: var(--mint-green, var(--mg-mint-green));
-    color: var(--dark-gray, #2F2F2F);
+    color: var(--cs-gray-800);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold, 600);
     box-shadow: var(--shadow-sm);
@@ -4887,13 +4906,13 @@ body {
 
 .mg-info-label {
     font-size: var(--font-size-xs);
-    color: var(--medium-gray, #6B6B6B);
+    color: var(--cs-gray-600);
     font-weight: var(--font-weight-medium, 500);
 }
 
 .mg-info-value {
     font-size: var(--font-size-sm);
-    color: var(--dark-gray, #2F2F2F);
+    color: var(--cs-gray-800);
     font-weight: var(--font-weight-semibold, 600);
     word-break: break-word;
 }
@@ -5657,7 +5676,7 @@ body {
 .specialty-display__title {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary, #666);
+  color: var(--cs-gray-600);
   margin: 0;
 }
 
@@ -5686,7 +5705,7 @@ body {
 
 .specialty-display__default {
   font-size: var(--font-size-sm);
-  color: var(--color-text-muted, #999);
+  color: var(--cs-gray-500);
   font-style: italic;
 }
 
@@ -5703,7 +5722,7 @@ body {
   font-size: var(--font-size-sm);
   color: var(--color-text-primary, var(--mg-black));
   padding: var(--spacing-xs) 0;
-  border-bottom: 1px solid var(--color-border-light, #eee);
+  border-bottom: 1px solid var(--cs-gray-200);
 }
 
 .specialty-display__list-item:last-child {
@@ -6142,7 +6161,7 @@ body {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--mg-success-500), #059669);
+  background: linear-gradient(135deg, var(--cs-success-500), var(--cs-success-600));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10683,7 +10702,7 @@ body {
 }
 
 .mg-v2-button-primary:hover:not(:disabled) {
-    background-color: var(--color-primary-dark, #0056b3);
+    background-color: var(--cs-primary-700);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
 }
@@ -10695,7 +10714,7 @@ body {
 }
 
 .mg-v2-button-secondary:hover:not(:disabled) {
-    background-color: var(--color-secondary-dark, #545b62);
+    background-color: var(--cs-gray-700);
     transform: translateY(-1px);
 }
 
@@ -15700,7 +15719,7 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
 .mg-v2-dashboard-icon {
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, #FFD700, #FFA500);
+  background: linear-gradient(135deg, var(--cs-warning-400), var(--cs-warning-500));
   border-radius: var(--border-radius-full);
   display: flex;
   align-items: center;

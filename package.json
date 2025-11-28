@@ -8,7 +8,13 @@
     "frontend": "cd frontend && npm start",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
     "build": "cd frontend && npm run build",
-    "install-deps": "npm install && cd frontend && npm install"
+    "install-deps": "npm install && cd frontend && npm install",
+    "widget:create": "node scripts/create-standard-widget.js",
+    "widget:migrate": "node scripts/migrate-widgets-to-standard.js",
+    "widget:migrate:dry": "node scripts/migrate-widgets-to-standard.js --dry-run",
+    "widget:check": "node scripts/migrate-widgets-to-standard.js --dry-run",
+    "widget:lint": "cd frontend && npx eslint src/components/dashboard/widgets --config ../.eslintrc.widget-standards.js",
+    "hooks:install": "chmod +x .githooks/pre-commit-widget-standards && git config core.hooksPath .githooks"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

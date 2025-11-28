@@ -480,9 +480,11 @@ public class ScheduleController extends BaseApiController {
      */
     @GetMapping("/today/statistics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTodayScheduleStatistics(
-            @RequestParam String userRole, HttpSession session) {
+            @RequestParam String userRole,
+            @RequestParam(required = false) String tenantId,
+            HttpSession session) {
         
-        log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}", userRole);
+        log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}, 테넌트 ID: {}", userRole, tenantId);
         
         // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkStatisticsPermission(session, dynamicPermissionService);
@@ -503,9 +505,15 @@ public class ScheduleController extends BaseApiController {
             statistics = scheduleService.getTodayScheduleStatisticsByConsultant(currentUser.getId());
             log.info("✅ 상담사 오늘의 스케줄 통계 조회 완료 - 상담사 ID: {}", currentUser.getId());
         } else {
-            // 관리자는 전체 통계 조회
-            statistics = scheduleService.getTodayScheduleStatistics();
-            log.info("✅ 관리자 오늘의 스케줄 통계 조회 완료");
+            // 관리자는 테넌트별 통계 조회 (테넌트 ID가 있으면)
+            if (tenantId != null && !tenantId.isEmpty()) {
+                statistics = scheduleService.getTodayScheduleStatisticsByTenant(tenantId);
+                log.info("✅ 테넌트별 오늘의 스케줄 통계 조회 완료 - 테넌트 ID: {}", tenantId);
+            } else {
+                // 테넌트 ID가 없으면 전체 통계 조회 (HQ 관리자용)
+                statistics = scheduleService.getTodayScheduleStatistics();
+                log.info("✅ 전체 오늘의 스케줄 통계 조회 완료");
+            }
         }
         
         return success(statistics);

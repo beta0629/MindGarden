@@ -1,130 +1,142 @@
 /**
- * Consultation Stats Widget
+ * Consultation Stats Widget - 표준화된 위젯
  * 상담소 특화 통계 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0 (표준화 업그레이드)
  * @since 2025-11-22
  */
 
-import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
-import { apiGet } from '../../../../utils/ajax';
+import React from 'react';
+import { useWidget } from '../../../../hooks/useWidget';
+import BaseWidget from '../BaseWidget';
+import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import '../Widget.css';
 
 const ConsultationStatsWidget = ({ widget, user }) => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh,
+    formatValue
+  } = useWidget(widget, user, {
+    immediate: true,
+    cache: true,
+    retryCount: 3
+  });
+
   const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadStats();
-      
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadStats, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (config.stats) {
-      setStats(config.stats);
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-  
-  const loadStats = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // 실제 API 엔드포인트: /api/v1/consultations/statistics/overall
-      // 또는 /api/admin/statistics/overall
-      const url = dataSource.url || '/api/v1/consultations/statistics/overall';
-      const params = dataSource.params || {};
-      
-      const response = await apiGet(url, params);
-      
-      if (response && response.success) {
-        // StatisticsController 응답 형식: { data: {...} }
-        setStats(response.data || response);
-      } else if (response) {
-        // 다른 응답 형식 지원
-        setStats(response);
-      } else {
-        setStats(config.stats || {});
-      }
-    } catch (err) {
-      console.error('ConsultationStatsWidget 데이터 로드 실패:', err);
-      setError(err.message);
-      setStats(config.stats || {});
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  if (loading && !stats) {
+  const metrics = config.metrics || [];
+
+  // 통계 메트릭 렌더링
+  const renderMetric = (metric, value, index) => {
+    const { key, label, icon, format, color } = metric;
+    const formattedValue = formatValue(value, format);
+
     return (
-      <div className="widget widget-consultation-stats">
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
-  }
-  
-  if (error && !stats) {
-    return (
-      <div className="widget widget-consultation-stats widget-error">
-        <div className="widget-title">{config.title || '상담 통계'}</div>
-        <div className="widget-error-message">{error}</div>
-      </div>
-    );
-  }
-  
-  const statsData = stats || {};
-  
-  return (
-    <div className="widget widget-consultation-stats">
-      <div className="widget-header">
-        <div className="widget-title">
-          <i className="bi bi-graph-up"></i>
-          {config.title || '상담 통계'}
+      <div key={index} className={`consultation-metric ${color ? `metric-${color}` : ''}`}>
+        <div className="metric-icon">
+          <i className={`bi ${icon || 'bi-bar-chart'}`}></i>
+        </div>
+        <div className="metric-content">
+          <div className="metric-value">{formattedValue}</div>
+          <div className="metric-label">{label}</div>
         </div>
       </div>
-      <div className="widget-body">
-        <div className="consultation-stats-grid">
-          {config.metrics && config.metrics.map((metric, index) => {
-            const value = statsData[metric.key] || 0;
-            const formattedValue = metric.format === 'number' 
-              ? value.toLocaleString() 
-              : metric.format === 'percentage'
-              ? `${value}%`
-              : value;
-            
-            return (
-              <div key={index} className="consultation-stat-item">
-                <div className="stat-icon">
-                  {metric.icon && <i className={`bi ${metric.icon}`}></i>}
-                </div>
-                <div className="stat-content">
-                  <div className="stat-label">{metric.label}</div>
-                  <div className="stat-value">{formattedValue}</div>
-                  {metric.trend && (
-                    <div className={`stat-trend trend-${metric.trend.direction}`}>
-                      {metric.trend.direction === 'up' ? '↑' : '↓'} {metric.trend.value}%
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
+    );
+  };
+
+  // 상담 통계 렌더링
+  const renderConsultationStats = () => {
+    if (isEmpty) {
+      return (
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+          표시할 상담 통계가 없습니다.
+        </div>
+      );
+    }
+    
+    if (!hasData) {
+      return null; // BaseWidget에서 빈 상태 처리
+    }
+
+    // 메트릭이 정의된 경우 해당 메트릭만 표시
+    if (metrics.length > 0) {
+      return (
+        <div className="consultation-metrics-grid">
+          {metrics.map((metric, index) => {
+            const value = data[metric.key];
+            return renderMetric(metric, value, index);
           })}
         </div>
+      );
+    }
+
+    // 메트릭이 정의되지 않은 경우 모든 데이터 표시
+    const defaultMetrics = [
+      { key: 'totalConsultations', label: '총 상담 수', icon: 'bi-chat-dots', format: 'number' },
+      { key: 'activeConsultations', label: '진행 중인 상담', icon: 'bi-clock', format: 'number', color: 'warning' },
+      { key: 'completedConsultations', label: '완료된 상담', icon: 'bi-check-circle', format: 'number', color: 'success' },
+      { key: 'pendingConsultations', label: '대기 중인 상담', icon: 'bi-hourglass-split', format: 'number', color: 'info' },
+      { key: 'cancelledConsultations', label: '취소된 상담', icon: 'bi-x-circle', format: 'number', color: 'danger' }
+    ];
+
+    return (
+      <div className="consultation-metrics-grid">
+        {defaultMetrics.map((metric, index) => {
+          const value = data[metric.key];
+          if (value !== undefined && value !== null) {
+            return renderMetric(metric, value, index);
+          }
+          return null;
+        }).filter(Boolean)}
       </div>
-    </div>
+    );
+  };
+
+  // 추가 통계 정보 렌더링 (차트, 트렌드 등)
+  const renderAdditionalStats = () => {
+    if (!hasData || !data.trends) return null;
+
+    return (
+      <div className="consultation-trends">
+        <h5>📈 상담 트렌드</h5>
+        <div className="trends-container">
+          {data.trends.map((trend, index) => (
+            <div key={index} className="trend-item">
+              <span className="trend-label">{trend.label}</span>
+              <span className={`trend-value ${trend.change > 0 ? 'positive' : trend.change < 0 ? 'negative' : 'neutral'}`}>
+                {trend.change > 0 && '+'}
+                {trend.change}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      isEmpty={isEmpty}
+      onRefresh={refresh}
+      title={widget.config?.title || WIDGET_CONSTANTS.DEFAULT_TITLES.CONSULTATION_STATS}
+      subtitle={widget.config?.subtitle || ''}
+    >
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTENT}>
+        {renderConsultationStats()}
+        {renderAdditionalStats()}
+      </div>
+    </BaseWidget>
   );
 };
 
 export default ConsultationStatsWidget;
-

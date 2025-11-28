@@ -30,6 +30,14 @@ public interface ClientStatsService {
     List<Map<String, Object>> getAllClientsWithStats();
     
     /**
+     * 테넌트별 내담자 목록 + 통계 정보 조회
+     * 
+     * @param tenantId 테넌트 ID
+     * @return 테넌트별 내담자 목록 + 통계 정보
+     */
+    List<Map<String, Object>> getAllClientsWithStatsByTenant(String tenantId);
+    
+    /**
      * 현재 활성 매핑 수 계산
      * 
      * @param clientId 내담자 ID

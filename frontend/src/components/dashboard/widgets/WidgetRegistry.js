@@ -16,6 +16,9 @@ import CalendarWidget from './CalendarWidget';
 import FormWidget from './FormWidget';
 import CustomWidget from './CustomWidget';
 
+// 테스트 위젯
+import SimpleTestWidget from './SimpleTestWidget';
+
 // 범용 위젯 (MindGarden 컴포넌트 기반, 모든 업종에서 사용 가능)
 import SummaryStatisticsWidget from './SummaryStatisticsWidget';
 import ActivityListWidget from './ActivityListWidget';
@@ -82,6 +85,9 @@ const COMMON_WIDGETS = {
   'notification': NotificationWidget,
   'schedule': ScheduleWidget,
   'rating': RatingWidget,
+  
+  // 테스트 위젯
+  'simple-test': SimpleTestWidget,
   'payment': PaymentWidget,
   'healing-card': HealingCardWidget,
   'purchase-request': PurchaseRequestWidget,
@@ -89,15 +95,19 @@ const COMMON_WIDGETS = {
   // 공통 컴포넌트 기반 위젯
   'header': HeaderWidget,
   'erp-card': ErpCardWidget,
-  // ERP 공통 위젯 (ERP 기능이 활성화된 테넌트에서 사용)
-  'erp-stats-grid': ErpStatsGridWidget,
-  'erp-management-grid': ErpManagementGridWidget,
   // 관리자용 위젯 (공통으로 등록하되 visibility로 제어)
   'system-status': SystemStatusWidget,
   'system-tools': SystemToolsWidget,
   'permission': PermissionWidget,
   'statistics-grid': StatisticsGridWidget,
-  'management-grid': ManagementGridWidget
+  'management-grid': ManagementGridWidget,
+  // 관리자 전용 위젯 (마인드가든 AdminDashboard 기능)
+  'system-overview': StatisticsGridWidget, // 시스템 개요는 통계 그리드 재사용
+  'admin-stats': StatisticsGridWidget,
+  'admin-management': ManagementGridWidget,
+  'admin-system-status': SystemStatusWidget,
+  'admin-system-tools': SystemToolsWidget,
+  'admin-permissions': PermissionWidget
 };
 
 /**

@@ -26,8 +26,8 @@ public class SimpleAdminController extends BaseApiController {
     private final AdminService adminService;
 
     @GetMapping("/hello")
-    public String hello() {
-        return "Admin Test Controller is working!";
+    public ResponseEntity<ApiResponse<String>> hello() {
+        return success("Admin Test Controller is working!");
     }
 
     @PostMapping("/consultants")

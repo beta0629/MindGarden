@@ -19,6 +19,15 @@ const QuickActionsWidget = ({ widget, user }) => {
   const config = widget.config || {};
   const actions = config.actions || [];
   
+  // 디버깅 로그 (개발용)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🚀 QuickActionsWidget 렌더링:', {
+      widget: widget.id,
+      actionsLength: actions.length,
+      userRole: user?.role
+    });
+  }
+  
   const handleActionClick = (action) => {
     if (action.url) {
       navigate(action.url);
@@ -47,6 +56,14 @@ const QuickActionsWidget = ({ widget, user }) => {
   };
   
   const visibleActions = actions.filter(shouldShowAction);
+  
+  // 필터링 결과 로그 (개발용)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🎯 QuickActionsWidget 필터링:', {
+      original: actions.length,
+      visible: visibleActions.length
+    });
+  }
   
   return (
     <div className="widget widget-quick-actions">

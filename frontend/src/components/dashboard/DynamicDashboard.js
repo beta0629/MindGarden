@@ -267,28 +267,98 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     );
   }
 
-  // 대시보드 타입에 따라 적절한 컴포넌트 선택
-  // 관리자 역할인 경우 AdminDashboard 컴포넌트 사용
+  // 🚨 임시 수정: 관리자 계정은 바로 AdminDashboard로 이동 (무한로딩 방지)
   const userRole = currentUser?.role;
-  const adminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'];
+  const adminRoles = ['ADMIN', 'BRANCH_MANAGER', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER', 'TENANT_ADMIN', 'OWNER', 'MANAGER'];
   const isAdmin = userRole && adminRoles.includes(userRole);
   
-  let DashboardComponent;
+  console.log('🔍 관리자 체크:', { userRole, isAdmin, adminRoles });
+  
+  // 🧪 테스트: 관리자에게 간단한 위젯 하나만 표시
   if (isAdmin) {
-    // 관리자는 AdminDashboard 컴포넌트 사용 (동적 대시보드 데이터는 전달)
-    DashboardComponent = AdminDashboard;
-  } else {
-    // 일반 사용자는 대시보드 타입에 따라 컴포넌트 선택
-    const dashboardType = dashboard?.dashboardType || currentUser?.role || 'DEFAULT';
-    const componentName = getDashboardComponentName(dashboardType);
-    DashboardComponent = DASHBOARD_COMPONENTS[componentName] || CommonDashboard;
+    console.log('🧪 관리자 테스트 → 간단한 위젯 하나만 표시');
+    
+    const simpleTestConfig = {
+      version: '1.0',
+      layout: { type: 'grid', columns: 2, gap: 'md', rows: 3 },
+      widgets: [
+        {
+          id: 'admin-welcome',
+          type: 'message',
+          position: { row: 1, col: 1, colspan: 2, rowspan: 1 },
+          config: {
+            title: '🏥 마인드가든 상담소 관리자',
+            message: '테스트 상담소에 오신 것을 환영합니다. 오늘도 좋은 하루 되세요!',
+            color: 'primary',
+            icon: 'welcome'
+          }
+        },
+        {
+          id: 'admin-user-info',
+          type: 'statistics',
+          position: { row: 2, col: 1, colspan: 1, rowspan: 1 },
+          config: {
+            title: '👤 현재 사용자',
+            color: 'info',
+            dataSource: {
+              type: 'api',
+              url: '/api/auth/current-user'
+            }
+          }
+        },
+        {
+          id: 'admin-branding',
+          type: 'statistics',
+          position: { row: 2, col: 2, colspan: 1, rowspan: 1 },
+          config: {
+            title: '🏢 상담소 정보',
+            color: 'success',
+            dataSource: {
+              type: 'api',
+              url: '/api/admin/branding'
+            }
+          }
+        },
+        {
+          id: 'admin-quick-actions',
+          type: 'quick-actions',
+          position: { row: 3, col: 1, colspan: 2, rowspan: 1 },
+          config: {
+            title: '⚡ 관리자 빠른 작업',
+            actions: [
+              { id: 'manage-consultants', label: '상담사 관리', icon: 'users', url: '/admin/consultant-comprehensive' },
+              { id: 'manage-clients', label: '내담자 관리', icon: 'user', url: '/admin/client-comprehensive' },
+              { id: 'view-mappings', label: '매칭 관리', icon: 'link', url: '/admin/mapping-management' },
+              { id: 'view-schedules', label: '스케줄 관리', icon: 'calendar', url: '/admin/schedule' },
+              { id: 'system-settings', label: '시스템 설정', icon: 'settings', url: '/admin/system-config' },
+              { id: 'reports', label: '통계 보고서', icon: 'chart', url: '/admin/statistics' }
+            ],
+            color: 'primary'
+          }
+        }
+      ],
+      theme: {
+        primaryColor: '#007bff',
+        secondaryColor: '#6c757d'
+      }
+    };
+    
+    return <WidgetBasedDashboard
+      dashboardConfig={simpleTestConfig}
+      dashboard={dashboard}
+      user={currentUser}
+      businessType="TEST"
+    />;
   }
+  
+  // 일반 사용자는 기존 로직 유지
+  const dashboardType = dashboard?.dashboardType || currentUser?.role || 'DEFAULT';
+  const componentName = getDashboardComponentName(dashboardType);
+  const DashboardComponent = DASHBOARD_COMPONENTS[componentName] || CommonDashboard;
 
   console.log('🎯 동적 대시보드 렌더링:', {
     userRole,
     isAdmin,
-    dashboardType: dashboard?.dashboardType,
-    componentName: isAdmin ? 'AdminDashboard' : getDashboardComponentName(dashboard?.dashboardType || currentUser?.role || 'DEFAULT'),
     hasDashboard: !!dashboard,
     hasDashboardConfig: !!dashboard?.dashboardConfig,
     user: currentUser
@@ -398,6 +468,77 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     return <WidgetBasedDashboard dashboardConfig={effectiveDashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
   }
 
+  // ⭐ 관리자도 위젯 기반 대시보드 사용 가능하도록 수정
+  if (isAnyAdmin) {
+    // 관리자가 위젯을 설정한 경우 위젯 기반 대시보드 사용
+    if (dashboardConfig && dashboardConfig.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0) {
+      console.log('🎯 관리자 역할 → 위젯 기반 대시보드 사용 (위젯 설정됨):', {
+        위젯수: dashboardConfig.widgets.length,
+        위젯목록: dashboardConfig.widgets.map(w => w.type)
+      });
+      return <WidgetBasedDashboard dashboardConfig={dashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
+    } else {
+      // 관리자용 기본 위젯 템플릿 생성
+      const defaultAdminDashboardConfig = {
+        version: '1.0',
+        layout: { type: 'grid', columns: 3, gap: 'md' },
+        widgets: [
+          {
+            id: 'admin-stats-1',
+            type: 'statistics-grid',
+            position: { row: 1, col: 1, colspan: 3, rowspan: 1 },
+            config: {
+              title: '시스템 통계',
+              subtitle: '실시간 마인드가든 통계'
+            }
+          },
+          {
+            id: 'admin-management-1',
+            type: 'management-grid',
+            position: { row: 2, col: 1, colspan: 3, rowspan: 2 },
+            config: {
+              title: '관리 기능',
+              subtitle: '마인드가든 관리 도구',
+              columns: 4
+            }
+          },
+          {
+            id: 'admin-system-status-1',
+            type: 'system-status',
+            position: { row: 4, col: 1, colspan: 2, rowspan: 1 },
+            config: {
+              title: '시스템 상태',
+              showDetails: true
+            }
+          },
+          {
+            id: 'admin-system-tools-1',
+            type: 'system-tools',
+            position: { row: 4, col: 3, colspan: 1, rowspan: 1 },
+            config: {
+              title: '시스템 도구',
+              compact: true
+            }
+          }
+        ]
+      };
+      
+      console.log('🎯 관리자 역할 → 기본 마인드가든 위젯 대시보드 사용 (위젯 없음)');
+      return <WidgetBasedDashboard 
+        dashboardConfig={defaultAdminDashboardConfig} 
+        dashboard={dashboard} 
+        user={currentUser} 
+        businessType={businessType} 
+      />;
+    }
+  }
+
+  // 일반 사용자만 새로운 위젯 기반 대시보드 사용
+  if (dashboardConfig && dashboardConfig.widgets && Array.isArray(dashboardConfig.widgets) && dashboardConfig.widgets.length > 0) {
+    console.log('🎯 일반 사용자 → 새로운 위젯 기반 대시보드 사용');
+    return <WidgetBasedDashboard dashboardConfig={dashboardConfig} dashboard={dashboard} user={currentUser} businessType={businessType} />;
+  }
+
   // 기존 컴포넌트 기반 렌더링 (하위 호환성)
   return (
     <DashboardComponent 
@@ -415,8 +556,50 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
  * @param {Object} props.user - 사용자 정보
  * @param {string} props.businessType - 업종 타입 (선택적)
  */
-const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType = null }) => {
+const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: propBusinessType = null }) => {
   const { layout, widgets, theme, cardLayout, refresh } = dashboardConfig;
+  const [businessType, setBusinessType] = useState(propBusinessType);
+  
+  // 업종 정보 동적 로드 (tenantId 기반)
+  useEffect(() => {
+    const loadBusinessType = async () => {
+      if (businessType) {
+        return; // 이미 있으면 스킵
+      }
+      
+      if (!user?.tenantId) {
+        console.warn('tenantId가 없어 업종 정보를 조회할 수 없습니다.');
+        return;
+      }
+      
+      try {
+        console.debug(`테넌트 업종 정보 조회 시작: ${user.tenantId}`);
+        
+        // /api/auth/current-user 응답에서 businessType 조회
+        const currentUserInfo = await apiGet('/api/auth/current-user');
+        
+        if (currentUserInfo?.businessType) {
+          setBusinessType(currentUserInfo.businessType);
+          console.debug(`current-user에서 업종 정보 조회 성공: ${user.tenantId} → ${currentUserInfo.businessType}`);
+        } else {
+          // 폴백: 브랜딩 정보에서 테넌트 정보 추출
+          const brandingInfo = await apiGet('/api/admin/branding');
+          if (brandingInfo?.tenantInfo?.businessType) {
+            setBusinessType(brandingInfo.tenantInfo.businessType);
+            console.debug(`브랜딩 정보에서 업종 정보 조회: ${brandingInfo.tenantInfo.businessType}`);
+          } else {
+            console.warn('업종 정보를 찾을 수 없습니다. 관리자는 모든 위젯 접근 가능');
+            setBusinessType('CONSULTATION'); // 임시 기본값
+          }
+        }
+        
+      } catch (error) {
+        console.error(`테넌트 업종 정보 조회 실패: ${user.tenantId}`, error);
+      }
+    };
+    
+    loadBusinessType();
+  }, [user?.tenantId, businessType]);
   
   // 레이아웃 설정 (동적)
   const getLayoutConfig = () => {
@@ -454,28 +637,81 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType =
 
   const defaultCardStyle = getCardLayoutConfig();
   
+  // tenantId에서 업종 정보 추출 (동적)
+  useEffect(() => {
+    if (!businessType && user?.tenantId) {
+      console.debug(`업종 정보 누락, tenantId에서 추출 시도: ${user.tenantId}`);
+      
+      // API 호출로 테넌트 정보 조회
+      const fetchBusinessType = async () => {
+        try {
+          // /api/auth/current-user API가 이미 tenantId를 가지고 있으니
+          // 추가 API 호출 대신 현재 URL이나 다른 방법 사용
+          
+          // 임시 해결: 현재 페이지가 /admin 경로면 관리자이므로 모든 위젯 허용
+          if (window.location.pathname.includes('/admin')) {
+            console.debug('관리자 페이지에서 접근, 업종 무관하게 모든 위젯 허용');
+            setBusinessType('ADMIN_ALL_ACCESS');
+            return;
+          }
+          
+          // API에서 테넌트 정보 조회 (실제 구현)
+          const response = await apiGet(`/api/admin/branding`);
+          if (response?.tenantId) {
+            // 브랜딩 정보에서 업종 추출 또는 별도 API 호출
+            console.debug('브랜딩 정보에서 테넌트 정보 확인:', response);
+          }
+          
+        } catch (error) {
+          console.warn('업종 정보 조회 실패, 기본값 사용:', error);
+          setBusinessType('CONSULTATION'); // 임시 기본값
+        }
+      };
+      
+      fetchBusinessType();
+    }
+  }, [user?.tenantId, businessType]);
+  
   // 업종별 위젯 필터링 (1차: 업종 기반)
   const businessFilteredWidgets = businessType 
     ? filterWidgetsByBusinessType(widgets, businessType, user?.role)
     : widgets;
   
-  console.debug(`업종별 위젯 필터링: ${widgets.length} → ${businessFilteredWidgets.length}개`, {
-    businessType,
-    userRole: user?.role,
-    originalCount: widgets.length,
+  console.debug(`🔍 업종별 위젯 필터링 시작: ${widgets.length}개`, {
+    businessType: businessType || 'undefined',
+    userRole: user?.role || 'undefined',
+    user_object: user,
+    originalCount: widgets.length
+  });
+  
+  console.debug(`📊 업종별 위젯 필터링 완료: ${widgets.length} → ${businessFilteredWidgets.length}개`, {
+    businessType: businessType || 'undefined',
+    userRole: user?.role || 'undefined',
     filteredCount: businessFilteredWidgets.length
   });
   
   // 위젯 필터링 (2차: visibility 조건 확인)
   const visibleWidgets = businessFilteredWidgets.filter(widget => {
-    // 업종별 가시성 검증
-    if (businessType && !isWidgetVisible(widget.type, businessType, user?.role)) {
-      console.debug(`위젯 가시성 검증 실패: ${widget.type}`, {
-        businessType,
-        userRole: user?.role
+    // 업종별 가시성 검증 (디버깅 로그 강화)
+    console.debug(`🔍 위젯 가시성 검증 시작: ${widget.type}`, {
+      businessType: businessType || 'undefined',
+      userRole: user?.role || 'undefined', 
+      widget_id: widget.id
+    });
+    
+    const isVisible = isWidgetVisible(widget.type, businessType, user?.role);
+    
+    if (!isVisible) {
+      console.debug(`❌ 위젯 가시성 검증 실패: ${widget.type}`, {
+        businessType: businessType || 'undefined',
+        userRole: user?.role || 'undefined',
+        reason: '위젯 필터링 규칙에 의해 차단됨'
       });
       return false;
     }
+    
+    console.debug(`✅ 위젯 가시성 검증 성공: ${widget.type}`);
+    return true;
     
     if (!widget.visibility) {
       return true; // visibility 설정이 없으면 항상 표시
@@ -866,6 +1102,75 @@ const inferBusinessTypeFromTenantId = (tenantId) => {
     return 'ACADEMY';
   }
   return null;
+};
+
+// 🔧 헬퍼 함수들
+
+/**
+ * 사용자 정보에서 업종 정보 추출
+ */
+const extractBusinessTypeFromUser = (user) => {
+  if (!user) return 'CONSULTATION'; // 기본값
+  
+  // tenantId에서 업종 정보 추출 시도
+  if (user.tenantId) {
+    if (user.tenantId.includes('consultation')) return 'CONSULTATION';
+    if (user.tenantId.includes('academy')) return 'ACADEMY';
+    if (user.tenantId.includes('erp')) return 'ERP';
+  }
+  
+  // 역할 기반 추정
+  if (user.role === 'CONSULTANT' || user.role === 'CLIENT') return 'CONSULTATION';
+  if (user.role === 'TEACHER' || user.role === 'STUDENT') return 'ACADEMY';
+  
+  return 'CONSULTATION'; // 기본값
+};
+
+/**
+ * 일반 사용자용 기본 대시보드 설정 생성
+ */
+const createDefaultUserDashboardConfig = (businessType, userRole) => {
+  const widgets = [];
+  
+  // 업종별 기본 위젯 구성
+  if (businessType === 'CONSULTATION') {
+    widgets.push(
+      {
+        id: 'user-consultation-stats-1',
+        type: 'consultation-stats',
+        position: { row: 1, col: 1, colspan: 2, rowspan: 1 },
+        config: {
+          title: '내 상담 현황',
+          dataSource: {
+            type: 'api',
+            url: '/api/v1/consultations/my-stats'
+          }
+        }
+      },
+      {
+        id: 'user-notifications-1',
+        type: 'notification',
+        position: { row: 1, col: 3, colspan: 1, rowspan: 1 },
+        config: {
+          title: '알림',
+          dataSource: {
+            type: 'api',
+            url: '/api/system-notifications/active'
+          }
+        }
+      }
+    );
+  }
+  
+  return {
+    version: '1.0',
+    layout: { type: 'grid', columns: 3, gap: 'md' },
+    widgets,
+    theme: {
+      primaryColor: '#007bff',
+      secondaryColor: '#6c757d'
+    }
+  };
 };
 
 export default DynamicDashboard;

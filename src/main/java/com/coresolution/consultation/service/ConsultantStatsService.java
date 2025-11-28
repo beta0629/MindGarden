@@ -30,6 +30,14 @@ public interface ConsultantStatsService {
     List<Map<String, Object>> getAllConsultantsWithStats();
     
     /**
+     * 테넌트별 상담사 목록 + 통계 정보 조회
+     * 
+     * @param tenantId 테넌트 ID
+     * @return 테넌트별 상담사 목록 + 통계 정보
+     */
+    List<Map<String, Object>> getAllConsultantsWithStatsByTenant(String tenantId);
+    
+    /**
      * 현재 활성 내담자 수 계산
      * 
      * @param consultantId 상담사 ID

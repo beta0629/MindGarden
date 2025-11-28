@@ -1,116 +1,191 @@
 /**
  * Statistics Grid Widget
- * 통계 카드 그리드를 표시하는 위젯
- * StatCard 그룹을 위젯화
+ * 실제 마인드가든 관리자 통계를 표시하는 위젯
+ * AdminDashboard의 통계 카드들을 위젯화
  * 
  * @author CoreSolution
- * @version 1.0.0
- * @since 2025-11-22
+ * @version 2.0.0
+ * @since 2025-11-27
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../../utils/ajax';
 import UnifiedLoading from '../../../common/UnifiedLoading';
+import StatCard from '../../../ui/Card/StatCard';
+import { Users, User, Link2, Calendar, CheckCircle, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import '../Widget.css';
 
 const StatisticsGridWidget = ({ widget, user }) => {
-  const [statistics, setStatistics] = useState([]);
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalConsultants: 0,
+    totalClients: 0,
+    totalMappings: 0,
+    activeMappings: 0,
+    todaySchedules: 0,
+    completedSessions: 0,
+    totalRevenue: 0,
+    pendingPayments: 0
+  });
   const [loading, setLoading] = useState(true);
   
   const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  const columns = config.columns || 4;
-  const statisticsList = config.statistics || [];
+  const title = config.title || '시스템 통계';
   
   useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadStatistics();
-      
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadStatistics, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (statisticsList.length > 0) {
-      setStatistics(statisticsList);
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
+    loadRealStatistics();
+    
+    // 5분마다 자동 새로고침
+    const interval = setInterval(loadRealStatistics, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
   
-  const loadStatistics = async () => {
+  const loadRealStatistics = async () => {
     try {
       setLoading(true);
       
-      const url = dataSource.url || '/api/admin/statistics/summary';
-      const response = await apiGet(url);
+      // 실제 마인드가든 관리자 통계 API 호출
+      const [consultantsRes, clientsRes, mappingsRes] = await Promise.all([
+        apiGet('/api/admin/consultants/with-stats').catch(() => ({ data: [] })),
+        apiGet('/api/admin/clients/with-stats').catch(() => ({ data: [] })),
+        apiGet('/api/admin/mappings/stats').catch(() => ({ data: {} }))
+      ]);
       
-      if (response && response.data) {
-        const stats = Array.isArray(response.data) ? response.data : [];
-        setStatistics(stats);
-      }
+      const consultants = consultantsRes.data || [];
+      const clients = clientsRes.data || [];
+      const mappingStats = mappingsRes.data || {};
+      
+      setStats({
+        totalConsultants: consultants.length,
+        totalClients: clients.length,
+        totalMappings: mappingStats.total || 0,
+        activeMappings: mappingStats.active || 0,
+        todaySchedules: mappingStats.todaySchedules || 0,
+        completedSessions: mappingStats.completedSessions || 0,
+        totalRevenue: mappingStats.totalRevenue || 0,
+        pendingPayments: mappingStats.pendingPayments || 0
+      });
+      
+      console.log('📊 실제 마인드가든 통계 로드 완료:', {
+        상담사: consultants.length,
+        내담자: clients.length,
+        매칭: mappingStats.total || 0
+      });
+      
     } catch (err) {
-      console.error('StatisticsGridWidget 데이터 로드 실패:', err);
-      setStatistics([]);
+      console.error('❌ 마인드가든 통계 로드 실패:', err);
     } finally {
       setLoading(false);
     }
   };
   
-  const formatValue = (value, format) => {
-    if (value === null || value === undefined) return '-';
-    
-    switch (format) {
-      case 'currency':
-        return `₩${Number(value).toLocaleString()}`;
-      case 'percentage':
-        return `${Number(value).toFixed(1)}%`;
-      case 'number':
-        return Number(value).toLocaleString();
-      default:
-        return value;
+  // 실제 마인드가든 통계 카드 정의
+  const statCards = [
+    {
+      title: '총 상담사',
+      value: stats.totalConsultants,
+      icon: <User className="mg-v2-icon" />,
+      color: 'blue',
+      onClick: () => navigate('/admin/consultants'),
+      description: '등록된 상담사 수'
+    },
+    {
+      title: '총 내담자',
+      value: stats.totalClients,
+      icon: <Users className="mg-v2-icon" />,
+      color: 'green',
+      onClick: () => navigate('/admin/clients'),
+      description: '등록된 내담자 수'
+    },
+    {
+      title: '총 매칭',
+      value: stats.totalMappings,
+      icon: <Link2 className="mg-v2-icon" />,
+      color: 'purple',
+      onClick: () => navigate('/admin/mappings'),
+      description: '전체 매칭 건수'
+    },
+    {
+      title: '활성 매칭',
+      value: stats.activeMappings,
+      icon: <CheckCircle className="mg-v2-icon" />,
+      color: 'green',
+      onClick: () => navigate('/admin/mappings'),
+      description: '현재 활성 매칭'
+    },
+    {
+      title: '오늘 일정',
+      value: stats.todaySchedules,
+      icon: <Calendar className="mg-v2-icon" />,
+      color: 'orange',
+      onClick: () => navigate('/admin/schedules'),
+      description: '오늘 예정된 상담'
+    },
+    {
+      title: '완료된 세션',
+      value: stats.completedSessions,
+      icon: <CheckCircle className="mg-v2-icon" />,
+      color: 'success',
+      onClick: () => navigate('/admin/sessions'),
+      description: '완료된 상담 세션'
+    },
+    {
+      title: '총 매출',
+      value: `₩${stats.totalRevenue.toLocaleString()}`,
+      icon: <DollarSign className="mg-v2-icon" />,
+      color: 'success',
+      onClick: () => navigate('/admin/finance'),
+      description: '누적 매출액'
+    },
+    {
+      title: '미수금',
+      value: `₩${stats.pendingPayments.toLocaleString()}`,
+      icon: <AlertTriangle className="mg-v2-icon" />,
+      color: 'warning',
+      onClick: () => navigate('/admin/payments'),
+      description: '미납 결제 금액'
     }
-  };
+  ];
   
-  if (loading && statistics.length === 0) {
+  if (loading) {
     return (
       <div className="widget widget-statistics-grid">
-        <UnifiedLoading message="로딩 중..." />
+        <div className="widget-header">
+          <div className="widget-title">
+            <TrendingUp className="mg-v2-icon" />
+            {title}
+          </div>
+        </div>
+        <div className="widget-body">
+          <UnifiedLoading message="통계 데이터 로딩 중..." />
+        </div>
       </div>
     );
   }
   
   return (
     <div className="widget widget-statistics-grid">
-      {config.title && (
-        <div className="widget-header">
-          <div className="widget-title">
-            <i className="bi bi-bar-chart"></i>
-            {config.title}
-          </div>
+      <div className="widget-header">
+        <div className="widget-title">
+          <TrendingUp className="mg-v2-icon" />
+          {title}
         </div>
-      )}
+        <div className="widget-subtitle">실시간 시스템 통계</div>
+      </div>
       <div className="widget-body">
-        <div className={`statistics-grid statistics-grid-${columns}`}>
-          {statistics.map((stat, index) => (
-            <div key={stat.id || index} className="stat-card">
-              {stat.icon && (
-                <div className="stat-card-icon">
-                  <i className={`bi ${stat.icon}`}></i>
-                </div>
-              )}
-              <div className="stat-card-content">
-                <div className="stat-card-value">
-                  {formatValue(stat.value, stat.format)}
-                </div>
-                <div className="stat-card-label">{stat.label}</div>
-                {stat.change !== undefined && (
-                  <div className={`stat-card-change ${stat.changeType || 'neutral'}`}>
-                    {stat.change > 0 ? '+' : ''}{stat.change}%
-                  </div>
-                )}
-              </div>
-            </div>
+        <div className="mg-stats-grid">
+          {statCards.map((card, index) => (
+            <StatCard
+              key={index}
+              title={card.title}
+              value={card.value}
+              icon={card.icon}
+              color={card.color}
+              onClick={card.onClick}
+              description={card.description}
+              loading={loading}
+            />
           ))}
         </div>
       </div>

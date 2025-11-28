@@ -76,12 +76,38 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     @Override
     @Cacheable(value = "consultantsWithStats", key = "'all:active'")
     public List<Map<String, Object>> getAllConsultantsWithStats() {
-        log.info("📊 전체 상담사 통계 조회 (DB)");
+        log.info("📊 전체 상담사 통계 조회 (DB) - 레거시 호환");
         
         // 삭제되지 않고 활성인 상담사만 조회
         List<Consultant> consultants = consultantRepository.findByIsDeletedFalse().stream()
                 .filter(c -> c.getIsActive() != null && c.getIsActive())
                 .collect(Collectors.toList());
+        
+        return buildConsultantStatsList(consultants);
+    }
+    
+    /**
+     * 테넌트별 상담사 통계 조회 (신규 추가)
+     */
+    @Cacheable(value = "consultantsWithStats", key = "'tenant:' + #tenantId + ':active'")
+    public List<Map<String, Object>> getAllConsultantsWithStatsByTenant(String tenantId) {
+        log.info("📊 테넌트별 상담사 통계 조회: tenantId={}", tenantId);
+        
+        // 테넌트별 삭제되지 않고 활성인 상담사만 조회
+        List<Consultant> consultants = consultantRepository.findByIsDeletedFalse().stream()
+                .filter(c -> tenantId.equals(c.getTenantId()))
+                .filter(c -> c.getIsActive() != null && c.getIsActive())
+                .collect(Collectors.toList());
+        
+        log.info("📊 테넌트별 상담사 조회 완료: tenantId={}, 조회된 수={}", tenantId, consultants.size());
+        
+        return buildConsultantStatsList(consultants);
+    }
+    
+    /**
+     * 상담사 목록을 통계와 함께 Map 리스트로 변환 (공통 로직)
+     */
+    private List<Map<String, Object>> buildConsultantStatsList(List<Consultant> consultants) {
         
         return consultants.stream()
                 .map(consultant -> {

@@ -191,8 +191,20 @@ const DashboardManagement = () => {
 
   // 대시보드 수정
   const handleEdit = (dashboard) => {
+    console.log('🔧 대시보드 수정 버튼 클릭:', dashboard);
+    if (!dashboard) {
+      console.error('❌ 대시보드 데이터가 없습니다.');
+      notificationManager.show('대시보드 데이터가 없습니다.', 'error');
+      return;
+    }
+    if (!dashboard.dashboardId) {
+      console.error('❌ 대시보드 ID가 없습니다.');
+      notificationManager.show('대시보드 ID가 없습니다.', 'error');
+      return;
+    }
     setSelectedDashboard(dashboard);
     setShowFormModal(true);
+    console.log('✅ 모달 열기:', { dashboardId: dashboard.dashboardId, showFormModal: true });
   };
 
   // 대시보드 생성
@@ -208,9 +220,14 @@ const DashboardManagement = () => {
   };
 
   // 모달 저장 후 콜백
-  const handleModalSave = async () => {
+  const handleModalSave = async (savedDashboard) => {
+    console.log('✅ 대시보드 저장 완료, 목록 새로고침:', savedDashboard);
     await loadDashboards();
     handleModalClose();
+    notificationManager.show(
+      savedDashboard ? '대시보드가 저장되었습니다.' : '대시보드가 저장되었습니다.',
+      'success'
+    );
   };
 
   // 대시보드 타입 한글 변환
@@ -423,8 +440,15 @@ const DashboardManagement = () => {
                   </MGButton>
                   <MGButton
                     variant="secondary"
-                    onClick={() => handleEdit(dashboard)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('🔘 수정 버튼 클릭 이벤트:', dashboard);
+                      handleEdit(dashboard);
+                    }}
                     className="btn-edit"
+                    disabled={loading || !dashboard || !dashboard.dashboardId}
+                    title={dashboard?.dashboardId ? '대시보드 수정' : '대시보드 ID가 없습니다.'}
                   >
                     <FaEdit /> 수정
                   </MGButton>

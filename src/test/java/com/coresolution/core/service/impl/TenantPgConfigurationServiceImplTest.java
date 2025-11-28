@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doNothing; // 추가
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,10 @@ import com.coresolution.core.dto.TenantPgConfigurationRequest;
 import com.coresolution.core.dto.TenantPgConfigurationResponse;
 import com.coresolution.core.repository.TenantPgConfigurationHistoryRepository;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
+import com.coresolution.core.repository.TenantRepository; // 추가
 import com.coresolution.core.service.PgConnectionTestService;
+import com.coresolution.core.service.TenantPgConfigurationHistoryService;
+import com.coresolution.consultation.service.EmailService; // 추가
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -58,6 +62,18 @@ class TenantPgConfigurationServiceImplTest {
     @Mock
     private List<PgConnectionTestService> connectionTestServices;
     
+    @Mock
+    private com.coresolution.core.security.TenantAccessControlService accessControlService; // 추가
+    
+    @Mock
+    private TenantPgConfigurationHistoryService historyService; // 추가
+
+    @Mock
+    private TenantRepository tenantRepository; // 추가
+    
+    @Mock
+    private EmailService emailService; // 추가
+
     @InjectMocks
     private TenantPgConfigurationServiceImpl service;
     
@@ -84,6 +100,18 @@ class TenantPgConfigurationServiceImplTest {
                 .testMode(false)
                 .build();
         
+        // Create a mock Tenant with a contactEmail and tenantId
+        com.coresolution.core.domain.Tenant mockTenant = mock(com.coresolution.core.domain.Tenant.class);
+        when(mockTenant.getContactEmail()).thenReturn("test@example.com");
+        when(mockTenant.getTenantId()).thenReturn(testTenantId); // Ensure tenantId is set for consistency
+
+        // 모든 테스트에서 사용될 TenantRepository 모의 설정
+        when(tenantRepository.findByTenantIdAndIsDeletedFalse(any(String.class)))
+                .thenReturn(Optional.of(mockTenant));
+
+        // EmailService 모의 설정
+        doNothing().when(emailService).sendEmail(any());
+
         // BaseEntity의 id는 JPA가 자동 생성하므로 테스트에서는 반영하지 않음
     }
     
@@ -198,13 +226,15 @@ class TenantPgConfigurationServiceImplTest {
                 .testMode(false)
                 .build();
         
-        when(encryptionService.encrypt("test-api-key")).thenReturn("encrypted-api-key");
-        when(encryptionService.encrypt("test-secret-key")).thenReturn("encrypted-secret-key");
+        when(encryptionService.encrypt(any(String.class))).thenAnswer(invocation -> "encrypted-" + invocation.getArgument(0)); // 수정
+        when(encryptionService.isEncrypted(any(String.class))).thenReturn(true); // 추가
+        when(encryptionService.ensureActiveKey(any(String.class))).thenAnswer(invocation -> invocation.getArgument(0)); // 추가
         when(configurationRepository.existsByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
                 testTenantId, PgProvider.TOSS, PgConfigurationStatus.ACTIVE))
                 .thenReturn(false);
         when(configurationRepository.save(any(TenantPgConfiguration.class)))
                 .thenReturn(testConfiguration);
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any()); // 추가
         
         // When
         TenantPgConfigurationResponse result = service.createConfiguration(
@@ -309,6 +339,8 @@ class TenantPgConfigurationServiceImplTest {
                 .thenReturn(Optional.of(testConfiguration));
         when(configurationRepository.save(any(TenantPgConfiguration.class)))
                 .thenReturn(testConfiguration);
+        // when(tenantRepository.findByTenantIdAndIsDeletedFalse(any(String.class)))
+        //         .thenReturn(Optional.of(mock(com.coresolution.core.domain.Tenant.class))); // setUp에서 이미 설정됨
         
         // When
         TenantPgConfigurationResponse result = service.approveConfiguration(testConfigId, request);
@@ -328,13 +360,14 @@ class TenantPgConfigurationServiceImplTest {
         // Given
         PgConfigurationRejectRequest request = PgConfigurationRejectRequest.builder()
                 .rejectedBy("admin-user")
-                .rejectionReason("키 검증 실패")
+                .rejectionReason("테스트용 키 검증 실패 사유는 10자 이상") 
                 .build();
         
         when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
                 .thenReturn(Optional.of(testConfiguration));
         when(configurationRepository.save(any(TenantPgConfiguration.class)))
                 .thenReturn(testConfiguration);
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any()); // 추가
         
         // When
         TenantPgConfigurationResponse result = service.rejectConfiguration(testConfigId, request);
@@ -342,7 +375,7 @@ class TenantPgConfigurationServiceImplTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.REJECTED);
-        assertThat(result.getRejectionReason()).isEqualTo("키 검증 실패");
+        assertThat(result.getRejectionReason()).isEqualTo("테스트용 키 검증 실패 사유는 10자 이상");
         
         verify(configurationRepository).findByConfigIdAndIsDeletedFalse(testConfigId);
         verify(configurationRepository).save(any(TenantPgConfiguration.class));
@@ -368,6 +401,8 @@ class TenantPgConfigurationServiceImplTest {
         when(testService.testConnection(testConfiguration)).thenReturn(testResponse);
         when(configurationRepository.save(any(TenantPgConfiguration.class)))
                 .thenReturn(testConfiguration);
+        doNothing().when(accessControlService).validateConfigurationAccess(any(TenantPgConfiguration.class), any(String.class)); 
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any()); // 추가
         
         // When
         ConnectionTestResponse result = service.testConnection(testTenantId, testConfigId);

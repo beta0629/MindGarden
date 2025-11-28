@@ -21,6 +21,7 @@ import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
+import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -78,6 +79,9 @@ class FullSystemIntegrationTest {
     
     @Autowired
     private PersonalDataEncryptionService encryptionService;
+
+    @Autowired
+    private Flyway flyway;
     
     private String testTenantId;
     private Tenant testTenant;
@@ -85,6 +89,10 @@ class FullSystemIntegrationTest {
     
     @BeforeEach
     void setUp() {
+        // 각 테스트 전에 데이터베이스 초기화 및 마이그레이션
+        flyway.clean();
+        flyway.migrate();
+
         // 테스트용 테넌트 생성
         testTenantId = UUID.randomUUID().toString();
         testTenant = Tenant.builder()
@@ -105,7 +113,7 @@ class FullSystemIntegrationTest {
                 .pgName("전체 시스템 테스트 토스페이먼츠")
                 .apiKeyEncrypted(encryptionService.encrypt("test-api-key"))
                 .secretKeyEncrypted(encryptionService.encrypt("test-secret-key"))
-                .merchantId("test-merchant-id")
+                .merchantId("test-merchant-01")
                 .storeId("test-store-id")
                 .webhookUrl("https://api.tosspayments.com/webhook")
                 .returnUrl("https://example.com/return")

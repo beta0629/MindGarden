@@ -93,7 +93,7 @@ public class AdminController extends BaseApiController {
     }
     
     /**
-     * 전체 상담사 통계 정보 조회 (캐시 사용)
+     * 전체 상담사 통계 정보 조회 (테넌트별 필터링)
      * GET /api/admin/consultants/with-stats
      */
     @GetMapping("/consultants/with-stats")
@@ -106,11 +106,20 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
+        String tenantId = currentUser.getTenantId();
         String branchCode = currentUser.getBranchCode();
-        log.info("🔍 현재 사용자 지점코드: {}, 역할: {}", branchCode, currentUser.getRole());
+        log.info("🔍 현재 사용자 정보: tenantId={}, branchCode={}, 역할={}", tenantId, branchCode, currentUser.getRole());
         
-        // 모든 상담사 조회
-        List<Map<String, Object>> allStats = consultantStatsService.getAllConsultantsWithStats();
+        // ⭐ 테넌트별 상담사 조회 (tenant_id 필터링)
+        List<Map<String, Object>> allStats;
+        if (tenantId != null && !tenantId.isEmpty()) {
+            allStats = consultantStatsService.getAllConsultantsWithStatsByTenant(tenantId);
+            log.info("📊 테넌트별 상담사 조회: tenantId={}, 조회된 수={}", tenantId, allStats.size());
+        } else {
+            // 폴백: 전체 조회 (레거시 호환)
+            allStats = consultantStatsService.getAllConsultantsWithStats();
+            log.warn("⚠️ tenantId 없음, 전체 상담사 조회: 조회된 수={}", allStats.size());
+        }
         
         // 지점별 필터링
         List<Map<String, Object>> filteredStats;
@@ -171,11 +180,20 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
+        String tenantId = currentUser.getTenantId();
         String branchCode = currentUser.getBranchCode();
-        log.info("🔍 현재 사용자 지점코드: {}, 역할: {}", branchCode, currentUser.getRole());
+        log.info("🔍 현재 사용자 정보: tenantId={}, branchCode={}, 역할={}", tenantId, branchCode, currentUser.getRole());
         
-        // 모든 내담자 조회
-        List<Map<String, Object>> allStats = clientStatsService.getAllClientsWithStats();
+        // ⭐ 테넌트별 내담자 조회 (tenant_id 필터링)
+        List<Map<String, Object>> allStats;
+        if (tenantId != null && !tenantId.isEmpty()) {
+            allStats = clientStatsService.getAllClientsWithStatsByTenant(tenantId);
+            log.info("📊 테넌트별 내담자 조회: tenantId={}, 조회된 수={}", tenantId, allStats.size());
+        } else {
+            // 폴백: 전체 조회 (레거시 호환)
+            allStats = clientStatsService.getAllClientsWithStats();
+            log.warn("⚠️ tenantId 없음, 전체 내담자 조회: 조회된 수={}", allStats.size());
+        }
         
         // 지점별 필터링
         List<Map<String, Object>> filteredStats;

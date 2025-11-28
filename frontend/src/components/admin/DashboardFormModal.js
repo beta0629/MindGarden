@@ -21,6 +21,7 @@ import DashboardWidgetEditor from './DashboardWidgetEditor';
 import DashboardLayoutEditor from './DashboardLayoutEditor';
 import Dashboard3DPreview from './Dashboard3DPreview';
 import WidgetConfigModal from './WidgetConfigModal';
+import ModernDashboardEditor from './ModernDashboardEditor';
 import './DashboardFormModal.css';
 
 // 대시보드 설정을 JSON 문자열로 변환하는 유틸리티 함수
@@ -51,7 +52,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [errors, setErrors] = useState({});
-  const [editMode, setEditMode] = useState('visual'); // 'visual', 'json', or 'preview'
+  const [editMode, setEditMode] = useState('visual'); // 시각적 편집만 사용
   const [selectedWidget, setSelectedWidget] = useState(null);
   const [showWidgetConfigModal, setShowWidgetConfigModal] = useState(false);
   const [parsedConfig, setParsedConfig] = useState(null);
@@ -352,11 +353,18 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   // 모달이 열릴 때 데이터 로드
   useEffect(() => {
     if (isOpen) {
+      console.log('📂 모달 열림:', { isOpen, dashboard, isEditMode });
       loadTenantRoles();
       loadRoleTemplates();
       
       // 수정 모드인 경우 기존 데이터 설정
       if (dashboard) {
+        console.log('📋 수정 모드 - 대시보드 데이터 로드:', {
+          dashboardId: dashboard.dashboardId,
+          dashboardNameKo: dashboard.dashboardNameKo,
+          tenantRoleId: dashboard.tenantRoleId,
+          dashboardConfig: dashboard.dashboardConfig ? '있음' : '없음'
+        });
         setFormData({
           tenantRoleId: dashboard.tenantRoleId || '',
           dashboardName: dashboard.dashboardName || '',
@@ -656,6 +664,12 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
   // 위젯 변경 핸들러
   const handleWidgetsChange = (newWidgets) => {
+    console.log('🔄 위젯 변경 감지:', {
+      이전위젯수: parsedConfig?.widgets?.length || 0,
+      새위젯수: newWidgets.length,
+      새위젯목록: newWidgets.map(w => ({ id: w.id, type: w.type }))
+    });
+    
     // parsedConfig가 없으면 기본 구조 생성
     const currentConfig = parsedConfig || {
       version: '1.0',
@@ -668,11 +682,25 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       widgets: newWidgets
     };
     
+    const configString = stringifyDashboardConfig(updatedConfig);
+    console.log('📝 위젯 설정 업데이트:', {
+      위젯수: newWidgets.length,
+      설정길이: configString.length,
+      설정미리보기: configString.substring(0, 100) + '...'
+    });
+    
     setParsedConfig(updatedConfig);
-    setFormData(prev => ({
-      ...prev,
-      dashboardConfig: stringifyDashboardConfig(updatedConfig)
-    }));
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        dashboardConfig: configString
+      };
+      console.log('💾 formData.dashboardConfig 업데이트 완료:', {
+        이전길이: prev.dashboardConfig?.length || 0,
+        새길이: configString.length
+      });
+      return updated;
+    });
   };
 
   // 위젯 설정 열기
@@ -737,20 +765,39 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   // 유효성 검사
   const validate = () => {
     const newErrors = {};
-    console.log('🔍 유효성 검사 시작:', { formData, tenantRoles });
+    console.log('🔍 유효성 검사 시작:', { 
+      isEditMode, 
+      formData: {
+        tenantRoleId: formData.tenantRoleId,
+        dashboardNameKo: formData.dashboardNameKo,
+        dashboardConfig: formData.dashboardConfig ? '있음' : '없음'
+      },
+      tenantRoles: tenantRoles.length 
+    });
 
-    if (!formData.tenantRoleId) {
-      console.warn('⚠️ tenantRoleId가 없음:', formData.tenantRoleId);
+    // 수정 모드에서는 tenantRoleId가 이미 설정되어 있어야 함
+    if (!isEditMode && !formData.tenantRoleId) {
+      console.warn('⚠️ 생성 모드: tenantRoleId가 없음');
       newErrors.tenantRoleId = '역할을 선택해주세요.';
-    } else {
-      // 선택된 역할이 실제로 존재하는지 확인
-      const selectedRole = tenantRoles.find(role => role.tenantRoleId === formData.tenantRoleId);
-      if (!selectedRole) {
-        console.error('❌ 선택된 역할이 존재하지 않음:', { 
-          selectedId: formData.tenantRoleId, 
-          availableRoles: tenantRoles.map(r => ({ id: r.tenantRoleId, name: r.nameKo }))
-        });
-        newErrors.tenantRoleId = '선택된 역할이 유효하지 않습니다. 모달을 닫고 다시 열어주세요.';
+    } else if (isEditMode && !formData.tenantRoleId) {
+      console.warn('⚠️ 수정 모드: tenantRoleId가 없음 (기존 데이터에서 가져와야 함)');
+      // 수정 모드에서는 dashboard에서 가져오기
+      if (dashboard && dashboard.tenantRoleId) {
+        setFormData(prev => ({ ...prev, tenantRoleId: dashboard.tenantRoleId }));
+      } else {
+        newErrors.tenantRoleId = '대시보드 역할 정보를 찾을 수 없습니다.';
+      }
+    } else if (formData.tenantRoleId) {
+      // 선택된 역할이 실제로 존재하는지 확인 (수정 모드에서는 모든 역할 목록에 없을 수 있으므로 완화)
+      if (!isEditMode) {
+        const selectedRole = tenantRoles.find(role => role.tenantRoleId === formData.tenantRoleId);
+        if (!selectedRole) {
+          console.error('❌ 선택된 역할이 존재하지 않음:', { 
+            selectedId: formData.tenantRoleId, 
+            availableRoles: tenantRoles.map(r => ({ id: r.tenantRoleId, name: r.nameKo }))
+          });
+          newErrors.tenantRoleId = '선택된 역할이 유효하지 않습니다. 모달을 닫고 다시 열어주세요.';
+        }
       }
     }
 
@@ -804,9 +851,26 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
   // 폼 제출 핸들러
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('🔄 대시보드 생성 시작:', { formData, tenantRoles });
+    e.stopPropagation();
+    console.log('🔄 대시보드 저장 시작:', { 
+      isEditMode, 
+      dashboardId: dashboard?.dashboardId,
+      formData,
+      tenantRoles: tenantRoles.length 
+    });
 
-    if (!validate()) {
+    const validationResult = validate();
+    console.log('🔍 유효성 검사 결과:', { 
+      isValid: validationResult, 
+      errors,
+      formData: {
+        tenantRoleId: formData.tenantRoleId,
+        dashboardNameKo: formData.dashboardNameKo,
+        dashboardConfig: formData.dashboardConfig ? '있음' : '없음'
+      }
+    });
+    
+    if (!validationResult) {
       console.error('❌ 유효성 검사 실패:', errors);
       notificationManager.show('입력한 정보를 확인해주세요.', 'warning');
       return;
@@ -822,6 +886,11 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
       // dashboardConfig 검증 및 기본값 설정
       let dashboardConfigValue = formData.dashboardConfig || '{}';
+      console.log('📋 저장할 dashboardConfig 확인:', {
+        원본길이: dashboardConfigValue.length,
+        위젯수: parsedConfig?.widgets?.length || 0,
+        미리보기: dashboardConfigValue.substring(0, 200) + '...'
+      });
       
       // 빈 문자열이거나 빈 객체인 경우 기본 구조 생성
       if (!dashboardConfigValue || dashboardConfigValue.trim() === '' || dashboardConfigValue.trim() === '{}') {
@@ -888,7 +957,13 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
       const response = await csrfTokenManager[method.toLowerCase()](url, requestData);
 
-      console.log('📥 대시보드 생성 응답:', { status: response.status, ok: response.ok });
+      console.log('📥 대시보드 저장 응답:', { 
+        status: response.status, 
+        ok: response.ok,
+        method,
+        url,
+        isEditMode 
+      });
 
       if (response.ok) {
         const result = await response.json();
@@ -1040,27 +1115,15 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
             <form onSubmit={handleSubmit} className="dashboard-form">
               {/* 역할 선택 */}
               <div className="form-group">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label htmlFor="tenantRoleId" className="form-label" style={{ marginBottom: 0 }}>
+                <div className="mg-form-label-row">
+                  <label htmlFor="tenantRoleId" className="form-label mg-form-label-inline">
                     역할 <span className="required">*</span>
                   </label>
                   {!isEditMode && (
                     <button
                       type="button"
                       onClick={() => setShowAddRoleModal(true)}
-                      className="btn btn-sm btn-primary"
-                      style={{
-                        padding: '4px 12px',
-                        fontSize: '12px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        border: '1px solid #007bff',
-                        borderRadius: '4px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        cursor: 'pointer'
-                      }}
+                      className="mg-btn-add-role"
                       disabled={loading || loadingRoles}
                     >
                       <FaPlus /> 역할 추가
@@ -1096,55 +1159,37 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   <span className="form-error">{errors.tenantRoleId}</span>
                 )}
                 {!isEditMode && formData.tenantRoleId && (
-                  <div className="form-group" style={{ marginTop: '12px' }}>
-                    <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <div className="form-group mg-form-group-spaced">
+                    <label className="checkbox-label mg-checkbox-label-flex">
                       <input
                         type="checkbox"
                         checked={assignRoleToCurrentUser}
                         onChange={(e) => setAssignRoleToCurrentUser(e.target.checked)}
                         disabled={loading}
                       />
-                      <span style={{ fontSize: '14px' }}>
+                      <span className="mg-text-sm">
                         대시보드 생성 후 현재 계정에 이 역할 자동 할당
                       </span>
                     </label>
-                    <small className="form-help" style={{ display: 'block', marginTop: '4px', color: '#666' }}>
+                    <small className="form-help mg-block mg-mt-xs mg-text-tertiary">
                       체크하면 대시보드 생성 후 바로 확인할 수 있습니다.
                     </small>
                   </div>
                 )}
                 {!isEditMode && tenantRoles.length > 0 && (
-                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                  <div className="mg-role-management">
                     <details>
-                      <summary style={{ cursor: 'pointer', userSelect: 'none' }}>
+                      <summary className="mg-role-management-summary">
                         역할 관리
                       </summary>
-                      <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+                      <div className="mg-role-list">
                         {tenantRoles.map(role => (
-                          <div key={role.tenantRoleId} style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center',
-                            padding: '4px 0',
-                            borderBottom: '1px solid #e0e0e0'
-                          }}>
+                          <div key={role.tenantRoleId} className="mg-role-item">
                             <span>{role.nameKo || role.name}</span>
                             <button
                               type="button"
                               onClick={() => handleDeleteRole(role.tenantRoleId, role.nameKo || role.name)}
-                              className="btn btn-sm btn-danger"
-                              style={{
-                                padding: '2px 8px',
-                                fontSize: '11px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                border: '1px solid #dc3545',
-                                borderRadius: '4px',
-                                backgroundColor: '#dc3545',
-                                color: 'white',
-                                cursor: 'pointer'
-                              }}
+                              className="mg-btn-delete-role"
                               disabled={loading}
                               title="역할 삭제"
                             >
@@ -1163,7 +1208,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 <label htmlFor="dashboardNameKo" className="form-label">
                   대시보드 이름
                   {!isEditMode && (
-                    <span className="form-help" style={{ marginLeft: '8px', fontSize: '12px', color: '#666', fontWeight: 'normal' }}>
+                    <span className="form-help mg-ml-sm mg-text-xs mg-text-tertiary mg-font-normal">
                       (역할 선택 시 자동 생성)
                     </span>
                   )}
@@ -1183,14 +1228,14 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   <span className="form-error">{errors.dashboardNameKo}</span>
                 )}
                 {!isEditMode && formData.tenantRoleId && !formData.dashboardNameKo && (
-                  <small className="form-help" style={{ color: '#28a745' }}>
+                  <small className="form-help mg-text-success">
                     ✅ 역할 선택 시 자동으로 이름이 생성됩니다
                   </small>
                 )}
               </div>
 
               {/* 대시보드 이름 (영문) - 자동 생성, 선택적 */}
-              <div className="form-group" style={{ display: 'none' }}>
+              <div className="form-group mg-hidden">
                 <label htmlFor="dashboardNameEn" className="form-label">
                   대시보드 이름 (영문)
                 </label>
@@ -1206,7 +1251,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               </div>
 
               {/* 대시보드 타입 - 자동 설정, 숨김 */}
-              <div className="form-group" style={{ display: 'none' }}>
+              <div className="form-group mg-hidden">
                 <label htmlFor="dashboardType" className="form-label">
                   대시보드 타입
                 </label>
@@ -1231,22 +1276,11 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
               {/* 설명 - 선택적, 접기/펼치기 */}
               <div className="form-group">
-                <details style={{ marginTop: '8px' }}>
-                  <summary style={{ 
-                    cursor: 'pointer', 
-                    color: '#666', 
-                    fontSize: '14px',
-                    userSelect: 'none',
-                    padding: '8px',
-                    borderRadius: '4px',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
-                  onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                  >
+                <details className="mg-advanced-settings">
+                  <summary className="mg-advanced-settings-summary">
                     ⚙️ 고급 설정 (선택사항)
                   </summary>
-                  <div style={{ marginTop: '16px', paddingLeft: '8px' }}>
+                  <div className="mg-advanced-settings-content">
                     {/* 설명 */}
                     <div className="form-group">
                       <label htmlFor="description" className="form-label">
@@ -1312,243 +1346,48 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               <div className="form-group">
                 <label className="form-label">
                   위젯 설정
-                  <span className="form-help" style={{ marginLeft: '8px', fontSize: '12px', color: '#666', fontWeight: 'normal' }}>
+                  <span className="form-help mg-ml-sm mg-text-xs mg-text-tertiary mg-font-normal">
                     (드래그 앤 드롭으로 쉽게 편집)
                   </span>
                 </label>
                 
-                {/* 편집 모드 전환 탭 */}
-                <div className="edit-mode-tabs" style={{
-                  display: 'flex',
-                  gap: '8px',
-                  marginBottom: '16px',
-                  borderBottom: '2px solid #e0e0e0'
-                }}>
-                  <button
-                    type="button"
-                    onClick={() => setEditMode('visual')}
-                    className={`edit-mode-tab ${editMode === 'visual' ? 'active' : ''}`}
-                    style={{
-                      padding: '10px 20px',
-                      border: 'none',
-                      background: 'none',
-                      cursor: 'pointer',
-                      borderBottom: editMode === 'visual' ? '3px solid #007bff' : '3px solid transparent',
-                      color: editMode === 'visual' ? '#007bff' : '#666',
-                      fontWeight: editMode === 'visual' ? '600' : '400',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    🎨 시각적 편집
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditMode('preview')}
-                    className={`edit-mode-tab ${editMode === 'preview' ? 'active' : ''}`}
-                    style={{
-                      padding: '10px 20px',
-                      border: 'none',
-                      background: 'none',
-                      cursor: 'pointer',
-                      borderBottom: editMode === 'preview' ? '3px solid #007bff' : '3px solid transparent',
-                      color: editMode === 'preview' ? '#007bff' : '#666',
-                      fontWeight: editMode === 'preview' ? '600' : '400',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    👁️ 3D 미리보기
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditMode('json')}
-                    className={`edit-mode-tab ${editMode === 'json' ? 'active' : ''}`}
-                    style={{
-                      padding: '10px 20px',
-                      border: 'none',
-                      background: 'none',
-                      cursor: 'pointer',
-                      borderBottom: editMode === 'json' ? '3px solid #007bff' : '3px solid transparent',
-                      color: editMode === 'json' ? '#007bff' : '#666',
-                      fontWeight: editMode === 'json' ? '600' : '400',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    📝 JSON 편집
-                  </button>
+                {/* 편집 헤더 (탭 제거) */}
+                <div className="mg-v2-edit-header">
+                  <h3 className="mg-v2-section-title">
+                    <LayoutDashboard className="mg-v2-icon" />
+                    ⚡ 위젯 편집
+                  </h3>
+                  <p className="mg-v2-section-subtitle">
+                    위젯을 클릭으로 추가하고 드래그로 배치하세요
+                  </p>
                 </div>
 
-                {/* 3D 미리보기 모드 */}
-                {editMode === 'preview' ? (
-                  <div className="preview-editor-container" style={{
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    backgroundColor: '#fafafa',
-                    minHeight: '400px'
-                  }}>
-                    <Dashboard3DPreview
-                      dashboardConfig={parsedConfig}
-                      dashboardName={formData.dashboardNameKo || '대시보드 미리보기'}
-                    />
-                  </div>
-                ) : editMode === 'visual' ? (
-                  /* 시각적 편집 모드 */
-                  <div className="visual-editor-container" style={{
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    backgroundColor: '#fafafa',
-                    minHeight: '400px'
-                  }}>
+                {/* 마인드가든 표준 위젯 편집기 */}
+                <div className="mg-v2-editor-container">
                     {parsedConfig ? (
-                      <>
-                        <div style={{ 
-                          marginBottom: '16px', 
-                          padding: '12px', 
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          borderRadius: '8px',
-                          color: 'white',
-                          fontSize: '14px',
-                          lineHeight: '1.6'
-                        }}>
-                          <strong>💡 사용 방법:</strong>
-                          <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
-                            <li>위젯 목록에서 <strong>드래그</strong>하여 레이아웃 영역으로 드롭하세요</li>
-                            <li>또는 위젯을 <strong>클릭</strong>하여 추가할 수 있습니다</li>
-                            <li>레이아웃 영역에서 위젯을 <strong>드래그</strong>하여 위치를 변경할 수 있습니다</li>
-                            <li>위젯의 <strong>설정</strong> 버튼을 클릭하여 세부 설정을 변경할 수 있습니다</li>
-                          </ul>
-                        </div>
-                        <DashboardWidgetEditor
-                          widgets={parsedConfig.widgets || []}
-                          onWidgetsChange={handleWidgetsChange}
-                          onWidgetConfig={handleWidgetConfig}
-                          onWidgetDelete={handleWidgetDelete}
-                          businessType={businessType}
-                        />
-                        <div style={{ marginTop: '24px' }}>
-                          <DashboardLayoutEditor
+                        <div className="mg-v2-editor-complete">
+                          <div className="mg-v2-editor-guide">
+                            <h4 className="mg-v2-guide-title">💡 사용 방법</h4>
+                            <ul className="mg-v2-guide-list">
+                              <li>위젯을 <strong>클릭</strong>하여 추가</li>
+                              <li>위젯을 <strong>드래그</strong>하여 위치 변경</li>
+                              <li><strong>🗑️ 버튼</strong>으로 위젯 삭제</li>
+                              <li><strong>⚙️ 버튼</strong>으로 위젯 설정</li>
+                            </ul>
+                          </div>
+                          
+                          <ModernDashboardEditor
                             widgets={parsedConfig.widgets || []}
                             onWidgetsChange={handleWidgetsChange}
-                            onWidgetConfig={handleWidgetConfig}
-                            onWidgetDelete={handleWidgetDelete}
-                            columns={parsedConfig.layout?.columns || 3}
+                            businessType={businessType}
                           />
                         </div>
-                      </>
                     ) : (
-                      <div style={{ 
-                        textAlign: 'center', 
-                        padding: '40px',
-                        color: '#999'
-                      }}>
+                      <div className="mg-v2-loading-placeholder">
                         <p>위젯 설정을 불러오는 중...</p>
                       </div>
                     )}
-                  </div>
-                ) : (
-                  /* JSON 편집 모드 */
-                  <div className="json-editor-container">
-                    <textarea
-                      id="dashboardConfig"
-                      value={formData.dashboardConfig}
-                      onChange={(e) => {
-                        handleChange('dashboardConfig', e.target.value);
-                        // JSON 변경 시 parsedConfig 동기화 시도
-                        try {
-                          const parsed = JSON.parse(e.target.value);
-                          setParsedConfig(parsed);
-                        } catch (error) {
-                          // JSON 파싱 실패 시 무시 (에러는 validate에서 처리)
-                        }
-                      }}
-                      className={`form-input ${errors.dashboardConfig ? 'error' : ''}`}
-                      placeholder={`{
-  "version": "1.0",
-  "layout": {
-    "type": "grid",
-    "columns": 3
-  },
-  "widgets": [
-    {
-      "id": "widget-1",
-      "type": "welcome",
-      "position": { "row": 0, "col": 0, "span": 3 }
-    }
-  ]
-}`}
-                      rows="12"
-                      disabled={loading}
-                      style={{
-                        fontFamily: 'monospace',
-                        fontSize: '13px'
-                      }}
-                    />
-                    {errors.dashboardConfig && (
-                      <span className="form-error">{errors.dashboardConfig}</span>
-                    )}
-                    <div className="form-help" style={{ marginTop: '8px' }}>
-                      <p style={{ marginBottom: '8px', fontWeight: '500' }}>
-                        📝 <strong>JSON이란?</strong> 데이터를 표현하는 텍스트 형식입니다. 위젯의 배치와 설정을 저장합니다.
-                      </p>
-                      <p style={{ marginBottom: '8px' }}>
-                        <strong>작성 방법:</strong>
-                      </p>
-                      <ul style={{ marginLeft: '20px', marginBottom: '8px', lineHeight: '1.6' }}>
-                        <li>중괄호 <code>{`{}`}</code>로 시작하고 끝나야 합니다</li>
-                        <li>각 항목은 쉼표 <code>,</code>로 구분합니다</li>
-                        <li>문자열은 큰따옴표 <code>"</code>로 감싸야 합니다</li>
-                        <li>위의 예시를 복사해서 수정하시면 쉽습니다</li>
-                      </ul>
-                      <p style={{ marginBottom: '4px', color: '#666', fontSize: '0.9em' }}>
-                        💡 <strong>팁:</strong> 시각적 편집 모드로 전환하면 드래그 앤 드롭으로 쉽게 편집할 수 있습니다.
-                      </p>
-                      <details style={{ marginTop: '8px' }}>
-                        <summary style={{ cursor: 'pointer', color: '#007bff', fontSize: '0.9em' }}>
-                          📋 자세한 예시 보기
-                        </summary>
-                        <pre style={{ 
-                          marginTop: '8px', 
-                          padding: '12px', 
-                          backgroundColor: '#f5f5f5', 
-                          borderRadius: '4px', 
-                          fontSize: '0.85em',
-                          overflow: 'auto',
-                          maxHeight: '300px'
-                        }}>
-{`{
-  "version": "1.0",
-  "layout": {
-    "type": "grid",
-    "columns": 3,
-    "gap": "md"
-  },
-  "widgets": [
-    {
-      "id": "widget-welcome",
-      "type": "welcome",
-      "position": { "row": 0, "col": 0, "span": 3 },
-      "config": {}
-    },
-    {
-      "id": "widget-stats",
-      "type": "summary-statistics",
-      "position": { "row": 1, "col": 0, "span": 2 },
-      "config": {}
-    },
-    {
-      "id": "widget-activity",
-      "type": "activity-list",
-      "position": { "row": 1, "col": 2, "span": 1 },
-      "config": {}
-    }
-  ]
-}`}
-                        </pre>
-                      </details>
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
 
               {/* 액션 버튼 */}
@@ -1562,9 +1401,27 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   취소
                 </MGButton>
                 <MGButton
-                  type="submit"
+                  type="button"
                   variant="primary"
                   disabled={loading}
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔘 저장 버튼 클릭:', { 
+                      isEditMode, 
+                      loading, 
+                      dashboardId: dashboard?.dashboardId,
+                      formData: {
+                        dashboardNameKo: formData.dashboardNameKo,
+                        tenantRoleId: formData.tenantRoleId,
+                        dashboardConfig: formData.dashboardConfig ? '있음' : '없음'
+                      }
+                    });
+                    
+                    // 직접 handleSubmit 호출
+                    const fakeEvent = { preventDefault: () => {}, stopPropagation: () => {} };
+                    await handleSubmit(fakeEvent);
+                  }}
                 >
                   {loading ? '저장 중...' : (isEditMode ? '수정' : '생성')}
                 </MGButton>
@@ -1590,7 +1447,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       {/* 역할 추가 모달 */}
       {showAddRoleModal && (
         <div className="dashboard-form-modal-overlay" onClick={() => setShowAddRoleModal(false)}>
-          <div className="dashboard-form-modal" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="dashboard-form-modal mg-add-role-modal" onClick={(e) => e.stopPropagation()}>
             <div className="dashboard-form-modal-header">
               <div className="dashboard-form-modal-title">
                 <FaPlus className="modal-icon" />
@@ -1707,7 +1564,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 </>
               )}
 
-              <div className="dashboard-form-modal-actions" style={{ marginTop: '24px' }}>
+              <div className="dashboard-form-modal-actions mg-add-role-modal-actions">
                 <MGButton
                   type="button"
                   variant="secondary"

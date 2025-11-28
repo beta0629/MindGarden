@@ -17,6 +17,7 @@ import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
+import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -70,6 +71,9 @@ class UserScenarioTest {
     
     @Autowired
     private PersonalDataEncryptionService encryptionService;
+
+    @Autowired
+    private Flyway flyway;
     
     private String testTenantId;
     private Tenant testTenant;
@@ -77,6 +81,10 @@ class UserScenarioTest {
     
     @BeforeEach
     void setUp() {
+        // 각 테스트 전에 데이터베이스 초기화 및 마이그레이션
+        flyway.clean();
+        flyway.migrate();
+        
         // 테스트용 테넌트 생성
         testTenantId = UUID.randomUUID().toString();
         testTenant = Tenant.builder()
@@ -123,7 +131,7 @@ class UserScenarioTest {
                 .pgName("토스페이먼츠")
                 .apiKey("test-api-key-12345")
                 .secretKey("test-secret-key-67890")
-                .merchantId("test-merchant-id")
+                .merchantId("test-merchant-01")
                 .storeId("test-store-id")
                 .webhookUrl("https://example.com/webhook")
                 .returnUrl("https://example.com/return")
@@ -230,7 +238,7 @@ class UserScenarioTest {
                 .pgName("기존 토스페이먼츠")
                 .apiKeyEncrypted(encryptionService.encrypt("existing-api-key"))
                 .secretKeyEncrypted(encryptionService.encrypt("existing-secret-key"))
-                .merchantId("existing-merchant-id")
+                .merchantId("exist-merchant-01")
                 .status(PgConfigurationStatus.ACTIVE)
                 .approvalStatus(ApprovalStatus.APPROVED)
                 .requestedBy("test-user")
@@ -322,7 +330,7 @@ class UserScenarioTest {
                 .pgName("변경된 토스페이먼츠")
                 .apiKey("new-api-key-12345")
                 .secretKey("new-secret-key-67890")
-                .merchantId("new-merchant-id")
+                .merchantId("new-merchant-01")
                 .testMode(true)
                 .notes("PG 설정 변경 요청")
                 .build();
@@ -373,7 +381,7 @@ class UserScenarioTest {
                 .pgName("수정된 토스페이먼츠")
                 .apiKey("correct-api-key-12345")
                 .secretKey("correct-secret-key-67890")
-                .merchantId("correct-merchant-id")
+                .merchantId("correct-merchant-01")
                 .testMode(true)
                 .notes("수정 후 재요청")
                 .build();

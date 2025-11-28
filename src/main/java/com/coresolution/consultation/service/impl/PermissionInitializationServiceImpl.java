@@ -1,10 +1,14 @@
 package com.coresolution.consultation.service.impl;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.Permission;
 import com.coresolution.consultation.entity.RolePermission;
+import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.PermissionRepository;
 import com.coresolution.consultation.repository.LegacyRolePermissionRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.service.PermissionInitializationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +25,8 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     
     private final PermissionRepository permissionRepository;
     private final LegacyRolePermissionRepository rolePermissionRepository;
+    private final CommonCodeRepository commonCodeRepository;
+    private final ObjectMapper objectMapper;
     
     @Override
     @Transactional
@@ -115,14 +121,8 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "VIEW_ALL_BRANCHES", "MANAGE_BRANCHES", "BRANCH_STATISTICS_VIEW"
         );
         
-        // ADMIN 권한 (일반 관리자 - ERP 접근 불가)
-        List<String> adminPermissions = List.of(
-            "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
-            "MAPPING_VIEW", "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW",
-            "ACCESS_SCHEDULE_MANAGEMENT", "SCHEDULE_MANAGE", "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
-            "CONSULTATION_RECORD_VIEW", "ADMIN_CONSULTATION_VIEW", "STATISTICS_VIEW", "CONSULTATION_STATISTICS_VIEW",
-            "SYSTEM_NOTIFICATION_MANAGE"
-        );
+        // ADMIN 권한 (공통코드에서 동적 조회)
+        List<String> adminPermissions = getPermissionsFromCommonCode("ADMIN_PERMISSIONS");
         
         // HQ_ADMIN 권한
         List<String> hqAdminPermissions = List.of(
@@ -190,6 +190,74 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         createRolePermissions("CLIENT", clientPermissions);
         
         log.info("기본 역할별 권한 매핑 초기화 완료");
+    }
+    
+    /**
+     * 공통코드에서 권한 목록 동적 조회
+     * @param codeGroup 권한 공통코드 그룹
+     * @return 권한 코드 목록
+     */
+    private List<String> getPermissionsFromCommonCode(String codeGroup) {
+        try {
+            log.info("📋 공통코드에서 권한 조회: {}", codeGroup);
+            
+            List<CommonCode> permissions = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(codeGroup);
+            
+            List<String> permissionCodes = permissions.stream()
+                .filter(code -> isAutoGrantPermission(code.getExtraData()))
+                .map(CommonCode::getCodeValue)
+                .collect(Collectors.toList());
+            
+            log.info("✅ 공통코드 권한 조회 완료: {} → {}개", codeGroup, permissionCodes.size());
+            return permissionCodes;
+            
+        } catch (Exception e) {
+            log.error("❌ 공통코드 권한 조회 실패: {}", codeGroup, e);
+            
+            // 폴백: 최소 필수 권한 반환
+            return getMinimalAdminPermissions();
+        }
+    }
+    
+    /**
+     * auto_grant 여부 확인
+     */
+    private boolean isAutoGrantPermission(String extraData) {
+        if (extraData == null || extraData.trim().isEmpty()) {
+            return true; // 기본값: 자동 부여
+        }
+        
+        try {
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> data = objectMapper.readValue(extraData, java.util.Map.class);
+            Object autoGrant = data.get("auto_grant");
+            
+            if (autoGrant instanceof Boolean) {
+                return (Boolean) autoGrant;
+            } else if (autoGrant instanceof String) {
+                return Boolean.parseBoolean((String) autoGrant);
+            }
+            
+            return true; // 기본값
+            
+        } catch (Exception e) {
+            log.warn("extra_data 파싱 실패, 자동 부여로 처리: {}", extraData);
+            return true;
+        }
+    }
+    
+    /**
+     * 최소 필수 ADMIN 권한 (공통코드 실패 시 폴백)
+     */
+    private List<String> getMinimalAdminPermissions() {
+        return List.of(
+            "DASHBOARD_VIEW",
+            "USER_MANAGE", 
+            "CLIENT_MANAGE",
+            "CONSULTANT_MANAGE",
+            "MAPPING_VIEW",
+            "STATISTICS_VIEW"
+        );
     }
     
     @Override

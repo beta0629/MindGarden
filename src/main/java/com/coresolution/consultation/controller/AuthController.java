@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.AuthRequest;
@@ -23,7 +24,9 @@ import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
+import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.repository.TenantRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +51,7 @@ public class AuthController extends BaseApiController {
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserRepository userRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
+    private final TenantRepository tenantRepository;
     private final AuthService authService;
     private final BranchService branchService;
     private final UserSessionService userSessionService;
@@ -136,6 +140,22 @@ public class AuthController extends BaseApiController {
         
         // 테넌트 정보 추가
         userInfo.put("tenantId", user.getTenantId());
+        
+        // 테넌트의 businessType 추가 (동적 조회)
+        if (user.getTenantId() != null && !user.getTenantId().isEmpty()) {
+            try {
+                Optional<Tenant> tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(user.getTenantId());
+                if (tenant.isPresent()) {
+                    userInfo.put("businessType", tenant.get().getBusinessType());
+                    log.debug("테넌트 업종 정보 추가: tenantId={}, businessType={}", 
+                        user.getTenantId(), tenant.get().getBusinessType());
+                } else {
+                    log.warn("테넌트를 찾을 수 없습니다: tenantId={}", user.getTenantId());
+                }
+            } catch (Exception e) {
+                log.warn("테넌트 업종 정보 조회 실패: tenantId={}, error={}", user.getTenantId(), e.getMessage());
+            }
+        }
         
         // 지점 정보 추가 (공통코드 기반)
         userInfo.put("branchId", user.getBranch() != null ? user.getBranch().getId() : null);

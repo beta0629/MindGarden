@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/auth/tenant")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class MultiTenantController extends BaseApiController {
     
     private final MultiTenantUserService multiTenantUserService;

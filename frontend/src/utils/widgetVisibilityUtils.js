@@ -15,6 +15,7 @@ import {
 } from '../components/dashboard/widgets/WidgetRegistry';
 
 import { apiGet } from './ajax';
+import { sessionManager } from './sessionManager';
 
 /**
  * 업종별 허용 위젯 타입 반환 (동적)
@@ -128,8 +129,15 @@ export const isWidgetVisible = (widgetType, businessType, userRole = null) => {
     return false;
   }
   
+  // ⭐ 관리자 특권: 업종 정보 없어도 모든 위젯 접근 가능 (최우선)
+  if (userRole === 'ADMIN') {
+    console.debug(`✅ ADMIN 특권으로 위젯 접근 허용: ${widgetType}, 역할: ${userRole}, 업종: ${businessType || 'N/A'}`);
+    return true;
+  }
+  
+  // 일반 사용자는 업종 정보 필수
   if (!businessType) {
-    console.warn('업종 정보가 필요합니다.');
+    console.warn(`❌ 업종 정보 필요 (일반 사용자). 위젯: ${widgetType} | 업종: ${businessType || 'undefined'} | 역할: ${userRole}`);
     return false;
   }
   
@@ -138,13 +146,13 @@ export const isWidgetVisible = (widgetType, businessType, userRole = null) => {
   const isAllowed = allowedTypes.includes(normalizedType);
   
   if (!isAllowed) {
-    console.debug(`위젯 접근 거부: ${widgetType}, 업종: ${businessType}`);
+    console.debug(`위젯 접근 거부: ${widgetType}, 업종: ${businessType}, 역할: ${userRole}`);
     return false;
   }
   
-  // 관리자 위젯은 추가 역할 검증
+  // 관리자 위젯은 추가 역할 검증 (2단계에서 공통코드로 개선 예정)
   if (isAdminWidget(normalizedType)) {
-    const hasAdminRole = isAdminRole(userRole);
+    const hasAdminRole = (userRole === 'ADMIN'); // 1단계 임시
     if (!hasAdminRole) {
       console.debug(`관리자 위젯 접근 거부: ${widgetType}, 역할: ${userRole}`);
       return false;
@@ -248,8 +256,50 @@ const isAdminRole = (userRole) => {
     return false;
   }
   
-  // 역할 권한 정보를 동적으로 조회
-  return checkRoleHasAdminPermission(userRole);
+  // 임시: 동기 버전 (캐시 우선, API는 백그라운드에서 업데이트)
+  const cacheKey = `admin_permission_${userRole}`;
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const { hasPermission } = JSON.parse(cached);
+      console.debug(`관리자 권한 캐시 사용: ${userRole} → ${hasPermission}`);
+      return hasPermission;
+    } catch (e) {
+      console.warn(`캐시 파싱 실패: ${userRole}`, e);
+    }
+  }
+  
+  // 비동기로 공통코드에서 조회하고 캐시 업데이트 (백그라운드)
+  checkRoleHasAdminPermission(userRole).then(hasPermission => {
+    sessionStorage.setItem(cacheKey, JSON.stringify({
+      hasPermission,
+      timestamp: Date.now(),
+      fromCommonCode: true
+    }));
+    console.debug(`공통코드 기반 관리자 권한 캐시 업데이트: ${userRole} → ${hasPermission}`);
+  }).catch(error => {
+    console.warn(`공통코드 관리자 권한 조회 실패: ${userRole}`, error);
+  });
+  
+  // 캐시가 없으면 현재 세션 기반으로 임시 판단
+  const currentUser = sessionManager?.getUser?.();
+  if (currentUser && currentUser.role === userRole) {
+    const isOnAdminPage = window.location.pathname.includes('/admin');
+    const hasAdminInName = userRole.toUpperCase().includes('ADMIN');
+    const result = isOnAdminPage || hasAdminInName;
+    
+    // 임시 결과를 캐시에 저장 (1분 단기 캐시)
+    sessionStorage.setItem(cacheKey, JSON.stringify({
+      hasPermission: result,
+      timestamp: Date.now(),
+      temporary: true
+    }));
+    
+    console.debug(`세션 기반 임시 관리자 권한: ${userRole} → ${result}`);
+    return result;
+  }
+  
+  return false;
 };
 
 /**
@@ -257,26 +307,93 @@ const isAdminRole = (userRole) => {
  * @param {string} userRole - 사용자 역할
  * @returns {boolean} 관리자 권한 여부
  */
-const checkRoleHasAdminPermission = (userRole) => {
-  // 역할 권한 캐시에서 조회
-  const cachedPermissions = sessionStorage.getItem(`role_permissions_${userRole}`);
-  if (cachedPermissions) {
-    try {
-      const permissions = JSON.parse(cachedPermissions);
-      return permissions.includes('ADMIN_ACCESS') || permissions.includes('WIDGET_ADMIN');
-    } catch (e) {
-      console.warn(`역할 권한 파싱 실패: ${userRole}`, e);
+const checkRoleHasAdminPermission = async (userRole) => {
+  try {
+    // 1. 캐시에서 관리자 권한 확인
+    const cacheKey = `admin_permission_${userRole}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      const { hasPermission, timestamp } = JSON.parse(cached);
+      // 30분 캐시
+      if (Date.now() - timestamp < 30 * 60 * 1000) {
+        console.debug(`관리자 권한 캐시 사용: ${userRole} → ${hasPermission}`);
+        return hasPermission;
+      }
     }
+    
+    // 2. 공통코드에서 해당 역할의 권한 레벨 조회
+    const roleInfo = await fetchRoleInfoFromCommonCode(userRole);
+    
+    // 3. 권한 레벨이 관리자 레벨인지 확인 (공통코드 기반)
+    const hasPermission = await checkAdminLevelFromCommonCode(roleInfo);
+    
+    // 4. 결과 캐시에 저장
+    sessionStorage.setItem(cacheKey, JSON.stringify({
+      hasPermission,
+      timestamp: Date.now()
+    }));
+    
+    console.debug(`관리자 권한 확인 (공통코드): ${userRole} → ${hasPermission}`);
+    return hasPermission;
+    
+  } catch (error) {
+    console.warn(`관리자 권한 확인 실패: ${userRole}`, error);
+    
+    // 최후 폴백: 현재 사용자 세션 정보에서 확인
+    const currentUser = sessionManager?.getUser?.();
+    if (currentUser && currentUser.role === userRole) {
+      // 관리자 대시보드에 접근했다면 관리자 권한이 있다고 간주
+      const isOnAdminPage = window.location.pathname.includes('/admin');
+      console.debug(`세션 기반 관리자 권한 확인: ${userRole} → ${isOnAdminPage}`);
+      return isOnAdminPage;
+    }
+    
+    return false;
+  }
+};
+
+/**
+ * 공통코드에서 역할 정보 조회
+ * @param {string} userRole - 사용자 역할
+ * @returns {Promise<Object>} 역할 정보
+ */
+const fetchRoleInfoFromCommonCode = async (userRole) => {
+  // USER_ROLES 공통코드 그룹에서 해당 역할 조회
+  const response = await apiGet(`/api/v1/common-codes?codeGroup=USER_ROLES&codeValue=${userRole}`);
+  
+  if (response && Array.isArray(response) && response.length > 0) {
+    const roleData = response[0];
+    return {
+      codeValue: roleData.code_value,
+      codeLabel: roleData.code_label,
+      extraData: roleData.extra_data ? JSON.parse(roleData.extra_data) : {}
+    };
   }
   
-  // API에서 권한 조회 (향후 구현)
-  // return await fetchRolePermissions(userRole);
+  throw new Error(`역할 정보를 찾을 수 없습니다: ${userRole}`);
+};
+
+/**
+ * 공통코드에서 관리자 레벨 확인
+ * @param {Object} roleInfo - 역할 정보
+ * @returns {Promise<boolean>} 관리자 권한 여부
+ */
+const checkAdminLevelFromCommonCode = async (roleInfo) => {
+  // extra_data에서 admin_level 확인
+  if (roleInfo.extraData && typeof roleInfo.extraData.admin_level === 'number') {
+    return roleInfo.extraData.admin_level > 0;
+  }
   
-  // 임시: 패턴 기반 관리자 역할 확인
-  const adminRolePatterns = ['ADMIN', 'DIRECTOR', 'MASTER'];
-  return adminRolePatterns.some(pattern => 
-    userRole.toUpperCase().includes(pattern)
-  );
+  // admin_level이 없으면 PERMISSION_LEVELS 공통코드에서 확인
+  const permissionResponse = await apiGet(`/api/v1/common-codes?codeGroup=PERMISSION_LEVELS&codeValue=${roleInfo.codeValue}`);
+  
+  if (permissionResponse && Array.isArray(permissionResponse) && permissionResponse.length > 0) {
+    const permissionData = permissionResponse[0];
+    const permissionInfo = permissionData.extra_data ? JSON.parse(permissionData.extra_data) : {};
+    return permissionInfo.widget_admin === true || permissionInfo.admin_access === true;
+  }
+  
+  return false;
 };
 
 /**

@@ -70,11 +70,37 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     @Override
     @Cacheable(value = "clientsWithStats", key = "'all'")
     public List<Map<String, Object>> getAllClientsWithStats() {
-        log.info("📊 전체 내담자 통계 조회 (DB)");
+        log.info("📊 전체 내담자 통계 조회 (DB) - 레거시 호환");
         
         // 삭제되지 않고 활성인 CLIENT 역할 사용자만 조회
         List<com.coresolution.consultation.entity.User> clientUsers = userRepository
                 .findByRoleAndIsActiveTrue(UserRole.CLIENT);
+        
+        return buildClientStatsList(clientUsers);
+    }
+    
+    /**
+     * 테넌트별 내담자 통계 조회 (신규 추가)
+     */
+    @Cacheable(value = "clientsWithStats", key = "'tenant:' + #tenantId")
+    public List<Map<String, Object>> getAllClientsWithStatsByTenant(String tenantId) {
+        log.info("📊 테넌트별 내담자 통계 조회: tenantId={}", tenantId);
+        
+        // 테넌트별 삭제되지 않고 활성인 CLIENT 역할 사용자만 조회
+        List<com.coresolution.consultation.entity.User> clientUsers = userRepository
+                .findByRoleAndIsActiveTrue(UserRole.CLIENT).stream()
+                .filter(user -> tenantId.equals(user.getTenantId()))
+                .collect(Collectors.toList());
+        
+        log.info("📊 테넌트별 내담자 조회 완료: tenantId={}, 조회된 수={}", tenantId, clientUsers.size());
+        
+        return buildClientStatsList(clientUsers);
+    }
+    
+    /**
+     * 내담자 목록을 통계와 함께 Map 리스트로 변환 (공통 로직)
+     */
+    private List<Map<String, Object>> buildClientStatsList(List<com.coresolution.consultation.entity.User> clientUsers) {
         
         return clientUsers.stream()
                 .map(user -> {

@@ -1,8 +1,8 @@
 /* Header Widget Styles */
-.widget-header {
+.mg-widget__header {
   width: 100%;
-  background: var(--mg-color-bg-primary, #ffffff);
-  border-bottom: 1px solid var(--mg-color-border, #e0e0e0);
+  background: var(--mg-color-bg-primary, var(--mg-white));
+  border-bottom: 1px solid var(--mg-color-border, var(--mg-gray-300));
   padding: 0.75rem 1rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -36,7 +36,7 @@
 }
 
 .widget-header-back-button:hover {
-  background-color: var(--mg-color-bg-secondary, #f5f5f5);
+  background-color: var(--mg-color-bg-secondary, var(--mg-gray-100));
 }
 
 .widget-header-logo {
@@ -56,7 +56,7 @@
 
 .widget-header-logo-link i {
   font-size: 1.5rem;
-  color: var(--mg-color-primary, #007bff);
+  color: var(--mg-color-primary, var(--mg-primary-500));
 }
 
 .widget-header-right {
@@ -84,7 +84,7 @@
 }
 
 .widget-header-user-info:hover {
-  background-color: var(--mg-color-bg-secondary, #f5f5f5);
+  background-color: var(--mg-color-bg-secondary, var(--mg-gray-100));
 }
 
 .widget-header-user-avatar {
@@ -95,7 +95,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--mg-color-bg-secondary, #f5f5f5);
+  background-color: var(--mg-color-bg-secondary, var(--mg-gray-100));
 }
 
 .widget-header-user-avatar img {
@@ -131,7 +131,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: var(--mg-color-danger, #dc3545);
+  background: var(--mg-color-danger, var(--mg-error-500));
   color: white;
   border: none;
   border-radius: 4px;
@@ -149,7 +149,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: var(--mg-color-primary, #007bff);
+  background: var(--mg-color-primary, var(--mg-primary-500));
   color: white;
   text-decoration: none;
   border-radius: 4px;

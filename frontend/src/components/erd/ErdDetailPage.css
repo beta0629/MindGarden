@@ -3,7 +3,7 @@
 .erd-detail-page {
   min-height: 100vh;
   padding: 2rem;
-  background: var(--bg-primary, #f5f5f5);
+  background: var(--bg-primary, var(--mg-gray-100));
 }
 
 /* 헤더 */
@@ -26,7 +26,7 @@
   padding: 0.5rem 1rem;
   background: var(--bg-secondary, #fff);
   color: var(--text-primary, #333);
-  border: 1px solid var(--border-color, #e0e0e0);
+  border: 1px solid var(--border-color, var(--mg-gray-300));
   border-radius: 0.5rem;
   cursor: pointer;
   font-size: 0.9rem;
@@ -36,8 +36,8 @@
 
 .back-button:hover {
   background: var(--bg-hover, #f0f0f0);
-  border-color: var(--primary-color, #007bff);
-  color: var(--primary-color, #007bff);
+  border-color: var(--primary-color, var(--mg-primary-500));
+  color: var(--primary-color, var(--mg-primary-500));
 }
 
 .erd-detail-title-section {
@@ -74,7 +74,7 @@
 }
 
 .erd-status-badge.active {
-  background: var(--success-color, #28a745);
+  background: var(--success-color, var(--mg-success-500));
   color: #fff;
 }
 
@@ -106,7 +106,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: var(--primary-color, #007bff);
+  background: var(--primary-color, var(--mg-primary-500));
   color: #fff;
   border: none;
   border-radius: 0.5rem;
@@ -126,9 +126,9 @@
   right: 0;
   margin-top: 0.5rem;
   background: white;
-  border: 1px solid var(--border-color, #e0e0e0);
+  border: 1px solid var(--border-color, var(--mg-gray-300));
   border-radius: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
   min-width: 160px;
   z-index: 100;
   display: none;
@@ -157,7 +157,7 @@
 }
 
 .export-menu button:first-child {
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  border-bottom: 1px solid var(--border-color, var(--mg-gray-300));
 }
 
 /* 탭 메뉴 */
@@ -165,7 +165,7 @@
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
-  border-bottom: 2px solid var(--border-color, #e0e0e0);
+  border-bottom: 2px solid var(--border-color, var(--mg-gray-300));
 }
 
 .tab-button {
@@ -182,12 +182,12 @@
 }
 
 .tab-button:hover {
-  color: var(--primary-color, #007bff);
+  color: var(--primary-color, var(--mg-primary-500));
 }
 
 .tab-button.active {
-  color: var(--primary-color, #007bff);
-  border-bottom-color: var(--primary-color, #007bff);
+  color: var(--primary-color, var(--mg-primary-500));
+  border-bottom-color: var(--primary-color, var(--mg-primary-500));
 }
 
 /* 탭 컨텐츠 */
@@ -204,7 +204,7 @@
   width: 100%;
   overflow: hidden;
   position: relative;
-  background: var(--bg-primary, #f5f5f5);
+  background: var(--bg-primary, var(--mg-gray-100));
   border-radius: 0.5rem;
 }
 
@@ -220,7 +220,7 @@
   background: var(--bg-secondary, #fff);
   padding: 0.5rem;
   border-radius: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px var(--mg-shadow-medium);
 }
 
 .zoom-button {
@@ -229,7 +229,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-color, #007bff);
+  background: var(--primary-color, var(--mg-primary-500));
   color: #fff;
   border: none;
   border-radius: 0.25rem;
@@ -289,24 +289,24 @@
   justify-content: center;
   background: var(--bg-secondary, #fff);
   color: var(--text-primary, #333);
-  border: 1px solid var(--border-color, #e0e0e0);
+  border: 1px solid var(--border-color, var(--mg-gray-300));
   border-radius: 0.5rem;
   cursor: pointer;
   font-size: 1.2rem;
   transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .filter-toggle-button:hover {
   background: var(--bg-hover, #f0f0f0);
-  border-color: var(--primary-color, #007bff);
+  border-color: var(--primary-color, var(--mg-primary-500));
 }
 
 .filter-panel {
   background: var(--bg-secondary, #fff);
   padding: 1rem;
   border-radius: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px var(--mg-shadow-medium);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -315,7 +315,7 @@
 
 .filter-input {
   padding: 0.5rem;
-  border: 1px solid var(--border-color, #e0e0e0);
+  border: 1px solid var(--border-color, var(--mg-gray-300));
   border-radius: 0.25rem;
   font-size: 0.9rem;
   transition: border-color 0.2s;
@@ -323,7 +323,7 @@
 
 .filter-input:focus {
   outline: none;
-  border-color: var(--primary-color, #007bff);
+  border-color: var(--primary-color, var(--mg-primary-500));
 }
 
 .filter-checkbox {
@@ -345,7 +345,7 @@
   top: 0;
   z-index: 10;
   background: var(--bg-secondary, #fff);
-  border-bottom: 2px solid var(--border-color, #e0e0e0);
+  border-bottom: 2px solid var(--border-color, var(--mg-gray-300));
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 0.5rem 0.5rem 0 0;
@@ -357,13 +357,13 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 1rem;
-  background: var(--bg-primary, #f5f5f5);
+  background: var(--bg-primary, var(--mg-gray-100));
   border-radius: 0.5rem;
-  border-left: 4px solid var(--primary-color, #007bff);
+  border-left: 4px solid var(--primary-color, var(--mg-primary-500));
 }
 
 .selection-info.hover {
-  border-left-color: var(--info-color, #17a2b8);
+  border-left-color: var(--info-color, var(--mg-info-500));
   opacity: 0.8;
 }
 
@@ -382,7 +382,7 @@
 
 .clear-selection-button {
   padding: 0.25rem 0.5rem;
-  background: var(--error-color, #dc3545);
+  background: var(--error-color, var(--mg-error-500));
   color: #fff;
   border: none;
   border-radius: 0.25rem;
@@ -402,7 +402,7 @@
   justify-content: center;
   align-items: center;
   padding: 1rem;
-  background: var(--bg-primary, #f5f5f5);
+  background: var(--bg-primary, var(--mg-gray-100));
   border-radius: 0.5rem;
   overflow: hidden;
   cursor: grab;
@@ -488,9 +488,9 @@
 
 .history-item {
   padding: 1.5rem;
-  background: var(--bg-primary, #f5f5f5);
+  background: var(--bg-primary, var(--mg-gray-100));
   border-radius: 0.5rem;
-  border-left: 4px solid var(--primary-color, #007bff);
+  border-left: 4px solid var(--primary-color, var(--mg-primary-500));
 }
 
 .history-item-header {
@@ -514,17 +514,17 @@
 }
 
 .history-change-type.created {
-  background: var(--success-color, #28a745);
+  background: var(--success-color, var(--mg-success-500));
   color: #fff;
 }
 
 .history-change-type.updated {
-  background: var(--info-color, #17a2b8);
+  background: var(--info-color, var(--mg-info-500));
   color: #fff;
 }
 
 .history-change-type.deleted {
-  background: var(--error-color, #dc3545);
+  background: var(--error-color, var(--mg-error-500));
   color: #fff;
 }
 
@@ -572,7 +572,7 @@
   font-size: 0.9rem;
   line-height: 1.6;
   color: var(--text-primary, #333);
-  background: var(--bg-primary, #f5f5f5);
+  background: var(--bg-primary, var(--mg-gray-100));
   padding: 1.5rem;
   border-radius: 0.5rem;
   white-space: pre-wrap;
@@ -593,8 +593,8 @@
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid var(--border-color, #e0e0e0);
-  border-top-color: var(--primary-color, #007bff);
+  border: 4px solid var(--border-color, var(--mg-gray-300));
+  border-top-color: var(--primary-color, var(--mg-primary-500));
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -615,7 +615,7 @@
 }
 
 .error-message {
-  color: var(--error-color, #dc3545);
+  color: var(--error-color, var(--mg-error-500));
   font-size: 1.1rem;
 }
 
@@ -626,7 +626,7 @@
 
 .retry-button {
   padding: 0.75rem 1.5rem;
-  background: var(--primary-color, #007bff);
+  background: var(--primary-color, var(--mg-primary-500));
   color: #fff;
   border: none;
   border-radius: 0.5rem;

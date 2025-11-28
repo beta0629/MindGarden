@@ -1,0 +1,115 @@
+/* ErpCard 스타일 - 새로운 디자인 시스템 적용 */
+
+.erp-card {
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+  transition: all var(--transition-normal);
+}
+
+/* Glass 효과 적용 */
+.erp-card--glass {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.erp-card--glass .erp-card-title {
+  color: var(--ios-text-primary-light);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Solid 효과 적용 */
+.erp-card--solid {
+  background-color: var(--ios-bg-primary);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--ios-border-light);
+}
+
+.erp-card--solid .erp-card-title {
+  color: var(--ios-text-primary);
+  border-bottom: 2px solid var(--ios-border-light);
+}
+
+.erp-card-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+}
+
+.erp-card-body {
+  /* 컨텐츠 영역 - 자식 요소들이 자유롭게 스타일링 */
+}
+
+/* 호버 효과 */
+.erp-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.erp-card--glass:hover {
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45);
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .erp-card {
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .erp-card-title {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-md);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .erp-card {
+    padding: var(--spacing-lg);
+  }
+  
+  .erp-card-title {
+    font-size: var(--font-size-lg);
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .erp-card--solid {
+    background-color: var(--ios-bg-primary-dark);
+    border-color: var(--ios-border-light-dark);
+  }
+  
+  .erp-card--solid .erp-card-title {
+    color: var(--ios-text-primary-dark);
+    border-bottom-color: var(--ios-border-light-dark);
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .erp-card {
+    transition: none;
+  }
+  
+  .erp-card:hover {
+    transform: none;
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .erp-card {
+    border-width: 2px;
+  }
+  
+  .erp-card-title {
+    border-bottom-width: 3px;
+  }
+}

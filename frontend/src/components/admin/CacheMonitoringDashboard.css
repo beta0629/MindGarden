@@ -7,16 +7,16 @@
 
 /* CSS 변수 정의 */
 :root {
-  --primary-color: #2196F3;
-  --success-color: #4CAF50;
-  --warning-color: #FF9800;
-  --error-color: #F44336;
-  --background-color: #f5f5f5;
-  --card-background: #ffffff;
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --border-color: #e0e0e0;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --primary-color: var(--mg-primary-500);
+  --success-color: var(--mg-success-500);
+  --warning-color: var(--mg-warning-500);
+  --error-color: var(--mg-error-500);
+  --background-color: var(--mg-gray-100);
+  --card-background: var(--mg-white);
+  --text-primary: var(--mg-gray-800);
+  --text-secondary: var(--mg-gray-600);
+  --border-color: var(--mg-gray-300);
+  --shadow: 0 2px 8px var(--mg-shadow-light);
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
@@ -82,7 +82,7 @@
 }
 
 .refresh-button:hover {
-  background: #1976D2;
+  background: var(--mg-secondary-600);
 }
 
 .refresh-button:disabled {
@@ -142,7 +142,7 @@
 
 .cache-stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px var(--mg-shadow-medium);
 }
 
 .cache-card-header {
@@ -268,7 +268,7 @@
 }
 
 .retry-button:hover {
-  background: #1976D2;
+  background: var(--mg-secondary-600);
 }
 
 /* 반응형 디자인 */

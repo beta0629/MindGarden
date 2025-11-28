@@ -1,0 +1,710 @@
+/**
+ * 브랜딩 관리 컴포넌트
+ * 관리자가 테넌트의 로고, 상호명, 색상 등을 설정할 수 있는 UI
+ * 
+ * @author CoreSolution
+ * @version 1.0.0
+ * @since 2025-11-26
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { Upload, Save, RotateCcw, Eye, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { useBranding } from '../../hooks/useBranding';
+import { updateBrandingInfo, uploadLogo, getBrandingInfo } from '../../utils/brandingUtils';
+import UnifiedModal from '../ui';
+import UnifiedLoading from '../ui';
+import notificationManager from '../../utils/notification';
+import './BrandingManagement.css';
+
+const BrandingManagement = ({ onClose }) => {
+  const { brandingInfo, isLoading, refreshBranding } = useBranding();
+  
+  // 폼 상태
+  const [formData, setFormData] = useState({
+    companyName: '',
+    companyNameEn: '',
+    primaryColor: 'var(--mg-primary-500)',
+    secondaryColor: 'var(--mg-secondary-500)',
+    favicon: ''
+  });
+  
+  // UI 상태
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  // 브랜딩 정보 로드 시 폼 데이터 초기화
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        const branding = await getBrandingInfo();
+        if (branding) {
+          setFormData({
+            companyName: branding.companyName || '',
+            companyNameEn: branding.companyNameEn || '',
+            primaryColor: branding.primaryColor || 'var(--mg-primary-500)',
+            secondaryColor: branding.secondaryColor || 'var(--mg-secondary-500)',
+            favicon: branding.favicon || ''
+          });
+          
+          // 현재 로고가 있으면 미리보기 설정
+          if (branding.logo && branding.logo.url && 
+              !branding.logo.url.includes('core-solution-logo.png')) {
+            setLogoPreview(branding.logo.url);
+          }
+        }
+      } catch (error) {
+        console.error('브랜딩 정보 로드 실패:', error);
+      }
+    };
+
+    loadInitialData();
+  }, []);
+
+  // 폼 데이터 변경 핸들러
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setHasChanges(true);
+    
+    // 에러 클리어
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: null
+      }));
+    }
+  };
+
+  // 파일 검증
+  const validateFile = (file) => {
+    const errors = [];
+    
+    // 파일 크기 검증 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      errors.push('파일 크기는 5MB 이하여야 합니다.');
+    }
+    
+    // 파일 형식 검증
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      errors.push('PNG, JPG, SVG 파일만 업로드 가능합니다.');
+    }
+    
+    return errors;
+  };
+
+  // 로고 파일 선택 핸들러
+  const handleLogoSelect = (file) => {
+    const validationErrors = validateFile(file);
+    
+    if (validationErrors.length > 0) {
+      setErrors(prev => ({
+        ...prev,
+        logo: validationErrors.join(' ')
+      }));
+      return;
+    }
+    
+    setLogoFile(file);
+    setHasChanges(true);
+    
+    // 미리보기 생성
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setLogoPreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+    
+    // 에러 클리어
+    setErrors(prev => ({
+      ...prev,
+      logo: null
+    }));
+  };
+
+  // 드래그 앤 드롭 핸들러
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleLogoSelect(files[0]);
+    }
+  }, []);
+
+  // 파일 입력 핸들러
+  const handleFileInputChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      handleLogoSelect(files[0]);
+    }
+  };
+
+  // 로고 제거
+  const handleLogoRemove = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setHasChanges(true);
+  };
+
+  // 폼 검증
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.companyName.trim()) {
+      newErrors.companyName = '회사명을 입력해주세요.';
+    }
+    
+    if (formData.companyName.length > 255) {
+      newErrors.companyName = '회사명은 255자 이하여야 합니다.';
+    }
+    
+    if (formData.companyNameEn.length > 255) {
+      newErrors.companyNameEn = '영문 회사명은 255자 이하여야 합니다.';
+    }
+    
+    // 색상 코드 검증
+    const colorRegex = /^#[0-9A-Fa-f]{6}$/;
+    if (formData.primaryColor && !colorRegex.test(formData.primaryColor)) {
+      newErrors.primaryColor = '올바른 색상 코드를 입력해주세요. (예: var(--mg-primary-500))';
+    }
+    
+    if (formData.secondaryColor && !colorRegex.test(formData.secondaryColor)) {
+      newErrors.secondaryColor = '올바른 색상 코드를 입력해주세요. (예: var(--mg-secondary-500))';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // 저장 핸들러
+  const handleSave = async () => {
+    if (!validateForm()) {
+      notificationManager.show('입력 정보를 확인해주세요.', 'error');
+      return;
+    }
+    
+    try {
+      setIsSaving(true);
+      
+      // 1. 로고 업로드 (파일이 있는 경우)
+      if (logoFile) {
+        setIsUploading(true);
+        await uploadLogo(logoFile);
+        setIsUploading(false);
+      }
+      
+      // 2. 브랜딩 정보 업데이트
+      await updateBrandingInfo(formData);
+      
+      // 3. 브랜딩 정보 새로고침
+      await refreshBranding();
+      
+      setHasChanges(false);
+      setLogoFile(null);
+      
+      notificationManager.show('브랜딩 정보가 저장되었습니다.', 'success');
+      
+    } catch (error) {
+      console.error('브랜딩 정보 저장 오류:', error);
+      notificationManager.show('저장 중 오류가 발생했습니다.', 'error');
+    } finally {
+      setIsSaving(false);
+      setIsUploading(false);
+    }
+  };
+
+  // 초기화 핸들러
+  const handleReset = async () => {
+    try {
+      const branding = await getBrandingInfo();
+      if (branding) {
+        setFormData({
+          companyName: branding.companyName || '',
+          companyNameEn: branding.companyNameEn || '',
+          primaryColor: branding.primaryColor || 'var(--mg-primary-500)',
+          secondaryColor: branding.secondaryColor || 'var(--mg-secondary-500)',
+          favicon: branding.favicon || ''
+        });
+        
+        if (branding.logo && branding.logo.url && 
+            !branding.logo.url.includes('core-solution-logo.png')) {
+          setLogoPreview(branding.logo.url);
+        } else {
+          setLogoPreview(null);
+        }
+      }
+    } catch (error) {
+      console.error('브랜딩 정보 로드 실패:', error);
+    }
+    
+    setLogoFile(null);
+    setHasChanges(false);
+    setErrors({});
+  };
+
+  // 미리보기 데이터 생성
+  const getPreviewData = () => {
+    const previewBranding = {
+      companyName: formData.companyName,
+      companyNameEn: formData.companyNameEn,
+      primaryColor: formData.primaryColor,
+      secondaryColor: formData.secondaryColor,
+      favicon: formData.favicon
+    };
+    
+    if (logoPreview) {
+      previewBranding.logo = {
+        url: logoPreview,
+        width: 200,
+        height: 60,
+        format: 'png'
+      };
+    }
+    
+    return previewBranding;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="branding-management">
+        <div className="branding-management__loading">
+          <UnifiedLoading 
+            text="브랜딩 정보를 불러오는 중..."
+            size="large"
+            variant="default"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="branding-management">
+      <div className="branding-management__header">
+        <h2 className="branding-management__title">브랜딩 관리</h2>
+        <p className="branding-management__description">
+          테넌트의 로고, 상호명, 색상을 설정하여 브랜드 아이덴티티를 구축하세요.
+        </p>
+      </div>
+
+      <div className="branding-management__content">
+        {/* 로고 업로드 섹션 */}
+        <div className="branding-management__section">
+          <h3 className="branding-management__section-title">
+            <Upload size={20} />
+            로고 업로드
+          </h3>
+          
+          <div className="branding-management__logo-section">
+            {/* 드래그 앤 드롭 영역 */}
+            <div 
+              className={`branding-management__upload-area ${isDragOver ? 'drag-over' : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => document.getElementById('logo-file-input').click()}
+            >
+              {logoPreview ? (
+                <div className="branding-management__logo-preview">
+                  <img 
+                    src={logoPreview} 
+                    alt="로고 미리보기" 
+                    className="branding-management__logo-image"
+                  />
+                  <button 
+                    className="branding-management__logo-remove"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLogoRemove();
+                    }}
+                    title="로고 제거"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div className="branding-management__upload-placeholder">
+                  <Upload size={48} />
+                  <p>로고를 드래그하여 놓거나 클릭하여 선택하세요</p>
+                  <span>PNG, JPG, SVG (최대 5MB)</span>
+                </div>
+              )}
+              
+              <input
+                id="logo-file-input"
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                onChange={handleFileInputChange}
+                style={{ display: 'none' }}
+              />
+            </div>
+            
+            {errors.logo && (
+              <div className="branding-management__error">
+                <AlertCircle size={16} />
+                {errors.logo}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 회사 정보 섹션 */}
+        <div className="branding-management__section">
+          <h3 className="branding-management__section-title">회사 정보</h3>
+          
+          <div className="branding-management__form-grid">
+            <div className="branding-management__form-group">
+              <label className="branding-management__label">
+                회사명 (한글) *
+              </label>
+              <input
+                type="text"
+                className={`branding-management__input ${errors.companyName ? 'error' : ''}`}
+                value={formData.companyName}
+                onChange={(e) => handleInputChange('companyName', e.target.value)}
+                placeholder="예: 마인드가든 상담센터"
+                maxLength={255}
+              />
+              {errors.companyName && (
+                <div className="branding-management__error">
+                  <AlertCircle size={16} />
+                  {errors.companyName}
+                </div>
+              )}
+            </div>
+            
+            <div className="branding-management__form-group">
+              <label className="branding-management__label">
+                회사명 (영문)
+              </label>
+              <input
+                type="text"
+                className={`branding-management__input ${errors.companyNameEn ? 'error' : ''}`}
+                value={formData.companyNameEn}
+                onChange={(e) => handleInputChange('companyNameEn', e.target.value)}
+                placeholder="예: MindGarden Counseling Center"
+                maxLength={255}
+              />
+              {errors.companyNameEn && (
+                <div className="branding-management__error">
+                  <AlertCircle size={16} />
+                  {errors.companyNameEn}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 색상 설정 섹션 */}
+        <div className="branding-management__section">
+          <h3 className="branding-management__section-title">색상 설정</h3>
+          
+          <div className="branding-management__form-grid">
+                        <div className="branding-management__form-group">
+                          <label className="branding-management__label">
+                            주 색상 (Primary)
+                          </label>
+                          <ColorPicker
+                            value={formData.primaryColor}
+                            onChange={(color) => handleInputChange('primaryColor', color)}
+                            error={errors.primaryColor}
+                          />
+                          {errors.primaryColor && (
+                            <div className="branding-management__error">
+                              <AlertCircle size={16} />
+                              {errors.primaryColor}
+                            </div>
+                          )}
+                        </div>
+            
+                        <div className="branding-management__form-group">
+                          <label className="branding-management__label">
+                            보조 색상 (Secondary)
+                          </label>
+                          <ColorPicker
+                            value={formData.secondaryColor}
+                            onChange={(color) => handleInputChange('secondaryColor', color)}
+                            error={errors.secondaryColor}
+                          />
+                          {errors.secondaryColor && (
+                            <div className="branding-management__error">
+                              <AlertCircle size={16} />
+                              {errors.secondaryColor}
+                            </div>
+                          )}
+                        </div>
+          </div>
+        </div>
+
+        {/* 파비콘 설정 섹션 */}
+        <div className="branding-management__section">
+          <h3 className="branding-management__section-title">파비콘 설정</h3>
+          
+          <div className="branding-management__form-group">
+            <label className="branding-management__label">
+              파비콘 URL
+            </label>
+            <input
+              type="url"
+              className="branding-management__input"
+              value={formData.favicon}
+              onChange={(e) => handleInputChange('favicon', e.target.value)}
+              placeholder="https://example.com/favicon.ico"
+            />
+            <small className="branding-management__help-text">
+              파비콘 이미지의 URL을 입력하세요. (선택사항)
+            </small>
+          </div>
+        </div>
+      </div>
+
+      {/* 액션 버튼 */}
+      <div className="branding-management__actions">
+        <button
+          className="branding-management__button branding-management__button--preview"
+          onClick={() => setShowPreview(true)}
+          disabled={isSaving || isUploading}
+        >
+          <Eye size={20} />
+          미리보기
+        </button>
+        
+        <button
+          className="branding-management__button branding-management__button--reset"
+          onClick={handleReset}
+          disabled={!hasChanges || isSaving || isUploading}
+        >
+          <RotateCcw size={20} />
+          초기화
+        </button>
+        
+        <button
+          className="branding-management__button branding-management__button--save"
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving || isUploading}
+        >
+          {isSaving || isUploading ? (
+            <UnifiedLoading size="small" showText={false} />
+          ) : (
+            <Save size={20} />
+          )}
+          {isUploading ? '업로드 중...' : isSaving ? '저장 중...' : '저장'}
+        </button>
+      </div>
+
+      {/* 미리보기 모달 */}
+      {showPreview && (
+        <BrandingPreviewModal
+          brandingData={getPreviewData()}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
+    </div>
+  );
+};
+
+// 색상 선택기 컴포넌트
+const ColorPicker = ({ value, onChange, error }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [customColor, setCustomColor] = useState(value || 'var(--mg-primary-500)');
+  
+  // 미리 정의된 색상 팔레트
+  const colorPalette = [
+    // 기본 색상
+    'var(--mg-primary-500)', 'var(--mg-secondary-500)', 'var(--mg-success-500)', 'var(--mg-error-500)', 'var(--mg-warning-500)', 'var(--mg-info-500)',
+    '#6f42c1', '#e83e8c', '#fd7e14', '#20c997', '#6610f2', '#e21e80',
+    
+    // 브랜드 색상
+    'var(--mg-primary-500)', '#764ba2', 'var(--mg-warning-500)', '#f5576c', '#4facfe', '#00f2fe',
+    '#43e97b', '#38f9d7', '#ffecd2', '#fcb69f', '#a8edea', '#fed6e3',
+    
+    // 비즈니스 색상
+    '#2c3e50', '#34495e', '#95a5a6', '#bdc3c7', '#ecf0f1', 'var(--mg-finance-primary)',
+    'var(--mg-finance-dark)', '#d35400', '#c0392b', '#8e44ad', '#9b59b6', '#3498db',
+    
+    // 파스텔 색상
+    '#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#d4baff',
+    '#ffb3ff', '#ffc9de', '#c9ffba', '#baffff', '#e6baff', '#ffbadc'
+  ];
+
+  const handleColorSelect = (color) => {
+    onChange(color);
+    setCustomColor(color);
+    setIsOpen(false);
+  };
+
+  const handleCustomColorChange = (e) => {
+    const color = e.target.value;
+    setCustomColor(color);
+    onChange(color);
+  };
+
+  return (
+    <div className="color-picker">
+      <div className="color-picker__display" onClick={() => setIsOpen(!isOpen)}>
+        <div 
+          className="color-picker__swatch"
+          style={{ backgroundColor: value }}
+        ></div>
+        <input
+          type="text"
+          className={`color-picker__input ${error ? 'error' : ''}`}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="var(--mg-primary-500)"
+          maxLength={7}
+        />
+        <button 
+          type="button"
+          className="color-picker__toggle"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          🎨
+        </button>
+      </div>
+      
+      {isOpen && (
+        <div className="color-picker__dropdown">
+          <div className="color-picker__section">
+            <h4>색상 팔레트</h4>
+            <div className="color-picker__palette">
+              {colorPalette.map((color, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={`color-picker__color ${value === color ? 'selected' : ''}`}
+                  style={{ backgroundColor: color }}
+                  onClick={() => handleColorSelect(color)}
+                  title={color}
+                />
+              ))}
+            </div>
+          </div>
+          
+          <div className="color-picker__section">
+            <h4>사용자 정의 색상</h4>
+            <div className="color-picker__custom">
+              <input
+                type="color"
+                className="color-picker__native"
+                value={customColor}
+                onChange={handleCustomColorChange}
+              />
+              <input
+                type="text"
+                className="color-picker__hex"
+                value={customColor}
+                onChange={(e) => {
+                  setCustomColor(e.target.value);
+                  onChange(e.target.value);
+                }}
+                placeholder="var(--mg-black)"
+                maxLength={7}
+              />
+            </div>
+          </div>
+          
+          <div className="color-picker__actions">
+            <button
+              type="button"
+              className="color-picker__close"
+              onClick={() => setIsOpen(false)}
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// 브랜딩 미리보기 모달 컴포넌트
+const BrandingPreviewModal = ({ brandingData, onClose }) => {
+  return (
+    <UnifiedModal
+      isOpen={true}
+      onClose={onClose}
+      title="브랜딩 미리보기"
+      size="large"
+    >
+      <div className="branding-preview">
+        <div className="branding-preview__header">
+          <p>변경사항이 적용된 헤더의 모습입니다.</p>
+        </div>
+        
+        <div className="branding-preview__demo">
+          {/* 헤더 미리보기 */}
+          <div className="branding-preview__header-demo">
+            <div className="branding-preview__logo">
+              {brandingData.logo && brandingData.logo.url && 
+               !brandingData.logo.url.includes('core-solution-logo.png') ? (
+                <img 
+                  src={brandingData.logo.url} 
+                  alt={brandingData.companyName || 'Logo'}
+                  className="branding-preview__logo-image"
+                />
+              ) : (
+                <div className="branding-preview__logo-text">
+                  <span className="branding-preview__company-name">
+                    {brandingData.companyName || 'MindGarden'}
+                  </span>
+                  <span className="branding-preview__subtitle">마인드가든</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* 색상 미리보기 */}
+          <div className="branding-preview__colors">
+            <div className="branding-preview__color-item">
+              <div 
+                className="branding-preview__color-swatch"
+                style={{ backgroundColor: brandingData.primaryColor }}
+              ></div>
+              <span>주 색상: {brandingData.primaryColor}</span>
+            </div>
+            <div className="branding-preview__color-item">
+              <div 
+                className="branding-preview__color-swatch"
+                style={{ backgroundColor: brandingData.secondaryColor }}
+              ></div>
+              <span>보조 색상: {brandingData.secondaryColor}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="branding-preview__actions">
+          <button
+            className="branding-preview__close-button"
+            onClick={onClose}
+          >
+            닫기
+          </button>
+        </div>
+      </div>
+    </UnifiedModal>
+  );
+};
+
+export default BrandingManagement;

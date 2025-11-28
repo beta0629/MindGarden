@@ -5,7 +5,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--mg-overlay);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -15,7 +15,7 @@
 .account-integration-modal {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 40px var(--mg-shadow-medium);
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
@@ -83,13 +83,13 @@
 }
 
 .warning-icon {
-    color: #f59e0b;
+    color: var(--mg-warning-500);
     font-size: var(--font-size-xxl);
     margin-bottom: 12px;
 }
 
 .account-integration-modal .step-icon {
-    color: #3b82f6;
+    color: var(--mg-primary-500);
     font-size: var(--font-size-xxl);
     margin-bottom: 12px;
 }
@@ -122,13 +122,13 @@
     color: #6b7280;
 }
 
-.account-integration-modal .form-group {
+.account-integration-modal .mg-form__group {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.account-integration-modal .form-group label {
+.account-integration-modal .mg-form__group label {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -137,7 +137,7 @@
     font-size: var(--font-size-sm);
 }
 
-.account-integration-modal .form-group input {
+.account-integration-modal .mg-form__group input {
     padding: var(--spacing-sm) var(--spacing-md);
     border: 1px solid #d1d5db;
     border-radius: 8px;
@@ -145,13 +145,13 @@
     transition: all 0.2s;
 }
 
-.account-integration-modal .form-group input:focus {
+.account-integration-modal .mg-form__group input:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: var(--mg-primary-500);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.account-integration-modal .form-group small {
+.account-integration-modal .mg-form__group small {
     color: #6b7280;
     font-size: var(--font-size-xs);
 }
@@ -234,28 +234,28 @@
     cursor: not-allowed;
 }
 
-.account-integration-modal .btn-primary {
-    background-color: #3b82f6;
+.account-integration-modal .mg-btn--primary {
+    background-color: var(--mg-primary-500);
     color: white;
 }
 
-.account-integration-modal .btn-primary:hover:not(:disabled) {
+.account-integration-modal .mg-btn--primary:hover:not(:disabled) {
     background-color: #2563eb;
 }
 
-.account-integration-modal .btn-secondary {
+.account-integration-modal .mg-btn--secondary {
     background-color: #f3f4f6;
     color: #374151;
     border: 1px solid #d1d5db;
 }
 
-.account-integration-modal .btn-secondary:hover:not(:disabled) {
+.account-integration-modal .mg-btn--secondary:hover:not(:disabled) {
     background-color: #e5e7eb;
 }
 
 .account-integration-modal .btn-link {
     background: none;
-    color: #3b82f6;
+    color: var(--mg-primary-500);
     text-decoration: underline;
     padding: var(--spacing-sm) var(--spacing-md);
 }

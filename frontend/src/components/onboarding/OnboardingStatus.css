@@ -1,7 +1,7 @@
 .onboarding-status {
   min-height: 100vh;
   padding: 2rem;
-  background: #f5f5f5;
+  background: var(--mg-gray-100);
 }
 
 .onboarding-status__container {
@@ -10,7 +10,7 @@
   background: white;
   border-radius: 8px;
   padding: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .onboarding-status__header {
@@ -93,7 +93,7 @@
 }
 
 .onboarding-status__table thead {
-  background: #f5f5f5;
+  background: var(--mg-gray-100);
 }
 
 .onboarding-status__table th {
@@ -179,7 +179,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--mg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -193,7 +193,7 @@
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px var(--mg-shadow-light);
 }
 
 .onboarding-status__modal-header {

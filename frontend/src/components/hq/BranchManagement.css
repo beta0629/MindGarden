@@ -116,15 +116,15 @@
     margin-right: var(--spacing-md);
 }
 
-.text-center {
+.mg-text--center {
     text-align: center;
 }
 
-.text-left {
+.mg-text--left {
     text-align: left;
 }
 
-.text-right {
+.mg-text--right {
     text-align: right;
 }
 

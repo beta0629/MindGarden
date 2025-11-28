@@ -1,5 +1,5 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { Bell, Mail } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -81,7 +81,7 @@ const SystemNotificationSection = () => {
 
       <div className="mg-v2-card-body">
         {loading ? (
-          <UnifiedLoading text="알림을 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         ) : displayItems.length === 0 ? (
           <div className="mg-v2-empty-state">
             <div className="mg-v2-empty-state-icon">📭</div>

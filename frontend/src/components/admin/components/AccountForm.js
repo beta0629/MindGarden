@@ -44,11 +44,11 @@ const AccountForm = ({
       console.error('은행 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setBankOptions([
-        { value: 'KB', label: '국민은행', icon: '🏦', color: '#3b82f6', description: '국민은행' },
-        { value: 'SHINHAN', label: '신한은행', icon: '🏦', color: '#10b981', description: '신한은행' },
-        { value: 'WOORI', label: '우리은행', icon: '🏦', color: '#f59e0b', description: '우리은행' },
-        { value: 'HANA', label: '하나은행', icon: '🏦', color: '#8b5cf6', description: '하나은행' },
-        { value: 'NH', label: '농협은행', icon: '🏦', color: '#ef4444', description: '농협은행' }
+        { value: 'KB', label: '국민은행', icon: '🏦', color: 'var(--mg-primary-500)', description: '국민은행' },
+        { value: 'SHINHAN', label: '신한은행', icon: '🏦', color: 'var(--mg-success-500)', description: '신한은행' },
+        { value: 'WOORI', label: '우리은행', icon: '🏦', color: 'var(--mg-warning-500)', description: '우리은행' },
+        { value: 'HANA', label: '하나은행', icon: '🏦', color: 'var(--mg-purple-500)', description: '하나은행' },
+        { value: 'NH', label: '농협은행', icon: '🏦', color: 'var(--mg-error-500)', description: '농협은행' }
       ]);
     } finally {
       setLoadingCodes(false);

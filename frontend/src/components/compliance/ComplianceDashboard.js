@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import '../../styles/main.css';
 import './ComplianceDashboard.css';
@@ -68,11 +68,11 @@ const ComplianceDashboard = () => {
 
     const getComplianceLevelColor = (level) => {
         switch (level) {
-            case '우수': return '#4CAF50';
+            case '우수': return 'var(--mg-success-500)';
             case '양호': return '#8BC34A';
-            case '보통': return '#FFC107';
-            case '미흡': return '#FF9800';
-            case '부족': return '#F44336';
+            case '보통': return 'var(--mg-warning-500)';
+            case '미흡': return 'var(--mg-warning-500)';
+            case '부족': return 'var(--mg-error-500)';
             default: return '#9E9E9E';
         }
     };

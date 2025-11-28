@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Table, Form, Alert, Badge } from 'react-bootstrap';
 import { 
@@ -237,7 +237,7 @@ const ConsolidatedFinancial = () => {
         return (
             <SimpleLayout title="통합 재무현황">
                 <Container fluid className="py-4">
-                    <UnifiedLoading text="재무 데이터를 불러오는 중..." size="large" type="inline" />
+                    <div className="mg-loading">로딩중...</div>
                 </Container>
             </SimpleLayout>
         );

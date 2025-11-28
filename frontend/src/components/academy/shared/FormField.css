@@ -14,7 +14,7 @@
 }
 
 .academy-required {
-  color: var(--color-error, #dc3545);
+  color: var(--color-error, var(--mg-error-500));
   margin-left: 0.25rem;
 }
 
@@ -22,7 +22,7 @@
   display: block;
   margin-top: var(--spacing-xs, 0.25rem);
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-error, #dc3545);
+  color: var(--color-error, var(--mg-error-500));
 }
 
 .academy-form-field {

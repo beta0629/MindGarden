@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useLocation } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -744,7 +744,7 @@ const TabletLogin = () => {
                     e.target.style.color = '#5a67d8';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.color = '#667eea';
+                    e.target.style.color = 'var(--mg-primary-500)';
                   }}
                 >
                   비밀번호를 잊으셨나요?
@@ -898,8 +898,8 @@ const TabletLogin = () => {
               top: '20%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              backgroundColor: '#ffffff',
-              color: '#333333',
+              backgroundColor: 'var(--mg-white)',
+              color: 'var(--mg-gray-800)',
               padding: '28px 56px',
               borderRadius: '12px',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
@@ -933,7 +933,7 @@ const TabletLogin = () => {
             {/* 닫기 안내 */}
             <div style={{ 
               fontSize: 'var(--font-size-sm)',
-              color: '#6c757d',
+              color: 'var(--mg-secondary-500)',
               fontWeight: '400',
               opacity: 0.8,
               marginTop: '12px'
@@ -950,7 +950,7 @@ const TabletLogin = () => {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              backgroundColor: 'var(--mg-shadow-light)',
               zIndex: 10000,
               backdropFilter: 'blur(0.5px)'
             }}

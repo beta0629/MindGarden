@@ -1,0 +1,157 @@
+/* 매핑 액션 스타일 */
+.mapping-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--color-bg-secondary);
+    border-top: 1px solid #e1e8ed;
+}
+
+.actions-primary {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.actions-secondary {
+    display: flex;
+    gap: 4px;
+}
+
+.mapping-actions .btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.mapping-actions .btn-sm {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+.mapping-actions .btn-outline-info {
+    background: transparent;
+    color: var(--status-info);
+    border: 1px solid var(--status-info);
+}
+
+.mapping-actions .btn-outline-info:hover {
+    background-color: var(--status-info);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.mapping-actions .btn-outline-danger {
+    background: transparent;
+    color: var(--status-error);
+    border: 1px solid var(--status-error);
+}
+
+.mapping-actions .btn-outline-danger:hover {
+    background-color: var(--status-error);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.mapping-actions .btn-success {
+    background-color: var(--status-success);
+    color: white;
+}
+
+.mapping-actions .btn-success:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+.mapping-actions .btn-danger {
+    background-color: var(--status-error);
+    color: white;
+}
+
+.mapping-actions .btn-danger:hover {
+    background-color: var(--status-error-dark);
+    transform: translateY(-1px);
+}
+
+.mapping-actions .btn-warning {
+    background-color: var(--status-warning);
+    color: #212529;
+}
+
+.mapping-actions .btn-warning:hover {
+    background-color: #e0a800;
+    transform: translateY(-1px);
+}
+
+.mapping-actions .btn-info {
+    background-color: var(--status-info);
+    color: white;
+}
+
+.mapping-actions .btn-info:hover {
+    background-color: var(--status-info-dark);
+    transform: translateY(-1px);
+}
+
+.mapping-actions .btn-secondary {
+    background-color: var(--color-secondary);
+    color: white;
+}
+
+.mapping-actions .btn-secondary:hover {
+    background-color: #5a6268;
+    transform: translateY(-1px);
+}
+
+.action-label {
+    font-size: 11px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .mapping-actions {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+    }
+    
+    .actions-primary {
+        justify-content: center;
+    }
+    
+    .actions-secondary {
+        justify-content: center;
+    }
+    
+    .mapping-actions .btn {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .action-label {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .mapping-actions .btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .mapping-actions .btn-sm {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+}

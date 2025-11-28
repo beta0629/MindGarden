@@ -1,7 +1,7 @@
 /* ===== MindGarden React App 메인 CSS ===== */
 
 /* 공통 스타일 */
-@import './common/index.css';
+@import './components/common.css';
 
 /* 대시보드 스타일 */
 @import './dashboard/dashboard.css';
@@ -61,7 +61,7 @@
   max-width: 320px;
   width: 85%;
   text-align: center;
-  box-shadow: var(--modal-shadow, 0 25px 50px rgba(0, 0, 0, 0.1));
+  box-shadow: var(--modal-shadow, 0 25px 50px var(--mg-shadow-light));
   border: 1px solid var(--modal-border, rgba(209, 209, 214, 0.8));
   backdrop-filter: var(--ios-backdrop-blur-xl);
   -webkit-backdrop-filter: var(--ios-backdrop-blur-xl);
@@ -139,9 +139,9 @@
 }
 
 /* 유틸리티 클래스 */
-.text-center { text-align: center; }
-.text-left { text-align: left; }
-.text-right { text-align: right; }
+.mg-text--center { text-align: center; }
+.mg-text--left { text-align: left; }
+.mg-text--right { text-align: right; }
 
 .text-primary { color: var(--primary-600); }
 .text-secondary { color: var(--secondary-600); }
@@ -160,8 +160,8 @@
 .rounded-lg { border-radius: 12px; }
 .rounded-full { border-radius: 50%; }
 
-.shadow { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-.shadow-lg { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); }
+.shadow { box-shadow: 0 2px 8px var(--mg-shadow-light); }
+.shadow-lg { box-shadow: 0 4px 20px var(--mg-shadow-medium); }
 
 .border { border: 1px solid var(--gray-200); }
 .border-t { border-top: 1px solid var(--gray-200); }

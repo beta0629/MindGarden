@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
@@ -19,10 +19,10 @@ const ConsultationReport = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [periodOptions, setPeriodOptions] = useState([
-    { value: 'MONTH', label: '월별', icon: '📅', color: '#3b82f6', description: '월별 보고서' },
-    { value: 'YEAR', label: '년별', icon: '📊', color: '#10b981', description: '년별 보고서' },
-    { value: 'QUARTER', label: '분기별', icon: '📈', color: '#f59e0b', description: '분기별 보고서' },
-    { value: 'WEEK', label: '주별', icon: '📋', color: '#8b5cf6', description: '주별 보고서' }
+    { value: 'MONTH', label: '월별', icon: '📅', color: 'var(--mg-primary-500)', description: '월별 보고서' },
+    { value: 'YEAR', label: '년별', icon: '📊', color: 'var(--mg-success-500)', description: '년별 보고서' },
+    { value: 'QUARTER', label: '분기별', icon: '📈', color: 'var(--mg-warning-500)', description: '분기별 보고서' },
+    { value: 'WEEK', label: '주별', icon: '📋', color: 'var(--mg-purple-500)', description: '주별 보고서' }
   ]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [yearOptions, setYearOptions] = useState(() => {
@@ -31,7 +31,7 @@ const ConsultationReport = () => {
       value: currentYear - i,
       label: `${currentYear - i}년`,
       icon: '📅',
-      color: '#3b82f6',
+      color: 'var(--mg-primary-500)',
       description: `${currentYear - i}년`
     }));
   });
@@ -40,7 +40,7 @@ const ConsultationReport = () => {
       value: i + 1,
       label: `${i + 1}월`,
       icon: '📅',
-      color: '#3b82f6',
+      color: 'var(--mg-primary-500)',
       description: `${i + 1}월`
     }));
   });
@@ -318,7 +318,7 @@ const ConsultationReport = () => {
       <SimpleLayout>
         <div className="consultation-report-page">
           <div className="loading-container">
-            <UnifiedLoading text="세션 확인 중..." size="medium" type="inline" />
+            <div className="mg-loading">로딩중...</div>
           </div>
         </div>
       </SimpleLayout>
@@ -330,7 +330,7 @@ const ConsultationReport = () => {
       <SimpleLayout>
         <div className="consultation-report-page">
           <div className="loading-container">
-            <UnifiedLoading text="상담 리포트를 생성하는 중..." size="medium" type="inline" />
+            <div className="mg-loading">로딩중...</div>
           </div>
         </div>
       </SimpleLayout>

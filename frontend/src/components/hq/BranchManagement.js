@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { 
     Container, Row, Col, Card, Button, Modal, Form, 
     Table, Badge, Alert, InputGroup, FormControl, 
@@ -247,7 +247,7 @@ const BranchManagement = () => {
                                                     height: '200px',
                                                     flexDirection: 'column'
                                                 }}>
-                                                    <UnifiedLoading text="지점 목록을 불러오는 중..." size="small" type="inline" />
+                                                    <div className="mg-loading">로딩중...</div>
                                                 </div>
                                             ) : (
                                                 <div style={{
@@ -266,8 +266,8 @@ const BranchManagement = () => {
                                                                 marginBottom: '4px',
                                                                 border: 'none',
                                                                 borderRadius: '8px',
-                                                                background: selectedBranch?.id === branch.id ? '#e3f2fd' : '#ffffff',
-                                                                borderLeft: selectedBranch?.id === branch.id ? '4px solid #007bff' : '4px solid #e9ecef',
+                                                                background: selectedBranch?.id === branch.id ? '#e3f2fd' : 'var(--mg-white)',
+                                                                borderLeft: selectedBranch?.id === branch.id ? '4px solid var(--mg-primary-500)' : '4px solid #e9ecef',
                                                                 cursor: 'pointer',
                                                                 transition: 'all 0.2s ease',
                                                                 display: 'flex',
@@ -280,13 +280,13 @@ const BranchManagement = () => {
                                                             }}
                                                             onMouseEnter={(e) => {
                                                                 if (selectedBranch?.id !== branch.id) {
-                                                                    e.target.style.background = '#f8f9fa';
-                                                                    e.target.style.borderLeftColor = '#007bff';
+                                                                    e.target.style.background = 'var(--mg-gray-100)';
+                                                                    e.target.style.borderLeftColor = 'var(--mg-primary-500)';
                                                                 }
                                                             }}
                                                             onMouseLeave={(e) => {
                                                                 if (selectedBranch?.id !== branch.id) {
-                                                                    e.target.style.background = '#ffffff';
+                                                                    e.target.style.background = 'var(--mg-white)';
                                                                     e.target.style.borderLeftColor = '#e9ecef';
                                                                 }
                                                             }}
@@ -299,7 +299,7 @@ const BranchManagement = () => {
                                                             }}>
                                                                 <strong style={{
                                                                     fontSize: 'var(--font-size-sm)',
-                                                                    color: selectedBranch?.id === branch.id ? '#007bff' : '#495057',
+                                                                    color: selectedBranch?.id === branch.id ? 'var(--mg-primary-500)' : '#495057',
                                                                     fontWeight: '600',
                                                                     marginBottom: '2px',
                                                                     whiteSpace: 'nowrap',
@@ -313,7 +313,7 @@ const BranchManagement = () => {
                                                                 </strong>
                                                                 <small style={{
                                                                     fontSize: 'var(--font-size-xs)',
-                                                                    color: '#6c757d',
+                                                                    color: 'var(--mg-secondary-500)',
                                                                     fontFamily: 'monospace',
                                                                     whiteSpace: 'nowrap',
                                                                     overflow: 'hidden',
@@ -354,7 +354,7 @@ const BranchManagement = () => {
                                                     overflow: 'hidden'
                                                 }}>
                                                     <Card.Header style={{
-                                                        background: '#f8f9fa',
+                                                        background: 'var(--mg-gray-100)',
                                                         borderBottom: '1px solid #e9ecef',
                                                         padding: '16px 20px'
                                                     }}>
@@ -366,7 +366,7 @@ const BranchManagement = () => {
                                                             display: 'flex',
                                                             alignItems: 'center'
                                                         }}>
-                                                            <FaChartBar style={{ marginRight: '8px', color: '#28a745' }} />
+                                                            <FaChartBar style={{ marginRight: '8px', color: 'var(--mg-success-500)' }} />
                                                             {selectedBranch.name} 통계
                                                         </h5>
                                                     </Card.Header>
@@ -376,21 +376,21 @@ const BranchManagement = () => {
                                                                 <div style={{
                                                                     textAlign: 'center',
                                                                     padding: '16px 8px',
-                                                                    background: '#f8f9fa',
+                                                                    background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
-                                                                        color: '#007bff',
+                                                                        color: 'var(--mg-primary-500)',
                                                                         marginBottom: '4px'
                                                                     }}>
                                                                         {branchStatistics.totalUsers || 0}
                                                                     </div>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xs)',
-                                                                        color: '#6c757d',
+                                                                        color: 'var(--mg-secondary-500)',
                                                                         fontWeight: '500'
                                                                     }}>
                                                                         전체 사용자
@@ -401,21 +401,21 @@ const BranchManagement = () => {
                                                                 <div style={{
                                                                     textAlign: 'center',
                                                                     padding: '16px 8px',
-                                                                    background: '#f8f9fa',
+                                                                    background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
-                                                                        color: '#28a745',
+                                                                        color: 'var(--mg-success-500)',
                                                                         marginBottom: '4px'
                                                                     }}>
                                                                         {branchStatistics.consultants || 0}
                                                                     </div>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xs)',
-                                                                        color: '#6c757d',
+                                                                        color: 'var(--mg-secondary-500)',
                                                                         fontWeight: '500'
                                                                     }}>
                                                                         상담사
@@ -426,21 +426,21 @@ const BranchManagement = () => {
                                                                 <div style={{
                                                                     textAlign: 'center',
                                                                     padding: '16px 8px',
-                                                                    background: '#f8f9fa',
+                                                                    background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
-                                                                        color: '#007bff',
+                                                                        color: 'var(--mg-primary-500)',
                                                                         marginBottom: '4px'
                                                                     }}>
                                                                         {branchStatistics.clients || 0}
                                                                     </div>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xs)',
-                                                                        color: '#6c757d',
+                                                                        color: 'var(--mg-secondary-500)',
                                                                         fontWeight: '500'
                                                                     }}>
                                                                         내담자
@@ -451,21 +451,21 @@ const BranchManagement = () => {
                                                                 <div style={{
                                                                     textAlign: 'center',
                                                                     padding: '16px 8px',
-                                                                    background: '#f8f9fa',
+                                                                    background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
-                                                                        color: '#ffc107',
+                                                                        color: 'var(--mg-warning-500)',
                                                                         marginBottom: '4px'
                                                                     }}>
                                                                         {branchStatistics.admins || 0}
                                                                     </div>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xs)',
-                                                                        color: '#6c757d',
+                                                                        color: 'var(--mg-secondary-500)',
                                                                         fontWeight: '500'
                                                                     }}>
                                                                         관리자
@@ -476,21 +476,21 @@ const BranchManagement = () => {
                                                                 <div style={{
                                                                     textAlign: 'center',
                                                                     padding: '16px 8px',
-                                                                    background: '#f8f9fa',
+                                                                    background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
-                                                                        color: '#17a2b8',
+                                                                        color: 'var(--mg-info-500)',
                                                                         marginBottom: '4px'
                                                                     }}>
                                                                         {branchStatistics.activeUsers || 0}
                                                                     </div>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xs)',
-                                                                        color: '#6c757d',
+                                                                        color: 'var(--mg-secondary-500)',
                                                                         fontWeight: '500'
                                                                     }}>
                                                                         활성
@@ -501,21 +501,21 @@ const BranchManagement = () => {
                                                                 <div style={{
                                                                     textAlign: 'center',
                                                                     padding: '16px 8px',
-                                                                    background: '#f8f9fa',
+                                                                    background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
-                                                                        color: '#6c757d',
+                                                                        color: 'var(--mg-secondary-500)',
                                                                         marginBottom: '4px'
                                                                     }}>
                                                                         {branchStatistics.inactiveUsers || 0}
                                                                     </div>
                                                                     <div style={{
                                                                         fontSize: 'var(--font-size-xs)',
-                                                                        color: '#6c757d',
+                                                                        color: 'var(--mg-secondary-500)',
                                                                         fontWeight: '500'
                                                                     }}>
                                                                         비활성
@@ -536,7 +536,7 @@ const BranchManagement = () => {
                                             overflow: 'hidden'
                                         }}>
                                             <Card.Header style={{
-                                                background: '#f8f9fa',
+                                                background: 'var(--mg-gray-100)',
                                                 borderBottom: '1px solid #e9ecef',
                                                 padding: '16px 20px'
                                             }}>
@@ -593,7 +593,7 @@ const BranchManagement = () => {
                                                 <div style={{
                                                     marginBottom: '20px',
                                                     padding: '16px',
-                                                    background: '#f8f9fa',
+                                                    background: 'var(--mg-gray-100)',
                                                     borderRadius: '8px',
                                                     border: '1px solid #e9ecef'
                                                 }}>
@@ -601,12 +601,12 @@ const BranchManagement = () => {
                                                         <Col md={4}>
                                                             <InputGroup size="sm">
                                                                 <InputGroup.Text style={{
-                                                                    background: '#ffffff',
+                                                                    background: 'var(--mg-white)',
                                                                     border: '1px solid #ced4da',
                                                                     borderRight: 'none',
                                                                     borderRadius: '6px 0 0 6px'
                                                                 }}>
-                                                                    <FaSearch style={{ color: '#6c757d' }} />
+                                                                    <FaSearch style={{ color: 'var(--mg-secondary-500)' }} />
                                                                 </InputGroup.Text>
                                                                 <FormControl
                                                                     placeholder="이름 또는 이메일로 검색..."
@@ -700,13 +700,13 @@ const BranchManagement = () => {
                                                             height: '200px',
                                                             flexDirection: 'column'
                                                         }}>
-                                                            <UnifiedLoading text="사용자 목록을 불러오는 중..." size="medium" type="inline" />
+                                                            <div className="mg-loading">로딩중...</div>
                                                         </div>
                                                     ) : filteredUsers.length === 0 ? (
                                                         <div style={{
                                                             textAlign: 'center',
                                                             padding: '40px 20px',
-                                                            color: '#6c757d'
+                                                            color: 'var(--mg-secondary-500)'
                                                         }}>
                                                             <FaUsers style={{ fontSize: '2rem', marginBottom: '12px', color: '#dee2e6' }} />
                                                             <p style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)' }}>이 지점에는 사용자가 없습니다.</p>
@@ -718,7 +718,7 @@ const BranchManagement = () => {
                                                                 <thead style={{
                                                                     position: 'sticky',
                                                                     top: 0,
-                                                                    background: '#ffffff',
+                                                                    background: 'var(--mg-white)',
                                                                     zIndex: 10,
                                                                     borderBottom: '2px solid #e9ecef'
                                                                 }}>
@@ -728,7 +728,7 @@ const BranchManagement = () => {
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
-                                                                            background: '#f8f9fa',
+                                                                            background: 'var(--mg-gray-100)',
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>
                                                                             <FormCheck
@@ -742,7 +742,7 @@ const BranchManagement = () => {
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
-                                                                            background: '#f8f9fa',
+                                                                            background: 'var(--mg-gray-100)',
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>사용자</th>
                                                                         <th style={{
@@ -750,7 +750,7 @@ const BranchManagement = () => {
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
-                                                                            background: '#f8f9fa',
+                                                                            background: 'var(--mg-gray-100)',
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>역할</th>
                                                                         <th style={{
@@ -758,7 +758,7 @@ const BranchManagement = () => {
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
-                                                                            background: '#f8f9fa',
+                                                                            background: 'var(--mg-gray-100)',
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>지점</th>
                                                                         <th style={{
@@ -766,7 +766,7 @@ const BranchManagement = () => {
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
-                                                                            background: '#f8f9fa',
+                                                                            background: 'var(--mg-gray-100)',
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>상태</th>
                                                                         <th style={{
@@ -774,7 +774,7 @@ const BranchManagement = () => {
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
-                                                                            background: '#f8f9fa',
+                                                                            background: 'var(--mg-gray-100)',
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>등록일</th>
                                                                     </tr>
@@ -784,7 +784,7 @@ const BranchManagement = () => {
                                                                     <tr 
                                                                         key={user.id} 
                                                                         style={{
-                                                                            background: !user.isActive ? '#f8f9fa' : '#ffffff',
+                                                                            background: !user.isActive ? 'var(--mg-gray-100)' : 'var(--mg-white)',
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}
                                                                     >
@@ -812,7 +812,7 @@ const BranchManagement = () => {
                                                                                     }}>
                                                                                         {user.name}
                                                                                     </div>
-                                                                                    <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
+                                                                                    <small style={{ color: 'var(--mg-secondary-500)', fontSize: 'var(--font-size-xs)' }}>
                                                                                         {user.email}
                                                                                     </small>
                                                                                 </div>
@@ -856,7 +856,7 @@ const BranchManagement = () => {
                                                                             </Badge>
                                                                         </td>
                                                                         <td style={{ padding: '12px 16px' }}>
-                                                                            <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
+                                                                            <small style={{ color: 'var(--mg-secondary-500)', fontSize: 'var(--font-size-xs)' }}>
                                                                                 {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                                                                             </small>
                                                                         </td>
@@ -885,7 +885,7 @@ const BranchManagement = () => {
                             overflow: 'hidden'
                         }}>
                             <Card.Header style={{
-                                background: '#f8f9fa',
+                                background: 'var(--mg-gray-100)',
                                 borderBottom: '1px solid #e9ecef',
                                 padding: '16px 20px'
                             }}>
@@ -963,18 +963,18 @@ const BranchManagement = () => {
                                     }}>
                                         <FaUsers style={{
                                             marginBottom: '16px',
-                                            color: '#6c757d',
+                                            color: 'var(--mg-secondary-500)',
                                             fontSize: '3rem'
                                         }} />
                                         <h5 style={{
-                                            color: '#6c757d',
+                                            color: 'var(--mg-secondary-500)',
                                             marginBottom: '12px',
                                             fontSize: 'var(--font-size-lg)'
                                         }}>
                                             이동할 사용자를 선택해주세요
                                         </h5>
                                         <p style={{
-                                            color: '#6c757d',
+                                            color: 'var(--mg-secondary-500)',
                                             marginBottom: '20px',
                                             fontSize: 'var(--font-size-sm)'
                                         }}>

@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../../utils/ajax';
-import UnifiedLoading from '../../common/UnifiedLoading';
+// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import './Widget.css';
 
 const HealingCardWidget = ({ widget, user }) => {
@@ -96,7 +96,7 @@ const HealingCardWidget = ({ widget, user }) => {
   if (loading && !healingData) {
     return (
       <div className="widget widget-healing-card">
-        <UnifiedLoading message="힐링 컨텐츠를 불러오는 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }

@@ -9,7 +9,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--mg-overlay);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -154,7 +154,7 @@
 }
 
 .mg-modal__button--primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
   color: white;
 }
 
@@ -171,12 +171,12 @@
 
 .mg-modal__button--secondary:hover {
   background: rgba(255, 255, 255, 1);
-  border-color: #667eea;
-  color: #667eea;
+  border-color: var(--mg-primary-500);
+  color: var(--mg-primary-500);
 }
 
 .mg-modal__button--danger {
-  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+  background: linear-gradient(135deg, var(--mg-error-500) 0%, #feca57 100%);
   color: white;
 }
 
@@ -198,7 +198,7 @@
   width: 48px;
   height: 48px;
   border: 4px solid rgba(102, 126, 234, 0.2);
-  border-top: 4px solid #667eea;
+  border-top: 4px solid var(--mg-primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

@@ -4,7 +4,7 @@
     border-radius: 12px;
     padding: var(--spacing-xl);
     margin-bottom: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px var(--mg-shadow-light);
 }
 
 .filters-header {
@@ -121,12 +121,12 @@
     gap: 8px;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+.mg-btn--primary {
+    background: linear-gradient(135deg, var(--mg-primary-500), #1d4ed8);
     color: white;
 }
 
-.btn-primary:hover {
+.mg-btn--primary:hover {
     background: linear-gradient(135deg, #1d4ed8, #1e40af);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);

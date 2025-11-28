@@ -13,10 +13,10 @@ import {
 } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
-import notificationManager from '../../utils/notification';
+// import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
-import '../../styles/mindgarden-design-system.css';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import '../../styles/unified-design-tokens.css';
 import './SystemConfigManagement.css';
 
 /**
@@ -193,7 +193,7 @@ const SystemConfigManagement = () => {
     if (loading) {
         return (
             <SimpleLayout title="시스템 설정 관리">
-                <UnifiedLoading text="설정을 불러오는 중..." />
+                <div className="mg-loading">로딩중...</div>
             </SimpleLayout>
         );
     }

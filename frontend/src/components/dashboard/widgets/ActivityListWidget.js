@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import UnifiedLoading from '../../common/UnifiedLoading';
+// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../../utils/ajax';
 import './Widget.css';
 import '../RecentActivities.css';
@@ -118,7 +118,7 @@ const ActivityListWidget = ({ widget, user }) => {
   if (loading && activities.length === 0) {
     return (
       <div className="widget widget-activity-list">
-        <UnifiedLoading message="로딩 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }

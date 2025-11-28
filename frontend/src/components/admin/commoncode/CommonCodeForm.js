@@ -53,11 +53,11 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
             console.error('공통 코드 그룹 옵션 로드 실패:', error);
             // 실패 시 기본값 설정
             setCommonCodeGroupOptions([
-                { value: 'PACKAGE_TYPE', label: '패키지 유형', icon: '📦', color: '#3b82f6', description: '상담 패키지 유형' },
-                { value: 'PAYMENT_METHOD', label: '결제 방법', icon: '💳', color: '#10b981', description: '결제 수단' },
-                { value: 'RESPONSIBILITY', label: '책임', icon: '👤', color: '#f59e0b', description: '책임 및 역할' },
-                { value: 'CONSULTATION_TYPE', label: '상담 유형', icon: '💬', color: '#8b5cf6', description: '상담의 유형' },
-                { value: 'GENDER', label: '성별', icon: '⚧', color: '#ef4444', description: '사용자 성별' },
+                { value: 'PACKAGE_TYPE', label: '패키지 유형', icon: '📦', color: 'var(--mg-primary-500)', description: '상담 패키지 유형' },
+                { value: 'PAYMENT_METHOD', label: '결제 방법', icon: '💳', color: 'var(--mg-success-500)', description: '결제 수단' },
+                { value: 'RESPONSIBILITY', label: '책임', icon: '👤', color: 'var(--mg-warning-500)', description: '책임 및 역할' },
+                { value: 'CONSULTATION_TYPE', label: '상담 유형', icon: '💬', color: 'var(--mg-purple-500)', description: '상담의 유형' },
+                { value: 'GENDER', label: '성별', icon: '⚧', color: 'var(--mg-error-500)', description: '사용자 성별' },
                 { value: 'ROLE', label: '역할', icon: '👑', color: '#06b6d4', description: '사용자 역할' },
                 { value: 'STATUS', label: '상태', icon: '🔄', color: '#f97316', description: '일반적인 상태' },
                 { value: 'PRIORITY', label: '우선순위', icon: '⚡', color: '#dc2626', description: '우선순위 구분' },

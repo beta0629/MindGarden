@@ -16,10 +16,10 @@ import {
 import { apiGet } from '../../utils/ajax';
 import { getDashboardPath } from '../../utils/session';
 import { useSession } from '../../contexts/SessionContext';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 import './ClientPaymentHistory.css';
 
 /**
@@ -131,7 +131,7 @@ const ClientPaymentHistory = () => {
     return (
       <SimpleLayout>
         <div className="client-payment-history">
-          <UnifiedLoading text="결제 데이터를 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );

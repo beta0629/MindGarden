@@ -1,5 +1,5 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
 import { useSession } from '../../contexts/SessionContext';
@@ -23,7 +23,7 @@ const ConsultantSchedule = () => {
     console.log('⏳ ConsultantSchedule: 세션 로딩 중...');
     return (
       <SimpleLayout>
-        <UnifiedLoading />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }
@@ -32,7 +32,7 @@ const ConsultantSchedule = () => {
     console.log('❌ ConsultantSchedule: 사용자 정보 없음');
     return (
       <SimpleLayout>
-        <UnifiedLoading />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }

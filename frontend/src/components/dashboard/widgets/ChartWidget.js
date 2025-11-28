@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../../common/UnifiedLoading';
+// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../../utils/ajax';
 import './Widget.css';
 
@@ -74,7 +74,7 @@ const ChartWidget = ({ widget, user }) => {
     return (
       <div className="widget widget-chart">
         <div className="widget-title">{config.title || '차트'}</div>
-        <UnifiedLoading message="로딩 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }

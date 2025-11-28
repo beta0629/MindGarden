@@ -3,8 +3,8 @@
  * 한글 번역 및 수채화 테마 적용
  */
 
-import React from 'react';
-import MGCard from '../common/MGCard';
+// import React from 'react';
+import MGCard from '../../components/common/MGCard'; // 임시 비활성화
 import './CounselingServices.css';
 
 const services = [
@@ -53,7 +53,7 @@ const CounselingServices = () => {
 
         <div className="counseling-services__grid">
           {services.map((service, index) => (
-            <MGCard
+            <div className="mg-card"
               key={index}
               variant="glass"
               padding="large"
@@ -68,7 +68,7 @@ const CounselingServices = () => {
               <div className="counseling-services__card-content">
                 <p className="counseling-services__description">{service.description}</p>
               </div>
-            </MGCard>
+            </div>
           ))}
         </div>
       </div>

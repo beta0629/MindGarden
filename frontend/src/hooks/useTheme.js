@@ -77,21 +77,21 @@ export const useTheme = () => {
             root.style.setProperty('--theme-bg-primary', '#1a1a1a');
             root.style.setProperty('--theme-bg-secondary', '#2a2a2a');
             root.style.setProperty('--theme-bg-tertiary', '#3a3a3a');
-            root.style.setProperty('--theme-text-primary', '#ffffff');
+            root.style.setProperty('--theme-text-primary', 'var(--mg-white)');
             root.style.setProperty('--theme-text-secondary', '#b3b3b3');
-            root.style.setProperty('--theme-text-tertiary', '#666666');
+            root.style.setProperty('--theme-text-tertiary', 'var(--mg-gray-600)');
             root.style.setProperty('--theme-border', 'rgba(255, 255, 255, 0.1)');
-            root.style.setProperty('--theme-shadow', 'rgba(0, 0, 0, 0.5)');
+            root.style.setProperty('--theme-shadow', 'var(--mg-overlay)');
         } else {
             // 라이트 테마 색상
-            root.style.setProperty('--theme-bg-primary', '#ffffff');
+            root.style.setProperty('--theme-bg-primary', 'var(--mg-white)');
             root.style.setProperty('--theme-bg-secondary', '#f2f2f7');
-            root.style.setProperty('--theme-bg-tertiary', '#ffffff');
+            root.style.setProperty('--theme-bg-tertiary', 'var(--mg-white)');
             root.style.setProperty('--theme-text-primary', '#1d1d1f');
             root.style.setProperty('--theme-text-secondary', '#86868b');
             root.style.setProperty('--theme-text-tertiary', '#c7c7cc');
             root.style.setProperty('--theme-border', 'rgba(0, 0, 0, 0.05)');
-            root.style.setProperty('--theme-shadow', 'rgba(0, 0, 0, 0.1)');
+            root.style.setProperty('--theme-shadow', 'var(--mg-shadow-light)');
         }
     }, [theme, systemTheme]);
 

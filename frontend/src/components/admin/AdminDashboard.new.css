@@ -330,7 +330,7 @@
     .mg-v2-admin-dashboard {
         --mg-color-background: #1a1a1a;
         --mg-color-surface: #2d2d2d;
-        --mg-color-text-primary: #ffffff;
+        --mg-color-text-primary: var(--mg-white);
         --mg-color-text-secondary: #b3b3b3;
         --mg-color-text-muted: #808080;
         --mg-color-primary: #4f46e5;

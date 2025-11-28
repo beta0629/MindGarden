@@ -20,7 +20,7 @@ const modalStyles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'var(--mg-overlay)',
     backdropFilter: 'blur(4px)',
     display: 'flex',
     justifyContent: 'center',
@@ -35,7 +35,7 @@ const modalStyles = {
     maxWidth: '500px',
     maxHeight: '80vh',
     overflowY: 'auto',
-    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+    boxShadow: '0 20px 40px var(--mg-shadow-medium)',
     border: `1px solid ${COLORS.SECONDARY}20`,
     animation: 'fadeIn 0.3s ease-out'
   },

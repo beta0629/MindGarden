@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { CreditCard, CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { apiPost } from '../../../utils/ajax';
-import notificationManager from '../../../utils/notification';
-import MGButton from '../../common/MGButton';
-
+// import notificationManager from '../../../utils/notification';
+import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 /**
  * 매칭 입금확인 모달 컴포넌트
  * - 결제 방법 선택 (계좌이체, 신용카드, 현금)
@@ -201,20 +200,20 @@ const MappingPaymentModal = ({
 
                 {/* 푸터 */}
                 <div className="mg-v2-modal-footer">
-                    <MGButton
+                    <button className="mg-button"
                         variant="secondary"
                         onClick={onClose}
                         disabled={loading}
                     >
                         취소
-                    </MGButton>
-                    <MGButton
+                    </button>
+                    <button className="mg-button"
                         variant="primary"
                         onClick={handleConfirmPayment}
                         disabled={loading}
                     >
                         {loading ? '처리 중...' : '확인'}
-                    </MGButton>
+                    </button>
                 </div>
             </div>
         </div>,

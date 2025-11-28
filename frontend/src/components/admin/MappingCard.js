@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { User, Package, Plus, PauseCircle, CheckCircle } from 'lucide-react';
 import { getStatusColor, getStatusIcon, getMappingStatusKoreanName } from '../../utils/codeHelper';
 

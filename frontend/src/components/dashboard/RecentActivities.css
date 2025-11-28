@@ -48,7 +48,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   border-radius: 8px;
   transition: all 0.2s ease;
   border: 1px solid #e9ecef;
@@ -56,7 +56,7 @@
 
 .recent-activities-activity-item:hover {
   background: #e9ecef;
-  border-color: #667eea;
+  border-color: var(--mg-primary-500);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
 }
@@ -98,14 +98,14 @@
 
 .recent-activities-activity-time {
   font-size: 0.85rem;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
   font-weight: 400;
 }
 
 .no-activities {
   text-align: center;
   padding: 2rem 1rem;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
 }
 
 .no-activities i {

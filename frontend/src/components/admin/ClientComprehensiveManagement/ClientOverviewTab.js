@@ -1,5 +1,5 @@
-import React from 'react';
-import MGButton from '../../common/MGButton';
+// import React from 'react';
+import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import { FaUser, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync, getUserGradeIconSync, getStatusColorSync } from '../../../utils/codeHelper';
 
@@ -81,27 +81,27 @@ const ClientOverviewTab = ({
                 </div>
                 
                 <div className="mg-v2-card-footer">
-                    <MGButton
+                    <button className="mg-button"
                         variant="secondary"
                         size="small"
                         onClick={() => onClientSelect(client)}
                     >
                         <FaEye /> 상세보기
-                    </MGButton>
-                    <MGButton
+                    </button>
+                    <button className="mg-button"
                         variant="primary"
                         size="small"
                         onClick={() => onEditClient(client)}
                     >
                         <FaEdit /> 수정
-                    </MGButton>
-                    <MGButton
+                    </button>
+                    <button className="mg-button"
                         variant="secondary"
                         size="small"
                         onClick={() => onDeleteClient(client)}
                     >
                         <FaTrash /> 삭제
-                    </MGButton>
+                    </button>
                 </div>
             </div>
         );

@@ -14,8 +14,8 @@ import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { registerPaymentMethod } from '../../utils/billingService';
 import { formatCardLast4 } from '../../utils/billingService';
 import { getErrorMessage } from '../../utils/billingService';
-import notificationManager from '../../utils/notification';
-import MGButton from '../../components/common/MGButton';
+// import notificationManager from '../../utils/notification';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import SimpleLayout from '../../components/layout/SimpleLayout';
 import {
   BILLING_CSS,
@@ -154,9 +154,9 @@ const BillingCallback = () => {
               </div>
             )}
             <div className={BILLING_CSS.BILLING_CALLBACK.ACTIONS}>
-              <MGButton variant="primary" onClick={handleGoToDashboard} fullWidth>
+              <button className="mg-button" variant="primary" onClick={handleGoToDashboard} fullWidth>
                 {BILLING_MESSAGES.CALLBACK.GO_TO_DASHBOARD}
-              </MGButton>
+              </button>
             </div>
           </div>
         ) : (
@@ -173,12 +173,12 @@ const BillingCallback = () => {
               </div>
             )}
             <div className={BILLING_CSS.BILLING_CALLBACK.ACTIONS}>
-              <MGButton variant="secondary" onClick={handleRetry} fullWidth>
+              <button className="mg-button" variant="secondary" onClick={handleRetry} fullWidth>
                 {BILLING_MESSAGES.CALLBACK.RETRY}
-              </MGButton>
-              <MGButton variant="primary" onClick={handleGoToDashboard} fullWidth>
+              </button>
+              <button className="mg-button" variant="primary" onClick={handleGoToDashboard} fullWidth>
                 {BILLING_MESSAGES.CALLBACK.GO_TO_DASHBOARD}
-              </MGButton>
+              </button>
             </div>
           </div>
         )}

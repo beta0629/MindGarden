@@ -12,10 +12,10 @@ import {
   Star
 } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
-import notificationManager from '../../utils/notification';
-import UnifiedModal from '../common/modals/UnifiedModal';
-import UnifiedLoading from '../common/UnifiedLoading';
-import '../../styles/mindgarden-design-system.css';
+// // import notificationManager from '../../utils/notification';
+import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
 
 /**
@@ -212,7 +212,7 @@ const ClientMessageSection = ({ userId }) => {
   if (loading) {
     return (
       <div className="client-message-section">
-        <UnifiedLoading text="메시지를 불러오는 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }
@@ -315,7 +315,7 @@ const ClientMessageSection = ({ userId }) => {
 
       {/* 메시지 상세 모달 */}
       {selectedMessage && (
-        <UnifiedModal
+        <div className="mg-modal"
           isOpen={!!selectedMessage}
           onClose={closeModal}
           title={selectedMessage.title}
@@ -352,7 +352,7 @@ const ClientMessageSection = ({ userId }) => {
               />
             </div>
           </div>
-        </UnifiedModal>
+        </div>
       )}
     </div>
   );

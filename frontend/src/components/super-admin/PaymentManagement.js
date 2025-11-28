@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
@@ -68,14 +68,14 @@ const PaymentManagement = () => {
         console.error('결제 상태 코드 로드 실패:', error);
         // 실패 시 기본값 설정
         setPaymentStatusOptions([
-          { value: 'PENDING', label: '대기중', icon: '⏳', color: '#f59e0b', description: '결제 대기 중' },
-          { value: 'PROCESSING', label: '처리중', icon: '🔄', color: '#3b82f6', description: '결제 처리 중' },
-          { value: 'APPROVED', label: '승인됨', icon: '✅', color: '#10b981', description: '결제 승인 완료' },
-          { value: 'FAILED', label: '실패', icon: '❌', color: '#ef4444', description: '결제 실패' },
+          { value: 'PENDING', label: '대기중', icon: '⏳', color: 'var(--mg-warning-500)', description: '결제 대기 중' },
+          { value: 'PROCESSING', label: '처리중', icon: '🔄', color: 'var(--mg-primary-500)', description: '결제 처리 중' },
+          { value: 'APPROVED', label: '승인됨', icon: '✅', color: 'var(--mg-success-500)', description: '결제 승인 완료' },
+          { value: 'FAILED', label: '실패', icon: '❌', color: 'var(--mg-error-500)', description: '결제 실패' },
           { value: 'CANCELLED', label: '취소됨', icon: '🚫', color: '#6b7280', description: '결제 취소' },
           { value: 'REFUNDED', label: '환불됨', icon: '↩️', color: '#f97316', description: '결제 환불' },
           { value: 'EXPIRED', label: '만료됨', icon: '⏰', color: '#374151', description: '결제 만료' },
-          { value: 'PARTIAL_REFUND', label: '부분환불', icon: '↩️', color: '#f59e0b', description: '부분 환불' }
+          { value: 'PARTIAL_REFUND', label: '부분환불', icon: '↩️', color: 'var(--mg-warning-500)', description: '부분 환불' }
         ]);
       } finally {
         setLoadingCodes(false);
@@ -136,11 +136,11 @@ const PaymentManagement = () => {
       console.error('결제 방법 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setPaymentMethodOptions([
-        { value: 'CARD', label: '카드', icon: '💳', color: '#3b82f6', description: '신용카드/체크카드 결제' },
-        { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: '#10b981', description: '은행 계좌 이체' },
-        { value: 'VIRTUAL_ACCOUNT', label: '가상계좌', icon: '🏧', color: '#8b5cf6', description: '가상계좌 결제' },
-        { value: 'MOBILE', label: '모바일결제', icon: '📱', color: '#f59e0b', description: '모바일 결제' },
-        { value: 'CASH', label: '현금', icon: '💵', color: '#f59e0b', description: '현금 결제' }
+        { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
+        { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
+        { value: 'VIRTUAL_ACCOUNT', label: '가상계좌', icon: '🏧', color: 'var(--mg-purple-500)', description: '가상계좌 결제' },
+        { value: 'MOBILE', label: '모바일결제', icon: '📱', color: 'var(--mg-warning-500)', description: '모바일 결제' },
+        { value: 'CASH', label: '현금', icon: '💵', color: 'var(--mg-warning-500)', description: '현금 결제' }
       ]);
     } finally {
       setLoadingMethodCodes(false);

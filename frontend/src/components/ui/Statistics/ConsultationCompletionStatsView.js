@@ -1,5 +1,4 @@
-import MGButton from '../../common/MGButton';
-
+// import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 /**
  * 상담 완료 통계 뷰 컴포넌트 (Presentational)
  * - 순수 UI 컴포넌트
@@ -30,9 +29,9 @@ const ConsultationCompletionStatsView = ({
         return (
             <div className="mg-v2-error-state">
                 <p>{error}</p>
-                <MGButton variant="primary" className="mg-v2-button mg-button-danger" onClick={onRetry}>
+                <button className="mg-button" variant="primary" className="mg-v2-button mg-button-danger" onClick={onRetry}>
                     다시 시도
-                </MGButton>
+                </button>
             </div>
         );
     }

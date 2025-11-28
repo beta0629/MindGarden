@@ -1,0 +1,311 @@
+/* ===== ConsultantSelectionStep 스타일 - 새로운 디자인 시스템 적용 ===== */
+
+.consultant-selection-step {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, 1.5rem);
+}
+
+.consultant-selection-header {
+  text-align: center;
+  margin-bottom: var(--spacing-md, 1rem);
+}
+
+.consultant-selection-title {
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #1D1D1F);
+  margin: 0 0 var(--spacing-sm, 0.75rem) 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm, 0.75rem);
+}
+
+.consultant-selection-description,
+.consultant-selection-subtitle {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-secondary, #424245);
+  margin: 0;
+}
+
+/* 필터 섹션 */
+.consultant-filter-section {
+  background: var(--color-bg-secondary, #F5F5F7);
+  border-radius: var(--border-radius-md, 12px);
+  padding: var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
+  box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
+  backdrop-filter: var(--ios-backdrop-blur-sm);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
+}
+
+.consultant-search-input {
+  width: 100%;
+  padding: var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-md, 12px);
+  font-size: var(--font-size-base, 1rem);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-primary, #1D1D1F);
+  margin-bottom: var(--spacing-md, 1rem);
+  transition: all 0.2s ease;
+}
+
+.consultant-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #007AFF);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  background: var(--color-bg-primary, #FAFAFA);
+}
+
+.consultant-filter-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 1rem);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-md, 1rem);
+}
+
+.consultant-specialty-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 0.75rem);
+}
+
+.consultant-specialty-label {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-secondary, #424245);
+  white-space: nowrap;
+}
+
+.consultant-specialty-select {
+  padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-md, 12px);
+  font-size: var(--font-size-sm, 0.875rem);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-primary, #1D1D1F);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.consultant-specialty-select:focus {
+  outline: none;
+  border-color: var(--color-primary, #007AFF);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+}
+
+.consultant-reset-button {
+  padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
+  border-radius: var(--border-radius-md, 12px);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-secondary, #424245);
+  font-size: var(--font-size-sm, 0.875rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.5rem);
+}
+
+.consultant-reset-button:hover {
+  background: var(--color-bg-accent, #E8E8ED);
+  color: var(--color-text-primary, #1D1D1F);
+  border-color: var(--color-border-primary, #D1D1D6);
+}
+
+.consultant-availability-filter {
+  display: flex;
+  gap: var(--spacing-sm, 0.75rem);
+  flex-wrap: wrap;
+}
+
+.consultant-filter-button {
+  padding: var(--spacing-xs, 0.5rem) var(--spacing-sm, 0.75rem);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-sm, 8px);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-secondary, #424245);
+  font-size: var(--font-size-xs, 0.75rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.consultant-filter-button:hover {
+  background: var(--color-bg-accent, #E8E8ED);
+  border-color: var(--color-border-accent, #A1A1A6);
+}
+
+.consultant-filter-button.active {
+  background: var(--color-primary, #007AFF);
+  color: var(--color-text-inverse, #FFFFFF);
+  border-color: var(--color-primary, #007AFF);
+}
+
+.consultant-count-info {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #424245);
+  margin-bottom: var(--spacing-sm, 0.75rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.consultant-availability-legend {
+  display: flex;
+  gap: var(--spacing-sm, 0.75rem);
+  flex-wrap: wrap;
+}
+
+.consultant-legend-item {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted, #8E8E93);
+}
+
+/* 상담사 그리드 */
+.consultant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-md, 1rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+}
+
+/* 선택된 상담사 정보 */
+.selected-consultant-info {
+  background: var(--color-primary-light, #E3F2FD);
+  border: 1px solid var(--color-primary, #007AFF);
+  border-radius: var(--border-radius-md, 12px);
+  padding: var(--spacing-md, 1rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
+}
+
+.selected-consultant-title {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-primary, #000000);
+  font-weight: var(--font-weight-semibold, 600);
+  margin: 0 0 var(--spacing-xs, 0.5rem) 0;
+}
+
+.selected-consultant-details {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-primary, #000000);
+  margin: 0;
+}
+
+/* 선택된 상담사 텍스트 */
+.consultant-selection-selected {
+  background: var(--mint-green-light, rgba(152, 251, 152, 0.2));
+  border-radius: var(--border-radius-md, 12px);
+  padding: var(--spacing-md, 1rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+  box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
+}
+
+.consultant-selection-selected-text {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-primary, #000000);
+  font-weight: var(--font-weight-medium, 500);
+  margin: 0;
+}
+
+/* 상담사 없음 */
+.no-consultants {
+  text-align: center;
+  padding: var(--spacing-xl, 2rem);
+  color: var(--color-text-muted, #8E8E93);
+  font-size: var(--font-size-base, 1rem);
+  background: var(--color-bg-secondary, #F5F5F7);
+  border-radius: var(--border-radius-md, 12px);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
+}
+
+/* 로딩 상태 */
+.consultant-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xl, 2rem);
+  color: var(--color-text-secondary, #424245);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .consultant-selection-step {
+    gap: var(--spacing-md, 1rem);
+  }
+  
+  .consultant-filter-section {
+    padding: var(--spacing-sm, 0.75rem);
+  }
+  
+  .consultant-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm, 0.75rem);
+  }
+  
+  .consultant-specialty-filter {
+    justify-content: space-between;
+  }
+  
+  .consultant-availability-filter {
+    justify-content: center;
+  }
+  
+  .consultant-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm, 0.75rem);
+  }
+  
+  .consultant-count-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs, 0.5rem);
+  }
+  
+  .consultant-availability-legend {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .consultant-selection-title {
+    font-size: var(--font-size-lg, 1.125rem);
+    flex-direction: column;
+    gap: var(--spacing-xs, 0.5rem);
+  }
+  
+  .consultant-selection-description {
+    font-size: var(--font-size-sm, 0.875rem);
+  }
+  
+  .consultant-filter-section {
+    padding: var(--spacing-xs, 0.5rem);
+  }
+  
+  .consultant-search-input {
+    padding: var(--spacing-sm, 0.75rem);
+    font-size: var(--font-size-sm, 0.875rem);
+  }
+  
+  .consultant-specialty-select {
+    padding: var(--spacing-xs, 0.5rem) var(--spacing-sm, 0.75rem);
+    font-size: var(--font-size-xs, 0.75rem);
+  }
+  
+  .consultant-reset-button {
+    padding: var(--spacing-xs, 0.5rem) var(--spacing-sm, 0.75rem);
+    font-size: var(--font-size-xs, 0.75rem);
+  }
+  
+  .consultant-filter-button {
+    padding: var(--spacing-xs, 0.5rem);
+    font-size: var(--font-size-xs, 0.75rem);
+  }
+}

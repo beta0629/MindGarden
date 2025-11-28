@@ -9,8 +9,8 @@
 
 import React, { useState } from 'react';
 import { apiPost } from '../../../../utils/ajax';
-import notificationManager from '../../../../utils/notification';
-import UnifiedLoading from '../../../common/UnifiedLoading';
+// import notificationManager from '../../../../utils/notification';
+import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
 import '../Widget.css';
 
 const ClientRegistrationWidget = ({ widget, user }) => {
@@ -139,7 +139,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
   if (loading) {
     return (
       <div className="widget widget-client-registration">
-        <UnifiedLoading message="등록 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }

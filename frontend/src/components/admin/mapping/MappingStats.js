@@ -157,7 +157,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '⏳',
                         label: '결제 대기',
                         value: stats.pending,
-                        color: 'var(--color-warning, #FFC107)',
+                        color: 'var(--color-warning, var(--mg-warning-500))',
                         bgColor: 'var(--color-warning-light, rgba(255, 193, 7, 0.1))',
                         action: 'payment'
                     },
@@ -166,7 +166,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '✅',
                         label: '활성 매칭',
                         value: stats.active,
-                        color: 'var(--color-success, #28A745)',
+                        color: 'var(--color-success, var(--mg-success-500))',
                         bgColor: 'var(--color-success-light, rgba(40, 167, 69, 0.1))',
                         action: 'view'
                     },
@@ -175,7 +175,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '💰',
                         label: '결제 확인',
                         value: stats.paymentConfirmed,
-                        color: 'var(--color-info, #17A2B8)',
+                        color: 'var(--color-info, var(--mg-info-500))',
                         bgColor: 'var(--color-info-light, rgba(23, 162, 184, 0.1))',
                         action: 'view'
                     },
@@ -184,7 +184,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '📊',
                         label: '전체 매칭',
                         value: stats.total,
-                        color: 'var(--color-primary, #007AFF)',
+                        color: 'var(--color-primary, var(--mg-primary-500))',
                         bgColor: 'var(--color-primary-light, rgba(0, 122, 255, 0.1))',
                         action: 'view_all'
                     },
@@ -193,7 +193,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '❌',
                         label: '종료됨',
                         value: stats.terminated,
-                        color: 'var(--color-danger, #DC3545)',
+                        color: 'var(--color-danger, var(--mg-error-500))',
                         bgColor: 'var(--color-danger-light, rgba(220, 53, 69, 0.1))',
                         action: 'view'
                     },
@@ -202,7 +202,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '🔚',
                         label: '회기 소진',
                         value: stats.sessionsExhausted,
-                        color: 'var(--color-warning, #FFC107)',
+                        color: 'var(--color-warning, var(--mg-warning-500))',
                         bgColor: 'var(--color-warning-light, rgba(255, 193, 7, 0.1))',
                         action: 'view'
                     }

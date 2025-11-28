@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import MGButton from '../components/common/MGButton';
-import MGCard from '../components/common/MGCard';
+// // import MGButton from '../components/common/MGButton'; // 임시 비활성화
+import MGCard from '../components/common/MGCard'; // 임시 비활성화
 import MGPageHeader from '../components/common/MGPageHeader';
 import MGLayout, { MGSection, MGContainer, MGGrid, MGFlex, MGSpace, MGDivider } from '../components/common/MGLayout';
 import MGStats, { MGStatsGrid } from '../components/common/MGStats';
@@ -265,14 +265,14 @@ const AdvancedDesignSample = () => {
       title: 'AI 기반 상담',
       description: '인공지능이 대화 내용을 분석하여 맞춤형 상담 방향을 제시합니다.',
       icon: '🤖',
-      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      gradient: 'linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%)',
       stats: { sessions: '2.4K', satisfaction: '98%' }
     },
     {
       title: '실시간 모니터링',
       description: '상담 진행 상황을 실시간으로 모니터링하고 필요한 지원을 제공합니다.',
       icon: '📊',
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      gradient: 'linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%)',
       stats: { sessions: '1.8K', satisfaction: '96%' }
     },
     {
@@ -426,12 +426,12 @@ const AdvancedDesignSample = () => {
               </p>
             </div>
             <div className="hero-actions">
-              <MGButton variant="primary" size="large" icon="🚀">
+              <button className="mg-button" variant="primary" size="large" icon="🚀">
                 시작하기
-              </MGButton>
-              <MGButton variant="secondary" size="large">
+              </button>
+              <button className="mg-button" variant="secondary" size="large">
                 더 알아보기
-              </MGButton>
+              </button>
             </div>
           </div>
         </MGContainer>
@@ -518,7 +518,7 @@ const AdvancedDesignSample = () => {
             
             <MGGrid cols="auto" gap="large">
               {features.map((feature, index) => (
-                <MGCard key={index} variant="elevated" padding="large" className="feature-card">
+                <div className="mg-card" key={index} variant="elevated" padding="large" className="feature-card">
                   <MGFlex direction="column" gap="medium">
                     <MGFlex align="center" gap="medium">
                       <div 
@@ -547,12 +547,12 @@ const AdvancedDesignSample = () => {
                         <span className="feature-badge">AI</span>
                         <span className="feature-badge">실시간</span>
                       </MGFlex>
-                      <MGButton variant="ghost" size="small">
+                      <button className="mg-button" variant="ghost" size="small">
                         자세히 보기 →
-                      </MGButton>
+                      </button>
                     </MGFlex>
                   </MGFlex>
-                </MGCard>
+                </div>
               ))}
             </MGGrid>
           </MGFlex>
@@ -572,7 +572,7 @@ const AdvancedDesignSample = () => {
               </p>
               
               {/* 로딩바 데모 */}
-              <div style={{ padding: '20px', background: '#f8f9fa', borderRadius: '8px', width: '100%', maxWidth: '800px' }}>
+              <div style={{ padding: '20px', background: 'var(--mg-gray-100)', borderRadius: '8px', width: '100%', maxWidth: '800px' }}>
                 <h4 style={{ margin: '0 0 16px 0', color: '#1a202c' }}>로딩바 데모</h4>
                 <MGFlex gap="medium" wrap justify="center">
                   <MGLoading variant="spinner" size="small" text="스피너" />
@@ -586,92 +586,92 @@ const AdvancedDesignSample = () => {
               <div style={{ padding: '20px', background: '#f0f9ff', borderRadius: '8px', width: '100%', maxWidth: '800px' }}>
                 <h4 style={{ margin: '0 0 16px 0', color: '#1a202c' }}>모달 테스트</h4>
                 <MGFlex gap="medium" wrap justify="center">
-                  <MGButton variant="primary" onClick={() => setShowConfirmModal(true)}>
+                  <button className="mg-button" variant="primary" onClick={() => setShowConfirmModal(true)}>
                     확인 모달 열기
-                  </MGButton>
-                  <MGButton variant="warning" onClick={() => {
+                  </button>
+                  <button className="mg-button" variant="warning" onClick={() => {
                     setShowLoadingModal(true);
                     setTimeout(() => setShowLoadingModal(false), 3000);
                   }}>
                     로딩 모달 열기
-                  </MGButton>
-                  <MGButton variant="success" onClick={() => setShowDemoModal(true)}>
+                  </button>
+                  <button className="mg-button" variant="success" onClick={() => setShowDemoModal(true)}>
                     데모 모달 열기
-                  </MGButton>
+                  </button>
                 </MGFlex>
               </div>
             </MGFlex>
             
             <MGGrid cols="auto" gap="large">
               {/* 버튼 데모 */}
-              <MGCard variant="glass" padding="large" className="demo-card">
+              <div className="mg-card" variant="glass" padding="large" className="demo-card">
                 <MGFlex direction="column" gap="large">
                   <h3 className="demo-title">버튼 컴포넌트</h3>
                   
                   <MGFlex direction="column" gap="medium">
                     <MGFlex gap="medium" wrap>
-                      <MGButton variant="primary" size="small">
+                      <button className="mg-button" variant="primary" size="small">
                         Primary Small
-                      </MGButton>
-                      <MGButton variant="primary" size="medium">
+                      </button>
+                      <button className="mg-button" variant="primary" size="medium">
                         Primary Medium
-                      </MGButton>
-                      <MGButton variant="primary" size="large">
+                      </button>
+                      <button className="mg-button" variant="primary" size="large">
                         Primary Large
-                      </MGButton>
+                      </button>
                     </MGFlex>
                     
                     <MGFlex gap="medium" wrap>
-                      <MGButton variant="secondary">Secondary</MGButton>
-                      <MGButton variant="success">Success</MGButton>
-                      <MGButton variant="warning">Warning</MGButton>
-                      <MGButton variant="danger">Danger</MGButton>
+                      <button className="mg-button" variant="secondary">Secondary</button>
+                      <button className="mg-button" variant="success">Success</button>
+                      <button className="mg-button" variant="warning">Warning</button>
+                      <button className="mg-button" variant="danger">Danger</button>
                     </MGFlex>
                     
                     <MGFlex gap="medium" wrap>
-                      <MGButton variant="primary" disabled>
+                      <button className="mg-button" variant="primary" disabled>
                         Disabled
-                      </MGButton>
-                      <MGButton variant="primary" loading={loading} onClick={handleLoadingTest}>
+                      </button>
+                      <button className="mg-button" variant="primary" loading={loading} onClick={handleLoadingTest}>
                         {loading ? '로딩 중...' : '로딩 테스트'}
-                      </MGButton>
-                      <MGButton variant="primary" icon="📧">
+                      </button>
+                      <button className="mg-button" variant="primary" icon="📧">
                         아이콘 버튼
-                      </MGButton>
-                      <MGButton variant="primary" onClick={() => setShowConfirmModal(true)}>
+                      </button>
+                      <button className="mg-button" variant="primary" onClick={() => setShowConfirmModal(true)}>
                         확인 모달
-                      </MGButton>
-                      <MGButton variant="warning" onClick={() => setShowLoadingModal(true)}>
+                      </button>
+                      <button className="mg-button" variant="warning" onClick={() => setShowLoadingModal(true)}>
                         로딩 모달
-                      </MGButton>
-                      <MGButton variant="success" onClick={() => setShowDemoModal(true)}>
+                      </button>
+                      <button className="mg-button" variant="success" onClick={() => setShowDemoModal(true)}>
                         데모 모달
-                      </MGButton>
+                      </button>
                     </MGFlex>
                   </MGFlex>
                 </MGFlex>
-              </MGCard>
+              </div>
 
               {/* 레이아웃 데모 */}
-              <MGCard variant="glass" padding="large" className="demo-card">
+              <div className="mg-card" variant="glass" padding="large" className="demo-card">
                 <MGFlex direction="column" gap="large">
                   <h3 className="demo-title">레이아웃 시스템</h3>
                   
                   <MGFlex direction="column" gap="medium">
                     <MGGrid cols={2} gap="small">
-                      <MGCard variant="outlined" padding="medium" className="mini-card">
+                      <div className="mg-card" variant="outlined" padding="medium" className="mini-card">
                         <MGFlex direction="column" align="center" gap="small">
                           <span className="mini-card-icon">📐</span>
                           <span className="mini-card-title">Grid</span>
                         </MGFlex>
-                      </MGCard>
+                      </div>
                       
-                      <MGCard variant="outlined" padding="medium" className="mini-card">
+                      <div className="mg-card" variant="outlined" padding="medium" className="mini-card">
                         <MGFlex direction="column" align="center" gap="small">
                           <span className="mini-card-icon">📏</span>
                           <span className="mini-card-title">Flex</span>
                         </MGFlex>
-                      </MGCard>
+                      </div>
                     </MGGrid>
                     
                     <MGDivider variant="dashed" />
@@ -687,7 +687,7 @@ const AdvancedDesignSample = () => {
                     </MGFlex>
                   </MGFlex>
                 </MGFlex>
-              </MGCard>
+              </div>
             </MGGrid>
           </MGFlex>
         </MGContainer>
@@ -822,16 +822,16 @@ const AdvancedDesignSample = () => {
                   />
 
                   <MGFlex gap="medium" justify="end">
-                    <MGButton variant="secondary" type="button">
+                    <button className="mg-button" variant="secondary" type="button">
                       취소
-                    </MGButton>
-                    <MGButton variant="primary" type="submit">
+                    </button>
+                    <button className="mg-button" variant="primary" type="submit">
                       저장
-                    </MGButton>
+                    </button>
                   </MGFlex>
                 </MGForm>
 
-                <MGCard variant="glass" padding="large">
+                <div className="mg-card" variant="glass" padding="large">
                   <h3>폼 데이터 미리보기</h3>
                   <pre style={{ 
                     background: 'var(--bg-secondary)', 
@@ -842,7 +842,7 @@ const AdvancedDesignSample = () => {
                   }}>
                     {JSON.stringify(formData, null, 2)}
                   </pre>
-                </MGCard>
+                </div>
               </MGGrid>
             </MGFlex>
           )}
@@ -941,7 +941,7 @@ const AdvancedDesignSample = () => {
       {/* CTA 섹션 */}
       <MGSection variant="elevated" padding="large">
         <MGContainer size="xl">
-          <MGCard variant="elevated" padding="large" className="cta-card">
+          <div className="mg-card" variant="elevated" padding="large" className="cta-card">
             <MGFlex direction="column" align="center" gap="large">
               <MGFlex direction="column" align="center" gap="medium">
                 <h2 className="cta-title">지금 시작해보세요</h2>
@@ -951,18 +951,18 @@ const AdvancedDesignSample = () => {
               </MGFlex>
               
               <MGFlex gap="medium" wrap justify="center">
-                <MGButton variant="primary" size="large">
+                <button className="mg-button" variant="primary" size="large">
                   무료 체험 시작
-                </MGButton>
-                <MGButton variant="secondary" size="large">
+                </button>
+                <button className="mg-button" variant="secondary" size="large">
                   상담사 등록
-                </MGButton>
-                <MGButton variant="ghost" size="large">
+                </button>
+                <button className="mg-button" variant="ghost" size="large">
                   데모 시청
-                </MGButton>
+                </button>
               </MGFlex>
             </MGFlex>
-          </MGCard>
+          </div>
         </MGContainer>
       </MGSection>
 
@@ -1026,9 +1026,9 @@ const AdvancedDesignSample = () => {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '12px', height: '12px', backgroundColor: '#667eea', borderRadius: '50%', animation: 'bounce 1.4s ease-in-out infinite both' }}></div>
-              <div style={{ width: '12px', height: '12px', backgroundColor: '#667eea', borderRadius: '50%', animation: 'bounce 1.4s ease-in-out infinite both', animationDelay: '-0.32s' }}></div>
-              <div style={{ width: '12px', height: '12px', backgroundColor: '#667eea', borderRadius: '50%', animation: 'bounce 1.4s ease-in-out infinite both', animationDelay: '-0.16s' }}></div>
+              <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--mg-primary-500)', borderRadius: '50%', animation: 'bounce 1.4s ease-in-out infinite both' }}></div>
+              <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--mg-primary-500)', borderRadius: '50%', animation: 'bounce 1.4s ease-in-out infinite both', animationDelay: '-0.32s' }}></div>
+              <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--mg-primary-500)', borderRadius: '50%', animation: 'bounce 1.4s ease-in-out infinite both', animationDelay: '-0.16s' }}></div>
               <span style={{ fontSize: '12px', color: '#718096', marginLeft: '8px' }}>로딩 중...</span>
             </div>
           </div>
@@ -1036,12 +1036,12 @@ const AdvancedDesignSample = () => {
         
         <MGModalFooter>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-            <MGButton variant="secondary" onClick={() => setShowDemoModal(false)}>
+            <button className="mg-button" variant="secondary" onClick={() => setShowDemoModal(false)}>
               닫기
-            </MGButton>
-            <MGButton variant="primary">
+            </button>
+            <button className="mg-button" variant="primary">
               저장
-            </MGButton>
+            </button>
           </div>
         </MGModalFooter>
       </MGModal>

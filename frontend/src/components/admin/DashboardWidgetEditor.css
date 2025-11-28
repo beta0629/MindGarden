@@ -64,7 +64,7 @@
 
 .available-widget-item:hover {
   background: var(--mg-bg-hover, #f3f4f6);
-  border-color: var(--mg-primary, #3b82f6);
+  border-color: var(--mg-primary, var(--mg-primary-500));
   transform: translateY(-2px);
   box-shadow: var(--mg-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
 }
@@ -74,7 +74,7 @@
 }
 
 .widget-add-icon {
-  color: var(--mg-primary, #3b82f6);
+  color: var(--mg-primary, var(--mg-primary-500));
   font-size: var(--mg-icon-size-md, 1.25rem);
 }
 
@@ -97,14 +97,14 @@
   align-items: center;
   gap: var(--mg-spacing-md, 0.75rem);
   padding: var(--mg-spacing-md, 0.75rem);
-  background: var(--mg-bg-primary, #ffffff);
+  background: var(--mg-bg-primary, var(--mg-white));
   border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
   border-radius: var(--mg-border-radius-md, 0.5rem);
   transition: all var(--mg-animation-duration-fast, 0.2s);
 }
 
 .current-widget-item:hover {
-  border-color: var(--mg-primary, #3b82f6);
+  border-color: var(--mg-primary, var(--mg-primary-500));
   box-shadow: var(--mg-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
 }
 

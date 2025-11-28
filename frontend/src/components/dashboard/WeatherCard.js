@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { CloudSun, Droplet, Wind, RefreshCw, AlertTriangle } from 'lucide-react';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 날씨 정보 카드 컴포넌트
@@ -178,7 +178,7 @@ const WeatherCard = () => {
     return (
       <div className="mg-v2-card mg-v2-card-hover">
         <div className="mg-v2-card-body">
-          <UnifiedLoading text="날씨 정보 로딩 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </div>
     );

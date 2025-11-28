@@ -102,7 +102,7 @@
 }
 
 .wellness-notification-card.card-urgent::before {
-  background: linear-gradient(180deg, #FF6B6B, #FF8E8E);
+  background: linear-gradient(180deg, var(--mg-error-500), #FF8E8E);
 }
 
 /* 배지 */
@@ -130,7 +130,7 @@
 }
 
 .badge-urgent {
-  background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+  background: linear-gradient(135deg, var(--mg-error-500), #FF8E8E);
   color: var(--color-white);
 }
 

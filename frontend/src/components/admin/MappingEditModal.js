@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Edit3, XCircle, Package2, DollarSign, Calendar, AlertCircle } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
@@ -332,7 +332,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                 </div>
 
                 <div className="mg-v2-modal-footer">
-                    <MGButton
+                    <button className="mg-button"
                         type="button"
                         variant="secondary"
                         onClick={ handleClose }
@@ -340,20 +340,20 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                     >
                         <XCircle size={20} className="mg-v2-icon-inline" />
                         취소
-                    </MGButton>
-                    <MGButton
+                    </button>
+                    <button className="mg-button"
                         type="submit"
                         variant="primary"
                         onClick={ handleSubmit }
                         disabled={ loading }
                     >
-                        { loading ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                        { loading ? <div className="mg-loading">로딩중...</div> : (
                             <>
                                 <Edit3 size={20} className="mg-v2-icon-inline" />
                                 수정 완료
                             </>
                         )}
-                    </MGButton>
+                    </button>
                 </div>
             </div>
         </div>,

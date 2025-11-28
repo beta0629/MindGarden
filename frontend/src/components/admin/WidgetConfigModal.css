@@ -9,7 +9,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--mg-overlay-bg, rgba(0, 0, 0, 0.5));
+  background: var(--mg-overlay-bg, var(--mg-overlay));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -28,9 +28,9 @@
 }
 
 .widget-config-modal {
-  background: var(--mg-bg-primary, #ffffff);
+  background: var(--mg-bg-primary, var(--mg-white));
   border-radius: var(--mg-border-radius-lg, 0.75rem);
-  box-shadow: var(--mg-shadow-lg, 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04));
+  box-shadow: var(--mg-shadow-lg, 0 20px 25px -5px var(--mg-shadow-light), 0 10px 10px -5px rgba(0, 0, 0, 0.04));
   width: 100%;
   max-width: var(--mg-modal-width-lg, 700px);
   max-height: var(--mg-modal-height-max, 90vh);
@@ -95,23 +95,23 @@
   gap: var(--mg-spacing-lg, 1.5rem);
 }
 
-.form-group {
+.mg-form__group {
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-xs, 0.25rem);
 }
 
-.form-label {
+.mg-form__label {
   font-size: var(--mg-font-size-sm, 0.875rem);
   font-weight: var(--mg-font-weight-medium, 500);
   color: var(--mg-text-primary, #1f2937);
 }
 
 .required {
-  color: var(--mg-danger, #ef4444);
+  color: var(--mg-danger, var(--mg-error-500));
 }
 
-.form-input {
+.mg-form__input {
   padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 0.75rem);
   border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
   border-radius: var(--mg-border-radius-md, 0.5rem);
@@ -120,27 +120,27 @@
   transition: all var(--mg-animation-duration-fast, 0.2s);
 }
 
-.form-input:focus {
+.mg-form__input:focus {
   outline: none;
-  border-color: var(--mg-primary, #3b82f6);
+  border-color: var(--mg-primary, var(--mg-primary-500));
   box-shadow: 0 0 0 3px var(--mg-primary-alpha, rgba(59, 130, 246, 0.1));
 }
 
-.form-input.error {
-  border-color: var(--mg-danger, #ef4444);
+.mg-form__input.error {
+  border-color: var(--mg-danger, var(--mg-error-500));
 }
 
-.form-input[readonly] {
+.mg-form__input[readonly] {
   background: var(--mg-bg-secondary, #f9fafb);
   cursor: not-allowed;
 }
 
-.form-error {
+.mg-form__error {
   font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--mg-danger, #ef4444);
+  color: var(--mg-danger, var(--mg-error-500));
 }
 
-.form-help {
+.mg-form__help {
   font-size: var(--mg-font-size-xs, 0.75rem);
   color: var(--mg-text-tertiary, #9ca3af);
 }

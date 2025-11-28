@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -96,11 +96,11 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.error('일정 상태 코드 로드 실패:', error);
             // 실패 시 기본값 설정
             setScheduleStatusOptions([
-                { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#3b82f6', description: '예약된 일정' },
-                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: '#8b5cf6', description: '확정된 일정' },
-                { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#f59e0b', description: '진행 중인 일정' },
+                { value: 'BOOKED', label: '예약됨', icon: '📅', color: 'var(--mg-primary-500)', description: '예약된 일정' },
+                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: 'var(--mg-purple-500)', description: '확정된 일정' },
+                { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-warning-500)', description: '진행 중인 일정' },
                 { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: '#059669', description: '완료된 일정' },
-                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#ef4444', description: '취소된 일정' },
+                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: 'var(--mg-error-500)', description: '취소된 일정' },
                 { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#6b7280', description: '차단된 시간' }
             ]);
         } finally {
@@ -281,7 +281,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             case 'MORNING':
                 endDate = new Date(date + 'T13:00:00+09:00');
                 title = '🌅 오전 휴무';
-                backgroundColor = '#FF9800';
+                backgroundColor = 'var(--mg-warning-500)';
                 allDay = false;
                 break;
             case 'AFTERNOON':
@@ -294,14 +294,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             case 'MORNING_HALF_1':
                 endDate = new Date(date + 'T11:00:00+09:00');
                 title = '🌄 오전 반반차 1';
-                backgroundColor = '#FFC107';
+                backgroundColor = 'var(--mg-warning-500)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_2':
                 startDate.setHours(11, 0, 0);
                 endDate = new Date(date + 'T13:00:00+09:00');
                 title = '🌄 오전 반반차 2';
-                backgroundColor = '#FFC107';
+                backgroundColor = 'var(--mg-warning-500)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_1':
@@ -336,7 +336,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 // 종일 휴가 처리
                 endDate = new Date(date + 'T23:59:59+09:00');
                 title = '🏖️ 하루 종일 휴무';
-                backgroundColor = '#F44336';
+                backgroundColor = 'var(--mg-error-500)';
                 allDay = true;
                 break;
             default:
@@ -352,7 +352,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     allDay = true;
                 }
                 title = '🏖️ 휴무';
-                backgroundColor = '#F44336';
+                backgroundColor = 'var(--mg-error-500)';
                 break;
         }
         
@@ -384,11 +384,11 @@ const ScheduleCalendar = ({ userRole, userId }) => {
      */
     const getConsultantColor = (consultantId) => {
         const colors = [
-            '#3b82f6', // 파란색
-            '#10b981', // 녹색
-            '#f59e0b', // 주황색
-            '#ef4444', // 빨간색
-            '#8b5cf6', // 보라색
+            'var(--mg-primary-500)', // 파란색
+            'var(--mg-success-500)', // 녹색
+            'var(--mg-warning-500)', // 주황색
+            'var(--mg-error-500)', // 빨간색
+            'var(--mg-purple-500)', // 보라색
             '#06b6d4', // 청록색
             '#84cc16', // 라임색
             '#f97316', // 오렌지색
@@ -423,17 +423,17 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const getEventColor = (status) => {
         switch (status) {
             case 'BOOKED':
-                return '#007bff'; // 파란색 - 예약됨
+                return 'var(--mg-primary-500)'; // 파란색 - 예약됨
             case 'IN_PROGRESS':
-                return '#28a745'; // 초록색 - 진행중
+                return 'var(--mg-success-500)'; // 초록색 - 진행중
             case 'COMPLETED':
-                return '#6c757d'; // 회색 - 완료
+                return 'var(--mg-secondary-500)'; // 회색 - 완료
             case 'CANCELLED':
-                return '#dc3545'; // 빨간색 - 취소
+                return 'var(--mg-error-500)'; // 빨간색 - 취소
             case 'BLOCKED':
-                return '#ffc107'; // 노란색 - 차단
+                return 'var(--mg-warning-500)'; // 노란색 - 차단
             default:
-                return '#007bff';
+                return 'var(--mg-primary-500)';
         }
     };
 
@@ -764,11 +764,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             </div>
 
             {loading && (
-                <UnifiedLoading text="스케줄을 불러오는 중..." 
-                    size="large" 
-                    variant="pulse"
-                    className="loading-spinner-fullscreen"
-                />
+                <div className="mg-loading">로딩중...</div>
             )}
 
             <FullCalendar
@@ -843,7 +839,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        background: 'rgba(0, 0, 0, 0.5)',
+                        background: 'var(--mg-overlay)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -858,7 +854,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             padding: '24px',
                             maxWidth: '400px',
                             width: '90%',
-                            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)'
+                            boxShadow: '0 20px 40px var(--mg-shadow-medium)'
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -871,7 +867,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     weekday: 'long'
                                 }) : ''}
                             </h3>
-                            <p style={{ margin: 0, color: '#6c757d' }}>원하는 작업을 선택하세요</p>
+                            <p style={{ margin: 0, color: 'var(--mg-secondary-500)' }}>원하는 작업을 선택하세요</p>
                         </div>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -890,7 +886,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     transition: 'all 0.3s ease'
                                 }}
                                 onMouseOver={(e) => {
-                                    e.target.style.borderColor = '#007bff';
+                                    e.target.style.borderColor = 'var(--mg-primary-500)';
                                     e.target.style.background = '#f8f9ff';
                                 }}
                                 onMouseOut={(e) => {
@@ -901,7 +897,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 <span style={{ fontSize: 'var(--font-size-xxl)', marginRight: '12px' }}>📋</span>
                                 <div>
                                     <div style={{ fontWeight: '600', marginBottom: '4px' }}>일정 등록</div>
-                                    <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>상담 일정을 등록합니다</div>
+                                    <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-secondary-500)' }}>상담 일정을 등록합니다</div>
                                 </div>
                             </button>
                             
@@ -921,7 +917,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                         transition: 'all 0.3s ease'
                                     }}
                                     onMouseOver={(e) => {
-                                        e.target.style.borderColor = '#ffc107';
+                                        e.target.style.borderColor = 'var(--mg-warning-500)';
                                         e.target.style.background = '#fffbf0';
                                     }}
                                     onMouseOut={(e) => {
@@ -932,7 +928,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     <span style={{ fontSize: 'var(--font-size-xxl)', marginRight: '12px' }}>🏖️</span>
                                     <div>
                                         <div style={{ fontWeight: '600', marginBottom: '4px' }}>휴가 등록</div>
-                                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>상담사의 휴가를 등록합니다</div>
+                                        <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-secondary-500)' }}>상담사의 휴가를 등록합니다</div>
                                     </div>
                                 </button>
                             )}
@@ -942,7 +938,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             <button 
                                 onClick={() => setIsDateActionModalOpen(false)}
                                 style={{
-                                    background: '#6c757d',
+                                    background: 'var(--mg-secondary-500)',
                                     color: 'white',
                                     border: 'none',
                                     padding: '12px 24px',
@@ -955,7 +951,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     e.target.style.transform = 'translateY(-1px)';
                                 }}
                                 onMouseOut={(e) => {
-                                    e.target.style.background = '#6c757d';
+                                    e.target.style.background = 'var(--mg-secondary-500)';
                                     e.target.style.transform = 'translateY(0)';
                                 }}
                             >
@@ -1009,7 +1005,7 @@ const styles = `
 }
 
 .refresh-button {
-    background: #3b82f6;
+    background: var(--mg-primary-500);
     color: white;
     border: none;
     border-radius: 6px;
@@ -1083,11 +1079,11 @@ const styles = `
 }
 
 .legend-color.available { background-color: #e5e7eb; }
-.legend-color.booked { background-color: #3b82f6; }
-.legend-color.in-progress { background-color: #10b981; }
+.legend-color.booked { background-color: var(--mg-primary-500); }
+.legend-color.in-progress { background-color: var(--mg-success-500); }
 .legend-color.completed { background-color: #6b7280; }
-.legend-color.cancelled { background-color: #ef4444; }
-.legend-color.blocked { background-color: #f59e0b; }
+.legend-color.cancelled { background-color: var(--mg-error-500); }
+.legend-color.blocked { background-color: var(--mg-warning-500); }
 
 .loading-overlay {
     position: fixed;
@@ -1108,7 +1104,7 @@ const styles = `
 .fc {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px 0 var(--mg-shadow-light);
     overflow: hidden;
 }
 
@@ -1125,7 +1121,7 @@ const styles = `
 }
 
 .fc-button {
-    background: #3b82f6;
+    background: var(--mg-primary-500);
     border: none;
     border-radius: 6px;
     padding: 8px 16px;

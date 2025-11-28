@@ -10,10 +10,10 @@ import {
 } from 'lucide-react';
 import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
-import mypageApi from '../../utils/mypageApi';
+// import mypageApi from '../../utils/mypageApi';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ProfileSection from './components/ProfileSection';
 import SettingsSection from './components/SettingsSection';
 import SecuritySection from './components/SecuritySection';
@@ -21,7 +21,7 @@ import SocialAccountsSection from './components/SocialAccountsSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
 import PasswordResetModal from './components/PasswordResetModal';
 import PasswordChangeModal from './components/PasswordChangeModal';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 import './MyPage.css';
 
 const MyPage = () => {
@@ -440,7 +440,7 @@ const MyPage = () => {
     return (
       <SimpleLayout>
         <div className="mypage-container">
-          <UnifiedLoading text="사용자 정보를 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );

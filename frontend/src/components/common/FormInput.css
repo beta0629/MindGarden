@@ -26,7 +26,7 @@
   position: relative;
 }
 
-.form-input {
+.mg-form__input {
   width: 100%;
   padding: var(--spacing-md);
   font-size: var(--font-size-md);
@@ -51,7 +51,7 @@
   cursor: not-allowed;
 }
 
-.form-input:focus {
+.mg-form__input:focus {
   border-color: var(--ios-blue);
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
@@ -93,7 +93,7 @@
 
 /* 반응형 디자인 */
 @media (max-width: 767px) {
-  .form-input {
+  .mg-form__input {
     font-size: var(--font-size-base);
     padding: var(--spacing-sm) var(--spacing-md);
   }
@@ -110,7 +110,7 @@
 
 /* 아이패드 스타일 최적화 */
 @media (min-width: 768px) and (max-width: 1024px) {
-  .form-input {
+  .mg-form__input {
     padding: var(--spacing-sm) var(--spacing-md);
   }
 }

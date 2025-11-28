@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPut, apiPost } from '../../utils/ajax';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import './ClientMessageScreen.css';
@@ -137,7 +137,7 @@ const ClientMessageScreen = () => {
     return (
       <SimpleLayout title="상담사 메시지">
         <div className="client-message-screen-loading">
-          <UnifiedLoading variant="pulse" size="large" text="메시지를 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );
@@ -277,7 +277,7 @@ const ClientMessageScreen = () => {
                   onClick={handleReply}
                   disabled={replying || !replyContent.trim()}
                 >
-                  {replying ? <UnifiedLoading variant="dots" size="small" /> : '📤 답장 전송'}
+                  {replying ? <div className="mg-loading">로딩중...</div> : '📤 답장 전송'}
                 </button>
               </div>
             </div>

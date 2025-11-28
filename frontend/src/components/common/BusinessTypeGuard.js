@@ -12,8 +12,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
 import { hasMenuAccess } from '../../constants/MenuConstants';
 import { apiGet } from '../../utils/ajax';
-import UnifiedLoading from './UnifiedLoading';
-
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 /**
  * 업종별 라우트 접근 제어 가드
  * @param {Object} props
@@ -100,7 +99,7 @@ const BusinessTypeGuard = ({
 
   // 로딩 중
   if (isLoading && showLoading) {
-    return <UnifiedLoading message="접근 권한을 확인하는 중..." />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   // 접근 거부

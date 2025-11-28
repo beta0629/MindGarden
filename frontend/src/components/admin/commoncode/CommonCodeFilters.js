@@ -51,8 +51,8 @@ const CommonCodeFilters = ({
             // 실패 시 기본값 설정
             setActiveStatusOptions([
                 { value: '', label: '전체 상태', icon: '📋', color: '#6b7280', description: '모든 상태' },
-                { value: 'true', label: '활성', icon: '✅', color: '#10b981', description: '활성 상태' },
-                { value: 'false', label: '비활성', icon: '❌', color: '#ef4444', description: '비활성 상태' }
+                { value: 'true', label: '활성', icon: '✅', color: 'var(--mg-success-500)', description: '활성 상태' },
+                { value: 'false', label: '비활성', icon: '❌', color: 'var(--mg-error-500)', description: '비활성 상태' }
             ]);
         } finally {
             setLoadingCodes(false);

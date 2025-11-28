@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import '../../styles/mindgarden-design-system.css';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import '../../styles/unified-design-tokens.css';
 
 const PERMISSION_CATEGORIES = {
     '대시보드 및 보고서': [

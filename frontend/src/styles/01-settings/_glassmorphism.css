@@ -4,8 +4,8 @@
 
 :root {
   /* 글래스모피즘 기본 변수 */
-  --glass-bg-primary: rgba(255, 255, 255, 0.25);
-  --glass-bg-secondary: rgba(255, 255, 255, 0.35);
+  --glass-bg-primary: var(--mg-glass-bg-light);
+  --glass-bg-secondary: var(--mg-glass-bg-medium);
   --glass-bg-tertiary: rgba(255, 255, 255, 0.15);
   
   --glass-blur-sm: blur(10px);
@@ -26,11 +26,11 @@
   --glass-radius-xl: 24px;
   
   /* 아이폰 스타일 색상 변수 */
-  --ios-blue: #007aff;
-  --ios-green: #34c759;
-  --ios-orange: #ff9500;
-  --ios-red: #ff3b30;
-  --ios-purple: #5856d6;
+  --ios-blue: var(--mg-primary-500);
+  --ios-green: var(--mg-success-500);
+  --ios-orange: var(--mg-warning-500);
+  --ios-red: var(--mg-error-500);
+  --ios-purple: var(--mg-purple-500);
   --ios-pink: #ff2d92;
   --ios-yellow: #ffcc00;
   --ios-gray: #8e8e93;

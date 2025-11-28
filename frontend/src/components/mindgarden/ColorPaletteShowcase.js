@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Check } from 'lucide-react';
 
 const ColorPaletteShowcase = () => {
   const [copiedColor, setCopiedColor] = useState(null);
 
   const colors = [
-    { name: 'Cream', var: '--cream', hex: '#F5F5DC', usage: '메인 배경색' },
-    { name: 'Light Beige', var: '--light-beige', hex: '#FDF5E6', usage: '보조 배경색' },
-    { name: 'Cocoa', var: '--cocoa', hex: '#8B4513', usage: '텍스트 및 강조색' },
-    { name: 'Olive Green', var: '--olive-green', hex: '#808000', usage: '버튼 및 액센트' },
-    { name: 'Mint Green', var: '--mint-green', hex: '#98FB98', usage: '포인트 색상' },
-    { name: 'Soft Mint', var: '--soft-mint', hex: '#B6E5D8', usage: '부드러운 액센트' },
+    { name: 'Cream', var: '--cream', hex: 'var(--mg-cream)', usage: '메인 배경색' },
+    { name: 'Light Beige', var: '--light-beige', hex: 'var(--mg-light-beige)', usage: '보조 배경색' },
+    { name: 'Cocoa', var: '--cocoa', hex: 'var(--mg-cocoa)', usage: '텍스트 및 강조색' },
+    { name: 'Olive Green', var: '--olive-green', hex: 'var(--mg-olive-green)', usage: '버튼 및 액센트' },
+    { name: 'Mint Green', var: '--mint-green', hex: 'var(--mg-mint-green)', usage: '포인트 색상' },
+    { name: 'Soft Mint', var: '--soft-mint', hex: 'var(--mg-soft-mint)', usage: '부드러운 액센트' },
     { name: 'Dark Gray', var: '--dark-gray', hex: '#2F2F2F', usage: '주 텍스트' },
     { name: 'Medium Gray', var: '--medium-gray', hex: '#6B6B6B', usage: '보조 텍스트' },
     { name: 'Light Cream', var: '--light-cream', hex: '#FFFEF7', usage: '밝은 배경' }
@@ -59,7 +59,7 @@ const ColorPaletteShowcase = () => {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    background: 'rgba(0, 0, 0, 0.5)',
+                    background: 'var(--mg-overlay)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -121,10 +121,10 @@ const ColorPaletteShowcase = () => {
             <div>/* CSS에서 사용 */</div>
             <div style={{ color: 'var(--mint-green)' }}>.button {'{'}</div>
             <div style={{ paddingLeft: '1rem' }}>
-              background: <span style={{ color: '#F5F5DC' }}>var(--mint-green)</span>;
+              background: <span style={{ color: 'var(--mg-cream)' }}>var(--mint-green)</span>;
             </div>
             <div style={{ paddingLeft: '1rem' }}>
-              color: <span style={{ color: '#F5F5DC' }}>var(--dark-gray)</span>;
+              color: <span style={{ color: 'var(--mg-cream)' }}>var(--dark-gray)</span>;
             </div>
             <div style={{ color: 'var(--mint-green)' }}>{'}'}</div>
           </div>

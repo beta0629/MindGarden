@@ -6,7 +6,7 @@
   background: var(--color-white);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-md);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
   transition: all 0.3s ease;
 }
 
@@ -23,7 +23,7 @@
 }
 
 .mg-v2-card--floating {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px var(--mg-shadow-medium);
 }
 
 .mg-v2-card--border {
@@ -38,7 +38,7 @@
 
 .mg-v2-card--clickable:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 /* 카드 헤더 */
@@ -48,7 +48,7 @@
   align-items: flex-start;
   margin-bottom: var(--spacing-md);
   padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--mg-shadow-light);
 }
 
 .mg-v2-card-header-content {
@@ -103,7 +103,7 @@
   align-items: center;
   margin-top: var(--spacing-md);
   padding-top: var(--spacing-sm);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--mg-shadow-light);
 }
 
 .mg-v2-card-meta {

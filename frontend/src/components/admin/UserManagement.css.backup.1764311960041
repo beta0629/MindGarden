@@ -1,0 +1,284 @@
+/* ==================== 대시보드 아이콘 ==================== */
+.mg-dashboard-icon {
+    font-size: 2rem;
+    color: var(--mint-green);
+}
+
+/* ==================== 필터 섹션 ==================== */
+.user-mgmt-filters {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto auto;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    background: var(--light-cream);
+    border-radius: var(--radius-md);
+    align-items: center;
+}
+
+.user-mgmt-search-wrapper {
+    position: relative;
+}
+
+.user-mgmt-search-icon {
+    position: absolute;
+    left: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--medium-gray);
+    pointer-events: none;
+}
+
+.user-mgmt-search-input {
+    padding-left: calc(var(--spacing-md) * 3);
+}
+
+.user-mgmt-role-select {
+    width: 100%;
+}
+
+.user-mgmt-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+}
+
+.user-mgmt-checkbox-label input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* ==================== 사용자 그리드 ==================== */
+.user-mgmt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+}
+
+/* ==================== 사용자 카드 ==================== */
+.user-mgmt-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.user-mgmt-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+.user-mgmt-card--inactive {
+    opacity: 0.6;
+    background: var(--light-cream);
+}
+
+.user-mgmt-card--inactive:hover {
+    opacity: 0.75;
+    transform: translateY(-1px);
+}
+
+/* ==================== 카드 헤더 ==================== */
+.user-mgmt-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.user-mgmt-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--mint-green), var(--soft-mint));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: var(--font-size-xl);
+    box-shadow: var(--shadow-md);
+    flex-shrink: 0;
+}
+
+.user-mgmt-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-mgmt-name {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-xs) 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-mgmt-email {
+    font-size: var(--font-size-sm);
+    color: var(--medium-gray);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ==================== 배지 ==================== */
+.user-mgmt-badges {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+}
+
+.mg-badge-secondary {
+    background-color: var(--medium-gray);
+    color: white;
+}
+
+/* ==================== 액션 버튼 ==================== */
+.user-mgmt-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.user-mgmt-actions .mg-button {
+    flex: 1;
+}
+
+/* ==================== 모달 추가 스타일 ==================== */
+.user-mgmt-info-box {
+    background: var(--light-cream);
+    border-left: 4px solid var(--mint-green);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.user-mgmt-info-title {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.user-mgmt-info-list {
+    margin: 0;
+    padding-left: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.user-mgmt-info-list li {
+    margin-bottom: var(--spacing-xs);
+}
+
+.user-mgmt-info-list li:last-child {
+    margin-bottom: 0;
+}
+
+.mg-ml-sm {
+    margin-left: var(--spacing-sm);
+}
+
+/* ==================== 반응형 디자인 ==================== */
+
+/* 태블릿 (768px ~ 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .user-mgmt-filters {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .user-mgmt-checkbox-label {
+        grid-column: 1 / -1;
+    }
+    
+    .user-mgmt-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: var(--spacing-md);
+    }
+}
+
+/* 모바일 (< 768px) */
+@media (max-width: 767px) {
+    .mg-dashboard-icon {
+        font-size: 1.5rem;
+    }
+    
+    .user-mgmt-filters {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .user-mgmt-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .user-mgmt-card {
+        padding: var(--spacing-md);
+    }
+    
+    .user-mgmt-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: var(--font-size-lg);
+    }
+    
+    .user-mgmt-name {
+        font-size: var(--font-size-sm);
+    }
+    
+    .user-mgmt-email {
+        font-size: var(--font-size-xs);
+    }
+    
+    .user-mgmt-actions {
+        flex-direction: column;
+    }
+    
+    .user-mgmt-actions .mg-button {
+        width: 100%;
+    }
+}
+
+/* 작은 모바일 (< 480px) */
+@media (max-width: 480px) {
+    .user-mgmt-filters {
+        padding: var(--spacing-md);
+    }
+    
+    .user-mgmt-grid {
+        padding: var(--spacing-md);
+    }
+    
+    .user-mgmt-card {
+        padding: var(--spacing-sm);
+    }
+}
+
+/* ==================== 다크모드 대비 ==================== */
+@media (prefers-color-scheme: dark) {
+    .user-mgmt-card {
+        background: var(--color-bg-secondary);
+        border-color: var(--color-border);
+    }
+    
+    .user-mgmt-card--inactive {
+        background: var(--color-bg-tertiary);
+    }
+    
+    .user-mgmt-info-box {
+        background: var(--color-bg-tertiary);
+    }
+}
+

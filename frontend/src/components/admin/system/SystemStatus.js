@@ -4,9 +4,9 @@ import { FaServer, FaDatabase, FaSync } from 'react-icons/fa';
 const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
     const getStatusColor = (status) => {
         switch (status) {
-            case 'healthy': return '#28a745';
-            case 'error': return '#dc3545';
-            default: return '#ffc107';
+            case 'healthy': return 'var(--mg-success-500)';
+            case 'error': return 'var(--mg-error-500)';
+            default: return 'var(--mg-warning-500)';
         }
     };
 

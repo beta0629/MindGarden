@@ -1,0 +1,221 @@
+/* ===== MGTable 컴포넌트 스타일 ===== */
+
+.mg-table-wrapper {
+  position: relative;
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+/* ===== 기본 테이블 스타일 ===== */
+.mg-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.mg-table__head {
+  background: var(--bg-secondary);
+}
+
+.mg-table__header {
+  padding: var(--spacing-md);
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.mg-table__header--checkbox {
+  width: 50px;
+  text-align: center;
+}
+
+.mg-table__body {
+  background: var(--bg-primary);
+}
+
+.mg-table__row {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mg-table__row:hover {
+  background: var(--bg-hover);
+}
+
+.mg-table__row--clickable {
+  cursor: pointer;
+}
+
+.mg-table__row--selected {
+  background: var(--primary-light);
+  border-left: 3px solid var(--primary-color);
+}
+
+.mg-table__cell {
+  padding: var(--spacing-md);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.mg-table__cell--checkbox {
+  width: 50px;
+  text-align: center;
+}
+
+/* ===== 테이블 변형 ===== */
+.mg-table--striped .mg-table__row:nth-child(even) {
+  background: var(--bg-secondary);
+}
+
+.mg-table--striped .mg-table__row:hover {
+  background: var(--bg-hover);
+}
+
+.mg-table--bordered {
+  border: 1px solid var(--border-color);
+}
+
+.mg-table--bordered .mg-table__cell {
+  border-right: 1px solid var(--border-color);
+}
+
+.mg-table--bordered .mg-table__cell:last-child {
+  border-right: none;
+}
+
+.mg-table--hover .mg-table__row:hover {
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== 테이블 크기 ===== */
+.mg-table--small .mg-table__header,
+.mg-table--small .mg-table__cell {
+  padding: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.mg-table--large .mg-table__header,
+.mg-table--large .mg-table__cell {
+  padding: var(--spacing-lg);
+  font-size: var(--font-size-lg);
+}
+
+/* ===== 로딩 상태 ===== */
+.mg-table--loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.mg-table__loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  z-index: 10;
+  backdrop-filter: blur(2px);
+}
+
+.mg-table__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== 빈 상태 ===== */
+.mg-table__empty-row {
+  background: var(--bg-primary);
+}
+
+.mg-table__empty-cell {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.mg-table__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-tertiary);
+}
+
+.mg-table__empty-icon {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.mg-table__empty-message {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+}
+
+/* ===== 체크박스 스타일 ===== */
+.mg-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 768px) {
+  .mg-table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .mg-table {
+    min-width: 600px;
+  }
+  
+  .mg-table__header,
+  .mg-table__cell {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+  
+  .mg-table__empty-cell {
+    padding: var(--spacing-lg) var(--spacing-sm);
+  }
+}
+
+/* ===== 다크 모드 지원 ===== */
+@media (prefers-color-scheme: dark) {
+  .mg-table__loading {
+    background: rgba(26, 32, 44, 0.9);
+  }
+  
+  .mg-table__row--selected {
+    background: var(--primary-dark);
+  }
+  
+  .mg-table--striped .mg-table__row:nth-child(even) {
+    background: var(--gray-800);
+  }
+}
+
+
+

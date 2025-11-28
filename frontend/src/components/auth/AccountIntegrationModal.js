@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { FaTimes, FaEnvelope, FaKey, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';

@@ -10,8 +10,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../../../utils/ajax';
-import StatCard from '../../../ui/Card/StatCard';
-import UnifiedLoading from '../../../common/UnifiedLoading';
+// import StatCard from '../../../ui/Card/StatCard';
+import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
 import { formatCurrency, formatNumber, formatPercent } from '../../../../utils/formatUtils';
 import * as LucideIcons from 'lucide-react';
 import '../Widget.css';
@@ -88,7 +88,7 @@ const ErpStatsGridWidget = ({ widget, user }) => {
   if (loading && !stats) {
     return (
       <div className="widget widget-erp-stats-grid">
-        <UnifiedLoading message="통계를 불러오는 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }

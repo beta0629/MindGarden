@@ -1,0 +1,432 @@
+/* SystemNotificationManagement 컴포넌트 모바일 반응형 스타일 */
+
+.system-notification-management {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 헤더 섹션 */
+.system-notification-management__header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.system-notification-management__title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.system-notification-management__title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.system-notification-management__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.system-notification-management__create-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
+}
+
+/* 필터 섹션 */
+.system-notification-management__filters {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.system-notification-management__filter-select {
+  min-width: 120px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.system-notification-management__filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.1);
+}
+
+/* 공지 목록 */
+.system-notification-management__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.system-notification-management__empty-state {
+  text-align: center;
+  padding: var(--spacing-xxxl);
+  color: var(--color-text-tertiary);
+}
+
+.system-notification-management__empty-icon {
+  margin-bottom: var(--spacing-md);
+  opacity: 0.5;
+}
+
+.system-notification-management__empty-text {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.system-notification-management__empty-button {
+  margin-top: var(--spacing-md);
+}
+
+/* 공지 카드 */
+.system-notification-management__card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  transition: all 0.2s ease-in-out;
+}
+
+.system-notification-management__card:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.system-notification-management__card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.system-notification-management__card-main {
+  flex: 1;
+  min-width: 0; /* 텍스트 오버플로우 방지 */
+}
+
+.system-notification-management__card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.system-notification-management__card-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.system-notification-management__card-badges {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.system-notification-management__card-content-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.5;
+}
+
+.system-notification-management__card-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.system-notification-management__card-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* 배지 스타일 */
+.system-notification-management__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.system-notification-management__badge--success {
+  background: var(--status-success);
+  color: var(--color-white);
+}
+
+.system-notification-management__badge--secondary {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+}
+
+.system-notification-management__badge--warning {
+  background: var(--status-warning);
+  color: var(--color-white);
+}
+
+.system-notification-management__badge--danger {
+  background: var(--status-error);
+  color: var(--color-white);
+}
+
+.system-notification-management__badge--primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+/* 모달 스타일 */
+.system-notification-management__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-md);
+}
+
+.system-notification-management__modal-content {
+  background: var(--color-bg-primary);
+  border-radius: var(--border-radius-lg);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.system-notification-management__modal-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.system-notification-management__modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.system-notification-management__modal-close {
+  background: none;
+  border: none;
+  font-size: var(--font-size-xl);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.system-notification-management__modal-close:hover {
+  background: var(--color-bg-secondary);
+}
+
+.system-notification-management__modal-body {
+  padding: var(--spacing-lg);
+}
+
+.system-notification-management__form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.system-notification-management__form-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.system-notification-management__form-input,
+.system-notification-management__form-select,
+.system-notification-management__form-textarea {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: border-color 0.2s ease-in-out;
+}
+
+.system-notification-management__form-input:focus,
+.system-notification-management__form-select:focus,
+.system-notification-management__form-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.system-notification-management__form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.system-notification-management__form-checkbox-group {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.system-notification-management__form-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.system-notification-management__form-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+}
+
+.system-notification-management__form-checkbox-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.system-notification-management__modal-actions {
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-border-light);
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .system-notification-management__title-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+  
+  .system-notification-management__filters {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .system-notification-management__filter-select {
+    width: 100%;
+    min-width: unset;
+  }
+  
+  .system-notification-management__card-content {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .system-notification-management__card-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .system-notification-management__card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+  
+  .system-notification-management__card-badges {
+    width: 100%;
+  }
+  
+  .system-notification-management__modal-overlay {
+    padding: var(--spacing-sm);
+  }
+  
+  .system-notification-management__modal-content {
+    max-height: 90vh;
+  }
+  
+  .system-notification-management__modal-header {
+    padding: var(--spacing-md);
+  }
+  
+  .system-notification-management__modal-body {
+    padding: var(--spacing-md);
+  }
+  
+  .system-notification-management__modal-actions {
+    padding: var(--spacing-md);
+    flex-direction: column;
+  }
+  
+  .system-notification-management__form-checkbox-group {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .system-notification-management__title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .system-notification-management__card {
+    padding: var(--spacing-md);
+  }
+  
+  .system-notification-management__card-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .system-notification-management__badge {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+  
+  .system-notification-management__card-actions {
+    gap: var(--spacing-xs);
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .system-notification-management__filter-select:focus,
+  .system-notification-management__form-input:focus,
+  .system-notification-management__form-select:focus,
+  .system-notification-management__form-textarea:focus {
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+  }
+  
+  .system-notification-management__card:hover {
+    box-shadow: var(--shadow-md);
+  }
+}

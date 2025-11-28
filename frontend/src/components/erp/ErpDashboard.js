@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import { LayoutDashboard, Package, Clock, ShoppingCart, TrendingUp, DollarSign } from 'lucide-react';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import '../../styles/main.css';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 import './ErpDashboard.css';
 
 /**
@@ -139,7 +139,7 @@ const ErpDashboard = ({ user: propUser }) => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="대시보드 데이터를 불러오는 중..." size="medium" type="page" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   return (
@@ -156,13 +156,13 @@ const ErpDashboard = ({ user: propUser }) => {
               </div>
             </div>
             <div className="mg-dashboard-header-right">
-              <MGButton 
+              <button className="mg-button" 
                 variant="outline" 
                 size="small"
                 onClick={loadDashboardData}
               >
                 새로고침
-              </MGButton>
+              </button>
             </div>
           </div>
         </div>

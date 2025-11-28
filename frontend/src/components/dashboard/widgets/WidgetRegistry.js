@@ -63,6 +63,8 @@ import StatisticsGridWidget from './admin/StatisticsGridWidget';
 import ManagementGridWidget from './admin/ManagementGridWidget';
 import SystemOverviewWidget from './admin/SystemOverviewWidget';
 import TodayStatsWidget from './admin/TodayStatsWidget';
+import PendingDepositsWidget from './admin/PendingDepositsWidget.js';
+import VacationStatsWidget from './admin/VacationStatsWidget.js';
 
 // 학원 특화 위젯 (학원 업종에서만 사용)
 // import AcademyScheduleWidget from './academy/AcademyScheduleWidget';

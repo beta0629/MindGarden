@@ -10,7 +10,7 @@
 }
 
 .tool-card {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFF 100%);
+    background: linear-gradient(135deg, var(--mg-white) 0%, #FAFBFF 100%);
     border: 1px solid #E8EBFF;
     border-radius: var(--admin-radius-lg);
     padding: var(--admin-spacing-lg);

@@ -7,12 +7,12 @@
   background: var(--color-bg-surface);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 16px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px 0 var(--mg-shadow-light), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(20px);
 }
 
 .mg-stats:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px var(--mg-shadow-light), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 }
 
@@ -255,11 +255,11 @@
   .mg-stats {
     background: rgba(26, 32, 44, 0.95);
     border-color: rgba(74, 85, 104, 0.6);
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.15);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 2px 0 var(--mg-shadow-medium);
   }
 
   .mg-stats:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px var(--mg-shadow-medium);
   }
 
   .mg-stats__icon--blue {

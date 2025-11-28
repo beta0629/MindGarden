@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
@@ -163,7 +163,7 @@ const PurchaseRequestForm = () => {
   };
 
   if (loading && items.length === 0) {
-    return <UnifiedLoading text="아이템 목록을 불러오는 중..." size="medium" type="inline" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   return (
@@ -197,26 +197,26 @@ const PurchaseRequestForm = () => {
                     onClick={() => handleItemSelect(item)}
                     style={{
                       padding: '20px',
-                      border: isItemSelected(item) ? '2px solid #007bff' : '1px solid #e9ecef',
+                      border: isItemSelected(item) ? '2px solid var(--mg-primary-500)' : '1px solid #e9ecef',
                       borderRadius: '12px',
                       cursor: 'pointer',
                       backgroundColor: isItemSelected(item) ? '#f8f9ff' : '#fff',
                       transition: 'all 0.3s ease',
                       boxShadow: isItemSelected(item) 
                         ? '0 4px 12px rgba(0, 123, 255, 0.15)' 
-                        : '0 2px 4px rgba(0, 0, 0, 0.1)',
+                        : '0 2px 4px var(--mg-shadow-light)',
                       transform: isItemSelected(item) ? 'translateY(-2px)' : 'none',
                       position: 'relative'
                     }}
                     onMouseEnter={(e) => {
                       if (!isItemSelected(item)) {
-                        e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+                        e.target.style.boxShadow = '0 4px 8px var(--mg-shadow-medium)';
                         e.target.style.transform = 'translateY(-1px)';
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isItemSelected(item)) {
-                        e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                        e.target.style.boxShadow = '0 2px 4px var(--mg-shadow-light)';
                         e.target.style.transform = 'none';
                       }
                     }}
@@ -229,7 +229,7 @@ const PurchaseRequestForm = () => {
                         right: '8px',
                         width: '20px',
                         height: '20px',
-                        backgroundColor: '#007bff',
+                        backgroundColor: 'var(--mg-primary-500)',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
@@ -256,7 +256,7 @@ const PurchaseRequestForm = () => {
                     {/* 카테고리 */}
                     <div style={{ 
                       fontSize: 'var(--font-size-xs)', 
-                      color: '#6c757d', 
+                      color: 'var(--mg-secondary-500)', 
                       marginBottom: '12px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -269,7 +269,7 @@ const PurchaseRequestForm = () => {
                     <div style={{ 
                       fontSize: 'var(--font-size-lg)', 
                       fontWeight: '700', 
-                      color: '#007bff',
+                      color: 'var(--mg-primary-500)',
                       marginBottom: '8px'
                     }}>
                       {formatCurrency(item.unitPrice)}
@@ -278,8 +278,8 @@ const PurchaseRequestForm = () => {
                     {/* 재고 */}
                     <div style={{ 
                       fontSize: 'var(--font-size-sm)', 
-                      color: '#6c757d',
-                      backgroundColor: '#f8f9fa',
+                      color: 'var(--mg-secondary-500)',
+                      backgroundColor: 'var(--mg-gray-100)',
                       padding: '4px 8px',
                       borderRadius: '4px',
                       display: 'inline-block',
@@ -317,7 +317,7 @@ const PurchaseRequestForm = () => {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '16px',
-                      backgroundColor: '#f8f9fa',
+                      backgroundColor: 'var(--mg-gray-100)',
                       borderRadius: '8px',
                       border: '1px solid #e9ecef'
                     }}>
@@ -325,7 +325,7 @@ const PurchaseRequestForm = () => {
                         <div style={{ fontWeight: '600', marginBottom: '4px' }}>
                           {item.name}
                         </div>
-                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--mg-secondary-500)' }}>
                           {formatCurrency(item.unitPrice)} × {itemQuantities[item.id] || 1} = {formatCurrency(item.unitPrice * (itemQuantities[item.id] || 1))}
                         </div>
                       </div>
@@ -415,7 +415,7 @@ const PurchaseRequestForm = () => {
               <div style={{ 
                 marginBottom: '24px', 
                 padding: '16px', 
-                backgroundColor: '#f8f9fa', 
+                backgroundColor: 'var(--mg-gray-100)', 
                 borderRadius: '8px',
                 border: '1px solid #e9ecef'
               }}>
@@ -439,7 +439,7 @@ const PurchaseRequestForm = () => {
                         <div>
                           <strong>{item.name}</strong> ({item.category})
                         </div>
-                        <div style={{ color: '#007bff', fontWeight: '600' }}>
+                        <div style={{ color: 'var(--mg-primary-500)', fontWeight: '600' }}>
                           {formatCurrency(item.unitPrice)} × {quantity} = {formatCurrency(totalPrice)}
                         </div>
                       </div>
@@ -453,7 +453,7 @@ const PurchaseRequestForm = () => {
                     textAlign: 'right',
                     fontWeight: '700',
                     fontSize: 'var(--font-size-base)',
-                    color: '#1976d2'
+                    color: 'var(--mg-secondary-600)'
                   }}>
                     총 금액: {formatCurrency(selectedItems.reduce((total, item) => {
                       const quantity = itemQuantities[item.id] || 1;
@@ -503,7 +503,7 @@ const PurchaseRequestForm = () => {
       >
         <div style={{ textAlign: 'center', padding: '20px' }}>
           <div style={{ fontSize: 'var(--font-size-xxxl)', marginBottom: '16px' }}>✅</div>
-          <h3 style={{ margin: '0 0 16px 0', color: '#28a745' }}>
+          <h3 style={{ margin: '0 0 16px 0', color: 'var(--mg-success-500)' }}>
             구매 요청이 성공적으로 제출되었습니다!
           </h3>
           <p style={{ color: '#666', marginBottom: '24px' }}>

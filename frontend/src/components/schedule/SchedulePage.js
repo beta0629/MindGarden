@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SimpleLayout from '../layout/SimpleLayout';
+// import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedScheduleComponent from './UnifiedScheduleComponent';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import './SchedulePage.css';
@@ -66,13 +66,7 @@ const SchedulePage = ({ user: propUser }) => {
         return (
             <SimpleLayout>
                 <div className="schedule-page">
-                    <UnifiedLoading 
-                        text="스케줄 정보를 불러오는 중..." 
-                        size="large" 
-                        variant="spinner"
-                        type="inline"
-                        className="loading-spinner-inline"
-                    />
+                    <div className="mg-loading">로딩중...</div>
                 </div>
             </SimpleLayout>
         );

@@ -15,7 +15,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { requestBillingAuth, PG_PROVIDER } from '../../utils/paymentGateway';
 import { generateUUID, generateCallbackUrl, getPgProviderCodes, getCodeLabel } from '../../utils/billingService';
 import { BILLING_CSS, ICON_SIZES, BILLING_MESSAGES, CALLBACK_STATUS, COMMON_CODE_GROUPS } from '../../constants/billing';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PaymentMethodRegistration.css';
 
 /**
@@ -163,15 +163,15 @@ const PaymentMethodRegistration = ({
 
       <div className={BILLING_CSS.PAYMENT_METHOD_REGISTRATION.FOOTER}>
         {onCancel && (
-          <MGButton
+          <button className="mg-button"
             variant="secondary"
             onClick={onCancel}
             disabled={loading}
           >
             {BILLING_MESSAGES.REGISTRATION.CANCEL_BUTTON}
-          </MGButton>
+          </button>
         )}
-        <MGButton
+        <button className="mg-button"
           variant="primary"
           onClick={handleRegister}
           disabled={loading || !customerKey}
@@ -179,7 +179,7 @@ const PaymentMethodRegistration = ({
           loadingText={BILLING_MESSAGES.REGISTRATION.REGISTERING}
         >
           {BILLING_MESSAGES.REGISTRATION.REGISTER_BUTTON}
-        </MGButton>
+        </button>
       </div>
     </div>
   );

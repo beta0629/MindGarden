@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import MGButton from '../components/common/MGButton';
-import MGCard from '../components/common/MGCard';
+// // import MGButton from '../components/common/MGButton'; // 임시 비활성화
+import MGCard from '../components/common/MGCard'; // 임시 비활성화
 import MGPageHeader from '../components/common/MGPageHeader';
 import './PremiumDesignSample.css';
 
@@ -34,13 +34,13 @@ const PremiumDesignSample = () => {
       title: '실시간 상담',
       description: '24시간 언제든지 전문 상담사와 연결되어 즉시 상담을 받을 수 있습니다.',
       icon: '💬',
-      color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      color: 'linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%)'
     },
     {
       title: 'AI 분석',
       description: '인공지능이 대화 내용을 분석하여 맞춤형 상담 방향을 제시합니다.',
       icon: '🤖',
-      color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+      color: 'linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%)'
     },
     {
       title: '개인화 추천',
@@ -74,12 +74,12 @@ const PremiumDesignSample = () => {
             icon="✨"
             actions={
               <div className="hero-actions">
-                <MGButton variant="primary" size="large" icon="🚀">
+                <button className="mg-button" variant="primary" size="large" icon="🚀">
                   시작하기
-                </MGButton>
-                <MGButton variant="secondary" size="large">
+                </button>
+                <button className="mg-button" variant="secondary" size="large">
                   더 알아보기
-                </MGButton>
+                </button>
               </div>
             }
           />
@@ -95,7 +95,7 @@ const PremiumDesignSample = () => {
         
         <div className="stats-grid">
           {statsData.map((stat, index) => (
-            <MGCard 
+            <div className="mg-card" 
               key={index}
               variant="glass" 
               padding="large"
@@ -114,7 +114,7 @@ const PremiumDesignSample = () => {
                   </div>
                 </div>
               </div>
-            </MGCard>
+            </div>
           ))}
         </div>
       </div>
@@ -128,7 +128,7 @@ const PremiumDesignSample = () => {
         
         <div className="features-grid">
           {features.map((feature, index) => (
-            <MGCard 
+            <div className="mg-card" 
               key={index}
               variant="elevated" 
               padding="large"
@@ -142,11 +142,11 @@ const PremiumDesignSample = () => {
               </div>
               <p className="feature-description">{feature.description}</p>
               <div className="feature-actions">
-                <MGButton variant="ghost" size="small">
+                <button className="mg-button" variant="ghost" size="small">
                   자세히 보기
-                </MGButton>
+                </button>
               </div>
-            </MGCard>
+            </div>
           ))}
         </div>
       </div>
@@ -160,81 +160,81 @@ const PremiumDesignSample = () => {
         
         <div className="demo-grid">
           {/* 버튼 데모 */}
-          <MGCard variant="glass" padding="large" className="demo-card">
+          <div className="mg-card" variant="glass" padding="large" className="demo-card">
             <h3>버튼 컴포넌트</h3>
             <div className="button-demo">
               <div className="button-row">
-                <MGButton variant="primary" size="small" onClick={() => handleButtonClick('primary-small')}>
+                <button className="mg-button" variant="primary" size="small" onClick={() => handleButtonClick('primary-small')}>
                   Primary Small
-                </MGButton>
-                <MGButton variant="primary" size="medium" onClick={() => handleButtonClick('primary-medium')}>
+                </button>
+                <button className="mg-button" variant="primary" size="medium" onClick={() => handleButtonClick('primary-medium')}>
                   Primary Medium
-                </MGButton>
-                <MGButton variant="primary" size="large" onClick={() => handleButtonClick('primary-large')}>
+                </button>
+                <button className="mg-button" variant="primary" size="large" onClick={() => handleButtonClick('primary-large')}>
                   Primary Large
-                </MGButton>
+                </button>
               </div>
               
               <div className="button-row">
-                <MGButton variant="secondary" onClick={() => handleButtonClick('secondary')}>
+                <button className="mg-button" variant="secondary" onClick={() => handleButtonClick('secondary')}>
                   Secondary
-                </MGButton>
-                <MGButton variant="success" onClick={() => handleButtonClick('success')}>
+                </button>
+                <button className="mg-button" variant="success" onClick={() => handleButtonClick('success')}>
                   Success
-                </MGButton>
-                <MGButton variant="warning" onClick={() => handleButtonClick('warning')}>
+                </button>
+                <button className="mg-button" variant="warning" onClick={() => handleButtonClick('warning')}>
                   Warning
-                </MGButton>
-                <MGButton variant="danger" onClick={() => handleButtonClick('danger')}>
+                </button>
+                <button className="mg-button" variant="danger" onClick={() => handleButtonClick('danger')}>
                   Danger
-                </MGButton>
+                </button>
               </div>
               
               <div className="button-row">
-                <MGButton variant="primary" disabled>
+                <button className="mg-button" variant="primary" disabled>
                   Disabled
-                </MGButton>
-                <MGButton variant="primary" loading={loading} onClick={handleLoadingTest}>
+                </button>
+                <button className="mg-button" variant="primary" loading={loading} onClick={handleLoadingTest}>
                   {loading ? '로딩 중...' : '로딩 테스트'}
-                </MGButton>
-                <MGButton variant="primary" icon="📧">
+                </button>
+                <button className="mg-button" variant="primary" icon="📧">
                   아이콘 버튼
-                </MGButton>
+                </button>
               </div>
             </div>
-          </MGCard>
+          </div>
 
           {/* 카드 데모 */}
-          <MGCard variant="glass" padding="large" className="demo-card">
+          <div className="mg-card" variant="glass" padding="large" className="demo-card">
             <h3>카드 컴포넌트</h3>
             <div className="card-demo">
               <div className="mini-card-grid">
-                <MGCard variant="default" padding="medium" className="mini-card">
+                <div className="mg-card" variant="default" padding="medium" className="mini-card">
                   <h4>Default</h4>
                   <p>기본 카드</p>
-                </MGCard>
+                </div>
                 
-                <MGCard variant="elevated" padding="medium" className="mini-card">
+                <div className="mg-card" variant="elevated" padding="medium" className="mini-card">
                   <h4>Elevated</h4>
                   <p>그림자 강조</p>
-                </MGCard>
+                </div>
                 
-                <MGCard variant="outlined" padding="medium" className="mini-card">
+                <div className="mg-card" variant="outlined" padding="medium" className="mini-card">
                   <h4>Outlined</h4>
                   <p>테두리 강조</p>
-                </MGCard>
+                </div>
                 
-                <MGCard variant="filled" padding="medium" className="mini-card">
+                <div className="mg-card" variant="filled" padding="medium" className="mini-card">
                   <h4>Filled</h4>
                   <p>배경 채움</p>
-                </MGCard>
+                </div>
                 
-                <MGCard variant="glass" padding="medium" className="mini-card">
+                <div className="mg-card" variant="glass" padding="medium" className="mini-card">
                   <h4>Glass</h4>
                   <p>글래스 효과</p>
-                </MGCard>
+                </div>
                 
-                <MGCard 
+                <div className="mg-card" 
                   variant="elevated" 
                   padding="medium" 
                   className="mini-card clickable"
@@ -242,29 +242,29 @@ const PremiumDesignSample = () => {
                 >
                   <h4>Clickable</h4>
                   <p>클릭 가능</p>
-                </MGCard>
+                </div>
               </div>
             </div>
-          </MGCard>
+          </div>
         </div>
       </div>
 
       {/* CTA 섹션 */}
       <div className="cta-section">
-        <MGCard variant="glass" padding="large" className="cta-card">
+        <div className="mg-card" variant="glass" padding="large" className="cta-card">
           <div className="cta-content">
             <h2>지금 시작해보세요</h2>
             <p>MindGarden의 모든 기능을 무료로 체험해보세요</p>
             <div className="cta-actions">
-              <MGButton variant="primary" size="large" icon="🚀">
+              <button className="mg-button" variant="primary" size="large" icon="🚀">
                 무료 체험 시작
-              </MGButton>
-              <MGButton variant="secondary" size="large">
+              </button>
+              <button className="mg-button" variant="secondary" size="large">
                 상담사 등록
-              </MGButton>
+              </button>
             </div>
           </div>
-        </MGCard>
+        </div>
       </div>
     </div>
   );

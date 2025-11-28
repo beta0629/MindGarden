@@ -1,0 +1,23 @@
+[Unit]
+Description=MindGarden Development Server
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/mindgarden-dev
+ExecStart=/opt/mindgarden/start.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mindgarden-dev
+
+# 로그 설정
+StandardOutput=append:/var/log/mindgarden/dev.log
+StandardError=append:/var/log/mindgarden/dev-error.log
+
+[Install]
+WantedBy=multi-user.target
+
+

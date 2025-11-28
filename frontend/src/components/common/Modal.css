@@ -1,11 +1,11 @@
 /* Modal.css - 공통 모달 기본 스타일 */
-.modal-overlay {
+.mg-modal__overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--mg-overlay);
   z-index: var(--z-modal);
   display: flex;
   align-items: center;
@@ -61,7 +61,7 @@
   max-height: 95vh;
 }
 
-.modal-header {
+.mg-modal__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -101,7 +101,7 @@
   color: var(--color-text-secondary);
 }
 
-.modal-body {
+.mg-modal__body {
   padding: 24px;
   flex: 1;
   overflow-y: auto;
@@ -139,7 +139,7 @@
     border-radius: 0;
   }
   
-  .modal-body {
+  .mg-modal__body {
     padding: 16px;
   }
 }
@@ -167,21 +167,21 @@
   transition: all 0.2s ease;
 }
 
-.modal-actions .btn-primary {
+.modal-actions .mg-btn--primary {
   background: var(--color-primary);
   color: white;
 }
 
-.modal-actions .btn-primary:hover {
+.modal-actions .mg-btn--primary:hover {
   background: var(--color-primary-dark);
 }
 
-.modal-actions .btn-secondary {
+.modal-actions .mg-btn--secondary {
   background: var(--color-secondary);
   color: white;
 }
 
-.modal-actions .btn-secondary:hover {
+.modal-actions .mg-btn--secondary:hover {
   background: #545b62;
 }
 
@@ -198,11 +198,11 @@
 }
 
 @media (max-width: 480px) {
-  .modal-header {
+  .mg-modal__header {
     padding: 16px 20px 12px;
   }
   
-  .modal-body {
+  .mg-modal__body {
     padding: 20px;
   }
   

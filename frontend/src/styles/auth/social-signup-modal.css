@@ -1,5 +1,5 @@
 /* Social Signup Modal Styles */
-.modal-overlay {
+.mg-modal__overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -20,7 +20,7 @@
   transform: translate(-50%, -50%);
   width: 90%;
   max-width: 500px;
-  background-color: #ffffff;
+  background-color: var(--mg-white);
   border-radius: 24px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
   z-index: var(--z-modal-content, 10002);
@@ -28,8 +28,8 @@
   animation: scaleIn 0.3s ease-out;
 }
 
-.modal-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.mg-modal__header {
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
   padding: 24px 32px;
   color: white;
   position: relative;
@@ -70,7 +70,7 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-.modal-body {
+.mg-modal__body {
   padding: 32px;
   max-height: 70vh;
   overflow-y: auto;
@@ -121,12 +121,12 @@
   gap: 20px;
 }
 
-.social-signup-modal .form-group {
+.social-signup-modal .mg-form__group {
   display: flex;
   flex-direction: column;
 }
 
-.form-label {
+.mg-form__label {
   display: block;
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -134,35 +134,35 @@
   margin-bottom: 8px;
 }
 
-.social-signup-modal .form-input {
+.social-signup-modal .mg-form__input {
   width: 100%;
   padding: 16px;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   font-size: var(--font-size-base);
   color: #374151;
-  background-color: #ffffff;
+  background-color: var(--mg-white);
   transition: all 0.2s ease;
 }
 
-.social-signup-modal .form-input:focus {
+.social-signup-modal .mg-form__input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--mg-primary-500);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.social-signup-modal .form-input:disabled {
+.social-signup-modal .mg-form__input:disabled {
   background-color: #f9fafb;
   color: #6b7280;
   cursor: not-allowed;
 }
 
-.social-signup-modal .form-input.error {
-  border-color: #ef4444;
+.social-signup-modal .mg-form__input.error {
+  border-color: var(--mg-error-500);
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
-.social-signup-modal .form-input.loading {
+.social-signup-modal .mg-form__input.loading {
   background-color: #f8fafc;
   color: #64748b;
   text-align: center;
@@ -171,7 +171,7 @@
 }
 
 .error-message {
-  color: #ef4444;
+  color: var(--mg-error-500);
   font-size: var(--font-size-xs);
   margin-top: 4px;
   display: flex;
@@ -192,7 +192,7 @@
   margin-bottom: 16px;
 }
 
-.form-help {
+.mg-form__help {
   font-size: var(--font-size-xs);
   color: #6b7280;
   margin-top: 4px;
@@ -242,29 +242,29 @@
   gap: 8px;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.mg-btn--primary {
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
   color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
+.mg-btn--primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
 }
 
-.btn-primary:disabled {
+.mg-btn--primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.btn-secondary {
+.mg-btn--secondary {
   background-color: #f3f4f6;
   color: #374151;
   border: 1px solid #e5e7eb;
 }
 
-.btn-secondary:hover {
+.mg-btn--secondary:hover {
   background-color: #e5e7eb;
 }
 
@@ -288,7 +288,7 @@
     margin: var(--spacing-base);
   }
   
-  .modal-body {
+  .mg-modal__body {
     padding: 24px;
   }
   
@@ -303,7 +303,7 @@
 
 /* 개인정보 동의 섹션 스타일 */
 .privacy-consent-section {
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   border: 1px solid #e9ecef;
   border-radius: 12px;
   padding: 20px;
@@ -321,7 +321,7 @@
 }
 
 .privacy-consent-title i {
-  color: #007bff;
+  color: var(--mg-primary-500);
   font-size: var(--font-size-lg);
 }
 
@@ -345,12 +345,12 @@
 }
 
 .consent-agreed {
-  color: #28a745;
+  color: var(--mg-success-500);
   font-weight: 500;
 }
 
 .consent-pending {
-  color: #6c757d;
+  color: var(--mg-secondary-500);
 }
 
 .privacy-consent-button {
@@ -358,9 +358,9 @@
   padding: 12px 16px;
   font-size: var(--font-size-sm);
   font-weight: 500;
-  border: 1px solid #007bff;
-  background-color: #ffffff;
-  color: #007bff;
+  border: 1px solid var(--mg-primary-500);
+  background-color: var(--mg-white);
+  color: var(--mg-primary-500);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -371,8 +371,8 @@
 }
 
 .privacy-consent-button:hover {
-  background-color: #007bff;
-  color: #ffffff;
+  background-color: var(--mg-primary-500);
+  color: var(--mg-white);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
@@ -383,7 +383,7 @@
 
 .privacy-error {
   margin-top: 8px;
-  color: #dc3545;
+  color: var(--mg-error-500);
   font-size: var(--font-size-xs);
   display: flex;
   align-items: center;

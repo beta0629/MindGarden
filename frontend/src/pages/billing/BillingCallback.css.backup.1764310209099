@@ -1,0 +1,149 @@
+/**
+ * 결제 수단 등록 콜백 페이지 스타일
+ */
+
+.billing-callback {
+  max-width: 600px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.billing-callback__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 2rem;
+}
+
+.billing-callback__spinner {
+  animation: spin 1s linear infinite;
+  color: #3b82f6;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.billing-callback__loading h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1f2937;
+}
+
+.billing-callback__loading p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.billing-callback__success,
+.billing-callback__fail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.billing-callback__icon {
+  margin-bottom: 1rem;
+}
+
+.billing-callback__success .billing-callback__icon {
+  color: #10b981;
+}
+
+.billing-callback__fail .billing-callback__icon {
+  color: #ef4444;
+}
+
+.billing-callback__success h2,
+.billing-callback__fail h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1f2937;
+}
+
+.billing-callback__success p,
+.billing-callback__fail p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.billing-callback__info {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.billing-callback__info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+}
+
+.billing-callback__info-item:last-child {
+  border-bottom: none;
+}
+
+.billing-callback__info-item strong {
+  color: #374151;
+}
+
+.billing-callback__info-item span {
+  color: #6b7280;
+  font-family: 'Courier New', monospace;
+}
+
+.billing-callback__error-details {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.billing-callback__error-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #dc2626;
+}
+
+.billing-callback__error-item strong {
+  color: #991b1b;
+}
+
+.billing-callback__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 2rem;
+}
+
+@media (min-width: 640px) {
+  .billing-callback__actions {
+    flex-direction: row;
+  }
+}
+

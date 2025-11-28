@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ScheduleCalendar from '../schedule/ScheduleCalendar';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 import './ClientSchedule.css';
 
 /**
@@ -33,7 +33,7 @@ const ClientSchedule = () => {
     return (
       <SimpleLayout>
         <div className="client-schedule-loading">
-          <UnifiedLoading text="일정을 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );

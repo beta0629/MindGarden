@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, TrendingUp } from 'lucide-react';
 
 const ConsultantCardShowcase = () => {
@@ -49,9 +49,9 @@ const ConsultantCardShowcase = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'available': return '#10b981';
-      case 'busy': return '#f59e0b';
-      case 'unavailable': return '#ef4444';
+      case 'available': return 'var(--mg-success-500)';
+      case 'busy': return 'var(--mg-warning-500)';
+      case 'unavailable': return 'var(--mg-error-500)';
       default: return '#6b7280';
     }
   };

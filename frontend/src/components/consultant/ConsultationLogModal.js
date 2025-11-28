@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { FileText, XCircle, Save, CheckCircle, User, AlertTriangle, Clock, Target } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -48,10 +48,10 @@ const ConsultationLogModal = ({
       console.error('우선순위 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setPriorityOptions([
-        { value: 'LOW', label: '낮음', icon: '🟢', color: '#28a745', description: '낮은 우선순위' },
-        { value: 'MEDIUM', label: '보통', icon: '🟡', color: '#ffc107', description: '보통 우선순위' },
+        { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
+        { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
         { value: 'HIGH', label: '높음', icon: '🟠', color: '#fd7e14', description: '높은 우선순위' },
-        { value: 'URGENT', label: '긴급', icon: '🔴', color: '#dc3545', description: '긴급 우선순위' },
+        { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
         { value: 'CRITICAL', label: '위험', icon: '🚨', color: '#6f42c1', description: '위험 우선순위' }
       ]);
     } finally {
@@ -98,9 +98,9 @@ const ConsultationLogModal = ({
 
   // 목표 달성도 옵션
   const goalAchievementLevels = [
-    { value: 'LOW', label: '낮음', color: '#dc3545' },
-    { value: 'MEDIUM', label: '보통', color: '#ffc107' },
-    { value: 'HIGH', label: '높음', color: '#28a745' }
+    { value: 'LOW', label: '낮음', color: 'var(--mg-error-500)' },
+    { value: 'MEDIUM', label: '보통', color: 'var(--mg-warning-500)' },
+    { value: 'HIGH', label: '높음', color: 'var(--mg-success-500)' }
   ];
 
   // 완료 상태 코드 로드
@@ -119,20 +119,20 @@ const ConsultationLogModal = ({
       } else {
         // 응답이 비어있을 때 기본값 설정
         setCompletionStatusOptions([
-          { value: 'COMPLETED', label: '완료', icon: '✅', color: '#10b981', description: '작업 완료' },
-          { value: 'PENDING', label: '대기', icon: '⏳', color: '#ffc107', description: '작업 대기' },
-          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#17a2b8', description: '작업 진행중' },
-          { value: 'CANCELLED', label: '취소', icon: '❌', color: '#ef4444', description: '작업 취소' }
+          { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
+          { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '작업 대기' },
+          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-info-500)', description: '작업 진행중' },
+          { value: 'CANCELLED', label: '취소', icon: '❌', color: 'var(--mg-error-500)', description: '작업 취소' }
         ]);
       }
     } catch (error) {
       console.error('완료 상태 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setCompletionStatusOptions([
-        { value: 'COMPLETED', label: '완료', icon: '✅', color: '#10b981', description: '작업 완료' },
-        { value: 'PENDING', label: '대기', icon: '⏳', color: '#ffc107', description: '작업 대기' },
-        { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#17a2b8', description: '작업 진행중' },
-        { value: 'CANCELLED', label: '취소', icon: '❌', color: '#ef4444', description: '작업 취소' }
+        { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
+        { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '작업 대기' },
+        { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-info-500)', description: '작업 진행중' },
+        { value: 'CANCELLED', label: '취소', icon: '❌', color: 'var(--mg-error-500)', description: '작업 취소' }
       ]);
     } finally {
       setLoadingCompletionCodes(false);
@@ -422,7 +422,7 @@ const ConsultationLogModal = ({
         <div className="mg-v2-modal mg-v2-modal-large">
           <div className="mg-v2-modal-body">
             <div className="mg-v2-loading-overlay">
-              <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." type="inline" />
+              <div className="mg-loading">로딩중...</div>
             </div>
           </div>
         </div>
@@ -533,8 +533,8 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   className="mg-v2-form-input"
                   style={{
-                    backgroundColor: '#f8f9fa',
-                    color: '#6c757d',
+                    backgroundColor: 'var(--mg-gray-100)',
+                    color: 'var(--mg-secondary-500)',
                     cursor: 'not-allowed'
                   }}
                   required
@@ -556,7 +556,7 @@ const ConsultationLogModal = ({
                   disabled={true}
                   className="mg-v2-form-input"
                   style={{
-                    backgroundColor: '#f5f5f5',
+                    backgroundColor: 'var(--mg-gray-100)',
                     color: '#666',
                     cursor: 'not-allowed'
                   }}
@@ -579,7 +579,7 @@ const ConsultationLogModal = ({
                   max="180"
                   className="mg-v2-form-input"
                   style={{
-                    borderColor: validationErrors.sessionDurationMinutes ? '#dc3545' : '#ced4da'
+                    borderColor: validationErrors.sessionDurationMinutes ? 'var(--mg-error-500)' : '#ced4da'
                   }}
                   required
                 />
@@ -598,7 +598,7 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   disabled={true}
                   style={{
-                    backgroundColor: '#f5f5f5',
+                    backgroundColor: 'var(--mg-gray-100)',
                     color: '#666',
                     cursor: 'not-allowed'
                   }}
@@ -625,7 +625,7 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   placeholder="내담자의 현재 상태를 기록해주세요."
                   style={{
-                    borderColor: validationErrors.clientCondition ? '#dc3545' : '#ced4da'
+                    borderColor: validationErrors.clientCondition ? 'var(--mg-error-500)' : '#ced4da'
                   }}
                   required
                 />
@@ -647,7 +647,7 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   placeholder="이번 세션에서 다룬 주요 이슈를 기록해주세요."
                   style={{
-                    borderColor: validationErrors.mainIssues ? '#dc3545' : '#ced4da'
+                    borderColor: validationErrors.mainIssues ? 'var(--mg-error-500)' : '#ced4da'
                   }}
                   required
                 />
@@ -669,7 +669,7 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   placeholder="사용한 상담 기법이나 개입 방법을 기록해주세요."
                   style={{
-                    borderColor: validationErrors.interventionMethods ? '#dc3545' : '#ced4da'
+                    borderColor: validationErrors.interventionMethods ? 'var(--mg-error-500)' : '#ced4da'
                   }}
                   required
                 />
@@ -691,7 +691,7 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   placeholder="내담자의 반응이나 변화를 기록해주세요."
                   style={{
-                    borderColor: validationErrors.clientResponse ? '#dc3545' : '#ced4da'
+                    borderColor: validationErrors.clientResponse ? 'var(--mg-error-500)' : '#ced4da'
                   }}
                   required
                 />
@@ -748,7 +748,7 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   onClick={(e) => e.stopPropagation()}
                   style={{
-                    borderColor: validationErrors.riskAssessment ? '#dc3545' : '#ced4da'
+                    borderColor: validationErrors.riskAssessment ? 'var(--mg-error-500)' : '#ced4da'
                   }}
                   disabled={loadingCodes}
                   required
@@ -800,7 +800,7 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   placeholder="전반적인 진행 상황을 평가해주세요."
                   style={{
-                    borderColor: validationErrors.progressEvaluation ? '#dc3545' : '#ced4da'
+                    borderColor: validationErrors.progressEvaluation ? 'var(--mg-error-500)' : '#ced4da'
                   }}
                   required
                 />
@@ -972,8 +972,8 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   className="mg-v2-form-input"
                   style={{
-                    backgroundColor: '#f8f9fa',
-                    color: '#6c757d',
+                    backgroundColor: 'var(--mg-gray-100)',
+                    color: 'var(--mg-secondary-500)',
                     cursor: 'not-allowed'
                   }}
                   disabled
@@ -1023,7 +1023,7 @@ const ConsultationLogModal = ({
                 className="mg-v2-button mg-v2-button--primary"
                 disabled={saving}
               >
-                {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '💾 저장'}
+                {saving ? <div className="mg-loading">로딩중...</div> : '💾 저장'}
               </button>
               <button
                 type="button"
@@ -1031,7 +1031,7 @@ const ConsultationLogModal = ({
                 className="mg-v2-button mg-v2-button--success"
                 disabled={saving}
               >
-                {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '✅ 완료'}
+                {saving ? <div className="mg-loading">로딩중...</div> : '✅ 완료'}
               </button>
             </div>
           </div>

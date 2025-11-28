@@ -150,7 +150,7 @@
     gap: var(--spacing-sm);
 }
 
-.user-mgmt-actions .mg-button {
+.user-mgmt-actions .mg-btn {
     flex: 1;
 }
 
@@ -246,7 +246,7 @@
         flex-direction: column;
     }
     
-    .user-mgmt-actions .mg-button {
+    .user-mgmt-actions .mg-btn {
         width: 100%;
     }
 }

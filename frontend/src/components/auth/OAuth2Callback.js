@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useLocation } from 'react-router-dom';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';

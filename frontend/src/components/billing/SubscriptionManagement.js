@@ -25,9 +25,9 @@ import {
   getBillingCycleCodes,
   getCodeLabel,
 } from '../../utils/billingService';
-import notificationManager from '../../utils/notification';
-import MGButton from '../common/MGButton';
-import UnifiedLoading from '../common/UnifiedLoading';
+// // import notificationManager from '../../utils/notification';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import PaymentMethodRegistration from './PaymentMethodRegistration';
 import {
   BILLING_CSS,
@@ -236,23 +236,23 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
       <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SECTION}>
         <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SECTION_HEADER}>
           <h3>{BILLING_MESSAGES.SUBSCRIPTION.PAYMENT_METHODS_TITLE}</h3>
-          <MGButton
+          <button className="mg-button"
             variant="secondary"
             size="small"
             onClick={() => setShowPaymentMethodRegistration(true)}
           >
             {BILLING_MESSAGES.SUBSCRIPTION.ADD_PAYMENT_METHOD}
-          </MGButton>
+          </button>
         </div>
         {paymentMethods.length === 0 ? (
           <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.EMPTY}>
             <p>{BILLING_MESSAGES.SUBSCRIPTION.NO_PAYMENT_METHODS}</p>
-            <MGButton
+            <button className="mg-button"
               variant="primary"
               onClick={() => setShowPaymentMethodRegistration(true)}
             >
               {BILLING_MESSAGES.SUBSCRIPTION.REGISTER_PAYMENT_METHOD}
-            </MGButton>
+            </button>
           </div>
         ) : (
           <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.PAYMENT_METHODS}>
@@ -285,7 +285,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
           <h3>{BILLING_MESSAGES.SUBSCRIPTION.SUBSCRIPTIONS_TITLE}</h3>
         </div>
         {loading ? (
-          <UnifiedLoading />
+          <div className="mg-loading">로딩중...</div>
         ) : subscriptions.length === 0 ? (
           <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.EMPTY}>
             <p>{BILLING_MESSAGES.SUBSCRIPTION.NO_SUBSCRIPTIONS}</p>
@@ -315,7 +315,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                   ))}
                 </div>
                 {selectedPlan && paymentMethods.length > 0 && (
-                  <MGButton
+                  <button className="mg-button"
                     variant="primary"
                     onClick={() =>
                       handleCreateSubscription(selectedPlan.planId, paymentMethods[0].paymentMethodId)
@@ -323,7 +323,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                     fullWidth
                   >
                     {BILLING_MESSAGES.SUBSCRIPTION.CREATE_SUBSCRIPTION}
-                  </MGButton>
+                  </button>
                 )}
                 {selectedPlan && paymentMethods.length === 0 && (
                   <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.WARNING}>
@@ -366,22 +366,22 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                 </div>
                 <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.SUBSCRIPTION_ACTIONS}>
                   {subscription.status === SUBSCRIPTION_CONSTANTS.STATUS.PENDING_ACTIVATION && (
-                    <MGButton
+                    <button className="mg-button"
                       variant="primary"
                       size="small"
                       onClick={() => handleActivateSubscription(subscription.subscriptionId)}
                     >
                       {BILLING_MESSAGES.SUBSCRIPTION.ACTIVATE}
-                    </MGButton>
+                    </button>
                   )}
                   {subscription.status === SUBSCRIPTION_CONSTANTS.STATUS.ACTIVE && (
-                    <MGButton
+                    <button className="mg-button"
                       variant="danger"
                       size="small"
                       onClick={() => handleCancelSubscription(subscription.subscriptionId)}
                     >
                       {BILLING_MESSAGES.SUBSCRIPTION.CANCEL}
-                    </MGButton>
+                    </button>
                   )}
                 </div>
               </div>

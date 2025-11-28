@@ -43,11 +43,11 @@ const AddressInput = ({
         console.error('주소 유형 코드 로드 실패:', error);
         // 실패 시 기본값 설정
         setAddressTypeOptions([
-          { value: 'HOME', label: '집', icon: '🏠', color: '#3b82f6', description: '자택 주소' },
-          { value: 'WORK', label: '회사', icon: '🏢', color: '#10b981', description: '직장 주소' },
-          { value: 'OFFICE', label: '사무실', icon: '🏛️', color: '#8b5cf6', description: '사무실 주소' },
-          { value: 'BRANCH', label: '지점', icon: '🏪', color: '#f59e0b', description: '지점 주소' },
-          { value: 'EMERGENCY', label: '비상연락처', icon: '🚨', color: '#ef4444', description: '비상연락처 주소' },
+          { value: 'HOME', label: '집', icon: '🏠', color: 'var(--mg-primary-500)', description: '자택 주소' },
+          { value: 'WORK', label: '회사', icon: '🏢', color: 'var(--mg-success-500)', description: '직장 주소' },
+          { value: 'OFFICE', label: '사무실', icon: '🏛️', color: 'var(--mg-purple-500)', description: '사무실 주소' },
+          { value: 'BRANCH', label: '지점', icon: '🏪', color: 'var(--mg-warning-500)', description: '지점 주소' },
+          { value: 'EMERGENCY', label: '비상연락처', icon: '🚨', color: 'var(--mg-error-500)', description: '비상연락처 주소' },
           { value: 'OTHER', label: '기타', icon: '📍', color: '#6b7280', description: '기타 주소' }
         ]);
       } finally {

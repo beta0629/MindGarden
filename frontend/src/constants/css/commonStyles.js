@@ -8,14 +8,14 @@
 // 공통 색상 시스템
 export const COMMON_COLORS = {
   // 메인 컬러 팔레트
-  PRIMARY: '#6c5ce7',
+  PRIMARY: 'var(--mg-consultant-dark)',
   PRIMARY_LIGHT: 'rgba(108, 92, 231, 0.1)',
   PRIMARY_HOVER: 'rgba(108, 92, 231, 0.2)',
   PRIMARY_DARK: '#5a4fcf',
   
   // 기본 색상
-  WHITE: '#ffffff',
-  BLACK: '#000000',
+  WHITE: 'var(--mg-white)',
+  BLACK: 'var(--mg-black)',
   TRANSPARENT: 'transparent',
   
   // 그레이 스케일
@@ -31,39 +31,39 @@ export const COMMON_COLORS = {
   GRAY_900: '#111827',
   
   // 텍스트 색상
-  TEXT_PRIMARY: '#333333',
-  TEXT_SECONDARY: '#666666',
-  TEXT_MUTED: '#999999',
-  TEXT_LIGHT: '#ffffff',
-  TEXT_DARK: '#000000',
+  TEXT_PRIMARY: 'var(--mg-gray-800)',
+  TEXT_SECONDARY: 'var(--mg-gray-600)',
+  TEXT_MUTED: 'var(--mg-gray-500)',
+  TEXT_LIGHT: 'var(--mg-white)',
+  TEXT_DARK: 'var(--mg-black)',
   
   // 배경 색상
-  BG_PRIMARY: '#ffffff',
-  BG_SECONDARY: '#f8f9fa',
-  BG_LIGHT: '#f5f5f5',
+  BG_PRIMARY: 'var(--mg-white)',
+  BG_SECONDARY: 'var(--mg-gray-100)',
+  BG_LIGHT: 'var(--mg-gray-100)',
   BG_DARK: '#2d3748',
   BG_HOVER: 'rgba(0, 0, 0, 0.05)',
-  BG_OVERLAY: 'rgba(0, 0, 0, 0.5)',
+  BG_OVERLAY: 'var(--mg-overlay)',
   
   // 테두리 색상
-  BORDER_PRIMARY: '#e0e0e0',
+  BORDER_PRIMARY: 'var(--mg-gray-300)',
   BORDER_SECONDARY: '#dee2e6',
   BORDER_LIGHT: '#f0f0f0',
   BORDER_DARK: '#d1d5db',
   
   // 상태 색상
-  SUCCESS: '#28a745',
+  SUCCESS: 'var(--mg-success-500)',
   SUCCESS_LIGHT: '#d4edda',
-  WARNING: '#ffc107',
+  WARNING: 'var(--mg-warning-500)',
   WARNING_LIGHT: '#fff3cd',
-  ERROR: '#dc3545',
+  ERROR: 'var(--mg-error-500)',
   ERROR_LIGHT: '#f8d7da',
-  INFO: '#17a2b8',
+  INFO: 'var(--mg-info-500)',
   INFO_LIGHT: '#d1ecf1',
   
   // 브랜드 색상
-  BRAND_PRIMARY: '#6c5ce7',
-  BRAND_SECONDARY: '#a29bfe',
+  BRAND_PRIMARY: 'var(--mg-consultant-dark)',
+  BRAND_SECONDARY: 'var(--mg-consultant-primary)',
   BRAND_ACCENT: '#fd79a8',
 };
 
@@ -124,10 +124,10 @@ export const COMMON_SIZES = {
 export const COMMON_SHADOWS = {
   NONE: 'none',
   XS: '0 1px 2px rgba(0, 0, 0, 0.05)',
-  SM: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+  SM: '0 1px 3px var(--mg-shadow-light), 0 1px 2px rgba(0, 0, 0, 0.06)',
   MD: '0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06)',
-  LG: '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
-  XL: '0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04)',
+  LG: '0 10px 15px var(--mg-shadow-light), 0 4px 6px rgba(0, 0, 0, 0.05)',
+  XL: '0 20px 25px var(--mg-shadow-light), 0 10px 10px rgba(0, 0, 0, 0.04)',
   XXL: '0 25px 50px rgba(0, 0, 0, 0.25)',
   INNER: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)',
   OUTLINE: '0 0 0 3px rgba(108, 92, 231, 0.1)',

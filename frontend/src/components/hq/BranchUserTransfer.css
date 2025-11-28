@@ -5,23 +5,23 @@
 }
 
 /* 모달 헤더 스타일 */
-.branch-user-transfer .modal-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.branch-user-transfer .mg-modal__header {
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
     color: white;
     border-bottom: none;
 }
 
-.branch-user-transfer .modal-header .modal-title {
+.branch-user-transfer .mg-modal__header .modal-title {
     font-weight: 600;
     font-size: 1.2rem;
 }
 
-.branch-user-transfer .modal-header .btn-close {
+.branch-user-transfer .mg-modal__header .btn-close {
     filter: invert(1);
 }
 
 /* 모달 바디 스타일 */
-.branch-user-transfer .modal-body {
+.branch-user-transfer .mg-modal__body {
     padding: 1.5rem;
 }
 
@@ -48,22 +48,22 @@
 }
 
 .branch-user-transfer .form-control-modern:focus {
-    border-color: #667eea;
+    border-color: var(--mg-primary-500);
     box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
     background-color: #fff;
 }
 
 .branch-user-transfer .form-control-modern.is-invalid {
-    border-color: #dc3545;
+    border-color: var(--mg-error-500);
 }
 
 .branch-user-transfer .form-control-modern.is-invalid:focus {
-    border-color: #dc3545;
+    border-color: var(--mg-error-500);
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
 }
 
 /* 라벨 스타일 */
-.branch-user-transfer .form-label {
+.branch-user-transfer .mg-form__label {
     font-weight: 600;
     color: #495057;
     margin-bottom: 0.5rem;
@@ -71,10 +71,10 @@
 }
 
 /* 모달 푸터 스타일 */
-.branch-user-transfer .modal-footer {
+.branch-user-transfer .mg-modal__footer {
     border-top: 1px solid #e9ecef;
     padding: 1rem 1.5rem;
-    background-color: #f8f9fa;
+    background-color: var(--mg-gray-100);
 }
 
 /* 버튼 스타일 */
@@ -86,7 +86,7 @@
 }
 
 .branch-user-transfer .transfer-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
     border: none;
     color: white;
     font-weight: 600;
@@ -99,17 +99,17 @@
 }
 
 .branch-user-transfer .transfer-btn:disabled {
-    background: #6c757d;
+    background: var(--mg-secondary-500);
     transform: none;
     box-shadow: none;
 }
 
-.branch-user-transfer .btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
+.branch-user-transfer .mg-btn--secondary {
+    background-color: var(--mg-secondary-500);
+    border-color: var(--mg-secondary-500);
 }
 
-.branch-user-transfer .btn-secondary:hover {
+.branch-user-transfer .mg-btn--secondary:hover {
     background-color: #5a6268;
     border-color: #545b62;
 }
@@ -122,24 +122,24 @@
 
 /* 아이콘 스타일 */
 .branch-user-transfer .fa-exchange-alt {
-    color: #667eea;
+    color: var(--mg-primary-500);
 }
 
 .branch-user-transfer .fa-users {
-    color: #28a745;
+    color: var(--mg-success-500);
 }
 
 .branch-user-transfer .fa-building {
-    color: #007bff;
+    color: var(--mg-primary-500);
 }
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
-    .branch-user-transfer .modal-body {
+    .branch-user-transfer .mg-modal__body {
         padding: 1rem;
     }
     
-    .branch-user-transfer .modal-footer {
+    .branch-user-transfer .mg-modal__footer {
         padding: 0.75rem 1rem;
     }
     
@@ -168,7 +168,7 @@
 /* 접근성 개선 */
 .branch-user-transfer .form-control-modern:focus,
 .branch-user-transfer .btn:focus {
-    outline: 2px solid #667eea;
+    outline: 2px solid var(--mg-primary-500);
     outline-offset: 2px;
 }
 

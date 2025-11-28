@@ -1,0 +1,525 @@
+/* ============================================
+   급여 관리 - MindGarden 디자인 시스템 v2.0
+   ============================================ */
+
+/* ==================== 섹션 헤더 ==================== */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--light-beige);
+}
+
+.section-header h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--dark-gray);
+    margin: 0;
+}
+
+/* ==================== 프로필 섹션 ==================== */
+.profiles-section {
+    padding: var(--spacing-lg);
+}
+
+.profiles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.profile-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    border: 1px solid var(--light-beige);
+}
+
+.profile-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.profile-info h4 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--dark-gray);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.profile-info p {
+    font-size: var(--font-size-sm);
+    color: var(--medium-gray);
+    margin: var(--spacing-xs) 0;
+}
+
+.profile-actions {
+    margin-top: var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+/* ==================== 프로필 없음 메시지 ==================== */
+.no-profiles-message {
+    text-align: center;
+    padding: var(--spacing-xl);
+    background: var(--light-cream);
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--light-beige);
+    margin: var(--spacing-lg) 0;
+}
+
+.salary-no-profiles-title {
+    font-size: var(--font-size-xl);
+    color: var(--dark-gray);
+    margin-bottom: var(--spacing-md);
+}
+
+.salary-no-profiles-description {
+    font-size: var(--font-size-md);
+    color: var(--medium-gray);
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.6;
+}
+
+.salary-management-create-btn {
+    background: var(--mint-green);
+    color: var(--dark-gray);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold, 600);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.salary-management-create-btn:hover {
+    background: var(--olive-green);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ==================== 데이터 없음 ==================== */
+.no-data {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--medium-gray);
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--light-beige);
+}
+
+.no-data p {
+    margin: 0;
+    font-size: var(--font-size-md);
+}
+
+/* ==================== 계산 섹션 ==================== */
+.calculations-section {
+    padding: var(--spacing-lg);
+}
+
+.profile-warning {
+    background: var(--light-beige);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    color: var(--dark-gray);
+}
+
+.salary-management-profile-link {
+    background: var(--mint-green);
+    color: var(--dark-gray);
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold, 600);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.salary-management-profile-link:hover {
+    background: var(--olive-green);
+    color: white;
+}
+
+.calculation-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--light-cream);
+    border-radius: var(--radius-md);
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.control-group label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--dark-gray);
+    white-space: nowrap;
+}
+
+.control-group select {
+    min-width: 150px;
+}
+
+/* ==================== 계산 결과 카드 ==================== */
+.calculations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.calculation-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    border: 1px solid var(--light-beige);
+}
+
+.calculation-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.calculation-card h4 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--dark-gray);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.calculation-card p {
+    font-size: var(--font-size-sm);
+    color: var(--medium-gray);
+    margin: var(--spacing-xs) 0;
+}
+
+.calculation-card strong {
+    color: var(--dark-gray);
+}
+
+.calculation-actions {
+    margin-top: var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+/* ==================== 세금 관리 섹션 ==================== */
+.tax-section {
+    padding: var(--spacing-lg);
+}
+
+.tax-statistics {
+    margin-top: var(--spacing-lg);
+}
+
+.tax-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.tax-stat-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    text-align: center;
+    border: 1px solid var(--light-beige);
+}
+
+.tax-stat-card h4 {
+    font-size: var(--font-size-sm);
+    color: var(--medium-gray);
+    margin: 0 0 var(--spacing-sm) 0;
+    font-weight: var(--font-weight-semibold, 600);
+}
+
+.tax-stat-card .amount {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--dark-gray);
+}
+
+/* ==================== 세금 명세서 ==================== */
+.tax-specification {
+    background: white;
+    border: 1px solid var(--light-beige);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-top: var(--spacing-lg);
+    width: 100%;
+}
+
+.spec-header {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1.5fr;
+    background: var(--dark-gray);
+    color: white;
+    font-weight: var(--font-weight-semibold, 600);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-sm);
+}
+
+.spec-section {
+    border-bottom: 1px solid var(--light-beige);
+}
+
+.spec-section:last-of-type {
+    border-bottom: none;
+}
+
+.section-title {
+    background: var(--medium-gray);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-weight: var(--font-weight-semibold, 600);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.spec-item {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1.5fr;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--light-cream);
+    align-items: center;
+    font-size: var(--font-size-sm);
+}
+
+.spec-item:last-child {
+    border-bottom: none;
+}
+
+.item-name {
+    font-weight: 500;
+    color: var(--dark-gray);
+}
+
+.item-rate {
+    color: var(--medium-gray);
+    text-align: center;
+}
+
+.item-amount {
+    text-align: right;
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--dark-gray);
+}
+
+.spec-total {
+    background: var(--light-beige);
+    border-top: 2px solid var(--dark-gray);
+    font-weight: 700;
+}
+
+.spec-total .item-name,
+.spec-total .item-amount {
+    font-size: var(--font-size-lg);
+    color: var(--dark-gray);
+}
+
+.spec-net-pay {
+    background: var(--mint-green);
+    font-weight: 700;
+}
+
+.spec-net-pay .item-name,
+.spec-net-pay .item-amount {
+    font-size: var(--font-size-xl);
+    color: var(--dark-gray);
+}
+
+/* ==================== 버튼 스타일 ==================== */
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold, 600);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: var(--mint-green);
+    color: var(--dark-gray);
+}
+
+.btn-primary:hover {
+    background: var(--olive-green);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+    background: var(--light-beige);
+    color: var(--dark-gray);
+}
+
+.btn-secondary:hover {
+    background: var(--medium-gray);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-success {
+    background: var(--status-active);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-danger {
+    background: var(--color-danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* ==================== 반응형 디자인 ==================== */
+
+/* 태블릿 (768px ~ 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .profiles-grid,
+    .calculations-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+    
+    .tax-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .spec-header,
+    .spec-item {
+        grid-template-columns: 2fr 1fr 1.5fr;
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+}
+
+/* 모바일 (< 768px) */
+@media (max-width: 767px) {
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+    
+    .profiles-grid,
+    .calculations-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tax-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .calculation-controls {
+        flex-direction: column;
+    }
+    
+    .control-group {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .control-group select {
+        width: 100%;
+    }
+    
+    /* 세금 명세서 모바일 최적화 */
+    .spec-header,
+    .spec-item {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xs);
+    }
+    
+    .spec-header > div,
+    .spec-item > div {
+        padding: var(--spacing-xs) 0;
+    }
+    
+    .item-rate,
+    .item-amount {
+        text-align: left;
+    }
+    
+    .item-name::after {
+        content: ':';
+    }
+    
+    .calculation-actions {
+        flex-direction: column;
+    }
+    
+    .calculation-actions button {
+        width: 100%;
+    }
+}
+
+/* 작은 모바일 (< 480px) */
+@media (max-width: 480px) {
+    .profiles-section,
+    .calculations-section,
+    .tax-section {
+        padding: var(--spacing-md);
+    }
+    
+    .profile-card,
+    .calculation-card,
+    .tax-stat-card {
+        padding: var(--spacing-md);
+    }
+    
+    .section-header h3 {
+        font-size: var(--font-size-lg);
+    }
+    
+    .btn-primary,
+    .btn-secondary,
+    .btn-success,
+    .btn-danger {
+        width: 100%;
+        justify-content: center;
+    }
+}

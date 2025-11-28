@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { RefreshCw, XCircle, Plus, Edit2, Trash2, DollarSign, Calendar, FileText } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
@@ -303,7 +303,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                         <h4 className="mg-v2-section-title mg-v2-mb-md">반복 지출 목록</h4>
                         {loading ? (
                             <div className="mg-v2-loading-overlay">
-                                <UnifiedLoading variant="pulse" size="large" text="로딩 중..." type="inline" />
+                                <div className="mg-loading">로딩중...</div>
                             </div>
                         ) : expenses.length > 0 ? (
                             <div className="mg-v2-list-container">
@@ -498,7 +498,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                                             onClick={handleSaveExpense}
                                             disabled={loading}
                                         >
-                                            {loading ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                                            {loading ? <div className="mg-loading">로딩중...</div> : (
                                                 <>
                                                     <Edit2 size={20} className="mg-v2-icon-inline" />
                                                     저장

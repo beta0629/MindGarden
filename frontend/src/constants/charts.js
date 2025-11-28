@@ -20,26 +20,26 @@ export const CHART_TYPES = {
 
 // ==================== 차트 색상 팔레트 ====================
 export const CHART_COLORS = {
-  PRIMARY: '#007bff',
-  SUCCESS: '#28a745',
-  WARNING: '#ffc107',
-  DANGER: '#dc3545',
-  INFO: '#17a2b8',
-  SECONDARY: '#6c757d',
-  LIGHT: '#f8f9fa',
+  PRIMARY: 'var(--mg-primary-500)',
+  SUCCESS: 'var(--mg-success-500)',
+  WARNING: 'var(--mg-warning-500)',
+  DANGER: 'var(--mg-error-500)',
+  INFO: 'var(--mg-info-500)',
+  SECONDARY: 'var(--mg-secondary-500)',
+  LIGHT: 'var(--mg-gray-100)',
   DARK: '#343a40',
-  WHITE: '#ffffff',
-  BLACK: '#000000'
+  WHITE: 'var(--mg-white)',
+  BLACK: 'var(--mg-black)'
 };
 
 // ==================== 차트 색상 그라데이션 ====================
 export const CHART_GRADIENTS = {
-  PRIMARY: ['#007bff', '#0056b3'],
-  SUCCESS: ['#28a745', '#1e7e34'],
-  WARNING: ['#ffc107', '#e0a800'],
-  DANGER: ['#dc3545', '#c82333'],
-  INFO: ['#17a2b8', '#138496'],
-  SECONDARY: ['#6c757d', '#545b62']
+  PRIMARY: ['var(--mg-primary-500)', '#0056b3'],
+  SUCCESS: ['var(--mg-success-500)', '#1e7e34'],
+  WARNING: ['var(--mg-warning-500)', '#e0a800'],
+  DANGER: ['var(--mg-error-500)', '#c82333'],
+  INFO: ['var(--mg-info-500)', '#138496'],
+  SECONDARY: ['var(--mg-secondary-500)', '#545b62']
 };
 
 // ==================== 차트 높이 ====================
@@ -71,8 +71,8 @@ export const CHART_OPTIONS = {
       MODE: 'index',
       INTERSECT: false,
       BACKGROUND_COLOR: 'rgba(0, 0, 0, 0.8)',
-      TITLE_COLOR: '#ffffff',
-      BODY_COLOR: '#ffffff',
+      TITLE_COLOR: 'var(--mg-white)',
+      BODY_COLOR: 'var(--mg-white)',
       BORDER_COLOR: 'rgba(255, 255, 255, 0.1)',
       BORDER_WIDTH: 1
     }
@@ -81,10 +81,10 @@ export const CHART_OPTIONS = {
     X: {
       GRID: {
         DISPLAY: true,
-        COLOR: 'rgba(0, 0, 0, 0.1)'
+        COLOR: 'var(--mg-shadow-light)'
       },
       TICKS: {
-        COLOR: '#6c757d',
+        COLOR: 'var(--mg-secondary-500)',
         FONT: {
           SIZE: 11
         }
@@ -93,10 +93,10 @@ export const CHART_OPTIONS = {
     Y: {
       GRID: {
         DISPLAY: true,
-        COLOR: 'rgba(0, 0, 0, 0.1)'
+        COLOR: 'var(--mg-shadow-light)'
       },
       TICKS: {
-        COLOR: '#6c757d',
+        COLOR: 'var(--mg-secondary-500)',
         FONT: {
           SIZE: 11
         }
@@ -127,8 +127,8 @@ export const PIE_CHART_OPTIONS = {
     TOOLTIP: {
       ENABLED: true,
       BACKGROUND_COLOR: 'rgba(0, 0, 0, 0.8)',
-      TITLE_COLOR: '#ffffff',
-      BODY_COLOR: '#ffffff',
+      TITLE_COLOR: 'var(--mg-white)',
+      BODY_COLOR: 'var(--mg-white)',
       BORDER_COLOR: 'rgba(255, 255, 255, 0.1)',
       BORDER_WIDTH: 1,
       CALLBACKS: {
@@ -153,7 +153,7 @@ export const PIE_CHART_OPTIONS = {
   ELEMENTS: {
     ARC: {
       BORDER_WIDTH: 2,
-      BORDER_COLOR: '#ffffff'
+      BORDER_COLOR: 'var(--mg-white)'
     }
   }
 };

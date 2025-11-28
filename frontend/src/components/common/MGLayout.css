@@ -20,7 +20,7 @@
 }
 
 .mg-layout--gradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
   color: var(--color-bg-surface);
 }
 
@@ -39,7 +39,7 @@
   backdrop-filter: blur(20px);
   border-radius: 24px;
   margin: 24px 0;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px var(--mg-shadow-light);
 }
 
 .mg-section--glass {
@@ -61,8 +61,8 @@
 .mg-section--bg-transparent { background: transparent; }
 .mg-section--bg-white { background: var(--color-bg-surface); }
 .mg-section--bg-gray { background: #f8fafc; }
-.mg-section--bg-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.mg-section--bg-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.mg-section--bg-primary { background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%); }
+.mg-section--bg-secondary { background: linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%); }
 
 /* ===== 컨테이너 컴포넌트 ===== */
 .mg-container {
@@ -160,7 +160,7 @@
 
 .mg-divider--gradient {
   height: 2px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, var(--mg-primary-500), #764ba2);
   border-radius: 1px;
 }
 

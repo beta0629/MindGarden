@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../utils/ajax';
 
 /**
@@ -170,7 +170,7 @@ const FinancialCalendarView = () => {
               <div
                 key={`empty-${index}`}
                 style={{
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: 'var(--mg-gray-100)',
                   minHeight: '100px'
                 }}
               />
@@ -192,7 +192,7 @@ const FinancialCalendarView = () => {
                 minHeight: '100px',
                 padding: '8px',
                 cursor: hasTransactions ? 'pointer' : 'default',
-                border: isToday ? '2px solid #ffc107' : 'none',
+                border: isToday ? '2px solid var(--mg-warning-500)' : 'none',
                 position: 'relative',
                 display: 'flex',
                 flexDirection: 'column'
@@ -242,7 +242,7 @@ const FinancialCalendarView = () => {
                   {/* 거래 건수 */}
                   <div style={{
                     fontSize: 'var(--font-size-xs)',
-                    color: '#6c757d',
+                    color: 'var(--mg-secondary-500)',
                     textAlign: 'center',
                     marginTop: 'auto'
                   }}>
@@ -260,7 +260,7 @@ const FinancialCalendarView = () => {
                       right: '4px',
                       width: '8px',
                       height: '8px',
-                      backgroundColor: '#007bff',
+                      backgroundColor: 'var(--mg-primary-500)',
                       borderRadius: '50%'
                     }}></div>
                   )}
@@ -278,7 +278,7 @@ const FinancialCalendarView = () => {
           padding: '20px',
           backgroundColor: 'white',
           borderRadius: '8px',
-          border: '2px solid #007bff',
+          border: '2px solid var(--mg-primary-500)',
           boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         }}>
           <div style={{
@@ -287,7 +287,7 @@ const FinancialCalendarView = () => {
             alignItems: 'center',
             marginBottom: '15px'
           }}>
-            <h3 style={{ margin: 0, color: '#007bff' }}>
+            <h3 style={{ margin: 0, color: 'var(--mg-primary-500)' }}>
               📊 {selectedDate} 거래 상세
             </h3>
             <button
@@ -297,7 +297,7 @@ const FinancialCalendarView = () => {
                 border: 'none',
                 fontSize: 'var(--font-size-xl)',
                 cursor: 'pointer',
-                color: '#6c757d'
+                color: 'var(--mg-secondary-500)'
               }}
             >
               ✕
@@ -361,7 +361,7 @@ const FinancialCalendarView = () => {
                     key={transaction.id}
                     style={{
                       padding: '12px',
-                      backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white',
+                      backgroundColor: index % 2 === 0 ? 'var(--mg-gray-100)' : 'white',
                       borderRadius: '4px',
                       marginBottom: '4px',
                       display: 'flex',
@@ -387,7 +387,7 @@ const FinancialCalendarView = () => {
                             fontSize: 'var(--font-size-xs)',
                             padding: '2px 6px',
                             backgroundColor: '#e3f2fd',
-                            color: '#1976d2',
+                            color: 'var(--mg-secondary-600)',
                             borderRadius: '10px',
                             fontWeight: '600'
                           }}>
@@ -400,7 +400,7 @@ const FinancialCalendarView = () => {
                         {transaction.category} - {transaction.subcategory || ''}
                       </div>
                       
-                      <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '2px' }}>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--mg-secondary-500)', marginTop: '2px' }}>
                         {transaction.description || '-'}
                       </div>
                     </div>
@@ -408,7 +408,7 @@ const FinancialCalendarView = () => {
                     <div style={{
                       fontSize: 'var(--font-size-base)',
                       fontWeight: 'bold',
-                      color: transaction.transactionType === 'INCOME' ? '#28a745' : '#dc3545'
+                      color: transaction.transactionType === 'INCOME' ? 'var(--mg-success-500)' : 'var(--mg-error-500)'
                     }}>
                       {transaction.transactionType === 'INCOME' ? '+' : '-'}
                       {formatCurrency(transaction.amount)}원
@@ -420,8 +420,8 @@ const FinancialCalendarView = () => {
               <div style={{
                 textAlign: 'center',
                 padding: '40px',
-                color: '#6c757d',
-                backgroundColor: '#f8f9fa',
+                color: 'var(--mg-secondary-500)',
+                backgroundColor: 'var(--mg-gray-100)',
                 borderRadius: '8px'
               }}>
                 이 날짜에는 거래가 없습니다.
@@ -435,7 +435,7 @@ const FinancialCalendarView = () => {
       <div style={{
         marginTop: '20px',
         padding: '20px',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'var(--mg-gray-100)',
         borderRadius: '8px'
       }}>
         <h3 style={{ marginBottom: '15px', color: '#495057' }}>

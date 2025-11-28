@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../utils/ajax';
 import './TodayStats.css';
 
@@ -79,12 +79,7 @@ const TodayStats = () => {
     if (loading) {
         return (
             <div className="stats-grid">
-                <UnifiedLoading 
-                    text="오늘의 통계를 불러오는 중..." 
-                    size="medium" 
-                    variant="dots"
-                    className="loading-spinner-inline"
-                />
+                <div className="mg-loading">로딩중...</div>
             </div>
         );
     }

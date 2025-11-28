@@ -29,7 +29,7 @@
 }
 
 .consolidated-financial .progress-bar {
-    background-color: #007bff;
+    background-color: var(--mg-primary-500);
 }
 
 /* 반응형 디자인 */
@@ -96,11 +96,11 @@
 }
 
 .consolidated-financial .btn-outline-secondary {
-    border-color: #6c757d;
-    color: #6c757d;
+    border-color: var(--mg-secondary-500);
+    color: var(--mg-secondary-500);
 }
 
 .consolidated-financial .btn-outline-secondary:hover {
-    background-color: #6c757d;
-    border-color: #6c757d;
+    background-color: var(--mg-secondary-500);
+    border-color: var(--mg-secondary-500);
 }

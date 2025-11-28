@@ -81,9 +81,9 @@
 }
 
 .tablet-login-mode-button-active {
-  background: #ffffff;
+  background: var(--mg-white);
   color: #1e293b;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
   font-weight: 600;
 }
 
@@ -130,14 +130,14 @@
   border-radius: 8px;
   font-size: 1rem;
   color: #374151;
-  background: #ffffff;
+  background: var(--mg-white);
   transition: all 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .tablet-login-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--mg-primary-500);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -185,7 +185,7 @@
 
 .tablet-login-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 .tablet-login-button:disabled {
@@ -195,7 +195,7 @@
 }
 
 .tablet-login-button-primary {
-  background: #3b82f6;
+  background: var(--mg-primary-500);
   color: white;
 }
 
@@ -204,7 +204,7 @@
 }
 
 .tablet-login-button-secondary {
-  background: #10b981;
+  background: var(--mg-success-500);
   color: white;
 }
 
@@ -257,18 +257,18 @@
   text-align: center;
   letter-spacing: 1px;
   color: #374151;
-  background: #ffffff;
+  background: var(--mg-white);
   transition: all 0.2s ease;
 }
 
 .tablet-login-verification-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--mg-primary-500);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .tablet-login-verification-button {
-  background: #10b981;
+  background: var(--mg-success-500);
   color: white;
   border: none;
   padding: var(--spacing-sm) var(--spacing-lg);
@@ -303,7 +303,7 @@
 }
 
 .login-divider span {
-  background: #ffffff;
+  background: var(--mg-white);
   padding: 0 16px;
   color: #6b7280;
   font-size: 0.9rem;
@@ -329,12 +329,12 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #ffffff;
+  background: var(--mg-white);
 }
 
 .social-login-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--mg-shadow-light);
 }
 
 .social-login-button:disabled {
@@ -384,7 +384,7 @@
 .link-button {
   background: none;
   border: none;
-  color: #3b82f6;
+  color: var(--mg-primary-500);
   cursor: pointer;
   font-size: inherit;
   font-weight: 500;
@@ -401,7 +401,7 @@
 }
 
 .test-button {
-  background: #ef4444;
+  background: var(--mg-error-500);
   color: white;
   border: none;
   padding: var(--spacing-xs) var(--spacing-md);

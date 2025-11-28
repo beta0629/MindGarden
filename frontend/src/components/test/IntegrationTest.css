@@ -13,11 +13,11 @@
 }
 
 .result-card.success {
-  border-left: 4px solid #28a745;
+  border-left: 4px solid var(--mg-success-500);
 }
 
 .result-card.error {
-  border-left: 4px solid #dc3545;
+  border-left: 4px solid var(--mg-error-500);
 }
 
 .result-header {
@@ -56,22 +56,22 @@
 
 .badge-success {
   color: #fff;
-  background-color: #28a745;
+  background-color: var(--mg-success-500);
 }
 
 .badge-danger {
   color: #fff;
-  background-color: #dc3545;
+  background-color: var(--mg-error-500);
 }
 
 .badge-warning {
   color: #212529;
-  background-color: #ffc107;
+  background-color: var(--mg-warning-500);
 }
 
 .badge-secondary {
   color: #fff;
-  background-color: #6c757d;
+  background-color: var(--mg-secondary-500);
 }
 
 .test-details {
@@ -91,7 +91,7 @@
 }
 
 .test-item {
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   border: 1px solid #e9ecef;
   border-radius: 4px;
   padding: 10px;
@@ -99,11 +99,11 @@
 }
 
 .test-item.success {
-  border-left: 3px solid #28a745;
+  border-left: 3px solid var(--mg-success-500);
 }
 
 .test-item.error {
-  border-left: 3px solid #dc3545;
+  border-left: 3px solid var(--mg-error-500);
 }
 
 .test-item-header {
@@ -151,7 +151,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   border-radius: 4px;
   border: 1px solid #e9ecef;
 }
@@ -191,7 +191,7 @@
   width: 40px;
   height: 40px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
+  border-top: 4px solid var(--mg-primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 20px;

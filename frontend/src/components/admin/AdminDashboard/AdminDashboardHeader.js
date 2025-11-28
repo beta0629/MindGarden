@@ -1,5 +1,5 @@
-import React from 'react';
-import MGButton from '../../common/MGButton';
+// import React from 'react';
+import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import { FaBell, FaCog, FaUserCog } from 'react-icons/fa';
 import { Bell, Settings, User } from 'lucide-react';
 
@@ -49,7 +49,7 @@ const AdminDashboardHeader = ({
             <div className="mg-v2-admin-dashboard-header-right">
                 <div className="mg-v2-admin-dashboard-actions">
                     {hasNotificationPermission && (
-                        <MGButton
+                        <button className="mg-button"
                             variant="outline"
                             size="small"
                             onClick={() => onNavigate('/admin/system-notifications')}
@@ -57,11 +57,11 @@ const AdminDashboardHeader = ({
                         >
                             <Bell className="mg-v2-icon" />
                             알림 관리
-                        </MGButton>
+                        </button>
                     )}
                     
                     {hasSystemConfigPermission && (
-                        <MGButton
+                        <button className="mg-button"
                             variant="outline"
                             size="small"
                             onClick={() => onNavigate('/admin/system-config')}
@@ -69,11 +69,11 @@ const AdminDashboardHeader = ({
                         >
                             <Settings className="mg-v2-icon" />
                             시스템 설정
-                        </MGButton>
+                        </button>
                     )}
                     
                     {hasUserManagementPermission && (
-                        <MGButton
+                        <button className="mg-button"
                             variant="outline"
                             size="small"
                             onClick={() => onNavigate('/admin/user-management')}
@@ -81,7 +81,7 @@ const AdminDashboardHeader = ({
                         >
                             <User className="mg-v2-icon" />
                             사용자 관리
-                        </MGButton>
+                        </button>
                     )}
                 </div>
             </div>

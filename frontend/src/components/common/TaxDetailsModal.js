@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Receipt, XCircle, User, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
-import UnifiedLoading from './UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS } from '../../constants/salaryConstants';
 import { apiGet } from '../../utils/ajax';
 
@@ -114,7 +114,7 @@ const TaxDetailsModal = ({
           {/* 내용 */}
           {loading ? (
             <div className="mg-v2-loading-overlay">
-              <UnifiedLoading variant="pulse" size="large" text="세금 내역을 불러오는 중..." type="inline" />
+              <div className="mg-loading">로딩중...</div>
             </div>
           ) : error ? (
             <div className="mg-v2-alert mg-v2-alert--error">

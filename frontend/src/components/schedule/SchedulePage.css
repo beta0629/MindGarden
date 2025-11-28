@@ -16,7 +16,7 @@
     padding: 20px 24px;
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px var(--mg-shadow-light);
 }
 
 .header-content h1 {
@@ -39,7 +39,7 @@
 }
 
 .user-role {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
     color: white;
     padding: 4px 12px;
     border-radius: 12px;
@@ -142,7 +142,7 @@
 .schedule-main {
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px var(--mg-shadow-light);
     overflow: hidden;
 }
 
@@ -157,7 +157,7 @@
     background: #fff;
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px var(--mg-shadow-light);
 }
 
 .sidebar-section h3 {
@@ -242,7 +242,7 @@
     text-align: center;
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px var(--mg-shadow-light);
     padding: 40px;
 }
 
@@ -396,7 +396,7 @@
 
 /* 포커스 스타일 (접근성) */
 .btn:focus {
-    outline: 2px solid #007bff;
+    outline: 2px solid var(--mg-primary-500);
     outline-offset: 2px;
 }
 

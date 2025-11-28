@@ -122,14 +122,14 @@ export const getCodeGroupColor = async (groupName) => {
         const response = await apiGet(`/api/common-codes/${groupName}`);
         if (response && response.length > 0) {
             // 첫 번째 코드의 colorCode 반환
-            return response[0].colorCode || '#6c757d';
+            return response[0].colorCode || 'var(--mg-secondary-500)';
         }
     } catch (error) {
         console.error('코드그룹 색상 조회 실패:', error);
     }
     
     // 기본 색상 반환
-    return '#007bff';
+    return 'var(--mg-primary-500)';
 };
 
 /**
@@ -144,8 +144,8 @@ export const getStatusColorSync = (codeValue) => {
     // 기본 색상 매칭 (fallback) - 최소한의 매칭만 유지
     const defaultColorMap = {
         // 기본 상태
-        'true': '#10b981',
-        'false': '#ef4444'
+        'true': 'var(--mg-success-500)',
+        'false': 'var(--mg-error-500)'
     };
     
     return defaultColorMap[codeValue] || '#6b7280';
@@ -294,11 +294,11 @@ export const getStatusColor = async (codeValue, groupName) => {
     const defaultColorMap = {
         // 스케줄 상태
         'AVAILABLE': '#e5e7eb',
-        'BOOKED': '#3b82f6',
-        'CONFIRMED': '#8b5cf6',
-        'IN_PROGRESS': '#f59e0b',
-        'COMPLETED': '#10b981',
-        'CANCELLED': '#ef4444',
+        'BOOKED': 'var(--mg-primary-500)',
+        'CONFIRMED': 'var(--mg-purple-500)',
+        'IN_PROGRESS': 'var(--mg-warning-500)',
+        'COMPLETED': 'var(--mg-success-500)',
+        'CANCELLED': 'var(--mg-error-500)',
         'BLOCKED': '#6b7280',
         'UNDER_REVIEW': '#f97316',
         'VACATION': '#06b6d4',
@@ -306,24 +306,24 @@ export const getStatusColor = async (codeValue, groupName) => {
         'MAINTENANCE': '#6b7280',
         
         // 매칭 상태
-        'PENDING_PAYMENT': '#ffc107',
-        'PAYMENT_CONFIRMED': '#17a2b8',
-        'ACTIVE': '#28a745',
-        'INACTIVE': '#6c757d',
+        'PENDING_PAYMENT': 'var(--mg-warning-500)',
+        'PAYMENT_CONFIRMED': 'var(--mg-info-500)',
+        'ACTIVE': 'var(--mg-success-500)',
+        'INACTIVE': 'var(--mg-secondary-500)',
         'SUSPENDED': '#fd7e14',
-        'TERMINATED': '#dc3545',
+        'TERMINATED': 'var(--mg-error-500)',
         'SESSIONS_EXHAUSTED': '#6f42c1',
         
         // 사용자 상태
         'PENDING': '#6b7280',
-        'APPROVED': '#10b981',
-        'REJECTED': '#ef4444',
-        'PAYMENT_PENDING': '#ffc107',
-        'PAYMENT_REJECTED': '#dc3545',
+        'APPROVED': 'var(--mg-success-500)',
+        'REJECTED': 'var(--mg-error-500)',
+        'PAYMENT_PENDING': 'var(--mg-warning-500)',
+        'PAYMENT_REJECTED': 'var(--mg-error-500)',
         
         // 기타
-        'true': '#10b981',
-        'false': '#ef4444'
+        'true': 'var(--mg-success-500)',
+        'false': 'var(--mg-error-500)'
     };
     
     return defaultColorMap[codeValue] || '#6b7280';
@@ -819,16 +819,16 @@ export const getFormattedAvailability = (consultant) => {
     
     if (isOnVacation) {
         text = '휴무';
-        color = '#ef4444';
+        color = 'var(--mg-error-500)';
     } else if (!consultant?.available) {
         text = '상담 불가';
         color = '#6b7280';
     } else if (consultant?.busy) {
         text = '상담 중';
-        color = '#f59e0b';
+        color = 'var(--mg-warning-500)';
     } else {
         text = '상담 가능';
-        color = '#10b981';
+        color = 'var(--mg-success-500)';
     }
     
     return { text, color };

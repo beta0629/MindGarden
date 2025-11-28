@@ -14,7 +14,7 @@
 /* MindGarden v2 카드 스타일 */
 .mg-v2-card {
   background: white;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--mg-gray-300);
 }
 
 /* 글래스모피즘 카드 */
@@ -31,14 +31,14 @@
 
 /* 평면 스타일 카드 */
 .mg-flat-card {
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   border: none;
   box-shadow: none;
 }
 
 /* 테두리 강조 카드 */
 .mg-bordered-card {
-  border: 2px solid #007bff;
+  border: 2px solid var(--mg-primary-500);
   background: white;
 }
 
@@ -56,7 +56,7 @@
 
 /* 카드 Variant */
 .mg-card-elevated {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .mg-card-outlined {
@@ -65,7 +65,7 @@
 }
 
 .mg-card-filled {
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   border: none;
 }
 
@@ -127,11 +127,11 @@
 }
 
 .mg-shadow-md {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .mg-shadow-lg {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 8px var(--mg-shadow-medium);
 }
 
 .mg-shadow-xl {
@@ -146,7 +146,7 @@
 
 .mg-card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--mg-shadow-medium);
 }
 
 /* 반응형 디자인 */

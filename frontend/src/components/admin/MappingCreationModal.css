@@ -330,11 +330,11 @@
 }
 
 /* 폼 그룹 */
-.form-group {
+.mg-form__group {
     margin-bottom: var(--spacing-lg);
 }
 
-.form-group label {
+.mg-form__group label {
     display: block;
     margin-bottom: var(--spacing-sm);
     font-weight: 500;
@@ -343,9 +343,9 @@
 }
 
 /* 모든 입력 필드와 드롭다운 - 글래스모피즘 강제 적용 */
-.form-group input,
-.form-group select,
-.form-group textarea,
+.mg-form__group input,
+.mg-form__group select,
+.mg-form__group textarea,
 input[type="text"],
 input[type="number"],
 input[type="email"],
@@ -362,7 +362,7 @@ textarea {
     -webkit-backdrop-filter: blur(10px);
     transition: all 0.2s ease;
     box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.1),
+        0 4px 16px var(--mg-shadow-light),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
@@ -374,9 +374,9 @@ textarea::placeholder {
     opacity: 0.8;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus,
+.mg-form__group input:focus,
+.mg-form__group select:focus,
+.mg-form__group textarea:focus,
 input[type="text"]:focus,
 input[type="number"]:focus,
 input[type="email"]:focus,
@@ -391,7 +391,7 @@ textarea:focus {
         0 0 0 3px rgba(182, 229, 216, 0.2);
 }
 
-.form-group textarea {
+.mg-form__group textarea {
     resize: vertical;
     min-height: 100px;
 }
@@ -425,7 +425,7 @@ textarea:focus {
     padding: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
     box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.1),
+        0 4px 16px var(--mg-shadow-light),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
@@ -575,23 +575,23 @@ textarea:focus {
     }
     
     /* 폼 그룹 모바일 최적화 */
-    .form-group {
+    .mg-form__group {
         margin-bottom: var(--spacing-md);
     }
     
-    .form-group label {
+    .mg-form__group label {
         font-size: var(--font-size-sm);
         margin-bottom: var(--spacing-xs);
     }
     
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
+    .mg-form__group input,
+    .mg-form__group select,
+    .mg-form__group textarea {
         padding: var(--spacing-sm);
         font-size: var(--font-size-sm);
     }
     
-    .form-group textarea {
+    .mg-form__group textarea {
         min-height: 80px;
     }
     

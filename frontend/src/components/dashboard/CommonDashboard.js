@@ -11,7 +11,7 @@ import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
 import './CommonDashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
-import SimpleLayout from '../layout/SimpleLayout';
+// import SimpleLayout from '../layout/SimpleLayout';
 import WelcomeSection from './WelcomeSection';
 import SummaryPanels from './SummaryPanels';
 import QuickActions from './QuickActions';
@@ -19,7 +19,7 @@ import RecentActivities from './RecentActivities';
 import ClientMessageSection from './ClientMessageSection';
 import ErpPurchaseRequestPanel from './ErpPurchaseRequestPanel';
 import SystemNotificationSection from './SystemNotificationSection';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ClientPersonalizedMessages from './ClientPersonalizedMessages';
 import ClientPaymentSessionsSection from './ClientPaymentSessionsSection';
 import ConsultantClientSection from './ConsultantClientSection';
@@ -766,11 +766,7 @@ const CommonDashboard = ({ user: propUser }) => {
     return (
       <div className="tablet-dashboard-page">
         <div className="loading-container">
-          <UnifiedLoading 
-            text="세션 확인 중..." 
-            size="medium"
-            type="page"
-          />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </div>
     );

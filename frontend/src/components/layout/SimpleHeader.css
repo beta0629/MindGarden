@@ -1,20 +1,20 @@
 /* SimpleHeader 컴포넌트 최적화된 스타일 - CSS 변수 사용 */
 :root {
   /* Header 색상 변수 */
-  --header-bg: #ffffff;
-  --header-border: #e0e0e0;
-  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --header-primary: #6c5ce7;
+  --header-bg: var(--mg-white);
+  --header-border: var(--mg-gray-300);
+  --header-shadow: 0 2px 4px var(--mg-shadow-light);
+  --header-primary: var(--mg-consultant-dark);
   --header-primary-light: rgba(108, 92, 231, 0.1);
   --header-primary-hover: rgba(108, 92, 231, 0.2);
   --header-text-primary: #333;
   --header-text-secondary: #666;
   --header-text-muted: #999;
-  --header-bg-light: #f5f5f5;
+  --header-bg-light: var(--mg-gray-100);
   --header-bg-hover: rgba(0, 0, 0, 0.05);
-  --header-danger: #dc3545;
+  --header-danger: var(--mg-error-500);
   --header-danger-hover: #c82333;
-  --header-neutral: #f8f9fa;
+  --header-neutral: var(--mg-gray-100);
   --header-neutral-hover: #e9ecef;
   --header-border-light: #dee2e6;
   

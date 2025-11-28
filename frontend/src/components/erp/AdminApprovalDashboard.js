@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
@@ -159,7 +159,7 @@ const AdminApprovalDashboard = () => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="승인 대기 목록을 불러오는 중..." size="medium" type="inline" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   return (

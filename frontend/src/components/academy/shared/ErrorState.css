@@ -17,7 +17,7 @@
 }
 
 .academy-error-message {
-  color: var(--color-error, #dc3545);
+  color: var(--color-error, var(--mg-error-500));
   font-size: var(--font-size-base, 1rem);
   margin-bottom: var(--spacing-md, 1rem);
   text-align: center;
@@ -25,7 +25,7 @@
 
 .academy-error-retry {
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
-  background: var(--color-primary, #007bff);
+  background: var(--color-primary, var(--mg-primary-500));
   color: white;
   border: none;
   border-radius: var(--border-radius-md, 0.375rem);

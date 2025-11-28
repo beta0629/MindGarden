@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
@@ -159,7 +159,7 @@ const SuperAdminApprovalDashboard = () => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="승인 대기 목록을 불러오는 중..." size="medium" type="inline" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   return (
@@ -226,7 +226,7 @@ const SuperAdminApprovalDashboard = () => {
                     <div style={{ 
                       marginTop: '4px', 
                       padding: '8px', 
-                      backgroundColor: '#f8f9fa', 
+                      backgroundColor: 'var(--mg-gray-100)', 
                       borderRadius: '4px',
                       fontSize: 'var(--font-size-sm)'
                     }}>
@@ -275,7 +275,7 @@ const SuperAdminApprovalDashboard = () => {
               <h4>최종 승인할 구매 요청</h4>
               <div style={{ 
                 padding: '12px', 
-                backgroundColor: '#f8f9fa', 
+                backgroundColor: 'var(--mg-gray-100)', 
                 borderRadius: '4px',
                 marginBottom: '16px'
               }}>
@@ -342,7 +342,7 @@ const SuperAdminApprovalDashboard = () => {
               <h4>거부할 구매 요청</h4>
               <div style={{ 
                 padding: '12px', 
-                backgroundColor: '#f8f9fa', 
+                backgroundColor: 'var(--mg-gray-100)', 
                 borderRadius: '4px',
                 marginBottom: '16px'
               }}>

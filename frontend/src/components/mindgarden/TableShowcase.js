@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const TableShowcase = () => {
@@ -23,8 +23,8 @@ const TableShowcase = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case '활성': return '#10b981';
-      case '대기': return '#f59e0b';
+      case '활성': return 'var(--mg-success-500)';
+      case '대기': return 'var(--mg-warning-500)';
       case '비활성': return '#6b7280';
       default: return '#6b7280';
     }

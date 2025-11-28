@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet } from '../../utils/ajax';
@@ -16,14 +16,14 @@ import {
   Sparkles,
   Sun
 } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ClientPersonalizedMessages from '../dashboard/ClientPersonalizedMessages';
 import ClientPaymentSessionsSection from '../dashboard/ClientPaymentSessionsSection';
 import RatableConsultationsSection from './RatableConsultationsSection';
 import ClientMessageSection from '../dashboard/ClientMessageSection';
 import HealingCard from '../common/HealingCard';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 import './ClientDashboard.css';
 
 /**
@@ -269,7 +269,7 @@ const ClientDashboard = () => {
     return (
       <SimpleLayout>
         <div className="mg-v2-dashboard-layout">
-          <UnifiedLoading text="대시보드를 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );
@@ -418,7 +418,7 @@ const ClientDashboard = () => {
         <div className="client-dashboard__quick-actions">
           <h2 className="client-dashboard__section-title">빠른 메뉴</h2>
           <div className="client-dashboard__action-grid">
-            <MGButton 
+            <button className="mg-button" 
               variant="primary"
               fullWidth={true}
               onClick={() => navigate('/client/schedule')}
@@ -426,8 +426,8 @@ const ClientDashboard = () => {
             >
               <Calendar size={24} />
               <span>상담 일정</span>
-            </MGButton>
-            <MGButton 
+            </button>
+            <button className="mg-button" 
               variant="success"
               fullWidth={true}
               onClick={() => navigate('/client/messages')}
@@ -435,8 +435,8 @@ const ClientDashboard = () => {
             >
               <MessageCircle size={24} />
               <span>메시지</span>
-            </MGButton>
-            <MGButton 
+            </button>
+            <button className="mg-button" 
               variant="info"
               fullWidth={true}
               onClick={() => navigate('/client/payment-history')}
@@ -444,8 +444,8 @@ const ClientDashboard = () => {
             >
               <CreditCard size={24} />
               <span>결제 내역</span>
-            </MGButton>
-            <MGButton 
+            </button>
+            <button className="mg-button" 
               variant="warning"
               fullWidth={true}
               onClick={() => navigate('/client/settings')}
@@ -453,7 +453,7 @@ const ClientDashboard = () => {
             >
               <Heart size={24} />
               <span>내 정보</span>
-            </MGButton>
+            </button>
           </div>
         </div>
 

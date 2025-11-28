@@ -195,47 +195,47 @@ export const getDynamicCSSVariables = async (themeName = 'default') => {
         const cssVariables = {
             COLORS: {
                 // Primary Colors
-                PRIMARY: colors.PRIMARY || '#667eea',
+                PRIMARY: colors.PRIMARY || 'var(--mg-primary-500)',
                 PRIMARY_DARK: colors.PRIMARY_DARK || '#764ba2',
-                PRIMARY_GRADIENT: colors.PRIMARY_GRADIENT || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                PRIMARY_GRADIENT: colors.PRIMARY_GRADIENT || 'linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%)',
                 
                 // Secondary Colors
-                SECONDARY: colors.SECONDARY || '#6c757d',
+                SECONDARY: colors.SECONDARY || 'var(--mg-secondary-500)',
                 SECONDARY_LIGHT: colors.SECONDARY_LIGHT || '#e9ecef',
                 
                 // Status Colors
-                SUCCESS: colors.SUCCESS || '#00b894',
+                SUCCESS: colors.SUCCESS || 'var(--mg-success-500)',
                 SUCCESS_LIGHT: colors.SUCCESS_LIGHT || '#d4edda',
                 SUCCESS_DARK: colors.SUCCESS_DARK || '#00a085',
                 SUCCESS_GRADIENT: colors.SUCCESS_GRADIENT || 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
                 
-                DANGER: colors.DANGER || '#ff6b6b',
+                DANGER: colors.DANGER || 'var(--mg-error-500)',
                 DANGER_LIGHT: colors.DANGER_LIGHT || '#f8d7da',
                 DANGER_DARK: colors.DANGER_DARK || '#ee5a24',
-                DANGER_GRADIENT: colors.DANGER_GRADIENT || 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
+                DANGER_GRADIENT: colors.DANGER_GRADIENT || 'linear-gradient(135deg, var(--mg-error-500) 0%, #ee5a24 100%)',
                 
-                INFO: colors.INFO || '#74b9ff',
+                INFO: colors.INFO || 'var(--mg-info-500)',
                 INFO_LIGHT: colors.INFO_LIGHT || '#d1ecf1',
                 INFO_DARK: colors.INFO_DARK || '#0984e3',
                 INFO_GRADIENT: colors.INFO_GRADIENT || 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                 
-                WARNING: colors.WARNING || '#f093fb',
+                WARNING: colors.WARNING || 'var(--mg-warning-500)',
                 WARNING_LIGHT: colors.WARNING_LIGHT || '#fff3cd',
                 WARNING_DARK: colors.WARNING_DARK || '#f5576c',
-                WARNING_GRADIENT: colors.WARNING_GRADIENT || 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                WARNING_GRADIENT: colors.WARNING_GRADIENT || 'linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%)',
                 
                 // Functional Colors
-                CONSULTANT: colors.CONSULTANT || '#a29bfe',
-                CONSULTANT_DARK: colors.CONSULTANT_DARK || '#6c5ce7',
-                CONSULTANT_GRADIENT: colors.CONSULTANT_GRADIENT || 'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)',
+                CONSULTANT: colors.CONSULTANT || 'var(--mg-consultant-primary)',
+                CONSULTANT_DARK: colors.CONSULTANT_DARK || 'var(--mg-consultant-dark)',
+                CONSULTANT_GRADIENT: colors.CONSULTANT_GRADIENT || 'linear-gradient(135deg, var(--mg-consultant-primary) 0%, var(--mg-consultant-dark) 100%)',
                 
-                CLIENT: colors.CLIENT || '#00b894',
+                CLIENT: colors.CLIENT || 'var(--mg-success-500)',
                 CLIENT_DARK: colors.CLIENT_DARK || '#00a085',
-                CLIENT_GRADIENT: colors.CLIENT_GRADIENT || 'linear-gradient(135deg, #00b894 0%, #00a085 100%)',
+                CLIENT_GRADIENT: colors.CLIENT_GRADIENT || 'linear-gradient(135deg, var(--mg-success-500) 0%, #00a085 100%)',
                 
-                FINANCE: colors.FINANCE || '#f39c12',
-                FINANCE_DARK: colors.FINANCE_DARK || '#e67e22',
-                FINANCE_GRADIENT: colors.FINANCE_GRADIENT || 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)'
+                FINANCE: colors.FINANCE || 'var(--mg-finance-primary)',
+                FINANCE_DARK: colors.FINANCE_DARK || 'var(--mg-finance-dark)',
+                FINANCE_GRADIENT: colors.FINANCE_GRADIENT || 'linear-gradient(135deg, var(--mg-finance-primary) 0%, var(--mg-finance-dark) 100%)'
             }
         };
         
@@ -248,36 +248,36 @@ export const getDynamicCSSVariables = async (themeName = 'default') => {
         // 오류 시 기본값 반환
         return {
             COLORS: {
-                PRIMARY: '#667eea',
+                PRIMARY: 'var(--mg-primary-500)',
                 PRIMARY_DARK: '#764ba2',
-                PRIMARY_GRADIENT: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                SECONDARY: '#6c757d',
+                PRIMARY_GRADIENT: 'linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%)',
+                SECONDARY: 'var(--mg-secondary-500)',
                 SECONDARY_LIGHT: '#e9ecef',
-                SUCCESS: '#00b894',
+                SUCCESS: 'var(--mg-success-500)',
                 SUCCESS_LIGHT: '#d4edda',
                 SUCCESS_DARK: '#00a085',
                 SUCCESS_GRADIENT: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-                DANGER: '#ff6b6b',
+                DANGER: 'var(--mg-error-500)',
                 DANGER_LIGHT: '#f8d7da',
                 DANGER_DARK: '#ee5a24',
-                DANGER_GRADIENT: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
-                INFO: '#74b9ff',
+                DANGER_GRADIENT: 'linear-gradient(135deg, var(--mg-error-500) 0%, #ee5a24 100%)',
+                INFO: 'var(--mg-info-500)',
                 INFO_LIGHT: '#d1ecf1',
                 INFO_DARK: '#0984e3',
                 INFO_GRADIENT: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                WARNING: '#f093fb',
+                WARNING: 'var(--mg-warning-500)',
                 WARNING_LIGHT: '#fff3cd',
                 WARNING_DARK: '#f5576c',
-                WARNING_GRADIENT: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                CONSULTANT: '#a29bfe',
-                CONSULTANT_DARK: '#6c5ce7',
-                CONSULTANT_GRADIENT: 'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)',
-                CLIENT: '#00b894',
+                WARNING_GRADIENT: 'linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%)',
+                CONSULTANT: 'var(--mg-consultant-primary)',
+                CONSULTANT_DARK: 'var(--mg-consultant-dark)',
+                CONSULTANT_GRADIENT: 'linear-gradient(135deg, var(--mg-consultant-primary) 0%, var(--mg-consultant-dark) 100%)',
+                CLIENT: 'var(--mg-success-500)',
                 CLIENT_DARK: '#00a085',
-                CLIENT_GRADIENT: 'linear-gradient(135deg, #00b894 0%, #00a085 100%)',
-                FINANCE: '#f39c12',
-                FINANCE_DARK: '#e67e22',
-                FINANCE_GRADIENT: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)'
+                CLIENT_GRADIENT: 'linear-gradient(135deg, var(--mg-success-500) 0%, #00a085 100%)',
+                FINANCE: 'var(--mg-finance-primary)',
+                FINANCE_DARK: 'var(--mg-finance-dark)',
+                FINANCE_GRADIENT: 'linear-gradient(135deg, var(--mg-finance-primary) 0%, var(--mg-finance-dark) 100%)'
             }
         };
     }

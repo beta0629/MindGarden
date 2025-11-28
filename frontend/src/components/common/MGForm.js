@@ -24,7 +24,7 @@ const MGForm = ({
   const getFormClasses = () => {
     const variantClasses = {
       default: "space-y-4",
-      card: "bg-[#F5F5DC] p-6 rounded-xl border border-[#D2B48C]/20 shadow-sm space-y-4",
+      card: "bg-[var(--mg-cream)] p-6 rounded-xl border border-[#D2B48C]/20 shadow-sm space-y-4",
       minimal: "space-y-2",
     };
 
@@ -143,7 +143,7 @@ export const MGFormInput = ({
           className={`
             w-full px-3 py-2 rounded-lg border border-[#D2B48C] 
             focus:border-[#6B7C32] focus:ring-2 focus:ring-[#6B7C32]/20 
-            bg-[#F5F5DC] text-[#6B7C32] placeholder-[#9CAF88]
+            bg-[var(--mg-cream)] text-[#6B7C32] placeholder-[#9CAF88]
             disabled:opacity-50 disabled:cursor-not-allowed
             transition-all duration-200
             ${icon ? 'pl-10' : ''}
@@ -201,7 +201,7 @@ export const MGFormTextarea = ({
         className={`
           w-full px-3 py-2 rounded-lg border border-[#D2B48C] 
           focus:border-[#6B7C32] focus:ring-2 focus:ring-[#6B7C32]/20 
-          bg-[#F5F5DC] text-[#6B7C32] placeholder-[#9CAF88]
+          bg-[var(--mg-cream)] text-[#6B7C32] placeholder-[#9CAF88]
           disabled:opacity-50 disabled:cursor-not-allowed
           transition-all duration-200 resize-vertical
           ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}
@@ -250,7 +250,7 @@ export const MGFormSelect = ({
           className={`
             w-full px-3 py-2 pr-10 rounded-lg border border-[#D2B48C] 
             focus:border-[#6B7C32] focus:ring-2 focus:ring-[#6B7C32]/20 
-            bg-[#F5F5DC] text-[#6B7C32] 
+            bg-[var(--mg-cream)] text-[#6B7C32] 
             disabled:opacity-50 disabled:cursor-not-allowed
             transition-all duration-200 appearance-none
             ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}

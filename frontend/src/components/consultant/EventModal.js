@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Calendar, XCircle, Save, Trash2, FileText, MessageSquare, AlertTriangle } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ConfirmModal from '../common/ConfirmModal';
 import MessageSendModal from './MessageSendModal';
-import MGButton from '../common/MGButton';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { apiGet } from '../../utils/ajax';
 
 // 일정 모달 컴포넌트
@@ -258,56 +258,56 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
           <div className="mg-v2-modal-footer">
             {/* 상담사일 때 상담일지 작성 버튼 표시 */}
             {isReadOnly && (
-              <MGButton 
+              <button className="mg-button" 
                 type="button" 
                 variant="info"
                 onClick={handleWriteConsultationLog}
               >
                 <FileText size={20} className="mg-v2-icon-inline" />
                 {consultationLogStatus.hasRecord ? '상담일지 수정' : '상담일지 작성'}
-              </MGButton>
+              </button>
             )}
 
             {/* 상담사일 때 메시지 전송 버튼 표시 */}
             {isReadOnly && event?.extendedProps?.clientId && (
-              <MGButton 
+              <button className="mg-button" 
                 type="button" 
                 variant="info"
                 onClick={handleSendMessage}
               >
                 <MessageSquare size={20} className="mg-v2-icon-inline" />
                 메시지 보내기
-              </MGButton>
+              </button>
             )}
             
             {/* 관리자일 때만 수정/삭제 버튼 표시 */}
             {!isReadOnly && mode === 'edit' && (
-              <MGButton 
+              <button className="mg-button" 
                 type="button" 
                 variant="danger"
                 onClick={handleDelete}
               >
                 <Trash2 size={20} className="mg-v2-icon-inline" />
                 삭제
-              </MGButton>
+              </button>
             )}
             {!isReadOnly && (
-              <MGButton 
+              <button className="mg-button" 
                 type="submit" 
                 variant="success"
               >
                 <Save size={20} className="mg-v2-icon-inline" />
                 {mode === 'add' ? '추가' : '수정'}
-              </MGButton>
+              </button>
             )}
-            <MGButton 
+            <button className="mg-button" 
               type="button" 
               variant="secondary"
               onClick={onClose}
             >
               <XCircle size={20} className="mg-v2-icon-inline" />
               취소
-            </MGButton>
+            </button>
           </div>
         </form>
       </div>

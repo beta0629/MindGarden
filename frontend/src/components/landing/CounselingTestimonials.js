@@ -2,9 +2,8 @@
  * 상담센터 랜딩페이지 - 후기 섹션
  */
 
-import React from 'react';
-import MGCard from '../common/MGCard';
-
+// import React from 'react';
+import MGCard from '../../components/common/MGCard'; // 임시 비활성화
 const CounselingTestimonials = () => {
   return (
     <section className="counseling-testimonials">
@@ -15,20 +14,20 @@ const CounselingTestimonials = () => {
         </p>
         
         <div className="counseling-testimonials__grid">
-          <MGCard variant="glass" padding="large">
+          <div className="mg-card" variant="glass" padding="large">
             <p>"상담사님이 정말 따뜻하게 들어주셔서 마음이 편해졌어요."</p>
             <cite>- 김○○님</cite>
-          </MGCard>
+          </div>
           
-          <MGCard variant="glass" padding="large">
+          <div className="mg-card" variant="glass" padding="large">
             <p>"온라인 상담도 정말 편리하고 효과적이었습니다."</p>
             <cite>- 이○○님</cite>
-          </MGCard>
+          </div>
           
-          <MGCard variant="glass" padding="large">
+          <div className="mg-card" variant="glass" padding="large">
             <p>"가족 상담을 통해 관계가 많이 개선되었어요."</p>
             <cite>- 박○○님</cite>
-          </MGCard>
+          </div>
         </div>
       </div>
     </section>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import {
     getCommonCodes,
@@ -645,7 +645,7 @@ const CommonCodeManagement = () => {
                             value={ searchTerm }
                             onChange={ (e) => setSearchTerm(e.target.value) }
                             className="mg-v2-input"
-                            onFocus={ (e) => e.target.style.borderColor = '#007bff' }
+                            onFocus={ (e) => e.target.style.borderColor = 'var(--mg-primary-500)' }
                             onBlur={ (e) => e.target.style.borderColor = '#e1e5e9' }
                         />
                         <i className="bi bi-search mg-search-icon"></i>
@@ -667,7 +667,7 @@ const CommonCodeManagement = () => {
                     
                     { /* 필터 초기화 */ }
                     {(searchTerm || categoryFilter !== 'all') && (
-                        <MGButton
+                        <button className="mg-button"
                             variant="secondary"
                             size="small"
                             onClick={() => {
@@ -678,14 +678,14 @@ const CommonCodeManagement = () => {
                         >
                             <i className="bi bi-x-circle"></i>
                             초기화
-                        </MGButton>
+                        </button>
                     )}
                 </div>
                 
                 { /* 필터 상태 표시 */ }
                 <div style={{
                             fontSize: 'var(--font-size-sm)',
-                    color: '#6c757d',
+                    color: 'var(--mg-secondary-500)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px'
@@ -706,7 +706,7 @@ const CommonCodeManagement = () => {
             </div>
 
             {loading ? (
-                <UnifiedLoading text="코드그룹을 불러오는 중..." size="medium" type="inline" />
+                <div className="mg-loading">로딩중...</div>
             ) : (
                 <div className="group-cards">
                     {getFilteredCodeGroups().map((group, index) => (
@@ -752,27 +752,27 @@ const CommonCodeManagement = () => {
                         { selectedGroup } - 코드를 추가, 수정, 삭제할 수 있습니다.
                     </p>
                 </div>
-                <MGButton 
+                <button className="mg-button" 
                     variant="primary"
                     onClick={ () => setShowAddForm(true) }
                     disabled={ loading }
                     className="mg-v2-add-code-btn"
                 >
                     + 새 코드 추가
-                </MGButton>
+                </button>
             </div>
 
             {showAddForm && (
                 <div className="add-code-form">
                     <div className="form-header">
                         <h3>{editingCode ? '코드 수정' : '새 코드 추가'}</h3>
-                        <MGButton 
+                        <button className="mg-button" 
                             variant="secondary"
                             size="small"
                             onClick={ handleCancelForm }
                         >
                             <i className="bi bi-x"></i>
-                        </MGButton>
+                        </button>
                     </div>
                     <form onSubmit={ editingCode ? handleUpdateCode : handleAddCode }>
                         <div className="form-row">
@@ -852,20 +852,20 @@ const CommonCodeManagement = () => {
                             </div>
                         </div>
                         <div className="form-actions">
-                            <MGButton 
+                            <button className="mg-button" 
                                 type="button" 
                                 variant="secondary"
                                 onClick={ handleCancelForm }
                             >
                                 취소
-                            </MGButton>
-                            <MGButton 
+                            </button>
+                            <button className="mg-button" 
                                 type="submit" 
                                 variant="primary"
                                 disabled={ loading }
                             >
                                 { editingCode ? '수정' : '추가' }
-                            </MGButton>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -873,7 +873,7 @@ const CommonCodeManagement = () => {
 
             <div className="codes-list">
                 {loading ? (
-                    <UnifiedLoading text="코드 목록을 불러오는 중..." size="medium" type="inline" />
+                    <div className="mg-loading">로딩중...</div>
                 ) : groupCodes.length === 0 ? (
                     <div className="empty-state">
                         <div className="empty-icon">📝</div>
@@ -886,7 +886,7 @@ const CommonCodeManagement = () => {
                             <div 
                                 key={code.id} 
                                 style={{
-                                    backgroundColor: '#f8f9fa',
+                                    backgroundColor: 'var(--mg-gray-100)',
                                     borderRadius: '12px',
                                     padding: '20px',
                                     border: '2px solid #e9ecef',
@@ -900,7 +900,7 @@ const CommonCodeManagement = () => {
                                             { code.codeLabel }
                                         </h4>
                                         <span style={{
-                                            color: '#6c757d',
+                                            color: 'var(--mg-secondary-500)',
                                             fontSize: 'var(--font-size-xs)',
                                             background: '#e9ecef',
                                             padding: '2px 6px',
@@ -936,10 +936,10 @@ const CommonCodeManagement = () => {
                                         <button 
                                             style={{
                                                 padding: '6px 10px',
-                                                border: '2px solid #007bff',
+                                                border: '2px solid var(--mg-primary-500)',
                                                 borderRadius: '6px',
                                                 backgroundColor: 'transparent',
-                                                color: '#007bff',
+                                                color: 'var(--mg-primary-500)',
                                                 fontSize: 'var(--font-size-xs)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s ease'
@@ -952,10 +952,10 @@ const CommonCodeManagement = () => {
                                         <button 
                                             style={{
                                                 padding: '6px 10px',
-                                                border: `2px solid ${code.isActive ? '#ffc107' : '#28a745'}`,
+                                                border: `2px solid ${code.isActive ? 'var(--mg-warning-500)' : 'var(--mg-success-500)'}`,
                                                 borderRadius: '6px',
                                                 backgroundColor: 'transparent',
-                                                color: code.isActive ? '#ffc107' : '#28a745',
+                                                color: code.isActive ? 'var(--mg-warning-500)' : 'var(--mg-success-500)',
                                                 fontSize: 'var(--font-size-xs)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s ease'
@@ -968,10 +968,10 @@ const CommonCodeManagement = () => {
                                         <button 
                                             style={{
                                                 padding: '6px 10px',
-                                                border: '2px solid #dc3545',
+                                                border: '2px solid var(--mg-error-500)',
                                                 borderRadius: '6px',
                                                 backgroundColor: 'transparent',
-                                                color: '#dc3545',
+                                                color: 'var(--mg-error-500)',
                                                 fontSize: 'var(--font-size-xs)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s ease'

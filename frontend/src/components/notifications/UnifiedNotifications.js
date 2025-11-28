@@ -3,9 +3,9 @@ import { useSession } from '../../contexts/SessionContext';
 // import { useNotification } from '../../contexts/NotificationContext'; // 이벤트 기반으로 카운트 갱신
 import { apiGet } from '../../utils/ajax';
 import { Bell, MessageSquare, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
-import '../../styles/mindgarden-design-system.css';
+// import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 통합 알림 페이지
@@ -249,7 +249,7 @@ const UnifiedNotifications = () => {
         </div>
 
         {/* 로딩 */}
-        {loading && <UnifiedLoading message="불러오는 중..." />}
+        {loading && <div className="mg-loading">로딩중...</div>}
 
         {/* 시스템 공지 목록 */}
         {!loading && activeTab === 'system' && (

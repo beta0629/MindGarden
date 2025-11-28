@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { FaUser } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
@@ -12,7 +12,7 @@ import {
 import { showError, showSuccess } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 // import { withFormSubmit } from '../../utils/formSubmitWrapper';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 
 // 하위 컴포넌트들 import
@@ -308,7 +308,7 @@ const ClientComprehensiveManagement = () => {
         return (
             <SimpleLayout>
                 <div className="mg-v2-container">
-                    <UnifiedLoading variant="page" />
+                    <div className="mg-loading">로딩중...</div>
                 </div>
             </SimpleLayout>
         );
@@ -325,34 +325,34 @@ const ClientComprehensiveManagement = () => {
                 {/* 메인 탭 네비게이션 */}
                 <div className="mg-v2-section">
                     <div className="mg-v2-tabs">
-                        <MGButton
+                        <button className="mg-button"
                             variant={mainTab === 'comprehensive' ? 'primary' : 'outline'}
                             onClick={() => handleMainTabChange('comprehensive')}
                             className="mg-v2-tab"
                         >
                             📊 내담자 종합관리
-                        </MGButton>
-                        <MGButton
+                        </button>
+                        <button className="mg-button"
                             variant={mainTab === 'consultation' ? 'primary' : 'outline'}
                             onClick={() => handleMainTabChange('consultation')}
                             className="mg-v2-tab"
                         >
                             💬 상담 이력관리
-                        </MGButton>
-                        <MGButton
+                        </button>
+                        <button className="mg-button"
                             variant={mainTab === 'mapping' ? 'primary' : 'outline'}
                             onClick={() => handleMainTabChange('mapping')}
                             className="mg-v2-tab"
                         >
                             🤝 매칭 관리
-                        </MGButton>
-                        <MGButton
+                        </button>
+                        <button className="mg-button"
                             variant={mainTab === 'statistics' ? 'primary' : 'outline'}
                             onClick={() => handleMainTabChange('statistics')}
                             className="mg-v2-tab"
                         >
                             📈 통계 분석
-                        </MGButton>
+                        </button>
                     </div>
                 </div>
 

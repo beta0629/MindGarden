@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { Users, Calendar, TrendingUp } from 'lucide-react';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 상담사용 내담자 섹션 컴포넌트
@@ -128,7 +128,7 @@ const ConsultantClientSection = ({ userId }) => {
     return (
       <div className="mg-v2-card">
         <div className="mg-v2-card-body">
-          <UnifiedLoading text="내담자 목록을 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </div>
     );

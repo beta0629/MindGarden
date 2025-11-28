@@ -1,435 +1,311 @@
 /**
- * 위젯 관련 상수 관리
- * 위젯 컴포넌트에서 사용되는 모든 상수를 중앙 집중식으로 관리
+ * MindGarden 위젯 상수 정의
  * 
- * @author CoreSolution
+ * CSS와 비즈니스 로직 분리를 위한 상수 관리
+ * 모든 하드코딩된 값들을 여기서 중앙 관리
+ * 
+ * @author MindGarden
  * @version 1.0.0
- * @since 2025-11-26
+ * @since 2025-11-28
  */
 
-// ===== 위젯 공통 상수 =====
+// 🎨 CSS 클래스 상수 (MindGarden 디자인 시스템 기반)
 export const WIDGET_CONSTANTS = {
-  // 새로고침 간격 옵션 (밀리초)
-  REFRESH_INTERVALS: {
-    FAST: 1000,      // 1초
-    DEFAULT: 5000,   // 5초
-    NORMAL: 10000,   // 10초
-    SLOW: 30000,     // 30초
-    VERY_SLOW: 60000 // 1분
+  // CSS 클래스명 (mg- 접두사 사용)
+  CSS_CLASSES: {
+    // 위젯 컨테이너
+    WIDGET_CONTAINER: (type) => `mg-widget mg-widget--${type} mg-card mg-card--elevated`,
+    WIDGET_HEADER: 'mg-widget__header mg-card__header',
+    WIDGET_BODY: 'mg-widget__body mg-card__body',
+    WIDGET_FOOTER: 'mg-widget__footer mg-card__footer',
+    
+    // 위젯 내용
+    WIDGET_TITLE: 'mg-widget__title mg-h4 mg-mb-0',
+    WIDGET_SUBTITLE: 'mg-widget__subtitle mg-text-muted mg-text-sm',
+    WIDGET_CONTENT: 'mg-widget__content',
+    
+    // MindGarden 카드 시스템
+    MG_CARD: 'mg-card',
+    MG_CARD_HEADER: 'mg-card__header mg-flex mg-align-center mg-gap-sm',
+    MG_CARD_BODY: 'mg-card__body',
+    MG_CARD_FOOTER: 'mg-card__footer',
+    MG_CARD_CONTENT: 'mg-card__content',
+    
+    // 통계 그리드
+    MG_STATS_GRID: 'mg-stats-grid',
+    MG_STATS_CARD: 'mg-stats-card',
+    
+    // 로딩 상태
+    LOADING_CONTAINER: 'mg-loading-container mg-flex mg-flex-col mg-align-center mg-justify-center mg-py-xl',
+    MG_LOADING_SPINNER: 'mg-loading-spinner',
+    
+    // 에러 상태  
+    ERROR_CONTAINER: 'mg-error-container mg-p-md',
+    MG_ALERT_ERROR: 'mg-alert mg-alert--error mg-flex mg-align-center mg-gap-sm',
+    MG_ALERT_ICON: 'mg-alert__icon',
+    MG_ALERT_MESSAGE: 'mg-alert__message',
+    
+    // 텍스트 스타일
+    MG_TEXT_BODY: 'mg-text-body',
+    MG_TEXT_MUTED: 'mg-text-muted',
+    MG_TEXT_SM: 'mg-text-sm',
+    MG_TEXT_LG: 'mg-text-lg',
+    
+    // 레이아웃
+    MG_FLEX: 'mg-flex',
+    MG_FLEX_COL: 'mg-flex-col',
+    MG_ALIGN_CENTER: 'mg-align-center',
+    MG_JUSTIFY_CENTER: 'mg-justify-center',
+    MG_GAP_SM: 'mg-gap-sm',
+    MG_GAP_MD: 'mg-gap-md',
+    
+    // 여백
+    MG_P_MD: 'mg-p-md',
+    MG_PY_XL: 'mg-py-xl',
+    MG_MB_0: 'mg-mb-0',
+    
+    // 반응형
+    MG_RESPONSIVE_GRID: 'mg-grid mg-grid--responsive',
+    MG_RESPONSIVE_COLS_2: 'mg-grid--cols-2',
+    MG_RESPONSIVE_COLS_3: 'mg-grid--cols-3',
+    MG_RESPONSIVE_COLS_4: 'mg-grid--cols-4'
   },
   
-  // 위젯 크기
-  SIZES: {
-    SMALL: 'small',
-    MEDIUM: 'medium',
-    LARGE: 'large',
-    FULL: 'full'
+  // 기본 제목들
+  DEFAULT_TITLES: {
+    SYSTEM_OVERVIEW: '시스템 개요',
+    TODAY_STATS: '오늘의 통계', 
+    QUICK_ACTIONS: '빠른 작업',
+    PENDING_DEPOSITS: '입금 확인 대기',
+    VACATION_STATS: '휴가 통계',
+    RATING_STATS: '상담사 평가 통계',
+    REFUND_STATS: '환불 현황',
+    CONSULTATION_STATS: '상담 완료 통계',
+    SYSTEM_STATUS: '시스템 상태',
+    SYSTEM_TOOLS: '시스템 도구',
+    PERMISSIONS: '권한 관리',
+    NOTIFICATIONS: '시스템 알림'
   },
   
-  // 위젯 상태
-  STATES: {
-    LOADING: 'loading',
-    ERROR: 'error',
-    SUCCESS: 'success',
-    EMPTY: 'empty'
+  // 로딩 메시지
+  LOADING_MESSAGES: {
+    DEFAULT: '데이터를 불러오는 중...',
+    STATS: '통계 데이터 로딩 중...',
+    API_CALL: 'API 호출 중...',
+    PROCESSING: '처리 중...'
   },
   
-  // 애니메이션 지속시간
+  // 에러 메시지
+  ERROR_MESSAGES: {
+    LOAD_FAILED: '데이터를 불러올 수 없습니다',
+    API_ERROR: 'API 호출에 실패했습니다',
+    NETWORK_ERROR: '네트워크 오류가 발생했습니다',
+    PERMISSION_DENIED: '권한이 없습니다',
+    DATA_NOT_FOUND: '데이터를 찾을 수 없습니다'
+  },
+  
+  // 버튼 라벨
+  BUTTON_LABELS: {
+    ACTION: '실행',
+    REFRESH: '새로고침',
+    VIEW_MORE: '더 보기',
+    SETTINGS: '설정',
+    CLOSE: '닫기',
+    SAVE: '저장',
+    CANCEL: '취소',
+    CONFIRM: '확인'
+  },
+  
+  // 위젯 크기 상수
+  WIDGET_SIZES: {
+    SMALL: { colspan: 1, rowspan: 1 },
+    MEDIUM: { colspan: 2, rowspan: 1 },
+    LARGE: { colspan: 3, rowspan: 1 },
+    TALL: { colspan: 2, rowspan: 2 },
+    FULL_WIDTH: { colspan: 4, rowspan: 1 }
+  },
+  
+  // 애니메이션 지속시간 (CSS 변수와 연동)
   ANIMATION_DURATION: {
-    FAST: 150,
-    DEFAULT: 300,
-    SLOW: 500
+    FAST: 'var(--mg-duration-fast)',
+    NORMAL: 'var(--mg-duration-normal)', 
+    SLOW: 'var(--mg-duration-slow)'
+  },
+  
+  // 아이콘 매핑
+  ICONS: {
+    LOADING: '⏳',
+    ERROR: '⚠️',
+    SUCCESS: '✅',
+    INFO: 'ℹ️',
+    WARNING: '⚠️',
+    REFRESH: '🔄',
+    SETTINGS: '⚙️',
+    STATS: '📊',
+    USERS: '👥',
+    CALENDAR: '📅',
+    CHART: '📈'
+  },
+  
+  // 유틸리티 함수들
+  UTILS: {
+    // CSS 클래스 조합 함수
+    combineClasses: (...classes) => classes.filter(Boolean).join(' ')
   }
 };
 
-// ===== 성능 위젯 상수 =====
-export const PERFORMANCE_WIDGET = {
-  // 기본 설정
-  DEFAULT_TITLE: '시스템 성능',
-  DEFAULT_REFRESH_INTERVAL: WIDGET_CONSTANTS.REFRESH_INTERVALS.SLOW,
-  
-  // 메트릭 타입
-  METRIC_TYPES: {
-    API_RESPONSE_TIME: 'apiResponseTime',
-    CACHE_HIT_RATE: 'cacheHitRate',
-    ACTIVE_USERS: 'activeUsers',
-    SYSTEM_LOAD: 'systemLoad'
-  },
-  
-  // 성능 임계값
-  THRESHOLDS: {
-    RESPONSE_TIME: {
-      EXCELLENT: 100,  // 100ms 이하
-      GOOD: 200,       // 200ms 이하
-      POOR: 500        // 500ms 이상
-    },
-    CACHE_HIT_RATE: {
-      EXCELLENT: 80,   // 80% 이상
-      GOOD: 60,        // 60% 이상
-      POOR: 40         // 40% 미만
-    },
-    SYSTEM_LOAD: {
-      EXCELLENT: 50,   // 50% 이하
-      GOOD: 70,        // 70% 이하
-      POOR: 90         // 90% 이상
-    }
-  },
-  
-  // 트렌드 타입
-  TREND_TYPES: {
-    UP: 'up',
-    DOWN: 'down',
-    STABLE: 'stable'
-  },
-  
-  // 메트릭 라벨
-  METRIC_LABELS: {
-    API_RESPONSE_TIME: 'API 응답시간',
-    CACHE_HIT_RATE: '캐시 히트율',
-    ACTIVE_USERS: '활성 사용자',
-    SYSTEM_LOAD: '시스템 부하'
-  },
-  
-  // 메트릭 단위
-  METRIC_UNITS: {
-    API_RESPONSE_TIME: 'ms',
-    CACHE_HIT_RATE: '%',
-    ACTIVE_USERS: '명',
-    SYSTEM_LOAD: '%'
-  },
-  
-  // 모의 데이터 범위
-  MOCK_DATA_RANGES: {
-    API_RESPONSE_TIME: { MIN: 50, MAX: 250 },
-    ACTIVE_USERS: { MIN: 20, MAX: 120 },
-    SYSTEM_LOAD: { MIN: 10, MAX: 90 }
-  }
-};
-
-// ===== 캐시 모니터링 위젯 상수 =====
-export const CACHE_MONITORING_WIDGET = {
-  DEFAULT_TITLE: '캐시 모니터링',
-  DEFAULT_REFRESH_INTERVAL: WIDGET_CONSTANTS.REFRESH_INTERVALS.DEFAULT,
-  
-  // API 엔드포인트
-  API_ENDPOINTS: {
-    STATS: '/api/admin/cache/stats',
-    CLEAR_ALL: '/api/admin/cache/all'
-  },
-  
-  // 캐시 효율성 임계값
-  EFFICIENCY_THRESHOLDS: {
-    EXCELLENT: 80,
-    GOOD: 60,
-    POOR: 40
-  },
-  
-  // 상태 메시지
-  MESSAGES: {
-    NO_DATA: '캐시 데이터가 없습니다.',
-    LOADING: '업데이트 중...',
-    ERROR: '캐시 통계 조회에 실패했습니다.',
-    CLEAR_CONFIRM: '모든 캐시를 삭제하시겠습니까?',
-    CLEAR_SUCCESS: '모든 캐시가 삭제되었습니다.',
-    CLEAR_ERROR: '캐시 삭제에 실패했습니다.'
-  }
-};
-
-// ===== API 성능 모니터링 위젯 상수 =====
+// 🔧 API 성능 위젯 상수 (기존 호환성)
 export const API_PERFORMANCE_WIDGET = {
   DEFAULT_TITLE: 'API 성능 모니터링',
-  DEFAULT_REFRESH_INTERVAL: WIDGET_CONSTANTS.REFRESH_INTERVALS.NORMAL,
+  DEFAULT_REFRESH_INTERVAL: 30000, // 30초
   
-  // API 엔드포인트
-  API_ENDPOINTS: {
-    STATS: '/api/admin/performance/stats',
-    SLOW_APIS: '/api/admin/performance/slow-apis',
-    ERROR_PRONE_APIS: '/api/admin/performance/error-prone-apis',
-    CLEAR_STATS: '/api/admin/performance/stats'
-  },
-  
-  // 성능 임계값
-  THRESHOLDS: {
-    SLOW_API_MS: 500,
-    ERROR_RATE_PERCENT: 5.0,
-    RESPONSE_TIME: {
-      EXCELLENT: 100,
-      GOOD: 300,
-      AVERAGE: 1000
-    },
-    ERROR_RATE: {
-      EXCELLENT: 1,
-      GOOD: 5,
-      AVERAGE: 10
-    }
-  },
-  
-  // 뷰 타입
   VIEW_TYPES: {
     SUMMARY: 'summary',
     SLOW: 'slow',
     ERRORS: 'errors'
   },
   
-  // 메트릭 라벨
+  API_ENDPOINTS: {
+    STATS: '/api/admin/performance/stats',
+    SLOW_APIS: '/api/admin/performance/slow-apis',
+    ERROR_PRONE_APIS: '/api/admin/performance/error-prone-apis'
+  },
+  
+  THRESHOLDS: {
+    SLOW_API_MS: 1000,
+    ERROR_RATE_PERCENT: 5
+  },
+  
   METRIC_LABELS: {
-    AVERAGE_RESPONSE_TIME: '평균 응답시간',
+    AVERAGE_RESPONSE_TIME: '평균 응답 시간',
     TOTAL_REQUESTS: '총 요청 수',
     OVERALL_ERROR_RATE: '전체 에러율',
     SLOWEST_REQUEST: '가장 느린 요청'
   },
   
-  // 상태 메시지
   MESSAGES: {
-    NO_SLOW_APIS: '느린 API가 없습니다! 🎉',
-    NO_ERROR_APIS: '에러율이 높은 API가 없습니다! ✅',
-    LOADING: '업데이트 중...',
-    CLEAR_CONFIRM: '모든 성능 통계를 초기화하시겠습니까?',
-    CLEAR_SUCCESS: '성능 통계가 초기화되었습니다.',
-    CLEAR_ERROR: '통계 초기화에 실패했습니다.',
-    DOWNLOAD_ERROR: '보고서 다운로드 중 오류가 발생했습니다.'
+    LOADING: '성능 데이터 로딩 중...',
+    NO_SLOW_APIS: '느린 API가 없습니다',
+    NO_ERROR_APIS: '에러가 많은 API가 없습니다'
   }
 };
 
-// ===== 대시보드 위젯 상수 =====
-export const DASHBOARD_WIDGET = {
-  // 그리드 레이아웃
-  GRID: {
-    COLUMNS: {
-      MOBILE: 1,
-      TABLET: 2,
-      DESKTOP: 3,
-      WIDE: 4
-    },
-    GAP: '24px',
-    MIN_COLUMN_WIDTH: '300px'
+// 🎨 위젯별 특화 상수
+export const WIDGET_SPECIFIC_CONSTANTS = {
+  SYSTEM_OVERVIEW: {
+    STAT_CARDS: {
+      CONSULTANTS: {
+        ICON: WIDGET_CONSTANTS.ICONS.USERS,
+        LABEL: '상담사',
+        COLOR: 'primary'
+      },
+      CLIENTS: {
+        ICON: WIDGET_CONSTANTS.ICONS.USERS,
+        LABEL: '내담자', 
+        COLOR: 'success'
+      },
+      MAPPINGS: {
+        ICON: '🔗',
+        LABEL: '매칭',
+        COLOR: 'info'
+      },
+      ACTIVE_MAPPINGS: {
+        ICON: '✅',
+        LABEL: '활성 매칭',
+        COLOR: 'warning'
+      }
+    }
   },
   
-  // 위젯 높이
-  HEIGHTS: {
-    COMPACT: '200px',
-    DEFAULT: '300px',
-    TALL: '400px',
-    AUTO: 'auto'
+  TODAY_STATS: {
+    STAT_CARDS: {
+      TOTAL_TODAY: {
+        ICON: WIDGET_CONSTANTS.ICONS.CALENDAR,
+        LABEL: '예약된 상담',
+        COLOR: 'primary'
+      },
+      COMPLETED_TODAY: {
+        ICON: WIDGET_CONSTANTS.ICONS.SUCCESS,
+        LABEL: '완료된 상담',
+        COLOR: 'success'
+      },
+      PENDING_TODAY: {
+        ICON: '⏰',
+        LABEL: '대기 중인 상담',
+        COLOR: 'warning'
+      }
+    }
   },
   
-  // 반응형 브레이크포인트
-  BREAKPOINTS: {
-    MOBILE: '768px',
-    TABLET: '992px',
-    DESKTOP: '1200px'
-  }
-};
-
-// ===== 알림 위젯 상수 =====
-export const NOTIFICATION_WIDGET = {
-  // 알림 타입
-  TYPES: {
-    INFO: 'info',
-    SUCCESS: 'success',
-    WARNING: 'warning',
-    ERROR: 'error'
-  },
-  
-  // 우선순위
-  PRIORITIES: {
-    LOW: 'low',
-    MEDIUM: 'medium',
-    HIGH: 'high',
-    CRITICAL: 'critical'
-  },
-  
-  // 자동 숨김 시간 (밀리초)
-  AUTO_HIDE_DURATION: {
-    SHORT: 3000,
-    DEFAULT: 5000,
-    LONG: 8000,
-    NEVER: 0
-  }
-};
-
-// ===== 차트 위젯 상수 =====
-export const CHART_WIDGET = {
-  // 차트 타입
-  TYPES: {
-    LINE: 'line',
-    BAR: 'bar',
-    PIE: 'pie',
-    DOUGHNUT: 'doughnut',
-    AREA: 'area'
-  },
-  
-  // 기본 색상 팔레트
-  COLOR_PALETTE: [
-    '#2196F3', '#4CAF50', '#FF9800', '#F44336',
-    '#9C27B0', '#00BCD4', '#FFEB3B', '#795548'
-  ],
-  
-  // 애니메이션 설정
-  ANIMATION: {
-    DURATION: 750,
-    EASING: 'easeInOutQuart'
-  },
-  
-  // 데이터 포인트 제한
-  MAX_DATA_POINTS: 50
-};
-
-// ===== 통계 위젯 상수 =====
-export const STATS_WIDGET = {
-  // 통계 타입
-  TYPES: {
-    COUNT: 'count',
-    PERCENTAGE: 'percentage',
-    CURRENCY: 'currency',
-    TIME: 'time',
-    BYTES: 'bytes'
-  },
-  
-  // 변화 표시 타입
-  CHANGE_TYPES: {
-    INCREASE: 'increase',
-    DECREASE: 'decrease',
-    NEUTRAL: 'neutral'
-  },
-  
-  // 포맷팅 옵션
-  FORMATTING: {
-    DECIMAL_PLACES: {
-      COUNT: 0,
-      PERCENTAGE: 1,
-      CURRENCY: 2,
-      TIME: 0,
-      BYTES: 1
+  QUICK_ACTIONS: {
+    ACTIONS: {
+      MANAGE_CONSULTANTS: {
+        ICON: '👨‍⚕️',
+        LABEL: '상담사 관리',
+        URL: '/admin/consultant-comprehensive'
+      },
+      MANAGE_CLIENTS: {
+        ICON: '👥',
+        LABEL: '내담자 관리', 
+        URL: '/admin/client-comprehensive'
+      },
+      VIEW_MAPPINGS: {
+        ICON: '🔗',
+        LABEL: '매칭 관리',
+        URL: '/admin/mapping-management'
+      },
+      VIEW_SCHEDULES: {
+        ICON: WIDGET_CONSTANTS.ICONS.CALENDAR,
+        LABEL: '스케줄 관리',
+        URL: '/admin/schedule'
+      },
+      SYSTEM_SETTINGS: {
+        ICON: WIDGET_CONSTANTS.ICONS.SETTINGS,
+        LABEL: '시스템 설정',
+        URL: '/admin/system-config'
+      },
+      REPORTS: {
+        ICON: WIDGET_CONSTANTS.ICONS.CHART,
+        LABEL: '통계 보고서',
+        URL: '/admin/statistics'
+      }
     }
   }
 };
 
-// ===== 테이블 위젯 상수 =====
-export const TABLE_WIDGET = {
-  // 페이지네이션
-  PAGINATION: {
-    DEFAULT_PAGE_SIZE: 10,
-    PAGE_SIZE_OPTIONS: [5, 10, 20, 50, 100],
-    MAX_VISIBLE_PAGES: 5
+// 🎯 위젯 유틸리티 함수
+export const WIDGET_UTILS = {
+  // CSS 클래스 조합 함수
+  combineClasses: (...classes) => classes.filter(Boolean).join(' '),
+  
+  // 위젯 타입별 기본 설정 반환
+  getDefaultConfig: (widgetType) => {
+    const configs = {
+      'system-overview': {
+        title: WIDGET_CONSTANTS.DEFAULT_TITLES.SYSTEM_OVERVIEW,
+        subtitle: '전체 시스템 현황 요약',
+        size: WIDGET_CONSTANTS.WIDGET_SIZES.LARGE
+      },
+      'today-stats': {
+        title: WIDGET_CONSTANTS.DEFAULT_TITLES.TODAY_STATS,
+        subtitle: '오늘의 상담 현황 요약',
+        size: WIDGET_CONSTANTS.WIDGET_SIZES.LARGE
+      },
+      'quick-actions': {
+        title: WIDGET_CONSTANTS.DEFAULT_TITLES.QUICK_ACTIONS,
+        subtitle: '자주 사용하는 관리 기능',
+        size: WIDGET_CONSTANTS.WIDGET_SIZES.FULL_WIDTH
+      }
+    };
+    
+    return configs[widgetType] || {};
   },
   
-  // 정렬
-  SORT_DIRECTIONS: {
-    ASC: 'asc',
-    DESC: 'desc'
-  },
-  
-  // 필터
-  FILTER_TYPES: {
-    TEXT: 'text',
-    SELECT: 'select',
-    DATE: 'date',
-    NUMBER: 'number',
-    BOOLEAN: 'boolean'
+  // 에러 메시지 포맷팅
+  formatErrorMessage: (error, context = '') => {
+    const baseMessage = WIDGET_CONSTANTS.ERROR_MESSAGES.LOAD_FAILED;
+    return context ? `${baseMessage} (${context}): ${error}` : `${baseMessage}: ${error}`;
   }
 };
 
-// ===== 위젯 아이콘 매핑 =====
-export const WIDGET_ICONS = {
-  PERFORMANCE: 'FaChartLine',
-  CACHE: 'FaDatabase',
-  USERS: 'FaUsers',
-  NOTIFICATIONS: 'FaBell',
-  SETTINGS: 'FaCog',
-  CHART: 'FaChartBar',
-  TABLE: 'FaTable',
-  CALENDAR: 'FaCalendar',
-  DASHBOARD: 'FaTachometerAlt'
-};
-
-// ===== 위젯 테마 =====
-export const WIDGET_THEMES = {
-  DEFAULT: 'default',
-  DARK: 'dark',
-  LIGHT: 'light',
-  COLORFUL: 'colorful',
-  MINIMAL: 'minimal'
-};
-
-// ===== 보안 모니터링 위젯 상수 =====
-export const SECURITY_WIDGET = {
-  DEFAULT_TITLE: '보안 모니터링',
-  DEFAULT_REFRESH_INTERVAL: WIDGET_CONSTANTS.REFRESH_INTERVALS.DEFAULT,
-  
-  // API 엔드포인트
-  API_ENDPOINTS: {
-    STATUS: '/api/admin/security/status',
-    STATS: '/api/admin/security/stats',
-    BLOCKED_IPS: '/api/admin/security/blocked-ips',
-    AUDIT_REPORT: '/api/admin/security/audit-report',
-    RECOMMENDATIONS: '/api/admin/security/recommendations'
-  },
-  
-  // 뷰 타입
-  VIEW_TYPES: {
-    OVERVIEW: 'overview',
-    EVENTS: 'events',
-    THREATS: 'threats'
-  },
-  
-  // 보안 상태
-  SECURITY_STATUS: {
-    SECURE: 'SECURE',
-    MONITORING: 'MONITORING',
-    WARNING: 'WARNING',
-    ALERT: 'ALERT'
-  },
-  
-  // 위협 수준
-  THREAT_LEVELS: {
-    LOW: 'LOW',
-    MEDIUM: 'MEDIUM',
-    HIGH: 'HIGH',
-    CRITICAL: 'CRITICAL'
-  },
-  
-  // 보안 점수 임계값
-  SCORE_THRESHOLDS: {
-    EXCELLENT: 90,
-    GOOD: 75,
-    AVERAGE: 50,
-    POOR: 25
-  },
-  
-  // 상태 메시지
-  MESSAGES: {
-    NO_RECENT_EVENTS: '최근 보안 이벤트가 없습니다. 시스템이 안전합니다! 🛡️',
-    LOADING: '보안 데이터 업데이트 중...',
-    ERROR: '보안 데이터 조회에 실패했습니다.',
-    SECURE_STATUS: '시스템이 안전한 상태입니다.',
-    WARNING_STATUS: '보안 위험이 감지되었습니다.',
-    ALERT_STATUS: '즉시 조치가 필요한 보안 위협이 있습니다!'
-  }
-};
-
-// WIDGET_CONSTANTS에 모든 위젯 상수 통합
-WIDGET_CONSTANTS.PERFORMANCE_WIDGET = PERFORMANCE_WIDGET;
-WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET = CACHE_MONITORING_WIDGET;
-WIDGET_CONSTANTS.DASHBOARD_WIDGET = DASHBOARD_WIDGET;
-WIDGET_CONSTANTS.NOTIFICATION_WIDGET = NOTIFICATION_WIDGET;
-WIDGET_CONSTANTS.CHART_WIDGET = CHART_WIDGET;
-WIDGET_CONSTANTS.STATS_WIDGET = STATS_WIDGET;
-WIDGET_CONSTANTS.TABLE_WIDGET = TABLE_WIDGET;
-WIDGET_CONSTANTS.WIDGET_ICONS = WIDGET_ICONS;
-WIDGET_CONSTANTS.WIDGET_THEMES = WIDGET_THEMES;
-WIDGET_CONSTANTS.SECURITY_WIDGET = SECURITY_WIDGET;
-
-export default {
-  WIDGET_CONSTANTS,
-  PERFORMANCE_WIDGET,
-  CACHE_MONITORING_WIDGET,
-  DASHBOARD_WIDGET,
-  NOTIFICATION_WIDGET,
-  CHART_WIDGET,
-  STATS_WIDGET,
-  TABLE_WIDGET,
-  WIDGET_ICONS,
-  WIDGET_THEMES,
-  SECURITY_WIDGET
-};
+export default WIDGET_CONSTANTS;

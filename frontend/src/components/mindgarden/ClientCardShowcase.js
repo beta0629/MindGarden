@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { User, MessageCircle, Calendar, TrendingUp, Phone, Mail, Clock, CheckCircle } from 'lucide-react';
 
 const ClientCardShowcase = () => {
@@ -43,8 +43,8 @@ const ClientCardShowcase = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case '진행중': return '#10b981';
-      case '예약됨': return '#3b82f6';
+      case '진행중': return 'var(--mg-success-500)';
+      case '예약됨': return 'var(--mg-primary-500)';
       case '완료': return '#6b7280';
       default: return '#6b7280';
     }

@@ -277,7 +277,7 @@
   /* 소셜 브랜드 색상 */
   --mypage-kakao-bg: #FEE500;
   --mypage-kakao-bg-hover: #FDD835;
-  --mypage-kakao-color: #000000;
+  --mypage-kakao-color: var(--mg-black);
   --mypage-naver-bg: #03C75A;
   --mypage-naver-bg-hover: #02B351;
   --mypage-naver-color: var(--color-white);
@@ -307,8 +307,8 @@
   --notification-toast-border-width: 1px;
   --notification-toast-bg: rgba(255, 255, 255, 0.95);
   --notification-toast-border-color: rgba(255, 255, 255, 0.3);
-  --notification-toast-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  --notification-toast-shadow-hover: 0 15px 35px rgba(0, 0, 0, 0.15);
+  --notification-toast-shadow: 0 10px 25px var(--mg-shadow-light);
+  --notification-toast-shadow-hover: 0 15px 35px var(--mg-shadow-medium);
   
   /* 아이콘 */
   --notification-icon-size: 24px;
@@ -333,7 +333,7 @@
   
   /* 진행바 */
   --notification-progress-height: 3px;
-  --notification-progress-bg: rgba(0, 0, 0, 0.1);
+  --notification-progress-bg: var(--mg-shadow-light);
   
   /* 모달 알림 */
   --notification-modal-max-width: 480px;
@@ -341,7 +341,7 @@
   --notification-modal-max-height: 90vh;
   --notification-modal-border-radius: var(--border-radius-xxl);
   --notification-modal-border-radius-mobile: var(--border-radius-lg);
-  --notification-modal-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  --notification-modal-shadow: 0 25px 50px var(--mg-shadow-medium);
   --notification-modal-bg: rgba(255, 255, 255, 0.95);
   --notification-modal-border-color: rgba(255, 255, 255, 0.3);
   --notification-modal-border-width: 1px;
@@ -386,28 +386,28 @@
   /* 타입별 색상 */
   --notification-success-border-color: var(--color-success);
   --notification-success-gradient-start: var(--color-success);
-  --notification-success-gradient-end: #10b981;
+  --notification-success-gradient-end: var(--mg-success-500);
   --notification-success-icon-bg-start: #d1fae5;
   --notification-success-icon-bg-end: #a7f3d0;
   --notification-success-icon-color: #059669;
   
   --notification-error-border-color: var(--color-danger);
   --notification-error-gradient-start: var(--color-danger);
-  --notification-error-gradient-end: #ef4444;
+  --notification-error-gradient-end: var(--mg-error-500);
   --notification-error-icon-bg-start: #fecaca;
   --notification-error-icon-bg-end: #fca5a5;
   --notification-error-icon-color: #dc2626;
   
   --notification-warning-border-color: var(--color-warning);
   --notification-warning-gradient-start: var(--color-warning);
-  --notification-warning-gradient-end: #f59e0b;
+  --notification-warning-gradient-end: var(--mg-warning-500);
   --notification-warning-icon-bg-start: #fef3c7;
   --notification-warning-icon-bg-end: #fde68a;
-  --notification-warning-icon-color: #f59e0b;
+  --notification-warning-icon-color: var(--mg-warning-500);
   
   --notification-info-border-color: var(--color-info);
   --notification-info-gradient-start: var(--color-info);
-  --notification-info-gradient-end: #3b82f6;
+  --notification-info-gradient-end: var(--mg-primary-500);
   --notification-info-icon-bg-start: #dbeafe;
   --notification-info-icon-bg-end: #bfdbfe;
   --notification-info-icon-color: #2563eb;

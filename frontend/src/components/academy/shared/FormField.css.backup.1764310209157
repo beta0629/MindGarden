@@ -1,0 +1,31 @@
+/**
+ * 학원 시스템 - 공통 폼 필드 스타일
+ */
+
+.academy-form-group {
+  margin-bottom: var(--spacing-md, 1rem);
+}
+
+.academy-form-label {
+  display: block;
+  margin-bottom: var(--spacing-xs, 0.25rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary, #333);
+}
+
+.academy-required {
+  color: var(--color-error, #dc3545);
+  margin-left: 0.25rem;
+}
+
+.academy-form-error {
+  display: block;
+  margin-top: var(--spacing-xs, 0.25rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-error, #dc3545);
+}
+
+.academy-form-field {
+  width: 100%;
+}
+

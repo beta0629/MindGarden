@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Info, XCircle, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
-import UnifiedLoading from '../../common/UnifiedLoading';
+// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import { getMappingStatusKoreanNameSync, getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 
 /**
@@ -112,11 +112,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                 {loading ? (
                     <div className="mg-v2-modal-body">
                         <div className="mg-v2-loading-container">
-                            <UnifiedLoading 
-                                text="상세 정보를 불러오는 중..." 
-                                size="medium" 
-                                type="inline"
-                            />
+                            <div className="mg-loading">로딩중...</div>
                         </div>
                     </div>
                 ) : (

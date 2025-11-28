@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
-import UnifiedModal from '../common/modals/UnifiedModal';
+// import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { loadMenuStructure, transformMenuStructure, debugMenuStructure } from '../../utils/menuHelper';
 import { hasMenuAccess, validateMenuPath, logPermissionCheck } from '../../utils/menuPermissionValidator';
 import './SimpleHamburgerMenu.css';
@@ -283,34 +283,44 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
       </div>
 
       {/* 로그아웃 확인 모달 */}
-      <UnifiedModal
-        isOpen={showLogoutModal}
-        onClose={() => setShowLogoutModal(false)}
-        title="로그아웃"
-        subtitle="정말 로그아웃 하시겠습니까?"
-        size="small"
-        variant="confirm"
-        actions={
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button 
-              onClick={() => setShowLogoutModal(false)}
-              className="mg-v2-button mg-v2-button-secondary"
-            >
-              취소
-            </button>
-            <button 
-              onClick={confirmLogout}
-              className="mg-v2-button mg-v2-button-danger"
-            >
-              로그아웃
-            </button>
+      {showLogoutModal && (
+        <div className="mg-modal">
+          <div className="mg-modal-overlay" onClick={() => setShowLogoutModal(false)}>
+            <div className="mg-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="mg-modal-header">
+                <h3>로그아웃</h3>
+                <button 
+                  className="mg-modal-close"
+                  onClick={() => setShowLogoutModal(false)}
+                >
+                  <i className="bi bi-x"></i>
+                </button>
+              </div>
+              <div className="mg-modal-body">
+                <p style={{ textAlign: 'center', margin: 0 }}>
+                  로그아웃하면 현재 세션이 종료됩니다.
+                </p>
+              </div>
+              <div className="mg-modal-footer">
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                  <button 
+                    onClick={() => setShowLogoutModal(false)}
+                    className="mg-v2-button mg-v2-button-secondary"
+                  >
+                    취소
+                  </button>
+                  <button 
+                    onClick={confirmLogout}
+                    className="mg-v2-button mg-v2-button-danger"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        }
-      >
-        <p style={{ textAlign: 'center', margin: 0 }}>
-          로그아웃하면 현재 세션이 종료됩니다.
-        </p>
-      </UnifiedModal>
+        </div>
+      )}
     </div>
   );
 };

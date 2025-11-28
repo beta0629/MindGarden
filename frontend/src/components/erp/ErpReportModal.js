@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { FileBarChart, XCircle, Download, Calendar, Building, DollarSign, TrendingUp } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
@@ -271,7 +271,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 onClick={handleGenerateReport}
                                 disabled={loading || !period}
                             >
-                                {loading ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                                {loading ? <div className="mg-loading">로딩중...</div> : (
                                     <>
                                         <TrendingUp size={20} className="mg-v2-icon-inline" />
                                         보고서 생성

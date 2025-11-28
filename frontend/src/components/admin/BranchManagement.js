@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../constants/api';
@@ -308,8 +308,8 @@ const BranchManagement = () => {
         <div className="branch-management">
             <div className="branch-management-header">
                 <h2>지점 관리</h2>
-                <MGButton variant="primary" className="btn-primary" onClick={handleCreateClick} disabled={loading}>새 지점 추가
-                </MGButton>
+                <button className="mg-button" variant="primary" className="btn-primary" onClick={handleCreateClick} disabled={loading}>새 지점 추가
+                </button>
             </div>
 
             {/* 검색 및 필터 */}

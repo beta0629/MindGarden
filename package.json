@@ -13,7 +13,16 @@
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
-  "keywords": ["spring-boot", "react", "consultation"],
+  "keywords": [
+    "spring-boot",
+    "react",
+    "consultation"
+  ],
   "author": "MindGarden",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "fs-extra": "^11.3.2",
+    "glob": "^13.0.0"
+  }
 }

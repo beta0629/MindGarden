@@ -5,13 +5,13 @@ import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
-import SimpleLayout from '../layout/SimpleLayout';
+// // import SimpleLayout from '../layout/SimpleLayout';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
-import MGButton from '../common/MGButton';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -266,7 +266,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
 
   if (loading) {
-    return <UnifiedLoading text="데이터를 불러오는 중..." size="medium" type="inline" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   if (error) {
@@ -319,7 +319,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 <option key="monthly" value="monthly">월간</option>
                 <option key="yearly" value="yearly">년간</option>
               </select>
-              <MGButton
+              <button className="mg-button"
                 variant="danger"
                 size="small"
                 onClick={() => setShowQuickExpenseForm(true)}
@@ -327,8 +327,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 className="mg-dashboard-icon-btn"
               >
                 <TrendingDown size={18} />
-              </MGButton>
-              <MGButton
+              </button>
+              <button className="mg-button"
                 variant="success"
                 size="small"
                 onClick={() => setShowTransactionForm(true)}
@@ -336,8 +336,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 className="mg-dashboard-icon-btn"
               >
                 <DollarSign size={18} />
-              </MGButton>
-              <MGButton
+              </button>
+              <button className="mg-button"
                 variant="primary"
                 size="small"
                 onClick={() => window.location.href = '/erp/financial'}
@@ -345,7 +345,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 className="mg-dashboard-icon-btn"
               >
                 <FileText size={18} />
-              </MGButton>
+              </button>
             </div>
           </div>
         </div>
@@ -503,14 +503,14 @@ const OverviewTab = ({ data }) => {
             <div className="mg-v2-text-xs mg-v2-text-secondary" style={{ marginTop: '4px' }}>
               ✅ 매핑 ↔ ERP 자동 동기화
             </div>
-            <MGButton
+            <button className="mg-button"
               variant="outline"
               size="small"
               style={{ marginTop: '8px' }}
               onClick={() => window.location.href = '/branch_super_admin/mapping-management'}
             >
               📋 매핑시스템 확인
-            </MGButton>
+            </button>
           </div>
         </div>
       </DashboardSection>
@@ -599,7 +599,7 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="대차대조표를 불러오는 중..." size="medium" type="inline" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   return (
@@ -749,7 +749,7 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="손익계산서를 불러오는 중..." size="medium" type="inline" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   return (
@@ -875,7 +875,7 @@ const DailyReportTab = ({ period }) => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="일간 리포트 데이터를 불러오는 중..." size="medium" type="inline" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   if (error) {
@@ -1003,7 +1003,7 @@ const MonthlyReportTab = ({ period }) => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="월간 리포트 데이터를 불러오는 중..." size="medium" type="inline" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   if (error) {
@@ -1133,7 +1133,7 @@ const YearlyReportTab = ({ period }) => {
   };
 
   if (loading) {
-    return <UnifiedLoading text="년간 리포트 데이터를 불러오는 중..." size="medium" type="inline" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   if (error) {

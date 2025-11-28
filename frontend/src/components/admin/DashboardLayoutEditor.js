@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ReactSortable } from 'react-sortablejs';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { FaGripVertical, FaTrash, FaCog } from 'react-icons/fa';
 import './DashboardLayoutEditor.css';
 

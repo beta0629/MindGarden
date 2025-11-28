@@ -9,8 +9,8 @@ import {
   Calendar,
   Package
 } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import '../../styles/mindgarden-design-system.css';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import '../../styles/unified-design-tokens.css';
 import './ClientPaymentSessionsSection.css';
 
 /**
@@ -152,7 +152,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
   if (isLoading) {
     return (
       <div className="payment-sessions-section">
-        <UnifiedLoading text="결제 정보를 불러오는 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }

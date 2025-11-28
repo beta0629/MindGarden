@@ -18,7 +18,7 @@ const MobileUISample = () => {
       title: '프로필 설정',
       subtitle: '개인정보 관리',
       icon: '👤',
-      color: '#007aff',
+      color: 'var(--mg-primary-500)',
       description: '사용자 프로필과 개인정보를 관리합니다.',
       features: ['프로필 사진', '이름 변경', '연락처 정보', '보안 설정']
     },
@@ -27,7 +27,7 @@ const MobileUISample = () => {
       title: '알림 설정',
       subtitle: '푸시 알림 관리',
       icon: '🔔',
-      color: '#ff9500',
+      color: 'var(--mg-warning-500)',
       description: '앱 알림과 푸시 메시지를 설정합니다.',
       features: ['푸시 알림', '이메일 알림', 'SMS 알림', '알림 시간']
     },
@@ -36,7 +36,7 @@ const MobileUISample = () => {
       title: '테마 설정',
       subtitle: '화면 테마 변경',
       icon: '🎨',
-      color: '#34c759',
+      color: 'var(--mg-success-500)',
       description: '앱의 색상과 테마를 변경합니다.',
       features: ['다크 모드', '라이트 모드', '커스텀 색상', '폰트 크기']
     },
@@ -45,7 +45,7 @@ const MobileUISample = () => {
       title: '데이터 관리',
       subtitle: '백업 및 복원',
       icon: '💾',
-      color: '#5856d6',
+      color: 'var(--mg-purple-500)',
       description: '데이터 백업과 복원을 관리합니다.',
       features: ['자동 백업', '수동 백업', '데이터 복원', '클라우드 동기화']
     }
@@ -171,7 +171,7 @@ const MobileUISample = () => {
                   background: currentMood === mood ? 'var(--mood-accent)' : 'rgba(142, 142, 147, 0.12)',
                   color: currentMood === mood ? 'white' : 'var(--mood-accent)',
                   transform: currentMood === mood ? 'scale(1.05)' : 'scale(1)',
-                  boxShadow: currentMood === mood ? 'var(--mood-shadow)' : '0 2px 4px rgba(0, 0, 0, 0.1)'
+                  boxShadow: currentMood === mood ? 'var(--mood-shadow)' : '0 2px 4px var(--mg-shadow-light)'
                 }}
                 onMouseEnter={(e) => {
                   if (currentMood !== mood) {
@@ -182,7 +182,7 @@ const MobileUISample = () => {
                 onMouseLeave={(e) => {
                   if (currentMood !== mood) {
                     e.target.style.transform = 'scale(1)';
-                    e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                    e.target.style.boxShadow = '0 2px 4px var(--mg-shadow-light)';
                   }
                 }}
               >
@@ -211,7 +211,7 @@ const MobileUISample = () => {
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 animation: `slideInLeft 0.6s ease-out ${0.6 + index * 0.1}s both`,
                 transform: selectedCard === card.id ? 'scale(1.02)' : 'scale(1)',
-                boxShadow: selectedCard === card.id ? '0 12px 40px rgba(0, 0, 0, 0.15)' : 'var(--mood-shadow)'
+                boxShadow: selectedCard === card.id ? '0 12px 40px var(--mg-shadow-medium)' : 'var(--mood-shadow)'
               }}
               onClick={() => setSelectedCard(selectedCard === card.id ? null : card.id)}
               onMouseEnter={(e) => {
@@ -393,7 +393,7 @@ const MobileUISample = () => {
                   animation: `bounceIn 0.4s ease-out ${1.5 + index * 0.1}s both`,
                   background: button.type === 'primary' ? 'var(--mood-accent)' :
                              button.type === 'secondary' ? 'rgba(142, 142, 147, 0.12)' :
-                             button.type === 'destructive' ? '#ff3b30' : 'transparent',
+                             button.type === 'destructive' ? 'var(--mg-error-500)' : 'transparent',
                   color: button.type === 'primary' ? 'white' :
                          button.type === 'secondary' ? 'var(--mood-accent)' :
                          button.type === 'destructive' ? 'white' : 'var(--mood-accent)',

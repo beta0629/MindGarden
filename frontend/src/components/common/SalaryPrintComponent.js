@@ -45,7 +45,7 @@ const SalaryPrintComponent = ({
             textAlign: 'center',
             marginBottom: '30px',
             padding: '20px',
-            backgroundColor: '#f8f9fa',
+            backgroundColor: 'var(--mg-gray-100)',
             border: '2px solid #333'
           },
           '.salary-info': {
@@ -74,7 +74,7 @@ const SalaryPrintComponent = ({
           '.salary-table td.label': {
             textAlign: 'left',
             fontWeight: 'bold',
-            backgroundColor: '#f8f9fa'
+            backgroundColor: 'var(--mg-gray-100)'
           },
           '.total-row': {
             backgroundColor: '#e8f5e8',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
@@ -88,10 +88,10 @@ const TaxManagement = () => {
     };
 
     const taxTypes = [
-        { value: 'WITHHOLDING_TAX', label: '원천징수', color: '#007bff' },
-        { value: 'VAT', label: '부가세', color: '#28a745' },
-        { value: 'INCOME_TAX', label: '소득세', color: '#dc3545' },
-        { value: 'ADDITIONAL_TAX', label: '추가세금', color: '#ffc107' }
+        { value: 'WITHHOLDING_TAX', label: '원천징수', color: 'var(--mg-primary-500)' },
+        { value: 'VAT', label: '부가세', color: 'var(--mg-success-500)' },
+        { value: 'INCOME_TAX', label: '소득세', color: 'var(--mg-error-500)' },
+        { value: 'ADDITIONAL_TAX', label: '추가세금', color: 'var(--mg-warning-500)' }
     ];
 
     return (

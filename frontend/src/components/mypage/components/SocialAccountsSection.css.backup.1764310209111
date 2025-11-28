@@ -1,0 +1,122 @@
+/* SocialAccountsSection 컴포넌트 스타일 */
+
+.social-accounts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.social-account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background: #f8f9fa;
+}
+
+.social-account-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.social-provider-icon {
+  font-size: 24px;
+}
+
+.social-account-details h3 {
+  margin: 0 0 5px 0;
+  color: #333;
+}
+
+.social-account-details p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.social-profile-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.social-profile-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.social-account-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.unlink-btn {
+  padding: 8px 16px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.unlink-btn:hover {
+  background: #c82333;
+}
+
+.no-social-accounts {
+  text-align: center;
+  padding: 40px;
+  color: #6c757d;
+}
+
+.link-new-account {
+  margin-top: 20px;
+  padding: 20px;
+  border: 2px dashed #dee2e6;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.link-new-account h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.link-options {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.link-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: transform 0.2s;
+}
+
+.link-btn:hover {
+  transform: translateY(-2px);
+}
+
+.link-btn.kakao {
+  background: #FEE500;
+  color: #000;
+}
+
+.link-btn.naver {
+  background: #03C75A;
+  color: white;
+}

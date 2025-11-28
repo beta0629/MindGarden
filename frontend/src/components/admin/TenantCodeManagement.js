@@ -12,8 +12,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { notificationManager } from '../../utils/notificationManager';
-import SimpleLayout from '../layout/SimpleLayout';
-import MGButton from '../common/MGButton';
+// import SimpleLayout from '../layout/SimpleLayout';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { 
     FaBuilding, 
     FaGlobe, 
@@ -297,13 +297,13 @@ const TenantCodeManagement = () => {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <MGButton
+                        <button className="mg-button"
                             variant="primary"
                             onClick={() => handleOpenModal()}
                             disabled={!permissions.canEdit}
                         >
                             <FaPlus /> {UI_TEXT.ADD_CODE}
-                        </MGButton>
+                        </button>
                     </div>
                 </div>
 
@@ -313,12 +313,12 @@ const TenantCodeManagement = () => {
                             <FaTag size={32} />
                             <p>{UI_TEXT.NO_CODES}</p>
                             {permissions.canEdit && (
-                                <MGButton
+                                <button className="mg-button"
                                     variant="outline"
                                     onClick={() => handleOpenModal()}
                                 >
                                     {UI_TEXT.FIRST_CODE}
-                                </MGButton>
+                                </button>
                             )}
                         </div>
                     ) : (
@@ -495,16 +495,16 @@ const TenantCodeManagement = () => {
                     </div>
                     
                     <div className="modal-footer">
-                        <MGButton variant="outline" onClick={handleCloseModal}>
+                        <button className="mg-button" variant="outline" onClick={handleCloseModal}>
                             {UI_TEXT.BTN_CANCEL}
-                        </MGButton>
-                        <MGButton 
+                        </button>
+                        <button className="mg-button" 
                             variant="primary" 
                             onClick={handleSaveCode}
                             disabled={!formData.codeValue || !formData.codeLabel || !formData.koreanName}
                         >
                             {editingCode ? UI_TEXT.BTN_EDIT : UI_TEXT.BTN_ADD}
-                        </MGButton>
+                        </button>
                     </div>
                 </div>
             </div>

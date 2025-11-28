@@ -1,9 +1,10 @@
 import React, { useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
-import './styles/css-variables.css'; // CSS 상수 시스템
+// import './styles/css-variables.css'; // CSS 상수 시스템 (통합됨)
 import { initializeDynamicThemeSystem } from './utils/designSystemHelper';
 import unifiedLayoutManager from './utils/unifiedLayoutSystem';
+import { useTenantBranding } from './hooks/useTenantBranding';
 import TabletHomepage from './components/homepage/Homepage';
 import TabletLogin from './components/auth/TabletLogin';
 import UnifiedLogin from './components/auth/UnifiedLogin';
@@ -109,6 +110,7 @@ import AdminMessages from './components/admin/AdminMessages';
 import SystemConfigManagement from './components/admin/SystemConfigManagement';
 import BrandingManagementPage from './pages/BrandingManagementPage';
 import CacheMonitoringDashboard from './components/admin/CacheMonitoringDashboard';
+import UnifiedHeader from './components/common/UnifiedHeader';
 import SecurityMonitoringDashboard from './components/admin/SecurityMonitoringDashboard';
 import ApiPerformanceMonitoring from './components/admin/ApiPerformanceMonitoring';
 import OnboardingRequest from './components/onboarding/OnboardingRequest';
@@ -144,6 +146,11 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
 function AppContent() {
   const { user, sessionInfo, isLoading, checkSession, logout, branchMappingModal, setBranchMappingModal, handleBranchMappingSuccess } = useSession();
+  
+  // 테넌트별 브랜딩 시스템 초기화
+  const { hasCustomBranding, companyName, primaryColor } = useTenantBranding({
+    autoApply: true
+  });
   
   // 공개 경로 정의 (인증 없이 접근 가능)
   // eslint-disable-next-line no-unused-vars
@@ -315,9 +322,9 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<TabletHomepage />} />
             <Route path="/landing" element={<CounselingCenterLanding />} />
-            <Route path="/test/modal" element={<UnifiedModalTest />} />
-            <Route path="/test/loading" element={<UnifiedLoadingTest />} />
-            <Route path="/test/header" element={<UnifiedHeaderTest />} />
+            <Route path="/test/modal" element={<div className="mg-modal"Test />} />
+            <Route path="/test/loading" element={<div className="mg-loading">로딩중...</div>} />
+            <Route path="/test/header" element={<UnifiedHeader />} />
             {/* Phase 3: 통합 로그인 시스템 */}
             <Route path="/login" element={<UnifiedLogin />} />
             <Route path="/login/tablet" element={<TabletLogin />} />

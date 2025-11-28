@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { 
     Sparkles, 
     Send, 
@@ -15,10 +15,10 @@ import {
 } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
-import notificationManager from '../../utils/notification';
+// import notificationManager from '../../utils/notification';
 import ConfirmModal from '../common/ConfirmModal';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { sessionManager } from '../../utils/sessionManager';
 import './WellnessManagement.css';
 
@@ -299,7 +299,7 @@ const WellnessManagement = () => {
     if (loading) {
         return (
             <SimpleLayout>
-                <UnifiedLoading message="웰니스 관리 데이터를 불러오는 중..." />
+                <div className="mg-loading">로딩중...</div>
             </SimpleLayout>
         );
     }
@@ -319,7 +319,7 @@ const WellnessManagement = () => {
                                 </div>
                             </div>
                             <div className="mg-v2-header-actions">
-                                <MGButton 
+                                <button className="mg-button" 
                                     variant="outline"
                                     size="small"
                                     onClick={handleExchangeRateRefresh}
@@ -327,8 +327,8 @@ const WellnessManagement = () => {
                                 >
                                     <TrendingUp size={18} className={refreshing ? 'spinning' : ''} />
                                     환율 새로고침
-                                </MGButton>
-                                <MGButton 
+                                </button>
+                                <button className="mg-button" 
                                     variant="outline"
                                     size="small"
                                     onClick={handleRefresh}
@@ -336,8 +336,8 @@ const WellnessManagement = () => {
                                 >
                                     <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
                                     새로고침
-                                </MGButton>
-                                <MGButton 
+                                </button>
+                                <button className="mg-button" 
                                     variant="primary"
                                     size="small"
                                     onClick={handleTestSend}
@@ -345,7 +345,7 @@ const WellnessManagement = () => {
                                 >
                                     <Send size={18} />
                                     {sending ? '발송 중...' : '테스트 발송'}
-                                </MGButton>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -404,16 +404,16 @@ const WellnessManagement = () => {
                 {/* 월 선택 */}
                 <div className="mg-v2-section">
                     <div className="mg-v2-card wellness-month-selector">
-                        <MGButton variant="primary" size="small" onClick={() => handleMonthChange(-1)}>◀
-                        </MGButton>
+                        <button className="mg-button" variant="primary" size="small" onClick={() => handleMonthChange(-1)}>◀
+                        </button>
                         <span className="mg-v2-h2">
                             {selectedMonth.year}년 {selectedMonth.month}월
                         </span>
-                        <MGButton variant="primary" size="small" onClick={() => handleMonthChange(1)} disabled={
+                        <button className="mg-button" variant="primary" size="small" onClick={() => handleMonthChange(1)} disabled={
                                 selectedMonth.year === new Date().getFullYear() &&
                                 selectedMonth.month === new Date().getMonth() + 1
                             }>▶
-                        </MGButton>
+                        </button>
                     </div>
                 </div>
 

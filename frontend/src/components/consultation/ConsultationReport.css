@@ -1,7 +1,7 @@
 /* 상담 리포트 페이지 스타일 */
 .consultation-report-page {
   min-height: 100vh;
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
 }
 
 .page-header {
@@ -28,8 +28,8 @@
   height: 40px;
   border: none;
   border-radius: 8px;
-  background: #f8f9fa;
-  color: #6c757d;
+  background: var(--mg-gray-100);
+  color: var(--mg-secondary-500);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -48,7 +48,7 @@
 
 .header-text p {
   margin: 0.25rem 0 0 0;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
   font-size: 0.9rem;
 }
 
@@ -98,7 +98,7 @@
 
 .selector-input:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: var(--mg-primary-500);
   background: white;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
   transform: translateY(-1px);
@@ -122,7 +122,7 @@
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
   border: 1px solid #e9ecef;
   display: flex;
   align-items: center;
@@ -132,14 +132,14 @@
 
 .summary-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px var(--mg-shadow-medium);
 }
 
 .card-icon {
   width: 50px;
   height: 50px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #007bff, #0056b3);
+  background: linear-gradient(135deg, var(--mg-primary-500), #0056b3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,7 +155,7 @@
   margin: 0 0 0.5rem 0;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
 }
 
 .card-number {
@@ -176,7 +176,7 @@
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
   border: 1px solid #e9ecef;
 }
 
@@ -201,7 +201,7 @@
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
   gap: 1rem;
   padding: 0.75rem;
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   border-radius: 8px;
   font-weight: 600;
   font-size: 0.9rem;
@@ -219,7 +219,7 @@
 }
 
 .table-row:hover {
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
 }
 
 .table-row span:first-child {
@@ -228,26 +228,26 @@
 }
 
 .table-row .completed {
-  color: #28a745;
+  color: var(--mg-success-500);
   font-weight: 500;
 }
 
 .table-row .confirmed {
-  color: #007bff;
+  color: var(--mg-primary-500);
   font-weight: 500;
 }
 
 .table-row .cancelled {
-  color: #dc3545;
+  color: var(--mg-error-500);
   font-weight: 500;
 }
 
 /* 기간 정보 */
 .period-info {
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   border-radius: 8px;
   padding: 1rem;
-  border-left: 4px solid #007bff;
+  border-left: 4px solid var(--mg-primary-500);
 }
 
 .period-info p {
@@ -261,7 +261,7 @@
 }
 
 .period-info strong {
-  color: #007bff;
+  color: var(--mg-primary-500);
   font-weight: 600;
 }
 
@@ -272,13 +272,13 @@
   padding: 3rem 1rem;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .error-message i,
 .no-data i {
   font-size: 3rem;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
   margin-bottom: 1rem;
   display: block;
 }
@@ -291,7 +291,7 @@
 }
 
 .no-data small {
-  color: #6c757d;
+  color: var(--mg-secondary-500);
   font-size: 0.9rem;
 }
 
@@ -300,7 +300,7 @@
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 6px;
-  background: #007bff;
+  background: var(--mg-primary-500);
   color: white;
   font-size: 0.9rem;
   cursor: pointer;
@@ -355,7 +355,7 @@
   .table-row span:before {
     content: attr(data-label) ': ';
     font-weight: 600;
-    color: #6c757d;
+    color: var(--mg-secondary-500);
   }
   
   .table-header span:before {

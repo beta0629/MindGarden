@@ -1,0 +1,518 @@
+/* 태블릿 전용 로그인 페이지 스타일 - 차분한 디자인 */
+.tablet-login {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  position: relative;
+  margin: 0;
+  font-family: var(--font-family-ios);
+}
+
+.tablet-login-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-xl);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  position: relative;
+  z-index: var(--z-index-modal);
+  margin: 0 auto;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+/* 로그인 헤더 */
+.tablet-login-header {
+  text-align: center;
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.tablet-login-title {
+  font-size: 2.2rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+  letter-spacing: -0.025em;
+}
+
+.login-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* 로그인 모드 스위치 */
+.tablet-login-mode-switch {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: var(--spacing-xs);
+  margin-bottom: 32px;
+  border: 1px solid #e2e8f0;
+}
+
+.tablet-login-mode-button {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.tablet-login-mode-button:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: #475569;
+}
+
+.tablet-login-mode-button-active {
+  background: #ffffff;
+  color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
+.tablet-login-mode-button i {
+  font-size: 1rem;
+}
+
+/* 로그인 폼 */
+.tablet-login-form {
+  margin-bottom: 32px;
+}
+
+.tablet-login-form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.tablet-login-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #374151;
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tablet-login-label i {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.tablet-login-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tablet-login-input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) var(--spacing-xxl);
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #374151;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tablet-login-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.tablet-login-input::placeholder {
+  color: #9ca3af;
+}
+
+.tablet-login-password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tablet-login-password-toggle:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.tablet-login-password-toggle i {
+  font-size: 1rem;
+}
+
+/* 버튼 스타일 */
+.tablet-login-button {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tablet-login-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tablet-login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tablet-login-button-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.tablet-login-button-primary:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.tablet-login-button-secondary {
+  background: #10b981;
+  color: white;
+}
+
+.tablet-login-button-secondary:hover:not(:disabled) {
+  background: #059669;
+}
+
+/* SMS 섹션 */
+.tablet-login-sms-section {
+  margin-bottom: 32px;
+}
+
+.tablet-login-sms-button {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tablet-login-sms-button:hover:not(:disabled) {
+  background: #4b5563;
+  transform: translateY(-1px);
+}
+
+.tablet-login-sms-button:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tablet-login-sms-verification {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tablet-login-verification-input {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 1px;
+  color: #374151;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.tablet-login-verification-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.tablet-login-verification-button {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tablet-login-verification-button:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+/* 구분선 */
+.login-divider {
+  position: relative;
+  text-align: center;
+  margin: var(--spacing-xl) 0;
+}
+
+.login-divider::before {
+  display: none; /* 가로선 제거 */
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.login-divider span {
+  background: #ffffff;
+  padding: 0 16px;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* 소셜 로그인 */
+.social-login-buttons {
+  margin-bottom: 32px;
+}
+
+.social-login-button {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ffffff;
+}
+
+.social-login-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.social-login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.social-login-button.kakao {
+  background: #fef01b;
+  color: #000;
+  border-color: #fef01b;
+}
+
+.social-login-button.kakao:hover:not(:disabled) {
+  background: #f4e800;
+  border-color: #f4e800;
+}
+
+.social-login-button.naver {
+  background: #03c75a;
+  color: white;
+  border-color: #03c75a;
+}
+
+.social-login-button.naver:hover:not(:disabled) {
+  background: #02b351;
+  border-color: #02b351;
+}
+
+.social-login-button i {
+  font-size: 1.1rem;
+}
+
+/* 로그인 푸터 */
+.login-footer {
+  text-align: center;
+}
+
+.login-footer p {
+  color: #6b7280;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  transition: all 0.2s ease;
+  padding: var(--spacing-xs) var(--spacing-xs);
+  border-radius: 4px;
+}
+
+.link-button:hover {
+  color: #2563eb;
+  background: rgba(59, 130, 246, 0.1);
+  text-decoration: none;
+}
+
+.test-button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.test-button:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.test-button:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 로딩 애니메이션 */
+.tablet-login-loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 태블릿 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tablet-login-content {
+    padding: var(--spacing-xxl);
+    max-width: 550px;
+  }
+  
+  .tablet-login-title {
+    font-size: 2.5rem;
+  }
+  
+  .login-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .tablet-login-input {
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) var(--spacing-xxl);
+    font-size: 1.05rem;
+  }
+  
+  .tablet-login-button {
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-size: 1.05rem;
+  }
+  
+  .social-login-button {
+    padding: var(--spacing-md) var(--spacing-md);
+    font-size: 1.05rem;
+  }
+  
+  .tablet-login-mode-button {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 1rem;
+  }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+  .tablet-login {
+    padding: var(--spacing-lg);
+  }
+  
+  .tablet-login-content {
+    padding: var(--spacing-xxl) var(--spacing-xl);
+    border-radius: 12px;
+    max-width: 450px;
+  }
+  
+  .tablet-login-title {
+    font-size: 2rem;
+  }
+  
+  .login-subtitle {
+    font-size: 0.95rem;
+  }
+  
+  .tablet-login-input {
+    padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) var(--spacing-xl);
+    font-size: 0.95rem;
+  }
+  
+  .tablet-login-button {
+    padding: var(--spacing-md) var(--spacing-md);
+    font-size: 0.95rem;
+  }
+  
+  .social-login-button {
+    padding: var(--spacing-sm) var(--spacing-sm);
+    font-size: 0.95rem;
+  }
+  
+  .tablet-login-mode-button {
+    padding: var(--spacing-sm) var(--spacing-sm);
+    font-size: 0.9rem;
+  }
+}

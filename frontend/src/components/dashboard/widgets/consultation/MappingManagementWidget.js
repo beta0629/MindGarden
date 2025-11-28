@@ -11,7 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../../utils/ajax';
-import UnifiedLoading from '../../../common/UnifiedLoading';
+// import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
 import '../Widget.css';
 
 const MappingManagementWidget = ({ widget, user }) => {
@@ -104,7 +104,7 @@ const MappingManagementWidget = ({ widget, user }) => {
   if (loading && mappings.length === 0) {
     return (
       <div className="widget widget-mapping-management">
-        <UnifiedLoading message="로딩 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }

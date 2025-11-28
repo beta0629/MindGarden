@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import UnifiedHeader from '../common/UnifiedHeader';
+// // import UnifiedHeader from "../common/UnifiedHeader"; // 임시 비활성화
+// 임시 비활성화
 import '../../styles/main.css';
 
 const UnifiedHeaderTest = () => {
@@ -13,8 +14,8 @@ const UnifiedHeaderTest = () => {
       <rect width="120" height="40" rx="8" fill="url(#gradient)"/>
       <defs>
         <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+          <stop offset="0%" style="stop-color:var(--mg-primary-500);stop-opacity:1" />
+          <stop offset="100%" style="stop-color:var(--mg-purple-500);stop-opacity:1" />
         </linearGradient>
       </defs>
       <text x="60" y="25" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">

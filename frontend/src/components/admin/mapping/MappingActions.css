@@ -104,12 +104,12 @@
     transform: translateY(-1px);
 }
 
-.mapping-actions .btn-secondary {
+.mapping-actions .mg-btn--secondary {
     background-color: var(--color-secondary);
     color: white;
 }
 
-.mapping-actions .btn-secondary:hover {
+.mapping-actions .mg-btn--secondary:hover {
     background-color: #5a6268;
     transform: translateY(-1px);
 }

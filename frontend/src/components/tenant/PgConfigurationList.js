@@ -19,9 +19,9 @@ import {
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+// // import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationList.css';
 
 /**
@@ -183,7 +183,7 @@ const PgConfigurationList = () => {
   if (sessionLoading || loading && configurations.length === 0) {
     return (
       <SimpleLayout>
-        <UnifiedLoading />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }
@@ -222,13 +222,13 @@ const PgConfigurationList = () => {
               <p>결제 게이트웨이 설정을 관리합니다.</p>
             </div>
           </div>
-          <MGButton
+          <button className="mg-button"
             variant="primary"
             onClick={() => navigate(`/tenant/pg-configurations/new`)}
           >
             <Plus size={18} />
             PG 설정 등록
-          </MGButton>
+          </button>
         </div>
         
         {/* 필터 및 검색 */}
@@ -272,14 +272,14 @@ const PgConfigurationList = () => {
               <option value="REJECTED">거부됨</option>
             </select>
             
-            <MGButton
+            <button className="mg-button"
               variant="secondary"
               size="small"
               onClick={loadConfigurations}
             >
               <RefreshCw size={16} />
               새로고침
-            </MGButton>
+            </button>
           </div>
         </div>
         
@@ -297,13 +297,13 @@ const PgConfigurationList = () => {
             <CreditCard size={48} />
             <h3>PG 설정이 없습니다</h3>
             <p>새로운 PG 설정을 등록해주세요.</p>
-            <MGButton
+            <button className="mg-button"
               variant="primary"
               onClick={() => navigate(`/tenant/pg-configurations/new`)}
             >
               <Plus size={18} />
               PG 설정 등록
-            </MGButton>
+            </button>
           </div>
         ) : (
           <div className="pg-config-cards">
@@ -366,17 +366,17 @@ const PgConfigurationList = () => {
                 
                 <div className="card-footer">
                   <div className="card-actions">
-                    <MGButton
+                    <button className="mg-button"
                       variant="secondary"
                       size="small"
                       onClick={() => navigate(`/tenant/pg-configurations/${config.configId}`)}
                     >
                       <Eye size={16} />
                       상세보기
-                    </MGButton>
+                    </button>
                     
                     {config.status === 'APPROVED' && (
-                      <MGButton
+                      <button className="mg-button"
                         variant="secondary"
                         size="small"
                         onClick={() => handleTestConnection(config.configId)}
@@ -385,20 +385,20 @@ const PgConfigurationList = () => {
                       >
                         <RefreshCw size={16} />
                         연결 테스트
-                      </MGButton>
+                      </button>
                     )}
                     
                     {config.approvalStatus === 'PENDING' && (
                       <>
-                        <MGButton
+                        <button className="mg-button"
                           variant="secondary"
                           size="small"
                           onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
                         >
                           <Edit size={16} />
                           수정
-                        </MGButton>
-                        <MGButton
+                        </button>
+                        <button className="mg-button"
                           variant="danger"
                           size="small"
                           onClick={() => {
@@ -408,7 +408,7 @@ const PgConfigurationList = () => {
                         >
                           <Trash2 size={16} />
                           삭제
-                        </MGButton>
+                        </button>
                       </>
                     )}
                   </div>
@@ -455,19 +455,19 @@ const PgConfigurationList = () => {
                 </p>
               </div>
               <div className="modal-footer">
-                <MGButton
+                <button className="mg-button"
                   variant="secondary"
                   onClick={() => setShowDeleteModal(false)}
                 >
                   취소
-                </MGButton>
-                <MGButton
+                </button>
+                <button className="mg-button"
                   variant="danger"
                   onClick={handleDelete}
                   disabled={loading}
                 >
                   삭제
-                </MGButton>
+                </button>
               </div>
             </div>
           </div>

@@ -7,9 +7,9 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import ReactDOM from 'react-dom';
-import MGButton from '../common/MGButton';
-import UnifiedLoading from '../common/UnifiedLoading';
+// // import ReactDOM from 'react-dom';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -1109,7 +1109,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
         <div className="dashboard-form-modal-body">
           {loadingRoles ? (
             <div className="loading-container">
-              <UnifiedLoading message="역할 목록을 불러오는 중..." />
+              <div className="mg-loading">로딩중...</div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="dashboard-form">
@@ -1392,15 +1392,15 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
               {/* 액션 버튼 */}
               <div className="dashboard-form-modal-actions">
-                <MGButton
+                <button className="mg-button"
                   type="button"
                   variant="secondary"
                   onClick={onClose}
                   disabled={loading}
                 >
                   취소
-                </MGButton>
-                <MGButton
+                </button>
+                <button className="mg-button"
                   type="button"
                   variant="primary"
                   disabled={loading}
@@ -1424,7 +1424,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   }}
                 >
                   {loading ? '저장 중...' : (isEditMode ? '수정' : '생성')}
-                </MGButton>
+                </button>
               </div>
             </form>
           )}
@@ -1471,7 +1471,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
             <div className="dashboard-form-modal-body">
               {loadingTemplates ? (
                 <div className="loading-container">
-                  <UnifiedLoading message="템플릿 목록을 불러오는 중..." />
+                  <div className="mg-loading">로딩중...</div>
                 </div>
               ) : (
                 <>
@@ -1565,7 +1565,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
               )}
 
               <div className="dashboard-form-modal-actions mg-add-role-modal-actions">
-                <MGButton
+                <button className="mg-button"
                   type="button"
                   variant="secondary"
                   onClick={() => {
@@ -1578,15 +1578,15 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                   disabled={loading}
                 >
                   취소
-                </MGButton>
-                <MGButton
+                </button>
+                <button className="mg-button"
                   type="button"
                   variant="primary"
                   onClick={handleAddRole}
                   disabled={loading || !selectedTemplateId || !newRoleName || loadingTemplates}
                 >
                   {loading ? '추가 중...' : '역할 추가'}
-                </MGButton>
+                </button>
               </div>
             </div>
           </div>

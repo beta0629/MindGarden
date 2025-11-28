@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import CommonPageTemplate from '../common/CommonPageTemplate';
-import UnifiedHeader from '../common/UnifiedHeader';
+// import CommonPageTemplate from '../common/CommonPageTemplate';
+import UnifiedHeader from "../common/UnifiedHeader";
+// 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -308,7 +309,7 @@ const ResetPassword = () => {
                       fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: 'white',
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%)',
                       textDecoration: 'none',
                       textAlign: 'center',
                       borderRadius: '12px',

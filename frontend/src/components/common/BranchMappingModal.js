@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Building, XCircle, MapPin, Check } from 'lucide-react';
-import UnifiedLoading from './UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { API_ENDPOINTS } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import { apiPost } from '../../utils/ajax';
@@ -161,7 +161,7 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
               </label>
               {isLoadingBranches ? (
                 <div className="mg-v2-loading-overlay">
-                  <UnifiedLoading variant="dots" size="small" text="지점 목록을 불러오는 중..." type="inline" />
+                  <div className="mg-loading">로딩중...</div>
                 </div>
               ) : (
                 <select
@@ -203,7 +203,7 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
                 className="mg-v2-button mg-v2-button--primary"
                 disabled={isLoading || !selectedBranchCode || isLoadingBranches}
               >
-                {isLoading ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                {isLoading ? <div className="mg-loading">로딩중...</div> : (
                   <>
                     <Check size={20} className="mg-v2-icon-inline" />
                     지점 매핑

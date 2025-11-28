@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { 
     Container, Row, Col, Card, Button, Badge, 
     InputGroup, FormControl, FormSelect, Alert
@@ -197,7 +197,7 @@ const BranchList = ({
                 <Card.Body className="p-0">
                     {loading ? (
                         <div className="text-center py-5">
-                            <UnifiedLoading text="지점 목록을 불러오는 중..." size="medium" type="inline" />
+                            <div className="mg-loading">로딩중...</div>
                         </div>
                     ) : filteredBranches.length === 0 ? (
                         <div className="text-center py-5">

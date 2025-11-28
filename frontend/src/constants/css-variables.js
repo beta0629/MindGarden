@@ -11,52 +11,52 @@ export const CSS_VARIABLES = {
   // 색상 시스템 (동적 처리로 변경됨)
   COLORS: {
     // Primary Colors (fallback)
-    PRIMARY: '#667eea',
+    PRIMARY: 'var(--mg-primary-500)',
     PRIMARY_DARK: '#764ba2',
-    PRIMARY_GRADIENT: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    PRIMARY_GRADIENT: 'linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%)',
     
     // Secondary Colors (fallback)
-    SECONDARY: '#6c757d',
+    SECONDARY: 'var(--mg-secondary-500)',
     SECONDARY_LIGHT: '#e9ecef',
     
     // Success Colors (fallback)
-    SUCCESS: '#00b894',
+    SUCCESS: 'var(--mg-success-500)',
     SUCCESS_LIGHT: '#d4edda',
     SUCCESS_DARK: '#00a085',
     SUCCESS_GRADIENT: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
     
     // Danger Colors (fallback)
-    DANGER: '#ff6b6b',
+    DANGER: 'var(--mg-error-500)',
     DANGER_LIGHT: '#f8d7da',
     DANGER_DARK: '#ee5a24',
-    DANGER_GRADIENT: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
+    DANGER_GRADIENT: 'linear-gradient(135deg, var(--mg-error-500) 0%, #ee5a24 100%)',
     
     // Info Colors (fallback)
-    INFO: '#74b9ff',
+    INFO: 'var(--mg-info-500)',
     INFO_LIGHT: '#d1ecf1',
     INFO_DARK: '#0984e3',
     INFO_GRADIENT: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
     
     // Warning Colors (fallback)
-    WARNING: '#f093fb',
+    WARNING: 'var(--mg-warning-500)',
     WARNING_LIGHT: '#fff3cd',
     WARNING_DARK: '#f5576c',
-    WARNING_GRADIENT: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    WARNING_GRADIENT: 'linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%)',
     
     // Consultant Colors (fallback)
-    CONSULTANT: '#a29bfe',
-    CONSULTANT_DARK: '#6c5ce7',
-    CONSULTANT_GRADIENT: 'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)',
+    CONSULTANT: 'var(--mg-consultant-primary)',
+    CONSULTANT_DARK: 'var(--mg-consultant-dark)',
+    CONSULTANT_GRADIENT: 'linear-gradient(135deg, var(--mg-consultant-primary) 0%, var(--mg-consultant-dark) 100%)',
     
     // Client Colors (fallback)
-    CLIENT: '#00b894',
+    CLIENT: 'var(--mg-success-500)',
     CLIENT_DARK: '#00a085',
-    CLIENT_GRADIENT: 'linear-gradient(135deg, #00b894 0%, #00a085 100%)',
+    CLIENT_GRADIENT: 'linear-gradient(135deg, var(--mg-success-500) 0%, #00a085 100%)',
     
     // Finance Colors (fallback)
-    FINANCE: '#f39c12',
-    FINANCE_DARK: '#e67e22',
-    FINANCE_GRADIENT: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)',
+    FINANCE: 'var(--mg-finance-primary)',
+    FINANCE_DARK: 'var(--mg-finance-dark)',
+    FINANCE_GRADIENT: 'linear-gradient(135deg, var(--mg-finance-primary) 0%, var(--mg-finance-dark) 100%)',
     
     // Revenue Colors
     REVENUE: '#27ae60',
@@ -84,15 +84,15 @@ export const CSS_VARIABLES = {
     SETTINGS_GRADIENT: 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)',
     
     // Neutral Colors
-    WHITE: '#ffffff',
+    WHITE: 'var(--mg-white)',
     BLACK: '#2c3e50',
-    GRAY_LIGHT: '#f8f9fa',
-    GRAY_MEDIUM: '#6c757d',
+    GRAY_LIGHT: 'var(--mg-gray-100)',
+    GRAY_MEDIUM: 'var(--mg-secondary-500)',
     GRAY_DARK: '#495057',
     BORDER: '#e9ecef',
     TEXT_PRIMARY: '#2c3e50',
-    TEXT_SECONDARY: '#6c757d',
-    TEXT_MUTED: '#6c757d'
+    TEXT_SECONDARY: 'var(--mg-secondary-500)',
+    TEXT_MUTED: 'var(--mg-secondary-500)'
   },
   
   // 간격 시스템
@@ -140,11 +140,11 @@ export const CSS_VARIABLES = {
   
   // 그림자
   SHADOWS: {
-    SM: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    MD: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    SM: '0 2px 4px var(--mg-shadow-light)',
+    MD: '0 4px 12px var(--mg-shadow-light)',
     LG: '0 4px 20px rgba(0, 0, 0, 0.08)',
     XL: '0 8px 30px rgba(0, 0, 0, 0.12)',
-    XXL: '0 8px 32px rgba(0, 0, 0, 0.15)',
+    XXL: '0 8px 32px var(--mg-shadow-medium)',
     MODAL: '0 10px 30px rgba(0, 0, 0, 0.2)'
   },
   
@@ -318,14 +318,14 @@ export const ICONS = {
 
 // 그라데이션 상수
 export const GRADIENTS = {
-  PRIMARY: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  PRIMARY: 'linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%)',
   SUCCESS: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-  DANGER: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
+  DANGER: 'linear-gradient(135deg, var(--mg-error-500) 0%, #ee5a24 100%)',
   INFO: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  WARNING: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-  CONSULTANT: 'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)',
-  CLIENT: 'linear-gradient(135deg, #00b894 0%, #00a085 100%)',
-  FINANCE: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)',
+  WARNING: 'linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%)',
+  CONSULTANT: 'linear-gradient(135deg, var(--mg-consultant-primary) 0%, var(--mg-consultant-dark) 100%)',
+  CLIENT: 'linear-gradient(135deg, var(--mg-success-500) 0%, #00a085 100%)',
+  FINANCE: 'linear-gradient(135deg, var(--mg-finance-primary) 0%, var(--mg-finance-dark) 100%)',
   REVENUE: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
   EXPENSE: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
   PAYMENT: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
@@ -350,11 +350,11 @@ export const SCHEDULE_MODAL_CONSTANTS = {
   ANIMATION_EASING: 'ease',
   
   // 색상
-  PRIMARY_COLOR: '#667eea',
-  SUCCESS_COLOR: '#28a745',
-  WARNING_COLOR: '#ffc107',
-  DANGER_COLOR: '#dc3545',
-  INFO_COLOR: '#17a2b8',
+  PRIMARY_COLOR: 'var(--mg-primary-500)',
+  SUCCESS_COLOR: 'var(--mg-success-500)',
+  WARNING_COLOR: 'var(--mg-warning-500)',
+  DANGER_COLOR: 'var(--mg-error-500)',
+  INFO_COLOR: 'var(--mg-info-500)',
   
   // 가용성 상태
   AVAILABILITY: {
@@ -379,10 +379,10 @@ export const SCHEDULE_MODAL_CONSTANTS = {
   
   // 가용성 필터 옵션
   AVAILABILITY_OPTIONS: [
-    { value: 'all', label: '전체', color: '#6c757d' },
-    { value: 'available', label: '여유', color: '#28a745' },
-    { value: 'busy', label: '바쁨', color: '#ffc107' },
-    { value: 'unavailable', label: '휴무', color: '#dc3545' }
+    { value: 'all', label: '전체', color: 'var(--mg-secondary-500)' },
+    { value: 'available', label: '여유', color: 'var(--mg-success-500)' },
+    { value: 'busy', label: '바쁨', color: 'var(--mg-warning-500)' },
+    { value: 'unavailable', label: '휴무', color: 'var(--mg-error-500)' }
   ],
   
   // 상담사 카드 설정
@@ -460,12 +460,12 @@ export const TABLET_LOGIN_CONSTANTS = {
       KAKAO: {
         TEXT: '카카오로 로그인',
         COLOR: '#FEE500',
-        TEXT_COLOR: '#000000'
+        TEXT_COLOR: 'var(--mg-black)'
       },
       NAVER: {
         TEXT: '네이버로 로그인',
         COLOR: '#03C75A',
-        TEXT_COLOR: '#FFFFFF'
+        TEXT_COLOR: 'var(--mg-white)'
       }
     }
   },
@@ -508,12 +508,12 @@ export const FINANCE_DASHBOARD_CONSTANTS = {
   // 차트 설정
   CHART: {
     COLORS: {
-      REVENUE: '#28a745',
-      EXPENSE: '#dc3545',
-      PROFIT: '#007bff',
-      PENDING: '#ffc107',
-      COMPLETED: '#28a745',
-      FAILED: '#dc3545'
+      REVENUE: 'var(--mg-success-500)',
+      EXPENSE: 'var(--mg-error-500)',
+      PROFIT: 'var(--mg-primary-500)',
+      PENDING: 'var(--mg-warning-500)',
+      COMPLETED: 'var(--mg-success-500)',
+      FAILED: 'var(--mg-error-500)'
     },
     MONTHS: [
       '1월', '2월', '3월', '4월', '5월', '6월',

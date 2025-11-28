@@ -1,6 +1,6 @@
-import React from 'react';
-import MGButton from '../../common/MGButton';
-import UnifiedModal from '../../common/modals/UnifiedModal';
+// // import React from 'react';
+import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
+import UnifiedModal from '../../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { FaTimes } from 'react-icons/fa';
 
 /**
@@ -203,7 +203,7 @@ const ClientModal = ({
     };
 
     return (
-        <UnifiedModal
+        <div className="mg-modal"
             isOpen={true}
             onClose={onClose}
             title={getTitle()}
@@ -212,20 +212,20 @@ const ClientModal = ({
             {type === 'delete' ? renderDeleteContent() : renderFormContent()}
             
             <div className="mg-modal__actions">
-                <MGButton
+                <button className="mg-button"
                     variant="outline"
                     onClick={onClose}
                 >
                     취소
-                </MGButton>
-                <MGButton
+                </button>
+                <button className="mg-button"
                     variant={type === 'delete' ? 'danger' : 'primary'}
                     onClick={type === 'delete' ? () => onSave(formData) : handleSubmit}
                 >
                     {getSubmitText()}
-                </MGButton>
+                </button>
             </div>
-        </UnifiedModal>
+        </div>
     );
 };
 

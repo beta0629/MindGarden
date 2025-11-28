@@ -1,0 +1,106 @@
+.consolidated-financial {
+    padding: 1rem 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.consolidated-financial .card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #e3e6f0;
+}
+
+.consolidated-financial .card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.consolidated-financial .category-item {
+    background-color: #f8f9fc;
+    transition: transform 0.2s ease;
+}
+
+.consolidated-financial .category-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.consolidated-financial .progress {
+    background-color: #e9ecef;
+}
+
+.consolidated-financial .progress-bar {
+    background-color: #007bff;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .consolidated-financial {
+        padding: 0.5rem 0;
+    }
+    
+    .consolidated-financial .card {
+        margin-bottom: 1rem;
+    }
+    
+    .consolidated-financial .row {
+        margin: 0;
+    }
+    
+    .consolidated-financial .col-md-3,
+    .consolidated-financial .col-md-6 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .consolidated-financial h2 {
+        font-size: 1.5rem;
+    }
+    
+    .consolidated-financial h3 {
+        font-size: 1.25rem;
+    }
+}
+
+/* 테이블 스타일 */
+.consolidated-financial .table {
+    font-size: 0.9rem;
+}
+
+.consolidated-financial .table th {
+    background-color: #f8f9fc;
+    border-color: #e3e6f0;
+    font-weight: 600;
+}
+
+.consolidated-financial .table td {
+    border-color: #e3e6f0;
+    vertical-align: middle;
+}
+
+/* 차트 컨테이너 */
+.consolidated-financial .chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+/* 알림 스타일 */
+.consolidated-financial .alert {
+    border: none;
+    border-radius: 8px;
+}
+
+/* 버튼 스타일 */
+.consolidated-financial .btn {
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.consolidated-financial .btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.consolidated-financial .btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}

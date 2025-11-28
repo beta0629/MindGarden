@@ -1,0 +1,197 @@
+/* iPhone 17 디자인 시스템 적용 */
+/* 이 파일은 자동으로 마이그레이션되었습니다 */
+
+/* ===== 자동 반응형 래퍼 스타일 ===== */
+
+.auto-responsive-wrapper {
+  width: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== 테이블 타입 자동 변환 ===== */
+.auto-responsive-wrapper--table {
+  /* 데스크톱/태블릿: 테이블 표시 */
+}
+
+.auto-responsive-wrapper--table .auto-responsive-table {
+  display: table;
+  width: 100%;
+}
+
+.auto-responsive-wrapper--table .auto-responsive-cards {
+  display: none;
+}
+
+/* 모바일: 카드로 변환 */
+@media (max-width: 767px) {
+  .auto-responsive-wrapper--table .auto-responsive-table {
+    display: none;
+  }
+  
+  .auto-responsive-wrapper--table .auto-responsive-cards {
+    display: block;
+  }
+  
+  .auto-responsive-wrapper--table .auto-responsive-card {
+    background: var(--mood-card-bg);
+    border-radius: var(--spacing-lg);
+    box-shadow: var(--mood-shadow);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    margin-bottom: var(--border-radius-lg);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .auto-responsive-wrapper--table .auto-responsive-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 var(--border-radius-md) 32px rgba(0, 0, 0, 0.15);
+  }
+  
+  .auto-responsive-wrapper--table .auto-responsive-card-header {
+    padding: var(--spacing-lg);
+    background: rgba(248, 248, 248, 0.8);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .auto-responsive-wrapper--table .auto-responsive-card-body {
+    padding: var(--spacing-lg);
+  }
+  
+  .auto-responsive-wrapper--table .auto-responsive-card-title {
+    font-size: var(--spacing-lg);
+    font-weight: 600;
+    color: var(--mood-text-primary);
+    margin-bottom: 4px;
+  }
+  
+  .auto-responsive-wrapper--table .auto-responsive-card-subtitle {
+    font-size: 14px;
+    color: var(--mood-text-secondary);
+  }
+}
+
+/* ===== 그리드 타입 자동 변환 ===== */
+.auto-responsive-wrapper--grid {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+/* 데스크톱: 4열 */
+.auto-responsive-wrapper--grid.auto-responsive-wrapper--desktop {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* 태블릿: 2열 */
+.auto-responsive-wrapper--grid.auto-responsive-wrapper--tablet {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* 모바일: 1열 */
+.auto-responsive-wrapper--grid.auto-responsive-wrapper--mobile {
+  grid-template-columns: 1fr;
+}
+
+/* ===== 리스트 타입 자동 변환 ===== */
+.auto-responsive-wrapper--list {
+  /* 데스크톱/태블릿: 가로 리스트 */
+}
+
+.auto-responsive-wrapper--list.auto-responsive-wrapper--mobile {
+  /* 모바일: 세로 리스트 */
+}
+
+.auto-responsive-wrapper--list.auto-responsive-wrapper--mobile .list-item {
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--border-radius-lg) 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* ===== 대시보드 타입 자동 변환 ===== */
+.auto-responsive-wrapper--dashboard {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+/* 데스크톱: 복잡한 레이아웃 */
+.auto-responsive-wrapper--dashboard.auto-responsive-wrapper--desktop {
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: auto auto 1fr;
+}
+
+/* 태블릿: 단순한 레이아웃 */
+.auto-responsive-wrapper--dashboard.auto-responsive-wrapper--tablet {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* 모바일: 세로 스택 */
+.auto-responsive-wrapper--dashboard.auto-responsive-wrapper--mobile {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+}
+
+/* ===== 공통 반응형 유틸리티 ===== */
+
+/* 모바일에서 숨김 */
+@media (max-width: 767px) {
+  .auto-responsive-hide-mobile {
+    display: none !important;
+  }
+}
+
+/* 태블릿에서 숨김 */
+@media (min-width: 76var(--border-radius-md)) and (max-width: 10var(--spacing-xl)) {
+  .auto-responsive-hide-tablet {
+    display: none !important;
+  }
+}
+
+/* 데스크톱에서 숨김 */
+@media (min-width: 1025px) {
+  .auto-responsive-hide-desktop {
+    display: none !important;
+  }
+}
+
+/* 모바일에서만 표시 */
+@media (max-width: 767px) {
+  .auto-responsive-show-mobile {
+    display: block !important;
+  }
+}
+
+/* 태블릿에서만 표시 */
+@media (min-width: 76var(--border-radius-md)) and (max-width: 10var(--spacing-xl)) {
+  .auto-responsive-show-tablet {
+    display: block !important;
+  }
+}
+
+/* 데스크톱에서만 표시 */
+@media (min-width: 1025px) {
+  .auto-responsive-show-desktop {
+    display: block !important;
+  }
+}
+
+/* ===== 애니메이션 ===== */
+.auto-responsive-wrapper * {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== 터치 디바이스 최적화 ===== */
+@media (hover: none) and (pointer: coarse) {
+  .auto-responsive-wrapper .auto-responsive-card:hover {
+    transform: none;
+    box-shadow: var(--mood-shadow);
+  }
+  
+  .auto-responsive-wrapper .auto-responsive-card:active {
+    transform: scale(0.98);
+  }
+}
+

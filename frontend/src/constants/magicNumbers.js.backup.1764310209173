@@ -1,0 +1,332 @@
+/**
+ * MindGarden Magic Numbers 상수 정의
+ * 하드코딩된 숫자들을 의미있는 상수로 변환
+ */
+
+// 시간 관련 상수 (밀리초)
+export const TIME_CONSTANTS = {
+  // 기본 시간 단위
+  SECOND: 1000,
+  MINUTE: 60 * 1000,
+  HOUR: 60 * 60 * 1000,
+  DAY: 24 * 60 * 60 * 1000,
+  WEEK: 7 * 24 * 60 * 60 * 1000,
+  MONTH: 30 * 24 * 60 * 60 * 1000,
+  YEAR: 365 * 24 * 60 * 60 * 1000,
+  
+  // 특정 시간 간격
+  LOGIN_CHECK_DELAY: 5000,
+  PERIODIC_CHECK_INTERVAL: 30000,
+  SESSION_TIMEOUT: 30 * 60 * 1000, // 30분
+  AUTO_SAVE_INTERVAL: 2000,
+  DEBOUNCE_DELAY: 300,
+  THROTTLE_DELAY: 100,
+  
+  // 알림 관련
+  NOTIFICATION_DURATION: 5000,
+  ERROR_NOTIFICATION_DURATION: 8000,
+  SUCCESS_NOTIFICATION_DURATION: 3000,
+  WARNING_NOTIFICATION_DURATION: 6000,
+  
+  // 애니메이션 관련
+  TRANSITION_DURATION: 300,
+  FADE_DURATION: 200,
+  SLIDE_DURATION: 400,
+  
+  // 폴링 간격
+  POLLING_INTERVAL: 10000,
+  QUICK_POLLING_INTERVAL: 2000,
+  LONG_POLLING_INTERVAL: 60000,
+};
+
+// HTTP 상태 코드
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  UNPROCESSABLE_ENTITY: 422,
+  INTERNAL_SERVER_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
+};
+
+// UI 관련 상수
+export const UI_CONSTANTS = {
+  // 크기 관련
+  MIN_TOUCH_TARGET_SIZE: 44, // 44px
+  MAX_MOBILE_WIDTH: 768,
+  MAX_TABLET_WIDTH: 1024,
+  MAX_DESKTOP_WIDTH: 1920,
+  
+  // 그리드 관련
+  GRID_COLUMNS_MOBILE: 1,
+  GRID_COLUMNS_TABLET: 2,
+  GRID_COLUMNS_DESKTOP: 3,
+  GRID_COLUMNS_LARGE: 4,
+  
+  // 스크롤 관련
+  SCROLL_THRESHOLD: 100,
+  INFINITE_SCROLL_THRESHOLD: 200,
+  
+  // 모달 관련
+  MODAL_Z_INDEX: 1000,
+  TOOLTIP_Z_INDEX: 1100,
+  DROPDOWN_Z_INDEX: 1200,
+  
+  // 애니메이션 관련
+  BOUNCE_DURATION: 300,
+  EASE_IN_OUT: 'cubic-bezier(0.4, 0, 0.2, 1)',
+  EASE_OUT: 'cubic-bezier(0, 0, 0.2, 1)',
+  EASE_IN: 'cubic-bezier(0.4, 0, 1, 1)',
+};
+
+// 비즈니스 로직 관련 상수
+export const BUSINESS_CONSTANTS = {
+  // 사용자 등급
+  USER_GRADE_BRONZE: 1,
+  USER_GRADE_SILVER: 2,
+  USER_GRADE_GOLD: 3,
+  USER_GRADE_PLATINUM: 4,
+  USER_GRADE_DIAMOND: 5,
+  
+  // 상담 관련
+  MAX_CONSULTATION_DURATION: 120, // 분
+  MIN_CONSULTATION_DURATION: 30, // 분
+  DEFAULT_CONSULTATION_DURATION: 60, // 분
+  
+  // 결제 관련
+  MIN_PAYMENT_AMOUNT: 1000, // 1,000원
+  MAX_PAYMENT_AMOUNT: 1000000, // 1,000,000원
+  PAYMENT_TIMEOUT: 10, // 10분
+  
+  // 파일 업로드 관련
+  MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
+  MAX_IMAGE_SIZE: 5 * 1024 * 1024, // 5MB
+  ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+  
+  // 검색 관련
+  MIN_SEARCH_LENGTH: 2,
+  MAX_SEARCH_RESULTS: 50,
+  SEARCH_DEBOUNCE_DELAY: 300,
+  
+  // 페이지네이션 관련
+  DEFAULT_PAGE_SIZE: 10,
+  PAGE_SIZE_OPTIONS: [10, 20, 50, 100],
+  MAX_PAGE_SIZE: 100,
+};
+
+// 수학 관련 상수
+export const MATH_CONSTANTS = {
+  // 기본 수학 상수
+  PI: Math.PI,
+  E: Math.E,
+  
+  // 백분율 관련
+  PERCENTAGE_MULTIPLIER: 100,
+  DECIMAL_PLACES: 2,
+  
+  // 통계 관련
+  CONFIDENCE_LEVEL_95: 0.95,
+  CONFIDENCE_LEVEL_99: 0.99,
+  
+  // 평점 관련
+  MIN_RATING: 1,
+  MAX_RATING: 5,
+  DEFAULT_RATING: 0,
+  
+  // 할인 관련
+  MAX_DISCOUNT_PERCENTAGE: 100,
+  MIN_DISCOUNT_PERCENTAGE: 0,
+};
+
+// 데이터베이스 관련 상수
+export const DATABASE_CONSTANTS = {
+  // 페이지네이션
+  DEFAULT_LIMIT: 20,
+  MAX_LIMIT: 1000,
+  
+  // 쿼리 관련
+  MAX_QUERY_LENGTH: 1000,
+  MAX_BATCH_SIZE: 100,
+  
+  // 캐시 관련
+  CACHE_TTL: 5 * 60 * 1000, // 5분
+  LONG_CACHE_TTL: 30 * 60 * 1000, // 30분
+  SHORT_CACHE_TTL: 1 * 60 * 1000, // 1분
+};
+
+// 보안 관련 상수
+export const SECURITY_CONSTANTS = {
+  // 비밀번호 관련
+  MIN_PASSWORD_LENGTH: 8,
+  MAX_PASSWORD_LENGTH: 128,
+  PASSWORD_COMPLEXITY_REQUIRED: true,
+  
+  // 토큰 관련
+  ACCESS_TOKEN_EXPIRY: 30 * 60 * 1000, // 30분
+  REFRESH_TOKEN_EXPIRY: 7 * 24 * 60 * 60 * 1000, // 7일
+  
+  // 로그인 시도 관련
+  MAX_LOGIN_ATTEMPTS: 5,
+  LOCKOUT_DURATION: 30 * 60 * 1000, // 30분
+  
+  // 세션 관련
+  SESSION_TIMEOUT: 60 * 60 * 1000, // 60분
+  SESSION_EXTENSION_TIME: 5 * 60 * 1000, // 5분
+};
+
+// API 관련 상수
+export const API_CONSTANTS = {
+  // 타임아웃
+  REQUEST_TIMEOUT: 30 * 1000, // 30초
+  UPLOAD_TIMEOUT: 5 * 60 * 1000, // 5분
+  
+  // 재시도 관련
+  MAX_RETRY_ATTEMPTS: 3,
+  RETRY_DELAY: 1000,
+  EXPONENTIAL_BACKOFF_MULTIPLIER: 2,
+  
+  // 배치 처리
+  BATCH_SIZE: 100,
+  MAX_BATCH_SIZE: 1000,
+  
+  // 캐시 관련
+  CACHE_DURATION: 5 * 60 * 1000, // 5분
+  STALE_WHILE_REVALIDATE: 1 * 60 * 1000, // 1분
+};
+
+// 폼 관련 상수
+export const FORM_CONSTANTS = {
+  // 입력 길이
+  MIN_INPUT_LENGTH: 1,
+  MAX_INPUT_LENGTH: 255,
+  MAX_TEXTAREA_LENGTH: 2000,
+  MAX_COMMENT_LENGTH: 500,
+  
+  // 유효성 검사
+  EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  PHONE_REGEX: /^[0-9-+\s()]+$/,
+  URL_REGEX: /^https?:\/\/.+/,
+  
+  // 파일 업로드
+  MAX_FILES_PER_UPLOAD: 10,
+  MAX_FILE_NAME_LENGTH: 255,
+};
+
+// 차트 관련 상수
+export const CHART_CONSTANTS = {
+  // 색상 팔레트
+  PRIMARY_COLORS: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'],
+  SECONDARY_COLORS: ['#6c757d', '#17a2b8', '#fd7e14', '#20c997', '#e83e8c'],
+  
+  // 차트 크기
+  DEFAULT_CHART_HEIGHT: 400,
+  MIN_CHART_HEIGHT: 200,
+  MAX_CHART_HEIGHT: 800,
+  
+  // 애니메이션
+  ANIMATION_DURATION: 1000,
+  ANIMATION_DELAY: 100,
+  
+  // 데이터 포인트
+  MAX_DATA_POINTS: 1000,
+  DEFAULT_DATA_POINTS: 50,
+};
+
+// 알림 관련 상수
+export const NOTIFICATION_CONSTANTS = {
+  // 우선순위
+  PRIORITY_LOW: 1,
+  PRIORITY_MEDIUM: 2,
+  PRIORITY_HIGH: 3,
+  PRIORITY_URGENT: 4,
+  
+  // 타입
+  TYPE_INFO: 'info',
+  TYPE_SUCCESS: 'success',
+  TYPE_WARNING: 'warning',
+  TYPE_ERROR: 'error',
+  
+  // 지속 시간
+  AUTO_DISMISS_DELAY: 5000,
+  STICKY_NOTIFICATION_DELAY: 10000,
+  
+  // 최대 개수
+  MAX_NOTIFICATIONS: 5,
+  MAX_STORED_NOTIFICATIONS: 100,
+};
+
+// 기본값 상수
+export const DEFAULT_VALUES = {
+  // 사용자 관련
+  DEFAULT_AVATAR: '/images/default-avatar.png',
+  DEFAULT_THEME: 'light',
+  DEFAULT_LANGUAGE: 'ko',
+  
+  // UI 관련
+  DEFAULT_PAGE_SIZE: 20,
+  DEFAULT_SORT_ORDER: 'desc',
+  DEFAULT_SORT_FIELD: 'createdAt',
+  
+  // 설정 관련
+  DEFAULT_TIMEZONE: 'Asia/Seoul',
+  DEFAULT_DATE_FORMAT: 'YYYY-MM-DD',
+  DEFAULT_TIME_FORMAT: 'HH:mm',
+  DEFAULT_DATETIME_FORMAT: 'YYYY-MM-DD HH:mm',
+  
+  // 비즈니스 관련
+  DEFAULT_CURRENCY: 'KRW',
+  DEFAULT_DECIMAL_PLACES: 2,
+  DEFAULT_RATING_SCALE: 5,
+};
+
+// 에러 코드 상수
+export const ERROR_CODES = {
+  // 일반 에러
+  UNKNOWN_ERROR: 'UNKNOWN_ERROR',
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  TIMEOUT_ERROR: 'TIMEOUT_ERROR',
+  
+  // 인증 에러
+  AUTHENTICATION_FAILED: 'AUTHENTICATION_FAILED',
+  AUTHORIZATION_FAILED: 'AUTHORIZATION_FAILED',
+  SESSION_EXPIRED: 'SESSION_EXPIRED',
+  
+  // 유효성 검사 에러
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  REQUIRED_FIELD_MISSING: 'REQUIRED_FIELD_MISSING',
+  INVALID_FORMAT: 'INVALID_FORMAT',
+  
+  // 비즈니스 로직 에러
+  BUSINESS_LOGIC_ERROR: 'BUSINESS_LOGIC_ERROR',
+  INSUFFICIENT_PERMISSIONS: 'INSUFFICIENT_PERMISSIONS',
+  RESOURCE_NOT_FOUND: 'RESOURCE_NOT_FOUND',
+  
+  // 시스템 에러
+  SYSTEM_ERROR: 'SYSTEM_ERROR',
+  DATABASE_ERROR: 'DATABASE_ERROR',
+  EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR',
+};
+
+// 모든 상수를 하나의 객체로 내보내기
+export const CONSTANTS = {
+  TIME_CONSTANTS,
+  HTTP_STATUS,
+  UI_CONSTANTS,
+  BUSINESS_CONSTANTS,
+  MATH_CONSTANTS,
+  DATABASE_CONSTANTS,
+  SECURITY_CONSTANTS,
+  API_CONSTANTS,
+  FORM_CONSTANTS,
+  CHART_CONSTANTS,
+  NOTIFICATION_CONSTANTS,
+  DEFAULT_VALUES,
+  ERROR_CODES,
+};
+
+export default CONSTANTS;

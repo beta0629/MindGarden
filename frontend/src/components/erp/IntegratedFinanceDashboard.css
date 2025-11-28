@@ -310,7 +310,7 @@
 }
 
 .income-statement-total {
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--mg-shadow-light);
   padding-top: var(--spacing-md);
   margin-top: var(--spacing-md);
 }
@@ -480,7 +480,7 @@
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-xl);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 40px var(--mg-shadow-light);
   text-align: center;
   color: var(--dark-gray);
   position: relative;
@@ -573,7 +573,7 @@
   padding: var(--spacing-md);
   background: white;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--mg-shadow-light);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -628,7 +628,7 @@
 .finance-summary-card {
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px var(--mg-shadow-light);
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
@@ -668,7 +668,7 @@
 .finance-summary-card-total {
   font-weight: bold;
   font-size: var(--font-size-lg);
-  border-top: 2px solid rgba(0, 0, 0, 0.15);
+  border-top: 2px solid var(--mg-shadow-medium);
   padding-top: var(--spacing-md);
 }
 
@@ -679,7 +679,7 @@
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px var(--mg-shadow-light);
 }
 
 .finance-transactions-title {
@@ -700,7 +700,7 @@
   padding: var(--spacing-md);
   background: white;
   border-radius: var(--radius-md);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .finance-transaction-value {

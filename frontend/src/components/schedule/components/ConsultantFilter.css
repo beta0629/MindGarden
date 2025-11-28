@@ -58,7 +58,7 @@
 
 .consultant-filter-input:focus {
   outline: none;
-  border-color: var(--color-primary, #007AFF);
+  border-color: var(--color-primary, var(--mg-primary-500));
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
   background: var(--color-bg-primary, #FAFAFA);
 }
@@ -81,7 +81,7 @@
 
 .consultant-filter-select:focus {
   outline: none;
-  border-color: var(--color-primary, #007AFF);
+  border-color: var(--color-primary, var(--mg-primary-500));
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
@@ -153,9 +153,9 @@
 }
 
 .consultant-filter-availability-btn.active {
-  background: var(--color-primary, #007AFF);
-  color: var(--color-text-inverse, #FFFFFF);
-  border-color: var(--color-primary, #007AFF);
+  background: var(--color-primary, var(--mg-primary-500));
+  color: var(--color-text-inverse, var(--mg-white));
+  border-color: var(--color-primary, var(--mg-primary-500));
 }
 
 .consultant-filter-availability-dot {
@@ -168,7 +168,7 @@
 
 .consultant-filter-availability-btn.active .consultant-filter-availability-dot {
   opacity: 1;
-  background: var(--color-text-inverse, #FFFFFF);
+  background: var(--color-text-inverse, var(--mg-white));
 }
 
 /* 반응형 디자인 */

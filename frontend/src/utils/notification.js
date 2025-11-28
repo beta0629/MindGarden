@@ -51,10 +51,10 @@ class NotificationManager {
             console.error('알림 유형 코드 로드 실패:', error);
             // 실패 시 기본값 설정 (통일된 색상 체계)
             this.notificationTypes = [
-                { code: 'SUCCESS', name: '성공', icon: '✅', color: '#10B981', description: '성공 알림' },     // 녹색
-                { code: 'ERROR', name: '오류', icon: '❌', color: '#EF4444', description: '오류 알림' },       // 빨강
-                { code: 'WARNING', name: '경고', icon: '⚠️', color: '#F59E0B', description: '경고 알림' },     // 주황
-                { code: 'INFO', name: '정보', icon: 'ℹ️', color: '#3B82F6', description: '정보 알림' }        // 파랑
+                { code: 'SUCCESS', name: '성공', icon: '✅', color: 'var(--mg-success-500)', description: '성공 알림' },     // 녹색
+                { code: 'ERROR', name: '오류', icon: '❌', color: 'var(--mg-error-500)', description: '오류 알림' },       // 빨강
+                { code: 'WARNING', name: '경고', icon: '⚠️', color: 'var(--mg-warning-500)', description: '경고 알림' },     // 주황
+                { code: 'INFO', name: '정보', icon: 'ℹ️', color: 'var(--mg-primary-500)', description: '정보 알림' }        // 파랑
             ];
         }
     }

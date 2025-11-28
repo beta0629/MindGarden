@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import StepIndicator from './components/StepIndicator';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
@@ -61,11 +61,11 @@ const ScheduleModal = ({
             console.error('상담 유형 코드 로드 실패:', error);
             // 실패 시 기본값 설정
             setConsultationTypeOptions([
-                { value: 'INDIVIDUAL', label: '개인상담 (50분)', icon: '👤', color: '#3b82f6', description: '개인 상담' },
-                { value: 'FAMILY', label: '가족상담 (100분)', icon: '👨‍👩‍👧‍👦', color: '#10b981', description: '가족 상담' },
-                { value: 'INITIAL', label: '초기상담 (60분)', icon: '🎯', color: '#f59e0b', description: '초기 상담' },
-                { value: 'COUPLE', label: '부부상담 (80분)', icon: '💑', color: '#8b5cf6', description: '부부 상담' },
-                { value: 'GROUP', label: '집단상담 (90분)', icon: '👥', color: '#ef4444', description: '집단 상담' }
+                { value: 'INDIVIDUAL', label: '개인상담 (50분)', icon: '👤', color: 'var(--mg-primary-500)', description: '개인 상담' },
+                { value: 'FAMILY', label: '가족상담 (100분)', icon: '👨‍👩‍👧‍👦', color: 'var(--mg-success-500)', description: '가족 상담' },
+                { value: 'INITIAL', label: '초기상담 (60분)', icon: '🎯', color: 'var(--mg-warning-500)', description: '초기 상담' },
+                { value: 'COUPLE', label: '부부상담 (80분)', icon: '💑', color: 'var(--mg-purple-500)', description: '부부 상담' },
+                { value: 'GROUP', label: '집단상담 (90분)', icon: '👥', color: 'var(--mg-error-500)', description: '집단 상담' }
             ]);
         } finally {
             setLoadingCodes(false);

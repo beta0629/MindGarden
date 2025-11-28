@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import { Calendar, User, BarChart3, Clock } from 'lucide-react';
@@ -218,11 +218,7 @@ const VacationStatistics = ({ className = "" }) => {
     if (loading) {
         return (
             <div className={`vacation-statistics ${className}`}>
-                <UnifiedLoading 
-                    text="휴가 통계를 불러오는 중..." 
-                    size="medium"
-                    inline={true}
-                />
+                <div className="mg-loading">로딩중...</div>
             </div>
         );
     }
@@ -235,7 +231,7 @@ const VacationStatistics = ({ className = "" }) => {
                         <Calendar size={48} />
                     </div>
                     <div className="mg-empty-state__text">{error}</div>
-                    <MGButton variant="primary" onClick={loadVacationStats}>다시 시도</MGButton>
+                    <button className="mg-button" variant="primary" onClick={loadVacationStats}>다시 시도</button>
                 </div>
             </div>
         );
@@ -256,7 +252,7 @@ const VacationStatistics = ({ className = "" }) => {
                     <div className="mg-dashboard-header-right">
                         <div className="period-selector">
                             {['week', 'month', 'quarter', 'year'].map(period => (
-                                <MGButton
+                                <button className="mg-button"
                                     key={period}
                                     variant={selectedPeriod === period ? 'primary' : 'outline'}
                                     size="small"
@@ -266,7 +262,7 @@ const VacationStatistics = ({ className = "" }) => {
                                     {period === 'month' && '1개월'}
                                     {period === 'quarter' && '3개월'}
                                     {period === 'year' && '1년'}
-                                </MGButton>
+                                </button>
                             ))}
                         </div>
                     </div>

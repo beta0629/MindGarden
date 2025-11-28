@@ -3,8 +3,8 @@ import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell } from 'react-icons/fa';
 import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SystemStatus from './system/SystemStatus';
 import DashboardSection from '../layout/DashboardSection';
 import StatCard from '../ui/Card/StatCard';
@@ -20,7 +20,7 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import '../../styles/main.css';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 import './AdminDashboard.new.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
@@ -589,12 +589,7 @@ const AdminDashboard = ({ user: propUser }) => {
         return (
             <div className="admin-dashboard">
                 <div className="admin-dashboard-content">
-                    <UnifiedLoading 
-                        text="세션 확인 중..."
-                        size="large"
-                        variant="default"
-                        type="page"
-                    />
+                    <div className="mg-loading">로딩중...</div>
                 </div>
             </div>
         );

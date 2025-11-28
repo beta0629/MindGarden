@@ -1,5 +1,5 @@
-import React from 'react';
-import MGButton from '../../common/MGButton';
+// import React from 'react';
+import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import { FaUser, FaHandshake, FaCalendarAlt } from 'react-icons/fa';
 import { getMappingStatusKoreanNameSync } from '../../../utils/codeHelper';
 
@@ -62,12 +62,12 @@ const ClientMappingTab = ({
                 </div>
                 
                 <div className="mg-v2-card-footer">
-                    <MGButton variant="outline" size="small">
+                    <button className="mg-button" variant="outline" size="small">
                         상세보기
-                    </MGButton>
-                    <MGButton variant="outline" size="small">
+                    </button>
+                    <button className="mg-button" variant="outline" size="small">
                         수정
-                    </MGButton>
+                    </button>
                 </div>
             </div>
         );
@@ -114,13 +114,13 @@ const ClientMappingTab = ({
                                 <span>{client.name}</span>
                                 <span className="mg-v2-client-email">({client.email})</span>
                             </div>
-                            <MGButton
+                            <button className="mg-button"
                                 variant="outline"
                                 size="small"
                                 onClick={() => onClientSelect(client)}
                             >
                                 상세보기
-                            </MGButton>
+                            </button>
                         </div>
                         {renderClientMappings(client)}
                     </div>

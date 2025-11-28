@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../utils/ajax';
 import './ConsultantStatus.css';
 
@@ -172,12 +172,7 @@ const ConsultantStatus = () => {
     if (loading) {
         return (
             <div className="consultant-status">
-                <UnifiedLoading 
-                    text="상담사 현황을 불러오는 중..." 
-                    size="medium" 
-                    variant="bars"
-                    className="loading-spinner-inline"
-                />
+                <div className="mg-loading">로딩중...</div>
             </div>
         );
     }

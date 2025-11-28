@@ -26,13 +26,13 @@
   align-items: center;
   gap: var(--spacing-md);
   transition: all 0.3s ease;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px var(--mg-shadow-light);
 }
 
 .erp-stat-card:hover {
   transform: translateY(-4px);
   background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 40px var(--mg-shadow-medium);
 }
 
 .erp-stat-icon {

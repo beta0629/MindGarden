@@ -33,12 +33,12 @@ export const MAPPING_STATUS_LABELS = {
 // 매칭 상태 색상 (동적 처리로 변경 - getStatusColor 함수 사용)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_COLORS = {
-    [MAPPING_STATUS.PENDING_PAYMENT]: '#ffc107',
-    [MAPPING_STATUS.PAYMENT_CONFIRMED]: '#17a2b8',
-    [MAPPING_STATUS.ACTIVE]: '#28a745',
-    [MAPPING_STATUS.INACTIVE]: '#6c757d',
+    [MAPPING_STATUS.PENDING_PAYMENT]: 'var(--mg-warning-500)',
+    [MAPPING_STATUS.PAYMENT_CONFIRMED]: 'var(--mg-info-500)',
+    [MAPPING_STATUS.ACTIVE]: 'var(--mg-success-500)',
+    [MAPPING_STATUS.INACTIVE]: 'var(--mg-secondary-500)',
     [MAPPING_STATUS.SUSPENDED]: '#fd7e14',
-    [MAPPING_STATUS.TERMINATED]: '#dc3545',
+    [MAPPING_STATUS.TERMINATED]: 'var(--mg-error-500)',
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#6f42c1'
 };
 
@@ -48,7 +48,7 @@ export const MAPPING_STATUS_BG_COLORS = {
     [MAPPING_STATUS.PENDING_PAYMENT]: '#fff3cd',
     [MAPPING_STATUS.PAYMENT_CONFIRMED]: '#d1ecf1',
     [MAPPING_STATUS.ACTIVE]: '#d4edda',
-    [MAPPING_STATUS.INACTIVE]: '#f8f9fa',
+    [MAPPING_STATUS.INACTIVE]: 'var(--mg-gray-100)',
     [MAPPING_STATUS.SUSPENDED]: '#ffeaa7',
     [MAPPING_STATUS.TERMINATED]: '#f8d7da',
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#e2e3f1'
@@ -153,11 +153,11 @@ export const MAPPING_STAT_LABELS = {
 // 매칭 통계 색상 (동적 처리로 변경 - getStatusColor 함수 사용)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_COLORS = {
-    PENDING: '#ffc107',
-    ACTIVE: '#28a745',
-    PAYMENT_CONFIRMED: '#17a2b8',
+    PENDING: 'var(--mg-warning-500)',
+    ACTIVE: 'var(--mg-success-500)',
+    PAYMENT_CONFIRMED: 'var(--mg-info-500)',
     TOTAL: '#6f42c1',
-    TERMINATED: '#dc3545',
+    TERMINATED: 'var(--mg-error-500)',
     SESSIONS_EXHAUSTED: '#fd7e14'
 };
 

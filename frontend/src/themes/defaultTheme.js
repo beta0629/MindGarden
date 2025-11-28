@@ -12,18 +12,18 @@ export const defaultTheme = {
   colors: {
     // Primary Colors
     primary: {
-      main: '#98FB98',      // Mint Green
-      hover: '#808000',     // Olive Green
+      main: 'var(--mg-mint-green)',      // Mint Green
+      hover: 'var(--mg-olive-green)',     // Olive Green
       active: '#6B6B00',
-      light: '#B6E5D8',     // Soft Mint
+      light: 'var(--mg-soft-mint)',     // Soft Mint
     },
     
     // Background Colors
     background: {
-      primary: '#FFFFFF',   // White
+      primary: 'var(--mg-white)',   // White
       secondary: '#FAFAFA', // Light Gray
-      surface: '#FFFFFF',
-      overlay: 'rgba(0, 0, 0, 0.5)',
+      surface: 'var(--mg-white)',
+      overlay: 'var(--mg-overlay)',
     },
     
     // Text Colors
@@ -31,8 +31,8 @@ export const defaultTheme = {
       primary: '#2F2F2F',   // Dark Gray
       secondary: '#6B6B6B', // Medium Gray
       tertiary: '#9CA3AF',
-      inverse: '#FFFFFF',
-      link: '#808000',      // Olive Green
+      inverse: 'var(--mg-white)',
+      link: 'var(--mg-olive-green)',      // Olive Green
     },
     
     // Border Colors
@@ -40,25 +40,25 @@ export const defaultTheme = {
       light: '#E5E5E7',
       medium: '#D1D5DB',
       dark: '#9CA3AF',
-      focus: '#808000',
+      focus: 'var(--mg-olive-green)',
     },
     
     // Status Colors
     status: {
-      success: '#10b981',
+      success: 'var(--mg-success-500)',
       successBg: '#d1fae5',
-      warning: '#f59e0b',
+      warning: 'var(--mg-warning-500)',
       warningBg: '#fef3c7',
-      error: '#ef4444',
+      error: 'var(--mg-error-500)',
       errorBg: '#fee2e2',
-      info: '#3b82f6',
+      info: 'var(--mg-primary-500)',
       infoBg: '#dbeafe',
     },
     
     // Interactive States
     interactive: {
       hover: 'rgba(0, 0, 0, 0.05)',
-      active: 'rgba(0, 0, 0, 0.1)',
+      active: 'var(--mg-shadow-light)',
       disabled: '#E5E5E7',
       disabledText: '#9CA3AF',
     },
@@ -126,9 +126,9 @@ export const defaultTheme = {
   shadows: {
     none: 'none',
     sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
-    md: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    lg: '0 10px 15px rgba(0, 0, 0, 0.1)',
-    xl: '0 20px 25px rgba(0, 0, 0, 0.15)',
+    md: '0 4px 6px var(--mg-shadow-light)',
+    lg: '0 10px 15px var(--mg-shadow-light)',
+    xl: '0 20px 25px var(--mg-shadow-medium)',
     '2xl': '0 25px 50px rgba(0, 0, 0, 0.25)',
     inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)',
   },

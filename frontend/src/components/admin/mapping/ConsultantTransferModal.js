@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { UserCheck, XCircle, Users, Package, Calendar } from 'lucide-react';
-import notificationManager from '../../../utils/notification';
-import MGButton from '../../common/MGButton';
-
+// import notificationManager from '../../../utils/notification';
+import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 /**
  * 상담사 변경 모달 컴포넌트
  * 
@@ -374,22 +373,22 @@ const ConsultantTransferModal = ({
         </div>
         
         <div className="mg-v2-modal-footer">
-          <MGButton
+          <button className="mg-button"
             type="button"
             variant="secondary"
             onClick={handleClose}
             disabled={loading}
           >
             취소
-          </MGButton>
-          <MGButton
+          </button>
+          <button className="mg-button"
             type="submit"
             variant="primary"
             onClick={handleSubmit}
             disabled={loading}
           >
 {loading ? '변경 중...' : '상담사 변경'}
-          </MGButton>
+          </button>
         </div>
       </div>
     </div>,

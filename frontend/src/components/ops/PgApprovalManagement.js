@@ -25,9 +25,9 @@ import {
   decryptPgKeysForOps
 } from '../../utils/pgOpsApi';
 import { showNotification } from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+// // import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgApprovalManagement.css';
 
 /**
@@ -310,7 +310,7 @@ const PgApprovalManagement = () => {
   if (sessionLoading || loading && pendingConfigs.length === 0) {
     return (
       <SimpleLayout>
-        <UnifiedLoading />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }
@@ -377,14 +377,14 @@ const PgApprovalManagement = () => {
               ))}
             </select>
             
-            <MGButton
+            <button className="mg-button"
               variant="secondary"
               size="small"
               onClick={loadPendingConfigurations}
             >
               <RefreshCw size={16} />
               새로고침
-            </MGButton>
+            </button>
           </div>
         </div>
         
@@ -470,7 +470,7 @@ const PgApprovalManagement = () => {
                 
                 <div className="card-footer">
                   <div className="card-actions">
-                    <MGButton
+                    <button className="mg-button"
                       variant="secondary"
                       size="small"
                       onClick={() => loadConfigDetail(config.configId)}
@@ -478,9 +478,9 @@ const PgApprovalManagement = () => {
                     >
                       <Eye size={16} />
                       상세보기
-                    </MGButton>
+                    </button>
                     
-                    <MGButton
+                    <button className="mg-button"
                       variant="secondary"
                       size="small"
                       onClick={() => handleTestConnection(config.configId)}
@@ -489,9 +489,9 @@ const PgApprovalManagement = () => {
                     >
                       <RefreshCw size={16} />
                       연결 테스트
-                    </MGButton>
+                    </button>
                     
-                    <MGButton
+                    <button className="mg-button"
                       variant="success"
                       size="small"
                       onClick={() => {
@@ -501,9 +501,9 @@ const PgApprovalManagement = () => {
                     >
                       <CheckCircle size={16} />
                       승인
-                    </MGButton>
+                    </button>
                     
-                    <MGButton
+                    <button className="mg-button"
                       variant="danger"
                       size="small"
                       onClick={() => {
@@ -513,7 +513,7 @@ const PgApprovalManagement = () => {
                     >
                       <XCircle size={16} />
                       거부
-                    </MGButton>
+                    </button>
                   </div>
                   
                   {testResult && testResult.configId === config.configId && (
@@ -596,7 +596,7 @@ const PgApprovalManagement = () => {
                   )}
                   
                   {approvalForm.testConnection && !testResult && (
-                    <MGButton
+                    <button className="mg-button"
                       variant="secondary"
                       size="small"
                       onClick={() => handleTestConnection(selectedConfig.configId)}
@@ -606,7 +606,7 @@ const PgApprovalManagement = () => {
                     >
                       <RefreshCw size={16} />
                       지금 테스트하기
-                    </MGButton>
+                    </button>
                   )}
                 </div>
                 
@@ -627,7 +627,7 @@ const PgApprovalManagement = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <MGButton
+                <button className="mg-button"
                   variant="secondary"
                   onClick={() => {
                     setShowApprovalModal(false);
@@ -637,8 +637,8 @@ const PgApprovalManagement = () => {
                   disabled={loading}
                 >
                   취소
-                </MGButton>
-                <MGButton
+                </button>
+                <button className="mg-button"
                   variant="success"
                   onClick={handleApprove}
                   disabled={loading}
@@ -646,7 +646,7 @@ const PgApprovalManagement = () => {
                 >
                   <CheckCircle size={18} />
                   승인
-                </MGButton>
+                </button>
               </div>
             </div>
           </div>
@@ -696,7 +696,7 @@ const PgApprovalManagement = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <MGButton
+                <button className="mg-button"
                   variant="secondary"
                   onClick={() => {
                     setShowRejectModal(false);
@@ -706,8 +706,8 @@ const PgApprovalManagement = () => {
                   disabled={loading}
                 >
                   취소
-                </MGButton>
-                <MGButton
+                </button>
+                <button className="mg-button"
                   variant="danger"
                   onClick={handleReject}
                   disabled={loading || !rejectForm.rejectionReason.trim()}
@@ -715,7 +715,7 @@ const PgApprovalManagement = () => {
                 >
                   <XCircle size={18} />
                   거부
-                </MGButton>
+                </button>
               </div>
             </div>
           </div>
@@ -780,7 +780,7 @@ const PgApprovalManagement = () => {
                       <div className="key-placeholder">
                         <Key size={24} />
                         <p>키 정보는 보안을 위해 암호화되어 저장됩니다.</p>
-                        <MGButton
+                        <button className="mg-button"
                           variant="secondary"
                           onClick={() => handleDecryptKeys(configDetail.configId)}
                           disabled={loadingKeys}
@@ -788,7 +788,7 @@ const PgApprovalManagement = () => {
                         >
                           <Eye size={18} />
                           키 확인
-                        </MGButton>
+                        </button>
                       </div>
                     ) : (
                       <div className="key-display">
@@ -824,7 +824,7 @@ const PgApprovalManagement = () => {
                             </button>
                           </div>
                         </div>
-                        <MGButton
+                        <button className="mg-button"
                           variant="secondary"
                           size="small"
                           onClick={() => {
@@ -834,7 +834,7 @@ const PgApprovalManagement = () => {
                         >
                           <Eye size={18} />
                           숨기기
-                        </MGButton>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -893,7 +893,7 @@ const PgApprovalManagement = () => {
                 )}
               </div>
               <div className="modal-footer">
-                <MGButton
+                <button className="mg-button"
                   variant="secondary"
                   onClick={() => {
                     setShowDetailModal(false);
@@ -903,7 +903,7 @@ const PgApprovalManagement = () => {
                   }}
                 >
                   닫기
-                </MGButton>
+                </button>
               </div>
             </div>
           </div>

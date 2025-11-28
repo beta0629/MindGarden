@@ -1,5 +1,5 @@
-import React from 'react';
-import MGButton from '../../common/MGButton';
+// import React from 'react';
+import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import { FaSyncAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaFileExport, FaRedo } from 'react-icons/fa';
 import { RotateCcw, Settings, Package, ShoppingCart, CheckCircle, FileText, RefreshCw } from 'lucide-react';
 
@@ -127,7 +127,7 @@ const AdminDashboardActions = ({
                             if (!action.permission) return null;
                             
                             return (
-                                <MGButton
+                                <button className="mg-button"
                                     key={actionIndex}
                                     variant={action.variant}
                                     onClick={action.onClick}
@@ -143,7 +143,7 @@ const AdminDashboardActions = ({
                                             {action.description}
                                         </span>
                                     </div>
-                                </MGButton>
+                                </button>
                             );
                         })}
                     </div>

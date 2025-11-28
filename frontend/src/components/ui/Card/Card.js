@@ -1,97 +1,71 @@
 /**
- * MindGarden 디자인 시스템 v2.0 - Card Component (Compound Component Pattern)
+ * Card Component
  * 
- * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
- * @reference /docs/design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md (Card 섹션)
- * @reference /design-system (CardShowcase)
- * @reference /frontend/src/components/mindgarden/CardShowcase.js
+ * MindGarden 디자인 시스템 표준 컴포넌트
+ * 
+ * @author MindGarden Team
+ * @version 2.0.0
+ * @since 2025-11-28
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 
-/**
- * 재사용 가능한 카드 컴포넌트 (Compound Component Pattern)
- * 
- * @param {Object} props
- * @param {React.ReactNode} props.children - 카드 내용
- * @param {string} [props.variant='default'] - 카드 스타일 ('default'|'glass'|'gradient'|'floating'|'border')
- * @param {string} [props.className=''] - 추가 CSS 클래스
- * 
- * @example
- * // 기본 카드
- * <Card>
- *   <Card.Header>
- *     <h3>제목</h3>
- *   </Card.Header>
- *   <Card.Body>
- *     내용
- *   </Card.Body>
- *   <Card.Footer>
- *     <Button>확인</Button>
- *   </Card.Footer>
- * </Card>
- * 
- * @example
- * // Glass 카드
- * <Card variant="glass">
- *   <h4>Glass Card</h4>
- *   <p>글라스모피즘 효과</p>
- * </Card>
- */
-const Card = ({ children, variant = 'default', className = '', ...props }) => {
-  const baseClass = 'mg-card';
-  const variantClass = variant && variant !== 'default' ? `mg-card-${variant}` : '';
-  
-  const allClasses = [
-    baseClass,
-    variantClass,
+const Card = ({
+  children,
+  variant = 'default',
+  padding = 'medium',
+  shadow = 'medium',
+  className = '',
+  onClick,
+  ...props
+}) => {
+  // 베이지/크림/올리브 그린 색상 시스템
+  const variantClasses = {
+    default: "mg-card mg-card--default",
+    elevated: "mg-card mg-card--elevated",
+    outlined: "mg-card mg-card--outlined",
+    glass: "mg-card mg-card--glass",
+  };
+
+  const paddingClasses = {
+    small: "mg-card--padding-sm",
+    medium: "mg-card--padding-md",
+    large: "mg-card--padding-lg"
+  };
+
+  const cardClasses = [
+    variantClasses[variant] || variantClasses.default,
+    paddingClasses[padding] || paddingClasses.medium,
+    onClick ? 'mg-card--clickable' : '',
     className
   ].filter(Boolean).join(' ');
-  
+
   return (
-    <div className={allClasses} {...props}>
+    <div 
+      className={cardClasses}
+      onClick={onClick}
+      {...props}
+    >
       {children}
     </div>
   );
 };
 
-/**
- * Card Header 컴포넌트
- */
-const CardHeader = ({ children, className = '' }) => {
-  return (
-    <div className={`mg-card__header ${className}`.trim()}>
-      {children}
-    </div>
-  );
+Card.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+  variant: PropTypes.oneOf(['default', 'elevated', 'outlined', 'glass']),
+  padding: PropTypes.oneOf(['small', 'medium', 'large']),
+  shadow: PropTypes.oneOf(['none', 'small', 'medium', 'large']),
+  onClick: PropTypes.func
 };
 
-/**
- * Card Body 컴포넌트
- */
-const CardBody = ({ children, className = '' }) => {
-  return (
-    <div className={`mg-card__body ${className}`.trim()}>
-      {children}
-    </div>
-  );
+Card.defaultProps = {
+  className: '',
+  variant: 'default',
+  padding: 'medium',
+  shadow: 'medium'
 };
-
-/**
- * Card Footer 컴포넌트
- */
-const CardFooter = ({ children, className = '' }) => {
-  return (
-    <div className={`mg-card__footer ${className}`.trim()}>
-      {children}
-    </div>
-  );
-};
-
-// Compound Component 패턴
-Card.Header = CardHeader;
-Card.Body = CardBody;
-Card.Footer = CardFooter;
 
 export default Card;
-

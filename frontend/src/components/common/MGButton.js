@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import UnifiedLoading from './UnifiedLoading';
+// import UnifiedLoading from './UnifiedLoading'; // 임시 비활성화
 import './MGButton.css';
 
 /**
@@ -105,12 +105,7 @@ const MGButton = ({
         {/* 로딩 상태 표시 */}
         {loading && (
           <span className="mg-button__loading">
-            <UnifiedLoading 
-              variant="spinner" 
-              size="small" 
-              showText={false}
-              type="inline"
-            />
+            <div className="mg-loading">로딩중...</div>
           </span>
         )}
         
@@ -123,12 +118,7 @@ const MGButton = ({
       {/* 처리 중 오버레이 */}
       {isProcessing && !loading && (
         <span className="mg-button__processing-overlay">
-          <UnifiedLoading 
-            variant="pulse" 
-            size="small" 
-            showText={false}
-            type="inline"
-          />
+          <div className="mg-loading">로딩중...</div>
         </span>
       )}
     </button>

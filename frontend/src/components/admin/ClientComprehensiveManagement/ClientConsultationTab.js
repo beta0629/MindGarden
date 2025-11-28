@@ -1,5 +1,5 @@
-import React from 'react';
-import MGButton from '../../common/MGButton';
+// import React from 'react';
+import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import { FaUser, FaCalendarAlt, FaClock } from 'react-icons/fa';
 
 /**
@@ -95,13 +95,13 @@ const ClientConsultationTab = ({
                                 <span>{client.name}</span>
                                 <span className="mg-v2-client-email">({client.email})</span>
                             </div>
-                            <MGButton
+                            <button className="mg-button"
                                 variant="outline"
                                 size="small"
                                 onClick={() => onClientSelect(client)}
                             >
                                 상세보기
-                            </MGButton>
+                            </button>
                         </div>
                         {renderClientConsultations(client)}
                     </div>

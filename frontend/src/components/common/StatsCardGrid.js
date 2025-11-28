@@ -79,15 +79,15 @@ const StatsCardGrid = ({
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '200px',
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--mg-white)',
         borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 2px 8px var(--mg-shadow-light)',
         border: '1px solid #e9ecef',
         marginBottom: '24px'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <i className="fas fa-chart-bar" style={{ fontSize: 'var(--font-size-xxxl)', color: '#6c757d', marginBottom: '16px' }}></i>
-          <p style={{ margin: '0', fontSize: 'var(--font-size-base)', color: '#6c757d' }}>
+          <i className="fas fa-chart-bar" style={{ fontSize: 'var(--font-size-xxxl)', color: 'var(--mg-secondary-500)', marginBottom: '16px' }}></i>
+          <p style={{ margin: '0', fontSize: 'var(--font-size-base)', color: 'var(--mg-secondary-500)' }}>
             통계 데이터를 불러오는 중입니다...
           </p>
         </div>
@@ -115,7 +115,7 @@ const StatsCardGrid = ({
         backgroundColor: '#E8E0FF',
         borderRadius: '12px',
         padding: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 2px 8px var(--mg-shadow-light)',
         border: '1px solid #D1C4E9',
         display: 'flex',
         alignItems: 'center',
@@ -131,7 +131,7 @@ const StatsCardGrid = ({
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: 'var(--font-size-xxl)',
-          color: '#ffffff'
+          color: 'var(--mg-white)'
         }}>
           <i className="bi bi-graph-up" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
         </div>
@@ -142,7 +142,7 @@ const StatsCardGrid = ({
           <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: '700', color: '#7B68EE', margin: '0 0 4px 0' }}>
             {statistics.totalSchedules || 0}
           </div>
-          <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>
+          <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: 'var(--mg-secondary-500)' }}>
             전체 상담
           </p>
         </div>
@@ -153,7 +153,7 @@ const StatsCardGrid = ({
         backgroundColor: '#FFE8D1',
         borderRadius: '12px',
         padding: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 2px 8px var(--mg-shadow-light)',
         border: '1px solid #FFCCBC',
         display: 'flex',
         alignItems: 'center',
@@ -164,12 +164,12 @@ const StatsCardGrid = ({
           width: '60px',
           height: '60px',
           borderRadius: '12px',
-          backgroundColor: '#FF9800',
+          backgroundColor: 'var(--mg-warning-500)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: 'var(--font-size-xxl)',
-          color: '#ffffff'
+          color: 'var(--mg-white)'
         }}>
           <i className="bi bi-calendar-check" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
         </div>
@@ -177,10 +177,10 @@ const StatsCardGrid = ({
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
             예약된 상담
           </h3>
-          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: '700', color: '#FF9800', margin: '0 0 4px 0' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: '700', color: 'var(--mg-warning-500)', margin: '0 0 4px 0' }}>
             {statistics.bookedSchedules || 0}
           </div>
-          <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>
+          <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: 'var(--mg-secondary-500)' }}>
             예약 대기
           </p>
         </div>
@@ -191,7 +191,7 @@ const StatsCardGrid = ({
         backgroundColor: '#D4F1E0',
         borderRadius: '12px',
         padding: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 2px 8px var(--mg-shadow-light)',
         border: '1px solid #C8E6C9',
         display: 'flex',
         alignItems: 'center',
@@ -202,12 +202,12 @@ const StatsCardGrid = ({
           width: '60px',
           height: '60px',
           borderRadius: '12px',
-          backgroundColor: '#4CAF50',
+          backgroundColor: 'var(--mg-success-500)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: 'var(--font-size-xxl)',
-          color: '#ffffff'
+          color: 'var(--mg-white)'
         }}>
           <i className="bi bi-check-circle-fill" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
         </div>
@@ -215,10 +215,10 @@ const StatsCardGrid = ({
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
             완료된 상담
           </h3>
-          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: '700', color: '#4CAF50', margin: '0 0 4px 0' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: '700', color: 'var(--mg-success-500)', margin: '0 0 4px 0' }}>
             {statistics.completedSchedules || 0}
           </div>
-          <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>
+          <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: 'var(--mg-secondary-500)' }}>
             상담 완료
           </p>
         </div>
@@ -229,7 +229,7 @@ const StatsCardGrid = ({
         backgroundColor: '#FFE0DB',
         borderRadius: '12px',
         padding: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 2px 8px var(--mg-shadow-light)',
         border: '1px solid #FFCDD2',
         display: 'flex',
         alignItems: 'center',
@@ -240,12 +240,12 @@ const StatsCardGrid = ({
           width: '60px',
           height: '60px',
           borderRadius: '12px',
-          backgroundColor: '#F44336',
+          backgroundColor: 'var(--mg-error-500)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: 'var(--font-size-xxl)',
-          color: '#ffffff'
+          color: 'var(--mg-white)'
         }}>
           <i className="bi bi-x-circle-fill" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
         </div>
@@ -253,10 +253,10 @@ const StatsCardGrid = ({
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
             취소된 상담
           </h3>
-          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: '700', color: '#F44336', margin: '0 0 4px 0' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: '700', color: 'var(--mg-error-500)', margin: '0 0 4px 0' }}>
             {statistics.cancelledSchedules || 0}
           </div>
-          <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>
+          <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: 'var(--mg-secondary-500)' }}>
             상담 취소
           </p>
         </div>

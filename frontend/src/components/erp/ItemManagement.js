@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
@@ -59,11 +59,11 @@ const ItemManagement = () => {
       console.error('아이템 카테고리 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setCategoryOptions([
-        { value: 'OFFICE_SUPPLIES', label: '사무용품', icon: '📝', color: '#3b82f6', description: '사무용품 및 문구류' },
-        { value: 'COUNSELING_TOOLS', label: '상담 도구', icon: '🧠', color: '#10b981', description: '상담에 사용되는 도구 및 자료' },
-        { value: 'ELECTRONICS', label: '전자제품', icon: '💻', color: '#8b5cf6', description: '전자기기 및 IT 장비' },
-        { value: 'FURNITURE', label: '가구', icon: '🪑', color: '#f59e0b', description: '사무용 가구 및 인테리어' },
-        { value: 'BOOKS', label: '도서', icon: '📚', color: '#ef4444', description: '도서 및 참고자료' },
+        { value: 'OFFICE_SUPPLIES', label: '사무용품', icon: '📝', color: 'var(--mg-primary-500)', description: '사무용품 및 문구류' },
+        { value: 'COUNSELING_TOOLS', label: '상담 도구', icon: '🧠', color: 'var(--mg-success-500)', description: '상담에 사용되는 도구 및 자료' },
+        { value: 'ELECTRONICS', label: '전자제품', icon: '💻', color: 'var(--mg-purple-500)', description: '전자기기 및 IT 장비' },
+        { value: 'FURNITURE', label: '가구', icon: '🪑', color: 'var(--mg-warning-500)', description: '사무용 가구 및 인테리어' },
+        { value: 'BOOKS', label: '도서', icon: '📚', color: 'var(--mg-error-500)', description: '도서 및 참고자료' },
         { value: 'MEDICAL_SUPPLIES', label: '의료용품', icon: '🏥', color: '#f97316', description: '의료 및 건강 관련 용품' },
         { value: 'CLEANING_SUPPLIES', label: '청소용품', icon: '🧽', color: '#06b6d4', description: '청소 및 위생용품' },
         { value: 'OTHER', label: '기타', icon: '📦', color: '#6b7280', description: '기타 아이템' }
@@ -231,7 +231,7 @@ const ItemManagement = () => {
   };
 
   if (loading && items.length === 0) {
-    return <UnifiedLoading text="아이템 목록을 불러오는 중..." size="medium" type="inline" />;
+    return <div className="mg-loading">로딩중...</div>;
   }
 
   return (

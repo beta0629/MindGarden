@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import './AccountManagement.css';
@@ -221,8 +221,8 @@ const AccountManagement = () => {
       <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT }>
         <div className={ ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER }>
           <h2>{ ACCOUNT_PAGE_TITLES.MAIN }</h2>
-          <MGButton variant="primary" className="btn btn-primary" onClick={ () => setShowForm(true) }>{ ACCOUNT_BUTTON_TEXT.REGISTER }
-          </MGButton>
+          <button className="mg-button" variant="primary" className="btn btn-primary" onClick={ () => setShowForm(true) }>{ ACCOUNT_BUTTON_TEXT.REGISTER }
+          </button>
         </div>
 
         <AccountForm

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { CalendarX, XCircle, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiPost } from '../../utils/ajax';
 import { 
   VACATION_TYPES, 
@@ -253,7 +253,7 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
           >
             {loading ? (
               <>
-                <UnifiedLoading />
+                <div className="mg-loading">로딩중...</div>
                 설정 중...
               </>
             ) : (

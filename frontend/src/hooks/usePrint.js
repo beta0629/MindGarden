@@ -83,7 +83,7 @@ const usePrint = (options = {}) => {
         textAlign: 'left'
       },
       'th': {
-        backgroundColor: '#f5f5f5',
+        backgroundColor: 'var(--mg-gray-100)',
         fontWeight: 'bold'
       },
       '.text-right': {

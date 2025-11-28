@@ -9,14 +9,14 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+// // import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import HealingCard from '../common/HealingCard';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
-import MGButton from '../common/MGButton';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import '../../styles/main.css';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 import './HQDashboard.css';
 
 /**
@@ -185,7 +185,7 @@ const HQDashboard = ({ user: propUser }) => {
         return (
             <SimpleLayout title="본사 대시보드">
                 <div className="hq-loading">
-                    <UnifiedLoading message="본사 대시보드 데이터를 불러오는 중..." />
+                    <div className="mg-loading">로딩중...</div>
                 </div>
             </SimpleLayout>
         );
@@ -261,7 +261,7 @@ const HQDashboard = ({ user: propUser }) => {
                 >
                     <div className="hq-actions-grid">
                             <div className="hq-action">
-                                <MGButton 
+                                <button className="mg-button" 
                                     variant="primary"
                                     size="large"
                                     onClick={handleBranchManagement}
@@ -269,12 +269,12 @@ const HQDashboard = ({ user: propUser }) => {
                                 >
                                     <Building2 className="hq-icon hq-icon--button" />
                                     지점 관리
-                                </MGButton>
+                                </button>
                                 <p className="hq-action__description">지점 현황 및 사용자 이동</p>
                             </div>
 
                             <div className="hq-action">
-                                <MGButton 
+                                <button className="mg-button" 
                                     variant="success"
                                     size="large"
                                     onClick={() => navigate('/admin/user-management')}
@@ -282,12 +282,12 @@ const HQDashboard = ({ user: propUser }) => {
                                 >
                                     <Users className="hq-icon hq-icon--button" />
                                     사용자 관리
-                                </MGButton>
+                                </button>
                                 <p className="hq-action__description">역할 변경 및 권한 관리</p>
                             </div>
 
                             <div className="hq-action">
-                                <MGButton 
+                                <button className="mg-button" 
                                     variant="info"
                                     size="large"
                                     onClick={() => navigate('/admin/statistics')}
@@ -295,12 +295,12 @@ const HQDashboard = ({ user: propUser }) => {
                                 >
                                     <BarChart3 className="hq-icon hq-icon--button" />
                                     전사 통계
-                                </MGButton>
+                                </button>
                                 <p className="hq-action__description">전사 현황 및 분석</p>
                             </div>
 
                             <div className="hq-action">
-                                <MGButton 
+                                <button className="mg-button" 
                                     variant="warning"
                                     size="large"
                                     onClick={() => navigate('/hq/erp/branch-financial')}
@@ -308,12 +308,12 @@ const HQDashboard = ({ user: propUser }) => {
                                 >
                                     <DollarSign className="hq-icon hq-icon--button" />
                                     지점별 재무관리
-                                </MGButton>
+                                </button>
                                 <p className="hq-action__description">지점별 수익/지출 분석</p>
                             </div>
 
                             <div className="hq-action">
-                                <MGButton 
+                                <button className="mg-button" 
                                     variant="danger"
                                     size="large"
                                     onClick={() => navigate('/hq/erp/consolidated')}
@@ -321,12 +321,12 @@ const HQDashboard = ({ user: propUser }) => {
                                 >
                                     <Calculator className="hq-icon hq-icon--button" />
                                     통합 재무현황
-                                </MGButton>
+                                </button>
                                 <p className="hq-action__description">전사 재무 통합 분석</p>
                             </div>
 
                             <div className="hq-action">
-                                <MGButton 
+                                <button className="mg-button" 
                                     variant="secondary"
                                     size="large"
                                     onClick={() => navigate('/hq/erp/reports')}
@@ -334,7 +334,7 @@ const HQDashboard = ({ user: propUser }) => {
                                 >
                                     <TrendingUp className="hq-icon hq-icon--button" />
                                     재무 보고서
-                                </MGButton>
+                                </button>
                                 <p className="hq-action__description">월별/연별 재무 리포트</p>
                             </div>
                         </div>
@@ -345,14 +345,14 @@ const HQDashboard = ({ user: propUser }) => {
                     title="지점 현황"
                     icon={<MapPin />}
                     actions={
-                        <MGButton
+                        <button className="mg-button"
                             variant="outline"
                             size="small"
                             onClick={handleBranchManagement}
                         >
                             <Eye className="hq-icon hq-icon--small" />
                             전체보기
-                        </MGButton>
+                        </button>
                     }
                 >
                         {dashboardData.branchList.length === 0 ? (

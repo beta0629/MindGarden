@@ -11,7 +11,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
 import { API_BASE_URL } from '../../constants/api';
@@ -187,7 +187,7 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
                 disabled={!selectedTenantId || isLoading}
                 className="tenant-selection__confirm-button"
               >
-                {isLoading ? <UnifiedLoading /> : '선택'}
+                {isLoading ? <div className="mg-loading">로딩중...</div> : '선택'}
               </button>
             </div>
           </div>

@@ -220,9 +220,9 @@ const DataTableSample = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      active: { color: '#34c759', text: '활성' },
-      inactive: { color: '#ff9500', text: '비활성' },
-      pending: { color: '#007aff', text: '대기' }
+      active: { color: 'var(--mg-success-500)', text: '활성' },
+      inactive: { color: 'var(--mg-warning-500)', text: '비활성' },
+      pending: { color: 'var(--mg-primary-500)', text: '대기' }
     };
     
     const config = statusConfig[status] || statusConfig.active;
@@ -364,7 +364,7 @@ const DataTableSample = () => {
                   background: currentMood === mood ? 'var(--mood-accent)' : 'rgba(142, 142, 147, 0.12)',
                   color: currentMood === mood ? 'white' : 'var(--mood-accent)',
                   transform: currentMood === mood ? 'scale(1.05)' : 'scale(1)',
-                  boxShadow: currentMood === mood ? 'var(--mood-shadow)' : '0 2px 4px rgba(0, 0, 0, 0.1)'
+                  boxShadow: currentMood === mood ? 'var(--mood-shadow)' : '0 2px 4px var(--mg-shadow-light)'
                 }}
                 onMouseEnter={(e) => {
                   if (currentMood !== mood) {
@@ -375,7 +375,7 @@ const DataTableSample = () => {
                 onMouseLeave={(e) => {
                   if (currentMood !== mood) {
                     e.target.style.transform = 'scale(1)';
-                    e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                    e.target.style.boxShadow = '0 2px 4px var(--mg-shadow-light)';
                   }
                 }}
               >
@@ -405,7 +405,7 @@ const DataTableSample = () => {
                 e.target.style.boxShadow = '0 0 0 3px var(--mood-accent, rgba(0, 122, 255, 0.1))';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+                e.target.style.borderColor = 'var(--mg-shadow-light)';
                 e.target.style.boxShadow = 'none';
               }}
             />
@@ -560,8 +560,8 @@ const DataTableSample = () => {
                             style={{
                               width: `${row.performance}%`,
                               height: '100%',
-                              background: row.performance >= 90 ? '#34c759' : 
-                                        row.performance >= 80 ? '#ff9500' : '#ff3b30',
+                              background: row.performance >= 90 ? 'var(--mg-success-500)' : 
+                                        row.performance >= 80 ? 'var(--mg-warning-500)' : 'var(--mg-error-500)',
                               transition: 'width 0.3s ease'
                             }}
                           />

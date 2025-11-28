@@ -5,8 +5,8 @@
  * 일관된 그리드 레이아웃 제공
  */
 
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './DashboardGrid.css';
 
 const DashboardGrid = ({ 

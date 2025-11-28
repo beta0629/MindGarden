@@ -49,7 +49,7 @@ export const exportSvgToPng = async (svg, filename = 'erd-diagram', options = {}
           canvas.height = svgHeight * scale;
 
           // 배경색 설정 (흰색)
-          ctx.fillStyle = '#ffffff';
+          ctx.fillStyle = 'var(--mg-white)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           // 이미지 그리기

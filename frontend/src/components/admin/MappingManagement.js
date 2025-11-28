@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { Link2, Plus } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
-import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import notificationManager from '../../utils/notification';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { 
     MAPPING_API_ENDPOINTS, 
     MAPPING_MESSAGES,
@@ -22,7 +22,7 @@ import PartialRefundModal from './mapping/PartialRefundModal';
 import PaymentConfirmationModal from './PaymentConfirmationModal';
 import MappingDetailModal from './mapping/MappingDetailModal';
 import MappingEditModal from './MappingEditModal';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 import './MappingManagement.css';
 
 /**
@@ -190,7 +190,7 @@ const MappingManagement = () => {
                 response.forEach(code => {
                     statusInfoMap[code.codeValue] = {
                         label: code.koreanName || code.codeLabel,
-                        color: code.colorCode || '#6c757d',
+                        color: code.colorCode || 'var(--mg-secondary-500)',
                         icon: code.icon || '📋'
                     };
                 });
@@ -216,28 +216,28 @@ const MappingManagement = () => {
             } else {
                 // 기본값 설정
                 setMappingStatusInfo({
-                    'PENDING_PAYMENT': { label: '입금대기', color: '#ffc107', icon: '⏳' },
-                    'PAYMENT_CONFIRMED': { label: '입금확인', color: '#17a2b8', icon: '💰' },
-                    'ACTIVE': { label: '활성', color: '#28a745', icon: '✅' },
-                    'TERMINATED': { label: '종료', color: '#dc3545', icon: '❌' },
+                    'PENDING_PAYMENT': { label: '입금대기', color: 'var(--mg-warning-500)', icon: '⏳' },
+                    'PAYMENT_CONFIRMED': { label: '입금확인', color: 'var(--mg-info-500)', icon: '💰' },
+                    'ACTIVE': { label: '활성', color: 'var(--mg-success-500)', icon: '✅' },
+                    'TERMINATED': { label: '종료', color: 'var(--mg-error-500)', icon: '❌' },
                     'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6f42c1', icon: '🔚' },
-                    'INACTIVE': { label: '비활성', color: '#6c757d', icon: '⚪' },
+                    'INACTIVE': { label: '비활성', color: 'var(--mg-secondary-500)', icon: '⚪' },
                     'SUSPENDED': { label: '일시정지', color: '#fd7e14', icon: '⏸️' },
-                    'CANCELLED': { label: '취소', color: '#dc3545', icon: '🚫' }
+                    'CANCELLED': { label: '취소', color: 'var(--mg-error-500)', icon: '🚫' }
                 });
             }
         } catch (error) {
             console.error('매칭 상태 정보 로드 오류:', error);
             // 오류 시 기본값 설정
             setMappingStatusInfo({
-                'PENDING_PAYMENT': { label: '입금대기', color: '#ffc107', icon: '⏳' },
-                'PAYMENT_CONFIRMED': { label: '입금확인', color: '#17a2b8', icon: '💰' },
-                'ACTIVE': { label: '활성', color: '#28a745', icon: '✅' },
-                'TERMINATED': { label: '종료', color: '#dc3545', icon: '❌' },
+                'PENDING_PAYMENT': { label: '입금대기', color: 'var(--mg-warning-500)', icon: '⏳' },
+                'PAYMENT_CONFIRMED': { label: '입금확인', color: 'var(--mg-info-500)', icon: '💰' },
+                'ACTIVE': { label: '활성', color: 'var(--mg-success-500)', icon: '✅' },
+                'TERMINATED': { label: '종료', color: 'var(--mg-error-500)', icon: '❌' },
                 'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6f42c1', icon: '🔚' },
-                'INACTIVE': { label: '비활성', color: '#6c757d', icon: '⚪' },
+                'INACTIVE': { label: '비활성', color: 'var(--mg-secondary-500)', icon: '⚪' },
                 'SUSPENDED': { label: '일시정지', color: '#fd7e14', icon: '⏸️' },
-                'CANCELLED': { label: '취소', color: '#dc3545', icon: '🚫' }
+                'CANCELLED': { label: '취소', color: 'var(--mg-error-500)', icon: '🚫' }
             });
         }
     };
@@ -642,11 +642,7 @@ const MappingManagement = () => {
             <SimpleLayout>
                 <div className="mapping-management">
                     <div className="loading-container">
-                        <UnifiedLoading 
-                            text="매칭 목록을 불러오는 중..." 
-                            size="large" 
-                            type="inline"
-                        />
+                        <div className="mg-loading">로딩중...</div>
                     </div>
                 </div>
             </SimpleLayout>
@@ -833,20 +829,20 @@ const MappingManagement = () => {
 
                         { /* 모달 푸터 */ }
                         <div className="mapping-refund-modal-footer">
-                            <MGButton
+                            <button className="mg-button"
                                 variant="secondary"
                                 onClick={ handleCloseRefundModal }
                                 disabled={ loading }
                             >
                                 취소
-                            </MGButton>
-                            <MGButton
+                            </button>
+                            <button className="mg-button"
                                 variant="danger"
                                 onClick={ handleRefundProcess }
                                 disabled={ loading || !refundReason.trim() }
                             >
                                 { loading ? '처리 중...' : '환불 처리' }
-                            </MGButton>
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import UnifiedModal from '../common/modals/UnifiedModal';
-
+// import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 /**
  * UnifiedModal 테스트 컴포넌트
  * 다양한 모달 설정을 테스트할 수 있습니다.
@@ -36,21 +35,21 @@ const UnifiedModalTest = () => {
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
         <button 
           onClick={() => openModal('basic')}
-          style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+          style={{ padding: '10px 20px', backgroundColor: 'var(--mg-primary-500)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
         >
           기본 모달
         </button>
         
         <button 
           onClick={() => openModal('confirm')}
-          style={{ padding: '10px 20px', backgroundColor: '#ffc107', color: 'black', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+          style={{ padding: '10px 20px', backgroundColor: 'var(--mg-warning-500)', color: 'black', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
         >
           확인 모달
         </button>
         
         <button 
           onClick={() => openModal('form')}
-          style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+          style={{ padding: '10px 20px', backgroundColor: 'var(--mg-success-500)', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
         >
           폼 모달
         </button>
@@ -71,7 +70,7 @@ const UnifiedModalTest = () => {
       </div>
 
       {/* 기본 모달 */}
-      <UnifiedModal
+      <div className="mg-modal"
         isOpen={modals.basic}
         onClose={() => closeModal('basic')}
         title="기본 모달"
@@ -81,10 +80,10 @@ const UnifiedModalTest = () => {
       >
         <p>이것은 기본 모달의 내용입니다.</p>
         <p>ESC 키를 누르거나 배경을 클릭하면 닫힙니다.</p>
-      </UnifiedModal>
+      </div>
 
       {/* 확인 모달 */}
-      <UnifiedModal
+      <div className="mg-modal"
         isOpen={modals.confirm}
         onClose={() => closeModal('confirm')}
         title="확인 모달"
@@ -95,13 +94,13 @@ const UnifiedModalTest = () => {
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
             <button 
               onClick={() => closeModal('confirm')}
-              style={{ padding: '8px 16px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              style={{ padding: '8px 16px', backgroundColor: 'var(--mg-secondary-500)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
             >
               취소
             </button>
             <button 
               onClick={() => closeModal('confirm')}
-              style={{ padding: '8px 16px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              style={{ padding: '8px 16px', backgroundColor: 'var(--mg-error-500)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
             >
               확인
             </button>
@@ -109,10 +108,10 @@ const UnifiedModalTest = () => {
         }
       >
         <p>이 작업은 되돌릴 수 없습니다.</p>
-      </UnifiedModal>
+      </div>
 
       {/* 폼 모달 */}
-      <UnifiedModal
+      <div className="mg-modal"
         isOpen={modals.form}
         onClose={() => closeModal('form')}
         title="폼 모달"
@@ -124,14 +123,14 @@ const UnifiedModalTest = () => {
             <button 
               type="button"
               onClick={() => closeModal('form')}
-              style={{ padding: '8px 16px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              style={{ padding: '8px 16px', backgroundColor: 'var(--mg-secondary-500)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
             >
               취소
             </button>
             <button 
               type="submit"
               form="test-form"
-              style={{ padding: '8px 16px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              style={{ padding: '8px 16px', backgroundColor: 'var(--mg-success-500)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
             >
               저장
             </button>
@@ -163,10 +162,10 @@ const UnifiedModalTest = () => {
             />
           </div>
         </form>
-      </UnifiedModal>
+      </div>
 
       {/* 큰 모달 */}
-      <UnifiedModal
+      <div className="mg-modal"
         isOpen={modals.large}
         onClose={() => closeModal('large')}
         title="큰 모달"
@@ -174,16 +173,16 @@ const UnifiedModalTest = () => {
         size="large"
         variant="default"
       >
-        <div style={{ height: '400px', overflowY: 'auto', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+        <div style={{ height: '400px', overflowY: 'auto', padding: '10px', backgroundColor: 'var(--mg-gray-100)', borderRadius: '4px' }}>
           <h3>스크롤 가능한 내용</h3>
           {Array.from({ length: 50 }, (_, i) => (
             <p key={i}>이것은 {i + 1}번째 줄입니다. 스크롤을 확인해보세요.</p>
           ))}
         </div>
-      </UnifiedModal>
+      </div>
 
       {/* 로딩 모달 */}
-      <UnifiedModal
+      <div className="mg-modal"
         isOpen={modals.loading}
         onClose={() => closeModal('loading')}
         title="로딩 모달"
@@ -203,7 +202,7 @@ const UnifiedModalTest = () => {
             잠시만 기다려주세요...
           </p>
         </div>
-      </UnifiedModal>
+      </div>
     </div>
   );
 };

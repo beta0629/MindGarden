@@ -1,0 +1,297 @@
+/**
+ * Icon 컴포넌트 CSS
+ * MindGarden 디자인 시스템 v2.0
+ */
+
+/* ============================================
+   Icon 기본 스타일
+   ============================================ */
+
+.mg-v2-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mg-v2-spacing-xs);
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================
+   Icon 크기 변형
+   ============================================ */
+
+.mg-v2-icon--xs {
+  width: var(--mg-v2-spacing-xs);
+  height: var(--mg-v2-spacing-xs);
+  border-radius: calc(var(--mg-v2-spacing-xs) / 2);
+}
+
+.mg-v2-icon--sm {
+  width: var(--mg-v2-spacing-sm);
+  height: var(--mg-v2-spacing-sm);
+  border-radius: calc(var(--mg-v2-spacing-sm) / 2);
+}
+
+.mg-v2-icon--md {
+  width: var(--mg-v2-spacing-md);
+  height: var(--mg-v2-spacing-md);
+  border-radius: calc(var(--mg-v2-spacing-md) / 2);
+}
+
+.mg-v2-icon--lg {
+  width: var(--mg-v2-spacing-lg);
+  height: var(--mg-v2-spacing-lg);
+  border-radius: calc(var(--mg-v2-spacing-lg) / 2);
+}
+
+.mg-v2-icon--xl {
+  width: var(--mg-v2-spacing-xl);
+  height: var(--mg-v2-spacing-xl);
+  border-radius: calc(var(--mg-v2-spacing-xl) / 2);
+}
+
+.mg-v2-icon--xxl {
+  width: calc(var(--mg-v2-spacing-xl) * 1.5);
+  height: calc(var(--mg-v2-spacing-xl) * 1.5);
+  border-radius: calc(var(--mg-v2-spacing-xl) * 0.75);
+}
+
+.mg-v2-icon--xxxl {
+  width: calc(var(--mg-v2-spacing-xl) * 2);
+  height: calc(var(--mg-v2-spacing-xl) * 2);
+  border-radius: var(--mg-v2-spacing-xl);
+}
+
+.mg-v2-icon--huge {
+  width: calc(var(--mg-v2-spacing-xl) * 3);
+  height: calc(var(--mg-v2-spacing-xl) * 3);
+  border-radius: calc(var(--mg-v2-spacing-xl) * 1.5);
+}
+
+/* ============================================
+   Icon 색상 변형
+   ============================================ */
+
+.mg-v2-icon--primary {
+  background-color: var(--mg-v2-primary);
+  color: var(--color-white);
+}
+
+.mg-v2-icon--secondary {
+  background-color: var(--mg-v2-secondary);
+  color: var(--color-white);
+}
+
+.mg-v2-icon--success {
+  background-color: var(--mg-v2-status-success);
+  color: var(--color-white);
+}
+
+.mg-v2-icon--warning {
+  background-color: var(--mg-v2-status-warning);
+  color: var(--color-white);
+}
+
+.mg-v2-icon--error {
+  background-color: var(--mg-v2-status-error);
+  color: var(--color-white);
+}
+
+.mg-v2-icon--info {
+  background-color: var(--mg-v2-status-info);
+  color: var(--color-white);
+}
+
+.mg-v2-icon--muted {
+  background-color: var(--mg-v2-secondary-light);
+  color: var(--mg-v2-secondary-dark);
+}
+
+.mg-v2-icon--transparent {
+  background-color: transparent;
+  color: var(--mg-v2-primary);
+}
+
+/* ============================================
+   Icon 변형 스타일
+   ============================================ */
+
+.mg-v2-icon--outlined {
+  background-color: transparent;
+  border: 2px solid currentColor;
+}
+
+.mg-v2-icon--filled {
+  background-color: currentColor;
+  color: var(--color-white);
+}
+
+.mg-v2-icon--minimal {
+  background-color: transparent;
+  color: inherit;
+}
+
+/* ============================================
+   Icon 상태 스타일
+   ============================================ */
+
+.mg-v2-icon--clickable {
+  cursor: pointer;
+}
+
+.mg-v2-icon--clickable:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.mg-v2-icon--clickable:active {
+  transform: scale(0.95);
+}
+
+.mg-v2-icon--clickable:focus {
+  outline: 2px solid var(--mg-v2-primary);
+  outline-offset: 2px;
+}
+
+.mg-v2-icon--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.mg-v2-icon--loading {
+  pointer-events: none;
+}
+
+/* ============================================
+   Icon 로딩 스피너
+   ============================================ */
+
+.mg-v2-icon-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-v2-icon-spinner-inner {
+  width: 60%;
+  height: 60%;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: mg-v2-icon-spin 1s linear infinite;
+}
+
+@keyframes mg-v2-icon-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   Icon 래퍼 스타일
+   ============================================ */
+
+.mg-v2-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.mg-v2-icon-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background-color: var(--mg-v2-status-error);
+  color: var(--color-white);
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: var(--mg-v2-fontWeight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* ============================================
+   반응형 Icon 스타일
+   ============================================ */
+
+@media (max-width: 768px) {
+  .mg-v2-icon--huge {
+    width: calc(var(--mg-v2-spacing-xl) * 2);
+    height: calc(var(--mg-v2-spacing-xl) * 2);
+    border-radius: var(--mg-v2-spacing-xl);
+  }
+  
+  .mg-v2-icon--xxxl {
+    width: calc(var(--mg-v2-spacing-xl) * 1.5);
+    height: calc(var(--mg-v2-spacing-xl) * 1.5);
+    border-radius: calc(var(--mg-v2-spacing-xl) * 0.75);
+  }
+}
+
+/* ============================================
+   접근성 개선
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-icon {
+    transition: none;
+  }
+  
+  .mg-v2-icon-spinner-inner {
+    animation: none;
+  }
+  
+  .mg-v2-icon--clickable:hover {
+    transform: none;
+  }
+  
+  .mg-v2-icon--clickable:active {
+    transform: none;
+  }
+}
+
+/* ============================================
+   다크 모드 지원
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  .mg-v2-icon--transparent {
+    color: var(--mg-v2-primary-light);
+  }
+  
+  .mg-v2-icon--muted {
+    background-color: var(--mg-v2-secondary-dark);
+    color: var(--mg-v2-secondary-light);
+  }
+}
+
+/* ============================================
+   고대비 모드 지원
+   ============================================ */
+
+@media (prefers-contrast: high) {
+  .mg-v2-icon {
+    border: 1px solid currentColor;
+  }
+  
+  .mg-v2-icon--outlined {
+    border-width: 3px;
+  }
+}

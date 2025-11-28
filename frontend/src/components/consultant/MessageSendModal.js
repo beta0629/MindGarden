@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { MessageSquare, XCircle, Send, User, Bell, AlertTriangle } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -50,11 +50,11 @@ const MessageSendModal = ({
         console.error('메시지 유형 코드 로드 실패:', error);
         // 실패 시 기본값 설정
         setMessageTypeOptions([
-          { value: 'GENERAL', label: '일반 메시지', icon: '💬', color: '#6c757d', description: '일반적인 메시지' },
-          { value: 'FOLLOW_UP', label: '후속 조치', icon: '🔄', color: '#007bff', description: '후속 조치 안내 메시지' },
-          { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: '#28a745', description: '과제 및 숙제 안내 메시지' },
-          { value: 'APPOINTMENT', label: '약속 안내', icon: '📅', color: '#ffc107', description: '약속 및 일정 안내 메시지' },
-          { value: 'EMERGENCY', label: '긴급 안내', icon: '🚨', color: '#dc3545', description: '긴급 상황 안내 메시지' }
+          { value: 'GENERAL', label: '일반 메시지', icon: '💬', color: 'var(--mg-secondary-500)', description: '일반적인 메시지' },
+          { value: 'FOLLOW_UP', label: '후속 조치', icon: '🔄', color: 'var(--mg-primary-500)', description: '후속 조치 안내 메시지' },
+          { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: 'var(--mg-success-500)', description: '과제 및 숙제 안내 메시지' },
+          { value: 'APPOINTMENT', label: '약속 안내', icon: '📅', color: 'var(--mg-warning-500)', description: '약속 및 일정 안내 메시지' },
+          { value: 'EMERGENCY', label: '긴급 안내', icon: '🚨', color: 'var(--mg-error-500)', description: '긴급 상황 안내 메시지' }
         ]);
       } finally {
         setLoadingCodes(false);
@@ -268,7 +268,7 @@ const MessageSendModal = ({
             className="mg-v2-button mg-v2-button--primary"
             disabled={sending}
           >
-            {sending ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+            {sending ? <div className="mg-loading">로딩중...</div> : (
               <>
                 <Send size={20} className="mg-v2-icon-inline" />
                 메시지 전송
@@ -280,7 +280,7 @@ const MessageSendModal = ({
         {/* 로딩 오버레이 */}
         {sending && (
           <div className="mg-v2-loading-overlay">
-            <UnifiedLoading variant="pulse" size="large" text="메시지 전송 중..." type="inline" />
+            <div className="mg-loading">로딩중...</div>
           </div>
         )}
       </div>

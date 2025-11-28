@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import StepIndicator from './components/StepIndicator';
+// import StepIndicator from './components/StepIndicator';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
@@ -85,7 +85,7 @@ const ScheduleModalNew = ({
                             value: code.codeValue,
                             label: code.codeLabel,
                             icon: null,
-                            color: code.colorCode || '#3b82f6',
+                            color: code.colorCode || 'var(--mg-primary-500)',
                             durationMinutes: durationMinutes
                         };
                     });
@@ -95,11 +95,11 @@ const ScheduleModalNew = ({
                 console.error('상담 유형 코드 로드 실패:', error);
                 // 실패 시 기본값 설정
                 setConsultationTypeOptions([
-                    { value: 'INDIVIDUAL', label: '개인상담', icon: null, color: '#3b82f6', durationMinutes: 50 },
-                    { value: 'FAMILY', label: '가족상담', icon: null, color: '#10b981', durationMinutes: 100 },
-                    { value: 'INITIAL', label: '초기상담', icon: null, color: '#f59e0b', durationMinutes: 60 },
+                    { value: 'INDIVIDUAL', label: '개인상담', icon: null, color: 'var(--mg-primary-500)', durationMinutes: 50 },
+                    { value: 'FAMILY', label: '가족상담', icon: null, color: 'var(--mg-success-500)', durationMinutes: 100 },
+                    { value: 'INITIAL', label: '초기상담', icon: null, color: 'var(--mg-warning-500)', durationMinutes: 60 },
                     { value: 'COUPLE', label: '부부상담', icon: null, color: '#ec4899', durationMinutes: 80 },
-                    { value: 'GROUP', label: '집단상담', icon: null, color: '#8b5cf6', durationMinutes: 90 }
+                    { value: 'GROUP', label: '집단상담', icon: null, color: 'var(--mg-purple-500)', durationMinutes: 90 }
                 ]);
             } finally {
                 setLoadingCodes(false);
@@ -133,7 +133,7 @@ const ScheduleModalNew = ({
                             value: code.codeValue,
                             label: code.codeLabel,
                             icon: null,
-                            color: code.colorCode || '#3b82f6',
+                            color: code.colorCode || 'var(--mg-primary-500)',
                             durationMinutes: durationMinutes,
                             description: code.codeDescription
                         };
@@ -148,13 +148,13 @@ const ScheduleModalNew = ({
                 console.error('상담 시간 코드 로드 실패:', error);
                 // 실패 시 기본값 설정
                 const defaultOptions = [
-                    { value: '30_MIN', label: '30분', icon: null, color: '#f59e0b', durationMinutes: 30, description: '30분 상담' },
-                    { value: '50_MIN', label: '50분', icon: null, color: '#3b82f6', durationMinutes: 50, description: '50분 상담' },
-                    { value: '60_MIN', label: '60분', icon: null, color: '#10b981', durationMinutes: 60, description: '60분 상담' },
+                    { value: '30_MIN', label: '30분', icon: null, color: 'var(--mg-warning-500)', durationMinutes: 30, description: '30분 상담' },
+                    { value: '50_MIN', label: '50분', icon: null, color: 'var(--mg-primary-500)', durationMinutes: 50, description: '50분 상담' },
+                    { value: '60_MIN', label: '60분', icon: null, color: 'var(--mg-success-500)', durationMinutes: 60, description: '60분 상담' },
                     { value: '80_MIN', label: '80분', icon: null, color: '#ec4899', durationMinutes: 80, description: '80분 상담' },
-                    { value: '90_MIN', label: '90분', icon: null, color: '#8b5cf6', durationMinutes: 90, description: '90분 상담' },
+                    { value: '90_MIN', label: '90분', icon: null, color: 'var(--mg-purple-500)', durationMinutes: 90, description: '90분 상담' },
                     { value: '100_MIN', label: '100분', icon: null, color: '#f97316', durationMinutes: 100, description: '100분 상담' },
-                    { value: '120_MIN', label: '120분', icon: null, color: '#ef4444', durationMinutes: 120, description: '120분 상담' },
+                    { value: '120_MIN', label: '120분', icon: null, color: 'var(--mg-error-500)', durationMinutes: 120, description: '120분 상담' },
                     { value: 'CUSTOM', label: '사용자 정의', icon: null, color: '#6b7280', durationMinutes: 0, description: '사용자가 직접 설정하는 상담 시간' }
                 ];
                 setDurationOptions(defaultOptions);

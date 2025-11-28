@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import ReactDOM from 'react-dom';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Heart, XCircle, CheckCircle, Calendar, User, Briefcase } from 'lucide-react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 상담사 하트 평가 모달 컴포넌트
@@ -226,7 +226,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         disabled={isSubmitDisabled}
                     >
                         {isSubmitting ? (
-                            <UnifiedLoading variant="dots" size="small" type="inline" />
+                            <div className="mg-loading">로딩중...</div>
                         ) : (
                             <>
                                 <CheckCircle size={20} className="mg-v2-icon-inline" />

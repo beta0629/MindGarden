@@ -12,13 +12,13 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
 
     const getErpStatusBadge = (status) => {
         const statusConfig = {
-            'SENT': { text: '전송완료', color: '#28a745' },
-            'PENDING': { text: '전송대기', color: '#ffc107' },
-            'FAILED': { text: '전송실패', color: '#dc3545' },
+            'SENT': { text: '전송완료', color: 'var(--mg-success-500)' },
+            'PENDING': { text: '전송대기', color: 'var(--mg-warning-500)' },
+            'FAILED': { text: '전송실패', color: 'var(--mg-error-500)' },
             'CONFIRMED': { text: '확인완료', color: '#6f42c1' }
         };
 
-        const config = statusConfig[status] || { text: '알수없음', color: '#6c757d' };
+        const config = statusConfig[status] || { text: '알수없음', color: 'var(--mg-secondary-500)' };
 
         return (
             <span className="refund-history-table-status">

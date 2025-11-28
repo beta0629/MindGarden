@@ -9,14 +9,20 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import { getCurrentUserDashboard, getDashboardComponentName } from '../../utils/dashboardUtils';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import notificationManager from '../../utils/notification';
 import DashboardGrid from '../layout/DashboardGrid';
-import { getWidgetComponent } from './widgets/WidgetRegistry';
+import { 
+  getWidgetComponent,
+  getCommonWidgetTypes,
+  getConsultationWidgetTypes,
+  getAcademyWidgetTypes,
+  getErpWidgetTypes
+} from './widgets/WidgetRegistry';
 import WidgetCardWrapper from './widgets/WidgetCardWrapper';
 import { apiGet } from '../../utils/ajax';
 import {
@@ -24,12 +30,6 @@ import {
   isWidgetVisible,
   validateWidgetAccess
 } from '../../utils/widgetVisibilityUtils';
-import {
-  getCommonWidgetTypes,
-  getConsultationWidgetTypes,
-  getAcademyWidgetTypes,
-  getErpWidgetTypes
-} from './widgets/WidgetRegistry';
 
 // 대시보드 컴포넌트 동적 import
 import CommonDashboard from './CommonDashboard';
@@ -230,7 +230,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
     return (
       <SimpleLayout>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-          <UnifiedLoading message="대시보드를 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );
@@ -247,13 +247,13 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
           minHeight: '400px',
           padding: '2rem'
         }}>
-          <h2 style={{ color: '#dc3545', marginBottom: '1rem' }}>대시보드 로드 실패</h2>
-          <p style={{ color: '#6c757d', marginBottom: '1rem' }}>{error}</p>
+          <h2 style={{ color: 'var(--mg-error-500)', marginBottom: '1rem' }}>대시보드 로드 실패</h2>
+          <p style={{ color: 'var(--mg-secondary-500)', marginBottom: '1rem' }}>{error}</p>
           <button 
             onClick={loadDashboard}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#007bff',
+              backgroundColor: 'var(--mg-primary-500)',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -275,6 +275,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   console.log('🔍 관리자 체크:', { userRole, isAdmin, adminRoles });
   
   // 🧪 테스트: 관리자에게 간단한 위젯 하나만 표시 (비활성화)
+  // eslint-disable-next-line no-constant-condition
   if (false && isAdmin) {
     console.log('🧪 관리자 테스트 → 간단한 위젯 하나만 표시');
     
@@ -338,8 +339,8 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
         }
       ],
       theme: {
-        primaryColor: '#007bff',
-        secondaryColor: '#6c757d'
+        primaryColor: 'var(--mg-primary-500)',
+        secondaryColor: 'var(--mg-secondary-500)'
       }
     };
     
@@ -734,30 +735,6 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
     
     console.debug(`✅ 위젯 가시성 검증 성공: ${widget.type}`);
     return true;
-    
-    if (!widget.visibility) {
-      return true; // visibility 설정이 없으면 항상 표시
-    }
-    
-    // 역할 기반 필터링
-    if (widget.visibility.roles && widget.visibility.roles.length > 0) {
-      const userRole = user?.role || user?.currentTenantRole?.roleName;
-      if (!userRole || !widget.visibility.roles.includes(userRole)) {
-        console.debug(`역할 기반 필터링 실패: ${widget.type}`, {
-          requiredRoles: widget.visibility.roles,
-          userRole
-        });
-        return false;
-      }
-    }
-    
-    // 조건 기반 필터링 (향후 구현)
-    if (widget.visibility.conditions && widget.visibility.conditions.length > 0) {
-      // TODO: 조건 평가 로직 구현
-      console.debug(`조건 기반 필터링 (미구현): ${widget.type}`);
-    }
-    
-    return true;
   });
   
   // 위젯 정렬 (position 기반)
@@ -1011,8 +988,8 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
     layout: { type: 'grid', columns: 2, gap: 'md' },
     widgets: widgets,
     theme: {
-      primaryColor: '#007bff',
-      secondaryColor: '#6c757d'
+      primaryColor: 'var(--mg-primary-500)',
+      secondaryColor: 'var(--mg-secondary-500)'
     }
   };
 };
@@ -1068,8 +1045,8 @@ const createDefaultBusinessTypeDashboardConfig = (businessType) => {
     widgets,
     layout: layoutConfig,
     theme: {
-      primaryColor: '#007bff',
-      secondaryColor: '#6c757d'
+      primaryColor: 'var(--mg-primary-500)',
+      secondaryColor: 'var(--mg-secondary-500)'
     },
     cardLayout: {
       style: 'v2',
@@ -1157,8 +1134,8 @@ const createDefaultUserDashboardConfig = (businessType, userRole) => {
     layout: { type: 'grid', columns: 3, gap: 'md' },
     widgets,
     theme: {
-      primaryColor: '#007bff',
-      secondaryColor: '#6c757d'
+      primaryColor: 'var(--mg-primary-500)',
+      secondaryColor: 'var(--mg-secondary-500)'
     }
   };
 };

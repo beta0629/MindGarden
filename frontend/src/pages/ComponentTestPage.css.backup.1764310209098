@@ -1,0 +1,111 @@
+/**
+ * 컴포넌트 테스트 페이지 스타일
+ */
+
+.component-test-page {
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding: var(--spacing-xl);
+}
+
+.test-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.test-container h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: #2c3e50;
+  margin-bottom: var(--spacing-sm);
+}
+
+.test-container > p {
+  font-size: var(--font-size-base);
+  color: #6c757d;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.test-section {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.test-section h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: #2c3e50;
+  margin: 0 0 var(--spacing-lg) 0;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 2px solid #e9ecef;
+}
+
+.stat-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.color-test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.color-test-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.color-box {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.color-test-item span {
+  font-size: var(--font-size-sm);
+  color: #6c757d;
+}
+
+.test-action-btn {
+  background: var(--role-admin);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: var(--transition-fast);
+}
+
+.test-action-btn:hover {
+  background: var(--role-hq-admin);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+  .component-test-page {
+    padding: var(--spacing-md);
+  }
+  
+  .stat-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .color-test-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+

@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurationDetail, updatePgConfiguration } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import PgConfigurationForm from './PgConfigurationForm';
 
 /**
@@ -63,7 +63,7 @@ const PgConfigurationEdit = () => {
   if (sessionLoading || loading) {
     return (
       <SimpleLayout>
-        <UnifiedLoading />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }

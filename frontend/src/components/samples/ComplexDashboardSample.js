@@ -172,7 +172,7 @@ const ComplexDashboardSample = () => {
                 background: currentMood === mood ? 'var(--mood-accent)' : 'rgba(142, 142, 147, 0.12)',
                 color: currentMood === mood ? 'white' : 'var(--mood-accent)',
                 transform: currentMood === mood ? 'scale(1.05)' : 'scale(1)',
-                boxShadow: currentMood === mood ? 'var(--mood-shadow)' : '0 2px 4px rgba(0, 0, 0, 0.1)'
+                boxShadow: currentMood === mood ? 'var(--mood-shadow)' : '0 2px 4px var(--mg-shadow-light)'
               }}
               onMouseEnter={(e) => {
                 if (currentMood !== mood) {
@@ -183,7 +183,7 @@ const ComplexDashboardSample = () => {
               onMouseLeave={(e) => {
                 if (currentMood !== mood) {
                   e.target.style.transform = 'scale(1)';
-                  e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                  e.target.style.boxShadow = '0 2px 4px var(--mg-shadow-light)';
                 }
               }}
             >
@@ -420,8 +420,8 @@ const ComplexDashboardSample = () => {
               
             >
               {[
-                { icon: '🔔', text: '이번 주 예정된 세션이 5개 있습니다.', color: '#007aff' },
-                { icon: '⚠️', text: '결제 예정일이 2일 남은 내담자가 있습니다.', color: '#ff9500' }
+                { icon: '🔔', text: '이번 주 예정된 세션이 5개 있습니다.', color: 'var(--mg-primary-500)' },
+                { icon: '⚠️', text: '결제 예정일이 2일 남은 내담자가 있습니다.', color: 'var(--mg-warning-500)' }
               ].map((item, index) => (
                 <li 
                   key={index}

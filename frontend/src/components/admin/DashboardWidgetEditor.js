@@ -10,7 +10,7 @@
 
 import React, { useState } from 'react';
 import { ReactSortable } from 'react-sortablejs';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { 
   getSupportedWidgetTypes,
   getCommonWidgetTypes,
@@ -156,7 +156,7 @@ const DashboardWidgetEditor = ({
             marginLeft: '8px',
             padding: '2px 8px',
             backgroundColor: '#e3f2fd',
-            color: '#1976d2',
+            color: 'var(--mg-secondary-600)',
             borderRadius: '12px',
             fontSize: '0.85em',
             fontWeight: '500'
@@ -246,7 +246,7 @@ const DashboardWidgetEditor = ({
                 onClick={() => handleAddWidget(widgetType)}
                 title={getWidgetTypeName(widgetType)}
                 style={{
-                  borderColor: '#ff9800',
+                  borderColor: 'var(--mg-warning-500)',
                   backgroundColor: '#fff8f0',
                   cursor: 'grab',
                   position: 'relative'
@@ -266,7 +266,7 @@ const DashboardWidgetEditor = ({
                 <span className="widget-specialized-badge" style={{
                   marginLeft: '4px',
                   padding: '1px 6px',
-                  backgroundColor: '#ff9800',
+                  backgroundColor: 'var(--mg-warning-500)',
                   color: 'white',
                   borderRadius: '8px',
                   fontSize: '0.75em',
@@ -336,7 +336,7 @@ const DashboardWidgetEditor = ({
                     title="위젯 삭제"
                     style={{
                       padding: '6px 12px',
-                      border: '1px solid #f44336',
+                      border: '1px solid var(--mg-error-500)',
                       borderRadius: '4px',
                       backgroundColor: '#fff',
                       cursor: 'pointer',
@@ -344,7 +344,7 @@ const DashboardWidgetEditor = ({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      color: '#f44336'
+                      color: 'var(--mg-error-500)'
                     }}
                   >
                     <FaTrash /> 삭제

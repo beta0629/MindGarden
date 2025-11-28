@@ -87,7 +87,7 @@
     font-size: var(--font-size-xl);
     font-weight: 600;
     margin: 0 0 var(--spacing-sm) 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .hq-welcome__message {

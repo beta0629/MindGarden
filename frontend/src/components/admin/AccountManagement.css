@@ -33,22 +33,22 @@
   text-align: center;
 }
 
-.btn-primary {
+.mg-btn--primary {
   background: var(--color-primary);
   color: white;
 }
 
-.btn-primary:hover {
+.mg-btn--primary:hover {
   background: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 
-.btn-secondary {
+.mg-btn--secondary {
   background: var(--color-gray-light);
   color: white;
 }
 
-.btn-secondary:hover {
+.mg-btn--secondary:hover {
   background: var(--color-gray-dark);
 }
 
@@ -91,7 +91,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--mg-overlay);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -116,11 +116,11 @@
   font-weight: 600;
 }
 
-.form-group {
+.mg-form__group {
   margin-bottom: 20px;
 }
 
-.form-group label {
+.mg-form__group label {
   display: block;
   margin-bottom: 8px;
   color: var(--color-text-primary);
@@ -128,9 +128,9 @@
   font-size: var(--font-size-sm);
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+.mg-form__group input,
+.mg-form__group select,
+.mg-form__group textarea {
   width: 100%;
   padding: 12px;
   border: 2px solid var(--color-bg-secondary);
@@ -140,9 +140,9 @@
   box-sizing: border-box;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.mg-form__group input:focus,
+.mg-form__group select:focus,
+.mg-form__group textarea:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
@@ -178,7 +178,7 @@
 .account-list {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px var(--mg-shadow-light);
   overflow: hidden;
 }
 

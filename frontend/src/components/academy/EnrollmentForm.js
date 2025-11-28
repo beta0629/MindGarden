@@ -8,8 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import Card from '../ui/Card/Card';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { FormField, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -157,11 +156,11 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
 
   return (
     <div className="academy-enrollment-form">
-      <Card>
-        <Card.Header>
+      <div className="mg-card">
+        <div className="mg-card__header">
           <h3>{enrollment ? '수강 등록 수정' : '수강 등록'}</h3>
-        </Card.Header>
-        <Card.Body>
+        </div>
+        <div className="mg-card__body">
           <form onSubmit={handleSubmit}>
             {/* 에러 메시지 */}
             {error && <ErrorState message={error} />}
@@ -297,26 +296,26 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
 
             {/* 버튼 */}
             <div className="academy-form-actions">
-              <MGButton
+              <button className="mg-button"
                 type="submit"
                 variant="primary"
                 loading={loading}
                 disabled={loading}
               >
                 {enrollment ? '수정' : '등록'}
-              </MGButton>
-              <MGButton
+              </button>
+              <button className="mg-button"
                 type="button"
                 variant="secondary"
                 onClick={onCancel}
                 disabled={loading}
               >
                 취소
-              </MGButton>
+              </button>
             </div>
           </form>
-        </Card.Body>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

@@ -323,8 +323,8 @@ const SalaryExportModal = ({
             style={{
               padding: '8px 16px',
               borderRadius: '4px',
-              border: '1px solid #3b82f6',
-              backgroundColor: '#3b82f6',
+              border: '1px solid var(--mg-primary-500)',
+              backgroundColor: 'var(--mg-primary-500)',
               color: 'white',
               cursor: 'pointer',
               fontSize: 'var(--font-size-sm)'
@@ -345,7 +345,7 @@ const modalOverlayStyle = {
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  backgroundColor: 'var(--mg-overlay)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -359,7 +359,7 @@ const modalContentStyle = {
   maxWidth: '600px',
   maxHeight: '90vh',
   overflow: 'hidden',
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+  boxShadow: '0 4px 20px var(--mg-shadow-medium)'
 };
 
 const modalHeaderStyle = {

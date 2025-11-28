@@ -4,8 +4,8 @@
     max-width: 900px;
 }
 
-.branch-form-modal .modal-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.branch-form-modal .mg-modal__header {
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
     color: white;
     border-bottom: none;
     padding: 1.5rem 2rem;
@@ -26,14 +26,14 @@
     opacity: 1;
 }
 
-.branch-form-modal .modal-body {
+.branch-form-modal .mg-modal__body {
     padding: 2rem;
     max-height: 70vh;
     overflow-y: auto;
 }
 
-.branch-form-modal .modal-footer {
-    background: #f8f9fa;
+.branch-form-modal .mg-modal__footer {
+    background: var(--mg-gray-100);
     border-top: 1px solid #e9ecef;
     padding: 1.5rem 2rem;
 }
@@ -42,7 +42,7 @@
 .form-section {
     margin-bottom: 2rem;
     padding: 1.5rem;
-    background: #f8f9fa;
+    background: var(--mg-gray-100);
     border-radius: 12px;
     border: 1px solid #e9ecef;
 }
@@ -57,7 +57,7 @@
     font-size: 1rem;
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #007bff;
+    border-bottom: 2px solid var(--mg-primary-500);
     display: flex;
     align-items: center;
 }
@@ -70,35 +70,35 @@
     padding: 0.75rem 1rem;
     font-size: 0.95rem;
     transition: all 0.2s ease;
-    background-color: #ffffff;
+    background-color: var(--mg-white);
 }
 
 .form-control-modern:focus,
 .form-select:focus {
-    border-color: #007bff;
+    border-color: var(--mg-primary-500);
     box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
-    background-color: #ffffff;
+    background-color: var(--mg-white);
 }
 
 .form-control-modern.is-invalid {
-    border-color: #dc3545;
+    border-color: var(--mg-error-500);
     background-image: none;
 }
 
 .form-control-modern.is-invalid:focus {
-    border-color: #dc3545;
+    border-color: var(--mg-error-500);
     box-shadow: 0 0 0 0.2rem rgba(220,53,69,0.25);
 }
 
 /* 라벨 스타일 */
-.form-label {
+.mg-form__label {
     font-weight: 600;
     color: #495057;
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
 }
 
-.form-label .text-danger {
+.mg-form__label .text-danger {
     color: var(--color-danger);
     font-weight: 700;
 }
@@ -113,8 +113,8 @@
 }
 
 .form-check-modern .form-check-input:checked {
-    background-color: #007bff;
-    border-color: #007bff;
+    background-color: var(--mg-primary-500);
+    border-color: var(--mg-primary-500);
 }
 
 .form-check-modern .form-check-input:focus {
@@ -134,7 +134,7 @@
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 0.75rem;
     padding: 1rem;
-    background: #ffffff;
+    background: var(--mg-white);
     border: 1px solid #e9ecef;
     border-radius: 8px;
     margin-top: 0.5rem;
@@ -168,21 +168,21 @@
     transform: translateY(0);
 }
 
-.btn-primary.btn-modern {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+.mg-btn--primary.btn-modern {
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #0056b3 100%);
     color: white;
 }
 
-.btn-primary.btn-modern:hover {
+.mg-btn--primary.btn-modern:hover {
     background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
 }
 
-.btn-secondary.btn-modern {
-    background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+.mg-btn--secondary.btn-modern {
+    background: linear-gradient(135deg, var(--mg-secondary-500) 0%, #545b62 100%);
     color: white;
 }
 
-.btn-secondary.btn-modern:hover {
+.mg-btn--secondary.btn-modern:hover {
     background: linear-gradient(135deg, #545b62 0%, #3d4449 100%);
 }
 
@@ -199,7 +199,7 @@
 /* 도움말 텍스트 */
 .form-text {
     font-size: 0.875rem;
-    color: #6c757d;
+    color: var(--mg-secondary-500);
     margin-top: 0.5rem;
 }
 
@@ -220,17 +220,17 @@
         max-width: calc(100% - 2rem);
     }
     
-    .branch-form-modal .modal-body {
+    .branch-form-modal .mg-modal__body {
         padding: 1.5rem;
     }
     
-    .branch-form-modal .modal-footer {
+    .branch-form-modal .mg-modal__footer {
         padding: 1rem 1.5rem;
         flex-direction: column;
         gap: 0.5rem;
     }
     
-    .branch-form-modal .modal-footer .btn {
+    .branch-form-modal .mg-modal__footer .btn {
         width: 100%;
     }
     
@@ -251,15 +251,15 @@
 }
 
 @media (max-width: 576px) {
-    .branch-form-modal .modal-header {
+    .branch-form-modal .mg-modal__header {
         padding: 1rem;
     }
     
-    .branch-form-modal .modal-body {
+    .branch-form-modal .mg-modal__body {
         padding: 1rem;
     }
     
-    .branch-form-modal .modal-footer {
+    .branch-form-modal .mg-modal__footer {
         padding: 1rem;
     }
     
@@ -273,22 +273,22 @@
 }
 
 /* 스크롤바 스타일 */
-.branch-form-modal .modal-body::-webkit-scrollbar {
+.branch-form-modal .mg-modal__body::-webkit-scrollbar {
     width: 6px;
 }
 
-.branch-form-modal .modal-body::-webkit-scrollbar-track {
+.branch-form-modal .mg-modal__body::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 3px;
     margin: 1rem 0;
 }
 
-.branch-form-modal .modal-body::-webkit-scrollbar-thumb {
+.branch-form-modal .mg-modal__body::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 3px;
 }
 
-.branch-form-modal .modal-body::-webkit-scrollbar-thumb:hover {
+.branch-form-modal .mg-modal__body::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
 

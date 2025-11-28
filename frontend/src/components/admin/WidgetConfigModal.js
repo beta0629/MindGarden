@@ -9,8 +9,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import MGButton from '../common/MGButton';
+// import ReactDOM from 'react-dom';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { FaTimes } from 'react-icons/fa';
 import './WidgetConfigModal.css';
 
@@ -313,18 +313,18 @@ const WidgetConfigModal = ({ isOpen, onClose, widget, onSave }) => {
 
         {/* 푸터 */}
         <div className="widget-config-modal-footer">
-          <MGButton
+          <button className="mg-button"
             variant="secondary"
             onClick={onClose}
           >
             취소
-          </MGButton>
-          <MGButton
+          </button>
+          <button className="mg-button"
             variant="primary"
             onClick={handleSave}
           >
             저장
-          </MGButton>
+          </button>
         </div>
       </div>
     </div>,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Container, Row, Col, Tab, Tabs } from 'react-bootstrap';
 import { FaBuilding, FaChartBar, FaCog } from 'react-icons/fa';
 import { useSession } from '../../contexts/SessionContext';
@@ -168,7 +168,7 @@ const HQBranchManagement = () => {
         return (
             <SimpleLayout>
                 <div className="hq-branch-management-loading">
-                    <UnifiedLoading text="지점 관리 시스템을 불러오는 중..." size="large" type="inline" />
+                    <div className="mg-loading">로딩중...</div>
                 </div>
             </SimpleLayout>
         );

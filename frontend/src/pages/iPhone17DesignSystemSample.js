@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedHeader from '../components/common/UnifiedHeader';
+// import UnifiedHeader from "../common/UnifiedHeader";
+// 임시 비활성화
 import CommonPageTemplate from '../components/common/CommonPageTemplate';
 import UnifiedNotification from '../components/common/UnifiedNotification';
 import IPhone17Card from '../components/common/IPhone17Card';
@@ -16,11 +17,11 @@ const IPhone17DesignSystemSample = () => {
 
   // 테마 설정 (샘플용)
   const themes = [
-    { id: 'default', name: '기본', color: '#007AFF' },
-    { id: 'warm', name: '따뜻한', color: '#FF9500' },
+    { id: 'default', name: '기본', color: 'var(--mg-primary-500)' },
+    { id: 'warm', name: '따뜻한', color: 'var(--mg-warning-500)' },
     { id: 'cool', name: '시원한', color: '#00C7BE' },
-    { id: 'elegant', name: '우아한', color: '#5856D6' },
-    { id: 'vibrant', name: '활기찬', color: '#FF3B30' }
+    { id: 'elegant', name: '우아한', color: 'var(--mg-purple-500)' },
+    { id: 'vibrant', name: '활기찬', color: 'var(--mg-error-500)' }
   ];
 
   // 다크모드 토글 (샘플용)
@@ -97,11 +98,7 @@ const IPhone17DesignSystemSample = () => {
       bodyClass="iphone17-design-system-page"
     >
       {/* UnifiedHeader 사용 */}
-      <UnifiedHeader
-        title="iPhone 17 디자인 시스템"
-        subtitle="공통화된 컴포넌트 시스템 완성 버전"
-        extraActions={headerActions}
-      />
+      <UnifiedHeader />
 
       <div className="iphone17-sample-container">
         {/* 페이지 헤더 섹션 */}

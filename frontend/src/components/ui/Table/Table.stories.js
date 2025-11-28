@@ -35,8 +35,8 @@ const customColumns = [{key: 'id', header: 'ID'},
     render: (value) => (<span style={{padding: '4px 8px', 
         borderRadius: '4px', 
         fontSize: '12px',
-        backgroundColor: value === 'admin' ? '#d1ecf1' : value === 'moderator' ? '#e2e3e5' : '#f8f9fa',
-        color: value === 'admin' ? '#0c5460' : value === 'moderator' ? '#383d41' : '#6c757d'}}>
+        backgroundColor: value === 'admin' ? '#d1ecf1' : value === 'moderator' ? '#e2e3e5' : 'var(--mg-gray-100)',
+        color: value === 'admin' ? '#0c5460' : value === 'moderator' ? '#383d41' : 'var(--mg-secondary-500)'}}>
         {value === 'admin' ? '관리자' : value === 'moderator' ? '모더레이터' : '사용자'}
       </span>)},
   {key: 'actions',
@@ -167,7 +167,7 @@ export const Interactive = () => {const [clickedRow, setClickedRow] = React.useS
           onCellClick={handleCellClick}
           hover={true}
         />
-        {clickedRow && (<div style={{marginTop: '15px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px'}}>
+        {clickedRow && (<div style={{marginTop: '15px', padding: '10px', backgroundColor: 'var(--mg-gray-100)', borderRadius: '4px'}}>
             <strong>클릭된 행:</strong> {clickedRow.row.name} (인덱스: {clickedRow.index})
           </div>)}
         {clickedCell && (<div style={{marginTop: '15px', padding: '10px', backgroundColor: '#e9ecef', borderRadius: '4px'}}>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { X, Calendar, Clock, User, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
@@ -94,14 +94,14 @@ const VacationManagementModal = ({
                 console.error('휴가 유형 코드 로드 실패:', error);
                 // 실패 시 기본값 설정 (시간이 표시된 구체적인 옵션만)
                 setVacationTypeOptions([
-                    { value: 'MORNING_HALF_DAY', label: '오전반차 (09:00-14:00)', icon: '🌅', color: '#f59e0b', description: '오전반차 - 5시간' },
-                    { value: 'AFTERNOON_HALF_DAY', label: '오후반차 (14:00-18:00)', icon: '🌆', color: '#3b82f6', description: '오후반차 - 4시간' },
+                    { value: 'MORNING_HALF_DAY', label: '오전반차 (09:00-14:00)', icon: '🌅', color: 'var(--mg-warning-500)', description: '오전반차 - 5시간' },
+                    { value: 'AFTERNOON_HALF_DAY', label: '오후반차 (14:00-18:00)', icon: '🌆', color: 'var(--mg-primary-500)', description: '오후반차 - 4시간' },
                     { value: 'MORNING_HALF_1', label: '오전 반반차 1 (09:00-11:00)', icon: '☀️', color: '#fbbf24', description: '오전 첫 번째 반반차 (09:00-11:00)' },
-                    { value: 'MORNING_HALF_2', label: '오전 반반차 2 (11:00-13:00)', icon: '🌞', color: '#f59e0b', description: '오전 두 번째 반반차 (11:00-13:00)' },
+                    { value: 'MORNING_HALF_2', label: '오전 반반차 2 (11:00-13:00)', icon: '🌞', color: 'var(--mg-warning-500)', description: '오전 두 번째 반반차 (11:00-13:00)' },
                     { value: 'AFTERNOON_HALF_1', label: '오후 반반차 1 (14:00-16:00)', icon: '🌤️', color: '#60a5fa', description: '오후 첫 번째 반반차 (14:00-16:00)' },
-                    { value: 'AFTERNOON_HALF_2', label: '오후 반반차 2 (16:00-18:00)', icon: '🌅', color: '#3b82f6', description: '오후 두 번째 반반차 (16:00-18:00)' },
-                    { value: 'CUSTOM_TIME', label: '사용자 지정', icon: '⏰', color: '#8b5cf6', description: '사용자가 직접 시간을 설정하는 휴가' },
-                    { value: 'ALL_DAY', label: '휴가', icon: '🏖️', color: '#ef4444', description: '하루 종일 휴가' }
+                    { value: 'AFTERNOON_HALF_2', label: '오후 반반차 2 (16:00-18:00)', icon: '🌅', color: 'var(--mg-primary-500)', description: '오후 두 번째 반반차 (16:00-18:00)' },
+                    { value: 'CUSTOM_TIME', label: '사용자 지정', icon: '⏰', color: 'var(--mg-purple-500)', description: '사용자가 직접 시간을 설정하는 휴가' },
+                    { value: 'ALL_DAY', label: '휴가', icon: '🏖️', color: 'var(--mg-error-500)', description: '하루 종일 휴가' }
                 ]);
             } finally {
                 setLoadingCodes(false);

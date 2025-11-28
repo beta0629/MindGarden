@@ -51,7 +51,7 @@
 }
 
 .add-client-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, var(--mg-primary-500), #764ba2);
   color: var(--color-white);
   border: none;
   padding: var(--spacing-sm) var(--spacing-xl);
@@ -179,9 +179,9 @@
 /* 휴가 이벤트 스타일 */
 .fc-event[data-event-type="휴가"],
 .fc-event.vacation-event,
-.fc-event[style*="background-color: rgb(255, 193, 7)"] {
-  background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
-  border: 2px solid #ffc107;
+.fc-event[style*="background-color: var(--mg-warning-500)"] {
+  background: linear-gradient(135deg, var(--mg-warning-500) 0%, #ffb300 100%);
+  border: 2px solid var(--mg-warning-500);
   box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
   font-weight: var(--font-weight-semibold);
   color: var(--color-white);
@@ -246,13 +246,13 @@
 }
 
 /* 모달 스타일 */
-.modal-overlay {
+.mg-modal__overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--mg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -260,7 +260,7 @@
   backdrop-filter: blur(5px);
 }
 
-.modal-content {
+.mg-modal__content {
   background: var(--color-bg-primary);
   border-radius: var(--border-radius-xl);
   padding: 0;
@@ -282,8 +282,8 @@
   }
 }
 
-.modal-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.mg-modal__header {
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
   color: var(--color-white);
   padding: var(--spacing-lg);
   border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
@@ -292,7 +292,7 @@
   align-items: center;
 }
 
-.modal-header h2 {
+.mg-modal__header h2 {
   margin: 0;
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
@@ -323,7 +323,7 @@ form {
   padding: var(--spacing-xxl);
 }
 
-.consultant-schedule .form-group {
+.consultant-schedule .mg-form__group {
   margin-bottom: var(--spacing-lg);
 }
 
@@ -353,7 +353,7 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--mg-primary-500);
   background: var(--color-bg-primary);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
@@ -442,7 +442,7 @@ textarea {
     gap: var(--spacing-md);
   }
   
-  .modal-content {
+  .mg-modal__content {
     width: 95%;
     margin: var(--spacing-md);
   }

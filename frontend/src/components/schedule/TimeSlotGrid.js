@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import '../../styles/main.css';
@@ -632,12 +632,12 @@ const TimeSlotGrid = ({
      * 슬롯 상태 아이콘 (색상 원으로 대체)
      */
     const getSlotIcon = (slot) => {
-        if (slot.vacation) return { color: '#ffc107', text: '휴' };
-        if (slot.past) return { color: '#6c757d', text: '과' };
-        if (slot.selected) return { color: '#28a745', text: '선' };
-        if (slot.conflict) return { color: '#dc3545', text: '충' };
-        if (!slot.available) return { color: '#6c757d', text: '불' };
-        return { color: '#28a745', text: '가' };
+        if (slot.vacation) return { color: 'var(--mg-warning-500)', text: '휴' };
+        if (slot.past) return { color: 'var(--mg-secondary-500)', text: '과' };
+        if (slot.selected) return { color: 'var(--mg-success-500)', text: '선' };
+        if (slot.conflict) return { color: 'var(--mg-error-500)', text: '충' };
+        if (!slot.available) return { color: 'var(--mg-secondary-500)', text: '불' };
+        return { color: 'var(--mg-success-500)', text: '가' };
     };
 
     /**
@@ -659,13 +659,7 @@ const TimeSlotGrid = ({
         return (
             <div className="time-slot-grid-container">
                 <div className="time-slot-grid-loading">
-                    <UnifiedLoading 
-                        text="시간 로딩 중..." 
-                        size="medium" 
-                        variant="pulse"
-                        type="inline"
-                        className="loading-spinner-inline"
-                    />
+                    <div className="mg-loading">로딩중...</div>
                 </div>
             </div>
         );
@@ -734,7 +728,7 @@ const TimeSlotGrid = ({
 
                                     // 상태별 스타일 적용
                                     if (slot.vacation) {
-                                        baseStyle.borderColor = '#ffc107';
+                                        baseStyle.borderColor = 'var(--mg-warning-500)';
                                         baseStyle.backgroundColor = '#fff8e1';
                                         baseStyle.cursor = 'not-allowed';
                                     } else if (slot.past) {
@@ -744,18 +738,18 @@ const TimeSlotGrid = ({
                                         baseStyle.opacity = '0.5';
                                         baseStyle.border = '1px solid #dee2e6';
                                     } else if (slot.selected) {
-                                        baseStyle.borderColor = '#28a745';
+                                        baseStyle.borderColor = 'var(--mg-success-500)';
                                         baseStyle.backgroundColor = '#f8fff9';
                                         baseStyle.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.25)';
                                         baseStyle.transform = 'translateY(-2px)';
                                         baseStyle.fontWeight = '600';
                                     } else if (slot.conflict) {
-                                        baseStyle.borderColor = '#dc3545';
+                                        baseStyle.borderColor = 'var(--mg-error-500)';
                                         baseStyle.backgroundColor = '#fff5f5';
                                     } else if (!slot.available) {
                                         baseStyle.opacity = '0.5';
                                         baseStyle.cursor = 'not-allowed';
-                                        baseStyle.backgroundColor = '#f8f9fa';
+                                        baseStyle.backgroundColor = 'var(--mg-gray-100)';
                                     }
 
                                     return baseStyle;
@@ -766,7 +760,7 @@ const TimeSlotGrid = ({
                                         return {};
                                     }
                                     return {
-                                        borderColor: '#007bff',
+                                        borderColor: 'var(--mg-primary-500)',
                                         backgroundColor: '#f8f9ff',
                                         transform: 'translateY(-2px)',
                                         boxShadow: '0 4px 8px rgba(0, 123, 255, 0.15)'

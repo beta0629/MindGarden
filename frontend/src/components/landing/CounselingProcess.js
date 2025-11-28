@@ -2,9 +2,8 @@
  * 상담센터 랜딩페이지 - 상담 과정 섹션
  */
 
-import React from 'react';
-import MGCard from '../common/MGCard';
-
+// import React from 'react';
+import MGCard from '../../components/common/MGCard'; // 임시 비활성화
 const CounselingProcess = () => {
   const steps = [
     { number: 1, title: '초기 상담', description: '상담사와의 첫 만남으로 현재 상황을 파악합니다.' },
@@ -23,11 +22,11 @@ const CounselingProcess = () => {
         
         <div className="counseling-process__steps">
           {steps.map((step, index) => (
-            <MGCard key={index} variant="glass" padding="large" className="counseling-process__step">
+            <div className="mg-card" key={index} variant="glass" padding="large" className="counseling-process__step">
               <div className="counseling-process__step-number">{step.number}</div>
               <h3 className="counseling-process__step-title">{step.title}</h3>
               <p className="counseling-process__step-description">{step.description}</p>
-            </MGCard>
+            </div>
           ))}
         </div>
       </div>

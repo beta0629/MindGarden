@@ -19,10 +19,10 @@ export const DEFAULT_RISK_LEVEL = 'LOW';
 
 // 기본 색상 (백엔드에서 가져올 수 없을 때 사용)
 export const DEFAULT_COLORS = {
-  PENDING: '#ff9800',
-  IN_REVIEW: '#2196f3',
-  APPROVED: '#4caf50',
-  REJECTED: '#f44336',
+  PENDING: 'var(--mg-warning-500)',
+  IN_REVIEW: 'var(--mg-primary-500)',
+  APPROVED: 'var(--mg-success-500)',
+  REJECTED: 'var(--mg-error-500)',
   ON_HOLD: '#9e9e9e',
   LOW: '#2e7d32',
   MEDIUM: '#e65100',

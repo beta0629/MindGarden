@@ -1,0 +1,439 @@
+/**
+ * Table 컴포넌트 CSS
+ * MindGarden 디자인 시스템 v2.0
+ */
+
+/* ============================================
+   Table 기본 스타일
+   ============================================ */
+
+.mg-v2-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--color-white);
+  border-radius: var(--mg-v2-spacing-xs);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mg-v2-table-desktop {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--color-white);
+}
+
+.mg-v2-table-mobile {
+  display: none;
+}
+
+/* ============================================
+   Table 크기 변형
+   ============================================ */
+
+.mg-v2-table--small .mg-v2-table-desktop {
+  font-size: var(--mg-v2-fontSize-sm);
+}
+
+.mg-v2-table--small .mg-v2-table-desktop th,
+.mg-v2-table--small .mg-v2-table-desktop td {
+  padding: var(--mg-v2-spacing-xs) var(--mg-v2-spacing-sm);
+}
+
+.mg-v2-table--medium .mg-v2-table-desktop {
+  font-size: var(--mg-v2-fontSize-base);
+}
+
+.mg-v2-table--medium .mg-v2-table-desktop th,
+.mg-v2-table--medium .mg-v2-table-desktop td {
+  padding: var(--mg-v2-spacing-sm) var(--mg-v2-spacing-md);
+}
+
+.mg-v2-table--large .mg-v2-table-desktop {
+  font-size: var(--mg-v2-fontSize-lg);
+}
+
+.mg-v2-table--large .mg-v2-table-desktop th,
+.mg-v2-table--large .mg-v2-table-desktop td {
+  padding: var(--mg-v2-spacing-md) var(--mg-v2-spacing-lg);
+}
+
+/* ============================================
+   Table 변형 스타일
+   ============================================ */
+
+.mg-v2-table--striped .mg-v2-table-desktop tbody tr:nth-child(even) {
+  background-color: var(--mg-v2-background);
+}
+
+.mg-v2-table--hover .mg-v2-table-desktop tbody tr:hover {
+  background-color: var(--mg-v2-secondary-light);
+  cursor: pointer;
+}
+
+.mg-v2-table--bordered .mg-v2-table-desktop th,
+.mg-v2-table--bordered .mg-v2-table-desktop td {
+  border: 1px solid var(--mg-v2-secondary-light);
+}
+
+.mg-v2-table--minimal .mg-v2-table-desktop th,
+.mg-v2-table--minimal .mg-v2-table-desktop td {
+  border: none;
+  padding: var(--mg-v2-spacing-xs) 0;
+}
+
+/* ============================================
+   Table 헤더 스타일
+   ============================================ */
+
+.mg-v2-table-header {
+  background-color: var(--mg-v2-background);
+}
+
+.mg-v2-table-header th {
+  background-color: var(--mg-v2-background);
+  color: var(--mg-v2-text);
+  font-weight: var(--mg-v2-fontWeight-semibold);
+  text-align: left;
+  border-bottom: 2px solid var(--mg-v2-secondary-light);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.mg-v2-table-header th:first-child {
+  border-top-left-radius: var(--mg-v2-spacing-xs);
+}
+
+.mg-v2-table-header th:last-child {
+  border-top-right-radius: var(--mg-v2-spacing-xs);
+}
+
+/* ============================================
+   Table 바디 스타일
+   ============================================ */
+
+.mg-v2-table-body tr {
+  border-bottom: 1px solid var(--mg-v2-secondary-light);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.mg-v2-table-body tr:last-child {
+  border-bottom: none;
+}
+
+.mg-v2-table-body tr:last-child td:first-child {
+  border-bottom-left-radius: var(--mg-v2-spacing-xs);
+}
+
+.mg-v2-table-body tr:last-child td:last-child {
+  border-bottom-right-radius: var(--mg-v2-spacing-xs);
+}
+
+/* ============================================
+   Table 셀 스타일
+   ============================================ */
+
+.mg-v2-table-cell {
+  color: var(--mg-v2-text);
+  vertical-align: middle;
+  word-wrap: break-word;
+  max-width: 200px;
+}
+
+.mg-v2-table-cell--center {
+  text-align: center;
+}
+
+.mg-v2-table-cell--right {
+  text-align: right;
+}
+
+.mg-v2-table-cell--nowrap {
+  white-space: nowrap;
+}
+
+/* ============================================
+   Table 상태 스타일
+   ============================================ */
+
+.mg-v2-table--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background-color: var(--color-white);
+  border-radius: var(--mg-v2-spacing-xs);
+}
+
+.mg-v2-table-loading {
+  text-align: center;
+  color: var(--mg-v2-secondary);
+}
+
+.mg-v2-table-loading .mg-v2-icon {
+  margin-bottom: var(--mg-v2-spacing-sm);
+}
+
+.mg-v2-table--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background-color: var(--color-white);
+  border-radius: var(--mg-v2-spacing-xs);
+}
+
+.mg-v2-table-empty {
+  text-align: center;
+  color: var(--mg-v2-secondary);
+}
+
+.mg-v2-table-empty .mg-v2-icon {
+  margin-bottom: var(--mg-v2-spacing-sm);
+}
+
+/* ============================================
+   모바일 테이블 (카드 형태)
+   ============================================ */
+
+@media (max-width: 768px) {
+  .mg-v2-table--responsive .mg-v2-table-desktop {
+    display: none;
+  }
+  
+  .mg-v2-table--responsive .mg-v2-table-mobile {
+    display: block;
+  }
+  
+  .mg-v2-table-mobile {
+    display: block;
+  }
+  
+  .mg-v2-table-card {
+    background-color: var(--color-white);
+    border-radius: var(--mg-v2-spacing-xs);
+    margin-bottom: var(--mg-v2-spacing-sm);
+    padding: var(--mg-v2-spacing-md);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--mg-v2-secondary-light);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .mg-v2-table-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+  }
+  
+  .mg-v2-table-card-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--mg-v2-spacing-xs) 0;
+    border-bottom: 1px solid var(--mg-v2-secondary-light);
+  }
+  
+  .mg-v2-table-card-item:last-child {
+    border-bottom: none;
+  }
+  
+  .mg-v2-table-card-label {
+    font-weight: var(--mg-v2-fontWeight-semibold);
+    color: var(--mg-v2-secondary);
+    font-size: var(--mg-v2-fontSize-sm);
+    min-width: 80px;
+  }
+  
+  .mg-v2-table-card-value {
+    color: var(--mg-v2-text);
+    font-size: var(--mg-v2-fontSize-sm);
+    text-align: right;
+    flex: 1;
+    margin-left: var(--mg-v2-spacing-sm);
+  }
+  
+  .mg-v2-table-card-value--center {
+    text-align: center;
+  }
+  
+  .mg-v2-table-card-value--left {
+    text-align: left;
+  }
+}
+
+/* ============================================
+   Table 정렬 스타일
+   ============================================ */
+
+.mg-v2-table-sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.mg-v2-table-sortable:hover {
+  background-color: var(--mg-v2-secondary-light);
+}
+
+.mg-v2-table-sortable::after {
+  content: '';
+  position: absolute;
+  right: var(--mg-v2-spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 4px solid var(--mg-v2-secondary);
+}
+
+.mg-v2-table-sortable--asc::after {
+  border-bottom: 4px solid var(--mg-v2-primary);
+  border-top: none;
+}
+
+.mg-v2-table-sortable--desc::after {
+  border-top: 4px solid var(--mg-v2-primary);
+  border-bottom: none;
+}
+
+/* ============================================
+   Table 필터 스타일
+   ============================================ */
+
+.mg-v2-table-filter {
+  position: relative;
+}
+
+.mg-v2-table-filter-input {
+  width: 100%;
+  padding: var(--mg-v2-spacing-xs);
+  border: 1px solid var(--mg-v2-secondary-light);
+  border-radius: var(--mg-v2-spacing-xs);
+  font-size: var(--mg-v2-fontSize-sm);
+}
+
+.mg-v2-table-filter-clear {
+  position: absolute;
+  right: var(--mg-v2-spacing-xs);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--mg-v2-secondary);
+}
+
+.mg-v2-table-filter-clear:hover {
+  color: var(--mg-v2-text);
+}
+
+/* ============================================
+   Table 페이지네이션 스타일
+   ============================================ */
+
+.mg-v2-table-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--mg-v2-spacing-sm);
+  margin-top: var(--mg-v2-spacing-md);
+  padding: var(--mg-v2-spacing-md);
+}
+
+.mg-v2-table-pagination-info {
+  color: var(--mg-v2-secondary);
+  font-size: var(--mg-v2-fontSize-sm);
+}
+
+.mg-v2-table-pagination-button {
+  padding: var(--mg-v2-spacing-xs) var(--mg-v2-spacing-sm);
+  border: 1px solid var(--mg-v2-secondary-light);
+  background-color: var(--color-white);
+  color: var(--mg-v2-text);
+  border-radius: var(--mg-v2-spacing-xs);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.mg-v2-table-pagination-button:hover:not(:disabled) {
+  background-color: var(--mg-v2-secondary-light);
+}
+
+.mg-v2-table-pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mg-v2-table-pagination-button--active {
+  background-color: var(--mg-v2-primary);
+  color: var(--color-white);
+  border-color: var(--mg-v2-primary);
+}
+
+/* ============================================
+   접근성 개선
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-table-body tr {
+    transition: none;
+  }
+  
+  .mg-v2-table-card {
+    transition: none;
+  }
+  
+  .mg-v2-table-card:hover {
+    transform: none;
+  }
+}
+
+/* ============================================
+   다크 모드 지원
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  .mg-v2-table-desktop {
+    background-color: var(--mg-v2-background);
+    color: var(--mg-v2-text);
+  }
+  
+  .mg-v2-table-header th {
+    background-color: var(--mg-v2-background);
+    color: var(--mg-v2-text);
+    border-bottom-color: var(--mg-v2-secondary-dark);
+  }
+  
+  .mg-v2-table-body tr {
+    border-bottom-color: var(--mg-v2-secondary-dark);
+  }
+  
+  .mg-v2-table-card {
+    background-color: var(--mg-v2-background);
+    border-color: var(--mg-v2-secondary-dark);
+  }
+  
+  .mg-v2-table-card-item {
+    border-bottom-color: var(--mg-v2-secondary-dark);
+  }
+}
+
+/* ============================================
+   고대비 모드 지원
+   ============================================ */
+
+@media (prefers-contrast: high) {
+  .mg-v2-table-desktop th,
+  .mg-v2-table-desktop td {
+    border: 2px solid var(--mg-v2-text);
+  }
+  
+  .mg-v2-table-card {
+    border: 2px solid var(--mg-v2-text);
+  }
+  
+  .mg-v2-table-card-item {
+    border-bottom: 2px solid var(--mg-v2-text);
+  }
+}

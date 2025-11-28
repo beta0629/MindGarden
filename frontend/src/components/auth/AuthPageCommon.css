@@ -241,7 +241,7 @@
   width: 64px;
   height: 64px;
   border-radius: var(--radius-lg);
-  background: var(--color-success, #10b981);
+  background: var(--color-success, var(--mg-success-500));
   color: var(--color-white);
   display: flex;
   align-items: center;

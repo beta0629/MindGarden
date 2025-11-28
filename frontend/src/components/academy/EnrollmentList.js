@@ -8,8 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import Card from '../ui/Card/Card';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { DataTable, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -101,13 +100,13 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
     { key: 'actions', label: '작업', render: (enrollment) => (
       <div className="academy-actions">
         {enrollment.status !== 'CANCELLED' && (
-          <MGButton
+          <button className="mg-button"
             variant="danger"
             size="small"
             onClick={() => handleCancel(enrollment.enrollmentId)}
           >
             취소
-          </MGButton>
+          </button>
         )}
       </div>
     )}
@@ -115,19 +114,19 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
 
   return (
     <div className="academy-enrollment-list">
-      <Card>
-        <Card.Header>
+      <div className="mg-card">
+        <div className="mg-card__header">
           <h3>수강 등록 목록</h3>
           {onCreateEnrollment && (
-            <MGButton
+            <button className="mg-button"
               variant="primary"
               onClick={onCreateEnrollment}
             >
               수강 등록
-            </MGButton>
+            </button>
           )}
-        </Card.Header>
-        <Card.Body>
+        </div>
+        <div className="mg-card__body">
           {/* 에러 상태 */}
           {error && !loading && (
             <ErrorState message={error} onRetry={fetchEnrollments} />
@@ -144,8 +143,8 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
               emptyMessage="등록된 수강이 없습니다."
             />
           )}
-        </Card.Body>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

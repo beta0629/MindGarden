@@ -8,7 +8,7 @@
   padding: 2rem;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
   text-align: center;
 }
 
@@ -22,7 +22,7 @@
 
 .billing-callback__spinner {
   animation: spin 1s linear infinite;
-  color: #3b82f6;
+  color: var(--mg-primary-500);
 }
 
 @keyframes spin {
@@ -59,11 +59,11 @@
 }
 
 .billing-callback__success .billing-callback__icon {
-  color: #10b981;
+  color: var(--mg-success-500);
 }
 
 .billing-callback__fail .billing-callback__icon {
-  color: #ef4444;
+  color: var(--mg-error-500);
 }
 
 .billing-callback__success h2,

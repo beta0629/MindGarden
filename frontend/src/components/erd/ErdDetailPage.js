@@ -96,35 +96,35 @@ const ErdDetailPage = () => {
         startOnLoad: false,
         theme: 'default',
         themeVariables: {
-          primaryColor: '#007bff',
+          primaryColor: 'var(--mg-primary-500)',
           primaryTextColor: '#333',
-          primaryBorderColor: '#007bff',
+          primaryBorderColor: 'var(--mg-primary-500)',
           lineColor: '#666',
           secondaryColor: '#f0f0f0',
           tertiaryColor: '#fff',
           background: '#fff',
           mainBkg: '#fff',
-          secondBkg: '#f5f5f5',
+          secondBkg: 'var(--mg-gray-100)',
           textColor: '#333',
           edgeLabelBackground: '#fff',
-          clusterBkg: '#f5f5f5',
+          clusterBkg: 'var(--mg-gray-100)',
           clusterBorder: '#ccc',
           defaultLinkColor: '#666',
           titleColor: '#333',
-          actorBorder: '#007bff',
+          actorBorder: 'var(--mg-primary-500)',
           actorBkg: '#e3f2fd',
           actorTextColor: '#333',
-          actorLineColor: '#007bff',
+          actorLineColor: 'var(--mg-primary-500)',
           signalColor: '#333',
           signalTextColor: '#333',
           labelBoxBkgColor: '#fff',
-          labelBoxBorderColor: '#007bff',
+          labelBoxBorderColor: 'var(--mg-primary-500)',
           labelTextColor: '#333',
           loopTextColor: '#333',
-          noteBorderColor: '#007bff',
+          noteBorderColor: 'var(--mg-primary-500)',
           noteBkgColor: '#fff3cd',
           noteTextColor: '#333',
-          activationBorderColor: '#007bff',
+          activationBorderColor: 'var(--mg-primary-500)',
           activationBkgColor: '#e3f2fd',
           sequenceNumberColor: '#fff',
         },
@@ -139,7 +139,7 @@ const ErdDetailPage = () => {
           minEntityWidth: 100,
           minEntityHeight: 75,
           entityPadding: 15,
-          stroke: '#007bff',
+          stroke: 'var(--mg-primary-500)',
           fill: '#fff',
           fontSize: 14,
         },
@@ -285,7 +285,7 @@ const ErdDetailPage = () => {
         // 현재 관계선 하이라이트
         path.style.opacity = '1';
         path.style.strokeWidth = '3';
-        path.style.stroke = '#007bff';
+        path.style.stroke = 'var(--mg-primary-500)';
 
         setSelectedRelation(`Relation ${index + 1}`);
         setSelectedTable(null);
@@ -333,7 +333,7 @@ const ErdDetailPage = () => {
       if (isRelated) {
         path.style.opacity = '1';
         path.style.strokeWidth = '2.5';
-        path.style.stroke = '#007bff';
+        path.style.stroke = 'var(--mg-primary-500)';
       } else {
         path.style.opacity = '0.2';
       }

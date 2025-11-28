@@ -14,9 +14,9 @@
     --branch-gray-700: #374151;
     --branch-gray-800: #1f2937;
     --branch-gray-900: #111827;
-    --branch-white: #ffffff;
+    --branch-white: var(--mg-white);
     --branch-border-radius: 8px;
-    --branch-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --branch-box-shadow: 0 1px 3px 0 var(--mg-shadow-light);
     --branch-transition: all 0.2s ease-in-out;
 }
 
@@ -323,7 +323,7 @@
 }
 
 /* 공통 버튼 스타일 */
-.btn-primary {
+.mg-btn--primary {
     padding: 12px 24px;
     background-color: var(--branch-primary-color);
     color: var(--branch-white);
@@ -335,11 +335,11 @@
     transition: var(--branch-transition);
 }
 
-.btn-primary:hover:not(:disabled) {
+.mg-btn--primary:hover:not(:disabled) {
     background-color: #1d4ed8;
 }
 
-.btn-primary:disabled {
+.mg-btn--primary:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
@@ -404,26 +404,26 @@
     margin-bottom: 16px;
 }
 
-.form-group {
+.mg-form__group {
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
-.form-group.full-width {
+.mg-form__group.full-width {
     flex: 1 1 100%;
 }
 
-.form-group label {
+.mg-form__group label {
     font-size: var(--font-size-sm);
     font-weight: 500;
     color: var(--branch-gray-700);
     margin-bottom: 4px;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+.mg-form__group input,
+.mg-form__group select,
+.mg-form__group textarea {
     padding: 10px 12px;
     border: 2px solid var(--branch-gray-300);
     border-radius: var(--branch-border-radius);
@@ -431,32 +431,32 @@
     transition: var(--branch-transition);
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.mg-form__group input:focus,
+.mg-form__group select:focus,
+.mg-form__group textarea:focus {
     outline: none;
     border-color: var(--branch-primary-color);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.form-group input.error,
-.form-group select.error,
-.form-group textarea.error {
+.mg-form__group input.error,
+.mg-form__group select.error,
+.mg-form__group textarea.error {
     border-color: var(--branch-error-color);
 }
 
-.form-group input.disabled {
+.mg-form__group input.disabled {
     background-color: var(--branch-gray-100);
     color: var(--branch-gray-500);
     cursor: not-allowed;
 }
 
-.form-group textarea {
+.mg-form__group textarea {
     resize: vertical;
     min-height: 80px;
 }
 
-.form-help {
+.mg-form__help {
     font-size: var(--font-size-xs);
     color: var(--branch-gray-500);
     margin-top: 4px;
@@ -693,9 +693,9 @@ textarea:focus {
 /* 고대비 모드 지원 */
 @media (prefers-contrast: high) {
     :root {
-        --branch-gray-300: #000000;
-        --branch-gray-500: #000000;
-        --branch-gray-700: #000000;
+        --branch-gray-300: var(--mg-black);
+        --branch-gray-500: var(--mg-black);
+        --branch-gray-700: var(--mg-black);
     }
     
     .branch-table th,

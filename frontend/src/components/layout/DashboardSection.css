@@ -46,7 +46,7 @@
 .dashboard-section-collapse-btn {
   background: none;
   border: none;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
   cursor: pointer;
   padding: var(--spacing-xs);
   margin-left: var(--spacing-sm);
@@ -57,7 +57,7 @@
 }
 
 .dashboard-section-collapse-btn:hover {
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   color: #2c3e50;
 }
 

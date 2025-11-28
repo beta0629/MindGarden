@@ -8,8 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import Card from '../ui/Card/Card';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { DataTable, FilterBar, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES, CLASS_STATUS, CLASS_STATUS_LABELS } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -118,22 +117,22 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
     { key: 'actions', label: '작업', render: (classItem) => (
       <div className="academy-actions">
         {onEditClass && (
-          <MGButton
+          <button className="mg-button"
             variant="outline"
             size="small"
             onClick={() => onEditClass(classItem)}
           >
             수정
-          </MGButton>
+          </button>
         )}
         {onDeleteClass && (
-          <MGButton
+          <button className="mg-button"
             variant="danger"
             size="small"
             onClick={() => handleDelete(classItem.classId)}
           >
             삭제
-          </MGButton>
+          </button>
         )}
       </div>
     )}
@@ -141,19 +140,19 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
 
   return (
     <div className="academy-class-list">
-      <Card>
-        <Card.Header>
+      <div className="mg-card">
+        <div className="mg-card__header">
           <h3>반 목록</h3>
           {onCreateClass && (
-            <MGButton
+            <button className="mg-button"
               variant="primary"
               onClick={onCreateClass}
             >
               반 등록
-            </MGButton>
+            </button>
           )}
-        </Card.Header>
-        <Card.Body>
+        </div>
+        <div className="mg-card__body">
           {/* 필터 */}
           <FilterBar
             filters={filterConfig}
@@ -177,8 +176,8 @@ const ClassList = ({ branchId, courseId, onClassSelect, onCreateClass, onEditCla
               emptyMessage="등록된 반이 없습니다."
             />
           )}
-        </Card.Body>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

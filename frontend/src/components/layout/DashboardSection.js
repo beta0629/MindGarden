@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './DashboardSection.css';
 
 const DashboardSection = ({ 

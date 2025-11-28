@@ -69,14 +69,14 @@
   background: rgba(248, 249, 250, 0.6);
   color: var(--ios-text-primary);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px var(--mg-shadow-light);
 }
 
 .mg-btn--secondary:hover {
   background: rgba(248, 249, 250, 0.8);
   color: var(--ios-text-primary);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px var(--mg-shadow-medium);
 }
 
 .mg-btn--success {

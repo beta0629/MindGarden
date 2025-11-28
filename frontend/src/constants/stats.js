@@ -58,16 +58,16 @@ export const STATS_ICONS = {
 export const STATS_COLORS = {
   [STATS_TYPES.TOTAL_SCHEDULES]: '#8B7ED8',        // 부드러운 보라색
   [STATS_TYPES.BOOKED_SCHEDULES]: '#F4A261',       // 부드러운 오렌지색
-  [STATS_TYPES.CONFIRMED_SCHEDULES]: '#74B9FF',    // 부드러운 파란색
+  [STATS_TYPES.CONFIRMED_SCHEDULES]: 'var(--mg-info-500)',    // 부드러운 파란색
   [STATS_TYPES.COMPLETED_SCHEDULES]: '#7BC4A4',    // 부드러운 민트색
   [STATS_TYPES.CANCELLED_SCHEDULES]: '#E76F51',    // 부드러운 코랄색
   [STATS_TYPES.IN_PROGRESS_SCHEDULES]: '#8B7ED8',  // 부드러운 보라색
   [STATS_TYPES.TODAY_TOTAL]: '#8B7ED8',            // 부드러운 보라색
   [STATS_TYPES.TODAY_COMPLETED]: '#7BC4A4',        // 부드러운 민트색
-  [STATS_TYPES.TODAY_IN_PROGRESS]: '#74B9FF',      // 부드러운 파란색
+  [STATS_TYPES.TODAY_IN_PROGRESS]: 'var(--mg-info-500)',      // 부드러운 파란색
   [STATS_TYPES.TODAY_CANCELLED]: '#E76F51',        // 부드러운 코랄색
   [STATS_TYPES.TODAY_BOOKED]: '#F4A261',           // 부드러운 오렌지색
-  [STATS_TYPES.TODAY_CONFIRMED]: '#74B9FF'         // 부드러운 파란색
+  [STATS_TYPES.TODAY_CONFIRMED]: 'var(--mg-info-500)'         // 부드러운 파란색
 };
 
 // ==================== 통계 그룹 ====================

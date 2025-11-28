@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { 
     Card, Row, Col, Button, Badge, Alert, 
     Tab, Tabs, Table, Modal, Form, ButtonGroup
@@ -308,7 +308,7 @@ const BranchDetail = ({
                         <Card.Body>
                             {loading ? (
                                 <div className="text-center py-4">
-                                    <UnifiedLoading text="통계를 불러오는 중..." size="medium" type="inline" />
+                                    <div className="mg-loading">로딩중...</div>
                                 </div>
                             ) : (
                                 <Row>

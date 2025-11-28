@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { FaUser, FaEdit, FaTrash, FaPlus, FaEye, FaUsers, FaLink, FaCalendarAlt, FaClipboardList } from 'react-icons/fa';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { getUserStatusColor, getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { getCurrentUser } from '../../utils/session';
@@ -674,7 +674,7 @@ const ConsultantComprehensiveManagement = () => {
                                             </div>
                                             
                                             <div className="mg-v2-consultant-card__actions">
-                                                <MGButton 
+                                                <button className="mg-button" 
                                                     variant="primary"
                                                     size="small"
                                                     onClick={(e) => {
@@ -683,8 +683,8 @@ const ConsultantComprehensiveManagement = () => {
                                                     }}
                                                 >
                                                     수정
-                                                </MGButton>
-                                                <MGButton 
+                                                </button>
+                                                <button className="mg-button" 
                                                     variant="danger"
                                                     size="small"
                                                     onClick={(e) => {
@@ -694,7 +694,7 @@ const ConsultantComprehensiveManagement = () => {
                                                     }}
                                                 >
                                                     삭제
-                                                </MGButton>
+                                                </button>
                                                             </div>
                                                                 </div>
                                                             </div>
@@ -714,10 +714,10 @@ const ConsultantComprehensiveManagement = () => {
                         
                         { /* 기본관리 기능들 */ }
                             <div className="mg-v2-form-actions">
-                            <MGButton variant="primary" className="mg-v2-button mg-v2-button-primary" onClick={ () => handleOpenModal('create') }>➕ 새 상담사 등록
-                            </MGButton>
-                            <MGButton variant="primary" className="mg-v2-button mg-v2-button-secondary" onClick={ loadConsultants }>🔄 새로고침
-                            </MGButton>
+                            <button className="mg-button" variant="primary" className="mg-v2-button mg-v2-button-primary" onClick={ () => handleOpenModal('create') }>➕ 새 상담사 등록
+                            </button>
+                            <button className="mg-button" variant="primary" className="mg-v2-button mg-v2-button-secondary" onClick={ loadConsultants }>🔄 새로고침
+                            </button>
                     </div>
 
                     { /* 상담사 목록 - 상담사 종합관리와 동일한 디자인 */ }
@@ -796,7 +796,7 @@ const ConsultantComprehensiveManagement = () => {
                                             </div>
                                             
                                             <div className="mg-v2-consultant-card__actions">
-                                        <MGButton 
+                                        <button className="mg-button" 
                                                     variant="primary"
                                                     size="small"
                                             onClick={(e) => {
@@ -805,8 +805,8 @@ const ConsultantComprehensiveManagement = () => {
                                             }}
                                         >
                                             수정
-                                        </MGButton>
-                                        <MGButton 
+                                        </button>
+                                        <button className="mg-button" 
                                                     variant="danger"
                                                     size="small"
                                             onClick={(e) => {
@@ -816,7 +816,7 @@ const ConsultantComprehensiveManagement = () => {
                                             }}
                                         >
                                             삭제
-                                        </MGButton>
+                                        </button>
                                             </div>
                                     </div>
                                 </div>
@@ -978,7 +978,7 @@ const ConsultantComprehensiveManagement = () => {
             </div>
             )}
 
-            { loading && <UnifiedLoading text="데이터를 불러오는 중..." type="inline" /> }
+            { loading && <div className="mg-loading">로딩중...</div> }
             
             { /* 삭제 확인 모달 */ }
             <MGConfirmModal

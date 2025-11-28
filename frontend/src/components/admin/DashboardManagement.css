@@ -35,7 +35,7 @@
 .dashboard-icon {
   width: var(--mg-icon-size-lg, 2rem);
   height: var(--mg-icon-size-lg, 2rem);
-  color: var(--mg-primary, #3b82f6);
+  color: var(--mg-primary, var(--mg-primary-500));
 }
 
 .btn-create-dashboard {
@@ -81,7 +81,7 @@
 
 .search-input:focus {
   outline: none;
-  border-color: var(--mg-primary, #3b82f6);
+  border-color: var(--mg-primary, var(--mg-primary-500));
   box-shadow: var(--mg-shadow-focus, 0 0 0 3px rgba(59, 130, 246, 0.1));
 }
 
@@ -154,16 +154,16 @@
 }
 
 .dashboard-card {
-  background: var(--mg-bg-primary, #ffffff);
+  background: var(--mg-bg-primary, var(--mg-white));
   border: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
   border-radius: var(--mg-border-radius-lg, 0.75rem);
   padding: var(--mg-spacing-lg, 1.5rem);
   transition: all var(--mg-transition-duration, 0.2s);
-  box-shadow: var(--mg-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+  box-shadow: var(--mg-shadow-sm, 0 1px 3px var(--mg-shadow-light));
 }
 
 .dashboard-card:hover {
-  box-shadow: var(--mg-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
+  box-shadow: var(--mg-shadow-md, 0 4px 12px var(--mg-shadow-medium));
   transform: translateY(var(--mg-transform-hover, -2px));
 }
 
@@ -173,7 +173,7 @@
 }
 
 .dashboard-card.default {
-  border-color: var(--mg-primary, #3b82f6);
+  border-color: var(--mg-primary, var(--mg-primary-500));
   border-width: var(--mg-border-width-thick, 2px);
 }
 
@@ -229,12 +229,12 @@
 
 .badge-default {
   background: var(--mg-primary-light, #dbeafe);
-  color: var(--mg-primary, #3b82f6);
+  color: var(--mg-primary, var(--mg-primary-500));
 }
 
 .badge-active {
   background: var(--mg-success-light, #d1fae5);
-  color: var(--mg-success, #10b981);
+  color: var(--mg-success, var(--mg-success-500));
 }
 
 .badge-inactive {
@@ -324,7 +324,7 @@
 }
 
 .stat-value.active {
-  color: var(--mg-success, #10b981);
+  color: var(--mg-success, var(--mg-success-500));
 }
 
 .stat-value.inactive {
@@ -332,7 +332,7 @@
 }
 
 .stat-value.default {
-  color: var(--mg-primary, #3b82f6);
+  color: var(--mg-primary, var(--mg-primary-500));
 }
 
 /* 반응형 */

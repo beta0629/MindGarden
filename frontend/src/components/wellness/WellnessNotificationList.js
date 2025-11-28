@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Heart, AlertCircle, TrendingUp, Bell } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import { useSession } from '../../contexts/SessionContext';
-import notificationManager from '../../utils/notification';
+// import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './WellnessNotificationList.css';
 
 /**
@@ -82,7 +82,7 @@ const WellnessNotificationList = () => {
     return (
       <SimpleLayout title="웰니스 알림">
         <div className="wellness-notification-list">
-          <UnifiedLoading message="알림을 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );

@@ -81,7 +81,7 @@
 
 .erp-management-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--mg-shadow-light);
 }
 
 .erp-management-icon {
@@ -92,7 +92,7 @@
   height: 48px;
   border-radius: 8px;
   background: var(--mg-color-primary-light, #e3f2fd);
-  color: var(--mg-color-primary, #007bff);
+  color: var(--mg-color-primary, var(--mg-primary-500));
   margin-bottom: 0.75rem;
 }
 

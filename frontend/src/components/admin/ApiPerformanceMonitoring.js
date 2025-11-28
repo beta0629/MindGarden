@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSync, FaTrash, FaDownload } from 'react-icons/fa';
-import SimpleLayout from '../layout/SimpleLayout';
+// import SimpleLayout from '../layout/SimpleLayout';
 import ApiPerformanceWidget from './widgets/ApiPerformanceWidget';
 import PerformanceWidget from './widgets/PerformanceWidget';
-import MGButton from '../common/MGButton';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { ApiPerformanceReportGenerator } from '../../utils/apiPerformanceUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import './ApiPerformanceMonitoring.css';
@@ -69,7 +69,7 @@ const ApiPerformanceMonitoring = () => {
       <div className="api-performance-monitoring">
         <div className="page-header">
           <div className="header-left">
-            <MGButton
+            <button className="mg-button"
               variant="outline"
               size="small"
               onClick={() => navigate('/admin')}
@@ -77,7 +77,7 @@ const ApiPerformanceMonitoring = () => {
             >
               <FaArrowLeft />
               관리자 대시보드
-            </MGButton>
+            </button>
             <div className="page-title">
               <h1>API 성능 모니터링</h1>
               <p>실시간 API 응답 시간 및 성능 지표 분석</p>
@@ -85,7 +85,7 @@ const ApiPerformanceMonitoring = () => {
           </div>
           
           <div className="header-actions">
-            <MGButton
+            <button className="mg-button"
               variant="outline"
               size="small"
               onClick={handleDownloadReport}
@@ -93,9 +93,9 @@ const ApiPerformanceMonitoring = () => {
             >
               <FaDownload />
               보고서 다운로드
-            </MGButton>
+            </button>
             
-            <MGButton
+            <button className="mg-button"
               variant="outline"
               size="small"
               onClick={handleClearStats}
@@ -104,9 +104,9 @@ const ApiPerformanceMonitoring = () => {
             >
               <FaTrash />
               통계 초기화
-            </MGButton>
+            </button>
             
-            <MGButton
+            <button className="mg-button"
               variant="primary"
               size="small"
               onClick={handleRefresh}
@@ -114,7 +114,7 @@ const ApiPerformanceMonitoring = () => {
             >
               <FaSync className={refreshing ? 'spinning' : ''} />
               새로고침
-            </MGButton>
+            </button>
           </div>
         </div>
 

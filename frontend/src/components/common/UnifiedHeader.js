@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
-import UnifiedModal from './modals/UnifiedModal';
+// import UnifiedModal from './modals/UnifiedModal'; // 임시 비활성화
 import SimpleHamburgerMenu from '../layout/SimpleHamburgerMenu';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
@@ -21,10 +21,10 @@ import '../../styles/main.css';
  * - 향후 브랜딩 변경 시 쉽게 교체 가능한 구조
  *
  * @param {object} props - 컴포넌트 props
- * @param {string} [props.title=''] - 헤더 제목 (기본값: 'MindGarden')
+ * @param {string} [props.title=''] - 헤더 제목 (기본값: 'CoreSolution')
  * @param {string} [props.logoType='text'] - 로고 타입 (text, image, custom)
  * @param {string} [props.logoImage=''] - 커스텀 로고 이미지 URL
- * @param {string} [props.logoAlt='MindGarden'] - 로고 alt 텍스트
+ * @param {string} [props.logoAlt='CoreSolution'] - 로고 alt 텍스트
  * @param {boolean} [props.showUserMenu=true] - 사용자 메뉴 표시 여부
  * @param {boolean} [props.showHamburger=true] - 햄버거 메뉴 표시 여부
  * @param {string} [props.variant='default'] - 헤더 스타일 (default, compact, transparent)
@@ -60,16 +60,30 @@ const UnifiedHeader = ({
   const [isLoadingTenants, setIsLoadingTenants] = useState(false);
 
   // 브랜딩 정보 Hook
-  const { headerProps, isLoading: isBrandingLoading } = useBranding({
+  const { headerProps, isLoading: isBrandingLoading, brandingInfo } = useBranding({
     autoLoad: useBrandingInfo && !!user,
     useCache: true
   });
 
   // 실제 사용할 props 결정 (전달받은 props 우선, 없으면 브랜딩 정보 사용)
-  const actualTitle = title || (useBrandingInfo ? headerProps.title : 'MindGarden');
+  const actualTitle = title || (useBrandingInfo ? headerProps.title : 'CoreSolution');
   const actualLogoType = logoType || (useBrandingInfo ? headerProps.logoType : 'text');
   const actualLogoImage = logoImage || (useBrandingInfo ? headerProps.logoImage : '');
-  const actualLogoAlt = logoAlt || (useBrandingInfo ? headerProps.logoAlt : 'MindGarden');
+  const actualLogoAlt = logoAlt || (useBrandingInfo ? headerProps.logoAlt : 'CoreSolution');
+  
+  // 테넌트 이름 결정 (우선순위: 사용자 정보 > 브랜딩 정보 > 기본값)
+  const getTenantDisplayName = () => {
+    // 1순위: 사용자 정보에서 테넌트 이름
+    if (user?.tenant?.name) return user.tenant.name;
+    if (user?.tenantName) return user.tenantName;
+    if (user?.branchName) return user.branchName;
+    
+    // 2순위: 브랜딩 정보에서 회사명
+    if (brandingInfo?.companyName) return brandingInfo.companyName;
+    
+    // 3순위: 헤더 타이틀
+    return actualTitle;
+  };
 
   // 로고 클릭 핸들러
   const handleLogoClick = () => {
@@ -373,7 +387,7 @@ const UnifiedHeader = ({
           {/* 사용자 정보 */}
           <div className="mg-header__user-details">
             <span className="mg-header__user-name">{user.name || user.nickname || user.username}</span>
-            <span className="mg-header__user-role">{user.role}</span>
+            <span className="mg-header__user-role">{getTenantDisplayName()}</span>
           </div>
         </div>
         <button 
@@ -438,7 +452,7 @@ const UnifiedHeader = ({
 
       {/* 테넌트 전환 모달 */}
       {showTenantSwitchModal && (
-        <UnifiedModal
+        <div className="mg-modal"
           isOpen={showTenantSwitchModal}
           onClose={() => setShowTenantSwitchModal(false)}
           title="테넌트 전환"
@@ -498,7 +512,7 @@ const UnifiedHeader = ({
               </button>
             </div>
           </div>
-        </UnifiedModal>
+        </div>
       )}
     </>
   );

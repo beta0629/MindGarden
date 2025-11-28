@@ -10,7 +10,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { apiGet } from '../../utils/ajax';
 import { SCHEDULE_API } from '../../constants/api';
-import UnifiedLoading from './UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import CustomSelect from './CustomSelect';
 import { 
   SORT_OPTIONS, 
@@ -74,10 +74,10 @@ const ScheduleList = ({
       // 실패 시 기본값 설정
       setFilterOptions([
         { value: 'ALL', label: '전체', icon: '📋', color: '#6b7280', description: '모든 일정' },
-        { value: 'TODAY', label: '오늘', icon: '📅', color: '#3b82f6', description: '오늘 일정' },
-        { value: 'THIS_WEEK', label: '이번 주', icon: '📅', color: '#10b981', description: '이번 주 일정' },
-        { value: 'THIS_MONTH', label: '이번 달', icon: '📅', color: '#f59e0b', description: '이번 달 일정' },
-        { value: 'UPCOMING', label: '예정된 일정', icon: '⏰', color: '#8b5cf6', description: '예정된 일정' },
+        { value: 'TODAY', label: '오늘', icon: '📅', color: 'var(--mg-primary-500)', description: '오늘 일정' },
+        { value: 'THIS_WEEK', label: '이번 주', icon: '📅', color: 'var(--mg-success-500)', description: '이번 주 일정' },
+        { value: 'THIS_MONTH', label: '이번 달', icon: '📅', color: 'var(--mg-warning-500)', description: '이번 달 일정' },
+        { value: 'UPCOMING', label: '예정된 일정', icon: '⏰', color: 'var(--mg-purple-500)', description: '예정된 일정' },
         { value: 'COMPLETED', label: '완료된 일정', icon: '✅', color: '#059669', description: '완료된 일정' }
       ]);
     } finally {
@@ -103,11 +103,11 @@ const ScheduleList = ({
       console.error('정렬 옵션 로드 실패:', error);
       // 실패 시 기본값 설정
       setSortOptions([
-        { value: 'DATE_ASC', label: '날짜 오름차순', icon: '📅', color: '#3b82f6', description: '날짜 오름차순 정렬' },
-        { value: 'DATE_DESC', label: '날짜 내림차순', icon: '📅', color: '#ef4444', description: '날짜 내림차순 정렬' },
-        { value: 'TITLE_ASC', label: '제목 오름차순', icon: '🔤', color: '#10b981', description: '제목 오름차순 정렬' },
-        { value: 'TITLE_DESC', label: '제목 내림차순', icon: '🔤', color: '#f59e0b', description: '제목 내림차순 정렬' },
-        { value: 'STATUS_ASC', label: '상태 오름차순', icon: '🔄', color: '#8b5cf6', description: '상태 오름차순 정렬' },
+        { value: 'DATE_ASC', label: '날짜 오름차순', icon: '📅', color: 'var(--mg-primary-500)', description: '날짜 오름차순 정렬' },
+        { value: 'DATE_DESC', label: '날짜 내림차순', icon: '📅', color: 'var(--mg-error-500)', description: '날짜 내림차순 정렬' },
+        { value: 'TITLE_ASC', label: '제목 오름차순', icon: '🔤', color: 'var(--mg-success-500)', description: '제목 오름차순 정렬' },
+        { value: 'TITLE_DESC', label: '제목 내림차순', icon: '🔤', color: 'var(--mg-warning-500)', description: '제목 내림차순 정렬' },
+        { value: 'STATUS_ASC', label: '상태 오름차순', icon: '🔄', color: 'var(--mg-purple-500)', description: '상태 오름차순 정렬' },
         { value: 'STATUS_DESC', label: '상태 내림차순', icon: '🔄', color: '#06b6d4', description: '상태 내림차순 정렬' }
       ]);
     } finally {
@@ -419,7 +419,7 @@ const ScheduleList = ({
 
       <div className="schedule-content">
         {loading ? (
-          <UnifiedLoading text="스케줄을 불러오는 중..." size="medium" type="inline" />
+          <div className="mg-loading">로딩중...</div>
         ) : displaySchedules.length === 0 ? (
           <div className="schedule-empty">
             <i className="bi bi-calendar-x"></i>

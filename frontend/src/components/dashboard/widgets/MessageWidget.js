@@ -11,8 +11,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../utils/ajax';
-import UnifiedLoading from '../../common/UnifiedLoading';
-import UnifiedModal from '../../common/modals/UnifiedModal';
+// // import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedModal from '../../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import './Widget.css';
 
 const MessageWidget = ({ widget, user }) => {
@@ -121,7 +121,7 @@ const MessageWidget = ({ widget, user }) => {
   if (loading && messages.length === 0) {
     return (
       <div className="widget widget-message">
-        <UnifiedLoading message="로딩 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }
@@ -181,7 +181,7 @@ const MessageWidget = ({ widget, user }) => {
       </div>
       
       {selectedMessage && (
-        <UnifiedModal
+        <div className="mg-modal"
           isOpen={!!selectedMessage}
           onClose={() => setSelectedMessage(null)}
           title={selectedMessage.title || selectedMessage.subject}
@@ -199,7 +199,7 @@ const MessageWidget = ({ widget, user }) => {
               )}
             </div>
           </div>
-        </UnifiedModal>
+        </div>
       )}
     </div>
   );

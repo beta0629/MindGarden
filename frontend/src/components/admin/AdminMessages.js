@@ -4,12 +4,12 @@ import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
 import { MessageSquare, Search, Filter, Users, User } from 'lucide-react';
-import UnifiedLoading from "../common/UnifiedLoading";
-import MGButton from "../common/MGButton";
+// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import SimpleLayout from '../layout/SimpleLayout';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 관리자 메시지 관리 페이지
@@ -170,7 +170,7 @@ const AdminMessages = () => {
     return (
       <SimpleLayout>
         <div className="mg-v2-dashboard-layout">
-          <UnifiedLoading text="메시지를 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );
@@ -412,14 +412,14 @@ const AdminMessages = () => {
             <div className="mg-v2-modal mg-v2-modal--medium" onClick={(e) => e.stopPropagation()}>
               <div className="mg-v2-modal__header">
                 <h2 className="mg-v2-modal__title">{selectedMessage.title}</h2>
-                <MGButton 
+                <button className="mg-button" 
                   variant="outline"
                   size="small"
                   onClick={closeModal}
                   aria-label="닫기"
                 >
                   ×
-                </MGButton>
+                </button>
               </div>
               <div className="mg-v2-modal__body">
                 <div className="mg-v2-message-modal-content">
@@ -453,12 +453,12 @@ const AdminMessages = () => {
                 </div>
               </div>
               <div className="mg-v2-modal__actions">
-                <MGButton 
+                <button className="mg-button" 
                   variant="outline"
                   onClick={closeModal}
                 >
                   닫기
-                </MGButton>
+                </button>
               </div>
             </div>
           </div>

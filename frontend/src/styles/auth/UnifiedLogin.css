@@ -192,17 +192,17 @@
 
 .unified-login__social-button--kakao {
   background-color: #FEE500;
-  color: #000000;
+  color: var(--mg-black);
 }
 
 .unified-login__social-button--naver {
   background-color: #03C75A;
-  color: #ffffff;
+  color: var(--mg-white);
 }
 
 .unified-login__social-button--google {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: var(--mg-white);
+  color: var(--mg-black);
   border: 1px solid #d1d5db;
 }
 

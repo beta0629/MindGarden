@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import ClientSelector from '../ClientSelector';
+// import ClientSelector from '../ClientSelector';
 import MappingCreationModal from '../../admin/MappingCreationModal';
-import UnifiedLoading from '../../common/UnifiedLoading';
+import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import { API_BASE_URL } from '../../../constants/api';
 import './ClientSelectionStep.css';
@@ -208,13 +208,7 @@ const ClientSelectionStep = ({
     if (loading) {
         return (
             <div className="client-selection-step">
-                <UnifiedLoading 
-                    text="내담자 목록을 불러오는 중..." 
-                    size="large" 
-                    variant="dots"
-                    type="inline"
-                    className="loading-spinner-inline"
-                />
+                <div className="mg-loading">로딩중...</div>
             </div>
         );
     }

@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import './MGHeader.css';
 
 const MGHeader = ({
-  logo = 'MindGarden',
+  logo = 'CoreSolution',
   user = null,
   notifications = 0,
   onLogoClick = null,

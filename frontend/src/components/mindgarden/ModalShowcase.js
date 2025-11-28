@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ReactDOM from 'react-dom';
 import { X, AlertTriangle } from 'lucide-react';
 
@@ -48,7 +48,7 @@ const ModalShowcase = () => {
           <div className="mg-modal" onClick={(e) => e.stopPropagation()}>
             <div className="mg-modal-header">
               <div className="mg-flex mg-gap-sm" style={{ alignItems: 'center' }}>
-                <AlertTriangle size={24} color="#f59e0b" />
+                <AlertTriangle size={24} color="var(--mg-warning-500)" />
                 <h3 className="mg-modal-title">확인이 필요합니다</h3>
               </div>
               <button 

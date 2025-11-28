@@ -22,7 +22,7 @@
 }
 
 .branch-header-card .card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
     color: white;
     border-bottom: none;
     padding: 1.5rem;
@@ -81,7 +81,7 @@
 }
 
 .branch-info-card .card-header {
-    background: #f8f9fa;
+    background: var(--mg-gray-100);
     border-bottom: 1px solid #e9ecef;
     padding: 1rem 1.5rem;
 }
@@ -101,7 +101,7 @@
 .info-item {
     margin-bottom: 1rem;
     padding: 0.5rem 0;
-    border-bottom: 1px solid #f8f9fa;
+    border-bottom: 1px solid var(--mg-gray-100);
 }
 
 .info-item:last-child {
@@ -126,14 +126,14 @@
 /* 탭 스타일 */
 .branch-tabs .nav-tabs {
     border-bottom: 2px solid #e9ecef;
-    background: #f8f9fa;
+    background: var(--mg-gray-100);
     margin: 0;
 }
 
 .branch-tabs .nav-tabs .nav-link {
     border: none;
     border-radius: 0;
-    color: #6c757d;
+    color: var(--mg-secondary-500);
     font-weight: 500;
     padding: 1rem 1.5rem;
     transition: all 0.2s ease;
@@ -146,8 +146,8 @@
 
 .branch-tabs .nav-tabs .nav-link.active {
     background: white;
-    color: #007bff;
-    border-bottom: 2px solid #007bff;
+    color: var(--mg-primary-500);
+    border-bottom: 2px solid var(--mg-primary-500);
     font-weight: 600;
 }
 
@@ -158,7 +158,7 @@
 
 /* 통계 카드 */
 .stat-card {
-    background: #ffffff;
+    background: var(--mg-white);
     border: 1px solid #e9ecef;
     border-radius: 12px;
     padding: 1.5rem;
@@ -185,19 +185,19 @@
 }
 
 .stat-icon.users {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #0056b3 100%);
 }
 
 .stat-icon.consultants {
-    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    background: linear-gradient(135deg, var(--mg-success-500) 0%, #1e7e34 100%);
 }
 
 .stat-icon.clients {
-    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+    background: linear-gradient(135deg, var(--mg-info-500) 0%, #117a8b 100%);
 }
 
 .stat-icon.admins {
-    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    background: linear-gradient(135deg, var(--mg-warning-500) 0%, #e0a800 100%);
 }
 
 .stat-content h3 {
@@ -208,7 +208,7 @@
 }
 
 .stat-content p {
-    color: #6c757d;
+    color: var(--mg-secondary-500);
     margin: 0;
     font-weight: 500;
 }
@@ -219,7 +219,7 @@
 }
 
 .branch-users-table th {
-    background: #f8f9fa;
+    background: var(--mg-gray-100);
     border-bottom: 2px solid #e9ecef;
     font-weight: 600;
     color: #495057;
@@ -229,7 +229,7 @@
 .branch-users-table td {
     padding: 1rem;
     vertical-align: middle;
-    border-bottom: 1px solid #f8f9fa;
+    border-bottom: 1px solid var(--mg-gray-100);
 }
 
 .branch-users-table tbody tr:hover {
@@ -238,7 +238,7 @@
 
 /* 설정 섹션 */
 .settings-section {
-    background: #f8f9fa;
+    background: var(--mg-gray-100);
     padding: 1.5rem;
     border-radius: 8px;
     border: 1px solid #e9ecef;
@@ -249,7 +249,7 @@
     font-weight: 600;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #007bff;
+    border-bottom: 2px solid var(--mg-primary-500);
 }
 
 .setting-item {
@@ -269,8 +269,8 @@
 }
 
 /* 모달 스타일 */
-.modal-header {
-    background: #f8f9fa;
+.mg-modal__header {
+    background: var(--mg-gray-100);
     border-bottom: 1px solid #e9ecef;
 }
 
@@ -279,12 +279,12 @@
     color: #495057;
 }
 
-.modal-body {
+.mg-modal__body {
     padding: 1.5rem;
 }
 
-.modal-footer {
-    background: #f8f9fa;
+.mg-modal__footer {
+    background: var(--mg-gray-100);
     border-top: 1px solid #e9ecef;
 }
 
@@ -297,19 +297,19 @@
 .alert-info {
     background: #d1ecf1;
     color: #0c5460;
-    border-left: 4px solid #17a2b8;
+    border-left: 4px solid var(--mg-info-500);
 }
 
 .alert-warning {
     background: #fff3cd;
     color: #856404;
-    border-left: 4px solid #ffc107;
+    border-left: 4px solid var(--mg-warning-500);
 }
 
 .alert-danger {
     background: #f8d7da;
     color: #721c24;
-    border-left: 4px solid #dc3545;
+    border-left: 4px solid var(--mg-error-500);
 }
 
 /* 배지 스타일 */
@@ -402,7 +402,7 @@
 }
 
 /* 로딩 스피너 */
-.text-center {
+.mg-text--center {
     padding: 2rem 1rem;
 }
 
@@ -412,8 +412,8 @@
 }
 
 .form-check-input:checked {
-    background-color: #007bff;
-    border-color: #007bff;
+    background-color: var(--mg-primary-500);
+    border-color: var(--mg-primary-500);
 }
 
 .form-check-input:focus {

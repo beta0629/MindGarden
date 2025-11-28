@@ -5,13 +5,13 @@
   background: white;
   border-radius: 12px;
   padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .pg-config-form-header {
   margin-bottom: 32px;
   padding-bottom: 24px;
-  border-bottom: 1px solid var(--mg-border-color, #e0e0e0);
+  border-bottom: 1px solid var(--mg-border-color, var(--mg-gray-300));
 }
 
 .pg-config-form-header h2 {
@@ -49,7 +49,7 @@
 
 .form-warning-box {
   background: #fff3cd;
-  border: 1px solid #ffc107;
+  border: 1px solid var(--mg-warning-500);
   color: #856404;
 }
 
@@ -89,13 +89,13 @@
   gap: 24px;
 }
 
-.form-group {
+.mg-form__group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.form-group label {
+.mg-form__group label {
   font-size: 14px;
   font-weight: 500;
   color: var(--mg-text-primary, #1a1a1a);
@@ -104,21 +104,21 @@
   gap: 4px;
 }
 
-.form-group label.required {
+.mg-form__group label.required {
   position: relative;
 }
 
 .required-mark {
-  color: var(--mg-error, #dc3545);
+  color: var(--mg-error, var(--mg-error-500));
   margin-left: 2px;
 }
 
-.form-input,
+.mg-form__input,
 .form-select,
 .form-textarea {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid var(--mg-border-color, #e0e0e0);
+  border: 1px solid var(--mg-border-color, var(--mg-gray-300));
   border-radius: 8px;
   font-size: 14px;
   transition: all 0.2s;
@@ -126,7 +126,7 @@
   color: var(--mg-text-primary, #1a1a1a);
 }
 
-.form-input:focus,
+.mg-form__input:focus,
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
@@ -134,21 +134,21 @@
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
-.form-input.error,
+.mg-form__input.error,
 .form-select.error,
 .form-textarea.error {
-  border-color: var(--mg-error, #dc3545);
+  border-color: var(--mg-error, var(--mg-error-500));
 }
 
-.form-input.error:focus,
+.mg-form__input.error:focus,
 .form-select.error:focus,
 .form-textarea.error:focus {
   box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
 }
 
-.form-input:disabled,
+.mg-form__input:disabled,
 .form-select:disabled {
-  background-color: var(--mg-bg-secondary, #f5f5f5);
+  background-color: var(--mg-bg-secondary, var(--mg-gray-100));
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -159,7 +159,7 @@
   align-items: center;
 }
 
-.input-with-icon .form-input {
+.input-with-icon .mg-form__input {
   padding-right: 48px;
 }
 
@@ -205,7 +205,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--mg-error, #dc3545);
+  color: var(--mg-error, var(--mg-error-500));
   font-size: 13px;
   margin-top: 4px;
 }
@@ -232,7 +232,7 @@
   gap: 12px;
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid var(--mg-border-color, #e0e0e0);
+  border-top: 1px solid var(--mg-border-color, var(--mg-gray-300));
 }
 
 /* 스크린 리더 전용 텍스트 */
@@ -249,7 +249,7 @@
 }
 
 /* 포커스 스타일 개선 (접근성) */
-.form-input:focus,
+.mg-form__input:focus,
 .form-select:focus,
 .form-textarea:focus,
 .form-checkbox:focus,
@@ -292,11 +292,11 @@
     font-size: 18px;
   }
   
-  .form-group {
+  .mg-form__group {
     gap: 6px;
   }
   
-  .input-with-icon .form-input {
+  .input-with-icon .mg-form__input {
     padding-right: 40px;
   }
   

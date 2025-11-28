@@ -20,11 +20,11 @@ import {
 import { exportMermaidToPng, exportMermaidToSvg } from '../../utils/erdExport';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
-import MGButton from '../common/MGButton';
+// // import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import '../../styles/main.css';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 import './ErdManagement.css';
 
 /**
@@ -323,7 +323,7 @@ const ErdManagement = () => {
   if (sessionLoading) {
     return (
       <SimpleLayout>
-        <UnifiedLoading />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }
@@ -337,13 +337,13 @@ const ErdManagement = () => {
             <Database className="title-icon" />
             <h1>ERD 관리</h1>
           </div>
-          <MGButton
+          <button className="mg-button"
             onClick={() => setShowGenerateModal(true)}
             variant="primary"
           >
             <Plus size={18} style={{ marginRight: '8px' }} />
             ERD 생성
-          </MGButton>
+          </button>
         </div>
 
         {/* 필터 및 검색 */}
@@ -386,13 +386,13 @@ const ErdManagement = () => {
               <option value="false">비활성</option>
             </select>
           </div>
-          <MGButton
+          <button className="mg-button"
             onClick={loadErds}
             variant="secondary"
           >
             <RefreshCw size={18} style={{ marginRight: '8px' }} />
             새로고침
-          </MGButton>
+          </button>
         </div>
 
         {/* 에러 메시지 */}
@@ -405,19 +405,19 @@ const ErdManagement = () => {
 
         {/* ERD 목록 */}
         {loading ? (
-          <UnifiedLoading />
+          <div className="mg-loading">로딩중...</div>
         ) : (
           <div className="erd-list">
             {erds.length === 0 ? (
               <div className="empty-state">
                 <Database className="empty-icon" />
                 <p>ERD가 없습니다.</p>
-                <MGButton
+                <button className="mg-button"
                   onClick={() => setShowGenerateModal(true)}
                   variant="primary"
                 >
                   ERD 생성하기
-                </MGButton>
+                </button>
               </div>
             ) : (
               <div className="erd-grid">
@@ -447,23 +447,23 @@ const ErdManagement = () => {
                       </div>
                     </div>
                     <div className="erd-card-actions">
-                      <MGButton
+                      <button className="mg-button"
                         onClick={() => handleViewErd(erd.diagramId)}
                         variant="secondary"
                         size="small"
                       >
                         <Eye size={16} style={{ marginRight: '4px' }} />
                         보기
-                      </MGButton>
-                      <MGButton
+                      </button>
+                      <button className="mg-button"
                         onClick={() => handleValidateErd(erd.diagramId)}
                         variant="secondary"
                         size="small"
                       >
                         <CheckCircle size={16} style={{ marginRight: '4px' }} />
                         검증
-                      </MGButton>
-                      <MGButton
+                      </button>
+                      <button className="mg-button"
                         onClick={() => {
                           setSelectedErd(erd);
                           setShowCompareModal(true);
@@ -473,15 +473,15 @@ const ErdManagement = () => {
                       >
                         <Compare size={16} style={{ marginRight: '4px' }} />
                         비교
-                      </MGButton>
+                      </button>
                       <div className="download-dropdown">
-                        <MGButton
+                        <button className="mg-button"
                           variant="secondary"
                           size="small"
                         >
                           <Download size={16} style={{ marginRight: '4px' }} />
                           리포트
-                        </MGButton>
+                        </button>
                         <div className="download-menu">
                           <button onClick={() => handleDownloadReport(erd.diagramId, 'json')}>
                             JSON
@@ -495,13 +495,13 @@ const ErdManagement = () => {
                         </div>
                       </div>
                       <div className="export-dropdown">
-                        <MGButton
+                        <button className="mg-button"
                           variant="secondary"
                           size="small"
                         >
                           <Download size={16} style={{ marginRight: '4px' }} />
                           내보내기
-                        </MGButton>
+                        </button>
                         <div className="export-menu">
                           <button onClick={() => handleExportPng(erd)}>
                             PNG
@@ -648,19 +648,19 @@ const ErdManagement = () => {
                 </div>
               </div>
               <div className="modal-footer">
-                <MGButton
+                <button className="mg-button"
                   onClick={() => setShowGenerateModal(false)}
                   variant="secondary"
                 >
                   취소
-                </MGButton>
-                <MGButton
+                </button>
+                <button className="mg-button"
                   onClick={handleGenerateErd}
                   variant="primary"
                   disabled={loading}
                 >
                   생성
-                </MGButton>
+                </button>
               </div>
             </div>
           </div>
@@ -736,26 +736,26 @@ const ErdManagement = () => {
                 )}
               </div>
               <div className="modal-footer">
-                <MGButton
+                <button className="mg-button"
                   onClick={() => handleDownloadReport(selectedErd?.diagramId, 'json')}
                   variant="secondary"
                 >
                   <Download size={16} style={{ marginRight: '8px' }} />
                   JSON 다운로드
-                </MGButton>
-                <MGButton
+                </button>
+                <button className="mg-button"
                   onClick={() => handleDownloadReport(selectedErd?.diagramId, 'html')}
                   variant="secondary"
                 >
                   <Download size={16} style={{ marginRight: '8px' }} />
                   HTML 다운로드
-                </MGButton>
-                <MGButton
+                </button>
+                <button className="mg-button"
                   onClick={() => setShowValidationModal(false)}
                   variant="primary"
                 >
                   닫기
-                </MGButton>
+                </button>
               </div>
             </div>
           </div>
@@ -798,19 +798,19 @@ const ErdManagement = () => {
                 )}
               </div>
               <div className="modal-footer">
-                <MGButton
+                <button className="mg-button"
                   onClick={() => setShowCompareModal(false)}
                   variant="secondary"
                 >
                   취소
-                </MGButton>
-                <MGButton
+                </button>
+                <button className="mg-button"
                   onClick={() => handleCompareVersions(selectedErd.diagramId)}
                   variant="primary"
                   disabled={loading}
                 >
                   비교 실행
-                </MGButton>
+                </button>
               </div>
             </div>
           </div>

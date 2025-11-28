@@ -1,6 +1,5 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 const TypographyShowcase = () => {
   return (
     <section className="mg-v2-section">

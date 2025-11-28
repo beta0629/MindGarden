@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import ReactDOM from 'react-dom';
-import MGButton from '../common/MGButton';
+// import ReactDOM from 'react-dom';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase, FaRocket, FaShieldAlt } from 'react-icons/fa';
 import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, XCircle } from 'lucide-react';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SystemStatus from './system/SystemStatus';
 import DashboardSection from '../layout/DashboardSection';
 import StatCard from '../ui/Card/StatCard';
@@ -28,7 +28,7 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import '../../styles/main.css';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 import './AdminDashboard.new.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
@@ -613,12 +613,7 @@ const AdminDashboard = ({ user: propUser }) => {
         return (
             <div className="admin-dashboard">
                 <div className="admin-dashboard-content">
-                    <UnifiedLoading 
-                        text="세션 확인 중..."
-                        size="large"
-                        variant="default"
-                        type="page"
-                    />
+                    <div className="mg-loading">로딩중...</div>
                 </div>
             </div>
         );
@@ -638,14 +633,14 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                     <div className="mg-dashboard-header-right">
-                        <MGButton 
+                        <button className="mg-button" 
                             variant="outline" 
                             size="small"
                             className="mg-dashboard-icon-btn" 
                             onClick={() => setShowStatisticsModal(true)}
                         >
                             <BarChart />
-                        </MGButton>
+                        </button>
                     </div>
                 </div>
             </div>

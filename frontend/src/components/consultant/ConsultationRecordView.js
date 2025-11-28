@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 상담일지 조회 전용 화면
@@ -53,7 +53,7 @@ const ConsultationRecordView = () => {
   if (loading) {
     return (
       <SimpleLayout title="상담기록 조회">
-        <UnifiedLoading text="상담기록을 불러오는 중..." />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }

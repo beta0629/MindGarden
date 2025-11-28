@@ -1,0 +1,41 @@
+/* SecuritySection 컴포넌트 스타일 */
+
+.security-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.security-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background: #f8f9fa;
+}
+
+.security-info h3 {
+  margin: 0 0 5px 0;
+  color: #333;
+}
+
+.security-info p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.security-btn {
+  padding: 8px 16px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.security-btn:hover {
+  background: #c82333;
+}

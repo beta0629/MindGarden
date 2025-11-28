@@ -1,0 +1,288 @@
+/* NotificationTest.css */
+
+.notification-test {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+    background: var(--color-surface);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-soft);
+}
+
+.notification-test-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 2px solid var(--color-neutral);
+}
+
+.notification-test-header h1 {
+    color: var(--color-text-primary);
+    font-size: 2rem;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+}
+
+.notification-test-header p {
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.notification-test-section {
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: var(--color-card);
+    border-radius: var(--border-radius-medium);
+    border: 1px solid var(--color-neutral);
+}
+
+.notification-test-section h2 {
+    color: var(--color-text-primary);
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.notification-test-section h2::before {
+    content: '📋';
+    font-size: 1.2rem;
+}
+
+.test-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.test-btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: none;
+    border-radius: var(--border-radius-medium);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    min-height: 48px;
+}
+
+.test-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.test-btn:active {
+    transform: translateY(0);
+}
+
+.test-btn-success {
+    background: var(--color-success);
+    color: var(--color-text-primary);
+}
+
+.test-btn-success:hover {
+    background: var(--toast-success-color);
+    color: white;
+}
+
+.test-btn-error {
+    background: var(--color-error);
+    color: var(--color-text-primary);
+}
+
+.test-btn-error:hover {
+    background: var(--toast-error-color);
+    color: white;
+}
+
+.test-btn-warning {
+    background: var(--color-warning);
+    color: var(--color-text-primary);
+}
+
+.test-btn-warning:hover {
+    background: var(--toast-warning-color);
+    color: white;
+}
+
+.test-btn-info {
+    background: var(--color-info);
+    color: var(--color-text-primary);
+}
+
+.test-btn-info:hover {
+    background: var(--toast-info-color);
+    color: white;
+}
+
+.test-btn-primary {
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+}
+
+.test-btn-primary:hover {
+    background: var(--color-primary-dark);
+    color: white;
+}
+
+.test-btn-secondary {
+    background: var(--color-accent);
+    color: var(--color-text-primary);
+}
+
+.test-btn-secondary:hover {
+    background: var(--color-accent-dark);
+    color: white;
+}
+
+.test-btn-special {
+    background: var(--color-tertiary);
+    color: var(--color-text-primary);
+}
+
+.test-btn-special:hover {
+    background: var(--color-tertiary-dark);
+    color: white;
+}
+
+.custom-form {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    max-width: 500px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--color-text-primary);
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 2px solid var(--color-neutral);
+    border-radius: var(--border-radius-small);
+    font-size: 1rem;
+    transition: var(--transition-fast);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(184, 230, 184, 0.2);
+}
+
+.notification-test-info {
+    background: var(--color-neutral-light);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-medium);
+    border-left: 4px solid var(--color-accent);
+}
+
+.notification-test-info h3 {
+    color: var(--color-text-primary);
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-md);
+    font-weight: 600;
+}
+
+.notification-test-info ul {
+    margin: 0;
+    padding-left: var(--spacing-lg);
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.notification-test-info li {
+    margin-bottom: var(--spacing-sm);
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .notification-test {
+        padding: var(--spacing-md);
+        margin: var(--spacing-sm);
+    }
+    
+    .notification-test-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .notification-test-header p {
+        font-size: 1rem;
+    }
+    
+    .test-buttons {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .test-btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.9rem;
+        min-height: 44px;
+    }
+    
+    .custom-form {
+        max-width: 100%;
+    }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .notification-test {
+        background: var(--toast-dark-bg);
+        color: var(--toast-dark-color);
+    }
+    
+    .notification-test-section {
+        background: #374151;
+        border-color: #4a5568;
+    }
+    
+    .notification-test-header h1,
+    .notification-test-section h2,
+    .notification-test-info h3 {
+        color: var(--toast-dark-color);
+    }
+    
+    .notification-test-header p,
+    .notification-test-info li {
+        color: var(--toast-dark-message-color);
+    }
+    
+    .form-group input,
+    .form-group select {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: var(--toast-dark-color);
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: var(--color-primary);
+    }
+    
+    .notification-test-info {
+        background: #2d3748;
+        border-left-color: var(--color-accent);
+    }
+}

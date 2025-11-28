@@ -10,54 +10,54 @@
 // ===== 색상 시스템 =====
 export const COLORS = {
   // 기본 색상
-  PRIMARY: '#2196F3',
-  SECONDARY: '#1976D2',
-  SUCCESS: '#4CAF50',
-  WARNING: '#FF9800',
-  ERROR: '#F44336',
-  INFO: '#2196F3',
+  PRIMARY: 'var(--mg-primary-500)',
+  SECONDARY: 'var(--mg-secondary-600)',
+  SUCCESS: 'var(--mg-success-500)',
+  WARNING: 'var(--mg-warning-500)',
+  ERROR: 'var(--mg-error-500)',
+  INFO: 'var(--mg-primary-500)',
   
   // 배경 색상
   BACKGROUND: {
-    PRIMARY: '#ffffff',
-    SECONDARY: '#f8f9fa',
-    TERTIARY: '#f5f5f5',
+    PRIMARY: 'var(--mg-white)',
+    SECONDARY: 'var(--mg-gray-100)',
+    TERTIARY: 'var(--mg-gray-100)',
     DARK: '#343a40',
-    LIGHT: '#ffffff'
+    LIGHT: 'var(--mg-white)'
   },
   
   // 텍스트 색상
   TEXT: {
-    PRIMARY: '#333333',
-    SECONDARY: '#666666',
-    MUTED: '#999999',
-    LIGHT: '#ffffff',
-    DARK: '#000000'
+    PRIMARY: 'var(--mg-gray-800)',
+    SECONDARY: 'var(--mg-gray-600)',
+    MUTED: 'var(--mg-gray-500)',
+    LIGHT: 'var(--mg-white)',
+    DARK: 'var(--mg-black)'
   },
   
   // 테두리 색상
   BORDER: {
-    DEFAULT: '#e0e0e0',
+    DEFAULT: 'var(--mg-gray-300)',
     LIGHT: '#f0f0f0',
     DARK: '#cccccc',
-    FOCUS: '#2196F3'
+    FOCUS: 'var(--mg-primary-500)'
   },
   
   // 상태별 색상
   STATUS: {
-    ACTIVE: '#4CAF50',
+    ACTIVE: 'var(--mg-success-500)',
     INACTIVE: '#9E9E9E',
-    PENDING: '#FF9800',
-    COMPLETED: '#4CAF50',
-    CANCELLED: '#F44336'
+    PENDING: 'var(--mg-warning-500)',
+    COMPLETED: 'var(--mg-success-500)',
+    CANCELLED: 'var(--mg-error-500)'
   },
   
   // 성능 지표 색상
   PERFORMANCE: {
-    EXCELLENT: '#4CAF50',
+    EXCELLENT: 'var(--mg-success-500)',
     GOOD: '#8BC34A',
-    AVERAGE: '#FF9800',
-    POOR: '#F44336',
+    AVERAGE: 'var(--mg-warning-500)',
+    POOR: 'var(--mg-error-500)',
     CRITICAL: '#D32F2F'
   }
 };
@@ -120,11 +120,11 @@ export const LAYOUT = {
   
   SHADOW: {
     NONE: 'none',
-    SM: '0 1px 3px rgba(0, 0, 0, 0.1)',
-    DEFAULT: '0 2px 8px rgba(0, 0, 0, 0.1)',
-    LG: '0 4px 12px rgba(0, 0, 0, 0.1)',
-    XL: '0 8px 24px rgba(0, 0, 0, 0.15)',
-    INNER: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)'
+    SM: '0 1px 3px var(--mg-shadow-light)',
+    DEFAULT: '0 2px 8px var(--mg-shadow-light)',
+    LG: '0 4px 12px var(--mg-shadow-light)',
+    XL: '0 8px 24px var(--mg-shadow-medium)',
+    INNER: 'inset 0 2px 4px var(--mg-shadow-light)'
   },
   
   Z_INDEX: {

@@ -213,7 +213,7 @@ const IntegrationTest = () => {
           }}>
             <span style={{
               fontSize: 'var(--font-size-xxxl)',
-              color: '#3b82f6'
+              color: 'var(--mg-primary-500)'
             }}>🔧</span>
             {PAGE_TITLES.MAIN}
           </h1>
@@ -259,7 +259,7 @@ const IntegrationTest = () => {
           padding: '24px',
           backgroundColor: 'white',
           borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 2px 8px var(--mg-shadow-light)',
           border: '1px solid #e5e7eb'
         }}>
           <h3 style={{
@@ -284,7 +284,7 @@ const IntegrationTest = () => {
               disabled={loading}
               style={{
                 padding: '16px 24px',
-                backgroundColor: '#3b82f6',
+                backgroundColor: 'var(--mg-primary-500)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -306,7 +306,7 @@ const IntegrationTest = () => {
               }}
               onMouseOut={(e) => {
                 if (!loading) {
-                  e.target.style.backgroundColor = '#3b82f6';
+                  e.target.style.backgroundColor = 'var(--mg-primary-500)';
                   e.target.style.transform = 'translateY(0)';
                 }
               }}
@@ -319,7 +319,7 @@ const IntegrationTest = () => {
               disabled={loading}
               style={{
                 padding: '16px 24px',
-                backgroundColor: '#10b981',
+                backgroundColor: 'var(--mg-success-500)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -341,7 +341,7 @@ const IntegrationTest = () => {
               }}
               onMouseOut={(e) => {
                 if (!loading) {
-                  e.target.style.backgroundColor = '#10b981';
+                  e.target.style.backgroundColor = 'var(--mg-success-500)';
                   e.target.style.transform = 'translateY(0)';
                 }
               }}
@@ -389,7 +389,7 @@ const IntegrationTest = () => {
               disabled={loading}
               style={{
                 padding: '16px 24px',
-                backgroundColor: '#ef4444',
+                backgroundColor: 'var(--mg-error-500)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -411,7 +411,7 @@ const IntegrationTest = () => {
               }}
               onMouseOut={(e) => {
                 if (!loading) {
-                  e.target.style.backgroundColor = '#ef4444';
+                  e.target.style.backgroundColor = 'var(--mg-error-500)';
                   e.target.style.transform = 'translateY(0)';
                 }
               }}
@@ -432,7 +432,7 @@ const IntegrationTest = () => {
             padding: '40px',
             backgroundColor: 'white',
             borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 2px 8px var(--mg-shadow-light)',
             border: '1px solid #e5e7eb',
             marginBottom: '32px'
           }}>
@@ -440,7 +440,7 @@ const IntegrationTest = () => {
               width: '40px',
               height: '40px',
               border: '4px solid #e5e7eb',
-              borderTop: '4px solid #3b82f6',
+              borderTop: '4px solid var(--mg-primary-500)',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               marginBottom: '16px'
@@ -461,7 +461,7 @@ const IntegrationTest = () => {
             padding: '24px',
             backgroundColor: 'white',
             borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 2px 8px var(--mg-shadow-light)',
             border: '1px solid #e5e7eb'
           }}>
             <h3 style={{
@@ -479,9 +479,9 @@ const IntegrationTest = () => {
             <div style={{
               padding: '20px',
               backgroundColor: testResults.success ? '#f0f9ff' : '#fef2f2',
-              border: `2px solid ${testResults.success ? '#3b82f6' : '#ef4444'}`,
+              border: `2px solid ${testResults.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
-              borderLeft: `6px solid ${testResults.success ? '#10b981' : '#ef4444'}`
+              borderLeft: `6px solid ${testResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)'}`
             }}>
               <div style={{
                 display: 'flex',
@@ -497,7 +497,7 @@ const IntegrationTest = () => {
                 }}>{testResults.testName}</h4>
                 <span style={{
                   padding: '6px 12px',
-                  backgroundColor: testResults.success ? '#10b981' : '#ef4444',
+                  backgroundColor: testResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
                   color: 'white',
                   borderRadius: '20px',
                   fontSize: 'var(--font-size-xs)',
@@ -549,9 +549,9 @@ const IntegrationTest = () => {
                       <div key={index} style={{
                         padding: '12px',
                         backgroundColor: result.success ? '#f0f9ff' : '#fef2f2',
-                        border: `1px solid ${result.success ? '#3b82f6' : '#ef4444'}`,
+                        border: `1px solid ${result.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
                         borderRadius: '6px',
-                        borderLeft: `4px solid ${result.success ? '#10b981' : '#ef4444'}`
+                        borderLeft: `4px solid ${result.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)'}`
                       }}>
                         <div style={{
                           display: 'flex',
@@ -566,7 +566,7 @@ const IntegrationTest = () => {
                           }}>{result.testName}</span>
                           <span style={{
                             padding: '4px 8px',
-                            backgroundColor: result.success ? '#10b981' : '#ef4444',
+                            backgroundColor: result.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
                             color: 'white',
                             borderRadius: '12px',
                             fontSize: 'var(--font-size-xs)',
@@ -602,7 +602,7 @@ const IntegrationTest = () => {
             padding: '24px',
             backgroundColor: 'white',
             borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 2px 8px var(--mg-shadow-light)',
             border: '1px solid #e5e7eb'
           }}>
             <h3 style={{
@@ -620,9 +620,9 @@ const IntegrationTest = () => {
             <div style={{
               padding: '20px',
               backgroundColor: healthStatus.overallStatus === 'HEALTHY' ? '#f0f9ff' : '#fef2f2',
-              border: `2px solid ${healthStatus.overallStatus === 'HEALTHY' ? '#3b82f6' : '#ef4444'}`,
+              border: `2px solid ${healthStatus.overallStatus === 'HEALTHY' ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
-              borderLeft: `6px solid ${healthStatus.overallStatus === 'HEALTHY' ? '#10b981' : '#ef4444'}`
+              borderLeft: `6px solid ${healthStatus.overallStatus === 'HEALTHY' ? 'var(--mg-success-500)' : 'var(--mg-error-500)'}`
             }}>
               <div style={{
                 display: 'flex',
@@ -638,7 +638,7 @@ const IntegrationTest = () => {
                 }}>시스템 상태</h4>
                 <span style={{
                   padding: '6px 12px',
-                  backgroundColor: healthStatus.overallStatus === 'HEALTHY' ? '#10b981' : '#ef4444',
+                  backgroundColor: healthStatus.overallStatus === 'HEALTHY' ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
                   color: 'white',
                   borderRadius: '20px',
                   fontSize: 'var(--font-size-xs)',
@@ -696,7 +696,7 @@ const IntegrationTest = () => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '12px',
-                      backgroundColor: '#f8f9fa',
+                      backgroundColor: 'var(--mg-gray-100)',
                       borderRadius: '6px',
                       border: '1px solid #e5e7eb'
                     }}>
@@ -707,7 +707,7 @@ const IntegrationTest = () => {
                       }}>{service.name}:</span>
                       <span style={{
                         padding: '4px 8px',
-                        backgroundColor: service.status === 'HEALTHY' ? '#10b981' : '#ef4444',
+                        backgroundColor: service.status === 'HEALTHY' ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
                         color: 'white',
                         borderRadius: '12px',
                         fontSize: 'var(--font-size-xs)',
@@ -730,7 +730,7 @@ const IntegrationTest = () => {
             padding: '24px',
             backgroundColor: 'white',
             borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 2px 8px var(--mg-shadow-light)',
             border: '1px solid #e5e7eb'
           }}>
             <h3 style={{
@@ -748,9 +748,9 @@ const IntegrationTest = () => {
             <div style={{
               padding: '20px',
               backgroundColor: performanceResults.success ? '#f0f9ff' : '#fef2f2',
-              border: `2px solid ${performanceResults.success ? '#3b82f6' : '#ef4444'}`,
+              border: `2px solid ${performanceResults.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
-              borderLeft: `6px solid ${performanceResults.success ? '#10b981' : '#ef4444'}`
+              borderLeft: `6px solid ${performanceResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)'}`
             }}>
               <div style={{
                 display: 'flex',
@@ -766,7 +766,7 @@ const IntegrationTest = () => {
                 }}>성능 측정 결과</h4>
                 <span style={{
                   padding: '6px 12px',
-                  backgroundColor: performanceResults.success ? '#10b981' : '#ef4444',
+                  backgroundColor: performanceResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
                   color: 'white',
                   borderRadius: '20px',
                   fontSize: 'var(--font-size-xs)',
@@ -814,7 +814,7 @@ const IntegrationTest = () => {
                       {performanceResults.responseTimes?.map((time, index) => (
                         <div key={index} style={{
                           padding: '8px 12px',
-                          backgroundColor: '#f8f9fa',
+                          backgroundColor: 'var(--mg-gray-100)',
                           borderRadius: '6px',
                           border: '1px solid #e5e7eb',
                           fontSize: 'var(--font-size-sm)',
@@ -845,7 +845,7 @@ const IntegrationTest = () => {
             padding: '24px',
             backgroundColor: 'white',
             borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 2px 8px var(--mg-shadow-light)',
             border: '1px solid #e5e7eb'
           }}>
             <h3 style={{
@@ -863,9 +863,9 @@ const IntegrationTest = () => {
             <div style={{
               padding: '20px',
               backgroundColor: securityResults.success ? '#f0f9ff' : '#fef2f2',
-              border: `2px solid ${securityResults.success ? '#3b82f6' : '#ef4444'}`,
+              border: `2px solid ${securityResults.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
-              borderLeft: `6px solid ${securityResults.success ? '#10b981' : '#ef4444'}`
+              borderLeft: `6px solid ${securityResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)'}`
             }}>
               <div style={{
                 display: 'flex',
@@ -881,7 +881,7 @@ const IntegrationTest = () => {
                 }}>보안 검증 결과</h4>
                 <span style={{
                   padding: '6px 12px',
-                  backgroundColor: securityResults.success ? '#10b981' : '#ef4444',
+                  backgroundColor: securityResults.success ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
                   color: 'white',
                   borderRadius: '20px',
                   fontSize: 'var(--font-size-xs)',
@@ -910,7 +910,7 @@ const IntegrationTest = () => {
                     </span>
                     <span style={{
                       padding: '4px 8px',
-                      backgroundColor: securityResults.encryptionWorking ? '#10b981' : '#ef4444',
+                      backgroundColor: securityResults.encryptionWorking ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
                       color: 'white',
                       borderRadius: '12px',
                       fontSize: 'var(--font-size-xs)',
@@ -933,7 +933,7 @@ const IntegrationTest = () => {
                     </span>
                     <span style={{
                       padding: '4px 8px',
-                      backgroundColor: securityResults.roleValidationWorking ? '#10b981' : '#ef4444',
+                      backgroundColor: securityResults.roleValidationWorking ? 'var(--mg-success-500)' : 'var(--mg-error-500)',
                       color: 'white',
                       borderRadius: '12px',
                       fontSize: 'var(--font-size-xs)',
@@ -957,7 +957,7 @@ const IntegrationTest = () => {
                     </span>
                     <span style={{
                       padding: '4px 8px',
-                      backgroundColor: securityResults.securityScore >= 80 ? '#10b981' : securityResults.securityScore >= 60 ? '#f59e0b' : '#ef4444',
+                      backgroundColor: securityResults.securityScore >= 80 ? 'var(--mg-success-500)' : securityResults.securityScore >= 60 ? 'var(--mg-warning-500)' : 'var(--mg-error-500)',
                       color: 'white',
                       borderRadius: '12px',
                       fontSize: 'var(--font-size-xs)',

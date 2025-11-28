@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
@@ -38,11 +38,11 @@ const ConsultantMessages = () => {
 
   // 메시지 유형 옵션
   const messageTypes = [
-    { value: 'GENERAL', label: '일반', icon: '💬', color: '#6c757d' },
-    { value: 'FOLLOW_UP', label: '후속 조치', icon: '📋', color: '#007bff' },
-    { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: '#28a745' },
-    { value: 'REMINDER', label: '알림', icon: '🔔', color: '#ffc107' },
-    { value: 'URGENT', label: '긴급', icon: '⚠️', color: '#dc3545' }
+    { value: 'GENERAL', label: '일반', icon: '💬', color: 'var(--mg-secondary-500)' },
+    { value: 'FOLLOW_UP', label: '후속 조치', icon: '📋', color: 'var(--mg-primary-500)' },
+    { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: 'var(--mg-success-500)' },
+    { value: 'REMINDER', label: '알림', icon: '🔔', color: 'var(--mg-warning-500)' },
+    { value: 'URGENT', label: '긴급', icon: '⚠️', color: 'var(--mg-error-500)' }
   ];
 
   const loadMessages = useCallback(async () => {
@@ -206,7 +206,7 @@ const ConsultantMessages = () => {
   if (sessionLoading) {
     return (
       <SimpleLayout title="메시지 관리">
-        <UnifiedLoading text="세션 정보를 불러오는 중..." size="medium" type="inline" />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }
@@ -276,7 +276,7 @@ const ConsultantMessages = () => {
         {/* 로딩 상태 */}
         {loading && (
           <div className="consultant-messages-loading-container">
-            <UnifiedLoading text="메시지 목록을 불러오는 중..." size="medium" type="inline" />
+            <div className="mg-loading">로딩중...</div>
             <p className="consultant-messages-loading-text">잠시만 기다려주세요...</p>
           </div>
         )}

@@ -1,0 +1,107 @@
+/**
+ * 결제 수단 등록 컴포넌트 스타일
+ */
+
+.payment-method-registration {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.payment-method-registration__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.payment-method-registration__header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.payment-method-registration__content {
+  margin-bottom: 2rem;
+}
+
+.payment-method-registration__description {
+  margin-bottom: 1.5rem;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.payment-method-registration__description small {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.payment-method-registration__error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+.payment-method-registration__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.payment-method-registration__info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.payment-method-registration__info-item strong {
+  color: #374151;
+}
+
+.payment-method-registration__info-item span {
+  color: #6b7280;
+}
+
+.payment-method-registration__customer-key {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  word-break: break-all;
+}
+
+.payment-method-registration__footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .payment-method-registration {
+    padding: 1.5rem;
+  }
+
+  .payment-method-registration__footer {
+    flex-direction: column;
+  }
+
+  .payment-method-registration__footer button {
+    width: 100%;
+  }
+}
+

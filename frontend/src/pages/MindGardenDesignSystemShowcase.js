@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/mindgarden-design-system.css';
+import '../styles/unified-design-tokens.css';
 import HeroSection from '../components/mindgarden/HeroSection';
 import StatsDashboard from '../components/mindgarden/StatsDashboard';
 import TypographyShowcase from '../components/mindgarden/TypographyShowcase';

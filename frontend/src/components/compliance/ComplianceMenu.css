@@ -10,7 +10,7 @@
     text-align: center;
     margin-bottom: 40px;
     padding: 30px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
     color: white;
     border-radius: 15px;
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
@@ -42,7 +42,7 @@
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--mg-gray-300);
     text-decoration: none;
     color: inherit;
     transition: all 0.3s ease;
@@ -62,7 +62,7 @@
 
 .menu-item:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 30px var(--mg-shadow-medium);
 }
 
 .menu-item:hover::before {
@@ -71,15 +71,15 @@
 
 /* 색상별 스타일 */
 .menu-item.primary::before {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
 }
 
 .menu-item.primary:hover {
-    border-color: #667eea;
+    border-color: var(--mg-primary-500);
 }
 
 .menu-item.secondary::before {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%);
 }
 
 .menu-item.secondary:hover {
@@ -95,27 +95,27 @@
 }
 
 .menu-item.danger::before {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    background: linear-gradient(135deg, var(--mg-error-500) 0%, #ee5a52 100%);
 }
 
 .menu-item.danger:hover {
-    border-color: #ff6b6b;
+    border-color: var(--mg-error-500);
 }
 
 .menu-item.info::before {
-    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    background: linear-gradient(135deg, var(--mg-info-500) 0%, #0984e3 100%);
 }
 
 .menu-item.info:hover {
-    border-color: #74b9ff;
+    border-color: var(--mg-info-500);
 }
 
 .menu-item.success::before {
-    background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+    background: linear-gradient(135deg, var(--mg-success-500) 0%, #00a085 100%);
 }
 
 .menu-item.success:hover {
-    border-color: #00b894;
+    border-color: var(--mg-success-500);
 }
 
 .menu-item.warning::before {
@@ -167,7 +167,7 @@
 }
 
 .menu-item:hover .menu-item-arrow {
-    color: #667eea;
+    color: var(--mg-primary-500);
     transform: translateX(5px);
 }
 
@@ -184,7 +184,7 @@
     padding: 25px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--mg-gray-300);
 }
 
 .info-card h3 {
@@ -206,7 +206,7 @@
     padding: 8px 0;
     color: #666;
     font-size: 0.95rem;
-    border-bottom: 1px solid #f8f9fa;
+    border-bottom: 1px solid var(--mg-gray-100);
 }
 
 .info-card li:last-child {
@@ -215,7 +215,7 @@
 
 .info-card li::before {
     content: '•';
-    color: #667eea;
+    color: var(--mg-primary-500);
     font-weight: bold;
     margin-right: 8px;
 }

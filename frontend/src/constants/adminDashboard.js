@@ -167,11 +167,11 @@ export const CSS_CLASSES = {
 
 // ===== 색상 =====
 export const COLORS = {
-  PRIMARY: '#007aff',
-  SECONDARY: '#5856d6',
-  SUCCESS: '#34c759',
-  WARNING: '#ff9500',
-  DANGER: '#ff3b30',
+  PRIMARY: 'var(--mg-primary-500)',
+  SECONDARY: 'var(--mg-purple-500)',
+  SUCCESS: 'var(--mg-success-500)',
+  WARNING: 'var(--mg-warning-500)',
+  DANGER: 'var(--mg-error-500)',
   INFO: '#5ac8fa',
   LIGHT: '#f2f2f7',
   DARK: '#1c1c1e',
@@ -182,7 +182,7 @@ export const COLORS = {
   TEXT_TERTIARY: '#c7c7cc',
   
   // 배경 색상
-  BG_PRIMARY: '#ffffff',
+  BG_PRIMARY: 'var(--mg-white)',
   BG_SECONDARY: '#f2f2f7',
   BG_TERTIARY: '#e5e5ea'
 };

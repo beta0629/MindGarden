@@ -22,11 +22,11 @@
 }
 
 .color-picker:hover {
-    border-color: #3b82f6;
+    border-color: var(--mg-primary-500);
 }
 
 .color-text:focus {
-    border-color: #3b82f6;
+    border-color: var(--mg-primary-500);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 .common-code-form-overlay {
@@ -35,7 +35,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--mg-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -50,7 +50,7 @@
     max-width: 800px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 20px 25px -5px var(--mg-shadow-light), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .form-header {
@@ -96,13 +96,13 @@
     margin-bottom: 16px;
 }
 
-.common-code-form .form-group {
+.common-code-form .mg-form__group {
     display: flex;
     flex-direction: column;
     margin-bottom: 16px;
 }
 
-.common-code-form .form-group label {
+.common-code-form .mg-form__group label {
     font-size: 14px;
     font-weight: 500;
     color: #374151;
@@ -187,24 +187,24 @@
     cursor: not-allowed;
 }
 
-.btn-secondary {
+.mg-btn--secondary {
     background: white;
     color: #6b7280;
     border: 2px solid var(--color-border);
 }
 
-.btn-secondary:hover:not(:disabled) {
+.mg-btn--secondary:hover:not(:disabled) {
     background: #f9fafb;
     border-color: #d1d5db;
     color: #374151;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+.mg-btn--primary {
+    background: linear-gradient(135deg, var(--mg-primary-500), #1d4ed8);
     color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
+.mg-btn--primary:hover:not(:disabled) {
     background: linear-gradient(135deg, #1d4ed8, #1e40af);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);

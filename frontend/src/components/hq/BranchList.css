@@ -13,7 +13,7 @@
 }
 
 .branch-list-header .card-header {
-    background: #f8f9fa;
+    background: var(--mg-gray-100);
     border-bottom: 1px solid #e9ecef;
     padding: var(--spacing-md) var(--spacing-lg);
 }
@@ -54,7 +54,7 @@
 .branch-card {
     border: 1px solid #e9ecef;
     border-radius: 12px;
-    background: #ffffff;
+    background: var(--mg-white);
     cursor: pointer;
     transition: all 0.3s ease;
     overflow: hidden;
@@ -62,13 +62,13 @@
 }
 
 .branch-card:hover {
-    border-color: #007bff;
+    border-color: var(--mg-primary-500);
     box-shadow: 0 4px 16px rgba(0,123,255,0.15);
     transform: translateY(-2px);
 }
 
 .branch-card.selected {
-    border-color: #007bff;
+    border-color: var(--mg-primary-500);
     background: #f8f9ff;
     box-shadow: 0 4px 16px rgba(0,123,255,0.2);
 }
@@ -80,7 +80,7 @@
     top: 0;
     bottom: 0;
     width: 4px;
-    background: #007bff;
+    background: var(--mg-primary-500);
 }
 
 /* 지점 카드 헤더 */
@@ -89,7 +89,7 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-sm) var(--spacing-md);
-    background: #f8f9fa;
+    background: var(--mg-gray-100);
     border-bottom: 1px solid #e9ecef;
 }
 
@@ -111,7 +111,7 @@
     font-size: var(--font-size-xs);
     border: none;
     background: transparent;
-    color: #6c757d;
+    color: var(--mg-secondary-500);
     transition: all 0.2s ease;
 }
 
@@ -144,7 +144,7 @@
 
 .branch-code {
     font-size: var(--font-size-sm);
-    color: #6c757d;
+    color: var(--mg-secondary-500);
     margin-bottom: 8px;
     display: flex;
     align-items: center;
@@ -155,7 +155,7 @@
 }
 
 .branch-code code {
-    background: #f8f9fa;
+    background: var(--mg-gray-100);
     padding: var(--spacing-xs) var(--spacing-md);
     border-radius: 4px;
     font-size: var(--font-size-xs);
@@ -182,7 +182,7 @@
     align-items: center;
     font-size: var(--font-size-sm);
     color: #495057;
-    background: #f8f9fa;
+    background: var(--mg-gray-100);
     padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: 6px;
     border: 1px solid #e9ecef;
@@ -190,14 +190,14 @@
 
 .stat-item .stat-label {
     margin-right: 4px;
-    color: #6c757d;
+    color: var(--mg-secondary-500);
     font-weight: 500;
 }
 
 /* 지점 카드 푸터 */
 .branch-card-footer {
     padding: var(--spacing-sm) var(--spacing-md);
-    background: #f8f9fa;
+    background: var(--mg-gray-100);
     border-top: 1px solid #e9ecef;
 }
 
@@ -275,7 +275,7 @@
 }
 
 /* 로딩 및 빈 상태 */
-.branch-list .text-center {
+.branch-list .mg-text--center {
     padding: 3rem 1rem;
 }
 
@@ -299,7 +299,7 @@
 
 .branch-list .form-control:focus,
 .branch-list .form-select:focus {
-    border-color: #007bff;
+    border-color: var(--mg-primary-500);
     box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
 }
 
@@ -315,11 +315,11 @@
 }
 
 .branch-list .btn-outline-secondary:hover {
-    background-color: #6c757d;
-    border-color: #6c757d;
+    background-color: var(--mg-secondary-500);
+    border-color: var(--mg-secondary-500);
 }
 
 .branch-list .btn-outline-primary:hover {
-    background-color: #007bff;
-    border-color: #007bff;
+    background-color: var(--mg-primary-500);
+    border-color: var(--mg-primary-500);
 }

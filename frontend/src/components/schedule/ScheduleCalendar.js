@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import ScheduleModal from './ScheduleModal';
+// import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import TimeSelectionModal from './TimeSelectionModal';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
@@ -101,12 +101,12 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.error('일정 상태 코드 로드 실패:', error);
             // 실패 시 기본값 설정 (enum 6개 상태만)
             setScheduleStatusOptions([
-                { value: 'AVAILABLE', label: '가능', icon: '✅', color: '#28a745', description: '예약 가능한 시간대' },
-                { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#007bff', description: '예약된 일정' },
-                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: '#17a2b8', description: '확정된 일정' },
-                { value: 'VACATION', label: '휴가', icon: '🏖️', color: '#ffc107', description: '휴가로 인한 비활성' },
-                { value: 'COMPLETED', label: '완료', icon: '✅', color: '#6c757d', description: '완료된 일정' },
-                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#dc3545', description: '취소된 일정' }
+                { value: 'AVAILABLE', label: '가능', icon: '✅', color: 'var(--mg-success-500)', description: '예약 가능한 시간대' },
+                { value: 'BOOKED', label: '예약됨', icon: '📅', color: 'var(--mg-primary-500)', description: '예약된 일정' },
+                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: 'var(--mg-info-500)', description: '확정된 일정' },
+                { value: 'VACATION', label: '휴가', icon: '🏖️', color: 'var(--mg-warning-500)', description: '휴가로 인한 비활성' },
+                { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-secondary-500)', description: '완료된 일정' },
+                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: 'var(--mg-error-500)', description: '취소된 일정' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -557,7 +557,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
     return (
         <div className="mg-v2-schedule-calendar mg-mobile-container">
-            {loading && <UnifiedLoading />}
+            {loading && <div className="mg-loading">로딩중...</div>}
             
             {/* 헤더 */}
             <ScheduleCalendarHeader

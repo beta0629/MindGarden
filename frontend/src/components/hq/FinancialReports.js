@@ -11,8 +11,8 @@ import {
     FaBuilding,
     FaChartBar
 } from 'react-icons/fa';
-import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import Chart from '../common/Chart';
 import './FinancialReports.css';
 
@@ -258,7 +258,7 @@ const FinancialReports = ({ user }) => {
         return (
             <SimpleLayout title="재무 보고서">
                 <div className="financial-reports-container">
-                    <UnifiedLoading text="보고서를 생성하는 중..." size="large" type="inline" />
+                    <div className="mg-loading">로딩중...</div>
                 </div>
             </SimpleLayout>
         );
@@ -680,7 +680,7 @@ const FinancialReports = ({ user }) => {
                 {/* 로딩 상태 */}
                 {loading && (
                     <div className="text-center py-5">
-                        <UnifiedLoading />
+                        <div className="mg-loading">로딩중...</div>
                         <p className="mt-3">데이터를 불러오는 중...</p>
                     </div>
                 )}

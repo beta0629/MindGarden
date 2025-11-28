@@ -9,9 +9,9 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
-import ConsultantRatingModal from './ConsultantRatingModal';
-import UnifiedLoading from '../common/UnifiedLoading';
-import '../../styles/mindgarden-design-system.css';
+// import ConsultantRatingModal from './ConsultantRatingModal';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import '../../styles/unified-design-tokens.css';
 import './RatableConsultationsSection.css';
 
 /**
@@ -95,7 +95,7 @@ const RatableConsultationsSection = () => {
   if (loading) {
     return (
       <div className="ratable-consultations-section">
-        <UnifiedLoading text="평가 가능한 상담을 불러오는 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }

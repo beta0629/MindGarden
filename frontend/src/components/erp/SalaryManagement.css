@@ -357,8 +357,8 @@
 }
 
 /* ==================== 버튼 스타일 ==================== */
-.btn-primary,
-.btn-secondary,
+.mg-btn--primary,
+.mg-btn--secondary,
 .btn-success,
 .btn-danger {
     padding: var(--spacing-sm) var(--spacing-md);
@@ -370,24 +370,24 @@
     transition: all 0.2s ease;
 }
 
-.btn-primary {
+.mg-btn--primary {
     background: var(--mint-green);
     color: var(--dark-gray);
 }
 
-.btn-primary:hover {
+.mg-btn--primary:hover {
     background: var(--olive-green);
     color: white;
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
-.btn-secondary {
+.mg-btn--secondary {
     background: var(--light-beige);
     color: var(--dark-gray);
 }
 
-.btn-secondary:hover {
+.mg-btn--secondary:hover {
     background: var(--medium-gray);
     color: white;
     transform: translateY(-2px);
@@ -515,8 +515,8 @@
         font-size: var(--font-size-lg);
     }
     
-    .btn-primary,
-    .btn-secondary,
+    .mg-btn--primary,
+    .mg-btn--secondary,
     .btn-success,
     .btn-danger {
         width: 100%;

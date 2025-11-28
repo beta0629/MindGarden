@@ -4,7 +4,7 @@
 
 .client-dashboard {
   --client-primary: #FFB6C1;      /* 연한 핑크 */
-  --client-secondary: #B6E5D8;    /* 민트 */
+  --client-secondary: var(--mg-soft-mint);    /* 민트 */
   --client-success: #98E4D8;      /* 연한 청록 */
   --client-info: #A8D8EA;         /* 연한 하늘색 */
   --client-warning: #FFE5B4;      /* 연한 피치 */

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, Link2, Plus, Users, CheckCircle, TrendingUp, Clock, Zap } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
-import notificationManager from '../../utils/notification';
+// // import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
@@ -10,11 +10,11 @@ import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
 import ClientCard from '../ui/Card/ClientCard';
 import MappingCard from './MappingCard';
-import MGButton from '../common/MGButton';
-import UnifiedLoading from '../common/UnifiedLoading';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SessionExtensionModal from './mapping/SessionExtensionModal';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 회기 관리 컴포넌트 - 완전 재설계
@@ -288,7 +288,7 @@ const SessionManagement = () => {
     }, [loadData, loadMappingStatusCodes]);
 
     if (loading && mappings.length === 0) {
-        return <UnifiedLoading text="데이터를 불러오는 중..." type="page" />;
+        return <div className="mg-loading">로딩중...</div>;
     }
 
     return (
@@ -394,7 +394,7 @@ const SessionManagement = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <MGButton 
+                                            <button className="mg-button" 
                                                 variant="primary"
                                                 size="small"
                                                 className="mg-v2-quick-add-button"
@@ -405,7 +405,7 @@ const SessionManagement = () => {
                                             >
                                                 <Plus size={16} />
                                                 회기 추가
-                                            </MGButton>
+                                            </button>
                                         </div>
                                     );
                                 })}
@@ -433,7 +433,7 @@ const SessionManagement = () => {
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
-                                    <MGButton 
+                                    <button className="mg-button" 
                                         variant="primary" 
                                         size="medium"
                                         onClick={() => {
@@ -445,7 +445,7 @@ const SessionManagement = () => {
                                     >
                                         <Users size={16} />
                                         검색
-                                    </MGButton>
+                                    </button>
                                 </div>
                                 
                                 <div className="mg-v2-search-results">
@@ -469,7 +469,7 @@ const SessionManagement = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <MGButton 
+                                                <button className="mg-button" 
                                                     variant="success"
                                                     size="small"
                                                     disabled={clientMappings.length === 0}
@@ -482,7 +482,7 @@ const SessionManagement = () => {
                                                 >
                                                     <Plus size={14} />
                                                     회기 추가
-                                                </MGButton>
+                                                </button>
                                             </div>
                                         );
                                     })}
@@ -536,7 +536,7 @@ const SessionManagement = () => {
                                                     </div>
                                                 </div>
                                                 <div className="mg-v2-mapping-card-actions">
-                                                    <MGButton
+                                                    <button className="mg-button"
                                                         variant="primary"
                                                         size="small"
                                                         onClick={() => handleQuickAdd(mapping)}
@@ -545,7 +545,7 @@ const SessionManagement = () => {
                                                     >
                                                         <Plus size={14} />
                                                         회기 추가
-                                                    </MGButton>
+                                                    </button>
                                                 </div>
                                             </div>
                                         ))}
@@ -605,7 +605,7 @@ const SessionManagement = () => {
                                     
                                     {request.status === 'PENDING' && (
                                         <div className="mg-v2-request-actions">
-                                            <MGButton 
+                                            <button className="mg-button" 
                                                 variant="success"
                                                 size="small"
                                                 loading={confirmingPayment}
@@ -615,8 +615,8 @@ const SessionManagement = () => {
                                                 clickDelay={2000}
                                             >
                                                 입금 확인
-                                            </MGButton>
-                                            <MGButton 
+                                            </button>
+                                            <button className="mg-button" 
                                                 variant="danger"
                                                 size="small"
                                                 loading={rejectingRequest}
@@ -626,13 +626,13 @@ const SessionManagement = () => {
                                                 clickDelay={1000}
                                             >
                                                 거부
-                                            </MGButton>
+                                            </button>
                                         </div>
                                     )}
                                     
                                     {request.status === 'PAYMENT_CONFIRMED' && (
                                         <div className="mg-v2-request-actions">
-                                            <MGButton 
+                                            <button className="mg-button" 
                                                 variant="primary"
                                                 size="small"
                                                 loading={confirmingPayment}
@@ -642,8 +642,8 @@ const SessionManagement = () => {
                                                 clickDelay={2000}
                                             >
                                                 관리자 승인
-                                            </MGButton>
-                                            <MGButton 
+                                            </button>
+                                            <button className="mg-button" 
                                                 variant="danger"
                                                 size="small"
                                                 loading={rejectingRequest}
@@ -653,7 +653,7 @@ const SessionManagement = () => {
                                                 clickDelay={1000}
                                             >
                                                 거부
-                                            </MGButton>
+                                            </button>
                                         </div>
                                     )}
                                 </div>

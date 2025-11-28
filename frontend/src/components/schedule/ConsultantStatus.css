@@ -25,7 +25,7 @@
 }
 
 .consultant-status-card:hover {
-    border-color: var(--color-success, #28A745);
+    border-color: var(--color-success, var(--mg-success-500));
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
 }
@@ -42,8 +42,8 @@
     height: 60px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid var(--color-success, #28A745);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid var(--color-success, var(--mg-success-500));
+    box-shadow: 0 2px 4px var(--mg-shadow-light);
     min-width: 60px;
     min-height: 60px;
     max-width: 60px;
@@ -59,12 +59,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--color-primary, #007AFF), var(--color-primary-hover, #0056CC));
+    background: linear-gradient(135deg, var(--color-primary, var(--mg-primary-500)), var(--color-primary-hover, #0056CC));
     border-radius: 50%;
     font-size: var(--font-size-base);
-    color: var(--color-text-inverse, #FFFFFF);
-    border: 2px solid var(--color-primary, #007AFF);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: var(--color-text-inverse, var(--mg-white));
+    border: 2px solid var(--color-primary, var(--mg-primary-500));
+    box-shadow: 0 2px 4px var(--mg-shadow-light);
     font-weight: bold;
 }
 

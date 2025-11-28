@@ -1,5 +1,5 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Sparkles } from 'lucide-react';
 
 const HeroSection = () => {
@@ -7,7 +7,7 @@ const HeroSection = () => {
     <section className="mg-v2-section mg-v2-text-center">
       <div className="mg-glass-card mg-animate-fade-in">
         <div className="mg-welcome-badge mg-flex-center mg-gap-sm mg-mb-md">
-          <Sparkles size={24} color="#808000" />
+          <Sparkles size={24} color="var(--mg-olive-green)" />
           <span className="mg-body-medium" style={{ color: 'var(--olive-green)' }}>
             MindGarden에 오신 것을 환영합니다
           </span>

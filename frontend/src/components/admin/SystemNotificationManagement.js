@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { Bell, Plus, Edit, Trash2, Send, Archive } from 'lucide-react';
-import notificationManager from '../../utils/notification';
+// // import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedModal from '../common/modals/UnifiedModal';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { fetchUserPermissions, hasPermission as checkPermission } from '../../utils/permissionUtils';
 import { sessionManager } from '../../utils/sessionManager';
-import '../../styles/mindgarden-design-system.css';
+import '../../styles/unified-design-tokens.css';
 
 /**
  * 시스템 공지 관리 (관리자 전용 - 지점 관리자 이상)
@@ -252,7 +252,7 @@ const SystemNotificationManagement = () => {
   if (permissionsLoading) {
     return (
       <SimpleLayout title="시스템 공지 관리">
-        <UnifiedLoading message="권한 확인 중..." />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }
@@ -313,7 +313,7 @@ const SystemNotificationManagement = () => {
         </div>
 
         {/* 로딩 */}
-        {loading && <UnifiedLoading message="공지 목록을 불러오는 중..." />}
+        {loading && <div className="mg-loading">로딩중...</div>}
 
         {/* 공지 목록 */}
         {!loading && (
@@ -415,7 +415,7 @@ const SystemNotificationManagement = () => {
         )}
 
         {/* 작성/수정 모달 */}
-        <UnifiedModal
+        <div className="mg-modal"
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           title={editingNotification ? '공지 수정' : '새 공지 작성'}
@@ -521,7 +521,7 @@ const SystemNotificationManagement = () => {
               />
             </div>
           </div>
-        </UnifiedModal>
+        </div>
       </div>
     </SimpleLayout>
   );

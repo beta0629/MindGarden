@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
@@ -47,10 +47,10 @@ const ConsultationRecordScreen = () => {
       console.error('우선순위 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setPriorityOptions([
-        { value: 'LOW', label: '낮음', icon: '🟢', color: '#28a745', description: '낮은 우선순위' },
-        { value: 'MEDIUM', label: '보통', icon: '🟡', color: '#ffc107', description: '보통 우선순위' },
+        { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
+        { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
         { value: 'HIGH', label: '높음', icon: '🟠', color: '#fd7e14', description: '높은 우선순위' },
-        { value: 'URGENT', label: '긴급', icon: '🔴', color: '#dc3545', description: '긴급 우선순위' },
+        { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
         { value: 'CRITICAL', label: '위험', icon: '🚨', color: '#6f42c1', description: '위험 우선순위' }
       ]);
     } finally {
@@ -97,17 +97,17 @@ const ConsultationRecordScreen = () => {
 
   // 목표 달성도 옵션
   const goalAchievements = [
-    { value: 'LOW', label: '낮음', color: '#dc3545' },
-    { value: 'MEDIUM', label: '보통', color: '#ffc107' },
-    { value: 'HIGH', label: '높음', color: '#28a745' },
-    { value: 'EXCELLENT', label: '우수', color: '#007bff' }
+    { value: 'LOW', label: '낮음', color: 'var(--mg-error-500)' },
+    { value: 'MEDIUM', label: '보통', color: 'var(--mg-warning-500)' },
+    { value: 'HIGH', label: '높음', color: 'var(--mg-success-500)' },
+    { value: 'EXCELLENT', label: '우수', color: 'var(--mg-primary-500)' }
   ];
 
   // 컴포넌트 스타일
   const styles = {
     container: {
       minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
+      backgroundColor: 'var(--mg-gray-100)',
       padding: '20px'
     },
     header: {
@@ -129,7 +129,7 @@ const ConsultationRecordScreen = () => {
     },
     headerSubtitle: {
       fontSize: 'var(--font-size-base)',
-      color: '#6c757d',
+      color: 'var(--mg-secondary-500)',
       marginBottom: '20px'
     },
     clientInfoCard: {
@@ -162,7 +162,7 @@ const ConsultationRecordScreen = () => {
     clientInfoLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
-      color: '#6c757d',
+      color: 'var(--mg-secondary-500)',
       textTransform: 'uppercase',
       letterSpacing: '0.5px'
     },
@@ -232,7 +232,7 @@ const ConsultationRecordScreen = () => {
       transition: 'all 0.2s ease'
     },
     formInputFocus: {
-      borderColor: '#007bff',
+      borderColor: 'var(--mg-primary-500)',
       boxShadow: '0 0 0 3px rgba(0,123,255,0.1)'
     },
     buttonGroup: {
@@ -256,15 +256,15 @@ const ConsultationRecordScreen = () => {
       gap: '8px'
     },
     primaryButton: {
-      backgroundColor: '#007bff',
+      backgroundColor: 'var(--mg-primary-500)',
       color: '#fff'
     },
     secondaryButton: {
-      backgroundColor: '#6c757d',
+      backgroundColor: 'var(--mg-secondary-500)',
       color: '#fff'
     },
     dangerButton: {
-      backgroundColor: '#dc3545',
+      backgroundColor: 'var(--mg-error-500)',
       color: '#fff'
     },
     statusBadge: {
@@ -285,7 +285,7 @@ const ConsultationRecordScreen = () => {
     },
     progressFill: {
       height: '100%',
-      backgroundColor: '#007bff',
+      backgroundColor: 'var(--mg-primary-500)',
       transition: 'width 0.3s ease'
     },
     loadingOverlay: {
@@ -320,8 +320,8 @@ const ConsultationRecordScreen = () => {
       console.error('완료 상태 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setCompletionStatusOptions([
-        { value: true, label: '완료', icon: '✅', color: '#10b981', description: '작업 완료' },
-        { value: false, label: '미완료', icon: '❌', color: '#ef4444', description: '작업 미완료' }
+        { value: true, label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
+        { value: false, label: '미완료', icon: '❌', color: 'var(--mg-error-500)', description: '작업 미완료' }
       ]);
     } finally {
       setLoadingCompletionCodes(false);
@@ -520,7 +520,7 @@ const ConsultationRecordScreen = () => {
     return (
       <SimpleLayout title="상담일지 작성">
         <div className="consultation-record-screen-loading">
-          <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." type="inline" />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );
@@ -570,7 +570,7 @@ const ConsultationRecordScreen = () => {
             <span style={styles.clientInfoValue}>
               <span style={{
                 ...styles.statusBadge,
-                backgroundColor: client.status === 'ACTIVE' ? '#28a745' : '#6c757d',
+                backgroundColor: client.status === 'ACTIVE' ? 'var(--mg-success-500)' : 'var(--mg-secondary-500)',
                 color: '#fff'
               }}>
                 {getUserStatusKoreanNameSync(client.status)}
@@ -992,7 +992,7 @@ const ConsultationRecordScreen = () => {
             style={{...styles.button, ...styles.primaryButton}}
             disabled={saving}
           >
-            {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '💾 저장'}
+            {saving ? <div className="mg-loading">로딩중...</div> : '💾 저장'}
           </button>
           <button
             type="button"
@@ -1000,7 +1000,7 @@ const ConsultationRecordScreen = () => {
             style={{...styles.button, ...styles.dangerButton}}
             disabled={saving}
           >
-            {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '✅ 완료'}
+            {saving ? <div className="mg-loading">로딩중...</div> : '✅ 완료'}
           </button>
         </div>
       </div>

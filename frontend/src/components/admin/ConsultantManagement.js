@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { Button, Modal, Form, Badge } from 'react-bootstrap';
 import { FaUserTie, FaPlus, FaTrash, FaEye } from 'react-icons/fa';

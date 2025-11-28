@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ReactDOM from 'react-dom';
 import axios from 'axios';
 import './QuickExpenseForm.css';
@@ -43,8 +43,8 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   const getQuickExpenses = () => {
     const quickExpenseConfigs = [
       { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY', icon: '💰', color: '#e74c3c' },
-      { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT', icon: '🏢', color: '#e67e22' },
-      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY', icon: '⚡', color: '#f39c12' },
+      { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT', icon: '🏢', color: 'var(--mg-finance-dark)' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY', icon: '⚡', color: 'var(--mg-finance-primary)' },
       { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'WATER', icon: '💧', color: '#3498db' },
       { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'GAS', icon: '🔥', color: '#e74c3c' },
       { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'INTERNET', icon: '🌐', color: '#9b59b6' },

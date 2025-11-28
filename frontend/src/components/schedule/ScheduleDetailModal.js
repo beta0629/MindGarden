@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiPut, apiGet } from '../../utils/ajax';
-import notificationManager from '../../utils/notification';
+// import notificationManager from '../../utils/notification';
 // import ConsultationLogModal from '../consultant/ConsultationLogModal'; // 부모 컴포넌트에서 관리
-import UnifiedModal from '../common/modals/UnifiedModal';
+import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
 import '../../styles/main.css';
@@ -55,27 +55,27 @@ const ScheduleDetailModal = ({
                     switch (code.codeValue) {
                         case 'AVAILABLE':
                             icon = '✅';
-                            color = '#28a745';
+                            color = 'var(--mg-success-500)';
                             break;
                         case 'BOOKED':
                             icon = '📅';
-                            color = '#007bff';
+                            color = 'var(--mg-primary-500)';
                             break;
                         case 'CONFIRMED':
                             icon = '✅';
-                            color = '#17a2b8';
+                            color = 'var(--mg-info-500)';
                             break;
                         case 'VACATION':
                             icon = '🏖️';
-                            color = '#ffc107';
+                            color = 'var(--mg-warning-500)';
                             break;
                         case 'COMPLETED':
                             icon = '✅';
-                            color = '#6c757d';
+                            color = 'var(--mg-secondary-500)';
                             break;
                         case 'CANCELLED':
                             icon = '❌';
-                            color = '#dc3545';
+                            color = 'var(--mg-error-500)';
                             break;
                     }
                     
@@ -92,12 +92,12 @@ const ScheduleDetailModal = ({
             console.error('일정 상태 코드 로드 실패:', error);
             // 실패 시 기본값 설정 (enum 6개 상태만)
             setScheduleStatusOptions([
-                { value: 'AVAILABLE', label: '가능', icon: '✅', color: '#28a745', description: '예약 가능한 시간대' },
-                { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#007bff', description: '예약된 일정' },
-                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: '#17a2b8', description: '확정된 일정' },
-                { value: 'VACATION', label: '휴가', icon: '🏖️', color: '#ffc107', description: '휴가로 인한 비활성' },
-                { value: 'COMPLETED', label: '완료', icon: '✅', color: '#6c757d', description: '완료된 일정' },
-                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#dc3545', description: '취소된 일정' }
+                { value: 'AVAILABLE', label: '가능', icon: '✅', color: 'var(--mg-success-500)', description: '예약 가능한 시간대' },
+                { value: 'BOOKED', label: '예약됨', icon: '📅', color: 'var(--mg-primary-500)', description: '예약된 일정' },
+                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: 'var(--mg-info-500)', description: '확정된 일정' },
+                { value: 'VACATION', label: '휴가', icon: '🏖️', color: 'var(--mg-warning-500)', description: '휴가로 인한 비활성' },
+                { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-secondary-500)', description: '완료된 일정' },
+                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: 'var(--mg-error-500)', description: '취소된 일정' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -386,7 +386,7 @@ const ScheduleDetailModal = ({
     return (
         <>
             {/* 메인 스케줄 상세 모달 */}
-            <UnifiedModal
+            <div className="mg-modal"
                 isOpen={isOpen}
                 onClose={onClose}
                 title="📋 스케줄 상세 정보"
@@ -571,7 +571,7 @@ const ScheduleDetailModal = ({
                         </div>
                     )}
                 </div>
-            </UnifiedModal>
+            </div>
 
             {showCancelConfirm && renderCancelConfirm()}
             {showConfirmModal && renderConfirmModal()}

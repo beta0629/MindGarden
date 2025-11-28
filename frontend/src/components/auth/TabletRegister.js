@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import { apiGet } from '../../utils/ajax';
@@ -85,7 +85,7 @@ const TabletRegister = () => {
         console.error('성별 코드 로드 실패:', error);
         // 실패 시 기본값 설정
         setGenderOptions([
-          { value: 'MALE', label: '남성', icon: '♂️', color: '#3b82f6' },
+          { value: 'MALE', label: '남성', icon: '♂️', color: 'var(--mg-primary-500)' },
           { value: 'FEMALE', label: '여성', icon: '♀️', color: '#ec4899' },
           { value: 'OTHER', label: '기타', icon: '⚧', color: '#6b7280' }
         ]);

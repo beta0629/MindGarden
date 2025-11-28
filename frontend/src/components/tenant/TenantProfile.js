@@ -13,12 +13,12 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { Building2, CreditCard, Calendar, DollarSign, CheckCircle, XCircle, AlertCircle, Plus, Trash2, Edit2 } from 'lucide-react';
 import { getPaymentMethods, getSubscriptions } from '../../utils/billingService';
-import SubscriptionManagement from '../billing/SubscriptionManagement';
+// // import SubscriptionManagement from '../billing/SubscriptionManagement';
 import PaymentMethodRegistration from '../billing/PaymentMethodRegistration';
 import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
-import MGButton from '../common/MGButton';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './TenantProfile.css';
 
 const TenantProfile = () => {
@@ -191,7 +191,7 @@ const TenantProfile = () => {
   if (sessionLoading || !isLoggedIn || !user) {
     return (
       <SimpleLayout>
-        <UnifiedLoading />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }
@@ -211,7 +211,7 @@ const TenantProfile = () => {
   if (loading) {
     return (
       <SimpleLayout>
-        <UnifiedLoading />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }
@@ -350,13 +350,13 @@ const TenantProfile = () => {
             <div className="tenant-profile-payment">
               <div className="payment-method-header">
                 <h2>결제 수단 관리</h2>
-                <MGButton
+                <button className="mg-button"
                   onClick={() => setShowPaymentMethodRegistration(true)}
                   variant="primary"
                 >
                   <Plus size={16} />
                   결제 수단 추가
-                </MGButton>
+                </button>
               </div>
 
               {showPaymentMethodRegistration && (
@@ -416,13 +416,13 @@ const TenantProfile = () => {
                   <div className="no-payment-methods">
                     <CreditCard size={48} />
                     <p>등록된 결제 수단이 없습니다.</p>
-                    <MGButton
+                    <button className="mg-button"
                       onClick={() => setShowPaymentMethodRegistration(true)}
                       variant="primary"
                     >
                       <Plus size={16} />
                       결제 수단 추가
-                    </MGButton>
+                    </button>
                   </div>
                 )}
               </div>

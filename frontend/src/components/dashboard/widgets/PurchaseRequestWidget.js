@@ -11,7 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../utils/ajax';
-import UnifiedLoading from '../../common/UnifiedLoading';
+// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import './Widget.css';
 
 const PurchaseRequestWidget = ({ widget, user }) => {
@@ -109,7 +109,7 @@ const PurchaseRequestWidget = ({ widget, user }) => {
   if (loading && purchaseData.totalRequests === 0) {
     return (
       <div className="widget widget-purchase-request">
-        <UnifiedLoading message="로딩 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }

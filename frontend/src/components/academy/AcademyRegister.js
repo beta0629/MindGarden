@@ -9,9 +9,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import SimpleLayout from '../layout/SimpleLayout';
-import Card from '../ui/Card/Card';
-import MGButton from '../common/MGButton';
+// import SimpleLayout from '../layout/SimpleLayout';
+// import Card from '../ui/Card/Card'; // 임시 비활성화
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { ACADEMY_API } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
@@ -213,11 +213,11 @@ const AcademyRegister = () => {
   return (
     <SimpleLayout>
       <div className="academy-register">
-        <Card>
-          <Card.Header>
+        <div className="mg-card">
+          <div className="mg-card__header">
             <h2>학원 회원가입</h2>
-          </Card.Header>
-          <Card.Body>
+          </div>
+          <div className="mg-card__body">
             {!tenantId && (
               <div className="academy-error">
                 <p>테넌트 정보가 없습니다. 올바른 링크로 접속해주세요.</p>
@@ -233,7 +233,7 @@ const AcademyRegister = () => {
                     SNS 계정으로 간편하게 가입하세요
                   </p>
                   <div className="academy-social-buttons">
-                    <MGButton
+                    <button className="mg-button"
                       type="button"
                       variant="outline"
                       onClick={() => handleSocialLogin('kakao')}
@@ -242,8 +242,8 @@ const AcademyRegister = () => {
                     >
                       <span className="academy-social-icon">카카오</span>
                       카카오로 가입
-                    </MGButton>
-                    <MGButton
+                    </button>
+                    <button className="mg-button"
                       type="button"
                       variant="outline"
                       onClick={() => handleSocialLogin('naver')}
@@ -252,8 +252,8 @@ const AcademyRegister = () => {
                     >
                       <span className="academy-social-icon">네이버</span>
                       네이버로 가입
-                    </MGButton>
-                    <MGButton
+                    </button>
+                    <button className="mg-button"
                       type="button"
                       variant="outline"
                       onClick={() => handleSocialLogin('google')}
@@ -262,7 +262,7 @@ const AcademyRegister = () => {
                     >
                       <span className="academy-social-icon">구글</span>
                       구글로 가입
-                    </MGButton>
+                    </button>
                   </div>
                   <div className="academy-social-divider">
                     <span>또는</span>
@@ -418,28 +418,28 @@ const AcademyRegister = () => {
 
                 {/* 액션 버튼 */}
                 <div className="academy-form-actions">
-                  <MGButton
+                  <button className="mg-button"
                     type="button"
                     variant="outline"
                     onClick={() => navigate('/login')}
                     disabled={loading}
                   >
                     취소
-                  </MGButton>
-                  <MGButton
+                  </button>
+                  <button className="mg-button"
                     type="submit"
                     variant="primary"
                     loading={loading}
                     disabled={loading}
                   >
                     회원가입
-                  </MGButton>
+                  </button>
                 </div>
               </form>
               </>
             )}
-          </Card.Body>
-        </Card>
+          </div>
+        </div>
       </div>
     </SimpleLayout>
   );

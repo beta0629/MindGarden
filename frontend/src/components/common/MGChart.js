@@ -51,9 +51,9 @@ const MGChart = ({
             },
             tooltip: {
               backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              titleColor: '#ffffff',
-              bodyColor: '#ffffff',
-              borderColor: '#ffffff',
+              titleColor: 'var(--mg-white)',
+              bodyColor: 'var(--mg-white)',
+              borderColor: 'var(--mg-white)',
               borderWidth: 1,
               cornerRadius: 8,
               displayColors: true
@@ -62,7 +62,7 @@ const MGChart = ({
           scales: {
             x: {
               grid: {
-                color: 'rgba(0, 0, 0, 0.1)',
+                color: 'var(--mg-shadow-light)',
                 drawBorder: false
               },
               ticks: {
@@ -74,7 +74,7 @@ const MGChart = ({
             },
             y: {
               grid: {
-                color: 'rgba(0, 0, 0, 0.1)',
+                color: 'var(--mg-shadow-light)',
                 drawBorder: false
               },
               ticks: {

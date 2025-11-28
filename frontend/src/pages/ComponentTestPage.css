@@ -4,7 +4,7 @@
 
 .component-test-page {
   min-height: 100vh;
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   padding: var(--spacing-xl);
 }
 
@@ -22,7 +22,7 @@
 
 .test-container > p {
   font-size: var(--font-size-base);
-  color: #6c757d;
+  color: var(--mg-secondary-500);
   margin-bottom: var(--spacing-2xl);
 }
 
@@ -71,7 +71,7 @@
 
 .color-test-item span {
   font-size: var(--font-size-sm);
-  color: #6c757d;
+  color: var(--mg-secondary-500);
 }
 
 .test-action-btn {

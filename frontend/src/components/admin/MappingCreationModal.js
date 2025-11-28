@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet, apiPost } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../hooks/useSession';
 import { getPackageOptions } from '../../utils/commonCodeUtils';
 import { API_BASE_URL } from '../../constants/api';
-import csrfTokenManager from '../../utils/csrfTokenManager';
-import UnifiedModal from '../common/modals/UnifiedModal';
+// import csrfTokenManager from '../../utils/csrfTokenManager';
+import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import { 
     MAPPING_CREATION_STEPS, 
@@ -607,7 +607,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
     );
 
     return(
-        <UnifiedModal
+        <div className="mg-modal"
             isOpen={ isOpen }
             onClose={ handleClose }
             title="🔗 상담사-내담자 매칭 생성"
@@ -997,7 +997,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                             </div>
                         </div>
                     )}
-        </UnifiedModal>
+        </div>
     );
 };
 

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
-import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import notificationManager from '../../utils/notification';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './ClientSettings.css';
 
 const ClientSettings = () => {
@@ -58,7 +58,7 @@ const ClientSettings = () => {
   if (loading) {
     return (
       <SimpleLayout title="설정">
-        <UnifiedLoading text="설정을 불러오는 중..." />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }

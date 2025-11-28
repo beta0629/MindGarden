@@ -1,0 +1,328 @@
+/* ===== AdminDashboard 스타일 - MindGarden 디자인 시스템 적용 ===== */
+/* 모든 하드코딩된 색상과 크기를 CSS 변수로 변경 */
+
+.admin-dashboard-content {
+    padding: var(--spacing-xl);
+    background-color: var(--color-background);
+    min-height: 100vh;
+}
+
+/* 섹션 제목 */
+.dashboard-section {
+    margin-bottom: var(--spacing-xxl);
+}
+
+.section-title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--color-border);
+}
+
+.section-title i {
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+}
+
+/* 시스템 개요 카드 */
+.overview-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--spacing-xxxl), 1fr));
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xxl);
+}
+
+.overview-card {
+    background: var(--color-background);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+    transition: var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.overview-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.card-icon {
+    width: var(--icon-size-xl);
+    height: var(--icon-size-xl);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xl);
+    color: var(--color-white);
+    flex-shrink: 0;
+}
+
+.card-icon.consultants {
+    background: var(--color-primary);
+}
+
+.card-icon.clients {
+    background: var(--color-success);
+}
+
+.card-icon.mappings {
+    background: var(--color-info);
+}
+
+.card-icon.active {
+    background: var(--color-warning);
+}
+
+.card-content h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.card-value {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-xs) 0;
+}
+
+.card-description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+/* 관리 기능 그리드 - 새로운 BEM 네이밍 적용 */
+.management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-xl);
+}
+
+/* management-card 스타일은 glassmorphism.css에서 관리 */
+
+/* management-card 호버 효과는 glassmorphism.css에서 관리 */
+
+.management-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--border-radius-xxl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xxxl);
+    color: var(--admin-white);
+    flex-shrink: 0;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    transition: var(--transition-bounce);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.management-icon.schedule {
+    background: var(--ios-blue);
+}
+
+.management-icon.sessions {
+    background: var(--ios-green);
+}
+
+.management-icon.consultants {
+    background: var(--ios-orange);
+}
+
+.management-icon.clients {
+    background: var(--ios-red);
+}
+
+.management-icon.user-management {
+    background: var(--ios-purple);
+}
+
+.management-icon.mappings {
+    background: var(--color-purple);
+}
+
+/* 재무 관리 아이콘 스타일 */
+.management-icon.finance {
+    background: var(--admin-color-finance);
+}
+
+.management-icon.revenue {
+    background: var(--admin-color-revenue);
+}
+
+.management-icon.expense {
+    background: var(--admin-color-expense);
+}
+
+.management-icon.payment {
+    background: var(--admin-color-payment);
+}
+
+.management-icon.reports {
+    background: var(--admin-color-report);
+}
+
+.management-icon.settings {
+    background: var(--admin-color-settings);
+}
+
+.management-icon.recurring-expense {
+    background: var(--color-success);
+}
+
+
+.management-content h3 {
+    font-size: var(--admin-font-xl);
+    font-weight: var(--admin-font-weight-semibold);
+    color: var(--admin-text-primary);
+    margin: 0 0 var(--admin-spacing-sm) 0;
+}
+
+.management-content p {
+    font-size: var(--admin-font-sm);
+    color: var(--admin-text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* 시스템 도구 섹션 */
+.tool-buttons {
+    display: flex;
+    gap: var(--admin-spacing-md);
+    flex-wrap: wrap;
+}
+
+.tool-buttons .btn {
+    padding: var(--admin-spacing-md) var(--admin-spacing-xxl);
+    font-weight: var(--admin-font-weight-medium);
+    border-radius: var(--admin-radius-lg);
+    transition: var(--admin-transition-normal);
+    border: 2px solid var(--admin-border-color);
+    background: var(--admin-white);
+    color: var(--admin-text-secondary);
+}
+
+.tool-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--admin-shadow-md);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.tool-buttons .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 토스트 스타일 */
+.toast {
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-xxl);
+    border: none;
+}
+
+.toast-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: var(--admin-spacing-md) var(--admin-spacing-lg);
+}
+
+.toast-body {
+    padding: var(--admin-spacing-md) var(--admin-spacing-lg);
+}
+
+.toast-success {
+    background: var(--color-success-light);
+    color: var(--color-success-dark);
+}
+
+.toast-danger {
+    background: var(--color-danger-light);
+    color: var(--color-danger-dark);
+}
+
+.toast-info {
+    background: var(--color-info-light);
+    color: var(--color-info-dark);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+    .overview-cards {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    
+    .management-grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-dashboard-content {
+        padding: var(--admin-spacing-lg);
+    }
+    
+    .overview-cards {
+        grid-template-columns: 1fr;
+        gap: var(--admin-spacing-lg);
+    }
+    
+    .management-grid {
+        grid-template-columns: 1fr;
+        gap: var(--admin-spacing-lg);
+    }
+    
+    .overview-card,
+    /* management-card 반응형 스타일은 glassmorphism.css에서 관리 */
+    
+    .card-icon,
+    .management-icon {
+        width: 50px;
+        height: 50px;
+        font-size: var(--admin-font-xxl);
+    }
+    
+    .card-value {
+        font-size: var(--admin-font-huge);
+    }
+    
+    .section-title {
+        font-size: var(--admin-font-xxl);
+        margin-bottom: var(--admin-spacing-lg);
+    }
+    
+    .tool-buttons {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-dashboard-content {
+        padding: var(--admin-spacing-md);
+    }
+    
+    .overview-card,
+    /* management-card 모바일 스타일은 glassmorphism.css에서 관리 */
+    
+    .card-value {
+        font-size: var(--admin-font-huge);
+    }
+    
+    .section-title {
+        font-size: var(--admin-font-xl);
+    }
+}

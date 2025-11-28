@@ -3,9 +3,8 @@
  */
 
 import React, { useState } from 'react';
-import MGButton from '../common/MGButton';
-import MGCard from '../common/MGCard';
-
+// // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import MGCard from '../../components/common/MGCard'; // 임시 비활성화
 const CounselingContact = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -36,7 +35,7 @@ const CounselingContact = () => {
         </p>
         
         <div className="counseling-contact__content">
-          <MGCard variant="glass" padding="large" className="counseling-contact__form-card">
+          <div className="mg-card" variant="glass" padding="large" className="counseling-contact__form-card">
             <h3>상담 문의하기</h3>
             <form onSubmit={handleSubmit} className="counseling-contact__form">
               <div className="counseling-contact__form-group">
@@ -86,14 +85,14 @@ const CounselingContact = () => {
                 />
               </div>
               
-              <MGButton type="submit" variant="primary" size="large">
+              <button className="mg-button" type="submit" variant="primary" size="large">
                 문의하기
-              </MGButton>
+              </button>
             </form>
-          </MGCard>
+          </div>
           
           <div className="counseling-contact__info">
-            <MGCard variant="glass" padding="large">
+            <div className="mg-card" variant="glass" padding="large">
               <h3>연락처 정보</h3>
               <div className="counseling-contact__info-item">
                 <strong>전화:</strong> 02-1234-5678
@@ -107,7 +106,7 @@ const CounselingContact = () => {
               <div className="counseling-contact__info-item">
                 <strong>위치:</strong> 서울시 강남구 테헤란로 123
               </div>
-            </MGCard>
+            </div>
           </div>
         </div>
       </div>

@@ -53,9 +53,9 @@ export const getConsultantColor = (consultantId) => {
     
     // 상담사 ID를 기반으로 일관된 색상 생성
     const colors = [
-        '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+        'var(--mg-primary-500)', 'var(--mg-error-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-purple-500)',
         '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1',
-        '#14b8a6', '#a855f7', '#22c55e', '#eab308', '#ef4444'
+        '#14b8a6', '#a855f7', '#22c55e', '#eab308', 'var(--mg-error-500)'
     ];
     
     // 간단한 해시 함수로 일관된 색상 선택
@@ -74,12 +74,12 @@ export const getConsultantColor = (consultantId) => {
  */
 export const getEventColor = (status) => {
     const statusColors = {
-        'AVAILABLE': '#28a745',
-        'BOOKED': '#007bff',
-        'CONFIRMED': '#17a2b8',
-        'VACATION': '#ffc107',
-        'COMPLETED': '#6c757d',
-        'CANCELLED': '#dc3545'
+        'AVAILABLE': 'var(--mg-success-500)',
+        'BOOKED': 'var(--mg-primary-500)',
+        'CONFIRMED': 'var(--mg-info-500)',
+        'VACATION': 'var(--mg-warning-500)',
+        'COMPLETED': 'var(--mg-secondary-500)',
+        'CANCELLED': 'var(--mg-error-500)'
     };
     return statusColors[status] || '#6b7280';
 };
@@ -96,8 +96,8 @@ export const convertVacationToEvent = (vacationData, consultantId, date) => {
         title: '휴가',
         start: startDate.toISOString(),
         end: endDate.toISOString(),
-        backgroundColor: '#ffc107',
-        borderColor: '#ffc107',
+        backgroundColor: 'var(--mg-warning-500)',
+        borderColor: 'var(--mg-warning-500)',
         className: 'vacation-event',
         allDay: true,
         extendedProps: {

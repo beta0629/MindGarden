@@ -1,7 +1,7 @@
 .onboarding-request {
   min-height: 100vh;
   padding: 2rem;
-  background: #f5f5f5;
+  background: var(--mg-gray-100);
 }
 
 .onboarding-request__container {
@@ -10,7 +10,7 @@
   background: white;
   border-radius: 8px;
   padding: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .onboarding-request__title {
@@ -109,7 +109,7 @@
 }
 
 .onboarding-request__input:disabled {
-  background: #f5f5f5;
+  background: var(--mg-gray-100);
   cursor: not-allowed;
 }
 
@@ -153,7 +153,7 @@
 }
 
 .onboarding-request__button--secondary {
-  background: #f5f5f5;
+  background: var(--mg-gray-100);
   color: #333;
 }
 

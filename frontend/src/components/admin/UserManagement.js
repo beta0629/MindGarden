@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { FaUsers, FaEdit, FaUser, FaUserTie, FaCrown, FaBuilding, FaSearch, FaFilter, FaSync, FaTimes } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
-import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import notificationManager from '../../utils/notification';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import './UserManagement.css';
@@ -51,20 +51,20 @@ const UserManagement = ({ onUpdate }) => {
             } else {
                 // 실패 시 기본값 설정
                 setRoleOptions([
-                    { value: 'CLIENT', label: '내담자', icon: '👤', color: '#3b82f6', description: '상담을 받는 내담자' },
-                    { value: 'CONSULTANT', label: '상담사', icon: '👨‍⚕️', color: '#10b981', description: '상담을 제공하는 상담사' },
-                    { value: 'ADMIN', label: '관리자', icon: '👨‍💼', color: '#f59e0b', description: '시스템 관리자' },
-                    { value: 'BRANCH_SUPER_ADMIN', label: '수퍼관리자', icon: '👑', color: '#ef4444', description: '최고 관리자' }
+                    { value: 'CLIENT', label: '내담자', icon: '👤', color: 'var(--mg-primary-500)', description: '상담을 받는 내담자' },
+                    { value: 'CONSULTANT', label: '상담사', icon: '👨‍⚕️', color: 'var(--mg-success-500)', description: '상담을 제공하는 상담사' },
+                    { value: 'ADMIN', label: '관리자', icon: '👨‍💼', color: 'var(--mg-warning-500)', description: '시스템 관리자' },
+                    { value: 'BRANCH_SUPER_ADMIN', label: '수퍼관리자', icon: '👑', color: 'var(--mg-error-500)', description: '최고 관리자' }
                 ]);
             }
         } catch (error) {
             console.error('역할 코드 로드 실패:', error);
             // 실패 시 기본값 설정
             setRoleOptions([
-                { value: 'CLIENT', label: '내담자', icon: '👤', color: '#3b82f6', description: '상담을 받는 내담자' },
-                { value: 'CONSULTANT', label: '상담사', icon: '👨‍⚕️', color: '#10b981', description: '상담을 제공하는 상담사' },
-                { value: 'ADMIN', label: '관리자', icon: '👨‍💼', color: '#f59e0b', description: '시스템 관리자' },
-                { value: 'BRANCH_SUPER_ADMIN', label: '수퍼관리자', icon: '👑', color: '#ef4444', description: '최고 관리자' }
+                { value: 'CLIENT', label: '내담자', icon: '👤', color: 'var(--mg-primary-500)', description: '상담을 받는 내담자' },
+                { value: 'CONSULTANT', label: '상담사', icon: '👨‍⚕️', color: 'var(--mg-success-500)', description: '상담을 제공하는 상담사' },
+                { value: 'ADMIN', label: '관리자', icon: '👨‍💼', color: 'var(--mg-warning-500)', description: '시스템 관리자' },
+                { value: 'BRANCH_SUPER_ADMIN', label: '수퍼관리자', icon: '👑', color: 'var(--mg-error-500)', description: '최고 관리자' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -272,7 +272,7 @@ const UserManagement = ({ onUpdate }) => {
                             </button>
                         </div>
                         {loading ? (
-                            <UnifiedLoading text="사용자 목록을 불러오는 중..." size="medium" type="inline" />
+                            <div className="mg-loading">로딩중...</div>
                         ) : users.length === 0 ? (
                             <div className="mg-v2-empty-state">
                                 <FaUsers className="mg-v2-empty-state__icon" />

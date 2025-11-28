@@ -96,7 +96,7 @@
 
 .summary-panels-summary-label {
   font-size: 0.9rem;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
   margin-bottom: 0.25rem;
   font-weight: 500;
 }
@@ -119,7 +119,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--mg-gray-100);
   border-radius: 8px;
   border: 1px solid #e9ecef;
   transition: all 0.2s ease;
@@ -128,7 +128,7 @@
 .consultant-card:hover {
   background: #e9ecef;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .consultant-avatar {
@@ -153,21 +153,21 @@
 
 .consultant-specialty {
   font-size: 0.9rem;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
   margin-bottom: 0.5rem;
   font-weight: 500;
 }
 
 .consultant-intro {
   font-size: 0.85rem;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
   line-height: 1.4;
 }
 
 .no-consultants {
   text-align: center;
   padding: 2rem;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
 }
 
 .no-consultants i {

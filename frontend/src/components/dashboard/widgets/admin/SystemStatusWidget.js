@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../../../utils/ajax';
-import UnifiedLoading from '../../../common/UnifiedLoading';
+// import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
 import '../Widget.css';
 
 const SystemStatusWidget = ({ widget, user }) => {
@@ -77,9 +77,9 @@ const SystemStatusWidget = ({ widget, user }) => {
   
   const getStatusColor = (status) => {
     switch (status) {
-      case 'healthy': return '#28a745';
-      case 'error': return '#dc3545';
-      default: return '#ffc107';
+      case 'healthy': return 'var(--mg-success-500)';
+      case 'error': return 'var(--mg-error-500)';
+      default: return 'var(--mg-warning-500)';
     }
   };
   

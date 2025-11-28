@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import MGButton from '../common/MGButton';
+// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { 
     FaUsers, FaUserTie, FaUser, FaChartBar, FaChartLine,
     FaBuilding, FaDollarSign, FaArrowUp, FaArrowDown,
@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import Chart from '../common/Chart';
 import './StatisticsDashboard.css';
 
@@ -170,7 +170,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId }) => {
     if (loading) {
         return (
             <div className="statistics-dashboard-container">
-                <UnifiedLoading text="통계 데이터를 불러오는 중..." size="large" type="inline" />
+                <div className="mg-loading">로딩중...</div>
             </div>
         );
     }
@@ -183,8 +183,8 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId }) => {
                         <FaChartBar className="statistics-error-icon" />
                         <h3 className="statistics-error-title">오류 발생</h3>
                         <p className="statistics-error-message">{error}</p>
-                        <MGButton variant="primary" className="statistics-retry-btn" onClick={loadStatistics}>다시 시도
-                        </MGButton>
+                        <button className="mg-button" variant="primary" className="statistics-retry-btn" onClick={loadStatistics}>다시 시도
+                        </button>
                     </div>
                 </div>
             </div>

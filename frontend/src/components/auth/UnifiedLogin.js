@@ -14,7 +14,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
 import SocialSignupModal from './SocialSignupModal';
@@ -484,7 +484,7 @@ const UnifiedLogin = () => {
                 disabled={isLoading}
                 className="unified-login__submit-button"
               >
-                {isLoading ? <UnifiedLoading /> : '로그인'}
+                {isLoading ? <div className="mg-loading">로딩중...</div> : '로그인'}
               </button>
             </form>
 

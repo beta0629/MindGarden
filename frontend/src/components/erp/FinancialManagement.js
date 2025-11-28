@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
@@ -376,12 +376,7 @@ const FinancialManagement = () => {
         <div className="erp-content">
           {loading && (
             <div className="financial-management-loading">
-              <UnifiedLoading 
-                text="데이터를 불러오는 중..."
-                size="medium"
-                variant="default"
-                inline={true}
-              />
+              <div className="mg-loading">로딩중...</div>
             </div>
           )}
 
@@ -949,7 +944,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 marginLeft: '8px',
                 fontSize: 'var(--font-size-base)',
                 fontWeight: 'bold',
-                color: transaction.transactionType === 'INCOME' ? '#28a745' : '#dc3545'
+                color: transaction.transactionType === 'INCOME' ? 'var(--mg-success-500)' : 'var(--mg-error-500)'
               }}>
                 {formatCurrency(transaction.amount)}
               </span>
@@ -972,9 +967,9 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             padding: '16px',
             borderRadius: '8px',
             marginBottom: '20px',
-            border: '2px solid #1976d2'
+            border: '2px solid var(--mg-secondary-600)'
           }}>
-            <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: '#1976d2' }}>
+            <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: 'var(--mg-secondary-600)' }}>
               🔗 매핑 연동 정보
             </h3>
             
@@ -1002,7 +997,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 
                 <div style={{ gridColumn: 'span 2' }}>
                   <strong>패키지 가격:</strong>
-                  <span style={{ marginLeft: '8px', fontSize: 'var(--font-size-base)', fontWeight: 'bold', color: '#28a745' }}>
+                  <span style={{ marginLeft: '8px', fontSize: 'var(--font-size-base)', fontWeight: 'bold', color: 'var(--mg-success-500)' }}>
                     {formatCurrency(mappingDetail.packagePrice)}
                   </span>
                 </div>
@@ -1012,11 +1007,11 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                   <span style={{ 
                     marginLeft: '8px', 
                     fontSize: 'var(--font-size-sm)', 
-                    color: mappingDetail.packagePrice === mappingDetail.paymentAmount ? '#28a745' : '#dc3545'
+                    color: mappingDetail.packagePrice === mappingDetail.paymentAmount ? 'var(--mg-success-500)' : 'var(--mg-error-500)'
                   }}>
                     {formatCurrency(mappingDetail.paymentAmount)}
                     {mappingDetail.packagePrice !== mappingDetail.paymentAmount && (
-                      <span style={{ fontSize: 'var(--font-size-xs)', color: '#dc3545', marginLeft: '4px' }}>
+                      <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--mg-error-500)', marginLeft: '4px' }}>
                         (⚠️ 패키지 가격과 다름)
                       </span>
                     )}
@@ -1037,7 +1032,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                       {mappingDetail.isConsistent ? '✅ 정상' : '⚠️ 불일치'}
                     </span>
                     {!mappingDetail.isConsistent && (
-                      <div style={{ fontSize: 'var(--font-size-xs)', color: '#dc3545', marginTop: '4px' }}>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--mg-error-500)', marginTop: '4px' }}>
                         {mappingDetail.consistencyMessage}
                       </div>
                     )}
@@ -1079,7 +1074,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             padding: '16px',
             borderRadius: '8px',
             marginBottom: '20px',
-            border: '2px solid #ffc107'
+            border: '2px solid var(--mg-warning-500)'
           }}>
             <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: '#856404' }}>
               🔗 연동 정보
@@ -1109,7 +1104,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             onClick={onClose}
             style={{
               padding: '8px 16px',
-              backgroundColor: '#6c757d',
+              backgroundColor: 'var(--mg-secondary-500)',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -1126,7 +1121,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
               }}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#007bff',
+                backgroundColor: 'var(--mg-primary-500)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',

@@ -1,5 +1,5 @@
-import React from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Star } from 'lucide-react';
 
 const CardShowcase = () => {
@@ -46,7 +46,7 @@ const CardShowcase = () => {
         {/* Animated Card with Icon */}
         <div className="mg-card">
           <div className="mg-flex-center mg-gap-sm mg-mb-sm">
-            <Star size={24} color="#808000" fill="#808000" />
+            <Star size={24} color="var(--mg-olive-green)" fill="var(--mg-olive-green)" />
             <h4 className="mg-h4" style={{ margin: 0 }}>Featured Card</h4>
           </div>
           <p className="mg-body-medium">호버 시 애니메이션 효과가 있는 카드입니다.</p>

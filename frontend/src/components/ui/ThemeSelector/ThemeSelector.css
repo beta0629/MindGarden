@@ -26,14 +26,14 @@
 
 .mg-v2-theme-option:hover {
   border-color: var(--mg-v2-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--mg-shadow-light);
   transform: translateY(-2px);
 }
 
 .mg-v2-theme-option--selected {
   border-color: var(--mg-v2-primary);
   background: var(--mg-v2-primary-light);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px var(--mg-shadow-medium);
 }
 
 .mg-v2-theme-preview {

@@ -35,7 +35,7 @@
   padding: var(--spacing-lg);
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .step {
@@ -125,7 +125,7 @@
   background: white;
   border-radius: 12px;
   padding: var(--spacing-lg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--mg-shadow-light);
   cursor: pointer;
   transition: all 0.3s ease;
   border: 2px solid transparent;
@@ -137,7 +137,7 @@
 
 .group-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px var(--mg-shadow-medium);
   border-color: var(--color-primary);
 }
 
@@ -211,7 +211,7 @@
   padding: var(--spacing-xxl) var(--spacing-xxl);
   background: white;
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px var(--mg-shadow-light);
   flex-wrap: wrap;
   gap: 20px;
   min-height: 100px;
@@ -266,7 +266,7 @@
   border-radius: 12px;
   padding: var(--spacing-xl);
   margin-bottom: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .form-header {
@@ -291,12 +291,12 @@
   margin-bottom: 20px;
 }
 
-.form-group {
+.mg-form__group {
   display: flex;
   flex-direction: column;
 }
 
-.form-group label {
+.mg-form__group label {
   color: var(--color-text-primary);
   font-weight: 500;
   margin-bottom: 8px;
@@ -352,7 +352,7 @@
   background: white;
   border-radius: 12px;
   padding: var(--spacing-xl);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
 }
 
 .empty-state {
@@ -393,7 +393,7 @@
 .code-card:hover {
   border-color: var(--color-primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--mg-shadow-light);
 }
 
 .code-card.inactive {
@@ -495,12 +495,12 @@
   white-space: nowrap;
 }
 
-.btn-primary {
+.mg-btn--primary {
   background-color: var(--color-primary);
   color: white;
 }
 
-.btn-primary:hover {
+.mg-btn--primary:hover {
   background-color: var(--color-primary-dark);
   transform: translateY(-1px);
 }
@@ -662,7 +662,7 @@
   width: 40px;
   height: 40px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
+  border-top: 4px solid var(--mg-primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;

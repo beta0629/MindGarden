@@ -64,7 +64,7 @@
     background-color: #e9ecef;
     border-radius: 6px;
     font-size: var(--font-size-sm);
-    color: #6c757d;
+    color: var(--mg-secondary-500);
     font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
 }
 

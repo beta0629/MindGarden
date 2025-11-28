@@ -203,27 +203,27 @@
 }
 
 /* ===== 모달 오버라이드 (기존 인라인 스타일 대체) ===== */
-.dashboard-form-modal .modal-content {
+.dashboard-form-modal .mg-modal__content {
   width: var(--mg-modal-xl-width, 95vw);
   max-width: var(--mg-modal-xl-max-width, 1400px);
   height: var(--mg-modal-xl-height, 90vh);
   max-height: var(--mg-modal-xl-max-height, 900px);
 }
 
-.dashboard-form-modal .modal-body {
+.dashboard-form-modal .mg-modal__body {
   padding: var(--mg-spacing-lg, 1.5rem);
   overflow-y: auto;
   }
 
-.dashboard-form-modal .modal-header {
-  background: var(--mg-gradient-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+.dashboard-form-modal .mg-modal__header {
+  background: var(--mg-gradient-primary, linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%));
   color: var(--mg-text-on-dark, white);
   border-bottom: none;
   }
 
-.dashboard-form-modal .modal-footer {
+.dashboard-form-modal .mg-modal__footer {
   border-top: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
-  background: var(--mg-bg-secondary, #f8f9fa);
+  background: var(--mg-bg-secondary, var(--mg-gray-100));
 }
 
 /* ===== 모달 오버레이 (Portal용) ===== */
@@ -250,9 +250,9 @@
   max-width: var(--mg-dashboard-modal-max-width, 1400px);
   height: var(--mg-dashboard-modal-height, 90vh);
   max-height: var(--mg-dashboard-modal-max-height, 900px);
-  background: var(--mg-bg-primary, #ffffff);
+  background: var(--mg-bg-primary, var(--mg-white));
   border-radius: var(--mg-border-radius-lg, 0.75rem);
-  box-shadow: var(--mg-shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04));
+  box-shadow: var(--mg-shadow-xl, 0 20px 25px -5px var(--mg-shadow-light), 0 10px 10px -5px rgba(0, 0, 0, 0.04));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -264,7 +264,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--mg-spacing-lg, 1.5rem);
-  background: var(--mg-gradient-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+  background: var(--mg-gradient-primary, linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%));
   color: var(--mg-text-on-primary, white);
   border-bottom: none;
   flex-shrink: 0;
@@ -306,7 +306,7 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--mg-spacing-lg, 1.5rem);
-  background: var(--mg-bg-primary, #ffffff);
+  background: var(--mg-bg-primary, var(--mg-white));
 }
 
 /* ===== 모달 액션 버튼 ===== */
@@ -317,7 +317,7 @@
   gap: var(--mg-spacing-md, 1rem);
   padding: var(--mg-spacing-lg, 1.5rem);
   border-top: var(--mg-border-width, 1px) solid var(--mg-border-color, #e5e7eb);
-  background: var(--mg-bg-secondary, #f8f9fa);
+  background: var(--mg-bg-secondary, var(--mg-gray-100));
   flex-shrink: 0;
 }
 
@@ -353,7 +353,7 @@
 }
 
 .mg-text-success {
-  color: var(--mg-color-success, #28a745);
+  color: var(--mg-color-success, var(--mg-success-500));
 }
 
 .mg-text-tertiary {
@@ -409,7 +409,7 @@
 }
 
 .mg-bg-light {
-  background-color: var(--mg-bg-tertiary, #f5f5f5);
+  background-color: var(--mg-bg-tertiary, var(--mg-gray-100));
 }
 
 .mg-border-radius-sm {
@@ -417,7 +417,7 @@
 }
 
 .mg-border-bottom-light {
-  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color-light, #e0e0e0);
+  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color-light, var(--mg-gray-300));
 }
 
 .mg-cursor-pointer {
@@ -447,9 +447,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--mg-spacing-2xs, 0.25rem);
-  border: var(--mg-border-width, 1px) solid var(--mg-color-primary, #007bff);
+  border: var(--mg-border-width, 1px) solid var(--mg-color-primary, var(--mg-primary-500));
   border-radius: var(--mg-border-radius-sm, 0.25rem);
-  background-color: var(--mg-color-primary, #007bff);
+  background-color: var(--mg-color-primary, var(--mg-primary-500));
   color: var(--mg-text-on-primary, white);
   cursor: pointer;
   transition: var(--mg-transition-fast, all 0.2s ease);
@@ -472,9 +472,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--mg-spacing-2xs, 0.25rem);
-  border: var(--mg-border-width, 1px) solid var(--mg-color-danger, #dc3545);
+  border: var(--mg-border-width, 1px) solid var(--mg-color-danger, var(--mg-error-500));
   border-radius: var(--mg-border-radius-sm, 0.25rem);
-  background-color: var(--mg-color-danger, #dc3545);
+  background-color: var(--mg-color-danger, var(--mg-error-500));
   color: var(--mg-text-on-danger, white);
   cursor: pointer;
   transition: var(--mg-transition-fast, all 0.2s ease);
@@ -505,7 +505,7 @@
 .mg-role-list {
   margin-top: var(--mg-spacing-xs, 0.5rem);
   padding: var(--mg-spacing-xs, 0.5rem);
-  background-color: var(--mg-bg-tertiary, #f5f5f5);
+  background-color: var(--mg-bg-tertiary, var(--mg-gray-100));
   border-radius: var(--mg-border-radius-sm, 0.25rem);
 }
 
@@ -514,7 +514,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--mg-spacing-2xs, 0.25rem) 0;
-  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color-light, #e0e0e0);
+  border-bottom: var(--mg-border-width, 1px) solid var(--mg-border-color-light, var(--mg-gray-300));
 }
 
 .mg-role-item:last-child {
@@ -537,7 +537,7 @@
 }
 
 .mg-advanced-settings-summary:hover {
-  background: var(--mg-bg-tertiary, #f5f5f5);
+  background: var(--mg-bg-tertiary, var(--mg-gray-100));
 }
 
 .mg-advanced-settings-content {

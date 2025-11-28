@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Menu, X, Home, Users, Calendar, Settings, ChevronRight } from 'lucide-react';
 
 const NavigationShowcase = () => {
@@ -62,7 +62,7 @@ const NavigationShowcase = () => {
               padding: 'var(--spacing-lg)',
               paddingTop: '60px',
               zIndex: 15,
-              boxShadow: isSidebarOpen ? '2px 0 8px rgba(0, 0, 0, 0.1)' : 'none'
+              boxShadow: isSidebarOpen ? '2px 0 8px var(--mg-shadow-light)' : 'none'
             }}>
               <div style={{
                 display: 'flex',

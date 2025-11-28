@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 
@@ -33,18 +33,18 @@ const ConsultantMessageScreen = () => {
 
   // 메시지 유형 옵션
   const messageTypes = [
-    { value: 'GENERAL', label: '일반', icon: '💬', color: '#6c757d' },
-    { value: 'FOLLOW_UP', label: '후속 조치', icon: '📋', color: '#007bff' },
-    { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: '#28a745' },
-    { value: 'REMINDER', label: '알림', icon: '🔔', color: '#ffc107' },
-    { value: 'URGENT', label: '긴급', icon: '⚠️', color: '#dc3545' }
+    { value: 'GENERAL', label: '일반', icon: '💬', color: 'var(--mg-secondary-500)' },
+    { value: 'FOLLOW_UP', label: '후속 조치', icon: '📋', color: 'var(--mg-primary-500)' },
+    { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: 'var(--mg-success-500)' },
+    { value: 'REMINDER', label: '알림', icon: '🔔', color: 'var(--mg-warning-500)' },
+    { value: 'URGENT', label: '긴급', icon: '⚠️', color: 'var(--mg-error-500)' }
   ];
 
   // 컴포넌트 스타일
   const styles = {
     container: {
       minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
+      backgroundColor: 'var(--mg-gray-100)',
       padding: '20px'
     },
     header: {
@@ -66,7 +66,7 @@ const ConsultantMessageScreen = () => {
     },
     headerSubtitle: {
       fontSize: 'var(--font-size-base)',
-      color: '#6c757d',
+      color: 'var(--mg-secondary-500)',
       marginBottom: '20px'
     },
     clientInfoCard: {
@@ -99,7 +99,7 @@ const ConsultantMessageScreen = () => {
     clientInfoLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
-      color: '#6c757d',
+      color: 'var(--mg-secondary-500)',
       textTransform: 'uppercase',
       letterSpacing: '0.5px'
     },
@@ -169,7 +169,7 @@ const ConsultantMessageScreen = () => {
       transition: 'all 0.2s ease'
     },
     formInputFocus: {
-      borderColor: '#007bff',
+      borderColor: 'var(--mg-primary-500)',
       boxShadow: '0 0 0 3px rgba(0,123,255,0.1)'
     },
     checkboxGroup: {
@@ -209,7 +209,7 @@ const ConsultantMessageScreen = () => {
       backgroundColor: '#fff'
     },
     messageTypeItemSelected: {
-      borderColor: '#007bff',
+      borderColor: 'var(--mg-primary-500)',
       backgroundColor: '#f8f9ff'
     },
     messageTypeIcon: {
@@ -242,15 +242,15 @@ const ConsultantMessageScreen = () => {
       gap: '8px'
     },
     primaryButton: {
-      backgroundColor: '#007bff',
+      backgroundColor: 'var(--mg-primary-500)',
       color: '#fff'
     },
     secondaryButton: {
-      backgroundColor: '#6c757d',
+      backgroundColor: 'var(--mg-secondary-500)',
       color: '#fff'
     },
     successButton: {
-      backgroundColor: '#28a745',
+      backgroundColor: 'var(--mg-success-500)',
       color: '#fff'
     },
     loadingOverlay: {
@@ -379,7 +379,7 @@ const ConsultantMessageScreen = () => {
     return (
       <SimpleLayout title="메시지 전송">
         <div className="consultant-message-screen-loading">
-          <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );
@@ -548,7 +548,7 @@ const ConsultantMessageScreen = () => {
             style={{...styles.button, ...styles.successButton}}
             disabled={sending || !messageData.title.trim() || !messageData.content.trim()}
           >
-            {sending ? <UnifiedLoading variant="dots" size="small" /> : '📤 메시지 전송'}
+            {sending ? <div className="mg-loading">로딩중...</div> : '📤 메시지 전송'}
           </button>
         </div>
       </div>

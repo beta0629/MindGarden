@@ -15,6 +15,9 @@ import { API_BASE_URL } from '../constants/api';
  */
 let brandingCache = null;
 let cacheTimestamp = null;
+
+// 개발 중 강제 기본 브랜딩 적용
+const FORCE_DEFAULT_BRANDING = false;
 const CACHE_DURATION = 30 * 60 * 1000; // 30분
 
 /**
@@ -24,6 +27,15 @@ const CACHE_DURATION = 30 * 60 * 1000; // 30분
  * @returns {Promise<Object>} 브랜딩 정보
  */
 export const getBrandingInfo = async (useCache = true) => {
+  // 개발 중 강제 기본 브랜딩 적용
+  if (FORCE_DEFAULT_BRANDING) {
+    console.warn('🎨 강제 기본 CoreSolution 브랜딩 적용');
+    const defaultBranding = createDefaultBranding();
+    brandingCache = defaultBranding;
+    cacheTimestamp = Date.now();
+    return defaultBranding;
+  }
+
   // 캐시 확인
   if (useCache && brandingCache && cacheTimestamp) {
     const now = Date.now();
@@ -53,9 +65,9 @@ export const getBrandingInfo = async (useCache = true) => {
         return defaultBranding;
       }
 
-      // 500 오류 (Tenant context 없음)도 기본값 사용
+      // 500 오류 (Tenant context 없음 또는 로그인 필요)도 기본값 사용
       if (response.status === 500) {
-        console.warn('테넌트 컨텍스트 없음, 기본값 사용');
+        console.warn('브랜딩 API 500 오류 - 기본 CoreSolution 브랜딩 사용');
         const defaultBranding = createDefaultBranding();
         brandingCache = defaultBranding;
         cacheTimestamp = Date.now();
@@ -119,7 +131,7 @@ export const fetchBrandingInfo = getBrandingInfo;
 export const createDefaultBranding = (tenantName = null) => {
   return {
     logo: {
-      url: '/images/core-solution-logo.png',
+      url: '/images/coresolution-logo.png',
       width: 200,
       height: 60,
       format: 'png',
@@ -127,8 +139,8 @@ export const createDefaultBranding = (tenantName = null) => {
     },
     companyName: tenantName || 'CoreSolution',
     companyNameEn: 'CoreSolution',
-    primaryColor: '#007bff',
-    secondaryColor: '#6c757d',
+    primaryColor: 'var(--mg-primary-500)',
+    secondaryColor: 'var(--mg-secondary-500)',
     favicon: '/favicon.ico'
   };
 };
@@ -159,7 +171,7 @@ export const getLogoType = (brandingInfo) => {
  * @returns {string} 표시할 회사명
  */
 export const getDisplayName = (brandingInfo) => {
-  if (!brandingInfo) return 'MindGarden';
+  if (!brandingInfo) return 'CoreSolution';
   
   // 한글 회사명 우선, 없으면 영문, 그것도 없으면 기본값
   if (brandingInfo.companyName && brandingInfo.companyName.trim()) {
@@ -170,7 +182,7 @@ export const getDisplayName = (brandingInfo) => {
     return brandingInfo.companyNameEn;
   }
   
-  return 'MindGarden';
+  return 'CoreSolution';
 };
 
 /**
@@ -194,7 +206,7 @@ export const getLogoImageUrl = (brandingInfo) => {
  * @returns {string} 로고 alt 텍스트
  */
 export const getLogoAlt = (brandingInfo) => {
-  if (!brandingInfo) return 'MindGarden';
+  if (!brandingInfo) return 'CoreSolution';
   
   // 로고 alt가 있으면 사용, 없으면 회사명 사용
   if (brandingInfo.logo && brandingInfo.logo.alt) {
@@ -418,6 +430,9 @@ export const clearBrandingCache = () => {
   console.debug('브랜딩 캐시 무효화');
 };
 
+// 페이지 로드 시 강제 캐시 초기화
+clearBrandingCache();
+
 /**
  * 브랜딩 정보를 UnifiedHeader props로 변환
  * 
@@ -428,8 +443,8 @@ export const brandingToHeaderProps = (brandingInfo) => {
   if (!brandingInfo) {
     return {
       logoType: 'text',
-      title: 'MindGarden',
-      logoAlt: 'MindGarden'
+      title: 'CoreSolution',
+      logoAlt: 'CoreSolution'
     };
   }
 

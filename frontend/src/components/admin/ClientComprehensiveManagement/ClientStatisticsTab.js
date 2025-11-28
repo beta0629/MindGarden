@@ -40,7 +40,7 @@ const ClientStatisticsTab = ({
     }, {});
 
     // 통계 카드 렌더링
-    const renderStatCard = (title, value, icon, color = '#007bff') => (
+    const renderStatCard = (title, value, icon, color = 'var(--mg-primary-500)') => (
         <div className="mg-v2-card mg-v2-stat-card">
             <div className="mg-v2-stat-icon" style={{ '--icon-color': color }}>
                 {icon}
@@ -53,7 +53,7 @@ const ClientStatisticsTab = ({
     );
 
     // 차트 데이터 렌더링
-    const renderChartData = (title, data, color = '#007bff') => {
+    const renderChartData = (title, data, color = 'var(--mg-primary-500)') => {
         // 데이터가 없으면 빈 상태 표시
         if (!data || Object.keys(data).length === 0) {
             return (
@@ -122,17 +122,17 @@ const ClientStatisticsTab = ({
             
             {/* 주요 통계 */}
             <div className="mg-v2-stats-grid">
-                {renderStatCard('총 내담자 수', totalClients, <FaUsers />, '#28a745')}
-                {renderStatCard('활성 내담자', activeClients, <FaUsers />, '#007bff')}
-                {renderStatCard('총 상담 수', totalConsultations, <FaCalendarAlt />, '#ffc107')}
-                {renderStatCard('총 매칭 수', totalMappings, <FaHandshake />, '#dc3545')}
+                {renderStatCard('총 내담자 수', totalClients, <FaUsers />, 'var(--mg-success-500)')}
+                {renderStatCard('활성 내담자', activeClients, <FaUsers />, 'var(--mg-primary-500)')}
+                {renderStatCard('총 상담 수', totalConsultations, <FaCalendarAlt />, 'var(--mg-warning-500)')}
+                {renderStatCard('총 매칭 수', totalMappings, <FaHandshake />, 'var(--mg-error-500)')}
             </div>
             
             {/* 상세 통계 */}
             <div className="mg-v2-detailed-stats">
                 <div className="mg-mobile-card-stack">
                     {renderChartData('등급별 내담자 분포', clientsByGrade, '#6f42c1')}
-                    {renderChartData('상태별 내담자 분포', clientsByStatus, '#17a2b8')}
+                    {renderChartData('상태별 내담자 분포', clientsByStatus, 'var(--mg-info-500)')}
                     {Object.keys(consultationsByMonth).length > 0 && 
                         renderChartData('월별 상담 수', consultationsByMonth, '#fd7e14')
                     }

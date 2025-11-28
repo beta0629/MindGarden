@@ -9,8 +9,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MGButton from '../common/MGButton';
-import UnifiedLoading from '../common/UnifiedLoading';
+// // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
@@ -284,13 +284,13 @@ const DashboardManagement = () => {
             <LayoutDashboard className="dashboard-icon" />
             <h2>대시보드 관리</h2>
           </div>
-          <MGButton
+          <button className="mg-button"
             variant="primary"
             onClick={handleCreate}
             className="btn-create-dashboard"
           >
             <FaPlus /> 새 대시보드
-          </MGButton>
+          </button>
         </div>
 
         {/* 필터 및 검색 */}
@@ -315,41 +315,41 @@ const DashboardManagement = () => {
           </div>
 
           <div className="filter-buttons">
-            <MGButton
+            <button className="mg-button"
               variant={filterType === 'all' ? 'primary' : 'secondary'}
               onClick={() => setFilterType('all')}
               className="filter-btn"
             >
               전체
-            </MGButton>
-            <MGButton
+            </button>
+            <button className="mg-button"
               variant={filterType === 'active' ? 'primary' : 'secondary'}
               onClick={() => setFilterType('active')}
               className="filter-btn"
             >
               <FaEye /> 활성
-            </MGButton>
-            <MGButton
+            </button>
+            <button className="mg-button"
               variant={filterType === 'inactive' ? 'primary' : 'secondary'}
               onClick={() => setFilterType('inactive')}
               className="filter-btn"
             >
               <FaEyeSlash /> 비활성
-            </MGButton>
-            <MGButton
+            </button>
+            <button className="mg-button"
               variant="secondary"
               onClick={loadDashboards}
               className="refresh-btn"
             >
               <FaSync /> 새로고침
-            </MGButton>
+            </button>
           </div>
         </div>
 
         {/* 로딩 상태 */}
         {loading && dashboards.length === 0 && (
           <div className="loading-container">
-            <UnifiedLoading message="대시보드를 불러오는 중..." />
+            <div className="mg-loading">로딩중...</div>
           </div>
         )}
 
@@ -430,15 +430,15 @@ const DashboardManagement = () => {
                 </div>
 
                 <div className="dashboard-card-actions">
-                  <MGButton
+                  <button className="mg-button"
                     variant="primary"
                     onClick={() => handleViewDashboard(dashboard)}
                     className="btn-view"
                     title="대시보드 보기 (새 탭에서 열기: Ctrl+클릭)"
                   >
                     <FaExternalLinkAlt /> 보기
-                  </MGButton>
-                  <MGButton
+                  </button>
+                  <button className="mg-button"
                     variant="secondary"
                     onClick={(e) => {
                       e.preventDefault();
@@ -451,8 +451,8 @@ const DashboardManagement = () => {
                     title={dashboard?.dashboardId ? '대시보드 수정' : '대시보드 ID가 없습니다.'}
                   >
                     <FaEdit /> 수정
-                  </MGButton>
-                  <MGButton
+                  </button>
+                  <button className="mg-button"
                     variant="secondary"
                     onClick={() => handleToggleActive(dashboard)}
                     className="btn-toggle"
@@ -466,15 +466,15 @@ const DashboardManagement = () => {
                         <FaEye /> 활성화
                       </>
                     )}
-                  </MGButton>
+                  </button>
                   {!dashboard.isDefault && (
-                    <MGButton
+                    <button className="mg-button"
                       variant="danger"
                       onClick={() => handleDelete(dashboard)}
                       className="btn-delete"
                     >
                       <FaTrash /> 삭제
-                    </MGButton>
+                    </button>
                   )}
                 </div>
               </div>

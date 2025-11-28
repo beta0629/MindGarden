@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { TrendingUp, XCircle, RefreshCw, Calendar, Building, BarChart, Target, DollarSign } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
@@ -216,7 +216,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                                 onClick={handleRecalculate}
                                 disabled={loading || recalculating}
                             >
-                                {recalculating ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                                {recalculating ? <div className="mg-loading">로딩중...</div> : (
                                     <>
                                         <RefreshCw size={20} className="mg-v2-icon-inline" />
                                         재계산
@@ -229,7 +229,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
                     {/* 성과 지표 표시 */}
                     {loading ? (
                         <div className="mg-v2-loading-overlay">
-                            <UnifiedLoading variant="pulse" size="large" text="성과 지표를 불러오는 중..." type="inline" />
+                            <div className="mg-loading">로딩중...</div>
                         </div>
                     ) : metrics ? (
                         <div className="mg-v2-form-section mg-v2-mt-lg">

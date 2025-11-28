@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { Building, XCircle, Search, MapPin, Phone, Mail, Clock, Users, FileText, Save, Plus } from 'lucide-react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
@@ -503,7 +503,7 @@ return ReactDOM.createPortal(
                         className="mg-v2-button mg-v2-button--primary"
                         disabled={loading}
                     >
-                        {loading ? <UnifiedLoading variant="dots" size="small" type="inline" /> : (
+                        {loading ? <div className="mg-loading">로딩중...</div> : (
                             <>
                                 <Plus size={20} className="mg-v2-icon-inline" />
                                 지점 등록

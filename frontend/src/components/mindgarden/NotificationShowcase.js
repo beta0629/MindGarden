@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 const NotificationShowcase = () => {

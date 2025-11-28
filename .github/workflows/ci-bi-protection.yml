@@ -1,0 +1,207 @@
+name: 🎨 CI/BI 보호 시스템
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  ci-bi-protection:
+    name: 🔍 CI/BI 변경 대응 준비도 체크
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: 📦 Node.js 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📚 의존성 설치
+      run: |
+        npm install
+        npm install -g glob fs-extra
+        
+    - name: 🔍 하드코딩 색상 검사
+      run: |
+        echo "🔍 하드코딩된 색상값 검사 시작..."
+        
+        # 하드코딩 패턴 검사
+        HARDCODED_COUNT=0
+        
+        # CSS 파일에서 HEX 색상 검사
+        HEX_COUNT=$(find frontend/src -name "*.css" -exec grep -E "#[0-9a-fA-F]{3,6}" {} \; | grep -v -E "#fff|#ffffff|#000|#000000" | wc -l || echo "0")
+        
+        # JS 파일에서 색상 검사  
+        JS_COLOR_COUNT=$(find frontend/src -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | xargs grep -E "color.*['\"]#[0-9a-fA-F]{3,6}['\"]" | wc -l || echo "0")
+        
+        TOTAL_HARDCODED=$((HEX_COUNT + JS_COLOR_COUNT))
+        
+        echo "📊 하드코딩 검사 결과:"
+        echo "  CSS 하드코딩: $HEX_COUNT개"
+        echo "  JS 하드코딩: $JS_COLOR_COUNT개"
+        echo "  총 하드코딩: $TOTAL_HARDCODED개"
+        
+        if [ $TOTAL_HARDCODED -gt 50 ]; then
+          echo "🚨 너무 많은 하드코딩이 발견되었습니다!"
+          echo "💡 자동 변환 도구를 사용하세요:"
+          echo "   node scripts/design-system/color-management/convert-hardcoded-colors.js"
+          exit 1
+        elif [ $TOTAL_HARDCODED -gt 10 ]; then
+          echo "⚠️  일부 하드코딩이 발견되었습니다. 정리를 권장합니다."
+        else
+          echo "✅ 하드코딩 검사 통과!"
+        fi
+        
+    - name: 🎯 통합 디자인 토큰 시스템 확인
+      run: |
+        echo "🎯 통합 디자인 토큰 시스템 확인..."
+        
+        # 필수 파일 존재 확인
+        REQUIRED_FILES=(
+          "frontend/src/styles/unified-design-tokens.css"
+          "frontend/src/constants/unifiedDesignTokens.js"
+        )
+        
+        MISSING_FILES=0
+        
+        for FILE in "${REQUIRED_FILES[@]}"; do
+          if [ ! -f "$FILE" ]; then
+            echo "❌ 필수 파일 없음: $FILE"
+            MISSING_FILES=$((MISSING_FILES + 1))
+          else
+            echo "✅ 파일 확인: $FILE"
+          fi
+        done
+        
+        if [ $MISSING_FILES -gt 0 ]; then
+          echo "🚨 통합 디자인 토큰 시스템이 완전하지 않습니다!"
+          echo "💡 다음 스크립트를 실행하세요:"
+          echo "   node scripts/design-system/color-management/create-unified-css-variables.js"
+          exit 1
+        fi
+        
+        echo "✅ 통합 디자인 토큰 시스템 확인 완료!"
+        
+    - name: 🔧 자동화 도구 확인
+      run: |
+        echo "🔧 자동화 도구 확인..."
+        
+        AUTOMATION_TOOLS=(
+          "scripts/design-system/color-management/detect-hardcoded-colors.js"
+          "scripts/design-system/color-management/convert-hardcoded-colors.js"
+          "scripts/design-system/color-management/create-unified-css-variables.js"
+          "scripts/design-system/automation/pre-commit-hardcoding-check.sh"
+        )
+        
+        MISSING_TOOLS=0
+        
+        for TOOL in "${AUTOMATION_TOOLS[@]}"; do
+          if [ ! -f "$TOOL" ]; then
+            echo "❌ 도구 없음: $TOOL"
+            MISSING_TOOLS=$((MISSING_TOOLS + 1))
+          else
+            echo "✅ 도구 확인: $TOOL"
+          fi
+        done
+        
+        if [ $MISSING_TOOLS -gt 0 ]; then
+          echo "🚨 일부 자동화 도구가 없습니다!"
+          exit 1
+        fi
+        
+        echo "✅ 모든 자동화 도구 확인 완료!"
+        
+    - name: 📊 CI/BI 준비도 종합 평가
+      run: |
+        echo "📊 CI/BI 변경 대응 준비도 종합 평가"
+        echo "=================================="
+        
+        # 점수 계산 (간단 버전)
+        SCORE=0
+        MAX_SCORE=100
+        
+        # 통합 디자인 토큰 (40점)
+        if [ -f "frontend/src/styles/unified-design-tokens.css" ]; then
+          SCORE=$((SCORE + 25))
+        fi
+        if [ -f "frontend/src/constants/unifiedDesignTokens.js" ]; then
+          SCORE=$((SCORE + 15))
+        fi
+        
+        # 하드코딩 제거 (30점)
+        HARDCODED_COUNT=$(find frontend/src -name "*.css" -exec grep -E "#[0-9a-fA-F]{3,6}" {} \; | grep -v -E "#fff|#ffffff|#000|#000000" | wc -l || echo "0")
+        if [ $HARDCODED_COUNT -eq 0 ]; then
+          SCORE=$((SCORE + 30))
+        elif [ $HARDCODED_COUNT -lt 10 ]; then
+          SCORE=$((SCORE + 20))
+        elif [ $HARDCODED_COUNT -lt 50 ]; then
+          SCORE=$((SCORE + 10))
+        fi
+        
+        # 자동화 도구 (30점)
+        TOOL_COUNT=0
+        AUTOMATION_TOOLS=(
+          "scripts/design-system/color-management/detect-hardcoded-colors.js"
+          "scripts/design-system/color-management/convert-hardcoded-colors.js"
+          "scripts/design-system/color-management/create-unified-css-variables.js"
+          "scripts/design-system/automation/pre-commit-hardcoding-check.sh"
+        )
+        
+        for TOOL in "${AUTOMATION_TOOLS[@]}"; do
+          if [ -f "$TOOL" ]; then
+            TOOL_COUNT=$((TOOL_COUNT + 1))
+          fi
+        done
+        
+        TOOL_SCORE=$((TOOL_COUNT * 7))
+        if [ $TOOL_SCORE -gt 30 ]; then
+          TOOL_SCORE=30
+        fi
+        SCORE=$((SCORE + TOOL_SCORE))
+        
+        # 결과 출력
+        PERCENTAGE=$((SCORE * 100 / MAX_SCORE))
+        
+        echo "🎯 종합 점수: $SCORE/$MAX_SCORE ($PERCENTAGE%)"
+        
+        if [ $PERCENTAGE -ge 90 ]; then
+          echo "🎉 등급: A+ - CI/BI 변경 완벽 준비!"
+          echo "⏱️  예상 변경 시간: 5분 이내"
+        elif [ $PERCENTAGE -ge 80 ]; then
+          echo "✅ 등급: A - CI/BI 변경 잘 준비됨"
+          echo "⏱️  예상 변경 시간: 10-15분"
+        elif [ $PERCENTAGE -ge 70 ]; then
+          echo "👍 등급: B - CI/BI 변경 대부분 준비됨"
+          echo "⏱️  예상 변경 시간: 30분-1시간"
+        elif [ $PERCENTAGE -ge 60 ]; then
+          echo "⚠️  등급: C - CI/BI 변경 부분적 준비"
+          echo "⏱️  예상 변경 시간: 2-4시간"
+        else
+          echo "🚨 등급: D - CI/BI 변경 준비 부족"
+          echo "⏱️  예상 변경 시간: 1-2일"
+          echo ""
+          echo "💡 개선이 필요합니다:"
+          echo "  1. 통합 디자인 토큰 시스템 구축"
+          echo "  2. 하드코딩 색상 제거"
+          echo "  3. 자동화 도구 설치"
+          exit 1
+        fi
+        
+        echo ""
+        echo "🎨 CI/BI 변경 방법:"
+        echo "  1. frontend/src/styles/unified-design-tokens.css 파일 수정"
+        echo "  2. --mg-primary-500: #NEW_COLOR 형태로 색상 변경"
+        echo "  3. npm run build && 배포"
+        echo ""
+        echo "✅ CI/BI 보호 시스템 검사 완료!"
+        
+    - name: 📝 빌드 테스트
+      run: |
+        echo "📝 빌드 테스트 실행..."
+        cd frontend && npm run build
+        echo "✅ 빌드 성공!"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
@@ -49,12 +49,12 @@ const ConsultationHistory = () => {
         console.error('상담 상태 코드 로드 실패:', error);
         // 실패 시 기본값 설정
         setStatusOptions([
-          { value: 'PENDING', label: '대기', icon: '⏳', color: '#f59e0b' },
-          { value: 'BOOKED', label: '예약', icon: '📅', color: '#3b82f6' },
-          { value: 'CONFIRMED', label: '확정', icon: '✅', color: '#10b981' },
-          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#8b5cf6' },
+          { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)' },
+          { value: 'BOOKED', label: '예약', icon: '📅', color: 'var(--mg-primary-500)' },
+          { value: 'CONFIRMED', label: '확정', icon: '✅', color: 'var(--mg-success-500)' },
+          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-purple-500)' },
           { value: 'COMPLETED', label: '완료', icon: '🎉', color: '#059669' },
-          { value: 'CANCELLED', label: '취소', icon: '❌', color: '#ef4444' },
+          { value: 'CANCELLED', label: '취소', icon: '❌', color: 'var(--mg-error-500)' },
           { value: 'NO_SHOW', label: '무단결석', icon: '🚫', color: '#dc2626' },
           { value: 'RESCHEDULED', label: '재예약', icon: '🔄', color: '#f97316' }
         ]);
@@ -166,7 +166,7 @@ const ConsultationHistory = () => {
       <SimpleLayout>
         <div className="consultation-history-page">
           <div className="loading-container">
-            <UnifiedLoading text="세션 확인 중..." size="medium" type="inline" />
+            <div className="mg-loading">로딩중...</div>
           </div>
         </div>
       </SimpleLayout>
@@ -178,7 +178,7 @@ const ConsultationHistory = () => {
       <SimpleLayout>
         <div className="consultation-history-page">
           <div className="loading-container">
-            <UnifiedLoading text="상담 내역을 불러오는 중..." size="medium" type="inline" />
+            <div className="mg-loading">로딩중...</div>
           </div>
         </div>
       </SimpleLayout>

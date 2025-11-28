@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
-import UnifiedModal from '../common/modals/UnifiedModal';
+// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import CustomSelect from '../common/CustomSelect';
 
 /**
@@ -110,7 +110,7 @@ const TimeSelectionModal = ({
     }
 
     return (
-        <UnifiedModal
+        <div className="mg-modal"
             isOpen={isOpen}
             onClose={onClose}
             title="시간을 선택하세요"
@@ -186,7 +186,7 @@ const TimeSelectionModal = ({
                     확인
                 </button>
             </div>
-        </UnifiedModal>
+        </div>
     );
 };
 

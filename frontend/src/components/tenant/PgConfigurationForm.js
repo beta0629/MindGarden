@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { showNotification } from '../../utils/notification';
-import MGButton from '../common/MGButton';
-import UnifiedLoading from '../common/UnifiedLoading';
+// // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './PgConfigurationForm.css';
 
 /**
@@ -481,7 +481,7 @@ const PgConfigurationForm = ({
       </div>
       
       <div className="pg-config-form-footer">
-        <MGButton
+        <button className="mg-button"
           type="button"
           variant="secondary"
           onClick={onCancel}
@@ -489,8 +489,8 @@ const PgConfigurationForm = ({
         >
           <X size={18} />
           취소
-        </MGButton>
-        <MGButton
+        </button>
+        <button className="mg-button"
           type="submit"
           variant="primary"
           disabled={loading}
@@ -498,7 +498,7 @@ const PgConfigurationForm = ({
         >
           {loading ? (
             <>
-              <UnifiedLoading size="small" />
+              <div className="mg-loading">로딩중...</div>
               <span aria-live="polite" className="sr-only">저장 중...</span>
             </>
           ) : (
@@ -507,7 +507,7 @@ const PgConfigurationForm = ({
               {mode === 'create' ? '등록' : '수정'}
             </>
           )}
-        </MGButton>
+        </button>
       </div>
     </form>
   );

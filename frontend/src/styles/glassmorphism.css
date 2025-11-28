@@ -55,7 +55,7 @@
   color: var(--ios-text-primary);
   margin: 0;
   line-height: 1.3;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px var(--mg-shadow-light);
   font-family: var(--font-family-ios);
 }
 
@@ -125,7 +125,7 @@
   transition: var(--transition-bounce);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px var(--mg-shadow-light);
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -147,31 +147,31 @@
   left: 100%;
 }
 
-.card-actions .btn-primary {
+.card-actions .mg-btn--primary {
   background: rgba(0, 123, 255, 0.8);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
 }
 
-.card-actions .btn-primary:hover {
+.card-actions .mg-btn--primary:hover {
   background: rgba(0, 123, 255, 0.9);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
 }
 
-.card-actions .btn-secondary {
+.card-actions .mg-btn--secondary {
   background: rgba(248, 249, 250, 0.6);
   color: var(--ios-text-primary);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px var(--mg-shadow-light);
 }
 
-.card-actions .btn-secondary:hover {
+.card-actions .mg-btn--secondary:hover {
   background: rgba(248, 249, 250, 0.8);
   color: var(--ios-text-primary);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px var(--mg-shadow-medium);
 }
 
 /* 통계 카드 스타일 */
@@ -241,7 +241,7 @@
 .stat-icon.success { background: var(--ios-green); }
 .stat-icon.warning { background: var(--ios-orange); }
 .stat-icon.danger { background: var(--ios-red); }
-.stat-icon.info { background: #17a2b8; }
+.stat-icon.info { background: var(--mg-info-500); }
 
 .stat-value {
   font-size: var(--font-size-xxxl);
@@ -249,7 +249,7 @@
   color: var(--ios-text-primary);
   margin: 0 0 var(--spacing-sm) 0;
   line-height: 1;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 4px var(--mg-shadow-light);
   font-family: var(--font-family-ios);
 }
 
@@ -276,7 +276,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px var(--mg-shadow-light);
 }
 
 .stat-change.positive {
@@ -388,7 +388,7 @@
   color: var(--ios-text-primary);
   margin: 0 0 var(--spacing-sm) 0;
   line-height: 1.3;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 4px var(--mg-shadow-light);
   font-family: var(--font-family-ios);
 }
 
@@ -503,14 +503,14 @@
     border-radius: var(--border-radius-sm);
   }
   
-  .card-actions .btn-primary {
+  .card-actions .mg-btn--primary {
     background: var(--ios-blue);
     color: white;
     border: none;
     box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
   }
   
-  .card-actions .btn-secondary {
+  .card-actions .mg-btn--secondary {
     background: var(--ipad-btn-secondary);
     color: var(--ios-blue);
     border: none;
@@ -789,12 +789,12 @@ body {
 
 /* 그라데이션 배경 (글래스 효과와 함께 사용) */
 .glass-background {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%);
   min-height: 100vh;
 }
 
 .glass-background-alt {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%);
   min-height: 100vh;
 }
 

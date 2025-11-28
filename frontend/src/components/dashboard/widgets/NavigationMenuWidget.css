@@ -43,13 +43,13 @@
 }
 
 .navigation-menu-link:hover {
-  background-color: #f5f5f5;
-  color: #007bff;
+  background-color: var(--mg-gray-100);
+  color: var(--mg-primary-500);
 }
 
 .navigation-menu-link.active {
   background-color: #e7f3ff;
-  color: #007bff;
+  color: var(--mg-primary-500);
   font-weight: 500;
 }
 
@@ -78,7 +78,7 @@
 }
 
 .navigation-menu-badge {
-  background-color: #dc3545;
+  background-color: var(--mg-error-500);
   color: white;
   font-size: 0.75rem;
   padding: 0.125rem 0.5rem;
@@ -106,7 +106,7 @@
 .navigation-menu-empty {
   padding: 2rem;
   text-align: center;
-  color: #6c757d;
+  color: var(--mg-secondary-500);
 }
 
 /* Horizontal style */
@@ -120,7 +120,7 @@
   top: 100%;
   left: 0;
   background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--mg-shadow-light);
   border-radius: 0.375rem;
   min-width: 200px;
   z-index: 1000;
@@ -141,13 +141,13 @@
 }
 
 .widget-navigation-sidebar .navigation-menu-link.active {
-  border-left-color: #007bff;
-  background-color: #f8f9fa;
+  border-left-color: var(--mg-primary-500);
+  background-color: var(--mg-gray-100);
 }
 
 .widget-navigation-sidebar .navigation-menu-link:hover {
-  background-color: #f8f9fa;
-  border-left-color: #007bff;
+  background-color: var(--mg-gray-100);
+  border-left-color: var(--mg-primary-500);
 }
 
 

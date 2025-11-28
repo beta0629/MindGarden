@@ -84,7 +84,7 @@ export const getRatingGrade = (rating) => {
     if (numRating >= 4.5) {
         return { grade: 'S', color: '#ffd700', label: '최고' };
     } else if (numRating >= 4.0) {
-        return { grade: 'A', color: '#ff6b6b', label: '우수' };
+        return { grade: 'A', color: 'var(--mg-error-500)', label: '우수' };
     } else if (numRating >= 3.5) {
         return { grade: 'B', color: '#4ecdc4', label: '양호' };
     } else if (numRating >= 3.0) {
@@ -92,7 +92,7 @@ export const getRatingGrade = (rating) => {
     } else if (numRating >= 2.0) {
         return { grade: 'D', color: '#f9ca24', label: '미흡' };
     } else {
-        return { grade: 'F', color: '#6c757d', label: '부족' };
+        return { grade: 'F', color: 'var(--mg-secondary-500)', label: '부족' };
     }
 };
 

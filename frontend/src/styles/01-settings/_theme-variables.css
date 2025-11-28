@@ -14,7 +14,7 @@
 /* ===== 기본 분위기 (Default) ===== */
 [data-mood="default"] {
   /* 기본 iOS 스타일 유지 */
-  --mood-accent: #007aff;
+  --mood-accent: var(--mg-primary-500);
   --mood-accent-light: rgba(0, 122, 255, 0.1);
   --mood-accent-dark: #0056b3;
   
@@ -38,15 +38,15 @@
   --mood-shadow: 0 2px 8px rgba(255, 107, 53, 0.12);
   
   --mood-text-primary: #2d1810;
-  --mood-text-secondary: #8b4513;
+  --mood-text-secondary: var(--mg-cocoa);
 }
 
 /* ===== 차분한 분위기 (Cool) ===== */
 [data-mood="cool"] {
   /* 차분한 블루/그린 톤 */
-  --mood-accent: #34c759;
+  --mood-accent: var(--mg-success-500);
   --mood-accent-light: rgba(52, 199, 89, 0.1);
-  --mood-accent-dark: #28a745;
+  --mood-accent-dark: var(--mg-success-500);
   
   --mood-card-bg: rgba(245, 255, 248, 0.95);
   --mood-card-border: rgba(52, 199, 89, 0.08);
@@ -59,7 +59,7 @@
 /* ===== 우아한 분위기 (Elegant) ===== */
 [data-mood="elegant"] {
   /* 우아한 퍼플/그레이 톤 */
-  --mood-accent: #5856d6;
+  --mood-accent: var(--mg-purple-500);
   --mood-accent-light: rgba(88, 86, 214, 0.1);
   --mood-accent-dark: #4a47a3;
   

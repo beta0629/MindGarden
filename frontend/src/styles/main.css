@@ -1,7 +1,10 @@
-/* ===== MindGarden 변수 중심 CSS 아키텍처 ===== */
+/* ===== CoreSolution 변수 중심 CSS 아키텍처 ===== */
 /* 모든 디자인 토큰을 변수로 관리하는 시스템 */
 
-/* ===== 1. 핵심 변수 시스템 ===== */
+/* ===== 1. 통합 디자인 토큰 (CI/BI 대응) ===== */
+@import './unified-design-tokens.css';
+
+/* ===== 1-1. 기존 핵심 변수 시스템 (호환성 유지) ===== */
 @import './00-core/_variables.css';
 @import './00-core/_component-variables.css';
 
@@ -16,7 +19,7 @@
 @import './themes/mobile-theme.css';
 
 /* ===== 4. 기존 디자인 시스템 (호환성 유지) ===== */
-@import './design-system.css';
+/* @import './design-system.css'; */ /* 통합됨 */
 
 /* ===== 5. 컴포넌트 스타일 ===== */
 @import './06-components/_cards.css';

@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import UnifiedLoading from '../../../common/UnifiedLoading';
+// import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../../../utils/ajax';
 import { getStatusLabel } from '../../../../utils/colorUtils';
 import '../Widget.css';
@@ -63,7 +63,7 @@ const ConsultationScheduleWidget = ({ widget, user }) => {
   if (loading && schedules.length === 0) {
     return (
       <div className="widget widget-consultation-schedule">
-        <UnifiedLoading message="로딩 중..." />
+        <div className="mg-loading">로딩중...</div>
       </div>
     );
   }

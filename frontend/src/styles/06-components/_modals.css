@@ -8,7 +8,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--mg-overlay);
   backdrop-filter: var(--ios-backdrop-blur-lg);
   -webkit-backdrop-filter: var(--ios-backdrop-blur-lg);
   z-index: var(--z-modal-backdrop);
@@ -293,7 +293,7 @@
   justify-content: center;
   z-index: 10;
   border-radius: inherit;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 0 20px var(--mg-shadow-light);
 }
 
 .mg-modal__loading-spinner {
@@ -466,7 +466,7 @@
 
 .time-slot-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px var(--mg-shadow-light);
   border-color: var(--color-primary);
 }
 

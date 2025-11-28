@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import ConsultationLogModal from '../consultant/ConsultationLogModal';
@@ -78,7 +78,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
 
     const getConsultantColor = (consultantId) => {
         const colors = [
-            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+            'var(--mg-primary-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-error-500)', 'var(--mg-purple-500)',
             '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
         ];
         const colorIndex = consultantId % colors.length;
@@ -94,7 +94,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             case 'MORNING':
                 endDate = new Date(date + 'T13:00:00+09:00');
                 title = '🌅 오전 휴무';
-                backgroundColor = '#FF9800';
+                backgroundColor = 'var(--mg-warning-500)';
                 allDay = false;
                 break;
             case 'AFTERNOON':
@@ -107,14 +107,14 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             case 'MORNING_HALF_1':
                 endDate = new Date(date + 'T11:00:00+09:00');
                 title = '🌄 오전 반반차 1';
-                backgroundColor = '#FFC107';
+                backgroundColor = 'var(--mg-warning-500)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_2':
                 startDate.setHours(11, 0, 0);
                 endDate = new Date(date + 'T13:00:00+09:00');
                 title = '🌄 오전 반반차 2';
-                backgroundColor = '#FFC107';
+                backgroundColor = 'var(--mg-warning-500)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_1':
@@ -148,7 +148,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             case 'FULL_DAY':
                 endDate = new Date(date + 'T23:59:59+09:00');
                 title = '🏖️ 하루 종일 휴무';
-                backgroundColor = '#F44336';
+                backgroundColor = 'var(--mg-error-500)';
                 allDay = true;
                 break;
             default:
@@ -161,7 +161,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                     allDay = true;
                 }
                 title = '🏖️ 휴무';
-                backgroundColor = '#F44336';
+                backgroundColor = 'var(--mg-error-500)';
                 break;
         }
         
@@ -230,11 +230,11 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
             setScheduleStatusOptions([
-                { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#3b82f6', description: '예약된 일정' },
-                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: '#8b5cf6', description: '확정된 일정' },
-                { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#f59e0b', description: '진행 중인 일정' },
+                { value: 'BOOKED', label: '예약됨', icon: '📅', color: 'var(--mg-primary-500)', description: '예약된 일정' },
+                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: 'var(--mg-purple-500)', description: '확정된 일정' },
+                { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-warning-500)', description: '진행 중인 일정' },
                 { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: '#059669', description: '완료된 일정' },
-                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#ef4444', description: '취소된 일정' },
+                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: 'var(--mg-error-500)', description: '취소된 일정' },
                 { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#6b7280', description: '차단된 시간' }
             ]);
         } finally {
@@ -649,12 +649,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             />
 
             {loading && (
-                <UnifiedLoading 
-                    text="스케줄을 불러오는 중..." 
-                    size="large" 
-                    variant="pulse"
-                    className="loading-spinner-fullscreen"
-                />
+                <div className="mg-loading">로딩중...</div>
             )}
 
             <ScheduleCalendarView

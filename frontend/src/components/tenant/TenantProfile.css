@@ -12,7 +12,7 @@
   padding: 1.5rem;
   background: var(--mg-color-background, #fff);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .tenant-profile-header-content {
@@ -45,22 +45,22 @@
 
 .tenant-status-badge--success {
   background: var(--mg-color-success-light, #d4edda);
-  color: var(--mg-color-success, #28a745);
+  color: var(--mg-color-success, var(--mg-success-500));
 }
 
 .tenant-status-badge--warning {
   background: var(--mg-color-warning-light, #fff3cd);
-  color: var(--mg-color-warning, #ffc107);
+  color: var(--mg-color-warning, var(--mg-warning-500));
 }
 
 .tenant-status-badge--danger {
   background: var(--mg-color-danger-light, #f8d7da);
-  color: var(--mg-color-danger, #dc3545);
+  color: var(--mg-color-danger, var(--mg-error-500));
 }
 
 .tenant-status-badge--secondary {
   background: var(--mg-color-secondary-light, #e2e3e5);
-  color: var(--mg-color-secondary, #6c757d);
+  color: var(--mg-color-secondary, var(--mg-secondary-500));
 }
 
 .tenant-profile-tabs {
@@ -84,12 +84,12 @@
 }
 
 .tenant-profile-tab:hover {
-  color: var(--mg-color-primary, #007bff);
+  color: var(--mg-color-primary, var(--mg-primary-500));
 }
 
 .tenant-profile-tab.active {
-  color: var(--mg-color-primary, #007bff);
-  border-bottom-color: var(--mg-color-primary, #007bff);
+  color: var(--mg-color-primary, var(--mg-primary-500));
+  border-bottom-color: var(--mg-color-primary, var(--mg-primary-500));
 }
 
 .tenant-profile-content {
@@ -105,7 +105,7 @@
   padding: 1.5rem;
   background: var(--mg-color-background, #fff);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .tenant-info-card h2 {
@@ -147,7 +147,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: var(--mg-color-background-secondary, #f8f9fa);
+  background: var(--mg-color-background-secondary, var(--mg-gray-100));
   border-radius: 4px;
 }
 
@@ -162,7 +162,7 @@
 
 .subscription-status--active {
   background: var(--mg-color-success-light, #d4edda);
-  color: var(--mg-color-success, #28a745);
+  color: var(--mg-color-success, var(--mg-success-500));
 }
 
 .subscription-amount {
@@ -170,14 +170,14 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-  color: var(--mg-color-primary, #007bff);
+  color: var(--mg-color-primary, var(--mg-primary-500));
 }
 
 .default-badge {
   display: inline-block;
   padding: 0.25rem 0.5rem;
   margin-left: 0.5rem;
-  background: var(--mg-color-primary, #007bff);
+  background: var(--mg-color-primary, var(--mg-primary-500));
   color: white;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -196,7 +196,7 @@
   padding: 1.5rem;
   background: var(--mg-color-background, #fff);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--mg-shadow-light);
 }
 
 .payment-method-header {
@@ -215,7 +215,7 @@
 .payment-method-registration-wrapper {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: var(--mg-color-background-secondary, #f8f9fa);
+  background: var(--mg-color-background-secondary, var(--mg-gray-100));
   border-radius: 8px;
 }
 
@@ -229,14 +229,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  background: var(--mg-color-background-secondary, #f8f9fa);
+  background: var(--mg-color-background-secondary, var(--mg-gray-100));
   border-radius: 8px;
   border: 1px solid var(--mg-color-border, #dee2e6);
   transition: all 0.2s;
 }
 
 .payment-method-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px var(--mg-shadow-light);
 }
 
 .payment-method-card-content {
@@ -281,14 +281,14 @@
 }
 
 .payment-method-action-btn:hover {
-  background: var(--mg-color-background-secondary, #f8f9fa);
-  border-color: var(--mg-color-primary, #007bff);
+  background: var(--mg-color-background-secondary, var(--mg-gray-100));
+  border-color: var(--mg-color-primary, var(--mg-primary-500));
 }
 
 .payment-method-action-btn--danger:hover {
   background: var(--mg-color-danger-light, #f8d7da);
-  border-color: var(--mg-color-danger, #dc3545);
-  color: var(--mg-color-danger, #dc3545);
+  border-color: var(--mg-color-danger, var(--mg-error-500));
+  color: var(--mg-color-danger, var(--mg-error-500));
 }
 
 .no-payment-methods {
@@ -313,7 +313,7 @@
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
-  color: var(--mg-color-danger, #dc3545);
+  color: var(--mg-color-danger, var(--mg-error-500));
 }
 
 .tenant-profile-error svg {

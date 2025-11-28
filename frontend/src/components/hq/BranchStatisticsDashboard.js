@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { 
     FaChartBar, FaUsers, FaUserTie, FaUser, FaCrown,
     FaCalendarAlt, FaDollarSign, FaArrowUp, FaArrowDown,
@@ -147,7 +147,7 @@ const BranchStatisticsDashboard = ({ selectedBranchId, onBranchSelect }) => {
         return (
             <SimpleLayout title="전사 통계">
                 <div className="branch-stats-container">
-                    <UnifiedLoading text="통계 데이터를 불러오는 중..." size="large" type="inline" />
+                    <div className="mg-loading">로딩중...</div>
                 </div>
             </SimpleLayout>
         );

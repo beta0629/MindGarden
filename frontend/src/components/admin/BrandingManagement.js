@@ -11,8 +11,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Upload, Save, RotateCcw, Eye, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { useBranding } from '../../hooks/useBranding';
 import { updateBrandingInfo, uploadLogo, getBrandingInfo } from '../../utils/brandingUtils';
-import UnifiedModal from '../common/modals/UnifiedModal';
-import UnifiedLoading from '../common/UnifiedLoading';
+// // import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import './BrandingManagement.css';
 
@@ -23,8 +23,8 @@ const BrandingManagement = ({ onClose }) => {
   const [formData, setFormData] = useState({
     companyName: '',
     companyNameEn: '',
-    primaryColor: '#007bff',
-    secondaryColor: '#6c757d',
+    primaryColor: 'var(--mg-primary-500)',
+    secondaryColor: 'var(--mg-secondary-500)',
     favicon: ''
   });
   
@@ -47,8 +47,8 @@ const BrandingManagement = ({ onClose }) => {
           setFormData({
             companyName: branding.companyName || '',
             companyNameEn: branding.companyNameEn || '',
-            primaryColor: branding.primaryColor || '#007bff',
-            secondaryColor: branding.secondaryColor || '#6c757d',
+            primaryColor: branding.primaryColor || 'var(--mg-primary-500)',
+            secondaryColor: branding.secondaryColor || 'var(--mg-secondary-500)',
             favicon: branding.favicon || ''
           });
           
@@ -185,11 +185,11 @@ const BrandingManagement = ({ onClose }) => {
     // 색상 코드 검증
     const colorRegex = /^#[0-9A-Fa-f]{6}$/;
     if (formData.primaryColor && !colorRegex.test(formData.primaryColor)) {
-      newErrors.primaryColor = '올바른 색상 코드를 입력해주세요. (예: #007bff)';
+      newErrors.primaryColor = '올바른 색상 코드를 입력해주세요. (예: var(--mg-primary-500))';
     }
     
     if (formData.secondaryColor && !colorRegex.test(formData.secondaryColor)) {
-      newErrors.secondaryColor = '올바른 색상 코드를 입력해주세요. (예: #6c757d)';
+      newErrors.secondaryColor = '올바른 색상 코드를 입력해주세요. (예: var(--mg-secondary-500))';
     }
     
     setErrors(newErrors);
@@ -241,8 +241,8 @@ const BrandingManagement = ({ onClose }) => {
         setFormData({
           companyName: branding.companyName || '',
           companyNameEn: branding.companyNameEn || '',
-          primaryColor: branding.primaryColor || '#007bff',
-          secondaryColor: branding.secondaryColor || '#6c757d',
+          primaryColor: branding.primaryColor || 'var(--mg-primary-500)',
+          secondaryColor: branding.secondaryColor || 'var(--mg-secondary-500)',
           favicon: branding.favicon || ''
         });
         
@@ -288,11 +288,7 @@ const BrandingManagement = ({ onClose }) => {
     return (
       <div className="branding-management">
         <div className="branding-management__loading">
-          <UnifiedLoading 
-            text="브랜딩 정보를 불러오는 중..."
-            size="large"
-            variant="default"
-          />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </div>
     );
@@ -504,7 +500,7 @@ const BrandingManagement = ({ onClose }) => {
           disabled={!hasChanges || isSaving || isUploading}
         >
           {isSaving || isUploading ? (
-            <UnifiedLoading size="small" showText={false} />
+            <div className="mg-loading">로딩중...</div>
           ) : (
             <Save size={20} />
           )}
@@ -526,21 +522,21 @@ const BrandingManagement = ({ onClose }) => {
 // 색상 선택기 컴포넌트
 const ColorPicker = ({ value, onChange, error }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [customColor, setCustomColor] = useState(value || '#007bff');
+  const [customColor, setCustomColor] = useState(value || 'var(--mg-primary-500)');
   
   // 미리 정의된 색상 팔레트
   const colorPalette = [
     // 기본 색상
-    '#007bff', '#6c757d', '#28a745', '#dc3545', '#ffc107', '#17a2b8',
+    'var(--mg-primary-500)', 'var(--mg-secondary-500)', 'var(--mg-success-500)', 'var(--mg-error-500)', 'var(--mg-warning-500)', 'var(--mg-info-500)',
     '#6f42c1', '#e83e8c', '#fd7e14', '#20c997', '#6610f2', '#e21e80',
     
     // 브랜드 색상
-    '#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe',
+    'var(--mg-primary-500)', '#764ba2', 'var(--mg-warning-500)', '#f5576c', '#4facfe', '#00f2fe',
     '#43e97b', '#38f9d7', '#ffecd2', '#fcb69f', '#a8edea', '#fed6e3',
     
     // 비즈니스 색상
-    '#2c3e50', '#34495e', '#95a5a6', '#bdc3c7', '#ecf0f1', '#f39c12',
-    '#e67e22', '#d35400', '#c0392b', '#8e44ad', '#9b59b6', '#3498db',
+    '#2c3e50', '#34495e', '#95a5a6', '#bdc3c7', '#ecf0f1', 'var(--mg-finance-primary)',
+    'var(--mg-finance-dark)', '#d35400', '#c0392b', '#8e44ad', '#9b59b6', '#3498db',
     
     // 파스텔 색상
     '#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#d4baff',
@@ -571,7 +567,7 @@ const ColorPicker = ({ value, onChange, error }) => {
           className={`color-picker__input ${error ? 'error' : ''}`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="#007bff"
+          placeholder="var(--mg-primary-500)"
           maxLength={7}
         />
         <button 
@@ -618,7 +614,7 @@ const ColorPicker = ({ value, onChange, error }) => {
                   setCustomColor(e.target.value);
                   onChange(e.target.value);
                 }}
-                placeholder="#000000"
+                placeholder="var(--mg-black)"
                 maxLength={7}
               />
             </div>
@@ -642,7 +638,7 @@ const ColorPicker = ({ value, onChange, error }) => {
 // 브랜딩 미리보기 모달 컴포넌트
 const BrandingPreviewModal = ({ brandingData, onClose }) => {
   return (
-    <UnifiedModal
+    <div className="mg-modal"
       isOpen={true}
       onClose={onClose}
       title="브랜딩 미리보기"
@@ -703,7 +699,7 @@ const BrandingPreviewModal = ({ brandingData, onClose }) => {
           </button>
         </div>
       </div>
-    </UnifiedModal>
+    </div>
   );
 };
 

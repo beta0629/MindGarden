@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { useNavigate } from 'react-router-dom';
@@ -35,7 +35,7 @@ const ConsultantRecords = () => {
             value: code.codeValue,
             label: code.codeLabel,
             icon: code.icon || (code.codeValue === 'COMPLETED' ? '✅' : '⏳'),
-            color: code.colorCode || (code.codeValue === 'COMPLETED' ? '#10b981' : '#ffc107'),
+            color: code.colorCode || (code.codeValue === 'COMPLETED' ? 'var(--mg-success-500)' : 'var(--mg-warning-500)'),
             description: code.description || `${code.codeLabel}된 상담기록`
           }))
         ];
@@ -47,8 +47,8 @@ const ConsultantRecords = () => {
       // 실패 시 기본값 설정 (상담기록에 맞는 상태)
       setStatusOptions([
         { value: 'ALL', label: '전체', icon: '📋', color: '#6b7280', description: '모든 상담기록' },
-        { value: 'COMPLETED', label: '완료', icon: '✅', color: '#10b981', description: '완료된 상담기록' },
-        { value: 'PENDING', label: '대기', icon: '⏳', color: '#ffc107', description: '대기 중인 상담기록' }
+        { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '완료된 상담기록' },
+        { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '대기 중인 상담기록' }
       ]);
     } finally {
       setLoadingCodes(false);
@@ -146,15 +146,15 @@ const ConsultantRecords = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'COMPLETED':
-        return '#28a745';
+        return 'var(--mg-success-500)';
       case 'IN_PROGRESS':
-        return '#ffc107';
+        return 'var(--mg-warning-500)';
       case 'CANCELLED':
-        return '#dc3545';
+        return 'var(--mg-error-500)';
       case 'PENDING':
-        return '#6c757d';
+        return 'var(--mg-secondary-500)';
       default:
-        return '#6c757d';
+        return 'var(--mg-secondary-500)';
     }
   };
 

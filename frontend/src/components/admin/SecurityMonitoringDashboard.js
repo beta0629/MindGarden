@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSync, FaDownload, FaShieldAlt, FaExclamationTriangle } from 'react-icons/fa';
-import SimpleLayout from '../layout/SimpleLayout';
+// import SimpleLayout from '../layout/SimpleLayout';
 import SecurityMonitoringWidget from './widgets/SecurityMonitoringWidget';
 import PerformanceWidget from './widgets/PerformanceWidget';
-import MGButton from '../common/MGButton';
+import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { SecurityDataManager } from '../../utils/securityUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import './SecurityMonitoringDashboard.css';
@@ -106,7 +106,7 @@ const SecurityMonitoringDashboard = () => {
       <div className="security-monitoring-dashboard">
         <div className={`page-header ${getHeaderStatusClass()}`}>
           <div className="header-left">
-            <MGButton
+            <button className="mg-button"
               variant="outline"
               size="small"
               onClick={() => navigate('/admin')}
@@ -114,7 +114,7 @@ const SecurityMonitoringDashboard = () => {
             >
               <FaArrowLeft />
               관리자 대시보드
-            </MGButton>
+            </button>
             <div className="page-title">
               <div className="title-with-status">
                 <h1>보안 모니터링</h1>
@@ -148,7 +148,7 @@ const SecurityMonitoringDashboard = () => {
             </div>
             
             <div className="action-buttons">
-              <MGButton
+              <button className="mg-button"
                 variant="outline"
                 size="small"
                 onClick={handleDownloadReport}
@@ -156,9 +156,9 @@ const SecurityMonitoringDashboard = () => {
               >
                 <FaDownload />
                 보안 보고서
-              </MGButton>
+              </button>
               
-              <MGButton
+              <button className="mg-button"
                 variant="primary"
                 size="small"
                 onClick={handleRefresh}
@@ -166,7 +166,7 @@ const SecurityMonitoringDashboard = () => {
               >
                 <FaSync className={refreshing ? 'spinning' : ''} />
                 새로고침
-              </MGButton>
+              </button>
             </div>
           </div>
         </div>

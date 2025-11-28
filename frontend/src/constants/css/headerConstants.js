@@ -40,19 +40,19 @@ export const HEADER_CSS_CLASSES = {
 export const HEADER_STYLE_CONSTANTS = {
   // 색상
   COLORS: {
-    PRIMARY: '#6c5ce7',
+    PRIMARY: 'var(--mg-consultant-dark)',
     PRIMARY_LIGHT: 'rgba(108, 92, 231, 0.1)',
     PRIMARY_HOVER: 'rgba(108, 92, 231, 0.2)',
-    WHITE: '#ffffff',
-    BORDER: '#e0e0e0',
+    WHITE: 'var(--mg-white)',
+    BORDER: 'var(--mg-gray-300)',
     TEXT_PRIMARY: '#333',
     TEXT_SECONDARY: '#666',
     TEXT_MUTED: '#999',
-    BACKGROUND_LIGHT: '#f5f5f5',
+    BACKGROUND_LIGHT: 'var(--mg-gray-100)',
     BACKGROUND_HOVER: 'rgba(0, 0, 0, 0.05)',
-    DANGER: '#dc3545',
+    DANGER: 'var(--mg-error-500)',
     DANGER_HOVER: '#c82333',
-    NEUTRAL: '#f8f9fa',
+    NEUTRAL: 'var(--mg-gray-100)',
     NEUTRAL_HOVER: '#e9ecef',
     BORDER_LIGHT: '#dee2e6',
   },
@@ -101,7 +101,7 @@ export const HEADER_STYLE_CONSTANTS = {
   
   // 그림자
   SHADOWS: {
-    HEADER: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    HEADER: '0 2px 4px var(--mg-shadow-light)',
     LOGOUT_BUTTON: '0 4px 15px rgba(220, 53, 69, 0.4)',
     LOGOUT_BUTTON_HOVER: '0 6px 20px rgba(220, 53, 69, 0.6)',
   },

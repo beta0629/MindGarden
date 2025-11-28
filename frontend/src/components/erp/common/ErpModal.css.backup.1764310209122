@@ -1,0 +1,196 @@
+/* ErpModal 스타일 - 새로운 디자인 시스템 적용 */
+
+.erp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-index-modal);
+  padding: var(--spacing-lg);
+  animation: fadeIn var(--transition-normal);
+}
+
+.erp-modal {
+  background-color: var(--ios-bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-xl);
+  max-height: 90vh;
+  overflow: auto;
+  animation: slideIn var(--transition-normal);
+}
+
+/* 모달 크기 변형 */
+.erp-modal--small {
+  width: 400px;
+  max-width: 90vw;
+}
+
+.erp-modal--medium {
+  width: 600px;
+  max-width: 90vw;
+}
+
+.erp-modal--large {
+  width: 800px;
+  max-width: 90vw;
+}
+
+.erp-modal--fullscreen {
+  width: 95vw;
+  height: 95vh;
+  max-width: none;
+}
+
+.erp-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid var(--ios-border-light);
+}
+
+.erp-modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin: 0;
+}
+
+.erp-modal-close {
+  background: none;
+  border: none;
+  font-size: var(--font-size-xxl);
+  color: var(--ios-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.erp-modal-close:hover {
+  background-color: var(--ios-bg-tertiary);
+  color: var(--ios-text-primary);
+}
+
+.erp-modal-content {
+  padding: var(--spacing-xl);
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .erp-modal-overlay {
+    padding: var(--spacing-sm);
+  }
+  
+  .erp-modal {
+    max-height: 95vh;
+  }
+  
+  .erp-modal--small,
+  .erp-modal--medium,
+  .erp-modal--large {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .erp-modal-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .erp-modal-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .erp-modal-content {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .erp-modal--small {
+    width: 350px;
+  }
+  
+  .erp-modal--medium {
+    width: 550px;
+  }
+  
+  .erp-modal--large {
+    width: 700px;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .erp-modal {
+    background-color: var(--ios-bg-primary-dark);
+  }
+  
+  .erp-modal-header {
+    border-bottom-color: var(--ios-border-light-dark);
+  }
+  
+  .erp-modal-title {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .erp-modal-close {
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .erp-modal-close:hover {
+    background-color: var(--ios-bg-tertiary-dark);
+    color: var(--ios-text-primary-dark);
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .erp-modal-overlay,
+  .erp-modal {
+    animation: none;
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .erp-modal {
+    border: 2px solid var(--ios-border-dark);
+  }
+  
+  .erp-modal-header {
+    border-bottom-width: 2px;
+  }
+}

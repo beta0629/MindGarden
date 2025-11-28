@@ -3,7 +3,9 @@ import { FaRocket, FaTachometerAlt, FaExclamationTriangle, FaClock, FaChartArea 
 import { PerformanceUtils } from '../../../utils/performanceUtils';
 import { ApiPerformanceProcessor, ApiPerformanceAnalyzer } from '../../../utils/apiPerformanceUtils';
 import { WIDGET_CONSTANTS, API_PERFORMANCE_WIDGET } from '../../../constants/widgetConstants';
-import './ApiPerformanceWidget.css';
+import { MG_DESIGN_TOKENS } from '../../../constants/designTokens';
+import '../../dashboard/widgets/Widget.css';
+import '../../../styles/unified-design-tokens.css';
 
 /**
  * API 성능 모니터링 위젯
@@ -88,64 +90,62 @@ const ApiPerformanceWidget = ({
 
   // 요약 뷰 렌더링
   const renderSummaryView = () => (
-    <div className="performance-summary">
-      <div className="summary-metrics">
-        <div className={`summary-metric ${getPerformanceGrade(performanceData.summary.averageResponseTime)}`}>
-          <div className="metric-icon">
-            <FaTachometerAlt />
+    <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_STATS_GRID}>
+      <div className={`mg-stats-card mg-stats-card--${getPerformanceGrade(performanceData.summary.averageResponseTime)}`}>
+        <div className="mg-stats-card__icon">
+          <FaTachometerAlt />
+        </div>
+        <div className="mg-stats-card__content">
+          <div className="mg-stats-card__label">
+            {API_PERFORMANCE_WIDGET.METRIC_LABELS.AVERAGE_RESPONSE_TIME}
           </div>
-          <div className="metric-content">
-            <div className="metric-label">
-              {API_PERFORMANCE_WIDGET.METRIC_LABELS.AVERAGE_RESPONSE_TIME}
-            </div>
-            <div className="metric-value">
-              {PerformanceUtils.formatDuration(performanceData.summary.averageResponseTime)}
-            </div>
+          <div className="mg-stats-card__value">
+            {PerformanceUtils.formatDuration(performanceData.summary.averageResponseTime)}
           </div>
         </div>
+      </div>
 
-        <div className="summary-metric">
-          <div className="metric-icon">
-            <FaRocket />
+      <div className="mg-stats-card">
+        <div className="mg-stats-card__icon">
+          <FaRocket />
+        </div>
+        <div className="mg-stats-card__content">
+          <div className="mg-stats-card__label">
+            {API_PERFORMANCE_WIDGET.METRIC_LABELS.TOTAL_REQUESTS}
           </div>
-          <div className="metric-content">
-            <div className="metric-label">
-              {API_PERFORMANCE_WIDGET.METRIC_LABELS.TOTAL_REQUESTS}
-            </div>
-            <div className="metric-value">
-              {PerformanceUtils.formatNumber(performanceData.summary.totalRequests)}
-            </div>
+          <div className="mg-stats-card__value">
+            {PerformanceUtils.formatNumber(performanceData.summary.totalRequests)}
           </div>
         </div>
+      </div>
 
-        <div className={`summary-metric ${getErrorRateGrade(performanceData.summary.overallErrorRate)}`}>
-          <div className="metric-icon">
-            <FaExclamationTriangle />
+      <div className={`mg-stats-card mg-stats-card--${getErrorRateGrade(performanceData.summary.overallErrorRate)}`}>
+        <div className="mg-stats-card__icon">
+          <FaExclamationTriangle />
+        </div>
+        <div className="mg-stats-card__content">
+          <div className="mg-stats-card__label">
+            {API_PERFORMANCE_WIDGET.METRIC_LABELS.OVERALL_ERROR_RATE}
           </div>
-          <div className="metric-content">
-            <div className="metric-label">
-              {API_PERFORMANCE_WIDGET.METRIC_LABELS.OVERALL_ERROR_RATE}
-            </div>
-            <div className="metric-value">
-              {PerformanceUtils.formatPercentage(performanceData.summary.overallErrorRate)}
-            </div>
+          <div className="mg-stats-card__value">
+            {PerformanceUtils.formatPercentage(performanceData.summary.overallErrorRate)}
           </div>
         </div>
+      </div>
 
-        <div className="summary-metric">
-          <div className="metric-icon">
-            <FaClock />
+      <div className="mg-stats-card">
+        <div className="mg-stats-card__icon">
+          <FaClock />
+        </div>
+        <div className="mg-stats-card__content">
+          <div className="mg-stats-card__label">
+            {API_PERFORMANCE_WIDGET.METRIC_LABELS.SLOWEST_REQUEST}
           </div>
-          <div className="metric-content">
-            <div className="metric-label">
-              {API_PERFORMANCE_WIDGET.METRIC_LABELS.SLOWEST_REQUEST}
-            </div>
-            <div className="metric-value">
-              {PerformanceUtils.formatDuration(performanceData.summary.slowestRequest)}
-            </div>
-            <div className="metric-detail">
-              {performanceData.summary.slowestEndpoint}
-            </div>
+          <div className="mg-stats-card__value">
+            {PerformanceUtils.formatDuration(performanceData.summary.slowestRequest)}
+          </div>
+          <div className="mg-stats-card__detail">
+            {performanceData.summary.slowestEndpoint}
           </div>
         </div>
       </div>
@@ -154,24 +154,26 @@ const ApiPerformanceWidget = ({
 
   // 느린 API 뷰 렌더링
   const renderSlowApisView = () => (
-    <div className="slow-apis-list">
+    <div className="mg-api-list">
       {Object.keys(performanceData.slowApis).length === 0 ? (
-        <div className="no-data">
-          <FaRocket />
-          <p>{API_PERFORMANCE_WIDGET.MESSAGES.NO_SLOW_APIS}</p>
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX_COL + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_ALIGN_CENTER + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_PY_XL}>
+          <FaRocket size={48} className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED} />
+          <p className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+            {API_PERFORMANCE_WIDGET.MESSAGES.NO_SLOW_APIS}
+          </p>
         </div>
       ) : (
         Object.entries(performanceData.slowApis).slice(0, 5).map(([endpoint, stats]) => (
-          <div key={endpoint} className="api-item slow-api">
-            <div className="api-endpoint">{endpoint}</div>
-            <div className="api-stats">
-              <span className="stat-item">
+          <div key={endpoint} className="mg-api-item mg-api-item--warning">
+            <div className="mg-api-item__endpoint">{endpoint}</div>
+            <div className="mg-api-item__stats">
+              <span className="mg-stat-badge">
                 평균: {PerformanceUtils.formatDuration(stats.averageDuration)}
               </span>
-              <span className="stat-item">
+              <span className="mg-stat-badge">
                 최대: {PerformanceUtils.formatDuration(stats.maxDuration)}
               </span>
-              <span className="stat-item">
+              <span className="mg-stat-badge">
                 요청: {PerformanceUtils.formatNumber(stats.totalRequests)}
               </span>
             </div>
@@ -183,24 +185,26 @@ const ApiPerformanceWidget = ({
 
   // 에러 많은 API 뷰 렌더링
   const renderErrorProneApisView = () => (
-    <div className="error-prone-apis-list">
+    <div className="mg-api-list">
       {Object.keys(performanceData.errorProneApis).length === 0 ? (
-        <div className="no-data">
-          <FaExclamationTriangle />
-          <p>{API_PERFORMANCE_WIDGET.MESSAGES.NO_ERROR_APIS}</p>
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_FLEX_COL + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_ALIGN_CENTER + ' ' + WIDGET_CONSTANTS.CSS_CLASSES.MG_PY_XL}>
+          <FaExclamationTriangle size={48} className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED} />
+          <p className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+            {API_PERFORMANCE_WIDGET.MESSAGES.NO_ERROR_APIS}
+          </p>
         </div>
       ) : (
         Object.entries(performanceData.errorProneApis).slice(0, 5).map(([endpoint, stats]) => (
-          <div key={endpoint} className="api-item error-api">
-            <div className="api-endpoint">{endpoint}</div>
-            <div className="api-stats">
-              <span className="stat-item error-rate">
+          <div key={endpoint} className="mg-api-item mg-api-item--error">
+            <div className="mg-api-item__endpoint">{endpoint}</div>
+            <div className="mg-api-item__stats">
+              <span className="mg-stat-badge mg-stat-badge--error">
                 에러율: {PerformanceUtils.formatPercentage(stats.errorRate)}
               </span>
-              <span className="stat-item">
+              <span className="mg-stat-badge">
                 에러: {PerformanceUtils.formatNumber(stats.errorCount)}
               </span>
-              <span className="stat-item">
+              <span className="mg-stat-badge">
                 총 요청: {PerformanceUtils.formatNumber(stats.totalRequests)}
               </span>
             </div>
@@ -211,27 +215,27 @@ const ApiPerformanceWidget = ({
   );
 
   return (
-    <div className={`api-performance-widget ${className}`} {...props}>
-      <div className="widget-header">
-        <div className="widget-title">
-          <FaChartArea className="widget-icon" />
-          <h3>{title}</h3>
+    <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTAINER('api-performance')}>
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_HEADER}>
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_HEADER}>
+          <FaChartArea className="mg-icon" />
+          <h3 className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_TITLE}>{title}</h3>
         </div>
-        <div className="view-selector">
+        <div className="mg-button-group">
           <button 
-            className={`view-button ${selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY ? 'active' : ''}`}
+            className={`mg-button mg-button--sm ${selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY ? 'mg-button--primary' : 'mg-button--outline'}`}
             onClick={() => setSelectedView(API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY)}
           >
             요약
           </button>
           <button 
-            className={`view-button ${selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW ? 'active' : ''}`}
+            className={`mg-button mg-button--sm ${selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW ? 'mg-button--primary' : 'mg-button--outline'}`}
             onClick={() => setSelectedView(API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW)}
           >
             느린 API
           </button>
           <button 
-            className={`view-button ${selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS ? 'active' : ''}`}
+            className={`mg-button mg-button--sm ${selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS ? 'mg-button--primary' : 'mg-button--outline'}`}
             onClick={() => setSelectedView(API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS)}
           >
             에러 API
@@ -239,24 +243,31 @@ const ApiPerformanceWidget = ({
         </div>
       </div>
 
-      <div className="widget-content">
-        {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY && renderSummaryView()}
-        {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW && renderSlowApisView()}
-        {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS && renderErrorProneApisView()}
+      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_BODY}>
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_CARD_BODY}>
+          {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SUMMARY && renderSummaryView()}
+          {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.SLOW && renderSlowApisView()}
+          {selectedView === API_PERFORMANCE_WIDGET.VIEW_TYPES.ERRORS && renderErrorProneApisView()}
+        </div>
       </div>
 
-      <div className="widget-footer">
-        {loading && (
-          <div className="loading-indicator">
-            {API_PERFORMANCE_WIDGET.MESSAGES.LOADING}
-          </div>
-        )}
-        {lastUpdated && !loading && (
-          <div className="last-updated">
-            마지막 업데이트: {lastUpdated.toLocaleTimeString()}
-          </div>
-        )}
-      </div>
+      {(loading || lastUpdated) && (
+        <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_FOOTER}>
+          {loading && (
+            <div className={WIDGET_CONSTANTS.CSS_CLASSES.LOADING_CONTAINER}>
+              <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_LOADING_SPINNER}></div>
+              <span className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+                {API_PERFORMANCE_WIDGET.MESSAGES.LOADING}
+              </span>
+            </div>
+          )}
+          {lastUpdated && !loading && (
+            <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
+              마지막 업데이트: {lastUpdated.toLocaleTimeString()}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

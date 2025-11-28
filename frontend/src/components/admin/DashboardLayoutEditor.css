@@ -43,7 +43,7 @@
 .widget-count,
 .grid-info {
   padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
-  background: var(--mg-bg-primary, #ffffff);
+  background: var(--mg-bg-primary, var(--mg-white));
   border-radius: var(--mg-border-radius-sm, 0.25rem);
 }
 
@@ -135,7 +135,7 @@
 
 /* 위젯 아이템 */
 .layout-widget-item {
-  background: var(--mg-bg-primary, #ffffff);
+  background: var(--mg-bg-primary, var(--mg-white));
   border: var(--mg-border-width, 2px) solid var(--mg-border-color, #e5e7eb);
   border-radius: var(--mg-border-radius-md, 0.5rem);
   min-height: 120px;
@@ -146,20 +146,20 @@
 }
 
 .layout-widget-item:hover {
-  border-color: var(--mg-primary, #3b82f6);
-  box-shadow: var(--mg-shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
+  border-color: var(--mg-primary, var(--mg-primary-500));
+  box-shadow: var(--mg-shadow-md, 0 4px 6px -1px var(--mg-shadow-light), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
 }
 
 /* 드래그 상태 */
 .widget-ghost {
   opacity: 0.4;
   background: var(--mg-bg-secondary, #f9fafb);
-  border: var(--mg-border-width, 2px) dashed var(--mg-primary, #3b82f6);
+  border: var(--mg-border-width, 2px) dashed var(--mg-primary, var(--mg-primary-500));
 }
 
 .widget-chosen {
-  border-color: var(--mg-primary, #3b82f6);
-  box-shadow: var(--mg-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
+  border-color: var(--mg-primary, var(--mg-primary-500));
+  box-shadow: var(--mg-shadow-lg, 0 10px 15px -3px var(--mg-shadow-light), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
 }
 
 .widget-drag {
@@ -223,7 +223,7 @@
 
 .widget-delete-btn:hover {
   background: var(--mg-danger-alpha, rgba(239, 68, 68, 0.1));
-  color: var(--mg-danger, #ef4444);
+  color: var(--mg-danger, var(--mg-error-500));
 }
 
 /* 위젯 미리보기 */
@@ -259,7 +259,7 @@
   padding: var(--mg-spacing-xl, 2rem);
   text-align: center;
   color: var(--mg-text-secondary, #6b7280);
-  background: var(--mg-bg-primary, #ffffff);
+  background: var(--mg-bg-primary, var(--mg-white));
   border-radius: var(--mg-border-radius-md, 0.5rem);
   border: var(--mg-border-width, 2px) dashed var(--mg-border-color, #e5e7eb);
 }

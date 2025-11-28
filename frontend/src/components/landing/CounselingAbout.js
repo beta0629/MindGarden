@@ -2,8 +2,8 @@
  * 상담센터 랜딩페이지 - 소개 섹션
  */
 
-import React from 'react';
-import MGCard from '../common/MGCard';
+// import React from 'react';
+import MGCard from '../../components/common/MGCard'; // 임시 비활성화
 import './CounselingAbout.css';
 
 const CounselingAbout = () => {
@@ -18,20 +18,20 @@ const CounselingAbout = () => {
           </p>
           
           <div className="counseling-about__features">
-            <MGCard variant="glass" padding="medium" className="counseling-about__feature">
+            <div className="mg-card" variant="glass" padding="medium" className="counseling-about__feature">
               <h3>📋 라이선스 보유</h3>
               <p>모든 상담사는 정식 라이선스를 보유하고 있습니다.</p>
-            </MGCard>
+            </div>
             
-            <MGCard variant="glass" padding="medium" className="counseling-about__feature">
+            <div className="mg-card" variant="glass" padding="medium" className="counseling-about__feature">
               <h3>🔬 증거 기반 치료</h3>
               <p>과학적으로 검증된 치료법을 사용합니다.</p>
-            </MGCard>
+            </div>
             
-            <MGCard variant="glass" padding="medium" className="counseling-about__feature">
+            <div className="mg-card" variant="glass" padding="medium" className="counseling-about__feature">
               <h3>🔒 기밀성 보장</h3>
               <p>모든 상담 내용은 완전히 비공개로 보호됩니다.</p>
-            </MGCard>
+            </div>
           </div>
         </div>
       </div>

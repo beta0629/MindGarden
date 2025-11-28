@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useSession } from '../../contexts/SessionContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../../utils/ajax';
-import './ConsultantClientList.css';
+// import './ConsultantClientList.css';
 import SimpleLayout from '../layout/SimpleLayout';
 import ClientDetailModal from './ClientDetailModal';
-import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 
 const ConsultantClientList = () => {
@@ -57,32 +57,32 @@ const ConsultantClientList = () => {
   // 기본 색상 반환 함수 (디자인 시스템 변수 사용)
   const getDefaultColor = (status) => {
     const colorMap = {
-      'ACTIVE': 'var(--color-success, #34c759)',
-      'INACTIVE': 'var(--color-secondary, #6c757d)',
-      'PENDING': 'var(--color-warning, #ff9500)',
-      'COMPLETED': 'var(--color-success, #34c759)',
-      'SUSPENDED': 'var(--color-danger, #ff3b30)',
-      'DELETED': 'var(--color-secondary, #6c757d)',
-      'APPROVED': 'var(--color-success, #34c759)',
-      'REJECTED': 'var(--color-danger, #ff3b30)',
-      'PAYMENT_CONFIRMED': 'var(--color-success, #34c759)',
-      'PAYMENT_PENDING': 'var(--color-warning, #ff9500)',
-      'PAYMENT_REJECTED': 'var(--color-danger, #ff3b30)',
-      'TERMINATED': 'var(--color-secondary, #6c757d)',
-      'REQUESTED': 'var(--color-primary, #007aff)',
-      'BOOKED': 'var(--ios-purple, #5856d6)',
-      'IN_PROGRESS': 'var(--color-warning, #ff9500)',
-      'CANCELLED': 'var(--color-danger, #ff3b30)',
-      'NO_SHOW': 'var(--color-danger, #ff3b30)',
-      'RESCHEDULED': 'var(--ios-purple, #5856d6)',
-      'AVAILABLE': 'var(--color-success, #34c759)',
-      'CONFIRMED': 'var(--color-success, #34c759)',
-      'WAITING': 'var(--color-warning, #ff9500)',
-      'EXPIRED': 'var(--color-secondary, #6c757d)',
-      'BLOCKED': 'var(--color-danger, #ff3b30)',
-      'MAINTENANCE': 'var(--color-warning, #ff9500)'
+      'ACTIVE': 'var(--color-success, var(--mg-success-500))',
+      'INACTIVE': 'var(--color-secondary, var(--mg-secondary-500))',
+      'PENDING': 'var(--color-warning, var(--mg-warning-500))',
+      'COMPLETED': 'var(--color-success, var(--mg-success-500))',
+      'SUSPENDED': 'var(--color-danger, var(--mg-error-500))',
+      'DELETED': 'var(--color-secondary, var(--mg-secondary-500))',
+      'APPROVED': 'var(--color-success, var(--mg-success-500))',
+      'REJECTED': 'var(--color-danger, var(--mg-error-500))',
+      'PAYMENT_CONFIRMED': 'var(--color-success, var(--mg-success-500))',
+      'PAYMENT_PENDING': 'var(--color-warning, var(--mg-warning-500))',
+      'PAYMENT_REJECTED': 'var(--color-danger, var(--mg-error-500))',
+      'TERMINATED': 'var(--color-secondary, var(--mg-secondary-500))',
+      'REQUESTED': 'var(--color-primary, var(--mg-primary-500))',
+      'BOOKED': 'var(--ios-purple, var(--mg-purple-500))',
+      'IN_PROGRESS': 'var(--color-warning, var(--mg-warning-500))',
+      'CANCELLED': 'var(--color-danger, var(--mg-error-500))',
+      'NO_SHOW': 'var(--color-danger, var(--mg-error-500))',
+      'RESCHEDULED': 'var(--ios-purple, var(--mg-purple-500))',
+      'AVAILABLE': 'var(--color-success, var(--mg-success-500))',
+      'CONFIRMED': 'var(--color-success, var(--mg-success-500))',
+      'WAITING': 'var(--color-warning, var(--mg-warning-500))',
+      'EXPIRED': 'var(--color-secondary, var(--mg-secondary-500))',
+      'BLOCKED': 'var(--color-danger, var(--mg-error-500))',
+      'MAINTENANCE': 'var(--color-warning, var(--mg-warning-500))'
     };
-    return colorMap[status] || 'var(--color-secondary, #6c757d)';
+    return colorMap[status] || 'var(--color-secondary, var(--mg-secondary-500))';
   };
 
   const loadClients = useCallback(async () => {
@@ -180,9 +180,9 @@ const ConsultantClientList = () => {
       console.error('❌ 사용자 상태 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       const defaultOptions = [
-        { value: 'ACTIVE', label: '활성', icon: '🟢', color: '#10b981', description: '활성 사용자' },
+        { value: 'ACTIVE', label: '활성', icon: '🟢', color: 'var(--mg-success-500)', description: '활성 사용자' },
         { value: 'INACTIVE', label: '비활성', icon: '🔴', color: '#6b7280', description: '비활성 사용자' },
-        { value: 'PENDING', label: '대기중', icon: '⏳', color: '#f59e0b', description: '대기 중인 사용자' },
+        { value: 'PENDING', label: '대기중', icon: '⏳', color: 'var(--mg-warning-500)', description: '대기 중인 사용자' },
         { value: 'COMPLETED', label: '완료', icon: '✅', color: '#059669', description: '완료된 사용자' },
         { value: 'SUSPENDED', label: '일시정지', icon: '⏸️', color: '#dc2626', description: '일시정지된 사용자' }
       ];
@@ -292,7 +292,7 @@ const ConsultantClientList = () => {
   if (sessionLoading) {
     return (
       <SimpleLayout title="내담자 목록">
-        <UnifiedLoading text="세션 정보를 불러오는 중..." size="medium" type="inline" />
+        <div className="mg-loading">로딩중...</div>
       </SimpleLayout>
     );
   }
@@ -362,7 +362,7 @@ const ConsultantClientList = () => {
       {/* 로딩 상태 */}
       {loading && (
         <div className="loading-container">
-          <UnifiedLoading text="내담자 목록을 불러오는 중..." size="medium" type="inline" />
+          <div className="mg-loading">로딩중...</div>
           <p>잠시만 기다려주세요...</p>
         </div>
       )}

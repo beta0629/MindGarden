@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import UnifiedLoading from '../common/UnifiedLoading';
+// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useSession } from '../../hooks/useSession';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -33,20 +33,20 @@ const ConsultantAvailability = () => {
       } else {
         // API 응답이 없을 때 기본값 설정
         setDurationOptions([
-          { value: '30_MIN', label: '30분', icon: '⏰', color: '#3b82f6', description: '30분 상담' },
-          { value: '60_MIN', label: '60분', icon: '⏰', color: '#10b981', description: '60분 상담' },
-          { value: '90_MIN', label: '90분', icon: '⏰', color: '#f59e0b', description: '90분 상담' },
-          { value: '120_MIN', label: '120분', icon: '⏰', color: '#ef4444', description: '120분 상담' }
+          { value: '30_MIN', label: '30분', icon: '⏰', color: 'var(--mg-primary-500)', description: '30분 상담' },
+          { value: '60_MIN', label: '60분', icon: '⏰', color: 'var(--mg-success-500)', description: '60분 상담' },
+          { value: '90_MIN', label: '90분', icon: '⏰', color: 'var(--mg-warning-500)', description: '90분 상담' },
+          { value: '120_MIN', label: '120분', icon: '⏰', color: 'var(--mg-error-500)', description: '120분 상담' }
         ]);
       }
     } catch (error) {
       console.error('시간 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setDurationOptions([
-        { value: '30_MIN', label: '30분', icon: '⏰', color: '#3b82f6', description: '30분 상담' },
-        { value: '60_MIN', label: '60분', icon: '⏰', color: '#10b981', description: '60분 상담' },
-        { value: '90_MIN', label: '90분', icon: '⏰', color: '#f59e0b', description: '90분 상담' },
-        { value: '120_MIN', label: '120분', icon: '⏰', color: '#ef4444', description: '120분 상담' }
+        { value: '30_MIN', label: '30분', icon: '⏰', color: 'var(--mg-primary-500)', description: '30분 상담' },
+        { value: '60_MIN', label: '60분', icon: '⏰', color: 'var(--mg-success-500)', description: '60분 상담' },
+        { value: '90_MIN', label: '90분', icon: '⏰', color: 'var(--mg-warning-500)', description: '90분 상담' },
+        { value: '120_MIN', label: '120분', icon: '⏰', color: 'var(--mg-error-500)', description: '120분 상담' }
       ]);
     } finally {
       setLoadingCodes(false);
@@ -220,11 +220,7 @@ const ConsultantAvailability = () => {
     return (
       <SimpleLayout>
         <div className="loading-container">
-          <UnifiedLoading 
-            text="세션 확인 중..." 
-            size="medium"
-            className="loading-spinner-inline"
-          />
+          <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
     );
@@ -328,7 +324,7 @@ const ConsultantAvailability = () => {
 
       {/* 로딩 상태 */}
       {loading && (
-        <UnifiedLoading text="상담 가능 시간을 불러오는 중..." size="medium" type="inline" />
+        <div className="mg-loading">로딩중...</div>
       )}
 
       {/* 오류 상태 */}

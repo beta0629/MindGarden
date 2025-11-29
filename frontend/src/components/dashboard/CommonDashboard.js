@@ -13,21 +13,37 @@ import './CommonDashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
 // import SimpleLayout from '../layout/SimpleLayout';
 import WelcomeSection from './WelcomeSection';
+import WelcomeWidget from './widgets/WelcomeWidget';
 import SummaryPanels from './SummaryPanels';
+import SummaryPanelsWidget from './widgets/SummaryPanelsWidget';
 import QuickActions from './QuickActions';
+import QuickActionsWidget from './widgets/QuickActionsWidget';
+import { createQuickActionsWidget } from '../../constants/quickActionsConfig';
 import RecentActivities from './RecentActivities';
+import RecentActivitiesWidget from './widgets/RecentActivitiesWidget';
 import ClientMessageSection from './ClientMessageSection';
+import ClientMessageWidget from './widgets/ClientMessageWidget';
 import ErpPurchaseRequestPanel from './ErpPurchaseRequestPanel';
+import ErpPurchaseRequestWidget from './widgets/ErpPurchaseRequestWidget';
 import SystemNotificationSection from './SystemNotificationSection';
+import SystemNotificationWidget from './widgets/SystemNotificationWidget';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ClientPersonalizedMessages from './ClientPersonalizedMessages';
+import PersonalizedMessagesWidget from './widgets/PersonalizedMessagesWidget';
 import ClientPaymentSessionsSection from './ClientPaymentSessionsSection';
+import PaymentSessionsWidget from './widgets/PaymentSessionsWidget';
 import ConsultantClientSection from './ConsultantClientSection';
+import ConsultantClientWidget from './widgets/ConsultantClientWidget';
 import HealingCard from '../common/HealingCard';
+import HealingCardWidget from './widgets/HealingCardWidget';
 import ScheduleQuickAccess from './ScheduleQuickAccess';
+import ScheduleWidget from './widgets/ScheduleWidget';
 import RatableConsultationsSection from '../client/RatableConsultationsSection';
+import RatableConsultationsWidget from './widgets/RatableConsultationsWidget';
 import ConsultantRatingDisplay from '../consultant/ConsultantRatingDisplay';
+import ConsultantRatingWidget from './widgets/ConsultantRatingWidget';
 import ConsultationRecordSection from '../consultant/ConsultationRecordSection';
+import ConsultationRecordWidget from './widgets/ConsultationRecordWidget';
 
 const CommonDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
@@ -621,16 +637,14 @@ const CommonDashboard = ({ user: propUser }) => {
         }
         
         // 2. 상담 데이터 로드
-        if (dashboardUser?.role === 'CLIENT') {
+        if (RoleUtils.isClient(dashboardUser)) {
           console.log('📊 내담자 상담 데이터 로드 시작');
           await loadClientConsultationData(dashboardUser.id);
           await loadClientStatus(dashboardUser.id);
-        } else if (dashboardUser?.role === 'CONSULTANT') {
+        } else if (RoleUtils.isConsultant(dashboardUser)) {
           console.log('📊 상담사 상담 데이터 로드 시작');
           await loadConsultantConsultationData(dashboardUser.id);
-        } else if (dashboardUser?.role === 'ADMIN' || dashboardUser?.role === 'BRANCH_SUPER_ADMIN' || 
-                   dashboardUser?.role === 'BRANCH_MANAGER' || dashboardUser?.role === 'HQ_ADMIN' || 
-                   dashboardUser?.role === 'SUPER_HQ_ADMIN' || dashboardUser?.role === 'HQ_MASTER') {
+        } else if (RoleUtils.isAdmin(dashboardUser) || RoleUtils.hasRole(dashboardUser, USER_ROLES.HQ_MASTER)) {
           console.log('📊 관리자 시스템 데이터 로드 시작');
           await loadAdminSystemData();
         }
@@ -776,82 +790,369 @@ const CommonDashboard = ({ user: propUser }) => {
     <SimpleLayout>
       <div className={`mg-dashboard-layout dashboard-container ${user?.role?.toLowerCase() || ''}`}>
         
-        {/* 웰컴 섹션 */}
-        <WelcomeSection 
+        {/* 웰컴 섹션 - 위젯으로 업그레이드 */}
+        <WelcomeWidget 
+          widget={{ 
+            id: 'welcome-widget',
+            type: 'welcome',
+            title: '환영합니다',
+            config: {
+              currentTime: currentTime,
+              showWeather: true
+            }
+          }}
           user={user} 
-          currentTime={currentTime} 
-          consultationData={consultationData} 
         />
         
-        {/* 내담자 맞춤형 메시지 (내담자 전용) */}
-        {RoleUtils.isClient(user) && (
-          <ClientPersonalizedMessages 
-            user={user}
-            consultationData={consultationData}
-            clientStatus={clientStatus}
-          />
-        )}
-
-        {/* 내담자 결제 내역 및 회기 현황 (내담자 전용) */}
-        {RoleUtils.isClient(user) && (
-          <ClientPaymentSessionsSection userId={user.id} />
-        )}
-
-        {/* 상담사 평가 섹션 (내담자 전용) */}
-        {RoleUtils.isClient(user) && (
-          <RatableConsultationsSection />
-        )}
-
-        {/* 상담사 내담자 섹션 (상담사 전용) */}
-        {RoleUtils.isConsultant(user) && (
-          <ConsultantClientSection userId={user.id} />
-        )}
-
-        {/* 상담사 평가 표시 섹션 (상담사 전용) */}
-        {RoleUtils.isConsultant(user) && (
-          <ConsultantRatingDisplay consultantId={user.id} />
-        )}
-
-        {/* 상담일지 섹션 (상담사 전용) */}
-        {RoleUtils.isConsultant(user) && (
-          <ConsultationRecordSection consultantId={user.id} />
-        )}
-
-        {/* 오늘의 힐링 카드 (내담자와 상담사만) */}
-        {(RoleUtils.isClient(user) || RoleUtils.isConsultant(user)) && (
-          <HealingCard userRole={user?.role} />
+        {/* 기존 WelcomeSection (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 WelcomeSection (비교용)</small>
+            <WelcomeSection 
+              user={user} 
+              currentTime={currentTime} 
+              consultationData={consultationData} 
+            />
+          </div>
         )}
         
-        {/* 스케줄 빠른 접근 (상담사 전용) */}
-        <ScheduleQuickAccess user={user} />
-        
-        {/* 요약 패널 섹션 (상담사/관리자 전용) */}
-        {(RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) && (
-          <SummaryPanels 
+        {/* 내담자 맞춤형 메시지 (내담자 전용) - 위젯으로 업그레이드 */}
+        {RoleUtils.isClient(user) && (
+          <PersonalizedMessagesWidget 
+            widget={{ 
+              id: 'personalized-messages-widget',
+              type: 'personalized-messages',
+              title: '맞춤형 메시지',
+              config: {
+                maxMessages: 5,
+                showGuides: true
+              }
+            }}
             user={user} 
-            consultationData={consultationData} 
           />
         )}
-        
-        {/* 빠른 액션 섹션 */}
-        <QuickActions user={user} />
-        
-        {/* 최근 활동 섹션 */}
-        <RecentActivities consultationData={consultationData} />
-        
-        {/* 시스템 알림 섹션 (상담사 전용) */}
-        {RoleUtils.isConsultant(user) && (
-          <SystemNotificationSection />
+
+        {/* 기존 ClientPersonalizedMessages (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && RoleUtils.isClient(user) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 ClientPersonalizedMessages (비교용)</small>
+            <ClientPersonalizedMessages 
+              user={user}
+              consultationData={consultationData}
+              clientStatus={clientStatus}
+            />
+          </div>
         )}
 
-        {/* ERP 구매 요청 섹션 (상담사 전용) */}
+        {/* 내담자 결제 내역 및 회기 현황 (내담자 전용) - 위젯으로 업그레이드 */}
+        {RoleUtils.isClient(user) && (
+          <PaymentSessionsWidget 
+            widget={{ 
+              id: 'payment-sessions-widget',
+              type: 'payment-sessions',
+              title: '결제 내역 및 회기 현황',
+              config: {
+                showStats: true,
+                showRecentPayments: true,
+                maxRecentPayments: 5
+              }
+            }}
+            user={user} 
+          />
+        )}
+
+        {/* 기존 ClientPaymentSessionsSection (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && RoleUtils.isClient(user) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 ClientPaymentSessionsSection (비교용)</small>
+            <ClientPaymentSessionsSection userId={user.id} />
+          </div>
+        )}
+
+        {/* 상담사 평가 섹션 (내담자 전용) - 위젯으로 업그레이드 */}
+        {RoleUtils.isClient(user) && (
+          <RatableConsultationsWidget 
+            widget={{ 
+              id: 'ratable-consultations-widget',
+              type: 'ratable-consultations',
+              title: '상담사 평가',
+              config: {
+                showEmptyState: true,
+                enableRatingModal: true
+              }
+            }}
+            user={user} 
+          />
+        )}
+
+        {/* 기존 RatableConsultationsSection (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && RoleUtils.isClient(user) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 RatableConsultationsSection (비교용)</small>
+            <RatableConsultationsSection />
+          </div>
+        )}
+
+        {/* 상담사 내담자 섹션 (상담사 전용) - 위젯으로 업그레이드 */}
         {RoleUtils.isConsultant(user) && (
-          <ErpPurchaseRequestPanel user={user} />
+          <ConsultantClientWidget 
+            widget={{ 
+              id: 'consultant-client-widget',
+              type: 'consultant-client',
+              title: '내 내담자',
+              config: {
+                showStats: true,
+                maxClients: 5,
+                enableNavigation: true
+              }
+            }}
+            user={user} 
+          />
+        )}
+
+        {/* 기존 ConsultantClientSection (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && RoleUtils.isConsultant(user) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 ConsultantClientSection (비교용)</small>
+            <ConsultantClientSection userId={user.id} />
+          </div>
+        )}
+
+        {/* 상담사 평가 표시 섹션 (상담사 전용) - 위젯으로 업그레이드 */}
+        {RoleUtils.isConsultant(user) && (
+          <ConsultantRatingWidget 
+            widget={{ 
+              id: 'consultant-rating-widget',
+              type: 'consultant-rating',
+              title: '내담자 평가 통계',
+              config: {
+                showRecentRatings: true,
+                showDistribution: true,
+                recentLimit: 5
+              }
+            }}
+            user={user} 
+          />
+        )}
+
+        {/* 기존 ConsultantRatingDisplay (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && RoleUtils.isConsultant(user) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 ConsultantRatingDisplay (비교용)</small>
+            <ConsultantRatingDisplay consultantId={user.id} />
+          </div>
+        )}
+
+        {/* 상담일지 섹션 (상담사 전용) - 위젯으로 업그레이드 */}
+        {RoleUtils.isConsultant(user) && (
+          <ConsultationRecordWidget 
+            widget={{ 
+              id: 'consultation-record-widget',
+              type: 'consultation-record',
+              title: '상담일지 관리',
+              config: {
+                showStats: true,
+                showRecentRecords: true,
+                recentLimit: 3,
+                enableQuickActions: true
+              }
+            }}
+            user={user} 
+          />
+        )}
+
+        {/* 기존 ConsultationRecordSection (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && RoleUtils.isConsultant(user) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 ConsultationRecordSection (비교용)</small>
+            <ConsultationRecordSection consultantId={user.id} />
+          </div>
+        )}
+
+        {/* 오늘의 힐링 카드 (내담자와 상담사만) - 위젯으로 업그레이드 */}
+        {(RoleUtils.isClient(user) || RoleUtils.isConsultant(user)) && (
+          <HealingCardWidget 
+            widget={{ 
+              id: 'healing-card-widget',
+              type: 'healing-card',
+              title: '오늘의 힐링',
+              config: {
+                category: null, // 모든 카테고리
+                autoRefresh: true
+              }
+            }}
+            user={user} 
+          />
+        )}
+
+        {/* 기존 HealingCard (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && (RoleUtils.isClient(user) || RoleUtils.isConsultant(user)) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 HealingCard (비교용)</small>
+            <HealingCard userRole={user?.role} />
+          </div>
         )}
         
-        {/* 내담자 메시지 섹션 */}
+        {/* 스케줄 빠른 접근 (상담사 전용) - 위젯으로 업그레이드 */}
+        <ScheduleWidget 
+          widget={{ 
+            id: 'schedule-widget',
+            type: 'schedule',
+            title: '스케줄 관리',
+            config: {
+              showQuickActions: true,
+              showConsultantMessage: true
+            }
+          }}
+          user={user} 
+        />
+
+        {/* 기존 ScheduleQuickAccess (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 ScheduleQuickAccess (비교용)</small>
+            <ScheduleQuickAccess user={user} />
+          </div>
+        )}
+        
+        {/* 요약 패널 섹션 (상담사/관리자 전용) - 위젯으로 업그레이드 */}
+        {(RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) && (
+          <SummaryPanelsWidget 
+            widget={{ 
+              id: 'summary-panels-widget',
+              type: 'summary-panels',
+              title: '요약 패널',
+              config: {
+                showSchedules: true,
+                showStats: true,
+                showSystem: true
+              }
+            }}
+            user={user} 
+          />
+        )}
+
+        {/* 기존 SummaryPanels (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && (RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 SummaryPanels (비교용)</small>
+            <SummaryPanels 
+              user={user} 
+              consultationData={consultationData} 
+            />
+          </div>
+        )}
+        
+        {/* 빠른 액션 섹션 - 위젯으로 업그레이드 */}
+        <QuickActionsWidget 
+          widget={createQuickActionsWidget(user)}
+          user={user} 
+        />
+        
+        {/* 기존 QuickActions (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 QuickActions (비교용)</small>
+            <QuickActions user={user} />
+          </div>
+        )}
+        
+        {/* 최근 활동 섹션 - 위젯으로 업그레이드 */}
+        <RecentActivitiesWidget 
+          widget={{ 
+            id: 'recent-activities-widget',
+            type: 'recent-activities',
+            title: '최근 활동',
+            config: {
+              maxItems: 5,
+              showViewAll: true
+            }
+          }}
+          user={user} 
+        />
+        
+        {/* 기존 RecentActivities (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 RecentActivities (비교용)</small>
+            <RecentActivities consultationData={consultationData} />
+          </div>
+        )}
+        
+        {/* 시스템 알림 섹션 (상담사 전용) - 위젯으로 업그레이드 */}
+        {RoleUtils.isConsultant(user) && (
+          <SystemNotificationWidget 
+            widget={{ 
+              id: 'system-notification-widget',
+              type: 'system-notification',
+              title: '시스템 알림',
+              config: {
+                maxItems: 5,
+                showUnreadBadge: true,
+                enableClickToRead: true
+              }
+            }}
+            user={user} 
+          />
+        )}
+
+        {/* 기존 SystemNotificationSection (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && RoleUtils.isConsultant(user) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 SystemNotificationSection (비교용)</small>
+            <SystemNotificationSection />
+          </div>
+        )}
+
+        {/* ERP 구매 요청 섹션 (상담사 전용) - 위젯으로 업그레이드 */}
+        {RoleUtils.isConsultant(user) && (
+          <ErpPurchaseRequestWidget 
+            widget={{ 
+              id: 'erp-purchase-request-widget',
+              type: 'erp-purchase-request',
+              title: 'ERP 구매 요청',
+              config: {
+                isAccordion: true,
+                showPendingBadge: true,
+                enableQuickActions: true
+              }
+            }}
+            user={user} 
+          />
+        )}
+
+        {/* 기존 ErpPurchaseRequestPanel (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && RoleUtils.isConsultant(user) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 ErpPurchaseRequestPanel (비교용)</small>
+            <ErpPurchaseRequestPanel user={user} />
+          </div>
+        )}
+        
+        {/* 내담자 메시지 섹션 - 위젯으로 업그레이드 */}
         {RoleUtils.isClient(user) && (
-          <ClientMessageSection userId={user.id} />
+          <ClientMessageWidget 
+            widget={{ 
+              id: 'client-message-widget',
+              type: 'client-message',
+              title: '알림 및 메시지',
+              config: {
+                showUnreadCount: true,
+                maxMessages: 10,
+                enableModal: true,
+                includeSystemNotifications: true
+              }
+            }}
+            user={user} 
+          />
+        )}
+
+        {/* 기존 ClientMessageSection (비교용 - 개발 후 제거) */}
+        {process.env.NODE_ENV === 'development' && RoleUtils.isClient(user) && (
+          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+            <small>기존 ClientMessageSection (비교용)</small>
+            <ClientMessageSection userId={user.id} />
+          </div>
         )}
       </div>
     </SimpleLayout>

@@ -1,24 +1,104 @@
 /**
- * Statistics Grid Widget
- * 실제 마인드가든 관리자 통계를 표시하는 위젯
- * AdminDashboard의 통계 카드들을 위젯화
+ * Statistics Grid Widget - 표준화된 위젯
+ * 실시간 마인드가든 관리자 주요 통계를 그리드 형태로 표시
  * 
  * @author CoreSolution
- * @version 2.0.0
- * @since 2025-11-27
+ * @version 3.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../../../../utils/ajax';
-// import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
-import StatCard from '../../../ui/Card/StatCard';
 import { Users, User, Link2, Calendar, CheckCircle, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
-import '../Widget.css';
+import { useWidget } from '../../../../hooks/useWidget';
+import BaseWidget from '../BaseWidget';
+import { RoleUtils } from '../../../../constants/roles';
+import { formatCurrency } from '../../../../utils/formatUtils';
+import './StatisticsGridWidget.css';
 
 const StatisticsGridWidget = ({ widget, user }) => {
+  // 관리자만 표시
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
+    return null;
+  }
+
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
+
+  // 다중 API 엔드포인트를 위한 데이터 소스 설정
+  const getDataSourceConfig = () => {
+    return {
+      type: 'multi-api',
+      cache: true,
+      refreshInterval: 300000, // 5분마다 새로고침
+      endpoints: [
+        {
+          url: '/api/admin/consultants/with-stats',
+          key: 'consultants',
+          fallback: []
+        },
+        {
+          url: '/api/admin/clients/with-stats', 
+          key: 'clients',
+          fallback: []
+        },
+        {
+          url: '/api/admin/mappings/stats',
+          key: 'mappings',
+          fallback: {}
+        },
+        {
+          url: '/api/admin/schedules/today',
+          key: 'schedules',
+          fallback: []
+        },
+        {
+          url: '/api/admin/finance/summary',
+          key: 'finance',
+          fallback: { totalRevenue: 0, pendingPayments: 0 }
+        }
+      ],
+      transform: (responses) => {
+        const [consultants, clients, mappings, schedules, finance] = responses;
+        
+        return {
+          totalConsultants: Array.isArray(consultants) ? consultants.length : 0,
+          totalClients: Array.isArray(clients) ? clients.length : 0,
+          totalMappings: mappings?.total || 0,
+          activeMappings: mappings?.active || 0,
+          todaySchedules: Array.isArray(schedules) ? schedules.length : 0,
+          completedSessions: mappings?.completedSessions || 0,
+          totalRevenue: finance?.totalRevenue || 0,
+          pendingPayments: finance?.pendingPayments || 0
+        };
+      }
+    };
+  };
+
+  // 위젯 설정에 데이터 소스 동적 설정
+  const widgetWithDataSource = {
+    ...widget,
+    config: {
+      ...widget.config,
+      dataSource: getDataSourceConfig()
+    }
+  };
+
+  // 표준화된 위젯 훅 사용
+  const {
+    data: stats,
+    loading,
+    error,
+    hasData,
+    isEmpty,
+    refresh
+  } = useWidget(widgetWithDataSource, user, {
+    immediate: true,
+    cache: true,
+    retryCount: 3
+  });
+  
+  // 기본 통계 데이터 구조
+  const defaultStats = {
     totalConsultants: 0,
     totalClients: 0,
     totalMappings: 0,
@@ -27,169 +107,147 @@ const StatisticsGridWidget = ({ widget, user }) => {
     completedSessions: 0,
     totalRevenue: 0,
     pendingPayments: 0
-  });
-  const [loading, setLoading] = useState(true);
-  
-  const config = widget.config || {};
-  const title = config.title || '시스템 통계';
-  
-  useEffect(() => {
-    loadRealStatistics();
-    
-    // 5분마다 자동 새로고침
-    const interval = setInterval(loadRealStatistics, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-  
-  const loadRealStatistics = async () => {
-    try {
-      setLoading(true);
-      
-      // 실제 마인드가든 관리자 통계 API 호출
-      const [consultantsRes, clientsRes, mappingsRes] = await Promise.all([
-        apiGet('/api/admin/consultants/with-stats').catch(() => ({ data: [] })),
-        apiGet('/api/admin/clients/with-stats').catch(() => ({ data: [] })),
-        apiGet('/api/admin/mappings/stats').catch(() => ({ data: {} }))
-      ]);
-      
-      const consultants = consultantsRes.data || [];
-      const clients = clientsRes.data || [];
-      const mappingStats = mappingsRes.data || {};
-      
-      setStats({
-        totalConsultants: consultants.length,
-        totalClients: clients.length,
-        totalMappings: mappingStats.total || 0,
-        activeMappings: mappingStats.active || 0,
-        todaySchedules: mappingStats.todaySchedules || 0,
-        completedSessions: mappingStats.completedSessions || 0,
-        totalRevenue: mappingStats.totalRevenue || 0,
-        pendingPayments: mappingStats.pendingPayments || 0
-      });
-      
-      console.log('📊 실제 마인드가든 통계 로드 완료:', {
-        상담사: consultants.length,
-        내담자: clients.length,
-        매칭: mappingStats.total || 0
-      });
-      
-    } catch (err) {
-      console.error('❌ 마인드가든 통계 로드 실패:', err);
-    } finally {
-      setLoading(false);
-    }
   };
-  
-  // 실제 마인드가든 통계 카드 정의
+
+  const displayStats = stats || defaultStats;
+
+  // 헤더 설정
+  const headerConfig = {
+    icon: <TrendingUp className="widget-header-icon" />,
+    subtitle: '실시간 시스템 통계',
+    actions: [
+      {
+        icon: 'RefreshCw',
+        label: '새로고침',
+        onClick: refresh
+      }
+    ]
+  };
+
+  // 통계 카드 정의 - 표준화된 형태
   const statCards = [
     {
+      id: 'consultants',
       title: '총 상담사',
-      value: stats.totalConsultants,
-      icon: <User className="mg-v2-icon" />,
-      color: 'blue',
+      value: displayStats.totalConsultants.toLocaleString(),
+      icon: <User className="stat-card-icon" />,
+      category: 'user',
       onClick: () => navigate('/admin/consultants'),
       description: '등록된 상담사 수'
     },
     {
+      id: 'clients',
       title: '총 내담자',
-      value: stats.totalClients,
-      icon: <Users className="mg-v2-icon" />,
-      color: 'green',
+      value: displayStats.totalClients.toLocaleString(),
+      icon: <Users className="stat-card-icon" />,
+      category: 'user',
       onClick: () => navigate('/admin/clients'),
       description: '등록된 내담자 수'
     },
     {
+      id: 'mappings',
       title: '총 매칭',
-      value: stats.totalMappings,
-      icon: <Link2 className="mg-v2-icon" />,
-      color: 'purple',
+      value: displayStats.totalMappings.toLocaleString(),
+      icon: <Link2 className="stat-card-icon" />,
+      category: 'mapping',
       onClick: () => navigate('/admin/mappings'),
       description: '전체 매칭 건수'
     },
     {
+      id: 'active-mappings',
       title: '활성 매칭',
-      value: stats.activeMappings,
-      icon: <CheckCircle className="mg-v2-icon" />,
-      color: 'green',
-      onClick: () => navigate('/admin/mappings'),
+      value: displayStats.activeMappings.toLocaleString(),
+      icon: <CheckCircle className="stat-card-icon" />,
+      category: 'mapping',
+      onClick: () => navigate('/admin/mappings?status=active'),
       description: '현재 활성 매칭'
     },
     {
+      id: 'today-schedules',
       title: '오늘 일정',
-      value: stats.todaySchedules,
-      icon: <Calendar className="mg-v2-icon" />,
-      color: 'orange',
+      value: displayStats.todaySchedules.toLocaleString(),
+      icon: <Calendar className="stat-card-icon" />,
+      category: 'schedule',
       onClick: () => navigate('/admin/schedules'),
       description: '오늘 예정된 상담'
     },
     {
+      id: 'completed-sessions',
       title: '완료된 세션',
-      value: stats.completedSessions,
-      icon: <CheckCircle className="mg-v2-icon" />,
-      color: 'success',
+      value: displayStats.completedSessions.toLocaleString(),
+      icon: <CheckCircle className="stat-card-icon" />,
+      category: 'session',
       onClick: () => navigate('/admin/sessions'),
       description: '완료된 상담 세션'
     },
     {
+      id: 'total-revenue',
       title: '총 매출',
-      value: `₩${stats.totalRevenue.toLocaleString()}`,
-      icon: <DollarSign className="mg-v2-icon" />,
-      color: 'success',
+      value: formatCurrency(displayStats.totalRevenue),
+      icon: <DollarSign className="stat-card-icon" />,
+      category: 'finance',
       onClick: () => navigate('/admin/finance'),
       description: '누적 매출액'
     },
     {
+      id: 'pending-payments',
       title: '미수금',
-      value: `₩${stats.pendingPayments.toLocaleString()}`,
-      icon: <AlertTriangle className="mg-v2-icon" />,
-      color: 'warning',
+      value: formatCurrency(displayStats.pendingPayments),
+      icon: <AlertTriangle className="stat-card-icon" />,
+      category: 'finance',
+      status: 'warning',
       onClick: () => navigate('/admin/payments'),
       description: '미납 결제 금액'
     }
   ];
-  
-  if (loading) {
-    return (
-      <div className="widget widget-statistics-grid">
-        <div className="widget-header">
-          <div className="widget-title">
-            <TrendingUp className="mg-v2-icon" />
-            {title}
-          </div>
-        </div>
-        <div className="widget-body">
-          <div className="mg-loading">로딩중...</div>
-        </div>
-      </div>
-    );
-  }
-  
   return (
-    <div className="widget widget-statistics-grid">
-      <div className="widget-header">
-        <div className="widget-title">
-          <TrendingUp className="mg-v2-icon" />
-          {title}
-        </div>
-        <div className="widget-subtitle">실시간 시스템 통계</div>
-      </div>
-      <div className="widget-body">
-        <div className="mg-stats-grid">
-          {statCards.map((card, index) => (
-            <StatCard
-              key={index}
-              title={card.title}
-              value={card.value}
-              icon={card.icon}
-              color={card.color}
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      onRefresh={refresh}
+      headerConfig={headerConfig}
+      className="statistics-grid-widget"
+    >
+      <div className="statistics-grid-content">
+        <div className="statistics-grid">
+          {statCards.map((card) => (
+            <div 
+              key={card.id} 
+              className={`stat-card stat-card-${card.category} ${card.status ? `stat-card-${card.status}` : ''} clickable`}
               onClick={card.onClick}
-              description={card.description}
-              loading={loading}
-            />
+              title={card.description}
+            >
+              <div className="stat-card-header">
+                <div className="stat-card-icon-wrapper">
+                  {card.icon}
+                </div>
+                <div className="stat-card-title">{card.title}</div>
+              </div>
+              <div className="stat-card-body">
+                <div className="stat-card-value">{card.value}</div>
+                <div className="stat-card-description">{card.description}</div>
+              </div>
+            </div>
           ))}
         </div>
+        
+        {/* 빈 상태 처리 */}
+        {isEmpty && (
+          <div className="statistics-grid-empty">
+            <TrendingUp className="empty-icon" />
+            <p>통계 데이터가 없습니다</p>
+            <button 
+              className="mg-btn mg-btn-primary mg-btn-sm"
+              onClick={refresh}
+            >
+              다시 시도
+            </button>
+          </div>
+        )}
       </div>
-    </div>
+    </BaseWidget>
   );
 };
 

@@ -44,13 +44,6 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
     public RecurringExpense createRecurringExpense(RecurringExpense recurringExpense) {
         log.info("반복 지출 생성: {}", recurringExpense.getExpenseName());
         
-        if (recurringExpense.getCreatedAt() == null) {
-            recurringExpense.setCreatedAt(LocalDate.now());
-        }
-        if (recurringExpense.getUpdatedAt() == null) {
-            recurringExpense.setUpdatedAt(LocalDateTime.now());
-        }
-        
         // 다음 처리 예정일 계산
         if (recurringExpense.getNextDueDate() == null) {
             recurringExpense.setNextDueDate(calculateNextDueDate(recurringExpense.getStartDate(), 

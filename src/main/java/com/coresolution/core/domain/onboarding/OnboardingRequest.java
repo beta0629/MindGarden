@@ -26,8 +26,28 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class OnboardingRequest extends BaseEntity {
+@EqualsAndHashCode(callSuper = false)
+public class OnboardingRequest {
+    
+    @Id
+    @Column(name = "id", columnDefinition = "BINARY(16)")
+    private java.util.UUID id;
+    
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private java.time.LocalDateTime createdAt;
+    
+    @Column(name = "updated_at", nullable = false)
+    private java.time.LocalDateTime updatedAt;
+    
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
+    
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+    
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
     
     @Column(name = "tenant_id", nullable = true, length = 64)
     private String tenantId; // 온보딩 중이면 null (승인 후 자동 생성)

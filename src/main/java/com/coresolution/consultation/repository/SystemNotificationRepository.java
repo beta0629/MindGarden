@@ -18,8 +18,24 @@ import org.springframework.transaction.annotation.Transactional;
 public interface SystemNotificationRepository extends BaseRepository<SystemNotification, Long> {
     
     /**
-     * 대상 유형별 유효한 공지 조회 (게시 기간 내, 삭제되지 않은 공지)
+     * 테넌트별 대상 유형별 유효한 공지 조회 (테넌트 필터링)
      */
+    @Query("SELECT n FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.targetType IN (:targetTypes) " +
+           "AND n.status = 'PUBLISHED' " +
+           "AND n.isDeleted = false " +
+           "AND (n.publishedAt IS NULL OR n.publishedAt <= :now) " +
+           "AND (n.expiresAt IS NULL OR n.expiresAt > :now) " +
+           "ORDER BY n.isUrgent DESC, n.isImportant DESC, n.publishedAt DESC")
+    Page<SystemNotification> findValidNotificationsByTenantIdAndTargetTypes(
+        @Param("tenantId") String tenantId,
+        @Param("targetTypes") List<String> targetTypes,
+        @Param("now") LocalDateTime now,
+        Pageable pageable);
+        
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 공지사항 노출!
+     */
+    @Deprecated
     @Query("SELECT n FROM SystemNotification n WHERE n.targetType IN (:targetTypes) " +
            "AND n.status = 'PUBLISHED' " +
            "AND n.isDeleted = false " +
@@ -32,8 +48,22 @@ public interface SystemNotificationRepository extends BaseRepository<SystemNotif
         Pageable pageable);
     
     /**
-     * 관리자용 전체 공지 조회
+     * 테넌트별 관리자용 전체 공지 조회 (테넌트 필터링)
      */
+    @Query("SELECT n FROM SystemNotification n WHERE n.tenantId = :tenantId AND n.isDeleted = false " +
+           "AND (:targetType IS NULL OR n.targetType = :targetType) " +
+           "AND (:status IS NULL OR n.status = :status) " +
+           "ORDER BY n.createdAt DESC")
+    Page<SystemNotification> findAllForAdminByTenantId(
+        @Param("tenantId") String tenantId,
+        @Param("targetType") String targetType,
+        @Param("status") String status,
+        Pageable pageable);
+        
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 관리자 공지 노출!
+     */
+    @Deprecated
     @Query("SELECT n FROM SystemNotification n WHERE n.isDeleted = false " +
            "AND (:targetType IS NULL OR n.targetType = :targetType) " +
            "AND (:status IS NULL OR n.status = :status) " +

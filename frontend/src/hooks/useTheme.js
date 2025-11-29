@@ -74,11 +74,11 @@ export const useTheme = () => {
         
         if (currentTheme === 'dark') {
             // 다크 테마 색상
-            root.style.setProperty('--theme-bg-primary', '#1a1a1a');
-            root.style.setProperty('--theme-bg-secondary', '#2a2a2a');
-            root.style.setProperty('--theme-bg-tertiary', '#3a3a3a');
+            root.style.setProperty('--theme-bg-primary', 'var(--cs-gray-900)');
+            root.style.setProperty('--theme-bg-secondary', 'var(--cs-gray-800)');
+            root.style.setProperty('--theme-bg-tertiary', 'var(--cs-gray-700)');
             root.style.setProperty('--theme-text-primary', 'var(--mg-white)');
-            root.style.setProperty('--theme-text-secondary', '#b3b3b3');
+            root.style.setProperty('--theme-text-secondary', 'var(--cs-gray-400)');
             root.style.setProperty('--theme-text-tertiary', 'var(--mg-gray-600)');
             root.style.setProperty('--theme-border', 'rgba(255, 255, 255, 0.1)');
             root.style.setProperty('--theme-shadow', 'var(--mg-overlay)');

@@ -17,6 +17,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.VacationRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +60,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
                     .startTime(LocalTime.of(9, 0))
                     .endTime(LocalTime.of(18, 0))
                     .isApproved(true)
-                    .isDeleted(false)
+                    
                     .build();
                 
                 vacationRepository.save(vacation);
@@ -107,7 +108,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
                     .startTime(startTimeStr != null ? LocalTime.parse(startTimeStr) : null)
                     .endTime(endTimeStr != null ? LocalTime.parse(endTimeStr) : null)
                     .isApproved(isApproved != null ? isApproved : true)
-                    .isDeleted(false)
+                    
                     .build();
             }
             
@@ -228,7 +229,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
                 .startTime(startTime != null && !startTime.trim().isEmpty() ? LocalTime.parse(startTime) : null)
                 .endTime(endTime != null && !endTime.trim().isEmpty() ? LocalTime.parse(endTime) : null)
                 .isApproved(true) // 기본적으로 승인된 상태로 설정
-                .isDeleted(false)
+                
                 .build();
         }
         
@@ -264,7 +265,8 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
                 // 날짜 범위로 조회
                 LocalDate start = LocalDate.parse(startDate);
                 LocalDate end = LocalDate.parse(endDate);
-                vacations = vacationRepository.findByConsultantIdAndDateRange(consultantId, start, end);
+                String tenantId = TenantContextHolder.getTenantId();
+                vacations = vacationRepository.findByTenantIdAndConsultantIdAndDateRange(tenantId, consultantId, start, end);
             } else {
                 // 전체 조회
                 vacations = vacationRepository.findByConsultantIdAndIsDeletedFalseOrderByVacationDateAsc(consultantId);

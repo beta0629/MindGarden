@@ -38,14 +38,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserSession {
+public class UserSession extends BaseEntity {
     
     /**
      * 세션 ID (Primary Key)
      */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     /**
      * 사용자 ID (Foreign Key)
@@ -57,14 +54,12 @@ public class UserSession {
     /**
      * HTTP 세션 ID
      */
-    @Column(name = "session_id", nullable = false, length = 100, unique = true)
+    // @Column(name = "session_id", nullable = false, length = 100, unique = true)
     private String sessionId;
     
     /**
      * 세션 생성 시간
      */
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
     
     /**
      * 마지막 활동 시간

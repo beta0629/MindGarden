@@ -21,11 +21,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SalaryProfile {
+public class SalaryProfile extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     @Column(name = "profile_name", nullable = false, length = 100)
     private String profileName;
@@ -52,17 +49,11 @@ public class SalaryProfile {
     @Column(name = "branch_code", length = 20)
     private String branchCode;
     
-    @Column(name = "created_by", length = 50)
+    // @Column(name = "created_by", length = 50)
     private String createdBy;
     
-    @Column(name = "updated_by", length = 50)
+    // @Column(name = "updated_by", length = 50)
     private String updatedBy;
     
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
     
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 }

@@ -30,31 +30,31 @@ public abstract class BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
-    private Long id;
+    protected Long id;
     
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    protected LocalDateTime createdAt;
     
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    protected LocalDateTime updatedAt;
     
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    protected LocalDateTime deletedAt;
     
     @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
+    protected Boolean isDeleted = false;
     
     @Version
     @Column(name = "version", nullable = false)
-    private Long version = 0L;
+    protected Long version = 0L;
     
     /**
      * 테넌트 ID (Multi-tenant 지원)
      */
     @Column(name = "tenant_id", length = 36)
-    private String tenantId;
+    protected String tenantId;
     
     // Getter & Setter
     public Long getId() {

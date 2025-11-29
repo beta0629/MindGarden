@@ -1,0 +1,238 @@
+/**
+ * WelcomeWidget 전용 스타일
+ * 하드코딩 및 인라인 스타일 완전 제거
+ * 통합 디자인 토큰 사용
+ */
+
+.welcome-widget-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-lg);
+}
+
+.welcome-main-section {
+  display: flex;
+  align-items: center;
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-light);
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-slate-200);
+}
+
+.welcome-profile-container {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-lg);
+  width: 100%;
+}
+
+.welcome-profile-image-wrapper {
+  flex-shrink: 0;
+}
+
+.welcome-profile-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--cs-primary-200);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.welcome-text-content {
+  flex: 1;
+}
+
+.welcome-title {
+  font-size: var(--cs-text-xl);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-gray-900);
+  margin: 0 0 var(--cs-spacing-xs) 0;
+}
+
+.welcome-user-name {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-primary-600);
+  margin: 0 0 var(--cs-spacing-sm) 0;
+}
+
+.welcome-subtitle {
+  font-size: var(--cs-text-md);
+  color: var(--cs-gray-600);
+  margin: 0;
+}
+
+/* 내담자 전용 상담 정보 카드 */
+.welcome-info-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+}
+
+.welcome-info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-strong);
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-slate-200);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.today-consultation-card {
+  border-left: 4px solid var(--cs-primary-500);
+}
+
+.info-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--cs-radius-md);
+  flex-shrink: 0;
+}
+
+.info-icon--consultation {
+  background: var(--cs-primary-100);
+  color: var(--cs-primary-600);
+}
+
+.info-content {
+  flex: 1;
+}
+
+.info-title {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-gray-900);
+  margin: 0 0 var(--cs-spacing-sm) 0;
+}
+
+.info-value {
+  font-size: var(--cs-text-md);
+  color: var(--cs-gray-700);
+  margin: 0 0 var(--cs-spacing-md) 0;
+  line-height: 1.5;
+}
+
+.consultation-count {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-primary-600);
+}
+
+.no-consultation {
+  color: var(--cs-gray-500);
+  font-style: italic;
+}
+
+/* 상담 세부 정보 */
+.consultation-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-sm);
+  margin-top: var(--cs-spacing-md);
+  padding-top: var(--cs-spacing-md);
+  /* 인라인 스타일 대체 - 하드코딩 제거 */
+  border-top: 1px solid var(--cs-cream);
+}
+
+.consultation-item {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+  padding: var(--cs-spacing-sm);
+  background: var(--cs-slate-50);
+  border-radius: var(--cs-radius-sm);
+  font-size: var(--cs-text-sm);
+}
+
+.consultation-time {
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-primary-600);
+  flex-shrink: 0;
+}
+
+.consultation-consultant {
+  color: var(--cs-gray-700);
+  flex: 1;
+}
+
+.consultation-status {
+  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  border-radius: var(--cs-radius-sm);
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+}
+
+.consultation-status.scheduled {
+  background: var(--cs-blue-100);
+  color: var(--cs-blue-800);
+}
+
+.consultation-status.confirmed {
+  background: var(--cs-success-100);
+  color: var(--cs-success-800);
+}
+
+.consultation-status.completed {
+  background: var(--cs-gray-100);
+  color: var(--cs-gray-800);
+}
+
+.consultation-status.cancelled {
+  background: var(--cs-error-100);
+  color: var(--cs-error-800);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .welcome-main-section {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .welcome-profile-container {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--cs-spacing-md);
+  }
+  
+  .welcome-profile-image {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .welcome-info-card {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .consultation-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-xs);
+  }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .welcome-main-section {
+    background: var(--cs-glass-dark);
+    border-color: var(--cs-slate-700);
+  }
+  
+  .welcome-info-card {
+    background: var(--cs-glass-dark);
+    border-color: var(--cs-slate-700);
+  }
+  
+  .consultation-details {
+    border-color: var(--cs-slate-600);
+  }
+  
+  .consultation-item {
+    background: var(--cs-slate-800);
+  }
+}

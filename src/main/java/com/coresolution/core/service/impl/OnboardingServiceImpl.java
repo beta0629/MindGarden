@@ -74,7 +74,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     
     @Override
     @Transactional(readOnly = true)
-    public OnboardingRequest getById(Long id) {
+    public OnboardingRequest getById(java.util.UUID id) {
         log.debug("온보딩 요청 조회: id={}", id);
         return repository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException(
@@ -140,7 +140,7 @@ public class OnboardingServiceImpl implements OnboardingService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public OnboardingRequest decideInNewTransaction(
-            Long requestId,
+            java.util.UUID requestId,
             OnboardingStatus status,
             String actorId,
             String note) {
@@ -161,7 +161,7 @@ public class OnboardingServiceImpl implements OnboardingService {
      * decide와 decideInNewTransaction에서 공통으로 사용
      */
     private OnboardingRequest decideInternal(
-            Long requestId,
+            java.util.UUID requestId,
             OnboardingStatus status,
             String actorId,
             String note) {
@@ -460,7 +460,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public OnboardingRequest decide(
-            Long requestId,
+            java.util.UUID requestId,
             OnboardingStatus status,
             String actorId,
             String note) {
@@ -506,7 +506,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
     
     @Override
-    public OnboardingRequest retryApproval(Long requestId, String actorId, String note) {
+    public OnboardingRequest retryApproval(java.util.UUID requestId, String actorId, String note) {
         log.info("온보딩 승인 프로세스 재시도: requestId={}, actorId={}", requestId, actorId);
         
         OnboardingRequest request = repository.findById(requestId)
@@ -548,7 +548,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     
     @Override
     @Transactional(readOnly = true)
-    public OnboardingRequest findByIdAndEmail(Long id, String email) {
+    public OnboardingRequest findByIdAndEmail(java.util.UUID id, String email) {
         log.debug("ID와 이메일로 온보딩 요청 조회: id={}, email={}", id, email);
         OnboardingRequest request = repository.findByIdAndRequestedByAndIsDeletedFalse(id, email);
         if (request == null) {

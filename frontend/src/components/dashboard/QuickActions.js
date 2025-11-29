@@ -144,7 +144,7 @@ const QuickActions = ({ user }) => {
         isOpen={showConsultantApplicationModal}
         onClose={() => setShowConsultantApplicationModal(false)}
         userId={user?.id}
-        userRole={user?.role}
+        user={user}
         onSuccess={handleConsultantApplicationSuccess}
       />
     </div>

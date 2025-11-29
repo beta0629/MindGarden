@@ -1,307 +1,289 @@
 /**
- * Consultation Summary Widget
- * 상담소 특화 통계 요약 위젯
- * SummaryPanels의 상담소 특화 기능을 포함
+ * Consultation Summary Widget - 표준화된 위젯
+ * 상담 요약 통계 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
- * @since 2025-11-22
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
  */
 
-import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
-import { apiGet } from '../../../../utils/ajax';
-import { RoleUtils } from '../../../../constants/roles';
-import { getStatusLabel } from '../../../../utils/colorUtils';
-import '../Widget.css';
-import '../../SummaryPanels.css';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { BarChart3, TrendingUp, Calendar, Users, Clock, Target, FileText } from 'lucide-react';
+import { useWidget } from '../../../../hooks/useWidget';
+import BaseWidget from '../BaseWidget';
+import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
+import './ConsultationSummaryWidget.css';
 
 const ConsultationSummaryWidget = ({ widget, user }) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadData();
-      
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadData, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (config.data) {
-      setData(config.data);
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-  
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiGet(dataSource.url, dataSource.params || {});
-      
-      if (response) {
-        setData(response);
-      } else {
-        setData(config.data || {});
-      }
-    } catch (err) {
-      console.error('ConsultationSummaryWidget 데이터 로드 실패:', err);
-      setError(err.message);
-      setData(config.data || {});
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // 전문 분야 영어를 한글로 변환
-  const convertSpecialtyToKorean = (specialty) => {
-    if (!specialty) return '전문 분야 미정';
-    
-    const specialtyMap = config.specialtyMap || {
-      'DEPRESSION': '우울증',
-      'ANXIETY': '불안장애',
-      'TRAUMA': '트라우마',
-      'RELATIONSHIP': '관계상담',
-      'FAMILY': '가족상담',
-      'COUPLE': '부부상담',
-      'CHILD': '아동상담',
-      'ADOLESCENT': '청소년상담',
-      'ADDICTION': '중독상담',
-      'EATING_DISORDER': '섭식장애',
-      'PERSONALITY': '성격장애',
-      'BIPOLAR': '양극성장애',
-      'OCD': '강박장애',
-      'PTSD': '외상후스트레스장애',
-      'GRIEF': '상실상담',
-      'CAREER': '진로상담',
-      'STRESS': '스트레스관리',
-      'SLEEP': '수면장애',
-      'ANGER': '분노조절',
-      'SELF_ESTEEM': '자존감'
-    };
+  // 권한 확인: 관리자와 상담사만 접근 가능
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
+  }
 
-    return specialty.split(',').map(s => {
-      const trimmed = s.trim();
-      return specialtyMap[trimmed] || trimmed;
-    }).join(', ');
+  const navigate = useNavigate();
+
+  // 데이터 소스 설정
+  const getDataSourceConfig = () => {
+    const period = widget.config?.period || 'month';
+    
+    return {
+      type: 'multi-api',
+      endpoints: {
+        summary: {
+          url: '/api/consultations/summary',
+          method: 'GET',
+          params: { 
+            period,
+            // 상담사인 경우 자신의 상담만 조회
+            ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
+          }
+        },
+        trends: {
+          url: '/api/consultations/trends',
+          method: 'GET',
+          params: {
+            period,
+            ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
+          }
+        }
+      },
+      refreshInterval: widget.config?.refreshInterval || 300000, // 5분마다 새로고침
+      cache: true,
+      cacheDuration: 300000
+    };
   };
-  
-  if (loading && !data) {
+
+  // Transform 함수
+  const transform = (rawData) => {
+    if (!rawData) return { summary: null, trends: null, hasData: false };
+
+    const { summary, trends } = rawData;
+
+    return {
+      summary: summary || {
+        totalSessions: 0,
+        completedSessions: 0,
+        activateClients: 0,
+        averageRating: 0,
+        totalDuration: 0,
+        successRate: 0
+      },
+      trends: trends || {
+        sessionGrowth: 0,
+        clientGrowth: 0,
+        ratingTrend: 0
+      },
+      hasData: summary && summary.totalSessions > 0
+    };
+  };
+
+  // 위젯 설정
+  const widgetWithDataSource = {
+    ...widget,
+    config: {
+      ...widget.config,
+      dataSource: getDataSourceConfig(),
+      transform
+    }
+  };
+
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    refresh
+  } = useWidget(widgetWithDataSource, user, {
+    immediate: true,
+    cache: true
+  });
+
+  // 성장률 색상
+  const getTrendColor = (value) => {
+    if (value > 0) return 'trend-positive';
+    if (value < 0) return 'trend-negative';
+    return 'trend-neutral';
+  };
+
+  // 성장률 아이콘
+  const getTrendIcon = (value) => {
+    if (value > 0) return <TrendingUp className="trend-icon" />;
+    if (value < 0) return <TrendingUp className="trend-icon rotate-180" />;
+    return <TrendingUp className="trend-icon" />;
+  };
+
+  // 상세보기
+  const handleViewReports = () => {
+    navigate('/reports/consultations');
+  };
+
+  // 시간 포맷팅
+  const formatDuration = (minutes) => {
+    if (!minutes) return '0분';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}시간 ${mins}분`;
+    }
+    return `${mins}분`;
+  };
+
+  // 렌더링 내용
+  const renderContent = () => {
+    if (!hasData) {
+      return (
+        <div className="summary-empty-state">
+          <div className="empty-icon-wrapper">
+            <BarChart3 className="empty-icon" />
+          </div>
+          <h3 className="empty-title">상담 데이터가 없습니다</h3>
+          <p className="empty-description">
+            {widget.config?.emptyMessage || '상담 완료 후 통계가 표시됩니다.'}
+          </p>
+        </div>
+      );
+    }
+
+    const { summary, trends } = data;
+
     return (
-      <div className="widget widget-consultation-summary">
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
-  }
-  
-  if (error && !data) {
-    return (
-      <div className="widget widget-consultation-summary widget-error">
-        <div className="widget-title">{config.title || '상담 요약'}</div>
-        <div className="widget-error-message">{error}</div>
-      </div>
-    );
-  }
-  
-  const consultationData = data || {};
-  const upcomingCount = consultationData?.upcomingConsultations?.length || 0;
-  const weeklyCount = consultationData?.weeklyConsultations || 0;
-  const monthlyCount = consultationData?.monthlyConsultations || 0;
-  const todayCount = consultationData?.todayConsultations || 0;
-  const totalUsers = consultationData?.totalUsers || 0;
-  const pendingMappings = consultationData?.pendingMappings || 0;
-  const activeMappings = consultationData?.activeMappings || 0;
-  const rating = consultationData?.rating || 0;
-  
-  return (
-    <div className="widget widget-consultation-summary">
-      <div className="widget-header">
-        <div className="widget-title">{config.title || '상담 요약'}</div>
-      </div>
-      <div className="widget-body">
-        {/* 상담 일정 요약 (상담사/관리자 전용) */}
-        {(RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user)) && (
-          <div className="summary-panel consultation-summary">
-            <div className="summary-panel-header">
-              <h3 className="summary-panel-title">
-                <i className="bi bi-calendar"></i>
-                상담 일정
-              </h3>
+      <div className="summary-content">
+        {/* 주요 지표 */}
+        <div className="summary-metrics">
+          <div className="metric-card">
+            <div className="metric-icon sessions">
+              <Calendar />
             </div>
-            <div className="summary-panel-content">
-              <div className="summary-item">
-                <div className="summary-icon">
-                  <i className="bi bi-clock"></i>
-                </div>
-                <div className="summary-info">
-                  <div className="summary-label">다가오는 상담</div>
-                  <div className="summary-value">
-                    {upcomingCount > 0 ? (
-                      <div>
-                        <div className="summary-value-number">{upcomingCount}건</div>
-                        {consultationData?.upcomingConsultations?.slice(0, 3).map((schedule, index) => (
-                          <div key={index} className="summary-schedule-item">
-                            <div className="summary-schedule-datetime">
-                              {new Date(schedule.date).toLocaleDateString('ko-KR')} {schedule.startTime} - {schedule.endTime}
-                            </div>
-                            <div 
-                              className="summary-schedule-status"
-                              data-status={schedule.status}
-                            >
-                              {getStatusLabel(schedule.status)}
-                            </div>
-                          </div>
-                        ))}
-                        {upcomingCount > 3 && (
-                          <div className="summary-panels-more-indicator">
-                            <a href={config.scheduleUrl || "/consultant/schedule"} className="mg-v2-link">
-                              +{upcomingCount - 3}건 더 보기 →
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="summary-no-data">예정된 상담이 없습니다</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="summary-item">
-                <div className="summary-icon">
-                  <i className="bi bi-calendar-check"></i>
-                </div>
-                <div className="summary-info">
-                  <div className="summary-label">이번 주 상담</div>
-                  <div className="summary-value">
-                    <div className="summary-value-count">{weeklyCount}건</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* 상담 통계 (상담사 전용) */}
-        {RoleUtils.isConsultant(user) && (
-          <div className="summary-panel consultation-stats">
-            <div className="summary-panel-header">
-              <h3 className="summary-panel-title">
-                <i className="bi bi-graph-up"></i>
-                상담 통계
-              </h3>
-            </div>
-            <div className="summary-panel-content">
-              <div className="summary-item">
-                <div className="summary-icon">
-                  <i className="bi bi-calendar"></i>
-                </div>
-                <div className="summary-info">
-                  <div className="summary-label">이번 달 상담</div>
-                  <div className="summary-value">{monthlyCount}건</div>
-                </div>
-              </div>
-              <div className="summary-item">
-                <div className="summary-icon">
-                  <i className="bi bi-star"></i>
-                </div>
-                <div className="summary-info">
-                  <div className="summary-label">평점</div>
-                  <div className="summary-value">
-                    {rating > 0 ? `${rating.toFixed(1)} / 5.0` : '평점 없음'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* 시스템 현황 (관리자 전용) */}
-        {RoleUtils.isAdmin(user) && (
-          <div className="summary-panel system-status">
-            <div className="summary-panel-header">
-              <h3 className="summary-panel-title">
-                <i className="bi bi-gear"></i>
-                시스템 현황
-              </h3>
-            </div>
-            <div className="summary-panel-content">
-              <div className="summary-item">
-                <div className="summary-icon">
-                  <i className="bi bi-people"></i>
-                </div>
-                <div className="summary-info">
-                  <div className="summary-label">총 사용자</div>
-                  <div className="summary-value">{totalUsers}명</div>
-                </div>
-              </div>
-              <div className="summary-item">
-                <div className="summary-icon">
-                  <i className="bi bi-calendar"></i>
-                </div>
-                <div className="summary-info">
-                  <div className="summary-label">오늘 상담</div>
-                  <div className="summary-value">{todayCount}건</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* 매핑 관리 (관리자 전용) */}
-        {RoleUtils.isAdmin(user) && (
-          <div className="summary-panel mapping-management">
-            <div className="summary-panel-header">
-              <h3 className="summary-panel-title">
-                <i className="bi bi-link-45deg"></i>
-                매핑 관리
-              </h3>
-            </div>
-            <div className="summary-panel-content">
-              <div className="summary-item">
-                <div className="summary-icon">
-                  <i className="bi bi-clock"></i>
-                </div>
-                <div className="summary-info">
-                  <div className="summary-label">승인 대기</div>
-                  <div className="summary-value">{pendingMappings}건</div>
-                </div>
-              </div>
-              <div className="summary-item">
-                <div className="summary-icon">
-                  <i className="bi bi-check-circle"></i>
-                </div>
-                <div className="summary-info">
-                  <div className="summary-label">활성 매핑</div>
-                  <div className="summary-value">{activeMappings}건</div>
-                </div>
-              </div>
-              {config.mappingManagementUrl && (
-                <div className="summary-panel-actions">
-                  <button 
-                    className="btn btn-primary btn-sm"
-                    onClick={() => window.location.href = config.mappingManagementUrl}
-                  >
-                    <i className="bi bi-gear"></i> 매핑 관리
-                  </button>
+            <div className="metric-info">
+              <div className="metric-number">{summary.totalSessions}</div>
+              <div className="metric-label">총 세션</div>
+              {trends && (
+                <div className={`metric-trend ${getTrendColor(trends.sessionGrowth)}`}>
+                  {getTrendIcon(trends.sessionGrowth)}
+                  <span>{Math.abs(trends.sessionGrowth)}%</span>
                 </div>
               )}
             </div>
           </div>
-        )}
+
+          <div className="metric-card">
+            <div className="metric-icon clients">
+              <Users />
+            </div>
+            <div className="metric-info">
+              <div className="metric-number">{summary.activateClients}</div>
+              <div className="metric-label">활성 내담자</div>
+              {trends && (
+                <div className={`metric-trend ${getTrendColor(trends.clientGrowth)}`}>
+                  {getTrendIcon(trends.clientGrowth)}
+                  <span>{Math.abs(trends.clientGrowth)}%</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-icon duration">
+              <Clock />
+            </div>
+            <div className="metric-info">
+              <div className="metric-number">{formatDuration(summary.totalDuration)}</div>
+              <div className="metric-label">총 상담시간</div>
+            </div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-icon rating">
+              <Target />
+            </div>
+            <div className="metric-info">
+              <div className="metric-number">{summary.averageRating?.toFixed(1) || '0.0'}</div>
+              <div className="metric-label">평균 평점</div>
+              {trends && (
+                <div className={`metric-trend ${getTrendColor(trends.ratingTrend)}`}>
+                  {getTrendIcon(trends.ratingTrend)}
+                  <span>{Math.abs(trends.ratingTrend)}%</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 성과 지표 */}
+        <div className="performance-section">
+          <h4 className="section-title">성과 지표</h4>
+          <div className="performance-grid">
+            <div className="performance-item">
+              <div className="performance-label">완료율</div>
+              <div className="performance-value">
+                {summary.totalSessions > 0 
+                  ? ((summary.completedSessions / summary.totalSessions) * 100).toFixed(1) 
+                  : 0}%
+              </div>
+            </div>
+            <div className="performance-item">
+              <div className="performance-label">성공률</div>
+              <div className="performance-value">{summary.successRate?.toFixed(1) || 0}%</div>
+            </div>
+            <div className="performance-item">
+              <div className="performance-label">세션당 평균시간</div>
+              <div className="performance-value">
+                {summary.totalSessions > 0 
+                  ? formatDuration(Math.round(summary.totalDuration / summary.totalSessions))
+                  : '0분'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 빠른 액션 */}
+        <div className="summary-actions">
+          <button 
+            className="mg-btn mg-btn-primary mg-btn-sm"
+            onClick={handleViewReports}
+          >
+            <FileText className="btn-icon" />
+            상세 보고서 보기
+          </button>
+        </div>
       </div>
-    </div>
+    );
+  };
+
+  // 헤더 설정
+  const headerConfig = {
+    icon: <BarChart3 className="widget-header-icon" />,
+    subtitle: '상담 성과 요약',
+    actions: [
+      {
+        icon: 'RefreshCw',
+        label: '새로고침',
+        onClick: refresh
+      },
+      {
+        icon: 'FileText',
+        label: '상세 보고서',
+        onClick: handleViewReports
+      }
+    ]
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      hasData={hasData}
+      onRefresh={refresh}
+      headerConfig={headerConfig}
+      className="consultation-summary-widget"
+    >
+      {renderContent()}
+    </BaseWidget>
   );
 };
 
 export default ConsultationSummaryWidget;
-
-
-

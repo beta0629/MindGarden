@@ -1,233 +1,397 @@
 /**
- * Schedule Registration Widget
+ * Schedule Registration Widget - 표준화된 위젯
  * 상담소 특화 일정 등록 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
- * @since 2025-11-22
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../../../../utils/ajax';
-// import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
-import '../Widget.css';
+import { Calendar, Clock, Plus, Eye, CheckCircle, XCircle, AlertCircle, Users, CalendarPlus } from 'lucide-react';
+import { useWidget } from '../../../../hooks/useWidget';
+import BaseWidget from '../BaseWidget';
+import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
+import './ScheduleRegistrationWidget.css';
 
 const ScheduleRegistrationWidget = ({ widget, user }) => {
+  // 권한 확인: 관리자와 상담사만 접근 가능
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
+  }
+
   const navigate = useNavigate();
-  const [schedules, setSchedules] = useState([]);
-  const [todayStats, setTodayStats] = useState({
-    total: 0,
-    completed: 0,
-    inProgress: 0,
-    cancelled: 0
-  });
-  const [loading, setLoading] = useState(true);
-  
-  const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  const maxItems = config.maxItems || 5;
-  const showTodayOnly = config.showTodayOnly !== false;
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadSchedules();
-      
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadSchedules, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (config.schedules && Array.isArray(config.schedules)) {
-      setSchedules(config.schedules);
-      calculateTodayStats(config.schedules);
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-  
-  const loadSchedules = async () => {
-    try {
-      setLoading(true);
-      
-      const url = dataSource.url || (showTodayOnly ? '/api/schedules/today/statistics' : '/api/schedules');
-      const params = {
-        ...dataSource.params,
-        ...(showTodayOnly && { date: new Date().toISOString().split('T')[0] }),
-        ...(user?.id && { userId: user.id }),
-        ...(user?.role && { userRole: user.role })
-      };
-      
-      const response = await apiGet(url, params);
-      
-      if (response && response.data) {
-        const schedulesList = Array.isArray(response.data) ? response.data : [];
-        setSchedules(schedulesList.slice(0, maxItems));
-        calculateTodayStats(schedulesList);
-      }
-    } catch (err) {
-      console.error('ScheduleRegistrationWidget 데이터 로드 실패:', err);
-      setSchedules([]);
-    } finally {
-      setLoading(false);
+
+  // 데이터 소스 설정
+  const getDataSourceConfig = () => {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 형식
+    
+    return {
+      type: 'multi-api',
+      endpoints: {
+        schedules: {
+          url: '/api/schedules',
+          method: 'GET',
+          params: { 
+            limit: widget.config?.maxItems || 10,
+            ...(widget.config?.showTodayOnly !== false && { date: today }),
+            // 상담사인 경우 자신의 일정만 조회
+            ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
+          }
+        },
+        todayStats: {
+          url: '/api/schedules/today-stats',
+          method: 'GET',
+          params: {
+            ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
+          }
+        }
+      },
+      refreshInterval: widget.config?.refreshInterval || 30000, // 30초마다 새로고침
+      cache: true,
+      cacheDuration: 30000
+    };
+  };
+
+  // Transform 함수: API 응답 데이터를 위젯 형태로 변환
+  const transform = (rawData) => {
+    if (!rawData) return { schedules: [], todayStats: null, hasData: false };
+
+    const { schedules, todayStats } = rawData;
+
+    return {
+      schedules: Array.isArray(schedules) ? schedules.slice(0, widget.config?.maxItems || 10) : [],
+      todayStats: todayStats || {
+        total: 0,
+        completed: 0,
+        inProgress: 0,
+        cancelled: 0,
+        upcoming: 0
+      },
+      hasData: Array.isArray(schedules) && schedules.length > 0
+    };
+  };
+
+  // 위젯 설정에 데이터 소스 동적 설정
+  const widgetWithDataSource = {
+    ...widget,
+    config: {
+      ...widget.config,
+      dataSource: getDataSourceConfig(),
+      transform
     }
   };
-  
-  const calculateTodayStats = (schedulesList) => {
-    const today = new Date().toISOString().split('T')[0];
-    const todaySchedules = schedulesList.filter(s => 
-      s.scheduledDate && s.scheduledDate.startsWith(today)
-    );
-    
-    setTodayStats({
-      total: todaySchedules.length,
-      completed: todaySchedules.filter(s => s.status === 'COMPLETED').length,
-      inProgress: todaySchedules.filter(s => s.status === 'IN_PROGRESS').length,
-      cancelled: todaySchedules.filter(s => s.status === 'CANCELLED').length
+
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    refresh
+  } = useWidget(widgetWithDataSource, user, {
+    immediate: true,
+    cache: true
+  });
+
+  // 일정 상태별 스타일 클래스
+  const getStatusClass = (status) => {
+    const statusMap = {
+      'COMPLETED': 'status-completed',
+      'IN_PROGRESS': 'status-in-progress',
+      'CANCELLED': 'status-cancelled',
+      'UPCOMING': 'status-upcoming',
+      'PENDING': 'status-pending'
+    };
+    return statusMap[status] || 'status-unknown';
+  };
+
+  // 일정 상태별 아이콘
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'COMPLETED':
+        return <CheckCircle className="status-icon" />;
+      case 'IN_PROGRESS':
+        return <Users className="status-icon" />;
+      case 'CANCELLED':
+        return <XCircle className="status-icon" />;
+      case 'UPCOMING':
+        return <Calendar className="status-icon" />;
+      case 'PENDING':
+        return <Clock className="status-icon" />;
+      default:
+        return <AlertCircle className="status-icon" />;
+    }
+  };
+
+  // 일정 상태 한글명
+  const getStatusLabel = (status) => {
+    const statusLabels = {
+      'COMPLETED': '완료',
+      'IN_PROGRESS': '진행중',
+      'CANCELLED': '취소',
+      'UPCOMING': '예정',
+      'PENDING': '대기'
+    };
+    return statusLabels[status] || '미지정';
+  };
+
+  // 일정 상세보기
+  const handleViewSchedule = (scheduleId) => {
+    navigate(`/schedules/${scheduleId}`);
+  };
+
+  // 새 일정 생성
+  const handleCreateSchedule = () => {
+    navigate('/schedules/new');
+  };
+
+  // 일정 관리 페이지로 이동
+  const handleViewAll = () => {
+    navigate('/schedules');
+  };
+
+  // 날짜/시간 포맷팅
+  const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return '-';
+    const date = new Date(dateTimeString);
+    return date.toLocaleString('ko-KR', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
-  
-  const handleScheduleClick = (schedule) => {
-    if (config.scheduleUrl) {
-      navigate(config.scheduleUrl.replace('{scheduleId}', schedule.id));
-    } else {
-      navigate(`/admin/schedules?scheduleId=${schedule.id}`);
-    }
+
+  // 시간만 포맷팅
+  const formatTime = (dateTimeString) => {
+    if (!dateTimeString) return '-';
+    const date = new Date(dateTimeString);
+    return date.toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
-  
-  const handleViewAll = () => {
-    if (config.viewAllUrl) {
-      navigate(config.viewAllUrl);
-    } else {
-      navigate('/admin/schedules');
-    }
+
+  // 오늘인지 체크
+  const isToday = (dateString) => {
+    const today = new Date().toDateString();
+    const targetDate = new Date(dateString).toDateString();
+    return today === targetDate;
   };
-  
-  const handleCreateSchedule = () => {
-    if (config.createUrl) {
-      navigate(config.createUrl);
-    } else {
-      navigate('/admin/schedules?action=create');
+
+  // 렌더링 내용
+  const renderContent = () => {
+    if (!hasData) {
+      return (
+        <div className="schedule-empty-state">
+          <div className="empty-icon-wrapper">
+            <Calendar className="empty-icon" />
+          </div>
+          <h3 className="empty-title">등록된 일정이 없습니다</h3>
+          <p className="empty-description">
+            {widget.config?.emptyMessage || '새로운 상담 일정을 등록해보세요.'}
+          </p>
+          {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
+            <button 
+              className="mg-btn mg-btn-primary"
+              onClick={handleCreateSchedule}
+            >
+              <Plus className="btn-icon" />
+              새 일정 등록
+            </button>
+          )}
+        </div>
+      );
     }
-  };
-  
-  const handleAutoComplete = async () => {
-    try {
-      const response = await fetch('/api/admin/schedules/auto-complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        console.log('✅ 스케줄 자동 완료 처리 완료');
-        loadSchedules();
-      }
-    } catch (err) {
-      console.error('❌ 스케줄 자동 완료 처리 실패:', err);
-    }
-  };
-  
-  if (loading && schedules.length === 0) {
+
+    const { schedules, todayStats } = data;
+
     return (
-      <div className="widget widget-schedule-registration">
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="widget widget-schedule-registration">
-      <div className="widget-header">
-        <div className="widget-title">
-          <i className="bi bi-calendar-event"></i>
-          {config.title || (showTodayOnly ? '오늘의 일정' : '일정 관리')}
-        </div>
-        <div className="widget-actions">
-          <button className="widget-btn widget-btn-sm" onClick={handleViewAll}>
-            전체보기
-          </button>
-          <button className="widget-btn widget-btn-primary widget-btn-sm" onClick={handleCreateSchedule}>
-            <i className="bi bi-plus-circle"></i> 일정 등록
-          </button>
-        </div>
-      </div>
-      
-      {showTodayOnly && (
-        <div className="widget-stats">
-          <div className="stat-item">
-            <div className="stat-label">전체</div>
-            <div className="stat-value">{todayStats.total}</div>
+      <div className="schedule-content">
+        {/* 오늘 통계 섹션 */}
+        {widget.config?.showStats !== false && todayStats && (
+          <div className="today-stats">
+            <div className="stats-header">
+              <h4 className="stats-title">
+                <Calendar className="stats-icon" />
+                {widget.config?.showTodayOnly !== false ? '오늘 일정' : '전체 일정'}
+              </h4>
+            </div>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon total">
+                  <Calendar />
+                </div>
+                <div className="stat-info">
+                  <div className="stat-number">{todayStats.total}</div>
+                  <div className="stat-label">총 일정</div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon completed">
+                  <CheckCircle />
+                </div>
+                <div className="stat-info">
+                  <div className="stat-number">{todayStats.completed}</div>
+                  <div className="stat-label">완료</div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon in-progress">
+                  <Users />
+                </div>
+                <div className="stat-info">
+                  <div className="stat-number">{todayStats.inProgress}</div>
+                  <div className="stat-label">진행중</div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon upcoming">
+                  <Clock />
+                </div>
+                <div className="stat-info">
+                  <div className="stat-number">{todayStats.upcoming}</div>
+                  <div className="stat-label">예정</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-label">완료</div>
-            <div className="stat-value text-success">{todayStats.completed}</div>
+        )}
+
+        {/* 일정 목록 */}
+        <div className="schedule-list">
+          <div className="list-header">
+            <h4 className="list-title">
+              {widget.config?.showTodayOnly !== false ? '오늘의 일정' : '최근 일정'}
+            </h4>
+            <button 
+              className="mg-btn mg-btn-ghost mg-btn-sm"
+              onClick={handleViewAll}
+            >
+              전체 보기
+            </button>
           </div>
-          <div className="stat-item">
-            <div className="stat-label">진행중</div>
-            <div className="stat-value text-info">{todayStats.inProgress}</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-label">취소</div>
-            <div className="stat-value text-danger">{todayStats.cancelled}</div>
-          </div>
-        </div>
-      )}
-      
-      {config.showAutoComplete && (
-        <div className="widget-actions-bar">
-          <button 
-            className="widget-btn widget-btn-warning widget-btn-sm"
-            onClick={handleAutoComplete}
-          >
-            <i className="bi bi-check-circle"></i> 지난 일정 자동 완료
-          </button>
-        </div>
-      )}
-      
-      <div className="widget-body">
-        {schedules.length > 0 ? (
-          <div className="schedule-list">
-            {schedules.map((schedule, index) => (
-              <div
-                key={schedule.id || index}
-                className="schedule-item"
-                onClick={() => handleScheduleClick(schedule)}
-              >
+          <div className="schedule-items">
+            {schedules.map((schedule) => (
+              <div key={schedule.id} className="schedule-item">
                 <div className="schedule-info">
                   <div className="schedule-header">
-                    <div className="schedule-time">
-                      {schedule.startTime} - {schedule.endTime}
+                    <div className="schedule-time-info">
+                      <div className="schedule-time">
+                        <Clock className="time-icon" />
+                        {formatDateTime(schedule.startTime)}
+                        {schedule.endTime && (
+                          <span className="time-separator">~{formatTime(schedule.endTime)}</span>
+                        )}
+                      </div>
+                      {isToday(schedule.startTime) && (
+                        <div className="today-badge">오늘</div>
+                      )}
                     </div>
-                    <div className={`schedule-status status-${schedule.status?.toLowerCase()}`}>
-                      {schedule.status}
+                    <div className={`schedule-status ${getStatusClass(schedule.status)}`}>
+                      {getStatusIcon(schedule.status)}
+                      <span className="status-text">{getStatusLabel(schedule.status)}</span>
                     </div>
                   </div>
                   <div className="schedule-details">
-                    <div className="schedule-client">{schedule.clientName || schedule.client?.name}</div>
-                    {schedule.consultantName && (
-                      <div className="schedule-consultant">상담사: {schedule.consultantName}</div>
-                    )}
+                    <div className="schedule-title">{schedule.title || '제목 없음'}</div>
+                    <div className="schedule-participants">
+                      {schedule.consultantName && (
+                        <div className="participant consultant">
+                          <span className="participant-label">상담사:</span>
+                          <span className="participant-name">{schedule.consultantName}</span>
+                        </div>
+                      )}
+                      {schedule.clientName && (
+                        <div className="participant client">
+                          <span className="participant-label">내담자:</span>
+                          <span className="participant-name">{schedule.clientName}</span>
+                        </div>
+                      )}
+                    </div>
                     {schedule.location && (
                       <div className="schedule-location">
-                        <i className="bi bi-geo-alt"></i> {schedule.location}
+                        <span className="location-label">장소:</span>
+                        <span className="location-value">{schedule.location}</span>
+                      </div>
+                    )}
+                    {schedule.notes && (
+                      <div className="schedule-notes">
+                        <span className="notes-label">메모:</span>
+                        <span className="notes-value">{schedule.notes}</span>
                       </div>
                     )}
                   </div>
                 </div>
+                <div className="schedule-actions">
+                  <button 
+                    className="action-btn view-btn"
+                    onClick={() => handleViewSchedule(schedule.id)}
+                    title="상세 보기"
+                  >
+                    <Eye className="action-icon" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="widget-empty">
-            <i className="bi bi-calendar-x"></i>
-            <p>{config.emptyMessage || '일정이 없습니다'}</p>
+        </div>
+
+        {/* 빠른 액션 */}
+        {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
+          <div className="schedule-quick-actions">
+            <button 
+              className="mg-btn mg-btn-primary mg-btn-sm"
+              onClick={handleCreateSchedule}
+            >
+              <CalendarPlus className="btn-icon" />
+              새 일정 등록
+            </button>
           </div>
         )}
       </div>
-    </div>
+    );
+  };
+
+  // 헤더 설정
+  const headerConfig = {
+    icon: <Calendar className="widget-header-icon" />,
+    subtitle: '상담 일정 관리',
+    actions: [
+      {
+        icon: 'RefreshCw',
+        label: '새로고침',
+        onClick: refresh
+      },
+      ...((RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) ? [{
+        icon: 'CalendarPlus',
+        label: '새 일정',
+        onClick: handleCreateSchedule
+      }] : []),
+      {
+        icon: 'ExternalLink',
+        label: '전체 보기',
+        onClick: handleViewAll
+      }
+    ]
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      hasData={hasData}
+      onRefresh={refresh}
+      headerConfig={headerConfig}
+      className="schedule-registration-widget"
+    >
+      {renderContent()}
+    </BaseWidget>
   );
 };
 
 export default ScheduleRegistrationWidget;
-

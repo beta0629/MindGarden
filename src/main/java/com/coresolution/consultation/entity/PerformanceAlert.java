@@ -38,11 +38,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PerformanceAlert {
+public class PerformanceAlert extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @Column(name = "consultant_id", nullable = false)
     private Long consultantId;

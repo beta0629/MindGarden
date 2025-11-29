@@ -27,6 +27,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.FinancialTransactionService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -966,7 +967,8 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                     branchCode, startDate, endDate, category, transactionType);
             
             // 지점별 거래 내역 조회 (삭제되지 않은 거래만)
-            List<FinancialTransaction> allTransactions = financialTransactionRepository.findByIsDeletedFalse();
+            String tenantId = TenantContextHolder.getTenantId();
+            List<FinancialTransaction> allTransactions = financialTransactionRepository.findByTenantIdAndIsDeletedFalse(tenantId);
             log.info("🔍 전체 거래 내역 수: {}", allTransactions.size());
             
             List<FinancialTransaction> transactions = allTransactions

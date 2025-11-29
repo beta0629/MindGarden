@@ -528,19 +528,19 @@ const ColorPicker = ({ value, onChange, error }) => {
   const colorPalette = [
     // 기본 색상
     'var(--mg-primary-500)', 'var(--mg-secondary-500)', 'var(--mg-success-500)', 'var(--mg-error-500)', 'var(--mg-warning-500)', 'var(--mg-info-500)',
-    '#6f42c1', '#e83e8c', '#fd7e14', '#20c997', '#6610f2', '#e21e80',
+    'var(--cs-purple-500)', 'var(--cs-pink-500)', 'var(--cs-orange-500)', 'var(--cs-teal-500)', 'var(--cs-purple-600)', 'var(--cs-pink-600)',
     
     // 브랜드 색상
-    'var(--mg-primary-500)', '#764ba2', 'var(--mg-warning-500)', '#f5576c', '#4facfe', '#00f2fe',
-    '#43e97b', '#38f9d7', '#ffecd2', '#fcb69f', '#a8edea', '#fed6e3',
+    'var(--mg-primary-500)', 'var(--cs-purple-600)', 'var(--mg-warning-500)', 'var(--cs-error-400)', 'var(--cs-blue-400)', 'var(--cs-teal-400)',
+    'var(--cs-success-400)', 'var(--cs-teal-400)', 'var(--cs-orange-100)', 'var(--cs-orange-300)', 'var(--cs-teal-200)', 'var(--cs-pink-200)',
     
     // 비즈니스 색상
-    '#2c3e50', '#34495e', '#95a5a6', '#bdc3c7', '#ecf0f1', 'var(--mg-finance-primary)',
-    'var(--mg-finance-dark)', '#d35400', '#c0392b', '#8e44ad', '#9b59b6', '#3498db',
+    'var(--cs-slate-800)', 'var(--cs-slate-700)', 'var(--cs-slate-500)', 'var(--cs-slate-300)', 'var(--cs-slate-100)', 'var(--mg-finance-primary)',
+    'var(--mg-finance-dark)', 'var(--cs-orange-600)', 'var(--cs-error-700)', 'var(--cs-purple-700)', 'var(--cs-purple-500)', 'var(--cs-blue-500)',
     
     // 파스텔 색상
-    '#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#d4baff',
-    '#ffb3ff', '#ffc9de', '#c9ffba', '#baffff', '#e6baff', '#ffbadc'
+    'var(--cs-pink-200)', 'var(--cs-orange-200)', 'var(--cs-yellow-200)', 'var(--cs-success-200)', 'var(--cs-blue-200)', 'var(--cs-purple-200)',
+    'var(--cs-pink-300)', 'var(--cs-pink-200)', 'var(--cs-success-200)', 'var(--cs-teal-200)', 'var(--cs-purple-200)', 'var(--cs-pink-200)'
   ];
 
   const handleColorSelect = (color) => {

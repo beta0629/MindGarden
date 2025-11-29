@@ -1,0 +1,208 @@
+/**
+ * AdminSystemOverviewWidget - 관리자 시스템 개요 위젯 CSS
+ * 상담사, 내담자, 매칭 통계 표시 위젯의 스타일
+ * 
+ * @author CoreSolution
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
+ */
+
+.admin-system-overview-widget {
+  width: 100%;
+}
+
+.admin-system-overview-content {
+  padding: var(--cs-spacing-md);
+}
+
+/* 통계 그리드 */
+.system-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--cs-spacing-md);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+/* 통계 카드 */
+.system-stat-card {
+  display: flex;
+  align-items: center;
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-white-90);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.system-stat-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cs-shadow-md);
+  border-color: var(--cs-primary-300);
+  background: var(--cs-glass-primary-10);
+}
+
+.system-stat-card.clickable:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* 통계 아이콘 */
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--cs-radius-md);
+  margin-right: var(--cs-spacing-md);
+  position: relative;
+}
+
+.stat-icon-svg {
+  width: 24px;
+  height: 24px;
+}
+
+.stat-icon.consultant-icon {
+  background: var(--cs-glass-blue-light);
+  color: var(--cs-blue-600);
+}
+
+.stat-icon.client-icon {
+  background: var(--cs-glass-primary-20);
+  color: var(--cs-primary-600);
+}
+
+.stat-icon.mapping-icon {
+  background: var(--cs-glass-success-20);
+  color: var(--cs-success-600);
+}
+
+.stat-icon.active-icon {
+  background: var(--cs-glass-teal-light);
+  color: var(--cs-teal-600);
+}
+
+/* 통계 내용 */
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: var(--cs-text-xl);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-text-primary);
+  margin-bottom: var(--cs-spacing-xs);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 빈 상태 */
+.admin-system-overview-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xxl);
+  color: var(--cs-text-muted);
+}
+
+.admin-system-overview-empty .empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--cs-gray-400);
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.admin-system-overview-empty p {
+  font-size: var(--cs-text-md);
+  margin-bottom: var(--cs-spacing-lg);
+  color: var(--cs-text-secondary);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .system-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .system-stat-card {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    margin-right: var(--cs-spacing-sm);
+  }
+  
+  .stat-icon-svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .stat-value {
+    font-size: var(--cs-text-lg);
+  }
+  
+  .stat-label {
+    font-size: var(--cs-text-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .system-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .admin-system-overview-content {
+    padding: var(--cs-spacing-sm);
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .system-stat-card {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .system-stat-card.clickable:hover {
+    background: var(--cs-glass-primary-30);
+    border-color: var(--cs-primary-400);
+  }
+  
+  .stat-icon.consultant-icon {
+    background: var(--cs-glass-blue-dark);
+    color: var(--cs-blue-400);
+  }
+  
+  .stat-icon.client-icon {
+    background: var(--cs-glass-primary-40);
+    color: var(--cs-primary-400);
+  }
+  
+  .stat-icon.mapping-icon {
+    background: var(--cs-glass-success-40);
+    color: var(--cs-success-400);
+  }
+  
+  .stat-icon.active-icon {
+    background: var(--cs-glass-teal-dark);
+    color: var(--cs-teal-400);
+  }
+}
+
+/* 로딩/에러 상태 스타일 */
+.admin-system-overview-widget .widget-loading,
+.admin-system-overview-widget .widget-error {
+  min-height: 240px;
+}

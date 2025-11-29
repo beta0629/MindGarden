@@ -32,7 +32,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     
     @Override
     public Map<String, Object> processOnboardingApproval(
-            Long requestId,
+            java.util.UUID requestId,
             String tenantId,
             String tenantName,
             String businessType,
@@ -50,8 +50,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
              CallableStatement cs = connection.prepareCall(
                  "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
-            // IN 파라미터 설정
-            cs.setLong(1, requestId);
+            // IN 파라미터 설정 - UUID를 BINARY(16)으로 변환
+            byte[] uuidBytes = convertUuidToBytes(requestId);
+            cs.setBytes(1, uuidBytes);
             cs.setString(2, tenantId);
             cs.setString(3, tenantName);
             cs.setString(4, businessType);
@@ -120,6 +121,16 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         }
         
         return result;
+    }
+    
+    /**
+     * UUID를 BINARY(16) 바이트 배열로 변환
+     */
+    private byte[] convertUuidToBytes(java.util.UUID uuid) {
+        java.nio.ByteBuffer bb = java.nio.ByteBuffer.wrap(new byte[16]);
+        bb.putLong(uuid.getMostSignificantBits());
+        bb.putLong(uuid.getLeastSignificantBits());
+        return bb.array();
     }
 }
 

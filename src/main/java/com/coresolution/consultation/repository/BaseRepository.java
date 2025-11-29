@@ -26,9 +26,29 @@ public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<
     
     // ==================== 활성 상태 엔티티 조회 ====================
     
+    /**
+     * 테넌트별 활성 엔티티 조회
+     */
+    @Query("SELECT e FROM #{#entityName} e WHERE e.tenantId = :tenantId AND e.isDeleted = false")
+    List<T> findAllActiveByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 활성 데이터 노출!
+     */
+    @Deprecated
     @Query("SELECT e FROM #{#entityName} e WHERE e.isDeleted = false")
     List<T> findAllActive();
     
+    /**
+     * 테넌트별 활성 엔티티 페이징 조회
+     */
+    @Query("SELECT e FROM #{#entityName} e WHERE e.tenantId = :tenantId AND e.isDeleted = false")
+    Page<T> findAllActiveByTenantId(@Param("tenantId") String tenantId, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 활성 데이터 페이징 노출!
+     */
+    @Deprecated
     @Query("SELECT e FROM #{#entityName} e WHERE e.isDeleted = false")
     Page<T> findAllActive(Pageable pageable);
     

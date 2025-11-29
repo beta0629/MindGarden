@@ -1,0 +1,133 @@
+/**
+ * RecentActivitiesWidget 전용 스타일
+ * 하드코딩 제거 및 통합 디자인 토큰 사용
+ */
+
+.recent-activities-widget-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-md);
+}
+
+.recent-activities-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--cs-spacing-sm);
+}
+
+.recent-activities-header h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-gray-900);
+  margin: 0;
+}
+
+/* 활동 리스트 개선 */
+.recent-activities-widget-content .no-activities {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cs-spacing-xl);
+  color: var(--cs-gray-500);
+  text-align: center;
+}
+
+.recent-activities-widget-content .no-activities i {
+  font-size: 3rem;
+  margin-bottom: var(--cs-spacing-md);
+  color: var(--cs-gray-400);
+}
+
+.recent-activities-widget-content .no-activities p {
+  font-size: var(--cs-text-md);
+  margin: 0;
+}
+
+/* 활동 아이템 호버 효과 개선 */
+.recent-activities-widget-content .activity-item:hover {
+  background: var(--cs-glass-light-subtle);
+  border-left: 3px solid var(--cs-primary-500);
+  transform: translateX(2px);
+  transition: all 0.2s ease;
+}
+
+/* 활동 아이콘 스타일 개선 */
+.recent-activities-widget-content .activity-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--cs-primary-100);
+  color: var(--cs-primary-600);
+  flex-shrink: 0;
+}
+
+.recent-activities-widget-content .activity-icon i {
+  font-size: 1.2rem;
+}
+
+/* 활동 타입별 아이콘 색상 */
+.recent-activities-widget-content .activity-item[data-type="profile"] .activity-icon {
+  background: var(--cs-blue-100);
+  color: var(--cs-blue-600);
+}
+
+.recent-activities-widget-content .activity-item[data-type="schedule"] .activity-icon {
+  background: var(--cs-success-100);
+  color: var(--cs-success-600);
+}
+
+.recent-activities-widget-content .activity-item[data-type="consultation"] .activity-icon {
+  background: var(--cs-purple-100);
+  color: var(--cs-purple-600);
+}
+
+.recent-activities-widget-content .activity-item[data-type="payment"] .activity-icon {
+  background: var(--cs-yellow-100);
+  color: var(--cs-yellow-700);
+}
+
+.recent-activities-widget-content .activity-item[data-type="info"] .activity-icon {
+  background: var(--cs-gray-100);
+  color: var(--cs-gray-600);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .recent-activities-widget-content {
+    padding: var(--cs-spacing-sm);
+  }
+  
+  .recent-activities-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .recent-activities-header h3 {
+    font-size: var(--cs-text-md);
+  }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .recent-activities-widget-content .no-activities {
+    color: var(--cs-gray-400);
+  }
+  
+  .recent-activities-widget-content .no-activities i {
+    color: var(--cs-gray-500);
+  }
+  
+  .recent-activities-widget-content .activity-item:hover {
+    background: var(--cs-glass-dark-subtle);
+  }
+}

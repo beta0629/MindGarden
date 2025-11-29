@@ -15,29 +15,29 @@
 [data-mood="default"] {
   /* 기본 iOS 스타일 유지 */
   --mood-accent: var(--mg-primary-500);
-  --mood-accent-light: rgba(0, 122, 255, 0.1);
-  --mood-accent-dark: #0056b3;
+  --mood-accent-light: var(--cs-glass-blue-light);
+  --mood-accent-dark: var(--cs-blue-700);
   
-  --mood-card-bg: rgba(255, 255, 255, 0.95);
-  --mood-card-border: rgba(0, 0, 0, 0.04);
-  --mood-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --mood-card-bg: var(--cs-glass-strong);
+  --mood-card-border: var(--cs-glass-dark-subtle);
+  --mood-shadow: var(--cs-shadow-soft);
   
-  --mood-text-primary: #1d1d1f;
-  --mood-text-secondary: #86868b;
+  --mood-text-primary: var(--cs-gray-900);
+  --mood-text-secondary: var(--cs-gray-500);
 }
 
 /* ===== 따뜻한 분위기 (Warm) ===== */
 [data-mood="warm"] {
   /* 따뜻한 오렌지/코랄 톤 */
-  --mood-accent: #ff6b35;
-  --mood-accent-light: rgba(255, 107, 53, 0.1);
-  --mood-accent-dark: #e55a2b;
+  --mood-accent: var(--cs-orange-500);
+  --mood-accent-light: var(--cs-glass-orange-light);
+  --mood-accent-dark: var(--cs-orange-600);
   
-  --mood-card-bg: rgba(255, 248, 245, 0.95);
-  --mood-card-border: rgba(255, 107, 53, 0.08);
-  --mood-shadow: 0 2px 8px rgba(255, 107, 53, 0.12);
+  --mood-card-bg: var(--cs-glass-orange-bg);
+  --mood-card-border: var(--cs-glass-orange-border);
+  --mood-shadow: var(--cs-shadow-orange);
   
-  --mood-text-primary: #2d1810;
+  --mood-text-primary: var(--cs-brown-900);
   --mood-text-secondary: var(--mg-cocoa);
 }
 

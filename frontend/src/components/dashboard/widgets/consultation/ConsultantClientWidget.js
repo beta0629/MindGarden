@@ -1,165 +1,166 @@
 /**
- * Consultant Client Widget
- * 상담소 특화 내담자 목록 위젯
- * ConsultantClientSection을 기반으로 위젯화
+ * Consultant Client Widget - 표준화된 위젯
+ * 상담사 내담자 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
- * @since 2025-11-22
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../../../../utils/ajax';
-// import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
-import '../Widget.css';
+import { Users, Eye, MessageCircle, Calendar, UserCheck, UserPlus } from 'lucide-react';
+import { useWidget } from '../../../../hooks/useWidget';
+import BaseWidget from '../BaseWidget';
+import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
+import './ConsultantClientWidget.css';
 
 const ConsultantClientWidget = ({ widget, user }) => {
-  const navigate = useNavigate();
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  const consultantId = user?.id || config.consultantId;
-  const maxItems = config.maxItems || 5;
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url && consultantId) {
-      loadClients();
-      
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadClients, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (config.clients && Array.isArray(config.clients)) {
-      setClients(config.clients);
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, [consultantId]);
-  
-  const loadClients = async () => {
-    try {
-      setLoading(true);
-      
-      const url = dataSource.url || `/api/admin/mappings/consultant/${consultantId}/clients`;
-      const response = await apiGet(url);
-      
-      if (response && response.data) {
-        const mappings = response.data;
-        const clientMap = new Map();
-        
-        mappings.forEach(mapping => {
-          const clientId = mapping.client?.id || mapping.clientId;
-          if (!clientMap.has(clientId)) {
-            clientMap.set(clientId, {
-              id: clientId,
-              name: mapping.client?.name || mapping.clientName,
-              email: mapping.client?.email || '',
-              mappingStatus: mapping.client?.status || mapping.status,
-              totalSessions: mapping.totalSessions || 0,
-              usedSessions: mapping.usedSessions || 0,
-              remainingSessions: mapping.remainingSessions || 0,
-              lastConsultationDate: mapping.lastConsultationDate
-            });
-          } else {
-            const client = clientMap.get(clientId);
-            client.totalSessions += mapping.totalSessions || 0;
-            client.usedSessions += mapping.usedSessions || 0;
-            client.remainingSessions += mapping.remainingSessions || 0;
-          }
-        });
-        
-        setClients(Array.from(clientMap.values()).slice(0, maxItems));
-      }
-    } catch (err) {
-      console.error('ConsultantClientWidget 데이터 로드 실패:', err);
-      setClients([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleClientClick = (client) => {
-    if (config.clientUrl) {
-      navigate(config.clientUrl.replace('{clientId}', client.id));
-    } else {
-      navigate(`/consultant/clients/${client.id}`);
-    }
-  };
-  
-  const handleViewAll = () => {
-    if (config.viewAllUrl) {
-      navigate(config.viewAllUrl);
-    } else {
-      navigate('/consultant/clients');
-    }
-  };
-  
-  if (loading && clients.length === 0) {
-    return (
-      <div className="widget widget-consultant-client">
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
   }
-  
-  return (
-    <div className="widget widget-consultant-client">
-      <div className="widget-header">
-        <div className="widget-title">
-          <i className="bi bi-people"></i>
-          {config.title || '내담자 목록'}
+
+  const navigate = useNavigate();
+
+  const getDataSourceConfig = () => ({
+    type: 'api',
+    url: '/api/consultant-clients',
+    method: 'GET',
+    params: { 
+      limit: widget.config?.maxItems || 5,
+      ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
+    },
+    refreshInterval: 180000,
+    cache: true
+  });
+
+  const transform = (rawData) => {
+    if (!rawData) return { clients: [], hasData: false };
+    return {
+      clients: Array.isArray(rawData) ? rawData : [],
+      hasData: Array.isArray(rawData) && rawData.length > 0
+    };
+  };
+
+  const widgetWithDataSource = {
+    ...widget,
+    config: { ...widget.config, dataSource: getDataSourceConfig(), transform }
+  };
+
+  const { data, loading, error, hasData, refresh } = useWidget(widgetWithDataSource, user, {
+    immediate: true,
+    cache: true
+  });
+
+  const getStatusClass = (status) => {
+    const statusMap = {
+      'ACTIVE': 'status-active',
+      'INACTIVE': 'status-inactive',
+      'PENDING': 'status-pending',
+      'COMPLETED': 'status-completed'
+    };
+    return statusMap[status] || 'status-unknown';
+  };
+
+  const formatDate = (datetime) => {
+    return new Date(datetime).toLocaleDateString('ko-KR');
+  };
+
+  const renderContent = () => {
+    if (!hasData) {
+      return (
+        <div className="client-empty-state">
+          <div className="empty-icon-wrapper">
+            <UserCheck className="empty-icon" />
+          </div>
+          <h3 className="empty-title">배정된 내담자 없음</h3>
+          <p className="empty-description">새로운 내담자 매칭을 기다리고 있습니다.</p>
         </div>
-        {config.viewAllUrl && (
-          <button className="widget-view-all" onClick={handleViewAll}>
-            전체보기 →
-          </button>
-        )}
-      </div>
-      <div className="widget-body">
-        {clients.length > 0 ? (
-          <div className="consultant-client-list">
-            {clients.map((client, index) => (
-              <div
-                key={client.id || index}
-                className="consultant-client-item"
-                onClick={() => handleClientClick(client)}
-              >
-                <div className="client-info">
-                  <div className="client-name">{client.name}</div>
-                  <div className="client-sessions">
-                    사용: {client.usedSessions} / 전체: {client.totalSessions}
-                    {client.remainingSessions > 0 && (
-                      <span className="client-remaining"> (남은: {client.remainingSessions})</span>
-                    )}
+      );
+    }
+
+    const { clients } = data;
+
+    return (
+      <div className="client-content">
+        <div className="client-list">
+          {clients.map((client) => (
+            <div key={client.id} className="client-item">
+              <div className="client-avatar">
+                <UserCheck className="avatar-icon" />
+              </div>
+              <div className="client-info">
+                <div className="client-name">{client.name}</div>
+                <div className="client-details">
+                  <div className={`client-status ${getStatusClass(client.status)}`}>
+                    {client.status === 'ACTIVE' ? '활성' : 
+                     client.status === 'PENDING' ? '대기' : 
+                     client.status === 'COMPLETED' ? '완료' : '비활성'}
                   </div>
-                  {client.lastConsultationDate && (
-                    <div className="client-last-date">
-                      최근 상담: {new Date(client.lastConsultationDate).toLocaleDateString('ko-KR')}
+                  {client.lastSessionAt && (
+                    <div className="last-session">
+                      <Calendar className="detail-icon" />
+                      <span>최근: {formatDate(client.lastSessionAt)}</span>
+                    </div>
+                  )}
+                  {client.sessionCount && (
+                    <div className="session-count">
+                      총 {client.sessionCount}회 상담
                     </div>
                   )}
                 </div>
-                <div className={`client-status status-${client.mappingStatus?.toLowerCase()}`}>
-                  {client.mappingStatus}
-                </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="widget-empty">
-            <i className="bi bi-person-x"></i>
-            <p>{config.emptyMessage || '내담자가 없습니다'}</p>
-          </div>
-        )}
+              <div className="client-actions">
+                <button 
+                  className="action-btn message-btn"
+                  onClick={() => navigate(`/messages/${client.id}`)}
+                  title="메시지"
+                >
+                  <MessageCircle className="action-icon" />
+                </button>
+                <button 
+                  className="action-btn view-btn"
+                  onClick={() => navigate(`/clients/${client.id}`)}
+                  title="상세보기"
+                >
+                  <Eye className="action-icon" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="client-actions-footer">
+          <button className="mg-btn mg-btn-ghost mg-btn-sm" onClick={() => navigate('/clients')}>
+            전체 내담자 보기
+          </button>
+        </div>
       </div>
-    </div>
+    );
+  };
+
+  const headerConfig = {
+    icon: <Users className="widget-header-icon" />,
+    subtitle: '담당 내담자',
+    actions: [
+      { icon: 'RefreshCw', label: '새로고침', onClick: refresh },
+      { icon: 'UserPlus', label: '내담자 추가', onClick: () => navigate('/clients/new') }
+    ]
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      hasData={hasData}
+      onRefresh={refresh}
+      headerConfig={headerConfig}
+      className="consultant-client-widget"
+    >
+      {renderContent()}
+    </BaseWidget>
   );
 };
 
 export default ConsultantClientWidget;
-
-
-

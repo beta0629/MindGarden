@@ -29,11 +29,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RecurringExpense {
+public class RecurringExpense extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     @Column(name = "expense_name", nullable = false, length = 100)
     private String expenseName;
@@ -99,15 +96,8 @@ public class RecurringExpense {
     @Column(name = "account_number", length = 50)
     private String accountNumber; // 자동이체 계좌번호
     
-    @Column(name = "is_vat_applicable", nullable = false)
-    @Builder.Default
+    // @Column(name = "is_vat_applicable", nullable = false)
     private Boolean isVatApplicable = true; // 부가세 적용 여부
-    
-    @Column(name = "created_at", nullable = false)
-    private LocalDate createdAt;
-    
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
     
     @Column(name = "created_by", length = 100)
     private String createdBy;
@@ -117,8 +107,6 @@ public class RecurringExpense {
     
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDate.now();
-        updatedAt = LocalDateTime.now();
         if (nextDueDate == null) {
             nextDueDate = calculateNextDueDate(startDate, recurrenceDay);
         }
@@ -126,7 +114,6 @@ public class RecurringExpense {
     
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
     
     /**

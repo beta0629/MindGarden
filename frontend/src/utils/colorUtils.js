@@ -39,7 +39,7 @@ export const getStatusBgColor = (status) => {
     'CANCELLED': 'var(--status-cancelled-bg)'
   };
   
-  return statusMap[status] || 'rgba(107, 114, 128, 0.1)';
+  return statusMap[status] || 'var(--cs-glass-gray-light)';
 };
 
 /**
@@ -103,7 +103,7 @@ export const getGradeBgColor = (grade) => {
     'MASTER': 'var(--grade-master-bg)'
   };
   
-  return gradeMap[grade] || 'rgba(107, 114, 128, 0.1)';
+  return gradeMap[grade] || 'var(--cs-glass-gray-light)';
 };
 
 /**
@@ -137,7 +137,7 @@ export const getRoleBgColor = (role) => {
     'ADMIN': 'var(--role-admin-bg)'
   };
   
-  return roleMap[role] || 'rgba(107, 114, 128, 0.1)';
+  return roleMap[role] || 'var(--cs-glass-gray-light)';
 };
 
 /**
@@ -170,7 +170,7 @@ export const getVacationBgColor = (type) => {
     'PERSONAL': 'var(--vacation-personal-bg)'
   };
   
-  return vacationMap[type] || 'rgba(107, 114, 128, 0.1)';
+  return vacationMap[type] || 'var(--cs-glass-gray-light)';
 };
 
 /**

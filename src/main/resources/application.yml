@@ -15,7 +15,7 @@ spring:
   # 데이터베이스 설정 (개발 서버 DB 사용)
   datasource:
     # IPv4 우선 사용을 위해 IP 주소 직접 사용 (DNS 문제 해결)
-    url: jdbc:mysql://114.202.247.246:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+    url: jdbc:mysql://beta0629.cafe24.com:3306/core_solution?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
     username: mindgarden_dev
     password: MindGardenDev2025!@#
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -24,7 +24,7 @@ spring:
   # JPA 설정
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none  # Flyway가 스키마 관리, Hibernate는 아무것도 안 함
     show-sql: true  # SQL 로그 활성화
     properties:
       hibernate:
@@ -43,10 +43,6 @@ spring:
         jdbc:
           batch_size: 20
           batch_versioned_data: true
-        # 스키마 업데이트 로깅
-        hbm2ddl:
-          auto: update
-          import_files: false
     database-platform: org.hibernate.dialect.MySQL8Dialect
   
   # Thymeleaf 설정
@@ -201,9 +197,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
 
 # 파일 업로드 설정

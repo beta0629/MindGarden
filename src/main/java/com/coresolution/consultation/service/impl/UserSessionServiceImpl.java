@@ -51,7 +51,6 @@ public class UserSessionServiceImpl implements UserSessionService {
             UserSession userSession = UserSession.builder()
                     .user(user)
                     .sessionId(sessionId)
-                    .createdAt(now)
                     .lastActivityAt(now)
                     .expiresAt(now.plusMinutes(SessionManagementConstants.DEFAULT_SESSION_TIMEOUT_MINUTES))
                     .clientIp(clientIp)
@@ -110,7 +109,7 @@ public class UserSessionServiceImpl implements UserSessionService {
     @Transactional(readOnly = true)
     public List<UserSession> getActiveSessions(User user) {
         try {
-            return userSessionRepository.findAllActiveSessionsByUser(user, LocalDateTime.now());
+            return userSessionRepository.findAllActiveSessionsByUser(user.getId(), LocalDateTime.now());
         } catch (Exception e) {
             log.error("❌ 사용자 활성 세션 조회 실패: userId={}, error={}", user.getId(), e.getMessage(), e);
             return List.of();
@@ -121,7 +120,7 @@ public class UserSessionServiceImpl implements UserSessionService {
     @Transactional(readOnly = true)
     public long getActiveSessionCount(User user) {
         try {
-            return userSessionRepository.countActiveSessionsByUser(user, LocalDateTime.now());
+            return userSessionRepository.countActiveSessionsByUser(user.getId(), LocalDateTime.now());
         } catch (Exception e) {
             log.error("❌ 활성 세션 수 조회 실패: userId={}, error={}", user.getId(), e.getMessage(), e);
             return 0;
@@ -215,7 +214,7 @@ public class UserSessionServiceImpl implements UserSessionService {
     @Override
     public int deactivateAllUserSessions(User user, String reason) {
         try {
-            int updatedCount = userSessionRepository.deactivateAllUserSessions(user, LocalDateTime.now(), reason);
+            int updatedCount = userSessionRepository.deactivateAllUserSessions(user.getId(), LocalDateTime.now(), reason);
             log.info("✅ 사용자 모든 세션 비활성화 완료: userId={}, reason={}, count={}", 
                     user.getId(), reason, updatedCount);
             return updatedCount;

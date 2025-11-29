@@ -37,12 +37,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RefreshToken {
+public class RefreshToken extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, updatable = false)
-    private Long id;
+    // @Column(name = "id", nullable = false, updatable = false)
     
     @Column(name = "token_id", nullable = false, unique = true, length = 36)
     private String tokenId; // UUID

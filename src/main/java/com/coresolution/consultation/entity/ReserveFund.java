@@ -29,11 +29,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReserveFund {
+public class ReserveFund extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     @Column(name = "fund_name", nullable = false, length = 100)
     private String fundName;
@@ -64,18 +61,13 @@ public class ReserveFund {
     @Column(name = "start_date")
     private LocalDate startDate;
     
-    @Column(name = "end_date")
+    // @Column(name = "end_date")
     private LocalDate endDate;
     
-    @Column(name = "is_active", nullable = false)
-    @Builder.Default
+    // @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
     
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
     
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
     
     @Column(name = "created_by", length = 100)
     private String createdBy;

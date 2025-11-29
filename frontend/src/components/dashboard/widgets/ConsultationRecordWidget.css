@@ -1,0 +1,532 @@
+/* ConsultationRecordWidget.css - 상담일지 위젯 스타일 */
+
+/* ============================================================================
+   헤더 스타일
+   ============================================================================ */
+.consultation-record-header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  color: var(--cs-text-primary);
+  font-weight: var(--cs-font-semibold);
+}
+
+.consultation-record-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+}
+
+.consultation-record-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--cs-border-primary);
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  border-radius: var(--cs-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.consultation-record-btn-ghost:hover {
+  background: var(--cs-bg-hover);
+  border-color: var(--cs-primary-300);
+}
+
+.consultation-record-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  background: var(--cs-primary-500);
+  border: none;
+  color: white;
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  border-radius: var(--cs-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.consultation-record-btn-primary:hover {
+  background: var(--cs-primary-600);
+}
+
+/* ============================================================================
+   에러 상태 스타일
+   ============================================================================ */
+.consultation-record-error {
+  text-align: center;
+  padding: var(--cs-spacing-xl);
+  color: var(--cs-error-500);
+}
+
+.consultation-record-error svg {
+  margin-bottom: var(--cs-spacing-md);
+  opacity: 0.6;
+}
+
+.consultation-record-error p {
+  font-size: var(--cs-text-md);
+  margin: 0;
+}
+
+/* ============================================================================
+   빈 상태 스타일
+   ============================================================================ */
+.consultation-record-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xl);
+  color: var(--cs-text-secondary);
+}
+
+.consultation-record-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--cs-spacing-md);
+  opacity: 0.6;
+}
+
+.consultation-record-empty-text {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-primary);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.consultation-record-empty-hint {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-secondary);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.consultation-record-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  background: var(--cs-primary-500);
+  border: none;
+  color: white;
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  padding: var(--cs-spacing-sm) var(--cs-spacing-md);
+  border-radius: var(--cs-radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.consultation-record-empty-btn:hover {
+  background: var(--cs-primary-600);
+  transform: translateY(-1px);
+}
+
+/* ============================================================================
+   콘텐츠 레이아웃
+   ============================================================================ */
+.consultation-record-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-lg);
+}
+
+/* ============================================================================
+   통계 카드 스타일
+   ============================================================================ */
+.consultation-record-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--cs-spacing-md);
+}
+
+.consultation-record-stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-bg-surface);
+  border: 1px solid var(--cs-border-primary);
+  border-radius: var(--cs-radius-lg);
+  transition: all 0.3s ease;
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.consultation-record-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cs-shadow-md);
+}
+
+.consultation-record-stat-card.primary {
+  border-left: 4px solid var(--cs-primary-500);
+}
+
+.consultation-record-stat-card.secondary {
+  border-left: 4px solid var(--cs-teal-500);
+}
+
+.consultation-record-stat-card.warning {
+  border-left: 4px solid var(--cs-warning-500);
+}
+
+.consultation-record-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.consultation-record-stat-card.primary .consultation-record-stat-icon {
+  background: var(--cs-primary-100);
+  color: var(--cs-primary-600);
+}
+
+.consultation-record-stat-card.secondary .consultation-record-stat-icon {
+  background: var(--cs-teal-100);
+  color: var(--cs-teal-600);
+}
+
+.consultation-record-stat-card.warning .consultation-record-stat-icon {
+  background: var(--cs-warning-100);
+  color: var(--cs-warning-600);
+}
+
+.consultation-record-stat-content {
+  flex: 1;
+}
+
+.consultation-record-stat-value {
+  font-size: var(--cs-text-xl);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-text-primary);
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.consultation-record-stat-label {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-secondary);
+}
+
+/* ============================================================================
+   섹션 제목
+   ============================================================================ */
+.consultation-record-section-title {
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  margin: 0 0 var(--cs-spacing-md) 0;
+}
+
+/* ============================================================================
+   최근 상담일지 스타일
+   ============================================================================ */
+.consultation-record-recent {
+  padding: var(--cs-spacing-md);
+  background: var(--cs-glass-light-subtle);
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-border-secondary);
+}
+
+.consultation-record-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+}
+
+.consultation-record-recent-item {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-bg-surface);
+  border: 1px solid var(--cs-border-primary);
+  border-radius: var(--cs-radius-md);
+  transition: all 0.2s ease;
+}
+
+.consultation-record-recent-item:hover {
+  border-color: var(--cs-primary-200);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.consultation-record-recent-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.consultation-record-recent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--cs-spacing-sm);
+}
+
+.consultation-record-recent-title {
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  line-height: 1.3;
+}
+
+.consultation-record-recent-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+  flex-shrink: 0;
+}
+
+.consultation-record-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+  border-radius: var(--cs-radius-sm);
+}
+
+.consultation-record-status.completed {
+  background: var(--cs-success-100);
+  color: var(--cs-success-700);
+  border: 1px solid var(--cs-success-200);
+}
+
+.consultation-record-status.pending {
+  background: var(--cs-warning-100);
+  color: var(--cs-warning-700);
+  border: 1px solid var(--cs-warning-200);
+}
+
+.consultation-record-date {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-secondary);
+}
+
+.consultation-record-view-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  background: transparent;
+  border: 1px solid var(--cs-primary-300);
+  color: var(--cs-primary-600);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  border-radius: var(--cs-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.consultation-record-view-btn:hover {
+  background: var(--cs-primary-50);
+  border-color: var(--cs-primary-400);
+}
+
+/* ============================================================================
+   빠른 액션 스타일
+   ============================================================================ */
+.consultation-record-actions {
+  display: flex;
+  gap: var(--cs-spacing-sm);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-glass-light-subtle);
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-border-secondary);
+  border-top: 1px solid var(--cs-border-primary);
+}
+
+.consultation-record-action-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  padding: var(--cs-spacing-sm) var(--cs-spacing-md);
+  border: 1px solid;
+  border-radius: var(--cs-radius-md);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  justify-content: center;
+}
+
+.consultation-record-action-btn.primary {
+  background: var(--cs-primary-500);
+  border-color: var(--cs-primary-500);
+  color: white;
+}
+
+.consultation-record-action-btn.primary:hover {
+  background: var(--cs-primary-600);
+  border-color: var(--cs-primary-600);
+}
+
+.consultation-record-action-btn.secondary {
+  background: transparent;
+  border-color: var(--cs-border-primary);
+  color: var(--cs-text-primary);
+}
+
+.consultation-record-action-btn.secondary:hover {
+  background: var(--cs-bg-hover);
+  border-color: var(--cs-primary-300);
+}
+
+.consultation-record-action-btn.tertiary {
+  background: transparent;
+  border-color: var(--cs-teal-300);
+  color: var(--cs-teal-600);
+}
+
+.consultation-record-action-btn.tertiary:hover {
+  background: var(--cs-teal-50);
+  border-color: var(--cs-teal-400);
+}
+
+/* ============================================================================
+   반응형 스타일
+   ============================================================================ */
+@media (max-width: 768px) {
+  .consultation-record-header-actions {
+    flex-direction: column;
+    gap: var(--cs-spacing-xs);
+  }
+
+  .consultation-record-btn-ghost,
+  .consultation-record-btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .consultation-record-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .consultation-record-stat-card {
+    padding: var(--cs-spacing-md);
+  }
+
+  .consultation-record-stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .consultation-record-stat-value {
+    font-size: var(--cs-text-lg);
+  }
+
+  .consultation-record-recent-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-xs);
+  }
+
+  .consultation-record-recent-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .consultation-record-actions {
+    flex-direction: column;
+  }
+
+  .consultation-record-action-btn {
+    flex: none;
+  }
+}
+
+/* ============================================================================
+   다크 테마 지원
+   ============================================================================ */
+@media (prefers-color-scheme: dark) {
+  .consultation-record-stat-card {
+    background: var(--cs-bg-surface-dark);
+    border-color: var(--cs-border-primary-dark);
+  }
+
+  .consultation-record-stat-value {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .consultation-record-stat-label {
+    color: var(--cs-text-secondary-dark);
+  }
+
+  .consultation-record-section-title {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .consultation-record-recent {
+    background: var(--cs-glass-dark-subtle);
+    border-color: var(--cs-border-secondary-dark);
+  }
+
+  .consultation-record-recent-item {
+    background: var(--cs-bg-surface-dark);
+    border-color: var(--cs-border-primary-dark);
+  }
+
+  .consultation-record-recent-title {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .consultation-record-date {
+    color: var(--cs-text-secondary-dark);
+  }
+
+  .consultation-record-actions {
+    background: var(--cs-glass-dark-subtle);
+    border-color: var(--cs-border-secondary-dark);
+  }
+}
+
+/* ============================================================================
+   애니메이션
+   ============================================================================ */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.consultation-record-stat-card {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.consultation-record-stat-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.consultation-record-stat-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.consultation-record-recent-item {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.consultation-record-recent-item:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.consultation-record-recent-item:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+/* 호버 애니메이션 */
+.consultation-record-action-btn:hover {
+  transform: translateY(-1px);
+}
+
+.consultation-record-view-btn:hover {
+  transform: translateX(2px);
+}

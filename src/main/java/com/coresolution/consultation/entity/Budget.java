@@ -36,11 +36,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Budget {
+public class Budget extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     @Column(nullable = false, length = 100)
     private String name;
@@ -74,13 +71,9 @@ public class Budget {
     @Column(nullable = false)
     private BudgetStatus status;
     
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    // @Column(nullable = false, updatable = false)
     
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    // @Column(nullable = false)
     
     @PrePersist
     protected void onCreate() {

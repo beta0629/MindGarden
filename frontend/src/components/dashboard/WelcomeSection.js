@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { WELCOME_SECTION_CSS } from '../../constants/css';
 import { DASHBOARD_MESSAGES } from '../../constants/dashboard';
+import { RoleUtils } from '../../constants/roles';
 import WeatherCard from './WeatherCard';
 import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
@@ -123,7 +124,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
       </div>
       
       {/* 내담자 전용 - 오늘의 상담 정보 (큰 카드) */}
-      {user?.role === 'CLIENT' && (
+      {RoleUtils.isClient(user) && (
         <div className="welcome-info-cards">
           <div className="welcome-info-card today-consultation-card">
             <div className="info-icon info-icon--consultation">

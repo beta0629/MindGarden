@@ -12,27 +12,57 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ConsultantRepository extends BaseRepository<Consultant, Long> {
     
-    // === 전문분야별 조회 ===
+    // === 전문분야별 조회 (테넌트 필터링) ===
+    @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.specialty LIKE %:specialty% AND c.isDeleted = false")
+    List<Consultant> findByTenantIdAndSpecialtyContainingIgnoreCaseAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("specialty") String specialty);
+    
+    // @Deprecated - 보안 위험: 테넌트 필터링 없음
+    @Deprecated
     @Query("SELECT c FROM Consultant c WHERE c.specialty LIKE %:specialty% AND c.isDeleted = false")
     List<Consultant> findBySpecialtyContainingIgnoreCaseAndIsDeletedFalse(@Param("specialty") String specialty);
     
-    // === 경력별 조회 ===
+    // === 경력별 조회 (테넌트 필터링) ===
+    @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.yearsOfExperience >= :experience AND c.isDeleted = false")
+    List<Consultant> findByTenantIdAndExperienceGreaterThanEqualAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("experience") int experience);
+    
+    // @Deprecated - 보안 위험: 테넌트 필터링 없음
+    @Deprecated
     @Query("SELECT c FROM Consultant c WHERE c.yearsOfExperience >= :experience AND c.isDeleted = false")
     List<Consultant> findByExperienceGreaterThanEqualAndIsDeletedFalse(@Param("experience") int experience);
     
-    // === 평점별 조회 ===
+    // === 평점별 조회 (테넌트 필터링) ===
+    @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.averageRating >= :rating AND c.isDeleted = false")
+    List<Consultant> findByTenantIdAndAverageRatingGreaterThanEqualAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("rating") double rating);
+    
+    // @Deprecated - 보안 위험: 테넌트 필터링 없음
+    @Deprecated
     @Query("SELECT c FROM Consultant c WHERE c.averageRating >= :rating AND c.isDeleted = false")
     List<Consultant> findByAverageRatingGreaterThanEqualAndIsDeletedFalse(@Param("rating") double rating);
     
-    // === 사용 가능한 상담사 조회 ===
+    // === 사용 가능한 상담사 조회 (테넌트 필터링) ===
+    @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.isAvailable = true AND c.isDeleted = false")
+    List<Consultant> findByTenantIdAndIsAvailableTrueAndIsDeletedFalse(@Param("tenantId") String tenantId);
+    
+    // @Deprecated - 보안 위험: 테넌트 필터링 없음  
+    @Deprecated
     @Query("SELECT c FROM Consultant c WHERE c.isAvailable = true AND c.isDeleted = false")
     List<Consultant> findByIsAvailableTrueAndIsDeletedFalse();
     
-    // === 삭제되지 않은 상담사 조회 ===
+    // === 삭제되지 않은 상담사 조회 (테넌트 필터링) ===
+    @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.isDeleted = false")  
+    List<Consultant> findByTenantIdAndIsDeletedFalse(@Param("tenantId") String tenantId);
+    
+    // @Deprecated - 🚨 보안 위험: 모든 테넌트 데이터 노출!
+    @Deprecated
     @Query("SELECT c FROM Consultant c WHERE c.isDeleted = false")
     List<Consultant> findByIsDeletedFalse();
     
-    // === 활성 상담사만 조회 ===
+    // === 활성 상담사만 조회 (테넌트 필터링) ===
+    @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND c.isActive = true")
+    List<Consultant> findActiveConsultantsByTenantId(@Param("tenantId") String tenantId);
+    
+    // @Deprecated - 🚨 보안 위험: 모든 테넌트 활성 상담사 노출!
+    @Deprecated
     @Query("SELECT c FROM Consultant c WHERE c.isDeleted = false AND c.isActive = true")
     List<Consultant> findActiveConsultants();
     

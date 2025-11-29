@@ -23,13 +23,27 @@ import java.util.Optional;
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
     
     /**
-     * tokenId로 Refresh Token 조회
+     * 테넌트별 tokenId로 Refresh Token 조회 (테넌트 필터링)
      */
+    @Query("SELECT rt FROM RefreshToken rt WHERE rt.tenantId = :tenantId AND rt.tokenId = :tokenId")
+    Optional<RefreshToken> findByTenantIdAndTokenId(@Param("tenantId") String tenantId, @Param("tokenId") String tokenId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 토큰 ID 접근 가능!
+     */
+    @Deprecated
     Optional<RefreshToken> findByTokenId(String tokenId);
     
     /**
-     * userId로 활성 Refresh Token 목록 조회
+     * 테넌트별 userId로 활성 Refresh Token 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT rt FROM RefreshToken rt WHERE rt.tenantId = :tenantId AND rt.userId = :userId AND rt.revoked = false AND rt.expiresAt > :now")
+    List<RefreshToken> findActiveTokensByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId, @Param("now") LocalDateTime now);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 토큰 노출!
+     */
+    @Deprecated
     @Query("SELECT rt FROM RefreshToken rt WHERE rt.userId = :userId AND rt.revoked = false AND rt.expiresAt > :now")
     List<RefreshToken> findActiveTokensByUserId(@Param("userId") Long userId, @Param("now") LocalDateTime now);
     

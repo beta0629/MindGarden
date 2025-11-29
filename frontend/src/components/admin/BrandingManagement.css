@@ -24,13 +24,13 @@
 .branding-management__title {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--color-text-primary, #1a202c);
+  color: var(--color-text-primary, var(--cs-gray-900));
   margin-bottom: 0.5rem;
 }
 
 .branding-management__description {
   font-size: 1rem;
-  color: var(--color-text-secondary, #718096);
+  color: var(--color-text-secondary, var(--cs-gray-600));
   margin: 0;
 }
 
@@ -44,9 +44,9 @@
 /* 섹션 */
 .branding-management__section {
   padding: 1.5rem;
-  background: var(--color-background-secondary, #f7fafc);
+  background: var(--color-background-secondary, var(--cs-slate-50));
   border-radius: var(--border-radius-md, 8px);
-  border: 1px solid var(--color-border-light, #e2e8f0);
+  border: 1px solid var(--color-border-light, var(--cs-slate-200));
 }
 
 .branding-management__section-title {
@@ -55,7 +55,7 @@
   gap: 0.5rem;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--color-text-primary, #1a202c);
+  color: var(--color-text-primary, var(--cs-gray-900));
   margin-bottom: 1rem;
 }
 
@@ -69,7 +69,7 @@
 .branding-management__upload-area {
   position: relative;
   min-height: 200px;
-  border: 2px dashed var(--color-border-medium, #cbd5e0);
+  border: 2px dashed var(--color-border-medium, var(--cs-slate-300));
   border-radius: var(--border-radius-md, 8px);
   background: var(--color-background-primary, var(--mg-white));
   cursor: pointer;
@@ -82,16 +82,16 @@
 .branding-management__upload-area:hover,
 .branding-management__upload-area.drag-over {
   border-color: var(--color-primary, var(--mg-primary-500));
-  background: var(--color-primary-light, rgba(0, 123, 255, 0.05));
+  background: var(--color-primary-light, var(--cs-blue-50));
 }
 
 .branding-management__upload-placeholder {
   text-align: center;
-  color: var(--color-text-secondary, #718096);
+  color: var(--color-text-secondary, var(--cs-gray-600));
 }
 
 .branding-management__upload-placeholder svg {
-  color: var(--color-text-tertiary, #a0aec0);
+  color: var(--color-text-tertiary, var(--cs-gray-400));
   margin-bottom: 1rem;
 }
 
@@ -102,7 +102,7 @@
 
 .branding-management__upload-placeholder span {
   font-size: 0.875rem;
-  color: var(--color-text-tertiary, #a0aec0);
+  color: var(--color-text-tertiary, var(--cs-gray-400));
 }
 
 /* 로고 미리보기 */
@@ -160,12 +160,12 @@
 .branding-management__label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-text-primary, #1a202c);
+  color: var(--color-text-primary, var(--cs-gray-900));
 }
 
 .branding-management__input {
   padding: 0.75rem;
-  border: 1px solid var(--color-border-medium, #cbd5e0);
+  border: 1px solid var(--color-border-medium, var(--cs-slate-300));
   border-radius: var(--border-radius-sm, 4px);
   font-size: 1rem;
   transition: all 0.2s ease;
@@ -196,7 +196,7 @@
 .branding-management__color-picker {
   width: 50px;
   height: 40px;
-  border: 1px solid var(--color-border-medium, #cbd5e0);
+  border: 1px solid var(--color-border-medium, var(--cs-slate-300));
   border-radius: var(--border-radius-sm, 4px);
   cursor: pointer;
   background: none;
@@ -214,7 +214,7 @@
 /* 도움말 텍스트 */
 .branding-management__help-text {
   font-size: 0.75rem;
-  color: var(--color-text-tertiary, #a0aec0);
+  color: var(--color-text-tertiary, var(--cs-gray-400));
   margin-top: 0.25rem;
 }
 
@@ -238,7 +238,7 @@
   justify-content: flex-end;
   gap: 1rem;
   padding-top: 2rem;
-  border-top: 1px solid var(--color-border-light, #e2e8f0);
+  border-top: 1px solid var(--color-border-light, var(--cs-slate-200));
   margin-top: 2rem;
 }
 
@@ -307,12 +307,12 @@
 }
 
 .branding-preview__header p {
-  color: var(--color-text-secondary, #718096);
+  color: var(--color-text-secondary, var(--cs-gray-600));
   margin: 0;
 }
 
 .branding-preview__demo {
-  background: var(--color-background-secondary, #f7fafc);
+  background: var(--color-background-secondary, var(--cs-slate-50));
   border-radius: var(--border-radius-md, 8px);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -345,12 +345,12 @@
 .branding-preview__company-name {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-text-primary, #1a202c);
+  color: var(--color-text-primary, var(--cs-gray-900));
 }
 
 .branding-preview__subtitle {
   font-size: 0.75rem;
-  color: var(--color-text-secondary, #718096);
+  color: var(--color-text-secondary, var(--cs-gray-600));
 }
 
 .branding-preview__colors {
@@ -370,7 +370,7 @@
   width: 24px;
   height: 24px;
   border-radius: var(--border-radius-sm, 4px);
-  border: 1px solid var(--color-border-light, #e2e8f0);
+  border: 1px solid var(--color-border-light, var(--cs-slate-200));
 }
 
 .branding-preview__actions {
@@ -411,7 +411,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--border-radius-sm, 4px);
-  border: 2px solid var(--color-border-medium, #cbd5e0);
+  border: 2px solid var(--color-border-medium, var(--cs-slate-300));
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
@@ -425,7 +425,7 @@
 .color-picker__input {
   flex: 1;
   padding: 0.75rem;
-  border: 1px solid var(--color-border-medium, #cbd5e0);
+  border: 1px solid var(--color-border-medium, var(--cs-slate-300));
   border-radius: var(--border-radius-sm, 4px);
   font-size: 1rem;
   transition: all 0.2s ease;
@@ -445,7 +445,7 @@
 .color-picker__toggle {
   width: 40px;
   height: 40px;
-  border: 1px solid var(--color-border-medium, #cbd5e0);
+  border: 1px solid var(--color-border-medium, var(--cs-slate-300));
   border-radius: var(--border-radius-sm, 4px);
   background: var(--color-background-primary, var(--mg-white));
   cursor: pointer;
@@ -458,7 +458,7 @@
 }
 
 .color-picker__toggle:hover {
-  background: var(--color-background-secondary, #f7fafc);
+  background: var(--color-background-secondary, var(--cs-slate-50));
   border-color: var(--color-primary, var(--mg-primary-500));
 }
 
@@ -469,7 +469,7 @@
   right: 0;
   z-index: 1000;
   background: var(--color-background-primary, var(--mg-white));
-  border: 1px solid var(--color-border-medium, #cbd5e0);
+  border: 1px solid var(--color-border-medium, var(--cs-slate-300));
   border-radius: var(--border-radius-md, 8px);
   box-shadow: var(--shadow-lg, 0 10px 25px var(--mg-shadow-light));
   padding: 1rem;
@@ -489,7 +489,7 @@
 .color-picker__section h4 {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-text-primary, #1a202c);
+  color: var(--color-text-primary, var(--cs-gray-900));
   margin-bottom: 0.75rem;
 }
 
@@ -511,7 +511,7 @@
 
 .color-picker__color:hover {
   transform: scale(1.1);
-  border-color: var(--color-text-primary, #1a202c);
+  border-color: var(--color-text-primary, var(--cs-gray-900));
 }
 
 .color-picker__color.selected {
@@ -540,7 +540,7 @@
 .color-picker__native {
   width: 50px;
   height: 40px;
-  border: 1px solid var(--color-border-medium, #cbd5e0);
+  border: 1px solid var(--color-border-medium, var(--cs-slate-300));
   border-radius: var(--border-radius-sm, 4px);
   cursor: pointer;
   background: none;
@@ -558,7 +558,7 @@
 .color-picker__hex {
   flex: 1;
   padding: 0.75rem;
-  border: 1px solid var(--color-border-medium, #cbd5e0);
+  border: 1px solid var(--color-border-medium, var(--cs-slate-300));
   border-radius: var(--border-radius-sm, 4px);
   font-size: 0.875rem;
   font-family: monospace;
@@ -574,7 +574,7 @@
   display: flex;
   justify-content: flex-end;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--color-border-light, #e2e8f0);
+  border-top: 1px solid var(--color-border-light, var(--cs-slate-200));
   margin-top: 0.75rem;
 }
 

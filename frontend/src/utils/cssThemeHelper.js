@@ -196,23 +196,23 @@ export const getDynamicCSSVariables = async (themeName = 'default') => {
             COLORS: {
                 // Primary Colors
                 PRIMARY: colors.PRIMARY || 'var(--mg-primary-500)',
-                PRIMARY_DARK: colors.PRIMARY_DARK || '#764ba2',
-                PRIMARY_GRADIENT: colors.PRIMARY_GRADIENT || 'linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%)',
+                PRIMARY_DARK: colors.PRIMARY_DARK || 'var(--cs-purple-600)',
+                PRIMARY_GRADIENT: colors.PRIMARY_GRADIENT || 'linear-gradient(135deg, var(--mg-primary-500) 0%, var(--cs-purple-600) 100%)',
                 
                 // Secondary Colors
                 SECONDARY: colors.SECONDARY || 'var(--mg-secondary-500)',
-                SECONDARY_LIGHT: colors.SECONDARY_LIGHT || '#e9ecef',
+                SECONDARY_LIGHT: colors.SECONDARY_LIGHT || 'var(--cs-gray-200)',
                 
                 // Status Colors
                 SUCCESS: colors.SUCCESS || 'var(--mg-success-500)',
-                SUCCESS_LIGHT: colors.SUCCESS_LIGHT || '#d4edda',
-                SUCCESS_DARK: colors.SUCCESS_DARK || '#00a085',
-                SUCCESS_GRADIENT: colors.SUCCESS_GRADIENT || 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                SUCCESS_LIGHT: colors.SUCCESS_LIGHT || 'var(--cs-success-100)',
+                SUCCESS_DARK: colors.SUCCESS_DARK || 'var(--cs-success-700)',
+                SUCCESS_GRADIENT: colors.SUCCESS_GRADIENT || 'linear-gradient(135deg, var(--cs-success-400) 0%, var(--cs-teal-400) 100%)',
                 
                 DANGER: colors.DANGER || 'var(--mg-error-500)',
-                DANGER_LIGHT: colors.DANGER_LIGHT || '#f8d7da',
-                DANGER_DARK: colors.DANGER_DARK || '#ee5a24',
-                DANGER_GRADIENT: colors.DANGER_GRADIENT || 'linear-gradient(135deg, var(--mg-error-500) 0%, #ee5a24 100%)',
+                DANGER_LIGHT: colors.DANGER_LIGHT || 'var(--cs-error-100)',
+                DANGER_DARK: colors.DANGER_DARK || 'var(--cs-error-600)',
+                DANGER_GRADIENT: colors.DANGER_GRADIENT || 'linear-gradient(135deg, var(--mg-error-500) 0%, var(--cs-error-600) 100%)',
                 
                 INFO: colors.INFO || 'var(--mg-info-500)',
                 INFO_LIGHT: colors.INFO_LIGHT || '#d1ecf1',

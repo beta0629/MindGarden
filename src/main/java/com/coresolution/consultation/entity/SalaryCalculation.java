@@ -27,11 +27,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SalaryCalculation {
+public class SalaryCalculation extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consultant_id", nullable = false)
@@ -97,19 +94,13 @@ public class SalaryCalculation {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
     
-    @Column(name = "paid_at")
+    // @Column(name = "paid_at")
     private LocalDateTime paidAt;
     
-    @Column(name = "branch_code", length = 20)
+    // @Column(name = "branch_code", length = 20)
     private String branchCode;
     
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
     
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
     
     public enum SalaryStatus {
         PENDING, CALCULATED, APPROVED, PAID, CANCELLED

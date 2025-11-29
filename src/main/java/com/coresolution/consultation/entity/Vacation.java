@@ -31,11 +31,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Vacation {
+public class Vacation extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     @Column(name = "consultant_id", nullable = false)
     private Long consultantId;
@@ -59,25 +56,15 @@ public class Vacation {
     @Column(name = "is_approved", nullable = false)
     private Boolean isApproved = false;
     
-    @Column(name = "approved_by")
+    // @Column(name = "approved_by")
     private Long approvedBy;
     
-    @Column(name = "approved_at")
+    // @Column(name = "approved_at")
     private LocalDateTime approvedAt;
     
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
     
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
     
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
     
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
     
     /**
      * 휴가 타입 열거형

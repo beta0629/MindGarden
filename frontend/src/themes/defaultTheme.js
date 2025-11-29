@@ -14,39 +14,39 @@ export const defaultTheme = {
     primary: {
       main: 'var(--mg-mint-green)',      // Mint Green
       hover: 'var(--mg-olive-green)',     // Olive Green
-      active: '#6B6B00',
+      active: 'var(--cs-yellow-700)',
       light: 'var(--mg-soft-mint)',     // Soft Mint
     },
     
     // Background Colors
     background: {
       primary: 'var(--mg-white)',   // White
-      secondary: '#FAFAFA', // Light Gray
+      secondary: 'var(--cs-gray-50)', // Light Gray
       surface: 'var(--mg-white)',
       overlay: 'var(--mg-overlay)',
     },
     
     // Text Colors
     text: {
-      primary: '#2F2F2F',   // Dark Gray
-      secondary: '#6B6B6B', // Medium Gray
-      tertiary: '#9CA3AF',
+      primary: 'var(--cs-gray-800)',   // Dark Gray
+      secondary: 'var(--cs-gray-600)', // Medium Gray
+      tertiary: 'var(--cs-gray-400)',
       inverse: 'var(--mg-white)',
       link: 'var(--mg-olive-green)',      // Olive Green
     },
     
     // Border Colors
     border: {
-      light: '#E5E5E7',
-      medium: '#D1D5DB',
-      dark: '#9CA3AF',
+      light: 'var(--cs-gray-200)',
+      medium: 'var(--cs-gray-300)',
+      dark: 'var(--cs-gray-400)',
       focus: 'var(--mg-olive-green)',
     },
     
     // Status Colors
     status: {
       success: 'var(--mg-success-500)',
-      successBg: '#d1fae5',
+      successBg: 'var(--cs-success-100)',
       warning: 'var(--mg-warning-500)',
       warningBg: '#fef3c7',
       error: 'var(--mg-error-500)',

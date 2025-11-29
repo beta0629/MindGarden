@@ -1,0 +1,272 @@
+/**
+ * Consultant Registration Widget Styles
+ * 상담사 등록 위젯 스타일
+ * 
+ * @author CoreSolution
+ * @version 2.0.0
+ * @since 2025-11-29
+ */
+
+/* 위젯 컨테이너 */
+.consultant-registration-widget {
+  --widget-bg: var(--cs-surface-primary);
+  --widget-border: var(--cs-border-primary);
+  
+  background: var(--widget-bg);
+  border-radius: var(--cs-radius-md);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.consultant-registration-content {
+  padding: var(--cs-spacing-lg);
+}
+
+/* Welcome 화면 */
+.registration-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--cs-spacing-xl) var(--cs-spacing-lg);
+}
+
+.welcome-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--cs-primary-500), var(--cs-primary-600));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--cs-spacing-lg);
+  box-shadow: var(--cs-shadow-md);
+}
+
+.welcome-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--cs-white);
+}
+
+.welcome-title {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-xl);
+  font-weight: var(--cs-font-semibold);
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.welcome-description {
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-md);
+  line-height: 1.6;
+  margin-bottom: var(--cs-spacing-xl);
+  max-width: 400px;
+}
+
+.registration-start-btn {
+  min-width: 200px;
+}
+
+/* 등록 폼 */
+.registration-form-container {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--cs-spacing-lg);
+  padding-bottom: var(--cs-spacing-md);
+  border-bottom: 1px solid var(--cs-border-primary);
+}
+
+.form-title {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  margin: 0;
+}
+
+.form-close-btn {
+  background: none;
+  border: none;
+  padding: var(--cs-spacing-xs);
+  border-radius: var(--cs-radius-sm);
+  cursor: pointer;
+  color: var(--cs-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.form-close-btn:hover {
+  background: var(--cs-bg-hover);
+  color: var(--cs-text-primary);
+}
+
+.close-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* 폼 섹션 */
+.form-section {
+  margin-bottom: var(--cs-spacing-xl);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-medium);
+  margin-bottom: var(--cs-spacing-md);
+  padding-bottom: var(--cs-spacing-xs);
+  border-bottom: 2px solid var(--cs-primary-100);
+}
+
+.section-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--cs-primary-500);
+}
+
+/* 폼 그리드 */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--cs-spacing-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+/* 라벨 */
+.form-label {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.required {
+  color: var(--cs-error-500);
+  margin-left: 2px;
+}
+
+/* 입력 필드 */
+.form-control {
+  padding: var(--cs-spacing-md);
+  border: 1px solid var(--cs-border-primary);
+  border-radius: var(--cs-radius-sm);
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-primary);
+  background: var(--cs-bg-primary);
+  transition: all 0.2s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--cs-primary-500);
+  box-shadow: 0 0 0 3px var(--cs-glass-primary-20);
+}
+
+.form-control.error {
+  border-color: var(--cs-error-500);
+  box-shadow: 0 0 0 3px var(--cs-glass-error-20);
+}
+
+.form-control::placeholder {
+  color: var(--cs-text-placeholder);
+}
+
+/* 텍스트에어리어 */
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* 에러 메시지 */
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  color: var(--cs-error-500);
+  font-size: var(--cs-text-xs);
+  margin-top: var(--cs-spacing-xs);
+}
+
+.error-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* 폼 액션 */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--cs-spacing-md);
+  margin-top: var(--cs-spacing-xl);
+  padding-top: var(--cs-spacing-lg);
+  border-top: 1px solid var(--cs-border-primary);
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 로딩 스피너 */
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: var(--cs-spacing-xs);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .consultant-registration-content {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: var(--cs-spacing-md);
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions .mg-btn {
+    width: 100%;
+  }
+  
+  .registration-form-container {
+    max-height: 60vh;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .consultant-registration-widget {
+    --widget-bg: var(--cs-surface-primary-dark);
+    --widget-border: var(--cs-border-primary-dark);
+  }
+}

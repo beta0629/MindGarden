@@ -31,11 +31,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class QualityEvaluation {
+public class QualityEvaluation extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     @Column(name = "consultation_id", nullable = false)
     private Long consultationId;
@@ -64,31 +61,19 @@ public class QualityEvaluation {
     @Column(name = "client_satisfaction_score", nullable = false)
     private Double clientSatisfactionScore;
     
-    @Column(name = "evaluation_notes", columnDefinition = "TEXT")
+    // @Column(name = "evaluation_notes", columnDefinition = "TEXT")
     private String evaluationNotes;
     
-    @Column(name = "improvement_suggestions", columnDefinition = "TEXT")
+    // @Column(name = "improvement_suggestions", columnDefinition = "TEXT")
     private String improvementSuggestions;
     
-    @Column(name = "evaluation_status")
+    // @Column(name = "evaluation_status")
     private String evaluationStatus = "PENDING"; // PENDING, APPROVED, REJECTED
     
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
     
-    @Column(name = "created_at")
-    @CreationTimestamp
-    private LocalDateTime createdAt;
     
-    @Column(name = "updated_at")
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
     
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
     
-    @Column(name = "version")
-    private Long version = 1L;
     
     // 연관관계 매핑
     @ManyToOne(fetch = FetchType.LAZY)

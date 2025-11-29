@@ -22,23 +22,51 @@ import org.springframework.stereotype.Repository;
 public interface PaymentRepository extends BaseRepository<Payment, Long> {
     
     /**
-     * 결제 고유 ID로 결제 조회
+     * 테넌트별 결제 고유 ID로 결제 조회 (테넌트 필터링)
      */
+    @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.paymentId = :paymentId AND p.isDeleted = false")
+    Optional<Payment> findByTenantIdAndPaymentIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("paymentId") String paymentId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 결제 정보 노출!
+     */
+    @Deprecated
     Optional<Payment> findByPaymentIdAndIsDeletedFalse(String paymentId);
     
     /**
-     * 주문 ID로 결제 조회
+     * 테넌트별 주문 ID로 결제 조회 (테넌트 필터링)
      */
+    @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.orderId = :orderId AND p.isDeleted = false")
+    List<Payment> findByTenantIdAndOrderIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 주문 결제 정보 노출!
+     */
+    @Deprecated
     List<Payment> findByOrderIdAndIsDeletedFalse(String orderId);
     
     /**
-     * 결제자 ID로 결제 목록 조회
+     * 테넌트별 결제자 ID로 결제 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.payerId = :payerId AND p.isDeleted = false")
+    Page<Payment> findByTenantIdAndPayerIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("payerId") Long payerId, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 결제자 결제 내역 노출!
+     */
+    @Deprecated
     Page<Payment> findByPayerIdAndIsDeletedFalse(Long payerId, Pageable pageable);
     
     /**
-     * 수취인 ID로 결제 목록 조회
+     * 테넌트별 수취인 ID로 결제 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.recipientId = :recipientId AND p.isDeleted = false")
+    Page<Payment> findByTenantIdAndRecipientIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("recipientId") Long recipientId, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 수취인 결제 내역 노출!
+     */
+    @Deprecated
     Page<Payment> findByRecipientIdAndIsDeletedFalse(Long recipientId, Pageable pageable);
     
     /**

@@ -22,7 +22,7 @@ export const COLORS = {
     PRIMARY: 'var(--mg-white)',
     SECONDARY: 'var(--mg-gray-100)',
     TERTIARY: 'var(--mg-gray-100)',
-    DARK: '#343a40',
+    DARK: 'var(--cs-gray-800)',
     LIGHT: 'var(--mg-white)'
   },
   
@@ -38,15 +38,15 @@ export const COLORS = {
   // 테두리 색상
   BORDER: {
     DEFAULT: 'var(--mg-gray-300)',
-    LIGHT: '#f0f0f0',
-    DARK: '#cccccc',
+    LIGHT: 'var(--cs-gray-100)',
+    DARK: 'var(--cs-gray-300)',
     FOCUS: 'var(--mg-primary-500)'
   },
   
   // 상태별 색상
   STATUS: {
     ACTIVE: 'var(--mg-success-500)',
-    INACTIVE: '#9E9E9E',
+    INACTIVE: 'var(--cs-gray-500)',
     PENDING: 'var(--mg-warning-500)',
     COMPLETED: 'var(--mg-success-500)',
     CANCELLED: 'var(--mg-error-500)'

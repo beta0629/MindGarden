@@ -11,13 +11,40 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CommonCodeRepository extends JpaRepository<CommonCode, Long> {
 
-    // 코드 그룹별 조회
+    /**
+     * 테넌트별 코드 그룹별 조회 (테넌트 필터링)
+     */
+    @Query("SELECT cc FROM CommonCode cc WHERE cc.tenantId = :tenantId AND cc.codeGroup = :codeGroup ORDER BY cc.sortOrder ASC")
+    List<CommonCode> findByTenantIdAndCodeGroupOrderBySortOrderAsc(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 공통 코드 노출!
+     */
+    @Deprecated
     List<CommonCode> findByCodeGroupOrderBySortOrderAsc(String codeGroup);
     
-    // 활성 코드만 조회
+    /**
+     * 테넌트별 활성 코드만 조회 (테넌트 필터링)
+     */
+    @Query("SELECT cc FROM CommonCode cc WHERE cc.tenantId = :tenantId AND cc.codeGroup = :codeGroup AND cc.isActive = true ORDER BY cc.sortOrder ASC")
+    List<CommonCode> findByTenantIdAndCodeGroupAndIsActiveTrueOrderBySortOrderAsc(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 활성 코드 노출!
+     */
+    @Deprecated
     List<CommonCode> findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(String codeGroup);
     
-    // 코드 그룹과 값으로 조회
+    /**
+     * 테넌트별 코드 그룹과 값으로 조회 (테넌트 필터링)
+     */
+    @Query("SELECT cc FROM CommonCode cc WHERE cc.tenantId = :tenantId AND cc.codeGroup = :codeGroup AND cc.codeValue = :codeValue")
+    Optional<CommonCode> findByTenantIdAndCodeGroupAndCodeValue(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup, @Param("codeValue") String codeValue);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 공통 코드 값 접근!
+     */
+    @Deprecated
     Optional<CommonCode> findByCodeGroupAndCodeValue(String codeGroup, String codeValue);
     
     // 코드 그룹과 값으로 활성 코드 조회

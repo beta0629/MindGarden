@@ -16,6 +16,7 @@ import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -203,13 +204,15 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public List<User> findAllActive() {
-        List<User> users = userRepository.findAllActive();
+        String tenantId = TenantContextHolder.getTenantId();
+        List<User> users = userRepository.findAllActiveByTenantId(tenantId);
         return decryptUserListPersonalData(users);
     }
     
     @Override
     public Optional<User> findActiveById(Long id) {
-        Optional<User> userOpt = userRepository.findActiveById(id);
+        String tenantId = TenantContextHolder.getTenantId();
+        Optional<User> userOpt = userRepository.findByTenantIdAndUsername(tenantId, String.valueOf(id));
         if (userOpt.isPresent()) {
             return Optional.of(decryptUserPersonalData(userOpt.get()));
         }
@@ -218,7 +221,8 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public User findActiveByIdOrThrow(Long id) {
-        User user = userRepository.findActiveById(id)
+        String tenantId = TenantContextHolder.getTenantId();
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("활성 사용자를 찾을 수 없습니다: " + id));
         return decryptUserPersonalData(user);
     }

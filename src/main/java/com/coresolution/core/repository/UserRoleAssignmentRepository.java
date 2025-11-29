@@ -3,6 +3,7 @@ package com.coresolution.core.repository;
 import com.coresolution.core.domain.UserRoleAssignment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -25,8 +26,15 @@ public interface UserRoleAssignmentRepository extends JpaRepository<UserRoleAssi
     Optional<UserRoleAssignment> findByAssignmentIdAndIsDeletedFalse(String assignmentId);
     
     /**
-     * 사용자 ID로 모든 할당 조회
+     * 테넌트별 사용자 ID로 모든 할당 조회 (테넌트 필터링)
      */
+    @Query("SELECT ura FROM UserRoleAssignment ura WHERE ura.tenantId = :tenantId AND ura.userId = :userId AND ura.isDeleted = false")
+    List<UserRoleAssignment> findByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 역할 할당 노출!
+     */
+    @Deprecated
     @Query("SELECT ura FROM UserRoleAssignment ura WHERE ura.userId = ?1 AND ura.isDeleted = false")
     List<UserRoleAssignment> findByUserId(Long userId);
     

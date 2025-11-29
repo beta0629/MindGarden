@@ -1,0 +1,439 @@
+/* ConsultantRatingWidget.css - 상담사 평가 표시 위젯 스타일 */
+
+/* ============================================================================
+   헤더 스타일
+   ============================================================================ */
+.consultant-rating-header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  color: var(--cs-text-primary);
+  font-weight: var(--cs-font-semibold);
+}
+
+.consultant-rating-badge {
+  background: var(--cs-primary-100);
+  color: var(--cs-primary-700);
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-bold);
+  padding: 2px 8px;
+  border-radius: var(--cs-radius-sm);
+  margin-left: var(--cs-spacing-xs);
+}
+
+/* ============================================================================
+   빈 상태 스타일
+   ============================================================================ */
+.consultant-rating-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xl);
+  color: var(--cs-text-secondary);
+}
+
+.consultant-rating-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--cs-spacing-md);
+  opacity: 0.6;
+}
+
+.consultant-rating-empty-text {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-primary);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.consultant-rating-empty-hint {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-secondary);
+  margin: 0;
+}
+
+/* ============================================================================
+   콘텐츠 레이아웃
+   ============================================================================ */
+.consultant-rating-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-lg);
+}
+
+/* ============================================================================
+   통계 카드 스타일
+   ============================================================================ */
+.consultant-rating-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--cs-spacing-md);
+}
+
+.consultant-rating-stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-bg-surface);
+  border: 1px solid var(--cs-border-primary);
+  border-radius: var(--cs-radius-lg);
+  transition: all 0.3s ease;
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.consultant-rating-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cs-shadow-md);
+}
+
+.consultant-rating-stat-card.primary {
+  border-left: 4px solid var(--cs-primary-500);
+}
+
+.consultant-rating-stat-card.secondary {
+  border-left: 4px solid var(--cs-teal-500);
+}
+
+.consultant-rating-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.consultant-rating-stat-card.primary .consultant-rating-stat-icon {
+  background: var(--cs-primary-100);
+  color: var(--cs-primary-600);
+}
+
+.consultant-rating-stat-card.secondary .consultant-rating-stat-icon {
+  background: var(--cs-teal-100);
+  color: var(--cs-teal-600);
+}
+
+.consultant-rating-stat-content {
+  flex: 1;
+}
+
+.consultant-rating-stat-value {
+  font-size: var(--cs-text-xl);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-text-primary);
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.consultant-rating-stat-label {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-secondary);
+}
+
+/* ============================================================================
+   섹션 제목
+   ============================================================================ */
+.consultant-rating-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  margin: 0 0 var(--cs-spacing-md) 0;
+}
+
+/* ============================================================================
+   점수별 분포 스타일
+   ============================================================================ */
+.consultant-rating-distribution {
+  padding: var(--cs-spacing-md);
+  background: var(--cs-glass-light-subtle);
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-border-secondary);
+}
+
+.consultant-rating-distribution-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--cs-spacing-sm);
+}
+
+.consultant-rating-distribution-item {
+  text-align: center;
+  padding: var(--cs-spacing-md);
+  background: var(--cs-bg-surface);
+  border-radius: var(--cs-radius-md);
+  border: 1px solid var(--cs-border-primary);
+  transition: all 0.2s ease;
+}
+
+.consultant-rating-distribution-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.consultant-rating-hearts {
+  font-size: var(--cs-text-lg);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.consultant-rating-count {
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-text-primary);
+  margin-bottom: 2px;
+}
+
+.consultant-rating-percentage {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-secondary);
+}
+
+/* ============================================================================
+   최근 평가 스타일
+   ============================================================================ */
+.consultant-rating-recent {
+  padding: var(--cs-spacing-md);
+  background: var(--cs-glass-light-subtle);
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid var(--cs-border-secondary);
+}
+
+.consultant-rating-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+}
+
+.consultant-rating-recent-item {
+  padding: var(--cs-spacing-md);
+  background: var(--cs-bg-surface);
+  border: 1px solid var(--cs-border-primary);
+  border-radius: var(--cs-radius-md);
+  transition: all 0.2s ease;
+}
+
+.consultant-rating-recent-item:hover {
+  border-color: var(--cs-primary-200);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+.consultant-rating-recent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--cs-spacing-sm);
+}
+
+.consultant-rating-recent-hearts {
+  font-size: var(--cs-text-md);
+}
+
+.consultant-rating-recent-meta {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-secondary);
+  text-align: right;
+}
+
+.consultant-rating-recent-comment {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-primary);
+  font-style: italic;
+  margin-bottom: var(--cs-spacing-sm);
+  padding: var(--cs-spacing-xs) var(--cs-spacing-sm);
+  background: var(--cs-glass-light);
+  border-radius: var(--cs-radius-sm);
+  border-left: 3px solid var(--cs-primary-300);
+}
+
+.consultant-rating-recent-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cs-spacing-xs);
+}
+
+.consultant-rating-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: var(--cs-primary-100);
+  color: var(--cs-primary-700);
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+  border-radius: var(--cs-radius-sm);
+  border: 1px solid var(--cs-primary-200);
+}
+
+/* ============================================================================
+   반응형 스타일
+   ============================================================================ */
+@media (max-width: 768px) {
+  .consultant-rating-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .consultant-rating-stat-card {
+    padding: var(--cs-spacing-md);
+  }
+
+  .consultant-rating-stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .consultant-rating-stat-value {
+    font-size: var(--cs-text-lg);
+  }
+
+  .consultant-rating-distribution-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--cs-spacing-xs);
+  }
+
+  .consultant-rating-distribution-item {
+    padding: var(--cs-spacing-sm);
+  }
+
+  .consultant-rating-hearts {
+    font-size: var(--cs-text-sm);
+  }
+
+  .consultant-rating-recent-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-xs);
+  }
+
+  .consultant-rating-recent-meta {
+    text-align: left;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .consultant-rating-distribution-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .consultant-rating-recent-tags {
+    gap: 4px;
+  }
+  
+  .consultant-rating-tag {
+    padding: 1px 6px;
+  }
+}
+
+/* ============================================================================
+   다크 테마 지원
+   ============================================================================ */
+@media (prefers-color-scheme: dark) {
+  .consultant-rating-stat-card {
+    background: var(--cs-bg-surface-dark);
+    border-color: var(--cs-border-primary-dark);
+  }
+
+  .consultant-rating-stat-value {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .consultant-rating-stat-label {
+    color: var(--cs-text-secondary-dark);
+  }
+
+  .consultant-rating-section-title {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .consultant-rating-distribution {
+    background: var(--cs-glass-dark-subtle);
+    border-color: var(--cs-border-secondary-dark);
+  }
+
+  .consultant-rating-distribution-item {
+    background: var(--cs-bg-surface-dark);
+    border-color: var(--cs-border-primary-dark);
+  }
+
+  .consultant-rating-count {
+    color: var(--cs-text-primary-dark);
+  }
+
+  .consultant-rating-percentage {
+    color: var(--cs-text-secondary-dark);
+  }
+
+  .consultant-rating-recent {
+    background: var(--cs-glass-dark-subtle);
+    border-color: var(--cs-border-secondary-dark);
+  }
+
+  .consultant-rating-recent-item {
+    background: var(--cs-bg-surface-dark);
+    border-color: var(--cs-border-primary-dark);
+  }
+
+  .consultant-rating-recent-comment {
+    color: var(--cs-text-primary-dark);
+    background: var(--cs-glass-dark);
+  }
+
+  .consultant-rating-recent-meta {
+    color: var(--cs-text-secondary-dark);
+  }
+}
+
+/* ============================================================================
+   애니메이션
+   ============================================================================ */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.consultant-rating-stat-card {
+  animation: fadeInScale 0.3s ease-out;
+}
+
+.consultant-rating-stat-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.consultant-rating-distribution-item {
+  animation: fadeInScale 0.3s ease-out;
+}
+
+.consultant-rating-distribution-item:nth-child(2) { animation-delay: 0.1s; }
+.consultant-rating-distribution-item:nth-child(3) { animation-delay: 0.2s; }
+.consultant-rating-distribution-item:nth-child(4) { animation-delay: 0.3s; }
+.consultant-rating-distribution-item:nth-child(5) { animation-delay: 0.4s; }
+
+.consultant-rating-recent-item {
+  animation: fadeInScale 0.3s ease-out;
+}
+
+.consultant-rating-recent-item:nth-child(2) { animation-delay: 0.1s; }
+.consultant-rating-recent-item:nth-child(3) { animation-delay: 0.2s; }
+.consultant-rating-recent-item:nth-child(4) { animation-delay: 0.3s; }
+.consultant-rating-recent-item:nth-child(5) { animation-delay: 0.4s; }
+
+/* 호버 애니메이션 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.consultant-rating-recent-hearts:hover {
+  animation: pulse 1s ease-in-out;
+}

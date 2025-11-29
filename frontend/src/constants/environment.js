@@ -28,10 +28,9 @@ const getBaseUrl = () => {
     return '';
   }
   
-  // 개발 환경에서는 프록시를 사용하므로 빈 문자열 (상대 경로 사용)
-  // package.json의 "proxy": "http://localhost:8080" 설정 활용
-  console.log('🔧 개발 환경: 프록시 사용 (상대 경로)');
-  return '';
+  // 개발 환경에서는 백엔드 직접 연결 (프록시 문제 방지)
+  console.log('🔧 개발 환경: 백엔드 직접 연결 (8080 포트)');
+  return 'http://localhost:8080';
 };
 
 const getFrontendUrl = () => {

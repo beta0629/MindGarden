@@ -1,226 +1,425 @@
 /**
- * Session Management Widget
+ * Session Management Widget - 표준화된 위젯
  * 상담소 특화 회기 관리 위젯
- * SessionManagement를 기반으로 위젯화
  * 
  * @author CoreSolution
- * @version 1.0.0
- * @since 2025-11-22
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../../../../utils/ajax';
-// import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
-import '../Widget.css';
+import { Calendar, Clock, CheckCircle, XCircle, AlertTriangle, Eye, Plus, FileText, Users } from 'lucide-react';
+import { useWidget } from '../../../../hooks/useWidget';
+import BaseWidget from '../BaseWidget';
+import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
+import './SessionManagementWidget.css';
 
 const SessionManagementWidget = ({ widget, user }) => {
-  const navigate = useNavigate();
-  const [sessions, setSessions] = useState([]);
-  const [extensionRequests, setExtensionRequests] = useState([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    completed: 0,
-    pending: 0,
-    upcoming: 0
-  });
-  const [loading, setLoading] = useState(true);
-  
-  const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  const maxItems = config.maxItems || 5;
-  const showExtensionRequests = config.showExtensionRequests !== false;
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url) {
-      loadSessions();
-      
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadSessions, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (config.sessions && Array.isArray(config.sessions)) {
-      setSessions(config.sessions);
-      calculateStats(config.sessions);
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-    
-    if (showExtensionRequests) {
-      loadExtensionRequests();
-    }
-  }, []);
-  
-  const loadSessions = async () => {
-    try {
-      setLoading(true);
-      
-      const url = dataSource.url || '/api/admin/sessions';
-      const params = { ...dataSource.params };
-      const response = await apiGet(url, params);
-      
-      if (response && response.data) {
-        const sessionsList = Array.isArray(response.data) ? response.data : [];
-        setSessions(sessionsList.slice(0, maxItems));
-        calculateStats(sessionsList);
-      }
-    } catch (err) {
-      console.error('SessionManagementWidget 데이터 로드 실패:', err);
-      setSessions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const loadExtensionRequests = async () => {
-    try {
-      const response = await apiGet('/api/admin/session-extensions/requests');
-      if (response && response.data) {
-        setExtensionRequests(Array.isArray(response.data) ? response.data : []);
-      } else if (response && Array.isArray(response)) {
-        setExtensionRequests(response);
-      }
-    } catch (err) {
-      console.error('회기 추가 요청 로드 실패:', err);
-      setExtensionRequests([]);
-    }
-  };
-  
-  const calculateStats = (sessionsList) => {
-    const total = sessionsList.length;
-    const completed = sessionsList.filter(s => s.status === 'COMPLETED').length;
-    const pending = sessionsList.filter(s => s.status === 'PENDING' || s.status === 'SCHEDULED').length;
-    const upcoming = sessionsList.filter(s => {
-      if (!s.scheduledDate) return false;
-      const scheduled = new Date(s.scheduledDate);
-      return scheduled > new Date();
-    }).length;
-    
-    setStats({ total, completed, pending, upcoming });
-  };
-  
-  const handleSessionClick = (session) => {
-    if (config.sessionUrl) {
-      navigate(config.sessionUrl.replace('{sessionId}', session.id));
-    } else {
-      navigate(`/admin/sessions?sessionId=${session.id}`);
-    }
-  };
-  
-  const handleViewAll = () => {
-    if (config.viewAllUrl) {
-      navigate(config.viewAllUrl);
-    } else {
-      navigate('/admin/sessions');
-    }
-  };
-  
-  const handleAddSession = () => {
-    if (config.addSessionUrl) {
-      navigate(config.addSessionUrl);
-    } else {
-      navigate('/admin/sessions?action=add');
-    }
-  };
-  
-  if (loading && sessions.length === 0) {
-    return (
-      <div className="widget widget-session-management">
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
+  // 권한 확인: 관리자와 상담사만 접근 가능
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
   }
-  
-  return (
-    <div className="widget widget-session-management">
-      <div className="widget-header">
-        <div className="widget-title">
-          <i className="bi bi-calendar-check"></i>
-          {config.title || '회기 관리'}
+
+  const navigate = useNavigate();
+
+  // 데이터 소스 설정
+  const getDataSourceConfig = () => {
+    const baseEndpoints = {
+      sessions: {
+        url: '/api/sessions',
+        method: 'GET',
+        params: { 
+          limit: widget.config?.maxItems || 10,
+          status: 'all',
+          // 상담사인 경우 자신의 세션만 조회
+          ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
+        }
+      },
+      stats: {
+        url: '/api/sessions/stats',
+        method: 'GET',
+        params: {
+          ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
+        }
+      }
+    };
+
+    // 회기 연장 요청은 설정에 따라 추가
+    if (widget.config?.showExtensionRequests !== false) {
+      baseEndpoints.extensionRequests = {
+        url: '/api/sessions/extension-requests',
+        method: 'GET',
+        params: {
+          status: 'pending',
+          ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
+        }
+      };
+    }
+
+    return {
+      type: 'multi-api',
+      endpoints: baseEndpoints,
+      refreshInterval: widget.config?.refreshInterval || 60000, // 1분마다 새로고침
+      cache: true,
+      cacheDuration: 60000
+    };
+  };
+
+  // Transform 함수: API 응답 데이터를 위젯 형태로 변환
+  const transform = (rawData) => {
+    if (!rawData) return { sessions: [], stats: null, extensionRequests: [], hasData: false };
+
+    const { sessions, stats, extensionRequests } = rawData;
+
+    return {
+      sessions: Array.isArray(sessions) ? sessions.slice(0, widget.config?.maxItems || 10) : [],
+      stats: stats || {
+        total: 0,
+        completed: 0,
+        pending: 0,
+        upcoming: 0
+      },
+      extensionRequests: Array.isArray(extensionRequests) ? extensionRequests : [],
+      hasData: (Array.isArray(sessions) && sessions.length > 0) || 
+               (Array.isArray(extensionRequests) && extensionRequests.length > 0)
+    };
+  };
+
+  // 위젯 설정에 데이터 소스 동적 설정
+  const widgetWithDataSource = {
+    ...widget,
+    config: {
+      ...widget.config,
+      dataSource: getDataSourceConfig(),
+      transform
+    }
+  };
+
+  // 표준화된 위젯 훅 사용
+  const {
+    data,
+    loading,
+    error,
+    hasData,
+    refresh
+  } = useWidget(widgetWithDataSource, user, {
+    immediate: true,
+    cache: true
+  });
+
+  // 세션 상태별 스타일 클래스
+  const getStatusClass = (status) => {
+    const statusMap = {
+      'COMPLETED': 'status-completed',
+      'PENDING': 'status-pending', 
+      'UPCOMING': 'status-upcoming',
+      'CANCELLED': 'status-cancelled',
+      'IN_PROGRESS': 'status-in-progress'
+    };
+    return statusMap[status] || 'status-unknown';
+  };
+
+  // 세션 상태별 아이콘
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'COMPLETED':
+        return <CheckCircle className="status-icon" />;
+      case 'PENDING':
+        return <Clock className="status-icon" />;
+      case 'UPCOMING':
+        return <Calendar className="status-icon" />;
+      case 'CANCELLED':
+        return <XCircle className="status-icon" />;
+      case 'IN_PROGRESS':
+        return <Users className="status-icon" />;
+      default:
+        return <AlertTriangle className="status-icon" />;
+    }
+  };
+
+  // 세션 상태 한글명
+  const getStatusLabel = (status) => {
+    const statusLabels = {
+      'COMPLETED': '완료',
+      'PENDING': '대기',
+      'UPCOMING': '예정',
+      'CANCELLED': '취소',
+      'IN_PROGRESS': '진행중'
+    };
+    return statusLabels[status] || '미지정';
+  };
+
+  // 세션 상세보기
+  const handleViewSession = (sessionId) => {
+    navigate(`/sessions/${sessionId}`);
+  };
+
+  // 새 세션 생성
+  const handleCreateSession = () => {
+    navigate('/sessions/new');
+  };
+
+  // 세션 관리 페이지로 이동
+  const handleViewAll = () => {
+    navigate('/sessions');
+  };
+
+  // 연장 요청 처리
+  const handleExtensionRequest = (requestId) => {
+    navigate(`/sessions/extension-requests/${requestId}`);
+  };
+
+  // 날짜 포맷팅
+  const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return '-';
+    const date = new Date(dateTimeString);
+    return date.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // 렌더링 내용
+  const renderContent = () => {
+    if (!hasData) {
+      return (
+        <div className="session-empty-state">
+          <div className="empty-icon-wrapper">
+            <Calendar className="empty-icon" />
+          </div>
+          <h3 className="empty-title">등록된 세션이 없습니다</h3>
+          <p className="empty-description">
+            {widget.config?.emptyMessage || '새로운 상담 세션을 예약해보세요.'}
+          </p>
+          {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
+            <button 
+              className="mg-btn mg-btn-primary"
+              onClick={handleCreateSession}
+            >
+              <Plus className="btn-icon" />
+              새 세션 예약
+            </button>
+          )}
         </div>
-        <div className="widget-actions">
-          <button className="widget-btn widget-btn-sm" onClick={handleViewAll}>
-            전체보기
-          </button>
-          <button className="widget-btn widget-btn-primary widget-btn-sm" onClick={handleAddSession}>
-            <i className="bi bi-plus-circle"></i> 회기 추가
-          </button>
-        </div>
-      </div>
-      
-      <div className="widget-stats">
-        <div className="stat-item">
-          <div className="stat-label">전체</div>
-          <div className="stat-value">{stats.total}</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-label">완료</div>
-          <div className="stat-value text-success">{stats.completed}</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-label">대기</div>
-          <div className="stat-value text-warning">{stats.pending}</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-label">예정</div>
-          <div className="stat-value text-info">{stats.upcoming}</div>
-        </div>
-      </div>
-      
-      {showExtensionRequests && extensionRequests.length > 0 && (
-        <div className="widget-alert">
-          <i className="bi bi-exclamation-triangle"></i>
-          <span>회기 추가 요청 {extensionRequests.length}건 대기 중</span>
-          <button 
-            className="widget-btn widget-btn-sm widget-btn-warning"
-            onClick={() => navigate('/admin/sessions?tab=requests')}
-          >
-            확인
-          </button>
-        </div>
-      )}
-      
-      <div className="widget-body">
-        {sessions.length > 0 ? (
-          <div className="session-list">
-            {sessions.map((session, index) => (
-              <div
-                key={session.id || index}
-                className="session-item"
-                onClick={() => handleSessionClick(session)}
-              >
+      );
+    }
+
+    const { sessions, stats, extensionRequests } = data;
+
+    return (
+      <div className="session-content">
+        {/* 통계 섹션 */}
+        {widget.config?.showStats !== false && stats && (
+          <div className="session-stats">
+            <div className="stat-card">
+              <div className="stat-icon total">
+                <Calendar />
+              </div>
+              <div className="stat-info">
+                <div className="stat-number">{stats.total}</div>
+                <div className="stat-label">전체 세션</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon completed">
+                <CheckCircle />
+              </div>
+              <div className="stat-info">
+                <div className="stat-number">{stats.completed}</div>
+                <div className="stat-label">완료</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon pending">
+                <Clock />
+              </div>
+              <div className="stat-info">
+                <div className="stat-number">{stats.pending}</div>
+                <div className="stat-label">대기중</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon upcoming">
+                <Calendar />
+              </div>
+              <div className="stat-info">
+                <div className="stat-number">{stats.upcoming}</div>
+                <div className="stat-label">예정</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 연장 요청 섹션 */}
+        {widget.config?.showExtensionRequests !== false && extensionRequests && extensionRequests.length > 0 && (
+          <div className="extension-requests">
+            <div className="section-header">
+              <h4 className="section-title">
+                <AlertTriangle className="section-icon" />
+                회기 연장 요청
+              </h4>
+              <div className="section-badge">{extensionRequests.length}</div>
+            </div>
+            <div className="extension-list">
+              {extensionRequests.map((request) => (
+                <div key={request.id} className="extension-item">
+                  <div className="extension-info">
+                    <div className="extension-header">
+                      <span className="client-name">{request.clientName}</span>
+                      <span className="request-date">
+                        {formatDateTime(request.requestedAt)}
+                      </span>
+                    </div>
+                    <div className="extension-reason">
+                      {request.reason || '사유 없음'}
+                    </div>
+                  </div>
+                  <button
+                    className="action-btn review-btn"
+                    onClick={() => handleExtensionRequest(request.id)}
+                    title="검토하기"
+                  >
+                    <Eye className="action-icon" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 세션 목록 */}
+        <div className="session-list">
+          <div className="list-header">
+            <h4 className="list-title">최근 세션 현황</h4>
+            <button 
+              className="mg-btn mg-btn-ghost mg-btn-sm"
+              onClick={handleViewAll}
+            >
+              전체 보기
+            </button>
+          </div>
+          <div className="session-items">
+            {sessions.map((session) => (
+              <div key={session.id} className="session-item">
                 <div className="session-info">
                   <div className="session-header">
-                    <div className="session-client">{session.clientName || session.client?.name}</div>
-                    <div className={`session-status status-${session.status?.toLowerCase()}`}>
-                      {session.status}
+                    <div className="session-participants">
+                      <div className="session-time">
+                        <Calendar className="time-icon" />
+                        {formatDateTime(session.scheduledAt)}
+                      </div>
+                      <div className="session-duration">
+                        {session.duration || 50}분
+                      </div>
+                    </div>
+                    <div className={`session-status ${getStatusClass(session.status)}`}>
+                      {getStatusIcon(session.status)}
+                      <span className="status-text">{getStatusLabel(session.status)}</span>
                     </div>
                   </div>
                   <div className="session-details">
-                    {session.scheduledDate && (
-                      <span>
-                        <i className="bi bi-calendar"></i> {new Date(session.scheduledDate).toLocaleDateString('ko-KR')}
-                      </span>
+                    <div className="detail-item">
+                      <span className="detail-label">상담사:</span>
+                      <span className="detail-value">{session.consultantName || '미배정'}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">내담자:</span>
+                      <span className="detail-value">{session.clientName || '미배정'}</span>
+                    </div>
+                    {session.sessionNumber && (
+                      <div className="detail-item">
+                        <span className="detail-label">회차:</span>
+                        <span className="detail-value">{session.sessionNumber}회차</span>
+                      </div>
                     )}
-                    {session.consultantName && (
-                      <span>상담사: {session.consultantName}</span>
+                    {session.notes && (
+                      <div className="detail-item full-width">
+                        <span className="detail-label">메모:</span>
+                        <span className="detail-value">{session.notes}</span>
+                      </div>
                     )}
                   </div>
+                </div>
+                <div className="session-actions">
+                  <button 
+                    className="action-btn view-btn"
+                    onClick={() => handleViewSession(session.id)}
+                    title="상세 보기"
+                  >
+                    <Eye className="action-icon" />
+                  </button>
+                  {session.recordUrl && (
+                    <button 
+                      className="action-btn record-btn"
+                      onClick={() => window.open(session.recordUrl, '_blank')}
+                      title="기록 보기"
+                    >
+                      <FileText className="action-icon" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="widget-empty">
-            <i className="bi bi-calendar-x"></i>
-            <p>{config.emptyMessage || '회기가 없습니다'}</p>
+        </div>
+
+        {/* 빠른 액션 */}
+        {(RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) && (
+          <div className="session-quick-actions">
+            <button 
+              className="mg-btn mg-btn-primary mg-btn-sm"
+              onClick={handleCreateSession}
+            >
+              <Plus className="btn-icon" />
+              새 세션 예약
+            </button>
           </div>
         )}
       </div>
-    </div>
+    );
+  };
+
+  // 헤더 설정
+  const headerConfig = {
+    icon: <Calendar className="widget-header-icon" />,
+    subtitle: '상담 세션 관리',
+    actions: [
+      {
+        icon: 'RefreshCw',
+        label: '새로고침',
+        onClick: refresh
+      },
+      ...((RoleUtils.isAdmin(user) || RoleUtils.isConsultant(user)) ? [{
+        icon: 'Plus',
+        label: '새 세션',
+        onClick: handleCreateSession
+      }] : []),
+      {
+        icon: 'ExternalLink',
+        label: '전체 보기',
+        onClick: handleViewAll
+      }
+    ]
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      hasData={hasData}
+      onRefresh={refresh}
+      headerConfig={headerConfig}
+      className="session-management-widget"
+    >
+      {renderContent()}
+    </BaseWidget>
   );
 };
 
 export default SessionManagementWidget;
-

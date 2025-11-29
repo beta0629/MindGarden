@@ -24,18 +24,39 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     // ==================== 상담사별 스케줄 조회 ====================
     
     /**
-     * 상담사별 스케줄 조회
+     * 테넌트별 상담사 스케줄 조회 (테넌트 필터링)
      */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId")
+    List<Schedule> findByTenantIdAndConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: consultantId만으로 모든 테넌트 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultantId(Long consultantId);
     
     /**
-     * 상담사별 스케줄 페이지네이션 조회
+     * 테넌트별 상담사 스케줄 페이지네이션 조회 (테넌트 필터링)
      */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId")
+    Page<Schedule> findByTenantIdAndConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: consultantId만으로 모든 테넌트 접근!
+     */
+    @Deprecated
     Page<Schedule> findByConsultantId(Long consultantId, Pageable pageable);
     
     /**
-     * 상담사별 특정 날짜 스케줄 조회
+     * 테넌트별 상담사의 특정 날짜 스케줄 조회 (테넌트 필터링)
      */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.date = :date")
+    List<Schedule> findByTenantIdAndConsultantIdAndDate(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("date") LocalDate date);
+    
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 상담사 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultantIdAndDate(Long consultantId, LocalDate date);
     
     /**
@@ -49,13 +70,27 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     List<Schedule> findByConsultantIdAndDateAfter(Long consultantId, LocalDate date);
     
     /**
-     * 특정 날짜의 스케줄 조회 (삭제되지 않은 것만)
+     * 테넌트별 특정 날짜 스케줄 조회 (테넌트 필터링)
      */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.date = :date AND s.isDeleted = false")
+    List<Schedule> findByTenantIdAndDateAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("date") LocalDate date);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트의 특정 날짜 스케줄 노출!
+     */
+    @Deprecated
     List<Schedule> findByDateAndIsDeletedFalse(LocalDate date);
     
     /**
-     * 특정 상담사의 특정 날짜 스케줄 조회 (삭제되지 않은 것만)
+     * 테넌트별 상담사의 특정 날짜 스케줄 조회 (테넌트 필터링)
      */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.date = :date AND s.consultantId = :consultantId AND s.isDeleted = false")
+    List<Schedule> findByTenantIdAndDateAndConsultantIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("date") LocalDate date, @Param("consultantId") Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 상담사 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByDateAndConsultantIdAndIsDeletedFalse(LocalDate date, Long consultantId);
     
     /**

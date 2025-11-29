@@ -4,6 +4,7 @@ import java.util.List;
 import com.coresolution.consultation.entity.ReserveFund;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -17,8 +18,15 @@ import org.springframework.stereotype.Repository;
 public interface ReserveFundRepository extends JpaRepository<ReserveFund, Long> {
     
     /**
-     * 활성화된 모든 적립금 조회
+     * 테넌트별 활성화된 모든 적립금 조회 (테넌트 필터링)
      */
+    @Query("SELECT rf FROM ReserveFund rf WHERE rf.tenantId = :tenantId AND rf.isActive = true")
+    List<ReserveFund> findByTenantIdAndIsActiveTrue(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: 모든 테넌트 적립금 정보 노출!
+     */
+    @Deprecated
     List<ReserveFund> findByIsActiveTrue();
     
     /**

@@ -22,13 +22,29 @@ import org.springframework.stereotype.Repository;
 public interface FinancialTransactionRepository extends JpaRepository<FinancialTransaction, Long> {
     
     /**
-     * 삭제되지 않은 모든 거래 조회
+     * 테넌트별 삭제되지 않은 모든 거래 조회 (테넌트 필터링)
      */
+    @Query("SELECT ft FROM FinancialTransaction ft WHERE ft.tenantId = :tenantId AND ft.isDeleted = false")
+    List<FinancialTransaction> findByTenantIdAndIsDeletedFalse(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 금융 거래 데이터 노출!
+     */
+    @Deprecated
     List<FinancialTransaction> findByIsDeletedFalse();
     
     /**
-     * 거래 유형별 조회
+     * 테넌트별 거래 유형별 조회 (테넌트 필터링)
      */
+    @Query("SELECT ft FROM FinancialTransaction ft WHERE ft.tenantId = :tenantId AND ft.transactionType = :transactionType AND ft.isDeleted = false")
+    List<FinancialTransaction> findByTenantIdAndTransactionTypeAndIsDeletedFalse(
+        @Param("tenantId") String tenantId,
+        @Param("transactionType") FinancialTransaction.TransactionType transactionType);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 거래 유형별 데이터 노출!
+     */
+    @Deprecated
     List<FinancialTransaction> findByTransactionTypeAndIsDeletedFalse(
         FinancialTransaction.TransactionType transactionType);
     

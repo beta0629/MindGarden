@@ -12,9 +12,9 @@ const ColorPaletteShowcase = () => {
     { name: 'Olive Green', var: '--olive-green', hex: 'var(--mg-olive-green)', usage: '버튼 및 액센트' },
     { name: 'Mint Green', var: '--mint-green', hex: 'var(--mg-mint-green)', usage: '포인트 색상' },
     { name: 'Soft Mint', var: '--soft-mint', hex: 'var(--mg-soft-mint)', usage: '부드러운 액센트' },
-    { name: 'Dark Gray', var: '--dark-gray', hex: '#2F2F2F', usage: '주 텍스트' },
-    { name: 'Medium Gray', var: '--medium-gray', hex: '#6B6B6B', usage: '보조 텍스트' },
-    { name: 'Light Cream', var: '--light-cream', hex: '#FFFEF7', usage: '밝은 배경' }
+    { name: 'Dark Gray', var: '--dark-gray', hex: 'var(--cs-gray-800)', usage: '주 텍스트' },
+    { name: 'Medium Gray', var: '--medium-gray', hex: 'var(--cs-gray-600)', usage: '보조 텍스트' },
+    { name: 'Light Cream', var: '--light-cream', hex: 'var(--cs-cream)', usage: '밝은 배경' }
   ];
 
   const handleCopyColor = (color) => {

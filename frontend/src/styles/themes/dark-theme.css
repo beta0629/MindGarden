@@ -1,17 +1,17 @@
 /* ===== 다크 테마 ===== */
 [data-theme="dark"] {
   /* 기본 색상 */
-  --color-primary: #60a5fa;
+  --color-primary: var(--cs-primary-400);
   --color-primary-hover: var(--mg-primary-500);
-  --color-primary-active: #2563eb;
-  --color-primary-light: #1e3a8a;
-  --color-primary-dark: #1e40af;
+  --color-primary-active: var(--cs-primary-600);
+  --color-primary-light: var(--cs-primary-900);
+  --color-primary-dark: var(--cs-primary-800);
 
-  --color-secondary: #9ca3af;
-  --color-secondary-hover: #d1d5db;
-  --color-secondary-active: #f3f4f6;
-  --color-secondary-light: #374151;
-  --color-secondary-dark: #f9fafb;
+  --color-secondary: var(--cs-secondary-400);
+  --color-secondary-hover: var(--cs-secondary-300);
+  --color-secondary-active: var(--cs-secondary-100);
+  --color-secondary-light: var(--cs-secondary-700);
+  --color-secondary-dark: var(--cs-secondary-50);
 
   /* 배경 색상 */
   --color-bg-primary: #0f172a;

@@ -20,12 +20,32 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     
     List<Review> findByConsultationIdAndIsDeletedFalse(Long consultationId);
     
+    /**
+     * 테넌트별 상담사 ID로 리뷰 조회 (consultant.tenantId를 통한 간접 필터링)
+     */
+    @Query("SELECT r FROM Review r WHERE r.tenantId = :tenantId AND r.consultantId = :consultantId AND r.isDeleted = false")
+    List<Review> findByTenantIdAndConsultantIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: 모든 테넌트 상담사 리뷰 노출!
+     */
+    @Deprecated
     List<Review> findByConsultantIdAndIsDeletedFalse(Long consultantId);
     
     List<Review> findByClientIdAndIsDeletedFalse(Long clientId);
     
     Optional<Review> findByConsultationIdAndClientIdAndIsDeletedFalse(Long consultationId, Long clientId);
     
+    /**
+     * 테넌트별 상담사 평균 평점 조회 (consultant.tenantId를 통한 간접 필터링)
+     */
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.tenantId = :tenantId AND r.consultantId = :consultantId AND r.isDeleted = false")
+    Double findAverageRatingByTenantIdAndConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: 모든 테넌트 상담사 평균 평점 노출!
+     */
+    @Deprecated
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.consultantId = :consultantId AND r.isDeleted = false")
     Double findAverageRatingByConsultantId(@Param("consultantId") Long consultantId);
     

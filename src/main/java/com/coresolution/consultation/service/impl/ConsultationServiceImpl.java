@@ -763,7 +763,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     .reviewText(review)
                     .isAnonymous(false)
                     .isVerified(false)
-                    .isDeleted(false)
+                    
                     .build();
             
             reviewRepository.save(reviewEntity);
@@ -802,7 +802,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                         .reviewText(review)
                         .isAnonymous(false)
                         .isVerified(false)
-                        .isDeleted(false)
+                        
                         .build();
                 reviewRepository.save(newReview);
             }
@@ -906,7 +906,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     .noteType("CONSULTATION") // 기본값
                     .isPrivate(false)
                     .isImportant(false)
-                    .isDeleted(false)
+                    
                     .build();
             
             noteRepository.save(noteEntity);

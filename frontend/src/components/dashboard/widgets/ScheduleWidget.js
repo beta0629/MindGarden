@@ -1,230 +1,102 @@
 /**
- * Schedule Widget - 표준화된 위젯
- * 스케줄을 표시하는 위젯
+ * Schedule Widget - 표준화된 스케줄 빠른 접근 위젯
+ * ScheduleQuickAccess 컴포넌트를 위젯으로 변환
  * 
  * @author CoreSolution
- * @version 2.0.0 (표준화 업그레이드)
- * @since 2025-11-21
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
  */
 
 import React from 'react';
-import { useWidget } from '../../../hooks/useWidget';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, ArrowRight, Clock, Plus } from 'lucide-react';
 import BaseWidget from './BaseWidget';
-import { WIDGET_CONSTANTS } from '../../../constants/widgetConstants';
-import './Widget.css';
+import { RoleUtils } from '../../../constants/roles';
+import './ScheduleWidget.css';
 
 const ScheduleWidget = ({ widget, user }) => {
-  // 표준화된 위젯 훅 사용
-  const {
-    data,
-    loading,
-    error,
-    hasData,
-    isEmpty,
-    refresh,
-    formatValue
-  } = useWidget(widget, user, {
-    immediate: true,
-    cache: true,
-    retryCount: 3
-  });
+  // 상담사 전용 (다른 역할은 숨김)
+  if (!RoleUtils.isConsultant(user)) {
+    return null;
+  }
 
-  const config = widget.config || {};
-  const viewType = config.viewType || 'list'; // list, calendar, timeline
+  const navigate = useNavigate();
 
-  // 날짜 포맷팅
-  const formatDate = (dateString) => {
-    if (!dateString) return '날짜 미정';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      month: 'short',
-      day: 'numeric',
-      weekday: 'short'
-    });
+  // 스케줄 페이지로 이동
+  const handleScheduleClick = () => {
+    navigate('/consultant/schedule');
   };
 
-  // 시간 포맷팅
-  const formatTime = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('ko-KR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // 스케줄 상태에 따른 스타일 클래스
-  const getStatusClass = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'confirmed': return 'schedule-confirmed';
-      case 'pending': return 'schedule-pending';
-      case 'cancelled': return 'schedule-cancelled';
-      case 'completed': return 'schedule-completed';
-      default: return 'schedule-default';
-    }
-  };
-
-  // 리스트 뷰 렌더링
-  const renderListView = () => {
-    return (
-      <div className="schedule-list">
-        {data.map((schedule, index) => (
-          <div key={index} className={`schedule-item ${getStatusClass(schedule.status)}`}>
-            <div className="schedule-time">
-              <div className="schedule-date">{formatDate(schedule.startTime || schedule.date)}</div>
-              <div className="schedule-time-range">
-                {formatTime(schedule.startTime)} 
-                {schedule.endTime && ` - ${formatTime(schedule.endTime)}`}
-              </div>
-            </div>
-            <div className="schedule-content">
-              <div className="schedule-title">
-                {schedule.title || schedule.name || `일정 ${index + 1}`}
-              </div>
-              {schedule.description && (
-                <div className="schedule-description">
-                  {schedule.description}
-                </div>
-              )}
-              <div className="schedule-meta">
-                {schedule.location && (
-                  <span className="schedule-location">
-                    <i className="bi bi-geo-alt"></i>
-                    {schedule.location}
-                  </span>
-                )}
-                {schedule.attendees && (
-                  <span className="schedule-attendees">
-                    <i className="bi bi-people"></i>
-                    {Array.isArray(schedule.attendees) ? schedule.attendees.length : schedule.attendees}명
-                  </span>
-                )}
-                {schedule.status && (
-                  <span className={`schedule-status ${getStatusClass(schedule.status)}`}>
-                    {schedule.status}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="schedule-actions">
-              {config.showActions && (
-                <>
-                  <button className="schedule-action-btn view" title="상세보기">
-                    <i className="bi bi-eye"></i>
-                  </button>
-                  <button className="schedule-action-btn edit" title="수정">
-                    <i className="bi bi-pencil"></i>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  // 캘린더 뷰 렌더링 (간단한 플레이스홀더)
-  const renderCalendarView = () => {
-    return (
-      <div className="schedule-calendar">
-        <div className="calendar-placeholder">
-          <i className="bi bi-calendar3"></i>
-          <p>📅 캘린더 뷰</p>
-          <p>{data.length}개의 일정</p>
-          {/* TODO: 실제 캘린더 컴포넌트 연동 */}
-        </div>
-      </div>
-    );
-  };
-
-  // 타임라인 뷰 렌더링
-  const renderTimelineView = () => {
-    return (
-      <div className="schedule-timeline">
-        {data.map((schedule, index) => (
-          <div key={index} className="timeline-item">
-            <div className="timeline-marker"></div>
-            <div className="timeline-content">
-              <div className="timeline-time">
-                {formatTime(schedule.startTime)}
-              </div>
-              <div className="timeline-title">
-                {schedule.title || schedule.name}
-              </div>
-              {schedule.description && (
-                <div className="timeline-description">
-                  {schedule.description}
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  // 스케줄 렌더링
-  const renderScheduleContent = () => {
-    if (isEmpty) {
-      return (
-        <div className={WIDGET_CONSTANTS.CSS_CLASSES.MG_TEXT_MUTED}>
-          표시할 일정이 없습니다.
-        </div>
-      );
-    }
-    
-    if (!hasData || !Array.isArray(data)) {
-      return null; // BaseWidget에서 빈 상태 처리
-    }
-
-    switch (viewType) {
-      case 'calendar':
-        return renderCalendarView();
-      case 'timeline':
-        return renderTimelineView();
-      default:
-        return renderListView();
-    }
+  // 새 일정 등록으로 이동
+  const handleNewScheduleClick = () => {
+    navigate('/consultant/schedule?action=new');
   };
 
   return (
     <BaseWidget
       widget={widget}
       user={user}
-      loading={loading}
-      error={error}
-      isEmpty={isEmpty}
-      onRefresh={refresh}
-      title={widget.config?.title || WIDGET_CONSTANTS.DEFAULT_TITLES.SCHEDULE}
-      subtitle={widget.config?.subtitle || ''}
-      headerActions={
-        config.showViewToggle && (
-          <div className="view-toggle">
-            <button 
-              className={`view-btn ${viewType === 'list' ? 'active' : ''}`}
-              title="리스트 뷰"
-            >
-              <i className="bi bi-list"></i>
-            </button>
-            <button 
-              className={`view-btn ${viewType === 'calendar' ? 'active' : ''}`}
-              title="캘린더 뷰"
-            >
-              <i className="bi bi-calendar3"></i>
-            </button>
-            <button 
-              className={`view-btn ${viewType === 'timeline' ? 'active' : ''}`}
-              title="타임라인 뷰"
-            >
-              <i className="bi bi-clock-history"></i>
-            </button>
-          </div>
-        )
-      }
+      loading={false}
+      error={null}
+      isEmpty={false}
+      customActions={[
+        {
+          icon: <ArrowRight size={16} />,
+          label: '전체보기',
+          onClick: handleScheduleClick
+        }
+      ]}
     >
-      <div className={WIDGET_CONSTANTS.CSS_CLASSES.WIDGET_CONTENT}>
-        {renderScheduleContent()}
+      <div className="schedule-widget-content">
+        {/* 메인 스케줄 카드 */}
+        <div
+          className="schedule-main-card"
+          onClick={handleScheduleClick}
+        >
+          <div className="schedule-card-icon">
+            <Calendar size={32} />
+          </div>
+          <div className="schedule-card-content">
+            <h3 className="schedule-card-title">
+              스케줄 관리
+            </h3>
+            <p className="schedule-card-description">
+              오늘의 스케줄, 다가오는 상담, 새 일정 등록
+            </p>
+          </div>
+          <div className="schedule-card-arrow">
+            <ArrowRight size={20} />
+          </div>
+        </div>
+
+        {/* 빠른 액션 버튼들 */}
+        <div className="schedule-quick-actions">
+          <button
+            className="schedule-action-btn primary"
+            onClick={handleScheduleClick}
+          >
+            <Clock size={18} />
+            오늘의 스케줄
+          </button>
+          
+          <button
+            className="schedule-action-btn secondary"
+            onClick={handleNewScheduleClick}
+          >
+            <Plus size={18} />
+            새 일정 등록
+          </button>
+        </div>
+
+        {/* 상담사 전용 안내 메시지 */}
+        <div className="schedule-consultant-message">
+          <div className="consultant-message-icon">
+            💼
+          </div>
+          <p className="consultant-message-text">
+            상담사님의 효율적인 스케줄 관리를 위한 전용 공간입니다
+          </p>
+        </div>
       </div>
     </BaseWidget>
   );

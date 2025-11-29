@@ -18,14 +18,33 @@ import java.util.List;
 public interface UserActivityRepository extends JpaRepository<UserActivity, Long> {
     
     /**
-     * 사용자별 활동 내역 조회 (최신순)
+     * 테넌트별 사용자 활동 내역 조회 (테넌트 필터링)
      */
+    @Query("SELECT ua FROM UserActivity ua WHERE ua.tenantId = :tenantId AND ua.userId = :userId ORDER BY ua.createdAt DESC")
+    Page<UserActivity> findByTenantIdAndUserIdOrderByCreatedAtDesc(@Param("tenantId") String tenantId, @Param("userId") Long userId, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 활동 내역 노출!
+     */
+    @Deprecated
     @Query("SELECT ua FROM UserActivity ua WHERE ua.userId = :userId ORDER BY ua.createdAt DESC")
     Page<UserActivity> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
     
     /**
-     * 사용자별 활동 타입별 조회
+     * 테넌트별 사용자 활동 타입별 조회 (테넌트 필터링)
      */
+    @Query("SELECT ua FROM UserActivity ua WHERE ua.tenantId = :tenantId AND ua.userId = :userId AND ua.activityType = :activityType ORDER BY ua.createdAt DESC")
+    Page<UserActivity> findByTenantIdAndUserIdAndActivityTypeOrderByCreatedAtDesc(
+        @Param("tenantId") String tenantId,
+        @Param("userId") Long userId, 
+        @Param("activityType") String activityType, 
+        Pageable pageable
+    );
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자별 활동 타입 노출!
+     */
+    @Deprecated
     @Query("SELECT ua FROM UserActivity ua WHERE ua.userId = :userId AND ua.activityType = :activityType ORDER BY ua.createdAt DESC")
     Page<UserActivity> findByUserIdAndActivityTypeOrderByCreatedAtDesc(
         @Param("userId") Long userId, 

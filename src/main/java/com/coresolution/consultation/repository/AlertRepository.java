@@ -20,32 +20,67 @@ import org.springframework.stereotype.Repository;
 public interface AlertRepository extends BaseRepository<Alert, Long> {
     
     /**
-     * 사용자 ID로 알림 조회 (활성 상태만)
+     * 테넌트별 사용자 ID로 알림 조회 (테넌트 필터링)
      */
+    @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.userId = :userId AND a.isDeleted = false ORDER BY a.createdAt DESC")
+    List<Alert> findByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 알림 노출!
+     */
+    @Deprecated
     @Query("SELECT a FROM Alert a WHERE a.userId = ?1 AND a.isDeleted = false ORDER BY a.createdAt DESC")
     List<Alert> findByUserId(Long userId);
     
     /**
-     * 사용자 ID로 알림 페이징 조회 (활성 상태만)
+     * 테넌트별 사용자 ID로 알림 페이징 조회 (테넌트 필터링)
      */
+    @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.userId = :userId AND a.isDeleted = false ORDER BY a.createdAt DESC")
+    Page<Alert> findByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 알림 페이징 노출!
+     */
+    @Deprecated
     @Query("SELECT a FROM Alert a WHERE a.userId = ?1 AND a.isDeleted = false ORDER BY a.createdAt DESC")
     Page<Alert> findByUserId(Long userId, Pageable pageable);
     
     /**
-     * 사용자 ID로 알림 개수 조회 (활성 상태만)
+     * 테넌트별 사용자 ID로 알림 개수 조회 (테넌트 필터링)
      */
+    @Query("SELECT COUNT(a) FROM Alert a WHERE a.tenantId = :tenantId AND a.userId = :userId AND a.isDeleted = false")
+    long countByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 알림 개수 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(a) FROM Alert a WHERE a.userId = ?1 AND a.isDeleted = false")
     long countByUserId(Long userId);
     
     /**
-     * 사용자 ID로 읽지 않은 알림 조회 (활성 상태만)
+     * 테넌트별 사용자 ID로 읽지 않은 알림 조회 (테넌트 필터링)
      */
+    @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.userId = :userId AND a.status = 'UNREAD' AND a.isDeleted = false ORDER BY a.createdAt DESC")
+    List<Alert> findUnreadByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 미읽음 알림 노출!
+     */
+    @Deprecated
     @Query("SELECT a FROM Alert a WHERE a.userId = ?1 AND a.status = 'UNREAD' AND a.isDeleted = false ORDER BY a.createdAt DESC")
     List<Alert> findUnreadByUserId(Long userId);
     
     /**
-     * 사용자 ID로 읽지 않은 알림 개수 조회 (활성 상태만)
+     * 테넌트별 사용자 ID로 읽지 않은 알림 개수 조회 (테넌트 필터링)
      */
+    @Query("SELECT COUNT(a) FROM Alert a WHERE a.tenantId = :tenantId AND a.userId = :userId AND a.status = 'UNREAD' AND a.isDeleted = false")
+    long countUnreadByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 미읽음 알림 개수 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(a) FROM Alert a WHERE a.userId = ?1 AND a.status = 'UNREAD' AND a.isDeleted = false")
     long countUnreadByUserId(Long userId);
     

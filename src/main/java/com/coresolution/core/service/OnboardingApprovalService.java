@@ -16,7 +16,7 @@ public interface OnboardingApprovalService {
      * 온보딩 승인 처리
      * PL/SQL 프로시저 ProcessOnboardingApproval 호출
      * 
-     * @param requestId 온보딩 요청 ID
+     * @param requestId 온보딩 요청 ID (UUID)
      * @param tenantId 테넌트 ID
      * @param tenantName 테넌트 이름
      * @param businessType 업종 타입
@@ -27,7 +27,7 @@ public interface OnboardingApprovalService {
      * @return 처리 결과 (success, message)
      */
     Map<String, Object> processOnboardingApproval(
-            Long requestId,
+            java.util.UUID requestId,
             String tenantId,
             String tenantName,
             String businessType,

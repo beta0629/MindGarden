@@ -39,19 +39,16 @@ import lombok.NoArgsConstructor;
 @Table(name = "financial_transactions", indexes = {
     @Index(name = "idx_financial_transaction_date", columnList = "transaction_date"),
     @Index(name = "idx_financial_transaction_type", columnList = "transaction_type"),
-    @Index(name = "idx_financial_transaction_category", columnList = "category"),
-    @Index(name = "idx_financial_transaction_status", columnList = "status"),
-    @Index(name = "idx_financial_transaction_created_at", columnList = "created_at")
+    // @Index(name = "idx_financial_transaction_category", columnList = "category"),
+    // @Index(name = "idx_financial_transaction_status", columnList = "status"),
+    // @Index(name = "idx_financial_transaction_created_at", columnList = "created_at")
 })
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FinancialTransaction {
+public class FinancialTransaction extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     /**
      * 거래 유형 (수입/지출)
@@ -197,30 +194,21 @@ public class FinancialTransaction {
     /**
      * 비고
      */
-    @Size(max = 1000, message = "비고는 1000자 이하여야 합니다.")
-    @Column(name = "remarks", length = 1000)
+    // @Size(max = 1000, message = "비고는 1000자 이하여야 합니다.")
+    // @Column(name = "remarks", length = 1000)
     private String remarks;
     
     /**
      * 삭제 여부
      */
-    @Column(name = "is_deleted", nullable = false)
-    @Builder.Default
-    private Boolean isDeleted = false;
     
     /**
      * 생성 시간
      */
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
     
     /**
      * 수정 시간
      */
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
     
     @PrePersist
     protected void onCreate() {

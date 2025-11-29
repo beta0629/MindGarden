@@ -26,8 +26,8 @@ const customColumns = [{key: 'id', header: 'ID'},
     render: (value) => (<span style={{padding: '4px 8px', 
         borderRadius: '4px', 
         fontSize: '12px',
-        backgroundColor: value === 'active' ? '#d4edda' : value === 'inactive' ? '#f8d7da' : '#fff3cd',
-        color: value === 'active' ? '#155724' : value === 'inactive' ? '#721c24' : '#856404'}}>
+        backgroundColor: value === 'active' ? 'var(--cs-success-100)' : value === 'inactive' ? 'var(--cs-error-100)' : 'var(--cs-warning-100)',
+        color: value === 'active' ? 'var(--cs-success-800)' : value === 'inactive' ? 'var(--cs-error-800)' : 'var(--cs-warning-800)'}}>
         {value === 'active' ? '활성' : value === 'inactive' ? '비활성' : '대기'}
       </span>)},
   {key: 'role', 
@@ -35,8 +35,8 @@ const customColumns = [{key: 'id', header: 'ID'},
     render: (value) => (<span style={{padding: '4px 8px', 
         borderRadius: '4px', 
         fontSize: '12px',
-        backgroundColor: value === 'admin' ? '#d1ecf1' : value === 'moderator' ? '#e2e3e5' : 'var(--mg-gray-100)',
-        color: value === 'admin' ? '#0c5460' : value === 'moderator' ? '#383d41' : 'var(--mg-secondary-500)'}}>
+        backgroundColor: value === 'admin' ? 'var(--cs-blue-100)' : value === 'moderator' ? 'var(--cs-slate-200)' : 'var(--mg-gray-100)',
+        color: value === 'admin' ? 'var(--cs-blue-800)' : value === 'moderator' ? 'var(--cs-slate-800)' : 'var(--mg-secondary-500)'}}>
         {value === 'admin' ? '관리자' : value === 'moderator' ? '모더레이터' : '사용자'}
       </span>)},
   {key: 'actions',
@@ -170,7 +170,7 @@ export const Interactive = () => {const [clickedRow, setClickedRow] = React.useS
         {clickedRow && (<div style={{marginTop: '15px', padding: '10px', backgroundColor: 'var(--mg-gray-100)', borderRadius: '4px'}}>
             <strong>클릭된 행:</strong> {clickedRow.row.name} (인덱스: {clickedRow.index})
           </div>)}
-        {clickedCell && (<div style={{marginTop: '15px', padding: '10px', backgroundColor: '#e9ecef', borderRadius: '4px'}}>
+        {clickedCell && (<div style={{marginTop: '15px', padding: '10px', backgroundColor: 'var(--cs-slate-100)', borderRadius: '4px'}}>
             <strong>클릭된 셀:</strong> {clickedCell.cell} (행: {clickedCell.rowIndex}, 열: {clickedCell.columnIndex})
           </div>)}
       </div>

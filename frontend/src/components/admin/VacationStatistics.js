@@ -304,12 +304,14 @@ const VacationStatistics = ({ className = "" }) => {
                                     key={consultant.consultantId} 
                                     className="consultant-card" 
                                 >
-                                    <div className={`consultant-avatar ${consultantColor}`}>
+                                    <div className="consultant-info">
+                                        <div className={`consultant-avatar ${consultantColor}`}>
                                             {getAvatarInitial(consultant.consultantName)}
                                         </div>
                                         <div className="consultant-name">{consultant.consultantName}</div>
                                         <div className="consultant-vacation-info">{consultant.consultantEmail}</div>
                                     </div>
+                                    <div className="consultant-vacation-details">
                                         <div className="consultant-vacation-count">
                                             {typeof consultant.vacationDays === 'number' 
                                                 ? consultant.vacationDays.toFixed(1)

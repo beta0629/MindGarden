@@ -124,7 +124,7 @@ public class OnboardingController extends BaseApiController {
      * GET /api/onboarding/requests/{id}
      */
     @GetMapping("/requests/{id}")
-    public ResponseEntity<ApiResponse<OnboardingRequest>> getRequest(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<OnboardingRequest>> getRequest(@PathVariable java.util.UUID id) {
         // 인증 정보 확인 및 권한 체크
         OpsPermissionUtils.requireAdminOrOps();
         
@@ -277,7 +277,7 @@ public class OnboardingController extends BaseApiController {
      */
     @GetMapping("/requests/public/{id}")
     public ResponseEntity<ApiResponse<OnboardingRequest>> getPublicRequest(
-            @PathVariable Long id,
+            @PathVariable java.util.UUID id,
             @RequestParam String email,
             HttpSession session) {
         // 온보딩 접근 권한 확인 (이미 테넌트에 속한 사용자는 접근 불가)
@@ -297,7 +297,7 @@ public class OnboardingController extends BaseApiController {
      */
     @PostMapping("/requests/{id}/decision")
     public ResponseEntity<ApiResponse<OnboardingRequest>> decide(
-            @PathVariable Long id,
+            @PathVariable java.util.UUID id,
             @RequestBody @Valid OnboardingDecisionRequest payload) {
         // 인증 정보 확인 및 권한 체크
         OpsPermissionUtils.requireAdminOrOps();
@@ -368,7 +368,7 @@ public class OnboardingController extends BaseApiController {
      */
     @PostMapping("/requests/{id}/retry")
     public ResponseEntity<ApiResponse<OnboardingRequest>> retryApproval(
-            @PathVariable Long id,
+            @PathVariable java.util.UUID id,
             @RequestBody(required = false) Map<String, String> payload) {
         // 인증 정보 확인 및 권한 체크
         OpsPermissionUtils.requireAdminOrOps();

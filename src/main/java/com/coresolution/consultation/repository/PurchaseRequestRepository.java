@@ -20,20 +20,41 @@ import org.springframework.stereotype.Repository;
 public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest, Long> {
     
     /**
-     * 요청자별 구매 요청 목록 조회
+     * 테넌트별 요청자별 구매 요청 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT pr FROM PurchaseRequest pr WHERE pr.tenantId = :tenantId AND pr.requester.id = :requesterId ORDER BY pr.createdAt DESC")
+    List<PurchaseRequest> findByTenantIdAndRequesterId(@Param("tenantId") String tenantId, @Param("requesterId") Long requesterId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 요청자 구매 요청 노출!
+     */
+    @Deprecated
     @Query("SELECT pr FROM PurchaseRequest pr WHERE pr.requester.id = :requesterId ORDER BY pr.createdAt DESC")
     List<PurchaseRequest> findByRequesterId(@Param("requesterId") Long requesterId);
     
     /**
-     * 상태별 구매 요청 목록 조회
+     * 테넌트별 상태별 구매 요청 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT pr FROM PurchaseRequest pr WHERE pr.tenantId = :tenantId AND pr.status = :status ORDER BY pr.createdAt DESC")
+    List<PurchaseRequest> findByTenantIdAndStatus(@Param("tenantId") String tenantId, @Param("status") PurchaseRequest.PurchaseRequestStatus status);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 상태별 구매 요청 노출!
+     */
+    @Deprecated
     @Query("SELECT pr FROM PurchaseRequest pr WHERE pr.status = :status ORDER BY pr.createdAt DESC")
     List<PurchaseRequest> findByStatus(@Param("status") PurchaseRequest.PurchaseRequestStatus status);
     
     /**
-     * 관리자 승인 대기 목록 조회
+     * 테넌트별 관리자 승인 대기 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT pr FROM PurchaseRequest pr WHERE pr.tenantId = :tenantId AND pr.status = 'PENDING' ORDER BY pr.createdAt ASC")
+    List<PurchaseRequest> findPendingAdminApprovalByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 관리자 승인 대기 목록 노출!
+     */
+    @Deprecated
     @Query("SELECT pr FROM PurchaseRequest pr WHERE pr.status = 'PENDING' ORDER BY pr.createdAt ASC")
     List<PurchaseRequest> findPendingAdminApproval();
     

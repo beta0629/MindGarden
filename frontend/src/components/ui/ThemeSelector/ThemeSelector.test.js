@@ -13,7 +13,7 @@ import ThemeSelector from './ThemeSelector';
 jest.mock('../../../contexts/ThemeContext', () => ({useTheme: () => ({currentTheme: {type: 'ADMIN',
       name: '관리자 테마',
       description: '간결하고 깔끔한 분위기 (블루 계열)',
-      colors: {primary: '#87CEEB',
+      colors: {primary: 'var(--cs-blue-300)',
         secondary: '#F0F8FF',
         background: 'var(--mg-gray-100)',
         text: '#191970'}},

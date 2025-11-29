@@ -26,7 +26,7 @@ public interface OnboardingService {
     /**
      * 온보딩 요청 ID로 조회
      */
-    OnboardingRequest getById(Long id);
+    OnboardingRequest getById(java.util.UUID id);
     
     /**
      * 온보딩 요청 생성
@@ -45,7 +45,7 @@ public interface OnboardingService {
      * 승인 시 PL/SQL 프로시저를 통해 테넌트 생성 및 ERD 생성 등 자동 처리
      */
     OnboardingRequest decide(
-        Long requestId,
+        java.util.UUID requestId,
         OnboardingStatus status,
         String actorId,
         String note
@@ -81,7 +81,7 @@ public interface OnboardingService {
      * ON_HOLD 상태인 경우에만 재시도 가능
      * 프로시저 실패로 보류된 온보딩 요청을 다시 승인 프로세스 실행
      */
-    OnboardingRequest retryApproval(Long requestId, String actorId, String note);
+    OnboardingRequest retryApproval(java.util.UUID requestId, String actorId, String note);
     
     /**
      * 이메일로 온보딩 요청 조회 (공개 조회용)
@@ -91,7 +91,7 @@ public interface OnboardingService {
     /**
      * ID와 이메일로 온보딩 요청 조회 (본인 확인용)
      */
-    OnboardingRequest findByIdAndEmail(Long id, String email);
+    OnboardingRequest findByIdAndEmail(java.util.UUID id, String email);
     
     /**
      * 이메일 중복 확인 (온보딩 요청 및 테넌트 관리자 계정 확인)

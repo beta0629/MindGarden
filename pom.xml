@@ -212,6 +212,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <mainClass>com.coresolution.consultation.ConsultationManagementApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.springframework.boot</groupId>
@@ -221,8 +222,7 @@
                     <jvmArguments>
                         -Xmx4g -Xms2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication
                     </jvmArguments>
-                </configuration>
-            </plugin>
+                </configuration>            </plugin>
             
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

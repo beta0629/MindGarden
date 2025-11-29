@@ -1,0 +1,460 @@
+/**
+ * Schedule Registration Widget Styles
+ * 일정 등록 위젯 스타일
+ * 
+ * @author CoreSolution
+ * @version 2.0.0
+ * @since 2025-11-29
+ */
+
+/* 위젯 컨테이너 */
+.schedule-registration-widget {
+  --widget-bg: var(--cs-surface-primary);
+  --widget-border: var(--cs-border-primary);
+  
+  background: var(--widget-bg);
+  border-radius: var(--cs-radius-md);
+  box-shadow: var(--cs-shadow-sm);
+}
+
+/* Empty State */
+.schedule-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--cs-spacing-xl);
+}
+
+.empty-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  background: var(--cs-glass-primary-20);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.empty-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--cs-primary-500);
+}
+
+.empty-title {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  margin-bottom: var(--cs-spacing-sm);
+}
+
+.empty-description {
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-sm);
+  line-height: 1.5;
+  margin-bottom: var(--cs-spacing-lg);
+  max-width: 300px;
+}
+
+/* 일정 콘텐츠 */
+.schedule-content {
+  padding: var(--cs-spacing-lg);
+}
+
+/* 오늘 통계 섹션 */
+.today-stats {
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.stats-header {
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.stats-title {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  margin: 0;
+}
+
+.stats-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--cs-primary-500);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--cs-spacing-md);
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-bg-secondary);
+  border-radius: var(--cs-radius-sm);
+  border: 1px solid var(--cs-border-secondary);
+}
+
+.stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--cs-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cs-white);
+}
+
+.stat-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.stat-icon.total {
+  background: var(--cs-primary-500);
+}
+
+.stat-icon.completed {
+  background: var(--cs-success-500);
+}
+
+.stat-icon.in-progress {
+  background: var(--cs-blue-500);
+}
+
+.stat-icon.upcoming {
+  background: var(--cs-warning-500);
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-number {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-bold);
+  line-height: 1;
+}
+
+.stat-label {
+  color: var(--cs-text-secondary);
+  font-size: var(--cs-text-xs);
+  margin-top: 2px;
+}
+
+/* 일정 목록 */
+.schedule-list {
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.list-title {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  margin: 0;
+}
+
+/* 일정 아이템 */
+.schedule-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-sm);
+}
+
+.schedule-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--cs-spacing-md);
+  background: var(--cs-bg-secondary);
+  border: 1px solid var(--cs-border-secondary);
+  border-radius: var(--cs-radius-sm);
+  transition: all 0.2s ease;
+}
+
+.schedule-item:hover {
+  background: var(--cs-bg-hover);
+  border-color: var(--cs-primary-200);
+}
+
+.schedule-info {
+  flex: 1;
+}
+
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--cs-spacing-sm);
+}
+
+.schedule-time-info {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+}
+
+.schedule-time {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-primary);
+}
+
+.time-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--cs-primary-500);
+}
+
+.time-separator {
+  color: var(--cs-text-secondary);
+  margin-left: var(--cs-spacing-xs);
+}
+
+.today-badge {
+  background: var(--cs-primary-500);
+  color: var(--cs-white);
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-bold);
+  padding: 2px 6px;
+  border-radius: var(--cs-radius-xs);
+}
+
+/* 일정 상태 */
+.schedule-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--cs-radius-xs);
+  font-size: var(--cs-text-xs);
+  font-weight: var(--cs-font-medium);
+}
+
+.status-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.status-completed {
+  background: var(--cs-glass-success-light);
+  color: var(--cs-success-600);
+}
+
+.status-in-progress {
+  background: var(--cs-glass-blue-light);
+  color: var(--cs-blue-600);
+}
+
+.status-cancelled {
+  background: var(--cs-glass-gray-light);
+  color: var(--cs-gray-600);
+}
+
+.status-upcoming {
+  background: var(--cs-glass-warning-light);
+  color: var(--cs-warning-600);
+}
+
+.status-pending {
+  background: var(--cs-glass-primary-20);
+  color: var(--cs-primary-600);
+}
+
+.status-unknown {
+  background: var(--cs-glass-gray-light);
+  color: var(--cs-gray-500);
+}
+
+/* 일정 상세 정보 */
+.schedule-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-xs);
+}
+
+.schedule-title {
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-semibold);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.schedule-participants {
+  display: flex;
+  gap: var(--cs-spacing-lg);
+  flex-wrap: wrap;
+}
+
+.participant {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-xs);
+  font-size: var(--cs-text-xs);
+}
+
+.participant-label {
+  color: var(--cs-text-secondary);
+}
+
+.participant-name {
+  color: var(--cs-text-primary);
+  font-weight: var(--cs-font-medium);
+}
+
+.participant.consultant .participant-name {
+  color: var(--cs-blue-600);
+}
+
+.participant.client .participant-name {
+  color: var(--cs-primary-600);
+}
+
+.schedule-location,
+.schedule-notes {
+  display: flex;
+  gap: var(--cs-spacing-xs);
+  font-size: var(--cs-text-xs);
+}
+
+.location-label,
+.notes-label {
+  color: var(--cs-text-secondary);
+  flex-shrink: 0;
+}
+
+.location-value,
+.notes-value {
+  color: var(--cs-text-primary);
+  font-weight: var(--cs-font-medium);
+}
+
+.notes-value {
+  line-height: 1.4;
+}
+
+/* 일정 액션 */
+.schedule-actions {
+  display: flex;
+  gap: var(--cs-spacing-xs);
+  align-self: flex-start;
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--cs-radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn {
+  background: var(--cs-glass-primary-20);
+  color: var(--cs-primary-500);
+}
+
+.view-btn:hover {
+  background: var(--cs-primary-500);
+  color: var(--cs-white);
+}
+
+.action-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* 빠른 액션 */
+.schedule-quick-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--cs-spacing-md);
+  border-top: 1px solid var(--cs-border-secondary);
+}
+
+/* 버튼 아이콘 */
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .schedule-content {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .schedule-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-xs);
+  }
+  
+  .schedule-time-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .schedule-participants {
+    flex-direction: column;
+    gap: var(--cs-spacing-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-xs);
+  }
+  
+  .schedule-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .schedule-actions {
+    align-self: flex-end;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .schedule-registration-widget {
+    --widget-bg: var(--cs-surface-primary-dark);
+    --widget-border: var(--cs-border-primary-dark);
+  }
+}

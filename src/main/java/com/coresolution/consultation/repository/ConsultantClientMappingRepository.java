@@ -39,11 +39,21 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     List<ConsultantClientMapping> findByDateRange(@Param("startDate") java.time.LocalDate startDate, 
                                                  @Param("endDate") java.time.LocalDate endDate);
     
-    // 모든 매칭을 관련 엔티티와 함께 조회 (최신 업데이트순 정렬)
+    // 테넌트별 모든 매칭을 관련 엔티티와 함께 조회 (테넌트 필터링)
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId ORDER BY m.updatedAt DESC, m.createdAt DESC")
+    List<ConsultantClientMapping> findAllWithDetailsByTenantId(@Param("tenantId") String tenantId);
+    
+    // @Deprecated - 🚨 극도로 위험: 모든 테넌트 매칭 정보 노출!
+    @Deprecated
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client ORDER BY m.updatedAt DESC, m.createdAt DESC")
     List<ConsultantClientMapping> findAllWithDetails();
     
-    // 활성 매칭을 관련 엔티티와 함께 조회
+    // 테넌트별 활성 매칭을 관련 엔티티와 함께 조회 (테넌트 필터링)
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.status = 'ACTIVE'")
+    List<ConsultantClientMapping> findActiveMappingsWithDetailsByTenantId(@Param("tenantId") String tenantId);
+    
+    // @Deprecated - 🚨 극도로 위험: 모든 테넌트 활성 매칭 노출!
+    @Deprecated
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.status = 'ACTIVE'")
     List<ConsultantClientMapping> findActiveMappingsWithDetails();
     
@@ -71,11 +81,21 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     @Query("SELECT m FROM ConsultantClientMapping m WHERE m.consultant.id = :consultantId")
     List<ConsultantClientMapping> findByConsultantId(@Param("consultantId") Long consultantId);
     
-    // 결제 상태별 매칭 수 조회
+    // 테넌트별 결제 상태별 매칭 수 조회 (테넌트 필터링)
+    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.paymentStatus = :paymentStatus")
+    long countByTenantIdAndPaymentStatus(@Param("tenantId") String tenantId, @Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
+    
+    // @Deprecated - 🚨 보안 위험: 모든 테넌트 결제 통계 노출!
+    @Deprecated
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.paymentStatus = :paymentStatus")
     long countByPaymentStatus(@Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
     
-    // 결제 상태별 매칭 조회
+    // 테넌트별 결제 상태별 매칭 조회 (테넌트 필터링)
+    @Query("SELECT m FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.paymentStatus = :paymentStatus")
+    List<ConsultantClientMapping> findByTenantIdAndPaymentStatus(@Param("tenantId") String tenantId, @Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
+    
+    // @Deprecated - 🚨 보안 위험: 모든 테넌트 결제 데이터 노출!
+    @Deprecated
     @Query("SELECT m FROM ConsultantClientMapping m WHERE m.paymentStatus = :paymentStatus")
     List<ConsultantClientMapping> findByPaymentStatus(@Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
     

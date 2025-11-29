@@ -12,16 +12,16 @@ export const CSS_VARIABLES = {
   COLORS: {
     // Primary Colors (fallback)
     PRIMARY: 'var(--mg-primary-500)',
-    PRIMARY_DARK: '#764ba2',
-    PRIMARY_GRADIENT: 'linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%)',
+    PRIMARY_DARK: 'var(--cs-purple-600)',
+    PRIMARY_GRADIENT: 'linear-gradient(135deg, var(--mg-primary-500) 0%, var(--cs-purple-600) 100%)',
     
     // Secondary Colors (fallback)
     SECONDARY: 'var(--mg-secondary-500)',
-    SECONDARY_LIGHT: '#e9ecef',
+    SECONDARY_LIGHT: 'var(--cs-gray-200)',
     
     // Success Colors (fallback)
     SUCCESS: 'var(--mg-success-500)',
-    SUCCESS_LIGHT: '#d4edda',
+    SUCCESS_LIGHT: 'var(--cs-success-100)',
     SUCCESS_DARK: '#00a085',
     SUCCESS_GRADIENT: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
     

@@ -1,0 +1,216 @@
+/**
+ * PersonalizedMessagesWidget 전용 스타일
+ * 하드코딩 제거 및 통합 디자인 토큰 사용
+ */
+
+.personalized-messages-widget-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-sm);
+}
+
+/* 메시지 카드 기본 스타일 */
+.personalized-message-card {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-md);
+  padding: var(--cs-spacing-lg);
+  border-radius: var(--cs-radius-lg);
+  border: 1px solid transparent;
+  background: var(--cs-glass-light);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.personalized-message-card.clickable {
+  cursor: pointer;
+}
+
+.personalized-message-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cs-shadow-lg);
+  border-color: var(--cs-slate-300);
+}
+
+/* 메시지 아이콘 */
+.message-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  color: white;
+  font-weight: var(--cs-font-medium);
+}
+
+/* 메시지 내용 */
+.message-content {
+  flex: 1;
+  min-width: 0; /* 텍스트 오버플로우 방지 */
+}
+
+.message-title {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-semibold);
+  margin: 0 0 var(--cs-spacing-xs) 0;
+  color: var(--cs-gray-900);
+  line-height: 1.2;
+}
+
+.message-subtitle {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-gray-600);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* 화살표 아이콘 */
+.message-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--cs-gray-400);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.personalized-message-card.clickable:hover .message-arrow {
+  transform: translateX(4px);
+  color: var(--cs-gray-600);
+}
+
+/* 색상 테마별 스타일 */
+.personalized-message-card.primary {
+  border-left: 4px solid var(--cs-primary-500);
+}
+
+.personalized-message-card.primary .message-icon {
+  background: linear-gradient(135deg, var(--cs-primary-500), var(--cs-primary-600));
+}
+
+.personalized-message-card.success {
+  border-left: 4px solid var(--cs-success-500);
+}
+
+.personalized-message-card.success .message-icon {
+  background: linear-gradient(135deg, var(--cs-success-500), var(--cs-success-600));
+}
+
+.personalized-message-card.warning {
+  border-left: 4px solid var(--cs-warning-500);
+}
+
+.personalized-message-card.warning .message-icon {
+  background: linear-gradient(135deg, var(--cs-warning-500), var(--cs-warning-600));
+}
+
+.personalized-message-card.danger {
+  border-left: 4px solid var(--cs-error-500);
+}
+
+.personalized-message-card.danger .message-icon {
+  background: linear-gradient(135deg, var(--cs-error-500), var(--cs-error-600));
+}
+
+.personalized-message-card.info {
+  border-left: 4px solid var(--cs-blue-500);
+}
+
+.personalized-message-card.info .message-icon {
+  background: linear-gradient(135deg, var(--cs-blue-500), var(--cs-blue-600));
+}
+
+.personalized-message-card.secondary {
+  border-left: 4px solid var(--cs-purple-500);
+}
+
+.personalized-message-card.secondary .message-icon {
+  background: linear-gradient(135deg, var(--cs-purple-500), var(--cs-purple-600));
+}
+
+/* 호버 효과 개선 */
+.personalized-message-card.primary.clickable:hover {
+  background: var(--cs-primary-50);
+  border-left-color: var(--cs-primary-600);
+}
+
+.personalized-message-card.success.clickable:hover {
+  background: var(--cs-success-50);
+  border-left-color: var(--cs-success-600);
+}
+
+.personalized-message-card.warning.clickable:hover {
+  background: var(--cs-warning-50);
+  border-left-color: var(--cs-warning-600);
+}
+
+.personalized-message-card.danger.clickable:hover {
+  background: var(--cs-error-50);
+  border-left-color: var(--cs-error-600);
+}
+
+.personalized-message-card.info.clickable:hover {
+  background: var(--cs-blue-50);
+  border-left-color: var(--cs-blue-600);
+}
+
+.personalized-message-card.secondary.clickable:hover {
+  background: var(--cs-purple-50);
+  border-left-color: var(--cs-purple-600);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .personalized-messages-widget-content {
+    padding: var(--cs-spacing-xs);
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .personalized-message-card {
+    padding: var(--cs-spacing-md);
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .message-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .message-title {
+    font-size: var(--cs-text-md);
+  }
+  
+  .message-subtitle {
+    font-size: var(--cs-text-xs);
+  }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .personalized-message-card {
+    background: var(--cs-glass-dark);
+    border-color: var(--cs-slate-700);
+  }
+  
+  .message-title {
+    color: var(--cs-gray-100);
+  }
+  
+  .message-subtitle {
+    color: var(--cs-gray-300);
+  }
+  
+  .message-arrow {
+    color: var(--cs-gray-500);
+  }
+  
+  .personalized-message-card.clickable:hover .message-arrow {
+    color: var(--cs-gray-300);
+  }
+}

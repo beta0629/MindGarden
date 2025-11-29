@@ -1,0 +1,358 @@
+/**
+ * PermissionWidget - 권한 관리 위젯 CSS
+ * 관리자 권한 현황을 아코디언 형태로 표시하는 위젯의 스타일
+ * 
+ * @author CoreSolution
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
+ */
+
+.permission-widget {
+  width: 100%;
+}
+
+.permission-content {
+  padding: var(--cs-spacing-md);
+}
+
+/* 권한 요약 */
+.permission-summary {
+  display: flex;
+  gap: var(--cs-spacing-lg);
+  padding: var(--cs-spacing-md);
+  background: var(--cs-glass-light-subtle);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-md);
+  margin-bottom: var(--cs-spacing-lg);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.summary-label {
+  font-size: var(--cs-text-sm);
+  font-weight: var(--cs-font-medium);
+  color: var(--cs-text-secondary);
+  margin-bottom: var(--cs-spacing-xs);
+}
+
+.summary-value {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--cs-font-bold);
+  color: var(--cs-text-primary);
+}
+
+.summary-value.success {
+  color: var(--cs-success-600);
+}
+
+.summary-value.warning {
+  color: var(--cs-warning-600);
+}
+
+/* 카테고리 목록 */
+.permission-categories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-md);
+}
+
+/* 권한 카테고리 */
+.permission-category {
+  background: var(--cs-glass-white-90);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+  overflow: hidden;
+}
+
+.permission-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--cs-spacing-lg);
+  background: var(--cs-glass-primary-10);
+  border-bottom: 1px solid var(--cs-border-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.permission-category-header.clickable:hover {
+  background: var(--cs-glass-primary-20);
+}
+
+.category-left {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-spacing-sm);
+}
+
+.category-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--cs-primary-600);
+}
+
+.category-title {
+  font-size: var(--cs-text-md);
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+}
+
+.category-count {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-muted);
+  background: var(--cs-gray-100);
+  padding: 2px 6px;
+  border-radius: var(--cs-radius-sm);
+}
+
+.category-right {
+  display: flex;
+  align-items: center;
+}
+
+.chevron-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--cs-text-secondary);
+  transition: transform 0.2s ease;
+}
+
+/* 권한 목록 */
+.permission-list {
+  padding: var(--cs-spacing-md);
+}
+
+.permission-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--cs-spacing-md);
+  border-bottom: 1px solid var(--cs-border-light);
+  transition: background-color 0.2s ease;
+}
+
+.permission-item:last-child {
+  border-bottom: none;
+}
+
+.permission-item:hover {
+  background: var(--cs-gray-50);
+}
+
+/* 권한 정보 */
+.permission-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cs-spacing-xs);
+}
+
+.permission-name {
+  font-weight: var(--cs-font-semibold);
+  color: var(--cs-text-primary);
+  font-size: var(--cs-text-md);
+}
+
+.permission-description {
+  font-size: var(--cs-text-sm);
+  color: var(--cs-text-secondary);
+  line-height: 1.4;
+}
+
+.permission-code {
+  font-size: var(--cs-text-xs);
+  color: var(--cs-text-muted);
+  font-family: monospace;
+  background: var(--cs-gray-100);
+  padding: 2px 6px;
+  border-radius: var(--cs-radius-sm);
+  display: inline-block;
+  margin-top: var(--cs-spacing-xs);
+}
+
+/* 권한 상태 */
+.permission-status {
+  display: flex;
+  align-items: center;
+  margin-left: var(--cs-spacing-md);
+}
+
+.permission-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.permission-icon.active {
+  color: var(--cs-success-600);
+}
+
+.permission-icon.inactive {
+  color: var(--cs-error-600);
+}
+
+.permission-icon.disabled {
+  color: var(--cs-gray-400);
+}
+
+/* 더 보기 버튼 */
+.permission-more {
+  padding: var(--cs-spacing-md);
+  text-align: center;
+  border-top: 1px solid var(--cs-border-light);
+}
+
+/* 권한 액션 */
+.permission-actions {
+  margin-top: var(--cs-spacing-lg);
+  text-align: center;
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: var(--cs-spacing-xs);
+}
+
+/* 빈 상태 */
+.permission-empty {
+  text-align: center;
+  padding: var(--cs-spacing-xxl);
+  color: var(--cs-text-muted);
+}
+
+.permission-empty .empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--cs-gray-400);
+  margin-bottom: var(--cs-spacing-md);
+}
+
+.permission-empty p {
+  font-size: var(--cs-text-md);
+  margin-bottom: var(--cs-spacing-lg);
+  color: var(--cs-text-secondary);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .permission-summary {
+    flex-direction: column;
+    gap: var(--cs-spacing-md);
+  }
+  
+  .permission-category-header {
+    padding: var(--cs-spacing-md);
+  }
+  
+  .category-left {
+    flex: 1;
+  }
+  
+  .category-title {
+    font-size: var(--cs-text-sm);
+  }
+  
+  .permission-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--cs-spacing-sm);
+  }
+  
+  .permission-status {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+  
+  .permission-content {
+    padding: var(--cs-spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .permission-list {
+    padding: var(--cs-spacing-sm);
+  }
+  
+  .permission-item {
+    padding: var(--cs-spacing-sm);
+  }
+  
+  .permission-name {
+    font-size: var(--cs-text-sm);
+  }
+  
+  .permission-description {
+    font-size: var(--cs-text-xs);
+  }
+  
+  .category-count {
+    display: none; /* 모바일에서는 카운트 숨김 */
+  }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+  .permission-summary {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .permission-category {
+    background: var(--cs-glass-dark-60);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .permission-category-header {
+    background: var(--cs-glass-primary-40);
+    border-color: var(--cs-gray-700);
+  }
+  
+  .permission-category-header.clickable:hover {
+    background: var(--cs-glass-primary-50);
+  }
+  
+  .permission-item:hover {
+    background: var(--cs-gray-800);
+  }
+  
+  .category-count {
+    background: var(--cs-gray-800);
+    color: var(--cs-gray-300);
+  }
+  
+  .permission-code {
+    background: var(--cs-gray-800);
+    color: var(--cs-gray-300);
+  }
+}
+
+/* 애니메이션 효과 */
+.permission-category {
+  animation: slideIn 0.3s ease-out;
+}
+
+.permission-category:nth-child(1) { animation-delay: 0.05s; }
+.permission-category:nth-child(2) { animation-delay: 0.1s; }
+.permission-category:nth-child(3) { animation-delay: 0.15s; }
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 로딩/에러 상태 스타일 */
+.permission-widget .widget-loading,
+.permission-widget .widget-error {
+  min-height: 300px;
+}

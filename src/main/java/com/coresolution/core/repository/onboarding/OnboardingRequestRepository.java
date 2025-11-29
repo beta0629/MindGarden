@@ -2,12 +2,13 @@ package com.coresolution.core.repository.onboarding;
 
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
-import com.coresolution.consultation.repository.BaseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 온보딩 요청 Repository
@@ -17,7 +18,7 @@ import java.util.List;
  * @since 2025-01-XX
  */
 @Repository
-public interface OnboardingRequestRepository extends BaseRepository<OnboardingRequest, Long> {
+public interface OnboardingRequestRepository extends JpaRepository<OnboardingRequest, UUID> {
     
     /**
      * 상태별 온보딩 요청 목록 조회 (생성일 내림차순)
@@ -64,7 +65,7 @@ public interface OnboardingRequestRepository extends BaseRepository<OnboardingRe
     /**
      * ID와 이메일로 온보딩 요청 조회 (본인 확인용)
      */
-    OnboardingRequest findByIdAndRequestedByAndIsDeletedFalse(Long id, String requestedBy);
+    OnboardingRequest findByIdAndRequestedByAndIsDeletedFalse(UUID id, String requestedBy);
     
     /**
      * 이메일로 승인된 온보딩 요청 존재 여부 확인

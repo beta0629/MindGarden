@@ -74,6 +74,106 @@
   --cs-warning-800: #92400e;
   --cs-warning-900: #78350f;
   
+  /* 분홍색 */
+  --cs-pink-50: #fdf2f8;
+  --cs-pink-100: #fce7f3;
+  --cs-pink-200: #fbcfe8;
+  --cs-pink-300: #f9a8d4;
+  --cs-pink-400: #f472b6;
+  --cs-pink-500: #ff2d92;
+  --cs-pink-600: #ec4899;
+  --cs-pink-700: #be185d;
+  --cs-pink-800: #9d174d;
+  --cs-pink-900: #831843;
+  
+  /* 노란색 */
+  --cs-yellow-50: #fffbeb;
+  --cs-yellow-100: #fef3c7;
+  --cs-yellow-200: #fde68a;
+  --cs-yellow-300: #fcd34d;
+  --cs-yellow-400: #ffcc00;
+  --cs-yellow-500: #f59e0b;
+  --cs-yellow-600: #d97706;
+  --cs-yellow-700: #b45309;
+  --cs-yellow-800: #92400e;
+  --cs-yellow-900: #78350f;
+  
+  /* 주황색 */
+  --cs-orange-50: #fff7ed;
+  --cs-orange-100: #ffedd5;
+  --cs-orange-200: #fed7aa;
+  --cs-orange-300: #fdba74;
+  --cs-orange-400: #fb923c;
+  --cs-orange-500: #ff6b35;
+  --cs-orange-600: #e55a2b;
+  --cs-orange-700: #c2410c;
+  --cs-orange-800: #9a3412;
+  --cs-orange-900: #7c2d12;
+  
+  /* 갈색 */
+  --cs-brown-50: #fdf8f6;
+  --cs-brown-100: #f2e8e5;
+  --cs-brown-200: #eaddd7;
+  --cs-brown-300: #e0cfc4;
+  --cs-brown-400: #d2bab0;
+  --cs-brown-500: #bfa094;
+  --cs-brown-600: #a18072;
+  --cs-brown-700: #8b6f47;
+  --cs-brown-800: #6f4f28;
+  --cs-brown-900: #2d1810;
+  
+  /* 청록색 */
+  --cs-teal-50: #f0fdfa;
+  --cs-teal-100: #ccfbf1;
+  --cs-teal-200: #99f6e4;
+  --cs-teal-300: #5eead4;
+  --cs-teal-400: #38f9d7;
+  --cs-teal-500: #14b8a6;
+  --cs-teal-600: #0d9488;
+  --cs-teal-700: #0f766e;
+  --cs-teal-800: #115e59;
+  --cs-teal-900: #134e4a;
+  
+  /* 브랜드 전용 색상 */
+  --cs-brand-primary-hover: #5a4fcf;
+  --cs-brand-accent: #fd79a8;
+  --cs-brand-primary-light: rgba(108, 92, 231, 0.1);
+  --cs-brand-primary-hover-bg: rgba(108, 92, 231, 0.2);
+  --cs-brand-outline: rgba(108, 92, 231, 0.1);
+  
+  /* 보더 전용 색상 */
+  --cs-border-secondary: #dee2e6;
+  --cs-border-light: #f0f0f0;
+  
+  /* 배경 전용 색상 */
+  --cs-bg-dark: #2d3748;
+  --cs-bg-hover: rgba(0, 0, 0, 0.05);
+  --cs-cream: #FFFEF7;
+  
+  /* 파란색 */
+  --cs-blue-50: #E3F2FD;
+  --cs-blue-100: #dbeafe;
+  --cs-blue-200: #bfdbfe;
+  --cs-blue-300: #93c5fd;
+  --cs-blue-400: #60a5fa;
+  --cs-blue-500: #3b82f6;
+  --cs-blue-600: #2563eb;
+  --cs-blue-700: #0056CC;
+  --cs-blue-800: #004499;
+  --cs-blue-900: #003366;
+  
+  /* 슬레이트 색상 */
+  --cs-slate-50: #f8fafc;
+  --cs-slate-100: #f1f5f9;
+  --cs-slate-200: #e2e8f0;
+  --cs-slate-300: #cbd5e1;
+  --cs-slate-400: #94a3b8;
+  --cs-slate-500: #64748b;
+  --cs-slate-600: #475569;
+  --cs-slate-700: #334155;
+  --cs-slate-800: #1e293b;
+  --cs-slate-900: #0f172a;
+  
   /* 보라색 */
   --cs-purple-50: #faf5ff;
   --cs-purple-100: #f3e8ff;
@@ -96,7 +196,71 @@
   --cs-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --cs-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --cs-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --cs-shadow-dark: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
   --cs-shadow-primary: 0 8px 20px rgba(59, 130, 246, 0.12);
+  --cs-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --cs-shadow-orange: 0 2px 8px rgba(255, 107, 53, 0.12);
+  --cs-shadow-error: 0 4px 15px rgba(220, 53, 69, 0.4);
+  --cs-shadow-error-strong: 0 6px 20px rgba(220, 53, 69, 0.6);
+  --cs-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --cs-shadow-sm-multi: 0 1px 3px var(--mg-shadow-light), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --cs-shadow-md-multi: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --cs-shadow-lg-multi: 0 10px 15px var(--mg-shadow-light), 0 4px 6px rgba(0, 0, 0, 0.05);
+  --cs-shadow-xl-multi: 0 20px 25px var(--mg-shadow-light), 0 10px 10px rgba(0, 0, 0, 0.04);
+  --cs-shadow-xxl: 0 25px 50px rgba(0, 0, 0, 0.25);
+  --cs-shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  --cs-shadow-outline: 0 0 0 3px rgba(108, 92, 231, 0.1);
+  
+  /* Glass 효과 */
+  --cs-glass-light: rgba(255, 255, 255, 0.8);
+  --cs-glass-strong: rgba(255, 255, 255, 0.95);
+  --cs-glass-dark: rgba(0, 0, 0, 0.1);
+  --cs-glass-medium: rgba(255, 255, 255, 0.6);
+  --cs-glass-light-subtle: rgba(255, 255, 255, 0.1);
+  --cs-glass-dark-subtle: rgba(0, 0, 0, 0.04);
+  --cs-glass-blue-light: rgba(0, 122, 255, 0.1);
+  --cs-glass-orange-light: rgba(255, 107, 53, 0.1);
+  --cs-glass-orange-bg: rgba(255, 248, 245, 0.95);
+  --cs-glass-orange-border: rgba(255, 107, 53, 0.08);
+  --cs-glass-gray-light: rgba(107, 114, 128, 0.1);
+  --cs-glass-slate-border: rgba(226, 232, 240, 0.5);
+  --cs-glass-dark-strong: rgba(0, 0, 0, 0.3);
+  --cs-glass-light-strong: rgba(250, 250, 250, 0.98);
+  --cs-glass-gray-border: rgba(209, 209, 214, 0.8);
+  --cs-glass-white-90: rgba(255, 255, 255, 0.9);
+  --cs-glass-white-80: rgba(255, 255, 255, 0.8);
+  --cs-glass-primary-40: rgba(102, 126, 234, 0.4);
+  --cs-glass-primary-30: rgba(102, 126, 234, 0.3);
+  --cs-glass-primary-20: rgba(102, 126, 234, 0.2);
+  --cs-glass-primary-10: rgba(102, 126, 234, 0.1);
+  --cs-glass-slate-border-60: rgba(226, 232, 240, 0.6);
+  --cs-glass-dark-60: rgba(0, 0, 0, 0.6);
+  
+  /* Spacing 시스템 */
+  --cs-spacing-xs: 0.25rem;  /* 4px */
+  --cs-spacing-sm: 0.5rem;   /* 8px */
+  --cs-spacing-md: 1rem;     /* 16px */
+  --cs-spacing-lg: 1.5rem;   /* 24px */
+  --cs-spacing-xl: 2rem;     /* 32px */
+  
+  /* Border Radius */
+  --cs-radius-sm: 0.25rem;   /* 4px */
+  --cs-radius-md: 0.5rem;    /* 8px */
+  --cs-radius-lg: 0.75rem;   /* 12px */
+  --cs-radius-xl: 1rem;      /* 16px */
+  
+  /* Typography */
+  --cs-text-xs: 0.75rem;     /* 12px */
+  --cs-text-sm: 0.875rem;    /* 14px */
+  --cs-text-md: 1rem;        /* 16px */
+  --cs-text-lg: 1.125rem;    /* 18px */
+  --cs-text-xl: 1.25rem;     /* 20px */
+  
+  /* Font Weights */
+  --cs-font-normal: 400;
+  --cs-font-medium: 500;
+  --cs-font-semibold: 600;
+  --cs-font-bold: 700;
   
   /* 회색 별칭 */
   --cs-gray-50: var(--cs-secondary-50);

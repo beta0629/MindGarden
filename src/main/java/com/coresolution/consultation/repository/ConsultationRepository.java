@@ -20,26 +20,54 @@ import org.springframework.stereotype.Repository;
 public interface ConsultationRepository extends BaseRepository<Consultation, Long> {
     
     /**
-     * 내담자 ID로 상담 조회 (활성 상태만)
+     * 테넌트별 내담자 ID로 상담 조회 (테넌트 필터링)
      */
+    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.clientId = :clientId AND c.isDeleted = false ORDER BY c.consultationDate DESC")
+    List<Consultation> findByTenantIdAndClientId(@Param("tenantId") String tenantId, @Param("clientId") Long clientId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 내담자 상담 기록 노출!
+     */
+    @Deprecated
     @Query("SELECT c FROM Consultation c WHERE c.clientId = ?1 AND c.isDeleted = false ORDER BY c.consultationDate DESC")
     List<Consultation> findByClientId(Long clientId);
     
     /**
-     * 내담자 ID로 상담 개수 조회 (활성 상태만)
+     * 테넌트별 내담자 ID로 상담 개수 조회 (테넌트 필터링)
      */
+    @Query("SELECT COUNT(c) FROM Consultation c WHERE c.tenantId = :tenantId AND c.clientId = :clientId AND c.isDeleted = false")
+    long countByTenantIdAndClientId(@Param("tenantId") String tenantId, @Param("clientId") Long clientId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 내담자 상담 개수 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(c) FROM Consultation c WHERE c.clientId = ?1 AND c.isDeleted = false")
     long countByClientId(Long clientId);
     
     /**
-     * 상담사 ID로 상담 조회 (활성 상태만)
+     * 테넌트별 상담사 ID로 상담 조회 (테넌트 필터링)
      */
+    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.consultantId = :consultantId AND c.isDeleted = false ORDER BY c.consultationDate DESC")
+    List<Consultation> findByTenantIdAndConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 상담사 상담 기록 노출!
+     */
+    @Deprecated
     @Query("SELECT c FROM Consultation c WHERE c.consultantId = ?1 AND c.isDeleted = false ORDER BY c.consultationDate DESC")
     List<Consultation> findByConsultantId(Long consultantId);
     
     /**
-     * 상담사 ID로 상담 개수 조회 (활성 상태만)
+     * 테넌트별 상담사 ID로 상담 개수 조회 (테넌트 필터링)
      */
+    @Query("SELECT COUNT(c) FROM Consultation c WHERE c.tenantId = :tenantId AND c.consultantId = :consultantId AND c.isDeleted = false")
+    long countByTenantIdAndConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 상담사 상담 개수 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(c) FROM Consultation c WHERE c.consultantId = ?1 AND c.isDeleted = false")
     long countByConsultantId(Long consultantId);
     

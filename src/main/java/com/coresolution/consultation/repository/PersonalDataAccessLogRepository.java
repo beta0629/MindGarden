@@ -20,14 +20,37 @@ import org.springframework.stereotype.Repository;
 public interface PersonalDataAccessLogRepository extends JpaRepository<PersonalDataAccessLog, Long> {
     
     /**
-     * 접근자 ID와 개인정보 유형으로 접근 로그 조회
+     * 테넌트별 접근자 ID와 개인정보 유형으로 접근 로그 조회 (테넌트 필터링)
      */
+    @Query("SELECT pdal FROM PersonalDataAccessLog pdal WHERE pdal.tenantId = :tenantId AND pdal.accessorId = :accessorId AND pdal.dataType = :dataType AND pdal.accessTime BETWEEN :startDate AND :endDate")
+    List<PersonalDataAccessLog> findByTenantIdAndAccessorIdAndDataTypeAndAccessTimeBetween(
+        @Param("tenantId") String tenantId, 
+        @Param("accessorId") String accessorId, 
+        @Param("dataType") String dataType, 
+        @Param("startDate") LocalDateTime startDate, 
+        @Param("endDate") LocalDateTime endDate);
+        
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 개인정보 접근 로그 노출!
+     */
+    @Deprecated
     List<PersonalDataAccessLog> findByAccessorIdAndDataTypeAndAccessTimeBetween(
         String accessorId, String dataType, LocalDateTime startDate, LocalDateTime endDate);
     
     /**
-     * 대상 사용자 ID로 접근 이력 조회
+     * 테넌트별 대상 사용자 ID로 접근 이력 조회 (테넌트 필터링)
      */
+    @Query("SELECT pdal FROM PersonalDataAccessLog pdal WHERE pdal.tenantId = :tenantId AND pdal.targetUserId = :targetUserId AND pdal.accessTime BETWEEN :startDate AND :endDate")
+    List<PersonalDataAccessLog> findByTenantIdAndTargetUserIdAndAccessTimeBetween(
+        @Param("tenantId") String tenantId,
+        @Param("targetUserId") String targetUserId, 
+        @Param("startDate") LocalDateTime startDate, 
+        @Param("endDate") LocalDateTime endDate);
+        
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 대상 사용자 접근 이력 노출!
+     */
+    @Deprecated
     List<PersonalDataAccessLog> findByTargetUserIdAndAccessTimeBetween(
         String targetUserId, LocalDateTime startDate, LocalDateTime endDate);
     

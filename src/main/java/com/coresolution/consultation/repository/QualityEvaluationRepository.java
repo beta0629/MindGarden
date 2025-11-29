@@ -26,6 +26,16 @@ public interface QualityEvaluationRepository extends JpaRepository<QualityEvalua
     
     List<QualityEvaluation> findByEvaluationStatusAndIsDeletedFalse(String evaluationStatus);
     
+    /**
+     * 테넌트별 상담사 평균 종합 점수 조회 (consultant.tenantId를 통한 간접 필터링)
+     */
+    @Query("SELECT AVG(qe.overallScore) FROM QualityEvaluation qe WHERE qe.tenantId = :tenantId AND qe.consultantId = :consultantId AND qe.isDeleted = false")
+    Double findAverageOverallScoreByTenantIdAndConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: 모든 테넌트 상담사 평균 점수 노출!
+     */
+    @Deprecated
     @Query("SELECT AVG(qe.overallScore) FROM QualityEvaluation qe WHERE qe.consultantId = :consultantId AND qe.isDeleted = false")
     Double findAverageOverallScoreByConsultantId(@Param("consultantId") Long consultantId);
     

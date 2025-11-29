@@ -4,19 +4,19 @@
 [data-theme="ios"] {
   /* iOS 기본 색상 팔레트 */
   --color-primary: var(--mg-primary-500);
-  --color-primary-hover: #0056CC;
-  --color-primary-active: #004499;
-  --color-primary-light: #E3F2FD;
-  --color-primary-dark: #003366;
+  --color-primary-hover: var(--cs-blue-700);
+  --color-primary-active: var(--cs-blue-800);
+  --color-primary-light: var(--cs-blue-50);
+  --color-primary-dark: var(--cs-blue-900);
 
-  --color-secondary: #8E8E93;
-  --color-secondary-hover: #6D6D70;
-  --color-secondary-active: #48484A;
-  --color-secondary-light: #F2F2F7;
-  --color-secondary-dark: #1C1C1E;
+  --color-secondary: var(--cs-gray-500);
+  --color-secondary-hover: var(--cs-gray-600);
+  --color-secondary-active: var(--cs-gray-700);
+  --color-secondary-light: var(--cs-gray-50);
+  --color-secondary-dark: var(--cs-gray-900);
 
   /* iOS 배경 색상 (부드럽게 조정) */
-  --color-bg-primary: #FAFAFA;
+  --color-bg-primary: var(--cs-gray-50);
   --color-bg-secondary: #F5F5F7;
   --color-bg-tertiary: var(--mg-gray-100);
   --color-bg-accent: #E8E8ED;

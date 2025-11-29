@@ -22,6 +22,22 @@ public interface SalaryCalculationRepository extends JpaRepository<SalaryCalcula
     List<SalaryCalculation> findByStatusAndCalculationPeriodStartBetween(
             SalaryCalculation.SalaryStatus status, LocalDate startDate, LocalDate endDate);
     
+    /**
+     * 테넌트별 상담사와 기간으로 급여 계산 조회 (테넌트 필터링)
+     */
+    @Query("SELECT sc FROM SalaryCalculation sc WHERE sc.tenantId = :tenantId AND sc.consultant = :consultant " +
+           "AND sc.calculationPeriodStart = :periodStart " +
+           "AND sc.calculationPeriodEnd = :periodEnd")
+    Optional<SalaryCalculation> findByTenantIdAndConsultantAndPeriod(
+            @Param("tenantId") String tenantId,
+            @Param("consultant") User consultant,
+            @Param("periodStart") LocalDate periodStart,
+            @Param("periodEnd") LocalDate periodEnd);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 상담사 급여 기간별 데이터 노출!
+     */
+    @Deprecated
     @Query("SELECT sc FROM SalaryCalculation sc WHERE sc.consultant = :consultant " +
            "AND sc.calculationPeriodStart = :periodStart " +
            "AND sc.calculationPeriodEnd = :periodEnd")
@@ -30,6 +46,22 @@ public interface SalaryCalculationRepository extends JpaRepository<SalaryCalcula
             @Param("periodStart") LocalDate periodStart,
             @Param("periodEnd") LocalDate periodEnd);
     
+    /**
+     * 테넌트별 지점별 최근 급여 계산 조회 (테넌트 필터링)
+     */
+    @Query("SELECT sc FROM SalaryCalculation sc WHERE sc.tenantId = :tenantId AND sc.branchCode = :branchCode " +
+           "AND sc.calculationPeriodStart BETWEEN :startDate AND :endDate " +
+           "ORDER BY sc.calculatedAt DESC")
+    List<SalaryCalculation> findRecentCalculationsByTenantIdAndBranch(
+            @Param("tenantId") String tenantId,
+            @Param("branchCode") String branchCode,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 지점별 급여 계산 데이터 노출!
+     */
+    @Deprecated
     @Query("SELECT sc FROM SalaryCalculation sc WHERE sc.branchCode = :branchCode " +
            "AND sc.calculationPeriodStart BETWEEN :startDate AND :endDate " +
            "ORDER BY sc.calculatedAt DESC")

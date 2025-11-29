@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import com.coresolution.consultation.entity.RecurringExpense;
 
@@ -18,8 +19,15 @@ import com.coresolution.consultation.entity.RecurringExpense;
 public interface RecurringExpenseRepository extends JpaRepository<RecurringExpense, Long> {
     
     /**
-     * 활성화된 모든 반복 지출 조회
+     * 테넌트별 활성화된 모든 반복 지출 조회 (테넌트 필터링)
      */
+    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId AND re.isActive = true")
+    List<RecurringExpense> findByTenantIdAndIsActiveTrue(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: 모든 테넌트 반복 지출 정보 노출!
+     */
+    @Deprecated
     List<RecurringExpense> findByIsActiveTrue();
     
     /**
@@ -33,8 +41,15 @@ public interface RecurringExpenseRepository extends JpaRepository<RecurringExpen
     List<RecurringExpense> findByCategoryAndIsActiveTrue(String category);
     
     /**
-     * 처리 예정인 반복 지출 조회 (지정 날짜 이하)
+     * 테넌트별 처리 예정인 반복 지출 조회 (테넌트 필터링)
      */
+    @Query("SELECT re FROM RecurringExpense re WHERE re.tenantId = :tenantId AND re.nextDueDate <= :targetDate AND re.isActive = true")
+    List<RecurringExpense> findByTenantIdAndNextDueDateLessThanEqualAndIsActiveTrue(@Param("tenantId") String tenantId, @Param("targetDate") LocalDate targetDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: 모든 테넌트 처리 예정 지출 노출!
+     */
+    @Deprecated
     List<RecurringExpense> findByNextDueDateLessThanEqualAndIsActiveTrue(LocalDate targetDate);
     
     /**

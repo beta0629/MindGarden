@@ -41,20 +41,20 @@ export const HEADER_STYLE_CONSTANTS = {
   // 색상
   COLORS: {
     PRIMARY: 'var(--mg-consultant-dark)',
-    PRIMARY_LIGHT: 'rgba(108, 92, 231, 0.1)',
-    PRIMARY_HOVER: 'rgba(108, 92, 231, 0.2)',
+    PRIMARY_LIGHT: 'var(--cs-brand-primary-light)',
+    PRIMARY_HOVER: 'var(--cs-brand-primary-hover-bg)',
     WHITE: 'var(--mg-white)',
     BORDER: 'var(--mg-gray-300)',
-    TEXT_PRIMARY: '#333',
-    TEXT_SECONDARY: '#666',
-    TEXT_MUTED: '#999',
+    TEXT_PRIMARY: 'var(--cs-gray-800)',
+    TEXT_SECONDARY: 'var(--cs-gray-600)',
+    TEXT_MUTED: 'var(--cs-gray-500)',
     BACKGROUND_LIGHT: 'var(--mg-gray-100)',
-    BACKGROUND_HOVER: 'rgba(0, 0, 0, 0.05)',
+    BACKGROUND_HOVER: 'var(--cs-bg-hover)',
     DANGER: 'var(--mg-error-500)',
-    DANGER_HOVER: '#c82333',
+    DANGER_HOVER: 'var(--cs-error-700)',
     NEUTRAL: 'var(--mg-gray-100)',
-    NEUTRAL_HOVER: '#e9ecef',
-    BORDER_LIGHT: '#dee2e6',
+    NEUTRAL_HOVER: 'var(--cs-gray-200)',
+    BORDER_LIGHT: 'var(--cs-border-secondary)',
   },
   
   // 크기
@@ -102,8 +102,8 @@ export const HEADER_STYLE_CONSTANTS = {
   // 그림자
   SHADOWS: {
     HEADER: '0 2px 4px var(--mg-shadow-light)',
-    LOGOUT_BUTTON: '0 4px 15px rgba(220, 53, 69, 0.4)',
-    LOGOUT_BUTTON_HOVER: '0 6px 20px rgba(220, 53, 69, 0.6)',
+    LOGOUT_BUTTON: 'var(--cs-shadow-error)',
+    LOGOUT_BUTTON_HOVER: 'var(--cs-shadow-error-strong)',
   },
   
   // Z-인덱스

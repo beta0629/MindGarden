@@ -22,34 +22,69 @@ import org.springframework.stereotype.Repository;
 public interface UserRepository extends BaseRepository<User, Long> {
     
     /**
-     * 사용자명으로 사용자 조회 (활성 상태만)
+     * 테넌트별 사용자명으로 사용자 조회 (테넌트 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.username = :username AND u.isDeleted = false")
+    Optional<User> findByTenantIdAndUsername(@Param("tenantId") String tenantId, @Param("username") String username);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.username = ?1 AND u.isDeleted = false")
     Optional<User> findByUsername(String username);
     
     /**
-     * 사용자명과 활성 상태로 사용자 조회 (삭제되지 않은 상태)
+     * 테넌트별 사용자명과 활성 상태로 사용자 조회 (테넌트 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.username = :username AND u.isActive = :isActive AND u.isDeleted = false")
+    Optional<User> findByTenantIdAndUsernameAndIsActive(@Param("tenantId") String tenantId, @Param("username") String username, @Param("isActive") Boolean isActive);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.username = ?1 AND u.isActive = ?2 AND u.isDeleted = false")
     Optional<User> findByUsernameAndIsActive(String username, Boolean isActive);
     
     /**
-     * 사용자명으로 사용자 존재 여부 확인 (활성 상태만)
+     * 테넌트별 사용자명으로 사용자 존재 여부 확인 (테넌트 필터링)
      */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.tenantId = :tenantId AND u.username = :username AND u.isDeleted = false")
+    boolean existsByTenantIdAndUsername(@Param("tenantId") String tenantId, @Param("username") String username);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자명 중복 검사!
+     */
+    @Deprecated
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.username = ?1 AND u.isDeleted = false")
     boolean existsByUsername(String username);
     
     /**
-     * 만료된 사용자 데이터 조회 (파기용)
+     * 테넌트별 만료된 사용자 데이터 조회 (테넌트 필터링)
      */
+    @Query("SELECT u.id, u.name FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = true AND u.updatedAt < :cutoffDate")
+    List<Object[]> findExpiredUsersForDestructionByTenantId(@Param("tenantId") String tenantId, @Param("cutoffDate") LocalDateTime cutoffDate);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 만료된 사용자 데이터 노출!
+     */
+    @Deprecated
     @Query("SELECT u.id, u.name FROM User u WHERE u.isDeleted = true AND u.updatedAt < ?1")
     List<Object[]> findExpiredUsersForDestruction(LocalDateTime cutoffDate);
     
     /**
-     * 이메일로 사용자 조회 (활성 상태만)
+     * 테넌트별 이메일로 사용자 조회 (테넌트 필터링)
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.email = :email AND u.isDeleted = false")
+    Optional<User> findByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 이메일 정보 노출!
      * 주의: 멀티 테넌트 사용자의 경우 첫 번째 결과만 반환
      * 모든 테넌트의 사용자를 조회하려면 findAllByEmail 사용
      */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.email = ?1 AND u.isDeleted = false")
     Optional<User> findByEmail(String email);
     

@@ -4,6 +4,10 @@ import java.util.Arrays;
 import java.util.List;
 import com.coresolution.core.filter.TenantContextFilter;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
+import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,6 +40,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
     
     private final SessionBasedAuthenticationFilter sessionBasedAuthenticationFilter;
+    @Autowired
+    private Environment environment;
+    
     private final TenantContextFilter tenantContextFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     
@@ -57,7 +64,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // CORS 설정
+            // CORS 설정 - 모든 요청에 대해 허용
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
             // TenantContextFilter를 가장 먼저 실행 (테넌트 컨텍스트 설정)
@@ -144,9 +151,10 @@ public class SecurityConfig {
                     .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
                 )
                 
-                // 개발 환경: 대부분 허용하되 @PreAuthorize는 여전히 작동
-                // Ops Portal API는 JWT 인증 필요 (단, 공개 엔드포인트 제외)
+                // 개발 환경: CORS preflight 요청 포함하여 대부분 허용
                 .authorizeHttpRequests(authz -> authz
+                    // CORS preflight 요청 허용
+                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
                         "/api/v1/ops/plans/active",           // 활성화된 요금제 목록 (공개)
@@ -198,25 +206,45 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // 환경별 Origin 설정
-        if (isProductionEnvironment()) {
-            // 운영 환경: 특정 도메인만 허용
-            if (System.getenv("ALLOWED_ORIGINS") != null) {
-                configuration.setAllowedOrigins(Arrays.asList(System.getenv("ALLOWED_ORIGINS").split(",")));
-            } else {
-                configuration.setAllowedOrigins(List.of("http://m-garden.co.kr", "https://m-garden.co.kr"));
-            }
-            } else {
-                // 개발 환경: 환경 변수에서 허용할 Origin 가져오기
-                String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
-                if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
-                    List<String> origins = Arrays.asList(allowedOrigins.split(","));
-                    configuration.setAllowedOrigins(origins);
-                    // CORS 허용 Origin 설정 완료 (환경 변수 사용)
-                } else {
-                    // 개발 환경: 모든 Origin 허용 (편의성 우선)
-                    configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-                }
+        // 환경별 CORS 설정
+        String[] activeProfiles = environment.getActiveProfiles();
+        boolean isLocal = activeProfiles.length == 0 || Arrays.asList(activeProfiles).contains("local");
+        boolean isDev = Arrays.asList(activeProfiles).contains("dev");
+        boolean isProd = Arrays.asList(activeProfiles).contains("prod");
+        
+        // 디버깅: 현재 프로파일 로그 출력
+        System.out.println("🔧 Active Profiles: " + Arrays.toString(activeProfiles));
+        System.out.println("🔧 isLocal: " + isLocal + ", isDev: " + isDev + ", isProd: " + isProd);
+        
+        if (isProd) {
+            // 운영: 실제 운영 도메인들
+            configuration.setAllowedOrigins(Arrays.asList(
+                "https://core-solution.co.kr", 
+                "http://core-solution.co.kr",
+                "https://apply.e-trinity.co.kr", 
+                "http://apply.e-trinity.co.kr",
+                "https://ops.e-trinity.co.kr", 
+                "http://ops.e-trinity.co.kr",
+                "https://m-garden.co.kr",
+                "http://m-garden.co.kr"
+            ));
+        } else if (isDev) {
+            // 개발: 실제 개발 도메인들 + localhost
+            configuration.setAllowedOrigins(Arrays.asList(
+                "https://dev.core-solution.co.kr",
+                "http://dev.core-solution.co.kr", 
+                "https://apply.dev.e-trinity.co.kr",
+                "http://apply.dev.e-trinity.co.kr",
+                "https://ops.dev.e-trinity.co.kr",
+                "http://ops.dev.e-trinity.co.kr",
+                "https://dev.m-garden.co.kr",
+                "http://dev.m-garden.co.kr",
+                "http://localhost:3000", 
+                "http://localhost:3001"
+            ));
+        } else {
+            // 로컬: 모든 Origin 허용
+            configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         }
         
         // 허용할 HTTP 메서드 설정

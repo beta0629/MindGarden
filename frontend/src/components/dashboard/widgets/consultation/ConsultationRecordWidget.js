@@ -1,160 +1,141 @@
 /**
- * Consultation Record Widget
- * 상담소 특화 상담일지 위젯
- * ConsultationRecordSection을 기반으로 위젯화
+ * Consultation Record Widget - 표준화된 위젯
+ * 상담 기록 위젯
  * 
  * @author CoreSolution
- * @version 1.0.0
- * @since 2025-11-22
+ * @version 2.0.0 (위젯 표준화 업그레이드)
+ * @since 2025-11-29
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet } from '../../../../utils/ajax';
-// import UnifiedLoading from '../../../../components/common/UnifiedLoading'; // 임시 비활성화
-import '../Widget.css';
+import { FileText, Eye, Calendar, User, Plus, BookOpen } from 'lucide-react';
+import { useWidget } from '../../../../hooks/useWidget';
+import BaseWidget from '../BaseWidget';
+import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
+import './ConsultationRecordWidget.css';
 
 const ConsultationRecordWidget = ({ widget, user }) => {
-  const navigate = useNavigate();
-  const [recordStats, setRecordStats] = useState({
-    totalRecords: 0,
-    todayRecords: 0,
-    pendingRecords: 0,
-    recentRecords: []
-  });
-  const [loading, setLoading] = useState(true);
-  
-  const config = widget.config || {};
-  const dataSource = config.dataSource || {};
-  const consultantId = user?.id || config.consultantId;
-  
-  useEffect(() => {
-    if (dataSource.type === 'api' && dataSource.url && consultantId) {
-      loadRecordStats();
-      
-      if (dataSource.refreshInterval) {
-        const interval = setInterval(loadRecordStats, dataSource.refreshInterval);
-        return () => clearInterval(interval);
-      }
-    } else if (config.recordStats) {
-      setRecordStats(config.recordStats);
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, [consultantId]);
-  
-  const loadRecordStats = async () => {
-    try {
-      setLoading(true);
-      
-      const url = dataSource.url || `/api/consultant/${consultantId}/consultation-records`;
-      const response = await apiGet(url);
-      
-      if (response && response.data) {
-        const records = response.data;
-        const today = new Date().toISOString().split('T')[0];
-        
-        const todayRecords = records.filter(record => 
-          record.sessionDate && record.sessionDate.startsWith(today)
-        ).length;
-        
-        setRecordStats({
-          totalRecords: records.length,
-          todayRecords: todayRecords,
-          pendingRecords: records.filter(record => !record.isCompleted).length,
-          recentRecords: records.slice(0, 3)
-        });
-      }
-    } catch (err) {
-      console.error('ConsultationRecordWidget 데이터 로드 실패:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleViewAll = () => {
-    if (config.viewAllUrl) {
-      navigate(config.viewAllUrl);
-    } else {
-      navigate('/consultant/consultation-records');
-    }
-  };
-  
-  const handleCreateRecord = () => {
-    if (config.createRecordUrl) {
-      navigate(config.createRecordUrl);
-    } else {
-      navigate('/consultant/schedule');
-    }
-  };
-  
-  if (loading && !recordStats.totalRecords) {
-    return (
-      <div className="widget widget-consultation-record">
-        <div className="mg-loading">로딩중...</div>
-      </div>
-    );
+  if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
+    return null;
   }
-  
-  return (
-    <div className="widget widget-consultation-record">
-      <div className="widget-header">
-        <div className="widget-title">
-          <i className="bi bi-file-text"></i>
-          {config.title || '상담일지'}
-        </div>
-        <div className="widget-actions">
-          <button className="widget-btn widget-btn-sm" onClick={handleViewAll}>
-            전체보기
-          </button>
-          <button className="widget-btn widget-btn-primary widget-btn-sm" onClick={handleCreateRecord}>
-            작성하기
-          </button>
-        </div>
-      </div>
-      <div className="widget-body">
-        <div className="consultation-record-stats">
-          <div className="record-stat-item">
-            <div className="record-stat-label">전체</div>
-            <div className="record-stat-value">{recordStats.totalRecords}건</div>
+
+  const navigate = useNavigate();
+
+  const getDataSourceConfig = () => ({
+    type: 'api',
+    url: '/api/consultation-records',
+    method: 'GET',
+    params: { 
+      limit: widget.config?.maxItems || 5,
+      ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
+    },
+    refreshInterval: 120000,
+    cache: true
+  });
+
+  const transform = (rawData) => {
+    if (!rawData) return { records: [], hasData: false };
+    return {
+      records: Array.isArray(rawData) ? rawData : [],
+      hasData: Array.isArray(rawData) && rawData.length > 0
+    };
+  };
+
+  const widgetWithDataSource = {
+    ...widget,
+    config: { ...widget.config, dataSource: getDataSourceConfig(), transform }
+  };
+
+  const { data, loading, error, hasData, refresh } = useWidget(widgetWithDataSource, user, {
+    immediate: true,
+    cache: true
+  });
+
+  const formatDate = (datetime) => {
+    return new Date(datetime).toLocaleDateString('ko-KR');
+  };
+
+  const renderContent = () => {
+    if (!hasData) {
+      return (
+        <div className="record-empty-state">
+          <div className="empty-icon-wrapper">
+            <BookOpen className="empty-icon" />
           </div>
-          <div className="record-stat-item">
-            <div className="record-stat-label">오늘</div>
-            <div className="record-stat-value">{recordStats.todayRecords}건</div>
-          </div>
-          <div className="record-stat-item">
-            <div className="record-stat-label">미완료</div>
-            <div className="record-stat-value">{recordStats.pendingRecords}건</div>
-          </div>
+          <h3 className="empty-title">상담 기록 없음</h3>
+          <p className="empty-description">상담 완료 후 기록이 표시됩니다.</p>
         </div>
-        
-        {recordStats.recentRecords.length > 0 && (
-          <div className="consultation-record-recent">
-            <div className="record-recent-title">최근 상담일지</div>
-            {recordStats.recentRecords.map((record, index) => (
-              <div key={record.id || index} className="record-recent-item">
-                <div className="record-recent-date">
-                  {new Date(record.sessionDate).toLocaleDateString('ko-KR')}
+      );
+    }
+
+    const { records } = data;
+
+    return (
+      <div className="record-content">
+        <div className="record-list">
+          {records.map((record) => (
+            <div key={record.id} className="record-item">
+              <div className="record-icon">
+                <FileText />
+              </div>
+              <div className="record-info">
+                <div className="record-title">{record.title || '상담 기록'}</div>
+                <div className="record-details">
+                  <div className="detail-item">
+                    <User className="detail-icon" />
+                    <span>{record.clientName}</span>
+                  </div>
+                  <div className="detail-item">
+                    <Calendar className="detail-icon" />
+                    <span>{formatDate(record.createdAt)}</span>
+                  </div>
                 </div>
-                <div className="record-recent-title-text">
-                  {record.title || record.clientName || '상담일지'}
-                </div>
-                {record.isCompleted ? (
-                  <i className="bi bi-check-circle text-success"></i>
-                ) : (
-                  <i className="bi bi-clock text-warning"></i>
+                {record.summary && (
+                  <div className="record-summary">{record.summary}</div>
                 )}
               </div>
-            ))}
-          </div>
-        )}
+              <button 
+                className="record-view-btn" 
+                onClick={() => navigate(`/records/${record.id}`)}
+              >
+                <Eye className="view-icon" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="record-actions">
+          <button className="mg-btn mg-btn-ghost mg-btn-sm" onClick={() => navigate('/records')}>
+            전체 기록 보기
+          </button>
+        </div>
       </div>
-    </div>
+    );
+  };
+
+  const headerConfig = {
+    icon: <FileText className="widget-header-icon" />,
+    subtitle: '최근 상담 기록',
+    actions: [
+      { icon: 'RefreshCw', label: '새로고침', onClick: refresh },
+      { icon: 'Plus', label: '기록 작성', onClick: () => navigate('/records/new') }
+    ]
+  };
+
+  return (
+    <BaseWidget
+      widget={widget}
+      user={user}
+      loading={loading}
+      error={error}
+      hasData={hasData}
+      onRefresh={refresh}
+      headerConfig={headerConfig}
+      className="consultation-record-widget"
+    >
+      {renderContent()}
+    </BaseWidget>
   );
 };
 
 export default ConsultationRecordWidget;
-
-
-

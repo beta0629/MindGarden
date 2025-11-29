@@ -38,11 +38,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class PurchaseRequest {
+public class PurchaseRequest extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requester_id", nullable = false)
@@ -82,19 +79,15 @@ public class PurchaseRequest {
     @JoinColumn(name = "super_admin_approver_id")
     private User superAdminApprover;
     
-    @Column
+    // @Column
     private LocalDateTime superAdminApprovedAt;
     
-    @Column(length = 500)
+    // @Column(length = 500)
     private String superAdminComment;
     
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    // @Column(nullable = false, updatable = false)
     
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    // @Column(nullable = false)
     
     @Column(name = "is_active", nullable = false)
     @Builder.Default

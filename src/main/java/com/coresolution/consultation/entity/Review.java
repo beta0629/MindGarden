@@ -31,11 +31,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Review {
+public class Review extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     
     @Column(name = "consultation_id", nullable = false)
     private Long consultationId;
@@ -49,31 +46,19 @@ public class Review {
     @Column(name = "rating", nullable = false)
     private Integer rating;
     
-    @Column(name = "review_text", columnDefinition = "TEXT")
+    // @Column(name = "review_text", columnDefinition = "TEXT")
     private String reviewText;
     
-    @Column(name = "is_anonymous")
+    // @Column(name = "is_anonymous")
     private Boolean isAnonymous = false;
     
-    @Column(name = "is_verified")
+    // @Column(name = "is_verified")
     private Boolean isVerified = false;
     
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
     
-    @Column(name = "created_at")
-    @CreationTimestamp
-    private LocalDateTime createdAt;
     
-    @Column(name = "updated_at")
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
     
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
     
-    @Column(name = "version")
-    private Long version = 1L;
     
     // 연관관계 매핑
     @ManyToOne(fetch = FetchType.LAZY)

@@ -21,13 +21,27 @@ import org.springframework.stereotype.Repository;
 public interface PerformanceAlertRepository extends JpaRepository<PerformanceAlert, Long> {
 
     /**
-     * 특정 상담사의 알림 조회
+     * 테넌트별 특정 상담사의 알림 조회 (테넌트 필터링)
      */
+    @Query("SELECT pa FROM PerformanceAlert pa WHERE pa.tenantId = :tenantId AND pa.consultantId = :consultantId ORDER BY pa.createdAt DESC")
+    List<PerformanceAlert> findByTenantIdAndConsultantIdOrderByCreatedAtDesc(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 상담사 성과 알림 노출!
+     */
+    @Deprecated
     List<PerformanceAlert> findByConsultantIdOrderByCreatedAtDesc(Long consultantId);
 
     /**
-     * 상태별 알림 조회
+     * 테넌트별 상태별 알림 조회 (테넌트 필터링)
      */
+    @Query("SELECT pa FROM PerformanceAlert pa WHERE pa.tenantId = :tenantId AND pa.status = :status ORDER BY pa.createdAt DESC")
+    List<PerformanceAlert> findByTenantIdAndStatusOrderByCreatedAtDesc(@Param("tenantId") String tenantId, @Param("status") PerformanceAlert.AlertStatus status);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 상태별 성과 알림 노출!
+     */
+    @Deprecated
     List<PerformanceAlert> findByStatusOrderByCreatedAtDesc(PerformanceAlert.AlertStatus status);
 
     /**

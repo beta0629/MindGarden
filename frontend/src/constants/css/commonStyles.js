@@ -9,9 +9,9 @@
 export const COMMON_COLORS = {
   // 메인 컬러 팔레트
   PRIMARY: 'var(--mg-consultant-dark)',
-  PRIMARY_LIGHT: 'rgba(108, 92, 231, 0.1)',
-  PRIMARY_HOVER: 'rgba(108, 92, 231, 0.2)',
-  PRIMARY_DARK: '#5a4fcf',
+  PRIMARY_LIGHT: 'var(--cs-brand-primary-light)',
+  PRIMARY_HOVER: 'var(--cs-brand-primary-hover-bg)',
+  PRIMARY_DARK: 'var(--cs-brand-primary-hover)',
   
   // 기본 색상
   WHITE: 'var(--mg-white)',
@@ -19,16 +19,16 @@ export const COMMON_COLORS = {
   TRANSPARENT: 'transparent',
   
   // 그레이 스케일
-  GRAY_50: '#f9fafb',
-  GRAY_100: '#f3f4f6',
-  GRAY_200: '#e5e7eb',
-  GRAY_300: '#d1d5db',
-  GRAY_400: '#9ca3af',
-  GRAY_500: '#6b7280',
-  GRAY_600: '#4b5563',
-  GRAY_700: '#374151',
-  GRAY_800: '#1f2937',
-  GRAY_900: '#111827',
+  GRAY_50: 'var(--cs-gray-50)',
+  GRAY_100: 'var(--cs-gray-100)',
+  GRAY_200: 'var(--cs-gray-200)',
+  GRAY_300: 'var(--cs-gray-300)',
+  GRAY_400: 'var(--cs-gray-400)',
+  GRAY_500: 'var(--cs-gray-500)',
+  GRAY_600: 'var(--cs-gray-600)',
+  GRAY_700: 'var(--cs-gray-700)',
+  GRAY_800: 'var(--cs-gray-800)',
+  GRAY_900: 'var(--cs-gray-900)',
   
   // 텍스트 색상
   TEXT_PRIMARY: 'var(--mg-gray-800)',
@@ -41,30 +41,30 @@ export const COMMON_COLORS = {
   BG_PRIMARY: 'var(--mg-white)',
   BG_SECONDARY: 'var(--mg-gray-100)',
   BG_LIGHT: 'var(--mg-gray-100)',
-  BG_DARK: '#2d3748',
-  BG_HOVER: 'rgba(0, 0, 0, 0.05)',
+  BG_DARK: 'var(--cs-bg-dark)',
+  BG_HOVER: 'var(--cs-bg-hover)',
   BG_OVERLAY: 'var(--mg-overlay)',
   
   // 테두리 색상
   BORDER_PRIMARY: 'var(--mg-gray-300)',
-  BORDER_SECONDARY: '#dee2e6',
-  BORDER_LIGHT: '#f0f0f0',
-  BORDER_DARK: '#d1d5db',
+  BORDER_SECONDARY: 'var(--cs-border-secondary)',
+  BORDER_LIGHT: 'var(--cs-border-light)',
+  BORDER_DARK: 'var(--cs-gray-300)',
   
   // 상태 색상
   SUCCESS: 'var(--mg-success-500)',
-  SUCCESS_LIGHT: '#d4edda',
+  SUCCESS_LIGHT: 'var(--cs-success-100)',
   WARNING: 'var(--mg-warning-500)',
-  WARNING_LIGHT: '#fff3cd',
+  WARNING_LIGHT: 'var(--cs-warning-100)',
   ERROR: 'var(--mg-error-500)',
-  ERROR_LIGHT: '#f8d7da',
+  ERROR_LIGHT: 'var(--cs-error-100)',
   INFO: 'var(--mg-info-500)',
-  INFO_LIGHT: '#d1ecf1',
+  INFO_LIGHT: 'var(--cs-blue-100)',
   
   // 브랜드 색상
   BRAND_PRIMARY: 'var(--mg-consultant-dark)',
   BRAND_SECONDARY: 'var(--mg-consultant-primary)',
-  BRAND_ACCENT: '#fd79a8',
+  BRAND_ACCENT: 'var(--cs-brand-accent)',
 };
 
 // 공통 크기 시스템
@@ -123,14 +123,14 @@ export const COMMON_SIZES = {
 // 공통 그림자 시스템
 export const COMMON_SHADOWS = {
   NONE: 'none',
-  XS: '0 1px 2px rgba(0, 0, 0, 0.05)',
-  SM: '0 1px 3px var(--mg-shadow-light), 0 1px 2px rgba(0, 0, 0, 0.06)',
-  MD: '0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06)',
-  LG: '0 10px 15px var(--mg-shadow-light), 0 4px 6px rgba(0, 0, 0, 0.05)',
-  XL: '0 20px 25px var(--mg-shadow-light), 0 10px 10px rgba(0, 0, 0, 0.04)',
-  XXL: '0 25px 50px rgba(0, 0, 0, 0.25)',
-  INNER: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)',
-  OUTLINE: '0 0 0 3px rgba(108, 92, 231, 0.1)',
+  XS: 'var(--cs-shadow-xs)',
+  SM: 'var(--cs-shadow-sm-multi)',
+  MD: 'var(--cs-shadow-md-multi)',
+  LG: 'var(--cs-shadow-lg-multi)',
+  XL: 'var(--cs-shadow-xl-multi)',
+  XXL: 'var(--cs-shadow-xxl)',
+  INNER: 'var(--cs-shadow-inner)',
+  OUTLINE: 'var(--cs-shadow-outline)',
 };
 
 // 공통 애니메이션 시스템

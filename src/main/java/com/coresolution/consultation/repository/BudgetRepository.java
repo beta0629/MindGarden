@@ -19,14 +19,28 @@ import org.springframework.stereotype.Repository;
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
     
     /**
-     * 활성화된 예산 목록 조회
+     * 테넌트별 활성화된 예산 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT b FROM Budget b WHERE b.tenantId = :tenantId AND b.status = 'ACTIVE' ORDER BY b.year DESC, b.month DESC, b.name")
+    List<Budget> findAllActiveByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 예산 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT b FROM Budget b WHERE b.status = 'ACTIVE' ORDER BY b.year DESC, b.month DESC, b.name")
     List<Budget> findAllActive();
     
     /**
-     * 연도별 예산 목록 조회
+     * 테넌트별 연도별 예산 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT b FROM Budget b WHERE b.tenantId = :tenantId AND b.year = :year AND b.status = 'ACTIVE' ORDER BY b.month DESC, b.name")
+    List<Budget> findByTenantIdAndYearAndActive(@Param("tenantId") String tenantId, @Param("year") String year);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 연도별 예산 노출!
+     */
+    @Deprecated
     @Query("SELECT b FROM Budget b WHERE b.year = :year AND b.status = 'ACTIVE' ORDER BY b.month DESC, b.name")
     List<Budget> findByYearAndActive(@Param("year") String year);
     
@@ -43,8 +57,15 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
     List<Budget> findByCategoryAndActive(@Param("category") String category);
     
     /**
-     * 관리자별 예산 목록 조회
+     * 테넌트별 관리자별 예산 목록 조회 (테넌트 필터링)
      */
+    @Query("SELECT b FROM Budget b WHERE b.tenantId = :tenantId AND b.manager.id = :managerId AND b.status = 'ACTIVE' ORDER BY b.year DESC, b.month DESC")
+    List<Budget> findByTenantIdAndManagerIdAndActive(@Param("tenantId") String tenantId, @Param("managerId") Long managerId);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 관리자별 예산 노출!
+     */
+    @Deprecated
     @Query("SELECT b FROM Budget b WHERE b.manager.id = :managerId AND b.status = 'ACTIVE' ORDER BY b.year DESC, b.month DESC")
     List<Budget> findByManagerIdAndActive(@Param("managerId") Long managerId);
     

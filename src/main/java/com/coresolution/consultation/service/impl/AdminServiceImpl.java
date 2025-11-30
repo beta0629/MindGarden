@@ -2320,6 +2320,7 @@ public class AdminServiceImpl implements AdminService {
     @Transactional(rollbackFor = Exception.class)
     public void terminateMapping(Long id, String reason) {
         log.info("🔧 매칭 강제 종료 처리 시작: ID={}, 사유={}", id, reason);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다."));

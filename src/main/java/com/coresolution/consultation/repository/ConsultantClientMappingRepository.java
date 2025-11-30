@@ -24,7 +24,11 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     @Deprecated
     List<ConsultantClientMapping> findByStatus(ConsultantClientMapping.MappingStatus status);
     
-    // 상담사와 내담자로 특정 매칭 조회 (중복 결과 방지를 위해 List로 변경)
+    // 상담사와 내담자로 특정 매칭 조회 (tenantId 필터링)
+    List<ConsultantClientMapping> findByTenantIdAndConsultantAndClient(String tenantId, User consultant, User client);
+    
+    // @Deprecated - 🚨 위험: tenantId 필터링 없이 매칭 접근!
+    @Deprecated
     List<ConsultantClientMapping> findByConsultantAndClient(User consultant, User client);
     
     // 상담사와 내담자로 활성 상태의 매칭 존재 여부 확인

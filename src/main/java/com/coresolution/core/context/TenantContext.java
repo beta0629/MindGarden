@@ -12,6 +12,7 @@ public class TenantContext {
     
     private static final ThreadLocal<String> tenantId = new ThreadLocal<>();
     private static final ThreadLocal<String> branchId = new ThreadLocal<>();
+    private static final ThreadLocal<String> businessType = new ThreadLocal<>();
     
     /**
      * 현재 요청의 테넌트 ID 설정
@@ -68,12 +69,40 @@ public class TenantContext {
     }
     
     /**
+     * 현재 요청의 비즈니스 타입 설정
+     * 
+     * @param businessType 비즈니스 타입 (CONSULTATION, ACADEMY, RESTAURANT 등)
+     */
+    public static void setBusinessType(String businessType) {
+        TenantContext.businessType.set(businessType);
+    }
+    
+    /**
+     * 현재 요청의 비즈니스 타입 조회
+     * 
+     * @return 비즈니스 타입 (없으면 null)
+     */
+    public static String getBusinessType() {
+        return businessType.get();
+    }
+    
+    /**
+     * 비즈니스 타입 존재 여부 확인
+     * 
+     * @return 비즈니스 타입이 설정되어 있으면 true
+     */
+    public static boolean hasBusinessType() {
+        return businessType.get() != null;
+    }
+    
+    /**
      * ThreadLocal 정리 (요청 종료 시 호출)
      * 메모리 누수 방지를 위해 반드시 호출해야 함
      */
     public static void clear() {
         tenantId.remove();
         branchId.remove();
+        businessType.remove();
     }
     
     /**
@@ -85,6 +114,19 @@ public class TenantContext {
     public static void set(String tenantId, String branchId) {
         setTenantId(tenantId);
         setBranchId(branchId);
+    }
+    
+    /**
+     * 모든 컨텍스트 정보 초기화 및 설정 (비즈니스 타입 포함)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @param branchId 지점 ID
+     * @param businessType 비즈니스 타입
+     */
+    public static void set(String tenantId, String branchId, String businessType) {
+        setTenantId(tenantId);
+        setBranchId(branchId);
+        setBusinessType(businessType);
     }
 }
 

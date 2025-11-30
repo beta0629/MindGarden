@@ -19,6 +19,7 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.WorkflowAutomationService;
 import com.coresolution.consultation.util.CommonCodeConstants;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -167,12 +168,18 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
         log.info("📊 일일 성과 요약 알림 시작");
         
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return;
+            }
+            
             LocalDate today = LocalDate.now();
             
             // 상담사 조회
             // 공통코드에서 상담사 역할 코드 조회
             String consultantRoleCode = getRoleCodeFromCommonCode("CONSULTANT");
-            List<User> consultants = userRepository.findByRoleAndIsDeletedFalse(consultantRoleCode);
+            List<User> consultants = userRepository.findByRoleAndIsDeletedFalse(tenantId, consultantRoleCode);
             
             for (User consultant : consultants) {
                 try {
@@ -226,6 +233,12 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
         log.info("📈 월간 성과 리포트 생성 시작");
         
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return;
+            }
+            
             LocalDate lastMonth = LocalDate.now().minusMonths(1);
             LocalDate firstDayOfLastMonth = lastMonth.withDayOfMonth(1);
             LocalDate lastDayOfLastMonth = lastMonth.withDayOfMonth(lastMonth.lengthOfMonth());
@@ -252,8 +265,8 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             String adminRoleCode = getRoleCodeFromCommonCode("ADMIN");
             String branchSuperAdminRoleCode = getRoleCodeFromCommonCode("BRANCH_SUPER_ADMIN");
             String hqMasterRoleCode = getRoleCodeFromCommonCode("HQ_MASTER");
-            List<User> admins = userRepository.findByRoleInAndIsDeletedFalse(
-                List.of(adminRoleCode, branchSuperAdminRoleCode, hqMasterRoleCode));
+            List<String> roleList = List.of(adminRoleCode, branchSuperAdminRoleCode, hqMasterRoleCode);
+            List<User> admins = userRepository.findByRoleInAndIsDeletedFalse(tenantId, roleList);
             
             for (User admin : admins) {
                 consultationMessageService.sendMessage(

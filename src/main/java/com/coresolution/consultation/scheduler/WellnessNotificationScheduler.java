@@ -17,6 +17,7 @@ import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.WellnessTemplateService;
 import com.coresolution.consultation.service.impl.HealingContentServiceImpl;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
@@ -112,9 +113,15 @@ public class WellnessNotificationScheduler {
      */
     private void createReadStatusForAllUsers(Long notificationId) {
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return;
+            }
+            
             // CLIENT와 CONSULTANT 사용자 조회
-            List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(UserRole.CLIENT);
-            List<User> consultantUsers = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
+            List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
+            List<User> consultantUsers = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
             
             log.info("👥 CLIENT 사용자 수: {}", clientUsers.size());
             log.info("👥 CONSULTANT 사용자 수: {}", consultantUsers.size());

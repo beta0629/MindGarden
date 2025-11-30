@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.SuperAdminService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -103,7 +105,13 @@ public class SuperAdminServiceImpl implements SuperAdminService {
         try {
             log.info("수퍼어드민 목록 조회 시작");
             
-            List<User> superAdmins = userRepository.findByRole(UserRole.HQ_MASTER)
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return ResponseEntity.badRequest().body("tenantId가 설정되지 않았습니다");
+            }
+            
+            List<User> superAdmins = userRepository.findByRole(tenantId, UserRole.HQ_MASTER)
                 .stream()
                 .filter(user -> !user.isDeleted())
                 .collect(Collectors.toList());

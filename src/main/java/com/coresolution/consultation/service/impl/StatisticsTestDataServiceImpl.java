@@ -20,6 +20,7 @@ import com.coresolution.consultation.repository.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.StatisticsTestDataService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -54,9 +55,17 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
         List<Long> createdScheduleIds = new ArrayList<>();
         
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                result.put("success", false);
+                result.put("message", "tenantId가 설정되지 않았습니다");
+                return result;
+            }
+            
             // 해당 지점의 상담사들 조회
             List<User> consultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(
-                UserRole.CONSULTANT, branchCode);
+                tenantId, UserRole.CONSULTANT, branchCode);
             
             if (consultants.isEmpty()) {
                 result.put("success", false);
@@ -66,7 +75,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             
             // 해당 지점의 내담자들 조회 (없으면 상담사를 내담자로 사용)
             List<User> clients = userRepository.findByRoleAndIsActiveTrueAndBranchCode(
-                UserRole.CLIENT, branchCode);
+                tenantId, UserRole.CLIENT, branchCode);
             
             if (clients.isEmpty()) {
                 // 테스트용으로 상담사를 내담자로 사용

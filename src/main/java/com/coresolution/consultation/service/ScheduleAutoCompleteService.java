@@ -8,6 +8,7 @@ import java.util.List;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,12 @@ public class ScheduleAutoCompleteService {
     @Scheduled(cron = "0 */10 * * * *") // 10분마다 실행 (운영용)
     public void autoCompleteExpiredSchedules() {
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return;
+            }
+            
             log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 시작 (스케줄러)");
             
             LocalDateTime now = LocalDateTime.now();
@@ -48,7 +55,7 @@ public class ScheduleAutoCompleteService {
             int reminderSentCount = 0;
             
             // 1. 오늘 날짜의 시간이 지난 스케줄 조회
-            List<Schedule> todayExpiredSchedules = scheduleRepository.findExpiredConfirmedSchedules(today, currentTime);
+            List<Schedule> todayExpiredSchedules = scheduleRepository.findExpiredConfirmedSchedules(tenantId, today, currentTime);
             for (Schedule schedule : todayExpiredSchedules) {
                 try {
                     if (ScheduleStatus.BOOKED.equals(schedule.getStatus()) || ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
@@ -94,9 +101,9 @@ public class ScheduleAutoCompleteService {
             
             // 2. 지난 날짜의 예약된/확정된 스케줄 조회
             List<Schedule> pastBookedSchedules = scheduleRepository.findByDateBeforeAndStatus(
-                today, ScheduleStatus.BOOKED);
+                tenantId, today, ScheduleStatus.BOOKED);
             List<Schedule> pastConfirmedSchedules = scheduleRepository.findByDateBeforeAndStatus(
-                today, ScheduleStatus.CONFIRMED);
+                tenantId, today, ScheduleStatus.CONFIRMED);
             
             // 지난 날짜의 스케줄들도 PL/SQL 기반으로 처리
             List<Schedule> allPastSchedules = new ArrayList<>();

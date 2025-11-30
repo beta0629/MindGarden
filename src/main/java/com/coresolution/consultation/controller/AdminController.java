@@ -747,6 +747,193 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     * 오늘의 통계 조회 (위젯용)
+     * GET /api/admin/today-stats
+     */
+    @GetMapping("/today-stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getTodayStats(HttpSession session) {
+        log.info("📊 오늘의 통계 조회 API 호출");
+        
+        try {
+            // 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "DASHBOARD_VIEW", dynamicPermissionService);
+            if (permissionResponse != null) {
+                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+            }
+            
+            // 오늘 날짜
+            java.time.LocalDate today = java.time.LocalDate.now();
+            
+            // 오늘의 스케줄 조회 (모든 상담사)
+            List<com.coresolution.consultation.entity.Schedule> todaySchedules = scheduleService.getSchedulesByDate(today, null);
+            
+            // 통계 계산
+            long totalToday = todaySchedules.size();
+            long completedToday = todaySchedules.stream()
+                .filter(s -> "COMPLETED".equals(s.getStatus() != null ? s.getStatus().toString() : ""))
+                .count();
+            long inProgressToday = todaySchedules.stream()
+                .filter(s -> "IN_PROGRESS".equals(s.getStatus() != null ? s.getStatus().toString() : ""))
+                .count();
+            long cancelledToday = todaySchedules.stream()
+                .filter(s -> "CANCELLED".equals(s.getStatus() != null ? s.getStatus().toString() : ""))
+                .count();
+            long bookedToday = todaySchedules.stream()
+                .filter(s -> "BOOKED".equals(s.getStatus() != null ? s.getStatus().toString() : ""))
+                .count();
+            
+            Map<String, Object> stats = new java.util.HashMap<>();
+            stats.put("totalToday", totalToday);
+            stats.put("completedToday", completedToday);
+            stats.put("inProgressToday", inProgressToday);
+            stats.put("cancelledToday", cancelledToday);
+            stats.put("bookedToday", bookedToday);
+            stats.put("date", today);
+            stats.put("lastUpdated", java.time.LocalDateTime.now());
+            
+            log.info("📊 오늘의 통계 조회 완료: 전체={}, 완료={}, 진행중={}, 취소={}", 
+                totalToday, completedToday, inProgressToday, cancelledToday);
+            
+            return success(stats);
+            
+        } catch (Exception e) {
+            log.error("❌ 오늘의 통계 조회 실패", e);
+            Map<String, Object> errorData = new java.util.HashMap<>();
+            errorData.put("error", "오늘의 통계 조회에 실패했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("오늘의 통계 조회에 실패했습니다", errorData));
+        }
+    }
+
+    /**
+     * 입금 대기 통계 조회 (위젯용)
+     * GET /api/admin/pending-deposit-stats
+     */
+    @GetMapping("/pending-deposit-stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingDepositStats(HttpSession session) {
+        log.info("📊 입금 대기 통계 조회 API 호출");
+        
+        try {
+            // 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
+            if (permissionResponse != null) {
+                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+            }
+            
+            // 입금 대기 매칭 조회
+            List<ConsultantClientMapping> pendingDeposits = adminService.getPendingDepositMappings();
+            
+            // 통계 계산
+            long count = pendingDeposits.size();
+            long totalAmount = pendingDeposits.stream()
+                .mapToLong(m -> m.getPackagePrice() != null ? m.getPackagePrice().longValue() : 0L)
+                .sum();
+            
+            // 가장 오래된 대기 시간 계산 (시간 단위)
+            long oldestHours = 0;
+            if (!pendingDeposits.isEmpty()) {
+                java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                oldestHours = pendingDeposits.stream()
+                    .filter(m -> m.getCreatedAt() != null)
+                    .mapToLong(m -> {
+                        java.time.LocalDateTime createdAt = m.getCreatedAt();
+                        return java.time.Duration.between(createdAt, now).toHours();
+                    })
+                    .max()
+                    .orElse(0L);
+            }
+            
+            Map<String, Object> stats = new java.util.HashMap<>();
+            stats.put("count", count);
+            stats.put("totalAmount", totalAmount);
+            stats.put("oldestHours", oldestHours);
+            stats.put("lastUpdated", java.time.LocalDateTime.now());
+            
+            log.info("📊 입금 대기 통계 조회 완료: 건수={}, 총금액={}, 최장대기={}시간", 
+                count, totalAmount, oldestHours);
+            
+            return success(stats);
+            
+        } catch (Exception e) {
+            log.error("❌ 입금 대기 통계 조회 실패", e);
+            Map<String, Object> errorData = new java.util.HashMap<>();
+            errorData.put("error", "입금 대기 통계 조회에 실패했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("입금 대기 통계 조회에 실패했습니다", errorData));
+        }
+    }
+
+    /**
+     * 오늘의 스케줄 조회 (관리자용)
+     * GET /api/admin/schedules/today
+     */
+    @GetMapping("/schedules/today")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTodaySchedules(HttpSession session) {
+        log.info("📅 오늘의 스케줄 조회 API 호출");
+        
+        try {
+            // 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SCHEDULE_VIEW", dynamicPermissionService);
+            if (permissionResponse != null) {
+                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+            }
+            
+            java.time.LocalDate today = java.time.LocalDate.now();
+            List<com.coresolution.consultation.entity.Schedule> schedules = scheduleService.getSchedulesByDate(today, null);
+            
+            // 필요한 정보만 추출
+            List<Map<String, Object>> scheduleData = schedules.stream()
+                .map(s -> {
+                    Map<String, Object> data = new java.util.HashMap<>();
+                    data.put("id", s.getId());
+                    data.put("date", s.getDate());
+                    data.put("startTime", s.getStartTime());
+                    data.put("endTime", s.getEndTime());
+                    data.put("status", s.getStatus() != null ? s.getStatus().toString() : "UNKNOWN");
+                    return data;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            return success(scheduleData);
+            
+        } catch (Exception e) {
+            log.error("❌ 오늘의 스케줄 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("오늘의 스케줄 조회에 실패했습니다", null));
+        }
+    }
+
+    /**
+     * 재무 요약 조회
+     * GET /api/admin/finance/summary
+     */
+    @GetMapping("/finance/summary")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getFinanceSummary(HttpSession session) {
+        log.info("💰 재무 요약 조회 API 호출");
+        
+        try {
+            // 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "FINANCE_VIEW", dynamicPermissionService);
+            if (permissionResponse != null) {
+                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+            }
+            
+            // 재무 요약 데이터 (기본 구현)
+            Map<String, Object> summary = new java.util.HashMap<>();
+            summary.put("totalRevenue", 0);
+            summary.put("pendingPayments", 0);
+            summary.put("lastUpdated", java.time.LocalDateTime.now());
+            
+            return success(summary);
+            
+        } catch (Exception e) {
+            log.error("❌ 재무 요약 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("재무 요약 조회에 실패했습니다", null));
+        }
+    }
+
+    /**
      * 매칭 목록 조회 (중앙화 - 모든 매칭 조회)
      */
     @GetMapping("/mappings")

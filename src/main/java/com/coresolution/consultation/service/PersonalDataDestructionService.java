@@ -120,8 +120,14 @@ public class PersonalDataDestructionService {
         try {
             LocalDateTime cutoffDate = LocalDateTime.now().minusYears(5);
             
+            String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return 0;
+            }
+            
             // 상담 완료 후 5년 경과된 상담 기록 조회
-            List<Object[]> expiredRecords = consultationRecordRepository.findExpiredRecordsForDestruction(cutoffDate);
+            List<Object[]> expiredRecords = consultationRecordRepository.findExpiredRecordsForDestruction(tenantId, cutoffDate);
             
             int destroyedCount = 0;
             for (Object[] record : expiredRecords) {

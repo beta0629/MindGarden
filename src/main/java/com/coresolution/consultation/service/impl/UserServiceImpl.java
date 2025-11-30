@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -316,80 +317,155 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public List<User> findByRole(String role) {
-        List<User> users = userRepository.findByRole(UserRole.fromString(role));
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        List<User> users = userRepository.findByRole(tenantId, UserRole.fromString(role));
         return decryptUserListPersonalData(users);
     }
     
     @Override
     public List<User> findByRoleInAndIsDeletedFalse(List<String> roles) {
-        List<User> users = userRepository.findByRoleInAndIsDeletedFalse(roles);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        List<User> users = userRepository.findByRoleInAndIsDeletedFalse(tenantId, roles);
         return decryptUserListPersonalData(users);
     }
     
     @Override
     public Page<User> findByRole(String role, Pageable pageable) {
-        Page<User> userPage = userRepository.findByRole(UserRole.fromString(role), pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Page.empty();
+        }
+        Page<User> userPage = userRepository.findByRole(tenantId, UserRole.fromString(role), pageable);
         return decryptUserPagePersonalData(userPage);
     }
     
     @Override
     public long countByRole(String role) {
-        return userRepository.countByRole(UserRole.fromString(role));
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return 0;
+        }
+        return userRepository.countByRole(tenantId, UserRole.fromString(role));
     }
     
     @Override
     public List<User> findByGrade(String grade) {
-        return userRepository.findByGrade(grade);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return userRepository.findByGrade(tenantId, grade);
     }
     
     @Override
     public Page<User> findByGrade(String grade, Pageable pageable) {
-        return userRepository.findByGrade(grade, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Page.empty();
+        }
+        return userRepository.findByGrade(tenantId, grade, pageable);
     }
     
     @Override
     public long countByGrade(String grade) {
-        return userRepository.countByGrade(grade);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return 0;
+        }
+        return userRepository.countByGrade(tenantId, grade);
     }
     
     @Override
     public List<User> findByIsActive(Boolean isActive) {
-        return userRepository.findByIsActive(isActive);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return userRepository.findByIsActive(tenantId, isActive);
     }
     
     @Override
     public Page<User> findByIsActive(Boolean isActive, Pageable pageable) {
-        return userRepository.findByIsActive(isActive, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Page.empty();
+        }
+        return userRepository.findByIsActive(tenantId, isActive, pageable);
     }
     
     @Override
     public long countByIsActive(Boolean isActive) {
-        return userRepository.countByIsActive(isActive);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return 0;
+        }
+        return userRepository.countByIsActive(tenantId, isActive);
     }
     
     @Override
     public List<User> findByGender(String gender) {
-        return userRepository.findByGender(gender);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return userRepository.findByGender(tenantId, gender);
     }
     
     @Override
     public long countByGender(String gender) {
-        return userRepository.countByGender(gender);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return 0;
+        }
+        return userRepository.countByGender(tenantId, gender);
     }
     
     @Override
     public List<User> findByAgeGroup(String ageGroup) {
-        return userRepository.findByAgeGroup(ageGroup);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return userRepository.findByAgeGroup(tenantId, ageGroup);
     }
     
     @Override
     public long countByAgeGroup(String ageGroup) {
-        return userRepository.countByAgeGroup(ageGroup);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return 0;
+        }
+        return userRepository.countByAgeGroup(tenantId, ageGroup);
     }
     
     @Override
     public ProfileImageInfo getProfileImageInfo(Long userId) {
-        List<Object[]> results = userRepository.findProfileImageInfoByUserId(userId);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return ProfileImageInfo.builder().userId(userId).build();
+        }
+        List<Object[]> results = userRepository.findProfileImageInfoByUserId(tenantId, userId);
         
         if (results.isEmpty()) {
             return ProfileImageInfo.builder()
@@ -455,92 +531,153 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public Page<User> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        return userRepository.findByCreatedAtBetween(startDate, endDate, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Page.empty();
+        }
+        return userRepository.findByCreatedAtBetween(tenantId, startDate, endDate, pageable);
     }
     
     @Override
     public List<User> findByLastLoginAtBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return userRepository.findByLastLoginAtBetween(startDate, endDate);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return userRepository.findByLastLoginAtBetween(tenantId, startDate, endDate);
     }
     
     @Override
     public List<User> findByNameContaining(String name) {
-        return userRepository.findByNameContaining(name);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return userRepository.findByNameContaining(tenantId, name);
     }
     
     @Override
     public Page<User> findByNameContaining(String name, Pageable pageable) {
-        return userRepository.findByNameContaining(name, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Page.empty();
+        }
+        return userRepository.findByNameContaining(tenantId, name, pageable);
     }
     
     @Override
     public List<User> findByNicknameContaining(String nickname) {
-        return userRepository.findByNicknameContaining(nickname);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return userRepository.findByNicknameContaining(tenantId, nickname);
     }
     
     @Override
     public Page<User> findByNicknameContaining(String nickname, Pageable pageable) {
-        return userRepository.findByNicknameContaining(nickname, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Page.empty();
+        }
+        return userRepository.findByNicknameContaining(tenantId, nickname, pageable);
     }
     
     @Override
     public List<User> findByEmailContaining(String email) {
-        return userRepository.findByEmailContaining(email);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return userRepository.findByEmailContaining(tenantId, email);
     }
     
     @Override
     public Page<User> findByEmailContaining(String email, Pageable pageable) {
-        return userRepository.findByEmailContaining(email, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Page.empty();
+        }
+        return userRepository.findByEmailContaining(tenantId, email, pageable);
     }
     
     @Override
     public List<User> findByPhoneContaining(String phone) {
-        return userRepository.findByPhoneContaining(phone);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return userRepository.findByPhoneContaining(tenantId, phone);
     }
     
     @Override
     public Page<User> findByPhoneContaining(String phone, Pageable pageable) {
-        return userRepository.findByPhoneContaining(phone, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Page.empty();
+        }
+        return userRepository.findByPhoneContaining(tenantId, phone, pageable);
     }
     
     @Override
     public Page<User> findByComplexCriteria(String name, String email, String role, String grade, 
                                           Boolean isActive, String gender, String ageGroup, Pageable pageable) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Page.empty();
+        }
         UserRole userRole = role != null ? UserRole.fromString(role) : null;
-        return userRepository.findByComplexCriteria(name, email, userRole, grade, isActive, gender, ageGroup, pageable);
+        return userRepository.findByComplexCriteria(tenantId, name, email, userRole, grade, isActive, gender, ageGroup, pageable);
     }
     
     @Override
     public Object[] getUserStatistics() {
-        return userRepository.getUserStatistics();
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.getUserStatistics(tenantId);
     }
     
     @Override
     public Object[] getUserStatisticsByBranchCode(String branchCode) {
+        String tenantId = TenantContextHolder.getTenantId();
         if (branchCode == null || branchCode.trim().isEmpty()) {
             return getUserStatistics(); // 지점코드가 없으면 전체 통계 반환
         }
-        return userRepository.getUserStatisticsByBranchCode(branchCode);
+        return userRepository.getUserStatisticsByBranchCode(tenantId, branchCode);
     }
     
     @Override
     public List<Object[]> getUserStatisticsByRole() {
-        return userRepository.getUserStatisticsByRole();
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.getUserStatisticsByRole(tenantId);
     }
     
     @Override
     public List<Object[]> getUserStatisticsByGrade() {
-        return userRepository.getUserStatisticsByGrade();
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.getUserStatisticsByGrade(tenantId);
     }
     
     @Override
     public List<Object[]> getUserStatisticsByGender() {
-        return userRepository.getUserStatisticsByGender();
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.getUserStatisticsByGender(tenantId);
     }
     
     @Override
     public List<Object[]> getUserStatisticsByAgeGroup() {
-        return userRepository.getUserStatisticsByAgeGroup();
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.getUserStatisticsByAgeGroup(tenantId);
     }
     
     @Override
@@ -672,7 +809,8 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public List<User> findByBranchCode(String branchCode) {
-        return userRepository.findByBranchCode(branchCode);
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.findByBranchCode(tenantId, branchCode);
     }
     
     @Override
@@ -727,32 +865,38 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public List<User> findRecentLoginUsers(int limit) {
-        return userRepository.findRecentLoginUsers(limit);
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.findRecentLoginUsers(tenantId, limit);
     }
     
     @Override
     public List<User> findInactiveUsers(LocalDateTime cutoffDate) {
-        return userRepository.findInactiveUsers(cutoffDate);
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.findInactiveUsers(tenantId, cutoffDate);
     }
     
     @Override
     public List<User> findByExperiencePointsGreaterThanEqual(Long minPoints) {
-        return userRepository.findByExperiencePointsGreaterThanEqual(minPoints);
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.findByExperiencePointsGreaterThanEqual(tenantId, minPoints);
     }
     
     @Override
     public Page<User> findByExperiencePointsGreaterThanEqual(Long minPoints, Pageable pageable) {
-        return userRepository.findByExperiencePointsGreaterThanEqual(minPoints, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.findByExperiencePointsGreaterThanEqual(tenantId, minPoints, pageable);
     }
     
     @Override
     public List<User> findByTotalConsultationsGreaterThanEqual(Integer minCount) {
-        return userRepository.findByTotalConsultationsGreaterThanEqual(minCount);
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.findByTotalConsultationsGreaterThanEqual(tenantId, minCount);
     }
     
     @Override
     public Page<User> findByTotalConsultationsGreaterThanEqual(Integer minCount, Pageable pageable) {
-        return userRepository.findByTotalConsultationsGreaterThanEqual(minCount, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        return userRepository.findByTotalConsultationsGreaterThanEqual(tenantId, minCount, pageable);
     }
     
     @Override

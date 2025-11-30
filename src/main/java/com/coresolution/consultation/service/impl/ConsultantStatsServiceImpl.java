@@ -13,6 +13,7 @@ import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -48,12 +49,19 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
         
+        // 현재 테넌트 ID 가져오기
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new HashMap<>();
+        }
+        
         // 활성 매핑 수 계산
         long currentClients = calculateCurrentClients(consultantId);
         
-        // 최근 매핑 정보 (최대 5개)
+        // 최근 매핑 정보 (최대 5개) - tenantId 필터링
         List<ConsultantClientMapping> recentMappings = mappingRepository
-                .findByConsultantId(consultantId).stream()
+                .findByConsultantId(tenantId, consultantId).stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .limit(5)
                 .collect(Collectors.toList());
@@ -152,7 +160,15 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     @Override
     @Cacheable(value = "consultantCurrentClients", key = "'consultant:' + #consultantId")
     public Long calculateCurrentClients(Long consultantId) {
+        // 현재 테넌트 ID 가져오기
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return 0L;
+        }
+        
         return mappingRepository.countByConsultantIdAndStatusIn(
+            tenantId,
             consultantId,
             Arrays.asList(
                 ConsultantClientMapping.MappingStatus.ACTIVE,
@@ -163,11 +179,13 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
 
     @Override
     public Map<String, Object> calculateConsultantStats(Long consultantId) {
+        String tenantId = TenantContextHolder.getTenantId();
+        
         // 총 상담 횟수
-        long totalSessions = scheduleRepository.countByConsultantId(consultantId);
+        long totalSessions = scheduleRepository.countByConsultantId(tenantId, consultantId);
         
         // 완료된 상담 횟수 - ScheduleRepository에 상태별 카운트 메서드가 없으므로 전체 카운트 사용
-        long completedSessions = scheduleRepository.countByConsultantId(consultantId);
+        long completedSessions = scheduleRepository.countByConsultantId(tenantId, consultantId);
         
         // 완료율 계산
         double completionRate = totalSessions > 0 

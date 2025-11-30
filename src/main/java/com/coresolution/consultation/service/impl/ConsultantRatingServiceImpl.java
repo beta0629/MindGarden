@@ -19,6 +19,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -529,13 +530,19 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
     @Transactional(readOnly = true)
     public Map<String, Object> getAdminRatingStatisticsByBranch(String branchCode) {
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new HashMap<>();
+            }
+            
             log.info("💖 관리자 평가 통계 조회 시작 (지점별): branchCode={}", branchCode);
 
             Map<String, Object> stats = new HashMap<>();
 
             // 해당 지점의 상담사들 조회
             List<User> branchConsultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(
-                UserRole.CONSULTANT, branchCode);
+                tenantId, UserRole.CONSULTANT, branchCode);
             List<Long> consultantIds = branchConsultants.stream()
                 .map(User::getId)
                 .collect(Collectors.toList());
@@ -598,9 +605,15 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
      */
     private List<Map<String, Object>> getConsultantRankingByBranch(String branchCode, Pageable pageable) {
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new ArrayList<>();
+            }
+            
             // 해당 지점의 상담사들 조회
             List<User> branchConsultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(
-                UserRole.CONSULTANT, branchCode);
+                tenantId, UserRole.CONSULTANT, branchCode);
             List<Long> consultantIds = branchConsultants.stream()
                 .map(User::getId)
                 .collect(Collectors.toList());

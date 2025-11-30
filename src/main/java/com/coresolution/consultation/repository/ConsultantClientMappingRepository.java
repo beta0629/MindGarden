@@ -26,17 +26,18 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     // 상담사와 내담자로 활성 상태의 매칭 존재 여부 확인
     boolean existsByConsultantAndClientAndStatus(User consultant, User client, ConsultantClientMapping.MappingStatus status);
     
-    // 상담사별 활성 매칭 수 조회
-    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.consultant = :consultant AND m.status = 'ACTIVE'")
-    long countActiveMappingsByConsultant(@Param("consultant") User consultant);
+    // 상담사별 활성 매칭 수 조회 (tenantId 필터링)
+    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant = :consultant AND m.status = 'ACTIVE'")
+    long countActiveMappingsByConsultant(@Param("tenantId") String tenantId, @Param("consultant") User consultant);
     
-    // 내담자별 활성 매칭 수 조회
-    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.client = :client AND m.status = 'ACTIVE'")
-    long countActiveMappingsByClient(@Param("client") User client);
+    // 내담자별 활성 매칭 수 조회 (tenantId 필터링)
+    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.client = :client AND m.status = 'ACTIVE'")
+    long countActiveMappingsByClient(@Param("tenantId") String tenantId, @Param("client") User client);
     
-    // 날짜 범위로 매칭 조회
-    @Query("SELECT m FROM ConsultantClientMapping m WHERE m.startDate >= :startDate AND m.endDate <= :endDate")
-    List<ConsultantClientMapping> findByDateRange(@Param("startDate") java.time.LocalDate startDate, 
+    // 날짜 범위로 매칭 조회 (tenantId 필터링)
+    @Query("SELECT m FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.startDate >= :startDate AND m.endDate <= :endDate")
+    List<ConsultantClientMapping> findByDateRange(@Param("tenantId") String tenantId,
+                                                 @Param("startDate") java.time.LocalDate startDate, 
                                                  @Param("endDate") java.time.LocalDate endDate);
     
     // 테넌트별 모든 매칭을 관련 엔티티와 함께 조회 (테넌트 필터링)
@@ -57,29 +58,29 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.status = 'ACTIVE'")
     List<ConsultantClientMapping> findActiveMappingsWithDetails();
     
-    // 상담사 ID로 매칭 조회 (특정 상태 제외)
-    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.consultant.id = :consultantId AND m.status != :status")
-    List<ConsultantClientMapping> findByConsultantIdAndStatusNot(@Param("consultantId") Long consultantId, @Param("status") ConsultantClientMapping.MappingStatus status);
+    // 상담사 ID로 매칭 조회 (특정 상태 제외, tenantId 필터링)
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status != :status")
+    List<ConsultantClientMapping> findByConsultantIdAndStatusNot(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("status") ConsultantClientMapping.MappingStatus status);
     
-    // 상담사 ID와 브랜치 코드로 매칭 조회 (특정 상태 제외)
-    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.consultant.id = :consultantId AND m.branchCode = :branchCode AND m.status != :status")
-    List<ConsultantClientMapping> findByConsultantIdAndBranchCodeAndStatusNot(@Param("consultantId") Long consultantId, @Param("branchCode") String branchCode, @Param("status") ConsultantClientMapping.MappingStatus status);
+    // 상담사 ID와 브랜치 코드로 매칭 조회 (특정 상태 제외, tenantId 필터링)
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.branchCode = :branchCode AND m.status != :status")
+    List<ConsultantClientMapping> findByConsultantIdAndBranchCodeAndStatusNot(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("branchCode") String branchCode, @Param("status") ConsultantClientMapping.MappingStatus status);
     
-    // 내담자 ID로 매칭 조회 (특정 상태 제외)
-    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.client.id = :clientId AND m.status != :status")
-    List<ConsultantClientMapping> findByClientIdAndStatusNot(@Param("clientId") Long clientId, @Param("status") ConsultantClientMapping.MappingStatus status);
+    // 내담자 ID로 매칭 조회 (특정 상태 제외, tenantId 필터링)
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.client.id = :clientId AND m.status != :status")
+    List<ConsultantClientMapping> findByClientIdAndStatusNot(@Param("tenantId") String tenantId, @Param("clientId") Long clientId, @Param("status") ConsultantClientMapping.MappingStatus status);
     
-    // 상담사 ID로 매칭 조회 (문자열 상태로 특정 상태 제외)
-    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.consultant.id = :consultantId AND m.status != :status")
-    List<ConsultantClientMapping> findByConsultantIdAndStatusNotString(@Param("consultantId") Long consultantId, @Param("status") String status);
+    // 상담사 ID로 매칭 조회 (문자열 상태로 특정 상태 제외, tenantId 필터링)
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status != :status")
+    List<ConsultantClientMapping> findByConsultantIdAndStatusNotString(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("status") String status);
     
-    // 상담사 ID로 특정 상태의 매칭 조회
-    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.consultant.id = :consultantId AND m.status = :status")
-    List<ConsultantClientMapping> findByConsultantIdAndStatus(@Param("consultantId") Long consultantId, @Param("status") ConsultantClientMapping.MappingStatus status);
+    // 상담사 ID로 특정 상태의 매칭 조회 (tenantId 필터링)
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status = :status")
+    List<ConsultantClientMapping> findByConsultantIdAndStatus(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("status") ConsultantClientMapping.MappingStatus status);
     
-    // 상담사 ID로 모든 매칭 조회
-    @Query("SELECT m FROM ConsultantClientMapping m WHERE m.consultant.id = :consultantId")
-    List<ConsultantClientMapping> findByConsultantId(@Param("consultantId") Long consultantId);
+    // 상담사 ID로 모든 매칭 조회 (tenantId 필터링)
+    @Query("SELECT m FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId")
+    List<ConsultantClientMapping> findByConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
     
     // 테넌트별 결제 상태별 매칭 수 조회 (테넌트 필터링)
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.paymentStatus = :paymentStatus")
@@ -99,21 +100,21 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     @Query("SELECT m FROM ConsultantClientMapping m WHERE m.paymentStatus = :paymentStatus")
     List<ConsultantClientMapping> findByPaymentStatus(@Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
     
-    // 상담사 ID와 상태 목록으로 매칭 수 조회
-    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.consultant.id = :consultantId AND m.status IN :statuses")
-    long countByConsultantIdAndStatusIn(@Param("consultantId") Long consultantId, @Param("statuses") List<ConsultantClientMapping.MappingStatus> statuses);
+    // 상담사 ID와 상태 목록으로 매칭 수 조회 (tenantId 필터링)
+    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status IN :statuses")
+    long countByConsultantIdAndStatusIn(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("statuses") List<ConsultantClientMapping.MappingStatus> statuses);
     
     // ==================== 통계 대시보드용 메서드 ====================
     
     /**
-     * 특정 상태 목록의 매칭 수 조회
+     * 특정 상태 목록의 매칭 수 조회 (tenantId 필터링)
      */
-    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.status IN :statuses")
-    long countByStatusIn(@Param("statuses") List<String> statuses);
+    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.status IN :statuses")
+    long countByStatusIn(@Param("tenantId") String tenantId, @Param("statuses") List<String> statuses);
     
     /**
-     * 최근 매칭 조회 (이름, 생성일시)
+     * 최근 매칭 조회 (이름, 생성일시) - tenantId 필터링
      */
-    @Query("SELECT CONCAT(m.consultant.name, ' - ', m.client.name), m.createdAt FROM ConsultantClientMapping m ORDER BY m.createdAt DESC")
-    List<Object[]> findRecentMappings(int limit);
+    @Query(value = "SELECT CONCAT(m.consultant.name, ' - ', m.client.name), m.createdAt FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId ORDER BY m.createdAt DESC LIMIT :limit", nativeQuery = false)
+    List<Object[]> findRecentMappings(@Param("tenantId") String tenantId, @Param("limit") int limit);
 }

@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -73,8 +74,13 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         log.info("📊 전체 내담자 통계 조회 (DB) - 레거시 호환");
         
         // 삭제되지 않고 활성인 CLIENT 역할 사용자만 조회
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return List.of();
+        }
         List<com.coresolution.consultation.entity.User> clientUsers = userRepository
-                .findByRoleAndIsActiveTrue(UserRole.CLIENT);
+                .findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
         
         return buildClientStatsList(clientUsers);
     }
@@ -88,9 +94,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         
         // 테넌트별 삭제되지 않고 활성인 CLIENT 역할 사용자만 조회
         List<com.coresolution.consultation.entity.User> clientUsers = userRepository
-                .findByRoleAndIsActiveTrue(UserRole.CLIENT).stream()
-                .filter(user -> tenantId.equals(user.getTenantId()))
-                .collect(Collectors.toList());
+                .findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
         
         log.info("📊 테넌트별 내담자 조회 완료: tenantId={}, 조회된 수={}", tenantId, clientUsers.size());
         
@@ -125,8 +129,16 @@ public class ClientStatsServiceImpl implements ClientStatsService {
 
     @Override
     public Long calculateCurrentConsultants(Long clientId) {
-        // clientId로 매핑 카운트 조회
+        // 현재 테넌트 ID 가져오기
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return 0L;
+        }
+        
+        // clientId로 매핑 카운트 조회 (tenantId 필터링)
         return (long) mappingRepository.findByClientIdAndStatusNot(
+            tenantId,
             clientId, 
             ConsultantClientMapping.MappingStatus.INACTIVE
         ).stream()
@@ -137,11 +149,17 @@ public class ClientStatsServiceImpl implements ClientStatsService {
 
     @Override
     public Map<String, Object> calculateClientStats(Long clientId) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new HashMap<>();
+        }
+        
         // 총 상담 횟수
-        long totalSessions = scheduleRepository.countByClientId(clientId);
+        long totalSessions = scheduleRepository.countByClientId(tenantId, clientId);
         
         // 완료된 상담 횟수
-        long completedSessions = scheduleRepository.countByClientId(clientId);
+        long completedSessions = scheduleRepository.countByClientId(tenantId, clientId);
         
         // 완료율 계산
         double completionRate = totalSessions > 0 

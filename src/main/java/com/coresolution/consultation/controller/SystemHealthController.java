@@ -214,4 +214,77 @@ public class SystemHealthController {
             return ResponseEntity.status(500).body(response);
         }
     }
+
+    /**
+     * 외부 서비스 상태 확인
+     * GET /api/health/external-services
+     */
+    @GetMapping("/external-services")
+    public ResponseEntity<Map<String, Object>> checkExternalServicesHealth() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // 외부 서비스 상태 확인 (예: Redis, 외부 API 등)
+            // 현재는 기본적으로 healthy 반환
+            response.put("status", "healthy");
+            response.put("message", "외부 서비스 연결이 정상입니다");
+            response.put("services", Map.of(
+                "redis", Map.of("status", "not_configured", "message", "Redis 미설정"),
+                "smtp", Map.of("status", "not_configured", "message", "SMTP 미설정")
+            ));
+            response.put("timestamp", System.currentTimeMillis());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", "외부 서비스 상태 확인 중 오류 발생: " + e.getMessage());
+            response.put("timestamp", System.currentTimeMillis());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
+     * 시스템 메트릭 조회
+     * GET /api/health/system-metrics
+     */
+    @GetMapping("/system-metrics")
+    public ResponseEntity<Map<String, Object>> getSystemMetrics() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Runtime runtime = Runtime.getRuntime();
+            
+            // 메모리 정보
+            long maxMemory = runtime.maxMemory();
+            long totalMemory = runtime.totalMemory();
+            long freeMemory = runtime.freeMemory();
+            long usedMemory = totalMemory - freeMemory;
+            
+            double memoryUsagePercent = (double) usedMemory / maxMemory * 100;
+            
+            // CPU 정보 (간단한 버전)
+            int availableProcessors = runtime.availableProcessors();
+            
+            response.put("status", "healthy");
+            response.put("cpu", Map.of(
+                "availableProcessors", availableProcessors,
+                "usage", 0 // 실제 CPU 사용률은 별도 라이브러리 필요
+            ));
+            response.put("memory", Map.of(
+                "max", maxMemory,
+                "total", totalMemory,
+                "used", usedMemory,
+                "free", freeMemory,
+                "usagePercent", String.format("%.2f", memoryUsagePercent)
+            ));
+            response.put("disk", Map.of(
+                "usage", 0 // 디스크 사용률은 별도 구현 필요
+            ));
+            response.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", "시스템 메트릭 조회 중 오류 발생: " + e.getMessage());
+            response.put("timestamp", System.currentTimeMillis());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
 }

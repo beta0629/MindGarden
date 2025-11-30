@@ -431,21 +431,36 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public List<Schedule> findByConsultantId(Long consultantId) {
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
-        return scheduleRepository.findByConsultantId(consultantId);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
     }
 
     @Override
     public List<Schedule> findByConsultantIdAndDate(Long consultantId, LocalDate date) {
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
-        return scheduleRepository.findByConsultantIdAndDate(consultantId, date);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return scheduleRepository.findByTenantIdAndConsultantIdAndDate(tenantId, consultantId, date);
     }
 
     @Override
     public List<Schedule> findByConsultantIdAndDateBetween(Long consultantId, LocalDate startDate, LocalDate endDate) {
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
-        return scheduleRepository.findByConsultantIdAndDateBetween(consultantId, startDate, endDate);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return scheduleRepository.findByTenantIdAndConsultantIdAndDateBetween(tenantId, consultantId, startDate, endDate);
     }
 
     // ==================== 내담자별 스케줄 관리 ====================
@@ -454,21 +469,36 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public List<Schedule> findByClientId(Long clientId) {
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
-        return scheduleRepository.findByClientId(clientId);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return scheduleRepository.findByTenantIdAndClientId(tenantId, clientId);
     }
 
     @Override
     public List<Schedule> findByClientIdAndDate(Long clientId, LocalDate date) {
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
-        return scheduleRepository.findByClientIdAndDate(clientId, date);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return scheduleRepository.findByTenantIdAndClientIdAndDate(tenantId, clientId, date);
     }
 
     @Override
     public List<Schedule> findByClientIdAndDateBetween(Long clientId, LocalDate startDate, LocalDate endDate) {
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
-        return scheduleRepository.findByClientIdAndDateBetween(clientId, startDate, endDate);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        return scheduleRepository.findByTenantIdAndClientIdAndDateBetween(tenantId, clientId, startDate, endDate);
     }
 
     // ==================== 스케줄 상태 관리 ====================
@@ -782,6 +812,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        
         if (isAdminRole(userRole)) {
             // 관리자: 모든 스케줄 조회
             log.info("👑 관리자 권한으로 모든 스케줄 조회");
@@ -789,7 +825,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         } else if (isConsultantRole(userRole)) {
             // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
-            return scheduleRepository.findByConsultantId(userId);
+            return scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId);
         } else {
             // 일반 사용자: 접근 권한 없음
             log.warn("❌ 권한 없음: 사용자 {}, 역할 {}", userId, userRole);
@@ -844,15 +880,18 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             LocalDate start = startDate != null ? LocalDate.parse(startDate) : null;
             LocalDate end = endDate != null ? LocalDate.parse(endDate) : null;
             
+            // tenantId 가져오기
+            String tenantId = TenantContextHolder.getTenantId();
+            
             // 전체 스케줄 수 (날짜 범위 적용)
             log.info("📊 전체 스케줄 수 조회 중...");
             long totalSchedules;
             if (start != null && end != null) {
-                totalSchedules = scheduleRepository.countByDateBetween(start, end);
+                totalSchedules = scheduleRepository.countByDateBetween(tenantId, start, end);
             } else if (start != null) {
-                totalSchedules = scheduleRepository.countByDateGreaterThanEqual(start);
+                totalSchedules = scheduleRepository.countByDateGreaterThanEqual(tenantId, start);
             } else if (end != null) {
-                totalSchedules = scheduleRepository.countByDateLessThanEqual(end);
+                totalSchedules = scheduleRepository.countByDateLessThanEqual(tenantId, end);
             } else {
                 totalSchedules = scheduleRepository.count();
             }
@@ -864,24 +903,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             long bookedSchedules, completedSchedules, cancelledSchedules, inProgressSchedules;
             
             if (start != null && end != null) {
-                bookedSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.BOOKED.name(), start, end);
-                completedSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.COMPLETED.name(), start, end);
-                cancelledSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.CANCELLED.name(), start, end);
+                bookedSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.BOOKED.name(), start, end);
+                completedSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED.name(), start, end);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED.name(), start, end);
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else if (start != null) {
-                bookedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleStatus.BOOKED.name(), start);
-                completedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleStatus.COMPLETED.name(), start);
-                cancelledSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleStatus.CANCELLED.name(), start);
+                bookedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.BOOKED.name(), start);
+                completedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.COMPLETED.name(), start);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.CANCELLED.name(), start);
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else if (end != null) {
-                bookedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleStatus.BOOKED.name(), end);
-                completedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleStatus.COMPLETED.name(), end);
-                cancelledSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleStatus.CANCELLED.name(), end);
+                bookedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.BOOKED.name(), end);
+                completedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.COMPLETED.name(), end);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.CANCELLED.name(), end);
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else {
-                bookedSchedules = scheduleRepository.countByStatus(ScheduleStatus.BOOKED.name());
-                completedSchedules = scheduleRepository.countByStatus(ScheduleStatus.COMPLETED.name());
-                cancelledSchedules = scheduleRepository.countByStatus(ScheduleStatus.CANCELLED.name());
+                bookedSchedules = scheduleRepository.countByStatus(tenantId, ScheduleStatus.BOOKED.name());
+                completedSchedules = scheduleRepository.countByStatus(tenantId, ScheduleStatus.COMPLETED.name());
+                cancelledSchedules = scheduleRepository.countByStatus(tenantId, ScheduleStatus.CANCELLED.name());
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             }
             
@@ -896,10 +935,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             // 오늘의 통계
             LocalDate today = LocalDate.now();
             log.info("📊 오늘의 통계 조회 중... (날짜: {})", today);
-            long totalToday = scheduleRepository.countByDate(today);
-            long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.BOOKED);
-            long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.COMPLETED);
-            long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.CANCELLED);
+            long totalToday = scheduleRepository.countByDate(tenantId, today);
+            long bookedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.BOOKED);
+            long completedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.COMPLETED);
+            long cancelledToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.CANCELLED);
             long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             
             statistics.put("totalToday", totalToday);
@@ -919,8 +958,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             LocalDate lastMonthStart = thisMonthStart.minusMonths(1);
             LocalDate lastMonthEnd = thisMonthStart.minusDays(1);
             
-            long thisMonthClients = scheduleRepository.countDistinctClientsByDateBetween(thisMonthStart, today);
-            long lastMonthClients = scheduleRepository.countDistinctClientsByDateBetween(lastMonthStart, lastMonthEnd);
+            long thisMonthClients = scheduleRepository.countDistinctClientsByDateBetween(tenantId, thisMonthStart, today);
+            long lastMonthClients = scheduleRepository.countDistinctClientsByDateBetween(tenantId, lastMonthStart, lastMonthEnd);
             long clientGrowth = thisMonthClients - lastMonthClients;
             double clientGrowthRate = lastMonthClients > 0 ? ((double) clientGrowth / lastMonthClients) * 100 : 0;
             
@@ -930,8 +969,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             statistics.put("clientGrowthRate", Math.round(clientGrowthRate * 100.0) / 100.0);
             
             // 상담사 증감 통계
-            long thisMonthConsultants = scheduleRepository.countDistinctConsultantsByDateBetween(thisMonthStart, today);
-            long lastMonthConsultants = scheduleRepository.countDistinctConsultantsByDateBetween(lastMonthStart, lastMonthEnd);
+            long thisMonthConsultants = scheduleRepository.countDistinctConsultantsByDateBetween(tenantId, thisMonthStart, today);
+            long lastMonthConsultants = scheduleRepository.countDistinctConsultantsByDateBetween(tenantId, lastMonthStart, lastMonthEnd);
             long consultantGrowth = thisMonthConsultants - lastMonthConsultants;
             double consultantGrowthRate = lastMonthConsultants > 0 ? ((double) consultantGrowth / lastMonthConsultants) * 100 : 0;
             
@@ -941,8 +980,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             statistics.put("consultantGrowthRate", Math.round(consultantGrowthRate * 100.0) / 100.0);
             
             // 상담 완료율 통계
-            long totalSchedulesInPeriod = scheduleRepository.countByDateBetween(thisMonthStart, today);
-            long completedSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.COMPLETED.name(), thisMonthStart, today);
+            long totalSchedulesInPeriod = scheduleRepository.countByDateBetween(tenantId, thisMonthStart, today);
+            long completedSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED.name(), thisMonthStart, today);
             double completionRate = totalSchedulesInPeriod > 0 ? ((double) completedSchedulesInPeriod / totalSchedulesInPeriod) * 100 : 0;
             
             statistics.put("totalSchedulesInPeriod", totalSchedulesInPeriod);
@@ -950,7 +989,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             statistics.put("completionRate", Math.round(completionRate * 100.0) / 100.0);
             
             // 취소율 통계
-            long cancelledSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.CANCELLED.name(), thisMonthStart, today);
+            long cancelledSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED.name(), thisMonthStart, today);
             double cancellationRate = totalSchedulesInPeriod > 0 ? ((double) cancelledSchedulesInPeriod / totalSchedulesInPeriod) * 100 : 0;
             
             statistics.put("cancelledSchedulesInPeriod", cancelledSchedulesInPeriod);
@@ -958,9 +997,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             
             // 주간 통계 (최근 7일)
             LocalDate weekAgo = today.minusDays(7);
-            long weeklySchedules = scheduleRepository.countByDateBetween(weekAgo, today);
-            long weeklyCompleted = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.COMPLETED.name(), weekAgo, today);
-            long weeklyCancelled = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.CANCELLED.name(), weekAgo, today);
+            long weeklySchedules = scheduleRepository.countByDateBetween(tenantId, weekAgo, today);
+            long weeklyCompleted = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED.name(), weekAgo, today);
+            long weeklyCancelled = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED.name(), weekAgo, today);
             
             statistics.put("weeklySchedules", weeklySchedules);
             statistics.put("weeklyCompleted", weeklyCompleted);
@@ -985,15 +1024,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public Map<String, Object> getTodayScheduleStatistics() {
         log.info("📊 오늘의 스케줄 통계 조회");
         
+        String tenantId = TenantContextHolder.getTenantId();
         LocalDate today = LocalDate.now();
         Map<String, Object> statistics = new HashMap<>();
         
         // 오늘의 총 상담 수
-        long totalToday = scheduleRepository.countByDate(today);
+        long totalToday = scheduleRepository.countByDate(tenantId, today);
         statistics.put("totalToday", totalToday);
         
         // 오늘의 완료된 상담 수
-        long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.COMPLETED);
+        long completedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.COMPLETED);
         statistics.put("completedToday", completedToday);
         
         // 오늘의 진행중인 상담 수
@@ -1001,15 +1041,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         statistics.put("inProgressToday", inProgressToday);
         
         // 오늘의 취소된 상담 수
-        long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.CANCELLED);
+        long cancelledToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.CANCELLED);
         statistics.put("cancelledToday", cancelledToday);
         
         // 오늘의 예약된 상담 수
-        long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.BOOKED);
+        long bookedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.BOOKED);
         statistics.put("bookedToday", bookedToday);
         
         // 오늘의 확인된 상담 수
-        long confirmedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.CONFIRMED);
+        long confirmedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.CONFIRMED);
         statistics.put("confirmedToday", confirmedToday);
         
         log.info("✅ 오늘의 스케줄 통계 조회 완료: 총 {}개, 완료 {}개, 진행중 {}개, 취소 {}개, 예약 {}개, 확인 {}개", 
@@ -1065,15 +1105,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public Map<String, Object> getTodayScheduleStatisticsByConsultant(Long consultantId) {
         log.info("📊 상담사 오늘의 스케줄 통계 조회 - 상담사 ID: {}", consultantId);
         
+        String tenantId = TenantContextHolder.getTenantId();
         LocalDate today = LocalDate.now();
         Map<String, Object> statistics = new HashMap<>();
         
         // 해당 상담사의 오늘 총 상담 수
-        long totalToday = scheduleRepository.countByDateAndConsultantId(today, consultantId);
+        long totalToday = scheduleRepository.countByDateAndConsultantId(tenantId, today, consultantId);
         statistics.put("totalToday", totalToday);
         
         // 해당 상담사의 오늘 완료된 상담 수
-        long completedToday = scheduleRepository.countByDateAndStatusAndConsultantId(today, ScheduleStatus.COMPLETED, consultantId);
+        long completedToday = scheduleRepository.countByDateAndStatusAndConsultantId(tenantId, today, ScheduleStatus.COMPLETED, consultantId);
         statistics.put("completedToday", completedToday);
         
         // 해당 상담사의 오늘 진행중인 상담 수
@@ -1081,15 +1122,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         statistics.put("inProgressToday", inProgressToday);
         
         // 해당 상담사의 오늘 취소된 상담 수
-        long cancelledToday = scheduleRepository.countByDateAndStatusAndConsultantId(today, ScheduleStatus.CANCELLED, consultantId);
+        long cancelledToday = scheduleRepository.countByDateAndStatusAndConsultantId(tenantId, today, ScheduleStatus.CANCELLED, consultantId);
         statistics.put("cancelledToday", cancelledToday);
         
         // 해당 상담사의 오늘 예약된 상담 수
-        long bookedToday = scheduleRepository.countByDateAndStatusAndConsultantId(today, ScheduleStatus.BOOKED, consultantId);
+        long bookedToday = scheduleRepository.countByDateAndStatusAndConsultantId(tenantId, today, ScheduleStatus.BOOKED, consultantId);
         statistics.put("bookedToday", bookedToday);
         
         // 해당 상담사의 오늘 확인된 상담 수
-        long confirmedToday = scheduleRepository.countByDateAndStatusAndConsultantId(today, ScheduleStatus.CONFIRMED, consultantId);
+        long confirmedToday = scheduleRepository.countByDateAndStatusAndConsultantId(tenantId, today, ScheduleStatus.CONFIRMED, consultantId);
         statistics.put("confirmedToday", confirmedToday);
         
         log.info("✅ 상담사 오늘의 스케줄 통계 조회 완료 - 상담사 ID: {}, 총 {}개, 완료 {}개, 진행중 {}개, 취소 {}개, 예약 {}개, 확인 {}개", 
@@ -1492,6 +1533,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public void autoCompleteExpiredSchedules() {
         log.info("🔄 시간이 지난 스케줄 자동 완료 처리 시작");
         
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return;
+        }
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
         LocalTime currentTime = now.toLocalTime();
@@ -1500,7 +1546,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         try {
             // 1. 오늘 날짜이고 현재 시간을 지난 확정된 스케줄 조회
-            List<Schedule> todayExpiredSchedules = scheduleRepository.findExpiredConfirmedSchedules(today, currentTime);
+            List<Schedule> todayExpiredSchedules = scheduleRepository.findExpiredConfirmedSchedules(tenantId, today, currentTime);
             
             for (Schedule schedule : todayExpiredSchedules) {
                 try {
@@ -1521,8 +1567,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             }
             
             // 2. 지난 날짜의 예약된/확정된 스케줄 조회 (오늘 이전)
-            List<Schedule> pastBookedSchedules = scheduleRepository.findByDateBeforeAndStatus(today, ScheduleStatus.BOOKED);
-            List<Schedule> pastConfirmedSchedules = scheduleRepository.findByDateBeforeAndStatus(today, ScheduleStatus.CONFIRMED);
+            List<Schedule> pastBookedSchedules = scheduleRepository.findByDateBeforeAndStatus(tenantId, today, ScheduleStatus.BOOKED);
+            List<Schedule> pastConfirmedSchedules = scheduleRepository.findByDateBeforeAndStatus(tenantId, today, ScheduleStatus.CONFIRMED);
             
             // 예약됨 상태의 지난 스케줄 처리
             for (Schedule schedule : pastBookedSchedules) {
@@ -1609,19 +1655,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
     
     /**
-     * 특정 날짜의 스케줄 조회 (드래그 앤 드롭용)
+     * 특정 날짜의 스케줄 조회 (드래그 앤 드롭용) - tenantId 필터링 적용
      */
     @Override
     public List<Schedule> getSchedulesByDate(LocalDate date, Long consultantId) {
         log.info("📅 특정 날짜 스케줄 조회: date={}, consultantId={}", date, consultantId);
         
         try {
+            // 현재 테넌트 ID 가져오기 (1차 필터링 - 필수)
+            String tenantIdStr = accessControlService.getCurrentTenantId().toString();
+            log.info("🔒 tenantId 필터링: {}", tenantIdStr);
+            
             if (consultantId != null) {
-                // 특정 상담사의 해당 날짜 스케줄 조회
-                return scheduleRepository.findByDateAndConsultantIdAndIsDeletedFalse(date, consultantId);
+                // 특정 상담사의 해당 날짜 스케줄 조회 (2차 필터링 - 선택적)
+                log.info("🔒 consultantId 필터링: {}", consultantId);
+                return scheduleRepository.findByTenantIdAndDateAndConsultantIdAndIsDeletedFalse(tenantIdStr, date, consultantId);
             } else {
-                // 모든 상담사의 해당 날짜 스케줄 조회
-                return scheduleRepository.findByDateAndIsDeletedFalse(date);
+                // 테넌트의 모든 상담사의 해당 날짜 스케줄 조회
+                return scheduleRepository.findByTenantIdAndDateAndIsDeletedFalse(tenantIdStr, date);
             }
         } catch (Exception e) {
             log.error("❌ 특정 날짜 스케줄 조회 실패: date={}, consultantId={}, error={}", 
@@ -1642,8 +1693,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
             
             // 지점의 상담사들 조회
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new ArrayList<>();
+            }
             List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
+                tenantId, branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
             if (consultants.isEmpty()) {
                 log.warn("지점에 상담사가 없습니다: branchId={}", branchId);
                 return new ArrayList<>();
@@ -1754,8 +1810,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
             
             // 지점의 상담사들 조회
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new HashMap<>();
+            }
             List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
+                tenantId, branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
             
             Map<String, Object> status = new HashMap<>();
             status.put("branchId", branchId);

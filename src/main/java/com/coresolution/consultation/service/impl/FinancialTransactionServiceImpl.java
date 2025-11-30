@@ -299,13 +299,19 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public FinancialDashboardResponse getFinancialDashboard(LocalDate startDate, LocalDate endDate) {
         log.info("📊 재무 대시보드 데이터 조회: {} ~ {}", startDate, endDate);
         
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new FinancialDashboardResponse();
+        }
+        
         // 기본 통계
         BigDecimal totalIncome = getTotalIncome(startDate, endDate);
         BigDecimal totalExpense = getTotalExpense(startDate, endDate);
         BigDecimal netProfit = totalIncome.subtract(totalExpense);
         
         // 승인 대기 건수
-        Long pendingCount = financialTransactionRepository.countPendingApprovals();
+        Long pendingCount = financialTransactionRepository.countPendingApprovals(tenantId);
         
         // 월별 데이터
         List<FinancialDashboardResponse.MonthlyFinancialData> monthlyData = getMonthlyFinancialData(startDate, endDate);
@@ -316,7 +322,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         
         // 최근 거래 내역
         List<FinancialTransactionResponse> recentTransactions = financialTransactionRepository
-                .findRecentTransactions(Pageable.ofSize(10))
+                .findRecentTransactions(tenantId, Pageable.ofSize(10))
                 .stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
@@ -352,13 +358,23 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getTotalIncome(LocalDate startDate, LocalDate endDate) {
-        return financialTransactionRepository.sumIncomeByDateRange(startDate, endDate);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return BigDecimal.ZERO;
+        }
+        return financialTransactionRepository.sumIncomeByDateRange(tenantId, startDate, endDate);
     }
     
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getTotalExpense(LocalDate startDate, LocalDate endDate) {
-        return financialTransactionRepository.sumExpenseByDateRange(startDate, endDate);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return BigDecimal.ZERO;
+        }
+        return financialTransactionRepository.sumExpenseByDateRange(tenantId, startDate, endDate);
     }
     
     @Override
@@ -422,21 +438,36 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Override
     @Transactional(readOnly = true)
     public List<FinancialDashboardResponse.CategoryFinancialData> getIncomeByCategory(LocalDate startDate, LocalDate endDate) {
-        List<Object[]> results = financialTransactionRepository.getIncomeByCategory(startDate, endDate);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        List<Object[]> results = financialTransactionRepository.getIncomeByCategory(tenantId, startDate, endDate);
         return convertToCategoryFinancialData(results);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<FinancialDashboardResponse.CategoryFinancialData> getExpenseByCategory(LocalDate startDate, LocalDate endDate) {
-        List<Object[]> results = financialTransactionRepository.getExpenseByCategory(startDate, endDate);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        List<Object[]> results = financialTransactionRepository.getExpenseByCategory(tenantId, startDate, endDate);
         return convertToCategoryFinancialData(results);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<FinancialDashboardResponse.MonthlyFinancialData> getMonthlyFinancialData(LocalDate startDate, LocalDate endDate) {
-        List<Object[]> results = financialTransactionRepository.getMonthlyFinancialData(startDate, endDate);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        List<Object[]> results = financialTransactionRepository.getMonthlyFinancialData(tenantId, startDate, endDate);
         Map<String, FinancialDashboardResponse.MonthlyFinancialData> monthlyMap = new HashMap<>();
         
         for (Object[] row : results) {
@@ -753,7 +784,9 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
             // 상담사 수 조회 (임시로 기본값 사용)
-            long consultantCount = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT).size();
+            String tenantId = TenantContextHolder.getTenantId();
+            long consultantCount = tenantId != null ? 
+                    userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT).size() : 0;
             
             // 평균 급여 계산
             BigDecimal averageSalary = consultantCount > 0 ? 

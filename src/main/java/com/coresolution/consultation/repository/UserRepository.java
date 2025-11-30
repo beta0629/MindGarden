@@ -139,53 +139,106 @@ public interface UserRepository extends BaseRepository<User, Long> {
     boolean existsByPhone(String phone);
     
     /**
-     * 역할별 사용자 조회 (활성 상태만)
+     * 역할별 사용자 조회 (tenantId 필터링)
      */
-    @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
-    List<User> findByRole(UserRole role);
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false")
+    List<User> findByRole(@Param("tenantId") String tenantId, @Param("role") UserRole role);
     
     /**
-     * 역할별 활성 사용자 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
+    @Deprecated
+    @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
+    List<User> findByRoleDeprecated(UserRole role);
+    
+    /**
+     * 역할별 활성 사용자 조회 (tenantId 필터링)
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isActive = true AND u.isDeleted = false")
+    List<User> findByRoleAndIsActiveTrue(@Param("tenantId") String tenantId, @Param("role") UserRole role);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isActive = true AND u.isDeleted = false")
-    List<User> findByRoleAndIsActiveTrue(UserRole role);
+    List<User> findByRoleAndIsActiveTrueDeprecated(UserRole role);
     
     /**
-     * 역할별 활성 사용자 조회 (지점코드 포함)
+     * 역할별 활성 사용자 조회 (지점코드 포함) (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isActive = true AND u.branchCode = :branchCode AND u.isDeleted = false")
+    List<User> findByRoleAndIsActiveTrueAndBranchCode(@Param("tenantId") String tenantId, @Param("role") UserRole role, @Param("branchCode") String branchCode);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isActive = true AND u.branchCode = ?2 AND u.isDeleted = false")
-    List<User> findByRoleAndIsActiveTrueAndBranchCode(UserRole role, String branchCode);
+    List<User> findByRoleAndIsActiveTrueAndBranchCodeDeprecated(UserRole role, String branchCode);
     
     /**
-     * 역할별 사용자 페이징 조회 (활성 상태만)
+     * 역할별 사용자 페이징 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false")
+    Page<User> findByRole(@Param("tenantId") String tenantId, @Param("role") UserRole role, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
-    Page<User> findByRole(UserRole role, Pageable pageable);
+    Page<User> findByRoleDeprecated(UserRole role, Pageable pageable);
     
     /**
-     * 역할별 사용자 개수 조회 (활성 상태만)
+     * 역할별 사용자 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false")
+    long countByRole(@Param("tenantId") String tenantId, @Param("role") UserRole role);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
-    long countByRole(UserRole role);
+    long countByRoleDeprecated(UserRole role);
     
     /**
-     * 등급별 사용자 조회 (활성 상태만)
+     * 등급별 사용자 조회 (tenantId 필터링)
      */
-    @Query("SELECT u FROM User u WHERE u.grade = ?1 AND u.isDeleted = false")
-    List<User> findByGrade(String grade);
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.grade = :grade AND u.isDeleted = false")
+    List<User> findByGrade(@Param("tenantId") String tenantId, @Param("grade") String grade);
     
     /**
-     * 사용자 ID로 프로필 사진 정보 조인 조회 (1. 사용자 프로필 2. SNS 이미지)
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
+    @Query("SELECT u FROM User u WHERE u.grade = ?1 AND u.isDeleted = false")
+    List<User> findByGradeDeprecated(String grade);
+    
+    /**
+     * 사용자 ID로 프로필 사진 정보 조인 조회 (tenantId 필터링)
      */
     @Query("SELECT u.id, u.name, u.email, u.role, u.profileImageUrl, " +
            "usa.provider, usa.providerProfileImage " +
            "FROM User u " +
            "LEFT JOIN u.userSocialAccounts usa " +
+           "WHERE u.tenantId = :tenantId AND u.id = :userId AND u.isDeleted = false AND (usa IS NULL OR usa.isDeleted = false)")
+    List<Object[]> findProfileImageInfoByUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
+    @Query("SELECT u.id, u.name, u.email, u.role, u.profileImageUrl, " +
+           "usa.provider, usa.providerProfileImage " +
+           "FROM User u " +
+           "LEFT JOIN u.userSocialAccounts usa " +
            "WHERE u.id = ?1 AND u.isDeleted = false AND (usa IS NULL OR usa.isDeleted = false)")
-    List<Object[]> findProfileImageInfoByUserId(Long userId);
+    List<Object[]> findProfileImageInfoByUserIdDeprecated(Long userId);
 
     /**
-     * 마이페이지 정보 조회 (사용자 + 소셜 계정 조인)
+     * 마이페이지 정보 조회 (tenantId 필터링)
      */
     @Query("SELECT u.id, u.username, u.email, u.name, u.nickname, u.phone, u.gender, " +
            "u.profileImageUrl, u.role, u.grade, u.experiencePoints, u.totalConsultations, " +
@@ -193,201 +246,431 @@ public interface UserRepository extends BaseRepository<User, Long> {
            "usa.provider, usa.providerProfileImage, usa.providerUsername " +
            "FROM User u " +
            "LEFT JOIN u.userSocialAccounts usa " +
+           "WHERE u.tenantId = :tenantId AND u.id = :userId AND u.isDeleted = false AND (usa IS NULL OR usa.isDeleted = false)")
+    List<Object[]> findMyPageInfoByUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
+    @Query("SELECT u.id, u.username, u.email, u.name, u.nickname, u.phone, u.gender, " +
+           "u.profileImageUrl, u.role, u.grade, u.experiencePoints, u.totalConsultations, " +
+           "u.lastLoginAt, u.isActive, u.isEmailVerified, u.createdAt, u.updatedAt, " +
+           "usa.provider, usa.providerProfileImage, usa.providerUsername " +
+           "FROM User u " +
+           "LEFT JOIN u.userSocialAccounts usa " +
            "WHERE u.id = ?1 AND u.isDeleted = false AND (usa IS NULL OR usa.isDeleted = false)")
-    List<Object[]> findMyPageInfoByUserId(Long userId);
+    List<Object[]> findMyPageInfoByUserIdDeprecated(Long userId);
     
     /**
-     * 등급별 사용자 페이징 조회 (활성 상태만)
+     * 등급별 사용자 페이징 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.grade = :grade AND u.isDeleted = false")
+    Page<User> findByGrade(@Param("tenantId") String tenantId, @Param("grade") String grade, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.grade = ?1 AND u.isDeleted = false")
-    Page<User> findByGrade(String grade, Pageable pageable);
+    Page<User> findByGradeDeprecated(String grade, Pageable pageable);
     
     /**
-     * 등급별 사용자 개수 조회 (활성 상태만)
+     * 등급별 사용자 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.grade = :grade AND u.isDeleted = false")
+    long countByGrade(@Param("tenantId") String tenantId, @Param("grade") String grade);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.grade = ?1 AND u.isDeleted = false")
-    long countByGrade(String grade);
+    long countByGradeDeprecated(String grade);
     
     /**
-     * 상태별 사용자 조회 (활성 상태만)
+     * 상태별 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.isActive = :isActive AND u.isDeleted = false")
+    List<User> findByIsActive(@Param("tenantId") String tenantId, @Param("isActive") Boolean isActive);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.isActive = ?1 AND u.isDeleted = false")
-    List<User> findByIsActive(Boolean isActive);
+    List<User> findByIsActiveDeprecated(Boolean isActive);
     
     /**
-     * 상태별 사용자 페이징 조회 (활성 상태만)
+     * 상태별 사용자 페이징 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.isActive = :isActive AND u.isDeleted = false")
+    Page<User> findByIsActive(@Param("tenantId") String tenantId, @Param("isActive") Boolean isActive, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.isActive = ?1 AND u.isDeleted = false")
-    Page<User> findByIsActive(Boolean isActive, Pageable pageable);
+    Page<User> findByIsActiveDeprecated(Boolean isActive, Pageable pageable);
     
     /**
-     * 상태별 사용자 개수 조회 (활성 상태만)
+     * 상태별 사용자 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isActive = :isActive AND u.isDeleted = false")
+    long countByIsActive(@Param("tenantId") String tenantId, @Param("isActive") Boolean isActive);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.isActive = ?1 AND u.isDeleted = false")
-    long countByIsActive(Boolean isActive);
+    long countByIsActiveDeprecated(Boolean isActive);
     
     /**
-     * 역할별 사용자 조회 (활성 상태 옵션)
+     * 역할별 사용자 조회 (활성 상태 옵션) (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND (:isActive IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
+    List<User> findByRoleAndIsActive(@Param("tenantId") String tenantId, @Param("role") UserRole role, @Param("isActive") Boolean isActive);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.role = ?1 AND (?2 IS NULL OR u.isActive = ?2) AND u.isDeleted = false")
-    List<User> findByRoleAndIsActive(UserRole role, Boolean isActive);
+    List<User> findByRoleAndIsActiveDeprecated(UserRole role, Boolean isActive);
     
     /**
-     * 지점별 사용자 조회 (활성 상태 옵션)
+     * 지점별 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND (:isActive IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
+    List<User> findByBranchCodeAndIsActive(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode, @Param("isActive") Boolean isActive);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND (?2 IS NULL OR u.isActive = ?2) AND u.isDeleted = false")
-    List<User> findByBranchCodeAndIsActive(String branchCode, Boolean isActive);
+    List<User> findByBranchCodeAndIsActiveDeprecated(String branchCode, Boolean isActive);
     
     /**
-     * 역할 + 지점별 사용자 조회 (활성 상태 옵션)
+     * 역할 + 지점별 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.branchCode = :branchCode AND (:isActive IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
+    List<User> findByRoleAndBranchCodeAndIsActive(@Param("tenantId") String tenantId, @Param("role") UserRole role, @Param("branchCode") String branchCode, @Param("isActive") Boolean isActive);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.branchCode = ?2 AND (?3 IS NULL OR u.isActive = ?3) AND u.isDeleted = false")
-    List<User> findByRoleAndBranchCodeAndIsActive(UserRole role, String branchCode, Boolean isActive);
+    List<User> findByRoleAndBranchCodeAndIsActiveDeprecated(UserRole role, String branchCode, Boolean isActive);
     
 
     
     /**
-     * 이메일 인증 상태별 사용자 조회 (활성 상태만)
+     * 이메일 인증 상태별 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.isEmailVerified = :isEmailVerified AND u.isDeleted = false")
+    List<User> findByIsEmailVerified(@Param("tenantId") String tenantId, @Param("isEmailVerified") Boolean isEmailVerified);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.isEmailVerified = ?1 AND u.isDeleted = false")
-    List<User> findByIsEmailVerified(Boolean isEmailVerified);
+    List<User> findByIsEmailVerifiedDeprecated(Boolean isEmailVerified);
     
     /**
-     * 이메일 인증 상태별 사용자 개수 조회 (활성 상태만)
+     * 이메일 인증 상태별 사용자 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isEmailVerified = :isEmailVerified AND u.isDeleted = false")
+    long countByIsEmailVerified(@Param("tenantId") String tenantId, @Param("isEmailVerified") Boolean isEmailVerified);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.isEmailVerified = ?1 AND u.isDeleted = false")
-    long countByIsEmailVerified(Boolean isEmailVerified);
+    long countByIsEmailVerifiedDeprecated(Boolean isEmailVerified);
     
     /**
-     * 성별 사용자 조회 (활성 상태만)
+     * 성별 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.gender = :gender AND u.isDeleted = false")
+    List<User> findByGender(@Param("tenantId") String tenantId, @Param("gender") String gender);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.gender = ?1 AND u.isDeleted = false")
-    List<User> findByGender(String gender);
+    List<User> findByGenderDeprecated(String gender);
     
     /**
-     * 성별 사용자 개수 조회 (활성 상태만)
+     * 성별 사용자 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.gender = :gender AND u.isDeleted = false")
+    long countByGender(@Param("tenantId") String tenantId, @Param("gender") String gender);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.gender = ?1 AND u.isDeleted = false")
-    long countByGender(String gender);
+    long countByGenderDeprecated(String gender);
     
     /**
-     * 연령대별 사용자 조회 (활성 상태만)
+     * 연령대별 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.ageGroup = :ageGroup AND u.isDeleted = false")
+    List<User> findByAgeGroup(@Param("tenantId") String tenantId, @Param("ageGroup") String ageGroup);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.ageGroup = ?1 AND u.isDeleted = false")
-    List<User> findByAgeGroup(String ageGroup);
+    List<User> findByAgeGroupDeprecated(String ageGroup);
     
     /**
-     * 연령대별 사용자 개수 조회 (활성 상태만)
+     * 연령대별 사용자 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.ageGroup = :ageGroup AND u.isDeleted = false")
+    long countByAgeGroup(@Param("tenantId") String tenantId, @Param("ageGroup") String ageGroup);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.ageGroup = ?1 AND u.isDeleted = false")
-    long countByAgeGroup(String ageGroup);
+    long countByAgeGroupDeprecated(String ageGroup);
     
     /**
-     * 특정 기간에 가입한 사용자 조회 (활성 상태만)
+     * 특정 기간에 가입한 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.createdAt BETWEEN :startDate AND :endDate AND u.isDeleted = false")
+    List<User> findByCreatedAtBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.createdAt BETWEEN ?1 AND ?2 AND u.isDeleted = false")
-    List<User> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+    List<User> findByCreatedAtBetweenDeprecated(LocalDateTime startDate, LocalDateTime endDate);
     
     /**
-     * 특정 기간에 가입한 사용자 페이징 조회 (활성 상태만)
+     * 특정 기간에 가입한 사용자 페이징 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.createdAt BETWEEN :startDate AND :endDate AND u.isDeleted = false")
+    Page<User> findByCreatedAtBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.createdAt BETWEEN ?1 AND ?2 AND u.isDeleted = false")
-    Page<User> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    Page<User> findByCreatedAtBetweenDeprecated(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     
     /**
-     * 특정 기간에 로그인한 사용자 조회 (활성 상태만)
+     * 특정 기간에 로그인한 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.lastLoginAt BETWEEN :startDate AND :endDate AND u.isDeleted = false")
+    List<User> findByLastLoginAtBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.lastLoginAt BETWEEN ?1 AND ?2 AND u.isDeleted = false")
-    List<User> findByLastLoginAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+    List<User> findByLastLoginAtBetweenDeprecated(LocalDateTime startDate, LocalDateTime endDate);
     
     /**
-     * 최근 로그인한 사용자 조회 (활성 상태만)
+     * 최근 로그인한 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false ORDER BY u.lastLoginAt DESC")
+    List<User> findRecentLoginUsers(@Param("tenantId") String tenantId, int limit);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.isDeleted = false ORDER BY u.lastLoginAt DESC")
-    List<User> findRecentLoginUsers(int limit);
+    List<User> findRecentLoginUsersDeprecated(int limit);
     
     /**
-     * 오랫동안 로그인하지 않은 사용자 조회 (활성 상태만)
+     * 오랫동안 로그인하지 않은 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.lastLoginAt < :cutoffDate AND u.isDeleted = false")
+    List<User> findInactiveUsers(@Param("tenantId") String tenantId, @Param("cutoffDate") LocalDateTime cutoffDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.lastLoginAt < ?1 AND u.isDeleted = false")
-    List<User> findInactiveUsers(LocalDateTime cutoffDate);
+    List<User> findInactiveUsersDeprecated(LocalDateTime cutoffDate);
     
     /**
-     * 경험치 기준 사용자 조회 (활성 상태만)
+     * 경험치 기준 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.experiencePoints >= :minExperiencePoints AND u.isDeleted = false ORDER BY u.experiencePoints DESC")
+    List<User> findByExperiencePointsGreaterThanEqual(@Param("tenantId") String tenantId, @Param("minExperiencePoints") Long minExperiencePoints);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.experiencePoints >= ?1 AND u.isDeleted = false ORDER BY u.experiencePoints DESC")
-    List<User> findByExperiencePointsGreaterThanEqual(Long minExperiencePoints);
+    List<User> findByExperiencePointsGreaterThanEqualDeprecated(Long minExperiencePoints);
     
     /**
-     * 경험치 기준 사용자 페이징 조회 (활성 상태만)
+     * 경험치 기준 사용자 페이징 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.experiencePoints >= :minExperiencePoints AND u.isDeleted = false ORDER BY u.experiencePoints DESC")
+    Page<User> findByExperiencePointsGreaterThanEqual(@Param("tenantId") String tenantId, @Param("minExperiencePoints") Long minExperiencePoints, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.experiencePoints >= ?1 AND u.isDeleted = false ORDER BY u.experiencePoints DESC")
-    Page<User> findByExperiencePointsGreaterThanEqual(Long minExperiencePoints, Pageable pageable);
+    Page<User> findByExperiencePointsGreaterThanEqualDeprecated(Long minExperiencePoints, Pageable pageable);
     
     /**
-     * 상담 횟수 기준 사용자 조회 (활성 상태만)
+     * 상담 횟수 기준 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.totalConsultations >= :minConsultations AND u.isDeleted = false ORDER BY u.totalConsultations DESC")
+    List<User> findByTotalConsultationsGreaterThanEqual(@Param("tenantId") String tenantId, @Param("minConsultations") Integer minConsultations);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.totalConsultations >= ?1 AND u.isDeleted = false ORDER BY u.totalConsultations DESC")
-    List<User> findByTotalConsultationsGreaterThanEqual(Integer minConsultations);
+    List<User> findByTotalConsultationsGreaterThanEqualDeprecated(Integer minConsultations);
     
     /**
-     * 상담 횟수 기준 사용자 페이징 조회 (활성 상태만)
+     * 상담 횟수 기준 사용자 페이징 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.totalConsultations >= :minConsultations AND u.isDeleted = false ORDER BY u.totalConsultations DESC")
+    Page<User> findByTotalConsultationsGreaterThanEqual(@Param("tenantId") String tenantId, @Param("minConsultations") Integer minConsultations, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.totalConsultations >= ?1 AND u.isDeleted = false ORDER BY u.totalConsultations DESC")
-    Page<User> findByTotalConsultationsGreaterThanEqual(Integer minConsultations, Pageable pageable);
+    Page<User> findByTotalConsultationsGreaterThanEqualDeprecated(Integer minConsultations, Pageable pageable);
     
     /**
-     * 이름으로 사용자 검색 (활성 상태만, 부분 일치)
+     * 이름으로 사용자 검색 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.name LIKE %:name% AND u.isDeleted = false")
+    List<User> findByNameContaining(@Param("tenantId") String tenantId, @Param("name") String name);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.name LIKE %?1% AND u.isDeleted = false")
-    List<User> findByNameContaining(String name);
+    List<User> findByNameContainingDeprecated(String name);
     
     /**
-     * 이름으로 사용자 검색 페이징 (활성 상태만, 부분 일치)
+     * 이름으로 사용자 검색 페이징 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.name LIKE %:name% AND u.isDeleted = false")
+    Page<User> findByNameContaining(@Param("tenantId") String tenantId, @Param("name") String name, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.name LIKE %?1% AND u.isDeleted = false")
-    Page<User> findByNameContaining(String name, Pageable pageable);
+    Page<User> findByNameContainingDeprecated(String name, Pageable pageable);
     
     /**
-     * 닉네임으로 사용자 검색 (활성 상태만, 부분 일치)
+     * 닉네임으로 사용자 검색 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.nickname LIKE %:nickname% AND u.isDeleted = false")
+    List<User> findByNicknameContaining(@Param("tenantId") String tenantId, @Param("nickname") String nickname);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.nickname LIKE %?1% AND u.isDeleted = false")
-    List<User> findByNicknameContaining(String nickname);
+    List<User> findByNicknameContainingDeprecated(String nickname);
     
     /**
-     * 닉네임으로 사용자 검색 페이징 (활성 상태만, 부분 일치)
+     * 닉네임으로 사용자 검색 페이징 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.nickname LIKE %:nickname% AND u.isDeleted = false")
+    Page<User> findByNicknameContaining(@Param("tenantId") String tenantId, @Param("nickname") String nickname, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.nickname LIKE %?1% AND u.isDeleted = false")
-    Page<User> findByNicknameContaining(String nickname, Pageable pageable);
+    Page<User> findByNicknameContainingDeprecated(String nickname, Pageable pageable);
     
     /**
-     * 이메일로 사용자 검색 (활성 상태만, 부분 일치)
+     * 이메일로 사용자 검색 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.email LIKE %:email% AND u.isDeleted = false")
+    List<User> findByEmailContaining(@Param("tenantId") String tenantId, @Param("email") String email);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.email LIKE %?1% AND u.isDeleted = false")
-    List<User> findByEmailContaining(String email);
+    List<User> findByEmailContainingDeprecated(String email);
     
     /**
-     * 이메일로 사용자 검색 페이징 (활성 상태만, 부분 일치)
+     * 이메일로 사용자 검색 페이징 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.email LIKE %:email% AND u.isDeleted = false")
+    Page<User> findByEmailContaining(@Param("tenantId") String tenantId, @Param("email") String email, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.email LIKE %?1% AND u.isDeleted = false")
-    Page<User> findByEmailContaining(String email, Pageable pageable);
+    Page<User> findByEmailContainingDeprecated(String email, Pageable pageable);
     
     /**
-     * 전화번호로 사용자 검색 (활성 상태만, 부분 일치)
+     * 전화번호로 사용자 검색 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.phone LIKE %:phone% AND u.isDeleted = false")
+    List<User> findByPhoneContaining(@Param("tenantId") String tenantId, @Param("phone") String phone);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.phone LIKE %?1% AND u.isDeleted = false")
-    List<User> findByPhoneContaining(String phone);
+    List<User> findByPhoneContainingDeprecated(String phone);
     
     /**
-     * 전화번호로 사용자 검색 페이징 (활성 상태만, 부분 일치)
+     * 전화번호로 사용자 검색 페이징 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.phone LIKE %:phone% AND u.isDeleted = false")
+    Page<User> findByPhoneContaining(@Param("tenantId") String tenantId, @Param("phone") String phone, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.phone LIKE %?1% AND u.isDeleted = false")
-    Page<User> findByPhoneContaining(String phone, Pageable pageable);
+    Page<User> findByPhoneContainingDeprecated(String phone, Pageable pageable);
     
     /**
-     * 복합 조건으로 사용자 검색 (활성 상태만)
+     * 복합 조건으로 사용자 검색 (tenantId 필터링)
      */
-    @Query("SELECT u FROM User u WHERE " +
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND " +
            "(:name IS NULL OR u.name LIKE %:name%) AND " +
            "(:email IS NULL OR u.email LIKE %:email%) AND " +
            "(:role IS NULL OR u.role = :role) AND " +
@@ -396,7 +679,8 @@ public interface UserRepository extends BaseRepository<User, Long> {
            "(:gender IS NULL OR u.gender = :gender) AND " +
            "(:ageGroup IS NULL OR u.ageGroup = :ageGroup) AND " +
            "u.isDeleted = false")
-    Page<User> findByComplexCriteria(@Param("name") String name,
+    Page<User> findByComplexCriteria(@Param("tenantId") String tenantId,
+                                   @Param("name") String name,
                                    @Param("email") String email,
                                    @Param("role") UserRole role,
                                    @Param("grade") String grade,
@@ -406,8 +690,46 @@ public interface UserRepository extends BaseRepository<User, Long> {
                                    Pageable pageable);
     
     /**
-     * 사용자 통계 정보 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
      */
+    @Deprecated
+    @Query("SELECT u FROM User u WHERE " +
+           "(:name IS NULL OR u.name LIKE %:name%) AND " +
+           "(:email IS NULL OR u.email LIKE %:email%) AND " +
+           "(:role IS NULL OR u.role = :role) AND " +
+           "(:grade IS NULL OR u.grade = :grade) AND " +
+           "(:isActive IS NULL OR u.isActive = :isActive) AND " +
+           "(:gender IS NULL OR u.gender = :gender) AND " +
+           "(:ageGroup IS NULL OR u.ageGroup = :ageGroup) AND " +
+           "u.isDeleted = false")
+    Page<User> findByComplexCriteriaDeprecated(@Param("name") String name,
+                                   @Param("email") String email,
+                                   @Param("role") UserRole role,
+                                   @Param("grade") String grade,
+                                   @Param("isActive") Boolean isActive,
+                                   @Param("gender") String gender,
+                                   @Param("ageGroup") String ageGroup,
+                                   Pageable pageable);
+    
+    /**
+     * 사용자 통계 정보 조회 (tenantId 필터링)
+     */
+    @Query("SELECT " +
+           "COUNT(u) as totalUsers, " +
+           "COUNT(CASE WHEN u.role = 'CLIENT' THEN 1 END) as clientCount, " +
+           "COUNT(CASE WHEN u.role = 'CONSULTANT' THEN 1 END) as consultantCount, " +
+           "COUNT(CASE WHEN u.role = 'ADMIN' THEN 1 END) as adminCount, " +
+           "COUNT(CASE WHEN u.isActive = true THEN 1 END) as activeCount, " +
+           "COUNT(CASE WHEN u.isEmailVerified = true THEN 1 END) as verifiedCount, " +
+           "AVG(u.experiencePoints) as avgExperiencePoints, " +
+           "AVG(u.totalConsultations) as avgConsultations " +
+           "FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false")
+    Object[] getUserStatistics(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT " +
            "COUNT(u) as totalUsers, " +
            "COUNT(CASE WHEN u.role = 'CLIENT' THEN 1 END) as clientCount, " +
@@ -418,10 +740,10 @@ public interface UserRepository extends BaseRepository<User, Long> {
            "AVG(u.experiencePoints) as avgExperiencePoints, " +
            "AVG(u.totalConsultations) as avgConsultations " +
            "FROM User u WHERE u.isDeleted = false")
-    Object[] getUserStatistics();
+    Object[] getUserStatisticsDeprecated();
     
     /**
-     * 지점코드별 사용자 통계 정보 조회
+     * 지점코드별 사용자 통계 정보 조회 (tenantId 필터링)
      */
     @Query("SELECT " +
            "COUNT(u) as totalUsers, " +
@@ -432,158 +754,347 @@ public interface UserRepository extends BaseRepository<User, Long> {
            "COUNT(CASE WHEN u.isEmailVerified = true THEN 1 END) as verifiedCount, " +
            "AVG(u.experiencePoints) as avgExperiencePoints, " +
            "AVG(u.totalConsultations) as avgConsultations " +
-           "FROM User u WHERE u.isDeleted = false AND u.branchCode = :branchCode")
-    Object[] getUserStatisticsByBranchCode(@Param("branchCode") String branchCode);
+           "FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false AND u.branchCode = :branchCode")
+    Object[] getUserStatisticsByBranchCode(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode);
     
     /**
-     * 역할별 사용자 통계 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
+    @Query("SELECT " +
+           "COUNT(u) as totalUsers, " +
+           "COUNT(CASE WHEN u.role = 'CLIENT' THEN 1 END) as clientCount, " +
+           "COUNT(CASE WHEN u.role = 'CONSULTANT' THEN 1 END) as consultantCount, " +
+           "COUNT(CASE WHEN u.role = 'ADMIN' THEN 1 END) as adminCount, " +
+           "COUNT(CASE WHEN u.isActive = true THEN 1 END) as activeCount, " +
+           "COUNT(CASE WHEN u.isEmailVerified = true THEN 1 END) as verifiedCount, " +
+           "AVG(u.experiencePoints) as avgExperiencePoints, " +
+           "AVG(u.totalConsultations) as avgConsultations " +
+           "FROM User u WHERE u.isDeleted = false AND u.branchCode = :branchCode")
+    Object[] getUserStatisticsByBranchCodeDeprecated(@Param("branchCode") String branchCode);
+    
+    /**
+     * 역할별 사용자 통계 조회 (tenantId 필터링)
      */
     @Query("SELECT u.role, COUNT(u) as count, AVG(u.experiencePoints) as avgExperience " +
-           "FROM User u WHERE u.isDeleted = false GROUP BY u.role")
-    List<Object[]> getUserStatisticsByRole();
+           "FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.role")
+    List<Object[]> getUserStatisticsByRole(@Param("tenantId") String tenantId);
     
     /**
-     * 등급별 사용자 통계 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
+    @Query("SELECT u.role, COUNT(u) as count, AVG(u.experiencePoints) as avgExperience " +
+           "FROM User u WHERE u.isDeleted = false GROUP BY u.role")
+    List<Object[]> getUserStatisticsByRoleDeprecated();
+    
+    /**
+     * 등급별 사용자 통계 조회 (tenantId 필터링)
      */
     @Query("SELECT u.grade, COUNT(u) as count, AVG(u.experiencePoints) as avgExperience " +
+           "FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.grade")
+    List<Object[]> getUserStatisticsByGrade(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
+    @Query("SELECT u.grade, COUNT(u) as count, AVG(u.experiencePoints) as avgExperience " +
            "FROM User u WHERE u.isDeleted = false GROUP BY u.grade")
-    List<Object[]> getUserStatisticsByGrade();
+    List<Object[]> getUserStatisticsByGradeDeprecated();
     
     /**
-     * 성별 사용자 통계 조회
+     * 성별 사용자 통계 조회 (tenantId 필터링)
      */
+    @Query("SELECT u.gender, COUNT(u) as count FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.gender")
+    List<Object[]> getUserStatisticsByGender(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u.gender, COUNT(u) as count FROM User u WHERE u.isDeleted = false GROUP BY u.gender")
-    List<Object[]> getUserStatisticsByGender();
+    List<Object[]> getUserStatisticsByGenderDeprecated();
     
     /**
-     * 연령대별 사용자 통계 조회
+     * 연령대별 사용자 통계 조회 (tenantId 필터링)
      */
+    @Query("SELECT u.ageGroup, COUNT(u) as count FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.ageGroup")
+    List<Object[]> getUserStatisticsByAgeGroup(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u.ageGroup, COUNT(u) as count FROM User u WHERE u.isDeleted = false GROUP BY u.ageGroup")
-    List<Object[]> getUserStatisticsByAgeGroup();
+    List<Object[]> getUserStatisticsByAgeGroupDeprecated();
     
     // === Branch 관련 메서드 ===
     
     /**
-     * 지점과 역할로 사용자 조회
+     * 지점과 역할로 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.role = :role AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUsername(@Param("tenantId") String tenantId, @Param("branch") com.coresolution.consultation.entity.Branch branch, @Param("role") UserRole role);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUsername(com.coresolution.consultation.entity.Branch branch, UserRole role);
+    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUsernameDeprecated(com.coresolution.consultation.entity.Branch branch, UserRole role);
     
     /**
-     * 지점으로 사용자 조회
+     * 지점으로 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch = :branch AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByBranchAndIsDeletedFalseOrderByUsername(@Param("tenantId") String tenantId, @Param("branch") com.coresolution.consultation.entity.Branch branch);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchAndIsDeletedFalseOrderByUsername(com.coresolution.consultation.entity.Branch branch);
+    List<User> findByBranchAndIsDeletedFalseOrderByUsernameDeprecated(com.coresolution.consultation.entity.Branch branch);
     
     /**
-     * 지점별 사용자 수 조회
+     * 지점별 사용자 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT u.branch.id, u.branch.branchName, COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName ORDER BY u.branch.branchName")
+    List<Object[]> countUsersByBranch(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u.branch.id, u.branch.branchName, COUNT(u) FROM User u WHERE u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName ORDER BY u.branch.branchName")
-    List<Object[]> countUsersByBranch();
+    List<Object[]> countUsersByBranchDeprecated();
     
     /**
-     * 지점이 없는 사용자들 조회
+     * 지점이 없는 사용자들 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch IS NULL AND u.isDeleted = false ORDER BY u.username")
+    List<User> findUsersWithoutBranch(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.branch IS NULL AND u.isDeleted = false ORDER BY u.username")
-    List<User> findUsersWithoutBranch();
+    List<User> findUsersWithoutBranchDeprecated();
     
     /**
-     * 지점별 역할별 사용자 수 조회
+     * 지점별 역할별 사용자 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT u.branch.id, u.branch.branchName, u.role, COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName, u.role ORDER BY u.branch.branchName, u.role")
+    List<Object[]> countUsersByBranchAndRole(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u.branch.id, u.branch.branchName, u.role, COUNT(u) FROM User u WHERE u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName, u.role ORDER BY u.branch.branchName, u.role")
-    List<Object[]> countUsersByBranchAndRole();
+    List<Object[]> countUsersByBranchAndRoleDeprecated();
     
     /**
-     * 지점 코드별 사용자 조회 (활성 사용자만)
+     * 지점 코드별 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByBranchCode(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchCode(String branchCode);
+    List<User> findByBranchCodeDeprecated(String branchCode);
     
     /**
-     * 지점 코드와 역할로 사용자 조회 (삭제되지 않은 사용자만)
+     * 지점 코드와 역할로 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND u.role = :role AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode, @Param("role") UserRole role);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername(String branchCode, UserRole role);
+    List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsernameDeprecated(String branchCode, UserRole role);
     
     /**
-     * 여러 역할로 사용자 조회
+     * 여러 역할로 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByRoleIn(@Param("tenantId") String tenantId, @Param("roles") List<String> roles);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByRoleIn(@Param("roles") List<String> roles);
+    List<User> findByRoleInDeprecated(@Param("roles") List<String> roles);
     
     /**
-     * 역할별 사용자 조회 (삭제되지 않은 사용자만)
+     * 역할별 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByRoleAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("role") String role);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByRoleAndIsDeletedFalse(String role);
+    List<User> findByRoleAndIsDeletedFalseDeprecated(String role);
     
     /**
-     * 여러 역할로 사용자 조회 (삭제되지 않은 사용자만)
+     * 여러 역할로 사용자 조회 (tenantId 필터링)
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByRoleInAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("roles") List<String> roles);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByRoleInAndIsDeletedFalse(@Param("roles") List<String> roles);
+    List<User> findByRoleInAndIsDeletedFalseDeprecated(@Param("roles") List<String> roles);
     
     // === 통계용 메서드 ===
     
     /**
-     * 활성 사용자 수 조회
+     * 활성 사용자 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isActive = true AND u.isDeleted = false")
+    long countByIsActiveTrueAndIsDeletedFalse(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.isActive = true AND u.isDeleted = false")
-    long countByIsActiveTrueAndIsDeletedFalse();
+    long countByIsActiveTrueAndIsDeletedFalseDeprecated();
     
     /**
-     * 역할별 사용자 수 조회
+     * 역할별 사용자 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false")
+    long countByRoleAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("role") UserRole role);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
-    long countByRoleAndIsDeletedFalse(UserRole role);
+    long countByRoleAndIsDeletedFalseDeprecated(UserRole role);
     
     /**
-     * 역할별 활성 사용자 수 조회
+     * 역할별 활성 사용자 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isActive = true AND u.isDeleted = false")
+    long countByRoleAndIsActiveTrueAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("role") UserRole role);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.isActive = true AND u.isDeleted = false")
-    long countByRoleAndIsActiveTrueAndIsDeletedFalse(UserRole role);
+    long countByRoleAndIsActiveTrueAndIsDeletedFalseDeprecated(UserRole role);
     
     /**
-     * 지점별 사용자 수 조회
+     * 지점별 사용자 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isDeleted = false")
+    long countByBranchIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.branch.id = ?1 AND u.isDeleted = false")
-    long countByBranchIdAndIsDeletedFalse(Long branchId);
+    long countByBranchIdAndIsDeletedFalseDeprecated(Long branchId);
     
     /**
-     * 지점별 활성 사용자 수 조회
+     * 지점별 활성 사용자 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isActive = true AND u.isDeleted = false")
+    long countByBranchIdAndIsActiveTrueAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.branch.id = ?1 AND u.isActive = true AND u.isDeleted = false")
-    long countByBranchIdAndIsActiveTrueAndIsDeletedFalse(Long branchId);
+    long countByBranchIdAndIsActiveTrueAndIsDeletedFalseDeprecated(Long branchId);
     
     /**
-     * 지점별 역할별 사용자 수 조회
+     * 지점별 역할별 사용자 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.role = :role AND u.isDeleted = false")
+    long countByBranchIdAndRoleAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, @Param("role") UserRole role);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.branch.id = ?1 AND u.role = ?2 AND u.isDeleted = false")
-    long countByBranchIdAndRoleAndIsDeletedFalse(Long branchId, UserRole role);
+    long countByBranchIdAndRoleAndIsDeletedFalseDeprecated(Long branchId, UserRole role);
     
     // === 통계 대시보드용 메서드 ===
     
     /**
-     * 역할별 사용자 수 조회 (문자열 역할명)
+     * 역할별 사용자 수 조회 (tenantId 필터링) (문자열 역할명)
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false")
+    long countByRole(@Param("tenantId") String tenantId, @Param("role") String role);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
-    long countByRole(String role);
+    long countByRoleDeprecated(String role);
+    
+    /**
+     * 특정 날짜 이후 생성된 역할별 사용자 수 조회 (tenantId 포함)
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.createdAt > :dateTime AND u.isDeleted = false")
+    long countByTenantIdAndCreatedAtAfterAndRole(@Param("tenantId") String tenantId, @Param("dateTime") LocalDateTime dateTime, @Param("role") UserRole role);
+    
+    /**
+     * 특정 날짜 이전 생성된 역할별 사용자 수 조회 (tenantId 포함)
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.createdAt < :dateTime AND u.isDeleted = false")
+    long countByTenantIdAndCreatedAtBeforeAndRole(@Param("tenantId") String tenantId, @Param("dateTime") LocalDateTime dateTime, @Param("role") UserRole role);
+    
+    /**
+     * 특정 기간에 생성된 역할별 사용자 수 조회 (tenantId 포함)
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.createdAt BETWEEN :startDate AND :endDate AND u.isDeleted = false")
+    long countByTenantIdAndCreatedAtBetweenAndRole(@Param("tenantId") String tenantId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, @Param("role") UserRole role);
     
     /**
      * 특정 날짜 이후 생성된 역할별 사용자 수 조회
+     * @deprecated tenantId 필터링이 없습니다. countByTenantIdAndCreatedAtAfterAndRole 사용하세요.
      */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.createdAt > ?2 AND u.isDeleted = false")
     long countByRoleAndCreatedAtAfter(UserRole role, LocalDateTime dateTime);
     
     /**
      * 특정 날짜 이전 생성된 역할별 사용자 수 조회
+     * @deprecated tenantId 필터링이 없습니다. countByTenantIdAndCreatedAtBeforeAndRole 사용하세요.
      */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.createdAt < ?2 AND u.isDeleted = false")
     long countByRoleAndCreatedAtBefore(UserRole role, LocalDateTime dateTime);
     
     /**
      * 특정 기간에 생성된 역할별 사용자 수 조회
+     * @deprecated tenantId 필터링이 없습니다. countByTenantIdAndCreatedAtBetweenAndRole 사용하세요.
      */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.createdAt BETWEEN ?2 AND ?3 AND u.isDeleted = false")
     long countByRoleAndCreatedAtBetween(UserRole role, LocalDateTime startDate, LocalDateTime endDate);
     

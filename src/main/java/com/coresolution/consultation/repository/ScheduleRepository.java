@@ -60,13 +60,25 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     List<Schedule> findByConsultantIdAndDate(Long consultantId, LocalDate date);
     
     /**
-     * 상담사별 날짜 범위 스케줄 조회
+     * 상담사별 날짜 범위 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndConsultantIdAndDateBetween(String tenantId, Long consultantId, LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultantIdAndDateBetween(Long consultantId, LocalDate startDate, LocalDate endDate);
     
     /**
-     * 상담사별 특정 날짜 이후 스케줄 조회
+     * 상담사별 특정 날짜 이후 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndConsultantIdAndDateAfter(String tenantId, Long consultantId, LocalDate date);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultantIdAndDateAfter(Long consultantId, LocalDate date);
     
     /**
@@ -94,65 +106,125 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     List<Schedule> findByDateAndConsultantIdAndIsDeletedFalse(LocalDate date, Long consultantId);
     
     /**
-     * 날짜별 지점 스케줄 조회
+     * 날짜별 지점 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndDateAndBranchCode(String tenantId, LocalDate date, String branchCode);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByDateAndBranchCode(LocalDate date, String branchCode);
     
     /**
-     * 상담사별 특정 날짜 이후 스케줄 조회 (해당 날짜 포함)
+     * 상담사별 특정 날짜 이후 스케줄 조회 (해당 날짜 포함) (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndConsultantIdAndDateGreaterThanEqual(String tenantId, Long consultantId, LocalDate date);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultantIdAndDateGreaterThanEqual(Long consultantId, LocalDate date);
     
     /**
-     * 상담사별 활성 스케줄 조회 (삭제되지 않은)
+     * 상담사별 활성 스케줄 조회 (삭제되지 않은) (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndConsultantIdAndIsDeletedFalse(String tenantId, Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultantIdAndIsDeletedFalse(Long consultantId);
 
     // ==================== 상태별 스케줄 조회 ====================
     
     /**
-     * 특정 날짜와 상태 목록으로 스케줄 조회
+     * 특정 날짜와 상태 목록으로 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndDateAndStatusIn(String tenantId, LocalDate date, List<ScheduleStatus> statuses);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByDateAndStatusIn(LocalDate date, List<ScheduleStatus> statuses);
     
     // ==================== 내담자별 스케줄 조회 ====================
     
     /**
-     * 내담자별 스케줄 조회
+     * 내담자별 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndClientId(String tenantId, Long clientId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByClientId(Long clientId);
     
     /**
-     * 내담자별 스케줄 페이지네이션 조회
+     * 내담자별 스케줄 페이지네이션 조회 (tenantId 필터링)
      */
+    Page<Schedule> findByTenantIdAndClientId(String tenantId, Long clientId, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     Page<Schedule> findByClientId(Long clientId, Pageable pageable);
     
     /**
-     * 내담자별 특정 날짜 스케줄 조회
+     * 내담자별 특정 날짜 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndClientIdAndDate(String tenantId, Long clientId, LocalDate date);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByClientIdAndDate(Long clientId, LocalDate date);
     
     /**
-     * 내담자별 날짜 범위 스케줄 조회
+     * 내담자별 날짜 범위 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndClientIdAndDateBetween(String tenantId, Long clientId, LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByClientIdAndDateBetween(Long clientId, LocalDate startDate, LocalDate endDate);
     
     /**
-     * 내담자별 특정 날짜 이후 스케줄 조회 (해당 날짜 포함)
+     * 내담자별 특정 날짜 이후 스케줄 조회 (해당 날짜 포함) (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndClientIdAndDateGreaterThanEqual(String tenantId, Long clientId, LocalDate date);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByClientIdAndDateGreaterThanEqual(Long clientId, LocalDate date);
     
     /**
-     * 상담사와 내담자별 특정 날짜 이후 스케줄 조회 (해당 날짜 포함)
+     * 상담사와 내담자별 특정 날짜 이후 스케줄 조회 (해당 날짜 포함) (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(String tenantId, Long consultantId, Long clientId, LocalDate date);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultantIdAndClientIdAndDateGreaterThanEqual(Long consultantId, Long clientId, LocalDate date);
 
     // ==================== 시간 충돌 검사 ====================
     
     /**
-     * 특정 시간대에 겹치는 스케줄 조회 (시간 충돌 검사용)
+     * 특정 시간대에 겹치는 스케줄 조회 (시간 충돌 검사용) (tenantId 필터링)
      */
-    @Query("SELECT s FROM Schedule s WHERE s.consultantId = :consultantId " +
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId " +
            "AND s.date = :date " +
            "AND s.isDeleted = false " +
            "AND s.status IN ('BOOKED', 'IN_PROGRESS') " +
@@ -160,6 +232,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
            "OR (s.startTime = :startTime) " +
            "OR (s.endTime = :endTime))")
     List<Schedule> findOverlappingSchedules(
+        @Param("tenantId") String tenantId,
         @Param("consultantId") Long consultantId,
         @Param("date") LocalDate date,
         @Param("startTime") LocalTime startTime,
@@ -167,9 +240,27 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     );
     
     /**
-     * 특정 시간대에 겹치는 스케줄 조회 (자기 자신 제외)
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
      */
+    @Deprecated
     @Query("SELECT s FROM Schedule s WHERE s.consultantId = :consultantId " +
+           "AND s.date = :date " +
+           "AND s.isDeleted = false " +
+           "AND s.status IN ('BOOKED', 'IN_PROGRESS') " +
+           "AND ((s.startTime < :endTime AND s.endTime > :startTime) " +
+           "OR (s.startTime = :startTime) " +
+           "OR (s.endTime = :endTime))")
+    List<Schedule> findOverlappingSchedulesDeprecated(
+        @Param("consultantId") Long consultantId,
+        @Param("date") LocalDate date,
+        @Param("startTime") LocalTime startTime,
+        @Param("endTime") LocalTime endTime
+    );
+    
+    /**
+     * 특정 시간대에 겹치는 스케줄 조회 (자기 자신 제외) (tenantId 필터링)
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId " +
            "AND s.date = :date " +
            "AND s.id != :excludeScheduleId " +
            "AND s.isDeleted = false " +
@@ -178,6 +269,27 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
            "OR (s.startTime = :startTime) " +
            "OR (s.endTime = :endTime))")
     List<Schedule> findOverlappingSchedulesExcluding(
+        @Param("tenantId") String tenantId,
+        @Param("consultantId") Long consultantId,
+        @Param("date") LocalDate date,
+        @Param("startTime") LocalTime startTime,
+        @Param("endTime") LocalTime endTime,
+        @Param("excludeScheduleId") Long excludeScheduleId
+    );
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
+    @Query("SELECT s FROM Schedule s WHERE s.consultantId = :consultantId " +
+           "AND s.date = :date " +
+           "AND s.id != :excludeScheduleId " +
+           "AND s.isDeleted = false " +
+           "AND s.status IN ('BOOKED', 'IN_PROGRESS') " +
+           "AND ((s.startTime < :endTime AND s.endTime > :startTime) " +
+           "OR (s.startTime = :startTime) " +
+           "OR (s.endTime = :endTime))")
+    List<Schedule> findOverlappingSchedulesExcludingDeprecated(
         @Param("consultantId") Long consultantId,
         @Param("date") LocalDate date,
         @Param("startTime") LocalTime startTime,
@@ -188,115 +300,238 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     // ==================== 상태별 스케줄 조회 ====================
     
     /**
-     * 상태별 스케줄 조회
+     * 상태별 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndStatus(String tenantId, String status);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByStatus(String status);
     
     /**
-     * 상담사별 상태별 스케줄 조회
+     * 상담사별 상태별 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndConsultantIdAndStatus(String tenantId, Long consultantId, String status);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultantIdAndStatus(Long consultantId, String status);
     
     /**
-     * 상담사별 상태별 날짜 범위 스케줄 조회
+     * 상담사별 상태별 날짜 범위 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndConsultantIdAndStatusAndDateBetween(String tenantId, Long consultantId, ScheduleStatus status, LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultantIdAndStatusAndDateBetween(Long consultantId, ScheduleStatus status, LocalDate startDate, LocalDate endDate);
     
     /**
-     * 내담자별 상태별 스케줄 조회 (문자열)
+     * 내담자별 상태별 스케줄 조회 (문자열) (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndClientIdAndStatus(String tenantId, Long clientId, String status);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByClientIdAndStatus(Long clientId, String status);
     
     /**
-     * 내담자별 상태별 스케줄 조회 (enum)
+     * 내담자별 상태별 스케줄 조회 (enum) (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndClientIdAndStatus(String tenantId, Long clientId, ScheduleStatus status);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByClientIdAndStatus(Long clientId, ScheduleStatus status);
 
     // ==================== 날짜별 스케줄 조회 ====================
     
     /**
-     * 특정 날짜의 모든 스케줄 조회
+     * 특정 날짜의 모든 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndDate(String tenantId, LocalDate date);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByDate(LocalDate date);
     
     /**
-     * 날짜 범위의 모든 스케줄 조회
+     * 날짜 범위의 모든 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndDateBetween(String tenantId, LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByDateBetween(LocalDate startDate, LocalDate endDate);
     
     // ==================== 스케줄 타입별 조회 ====================
     
     /**
-     * 스케줄 타입별 조회
+     * 스케줄 타입별 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndScheduleType(String tenantId, String scheduleType);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByScheduleType(String scheduleType);
     
     /**
-     * 상담사별 스케줄 타입별 조회
+     * 상담사별 스케줄 타입별 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndConsultantIdAndScheduleType(String tenantId, Long consultantId, String scheduleType);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultantIdAndScheduleType(Long consultantId, String scheduleType);
 
     // ==================== 통계 및 분석 ====================
     
     /**
-     * 상담사별 스케줄 개수 조회
+     * 상담사별 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.isDeleted = false")
+    long countByConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.consultantId = :consultantId AND s.isDeleted = false")
-    long countByConsultantId(@Param("consultantId") Long consultantId);
+    long countByConsultantIdDeprecated(@Param("consultantId") Long consultantId);
     
     /**
-     * 내담자별 스케줄 개수 조회
+     * 내담자별 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.clientId = :clientId AND s.isDeleted = false")
+    long countByClientId(@Param("tenantId") String tenantId, @Param("clientId") Long clientId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.clientId = :clientId AND s.isDeleted = false")
-    long countByClientId(@Param("clientId") Long clientId);
+    long countByClientIdDeprecated(@Param("clientId") Long clientId);
     
     /**
-     * 상담사별 특정 날짜의 스케줄 개수 조회
+     * 상담사별 특정 날짜의 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.date = :date AND s.isDeleted = false")
+    long countByConsultantIdAndDate(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("date") LocalDate date);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.consultantId = :consultantId AND s.date = :date AND s.isDeleted = false")
-    long countByConsultantIdAndDate(@Param("consultantId") Long consultantId, @Param("date") LocalDate date);
+    long countByConsultantIdAndDateDeprecated(@Param("consultantId") Long consultantId, @Param("date") LocalDate date);
 
     // ==================== 통계 조회 ====================
     
     /**
-     * 상담사별 스케줄 수 통계
+     * 상담사별 스케줄 수 통계 (tenantId 필터링)
      */
+    @Query("SELECT s.consultantId, COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false GROUP BY s.consultantId")
+    List<Object[]> countSchedulesByConsultant(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT s.consultantId, COUNT(s) FROM Schedule s WHERE s.isDeleted = false GROUP BY s.consultantId")
-    List<Object[]> countSchedulesByConsultant();
+    List<Object[]> countSchedulesByConsultantDeprecated();
     
     /**
-     * 날짜별 스케줄 수 통계
+     * 날짜별 스케줄 수 통계 (tenantId 필터링)
      */
+    @Query("SELECT s.date, COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false AND s.date BETWEEN :startDate AND :endDate GROUP BY s.date ORDER BY s.date")
+    List<Object[]> countSchedulesByDateBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT s.date, COUNT(s) FROM Schedule s WHERE s.isDeleted = false AND s.date BETWEEN :startDate AND :endDate GROUP BY s.date ORDER BY s.date")
-    List<Object[]> countSchedulesByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    List<Object[]> countSchedulesByDateBetweenDeprecated(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
     /**
-     * 상태별 스케줄 수 통계
+     * 상태별 스케줄 수 통계 (tenantId 필터링)
      */
+    @Query("SELECT s.status, COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false GROUP BY s.status")
+    List<Object[]> countSchedulesByStatus(@Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT s.status, COUNT(s) FROM Schedule s WHERE s.isDeleted = false GROUP BY s.status")
-    List<Object[]> countSchedulesByStatus();
+    List<Object[]> countSchedulesByStatusDeprecated();
 
     // ==================== 자동 완료 처리 ====================
     
     /**
-     * 시간이 지난 확정된 스케줄 조회 (자동 완료 처리용)
+     * 시간이 지난 확정된 스케줄 조회 (자동 완료 처리용) (tenantId 필터링)
      */
-    @Query("SELECT s FROM Schedule s WHERE s.date = :date " +
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.date = :date " +
            "AND s.endTime < :currentTime " +
            "AND s.status = 'CONFIRMED' " +
            "AND s.isDeleted = false")
     List<Schedule> findExpiredConfirmedSchedules(
+        @Param("tenantId") String tenantId,
         @Param("date") LocalDate date,
         @Param("currentTime") LocalTime currentTime
     );
     
     /**
-     * 특정 날짜 이전의 특정 상태 스케줄 조회 (자동 완료 처리용)
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
      */
-    @Query("SELECT s FROM Schedule s WHERE s.date < :date " +
+    @Deprecated
+    @Query("SELECT s FROM Schedule s WHERE s.date = :date " +
+           "AND s.endTime < :currentTime " +
+           "AND s.status = 'CONFIRMED' " +
+           "AND s.isDeleted = false")
+    List<Schedule> findExpiredConfirmedSchedulesDeprecated(
+        @Param("date") LocalDate date,
+        @Param("currentTime") LocalTime currentTime
+    );
+    
+    /**
+     * 특정 날짜 이전의 특정 상태 스케줄 조회 (자동 완료 처리용) (tenantId 필터링)
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.date < :date " +
            "AND s.status = :status " +
            "AND s.isDeleted = false")
     List<Schedule> findByDateBeforeAndStatus(
+        @Param("tenantId") String tenantId,
+        @Param("date") LocalDate date,
+        @Param("status") ScheduleStatus status
+    );
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
+    @Query("SELECT s FROM Schedule s WHERE s.date < :date " +
+           "AND s.status = :status " +
+           "AND s.isDeleted = false")
+    List<Schedule> findByDateBeforeAndStatusDeprecated(
         @Param("date") LocalDate date,
         @Param("status") ScheduleStatus status
     );
@@ -304,115 +539,233 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     // ==================== 오늘의 통계 ====================
     
     /**
-     * 특정 날짜의 특정 상태 스케줄 개수 조회
+     * 특정 날짜의 특정 상태 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date = :date AND s.status = :status AND s.isDeleted = false")
+    long countByDateAndStatus(@Param("tenantId") String tenantId, @Param("date") LocalDate date, @Param("status") ScheduleStatus status);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date = :date AND s.status = :status AND s.isDeleted = false")
-    long countByDateAndStatus(@Param("date") LocalDate date, @Param("status") ScheduleStatus status);
+    long countByDateAndStatusDeprecated(@Param("date") LocalDate date, @Param("status") ScheduleStatus status);
     
     /**
-     * 특정 날짜의 스케줄 개수 조회
+     * 특정 날짜의 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date = :date AND s.isDeleted = false")
+    long countByDate(@Param("tenantId") String tenantId, @Param("date") LocalDate date);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date = :date AND s.isDeleted = false")
-    long countByDate(@Param("date") LocalDate date);
+    long countByDateDeprecated(@Param("date") LocalDate date);
     
     /**
-     * 특정 상태의 스케줄 개수 조회
+     * 특정 상태의 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.status = :status AND s.isDeleted = false")
+    long countByStatus(@Param("tenantId") String tenantId, @Param("status") String status);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.status = :status AND s.isDeleted = false")
-    long countByStatus(@Param("status") String status);
+    long countByStatusDeprecated(@Param("status") String status);
     
     // ==================== 날짜 범위 통계 ====================
     
     /**
-     * 날짜 범위 내 스케줄 개수 조회
+     * 날짜 범위 내 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countByDateBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
-    long countByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    long countByDateBetweenDeprecated(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
     /**
-     * 시작일 이후 스케줄 개수 조회
+     * 시작일 이후 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date >= :startDate AND s.isDeleted = false")
+    long countByDateGreaterThanEqual(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date >= :startDate AND s.isDeleted = false")
-    long countByDateGreaterThanEqual(@Param("startDate") LocalDate startDate);
+    long countByDateGreaterThanEqualDeprecated(@Param("startDate") LocalDate startDate);
     
     /**
-     * 종료일 이전 스케줄 개수 조회
+     * 종료일 이전 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date <= :endDate AND s.isDeleted = false")
+    long countByDateLessThanEqual(@Param("tenantId") String tenantId, @Param("endDate") LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date <= :endDate AND s.isDeleted = false")
-    long countByDateLessThanEqual(@Param("endDate") LocalDate endDate);
+    long countByDateLessThanEqualDeprecated(@Param("endDate") LocalDate endDate);
     
     /**
-     * 날짜 범위 내 특정 상태 스케줄 개수 조회
+     * 날짜 범위 내 특정 상태 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.status = :status AND s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countByStatusAndDateBetween(@Param("tenantId") String tenantId, @Param("status") String status, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.status = :status AND s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
-    long countByStatusAndDateBetween(@Param("status") String status, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    long countByStatusAndDateBetweenDeprecated(@Param("status") String status, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
     /**
-     * 시작일 이후 특정 상태 스케줄 개수 조회
+     * 시작일 이후 특정 상태 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.status = :status AND s.date >= :startDate AND s.isDeleted = false")
+    long countByStatusAndDateGreaterThanEqual(@Param("tenantId") String tenantId, @Param("status") String status, @Param("startDate") LocalDate startDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.status = :status AND s.date >= :startDate AND s.isDeleted = false")
-    long countByStatusAndDateGreaterThanEqual(@Param("status") String status, @Param("startDate") LocalDate startDate);
+    long countByStatusAndDateGreaterThanEqualDeprecated(@Param("status") String status, @Param("startDate") LocalDate startDate);
     
     /**
-     * 종료일 이전 특정 상태 스케줄 개수 조회
+     * 종료일 이전 특정 상태 스케줄 개수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.status = :status AND s.date <= :endDate AND s.isDeleted = false")
+    long countByStatusAndDateLessThanEqual(@Param("tenantId") String tenantId, @Param("status") String status, @Param("endDate") LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.status = :status AND s.date <= :endDate AND s.isDeleted = false")
-    long countByStatusAndDateLessThanEqual(@Param("status") String status, @Param("endDate") LocalDate endDate);
+    long countByStatusAndDateLessThanEqualDeprecated(@Param("status") String status, @Param("endDate") LocalDate endDate);
     
     // ==================== 상담 ID별 스케줄 조회 ====================
     
     /**
-     * 상담 ID별 스케줄 조회
+     * 상담 ID별 스케줄 조회 (tenantId 필터링)
      */
+    List<Schedule> findByTenantIdAndConsultationId(String tenantId, Long consultationId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     List<Schedule> findByConsultationId(Long consultationId);
     
     // ==================== 상세 통계 ====================
     
     /**
-     * 날짜 범위 내 고유 내담자 수 조회
+     * 날짜 범위 내 고유 내담자 수 조회 (tenantId 필터링)
      */
-    @Query("SELECT COUNT(DISTINCT s.clientId) FROM Schedule s WHERE s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
-    long countDistinctClientsByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    @Query("SELECT COUNT(DISTINCT s.clientId) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countDistinctClientsByDateBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
     /**
-     * 날짜 범위 내 고유 상담사 수 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
      */
+    @Deprecated
+    @Query("SELECT COUNT(DISTINCT s.clientId) FROM Schedule s WHERE s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countDistinctClientsByDateBetweenDeprecated(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
+    /**
+     * 날짜 범위 내 고유 상담사 수 조회 (tenantId 필터링)
+     */
+    @Query("SELECT COUNT(DISTINCT s.consultantId) FROM Schedule s WHERE s.tenantId = :tenantId AND s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countDistinctConsultantsByDateBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(DISTINCT s.consultantId) FROM Schedule s WHERE s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
-    long countDistinctConsultantsByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    long countDistinctConsultantsByDateBetweenDeprecated(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
     // ==================== 상담사별 오늘 통계 ====================
     
     /**
-     * 특정 상담사의 특정 날짜 스케줄 개수 조회
+     * 특정 상담사의 특정 날짜 스케줄 개수 조회 (tenantId 필터링)
      */
-    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.consultantId = :consultantId AND s.date = :date AND s.isDeleted = false")
-    long countByDateAndConsultantId(@Param("date") LocalDate date, @Param("consultantId") Long consultantId);
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.date = :date AND s.isDeleted = false")
+    long countByDateAndConsultantId(@Param("tenantId") String tenantId, @Param("date") LocalDate date, @Param("consultantId") Long consultantId);
     
     /**
-     * 특정 상담사의 특정 날짜 특정 상태 스케줄 개수 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
      */
+    @Deprecated
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.consultantId = :consultantId AND s.date = :date AND s.isDeleted = false")
+    long countByDateAndConsultantIdDeprecated(@Param("date") LocalDate date, @Param("consultantId") Long consultantId);
+    
+    /**
+     * 특정 상담사의 특정 날짜 특정 상태 스케줄 개수 조회 (tenantId 필터링)
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.consultantId = :consultantId AND s.date = :date AND s.status = :status AND s.isDeleted = false")
+    long countByDateAndStatusAndConsultantId(@Param("tenantId") String tenantId, @Param("date") LocalDate date, @Param("status") ScheduleStatus status, @Param("consultantId") Long consultantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.consultantId = :consultantId AND s.date = :date AND s.status = :status AND s.isDeleted = false")
-    long countByDateAndStatusAndConsultantId(@Param("date") LocalDate date, @Param("status") ScheduleStatus status, @Param("consultantId") Long consultantId);
+    long countByDateAndStatusAndConsultantIdDeprecated(@Param("date") LocalDate date, @Param("status") ScheduleStatus status, @Param("consultantId") Long consultantId);
     
     // ==================== 통계 대시보드용 메서드 ====================
     
     /**
-     * 특정 날짜 이후 생성된 스케줄 수 조회
+     * 특정 날짜 이후 생성된 스케줄 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.createdAt > :dateTime AND s.isDeleted = false")
+    long countByTenantIdAndCreatedAtAfter(@Param("tenantId") String tenantId, @Param("dateTime") java.time.LocalDateTime dateTime);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.createdAt > ?1 AND s.isDeleted = false")
-    long countByCreatedAtAfter(java.time.LocalDateTime dateTime);
+    long countByCreatedAtAfterDeprecated(java.time.LocalDateTime dateTime);
     
     /**
-     * 특정 날짜 이전 생성된 스케줄 수 조회
+     * 특정 날짜 이전 생성된 스케줄 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.createdAt < :dateTime AND s.isDeleted = false")
+    long countByTenantIdAndCreatedAtBefore(@Param("tenantId") String tenantId, @Param("dateTime") java.time.LocalDateTime dateTime);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.createdAt < ?1 AND s.isDeleted = false")
-    long countByCreatedAtBefore(java.time.LocalDateTime dateTime);
+    long countByCreatedAtBeforeDeprecated(java.time.LocalDateTime dateTime);
     
     /**
-     * 특정 기간에 생성된 스케줄 수 조회
+     * 특정 기간에 생성된 스케줄 수 조회 (tenantId 필터링)
      */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.createdAt BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countByTenantIdAndCreatedAtBetween(@Param("tenantId") String tenantId, @Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!
+     */
+    @Deprecated
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.createdAt BETWEEN ?1 AND ?2 AND s.isDeleted = false")
-    long countByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
+    long countByCreatedAtBetweenDeprecated(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
     
     // ==================== 테넌트별 통계 메서드 ====================
     

@@ -30,6 +30,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.service.StatisticsService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.service.CommonCodeService;
 import java.math.RoundingMode;
 import java.util.Optional;
@@ -449,8 +450,14 @@ public class StatisticsServiceImpl implements StatisticsService {
         log.info("🔄 전체 상담사 성과 배치 업데이트 시작: date={}", date);
 
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return;
+            }
+            
             // 모든 활성 상담사 조회
-            List<User> consultants = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
+            List<User> consultants = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
 
             for (User consultant : consultants) {
                 try {
@@ -739,14 +746,20 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     public Map<String, Object> getOverallStatistics() {
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new HashMap<>();
+            }
+            
             Map<String, Object> statistics = new HashMap<>();
             
             // 총 내담자 수
-            long totalClients = userRepository.countByRole(UserRole.CLIENT);
+            long totalClients = userRepository.countByRole(tenantId, UserRole.CLIENT);
             statistics.put("totalClients", totalClients);
             
             // 총 상담사 수
-            long totalConsultants = userRepository.countByRole(UserRole.CONSULTANT);
+            long totalConsultants = userRepository.countByRole(tenantId, UserRole.CONSULTANT);
             statistics.put("totalConsultants", totalConsultants);
             
             // 총 상담 세션 수
@@ -776,26 +789,32 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     public Map<String, Object> getTrendStatistics() {
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new HashMap<>();
+            }
+            
             Map<String, Object> trends = new HashMap<>();
             
             LocalDate now = LocalDate.now();
             LocalDate lastYear = now.minusYears(1);
             
             // 내담자 증가율
-            long currentClients = userRepository.countByRoleAndCreatedAtAfter(UserRole.CLIENT, lastYear.atStartOfDay());
-            long lastYearClients = userRepository.countByRoleAndCreatedAtBefore(UserRole.CLIENT, lastYear.atStartOfDay());
+            long currentClients = userRepository.countByTenantIdAndCreatedAtAfterAndRole(tenantId, lastYear.atStartOfDay(), UserRole.CLIENT);
+            long lastYearClients = userRepository.countByTenantIdAndCreatedAtBeforeAndRole(tenantId, lastYear.atStartOfDay(), UserRole.CLIENT);
             double clientGrowth = lastYearClients > 0 ? (double) (currentClients - lastYearClients) / lastYearClients * 100 : 0;
             trends.put("clientGrowth", Math.round(clientGrowth * 10.0) / 10.0);
             
             // 상담사 증가율
-            long currentConsultants = userRepository.countByRoleAndCreatedAtAfter(UserRole.CONSULTANT, lastYear.atStartOfDay());
-            long lastYearConsultants = userRepository.countByRoleAndCreatedAtBefore(UserRole.CONSULTANT, lastYear.atStartOfDay());
+            long currentConsultants = userRepository.countByTenantIdAndCreatedAtAfterAndRole(tenantId, lastYear.atStartOfDay(), UserRole.CONSULTANT);
+            long lastYearConsultants = userRepository.countByTenantIdAndCreatedAtBeforeAndRole(tenantId, lastYear.atStartOfDay(), UserRole.CONSULTANT);
             double consultantGrowth = lastYearConsultants > 0 ? (double) (currentConsultants - lastYearConsultants) / lastYearConsultants * 100 : 0;
             trends.put("consultantGrowth", Math.round(consultantGrowth * 10.0) / 10.0);
             
             // 상담 세션 증가율
-            long currentSessions = scheduleRepository.countByCreatedAtAfter(lastYear.atStartOfDay());
-            long lastYearSessions = scheduleRepository.countByCreatedAtBefore(lastYear.atStartOfDay());
+            long currentSessions = scheduleRepository.countByTenantIdAndCreatedAtAfter(tenantId, lastYear.atStartOfDay());
+            long lastYearSessions = scheduleRepository.countByTenantIdAndCreatedAtBefore(tenantId, lastYear.atStartOfDay());
             double sessionGrowth = lastYearSessions > 0 ? (double) (currentSessions - lastYearSessions) / lastYearSessions * 100 : 0;
             trends.put("sessionGrowth", Math.round(sessionGrowth * 10.0) / 10.0);
             
@@ -816,6 +835,12 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     public Map<String, Object> getChartData() {
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new HashMap<>();
+            }
+            
             Map<String, Object> chartData = new HashMap<>();
             
             // 최근 6개월 데이터
@@ -834,11 +859,11 @@ public class StatisticsServiceImpl implements StatisticsService {
                 LocalDateTime monthEnd = month.withDayOfMonth(month.lengthOfMonth()).atTime(23, 59, 59);
                 
                 // 해당 월 내담자 수
-                long monthlyClients = userRepository.countByRoleAndCreatedAtBetween(UserRole.CLIENT, monthStart, monthEnd);
+                long monthlyClients = userRepository.countByTenantIdAndCreatedAtBetweenAndRole(tenantId, monthStart, monthEnd, UserRole.CLIENT);
                 clientData.add((int) monthlyClients);
                 
                 // 해당 월 상담 세션 수
-                long monthlySessions = scheduleRepository.countByCreatedAtBetween(monthStart, monthEnd);
+                long monthlySessions = scheduleRepository.countByTenantIdAndCreatedAtBetween(tenantId, monthStart, monthEnd);
                 sessionData.add((int) monthlySessions);
             }
             

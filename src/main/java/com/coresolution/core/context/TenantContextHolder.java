@@ -106,6 +106,52 @@ public class TenantContextHolder {
     }
     
     /**
+     * 비즈니스 타입 컨텍스트 설정
+     * 
+     * @param businessType 비즈니스 타입 (CONSULTATION, ACADEMY, RESTAURANT 등)
+     */
+    public static void setBusinessType(String businessType) {
+        if (businessType != null && !businessType.isEmpty()) {
+            TenantContext.setBusinessType(businessType);
+            log.debug("Business type context set: {}", businessType);
+        } else {
+            log.warn("Attempted to set empty business type");
+        }
+    }
+    
+    /**
+     * 현재 요청의 비즈니스 타입 조회
+     * 
+     * @return 비즈니스 타입 (없으면 null)
+     */
+    public static String getBusinessType() {
+        return TenantContext.getBusinessType();
+    }
+    
+    /**
+     * 현재 요청의 비즈니스 타입 조회 (필수)
+     * 
+     * @return 비즈니스 타입
+     * @throws IllegalStateException 비즈니스 타입이 설정되지 않은 경우
+     */
+    public static String getRequiredBusinessType() {
+        String businessType = TenantContext.getBusinessType();
+        if (businessType == null || businessType.isEmpty()) {
+            throw new IllegalStateException("Business type is not set in current context");
+        }
+        return businessType;
+    }
+    
+    /**
+     * 비즈니스 타입 컨텍스트가 설정되어 있는지 확인
+     * 
+     * @return 비즈니스 타입이 설정되어 있으면 true
+     */
+    public static boolean isBusinessTypeSet() {
+        return TenantContext.hasBusinessType();
+    }
+    
+    /**
      * 모든 컨텍스트 정리
      */
     public static void clear() {
@@ -118,9 +164,10 @@ public class TenantContextHolder {
      */
     public static void logContext() {
         if (log.isDebugEnabled()) {
-            log.debug("Tenant Context - TenantId: {}, BranchId: {}", 
+            log.debug("Tenant Context - TenantId: {}, BranchId: {}, BusinessType: {}", 
                 TenantContext.getTenantId(), 
-                TenantContext.getBranchId());
+                TenantContext.getBranchId(),
+                TenantContext.getBusinessType());
         }
     }
 }

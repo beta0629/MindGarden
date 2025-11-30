@@ -15,6 +15,7 @@ import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.SalaryTaxCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.SalaryManagementService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -92,10 +93,16 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     public List<User> getConsultantsForSalary(String branchCode) {
         log.info("👥 급여용 상담사 목록 조회: BranchCode={}", branchCode);
         
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return List.of();
+        }
+        
         if (branchCode == null) {
-            return userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
+            return userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
         } else {
-            return userRepository.findByRoleAndIsActiveTrueAndBranchCode(UserRole.CONSULTANT, branchCode);
+            return userRepository.findByRoleAndIsActiveTrueAndBranchCode(tenantId, UserRole.CONSULTANT, branchCode);
         }
     }
     

@@ -416,17 +416,24 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 매칭을 통해 내담자 조회
+        // 현재 테넌트 ID 가져오기
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new org.springframework.data.domain.PageImpl<>(new java.util.ArrayList<>(), pageable, 0);
+        }
+        
+        // 매칭을 통해 내담자 조회 (tenantId 필터링)
         List<ConsultantClientMapping> mappings;
         if (status != null && !status.trim().isEmpty()) {
             // 특정 상태의 매칭만 조회
             ConsultantClientMapping.MappingStatus mappingStatus = ConsultantClientMapping.MappingStatus.valueOf(status);
-            mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, 
+            mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, 
                 mappingStatus == ConsultantClientMapping.MappingStatus.ACTIVE ? 
                 ConsultantClientMapping.MappingStatus.INACTIVE : ConsultantClientMapping.MappingStatus.ACTIVE);
         } else {
             // 모든 활성 매칭 조회
-            mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
+            mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
         }
         
         // 매칭에서 클라이언트 정보 추출 (User를 Client로 변환)
@@ -465,8 +472,15 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 매칭을 통해 특정 내담자 조회
-        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
+        // 현재 테넌트 ID 가져오기
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Optional.empty();
+        }
+        
+        // 매칭을 통해 특정 내담자 조회 (tenantId 필터링)
+        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
         
         return mappings.stream()
                 .map(mapping -> {

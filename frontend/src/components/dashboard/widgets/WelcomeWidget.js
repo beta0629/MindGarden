@@ -110,7 +110,7 @@ const WelcomeWidget = ({ widget, user }) => {
       }
     };
 
-    if (user?.role === 'CONSULTANT') {
+    if (RoleUtils.isConsultant(user)) {
       loadConsultantStats();
     }
   }, [user?.role, user?.id]);
@@ -176,7 +176,7 @@ const WelcomeWidget = ({ widget, user }) => {
     let todayConsultations = [];
     let stats = null;
     
-    if (user?.role === 'CLIENT') {
+    if (RoleUtils.isClient(user)) {
       // 내담자: 오늘의 상담 필터링
       todayConsultations = consultationData.schedules?.filter(schedule => {
         if (!schedule.scheduledAt) return false;
@@ -184,7 +184,7 @@ const WelcomeWidget = ({ widget, user }) => {
         const today = new Date();
         return scheduleDate.toDateString() === today.toDateString();
       }) || [];
-    } else if (user?.role === 'CONSULTANT') {
+    } else if (RoleUtils.isConsultant(user)) {
       // 상담사: 오늘의 상담 + 통계
       todayConsultations = consultationData.schedules?.filter(schedule => {
         if (!schedule.scheduledAt) return false;
@@ -200,7 +200,7 @@ const WelcomeWidget = ({ widget, user }) => {
         rating: consultantStats?.rating || 0,
         ...consultantStats?.todayStats
       };
-    } else if (['ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_MASTER'].includes(user?.role)) {
+    } else if (RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, 'HQ_MASTER')) {
       // 관리자: 시스템 통계
       stats = {
         totalUsers: consultationData.totalUsers || 0,

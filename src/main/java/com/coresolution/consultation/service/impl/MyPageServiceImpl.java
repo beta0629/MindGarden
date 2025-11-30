@@ -10,6 +10,7 @@ import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MyPageService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,12 @@ public class MyPageServiceImpl implements MyPageService {
     public MyPageResponse getMyPageInfo(Long userId) {
         log.info("🔍 마이페이지 정보 조회: {}", userId);
         
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            throw new IllegalStateException("tenantId가 설정되지 않았습니다");
+        }
+        
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
         
@@ -41,7 +48,7 @@ public class MyPageServiceImpl implements MyPageService {
             user.getProfileImageUrl() != null && user.getProfileImageUrl().startsWith("data:") ? "base64" : "url");
         
         // 프로필 이미지 정보 조회
-        List<Object[]> profileResults = userRepository.findProfileImageInfoByUserId(userId);
+        List<Object[]> profileResults = userRepository.findProfileImageInfoByUserId(tenantId, userId);
         
         // 프로필 이미지 우선순위 결정
         String finalProfileImageUrl;

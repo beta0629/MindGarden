@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -349,10 +350,16 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public Page<ConsultationRecord> searchConsultationRecords(Long userId, String userType, String keyword, Pageable pageable) {
         log.info("📝 상담일지 검색 - 사용자 ID: {}, 유형: {}, 키워드: {}", userId, userType, keyword);
         
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return Page.empty(pageable);
+        }
+        
         if ("CONSULTANT".equals(userType)) {
-            return consultationRecordRepository.searchByKeywordAndConsultantId(keyword, userId, pageable);
+            return consultationRecordRepository.searchByKeywordAndConsultantId(tenantId, keyword, userId, pageable);
         } else {
-            return consultationRecordRepository.searchByKeywordAndClientId(keyword, userId, pageable);
+            return consultationRecordRepository.searchByKeywordAndClientId(tenantId, keyword, userId, pageable);
         }
     }
 
@@ -394,11 +401,17 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public List<ConsultationRecord> getRecentConsultationRecords(Long userId, String userType, int limit) {
         log.info("📝 최근 상담일지 조회 - 사용자 ID: {}, 유형: {}, 제한: {}", userId, userType, limit);
         
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        
         Pageable pageable = Pageable.ofSize(limit);
         if ("CONSULTANT".equals(userType)) {
-            return consultationRecordRepository.findRecentByConsultantId(userId, pageable);
+            return consultationRecordRepository.findRecentByConsultantId(tenantId, userId, pageable);
         } else {
-            return consultationRecordRepository.findRecentByClientId(userId, pageable);
+            return consultationRecordRepository.findRecentByClientId(tenantId, userId, pageable);
         }
     }
 
@@ -435,8 +448,14 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public List<ConsultationRecord> getConsultationRecordsByClientOrderBySession(Long clientId) {
         log.info("👤 내담자별 전체 상담일지 조회 (회기순) - 내담자ID: {}", clientId);
         
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        
         try {
-            return consultationRecordRepository.findByClientIdOrderBySession(clientId);
+            return consultationRecordRepository.findByClientIdOrderBySession(tenantId, clientId);
         } catch (Exception e) {
             log.error("❌ 내담자별 전체 상담일지 조회 실패", e);
             throw new RuntimeException("내담자별 전체 상담일지 조회 중 오류가 발생했습니다: " + e.getMessage());
@@ -447,8 +466,14 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public Map<Integer, List<ConsultationRecord>> getConsultationRecordsGroupedBySession(Long clientId) {
         log.info("👤 내담자별 상담일지 회기별 그룹화 조회 - 내담자ID: {}", clientId);
         
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new HashMap<>();
+        }
+        
         try {
-            List<ConsultationRecord> records = consultationRecordRepository.findByClientIdOrderBySession(clientId);
+            List<ConsultationRecord> records = consultationRecordRepository.findByClientIdOrderBySession(tenantId, clientId);
             return records.stream()
                     .collect(Collectors.groupingBy(ConsultationRecord::getSessionNumber));
         } catch (Exception e) {

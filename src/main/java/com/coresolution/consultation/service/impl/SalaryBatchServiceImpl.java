@@ -13,6 +13,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.consultation.service.SalaryBatchService;
 import com.coresolution.consultation.service.SalaryScheduleService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -197,12 +198,18 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
      * 대상 상담사 조회
      */
     private List<User> getTargetConsultants(String branchCode) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        
         if (branchCode == null) {
             // 전체 지점
-            return userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
+            return userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
         } else {
             // 특정 지점
-            return userRepository.findByRoleAndIsActiveTrueAndBranchCode(UserRole.CONSULTANT, branchCode);
+            return userRepository.findByRoleAndIsActiveTrueAndBranchCode(tenantId, UserRole.CONSULTANT, branchCode);
         }
     }
 }

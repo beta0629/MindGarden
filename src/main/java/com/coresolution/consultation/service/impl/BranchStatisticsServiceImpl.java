@@ -15,6 +15,7 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchStatisticsService;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -131,13 +132,19 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     public Map<String, Object> getConsultantPerformanceStatistics(Long branchId, LocalDate startDate, LocalDate endDate) {
         log.info("지점별 상담사 성과 통계 조회: 지점 ID={}, 기간={} ~ {}", branchId, startDate, endDate);
         
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new HashMap<>();
+        }
+        
         Branch branch = branchRepository.findById(branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
         
         
         // 지점의 상담사들 조회 (기존 구현 방식 사용)
         List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
+                tenantId, branch, com.coresolution.consultation.constant.UserRole.CONSULTANT);
         
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("branchId", branchId);

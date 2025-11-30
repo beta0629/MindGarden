@@ -47,6 +47,7 @@ import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -106,7 +107,8 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 같은 username을 가진 삭제된 상담사가 있는지 확인
-        Optional<User> existingConsultant = userRepository.findByUsernameAndIsActive(dto.getUsername(), false);
+        String tenantId = TenantContextHolder.getTenantId();
+        Optional<User> existingConsultant = userRepository.findByTenantIdAndUsernameAndIsActive(tenantId, dto.getUsername(), false);
         
         if (existingConsultant.isPresent()) {
             // 삭제된 상담사가 있으면 기존 데이터를 업데이트
@@ -1079,11 +1081,16 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("grade", grade);
                 
                 // Consultant 엔티티의 추가 정보 가져오기
-                // 실제 활성 매핑 수를 계산
-                long actualCurrentClients = mappingRepository.countByConsultantIdAndStatusIn(
-                    consultant.getId(), 
-                    List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
-                );
+                // 현재 테넌트 ID 가져오기
+                String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+                
+                // 실제 활성 매핑 수를 계산 (tenantId 필터링)
+                long actualCurrentClients = tenantId != null ? 
+                    mappingRepository.countByConsultantIdAndStatusIn(
+                        tenantId,
+                        consultant.getId(), 
+                        List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
+                    ) : 0L;
                 consultantData.put("currentClients", (int) actualCurrentClients);
                 consultantData.put("maxClients", consultant.getMaxClients());
                 consultantData.put("totalClients", consultant.getTotalClients());
@@ -1159,11 +1166,16 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 
                 // Consultant 엔티티의 추가 정보 가져오기
-                // 실제 활성 매핑 수를 계산
-                long actualCurrentClients = mappingRepository.countByConsultantIdAndStatusIn(
-                    consultant.getId(), 
-                    List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
-                );
+                // 현재 테넌트 ID 가져오기
+                String tenantId2 = com.coresolution.core.context.TenantContext.getTenantId();
+                
+                // 실제 활성 매핑 수를 계산 (tenantId 필터링)
+                long actualCurrentClients = tenantId2 != null ? 
+                    mappingRepository.countByConsultantIdAndStatusIn(
+                        tenantId2,
+                        consultant.getId(), 
+                        List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
+                    ) : 0L;
                 consultantData.put("currentClients", (int) actualCurrentClients);
                 consultantData.put("maxClients", consultant.getMaxClients());
                 consultantData.put("totalClients", consultant.getTotalClients());
@@ -1405,7 +1417,12 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<Client> getAllClients() {
         // User 테이블에서 활성 CLIENT role 사용자들을 조회하고 Client 정보와 조인
-        List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(UserRole.CLIENT);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
         
         log.info("🔍 내담자 조회 - 총 {}명", clientUsers.size());
         
@@ -1472,7 +1489,12 @@ public class AdminServiceImpl implements AdminService {
             log.info("🔍 통합 내담자 데이터 조회 시작");
             
             // 활성 내담자만 조회
-            List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(UserRole.CLIENT);
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new ArrayList<>();
+            }
+            List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
             log.info("🔍 내담자 수: {}", clientUsers.size());
             
             // 모든 매칭 조회
@@ -1772,9 +1794,16 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("상담사가 아닌 사용자는 삭제할 수 없습니다.");
         }
         
-        // 1. 해당 상담사의 활성 매칭 조회
+        // 현재 테넌트 ID 가져오기
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            throw new RuntimeException("테넌트 정보를 확인할 수 없습니다.");
+        }
+        
+        // 1. 해당 상담사의 활성 매핑 조회 (tenantId 필터링)
         List<ConsultantClientMapping> activeMappings = mappingRepository
-                .findByConsultantIdAndStatusNot(id, ConsultantClientMapping.MappingStatus.TERMINATED);
+                .findByConsultantIdAndStatusNot(tenantId, id, ConsultantClientMapping.MappingStatus.TERMINATED);
         
         if (!activeMappings.isEmpty()) {
             log.warn("⚠️ 상담사에게 {} 개의 활성 매칭이 있습니다. 다른 상담사로 이전이 필요합니다.", activeMappings.size());
@@ -3694,7 +3723,14 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId) {
-        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        // 현재 테넌트 ID 가져오기
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        
+        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
         
         // 매칭된 사용자 정보 복호화
         for (ConsultantClientMapping mapping : mappings) {
@@ -3713,9 +3749,16 @@ public class AdminServiceImpl implements AdminService {
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId, String branchCode) {
         log.info("🔍 상담사별 매칭 조회 - 상담사 ID: {}, 브랜치 코드: {}", consultantId, branchCode);
         
-        // 브랜치 코드로 필터링된 매칭 조회
+        // 현재 테넌트 ID 가져오기
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        
+        // 브랜치 코드로 필터링된 매칭 조회 (tenantId 필터링)
         List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndBranchCodeAndStatusNot(
-            consultantId, branchCode, ConsultantClientMapping.MappingStatus.TERMINATED);
+            tenantId, consultantId, branchCode, ConsultantClientMapping.MappingStatus.TERMINATED);
         
         log.info("🔍 브랜치 코드 필터링된 매칭 수: {}", mappings.size());
         
@@ -3737,10 +3780,17 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔍 내담자별 매칭 조회 시작: clientId={}", clientId);
             
-            // 안전한 매칭 조회
+            // 현재 테넌트 ID 가져오기
+            String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new ArrayList<>();
+            }
+            
+            // 안전한 매칭 조회 (tenantId 필터링)
             List<ConsultantClientMapping> mappings = new ArrayList<>();
             try {
-                mappings = mappingRepository.findByClientIdAndStatusNot(clientId, ConsultantClientMapping.MappingStatus.TERMINATED);
+                mappings = mappingRepository.findByClientIdAndStatusNot(tenantId, clientId, ConsultantClientMapping.MappingStatus.TERMINATED);
                 log.info("🔍 내담자별 매칭 조회 완료: clientId={}, 매칭 수={}", clientId, mappings.size());
                 
                 // 매칭된 사용자 정보 복호화
@@ -3993,7 +4043,12 @@ public class AdminServiceImpl implements AdminService {
             log.info("📊 지점별 상담 완료 건수 통계 조회: period={}, branchCode={}", period, branchCode);
             
             // 특정 지점의 활성 상담사만 조회
-            List<User> consultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(UserRole.CONSULTANT, branchCode);
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new ArrayList<>();
+            }
+            List<User> consultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(tenantId, UserRole.CONSULTANT, branchCode);
             log.info("👥 지점 {} 활성 상담사 수: {}명", branchCode, consultants.size());
             
             List<Map<String, Object>> statistics = new ArrayList<>();
@@ -4274,9 +4329,18 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 시작");
             
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("completedCount", 0);
+                errorResult.put("reminderSentCount", 0);
+                return errorResult;
+            }
+            
             // 1. 지난 스케줄 중 완료되지 않은 것들 조회
             List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
-                LocalDate.now(), ScheduleStatus.BOOKED);
+                tenantId, LocalDate.now(), ScheduleStatus.BOOKED);
             
             int completedCount = 0;
             int reminderSentCount = 0;
@@ -4412,7 +4476,12 @@ public class AdminServiceImpl implements AdminService {
      */
     private long getTotalScheduleCount(Long consultantId) {
         try {
-            return scheduleRepository.countByConsultantId(consultantId);
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return 0;
+            }
+            return scheduleRepository.countByConsultantId(tenantId, consultantId);
         } catch (Exception e) {
             log.warn("상담사 {} 총 스케줄 건수 조회 실패: {}", consultantId, e.getMessage());
             return 0;
@@ -4439,6 +4508,12 @@ public class AdminServiceImpl implements AdminService {
     public List<User> getUsers(boolean includeInactive, String role, String branchCode) {
         log.info("🔍 사용자 목록 조회: includeInactive={}, role={}, branchCode={}", includeInactive, role, branchCode);
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new ArrayList<>();
+            }
+            
             List<User> users;
             
             if (role != null && !role.isEmpty()) {
@@ -4446,20 +4521,20 @@ public class AdminServiceImpl implements AdminService {
                 UserRole userRole = UserRole.valueOf(role);
                 if (branchCode != null && !branchCode.isEmpty()) {
                     // 역할 + 지점별 조회
-                    users = userRepository.findByRoleAndBranchCodeAndIsActive(userRole, branchCode, includeInactive ? null : true);
+                    users = userRepository.findByRoleAndBranchCodeAndIsActive(tenantId, userRole, branchCode, includeInactive ? null : true);
                 } else {
                     // 역할별 조회
-                    users = userRepository.findByRoleAndIsActive(userRole, includeInactive ? null : true);
+                    users = userRepository.findByRoleAndIsActive(tenantId, userRole, includeInactive ? null : true);
                 }
             } else if (branchCode != null && !branchCode.isEmpty()) {
                 // 지점별 조회
-                users = userRepository.findByBranchCodeAndIsActive(branchCode, includeInactive ? null : true);
+                users = userRepository.findByBranchCodeAndIsActive(tenantId, branchCode, includeInactive ? null : true);
             } else {
                 // 전체 조회
                 if (includeInactive) {
                     users = userRepository.findAll();
                 } else {
-                    users = userRepository.findByIsActive(true);
+                    users = userRepository.findByIsActive(tenantId, true);
                 }
             }
             
@@ -4665,8 +4740,14 @@ public class AdminServiceImpl implements AdminService {
             
             log.info("📅 휴가 통계 조회 기간: {} ~ {} (period={})", startDate, endDate, period);
             
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new HashMap<>();
+            }
+            
             // 활성 상담사 목록 조회
-            List<User> activeConsultants = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
+            List<User> activeConsultants = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
             log.info("👥 활성 상담사 수: {}명", activeConsultants.size());
             
             // 상담사별 휴가 통계
@@ -4750,8 +4831,14 @@ public class AdminServiceImpl implements AdminService {
             
             log.info("📅 휴가 통계 조회 기간: {} ~ {} (period={})", startDate, endDate, period);
             
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new HashMap<>();
+            }
+            
             // 특정 지점의 활성 상담사 목록 조회
-            List<User> activeConsultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(UserRole.CONSULTANT, branchCode);
+            List<User> activeConsultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(tenantId, UserRole.CONSULTANT, branchCode);
             log.info("👥 지점 {} 활성 상담사 수: {}명", branchCode, activeConsultants.size());
             
             // 상담사별 휴가 통계
@@ -5194,8 +5281,15 @@ public class AdminServiceImpl implements AdminService {
         log.info("🔍 찾은 상담사 정보 - ID: {}, 이름: {}, 역할: {}, 브랜치코드: {}", 
                 consultant.getId(), consultant.getName(), consultant.getRole(), consultant.getBranchCode());
         
-        // TERMINATED가 아닌 모든 매칭 조회 (ACTIVE, PAYMENT_CONFIRMED 등)
-        List<ConsultantClientMapping> allMappings = mappingRepository.findByConsultantId(consultant.getId());
+        // 현재 테넌트 ID 가져오기
+        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        
+        // TERMINATED가 아닌 모든 매칭 조회 (ACTIVE, PAYMENT_CONFIRMED 등) - tenantId 필터링
+        List<ConsultantClientMapping> allMappings = mappingRepository.findByConsultantId(tenantId, consultant.getId());
         List<ConsultantClientMapping> mappings = allMappings.stream()
             .filter(mapping -> mapping.getStatus() != ConsultantClientMapping.MappingStatus.TERMINATED)
             .collect(java.util.stream.Collectors.toList());

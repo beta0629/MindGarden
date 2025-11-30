@@ -13,6 +13,7 @@ import com.coresolution.consultation.repository.AlertRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.SecurityAlertService;
+import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -164,13 +165,19 @@ public class SecurityAlertServiceImpl implements SecurityAlertService {
             alert.setAutoDismissSeconds(null);
             
             // 본사 관리자에게만 알림 발송
-            List<User> hqAdmins = userRepository.findByRole(UserRole.HQ_ADMIN)
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return;
+            }
+            
+            List<User> hqAdmins = userRepository.findByRole(tenantId, UserRole.HQ_ADMIN)
                 .stream()
                 .filter(user -> user.getIsActive() != null && user.getIsActive())
                 .collect(Collectors.toList());
             
             // HQ_MASTER도 포함
-            hqAdmins.addAll(userRepository.findByRole(UserRole.HQ_MASTER)
+            hqAdmins.addAll(userRepository.findByRole(tenantId, UserRole.HQ_MASTER)
                 .stream()
                 .filter(user -> user.getIsActive() != null && user.getIsActive())
                 .collect(Collectors.toList()));

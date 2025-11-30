@@ -5,6 +5,7 @@ import java.util.List;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +70,14 @@ public class BranchCodeInitService {
             }
             
             // 4. 본사 역할의 모든 사용자 업데이트
-            var hqUsers = userRepository.findByRoleIn(List.of("HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER"));
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return;
+            }
+            
+            List<String> roleList = List.of("HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER");
+            var hqUsers = userRepository.findByRoleIn(tenantId, roleList);
             for (var user : hqUsers) {
                 if (!"HQ".equals(user.getBranchCode())) {
                     user.setBranchCode("HQ");

@@ -11,6 +11,7 @@ import BranchDetail from './BranchDetail';
 import BranchStatisticsDashboard from './BranchStatisticsDashboard';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
+import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import './HQBranchManagement.css';
 
 /**
@@ -189,8 +190,8 @@ const HQBranchManagement = () => {
                         </p>
                         <div className="user-info">
                             <span className="user-role">
-                                {user?.role === 'HQ_MASTER' ? 'HQ 마스터' : 
-                                 user?.role === 'SUPER_HQ_ADMIN' ? '수퍼 본사 관리자' : 
+                                {RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER) ? 'HQ 마스터' : 
+                                 RoleUtils.hasRole(user, USER_ROLES.SUPER_HQ_ADMIN) ? '수퍼 본사 관리자' : 
                                  '본사 관리자'}
                             </span>
                         </div>

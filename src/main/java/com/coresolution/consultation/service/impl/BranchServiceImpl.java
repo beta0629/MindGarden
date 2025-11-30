@@ -461,13 +461,18 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     @Override
     @Transactional(readOnly = true)
     public List<User> getBranchConsultants(Long branchId) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
         Branch branch = findActiveByIdOrThrow(branchId);
         List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, UserRole.CONSULTANT);
+                tenantId, branch, UserRole.CONSULTANT);
         
         // branchId가 null인 상담사들도 branchCode로 매칭하여 추가
         List<User> additionalConsultants = userRepository.findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername(
-                branch.getBranchCode(), UserRole.CONSULTANT);
+                tenantId, branch.getBranchCode(), UserRole.CONSULTANT);
         
         // 중복 제거를 위해 ID 기준으로 합치기
         Map<Long, User> consultantMap = new HashMap<>();
@@ -480,9 +485,14 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     @Override
     @Transactional(readOnly = true)
     public List<User> getBranchClients(Long branchId) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
         Branch branch = findActiveByIdOrThrow(branchId);
         return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, UserRole.CLIENT);
+                tenantId, branch, UserRole.CLIENT);
     }
     
     // === 통계 및 분석 메서드 ===
@@ -860,16 +870,22 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             Map<String, Object> stats = new HashMap<>();
             
             // 기본 통계 데이터
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.error("❌ tenantId가 설정되지 않았습니다");
+                return new HashMap<>();
+            }
+            
             long totalBranches = branchRepository.count();
             long activeBranches = branchRepository.countByBranchStatusAndIsDeletedFalse(Branch.BranchStatus.ACTIVE);
             long totalUsers = userRepository.count();
-            long activeUsers = userRepository.countByIsActiveTrueAndIsDeletedFalse();
+            long activeUsers = userRepository.countByIsActiveTrueAndIsDeletedFalse(tenantId);
             
             // 역할별 사용자 수
-            long totalConsultants = userRepository.countByRoleAndIsDeletedFalse(UserRole.CONSULTANT);
-            long activeConsultants = userRepository.countByRoleAndIsActiveTrueAndIsDeletedFalse(UserRole.CONSULTANT);
-            long totalClients = userRepository.countByRoleAndIsDeletedFalse(UserRole.CLIENT);
-            long activeClients = userRepository.countByRoleAndIsActiveTrueAndIsDeletedFalse(UserRole.CLIENT);
+            long totalConsultants = userRepository.countByRoleAndIsDeletedFalse(tenantId, UserRole.CONSULTANT);
+            long activeConsultants = userRepository.countByRoleAndIsActiveTrueAndIsDeletedFalse(tenantId, UserRole.CONSULTANT);
+            long totalClients = userRepository.countByRoleAndIsDeletedFalse(tenantId, UserRole.CLIENT);
+            long activeClients = userRepository.countByRoleAndIsActiveTrueAndIsDeletedFalse(tenantId, UserRole.CLIENT);
             
             stats.put("totalBranches", totalBranches);
             stats.put("activeBranches", activeBranches);
@@ -907,10 +923,11 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
                     branchStats.put("branchStatus", branch.getBranchStatus());
                     
                     // 지점별 사용자 수
-                    long userCount = userRepository.countByBranchIdAndIsDeletedFalse(branch.getId());
-                    long activeUserCount = userRepository.countByBranchIdAndIsActiveTrueAndIsDeletedFalse(branch.getId());
-                    long consultantCount = userRepository.countByBranchIdAndRoleAndIsDeletedFalse(branch.getId(), UserRole.CONSULTANT);
-                    long clientCount = userRepository.countByBranchIdAndRoleAndIsDeletedFalse(branch.getId(), UserRole.CLIENT);
+                    String tenantId = TenantContextHolder.getTenantId();
+                    long userCount = tenantId != null ? userRepository.countByBranchIdAndIsDeletedFalse(tenantId, branch.getId()) : 0;
+                    long activeUserCount = tenantId != null ? userRepository.countByBranchIdAndIsActiveTrueAndIsDeletedFalse(tenantId, branch.getId()) : 0;
+                    long consultantCount = tenantId != null ? userRepository.countByBranchIdAndRoleAndIsDeletedFalse(tenantId, branch.getId(), UserRole.CONSULTANT) : 0;
+                    long clientCount = tenantId != null ? userRepository.countByBranchIdAndRoleAndIsDeletedFalse(tenantId, branch.getId(), UserRole.CLIENT) : 0;
                     
                     branchStats.put("totalUsers", userCount);
                     branchStats.put("activeUsers", activeUserCount);

@@ -65,6 +65,7 @@ public class TenantContextFilter implements Filter {
         try {
             String tenantId = extractTenantId(httpRequest, session);
             String branchId = extractBranchId(httpRequest, session);
+            String businessType = extractBusinessType(httpRequest, session);
             
             // TenantContext에 설정
             if (tenantId != null && !tenantId.isEmpty()) {
@@ -75,6 +76,11 @@ public class TenantContextFilter implements Filter {
             if (branchId != null && !branchId.isEmpty()) {
                 TenantContextHolder.setBranchId(branchId);
                 log.debug("Branch context set from filter: {}", branchId);
+            }
+            
+            if (businessType != null && !businessType.isEmpty()) {
+                TenantContextHolder.setBusinessType(businessType);
+                log.debug("Business type context set from filter: {}", businessType);
             }
             
             // 다음 필터로 진행
@@ -259,6 +265,61 @@ public class TenantContextFilter implements Filter {
         // 5. branch_id를 찾을 수 없는 경우
         log.trace("Branch ID not found in request");
         return null;
+    }
+    
+    /**
+     * business_type 추출
+     * 
+     * @param request HTTP 요청
+     * @param session HTTP 세션
+     * @return business_type (없으면 null)
+     */
+    private String extractBusinessType(HttpServletRequest request, HttpSession session) {
+        // 1. HTTP 헤더에서 추출 (우선순위 1)
+        String businessType = request.getHeader("X-Business-Type");
+        if (businessType != null && !businessType.isEmpty()) {
+            log.debug("Business type extracted from header: {}", businessType);
+            return businessType;
+        }
+        
+        // 2. 세션에서 User 정보를 통해 business_type 조회 (우선순위 2)
+        if (session != null) {
+            User user = SessionUtils.getCurrentUser(session);
+            if (user != null) {
+                // User의 branchCode를 통해 Branch의 tenant_id를 조회하고, 
+                // 그 tenant_id로 Tenant의 businessType 조회
+                if (user.getBranchCode() != null && branchRepository != null) {
+                    try {
+                        Branch branch = branchRepository.findByBranchCodeAndIsDeletedFalse(user.getBranchCode())
+                            .orElse(null);
+                        
+                        if (branch != null && branch.getTenantId() != null) {
+                            // Branch에서 tenantId를 가져와서 Tenant 조회
+                            // TODO: TenantRepository 추가 필요
+                            // 임시로 세션에서 조회
+                            Object sessionBusinessType = session.getAttribute("businessType");
+                            if (sessionBusinessType != null) {
+                                log.debug("Business type extracted from session: {}", sessionBusinessType);
+                                return sessionBusinessType.toString();
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to extract business type from user branch: {}", e.getMessage());
+                    }
+                }
+            }
+            
+            // 3. 세션에 저장된 business_type 사용 (우선순위 3)
+            Object sessionBusinessType = session.getAttribute("businessType");
+            if (sessionBusinessType != null) {
+                log.debug("Business type extracted from session: {}", sessionBusinessType);
+                return sessionBusinessType.toString();
+            }
+        }
+        
+        // 4. business_type를 찾을 수 없는 경우 - 기본값 CONSULTATION 사용
+        log.debug("Business type not found, using default: CONSULTATION");
+        return "CONSULTATION"; // 현재는 상담소만 운영 중이므로 기본값
     }
 }
 

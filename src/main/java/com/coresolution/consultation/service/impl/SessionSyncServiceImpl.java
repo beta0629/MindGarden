@@ -345,10 +345,17 @@ public class SessionSyncServiceImpl implements SessionSyncService {
      */
     private void syncRelatedMappings(ConsultantClientMapping mapping) {
         try {
+            // 현재 테넌트 ID 가져오기
+            String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+            if (tenantId == null) {
+                log.warn("⚠️ tenantId가 설정되지 않아 관련 매핑 동기화를 건너뜁니다");
+                return;
+            }
+            
             // 같은 상담사-내담자 조합의 다른 매핑들도 동기화
             // 먼저 상담사 ID로 매핑들을 찾고, 그 중에서 같은 내담자 ID를 가진 것들을 필터링
             List<ConsultantClientMapping> consultantMappings = mappingRepository
-                    .findByConsultantIdAndStatusNot(mapping.getConsultant().getId(), 
+                    .findByConsultantIdAndStatusNot(tenantId, mapping.getConsultant().getId(), 
                             ConsultantClientMapping.MappingStatus.TERMINATED);
             
             List<ConsultantClientMapping> relatedMappings = consultantMappings.stream()

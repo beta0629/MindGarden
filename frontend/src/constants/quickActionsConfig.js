@@ -12,6 +12,7 @@ import {
   User, Calendar, MessageCircle, UserPlus, History, 
   FileText, Link2, Code, BarChart3, HelpCircle, Settings 
 } from 'lucide-react';
+import { RoleUtils } from './roles';
 
 /**
  * 기본 공통 액션들 (모든 사용자)
@@ -29,7 +30,7 @@ const COMMON_ACTIONS = [
     label: '스케줄',
     icon: <Calendar size={24} />,
     url: (user) => {
-      if (user?.role === 'CONSULTANT') {
+      if (RoleUtils.isConsultant(user)) {
         return '/consultant/schedule';
       }
       return `/${user?.role?.toLowerCase()}/schedule`;
@@ -72,12 +73,12 @@ const COMMON_ACTIONS = [
 const CLIENT_CONSULTANT_ACTIONS = [
   {
     id: 'messages',
-    label: (user) => user?.role === 'CLIENT' ? '상담사 메시지' : '메시지 관리',
+    label: (user) => RoleUtils.isClient(user) ? '상담사 메시지' : '메시지 관리',
     icon: <MessageCircle size={24} />,
     url: (user) => {
-      if (user?.role === 'CLIENT') {
+      if (RoleUtils.isClient(user)) {
         return '/client/messages';
-      } else if (user?.role === 'CONSULTANT') {
+      } else if (RoleUtils.isConsultant(user)) {
         return '/consultant/messages';
       }
       return '/messages';

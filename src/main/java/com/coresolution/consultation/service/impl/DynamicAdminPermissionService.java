@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+
+import com.coresolution.core.context.TenantContextHolder;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;

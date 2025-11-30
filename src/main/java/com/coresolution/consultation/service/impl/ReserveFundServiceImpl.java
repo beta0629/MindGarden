@@ -274,7 +274,8 @@ public class ReserveFundServiceImpl implements ReserveFundService {
     public Map<String, Object> getReserveFundStatistics() {
         log.info("적립금 통계 조회");
         
-        List<ReserveFund> allFunds = reserveFundRepository.findAll();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<ReserveFund> allFunds = reserveFundRepository.findByTenantId(tenantId);
         
         Map<String, Object> statistics = new HashMap<>();
         

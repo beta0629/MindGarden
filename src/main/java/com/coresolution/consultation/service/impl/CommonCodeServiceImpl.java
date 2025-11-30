@@ -49,7 +49,8 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Transactional(readOnly = true)
     public List<CommonCode> getAllCommonCodes() {
         log.info("🔍 모든 공통코드 조회");
-        return commonCodeRepository.findAll();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return commonCodeRepository.findByTenantId(tenantId);
     }
 
     @Override

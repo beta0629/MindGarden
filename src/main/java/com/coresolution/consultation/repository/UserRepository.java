@@ -141,6 +141,12 @@ public interface UserRepository extends BaseRepository<User, Long> {
     boolean existsByPhone(String phone);
     
     /**
+     * 테넌트별 모든 사용자 조회 (tenantId 필터링)
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false")
+    List<User> findByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
      * 역할별 사용자 조회 (tenantId 필터링)
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false")

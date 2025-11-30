@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;

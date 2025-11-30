@@ -483,7 +483,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             stats.put("totalRatings", totalRatings != null ? totalRatings : 0L);
 
             // 전체 평균 점수
-            List<ConsultantRating> allRatings = ratingRepository.findAll();
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<ConsultantRating> allRatings = ratingRepository.findByTenantId(tenantId);
             double averageScore = allRatings.stream()
                 .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
                 .mapToInt(ConsultantRating::getHeartScore)
@@ -503,7 +504,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 LocalDateTime dayEnd = dayStart.withHour(23).withMinute(59).withSecond(59);
                 
                 // 해당 날짜의 모든 평가 개수 조회
-                long dayCount = ratingRepository.findAll().stream()
+                long dayCount = ratingRepository.findByTenantId(tenantId).stream()
                     .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
                     .filter(rating -> rating.getRatedAt().isAfter(dayStart) && rating.getRatedAt().isBefore(dayEnd))
                     .count();
@@ -550,7 +551,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             log.info("🏢 지점 상담사 수: {} (지점코드: {})", consultantIds.size(), branchCode);
 
             // 해당 지점 상담사들의 평가만 조회
-            List<ConsultantRating> branchRatings = ratingRepository.findAll().stream()
+            List<ConsultantRating> branchRatings = ratingRepository.findByTenantId(tenantId).stream()
                 .filter(rating -> consultantIds.contains(rating.getConsultant().getId()))
                 .collect(Collectors.toList());
             
@@ -623,7 +624,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             }
             
             // 해당 지점 상담사들의 평가만 조회하여 랭킹 계산
-            List<ConsultantRating> branchRatings = ratingRepository.findAll().stream()
+            List<ConsultantRating> branchRatings = ratingRepository.findByTenantId(tenantId).stream()
                 .filter(rating -> consultantIds.contains(rating.getConsultant().getId()))
                 .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
                 .collect(Collectors.toList());

@@ -880,7 +880,8 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<ConsultantClientMapping> getPendingPaymentMappings() {
         String pendingPaymentStatus = getMappingStatusCode("PENDING_PAYMENT");
-        return mappingRepository.findAll().stream()
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(pendingPaymentStatus))
                 .collect(Collectors.toList());
     }
@@ -891,7 +892,8 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<ConsultantClientMapping> getPaymentConfirmedMappings() {
         String paymentConfirmedStatus = getMappingStatusCode("PAYMENT_CONFIRMED");
-        return mappingRepository.findAll().stream()
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(paymentConfirmedStatus))
                 .collect(Collectors.toList());
     }
@@ -901,7 +903,8 @@ public class AdminServiceImpl implements AdminService {
      */
     @Override
     public List<ConsultantClientMapping> getPendingDepositMappings() {
-        return mappingRepository.findAll().stream()
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getPaymentStatus() != null && 
                                  mapping.getPaymentStatus().name().equals("CONFIRMED") &&
                                  mapping.getStatus() != null &&
@@ -923,7 +926,8 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<ConsultantClientMapping> getSessionsExhaustedMappings() {
         String sessionsExhaustedStatus = getMappingStatusCode("SESSIONS_EXHAUSTED");
-        return mappingRepository.findAll().stream()
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(sessionsExhaustedStatus))
                 .collect(Collectors.toList());
     }
@@ -938,25 +942,26 @@ public class AdminServiceImpl implements AdminService {
             statistics.put("totalMappings", totalMappings);
             
             // 활성 매칭 수
-            long activeMappings = mappingRepository.findAll().stream()
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            long activeMappings = mappingRepository.findByTenantId(tenantId).stream()
                     .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
                     .count();
             statistics.put("activeMappings", activeMappings);
             
             // 회기 소진된 매칭 수
-            long sessionsExhaustedMappings = mappingRepository.findAll().stream()
+            long sessionsExhaustedMappings = mappingRepository.findByTenantId(tenantId).stream()
                     .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED)
                     .count();
             statistics.put("sessionsExhaustedMappings", sessionsExhaustedMappings);
             
             // 총 회기 수
-            int totalSessions = mappingRepository.findAll().stream()
+            int totalSessions = mappingRepository.findByTenantId(tenantId).stream()
                     .mapToInt(mapping -> mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0)
                     .sum();
             statistics.put("totalSessions", totalSessions);
             
             // 사용된 회기 수
-            int usedSessions = mappingRepository.findAll().stream()
+            int usedSessions = mappingRepository.findByTenantId(tenantId).stream()
                     .mapToInt(mapping -> {
                         if (mapping.getTotalSessions() != null && mapping.getRemainingSessions() != null) {
                             return mapping.getTotalSessions() - mapping.getRemainingSessions();
@@ -967,7 +972,7 @@ public class AdminServiceImpl implements AdminService {
             statistics.put("usedSessions", usedSessions);
             
             // 남은 회기 수
-            int remainingSessions = mappingRepository.findAll().stream()
+            int remainingSessions = mappingRepository.findByTenantId(tenantId).stream()
                     .mapToInt(mapping -> mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0)
                     .sum();
             statistics.put("remainingSessions", remainingSessions);
@@ -982,7 +987,8 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<Map<String, Object>> getSessions() {
         try {
-            List<ConsultantClientMapping> mappings = mappingRepository.findAll();
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<ConsultantClientMapping> mappings = mappingRepository.findByTenantId(tenantId);
             
             return mappings.stream()
                     .map(mapping -> {
@@ -1439,7 +1445,7 @@ public class AdminServiceImpl implements AdminService {
             .collect(Collectors.toList());
         
         // 삭제된 사용자도 포함해서 전체 조회해보기
-        List<User> allUsers = userRepository.findAll();
+        List<User> allUsers = userRepository.findByTenantId(tenantId);
         List<User> allClientUsers = allUsers.stream()
             .filter(user -> user.getRole() == UserRole.CLIENT)
             .collect(Collectors.toList());
@@ -1858,7 +1864,7 @@ public class AdminServiceImpl implements AdminService {
         
         // 2. 활성 매칭들을 새로운 상담사로 이전
         String terminatedStatus = getMappingStatusCode("TERMINATED");
-        List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getConsultant().getId().equals(consultantId))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
@@ -1993,7 +1999,7 @@ public class AdminServiceImpl implements AdminService {
         
         // 1. 활성 매칭 조회
         String terminatedStatus = getMappingStatusCode("TERMINATED");
-        List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getConsultant().getId().equals(consultantId))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
@@ -2097,7 +2103,7 @@ public class AdminServiceImpl implements AdminService {
         
         // 1. 해당 내담자의 활성 매칭 조회
         String terminatedStatus = getMappingStatusCode("TERMINATED");
-        List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getClient().getId().equals(id))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
@@ -2207,7 +2213,7 @@ public class AdminServiceImpl implements AdminService {
         
         // 1. 활성 매칭 조회
         String terminatedStatus = getMappingStatusCode("TERMINATED");
-        List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getClient().getId().equals(clientId))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
@@ -2611,7 +2617,7 @@ public class AdminServiceImpl implements AdminService {
         
         // 1. 전체 환불된 매칭 조회 (강제 종료된 매칭)
         String terminatedStatus = getMappingStatusCode("TERMINATED");
-        List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findAll().stream()
+        List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
                 .filter(mapping -> mapping.getTerminatedAt() != null)
                 .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
@@ -2930,7 +2936,7 @@ public class AdminServiceImpl implements AdminService {
         
         // 1. 전체 환불된 매칭 조회 (강제 종료된 매칭)
         String terminatedStatus = getMappingStatusCode("TERMINATED");
-        List<ConsultantClientMapping> terminatedMappings = mappingRepository.findAll().stream()
+        List<ConsultantClientMapping> terminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
                 .filter(mapping -> mapping.getTerminatedAt() != null)
                 .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
@@ -3096,7 +3102,7 @@ public class AdminServiceImpl implements AdminService {
         
         // 1. 전체 환불된 매칭 조회 (강제 종료된 매칭)
         String terminatedStatus = getMappingStatusCode("TERMINATED");
-        List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findAll().stream()
+        List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
                 .filter(mapping -> mapping.getTerminatedAt() != null)
                 .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
@@ -3296,7 +3302,8 @@ public class AdminServiceImpl implements AdminService {
             
             // 최근 환불 처리 건수 (24시간 내)
             LocalDateTime yesterday = LocalDateTime.now().minusHours(24);
-            List<ConsultantClientMapping> recentRefunds = mappingRepository.findAll().stream()
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<ConsultantClientMapping> recentRefunds = mappingRepository.findByTenantId(tenantId).stream()
                     .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED)
                     .filter(mapping -> mapping.getTerminatedAt() != null)
                     .filter(mapping -> mapping.getTerminatedAt().isAfter(yesterday))
@@ -4134,7 +4141,8 @@ public class AdminServiceImpl implements AdminService {
             log.info("🔍 모든 스케줄 조회");
             
             // 모든 스케줄 조회
-            List<Schedule> schedules = scheduleRepository.findAll();
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<Schedule> schedules = scheduleRepository.findByTenantId(tenantId);
             
             // 스케줄을 Map 형태로 변환
             List<Map<String, Object>> scheduleMaps = schedules.stream()
@@ -4217,7 +4225,8 @@ public class AdminServiceImpl implements AdminService {
             
             // 모든 스케줄 조회
             log.debug("🔍 모든 스케줄 조회 중...");
-            List<Schedule> allSchedules = scheduleRepository.findAll();
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<Schedule> allSchedules = scheduleRepository.findByTenantId(tenantId);
             log.info("📋 조회된 스케줄 수: {}", allSchedules.size());
             
             // 상태별 카운트
@@ -4278,7 +4287,8 @@ public class AdminServiceImpl implements AdminService {
             
             // 해당 지점의 스케줄만 조회
             log.debug("🔍 지점별 스케줄 조회 중...");
-            List<Schedule> allSchedules = scheduleRepository.findAll();
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<Schedule> allSchedules = scheduleRepository.findByTenantId(tenantId);
             List<Schedule> branchSchedules = allSchedules.stream()
                     .filter(schedule -> branchCode.equals(schedule.getBranchCode()))
                     .collect(Collectors.toList());
@@ -4544,7 +4554,7 @@ public class AdminServiceImpl implements AdminService {
             } else {
                 // 전체 조회
                 if (includeInactive) {
-                    users = userRepository.findAll();
+                    users = userRepository.findByTenantId(tenantId);
                 } else {
                     users = userRepository.findByIsActive(tenantId, true);
                 }

@@ -12,6 +12,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ConsultantRepository extends BaseRepository<Consultant, Long> {
     
+    // === 테넌트별 모든 상담사 조회 (테넌트 필터링) ===
+    @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.isDeleted = false")
+    List<Consultant> findByTenantId(@Param("tenantId") String tenantId);
+    
     // === 전문분야별 조회 (테넌트 필터링) ===
     @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.specialty LIKE %:specialty% AND c.isDeleted = false")
     List<Consultant> findByTenantIdAndSpecialtyContainingIgnoreCaseAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("specialty") String specialty);

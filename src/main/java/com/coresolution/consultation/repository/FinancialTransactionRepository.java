@@ -22,6 +22,12 @@ import org.springframework.stereotype.Repository;
 public interface FinancialTransactionRepository extends JpaRepository<FinancialTransaction, Long> {
     
     /**
+     * 테넌트별 모든 거래 조회 (테넌트 필터링)
+     */
+    @Query("SELECT ft FROM FinancialTransaction ft WHERE ft.tenantId = :tenantId")
+    List<FinancialTransaction> findByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
      * 테넌트별 삭제되지 않은 모든 거래 조회 (테넌트 필터링)
      */
     @Query("SELECT ft FROM FinancialTransaction ft WHERE ft.tenantId = :tenantId AND ft.isDeleted = false")

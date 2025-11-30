@@ -11,6 +11,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ConsultantClientMappingRepository extends JpaRepository<ConsultantClientMapping, Long> {
 
+    // 테넌트별 모든 매칭 조회 (tenantId 필터링)
+    List<ConsultantClientMapping> findByTenantId(String tenantId);
+    
     // 상담사별 매칭 조회
     List<ConsultantClientMapping> findByConsultant(User consultant);
     

@@ -12,6 +12,12 @@ import org.springframework.stereotype.Repository;
 public interface CommonCodeRepository extends JpaRepository<CommonCode, Long> {
 
     /**
+     * 테넌트별 모든 공통 코드 조회 (테넌트 필터링)
+     */
+    @Query("SELECT cc FROM CommonCode cc WHERE cc.tenantId = :tenantId ORDER BY cc.sortOrder ASC")
+    List<CommonCode> findByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
      * 테넌트별 코드 그룹별 조회 (테넌트 필터링)
      */
     @Query("SELECT cc FROM CommonCode cc WHERE cc.tenantId = :tenantId AND cc.codeGroup = :codeGroup ORDER BY cc.sortOrder ASC")

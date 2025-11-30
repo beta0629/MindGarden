@@ -21,6 +21,12 @@ import org.springframework.stereotype.Repository;
 public interface LegacyRolePermissionRepository extends JpaRepository<RolePermission, Long> {
     
     /**
+     * 테넌트별 모든 권한 조회 (테넌트 필터링)
+     */
+    @Query("SELECT rp FROM RolePermission rp WHERE rp.tenantId = :tenantId AND rp.isActive = true")
+    List<RolePermission> findByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
      * 역할명으로 권한 목록 조회
      */
     @Query("SELECT rp FROM RolePermission rp WHERE rp.roleName = :roleName AND rp.isActive = true")

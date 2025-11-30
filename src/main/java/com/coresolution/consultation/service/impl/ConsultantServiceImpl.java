@@ -246,14 +246,16 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public List<Consultant> findAllDeleted() {
-        return consultantRepository.findAll().stream()
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantId(tenantId).stream()
                 .filter(Consultant::getIsDeleted)
                 .collect(java.util.stream.Collectors.toList());
     }
     
     @Override
     public long countDeleted() {
-        return (long) consultantRepository.findAll().stream()
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return (long) consultantRepository.findByTenantId(tenantId).stream()
                 .filter(Consultant::getIsDeleted)
                 .count();
     }
@@ -272,7 +274,8 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public Object[] getEntityStatistics() {
-        List<Consultant> all = consultantRepository.findAll();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<Consultant> all = consultantRepository.findByTenantId(tenantId);
         long total = all.size();
         long deleted = all.stream().filter(Consultant::getIsDeleted).count();
         long active = total - deleted;

@@ -266,7 +266,8 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 Schedule schedule = completedSchedules.get(i);
                 
                 // 이미 평점이 있는지 확인
-                boolean hasRating = consultantRatingRepository.findAll().stream()
+                String tenantId = TenantContextHolder.getRequiredTenantId();
+                boolean hasRating = consultantRatingRepository.findByTenantId(tenantId).stream()
                     .anyMatch(r -> r.getSchedule().getId().equals(schedule.getId()) && 
                                   r.getStatus() == ConsultantRating.RatingStatus.ACTIVE);
                 
@@ -381,7 +382,8 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             for (Schedule schedule : testSchedules) {
                 if (schedule.getTitle() != null && schedule.getTitle().contains("테스트")) {
                     // 관련 평점 삭제
-                    List<ConsultantRating> ratings = consultantRatingRepository.findAll().stream()
+                    String tenantId = TenantContextHolder.getRequiredTenantId();
+                    List<ConsultantRating> ratings = consultantRatingRepository.findByTenantId(tenantId).stream()
                         .filter(r -> r.getSchedule().getId().equals(schedule.getId()))
                         .collect(java.util.stream.Collectors.toList());
                     for (ConsultantRating rating : ratings) {
@@ -390,7 +392,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                     }
                     
                     // 관련 재무 거래 삭제
-                    List<FinancialTransaction> transactions = financialTransactionRepository.findAll().stream()
+                    List<FinancialTransaction> transactions = financialTransactionRepository.findByTenantId(tenantId).stream()
                         .filter(t -> t.getRelatedEntityId() != null && t.getRelatedEntityId().equals(schedule.getId()))
                         .collect(java.util.stream.Collectors.toList());
                     for (FinancialTransaction transaction : transactions) {

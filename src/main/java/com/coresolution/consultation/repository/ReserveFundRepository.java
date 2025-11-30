@@ -18,6 +18,12 @@ import org.springframework.stereotype.Repository;
 public interface ReserveFundRepository extends JpaRepository<ReserveFund, Long> {
     
     /**
+     * 테넌트별 모든 적립금 조회 (테넌트 필터링)
+     */
+    @Query("SELECT rf FROM ReserveFund rf WHERE rf.tenantId = :tenantId")
+    List<ReserveFund> findByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
      * 테넌트별 활성화된 모든 적립금 조회 (테넌트 필터링)
      */
     @Query("SELECT rf FROM ReserveFund rf WHERE rf.tenantId = :tenantId AND rf.isActive = true")

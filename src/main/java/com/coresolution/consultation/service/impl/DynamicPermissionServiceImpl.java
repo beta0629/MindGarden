@@ -503,7 +503,8 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
             log.debug("기존 권한 비활성화 완료: 역할={}, 개수={}", roleName, existingPermissions.size());
             
             // 2. 비활성화 포함 모든 권한 조회 (한 번만)
-            List<RolePermission> allRolePermissions = rolePermissionRepository.findAll();
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<RolePermission> allRolePermissions = rolePermissionRepository.findByTenantId(tenantId);
             Map<String, RolePermission> existingPermissionsMap = allRolePermissions.stream()
                 .filter(rp -> rp.getRoleName().equals(roleName))
                 .collect(Collectors.toMap(

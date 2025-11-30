@@ -168,7 +168,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
         // 0. DB에 저장된 모든 소셜 계정 조회 (디버깅용)
-        var allSocialAccounts = userSocialAccountRepository.findAll();
+        var allSocialAccounts = userSocialAccountRepository.findByTenantId(tenantId);
         log.info("DB에 저장된 모든 소셜 계정 수: {}", allSocialAccounts.size());
         allSocialAccounts.forEach(account -> {
             log.info("소셜 계정: id={}, provider={}, providerUserId={}, userId={}", 

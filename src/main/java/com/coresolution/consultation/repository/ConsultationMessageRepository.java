@@ -15,6 +15,12 @@ import org.springframework.stereotype.Repository;
 public interface ConsultationMessageRepository extends BaseRepository<ConsultationMessage, Long> {
     
     /**
+     * 테넌트별 모든 메시지 조회 (tenantId 필터링)
+     */
+    @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = false ORDER BY m.createdAt DESC")
+    List<ConsultationMessage> findByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
      * 상담사 메시지 목록 조회
      */
     @Query("SELECT m FROM ConsultationMessage m WHERE m.consultantId = :consultantId " +

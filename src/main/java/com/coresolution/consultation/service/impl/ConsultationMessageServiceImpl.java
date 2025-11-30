@@ -455,6 +455,6 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
             return findAllByTenant(tenantId, null);
         }
         // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
-        return consultationMessageRepository.findAll();
+        return consultationMessageRepository.findByTenantId(tenantId);
     }
 }

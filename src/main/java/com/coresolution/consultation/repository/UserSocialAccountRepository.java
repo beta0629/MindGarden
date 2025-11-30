@@ -21,6 +21,12 @@ public interface UserSocialAccountRepository extends JpaRepository<UserSocialAcc
     // ==================== tenantId 필터링 메서드 ====================
     
     /**
+     * 테넌트별 모든 소셜 계정 조회 (tenantId 필터링)
+     */
+    @Query("SELECT usa FROM UserSocialAccount usa WHERE usa.tenantId = :tenantId AND usa.isDeleted = false")
+    List<UserSocialAccount> findByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
      * 제공자와 제공자 사용자 ID로 소셜 계정 조회 (tenantId 필터링)
      * 
      * @param tenantId 테넌트 ID

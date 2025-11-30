@@ -423,7 +423,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         try {
             // 모든 활성 지점 조회
-            List<String> branchCodes = userRepository.findAll().stream()
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<String> branchCodes = userRepository.findByTenantId(tenantId).stream()
                 .map(User::getBranchCode)
                 .filter(code -> code != null && !code.isEmpty())
                 .distinct()

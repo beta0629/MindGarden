@@ -145,7 +145,8 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         int remainingSessions = 0;
         
         try {
-            List<ConsultantClientMapping> allMappings = mappingRepository.findAll();
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<ConsultantClientMapping> allMappings = mappingRepository.findByTenantId(tenantId);
             totalMappings = allMappings.size();
             
             for (ConsultantClientMapping mapping : allMappings) {
@@ -190,7 +191,8 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         log.info("🔧 회기 수 불일치 자동 수정 시작");
         
         try {
-            List<ConsultantClientMapping> allMappings = mappingRepository.findAll();
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<ConsultantClientMapping> allMappings = mappingRepository.findByTenantId(tenantId);
             int fixedCount = 0;
             
             for (ConsultantClientMapping mapping : allMappings) {

@@ -24,6 +24,12 @@ public interface ConsultantRatingRepository extends JpaRepository<ConsultantRati
     // ==================== tenantId 필터링 메서드 ====================
 
     /**
+     * 테넌트별 모든 평가 조회 (tenantId 필터링)
+     */
+    @Query("SELECT cr FROM ConsultantRating cr WHERE cr.tenantId = :tenantId")
+    List<ConsultantRating> findByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
      * 스케줄별 평가 조회 (중복 평가 방지용) (tenantId 필터링)
      */
     @Query("SELECT cr FROM ConsultantRating cr WHERE cr.tenantId = :tenantId AND cr.scheduleId = :scheduleId AND cr.status = :status")

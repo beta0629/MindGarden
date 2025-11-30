@@ -88,9 +88,11 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
         log.info("📊 할인 회계 요약 조회: BranchCode={}, Period={} ~ {}", branchCode, startDate, endDate);
         
         try {
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            
             // 1. 할인 거래 조회
             var discountTransactions = financialTransactionRepository
-                .findAll()
+                .findByTenantId(tenantId)
                 .stream()
                 .filter(ft -> "DISCOUNT".equals(ft.getTransactionType()) && 
                              branchCode.equals(ft.getBranchCode()) &&
@@ -100,7 +102,7 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
             
             // 2. 매출 거래 조회
             var revenueTransactions = financialTransactionRepository
-                .findAll()
+                .findByTenantId(tenantId)
                 .stream()
                 .filter(ft -> "INCOME".equals(ft.getTransactionType()) && 
                              branchCode.equals(ft.getBranchCode()) &&
@@ -161,15 +163,17 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
         log.info("🔍 할인 회계 무결성 검증: BranchCode={}", branchCode);
         
         try {
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            
             // 1. 매출 거래와 할인 거래 매칭 검증
             var revenueTransactions = financialTransactionRepository
-                .findAll()
+                .findByTenantId(tenantId)
                 .stream()
                 .filter(ft -> "INCOME".equals(ft.getTransactionType()) && branchCode.equals(ft.getBranchCode()))
                 .collect(Collectors.toList());
             
             var discountTransactions = financialTransactionRepository
-                .findAll()
+                .findByTenantId(tenantId)
                 .stream()
                 .filter(ft -> "DISCOUNT".equals(ft.getTransactionType()) && branchCode.equals(ft.getBranchCode()))
                 .collect(Collectors.toList());

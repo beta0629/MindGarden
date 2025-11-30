@@ -13,6 +13,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PermissionRepository;
 import com.coresolution.consultation.repository.LegacyRolePermissionRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -322,6 +323,7 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
      * RolePermission을 Map으로 변환
      */
     private Map<String, Object> convertToPermissionMap(RolePermission rolePermission) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> map = new HashMap<>();
         map.put("permission_code", rolePermission.getPermissionCode());
         map.put("role_name", rolePermission.getRoleName());
@@ -334,7 +336,7 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
         }
         
         // 권한 상세 정보 조회
-        Permission permission = permissionRepository.findByPermissionCode(rolePermission.getPermissionCode()).orElse(null);
+        Permission permission = permissionRepository.findByTenantIdAndPermissionCode(tenantId, rolePermission.getPermissionCode()).orElse(null);
         if (permission != null) {
             map.put("permission_name", permission.getPermissionName());
             map.put("permission_description", permission.getPermissionDescription());

@@ -6,6 +6,7 @@ import com.coresolution.consultation.entity.SystemConfig;
 import com.coresolution.consultation.repository.SystemConfigRepository;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.util.EncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,8 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     
     @Override
     public Optional<String> getConfigValue(String configKey) {
-        return systemConfigRepository.findByConfigKeyAndIsActiveTrue(configKey)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue(tenantId, configKey)
                 .map(config -> {
                     if (config.getIsEncrypted() && config.getConfigValue() != null) {
                         try {
@@ -49,7 +51,8 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     @Override
     @Transactional
     public void setConfigValue(String configKey, String configValue, String description, String category) {
-        Optional<SystemConfig> existingConfig = systemConfigRepository.findByConfigKeyAndIsActiveTrue(configKey);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<SystemConfig> existingConfig = systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue(tenantId, configKey);
         
         // 암호화 여부 결정
         boolean isEncrypted = configKey.contains("KEY") || configKey.contains("SECRET") || configKey.contains("PASSWORD");

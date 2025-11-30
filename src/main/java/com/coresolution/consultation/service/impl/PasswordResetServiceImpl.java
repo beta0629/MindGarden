@@ -11,6 +11,7 @@ import com.coresolution.consultation.repository.PasswordResetTokenRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.PasswordResetService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -46,9 +47,10 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     public boolean sendPasswordResetEmail(String email) {
         try {
             log.info("🔑 비밀번호 재설정 이메일 발송 요청: {}", email);
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             
-            // 사용자 확인
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            // 사용자 확인 (tenantId 필터링)
+            Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, email);
             if (userOpt.isEmpty()) {
                 log.warn("❌ 존재하지 않는 이메일: {}", email);
                 // 보안상 이유로 성공으로 응답 (이메일 존재 여부를 알려주지 않음)

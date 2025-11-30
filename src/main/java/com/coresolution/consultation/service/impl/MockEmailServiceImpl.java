@@ -15,6 +15,7 @@ import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;

@@ -9,6 +9,7 @@ import com.coresolution.consultation.dto.PrivacyConsentDto;
 import com.coresolution.consultation.entity.UserPrivacyConsent;
 import com.coresolution.consultation.repository.UserPrivacyConsentRepository;
 import com.coresolution.consultation.service.PrivacyConsentService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;

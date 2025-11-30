@@ -19,6 +19,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.SessionExtensionService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;

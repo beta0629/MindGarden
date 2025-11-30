@@ -22,20 +22,150 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ConsultantPerformanceRepository extends JpaRepository<ConsultantPerformance, ConsultantPerformanceId> {
 
+    // ==================== tenantId 필터링 메서드 ====================
+
     /**
-     * 특정 상담사의 기간별 성과 조회
+     * 특정 상담사의 기간별 성과 조회 (tenantId 필터링)
      */
+    @Query("SELECT cp FROM ConsultantPerformance cp WHERE cp.tenantId = :tenantId AND cp.consultantId = :consultantId AND cp.performanceDate BETWEEN :startDate AND :endDate ORDER BY cp.performanceDate DESC")
+    List<ConsultantPerformance> findByTenantIdAndConsultantIdAndPerformanceDateBetweenOrderByPerformanceDateDesc(
+            @Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    /**
+     * 특정 날짜의 모든 상담사 성과 조회 (tenantId 필터링)
+     */
+    @Query("SELECT cp FROM ConsultantPerformance cp WHERE cp.tenantId = :tenantId AND cp.performanceDate = :performanceDate ORDER BY cp.performanceScore DESC")
+    List<ConsultantPerformance> findByTenantIdAndPerformanceDateOrderByPerformanceScoreDesc(@Param("tenantId") String tenantId, @Param("performanceDate") LocalDate performanceDate);
+
+    /**
+     * 성과 점수 기준 상위 상담사 조회 (지점별) (tenantId 필터링)
+     */
+    @Query("SELECT cp FROM ConsultantPerformance cp " +
+           "WHERE cp.tenantId = :tenantId " +
+           "AND cp.performanceDate BETWEEN :startDate AND :endDate " +
+           "AND cp.consultant.branchCode = :branchCode " +
+           "ORDER BY cp.performanceScore DESC")
+    Page<ConsultantPerformance> findTopPerformersByTenantIdAndBranch(@Param("tenantId") String tenantId,
+                                                                      @Param("startDate") LocalDate startDate,
+                                                                      @Param("endDate") LocalDate endDate,
+                                                                      @Param("branchCode") String branchCode,
+                                                                      Pageable pageable);
+
+    /**
+     * 전체 상위 성과자 조회 (tenantId 필터링)
+     */
+    @Query("SELECT cp FROM ConsultantPerformance cp " +
+           "WHERE cp.tenantId = :tenantId " +
+           "AND cp.performanceDate BETWEEN :startDate AND :endDate " +
+           "ORDER BY cp.performanceScore DESC")
+    Page<ConsultantPerformance> findTopPerformersByTenantId(@Param("tenantId") String tenantId,
+                                                             @Param("startDate") LocalDate startDate,
+                                                             @Param("endDate") LocalDate endDate,
+                                                             Pageable pageable);
+
+    /**
+     * 상담사의 최근 성과 조회 (tenantId 필터링)
+     */
+    @Query("SELECT cp FROM ConsultantPerformance cp WHERE cp.tenantId = :tenantId AND cp.consultantId = :consultantId ORDER BY cp.performanceDate DESC")
+    Optional<ConsultantPerformance> findTopByTenantIdAndConsultantIdOrderByPerformanceDateDesc(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
+
+    /**
+     * 성과 저하 상담사 조회 (완료율 기준) (tenantId 필터링)
+     */
+    @Query("SELECT cp FROM ConsultantPerformance cp " +
+           "WHERE cp.tenantId = :tenantId " +
+           "AND cp.performanceDate = :date " +
+           "AND cp.completionRate < :threshold " +
+           "AND cp.consultant.branchCode = :branchCode " +
+           "ORDER BY cp.completionRate ASC")
+    List<ConsultantPerformance> findUnderperformingConsultantsByTenantId(@Param("tenantId") String tenantId,
+                                                                          @Param("date") LocalDate date,
+                                                                          @Param("threshold") Double threshold,
+                                                                          @Param("branchCode") String branchCode);
+
+    /**
+     * 등급별 상담사 수 조회 (tenantId 필터링)
+     */
+    @Query("SELECT cp.grade, COUNT(cp) FROM ConsultantPerformance cp " +
+           "WHERE cp.tenantId = :tenantId " +
+           "AND cp.performanceDate BETWEEN :startDate AND :endDate " +
+           "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) " +
+           "GROUP BY cp.grade " +
+           "ORDER BY cp.grade")
+    List<Object[]> getGradeDistributionByTenantId(@Param("tenantId") String tenantId,
+                                                   @Param("startDate") LocalDate startDate,
+                                                   @Param("endDate") LocalDate endDate,
+                                                   @Param("branchCode") String branchCode);
+
+    /**
+     * 상담사별 성과 트렌드 분석 (tenantId 필터링)
+     */
+    @Query("SELECT cp.consultantId, cp.performanceDate, cp.performanceScore, " +
+           "LAG(cp.performanceScore) OVER (PARTITION BY cp.consultantId ORDER BY cp.performanceDate) as prevScore " +
+           "FROM ConsultantPerformance cp " +
+           "WHERE cp.tenantId = :tenantId " +
+           "AND cp.performanceDate BETWEEN :startDate AND :endDate " +
+           "AND cp.consultantId = :consultantId " +
+           "ORDER BY cp.performanceDate")
+    List<Object[]> getPerformanceTrendByTenantId(@Param("tenantId") String tenantId,
+                                                  @Param("consultantId") Long consultantId,
+                                                  @Param("startDate") LocalDate startDate,
+                                                  @Param("endDate") LocalDate endDate);
+
+    /**
+     * 지점별 평균 성과 조회 (tenantId 필터링)
+     */
+    @Query("SELECT cp.consultant.branchCode, " +
+           "AVG(cp.performanceScore) as avgScore, " +
+           "AVG(cp.completionRate) as avgCompletionRate, " +
+           "AVG(cp.avgRating) as avgRating, " +
+           "COUNT(cp) as consultantCount " +
+           "FROM ConsultantPerformance cp " +
+           "WHERE cp.tenantId = :tenantId " +
+           "AND cp.performanceDate BETWEEN :startDate AND :endDate " +
+           "GROUP BY cp.consultant.branchCode " +
+           "ORDER BY avgScore DESC")
+    List<Object[]> getBranchPerformanceAveragesByTenantId(@Param("tenantId") String tenantId,
+                                                           @Param("startDate") LocalDate startDate,
+                                                           @Param("endDate") LocalDate endDate);
+
+    /**
+     * 월별 성과 집계 (tenantId 필터링)
+     */
+    @Query("SELECT FUNCTION('DATE_FORMAT', cp.performanceDate, '%Y-%m') as month, " +
+           "AVG(cp.performanceScore) as avgScore, " +
+           "AVG(cp.completionRate) as avgCompletionRate, " +
+           "COUNT(cp) as consultantCount " +
+           "FROM ConsultantPerformance cp " +
+           "WHERE cp.tenantId = :tenantId " +
+           "AND cp.performanceDate BETWEEN :startDate AND :endDate " +
+           "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) " +
+           "GROUP BY FUNCTION('DATE_FORMAT', cp.performanceDate, '%Y-%m') " +
+           "ORDER BY month")
+    List<Object[]> getMonthlyPerformanceAggregateByTenantId(@Param("tenantId") String tenantId,
+                                                             @Param("startDate") LocalDate startDate,
+                                                             @Param("endDate") LocalDate endDate,
+                                                             @Param("branchCode") String branchCode);
+
+    // ==================== @Deprecated 메서드 (하위 호환성) ====================
+
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findByTenantIdAndConsultantIdAndPerformanceDateBetweenOrderByPerformanceDateDesc 사용하세요.
+     */
+    @Deprecated
     List<ConsultantPerformance> findByConsultantIdAndPerformanceDateBetweenOrderByPerformanceDateDesc(
             Long consultantId, LocalDate startDate, LocalDate endDate);
 
     /**
-     * 특정 날짜의 모든 상담사 성과 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findByTenantIdAndPerformanceDateOrderByPerformanceScoreDesc 사용하세요.
      */
+    @Deprecated
     List<ConsultantPerformance> findByPerformanceDateOrderByPerformanceScoreDesc(LocalDate performanceDate);
 
     /**
-     * 성과 점수 기준 상위 상담사 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findTopPerformersByTenantIdAndBranch 사용하세요.
      */
+    @Deprecated
     @Query("SELECT cp FROM ConsultantPerformance cp " +
            "WHERE cp.performanceDate BETWEEN :startDate AND :endDate " +
            "AND cp.consultant.branchCode = :branchCode " +
@@ -46,8 +176,9 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
                                                           Pageable pageable);
 
     /**
-     * 전체 상위 성과자 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findTopPerformersByTenantId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT cp FROM ConsultantPerformance cp " +
            "WHERE cp.performanceDate BETWEEN :startDate AND :endDate " +
            "ORDER BY cp.performanceScore DESC")
@@ -56,13 +187,15 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
                                                   Pageable pageable);
 
     /**
-     * 상담사의 최근 성과 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findTopByTenantIdAndConsultantIdOrderByPerformanceDateDesc 사용하세요.
      */
+    @Deprecated
     Optional<ConsultantPerformance> findTopByConsultantIdOrderByPerformanceDateDesc(Long consultantId);
 
     /**
-     * 성과 저하 상담사 조회 (완료율 기준)
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findUnderperformingConsultantsByTenantId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT cp FROM ConsultantPerformance cp " +
            "WHERE cp.performanceDate = :date " +
            "AND cp.completionRate < :threshold " +
@@ -73,8 +206,9 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
                                                                @Param("branchCode") String branchCode);
 
     /**
-     * 등급별 상담사 수 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! getGradeDistributionByTenantId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT cp.grade, COUNT(cp) FROM ConsultantPerformance cp " +
            "WHERE cp.performanceDate BETWEEN :startDate AND :endDate " +
            "AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) " +
@@ -85,8 +219,9 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
                                        @Param("branchCode") String branchCode);
 
     /**
-     * 상담사별 성과 트렌드 분석
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! getPerformanceTrendByTenantId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT cp.consultantId, cp.performanceDate, cp.performanceScore, " +
            "LAG(cp.performanceScore) OVER (PARTITION BY cp.consultantId ORDER BY cp.performanceDate) as prevScore " +
            "FROM ConsultantPerformance cp " +
@@ -98,8 +233,9 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
                                       @Param("endDate") LocalDate endDate);
 
     /**
-     * 지점별 평균 성과 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! getBranchPerformanceAveragesByTenantId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT cp.consultant.branchCode, " +
            "AVG(cp.performanceScore) as avgScore, " +
            "AVG(cp.completionRate) as avgCompletionRate, " +
@@ -113,8 +249,9 @@ public interface ConsultantPerformanceRepository extends JpaRepository<Consultan
                                                @Param("endDate") LocalDate endDate);
 
     /**
-     * 월별 성과 집계
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! getMonthlyPerformanceAggregateByTenantId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT FUNCTION('DATE_FORMAT', cp.performanceDate, '%Y-%m') as month, " +
            "AVG(cp.performanceScore) as avgScore, " +
            "AVG(cp.completionRate) as avgCompletionRate, " +

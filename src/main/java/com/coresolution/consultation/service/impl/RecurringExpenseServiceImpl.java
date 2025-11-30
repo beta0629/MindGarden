@@ -18,6 +18,7 @@ import com.coresolution.consultation.repository.RecurringExpenseRepository;
 import com.coresolution.consultation.service.FinancialTransactionService;
 import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.util.TaxCalculationUtil;
+import com.coresolution.core.context.TenantContextHolder;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

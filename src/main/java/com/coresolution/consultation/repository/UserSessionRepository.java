@@ -21,101 +21,171 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserSessionRepository extends JpaRepository<UserSession, Long> {
     
+    // ==================== tenantId 필터링 메서드 ====================
+    
     /**
-     * 테넌트별 사용자 ID로 활성 세션 조회 (user.tenantId를 통한 간접 필터링)
+     * 테넌트별 사용자 ID로 활성 세션 조회 (tenantId 필터링)
      */
     @Query("SELECT us FROM UserSession us WHERE us.tenantId = :tenantId AND us.user.id = :userId AND us.isActive = true AND us.expiresAt > :now")
     List<UserSession> findActiveSessionsByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId, @Param("now") LocalDateTime now);
     
     /**
-     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 세션 정보 노출!
+     * 테넌트별 세션 ID로 활성 세션 조회 (tenantId 필터링)
+     */
+    @Query("SELECT us FROM UserSession us JOIN FETCH us.user WHERE us.tenantId = :tenantId AND us.sessionId = :sessionId AND us.isActive = true AND us.expiresAt > :now")
+    Optional<UserSession> findActiveSessionByTenantIdAndSessionId(@Param("tenantId") String tenantId, @Param("sessionId") String sessionId, @Param("now") LocalDateTime now);
+    
+    /**
+     * 테넌트별 사용자의 모든 활성 세션 조회 (tenantId 필터링)
+     */
+    @Query("SELECT us FROM UserSession us WHERE us.tenantId = :tenantId AND us.user.id = :userId AND us.isActive = true AND us.expiresAt > :now ORDER BY us.lastActivityAt DESC")
+    List<UserSession> findAllActiveSessionsByTenantIdAndUser(@Param("tenantId") String tenantId, @Param("userId") Long userId, @Param("now") LocalDateTime now);
+    
+    /**
+     * 테넌트별 사용자의 가장 최근 활성 세션 조회 (tenantId 필터링)
+     */
+    @Query("SELECT us FROM UserSession us WHERE us.tenantId = :tenantId AND us.user.id = :userId AND us.isActive = true AND us.expiresAt > :now ORDER BY us.lastActivityAt DESC")
+    Optional<UserSession> findLatestActiveSessionByTenantIdAndUser(@Param("tenantId") String tenantId, @Param("userId") Long userId, @Param("now") LocalDateTime now);
+    
+    /**
+     * 테넌트별 만료된 세션들을 비활성화 (tenantId 필터링)
+     */
+    @Modifying
+    @Query("UPDATE UserSession us SET us.isActive = false, us.endedAt = :now, us.endReason = 'EXPIRED' WHERE us.tenantId = :tenantId AND us.isActive = true AND us.expiresAt <= :now")
+    int deactivateExpiredSessionsByTenantId(@Param("tenantId") String tenantId, @Param("now") LocalDateTime now);
+    
+    /**
+     * 테넌트별 사용자의 모든 세션을 비활성화 (tenantId 필터링)
+     */
+    @Modifying
+    @Query("UPDATE UserSession us SET us.isActive = false, us.endedAt = :now, us.endReason = :reason WHERE us.tenantId = :tenantId AND us.user.id = :userId AND us.isActive = true")
+    int deactivateAllUserSessionsByTenantId(@Param("tenantId") String tenantId, @Param("userId") Long userId, @Param("now") LocalDateTime now, @Param("reason") String reason);
+    
+    /**
+     * 테넌트별 특정 세션을 비활성화 (tenantId 필터링)
+     */
+    @Modifying
+    @Query("UPDATE UserSession us SET us.isActive = false, us.endedAt = :now, us.endReason = :reason WHERE us.tenantId = :tenantId AND us.sessionId = :sessionId")
+    int deactivateSessionByTenantIdAndSessionId(@Param("tenantId") String tenantId, @Param("sessionId") String sessionId, @Param("now") LocalDateTime now, @Param("reason") String reason);
+    
+    /**
+     * 테넌트별 사용자의 활성 세션 수 조회 (tenantId 필터링)
+     */
+    @Query("SELECT COUNT(us) FROM UserSession us WHERE us.tenantId = :tenantId AND us.user.id = :userId AND us.isActive = true AND us.expiresAt > :now")
+    long countActiveSessionsByTenantIdAndUser(@Param("tenantId") String tenantId, @Param("userId") Long userId, @Param("now") LocalDateTime now);
+    
+    /**
+     * 테넌트별 특정 IP에서의 활성 세션 조회 (tenantId 필터링)
+     */
+    @Query("SELECT us FROM UserSession us WHERE us.tenantId = :tenantId AND us.clientIp = :clientIp AND us.isActive = true AND us.expiresAt > :now")
+    List<UserSession> findActiveSessionsByTenantIdAndClientIp(@Param("tenantId") String tenantId, @Param("clientIp") String clientIp, @Param("now") LocalDateTime now);
+    
+    /**
+     * 테넌트별 사용자별 활성 세션 통계 (tenantId 필터링)
+     */
+    @Query("SELECT us.user.id, COUNT(us) FROM UserSession us WHERE us.tenantId = :tenantId AND us.isActive = true AND us.expiresAt > :now GROUP BY us.user.id")
+    List<Object[]> getActiveSessionStatisticsByTenantId(@Param("tenantId") String tenantId, @Param("now") LocalDateTime now);
+    
+    /**
+     * 테넌트별 세션 ID로 모든 세션 조회 (활성/비활성 포함) (tenantId 필터링)
+     */
+    @Query("SELECT us FROM UserSession us WHERE us.tenantId = :tenantId AND us.sessionId = :sessionId")
+    List<UserSession> findByTenantIdAndSessionId(@Param("tenantId") String tenantId, @Param("sessionId") String sessionId);
+    
+    /**
+     * 테넌트별 세션 ID로 세션 삭제 (tenantId 필터링)
+     */
+    @Modifying
+    @Query("DELETE FROM UserSession us WHERE us.tenantId = :tenantId AND us.sessionId = :sessionId")
+    void deleteByTenantIdAndSessionId(@Param("tenantId") String tenantId, @Param("sessionId") String sessionId);
+    
+    // ==================== @Deprecated 메서드 (하위 호환성) ====================
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 세션 정보 노출! findActiveSessionsByTenantIdAndUserId 사용하세요.
      */
     @Deprecated
     @Query("SELECT us FROM UserSession us WHERE us.user.id = :userId AND us.isActive = true AND us.expiresAt > :now")
     List<UserSession> findActiveSessionsByUserId(@Param("userId") Long userId, @Param("now") LocalDateTime now);
     
     /**
-     * 테넌트별 세션 ID로 활성 세션 조회 (user.tenantId를 통한 간접 필터링)
-     */
-    @Query("SELECT us FROM UserSession us JOIN FETCH us.user WHERE us.tenantId = :tenantId AND us.sessionId = :sessionId AND us.isActive = true AND us.expiresAt > :now")
-    Optional<UserSession> findActiveSessionByTenantIdAndSessionId(@Param("tenantId") String tenantId, @Param("sessionId") String sessionId, @Param("now") LocalDateTime now);
-    
-    /**
-     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 세션 ID 접근 가능!
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 세션 ID 접근 가능! findActiveSessionByTenantIdAndSessionId 사용하세요.
      */
     @Deprecated
     @Query("SELECT us FROM UserSession us JOIN FETCH us.user WHERE us.sessionId = :sessionId AND us.isActive = true AND us.expiresAt > :now")
     Optional<UserSession> findActiveSessionBySessionId(@Param("sessionId") String sessionId, @Param("now") LocalDateTime now);
     
     /**
-     * 테넌트별 사용자의 모든 활성 세션 조회 (user.tenantId를 통한 간접 필터링)
-     */
-    @Query("SELECT us FROM UserSession us WHERE us.tenantId = :tenantId AND us.user.id = :userId AND us.isActive = true AND us.expiresAt > :now ORDER BY us.lastActivityAt DESC")
-    List<UserSession> findAllActiveSessionsByTenantIdAndUser(@Param("tenantId") String tenantId, @Param("userId") Long userId, @Param("now") LocalDateTime now);
-    
-    /**
-     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 세션 목록 노출!
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자 세션 목록 노출! findAllActiveSessionsByTenantIdAndUser 사용하세요.
      */
     @Deprecated
     @Query("SELECT us FROM UserSession us WHERE us.user.id = :userId AND us.isActive = true AND us.expiresAt > :now ORDER BY us.lastActivityAt DESC")
     List<UserSession> findAllActiveSessionsByUser(@Param("userId") Long userId, @Param("now") LocalDateTime now);
     
     /**
-     * 사용자의 가장 최근 활성 세션 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findLatestActiveSessionByTenantIdAndUser 사용하세요.
      */
+    @Deprecated
     @Query("SELECT us FROM UserSession us WHERE us.user.id = :userId AND us.isActive = true AND us.expiresAt > :now ORDER BY us.lastActivityAt DESC")
     Optional<UserSession> findLatestActiveSessionByUser(@Param("userId") Long userId, @Param("now") LocalDateTime now);
     
     /**
-     * 만료된 세션들을 비활성화
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! deactivateExpiredSessionsByTenantId 사용하세요.
      */
+    @Deprecated
     @Modifying
     @Query("UPDATE UserSession us SET us.isActive = false, us.endedAt = :now, us.endReason = 'EXPIRED' WHERE us.isActive = true AND us.expiresAt <= :now")
     int deactivateExpiredSessions(@Param("now") LocalDateTime now);
     
     /**
-     * 사용자의 모든 세션을 비활성화 (중복 로그인 방지)
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! deactivateAllUserSessionsByTenantId 사용하세요.
      */
+    @Deprecated
     @Modifying
     @Query("UPDATE UserSession us SET us.isActive = false, us.endedAt = :now, us.endReason = :reason WHERE us.user.id = :userId AND us.isActive = true")
     int deactivateAllUserSessions(@Param("userId") Long userId, @Param("now") LocalDateTime now, @Param("reason") String reason);
     
     /**
-     * 특정 세션을 비활성화
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! deactivateSessionByTenantIdAndSessionId 사용하세요.
      */
+    @Deprecated
     @Modifying
     @Query("UPDATE UserSession us SET us.isActive = false, us.endedAt = :now, us.endReason = :reason WHERE us.sessionId = :sessionId")
     int deactivateSessionBySessionId(@Param("sessionId") String sessionId, @Param("now") LocalDateTime now, @Param("reason") String reason);
     
     /**
-     * 사용자의 활성 세션 수 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! countActiveSessionsByTenantIdAndUser 사용하세요.
      */
+    @Deprecated
     @Query("SELECT COUNT(us) FROM UserSession us WHERE us.user.id = :userId AND us.isActive = true AND us.expiresAt > :now")
     long countActiveSessionsByUser(@Param("userId") Long userId, @Param("now") LocalDateTime now);
     
     /**
-     * 특정 IP에서의 활성 세션 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findActiveSessionsByTenantIdAndClientIp 사용하세요.
      */
+    @Deprecated
     @Query("SELECT us FROM UserSession us WHERE us.clientIp = :clientIp AND us.isActive = true AND us.expiresAt > :now")
     List<UserSession> findActiveSessionsByClientIp(@Param("clientIp") String clientIp, @Param("now") LocalDateTime now);
     
     /**
-     * 사용자별 활성 세션 통계
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! getActiveSessionStatisticsByTenantId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT us.user.id, COUNT(us) FROM UserSession us WHERE us.isActive = true AND us.expiresAt > :now GROUP BY us.user.id")
     List<Object[]> getActiveSessionStatistics(@Param("now") LocalDateTime now);
     
     /**
-     * 세션 ID로 모든 세션 조회 (활성/비활성 포함)
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findByTenantIdAndSessionId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT us FROM UserSession us WHERE us.sessionId = :sessionId")
     List<UserSession> findBySessionId(@Param("sessionId") String sessionId);
     
     /**
-     * 세션 ID로 세션 삭제
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! deleteByTenantIdAndSessionId 사용하세요.
      */
+    @Deprecated
     @Modifying
     @Query("DELETE FROM UserSession us WHERE us.sessionId = :sessionId")
     void deleteBySessionId(@Param("sessionId") String sessionId);
-    
 }

@@ -11,6 +11,7 @@ import com.coresolution.consultation.entity.PackageDiscount;
 import com.coresolution.consultation.repository.FinancialTransactionRepository;
 import com.coresolution.consultation.service.DiscountAccountingService;
 import com.coresolution.consultation.service.ErpDiscountIntegrationService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;

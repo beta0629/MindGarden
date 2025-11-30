@@ -8,6 +8,7 @@ import com.coresolution.consultation.dto.UserAddressDto;
 import com.coresolution.consultation.entity.UserAddress;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.service.UserAddressService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +33,9 @@ public class UserAddressServiceImpl implements UserAddressService {
     @Transactional(readOnly = true)
     public List<UserAddressDto> getUserAddresses(Long userId) {
         log.info("🔍 사용자 주소 조회: userId={}", userId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        List<UserAddress> addresses = userAddressRepository.findByUserIdAndIsDeletedFalseOrderByIsPrimaryDescCreatedAtAsc(userId);
+        List<UserAddress> addresses = userAddressRepository.findByTenantIdAndUserIdAndIsDeletedFalseOrderByIsPrimaryDescCreatedAtAsc(tenantId, userId);
         
         return addresses.stream()
                 .map(this::convertToDto)
@@ -99,9 +101,10 @@ public class UserAddressServiceImpl implements UserAddressService {
     @Override
     public UserAddressDto setPrimaryAddress(Long userId, Long addressId) {
         log.info("⭐ 기본 주소 설정: userId={}, addressId={}", userId, addressId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         // 기존 기본 주소 해제
-        userAddressRepository.findByUserIdAndIsPrimaryTrueAndIsDeletedFalse(userId)
+        userAddressRepository.findByTenantIdAndUserIdAndIsPrimaryTrueAndIsDeletedFalse(tenantId, userId)
                 .ifPresent(address -> {
                     address.setIsPrimary(false);
                     userAddressRepository.save(address);
@@ -124,8 +127,9 @@ public class UserAddressServiceImpl implements UserAddressService {
     @Transactional(readOnly = true)
     public List<UserAddressDto> getAddressesByType(Long userId, String addressType) {
         log.info("🔍 주소 타입별 조회: userId={}, type={}", userId, addressType);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        List<UserAddress> addresses = userAddressRepository.findByUserIdAndAddressTypeAndIsDeletedFalse(userId, addressType);
+        List<UserAddress> addresses = userAddressRepository.findByTenantIdAndUserIdAndAddressTypeAndIsDeletedFalse(tenantId, userId, addressType);
         
         return addresses.stream()
                 .map(this::convertToDto)
@@ -136,8 +140,9 @@ public class UserAddressServiceImpl implements UserAddressService {
     @Transactional(readOnly = true)
     public Optional<UserAddressDto> getPrimaryAddress(Long userId) {
         log.info("🔍 기본 주소 조회: userId={}", userId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        Optional<UserAddress> address = userAddressRepository.findByUserIdAndIsPrimaryTrueAndIsDeletedFalse(userId);
+        Optional<UserAddress> address = userAddressRepository.findByTenantIdAndUserIdAndIsPrimaryTrueAndIsDeletedFalse(tenantId, userId);
         
         return address.map(this::convertToDto);
     }

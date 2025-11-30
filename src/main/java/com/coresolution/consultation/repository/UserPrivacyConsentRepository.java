@@ -18,33 +18,72 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserPrivacyConsentRepository extends JpaRepository<UserPrivacyConsent, Long> {
     
+    // ==================== tenantId 필터링 메서드 ====================
+    
     /**
-     * 사용자 ID로 최신 동의 정보 조회
+     * 사용자 ID로 최신 동의 정보 조회 (tenantId 필터링)
      */
+    @Query("SELECT upc FROM UserPrivacyConsent upc WHERE upc.tenantId = :tenantId AND upc.userId = :userId ORDER BY upc.consentDate DESC")
+    List<UserPrivacyConsent> findByTenantIdAndUserIdOrderByConsentDateDesc(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * 사용자 ID로 최신 동의 정보 조회 (단일) (tenantId 필터링)
+     */
+    @Query("SELECT upc FROM UserPrivacyConsent upc WHERE upc.tenantId = :tenantId AND upc.userId = :userId ORDER BY upc.consentDate DESC LIMIT 1")
+    Optional<UserPrivacyConsent> findLatestByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * 사용자 ID로 개인정보 처리방침 동의 여부 조회 (tenantId 필터링)
+     */
+    @Query("SELECT upc.privacyConsent FROM UserPrivacyConsent upc WHERE upc.tenantId = :tenantId AND upc.userId = :userId ORDER BY upc.consentDate DESC")
+    Optional<Boolean> findLatestPrivacyConsentByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * 사용자 ID로 이용약관 동의 여부 조회 (tenantId 필터링)
+     */
+    @Query("SELECT upc.termsConsent FROM UserPrivacyConsent upc WHERE upc.tenantId = :tenantId AND upc.userId = :userId ORDER BY upc.consentDate DESC")
+    Optional<Boolean> findLatestTermsConsentByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    /**
+     * 사용자 ID로 마케팅 동의 여부 조회 (tenantId 필터링)
+     */
+    @Query("SELECT upc.marketingConsent FROM UserPrivacyConsent upc WHERE upc.tenantId = :tenantId AND upc.userId = :userId ORDER BY upc.consentDate DESC")
+    Optional<Boolean> findLatestMarketingConsentByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+    
+    // ==================== @Deprecated 메서드 (하위 호환성) ====================
+    
+    /**
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findByTenantIdAndUserIdOrderByConsentDateDesc 사용하세요.
+     */
+    @Deprecated
     @Query("SELECT upc FROM UserPrivacyConsent upc WHERE upc.userId = :userId ORDER BY upc.consentDate DESC")
     List<UserPrivacyConsent> findByUserIdOrderByConsentDateDesc(@Param("userId") Long userId);
     
     /**
-     * 사용자 ID로 최신 동의 정보 조회 (단일)
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findLatestByTenantIdAndUserId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT upc FROM UserPrivacyConsent upc WHERE upc.userId = :userId ORDER BY upc.consentDate DESC LIMIT 1")
     Optional<UserPrivacyConsent> findLatestByUserId(@Param("userId") Long userId);
     
     /**
-     * 사용자 ID로 개인정보 처리방침 동의 여부 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findLatestPrivacyConsentByTenantIdAndUserId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT upc.privacyConsent FROM UserPrivacyConsent upc WHERE upc.userId = :userId ORDER BY upc.consentDate DESC")
     Optional<Boolean> findLatestPrivacyConsentByUserId(@Param("userId") Long userId);
     
     /**
-     * 사용자 ID로 이용약관 동의 여부 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findLatestTermsConsentByTenantIdAndUserId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT upc.termsConsent FROM UserPrivacyConsent upc WHERE upc.userId = :userId ORDER BY upc.consentDate DESC")
     Optional<Boolean> findLatestTermsConsentByUserId(@Param("userId") Long userId);
     
     /**
-     * 사용자 ID로 마케팅 동의 여부 조회
+     * @Deprecated - 🚨 위험: tenantId 필터링 없음! findLatestMarketingConsentByTenantIdAndUserId 사용하세요.
      */
+    @Deprecated
     @Query("SELECT upc.marketingConsent FROM UserPrivacyConsent upc WHERE upc.userId = :userId ORDER BY upc.consentDate DESC")
     Optional<Boolean> findLatestMarketingConsentByUserId(@Param("userId") Long userId);
 }

@@ -11,6 +11,7 @@ import com.coresolution.consultation.entity.FinancialTransaction;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;

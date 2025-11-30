@@ -10,6 +10,7 @@ import com.coresolution.consultation.repository.PermissionRepository;
 import com.coresolution.consultation.repository.LegacyRolePermissionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.service.PermissionInitializationService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;

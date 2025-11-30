@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.service.PlSqlMappingSyncService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

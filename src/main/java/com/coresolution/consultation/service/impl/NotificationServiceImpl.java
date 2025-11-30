@@ -15,6 +15,7 @@ import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

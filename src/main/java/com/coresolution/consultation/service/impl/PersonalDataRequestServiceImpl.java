@@ -11,6 +11,7 @@ import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.PersonalDataRequestService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

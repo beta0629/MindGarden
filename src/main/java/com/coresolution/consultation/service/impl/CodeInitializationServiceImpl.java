@@ -5,6 +5,7 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.CodeInitializationService;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

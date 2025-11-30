@@ -53,6 +53,8 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.tenantId = :tenantId AND u.username = :username AND u.isDeleted = false")
     boolean existsByTenantIdAndUsername(@Param("tenantId") String tenantId, @Param("username") String username);
     
+    boolean existsByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
+    
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 사용자명 중복 검사!
      */

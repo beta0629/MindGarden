@@ -6,6 +6,7 @@ import com.coresolution.consultation.repository.UserPasskeyRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.PasskeyService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.webauthn4j.util.Base64UrlUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -194,8 +195,9 @@ public class PasskeyServiceImpl implements PasskeyService {
     @Override
     public Map<String, Object> startAuthentication(String email) {
         log.info("Passkey 인증 시작: email={}", email);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByTenantIdAndEmail(tenantId, email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
         
         // 사용자의 활성화된 Passkey 목록 조회

@@ -12,6 +12,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PackageDiscountRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.PackageDiscountService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;

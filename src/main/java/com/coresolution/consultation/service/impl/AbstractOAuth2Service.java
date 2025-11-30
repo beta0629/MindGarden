@@ -16,6 +16,7 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuth2Service;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -164,6 +165,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     public Long findExistingUserByProviderId(String providerUserId) {
         log.info("findExistingUserByProviderId 호출: provider={}, providerUserId={}", 
                 getProviderName(), providerUserId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         // 0. DB에 저장된 모든 소셜 계정 조회 (디버깅용)
         var allSocialAccounts = userSocialAccountRepository.findAll();
@@ -173,8 +175,8 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                     account.getId(), account.getProvider(), account.getProviderUserId(), account.getUser().getId());
         });
         
-        // 1. providerUserId로 직접 조회
-        var socialAccountOptional = userSocialAccountRepository.findByProviderAndProviderUserIdAndIsDeletedFalse(getProviderName(), providerUserId);
+        // 1. providerUserId로 직접 조회 (tenantId 필터링)
+        var socialAccountOptional = userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(tenantId, getProviderName(), providerUserId);
         log.info("소셜 계정 조회 결과: socialAccountOptional={}", socialAccountOptional.isPresent());
         
         if (socialAccountOptional.isPresent()) {
@@ -198,10 +200,11 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
      */
     protected Long findExistingUserByEmail(String email) {
         log.info("이메일로 사용자 찾기: email={}", email);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         try {
-            // 이메일로 사용자 찾기
-            var userOptional = userRepository.findByEmail(email);
+            // 이메일로 사용자 찾기 (tenantId 필터링)
+            var userOptional = userRepository.findByTenantIdAndEmail(tenantId, email);
             log.info("UserRepository.findByEmail 결과: userOptional={}", userOptional);
             
             if (userOptional.isPresent()) {
@@ -267,7 +270,8 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
      * 소셜 계정 정보 업데이트
      */
     protected void updateSocialAccountInfo(Long userId, SocialUserInfo socialUserInfo) {
-        userSocialAccountRepository.findByProviderAndProviderUserIdAndIsDeletedFalse(getProviderName(), socialUserInfo.getProviderUserId())
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(tenantId, getProviderName(), socialUserInfo.getProviderUserId())
             .ifPresent(socialAccount -> {
                 socialAccount.setProviderUsername(socialUserInfo.getNickname());
                 socialAccount.setProviderProfileImage(socialUserInfo.getProfileImageUrl());
@@ -290,9 +294,10 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
      */
     protected void updateOrCreateSocialAccount(Long userId, SocialUserInfo socialUserInfo) {
         log.info("기존 사용자에게 소셜 계정 추가/업데이트: userId={}, provider={}", userId, getProviderName());
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        // 기존 소셜 계정이 있는지 확인
-        var existingSocialAccount = userSocialAccountRepository.findByProviderAndProviderUserIdAndIsDeletedFalse(getProviderName(), socialUserInfo.getProviderUserId());
+        // 기존 소셜 계정이 있는지 확인 (tenantId 필터링)
+        var existingSocialAccount = userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(tenantId, getProviderName(), socialUserInfo.getProviderUserId());
         
         if (existingSocialAccount.isPresent()) {
             // 기존 소셜 계정 업데이트

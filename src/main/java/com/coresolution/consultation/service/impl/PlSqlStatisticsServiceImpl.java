@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
 import com.coresolution.consultation.service.PlSqlStatisticsService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;

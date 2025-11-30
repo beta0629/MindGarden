@@ -6,6 +6,7 @@ import com.coresolution.consultation.entity.ErpSyncLog;
 import com.coresolution.consultation.repository.ErpSyncLogRepository;
 import com.coresolution.consultation.service.PlSqlStatisticsService;
 import com.coresolution.consultation.service.StatisticsSchedulerService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.BusinessTimeService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;

@@ -8,6 +8,7 @@ import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.BaseRepository;
 import com.coresolution.consultation.service.BaseService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

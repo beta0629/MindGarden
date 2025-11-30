@@ -15,6 +15,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.core.context.TenantContextHolder;
 import java.util.List;
 import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;

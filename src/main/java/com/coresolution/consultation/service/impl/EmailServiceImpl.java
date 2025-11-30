@@ -15,6 +15,7 @@ import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;

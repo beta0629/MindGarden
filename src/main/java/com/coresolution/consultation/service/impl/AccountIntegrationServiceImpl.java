@@ -18,6 +18,7 @@ import com.coresolution.consultation.service.AccountIntegrationService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,11 +72,12 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     @Override
     public AccountIntegrationResponse integrateAccountsByEmail(AccountIntegrationRequest request) {
         try {
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             log.info("계정 통합 시작: existingEmail={}, socialEmail={}, provider={}", 
                     request.getExistingEmail(), request.getSocialEmail(), request.getProvider());
             
             // 1. 기존 계정 존재 확인
-            Optional<User> existingUserOpt = userRepository.findByEmail(request.getExistingEmail());
+            Optional<User> existingUserOpt = userRepository.findByTenantIdAndEmail(tenantId, request.getExistingEmail());
             if (existingUserOpt.isEmpty()) {
                 return AccountIntegrationResponse.failure(
                     "기존 계정을 찾을 수 없습니다.", 
@@ -277,9 +279,10 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     @Override
     public AccountIntegrationResponse checkIntegrationStatus(String email) {
         try {
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             log.info("계정 통합 상태 확인: email={}", email);
             
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, email);
             if (userOpt.isEmpty()) {
                 return AccountIntegrationResponse.failure(
                     "계정을 찾을 수 없습니다.",

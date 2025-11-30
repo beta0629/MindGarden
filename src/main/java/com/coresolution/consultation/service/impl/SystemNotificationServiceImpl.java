@@ -9,6 +9,7 @@ import com.coresolution.consultation.entity.SystemNotificationRead;
 import com.coresolution.consultation.repository.SystemNotificationReadRepository;
 import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.consultation.service.SystemNotificationService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -4,6 +4,7 @@ import com.coresolution.consultation.dto.ActivityResponse;
 import com.coresolution.consultation.entity.UserActivity;
 import com.coresolution.consultation.repository.UserActivityRepository;
 import com.coresolution.consultation.service.ActivityService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

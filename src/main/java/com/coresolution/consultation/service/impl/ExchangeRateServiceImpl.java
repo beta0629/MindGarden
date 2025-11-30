@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.coresolution.consultation.service.ExchangeRateService;
 import com.coresolution.consultation.service.SystemConfigService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;

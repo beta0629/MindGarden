@@ -15,6 +15,7 @@ import com.coresolution.consultation.service.PlSqlStatisticsService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StatisticsConfigService;
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.core.context.TenantContextHolder;
 import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

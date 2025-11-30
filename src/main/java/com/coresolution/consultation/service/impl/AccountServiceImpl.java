@@ -9,6 +9,7 @@ import com.coresolution.consultation.dto.AccountResponse;
 import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.repository.AccountRepository;
 import com.coresolution.consultation.service.AccountService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,22 +28,23 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponse createAccount(AccountRequest request) {
         log.info("계좌 등록 요청: {}", request);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         // 계좌번호 중복 확인
-        if (accountRepository.findByAccountNumberAndIsDeletedFalse(request.getAccountNumber()).isPresent()) {
+        if (accountRepository.findByTenantIdAndAccountNumberAndIsDeletedFalse(tenantId, request.getAccountNumber()).isPresent()) {
             throw new IllegalArgumentException("이미 등록된 계좌번호입니다: " + request.getAccountNumber());
         }
         
         // 기본 계좌 설정 시 기존 기본 계좌 해제
         if (Boolean.TRUE.equals(request.getIsPrimary())) {
             if (request.getBranchId() != null) {
-                accountRepository.findByBranchIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(request.getBranchId())
+                accountRepository.findByTenantIdAndBranchIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(tenantId, request.getBranchId())
                         .ifPresent(account -> {
                             account.setIsPrimary(false);
                             accountRepository.save(account);
                         });
             } else {
-                accountRepository.findByIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse()
+                accountRepository.findByTenantIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(tenantId)
                         .ifPresent(account -> {
                             account.setIsPrimary(false);
                             accountRepository.save(account);
@@ -82,6 +84,7 @@ public class AccountServiceImpl implements AccountService {
     
     @Override
     public AccountResponse updateAccount(Long id, AccountRequest request) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다: " + id));
         
@@ -91,7 +94,7 @@ public class AccountServiceImpl implements AccountService {
         
         // 계좌번호 변경 시 중복 확인
         if (!account.getAccountNumber().equals(request.getAccountNumber())) {
-            if (accountRepository.findByAccountNumberAndIsDeletedFalse(request.getAccountNumber()).isPresent()) {
+            if (accountRepository.findByTenantIdAndAccountNumberAndIsDeletedFalse(tenantId, request.getAccountNumber()).isPresent()) {
                 throw new IllegalArgumentException("이미 등록된 계좌번호입니다: " + request.getAccountNumber());
             }
         }
@@ -99,13 +102,13 @@ public class AccountServiceImpl implements AccountService {
         // 기본 계좌 설정 시 기존 기본 계좌 해제
         if (Boolean.TRUE.equals(request.getIsPrimary()) && !Boolean.TRUE.equals(account.getIsPrimary())) {
             if (request.getBranchId() != null) {
-                accountRepository.findByBranchIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(request.getBranchId())
+                accountRepository.findByTenantIdAndBranchIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(tenantId, request.getBranchId())
                         .ifPresent(existingPrimary -> {
                             existingPrimary.setIsPrimary(false);
                             accountRepository.save(existingPrimary);
                         });
             } else {
-                accountRepository.findByIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse()
+                accountRepository.findByTenantIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(tenantId)
                         .ifPresent(existingPrimary -> {
                             existingPrimary.setIsPrimary(false);
                             accountRepository.save(existingPrimary);
@@ -167,6 +170,7 @@ public class AccountServiceImpl implements AccountService {
     
     @Override
     public AccountResponse setPrimaryAccount(Long id) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("계좌를 찾을 수 없습니다: " + id));
         
@@ -176,13 +180,13 @@ public class AccountServiceImpl implements AccountService {
         
         // 기존 기본 계좌 해제
         if (account.getBranchId() != null) {
-            accountRepository.findByBranchIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(account.getBranchId())
+            accountRepository.findByTenantIdAndBranchIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(tenantId, account.getBranchId())
                     .ifPresent(existingPrimary -> {
                         existingPrimary.setIsPrimary(false);
                         accountRepository.save(existingPrimary);
                     });
         } else {
-            accountRepository.findByIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse()
+            accountRepository.findByTenantIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(tenantId)
                     .ifPresent(existingPrimary -> {
                         existingPrimary.setIsPrimary(false);
                         accountRepository.save(existingPrimary);
@@ -206,7 +210,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public List<AccountResponse> getActiveAccounts() {
-        return accountRepository.findByIsActiveTrueAndIsDeletedFalse()
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return accountRepository.findByTenantIdAndIsActiveTrueAndIsDeletedFalse(tenantId)
                 .stream()
                 .map(AccountResponse::from)
                 .collect(Collectors.toList());
@@ -215,7 +220,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public List<AccountResponse> getAccountsByBranch(Long branchId) {
-        return accountRepository.findByBranchIdAndIsActiveTrueAndIsDeletedFalse(branchId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return accountRepository.findByTenantIdAndBranchIdAndIsActiveTrueAndIsDeletedFalse(tenantId, branchId)
                 .stream()
                 .map(AccountResponse::from)
                 .collect(Collectors.toList());
@@ -224,18 +230,20 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public Page<AccountResponse> searchAccounts(String keyword, Pageable pageable) {
-        return accountRepository.searchAccounts(keyword, pageable)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return accountRepository.searchAccountsByTenantId(tenantId, keyword, pageable)
                 .map(AccountResponse::from);
     }
     
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getAccountStatistics() {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> statistics = new HashMap<>();
         
-        statistics.put("totalAccounts", accountRepository.countActiveAccounts());
-        statistics.put("activeAccounts", accountRepository.countActiveAccountsOnly());
-        statistics.put("bankCounts", accountRepository.countAccountsByBank());
+        statistics.put("totalAccounts", accountRepository.countActiveAccountsByTenantId(tenantId));
+        statistics.put("activeAccounts", accountRepository.countActiveAccountsOnlyByTenantId(tenantId));
+        statistics.put("bankCounts", accountRepository.countAccountsByBankAndTenantId(tenantId));
         
         return statistics;
     }
@@ -266,7 +274,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public AccountResponse getPrimaryAccount() {
-        return accountRepository.findByIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse()
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return accountRepository.findByTenantIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(tenantId)
                 .map(AccountResponse::from)
                 .orElse(null);
     }
@@ -274,7 +283,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public AccountResponse getPrimaryAccountByBranch(Long branchId) {
-        return accountRepository.findByBranchIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(branchId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return accountRepository.findByTenantIdAndBranchIdAndIsPrimaryTrueAndIsActiveTrueAndIsDeletedFalse(tenantId, branchId)
                 .map(AccountResponse::from)
                 .orElse(null);
     }

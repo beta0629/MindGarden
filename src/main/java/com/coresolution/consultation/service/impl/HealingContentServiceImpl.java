@@ -13,6 +13,7 @@ import com.coresolution.consultation.repository.OpenAIUsageLogRepository;
 import com.coresolution.consultation.service.HealingContentService;
 import com.coresolution.consultation.service.OpenAIWellnessService.HealingContent;
 import com.coresolution.consultation.service.SystemConfigService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;

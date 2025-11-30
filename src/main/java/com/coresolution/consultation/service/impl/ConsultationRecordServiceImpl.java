@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

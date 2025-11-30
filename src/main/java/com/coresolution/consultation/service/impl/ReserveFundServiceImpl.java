@@ -12,6 +12,7 @@ import com.coresolution.consultation.entity.ReserveFund;
 import com.coresolution.consultation.repository.ReserveFundRepository;
 import com.coresolution.consultation.service.FinancialTransactionService;
 import com.coresolution.consultation.service.ReserveFundService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;

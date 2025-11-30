@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.SocialAuthService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -64,9 +65,10 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     public SocialSignupResponse createUserFromSocial(SocialSignupRequest request) {
         try {
             log.info("소셜 회원가입 시작: email={}, provider={}", request.getEmail(), request.getProvider());
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             
-            // 이메일 중복 확인
-            if (userRepository.existsByEmail(request.getEmail())) {
+            // 이메일 중복 확인 (tenantId 필터링)
+            if (userRepository.existsByTenantIdAndEmail(tenantId, request.getEmail())) {
                 log.warn("이미 가입된 이메일: {}", request.getEmail());
                 return SocialSignupResponse.builder()
                     .success(false)

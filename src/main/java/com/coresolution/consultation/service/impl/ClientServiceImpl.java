@@ -269,32 +269,38 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     
     @Override
     public Optional<Client> findByEmail(String email) {
-        return clientRepository.findByEmailAndIsDeletedFalse(email);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findByTenantIdAndEmailAndIsDeletedFalse(tenantId, email);
     }
     
     @Override
     public List<Client> findByNameContaining(String name) {
-        return clientRepository.findByNameContaining(name);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findByTenantIdAndNameContaining(tenantId, name);
     }
     
     @Override
     public List<Client> findByPhoneContaining(String phone) {
-        return clientRepository.findByPhoneContaining(phone);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findByTenantIdAndPhoneContaining(tenantId, phone);
     }
     
     @Override
     public List<Client> findByGender(String gender) {
-        return clientRepository.findByGender(gender);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findByTenantIdAndGender(tenantId, gender);
     }
     
     @Override
     public List<Client> findByPreferredLanguage(String language) {
-        return clientRepository.findByPreferredLanguage(language);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findByTenantIdAndPreferredLanguage(tenantId, language);
     }
     
     @Override
     public List<Client> findByIsEmergencyContact(Boolean isEmergencyContact) {
-        return clientRepository.findByIsEmergencyContactAndIsDeletedFalse(isEmergencyContact);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return clientRepository.findByTenantIdAndIsEmergencyContactAndIsDeletedFalse(tenantId, isEmergencyContact);
     }
     
     // ==================== 보조 메서드 ====================

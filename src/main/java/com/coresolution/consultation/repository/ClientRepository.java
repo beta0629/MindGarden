@@ -18,21 +18,51 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ClientRepository extends BaseRepository<Client, Long> {
     
+    // === tenantId 필터링 메서드 (권장) ===
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.email = :email AND c.isDeleted = false")
+    Optional<Client> findByTenantIdAndEmailAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("email") String email);
+    
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted = false")
+    List<Client> findByTenantIdAndIsDeletedFalse(@Param("tenantId") String tenantId);
+    
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isEmergencyContact = :isEmergencyContact AND c.isDeleted = false")
+    List<Client> findByTenantIdAndIsEmergencyContactAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("isEmergencyContact") Boolean isEmergencyContact);
+    
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.name LIKE %:name% AND c.isDeleted = false")
+    List<Client> findByTenantIdAndNameContaining(@Param("tenantId") String tenantId, @Param("name") String name);
+    
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.phone LIKE %:phone% AND c.isDeleted = false")
+    List<Client> findByTenantIdAndPhoneContaining(@Param("tenantId") String tenantId, @Param("phone") String phone);
+    
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.gender = :gender AND c.isDeleted = false")
+    List<Client> findByTenantIdAndGender(@Param("tenantId") String tenantId, @Param("gender") String gender);
+    
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.preferredLanguage = :language AND c.isDeleted = false")
+    List<Client> findByTenantIdAndPreferredLanguage(@Param("tenantId") String tenantId, @Param("language") String language);
+    
+    // === @Deprecated: tenantId 없는 메서드 (하위 호환성) ===
+    @Deprecated
     Optional<Client> findByEmailAndIsDeletedFalse(String email);
     
+    @Deprecated
     List<Client> findByIsDeletedFalse();
     
+    @Deprecated
     List<Client> findByIsEmergencyContactAndIsDeletedFalse(Boolean isEmergencyContact);
     
+    @Deprecated
     @Query("SELECT c FROM Client c WHERE c.name LIKE %:name% AND c.isDeleted = false")
     List<Client> findByNameContaining(@Param("name") String name);
     
+    @Deprecated
     @Query("SELECT c FROM Client c WHERE c.phone LIKE %:phone% AND c.isDeleted = false")
     List<Client> findByPhoneContaining(@Param("phone") String phone);
     
+    @Deprecated
     @Query("SELECT c FROM Client c WHERE c.gender = :gender AND c.isDeleted = false")
     List<Client> findByGender(@Param("gender") String gender);
     
+    @Deprecated
     @Query("SELECT c FROM Client c WHERE c.preferredLanguage = :language AND c.isDeleted = false")
     List<Client> findByPreferredLanguage(@Param("language") String language);
     

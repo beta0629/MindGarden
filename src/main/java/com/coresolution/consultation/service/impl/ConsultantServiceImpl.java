@@ -240,7 +240,8 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public long countActive() {
-        return consultantRepository.findByIsDeletedFalse().size();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId).size();
     }
     
     @Override
@@ -303,7 +304,8 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public List<Consultant> findRecentActive(int limit) {
-        return consultantRepository.findByIsDeletedFalse().stream()
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId).stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .limit(limit)
                 .collect(java.util.stream.Collectors.toList());

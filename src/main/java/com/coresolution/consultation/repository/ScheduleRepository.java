@@ -297,6 +297,18 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
         @Param("excludeScheduleId") Long excludeScheduleId
     );
 
+    // ==================== 전체 스케줄 조회 ====================
+    
+    /**
+     * 테넌트별 전체 스케줄 조회 (tenantId 필터링)
+     */
+    List<Schedule> findByTenantId(String tenantId);
+    
+    /**
+     * 테넌트별 전체 스케줄 조회 (페이징, tenantId 필터링)
+     */
+    org.springframework.data.domain.Page<Schedule> findByTenantId(String tenantId, org.springframework.data.domain.Pageable pageable);
+    
     // ==================== 상태별 스케줄 조회 ====================
     
     /**

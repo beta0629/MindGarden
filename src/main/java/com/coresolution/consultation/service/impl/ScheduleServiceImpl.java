@@ -677,10 +677,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public boolean validateMappingForSchedule(Long consultantId, Long clientId) {
         log.debug("🔗 매칭 상태 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         // 활성 상태의 매칭이 있는지 확인
-        List<ConsultantClientMapping> activeMappings = mappingRepository.findByStatus(
-            ConsultantClientMapping.MappingStatus.ACTIVE);
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+            tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
         
         for (ConsultantClientMapping mapping : activeMappings) {
             if (mapping.getConsultant().getId().equals(consultantId) && 
@@ -697,10 +698,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public boolean validateRemainingSessions(Long consultantId, Long clientId) {
         log.debug("📊 회기 수 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         // 활성 상태의 매칭에서 남은 회기 수 확인
-        List<ConsultantClientMapping> activeMappings = mappingRepository.findByStatus(
-            ConsultantClientMapping.MappingStatus.ACTIVE);
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+            tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
         
         for (ConsultantClientMapping mapping : activeMappings) {
             if (mapping.getConsultant().getId().equals(consultantId) && 
@@ -786,19 +788,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public Map<String, Object> getOverallScheduleStats(LocalDate startDate, LocalDate endDate) {
         log.info("📊 전체 스케줄 통계: 기간 {} - {}", startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        List<Schedule> allSchedules = scheduleRepository.findAll();
-        List<Schedule> periodSchedules = allSchedules.stream()
-            .filter(s -> s.getDate() != null && 
-                        !s.getDate().isBefore(startDate) && 
-                        !s.getDate().isAfter(endDate))
-            .toList();
+        List<Schedule> allSchedules = scheduleRepository.findByTenantIdAndDateBetween(tenantId, startDate, endDate);
         
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalSchedules", periodSchedules.size());
-        stats.put("bookedSchedules", periodSchedules.stream().filter(s -> ScheduleConstants.STATUS_BOOKED.equals(s.getStatus())).count());
-        stats.put("completedSchedules", periodSchedules.stream().filter(s -> ScheduleConstants.STATUS_COMPLETED.equals(s.getStatus())).count());
-        stats.put("cancelledSchedules", periodSchedules.stream().filter(s -> ScheduleConstants.STATUS_CANCELLED.equals(s.getStatus())).count());
+        stats.put("totalSchedules", allSchedules.size());
+        stats.put("bookedSchedules", allSchedules.stream().filter(s -> ScheduleConstants.STATUS_BOOKED.equals(s.getStatus())).count());
+        stats.put("completedSchedules", allSchedules.stream().filter(s -> ScheduleConstants.STATUS_COMPLETED.equals(s.getStatus())).count());
+        stats.put("cancelledSchedules", allSchedules.stream().filter(s -> ScheduleConstants.STATUS_CANCELLED.equals(s.getStatus())).count());
         
         return stats;
     }
@@ -821,7 +819,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (isAdminRole(userRole)) {
             // 관리자: 모든 스케줄 조회
             log.info("👑 관리자 권한으로 모든 스케줄 조회");
-            return scheduleRepository.findAll();
+            return scheduleRepository.findByTenantId(tenantId);
         } else if (isConsultantRole(userRole)) {
             // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
@@ -840,12 +838,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         if (isAdminRole(userRole)) {
             // 관리자: 해당 날짜의 모든 스케줄 조회
-            return scheduleRepository.findByDate(date);
+            return scheduleRepository.findByTenantIdAndDate(tenantId, date);
         } else if (isConsultantRole(userRole)) {
             // 상담사: 해당 날짜의 자신의 스케줄만 조회
-            return scheduleRepository.findByConsultantIdAndDate(userId, date);
+            return scheduleRepository.findByTenantIdAndConsultantIdAndDate(tenantId, userId, date);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }
@@ -858,12 +857,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         if (isAdminRole(userRole)) {
             // 관리자: 해당 기간의 모든 스케줄 조회
-            return scheduleRepository.findByDateBetween(startDate, endDate);
+            return scheduleRepository.findByTenantIdAndDateBetween(tenantId, startDate, endDate);
         } else if (isConsultantRole(userRole)) {
             // 상담사: 해당 기간의 자신의 스케줄만 조회
-            return scheduleRepository.findByConsultantIdAndDateBetween(userId, startDate, endDate);
+            return scheduleRepository.findByTenantIdAndConsultantIdAndDateBetween(tenantId, userId, startDate, endDate);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }
@@ -1173,9 +1173,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      */
     private void useSessionForMapping(Long consultantId, Long clientId) {
         log.debug("📅 매칭 회기 사용 처리: 상담사 {}, 내담자 {}", consultantId, clientId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        List<ConsultantClientMapping> activeMappings = mappingRepository.findByStatus(
-            ConsultantClientMapping.MappingStatus.ACTIVE);
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+            tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
         
         for (ConsultantClientMapping mapping : activeMappings) {
             if (mapping.getConsultant().getId().equals(consultantId) && 
@@ -1246,19 +1247,20 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         List<Schedule> schedules;
         if (isAdminRole(userRole)) {
             // 관리자: 모든 스케줄 조회
             log.info("👑 관리자 권한으로 모든 스케줄 조회");
-            schedules = scheduleRepository.findAll();
+            schedules = scheduleRepository.findByTenantId(tenantId);
         } else if (isConsultantRole(userRole)) {
             // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
-            schedules = scheduleRepository.findByConsultantId(userId);
+            schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId);
         } else if (getRoleCodeFromCommonCode("CLIENT").equals(userRole)) {
             // 내담자: 자신의 스케줄만 조회
             log.info("👤 내담자 권한으로 자신의 스케줄만 조회: {}", userId);
-            schedules = scheduleRepository.findByClientId(userId);
+            schedules = scheduleRepository.findByTenantIdAndClientId(tenantId, userId);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }
@@ -1288,19 +1290,20 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Page<Schedule> schedulePage;
         if (isAdminRole(userRole)) {
             // 관리자: 모든 스케줄 조회
             log.info("👑 관리자 권한으로 모든 스케줄 페이지네이션 조회");
-            schedulePage = scheduleRepository.findAll(pageable);
+            schedulePage = scheduleRepository.findByTenantId(tenantId, pageable);
         } else if (isConsultantRole(userRole)) {
             // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
-            schedulePage = scheduleRepository.findByConsultantId(userId, pageable);
+            schedulePage = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId, pageable);
         } else if (getRoleCodeFromCommonCode("CLIENT").equals(userRole)) {
             // 내담자: 자신의 스케줄만 조회
             log.info("👤 내담자 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
-            schedulePage = scheduleRepository.findByClientId(userId, pageable);
+            schedulePage = scheduleRepository.findByTenantIdAndClientId(tenantId, userId, pageable);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }

@@ -1007,7 +1007,8 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<User> getAllConsultants() {
-        List<Consultant> consultantEntities = consultantRepository.findByIsDeletedFalse();
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<Consultant> consultantEntities = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         List<User> consultants = consultantEntities.stream()
                 .map(consultant -> (User) consultant)
                 .collect(Collectors.toList());
@@ -1813,7 +1814,7 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 2. 해당 상담사의 예정된 스케줄 조회 (오늘 포함)
-        List<Schedule> futureSchedules = scheduleRepository.findByConsultantIdAndDateGreaterThanEqual(id, LocalDate.now());
+        List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
         
         if (!futureSchedules.isEmpty()) {
             log.warn("⚠️ 상담사에게 {} 개의 예정된 스케줄이 있습니다. 다른 상담사로 이전이 필요합니다.", futureSchedules.size());
@@ -1834,6 +1835,7 @@ public class AdminServiceImpl implements AdminService {
     public void deleteConsultantWithTransfer(Long consultantId, Long transferToConsultantId, String reason) {
         log.info("🔄 상담사 삭제 및 이전 처리 시작: 삭제 상담사 ID={}, 이전 대상 상담사 ID={}", 
                 consultantId, transferToConsultantId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         // 1. 삭제할 상담사와 이전 대상 상담사 검증
         User consultantToDelete = userRepository.findById(consultantId)
@@ -1867,7 +1869,7 @@ public class AdminServiceImpl implements AdminService {
             
             // 이전 대상 상담사와 내담자 조합으로 기존 매칭이 있는지 확인 (중복 방지)
             List<ConsultantClientMapping> existingTransferMappings = 
-                mappingRepository.findByConsultantAndClient(transferToConsultant, mapping.getClient());
+                mappingRepository.findByTenantIdAndConsultantAndClient(tenantId, transferToConsultant, mapping.getClient());
             
             // 활성 매칭이 있는지 확인
             String activeStatus = getMappingStatusCode("ACTIVE");
@@ -1956,7 +1958,7 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 3. 예정된 스케줄들을 새로운 상담사로 이전 (오늘 포함)
-        List<Schedule> futureSchedules = scheduleRepository.findByConsultantIdAndDateGreaterThanEqual(consultantId, LocalDate.now());
+        List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateGreaterThanEqual(tenantId, consultantId, LocalDate.now());
         
         for (Schedule schedule : futureSchedules) {
             schedule.setConsultantId(transferToConsultantId);
@@ -1980,6 +1982,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Map<String, Object> checkConsultantDeletionStatus(Long consultantId) {
         log.info("🔍 상담사 삭제 가능 여부 확인: ID={}", consultantId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         User consultant = userRepository.findById(consultantId)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
@@ -1998,7 +2001,7 @@ public class AdminServiceImpl implements AdminService {
         // 2. 예정된 스케줄 조회 (오늘 포함, 활성 상태만)
         String bookedStatus = getScheduleStatusCode("BOOKED");
         String confirmedStatus = getScheduleStatusCode("CONFIRMED");
-        List<Schedule> futureSchedules = scheduleRepository.findByConsultantIdAndDateGreaterThanEqual(consultantId, LocalDate.now())
+        List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateGreaterThanEqual(tenantId, consultantId, LocalDate.now())
                 .stream()
                 .filter(schedule -> schedule.getStatus().name().equals(bookedStatus) || 
                                   schedule.getStatus().name().equals(confirmedStatus))
@@ -2083,6 +2086,7 @@ public class AdminServiceImpl implements AdminService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteClient(Long id) {
         log.info("🗑️ 내담자 삭제 처리 시작: ID={}", id);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         User client = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
@@ -2130,7 +2134,7 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 4. 해당 내담자의 예정된 스케줄 조회 (오늘 포함)
-        List<Schedule> futureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(id, LocalDate.now());
+        List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
         
         // 활성 스케줄만 필터링 (BOOKED, CONFIRMED 상태)
         String bookedStatus = getScheduleStatusCode("BOOKED");
@@ -2158,7 +2162,7 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 5. 모든 미래 스케줄 취소 (삭제된 상담사와의 스케줄 포함)
-        List<Schedule> allFutureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(id, LocalDate.now());
+        List<Schedule> allFutureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
         int cancelledScheduleCount = 0;
         
         for (Schedule schedule : allFutureSchedules) {
@@ -2191,6 +2195,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public Map<String, Object> checkClientDeletionStatus(Long clientId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("🔍 내담자 삭제 가능 여부 확인: ID={}", clientId);
         
         User client = userRepository.findById(clientId)
@@ -2221,7 +2226,7 @@ public class AdminServiceImpl implements AdminService {
         // 4. 예정된 스케줄 조회 (오늘 포함, 활성 스케줄만)
         String bookedStatus = getScheduleStatusCode("BOOKED");
         String confirmedStatus = getScheduleStatusCode("CONFIRMED");
-        List<Schedule> futureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(clientId, LocalDate.now())
+        List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, clientId, LocalDate.now())
                 .stream()
                 .filter(schedule -> schedule.getStatus().name().equals(bookedStatus) || 
                                   schedule.getStatus().name().equals(confirmedStatus))
@@ -2365,7 +2370,7 @@ public class AdminServiceImpl implements AdminService {
             log.info("🔍 환불 처리 관련 스케줄 조회 시작: 상담사ID={}, 내담자ID={}, 오늘날짜={}", 
                     mapping.getConsultant().getId(), mapping.getClient().getId(), LocalDate.now());
             
-            List<Schedule> futureSchedules = scheduleRepository.findByConsultantIdAndClientIdAndDateGreaterThanEqual(
+            List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(tenantId, 
                 mapping.getConsultant().getId(), 
                 mapping.getClient().getId(), 
                 LocalDate.now()
@@ -2623,7 +2628,7 @@ public class AdminServiceImpl implements AdminService {
         
         // 2. 부분 환불 거래 조회 (FinancialTransaction에서)
         List<com.coresolution.consultation.entity.FinancialTransaction> allPartialRefundTransactions = 
-            financialTransactionRepository.findByTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
+            financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
                 com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
         
         // 지점별 필터링 적용
@@ -2931,7 +2936,7 @@ public class AdminServiceImpl implements AdminService {
         
         // 2. 부분 환불 거래 조회 (FinancialTransaction에서)
         List<com.coresolution.consultation.entity.FinancialTransaction> partialRefundTransactions = 
-            financialTransactionRepository.findByTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
+            financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
                 com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
         
         // 3. 부분 환불 데이터를 환불 이력 형식으로 변환
@@ -3106,7 +3111,7 @@ public class AdminServiceImpl implements AdminService {
         
         // 2. 부분 환불 거래 조회 (FinancialTransaction에서)
         List<com.coresolution.consultation.entity.FinancialTransaction> allPartialRefundTransactions = 
-            financialTransactionRepository.findByTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
+            financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
                 com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
         
         // 지점별 필터링 적용
@@ -3897,7 +3902,7 @@ public class AdminServiceImpl implements AdminService {
         User client = userRepository.findById(clientId)
                 .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
         
-        return mappingRepository.findByClient(client).stream()
+        return mappingRepository.findByTenantIdAndClient(tenantId, client).stream()
                 .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED)
                 .filter(mapping -> mapping.getTerminationReason() != null && 
                         mapping.getTerminationReason().contains("상담사 변경"))
@@ -3914,7 +3919,7 @@ public class AdminServiceImpl implements AdminService {
                     .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
             
             // 상담사의 스케줄 조회
-            List<Schedule> schedules = scheduleRepository.findByConsultantId(consultantId);
+            List<Schedule> schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
             
             // 스케줄을 Map 형태로 변환
             List<Map<String, Object>> scheduleMaps = schedules.stream()
@@ -3968,7 +3973,7 @@ public class AdminServiceImpl implements AdminService {
             log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
             
             // 활성 상담사만 조회
-            List<Consultant> consultantEntities = consultantRepository.findByIsDeletedFalse();
+            List<Consultant> consultantEntities = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
             List<User> consultants = consultantEntities.stream()
                     .map(consultant -> (User) consultant)
                     .collect(Collectors.toList());
@@ -5271,7 +5276,7 @@ public class AdminServiceImpl implements AdminService {
         log.info("🔍 상담사 이메일로 매칭 조회 - 이메일: {}", consultantEmail);
         
         // 이메일로 상담사 찾기
-        Optional<User> consultantOpt = userRepository.findByEmail(consultantEmail);
+        Optional<User> consultantOpt = userRepository.findByTenantIdAndEmail(tenantId, consultantEmail);
         if (consultantOpt.isEmpty()) {
             log.warn("❌ 상담사를 찾을 수 없습니다 - 이메일: {}", consultantEmail);
             return new ArrayList<>();

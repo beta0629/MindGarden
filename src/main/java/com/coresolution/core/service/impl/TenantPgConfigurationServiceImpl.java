@@ -1,4 +1,5 @@
 package com.coresolution.core.service.impl;
+import com.coresolution.core.context.TenantContextHolder;
 
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.TenantPgConfiguration;

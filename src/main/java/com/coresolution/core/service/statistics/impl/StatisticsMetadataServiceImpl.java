@@ -1,4 +1,5 @@
 package com.coresolution.core.service.statistics.impl;
+import com.coresolution.core.context.TenantContextHolder;
 
 import com.coresolution.core.domain.statistics.StatisticsDefinition;
 import com.coresolution.core.domain.statistics.StatisticsGenerationLog;

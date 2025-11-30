@@ -1,4 +1,5 @@
 package com.coresolution.core.service.impl.academy;
+import com.coresolution.core.context.TenantContextHolder;
 
 import com.coresolution.core.domain.academy.Course;
 import com.coresolution.core.dto.academy.CourseRequest;

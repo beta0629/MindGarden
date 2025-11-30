@@ -2598,6 +2598,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Map<String, Object> getRefundStatistics(String period, String branchCode) {
         log.info("📊 환불 통계 조회 시작: period={}, branchCode={}", period, branchCode);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         // 환불 관련 공통 코드 초기화 (없으면 생성)
         initializeRefundCommonCodes();

@@ -13,6 +13,7 @@ public class TenantContext {
     private static final ThreadLocal<String> tenantId = new ThreadLocal<>();
     private static final ThreadLocal<String> branchId = new ThreadLocal<>();
     private static final ThreadLocal<String> businessType = new ThreadLocal<>();
+    private static final ThreadLocal<Boolean> bypassTenantFilter = new ThreadLocal<>();
     
     /**
      * 현재 요청의 테넌트 ID 설정
@@ -96,6 +97,30 @@ public class TenantContext {
     }
     
     /**
+     * 슈퍼 어드민 필터 우회 설정
+     * 
+     * <p>HQ_MASTER, HQ_SUPER_ADMIN 등 본사 관리자가 전체 테넌트 데이터를 
+     * 조회해야 할 때 사용합니다.</p>
+     * 
+     * <p>⚠️ 주의: 보안상 매우 민감한 설정이므로 신중하게 사용해야 합니다.</p>
+     * 
+     * @param bypass true면 tenantId 필터링을 우회
+     */
+    public static void setBypassTenantFilter(boolean bypass) {
+        bypassTenantFilter.set(bypass);
+    }
+    
+    /**
+     * 슈퍼 어드민 필터 우회 여부 확인
+     * 
+     * @return true면 tenantId 필터링을 우회해야 함
+     */
+    public static boolean shouldBypassTenantFilter() {
+        Boolean bypass = bypassTenantFilter.get();
+        return bypass != null && bypass;
+    }
+    
+    /**
      * ThreadLocal 정리 (요청 종료 시 호출)
      * 메모리 누수 방지를 위해 반드시 호출해야 함
      */
@@ -103,6 +128,7 @@ public class TenantContext {
         tenantId.remove();
         branchId.remove();
         businessType.remove();
+        bypassTenantFilter.remove();
     }
     
     /**

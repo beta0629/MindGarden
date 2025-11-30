@@ -2923,6 +2923,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Map<String, Object> getRefundHistory(int page, int size, String period, String status) {
         log.info("📋 환불 이력 조회: page={}, size={}, period={}, status={}", page, size, period, status);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
@@ -3088,6 +3089,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Map<String, Object> getRefundHistory(int page, int size, String period, String status, String branchCode) {
         log.info("📋 환불 이력 조회 (지점별): page={}, size={}, period={}, status={}, branchCode={}", page, size, period, status, branchCode);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
@@ -3901,6 +3903,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<ConsultantClientMapping> getTransferHistory(Long clientId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         User client = userRepository.findById(clientId)
                 .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
         
@@ -3915,6 +3918,7 @@ public class AdminServiceImpl implements AdminService {
     public List<Map<String, Object>> getSchedulesByConsultantId(Long consultantId) {
         try {
             log.info("🔍 상담사별 스케줄 조회: consultantId={}", consultantId);
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             
             // 상담사 존재 확인
             userRepository.findById(consultantId)
@@ -3973,6 +3977,7 @@ public class AdminServiceImpl implements AdminService {
     public List<Map<String, Object>> getConsultationCompletionStatistics(String period) {
         try {
             log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             
             // 활성 상담사만 조회
             List<Consultant> consultantEntities = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
@@ -5276,6 +5281,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantEmail(String consultantEmail) {
         log.info("🔍 상담사 이메일로 매칭 조회 - 이메일: {}", consultantEmail);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         // 이메일로 상담사 찾기
         Optional<User> consultantOpt = userRepository.findByTenantIdAndEmail(tenantId, consultantEmail);
@@ -5287,13 +5293,6 @@ public class AdminServiceImpl implements AdminService {
         User consultant = consultantOpt.get();
         log.info("🔍 찾은 상담사 정보 - ID: {}, 이름: {}, 역할: {}, 브랜치코드: {}", 
                 consultant.getId(), consultant.getName(), consultant.getRole(), consultant.getBranchCode());
-        
-        // 현재 테넌트 ID 가져오기
-        String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new ArrayList<>();
-        }
         
         // TERMINATED가 아닌 모든 매칭 조회 (ACTIVE, PAYMENT_CONFIRMED 등) - tenantId 필터링
         List<ConsultantClientMapping> allMappings = mappingRepository.findByConsultantId(tenantId, consultant.getId());

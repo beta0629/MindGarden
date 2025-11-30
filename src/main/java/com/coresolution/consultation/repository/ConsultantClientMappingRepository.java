@@ -14,7 +14,11 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     // 상담사별 매칭 조회
     List<ConsultantClientMapping> findByConsultant(User consultant);
     
-    // 내담자별 매칭 조회
+    // 내담자별 매칭 조회 (tenantId 필터링)
+    List<ConsultantClientMapping> findByTenantIdAndClient(String tenantId, User client);
+    
+    // @Deprecated - 🚨 위험: tenantId 필터링 없이 매칭 접근!
+    @Deprecated
     List<ConsultantClientMapping> findByClient(User client);
     
     // 활성 상태의 매칭만 조회 (tenantId 필터링)

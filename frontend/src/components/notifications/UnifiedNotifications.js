@@ -3,7 +3,7 @@ import { useSession } from '../../contexts/SessionContext';
 // import { useNotification } from '../../contexts/NotificationContext'; // 이벤트 기반으로 카운트 갱신
 import { apiGet } from '../../utils/ajax';
 import { Bell, MessageSquare, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import '../../styles/unified-design-tokens.css';
 

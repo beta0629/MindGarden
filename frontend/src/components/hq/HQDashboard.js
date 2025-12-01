@@ -9,7 +9,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
-// // import SimpleLayout from '../layout/SimpleLayout';
+// import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import HealingCard from '../common/HealingCard';
 import StatCard from '../ui/Card/StatCard';

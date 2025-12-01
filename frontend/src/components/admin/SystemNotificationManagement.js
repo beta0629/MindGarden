@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { Bell, Plus, Edit, Trash2, Send, Archive } from 'lucide-react';
-// // import notificationManager from '../../utils/notification';
+import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화

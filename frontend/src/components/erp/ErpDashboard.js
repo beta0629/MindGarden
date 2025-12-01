@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';

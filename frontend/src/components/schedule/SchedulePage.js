@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedScheduleComponent from './UnifiedScheduleComponent';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';

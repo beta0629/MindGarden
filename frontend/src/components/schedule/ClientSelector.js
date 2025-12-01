@@ -5,6 +5,7 @@ import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import '../../styles/main.css';
+import ClientSelector from '../ui/ClientSelector';
 
 /**
  * 내담자 선택 컴포넌트

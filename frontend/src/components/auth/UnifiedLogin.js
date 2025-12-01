@@ -34,6 +34,7 @@ import { TABLET_LOGIN_CONSTANTS, COMPONENT_CSS } from '../../constants/css-varia
 import '../../styles/auth/UnifiedLogin.css';
 
 const UnifiedLogin = () => {
+  console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
   const navigate = useNavigate();
   const location = useLocation();
   const { login, checkSession, setDuplicateLoginModal } = useSession();
@@ -47,7 +48,16 @@ const UnifiedLogin = () => {
     email: emailFromUrl || '',
     password: ''
   });
+  
+  console.log('📋 초기 formData 상태:', formData);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // 컴포넌트 마운트 확인
+  useEffect(() => {
+    console.log('✅ UnifiedLogin 컴포넌트 마운트됨');
+    console.log('📋 마운트 시 formData:', formData);
+    console.log('🔧 handleInputChange 함수:', typeof handleInputChange);
+  }, []);
   const [oauth2Config, setOauth2Config] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showSocialSignupModal, setShowSocialSignupModal] = useState(false);
@@ -241,18 +251,36 @@ const UnifiedLogin = () => {
 
   // ID/PW 로그인 처리
   const handleSubmit = async (e) => {
+    console.log('🚀 handleSubmit 함수 호출됨!', e);
     e.preventDefault();
     
-    if (!formData.email || !formData.password) {
+    // DOM에서 직접 값 가져오기
+    const formElement = e.target;
+    const emailInput = formElement.querySelector('input[name="email"]');
+    const passwordInput = formElement.querySelector('input[name="password"]');
+    
+    const actualFormData = {
+      email: emailInput?.value || '',
+      password: passwordInput?.value || ''
+    };
+    
+    console.log('📋 DOM에서 가져온 실제 폼 데이터:', actualFormData);
+    console.log('📧 실제 이메일 값:', JSON.stringify(actualFormData.email), '길이:', actualFormData.email?.length);
+    console.log('🔒 실제 비밀번호 값:', JSON.stringify(actualFormData.password), '길이:', actualFormData.password?.length);
+    console.log('📋 React 상태 formData:', JSON.stringify(formData));
+    
+    if (!actualFormData.email || !actualFormData.password) {
+      console.log('❌ 폼 데이터 유효성 검사 실패');
       showTooltip('이메일과 비밀번호를 입력해주세요.', 'warning');
       return;
     }
 
+    console.log('✅ 폼 데이터 유효성 검사 통과');
     setIsLoading(true);
     try {
-      console.log('🔐 통합 로그인 요청:', formData);
+      console.log('🔐 통합 로그인 요청:', actualFormData);
       
-      const result = await authAPI.login(formData);
+      const result = await authAPI.login(actualFormData);
       console.log('🔐 로그인 응답:', result);
       
       // ApiResponse 래퍼 처리: result.data 또는 result 직접 사용
@@ -400,11 +428,16 @@ const UnifiedLogin = () => {
 
   // 입력 핸들러
   const handleInputChange = (e) => {
+    console.log('🔄 handleInputChange 호출됨:', e.target.name, '값:', e.target.value);
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        [name]: value
+      };
+      console.log('📝 formData 업데이트:', newFormData);
+      return newFormData;
+    });
   };
 
   const togglePassword = () => {
@@ -443,8 +476,10 @@ const UnifiedLogin = () => {
                 <input
                   type="email"
                   name="email"
-                  value={formData.email}
+                  defaultValue={formData.email}
                   onChange={handleInputChange}
+                  onFocus={() => console.log('📧 이메일 필드 포커스됨')}
+                  onBlur={() => console.log('📧 이메일 필드 포커스 해제됨')}
                   className="unified-login__input"
                   placeholder="이메일을 입력하세요"
                   required
@@ -457,8 +492,10 @@ const UnifiedLogin = () => {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
-                    value={formData.password}
+                    defaultValue={formData.password}
                     onChange={handleInputChange}
+                    onFocus={() => console.log('🔒 비밀번호 필드 포커스됨')}
+                    onBlur={() => console.log('🔒 비밀번호 필드 포커스 해제됨')}
                     className="unified-login__input"
                     placeholder="비밀번호를 입력하세요"
                     required

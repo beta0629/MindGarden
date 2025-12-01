@@ -11,7 +11,7 @@ import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
 import './CommonDashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 import WelcomeSection from './WelcomeSection';
 import WelcomeWidget from './widgets/WelcomeWidget';
 import SummaryPanels from './SummaryPanels';

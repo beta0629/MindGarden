@@ -11,7 +11,7 @@ import {
     FaBuilding,
     FaChartBar
 } from 'react-icons/fa';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import Chart from '../common/Chart';
 import './FinancialReports.css';

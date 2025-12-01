@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
-// import notificationManager from '../../utils/notification';
+import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './ClientSettings.css';
 

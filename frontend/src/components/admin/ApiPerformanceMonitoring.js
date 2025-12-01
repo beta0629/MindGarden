@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaSync, FaTrash, FaDownload } from 'react-icons/fa';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 import ApiPerformanceWidget from './widgets/ApiPerformanceWidget';
 import PerformanceWidget from './widgets/PerformanceWidget';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Heart, XCircle, CheckCircle, Calendar, User, Briefcase } from 'lucide-react';
 import { API_BASE_URL } from '../../constants/api';
@@ -7,6 +7,7 @@ import { useSession } from '../../contexts/SessionContext';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
+// import ConsultantRatingModal from '../consultant/ConsultantRatingModal'; // 자기 자신을 import하지 않음
 
 /**
  * 상담사 하트 평가 모달 컴포넌트

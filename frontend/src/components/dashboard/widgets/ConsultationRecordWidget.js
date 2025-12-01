@@ -17,12 +17,12 @@ import BaseWidget from './BaseWidget';
 import './ConsultationRecordWidget.css';
 
 const ConsultationRecordWidget = ({ widget, user }) => {
+  const navigate = useNavigate();
+
   // 상담사 전용 위젯 (다른 역할은 표시하지 않음)
   if (!RoleUtils.isConsultant(user)) {
     return null;
   }
-
-  const navigate = useNavigate();
 
   // 데이터 소스 설정 (상담사 전용)
   const getDataSourceConfig = () => ({

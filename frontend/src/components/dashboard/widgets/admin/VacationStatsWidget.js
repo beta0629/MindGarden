@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidget } from '../../../../hooks/useWidget';
-// import BaseWidget from '../BaseWidget';
+import BaseWidget from '../BaseWidget';
 import StatCard from '../../../ui/Card/StatCard';
 import MGButton from '../../../../components/common/MGButton'; // 임시 비활성화
 import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';

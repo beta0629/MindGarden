@@ -5,7 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
-// // import SimpleLayout from '../layout/SimpleLayout';
+// import SimpleLayout from '../layout/SimpleLayout';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화

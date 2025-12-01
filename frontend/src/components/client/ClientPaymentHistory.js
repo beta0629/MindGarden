@@ -16,7 +16,7 @@ import {
 import { apiGet } from '../../utils/ajax';
 import { getDashboardPath } from '../../utils/session';
 import { useSession } from '../../contexts/SessionContext';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';

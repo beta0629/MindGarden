@@ -19,7 +19,7 @@ import {
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
-// // import SimpleLayout from '../layout/SimpleLayout';
+// import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationList.css';

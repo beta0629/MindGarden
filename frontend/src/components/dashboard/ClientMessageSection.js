@@ -12,7 +12,7 @@ import {
   Star
 } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
-// // import notificationManager from '../../utils/notification';
+// import notificationManager from '../../utils/notification';
 import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import '../../styles/unified-design-tokens.css';

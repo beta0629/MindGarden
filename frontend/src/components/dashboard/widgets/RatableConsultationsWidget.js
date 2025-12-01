@@ -12,6 +12,7 @@ import { useWidget } from '../../../hooks/useWidget';
 import BaseWidget from './BaseWidget';
 import { useSession } from '../../../contexts/SessionContext';
 import './RatableConsultationsWidget.css';
+import ConsultantRatingModal from '../../client/ConsultantRatingModal';
 
 const RatableConsultationsWidget = ({ widget, user }) => {
   // 내담자 전용 위젯 (다른 역할은 표시하지 않음)

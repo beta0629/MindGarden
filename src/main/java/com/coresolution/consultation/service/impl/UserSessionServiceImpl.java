@@ -9,7 +9,6 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSession;
 import com.coresolution.consultation.repository.UserSessionRepository;
 import com.coresolution.consultation.service.UserSessionService;
-import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +48,7 @@ public class UserSessionServiceImpl implements UserSessionService {
             
             // 새 세션 생성 (중복 로그인 체크는 AuthService에서 처리)
             LocalDateTime now = LocalDateTime.now();
+            
             UserSession userSession = UserSession.builder()
                     .user(user)
                     .sessionId(sessionId)
@@ -60,6 +60,14 @@ public class UserSessionServiceImpl implements UserSessionService {
                     .socialProvider(socialProvider)
                     .isActive(true)
                     .build();
+            
+            // 테넌트 ID 설정 (User 엔티티에서 가져오기)
+            String tenantId = user.getTenantId();
+            if (tenantId == null) {
+                // TenantContext에서 가져오기 (폴백)
+                tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+            }
+            userSession.setTenantId(tenantId);
             
             UserSession savedSession = userSessionRepository.save(userSession);
             log.info("✅ 세션 생성 완료: userId={}, sessionId={}", user.getId(), sessionId);

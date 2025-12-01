@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ScheduleCalendar from '../schedule/ScheduleCalendar';
 import '../../styles/unified-design-tokens.css';

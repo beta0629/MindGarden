@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiPut, apiGet } from '../../utils/ajax';
-// import notificationManager from '../../utils/notification';
+import notificationManager from '../../utils/notification';
 // import ConsultationLogModal from '../consultant/ConsultationLogModal'; // 부모 컴포넌트에서 관리
 import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';

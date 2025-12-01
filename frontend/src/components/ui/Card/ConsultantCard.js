@@ -4,6 +4,7 @@ import SpecialtyDisplay from '../SpecialtyDisplay';
 import ConsultantDetailModal from '../ConsultantDetailModal';
 import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
 import { getFormattedCurrentClients, getFormattedExperience } from '../../../utils/codeHelper';
+import ConsultantCard from '../ui/Card/ConsultantCard';
 
 /**
  * 공통 상담사 카드 컴포넌트

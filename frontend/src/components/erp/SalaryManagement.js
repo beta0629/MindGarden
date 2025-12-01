@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { DollarSign, Settings, FileText, Users, Calculator, Receipt } from 'lucide-react';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화

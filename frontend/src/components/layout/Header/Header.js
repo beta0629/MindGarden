@@ -12,6 +12,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { cn } from '../../../utils/classNames';
 import './styles.css';
+import UnifiedHeader from '../common/UnifiedHeader';
 
 const UnifiedHeader = ({
   title = '', // 빈 문자열이면 브랜딩 정보에서 가져옴

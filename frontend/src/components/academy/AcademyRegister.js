@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-// import SimpleLayout from '../layout/SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 // import Card from '../ui/Card/Card'; // 임시 비활성화
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { ACADEMY_API } from '../../constants/academy';

@@ -8,6 +8,7 @@ import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import { useBranding } from '../../hooks/useBranding';
 import '../../styles/main.css';
+import UnifiedHeader from '../common/UnifiedHeader';
 
 /**
  * 통합 헤더 컴포넌트 (UnifiedHeader)

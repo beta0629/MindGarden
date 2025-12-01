@@ -3,6 +3,7 @@ package com.coresolution.consultation.entity;
 import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -10,11 +11,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * 사용자 활성 세션 관리 엔티티
@@ -25,7 +30,7 @@ import lombok.NoArgsConstructor;
  * @since 2025-01-09
  */
 @Entity
-@Table(name = "user_sessions", 
+@Table(name = "user_sessions",
        indexes = {
            @Index(name = "idx_user_sessions_user_id", columnList = "user_id"),
            @Index(name = "idx_user_sessions_session_id", columnList = "session_id"),
@@ -34,11 +39,50 @@ import lombok.NoArgsConstructor;
            @Index(name = "idx_user_sessions_expires_at", columnList = "expires_at"),
            @Index(name = "idx_user_sessions_client_ip", columnList = "client_ip")
        })
+@EntityListeners(AuditingEntityListener.class)
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserSession extends BaseEntity {
+public class UserSession {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", updatable = false, nullable = false)
+    private Long id;
+    
+    @Column(name = "tenant_id", length = 36)
+    private String tenantId;
+    
+    @CreatedDate
+    @Column(name = "created_at", updatable = false, nullable = false)
+    private LocalDateTime createdAt;
+    
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+    
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+    
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
+    
+    @PrePersist
+    public void prePersist() {
+        if (this.tenantId == null) {
+            this.tenantId = java.util.UUID.randomUUID().toString();
+        }
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        if (this.isDeleted == null) {
+            this.isDeleted = false;
+        }
+        if (this.version == null) {
+            this.version = 0L;
+        }
+    }
     
     /**
      * 세션 ID (Primary Key)
@@ -77,7 +121,6 @@ public class UserSession extends BaseEntity {
      * 세션 활성 상태
      */
     @Column(name = "is_active", nullable = false)
-    @Builder.Default
     private Boolean isActive = true;
     
     /**
@@ -96,7 +139,6 @@ public class UserSession extends BaseEntity {
      * 로그인 방식 (NORMAL, SOCIAL)
      */
     @Column(name = "login_type", length = 20)
-    @Builder.Default
     private String loginType = "NORMAL";
     
     /**

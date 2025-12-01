@@ -18,15 +18,15 @@ import { apiGet } from '../../../utils/ajax';
 import './ClientMessageWidget.css';
 
 const ClientMessageWidget = ({ widget, user }) => {
-  // 내담자 전용 위젯 (다른 역할은 표시하지 않음)
-  if (!RoleUtils.isClient(user)) {
-    return null;
-  }
-
   const navigate = useNavigate();
   const [allMessages, setAllMessages] = useState([]);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // 내담자 전용 위젯 (다른 역할은 표시하지 않음)
+  if (!RoleUtils.isClient(user)) {
+    return null;
+  }
 
   // 데이터 소스 설정 (내담자 전용)
   const getDataSourceConfig = () => ({

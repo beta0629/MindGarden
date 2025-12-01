@@ -362,7 +362,7 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
            "JOIN User u2 ON cr.clientId = u2.id " +
            "WHERE cr.tenantId = :tenantId AND cr.isSessionCompleted = true AND cr.isDeleted = false " +
            "ORDER BY cr.sessionDate DESC")
-    List<Object[]> findRecentCompletedSessions(@Param("tenantId") String tenantId, int limit);
+    List<Object[]> findRecentCompletedSessions(@Param("tenantId") String tenantId, Pageable pageable);
     
     /**
      * @Deprecated - 🚨 극도로 위험: tenantId 필터링 없이 상담 기록 노출!
@@ -373,5 +373,5 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
            "JOIN User u2 ON cr.clientId = u2.id " +
            "WHERE cr.isSessionCompleted = true AND cr.isDeleted = false " +
            "ORDER BY cr.sessionDate DESC")
-    List<Object[]> findRecentCompletedSessionsDeprecated(int limit);
+    List<Object[]> findRecentCompletedSessionsDeprecated(Pageable pageable);
 }

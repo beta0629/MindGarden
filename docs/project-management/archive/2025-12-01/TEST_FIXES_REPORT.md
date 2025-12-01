@@ -134,7 +134,34 @@ flyway:
 
 ---
 
+## 📊 추가 수정 사항 (2025-12-01 09:36)
+
+### 8. ❌ **34개 엔티티 tenantId 필드 누락**
+- **문제**: Repository 쿼리에서 `tenantId`를 사용하지만, 많은 엔티티에 `tenantId` 필드가 정의되어 있지 않아 쿼리 검증 실패.
+- **해결**: Python 스크립트(`scripts/add_tenantid_to_entities.py`)를 작성하여 34개 엔티티에 `tenantId` 필드를 자동으로 추가.
+- **관련 파일**:
+  - `scripts/add_tenantid_to_entities.py` (신규 생성)
+  - 34개 엔티티 파일 (Account, AccountingEntry, ConsultantPerformance, Permission, RolePermission 등)
+
+### 9. ❌ **ConsultantRatingRepository 쿼리 관계 필드 오류**
+- **문제**: `ConsultantRatingRepository`의 여러 쿼리에서 `cr.scheduleId`, `cr.consultantId`, `cr.clientId`를 직접 사용하지만, 엔티티에는 이러한 필드가 없고 `@ManyToOne` 관계(`schedule`, `consultant`, `client`)만 존재.
+- **해결**: 모든 쿼리를 관계 필드를 통한 접근으로 수정 (예: `cr.scheduleId` → `cr.schedule.id`).
+- **관련 파일**:
+  - `src/main/java/com/coresolution/consultation/repository/ConsultantRatingRepository.java`
+
+---
+
+## 📊 현재 상태 및 다음 단계
+
+- **현재**: 모든 엔티티 및 Repository 쿼리 수정 완료. ApplicationContext가 성공적으로 로드되며, 테스트가 실행 가능한 상태.
+- **테스트 상태**: `AsyncContextPropagationTest` 및 `SuperAdminBypassTest`가 실행되고 있으며, 일부 테스트 케이스에서 오류 발생 (이는 정상적인 검증 과정).
+- **다음 단계**: 실제 테스트 케이스의 오류를 분석하고 수정하여 모든 테스트가 성공하도록 개선.
+
+---
+
 **작성일**: 2025-12-01  
+**최종 업데이트**: 2025-12-01 09:36  
 **작성자**: AI Assistant  
-**상태**: 잠재적 문제 수정 완료 ✅
+**상태**: 엔티티 및 Repository 수정 완료, 테스트 실행 가능 ✅  
+**커밋**: `65ae6cb6` (develop 브랜치에 푸시 완료)
 

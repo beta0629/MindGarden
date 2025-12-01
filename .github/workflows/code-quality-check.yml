@@ -48,7 +48,7 @@ jobs:
         
     - name: 🔍 하드코딩 검사
       run: |
-        node scripts/check-hardcoding-enhanced.js || exit 1
+        node scripts/design-system/css-tools/check-hardcoding-enhanced.js || exit 1
         
     - name: 🧪 테스트 실행
       run: |
@@ -56,20 +56,18 @@ jobs:
         
     - name: 📊 코드 품질 메트릭 수집
       run: |
-        node scripts/collect-code-quality-metrics.js || true
+        node scripts/development/code-quality/collect-code-quality-metrics.js || true
         
     - name: 📄 코드 품질 리포트 생성
       run: |
-        node scripts/generate-code-quality-report.js || true
+        node scripts/development/code-quality/generate-code-quality-report.js || true
         
     - name: 📤 리포트 업로드
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: code-quality-reports
-        path: |
-          test-reports/hardcoding/
-          test-reports/code-quality/
-          test-reports/code-quality-reports/
+        path: test-reports/
+        if-no-files-found: warn
         retention-days: 30
 

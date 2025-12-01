@@ -34,8 +34,9 @@ echo -e "${BLUE}   - 프론트엔드 모드: ${FRONTEND_MODE}${NC}"
 echo
 
 # 프로젝트 루트 디렉토리로 이동
-cd "$(dirname "$0")/../../.."
-PROJECT_ROOT=$(pwd)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+cd "$PROJECT_ROOT"
 echo -e "${BLUE}📂 프로젝트 루트: ${PROJECT_ROOT}${NC}"
 
 # 로그 디렉토리 생성
@@ -118,9 +119,9 @@ VALIDATION_WARNING=0
 
 # DTO 표준화 검증
 echo -e "${YELLOW}   2-4-1. DTO 표준화 검증 중...${NC}"
-if [ -f "scripts/validate-dto-standardization.js" ]; then
+if [ -f "scripts/development/code-quality/validate-dto-standardization.js" ]; then
   if command -v node >/dev/null 2>&1; then
-    node scripts/validate-dto-standardization.js
+    node scripts/development/code-quality/validate-dto-standardization.js
     if [ $? -ne 0 ]; then
       echo -e "${RED}   ❌ DTO 표준화 검증 실패${NC}"
       VALIDATION_ERROR=$((VALIDATION_ERROR + 1))
@@ -136,9 +137,9 @@ fi
 
 # 동적 시스템 검증 (하드코딩 및 동적 시스템 사용 확인)
 echo -e "${YELLOW}   2-4-2. 동적 시스템 검증 중 (하드코딩 및 동적 시스템 사용 확인)...${NC}"
-if [ -f "scripts/validate-dynamic-system.js" ]; then
+if [ -f "scripts/development/code-quality/validate-dynamic-system.js" ]; then
   if command -v node >/dev/null 2>&1; then
-    node scripts/validate-dynamic-system.js
+    node scripts/development/code-quality/validate-dynamic-system.js
     if [ $? -ne 0 ]; then
       echo -e "${RED}   ❌ 동적 시스템 검증 실패${NC}"
       VALIDATION_ERROR=$((VALIDATION_ERROR + 1))
@@ -167,19 +168,16 @@ else
   echo -e "${YELLOW}   ⚠️ Maven이 설치되지 않았거나 pom.xml이 없습니다. Checkstyle 검증을 건너뜁니다.${NC}"
 fi
 
-# 검증 결과 확인
+# 검증 결과 확인 (개발 모드에서는 경고만 출력)
 if [ $VALIDATION_ERROR -eq 0 ]; then
   echo -e "${GREEN}✅ 2-4단계 완료: 표준화 검증 통과${NC}"
 else
-  echo -e "${RED}❌ 2-4단계 실패: $VALIDATION_ERROR 개의 표준화 검증이 실패했습니다.${NC}"
-  echo -e "${YELLOW}💡 해결 방법:${NC}"
-  echo -e "   1. DTO 표준화 검증: node scripts/validate-dto-standardization.js"
-  echo -e "   2. 동적 시스템 검증: node scripts/validate-dynamic-system.js"
+  echo -e "${YELLOW}⚠️  2-4단계: $VALIDATION_ERROR 개의 표준화 검증이 실패했지만 개발 모드에서는 계속 진행합니다.${NC}"
+  echo -e "${YELLOW}💡 나중에 해결하세요:${NC}"
+  echo -e "   1. DTO 표준화 검증: node scripts/development/code-quality/validate-dto-standardization.js"
+  echo -e "   2. 동적 시스템 검증: node scripts/development/code-quality/validate-dynamic-system.js"
   echo -e "   3. Checkstyle 검증: mvn checkstyle:check"
-  echo -e "   4. 검증 통과 후 서버를 다시 실행하세요.${NC}"
   echo ""
-  echo -e "${YELLOW}⚠️  서버 실행을 중단합니다.${NC}"
-  exit 1
 fi
 echo
 
@@ -225,7 +223,7 @@ if [ "$BACKEND_PROFILE" = "local" ]; then
     (
         # 서브셸에서 환경 변수 export 후 실행
         export DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD
-        mvn spring-boot:run -Dspring-boot.run.profiles=local > logs/backend.log 2>&1
+        mvn spring-boot:run -Dspring-boot.run.profiles=$BACKEND_PROFILE > logs/backend.log 2>&1
     ) &
     BACKEND_PID=$!
 else

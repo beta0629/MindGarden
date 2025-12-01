@@ -51,7 +51,15 @@ if [ ! -f "package.json" ]; then
 fi
 
 # 변경된 파일들 가져오기
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(css|js|jsx|ts|tsx)$' || true)
+ALL_STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(css|js|jsx|ts|tsx)$' || true)
+STAGED_FILES=""
+
+# 존재하는 파일만 필터링
+for file in $ALL_STAGED_FILES; do
+    if [ -f "$file" ]; then
+        STAGED_FILES="$STAGED_FILES $file"
+    fi
+done
 
 if [ -z "$STAGED_FILES" ]; then
     log_success "검사할 CSS/JS 파일이 없습니다"
@@ -99,6 +107,7 @@ TOTAL_VIOLATIONS=0
 # 각 파일 검사
 for FILE in $STAGED_FILES; do
     if [ ! -f "$FILE" ]; then
+        log_warning "파일을 찾을 수 없습니다: $FILE (건너뜀)"
         continue
     fi
     

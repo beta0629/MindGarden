@@ -99,7 +99,9 @@ const SimpleHeader = () => {
 
   // 하드코딩된 역할 매핑 함수 제거 - 동적 로딩 사용
 
-  const handleLogout = async () => {
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setShowLogoutModal(true);
   };
 
@@ -175,6 +177,11 @@ const SimpleHeader = () => {
         
         {/* 오른쪽 영역 */}
         <div className={HEADER_CSS_CLASSES.HEADER_RIGHT}>
+          {/* 디버그 정보 */}
+          <div style={{fontSize: '10px', color: '#666', marginRight: '10px'}}>
+            Debug: {isLoading ? 'Loading' : isLoggedIn ? 'LoggedIn' : 'NotLoggedIn'} | User: {user ? 'Yes' : 'No'}
+          </div>
+          
           {isLoading ? (
             <div className={HEADER_CSS_CLASSES.LOADING}>
               <i className={`bi ${HEADER_ICONS.LOADING}`}></i>
@@ -208,7 +215,7 @@ const SimpleHeader = () => {
 
               {/* 로그아웃 버튼 */}
               <button 
-                className="simple-header-logout-button"
+                className="simple-logout-button"
                 onClick={handleLogout}
                 title="로그아웃"
               >

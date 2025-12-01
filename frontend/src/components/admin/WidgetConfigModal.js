@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-// import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { FaTimes } from 'react-icons/fa';
 import './WidgetConfigModal.css';

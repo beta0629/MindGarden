@@ -355,6 +355,7 @@
   --mg-gray-900: var(--cs-secondary-900);
   
   --mg-consultant-dark: var(--cs-primary-800);
+  --mg-shadow-light: rgba(0, 0, 0, 0.1);
   
   /* 색상 별칭 */
   --mint-green: var(--cs-success-500);
@@ -10836,6 +10837,12 @@ body {
     cursor: not-allowed;
 }
 
+.mg-v2-button--primary {
+    border: none;
+    background-color: var(--color-primary);
+    color: var(--color-background-primary);
+}
+
 .mg-v2-button--secondary {
     border: 2px solid var(--color-text-secondary);
     background-color: var(--color-background-primary);
@@ -10880,6 +10887,97 @@ body {
 .mg-v2-button-secondary:hover:not(:disabled) {
     background-color: var(--cs-gray-700);
     transform: translateY(-1px);
+}
+
+.mg-v2-button-danger {
+    background-color: var(--mg-error-500, #dc3545);
+    color: white;
+    border: none;
+}
+
+.mg-v2-button-danger:hover:not(:disabled) {
+    background-color: var(--mg-error-600, #c82333);
+    transform: translateY(-1px);
+}
+
+/* Modal Styles */
+.mg-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mg-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.98);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999998;
+}
+
+.mg-modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    z-index: 999999999;
+}
+
+.mg-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--cs-gray-200, #e5e7eb);
+}
+
+.mg-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--cs-gray-900, #111827);
+}
+
+.mg-modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--cs-gray-500, #6b7280);
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mg-modal-close:hover {
+    background-color: var(--cs-gray-100, #f3f4f6);
+    color: var(--cs-gray-700, #374151);
+}
+
+.mg-modal-body {
+    padding: 20px 24px;
+}
+
+.mg-modal-footer {
+    padding: 16px 24px 20px;
+    border-top: 1px solid var(--cs-gray-200, #e5e7eb);
 }
 
 .mg-v2-button-success {

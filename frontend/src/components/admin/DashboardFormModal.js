@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-// // import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';

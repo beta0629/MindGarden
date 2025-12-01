@@ -12,7 +12,7 @@
   --header-text-muted: #999;
   --header-bg-light: var(--mg-gray-100);
   --header-bg-hover: rgba(0, 0, 0, 0.05);
-  --header-danger: var(--mg-error-500);
+  --header-danger: #dc3545;
   --header-danger-hover: #c82333;
   --header-neutral: var(--mg-gray-100);
   --header-neutral-hover: #e9ecef;
@@ -244,46 +244,44 @@
 
 /* 로그아웃 버튼 - 헤더 내 위치로 수정 */
 .simple-logout-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 3px solid var(--color-danger);
-  border-radius: 25px;
-  background: var(--color-danger);
+  padding: 8px 12px;
+  border: 2px solid var(--header-danger);
+  border-radius: 8px;
+  background: var(--header-danger);
   color: white;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: var(--font-size-base);
-  font-weight: 700;
-  margin-right: 10px;
-  position: relative; /* relative로 변경하여 헤더 내 위치 */
-  z-index: var(--z-header); /* 헤더 z-index 사용 */
-  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-  animation: pulse 2s infinite;
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 8px;
+  position: relative;
+  z-index: var(--z-header);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 80px;
+  height: 36px;
 }
 
 .simple-logout-button:hover {
-  background: var(--color-danger-hover);
-  transform: translateY(-1px) scale(1.05);
-  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+  background: var(--header-danger-hover);
+  border-color: var(--header-danger-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.5);
 }
 
-/* 로그아웃 버튼 애니메이션 */
-@keyframes pulse {
-  0% { 
-    transform: scale(1);
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-  }
-  50% { 
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
-  }
-  100% { 
-    transform: scale(1);
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-  }
+.simple-logout-button:active {
+  background: var(--header-danger);
+  border-color: var(--header-danger);
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
 }
+
+/* 로그아웃 버튼 애니메이션 제거 - 안정성을 위해 */
 
 .simple-logout-button i {
   font-size: var(--font-size-base);

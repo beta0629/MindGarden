@@ -1,4 +1,4 @@
-package com.coresolution.core.service.impl;
+package com.coresolution.core.service;
 
 import com.coresolution.core.service.OnboardingApprovalService;
 import org.junit.jupiter.api.BeforeEach;

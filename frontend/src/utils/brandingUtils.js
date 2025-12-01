@@ -427,11 +427,11 @@ export const deleteFavicon = async () => {
 export const clearBrandingCache = () => {
   brandingCache = null;
   cacheTimestamp = null;
-  console.debug('브랜딩 캐시 무효화');
+  // console.log('브랜딩 캐시 무효화'); // 로그 출력 줄임
 };
 
-// 페이지 로드 시 강제 캐시 초기화
-clearBrandingCache();
+// 페이지 로드 시 강제 캐시 초기화 제거 (무한 루프 방지)
+// clearBrandingCache();
 
 /**
  * 브랜딩 정보를 UnifiedHeader props로 변환

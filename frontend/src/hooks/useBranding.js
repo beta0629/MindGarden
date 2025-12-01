@@ -49,14 +49,14 @@ export const useBranding = (options = {}) => {
     setError(null);
 
     try {
-      console.debug('브랜딩 정보 로드 시작');
+      console.log('브랜딩 정보 로드 시작');
 
       // 로그인 상태 및 테넌트 정보 확인
       const currentUser = sessionManager.getUser();
       const hasValidSession = currentUser && currentUser.tenant && currentUser.tenant.tenantId;
 
       if (!hasValidSession) {
-        console.debug('세션 정보 없음, 브랜딩 기본값 사용');
+        // console.log('세션 정보 없음, 브랜딩 기본값 사용'); // 로그 출력 줄임
         const defaultProps = brandingToHeaderProps(null);
         setHeaderProps(defaultProps);
         setBrandingInfo(null);
@@ -127,10 +127,10 @@ export const useBranding = (options = {}) => {
     const tenantId = user?.tenantId;
     
     if (tenantId) {
-      console.debug('테넌트 변경 감지, 브랜딩 정보 새로고침:', tenantId);
+      // console.log('테넌트 변경 감지, 브랜딩 정보 새로고침:', tenantId); // 로그 출력 줄임
       refreshBranding();
     }
-  }, [sessionManager.getUser()?.tenantId, refreshBranding]);
+  }, [refreshBranding]); // tenantId 의존성 제거하여 무한 루프 방지
 
   return {
     // 상태

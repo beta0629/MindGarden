@@ -189,7 +189,7 @@ export const useTenantBranding = (options = {}) => {
       
       return () => clearTimeout(timer);
     }
-  }, [sessionManager.getUser()?.tenantId, autoApply, refreshBranding, applyTenantBranding]);
+  }, [autoApply, refreshBranding, applyTenantBranding]); // tenantId 의존성 제거하여 무한 루프 방지
   
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {

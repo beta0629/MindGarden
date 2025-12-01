@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,15 +47,17 @@ class OnboardingServiceTest {
     private String testTenantId;
     private String testTenantName;
     private String testBusinessType;
+    private UUID testId;
     
     @BeforeEach
     void setUp() {
         testTenantId = "test-tenant-123";
         testTenantName = "테스트 테넌트";
         testBusinessType = "ACADEMY";
+        testId = UUID.randomUUID();
         
         testRequest = OnboardingRequest.builder()
-            .id(1L)
+            .id(testId)
             .tenantId(testTenantId)
             .tenantName(testTenantName)
             .requestedBy("test-requester")
@@ -86,14 +89,14 @@ class OnboardingServiceTest {
     @DisplayName("온보딩 요청 ID로 조회 - 성공")
     void testGetById_Success() {
         // Given
-        when(repository.findById(1L)).thenReturn(Optional.of(testRequest));
+        when(repository.findById(testId)).thenReturn(Optional.of(testRequest));
         
         // When
-        OnboardingRequest result = onboardingService.getById(1L);
+        OnboardingRequest result = onboardingService.getById(testId);
         
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getId()).isEqualTo(testId);
         assertThat(result.getTenantId()).isEqualTo(testTenantId);
     }
     
@@ -101,10 +104,11 @@ class OnboardingServiceTest {
     @DisplayName("온보딩 요청 ID로 조회 - 없음")
     void testGetById_NotFound() {
         // Given
-        when(repository.findById(999L)).thenReturn(Optional.empty());
+        UUID nonExistentId = UUID.randomUUID();
+        when(repository.findById(nonExistentId)).thenReturn(Optional.empty());
         
         // When & Then
-        assertThatThrownBy(() -> onboardingService.getById(999L))
+        assertThatThrownBy(() -> onboardingService.getById(nonExistentId))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("온보딩 요청을 찾을 수 없습니다");
     }
@@ -137,7 +141,7 @@ class OnboardingServiceTest {
     @DisplayName("온보딩 요청 결정 - 승인")
     void testDecide_Approved() {
         // Given
-        when(repository.findById(1L)).thenReturn(Optional.of(testRequest));
+        when(repository.findById(testId)).thenReturn(Optional.of(testRequest));
         when(repository.save(any(OnboardingRequest.class))).thenAnswer(invocation -> {
             OnboardingRequest request = invocation.getArgument(0);
             return request;
@@ -148,12 +152,12 @@ class OnboardingServiceTest {
         approvalResult.put("success", true);
         approvalResult.put("message", "온보딩 승인 완료");
         when(approvalService.processOnboardingApproval(
-            anyLong(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString()
+            any(UUID.class), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString()
         )).thenReturn(approvalResult);
         
         // When
         OnboardingRequest result = onboardingService.decide(
-            1L,
+            testId,
             OnboardingStatus.APPROVED,
             "test-admin",
             "테스트 승인"
@@ -166,7 +170,7 @@ class OnboardingServiceTest {
         assertThat(result.getDecisionNote()).isEqualTo("테스트 승인");
         verify(repository, atLeastOnce()).save(any(OnboardingRequest.class));
         verify(approvalService, times(1)).processOnboardingApproval(
-            anyLong(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString()
+            any(UUID.class), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString()
         );
     }
     
@@ -174,12 +178,12 @@ class OnboardingServiceTest {
     @DisplayName("온보딩 요청 결정 - 거부")
     void testDecide_Rejected() {
         // Given
-        when(repository.findById(1L)).thenReturn(Optional.of(testRequest));
+        when(repository.findById(testId)).thenReturn(Optional.of(testRequest));
         when(repository.save(any(OnboardingRequest.class))).thenReturn(testRequest);
         
         // When
         OnboardingRequest result = onboardingService.decide(
-            1L,
+            testId,
             OnboardingStatus.REJECTED,
             "test-admin",
             "테스트 거부"

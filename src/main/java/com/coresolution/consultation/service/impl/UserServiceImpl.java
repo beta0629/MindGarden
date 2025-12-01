@@ -866,7 +866,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findRecentLoginUsers(int limit) {
         String tenantId = TenantContextHolder.getTenantId();
-        return userRepository.findRecentLoginUsers(tenantId, limit);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit);
+        return userRepository.findRecentLoginUsers(tenantId, pageable);
     }
     
     @Override

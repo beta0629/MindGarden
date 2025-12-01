@@ -27,7 +27,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * @since 2025-11-30
  */
 @Slf4j
-@SpringBootTest
+@SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
+@org.springframework.test.context.ActiveProfiles("test")
 public class AsyncContextPropagationTest {
     
     @Autowired

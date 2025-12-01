@@ -10,6 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,7 +31,7 @@ class OnboardingApprovalServiceIntegrationTest {
     @Autowired
     private OnboardingApprovalService onboardingApprovalService;
     
-    private Long testRequestId;
+    private UUID testRequestId;
     private String testTenantId;
     private String testTenantName;
     private String testBusinessType;
@@ -38,7 +39,7 @@ class OnboardingApprovalServiceIntegrationTest {
     
     @BeforeEach
     void setUp() {
-        testRequestId = 1L;
+        testRequestId = UUID.randomUUID();
         testTenantId = "test-tenant-" + System.currentTimeMillis();
         testTenantName = "테스트 테넌트";
         testBusinessType = "ACADEMY";
@@ -82,7 +83,7 @@ class OnboardingApprovalServiceIntegrationTest {
     @DisplayName("온보딩 승인 프로세스 - 잘못된 요청 ID")
     void testProcessOnboardingApproval_InvalidRequestId() {
         // Given
-        Long invalidRequestId = 999999L;
+        UUID invalidRequestId = UUID.randomUUID();
         
         // When
         Map<String, Object> result = onboardingApprovalService.processOnboardingApproval(

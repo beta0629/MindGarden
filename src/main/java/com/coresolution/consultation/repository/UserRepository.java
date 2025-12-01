@@ -497,7 +497,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * 최근 로그인한 사용자 조회 (tenantId 필터링)
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false ORDER BY u.lastLoginAt DESC")
-    List<User> findRecentLoginUsers(@Param("tenantId") String tenantId, int limit);
+    List<User> findRecentLoginUsers(@Param("tenantId") String tenantId, org.springframework.data.domain.Pageable pageable);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!

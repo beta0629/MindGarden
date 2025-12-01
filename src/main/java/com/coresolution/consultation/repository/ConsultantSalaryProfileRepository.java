@@ -62,12 +62,6 @@ public interface ConsultantSalaryProfileRepository extends JpaRepository<Consult
     @Query("SELECT csp FROM ConsultantSalaryProfile csp WHERE csp.tenantId = :tenantId AND csp.salaryType = 'REGULAR' AND csp.isActive = true")
     List<ConsultantSalaryProfile> findRegularProfilesByTenantId(@Param("tenantId") String tenantId);
     
-    /**
-     * 지점별 활성화된 급여 프로필 조회 (tenantId 필터링)
-     */
-    @Query("SELECT csp FROM ConsultantSalaryProfile csp WHERE csp.tenantId = :tenantId AND csp.branchCode = :branchCode AND csp.isActive = true")
-    List<ConsultantSalaryProfile> findByTenantIdAndBranchCodeAndIsActiveTrue(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode);
-    
     // ==================== @Deprecated 메서드 (하위 호환성) ====================
     
     /**

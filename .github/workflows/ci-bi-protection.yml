@@ -34,10 +34,10 @@ jobs:
         HARDCODED_COUNT=0
         
         # CSS 파일에서 HEX 색상 검사
-        HEX_COUNT=$(find frontend/src -name "*.css" -exec grep -E "#[0-9a-fA-F]{3,6}" {} \; | grep -v -E "#fff|#ffffff|#000|#000000" | wc -l || echo "0")
+        HEX_COUNT=$(find frontend/src -name "*.css" -type f 2>/dev/null | xargs grep -E "#[0-9a-fA-F]{3,6}" 2>/dev/null | grep -v -E "#fff|#ffffff|#000|#000000" | wc -l || echo "0")
         
         # JS 파일에서 색상 검사  
-        JS_COLOR_COUNT=$(find frontend/src -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | xargs grep -E "color.*['\"]#[0-9a-fA-F]{3,6}['\"]" | wc -l || echo "0")
+        JS_COLOR_COUNT=$(find frontend/src -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -type f 2>/dev/null | xargs grep -E "color.*['\"]#[0-9a-fA-F]{3,6}['\"]" 2>/dev/null | wc -l || echo "0")
         
         TOTAL_HARDCODED=$((HEX_COUNT + JS_COLOR_COUNT))
         
@@ -134,7 +134,7 @@ jobs:
         fi
         
         # 하드코딩 제거 (30점)
-        HARDCODED_COUNT=$(find frontend/src -name "*.css" -exec grep -E "#[0-9a-fA-F]{3,6}" {} \; | grep -v -E "#fff|#ffffff|#000|#000000" | wc -l || echo "0")
+        HARDCODED_COUNT=$(find frontend/src -name "*.css" -type f 2>/dev/null | xargs grep -E "#[0-9a-fA-F]{3,6}" 2>/dev/null | grep -v -E "#fff|#ffffff|#000|#000000" | wc -l || echo "0")
         if [ $HARDCODED_COUNT -eq 0 ]; then
           SCORE=$((SCORE + 30))
         elif [ $HARDCODED_COUNT -lt 10 ]; then

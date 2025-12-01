@@ -39,6 +39,9 @@ public class Item {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @Column(nullable = false, length = 100)
     private String name;
     

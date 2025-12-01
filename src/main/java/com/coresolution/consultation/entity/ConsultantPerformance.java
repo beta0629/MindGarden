@@ -41,6 +41,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ConsultantPerformance {
 
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+
     @Id
     @Column(name = "consultant_id")
     private Long consultantId;

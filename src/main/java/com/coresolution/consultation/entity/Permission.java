@@ -30,6 +30,9 @@ public class Permission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @Column(name = "permission_code", nullable = false, unique = true, length = 100)
     private String permissionCode;
     

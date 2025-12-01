@@ -33,6 +33,9 @@ public class SystemConfig {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @Column(name = "config_key", nullable = false, unique = true, length = 100)
     private String configKey;
     

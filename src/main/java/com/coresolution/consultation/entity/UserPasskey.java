@@ -38,6 +38,9 @@ public class UserPasskey {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

@@ -28,6 +28,9 @@ public class OpenAIUsageLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     /**
      * 요청 타입 (wellness, chat, analysis 등)
      */

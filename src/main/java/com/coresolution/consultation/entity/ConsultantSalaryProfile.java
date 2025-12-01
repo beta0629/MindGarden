@@ -41,6 +41,9 @@ public class ConsultantSalaryProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @NotNull(message = "상담사 ID는 필수입니다.")
     @Column(name = "consultant_id", nullable = false)
     private Long consultantId;

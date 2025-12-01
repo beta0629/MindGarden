@@ -44,6 +44,9 @@ public class PurchaseOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "purchase_request_id", nullable = false)
     private PurchaseRequest purchaseRequest;

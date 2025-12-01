@@ -43,6 +43,9 @@ public class SessionExtensionRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mapping_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})

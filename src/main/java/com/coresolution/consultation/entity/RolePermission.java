@@ -32,6 +32,9 @@ public class RolePermission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @Column(name = "role_name", nullable = false, length = 50)
     private String roleName;
     

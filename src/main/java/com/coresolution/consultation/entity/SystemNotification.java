@@ -30,6 +30,9 @@ public class SystemNotification extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     /**
      * 공지 대상 유형
      * ALL: 전체 사용자

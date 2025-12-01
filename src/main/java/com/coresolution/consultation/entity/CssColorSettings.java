@@ -27,6 +27,9 @@ public class CssColorSettings extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
 
     @Column(name = "theme_name", nullable = false, length = 50)
     private String themeName; // 테마명

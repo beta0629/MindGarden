@@ -33,6 +33,9 @@ public class WellnessTemplate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @Column(name = "title", nullable = false, length = 200)
     private String title;
     

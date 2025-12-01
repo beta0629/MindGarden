@@ -38,6 +38,9 @@ public class ErpSyncLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "sync_type", nullable = false, length = 50)

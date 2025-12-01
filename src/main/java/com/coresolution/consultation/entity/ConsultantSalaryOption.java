@@ -41,6 +41,9 @@ public class ConsultantSalaryOption {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @NotNull(message = "급여 프로필 ID는 필수입니다.")
     @Column(name = "salary_profile_id", nullable = false)
     private Long salaryProfileId;

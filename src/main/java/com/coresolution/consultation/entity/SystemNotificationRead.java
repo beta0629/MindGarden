@@ -31,6 +31,9 @@ public class SystemNotificationRead extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     /**
      * 공지 ID
      */

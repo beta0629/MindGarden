@@ -30,6 +30,9 @@ public class DailyHealingContent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @Column(name = "content_date", nullable = false)
     private LocalDate contentDate; // 컨텐츠 생성 날짜
     

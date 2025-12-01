@@ -35,6 +35,9 @@ public class AccumulatedDepreciation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @Column(name = "asset_name", nullable = false, length = 200)
     private String assetName;
     

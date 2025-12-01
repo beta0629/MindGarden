@@ -32,25 +32,25 @@ public interface ConsultantRatingRepository extends JpaRepository<ConsultantRati
     /**
      * 스케줄별 평가 조회 (중복 평가 방지용) (tenantId 필터링)
      */
-    @Query("SELECT cr FROM ConsultantRating cr WHERE cr.tenantId = :tenantId AND cr.scheduleId = :scheduleId AND cr.status = :status")
+    @Query("SELECT cr FROM ConsultantRating cr WHERE cr.tenantId = :tenantId AND cr.schedule.id = :scheduleId AND cr.status = :status")
     Optional<ConsultantRating> findByTenantIdAndScheduleIdAndStatus(@Param("tenantId") String tenantId, @Param("scheduleId") Long scheduleId, @Param("status") ConsultantRating.RatingStatus status);
 
     /**
      * 내담자가 특정 스케줄에 평가했는지 확인 (tenantId 필터링)
      */
-    @Query("SELECT CASE WHEN COUNT(cr) > 0 THEN true ELSE false END FROM ConsultantRating cr WHERE cr.tenantId = :tenantId AND cr.scheduleId = :scheduleId AND cr.clientId = :clientId AND cr.status = :status")
+    @Query("SELECT CASE WHEN COUNT(cr) > 0 THEN true ELSE false END FROM ConsultantRating cr WHERE cr.tenantId = :tenantId AND cr.schedule.id = :scheduleId AND cr.client.id = :clientId AND cr.status = :status")
     boolean existsByTenantIdAndScheduleIdAndClientIdAndStatus(@Param("tenantId") String tenantId, @Param("scheduleId") Long scheduleId, @Param("clientId") Long clientId, @Param("status") ConsultantRating.RatingStatus status);
 
     /**
      * 상담사별 평가 목록 조회 (페이징) (tenantId 필터링)
      */
-    @Query("SELECT cr FROM ConsultantRating cr WHERE cr.tenantId = :tenantId AND cr.consultantId = :consultantId AND cr.status = :status ORDER BY cr.ratedAt DESC")
+    @Query("SELECT cr FROM ConsultantRating cr WHERE cr.tenantId = :tenantId AND cr.consultant.id = :consultantId AND cr.status = :status ORDER BY cr.ratedAt DESC")
     Page<ConsultantRating> findByTenantIdAndConsultantIdAndStatusOrderByRatedAtDesc(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("status") ConsultantRating.RatingStatus status, Pageable pageable);
 
     /**
      * 내담자별 평가 목록 조회 (페이징) (tenantId 필터링)
      */
-    @Query("SELECT cr FROM ConsultantRating cr WHERE cr.tenantId = :tenantId AND cr.clientId = :clientId AND cr.status = :status ORDER BY cr.ratedAt DESC")
+    @Query("SELECT cr FROM ConsultantRating cr WHERE cr.tenantId = :tenantId AND cr.client.id = :clientId AND cr.status = :status ORDER BY cr.ratedAt DESC")
     Page<ConsultantRating> findByTenantIdAndClientIdAndStatusOrderByRatedAtDesc(@Param("tenantId") String tenantId, @Param("clientId") Long clientId, @Param("status") ConsultantRating.RatingStatus status, Pageable pageable);
 
     /**
@@ -80,7 +80,7 @@ public interface ConsultantRatingRepository extends JpaRepository<ConsultantRati
     /**
      * 최근 평가 조회 (상담사별) (tenantId 필터링)
      */
-    @Query("SELECT r FROM ConsultantRating r WHERE r.tenantId = :tenantId AND r.consultantId = :consultantId AND r.status = :status ORDER BY r.ratedAt DESC")
+    @Query("SELECT r FROM ConsultantRating r WHERE r.tenantId = :tenantId AND r.consultant.id = :consultantId AND r.status = :status ORDER BY r.ratedAt DESC")
     List<ConsultantRating> findTop10ByTenantIdAndConsultantIdAndStatusOrderByRatedAtDesc(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId, @Param("status") ConsultantRating.RatingStatus status, Pageable pageable);
 
     /**

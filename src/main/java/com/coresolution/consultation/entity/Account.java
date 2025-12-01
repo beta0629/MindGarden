@@ -26,6 +26,9 @@ public class Account {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+    
     @Column(name = "bank_code", nullable = false, length = 10)
     private String bankCode;
     

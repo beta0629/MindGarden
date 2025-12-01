@@ -26,6 +26,9 @@ public class ConsultantRating extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
 
     /**
      * 평가받는 상담사

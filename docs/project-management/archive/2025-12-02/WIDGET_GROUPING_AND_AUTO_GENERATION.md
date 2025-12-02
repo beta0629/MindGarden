@@ -546,27 +546,424 @@ private String createDefaultDashboardConfig(String businessType, String roleCode
 
 ---
 
+## 🔐 위젯 관리 권한 체계
+
+### 위젯 분류
+
+#### 1. 그룹화 위젯 (System-Managed Widgets)
+**특징**:
+- 테넌트 생성 시 자동 생성
+- 업종별/역할별로 필수 위젯
+- **관리자가 추가/삭제 불가** ❌
+- 시스템에서만 관리
+
+**예시**:
+```json
+{
+  "id": "consultation-admin-welcome",
+  "type": "welcome",
+  "group": "핵심 위젯",
+  "isSystemManaged": true,     // ← 시스템 관리
+  "isRequired": true,           // ← 필수 위젯
+  "isDeletable": false,         // ← 삭제 불가
+  "isMovable": true             // ← 순서 변경만 가능
+}
+```
+
+#### 2. 독립 위젯 (User-Managed Widgets)
+**특징**:
+- 관리자가 직접 추가/삭제 가능 ✅
+- 선택적 위젯
+- 커스터마이징 가능
+
+**예시**:
+```json
+{
+  "id": "custom-chart-001",
+  "type": "custom-chart",
+  "group": null,                // ← 그룹 없음
+  "isSystemManaged": false,     // ← 사용자 관리
+  "isRequired": false,          // ← 선택적
+  "isDeletable": true,          // ← 삭제 가능
+  "isMovable": true             // ← 이동 가능
+}
+```
+
+---
+
+### 위젯 권한 매트릭스
+
+| 위젯 유형 | 추가 | 삭제 | 수정 | 이동 | 관리 주체 |
+|---------|-----|-----|-----|-----|---------|
+| **그룹화 위젯 (필수)** | ❌ | ❌ | ⚠️ 제한적 | ✅ | 시스템 |
+| **그룹화 위젯 (선택)** | ❌ | ❌ | ✅ | ✅ | 시스템 |
+| **독립 위젯** | ✅ | ✅ | ✅ | ✅ | 관리자 |
+
+**⚠️ 제한적 수정**: 위젯 설정(config)만 변경 가능, 위젯 타입은 변경 불가
+
+---
+
+### 데이터베이스 구조 수정
+
+#### widget_definitions 테이블 (필드 추가)
+
+```sql
+CREATE TABLE widget_definitions (
+    widget_id VARCHAR(50) PRIMARY KEY,
+    widget_type VARCHAR(100) NOT NULL,
+    widget_name VARCHAR(100) NOT NULL,
+    group_id VARCHAR(50),                -- NULL이면 독립 위젯
+    business_type VARCHAR(50) NOT NULL,
+    role_code VARCHAR(50),
+    default_config JSON,
+    display_order INT NOT NULL,
+    
+    -- ✅ 권한 관리 필드 추가
+    is_system_managed BOOLEAN DEFAULT TRUE,   -- 시스템 관리 여부
+    is_required BOOLEAN DEFAULT FALSE,        -- 필수 위젯 여부
+    is_deletable BOOLEAN DEFAULT FALSE,       -- 삭제 가능 여부
+    is_movable BOOLEAN DEFAULT TRUE,          -- 이동 가능 여부
+    is_configurable BOOLEAN DEFAULT TRUE,     -- 설정 변경 가능 여부
+    
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (group_id) REFERENCES widget_groups(group_id),
+    INDEX idx_group_id (group_id),
+    INDEX idx_business_type_role (business_type, role_code),
+    INDEX idx_is_system_managed (is_system_managed)
+);
+```
+
+---
+
+### 초기 데이터 예시 (권한 포함)
+
+```sql
+-- 상담소 - ADMIN - 그룹화 위젯 (필수)
+INSERT INTO widget_definitions (
+    widget_id, widget_type, widget_name, group_id, 
+    business_type, role_code, default_config, display_order,
+    is_system_managed, is_required, is_deletable, is_movable, is_configurable
+) VALUES
+-- 핵심 위젯 (필수, 삭제 불가)
+('consultation-admin-welcome', 'welcome', '환영 위젯', 'consultation-admin-core',
+ 'CONSULTATION', 'ADMIN', '{"refreshInterval": 30000}', 1,
+ TRUE, TRUE, FALSE, TRUE, TRUE),  -- ← 시스템 관리, 필수, 삭제 불가
+
+('consultation-admin-summary', 'summary-panels', '요약 패널', 'consultation-admin-core',
+ 'CONSULTATION', 'ADMIN', '{"refreshInterval": 60000}', 2,
+ TRUE, TRUE, FALSE, TRUE, TRUE),  -- ← 시스템 관리, 필수, 삭제 불가
+
+-- 관리 위젯 (선택, 삭제 불가)
+('consultation-admin-consultant-mgmt', 'consultant-management', '상담사 관리', 'consultation-admin-management',
+ 'CONSULTATION', 'ADMIN', '{"showQuickActions": true}', 1,
+ TRUE, FALSE, FALSE, TRUE, TRUE),  -- ← 시스템 관리, 선택적, 삭제 불가
+
+-- 독립 위젯 (사용자 추가 가능한 위젯 풀)
+('custom-chart-template', 'custom-chart', '커스텀 차트', NULL,
+ 'CONSULTATION', NULL, '{"chartType": "line"}', 999,
+ FALSE, FALSE, TRUE, TRUE, TRUE),  -- ← 사용자 관리, 삭제 가능
+
+('custom-table-template', 'custom-table', '커스텀 테이블', NULL,
+ 'CONSULTATION', NULL, '{"columns": []}', 999,
+ FALSE, FALSE, TRUE, TRUE, TRUE);  -- ← 사용자 관리, 삭제 가능
+```
+
+---
+
+### 백엔드 구현
+
+#### WidgetPermissionService (신규)
+
+```java
+@Service
+public class WidgetPermissionService {
+    
+    /**
+     * 위젯 삭제 가능 여부 확인
+     */
+    public boolean canDeleteWidget(String widgetId, String userId) {
+        WidgetDefinition widget = widgetDefinitionRepository.findById(widgetId)
+                .orElseThrow(() -> new IllegalArgumentException("위젯을 찾을 수 없습니다"));
+        
+        // 시스템 관리 위젯은 삭제 불가
+        if (widget.getIsSystemManaged()) {
+            return false;
+        }
+        
+        // 삭제 가능 플래그 확인
+        return widget.getIsDeletable();
+    }
+    
+    /**
+     * 위젯 추가 가능 여부 확인
+     */
+    public boolean canAddWidget(String widgetType, String businessType, String roleCode) {
+        // 독립 위젯만 추가 가능
+        List<WidgetDefinition> templates = widgetDefinitionRepository
+                .findByWidgetTypeAndBusinessTypeAndIsSystemManagedFalse(
+                        widgetType, businessType);
+        
+        return !templates.isEmpty();
+    }
+    
+    /**
+     * 위젯 수정 가능 여부 확인
+     */
+    public boolean canConfigureWidget(String widgetId) {
+        WidgetDefinition widget = widgetDefinitionRepository.findById(widgetId)
+                .orElseThrow(() -> new IllegalArgumentException("위젯을 찾을 수 없습니다"));
+        
+        return widget.getIsConfigurable();
+    }
+}
+```
+
+#### TenantDashboardController (API 수정)
+
+```java
+@RestController
+@RequestMapping("/api/v1/dashboards")
+public class TenantDashboardController {
+    
+    @Autowired
+    private WidgetPermissionService widgetPermissionService;
+    
+    /**
+     * 위젯 추가 (독립 위젯만)
+     */
+    @PostMapping("/{dashboardId}/widgets")
+    public ResponseEntity<?> addWidget(
+            @PathVariable String dashboardId,
+            @RequestBody AddWidgetRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        // 권한 확인
+        if (!widgetPermissionService.canAddWidget(
+                request.getWidgetType(), 
+                request.getBusinessType(), 
+                request.getRoleCode())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("이 위젯은 추가할 수 없습니다 (시스템 관리 위젯)");
+        }
+        
+        // 위젯 추가 로직
+        // ...
+        
+        return ResponseEntity.ok("위젯이 추가되었습니다");
+    }
+    
+    /**
+     * 위젯 삭제 (독립 위젯만)
+     */
+    @DeleteMapping("/{dashboardId}/widgets/{widgetId}")
+    public ResponseEntity<?> deleteWidget(
+            @PathVariable String dashboardId,
+            @PathVariable String widgetId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        // 권한 확인
+        if (!widgetPermissionService.canDeleteWidget(widgetId, userDetails.getUsername())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("이 위젯은 삭제할 수 없습니다 (시스템 관리 위젯)");
+        }
+        
+        // 위젯 삭제 로직
+        // ...
+        
+        return ResponseEntity.ok("위젯이 삭제되었습니다");
+    }
+    
+    /**
+     * 독립 위젯 목록 조회 (추가 가능한 위젯)
+     */
+    @GetMapping("/available-widgets")
+    public ResponseEntity<?> getAvailableWidgets(
+            @RequestParam String businessType,
+            @RequestParam String roleCode) {
+        
+        List<WidgetDefinition> widgets = widgetDefinitionRepository
+                .findByBusinessTypeAndIsSystemManagedFalseAndIsActiveTrue(businessType);
+        
+        return ResponseEntity.ok(widgets);
+    }
+}
+```
+
+---
+
+### 프론트엔드 구현
+
+#### DashboardWidgetManager.js (위젯 관리 UI)
+
+```javascript
+import React, { useState } from 'react';
+import { Plus, Trash2, Settings, Lock } from 'lucide-react';
+
+const DashboardWidgetManager = ({ dashboard, user }) => {
+  const [widgets, setWidgets] = useState(dashboard.widgets || []);
+  const [availableWidgets, setAvailableWidgets] = useState([]);
+  
+  // 독립 위젯 목록 조회
+  const fetchAvailableWidgets = async () => {
+    const response = await fetch(
+      `/api/v1/dashboards/available-widgets?businessType=${user.businessType}&roleCode=${user.roleCode}`
+    );
+    const data = await response.json();
+    setAvailableWidgets(data);
+  };
+  
+  // 위젯 추가
+  const handleAddWidget = async (widgetType) => {
+    try {
+      const response = await fetch(`/api/v1/dashboards/${dashboard.id}/widgets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          widgetType,
+          businessType: user.businessType,
+          roleCode: user.roleCode
+        })
+      });
+      
+      if (response.ok) {
+        alert('위젯이 추가되었습니다');
+        // 대시보드 새로고침
+      } else {
+        const error = await response.text();
+        alert(error);
+      }
+    } catch (error) {
+      console.error('위젯 추가 실패:', error);
+    }
+  };
+  
+  // 위젯 삭제
+  const handleDeleteWidget = async (widgetId) => {
+    try {
+      const response = await fetch(
+        `/api/v1/dashboards/${dashboard.id}/widgets/${widgetId}`,
+        { method: 'DELETE' }
+      );
+      
+      if (response.ok) {
+        alert('위젯이 삭제되었습니다');
+        // 대시보드 새로고침
+      } else {
+        const error = await response.text();
+        alert(error);
+      }
+    } catch (error) {
+      console.error('위젯 삭제 실패:', error);
+    }
+  };
+  
+  return (
+    <div className="mg-dashboard-widget-manager">
+      {/* 위젯 목록 */}
+      <div className="mg-widget-list">
+        {widgets.map(widget => (
+          <div key={widget.id} className="mg-widget-item">
+            <div className="mg-widget-header">
+              <h4>{widget.title}</h4>
+              
+              {/* 시스템 관리 위젯 표시 */}
+              {widget.isSystemManaged && (
+                <span className="mg-badge mg-badge-system">
+                  <Lock size={14} /> 시스템 위젯
+                </span>
+              )}
+              
+              {/* 필수 위젯 표시 */}
+              {widget.isRequired && (
+                <span className="mg-badge mg-badge-required">필수</span>
+              )}
+            </div>
+            
+            <div className="mg-widget-actions">
+              {/* 설정 버튼 (모든 위젯) */}
+              {widget.isConfigurable && (
+                <button
+                  onClick={() => handleConfigureWidget(widget.id)}
+                  className="mg-btn mg-btn-sm mg-btn-secondary"
+                >
+                  <Settings size={16} /> 설정
+                </button>
+              )}
+              
+              {/* 삭제 버튼 (독립 위젯만) */}
+              {widget.isDeletable && (
+                <button
+                  onClick={() => handleDeleteWidget(widget.id)}
+                  className="mg-btn mg-btn-sm mg-btn-danger"
+                >
+                  <Trash2 size={16} /> 삭제
+                </button>
+              )}
+              
+              {/* 삭제 불가 표시 */}
+              {!widget.isDeletable && (
+                <span className="mg-text-muted">
+                  <Lock size={14} /> 삭제 불가
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* 위젯 추가 버튼 */}
+      <div className="mg-widget-add-section">
+        <h4>위젯 추가</h4>
+        <div className="mg-available-widgets">
+          {availableWidgets.map(widget => (
+            <button
+              key={widget.widgetId}
+              onClick={() => handleAddWidget(widget.widgetType)}
+              className="mg-btn mg-btn-outline"
+            >
+              <Plus size={16} /> {widget.widgetName}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardWidgetManager;
+```
+
+---
+
 ## 📈 구현 계획
 
 ### Phase 1: 데이터베이스 설계 (1일)
 - [ ] `widget_groups` 테이블 생성
-- [ ] `widget_definitions` 테이블 생성
+- [ ] `widget_definitions` 테이블 생성 (권한 필드 포함)
 - [ ] 초기 데이터 삽입 (상담소, 학원)
+- [ ] **권한 체계 데이터 정의**
 
 ### Phase 2: 백엔드 구현 (2일)
-- [ ] `WidgetGroup`, `WidgetDefinition` 엔티티
+- [ ] `WidgetGroup`, `WidgetDefinition` 엔티티 (권한 필드 포함)
 - [ ] `WidgetGroupService` 구현
+- [ ] **`WidgetPermissionService` 구현**
 - [ ] `TenantDashboardServiceImpl` 수정
+- [ ] **위젯 추가/삭제 API (권한 검증 포함)**
 
 ### Phase 3: 프론트엔드 구현 (2일)
 - [ ] 위젯 그룹별 렌더링
 - [ ] `WidgetRenderer` 컴포넌트
 - [ ] 위젯 타입별 매핑
+- [ ] **`DashboardWidgetManager` 구현 (권한 UI)**
+- [ ] **시스템 위젯 잠금 표시**
 
 ### Phase 4: 테스트 (1일)
 - [ ] 테넌트 생성 테스트
 - [ ] 위젯 자동 생성 확인
 - [ ] 업종별 위젯 확인
+- [ ] **권한 체계 테스트 (추가/삭제 제한)**
 
 **총 소요 시간**: 약 6일 (1주)
 
@@ -577,13 +974,25 @@ private String createDefaultDashboardConfig(String businessType, String roleCode
 ### 핵심 인사이트
 
 > **"테넌트가 생성될 때 위젯이 생성되어야 하잖어"** → 정확합니다!
+> 
+> **"관리자에서는 그룹화 위젯은 추가 삭제 안되고, 독립된 위젯만 추가 제거 가능"** → 완벽합니다!
 
 ### 해결 방안
 
 1. ✅ **위젯 그룹 시스템** (데이터베이스 기반)
 2. ✅ **업종 + 역할별 자동 생성**
 3. ✅ **그룹화된 위젯 표시**
-4. ✅ **동적 추가/제거 가능**
+4. ✅ **권한 기반 위젯 관리**
+   - 그룹화 위젯: 시스템 관리 (추가/삭제 불가)
+   - 독립 위젯: 관리자 관리 (추가/삭제 가능)
+
+### 위젯 관리 규칙
+
+| 위젯 유형 | 생성 시점 | 추가 | 삭제 | 수정 | 이동 |
+|---------|---------|-----|-----|-----|-----|
+| **그룹화 위젯 (필수)** | 테넌트 생성 시 | ❌ | ❌ | ⚠️ 제한적 | ✅ |
+| **그룹화 위젯 (선택)** | 테넌트 생성 시 | ❌ | ❌ | ✅ | ✅ |
+| **독립 위젯** | 관리자 추가 시 | ✅ | ✅ | ✅ | ✅ |
 
 ### 기대 효과
 
@@ -592,6 +1001,7 @@ private String createDefaultDashboardConfig(String businessType, String roleCode
 - ✅ **업종별 자동 분기**: 코드 수정 없음
 - ✅ **그룹화**: 사용자 경험 개선
 - ✅ **확장성**: 새 위젯 추가 용이
+- ✅ **권한 체계**: 시스템 위젯 보호, 사용자 커스터마이징 지원
 
 ---
 

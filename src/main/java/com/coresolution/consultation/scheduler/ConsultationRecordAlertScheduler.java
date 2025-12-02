@@ -307,4 +307,81 @@ public class ConsultationRecordAlertScheduler {
             );
         }
     }
+    
+    /**
+     * 수동 상담일지 미작성 확인 실행 (관리자용)
+     * @param daysBack 확인할 과거 일수
+     * @return 실행 결과
+     */
+    public Map<String, Object> manualCheckMissingRecords(int daysBack) {
+        String executionId = UUID.randomUUID().toString();
+        LocalDateTime startTime = LocalDateTime.now();
+        
+        log.info("⏰ [ConsultationRecordAlert] 수동 실행 시작: executionId={}, daysBack={}", 
+            executionId, daysBack);
+        
+        int successCount = 0;
+        int failureCount = 0;
+        int totalTenants = 0;
+        int totalAlertsCreated = 0;
+        
+        try {
+            List<String> activeTenantIds = tenantService.getAllActiveTenantIds();
+            totalTenants = activeTenantIds.size();
+            log.info("📋 [ConsultationRecordAlert] 대상 테넌트 수: {}", totalTenants);
+            
+            for (String tenantId : activeTenantIds) {
+                try {
+                    TenantContextHolder.setTenantId(tenantId);
+                    
+                    Map<String, Object> result = consultationRecordAlertService.autoCreateMissingConsultationRecordAlerts(daysBack);
+                    
+                    Boolean success = (Boolean) result.get("success");
+                    Integer alertsCreated = (Integer) result.get("totalAlertsCreated");
+                    
+                    if (success) {
+                        totalAlertsCreated += (alertsCreated != null ? alertsCreated : 0);
+                        successCount++;
+                    } else {
+                        failureCount++;
+                    }
+                    
+                } catch (Exception e) {
+                    log.error("❌ [ConsultationRecordAlert] 수동 실행 오류: tenantId={}, error={}", 
+                        tenantId, e.getMessage(), e);
+                    failureCount++;
+                } finally {
+                    TenantContextHolder.clear();
+                }
+            }
+            
+            LocalDateTime endTime = LocalDateTime.now();
+            long durationMs = Duration.between(startTime, endTime).toMillis();
+            
+            log.info("✅ [ConsultationRecordAlert] 수동 실행 완료: executionId={}, duration={}ms, success={}, failure={}, totalAlerts={}",
+                executionId, durationMs, successCount, failureCount, totalAlertsCreated);
+            
+            return Map.of(
+                "success", true,
+                "message", "수동 확인이 완료되었습니다.",
+                "processedDays", daysBack,
+                "totalTenants", totalTenants,
+                "successCount", successCount,
+                "failureCount", failureCount,
+                "totalAlertsCreated", totalAlertsCreated,
+                "executionTimeMs", durationMs
+            );
+            
+        } catch (Exception e) {
+            log.error("❌ [ConsultationRecordAlert] 수동 실행 전체 실패: executionId={}, error={}",
+                executionId, e.getMessage(), e);
+            
+            return Map.of(
+                "success", false,
+                "message", "수동 확인 중 오류가 발생했습니다: " + e.getMessage(),
+                "processedDays", daysBack,
+                "totalAlertsCreated", 0
+            );
+        }
+    }
 }

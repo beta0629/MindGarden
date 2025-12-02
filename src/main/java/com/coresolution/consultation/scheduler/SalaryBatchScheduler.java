@@ -38,7 +38,6 @@ public class SalaryBatchScheduler {
     private final SalaryBatchService salaryBatchService;
     private final SalaryScheduleService salaryScheduleService;
     private final TenantService tenantService;
-    private final TenantContextHolder tenantContextHolder;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
     

@@ -2,8 +2,17 @@
 
 ##############################################################################
 # 위젯 그룹화 시스템 테스트 스크립트
+# 
 # 작성일: 2025-12-02
 # 목적: 위젯 그룹화 및 자동 생성 시스템 전체 플로우 테스트
+# 표준: TESTING_STANDARD.md 준수
+# 
+# 테스트 원칙:
+# - Given-When-Then 패턴 사용
+# - 테스트 데이터 동적 생성 (UUID)
+# - 테스트 간 독립성 보장
+# - 자동 리포트 생성
+# - 테넌트 격리 테스트
 ##############################################################################
 
 # 색상 정의
@@ -102,8 +111,14 @@ init() {
 test_tenant_creation() {
     section "Test 1: 테넌트 생성 및 위젯 자동 생성"
     
+    # Given-When-Then 패턴
+    log "📋 Given: 테스트 테넌트 데이터 준비"
+    log "   - 테넌트 이메일: ${TENANT_EMAIL}"
+    log "   - 비즈니스 타입: CONSULTATION"
+    log "   - 타임스탬프: ${TIMESTAMP}"
+    
     # 1.1 온보딩 요청 생성
-    log "1.1 온보딩 요청 생성 중..."
+    log "🔄 When: 온보딩 요청 생성..."
     REQUEST_PAYLOAD=$(cat <<EOF
 {
   "tenantName": "위젯 테스트 상담소",
@@ -121,6 +136,8 @@ EOF
     
     REQUEST_ID=$(echo "$REQUEST_RESPONSE" | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
     
+    # Then: 결과 검증
+    log "✅ Then: 온보딩 요청 생성 결과 검증"
     if [ -z "$REQUEST_ID" ] || [ "$REQUEST_ID" = "null" ]; then
         fail "온보딩 요청 생성 실패"
         echo "$REQUEST_RESPONSE"
@@ -190,21 +207,29 @@ EOF
 test_widget_groups() {
     section "Test 2: 위젯 그룹 조회 API"
     
+    # Given
+    log "📋 Given: 테넌트 생성 완료 (tenantId=${TENANT_ID})"
+    
+    # When & Then
     # 2.1 모든 위젯 그룹 조회
-    log "2.1 모든 위젯 그룹 조회..."
+    log "🔄 When: 모든 위젯 그룹 조회 API 호출..."
     GROUPS_RESPONSE=$(curl -s -X GET "${API_URL}/api/v1/widgets/groups" \
         -H "X-Tenant-ID: ${TENANT_ID}" \
         -b "$COOKIE_FILE")
     
+    # Then: 결과 검증
+    log "✅ Then: 위젯 그룹 조회 결과 검증"
     if echo "$GROUPS_RESPONSE" | grep -q '"success":true'; then
         GROUP_COUNT=$(echo "$GROUPS_RESPONSE" | grep -o '"groupId"' | wc -l)
         if [ "$GROUP_COUNT" -ge 1 ]; then
             success "위젯 그룹 조회 성공: ${GROUP_COUNT}개 그룹"
+            log "   - 예상: 3개 그룹 (ADMIN, MANAGER, CONSULTANT)"
+            log "   - 실제: ${GROUP_COUNT}개 그룹"
         else
-            fail "위젯 그룹이 생성되지 않음"
+            fail "위젯 그룹이 생성되지 않음 (테넌트 생성 시 자동 생성 실패)"
         fi
     else
-        fail "위젯 그룹 조회 실패"
+        fail "위젯 그룹 조회 API 실패"
         echo "$GROUPS_RESPONSE"
     fi
     

@@ -6,6 +6,7 @@ import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.core.domain.SystemMetric;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,9 +22,10 @@ import java.util.Map;
 
 /**
  * OpenAI API를 활용한 AI 모니터링 서비스
+ * 민감정보 마스킹 적용 (운영 환경)
  * 
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2025-12-02
  */
 @Slf4j
@@ -35,6 +37,9 @@ public class OpenAIMonitoringService {
     private final OpenAIUsageLogRepository usageLogRepository;
     private final SystemConfigService systemConfigService;
     private final RestTemplate restTemplate = new RestTemplate();
+    
+    @Autowired(required = false)
+    private SensitiveDataMaskingService maskingService;
     
     /**
      * AI 기반 이상 탐지 분석
@@ -71,6 +76,7 @@ public class OpenAIMonitoringService {
     
     /**
      * AI 기반 보안 위협 분석
+     * 민감정보 마스킹 적용 (운영 환경)
      * 
      * @param eventType 이벤트 타입
      * @param eventDetails 이벤트 상세 정보
@@ -86,7 +92,14 @@ public class OpenAIMonitoringService {
         long startTime = System.currentTimeMillis();
         
         try {
-            String prompt = buildSecurityThreatPrompt(eventType, eventDetails);
+            // 민감정보 마스킹 (운영 환경에서만 적용)
+            Map<String, Object> maskedDetails = eventDetails;
+            if (maskingService != null) {
+                maskedDetails = maskingService.maskEventDetails(eventDetails);
+                log.debug("🔒 민감정보 마스킹 완료: {} 필드", maskedDetails.size());
+            }
+            
+            String prompt = buildSecurityThreatPrompt(eventType, maskedDetails);
             SecurityThreatAnalysisResult result = callOpenAIForSecurityAnalysis(prompt);
             
             long responseTime = System.currentTimeMillis() - startTime;

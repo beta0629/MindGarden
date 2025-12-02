@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 보안 위협 탐지 서비스 (AI 기반)
+ * 민감정보 마스킹 적용
  * 
  * @author CoreSolution
  * @version 2.0.0 (AI Enhanced)
@@ -35,6 +36,9 @@ public class SecurityThreatDetectionService {
     
     @Autowired(required = false)
     private OpenAIMonitoringService openAIMonitoringService;
+    
+    @Autowired(required = false)
+    private SensitiveDataMaskingService maskingService;
     
     private static final int BRUTE_FORCE_THRESHOLD = 5; // 5회
     private static final int DDOS_THRESHOLD = 100; // 100회/분
@@ -107,8 +111,12 @@ public class SecurityThreatDetectionService {
             
             threatDetectionRepository.save(threat);
             
+            // 로그 출력 시 마스킹 (운영 환경)
+            String maskedIp = maskingService != null ? maskingService.maskIpAddress(sourceIp) : sourceIp;
+            String maskedEmail = maskingService != null ? maskingService.maskEmail(userEmail) : userEmail;
+            
             log.warn("🚨 Brute Force 공격 탐지: ip={}, email={}, attempts={}, severity={}, model={}", 
-                sourceIp, userEmail, attemptCount, severity, modelUsed);
+                maskedIp, maskedEmail, attemptCount, severity, modelUsed);
             
             // 자동 차단
             if (attemptCount >= BRUTE_FORCE_THRESHOLD * 2) {

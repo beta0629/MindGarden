@@ -1,5 +1,7 @@
 package com.coresolution.core.service;
 
+import com.coresolution.core.config.DataMaskingConfig;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +11,7 @@ import java.util.regex.Pattern;
 /**
  * 민감정보 마스킹 서비스
  * AI 분석 전 개인정보 및 민감정보를 마스킹 처리
+ * 환경별 설정: 운영(마스킹), 개발(평문)
  * 
  * @author CoreSolution
  * @version 1.0.0
@@ -16,7 +19,10 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SensitiveDataMaskingService {
+    
+    private final DataMaskingConfig maskingConfig;
     
     // 정규식 패턴
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
@@ -36,12 +42,20 @@ public class SensitiveDataMaskingService {
     );
     
     /**
-     * 이벤트 상세 정보 마스킹
+     * 이벤트 상세 정보 마스킹 (AI 분석용)
      */
     public Map<String, Object> maskEventDetails(Map<String, Object> eventDetails) {
+        // 마스킹이 비활성화된 경우 원본 반환 (개발 환경)
+        if (!maskingConfig.shouldMaskForAI()) {
+            log.debug("🔓 마스킹 비활성화 (개발 모드): 평문 데이터 사용");
+            return eventDetails;
+        }
+        
         if (eventDetails == null) {
             return null;
         }
+        
+        log.debug("🔒 마스킹 활성화 (운영 모드): 민감정보 마스킹 처리");
         
         for (Map.Entry<String, Object> entry : eventDetails.entrySet()) {
             String key = entry.getKey().toLowerCase();
@@ -161,6 +175,10 @@ public class SensitiveDataMaskingService {
      * 텍스트 마스킹 (로그, 분석 결과 등)
      */
     public String maskText(String text) {
+        if (!maskingConfig.shouldMaskForLogs()) {
+            return text; // 개발 환경: 평문 반환
+        }
+        
         if (text == null || text.isEmpty()) {
             return text;
         }
@@ -172,6 +190,10 @@ public class SensitiveDataMaskingService {
      * 이메일 마스킹
      */
     public String maskEmail(String email) {
+        if (!maskingConfig.shouldMask()) {
+            return email; // 개발 환경: 평문 반환
+        }
+        
         if (email == null || email.isEmpty()) {
             return email;
         }
@@ -190,6 +212,10 @@ public class SensitiveDataMaskingService {
      * 전화번호 마스킹
      */
     public String maskPhone(String phone) {
+        if (!maskingConfig.shouldMask()) {
+            return phone; // 개발 환경: 평문 반환
+        }
+        
         if (phone == null || phone.isEmpty()) {
             return phone;
         }
@@ -212,6 +238,10 @@ public class SensitiveDataMaskingService {
      * IP 주소 마스킹
      */
     public String maskIpAddress(String ip) {
+        if (!maskingConfig.shouldMask()) {
+            return ip; // 개발 환경: 평문 반환
+        }
+        
         if (ip == null || ip.isEmpty()) {
             return ip;
         }
@@ -228,6 +258,10 @@ public class SensitiveDataMaskingService {
      * 카드번호 마스킹
      */
     public String maskCardNumber(String cardNumber) {
+        if (!maskingConfig.shouldMask()) {
+            return cardNumber; // 개발 환경: 평문 반환
+        }
+        
         if (cardNumber == null || cardNumber.isEmpty()) {
             return cardNumber;
         }

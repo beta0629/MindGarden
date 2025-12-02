@@ -3,7 +3,6 @@ package com.coresolution.consultation.scheduler;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -88,7 +87,7 @@ public class SalaryBatchScheduler {
             for (String tenantId : activeTenantIds) {
                 try {
                     // 테넌트 컨텍스트 설정
-                    tenantContextHolder.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     
                     log.debug("🔄 [SalaryBatch] 테넌트 실행 시작: tenantId={}", tenantId);
                     
@@ -148,7 +147,7 @@ public class SalaryBatchScheduler {
                     
                 } finally {
                     // 테넌트 컨텍스트 정리
-                    tenantContextHolder.clear();
+                    TenantContextHolder.clear();
                 }
             }
             
@@ -212,7 +211,7 @@ public class SalaryBatchScheduler {
             // 테넌트별 배치 상태 확인
             for (String tenantId : activeTenantIds) {
                 try {
-                    tenantContextHolder.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     
                     // 현재 달과 이전 달 배치 상태 확인
                     SalaryBatchService.BatchStatus currentMonthStatus = salaryBatchService.getBatchStatus(
@@ -233,7 +232,7 @@ public class SalaryBatchScheduler {
                     }
                     
                 } finally {
-                    tenantContextHolder.clear();
+                    TenantContextHolder.clear();
                 }
             }
             

@@ -30,4 +30,10 @@ public interface TenantService {
      * @return 활성 상태 여부
      */
     boolean isActiveTenant(String tenantId);
+    
+    /**
+     * 모든 활성 테넌트 ID 목록 조회
+     * @return 활성 테넌트 ID 목록
+     */
+    java.util.List<String> getAllActiveTenantIds();
 }

@@ -37,7 +37,6 @@ public class SessionCleanupScheduler {
     
     private final UserSessionService userSessionService;
     private final TenantService tenantService;
-    private final TenantContextHolder tenantContextHolder;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
     
@@ -67,7 +66,7 @@ public class SessionCleanupScheduler {
             
             for (String tenantId : activeTenantIds) {
                 try {
-                    tenantContextHolder.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     
                     int cleanedCount = userSessionService.cleanupExpiredSessions();
                     totalCleaned += cleanedCount;
@@ -91,7 +90,7 @@ public class SessionCleanupScheduler {
                     );
                     failureCount++;
                 } finally {
-                    tenantContextHolder.clear();
+                    TenantContextHolder.clear();
                 }
             }
             
@@ -136,7 +135,7 @@ public class SessionCleanupScheduler {
             
             for (String tenantId : activeTenantIds) {
                 try {
-                    tenantContextHolder.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     
                     var statistics = userSessionService.getSessionStatistics();
                     
@@ -151,7 +150,7 @@ public class SessionCleanupScheduler {
                 } catch (Exception e) {
                     log.warn("세션 통계 조회 실패: tenantId={}", tenantId, e);
                 } finally {
-                    tenantContextHolder.clear();
+                    TenantContextHolder.clear();
                 }
             }
             

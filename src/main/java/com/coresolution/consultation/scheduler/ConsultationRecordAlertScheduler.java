@@ -40,7 +40,6 @@ public class ConsultationRecordAlertScheduler {
     
     private final PlSqlConsultationRecordAlertService consultationRecordAlertService;
     private final TenantService tenantService;
-    private final TenantContextHolder tenantContextHolder;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
     
@@ -71,7 +70,7 @@ public class ConsultationRecordAlertScheduler {
             
             for (String tenantId : activeTenantIds) {
                 try {
-                    tenantContextHolder.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     
                     Map<String, Object> result = consultationRecordAlertService.checkMissingConsultationRecords(
                         yesterday, null // 전체 지점
@@ -107,7 +106,7 @@ public class ConsultationRecordAlertScheduler {
                     );
                     failureCount++;
                 } finally {
-                    tenantContextHolder.clear();
+                    TenantContextHolder.clear();
                 }
             }
             
@@ -159,7 +158,7 @@ public class ConsultationRecordAlertScheduler {
             
             for (String tenantId : activeTenantIds) {
                 try {
-                    tenantContextHolder.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     
                     Map<String, Object> result = consultationRecordAlertService.autoCreateMissingConsultationRecordAlerts(7);
                     
@@ -193,7 +192,7 @@ public class ConsultationRecordAlertScheduler {
                     );
                     failureCount++;
                 } finally {
-                    tenantContextHolder.clear();
+                    TenantContextHolder.clear();
                 }
             }
             
@@ -245,7 +244,7 @@ public class ConsultationRecordAlertScheduler {
             
             for (String tenantId : activeTenantIds) {
                 try {
-                    tenantContextHolder.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     
                     Map<String, Object> result = consultationRecordAlertService.autoCreateMissingConsultationRecordAlerts(30);
                     
@@ -279,7 +278,7 @@ public class ConsultationRecordAlertScheduler {
                     );
                     failureCount++;
                 } finally {
-                    tenantContextHolder.clear();
+                    TenantContextHolder.clear();
                 }
             }
             

@@ -1,5 +1,4 @@
 package com.coresolution.core.service.impl;
-import com.coresolution.core.context.TenantContextHolder;
 
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
@@ -70,6 +69,24 @@ public class TenantServiceImpl implements TenantService {
         log.debug("테넌트 활성 상태: tenantId={}, isActive={}", tenantId, isActive);
         
         return isActive;
+    }
+    
+    /**
+     * 모든 활성 테넌트 ID 목록 조회
+     * @return 활성 테넌트 ID 목록
+     */
+    @Override
+    public java.util.List<String> getAllActiveTenantIds() {
+        log.debug("모든 활성 테넌트 ID 조회");
+        
+        java.util.List<String> tenantIds = tenantRepository.findAllActive()
+                .stream()
+                .map(Tenant::getTenantId)
+                .collect(java.util.stream.Collectors.toList());
+        
+        log.debug("활성 테넌트 수: {}", tenantIds.size());
+        
+        return tenantIds;
     }
 }
 

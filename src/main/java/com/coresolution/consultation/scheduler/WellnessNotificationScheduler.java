@@ -58,7 +58,6 @@ public class WellnessNotificationScheduler {
     private final DailyHealingContentRepository dailyHealingContentRepository;
     private final HealingContentServiceImpl healingContentService;
     private final TenantService tenantService;
-    private final TenantContextHolder tenantContextHolder;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
     
@@ -91,7 +90,7 @@ public class WellnessNotificationScheduler {
             for (String tenantId : activeTenantIds) {
                 try {
                     // 테넌트 컨텍스트 설정
-                    tenantContextHolder.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     
                     log.debug("🔄 [WellnessNotification] 테넌트 실행 시작: tenantId={}", tenantId);
                     
@@ -113,7 +112,7 @@ public class WellnessNotificationScheduler {
                     failureCount++;
                 } finally {
                     // 테넌트 컨텍스트 정리
-                    tenantContextHolder.clear();
+                    TenantContextHolder.clear();
                 }
             }
             

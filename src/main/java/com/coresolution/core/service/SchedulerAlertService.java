@@ -62,7 +62,8 @@ public class SchedulerAlertService {
         if (successRate < successRateThreshold) {
         try {
             String title = String.format("[스케줄러 성공률 저하] %s", schedulerName);
-            // String message = String.format(
+            /*
+            String message = String.format(
                     "스케줄러 성공률이 %.2f%%로 저하되었습니다. (기준: %.2f%%)\n" +
                     "스케줄러: %s\n" +
                     "현재 성공률: %.2f%%\n" +
@@ -72,8 +73,9 @@ public class SchedulerAlertService {
                     schedulerName,
                     successRate * 100
                 );
+            */
                 
-                log.warn("📧 알림 발송: {}", title);
+            log.warn("📧 알림 발송: {}", title);
                 
                 log.warn("⚠️ 스케줄러 성공률 저하 알림 발송: scheduler={}, successRate={}", 
                     schedulerName, successRate);
@@ -99,7 +101,8 @@ public class SchedulerAlertService {
         
         try {
             String title = String.format("[스케줄러 완전 실패] %s", schedulerName);
-            // String message = String.format(
+            /*
+            String message = String.format(
                 "스케줄러가 모든 테넌트에서 실패했습니다.\n\n" +
                 "스케줄러: %s\n" +
                 "실행 ID: %s\n" +
@@ -111,6 +114,7 @@ public class SchedulerAlertService {
                 totalTenants,
                 errorMessage != null ? errorMessage : "알 수 없음"
             );
+            */
             
             log.warn("📧 알림 발송: {}", title);
             log.error("🚨 스케줄러 완전 실패 알림 발송: scheduler={}, executionId={}, totalTenants={}", 
@@ -136,7 +140,8 @@ public class SchedulerAlertService {
         
         try {
             String title = String.format("[스케줄러 실행 시간 초과] %s", schedulerName);
-            // String message = String.format(
+            /*
+            String message = String.format(
                 "스케줄러 실행 시간이 임계값을 초과했습니다.\n\n" +
                 "스케줄러: %s\n" +
                 "실행 ID: %s\n" +
@@ -150,6 +155,7 @@ public class SchedulerAlertService {
                 thresholdMs,
                 thresholdMs / 1000.0
             );
+            */
             
             log.warn("📧 알림 발송: {}", title);
             log.warn("⏰ 스케줄러 실행 시간 초과 알림 발송: scheduler={}, executionTime={}ms, threshold={}ms", 

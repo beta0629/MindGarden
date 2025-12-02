@@ -66,5 +66,43 @@ public class SchedulerExecutionLog {
     
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+    
+    @Column(name = "processed_count")
+    private Integer processedCount; // 처리된 항목 수
+    
+    // ===== 편의 메서드 =====
+    
+    /**
+     * executedAt은 startedAt의 별칭
+     */
+    public LocalDateTime getExecutedAt() {
+        return startedAt;
+    }
+    
+    public void setExecutedAt(LocalDateTime executedAt) {
+        this.startedAt = executedAt;
+    }
+    
+    /**
+     * jobName은 schedulerName의 별칭
+     */
+    public String getJobName() {
+        return schedulerName;
+    }
+    
+    public void setJobName(String jobName) {
+        this.schedulerName = jobName;
+    }
+    
+    /**
+     * durationMs는 executionTime의 별칭
+     */
+    public Long getDurationMs() {
+        return executionTime;
+    }
+    
+    public void setDurationMs(Long durationMs) {
+        this.executionTime = durationMs;
+    }
 }
 

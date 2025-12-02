@@ -51,5 +51,40 @@ public interface SchedulerExecutionLogRepository extends JpaRepository<Scheduler
         LocalDateTime startDate,
         LocalDateTime endDate
     );
+    
+    /**
+     * 최근 실행 내역 조회
+     */
+    List<SchedulerExecutionLog> findByExecutedAtAfterOrderByExecutedAtDesc(LocalDateTime since);
+    
+    /**
+     * 테넌트별 최근 실행 내역 조회
+     */
+    List<SchedulerExecutionLog> findByTenantIdAndExecutedAtAfterOrderByExecutedAtDesc(String tenantId, LocalDateTime since);
+    
+    /**
+     * 테넌트별 특정 시점 이후 조회
+     */
+    List<SchedulerExecutionLog> findByTenantIdAndExecutedAtAfter(String tenantId, LocalDateTime since);
+    
+    /**
+     * 기간별 조회
+     */
+    List<SchedulerExecutionLog> findByExecutedAtBetween(LocalDateTime start, LocalDateTime end);
+    
+    /**
+     * 테넌트별 기간별 조회
+     */
+    List<SchedulerExecutionLog> findByTenantIdAndExecutedAtBetween(String tenantId, LocalDateTime start, LocalDateTime end);
+    
+    /**
+     * 상태별 조회
+     */
+    List<SchedulerExecutionLog> findByStatusOrderByExecutedAtDesc(String status);
+    
+    /**
+     * 테넌트별 상태별 조회
+     */
+    List<SchedulerExecutionLog> findByTenantIdAndStatusOrderByExecutedAtDesc(String tenantId, String status);
 }
 

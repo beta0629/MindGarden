@@ -295,11 +295,11 @@ test_widget_operations() {
     
     # 대시보드 ID 조회
     log "대시보드 ID 조회 중..."
-    DASHBOARD_RESPONSE=$(curl -s -X GET "${API_URL}/api/v1/dashboards" \
+    DASHBOARD_RESPONSE=$(curl -s -X GET "${API_URL}/api/v1/tenant/dashboards" \
         -H "X-Tenant-ID: ${TENANT_ID}" \
         -b "$COOKIE_FILE")
     
-    DASHBOARD_ID=$(echo "$DASHBOARD_RESPONSE" | grep -o '"dashboardId":[0-9]*' | head -1 | cut -d':' -f2)
+    DASHBOARD_ID=$(echo "$DASHBOARD_RESPONSE" | grep -o '"dashboardId":"[^"]*"' | head -1 | cut -d'"' -f4)
     
     if [ -z "$DASHBOARD_ID" ]; then
         fail "대시보드 ID 조회 실패"
@@ -327,7 +327,10 @@ EOF
         -d "$ADD_PAYLOAD")
     
     if echo "$ADD_RESPONSE" | grep -q '"success":true'; then
-        WIDGET_ID=$(echo "$ADD_RESPONSE" | grep -o '"widgetId":[0-9]*' | cut -d':' -f2)
+        WIDGET_ID=$(echo "$ADD_RESPONSE" | grep -o '"widgetId":"[^"]*"' | cut -d'"' -f4)
+        if [ -z "$WIDGET_ID" ]; then
+            WIDGET_ID=$(echo "$ADD_RESPONSE" | grep -o '"widgetId":[0-9]*' | cut -d':' -f2)
+        fi
         success "독립 위젯 추가 성공: widgetId=$WIDGET_ID"
     else
         warn "독립 위젯 추가 실패 (CUSTOM_CHART 타입이 없을 수 있음)"
@@ -388,7 +391,11 @@ test_widget_permissions() {
         -H "X-Tenant-ID: ${TENANT_ID}" \
         -b "$COOKIE_FILE")
     
-    FIRST_WIDGET_ID=$(echo "$WIDGETS_RESPONSE" | grep -o '"widgetId":[0-9]*' | head -1 | cut -d':' -f2)
+    # widgetId는 숫자 또는 UUID일 수 있음
+    FIRST_WIDGET_ID=$(echo "$WIDGETS_RESPONSE" | grep -o '"widgetId":"[^"]*"' | head -1 | cut -d'"' -f4)
+    if [ -z "$FIRST_WIDGET_ID" ]; then
+        FIRST_WIDGET_ID=$(echo "$WIDGETS_RESPONSE" | grep -o '"widgetId":[0-9]*' | head -1 | cut -d':' -f2)
+    fi
     
     if [ -z "$FIRST_WIDGET_ID" ]; then
         fail "위젯 ID 조회 실패"

@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
@@ -65,6 +65,7 @@ public class AiAnomalyDetection {
     private String details;
     
     @Column(name = "is_false_positive")
+    @Builder.Default
     private Boolean isFalsePositive = false;
     
     @Column(name = "resolved_at")

@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
@@ -64,9 +64,11 @@ public class SecurityThreatDetection {
     private Double confidenceScore; // 0-1
     
     @Column(name = "blocked")
+    @Builder.Default
     private Boolean blocked = false;
     
     @Column(name = "auto_blocked")
+    @Builder.Default
     private Boolean autoBlocked = false;
     
     @Column(name = "details", columnDefinition = "JSON")

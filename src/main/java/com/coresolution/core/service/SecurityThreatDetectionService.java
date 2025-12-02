@@ -2,7 +2,6 @@ package com.coresolution.core.service;
 
 import com.coresolution.core.domain.SecurityThreatDetection;
 import com.coresolution.core.repository.SecurityThreatDetectionRepository;
-import com.coresolution.core.security.LoginSecurityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -25,7 +24,6 @@ public class SecurityThreatDetectionService {
     
     private final SecurityThreatDetectionRepository threatDetectionRepository;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final LoginSecurityService loginSecurityService;
     
     private static final int BRUTE_FORCE_THRESHOLD = 5; // 5회
     private static final int DDOS_THRESHOLD = 100; // 100회/분
@@ -79,12 +77,13 @@ public class SecurityThreatDetectionService {
             String key = "ddos:count:" + sourceIp;
             Long count = redisTemplate.opsForValue().increment(key);
             
-            if (count == 1) {
+            if (count != null && count == 1) {
                 redisTemplate.expire(key, 1, TimeUnit.MINUTES);
             }
             
             if (count != null && count > DDOS_THRESHOLD) {
-                double confidenceScore = Math.min((double) count / (DDOS_THRESHOLD * 2), 1.0);
+                long countValue = count; // null 체크 후 언박싱
+                double confidenceScore = Math.min((double) countValue / (DDOS_THRESHOLD * 2), 1.0);
                 String severity = getSeverity(confidenceScore);
                 
                 SecurityThreatDetection threat = SecurityThreatDetection.builder()
@@ -93,7 +92,7 @@ public class SecurityThreatDetectionService {
                     .severity(severity)
                     .sourceIp(sourceIp)
                     .targetUrl(targetUrl)
-                    .attackPattern(String.format("1분간 %d회 요청", count))
+                    .attackPattern(String.format("1분간 %d회 요청", countValue))
                     .confidenceScore(confidenceScore)
                     .blocked(false)
                     .autoBlocked(false)

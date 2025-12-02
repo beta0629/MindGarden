@@ -18,9 +18,79 @@ CoreSolution 플랫폼의 시스템 명칭 통일 표준입니다. MindGarden에
 
 ## 🎯 시스템 명칭 원칙
 
+### ⭐ 공식 표준: CoreSolution (코어솔루션)
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  공식 시스템 명칭: CoreSolution (코어솔루션)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+영문 명칭: CoreSolution
+한글 명칭: 코어솔루션
+영문 약자: CS
+로마자 표기: coresolution (소문자, 공백 없음)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**✅ 필수 사용 범위**:
+- ✅ 플랫폼 전체 명칭
+- ✅ 시스템 공통코드
+- ✅ 공통 컴포넌트
+- ✅ 데이터베이스 스키마
+- ✅ API 엔드포인트
+- ✅ 패키지명
+- ✅ 프로젝트 문서
+- ✅ 환경 변수
+- ✅ 로그 메시지
+
+**📋 표준 사용 예시**:
+```java
+// ✅ 패키지명 (필수)
+com.coresolution.core
+com.coresolution.consultation
+com.coresolution.ops
+
+// ✅ 클래스명 (필수)
+CoreSolutionApplication
+CoreSolutionConfig
+CoreSolutionConstants
+
+// ✅ 데이터베이스명 (필수)
+core_solution
+core_solution_ops
+
+// ✅ 환경 변수 (필수)
+CS_DB_URL
+CS_JWT_SECRET
+CORESOLUTION_API_KEY
+
+// ✅ 로그 메시지 (필수)
+log.info("CoreSolution 플랫폼 시작");
+log.info("코어솔루션 테넌트 생성 완료");
+```
+
+**❌ 금지 사항**:
+```java
+// ❌ 금지 - MindGarden을 시스템 명칭으로 사용
+com.mindgarden.core          // 금지
+MindGardenApplication        // 금지
+mindgarden_db                // 금지
+
+// ❌ 금지 - 임의 약어 사용
+com.cs.core                  // 금지
+CSApp                        // 금지
+cs_system                    // 금지
+
+// ❌ 금지 - 혼용
+CoreSolution + MindGarden    // 금지
+```
+
+---
+
 ### 1. 플랫폼 명칭
 
-#### CoreSolution (코어솔루션)
+#### CoreSolution (코어솔루션) - 공식 표준 ⭐
 ```
 공식 명칭: CoreSolution
 한글 명칭: 코어솔루션
@@ -529,17 +599,51 @@ OPS_SERVER_PORT=8080
 
 ## 🚫 금지 사항
 
-### 1. 혼용 금지
+### ⭐ 중요: CoreSolution 표준 준수 필수
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  모든 시스템 명칭은 CoreSolution 표준을 따라야 합니다
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### 1. 시스템 명칭 혼용 금지
+```
+❌ 절대 금지:
+- MindGarden을 시스템 명칭으로 사용
+- MindGarden과 CoreSolution 혼용
+- 임의의 약어 사용 (CS_APP, CORE_SYS 등)
+
+✅ 필수 준수:
+- CoreSolution으로 통일
+- 공식 약자 CS 사용
+- 일관된 표기법 유지
+```
+
+**예시**:
+```java
+// ❌ 금지
+public class MindGardenService { }
+String systemName = "MindGarden";
+log.info("MindGarden 시스템 시작");
+
+// ✅ 필수
+public class CoreSolutionService { }
+String systemName = "CoreSolution";
+log.info("CoreSolution 플랫폼 시작");
+```
+
+### 2. 용어 혼용 금지
 ```
 ❌ 금지:
-- MindGarden과 CoreSolution 혼용
 - Onboarding과 Registration 혼용
 - Ops와 Admin 혼용
+- Tenant와 Client 혼용
 
 ✅ 권장:
-- CoreSolution으로 통일
 - Onboarding으로 통일
 - Ops로 통일
+- Tenant로 통일
 ```
 
 ### 2. 임의 명칭 사용 금지

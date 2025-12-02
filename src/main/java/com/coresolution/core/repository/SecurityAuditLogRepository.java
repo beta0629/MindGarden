@@ -47,5 +47,35 @@ public interface SecurityAuditLogRepository extends JpaRepository<SecurityAuditL
         String result,
         LocalDateTime since
     );
+    
+    /**
+     * 최근 감사 로그 조회
+     */
+    List<SecurityAuditLog> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime since);
+    
+    /**
+     * 테넌트별 최근 감사 로그 조회
+     */
+    List<SecurityAuditLog> findByTenantIdAndCreatedAtAfterOrderByCreatedAtDesc(String tenantId, LocalDateTime since);
+    
+    /**
+     * 테넌트별 특정 시점 이후 조회
+     */
+    List<SecurityAuditLog> findByTenantIdAndCreatedAtAfter(String tenantId, LocalDateTime since);
+    
+    /**
+     * 기간별 조회
+     */
+    List<SecurityAuditLog> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+    
+    /**
+     * 테넌트별 기간별 조회
+     */
+    List<SecurityAuditLog> findByTenantIdAndCreatedAtBetween(String tenantId, LocalDateTime start, LocalDateTime end);
+    
+    /**
+     * 테넌트별 이벤트 타입별 조회
+     */
+    List<SecurityAuditLog> findByTenantIdAndEventTypeOrderByCreatedAtDesc(String tenantId, String eventType);
 }
 

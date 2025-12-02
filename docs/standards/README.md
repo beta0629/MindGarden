@@ -209,6 +209,73 @@ Stored Procedure 작성 및 관리 표준입니다.
 
 ---
 
+### 12. [공통 알림 시스템 표준](./NOTIFICATION_SYSTEM_STANDARD.md)
+**우선순위**: ⭐⭐⭐⭐⭐ (최우선)
+
+통합 알림 시스템 표준입니다.
+
+**주요 내용**:
+- ✅ UnifiedNotification 컴포넌트
+- ✅ NotificationManager 유틸리티
+- ✅ 알림 타입 (toast, modal, banner)
+- ✅ 알림 변형 (success, error, warning, info)
+- ✅ 백엔드 알림 서비스 (카카오, SMS, 이메일)
+- ✅ 시스템 내 알림 (Alert 테이블)
+- ✅ **모바일 푸시 알림 (앱 개발용)**
+  * FCM/APNs 통합
+  * 푸시 알림 타입 및 우선순위
+  * 토큰 관리 및 토픽 구독
+  * 딥링크 규칙
+  * 사용자 푸시 설정
+
+**적용 범위**: 모든 알림 (웹, 모바일)
+
+---
+
+### 13. [공통코드 시스템 표준](./COMMON_CODE_SYSTEM_STANDARD.md)
+**우선순위**: ⭐⭐⭐⭐⭐ (최우선)
+
+시스템 공통코드와 테넌트 공통코드 관리 표준입니다.
+
+**주요 내용**:
+- ✅ 단일 테이블 전략 (tenant_id 구분)
+- ✅ CORE 코드 (시스템 전역, tenant_id = NULL)
+- ✅ TENANT 코드 (테넌트별, tenant_id = UUID)
+- ✅ CommonCode 엔티티 구조
+- ✅ CodeGroupMetadata 엔티티
+- ✅ 공통코드 조회 로직 (테넌트 우선)
+- ✅ 테넌트 생성 시 기본 코드 복사
+- ✅ 백엔드 하드코딩 금지 원칙
+- ✅ 프론트엔드 API 유틸리티
+
+**적용 범위**: 모든 공통코드 관리
+
+---
+
+### 14. [시스템 명칭 통일 표준](./SYSTEM_NAMING_STANDARD.md)
+**우선순위**: ⭐⭐⭐⭐⭐ (최우선)
+
+CoreSolution 플랫폼의 시스템 명칭 통일 표준입니다.
+
+**주요 내용**:
+- ✅ MindGarden → CoreSolution 명칭 변경
+- ✅ Core System vs Ops System 구분
+- ✅ 온보딩 시스템 명칭 표준
+  * Onboarding Request (온보딩 요청)
+  * Onboarding Approval (온보딩 승인)
+  * Onboarding Process (온보딩 프로세스)
+- ✅ Ops 시스템 명칭 표준
+  * Backend Ops (백엔드 운영 도구)
+  * Frontend Ops (프론트엔드 운영 도구)
+  * Trinity (트리니티 홈페이지)
+- ✅ 폴더 구조 표준
+- ✅ 패키지 구조 표준
+- ✅ 네이밍 규칙 (DB, API, 환경변수)
+
+**적용 범위**: 전체 프로젝트
+
+---
+
 ## 🎯 표준 준수 원칙
 
 ### 필수 준수 사항

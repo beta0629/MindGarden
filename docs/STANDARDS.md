@@ -64,6 +64,21 @@
     - 에러 핸들러
     - 트랜잭션 관리
 
+12. **[공통 알림 시스템 표준](./standards/NOTIFICATION_SYSTEM_STANDARD.md)** ⭐⭐⭐⭐⭐
+    - UnifiedNotification 컴포넌트
+    - 백엔드 알림 서비스
+    - 모바일 푸시 알림 (FCM/APNs)
+
+13. **[공통코드 시스템 표준](./standards/COMMON_CODE_SYSTEM_STANDARD.md)** ⭐⭐⭐⭐⭐
+    - CORE/TENANT 코드 구분
+    - 단일 테이블 전략
+    - 하드코딩 금지 원칙
+
+14. **[시스템 명칭 통일 표준](./standards/SYSTEM_NAMING_STANDARD.md)** ⭐⭐⭐⭐⭐
+    - MindGarden → CoreSolution
+    - 온보딩 시스템 명칭
+    - Ops 시스템 명칭
+
 ---
 
 ## 📋 핵심 원칙

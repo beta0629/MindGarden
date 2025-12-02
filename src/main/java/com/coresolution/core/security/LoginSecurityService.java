@@ -3,6 +3,7 @@ package com.coresolution.core.security;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 로그인 보안 서비스
+ * Redis가 설정되어 있을 때만 활성화됩니다.
  * 
  * @author CoreSolution
  * @version 1.0.0
@@ -19,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(RedisTemplate.class)
 public class LoginSecurityService {
     
     private final RedisTemplate<String, Object> redisTemplate;

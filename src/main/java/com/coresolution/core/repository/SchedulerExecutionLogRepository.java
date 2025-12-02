@@ -1,11 +1,10 @@
 package com.coresolution.core.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import com.coresolution.core.domain.SchedulerExecutionLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 스케줄러 실행 로그 Repository
@@ -55,36 +54,36 @@ public interface SchedulerExecutionLogRepository extends JpaRepository<Scheduler
     /**
      * 최근 실행 내역 조회
      */
-    List<SchedulerExecutionLog> findByExecutedAtAfterOrderByExecutedAtDesc(LocalDateTime since);
+    List<SchedulerExecutionLog> findByStartedAtAfterOrderByStartedAtDesc(LocalDateTime since);
     
     /**
      * 테넌트별 최근 실행 내역 조회
      */
-    List<SchedulerExecutionLog> findByTenantIdAndExecutedAtAfterOrderByExecutedAtDesc(String tenantId, LocalDateTime since);
+    List<SchedulerExecutionLog> findByTenantIdAndStartedAtAfterOrderByStartedAtDesc(String tenantId, LocalDateTime since);
     
     /**
      * 테넌트별 특정 시점 이후 조회
      */
-    List<SchedulerExecutionLog> findByTenantIdAndExecutedAtAfter(String tenantId, LocalDateTime since);
+    List<SchedulerExecutionLog> findByTenantIdAndStartedAtAfter(String tenantId, LocalDateTime since);
     
     /**
      * 기간별 조회
      */
-    List<SchedulerExecutionLog> findByExecutedAtBetween(LocalDateTime start, LocalDateTime end);
+    List<SchedulerExecutionLog> findByStartedAtBetween(LocalDateTime start, LocalDateTime end);
     
     /**
      * 테넌트별 기간별 조회
      */
-    List<SchedulerExecutionLog> findByTenantIdAndExecutedAtBetween(String tenantId, LocalDateTime start, LocalDateTime end);
+    List<SchedulerExecutionLog> findByTenantIdAndStartedAtBetween(String tenantId, LocalDateTime start, LocalDateTime end);
     
     /**
      * 상태별 조회
      */
-    List<SchedulerExecutionLog> findByStatusOrderByExecutedAtDesc(String status);
+    List<SchedulerExecutionLog> findByStatusOrderByStartedAtDesc(String status);
     
     /**
      * 테넌트별 상태별 조회
      */
-    List<SchedulerExecutionLog> findByTenantIdAndStatusOrderByExecutedAtDesc(String tenantId, String status);
+    List<SchedulerExecutionLog> findByTenantIdAndStatusOrderByStartedAtDesc(String tenantId, String status);
 }
 

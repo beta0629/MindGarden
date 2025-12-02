@@ -1,5 +1,10 @@
 package com.coresolution.core.service;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import com.coresolution.core.domain.WidgetDefinition;
 import com.coresolution.core.domain.WidgetGroup;
 import com.coresolution.core.dto.WidgetDefinitionResponse;
@@ -7,14 +12,10 @@ import com.coresolution.core.dto.WidgetGroupResponse;
 import com.coresolution.core.repository.WidgetDefinitionRepository;
 import com.coresolution.core.repository.WidgetGroupRepository;
 import com.coresolution.core.security.TenantAccessControlService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 위젯 그룹 서비스

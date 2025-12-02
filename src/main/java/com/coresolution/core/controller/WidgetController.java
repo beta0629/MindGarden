@@ -1,6 +1,7 @@
 package com.coresolution.core.controller;
 
 import com.coresolution.consultation.service.CommonCodeService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.AddWidgetRequest;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.WidgetDefinitionResponse;
@@ -47,9 +48,21 @@ public class WidgetController {
      */
     @GetMapping("/groups")
     public ResponseEntity<ApiResponse<List<WidgetGroupResponse>>> getWidgetGroups(
-            @RequestHeader("X-Tenant-ID") String tenantId,
+            @RequestHeader(value = "X-Tenant-ID", required = false) String tenantId,
             @RequestParam String businessType,
             @RequestParam String roleCode) {
+        
+        // 헤더에 없으면 현재 컨텍스트에서 가져오기
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
+        
+        // 테넌트 ID가 여전히 없으면 오류 반환
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("테넌트 ID가 제공되지 않았습니다");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<List<WidgetGroupResponse>>error("테넌트 ID가 필요합니다"));
+        }
         
         log.debug("위젯 그룹 조회 API: tenantId={}, businessType={}, roleCode={}", 
                 tenantId, businessType, roleCode);
@@ -100,9 +113,21 @@ public class WidgetController {
      */
     @GetMapping("/grouped")
     public ResponseEntity<ApiResponse<Map<String, List<WidgetDefinitionResponse>>>> getGroupedWidgets(
-            @RequestHeader("X-Tenant-ID") String tenantId,
+            @RequestHeader(value = "X-Tenant-ID", required = false) String tenantId,
             @RequestParam String businessType,
             @RequestParam String roleCode) {
+        
+        // 헤더에 없으면 현재 컨텍스트에서 가져오기
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
+        
+        // 테넌트 ID가 여전히 없으면 오류 반환
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("테넌트 ID가 제공되지 않았습니다");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<Map<String, List<WidgetDefinitionResponse>>>error("테넌트 ID가 필요합니다"));
+        }
         
         log.debug("그룹화된 위젯 조회 API: tenantId={}, businessType={}, roleCode={}", 
                 tenantId, businessType, roleCode);
@@ -154,9 +179,14 @@ public class WidgetController {
     @PostMapping("/dashboards/{dashboardId}/widgets")
     public ResponseEntity<ApiResponse<String>> addWidget(
             @PathVariable String dashboardId,
-            @RequestHeader("X-Tenant-ID") String tenantId,
+            @RequestHeader(value = "X-Tenant-ID", required = false) String tenantId,
             @Valid @RequestBody AddWidgetRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
+        
+        // 헤더에 없으면 현재 컨텍스트에서 가져오기
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
         
         log.info("위젯 추가 API: dashboardId={}, tenantId={}, widgetType={}, user={}", 
                 dashboardId, tenantId, request.getWidgetType(), userDetails.getUsername());
@@ -198,8 +228,13 @@ public class WidgetController {
     public ResponseEntity<ApiResponse<String>> deleteWidget(
             @PathVariable String dashboardId,
             @PathVariable String widgetId,
-            @RequestHeader("X-Tenant-ID") String tenantId,
+            @RequestHeader(value = "X-Tenant-ID", required = false) String tenantId,
             @AuthenticationPrincipal UserDetails userDetails) {
+        
+        // 헤더에 없으면 현재 컨텍스트에서 가져오기
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = TenantContextHolder.getTenantId();
+        }
         
         log.info("위젯 삭제 API: dashboardId={}, widgetId={}, tenantId={}, user={}", 
                 dashboardId, widgetId, tenantId, userDetails.getUsername());

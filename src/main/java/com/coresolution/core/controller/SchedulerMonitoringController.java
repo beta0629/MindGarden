@@ -5,7 +5,10 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.domain.SchedulerExecutionLog;
+import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.repository.SchedulerExecutionLogRepository;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,12 +16,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.core.domain.SchedulerExecutionLog;
-import com.coresolution.core.dto.ApiResponse;
-import com.coresolution.core.repository.SchedulerExecutionLogRepository;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,13 +59,13 @@ public class SchedulerMonitoringController {
             if (targetTenantId != null) {
                 // 테넌트별 조회
                 executions = executionLogRepository
-                    .findByTenantIdAndExecutedAtAfterOrderByExecutedAtDesc(
+                    .findByTenantIdAndStartedAtAfterOrderByStartedAtDesc(
                         targetTenantId, since
                     );
             } else {
                 // 전체 조회 (시스템 관리자)
                 executions = executionLogRepository
-                    .findByExecutedAtAfterOrderByExecutedAtDesc(since);
+                    .findByStartedAtAfterOrderByStartedAtDesc(since);
             }
             
             // limit 적용
@@ -105,10 +102,10 @@ public class SchedulerMonitoringController {
             List<SchedulerExecutionLog> todayExecutions;
             if (targetTenantId != null) {
                 todayExecutions = executionLogRepository
-                    .findByTenantIdAndExecutedAtAfter(targetTenantId, todayStart);
+                    .findByTenantIdAndStartedAtAfter(targetTenantId, todayStart);
             } else {
                 todayExecutions = executionLogRepository
-                    .findByExecutedAtAfterOrderByExecutedAtDesc(todayStart);
+                    .findByStartedAtAfterOrderByStartedAtDesc(todayStart);
             }
             
             // 통계 계산
@@ -171,10 +168,10 @@ public class SchedulerMonitoringController {
             List<SchedulerExecutionLog> executions;
             if (targetTenantId != null) {
                 executions = executionLogRepository
-                    .findByTenantIdAndExecutedAtBetween(targetTenantId, start, end);
+                    .findByTenantIdAndStartedAtBetween(targetTenantId, start, end);
             } else {
                 executions = executionLogRepository
-                    .findByExecutedAtBetween(start, end);
+                    .findByStartedAtBetween(start, end);
             }
             
             // 통계 계산
@@ -246,10 +243,10 @@ public class SchedulerMonitoringController {
             List<SchedulerExecutionLog> failures;
             if (targetTenantId != null) {
                 failures = executionLogRepository
-                    .findByTenantIdAndStatusOrderByExecutedAtDesc(targetTenantId, "FAILED");
+                    .findByTenantIdAndStatusOrderByStartedAtDesc(targetTenantId, "FAILED");
             } else {
                 failures = executionLogRepository
-                    .findByStatusOrderByExecutedAtDesc("FAILED");
+                    .findByStatusOrderByStartedAtDesc("FAILED");
             }
             
             // limit 적용

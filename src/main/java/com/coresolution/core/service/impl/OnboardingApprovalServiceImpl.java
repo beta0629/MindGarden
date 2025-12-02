@@ -47,8 +47,19 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         
         Map<String, Object> result = new HashMap<>();
         
-        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
-             CallableStatement cs = connection.prepareCall(
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection()) {
+            
+            // Collation 설정 (프로시저 실행 전)
+            try (java.sql.Statement stmt = connection.createStatement()) {
+                stmt.execute("SET collation_connection = 'utf8mb4_unicode_ci'");
+                stmt.execute("SET collation_database = 'utf8mb4_unicode_ci'");
+                log.info("✅ Collation 설정 완료: utf8mb4_unicode_ci");
+            } catch (SQLException e) {
+                log.error("❌ Collation 설정 실패: {}", e.getMessage());
+                throw e;
+            }
+            
+            try (CallableStatement cs = connection.prepareCall(
                  "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // IN 파라미터 설정 - UUID를 BINARY(16)으로 변환
@@ -99,11 +110,24 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             result.put("success", success);
             result.put("message", message);
             
+            // 프로시저 성공 여부와 관계없이 관리자 계정 생성 시도 (프로시저 문제 대응)
+            if (contactEmail != null && !contactEmail.trim().isEmpty() 
+                && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
+                try {
+                    createAdminAccountDirectly(tenantId, contactEmail, tenantName, adminPasswordHash, approvedBy);
+                    log.info("관리자 계정 생성 완료 (Java 직접 생성)");
+                } catch (Exception e) {
+                    log.warn("관리자 계정 직접 생성 실패 (프로시저에서 이미 생성되었을 수 있음): {}", e.getMessage());
+                }
+            }
+            
             if (success) {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
             } else {
                 log.error("온보딩 승인 프로세스 실패: {}", message);
             }
+            
+            } // CallableStatement 닫기
             
         } catch (SQLException e) {
             log.error("온보딩 승인 프로세스 중 SQL 오류 발생: {}", e.getMessage(), e);
@@ -132,6 +156,53 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         bb.putLong(uuid.getMostSignificantBits());
         bb.putLong(uuid.getLeastSignificantBits());
         return bb.array();
+    }
+    
+    /**
+     * 관리자 계정을 직접 생성 (프로시저 실패 시 fallback)
+     */
+    private void createAdminAccountDirectly(String tenantId, String contactEmail, 
+                                            String tenantName, String adminPasswordHash, String approvedBy) {
+        log.info("관리자 계정 직접 생성 시작: tenantId={}, email={}", tenantId, contactEmail);
+        
+        // 이미 존재하는지 확인
+        Integer existingCount = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM users WHERE tenant_id = ? AND email = ? AND role = 'ADMIN' AND (is_deleted IS NULL OR is_deleted = FALSE)",
+            Integer.class,
+            tenantId, contactEmail.toLowerCase().trim()
+        );
+        
+        if (existingCount != null && existingCount > 0) {
+            log.info("관리자 계정이 이미 존재합니다: {}", contactEmail);
+            return;
+        }
+        
+        // 사용자명 생성 (이메일의 로컬 파트)
+        String username = contactEmail.substring(0, contactEmail.indexOf('@'));
+        String email = contactEmail.toLowerCase().trim();
+        
+        // 관리자 계정 생성
+        jdbcTemplate.update(
+            "INSERT INTO users (" +
+            "    tenant_id, username, email, password, name, role, " +
+            "    phone, is_active, is_email_verified, is_social_account, " +
+            "    created_at, updated_at, created_by, updated_by, is_deleted, version" +
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?, FALSE, 0)",
+            tenantId,
+            username,
+            email,
+            adminPasswordHash,
+            tenantName + " 관리자",
+            "ADMIN",
+            null, // phone
+            true, // is_active
+            true, // is_email_verified
+            false, // is_social_account
+            approvedBy,
+            approvedBy
+        );
+        
+        log.info("관리자 계정 생성 완료: email={}, tenantId={}", email, tenantId);
     }
 }
 

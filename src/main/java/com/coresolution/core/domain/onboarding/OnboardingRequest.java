@@ -30,6 +30,7 @@ import lombok.experimental.SuperBuilder;
 public class OnboardingRequest {
     
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", columnDefinition = "BINARY(16)")
     private java.util.UUID id;
     
@@ -82,5 +83,26 @@ public class OnboardingRequest {
     
     @Column(name = "business_type", length = 50)
     private String businessType; // 업종 타입 (동적 카테고리 시스템 사용)
+    
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = java.time.LocalDateTime.now();
+        }
+        if (this.updatedAt == null) {
+            this.updatedAt = java.time.LocalDateTime.now();
+        }
+        if (this.isDeleted == null) {
+            this.isDeleted = false;
+        }
+        if (this.version == null) {
+            this.version = 0L;
+        }
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = java.time.LocalDateTime.now();
+    }
 }
 

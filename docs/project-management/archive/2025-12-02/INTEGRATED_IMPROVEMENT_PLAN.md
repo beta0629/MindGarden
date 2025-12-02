@@ -737,6 +737,8 @@ GET /api/bundle/billing-data?tenantId=xxx
 
 1. [상담소 위젯 의존성 분석](./CONSULTATION_CENTER_WIDGET_DEPENDENCY_ANALYSIS.md)
 2. [멀티 비즈니스 타입 시스템 재설계](./MULTI_BUSINESS_TYPE_SYSTEM_REDESIGN.md)
-3. [비즈니스 타입 시스템](../../architecture/BUSINESS_TYPE_SYSTEM.md)
-4. [업종별 컴포넌트 분리](../2025-11-26/BUSINESS_TYPE_COMPONENT_SEPARATION.md)
+3. [업종별 특화 서비스 아키텍처](./BUSINESS_SPECIFIC_SERVICES_ARCHITECTURE.md)
+4. [위젯 그룹화 및 자동 생성 시스템](./WIDGET_GROUPING_AND_AUTO_GENERATION.md)
+5. [비즈니스 타입 시스템](../../architecture/BUSINESS_TYPE_SYSTEM.md)
+6. [업종별 컴포넌트 분리](../2025-11-26/BUSINESS_TYPE_COMPONENT_SEPARATION.md)
 

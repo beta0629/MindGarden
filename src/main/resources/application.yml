@@ -245,6 +245,28 @@ openai:
     url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
   model: ${OPENAI_MODEL:gpt-3.5-turbo}  # gpt-3.5-turbo 또는 gpt-4
 
+# AI 모니터링 설정 (하이브리드 방식)
+ai:
+  monitoring:
+    enabled: ${AI_MONITORING_ENABLED:false}  # AI 모니터링 활성화 여부 (기본: 비활성화)
+    hybrid:
+      enabled: true  # 하이브리드 모드 (통계 + AI)
+      # 1차 필터링: 통계 기반 임계값
+      statistical-threshold:
+        cpu: 70.0      # CPU 70% 이상일 때만 AI 분석 고려
+        memory: 75.0   # 메모리 75% 이상일 때만 AI 분석 고려
+        jvm: 80.0      # JVM 80% 이상일 때만 AI 분석 고려
+      # 2차 분석: AI 호출 조건
+      ai-trigger:
+        consecutive-violations: 3  # 연속 3회 임계값 초과 시 AI 호출
+        severity-threshold: "MEDIUM"  # MEDIUM 이상 심각도일 때만 AI 호출
+        cooldown-minutes: 30  # AI 호출 후 30분간 재호출 방지 (비용 절감)
+    # 비용 관리
+    cost-control:
+      daily-limit: 100  # 일일 AI 호출 최대 횟수
+      monthly-budget: 50.0  # 월 예산 (USD)
+      alert-threshold: 80  # 예산 80% 도달 시 알림
+
 # 온보딩 자동 승인 설정
 onboarding:
   auto-approval:

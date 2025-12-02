@@ -59,7 +59,13 @@ public class AiAnomalyDetection {
     private Double deviation;
     
     @Column(name = "model_used", length = 50)
-    private String modelUsed; // ISOLATION_FOREST, LSTM, STATISTICAL
+    private String modelUsed; // OPENAI_GPT, ISOLATION_FOREST, LSTM, STATISTICAL
+    
+    @Column(name = "ai_analysis", columnDefinition = "TEXT")
+    private String aiAnalysis; // AI 모델의 분석 결과
+    
+    @Column(name = "ai_recommendation", columnDefinition = "TEXT")
+    private String aiRecommendation; // AI 모델의 권장 조치사항
     
     @Column(name = "details", columnDefinition = "JSON")
     private String details;

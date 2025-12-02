@@ -1,22 +1,33 @@
 package com.coresolution.core.service;
 
+import com.coresolution.core.config.AIMonitoringConfig;
 import com.coresolution.core.domain.AiAnomalyDetection;
 import com.coresolution.core.domain.SystemMetric;
 import com.coresolution.core.repository.AiAnomalyDetectionRepository;
 import com.coresolution.core.repository.SystemMetricRepository;
+import com.coresolution.core.service.OpenAIMonitoringService.AnomalyAnalysisResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * AI 이상 탐지 서비스
+ * AI 이상 탐지 서비스 (하이브리드 방식)
+ * 
+ * 전략:
+ * 1. 1차 필터링: 통계 기반 임계값 체크 (빠르고 저렴)
+ * 2. 2차 분석: 의심스러운 경우에만 AI 분석 (정확하지만 비용 발생)
+ * 3. 비용 관리: 일일 호출 제한, 쿨다운 적용
  * 
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0 (Hybrid)
  * @since 2025-12-02
  */
 @Slf4j
@@ -26,6 +37,20 @@ public class AnomalyDetectionService {
     
     private final SystemMetricRepository systemMetricRepository;
     private final AiAnomalyDetectionRepository anomalyDetectionRepository;
+    private final AIMonitoringConfig aiConfig;
+    
+    @Autowired(required = false)
+    private OpenAIMonitoringService openAIMonitoringService;
+    
+    // 연속 위반 카운터 (메트릭 타입별)
+    private final Map<String, Integer> consecutiveViolations = new HashMap<>();
+    
+    // 마지막 AI 호출 시간 (메트릭 타입별)
+    private final Map<String, LocalDateTime> lastAICall = new HashMap<>();
+    
+    // 일일 AI 호출 카운터
+    private final AtomicInteger dailyAICallCount = new AtomicInteger(0);
+    private LocalDateTime lastResetDate = LocalDateTime.now();
     
     // 임계값 설정
     private static final double CPU_THRESHOLD = 80.0; // 80%
@@ -51,137 +76,231 @@ public class AnomalyDetectionService {
     }
     
     /**
-     * CPU 이상 탐지
+     * CPU 이상 탐지 (하이브리드 방식)
+     * 1단계: 통계 기반 필터링
+     * 2단계: 조건 충족 시 AI 분석
      */
     private void detectCpuAnomaly() {
+        detectAnomalyHybrid("CPU_LOAD", CPU_THRESHOLD, 
+            aiConfig.getHybrid().getStatisticalThreshold().getCpu());
+    }
+    
+    /**
+     * 하이브리드 이상 탐지 핵심 로직
+     */
+    private void detectAnomalyHybrid(String metricType, double criticalThreshold, double aiTriggerThreshold) {
         try {
             LocalDateTime since = LocalDateTime.now().minusMinutes(10);
             List<SystemMetric> metrics = systemMetricRepository
-                .findByMetricTypeAndCollectedAtAfterOrderByCollectedAtDesc("CPU_LOAD", since);
+                .findByMetricTypeAndCollectedAtAfterOrderByCollectedAtDesc(metricType, since);
             
             if (metrics.isEmpty()) {
+                resetConsecutiveViolations(metricType);
                 return;
             }
             
-            // 최근 평균 계산
+            // 평균값 계산
             double avgValue = metrics.stream()
                 .mapToDouble(SystemMetric::getMetricValue)
                 .average()
                 .orElse(0.0);
             
-            // 임계값 초과 확인
-            if (avgValue > CPU_THRESHOLD) {
+            // 1단계: 통계 기반 필터링
+            if (avgValue < aiTriggerThreshold) {
+                // 정상 범위 - 아무것도 안 함
+                resetConsecutiveViolations(metricType);
+                return;
+            }
+            
+            // 2단계: AI 분석 필요성 판단
+            boolean shouldUseAI = shouldTriggerAIAnalysis(metricType, avgValue, criticalThreshold);
+            
+            if (shouldUseAI && openAIMonitoringService != null && aiConfig.isEnabled()) {
+                // AI 기반 분석
+                try {
+                    AnomalyAnalysisResult aiResult = openAIMonitoringService.analyzeAnomalies(metrics, metricType);
+                    
+                    if (aiResult != null && aiResult.hasAnomaly()) {
+                        saveAnomalyDetection(metricType, avgValue, criticalThreshold, 
+                            aiResult.getAnomalyScore(), aiResult.getSeverity(), 
+                            "OPENAI_GPT", aiResult.getAnalysis(), aiResult.getRecommendation());
+                        
+                        log.warn("🤖 AI {} 이상 탐지: avgValue={}, score={}, severity={}", 
+                            metricType, String.format("%.2f", avgValue), 
+                            aiResult.getAnomalyScore(), aiResult.getSeverity());
+                        
+                        updateLastAICall(metricType);
+                        incrementDailyAICallCount();
+                        resetConsecutiveViolations(metricType);
+                        return;
+                    } else {
+                        // AI가 정상으로 판단 - 연속 위반 리셋
+                        resetConsecutiveViolations(metricType);
+                        log.info("✅ AI 분석 결과: {} 정상 (avgValue={})", metricType, String.format("%.2f", avgValue));
+                        return;
+                    }
+                } catch (Exception e) {
+                    log.warn("AI 분석 실패, 통계 기반으로 대체: {}", e.getMessage());
+                }
+            }
+            
+            // 3단계: 통계 기반 분석 (AI 미사용 또는 실패 시)
+            if (avgValue > criticalThreshold) {
                 double anomalyScore = Math.min(avgValue / 100.0, 1.0);
                 String severity = getSeverity(anomalyScore);
                 
-                AiAnomalyDetection anomaly = AiAnomalyDetection.builder()
-                    .tenantId(null) // 시스템 전체
-                    .detectionType("PERFORMANCE")
-                    .anomalyScore(anomalyScore)
-                    .severity(severity)
-                    .metricType("CPU_LOAD")
-                    .metricValue(avgValue)
-                    .expectedValue(CPU_THRESHOLD)
-                    .deviation(avgValue - CPU_THRESHOLD)
-                    .modelUsed("STATISTICAL")
-                    .detectedAt(LocalDateTime.now())
-                    .build();
+                saveAnomalyDetection(metricType, avgValue, criticalThreshold, 
+                    anomalyScore, severity, "STATISTICAL", null, null);
                 
-                anomalyDetectionRepository.save(anomaly);
-                log.warn("⚠️ CPU 이상 탐지: avgValue={}, threshold={}, severity={}", 
-                    String.format("%.2f", avgValue), CPU_THRESHOLD, severity);
+                log.warn("📊 통계 기반 {} 이상 탐지: avgValue={}, threshold={}, severity={}", 
+                    metricType, String.format("%.2f", avgValue), criticalThreshold, severity);
+                
+                incrementConsecutiveViolations(metricType);
+            } else {
+                // AI 트리거 임계값은 넘었지만 치명적 임계값은 안 넘음
+                incrementConsecutiveViolations(metricType);
+                log.info("⚠️ {} 주의 필요: avgValue={} (임계값: {})", 
+                    metricType, String.format("%.2f", avgValue), aiTriggerThreshold);
             }
+            
         } catch (Exception e) {
-            log.error("CPU 이상 탐지 실패", e);
+            log.error("{} 이상 탐지 실패", metricType, e);
         }
     }
     
     /**
-     * 메모리 이상 탐지
+     * AI 분석 트리거 여부 판단
+     */
+    private boolean shouldTriggerAIAnalysis(String metricType, double avgValue, double criticalThreshold) {
+        // AI 모니터링이 비활성화된 경우
+        if (!aiConfig.isEnabled() || !aiConfig.getHybrid().isEnabled()) {
+            return false;
+        }
+        
+        // 일일 호출 제한 확인
+        if (isDailyLimitReached()) {
+            log.warn("⚠️ AI 호출 일일 제한 도달: {}/{}", 
+                dailyAICallCount.get(), aiConfig.getCostControl().getDailyLimit());
+            return false;
+        }
+        
+        // 쿨다운 확인
+        if (isInCooldown(metricType)) {
+            log.debug("⏰ {} AI 분석 쿨다운 중", metricType);
+            return false;
+        }
+        
+        // 연속 위반 횟수 확인
+        int violations = consecutiveViolations.getOrDefault(metricType, 0);
+        int requiredViolations = aiConfig.getHybrid().getAiTrigger().getConsecutiveViolations();
+        
+        if (violations < requiredViolations) {
+            log.debug("📈 {} 연속 위반: {}/{}", metricType, violations, requiredViolations);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * 이상 탐지 결과 저장
+     */
+    private void saveAnomalyDetection(String metricType, double avgValue, double expectedValue,
+                                     double anomalyScore, String severity, String modelUsed,
+                                     String aiAnalysis, String aiRecommendation) {
+        AiAnomalyDetection anomaly = AiAnomalyDetection.builder()
+            .tenantId(null)
+            .detectionType("PERFORMANCE")
+            .anomalyScore(anomalyScore)
+            .severity(severity)
+            .metricType(metricType)
+            .metricValue(avgValue)
+            .expectedValue(expectedValue)
+            .deviation(avgValue - expectedValue)
+            .modelUsed(modelUsed)
+            .aiAnalysis(aiAnalysis)
+            .aiRecommendation(aiRecommendation)
+            .detectedAt(LocalDateTime.now())
+            .build();
+        
+        anomalyDetectionRepository.save(anomaly);
+    }
+    
+    /**
+     * 연속 위반 증가
+     */
+    private void incrementConsecutiveViolations(String metricType) {
+        consecutiveViolations.put(metricType, 
+            consecutiveViolations.getOrDefault(metricType, 0) + 1);
+    }
+    
+    /**
+     * 연속 위반 리셋
+     */
+    private void resetConsecutiveViolations(String metricType) {
+        consecutiveViolations.put(metricType, 0);
+    }
+    
+    /**
+     * 마지막 AI 호출 시간 업데이트
+     */
+    private void updateLastAICall(String metricType) {
+        lastAICall.put(metricType, LocalDateTime.now());
+    }
+    
+    /**
+     * 쿨다운 확인
+     */
+    private boolean isInCooldown(String metricType) {
+        LocalDateTime lastCall = lastAICall.get(metricType);
+        if (lastCall == null) {
+            return false;
+        }
+        
+        int cooldownMinutes = aiConfig.getHybrid().getAiTrigger().getCooldownMinutes();
+        return LocalDateTime.now().isBefore(lastCall.plusMinutes(cooldownMinutes));
+    }
+    
+    /**
+     * 일일 호출 제한 확인
+     */
+    private boolean isDailyLimitReached() {
+        // 날짜가 바뀌면 카운터 리셋
+        if (lastResetDate.toLocalDate().isBefore(LocalDateTime.now().toLocalDate())) {
+            dailyAICallCount.set(0);
+            lastResetDate = LocalDateTime.now();
+        }
+        
+        return dailyAICallCount.get() >= aiConfig.getCostControl().getDailyLimit();
+    }
+    
+    /**
+     * 일일 AI 호출 카운터 증가
+     */
+    private void incrementDailyAICallCount() {
+        int count = dailyAICallCount.incrementAndGet();
+        int limit = aiConfig.getCostControl().getDailyLimit();
+        
+        if (count >= limit * aiConfig.getCostControl().getAlertThreshold() / 100) {
+            log.warn("⚠️ AI 호출 횟수 {}% 도달: {}/{}", 
+                aiConfig.getCostControl().getAlertThreshold(), count, limit);
+        }
+    }
+    
+    /**
+     * 메모리 이상 탐지 (하이브리드 방식)
      */
     private void detectMemoryAnomaly() {
-        try {
-            LocalDateTime since = LocalDateTime.now().minusMinutes(10);
-            List<SystemMetric> metrics = systemMetricRepository
-                .findByMetricTypeAndCollectedAtAfterOrderByCollectedAtDesc("MEMORY_USAGE", since);
-            
-            if (metrics.isEmpty()) {
-                return;
-            }
-            
-            double avgValue = metrics.stream()
-                .mapToDouble(SystemMetric::getMetricValue)
-                .average()
-                .orElse(0.0);
-            
-            if (avgValue > MEMORY_THRESHOLD) {
-                double anomalyScore = Math.min(avgValue / 100.0, 1.0);
-                String severity = getSeverity(anomalyScore);
-                
-                AiAnomalyDetection anomaly = AiAnomalyDetection.builder()
-                    .tenantId(null)
-                    .detectionType("PERFORMANCE")
-                    .anomalyScore(anomalyScore)
-                    .severity(severity)
-                    .metricType("MEMORY_USAGE")
-                    .metricValue(avgValue)
-                    .expectedValue(MEMORY_THRESHOLD)
-                    .deviation(avgValue - MEMORY_THRESHOLD)
-                    .modelUsed("STATISTICAL")
-                    .detectedAt(LocalDateTime.now())
-                    .build();
-                
-                anomalyDetectionRepository.save(anomaly);
-                log.warn("⚠️ 메모리 이상 탐지: avgValue={}, threshold={}, severity={}", 
-                    String.format("%.2f", avgValue), MEMORY_THRESHOLD, severity);
-            }
-        } catch (Exception e) {
-            log.error("메모리 이상 탐지 실패", e);
-        }
+        detectAnomalyHybrid("MEMORY_USAGE", MEMORY_THRESHOLD, 
+            aiConfig.getHybrid().getStatisticalThreshold().getMemory());
     }
     
     /**
-     * JVM 메모리 이상 탐지
+     * JVM 메모리 이상 탐지 (하이브리드 방식)
      */
     private void detectJvmAnomaly() {
-        try {
-            LocalDateTime since = LocalDateTime.now().minusMinutes(10);
-            List<SystemMetric> metrics = systemMetricRepository
-                .findByMetricTypeAndCollectedAtAfterOrderByCollectedAtDesc("JVM_MEMORY", since);
-            
-            if (metrics.isEmpty()) {
-                return;
-            }
-            
-            double avgValue = metrics.stream()
-                .mapToDouble(SystemMetric::getMetricValue)
-                .average()
-                .orElse(0.0);
-            
-            if (avgValue > JVM_THRESHOLD) {
-                double anomalyScore = Math.min(avgValue / 100.0, 1.0);
-                String severity = getSeverity(anomalyScore);
-                
-                AiAnomalyDetection anomaly = AiAnomalyDetection.builder()
-                    .tenantId(null)
-                    .detectionType("PERFORMANCE")
-                    .anomalyScore(anomalyScore)
-                    .severity(severity)
-                    .metricType("JVM_MEMORY")
-                    .metricValue(avgValue)
-                    .expectedValue(JVM_THRESHOLD)
-                    .deviation(avgValue - JVM_THRESHOLD)
-                    .modelUsed("STATISTICAL")
-                    .detectedAt(LocalDateTime.now())
-                    .build();
-                
-                anomalyDetectionRepository.save(anomaly);
-                log.warn("⚠️ JVM 메모리 이상 탐지: avgValue={}, threshold={}, severity={}", 
-                    String.format("%.2f", avgValue), JVM_THRESHOLD, severity);
-            }
-        } catch (Exception e) {
-            log.error("JVM 메모리 이상 탐지 실패", e);
-        }
+        detectAnomalyHybrid("JVM_MEMORY", JVM_THRESHOLD, 
+            aiConfig.getHybrid().getStatisticalThreshold().getJvm());
     }
     
     /**

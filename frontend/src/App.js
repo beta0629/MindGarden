@@ -51,6 +51,7 @@ import AcademyDashboard from './components/academy/AcademyDashboard';
 import AcademyRegister from './components/academy/AcademyRegister';
 import DynamicDashboard from './components/dashboard/DynamicDashboard';
 import DashboardManagement from './components/admin/DashboardManagement';
+import WidgetBasedAdminDashboard from './components/admin/WidgetBasedAdminDashboard';
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
@@ -344,7 +345,8 @@ function AppContent() {
             {/* 역할별 대시보드 라우트 - 동적 대시보드로 통합 (하위 호환성 유지) */}
             <Route path="/client/dashboard" element={<DynamicDashboard user={user} />} />
             <Route path="/consultant/dashboard" element={<DynamicDashboard user={user} />} />
-            <Route path="/admin/dashboard" element={<DynamicDashboard user={user} />} />
+            <Route path="/admin/dashboard" element={<WidgetBasedAdminDashboard />} />
+            <Route path="/admin/dashboard-old" element={<DynamicDashboard user={user} />} />
             <Route path="/super_admin/dashboard" element={<DynamicDashboard user={user} />} />
             <Route path="/hq_admin/dashboard" element={<DynamicDashboard user={user} />} />
             <Route path="/super_hq_admin/dashboard" element={<DynamicDashboard user={user} />} />

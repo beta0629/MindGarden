@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.models.GroupedOpenApi;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,14 +22,23 @@ import java.util.List;
 @Configuration
 public class OpenApiConfig {
     
+    @Value("${server.port:8080}")
+    private String serverPort;
+    
+    @Value("${api.server.dev-url:http://localhost:8080}")
+    private String devServerUrl;
+    
+    @Value("${api.server.prod-url:https://core-solution.co.kr}")
+    private String prodServerUrl;
+    
     @Bean
     public OpenAPI coreSolutionOpenAPI() {
         Server devServer = new Server();
-        devServer.setUrl("http://localhost:8080");
+        devServer.setUrl(devServerUrl);
         devServer.setDescription("개발 서버");
         
         Server prodServer = new Server();
-        prodServer.setUrl("https://core-solution.co.kr");
+        prodServer.setUrl(prodServerUrl);
         prodServer.setDescription("운영 서버");
         
         Contact contact = new Contact();

@@ -93,8 +93,9 @@ public class AdminServiceImpl implements AdminService {
             log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(dto.getPhone()));
         }
         
-        // 지점코드 처리
+        // 지점코드 처리 (레거시 시스템, 필요시 사용)
         Branch branch = null;
+        /*
         if (dto.getBranchCode() != null && !dto.getBranchCode().trim().isEmpty()) {
             try {
                 branch = branchService.getBranchByCode(dto.getBranchCode());
@@ -105,6 +106,7 @@ public class AdminServiceImpl implements AdminService {
                 throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + dto.getBranchCode());
             }
         }
+        */
         
         // 같은 username을 가진 삭제된 상담사가 있는지 확인
         String tenantId = TenantContextHolder.getTenantId();
@@ -158,8 +160,9 @@ public class AdminServiceImpl implements AdminService {
             log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(dto.getPhone()));
         }
         
-        // 지점코드 처리
+        // 지점코드 처리 (레거시 시스템, 테넌트 시스템에서는 불필요)
         Branch branch = null;
+        /*
         if (dto.getBranchCode() != null && !dto.getBranchCode().trim().isEmpty()) {
             try {
                 branch = branchService.getBranchByCode(dto.getBranchCode());
@@ -170,6 +173,7 @@ public class AdminServiceImpl implements AdminService {
                 throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + dto.getBranchCode());
             }
         }
+        */
         
         // User 테이블에 CLIENT role로 저장
         User clientUser = User.builder()
@@ -211,14 +215,17 @@ public class AdminServiceImpl implements AdminService {
         User clientUser = userRepository.findById(dto.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
-        // 지점코드 설정 (상담사의 지점코드 우선, 없으면 내담자의 지점코드 사용)
-        String branchCode = consultant.getBranchCode();
+        // 지점코드 설정 (레거시 시스템, 테넌트 시스템에서는 불필요)
+        String branchCode = null;
+        /*
+        branchCode = consultant.getBranchCode();
         if (branchCode == null || branchCode.trim().isEmpty()) {
             branchCode = clientUser.getBranchCode();
         }
         if (branchCode == null || branchCode.trim().isEmpty()) {
             branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
         }
+        */
         
         // 기존 매칭이 있는지 확인 (중복 결과 처리)
         List<ConsultantClientMapping> existingMappings = mappingRepository

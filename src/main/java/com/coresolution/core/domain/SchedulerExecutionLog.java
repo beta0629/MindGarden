@@ -1,12 +1,17 @@
 package com.coresolution.core.domain;
 
+import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 /**
  * 스케줄러 실행 로그 엔티티

@@ -1,15 +1,12 @@
 package com.coresolution.consultation.config;
 
 import java.util.Arrays;
-import java.util.List;
 import com.coresolution.core.filter.TenantContextFilter;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
 import org.springframework.core.env.Environment;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -34,6 +31,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
  * @version 1.0.0
  * @since 2024-12-19
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -213,8 +211,8 @@ public class SecurityConfig {
         boolean isProd = Arrays.asList(activeProfiles).contains("prod");
         
         // 디버깅: 현재 프로파일 로그 출력
-        System.out.println("🔧 Active Profiles: " + Arrays.toString(activeProfiles));
-        System.out.println("🔧 isLocal: " + isLocal + ", isDev: " + isDev + ", isProd: " + isProd);
+        log.info("🔧 Active Profiles: {}", Arrays.toString(activeProfiles));
+        log.info("🔧 isLocal: {}, isDev: {}, isProd: {}", isLocal, isDev, isProd);
         
         if (isProd) {
             // 운영: 실제 운영 도메인들

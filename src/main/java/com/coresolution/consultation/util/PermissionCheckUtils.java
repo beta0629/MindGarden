@@ -111,7 +111,15 @@ public class PermissionCheckUtils {
             log.info("✅ Spring Security 컨텍스트에 인증 정보 설정 완료");
         }
         
-        // 3. 권한 체크 - User 객체로 직접 체크 (더 안전한 방식)
+        // 3. ADMIN 역할은 모든 권한 자동 부여 (테넌트 시스템)
+        boolean isAdmin = com.coresolution.consultation.util.AdminRoleUtils.isAdmin(currentUser);
+        if (isAdmin) {
+            log.info("✅ ADMIN 역할 자동 권한 부여: 사용자={}, 역할={}, 권한={}", 
+                    currentUser.getEmail(), currentUser.getRole(), permissionCode);
+            return null; // 권한 체크 성공
+        }
+        
+        // 4. 일반 사용자는 동적 권한 체크
         boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, permissionCode);
         log.info("🔍 권한 체크 결과: hasPermission={}, permissionCode={}, roleName={}", 
                 hasPermission, permissionCode, currentUser.getRole().name());

@@ -986,7 +986,8 @@ public class AuthController extends BaseApiController {
         String userAgent = httpRequest.getHeader("User-Agent");
         String sessionId = session.getId();
         
-        // 지점 코드 유효성 검사
+        // 지점 코드 유효성 검사 (레거시 시스템, 테넌트 시스템에서는 불필요)
+        /*
         if (request.getLoginType() == BranchLoginRequest.LoginType.BRANCH) {
             if (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty()) {
                 throw new IllegalArgumentException("지점 로그인시 지점 코드는 필수입니다.");
@@ -999,6 +1000,7 @@ public class AuthController extends BaseApiController {
                 throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + request.getBranchCode());
             }
         }
+        */
         
         // 기존 인증 로직 사용
         AuthResponse authResponse = authService.authenticateWithSession(

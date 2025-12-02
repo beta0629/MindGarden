@@ -135,9 +135,11 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             // username 생성 (이메일 기반)
             String username = generateUsernameFromEmail(request.getEmail());
             
-            // 지점 정보 검증 (BranchCode enum 사용)
+            // 지점 정보 검증 (레거시 시스템, 테넌트 시스템에서는 불필요)
             Branch branch = null;
-            String validatedBranchCode = request.getBranchCode();
+            String validatedBranchCode = null;
+            /*
+            validatedBranchCode = request.getBranchCode();
             if (validatedBranchCode != null && !validatedBranchCode.trim().isEmpty()) {
                 // BranchCode enum으로 유효성 검사
            if (com.coresolution.consultation.enums.BranchCode.isValidCode(validatedBranchCode)) {
@@ -151,6 +153,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 validatedBranchCode = com.coresolution.consultation.enums.BranchCode.MAIN001.getCode();
                 log.info("지점 코드 없음, 기본값(MAIN001)으로 설정");
             }
+            */
             
             User user = User.builder()
                     .username(username)
@@ -159,8 +162,8 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                     .email(request.getEmail())
                     .phone(phone)
                     .role(UserRole.CLIENT)
-                    .branchCode(validatedBranchCode) // 검증된 지점코드 추가
-                    .branch(branch) // 지점 객체 추가
+                    .branchCode(validatedBranchCode) // 지점코드 (테넌트 시스템에서는 NULL)
+                    .branch(branch) // 지점 객체 (테넌트 시스템에서는 NULL)
                     .profileImageUrl(request.getProviderProfileImage()) // 소셜 계정 프로필 이미지 설정
                     .build();
             

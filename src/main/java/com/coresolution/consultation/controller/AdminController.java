@@ -1474,6 +1474,8 @@ public class AdminController extends BaseApiController {
         
         User currentUser = SessionUtils.getCurrentUser(session);
         
+        // 지점코드 자동 설정 로직 (레거시 시스템, 현재 사용 안 함)
+        /*
         if (currentUser != null) {
             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
@@ -1485,11 +1487,12 @@ public class AdminController extends BaseApiController {
             }
         }
         
-        // 지점코드 필수 검증 강화
+        // 지점코드 필수 검증 (레거시 시스템)
         if (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty()) {
             log.error("❌ 지점코드가 없습니다. 상담사 등록을 거부합니다.");
             throw new IllegalArgumentException("지점코드는 필수입니다. 관리자에게 문의하세요.");
         }
+        */
         
         User consultant = adminService.registerConsultant(dto);
         return created("상담사가 성공적으로 등록되었습니다", consultant);
@@ -1513,6 +1516,8 @@ public class AdminController extends BaseApiController {
         
         log.info("🔧 세션 사용자: {}", currentUser.getName());
         
+        // 지점코드 자동 설정 로직 (레거시 시스템, 필요시 사용)
+        /*
         if (currentUser != null) {
             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
@@ -1524,11 +1529,12 @@ public class AdminController extends BaseApiController {
             }
         }
         
-        // 지점코드 필수 검증 강화
+        // 지점코드 필수 검증 (레거시 시스템)
         if (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty()) {
             log.error("❌ 지점코드가 없습니다. 등록을 거부합니다.");
             throw new IllegalArgumentException("지점코드는 필수입니다. 관리자에게 문의하세요.");
         }
+        */
         
         Client client = adminService.registerClient(dto);
         log.info("✅ 내담자 등록 완료: id={}, name={}, branchCode={}", 

@@ -4,8 +4,8 @@ import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -16,6 +16,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * 로컬 개발 환경 전용 설정
  * isDev 프로퍼티가 true일 때만 활성화
  */
+@Slf4j
 @Configuration
 @Profile("local")
 public class DevelopmentConfig implements WebMvcConfigurer {
@@ -79,14 +80,14 @@ public class DevelopmentConfig implements WebMvcConfigurer {
      */
     public void logDevelopmentInfo() {
         if (isDevelopmentMode()) {
-            System.out.println("🚀 ========================================");
-            System.out.println("🚀 개발 환경이 활성화되었습니다!");
+            log.info("🚀 ========================================");
+            log.info("🚀 개발 환경이 활성화되었습니다!");
             System.out.println("🚀 isDev: " + isDev);
             System.out.println("🚀 isLocal: " + isLocal);
             System.out.println("🚀 isDevelopment: " + isDevelopment);
-            System.out.println("🚀 CORS: 모든 도메인 허용");
-            System.out.println("🚀 보안: 개발용으로 완화됨");
-            System.out.println("🚀 ========================================");
+            log.info("🚀 CORS: 모든 도메인 허용");
+            log.info("🚀 보안: 개발용으로 완화됨");
+            log.info("🚀 ========================================");
         }
     }
 }

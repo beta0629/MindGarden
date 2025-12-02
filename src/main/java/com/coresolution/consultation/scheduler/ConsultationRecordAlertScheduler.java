@@ -1,151 +1,311 @@
 package com.coresolution.consultation.scheduler;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.SchedulerAlertService;
+import com.coresolution.core.service.SchedulerExecutionLogService;
+import com.coresolution.core.service.TenantService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 상담일지 미작성 알림 스케줄러
+ * 상담일지 미작성 알림 스케줄러 (표준화 적용)
  * - 매일 오전 9시에 전날 상담일지 미작성 확인
  * - 매주 월요일 오전 10시에 지난주 전체 확인
+ * - 테넌트별 독립 실행
  * 
- * @author MindGarden
- * @version 1.0.0
- * @since 2025-01-11
+ * @author CoreSolution
+ * @version 2.0.0
+ * @since 2025-12-02
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
+@ConditionalOnProperty(
+    name = "scheduler.consultation-record-alert.enabled",
+    havingValue = "true",
+    matchIfMissing = true
+)
 public class ConsultationRecordAlertScheduler {
     
-    @Autowired
-    private PlSqlConsultationRecordAlertService consultationRecordAlertService;
+    private final PlSqlConsultationRecordAlertService consultationRecordAlertService;
+    private final TenantService tenantService;
+    private final TenantContextHolder tenantContextHolder;
+    private final SchedulerExecutionLogService logService;
+    private final SchedulerAlertService alertService;
+    
+    @Value("${scheduler.consultation-record-alert.cron:0 0 9 * * *}")
+    private String cronExpression;
     
     /**
-     * 매일 오전 9시에 전날 상담일지 미작성 확인
-     * cron: 초 분 시 일 월 요일
+     * 매일 오전 9시에 전날 상담일지 미작성 확인 (테넌트별 독립 실행)
+     * Cron: 매일 오전 9시
      */
-    @Scheduled(cron = "0 0 9 * * *")
+    @Scheduled(cron = "${scheduler.consultation-record-alert.cron:0 0 9 * * *}")
     public void checkDailyMissingConsultationRecords() {
-        log.info("🕘 일일 상담일지 미작성 확인 스케줄러 시작");
+        String executionId = UUID.randomUUID().toString();
+        LocalDateTime startTime = LocalDateTime.now();
+        
+        log.info("⏰ [ConsultationRecordAlert] 일일 스케줄러 시작: executionId={}", executionId);
+        
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        
+        int successCount = 0;
+        int failureCount = 0;
+        int totalTenants = 0;
         
         try {
-            LocalDate yesterday = LocalDate.now().minusDays(1);
+            List<String> activeTenantIds = tenantService.getAllActiveTenantIds();
+            totalTenants = activeTenantIds.size();
+            log.info("📋 [ConsultationRecordAlert] 대상 테넌트 수: {}", totalTenants);
             
-            Map<String, Object> result = consultationRecordAlertService.checkMissingConsultationRecords(
-                yesterday, null // 전체 지점
-            );
-            
-            Boolean success = (Boolean) result.get("success");
-            String message = (String) result.get("message");
-            Integer missingCount = (Integer) result.get("missingCount");
-            Integer alertsCreated = (Integer) result.get("alertsCreated");
-            
-            if (success) {
-                log.info("✅ 일일 상담일지 미작성 확인 완료: {} - 미작성 {}건, 알림생성 {}건", 
-                        message, missingCount, alertsCreated);
-            } else {
-                log.error("❌ 일일 상담일지 미작성 확인 실패: {}", message);
+            for (String tenantId : activeTenantIds) {
+                try {
+                    tenantContextHolder.setTenantId(tenantId);
+                    
+                    Map<String, Object> result = consultationRecordAlertService.checkMissingConsultationRecords(
+                        yesterday, null // 전체 지점
+                    );
+                    
+                    Boolean success = (Boolean) result.get("success");
+                    String message = (String) result.get("message");
+                    Integer missingCount = (Integer) result.get("missingCount");
+                    Integer alertsCreated = (Integer) result.get("alertsCreated");
+                    
+                    if (success) {
+                        log.info("✅ [ConsultationRecordAlert] 일일 확인 완료: tenantId={}, 미작성={}건, 알림={}건", 
+                            tenantId, missingCount, alertsCreated);
+                        logService.saveExecutionLog(
+                            executionId, tenantId, "ConsultationRecordAlert", "SUCCESS", 
+                            String.format("Missing: %d, Alerts: %d", missingCount, alertsCreated)
+                        );
+                        successCount++;
+                    } else {
+                        log.error("❌ [ConsultationRecordAlert] 일일 확인 실패: tenantId={}, message={}", 
+                            tenantId, message);
+                        logService.saveExecutionLog(
+                            executionId, tenantId, "ConsultationRecordAlert", "FAILED", message
+                        );
+                        failureCount++;
+                    }
+                    
+                } catch (Exception e) {
+                    log.error("❌ [ConsultationRecordAlert] 일일 확인 오류: tenantId={}, error={}", 
+                        tenantId, e.getMessage(), e);
+                    logService.saveExecutionLog(
+                        executionId, tenantId, "ConsultationRecordAlert", "FAILED", e.getMessage()
+                    );
+                    failureCount++;
+                } finally {
+                    tenantContextHolder.clear();
+                }
             }
             
+            LocalDateTime endTime = LocalDateTime.now();
+            long durationMs = Duration.between(startTime, endTime).toMillis();
+            
+            log.info("✅ [ConsultationRecordAlert] 일일 스케줄러 완료: executionId={}, duration={}ms, success={}, failure={}",
+                executionId, durationMs, successCount, failureCount);
+            
+            logService.saveSummaryLog(
+                executionId,
+                "ConsultationRecordAlert-Daily",
+                totalTenants,
+                successCount,
+                failureCount,
+                durationMs,
+                startTime,
+                endTime
+            );
+            
         } catch (Exception e) {
-            log.error("❌ 일일 상담일지 미작성 확인 스케줄러 오류: {}", e.getMessage(), e);
+            log.error("❌ [ConsultationRecordAlert] 일일 스케줄러 전체 실행 실패: executionId={}, error={}",
+                executionId, e.getMessage(), e);
+            alertService.sendFailureAlert(
+                "ConsultationRecordAlert-Daily", executionId, failureCount, e.getMessage()
+            );
         }
     }
     
     /**
-     * 매주 월요일 오전 10시에 지난주 전체 상담일지 미작성 확인
-     * cron: 초 분 시 일 월 요일 (1=월요일)
+     * 매주 월요일 오전 10시에 지난주 전체 상담일지 미작성 확인 (테넌트별 독립 실행)
+     * Cron: 매주 월요일 오전 10시
      */
     @Scheduled(cron = "0 0 10 * * 1")
     public void checkWeeklyMissingConsultationRecords() {
-        log.info("🕙 주간 상담일지 미작성 확인 스케줄러 시작");
+        String executionId = UUID.randomUUID().toString();
+        LocalDateTime startTime = LocalDateTime.now();
+        
+        log.info("⏰ [ConsultationRecordAlert] 주간 스케줄러 시작: executionId={}", executionId);
+        
+        int successCount = 0;
+        int failureCount = 0;
+        int totalTenants = 0;
         
         try {
-            Map<String, Object> result = consultationRecordAlertService.autoCreateMissingConsultationRecordAlerts(7);
+            List<String> activeTenantIds = tenantService.getAllActiveTenantIds();
+            totalTenants = activeTenantIds.size();
+            log.info("📋 [ConsultationRecordAlert] 대상 테넌트 수: {}", totalTenants);
             
-            Boolean success = (Boolean) result.get("success");
-            String message = (String) result.get("message");
-            Integer processedDays = (Integer) result.get("processedDays");
-            Integer totalAlertsCreated = (Integer) result.get("totalAlertsCreated");
-            
-            if (success) {
-                log.info("✅ 주간 상담일지 미작성 확인 완료: {} - 처리일수 {}일, 생성알림 {}건", 
-                        message, processedDays, totalAlertsCreated);
-            } else {
-                log.error("❌ 주간 상담일지 미작성 확인 실패: {}", message);
+            for (String tenantId : activeTenantIds) {
+                try {
+                    tenantContextHolder.setTenantId(tenantId);
+                    
+                    Map<String, Object> result = consultationRecordAlertService.autoCreateMissingConsultationRecordAlerts(7);
+                    
+                    Boolean success = (Boolean) result.get("success");
+                    String message = (String) result.get("message");
+                    Integer processedDays = (Integer) result.get("processedDays");
+                    Integer totalAlertsCreated = (Integer) result.get("totalAlertsCreated");
+                    
+                    if (success) {
+                        log.info("✅ [ConsultationRecordAlert] 주간 확인 완료: tenantId={}, 처리일수={}일, 알림={}건", 
+                            tenantId, processedDays, totalAlertsCreated);
+                        logService.saveExecutionLog(
+                            executionId, tenantId, "ConsultationRecordAlert-Weekly", "SUCCESS", 
+                            String.format("Days: %d, Alerts: %d", processedDays, totalAlertsCreated)
+                        );
+                        successCount++;
+                    } else {
+                        log.error("❌ [ConsultationRecordAlert] 주간 확인 실패: tenantId={}, message={}", 
+                            tenantId, message);
+                        logService.saveExecutionLog(
+                            executionId, tenantId, "ConsultationRecordAlert-Weekly", "FAILED", message
+                        );
+                        failureCount++;
+                    }
+                    
+                } catch (Exception e) {
+                    log.error("❌ [ConsultationRecordAlert] 주간 확인 오류: tenantId={}, error={}", 
+                        tenantId, e.getMessage(), e);
+                    logService.saveExecutionLog(
+                        executionId, tenantId, "ConsultationRecordAlert-Weekly", "FAILED", e.getMessage()
+                    );
+                    failureCount++;
+                } finally {
+                    tenantContextHolder.clear();
+                }
             }
             
-        } catch (Exception e) {
-            log.error("❌ 주간 상담일지 미작성 확인 스케줄러 오류: {}", e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * 매월 1일 오전 11시에 지난달 전체 상담일지 미작성 확인
-     * cron: 초 분 시 일 월 요일
-     */
-    @Scheduled(cron = "0 0 11 1 * *")
-    public void checkMonthlyMissingConsultationRecords() {
-        log.info("🕚 월간 상담일지 미작성 확인 스케줄러 시작");
-        
-        try {
-            Map<String, Object> result = consultationRecordAlertService.autoCreateMissingConsultationRecordAlerts(30);
+            LocalDateTime endTime = LocalDateTime.now();
+            long durationMs = Duration.between(startTime, endTime).toMillis();
             
-            Boolean success = (Boolean) result.get("success");
-            String message = (String) result.get("message");
-            Integer processedDays = (Integer) result.get("processedDays");
-            Integer totalAlertsCreated = (Integer) result.get("totalAlertsCreated");
+            log.info("✅ [ConsultationRecordAlert] 주간 스케줄러 완료: executionId={}, duration={}ms, success={}, failure={}",
+                executionId, durationMs, successCount, failureCount);
             
-            if (success) {
-                log.info("✅ 월간 상담일지 미작성 확인 완료: {} - 처리일수 {}일, 생성알림 {}건", 
-                        message, processedDays, totalAlertsCreated);
-            } else {
-                log.error("❌ 월간 상담일지 미작성 확인 실패: {}", message);
-            }
-            
-        } catch (Exception e) {
-            log.error("❌ 월간 상담일지 미작성 확인 스케줄러 오류: {}", e.getMessage(), e);
-        }
-    }
-    
-    /**
-     * 수동으로 상담일지 미작성 확인 실행 (테스트용)
-     * 
-     * @param daysBack 며칠 전까지 확인할지
-     * @return 실행 결과
-     */
-    public Map<String, Object> manualCheckMissingRecords(int daysBack) {
-        log.info("🔧 수동 상담일지 미작성 확인 실행: {}일 전까지", daysBack);
-        
-        try {
-            Map<String, Object> result = consultationRecordAlertService.autoCreateMissingConsultationRecordAlerts(daysBack);
-            
-            Boolean success = (Boolean) result.get("success");
-            String message = (String) result.get("message");
-            
-            if (success) {
-                log.info("✅ 수동 상담일지 미작성 확인 완료: {}", message);
-            } else {
-                log.error("❌ 수동 상담일지 미작성 확인 실패: {}", message);
-            }
-            
-            return result;
-            
-        } catch (Exception e) {
-            log.error("❌ 수동 상담일지 미작성 확인 오류: {}", e.getMessage(), e);
-            
-            Map<String, Object> errorResult = Map.of(
-                "success", false,
-                "message", "수동 상담일지 미작성 확인 중 오류가 발생했습니다: " + e.getMessage(),
-                "processedDays", 0,
-                "totalAlertsCreated", 0
+            logService.saveSummaryLog(
+                executionId,
+                "ConsultationRecordAlert-Weekly",
+                totalTenants,
+                successCount,
+                failureCount,
+                durationMs,
+                startTime,
+                endTime
             );
             
-            return errorResult;
+        } catch (Exception e) {
+            log.error("❌ [ConsultationRecordAlert] 주간 스케줄러 전체 실행 실패: executionId={}, error={}",
+                executionId, e.getMessage(), e);
+            alertService.sendFailureAlert(
+                "ConsultationRecordAlert-Weekly", executionId, failureCount, e.getMessage()
+            );
+        }
+    }
+    
+    /**
+     * 매월 1일 오전 11시에 지난달 전체 상담일지 미작성 확인 (테넌트별 독립 실행)
+     * Cron: 매월 1일 오전 11시
+     */
+    @Scheduled(cron = "0 0 11 1 * ?")
+    public void checkMonthlyMissingConsultationRecords() {
+        String executionId = UUID.randomUUID().toString();
+        LocalDateTime startTime = LocalDateTime.now();
+        
+        log.info("⏰ [ConsultationRecordAlert] 월간 스케줄러 시작: executionId={}", executionId);
+        
+        int successCount = 0;
+        int failureCount = 0;
+        int totalTenants = 0;
+        
+        try {
+            List<String> activeTenantIds = tenantService.getAllActiveTenantIds();
+            totalTenants = activeTenantIds.size();
+            log.info("📋 [ConsultationRecordAlert] 대상 테넌트 수: {}", totalTenants);
+            
+            for (String tenantId : activeTenantIds) {
+                try {
+                    tenantContextHolder.setTenantId(tenantId);
+                    
+                    Map<String, Object> result = consultationRecordAlertService.autoCreateMissingConsultationRecordAlerts(30);
+                    
+                    Boolean success = (Boolean) result.get("success");
+                    String message = (String) result.get("message");
+                    Integer processedDays = (Integer) result.get("processedDays");
+                    Integer totalAlertsCreated = (Integer) result.get("totalAlertsCreated");
+                    
+                    if (success) {
+                        log.info("✅ [ConsultationRecordAlert] 월간 확인 완료: tenantId={}, 처리일수={}일, 알림={}건", 
+                            tenantId, processedDays, totalAlertsCreated);
+                        logService.saveExecutionLog(
+                            executionId, tenantId, "ConsultationRecordAlert-Monthly", "SUCCESS", 
+                            String.format("Days: %d, Alerts: %d", processedDays, totalAlertsCreated)
+                        );
+                        successCount++;
+                    } else {
+                        log.error("❌ [ConsultationRecordAlert] 월간 확인 실패: tenantId={}, message={}", 
+                            tenantId, message);
+                        logService.saveExecutionLog(
+                            executionId, tenantId, "ConsultationRecordAlert-Monthly", "FAILED", message
+                        );
+                        failureCount++;
+                    }
+                    
+                } catch (Exception e) {
+                    log.error("❌ [ConsultationRecordAlert] 월간 확인 오류: tenantId={}, error={}", 
+                        tenantId, e.getMessage(), e);
+                    logService.saveExecutionLog(
+                        executionId, tenantId, "ConsultationRecordAlert-Monthly", "FAILED", e.getMessage()
+                    );
+                    failureCount++;
+                } finally {
+                    tenantContextHolder.clear();
+                }
+            }
+            
+            LocalDateTime endTime = LocalDateTime.now();
+            long durationMs = Duration.between(startTime, endTime).toMillis();
+            
+            log.info("✅ [ConsultationRecordAlert] 월간 스케줄러 완료: executionId={}, duration={}ms, success={}, failure={}",
+                executionId, durationMs, successCount, failureCount);
+            
+            logService.saveSummaryLog(
+                executionId,
+                "ConsultationRecordAlert-Monthly",
+                totalTenants,
+                successCount,
+                failureCount,
+                durationMs,
+                startTime,
+                endTime
+            );
+            
+        } catch (Exception e) {
+            log.error("❌ [ConsultationRecordAlert] 월간 스케줄러 전체 실행 실패: executionId={}, error={}",
+                executionId, e.getMessage(), e);
+            alertService.sendFailureAlert(
+                "ConsultationRecordAlert-Monthly", executionId, failureCount, e.getMessage()
+            );
         }
     }
 }

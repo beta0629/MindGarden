@@ -39,7 +39,6 @@ public class StatisticsGenerationScheduler {
     
     private final StatisticsMetadataService statisticsMetadataService;
     private final TenantRepository tenantRepository;
-    private final TenantContextHolder tenantContextHolder;
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
     
@@ -76,7 +75,7 @@ public class StatisticsGenerationScheduler {
             
             for (String tenantId : tenantIds) {
                 try {
-                    tenantContextHolder.setTenantId(tenantId);
+                    TenantContextHolder.setTenantId(tenantId);
                     
                     statisticsMetadataService.generateDailyStatistics(tenantId, yesterday);
                     
@@ -96,7 +95,7 @@ public class StatisticsGenerationScheduler {
                     );
                     failureCount++;
                 } finally {
-                    tenantContextHolder.clear();
+                    TenantContextHolder.clear();
                 }
             }
             
@@ -142,16 +141,16 @@ public class StatisticsGenerationScheduler {
             .map(tenant -> tenant.getTenantId())
             .collect(Collectors.toList());
         
-        for (String tenantId : tenantIds) {
-            try {
-                tenantContextHolder.setTenantId(tenantId);
+            for (String tenantId : tenantIds) {
+                try {
+                    TenantContextHolder.setTenantId(tenantId);
                 // 실시간 통계만 갱신 (aggregationPeriod = REALTIME)
                 statisticsMetadataService.generateDailyStatistics(tenantId, today);
             } catch (Exception e) {
                 log.warn("실시간 통계 캐시 갱신 실패: tenantId={}", tenantId, e);
-            } finally {
-                tenantContextHolder.clear();
-            }
+                } finally {
+                    TenantContextHolder.clear();
+                }
         }
         
         log.debug("🔄 [StatisticsGeneration] 실시간 통계 캐시 갱신 완료");

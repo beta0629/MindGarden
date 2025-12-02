@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -32,7 +32,6 @@ import java.time.LocalDateTime;
 public class SecurityAuditAspect {
     
     private final SecurityAuditLogRepository auditLogRepository;
-    private final TenantContextHolder tenantContextHolder;
     
     /**
      * @SecurityAudit 어노테이션이 붙은 메서드 자동 로깅
@@ -67,7 +66,7 @@ public class SecurityAuditAspect {
             // 테넌트 ID 조회
             String tenantId = null;
             try {
-                tenantId = tenantContextHolder.getCurrentTenantId();
+                tenantId = TenantContextHolder.getTenantId();
             } catch (Exception e) {
                 // 테넌트 컨텍스트가 없는 경우 무시
             }
@@ -118,7 +117,7 @@ public class SecurityAuditAspect {
             
             auditLogRepository.save(log);
             
-            log.debug("🔐 보안 감사 로그 저장: eventType={}, result={}, executionTime={}ms", 
+            SecurityAuditAspect.log.debug("🔐 보안 감사 로그 저장: eventType={}, result={}, executionTime={}ms", 
                 eventType, result, executionTime);
             
         } catch (Exception e) {

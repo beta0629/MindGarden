@@ -123,6 +123,40 @@ public class SchedulerExecutionLogService {
     }
     
     /**
+     * 실행 요약 저장 (시작/종료 시간 포함)
+     */
+    @Transactional
+    public void saveSummaryLog(
+        String executionId,
+        String schedulerName,
+        int totalTenants,
+        int successCount,
+        int failureCount,
+        long durationMs,
+        LocalDateTime startedAt,
+        LocalDateTime completedAt
+    ) {
+        try {
+            SchedulerExecutionSummary summary = SchedulerExecutionSummary.builder()
+                .executionId(executionId)
+                .schedulerName(schedulerName)
+                .totalTenants(totalTenants)
+                .successCount(successCount)
+                .failureCount(failureCount)
+                .totalDuration(durationMs)
+                .startedAt(startedAt)
+                .completedAt(completedAt)
+                .build();
+            
+            summaryRepository.save(summary);
+            
+        } catch (Exception e) {
+            log.error("스케줄러 실행 요약 저장 실패: executionId={}, schedulerName={}", 
+                executionId, schedulerName, e);
+        }
+    }
+    
+    /**
      * 스케줄러 실행 이력 조회
      */
     public List<SchedulerExecutionSummary> getExecutionHistory(

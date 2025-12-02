@@ -39,6 +39,31 @@
    - ADMIN 자동 권한 부여
    - 일반 사용자 DB 기반 권한
 
+7. **[에러 처리 표준](./standards/ERROR_HANDLING_STANDARD.md)** ⭐⭐⭐⭐⭐
+   - GlobalExceptionHandler
+   - 커스텀 예외 클래스
+   - 표준 에러 응답
+
+8. **[로깅 표준](./standards/LOGGING_STANDARD.md)** ⭐⭐⭐⭐
+   - @Slf4j 어노테이션
+   - 구조화된 로깅
+   - 민감한 정보 보호
+
+9. **[DTO 네이밍 표준](./standards/DTO_NAMING_STANDARD.md)** ⭐⭐⭐⭐
+   - Request/Response DTO
+   - 검증 어노테이션
+   - 정적 팩토리 메서드
+
+10. **[디자인 중앙화 표준](./standards/DESIGN_CENTRALIZATION_STANDARD.md)** ⭐⭐⭐⭐⭐
+    - CSS 변수 시스템
+    - BEM 네이밍 규칙
+    - 테넌트 브랜딩
+
+11. **[Stored Procedure 표준](./standards/STORED_PROCEDURE_STANDARD.md)** ⭐⭐⭐⭐
+    - 프로시저 네이밍
+    - 에러 핸들러
+    - 트랜잭션 관리
+
 ---
 
 ## 📋 핵심 원칙

@@ -128,6 +128,87 @@ POST /api/v1/permissions/role-permissions
 
 ---
 
+### 7. [에러 처리 표준](./ERROR_HANDLING_STANDARD.md)
+**우선순위**: ⭐⭐⭐⭐⭐ (최우선)
+
+에러 처리 및 예외 관리 표준입니다.
+
+**주요 내용**:
+- ✅ GlobalExceptionHandler 중앙 집중식 처리
+- ✅ 커스텀 예외 클래스 (EntityNotFoundException, ValidationException 등)
+- ✅ 표준 에러 응답 형식
+- ✅ HTTP 상태 코드 매핑
+- ✅ 에러 코드 목록
+
+**적용 범위**: 모든 예외 처리
+
+---
+
+### 8. [로깅 표준](./LOGGING_STANDARD.md)
+**우선순위**: ⭐⭐⭐⭐ (높음)
+
+로깅 패턴 및 관리 표준입니다.
+
+**주요 내용**:
+- ✅ @Slf4j 어노테이션 사용
+- ✅ 구조화된 로깅 (키-값 쌍)
+- ✅ 로그 레벨 (DEBUG, INFO, WARN, ERROR)
+- ✅ 민감한 정보 보호 (마스킹)
+- ✅ 로그 레벨 설정
+
+**적용 범위**: 모든 로깅
+
+---
+
+### 9. [DTO 네이밍 표준](./DTO_NAMING_STANDARD.md)
+**우선순위**: ⭐⭐⭐⭐ (높음)
+
+DTO 네이밍 규칙 및 구조 표준입니다.
+
+**주요 내용**:
+- ✅ Request DTO ({Entity}CreateRequest, {Entity}UpdateRequest)
+- ✅ Response DTO ({Entity}Response, {Entity}ListResponse)
+- ✅ 검증 어노테이션 (@NotBlank, @Email 등)
+- ✅ 정적 팩토리 메서드 (from(), fromList())
+- ✅ 레거시 DTO 마이그레이션
+
+**적용 범위**: 모든 DTO
+
+---
+
+### 10. [디자인 중앙화 표준](./DESIGN_CENTRALIZATION_STANDARD.md)
+**우선순위**: ⭐⭐⭐⭐⭐ (최우선)
+
+디자인 시스템 중앙화 및 표준화 가이드입니다.
+
+**주요 내용**:
+- ✅ CSS 변수 시스템 (1,026개 변수)
+- ✅ BEM 네이밍 규칙 (mg-{component}-{element}--{modifier})
+- ✅ 색상/간격/타이포그래피/레이아웃 토큰
+- ✅ 컴포넌트 표준 (버튼, 카드, 모달)
+- ✅ 테넌트 브랜딩 시스템
+
+**적용 범위**: 모든 프론트엔드 디자인
+
+---
+
+### 11. [Stored Procedure 표준](./STORED_PROCEDURE_STANDARD.md)
+**우선순위**: ⭐⭐⭐⭐ (높음)
+
+Stored Procedure 작성 및 관리 표준입니다.
+
+**주요 내용**:
+- ✅ 프로시저 네이밍 규칙 ({Action}{Entity})
+- ✅ 파라미터 규칙 (p_{name}, v_{name})
+- ✅ 에러 핸들러 구현
+- ✅ 트랜잭션 관리
+- ✅ Soft Delete 원칙
+- ✅ 프로시저 유형별 템플릿
+
+**적용 범위**: 모든 Stored Procedure
+
+---
+
 ## 🎯 표준 준수 원칙
 
 ### 필수 준수 사항

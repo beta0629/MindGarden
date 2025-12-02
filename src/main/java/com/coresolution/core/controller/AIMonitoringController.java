@@ -183,6 +183,60 @@ public class AIMonitoringController {
     }
     
     /**
+     * AI 사용량 상세 조회 (위젯용)
+     * 
+     * @return AI 사용량 상세
+     */
+    @GetMapping("/ai-usage/detailed")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HQ_MASTER')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAIUsageDetailed() {
+        try {
+            log.info("AI 사용량 상세 조회");
+            
+            LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+            LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+            
+            // 오늘 통계
+            long todayCalls = usageLogRepository.countByCreatedAtAfter(todayStart);
+            Double todayCost = usageLogRepository.sumEstimatedCostByCreatedAtAfter(todayStart);
+            if (todayCost == null) todayCost = 0.0;
+            
+            // 이번 달 통계
+            long monthCalls = usageLogRepository.countByCreatedAtAfter(monthStart);
+            Double monthCost = usageLogRepository.sumEstimatedCostByCreatedAtAfter(monthStart);
+            if (monthCost == null) monthCost = 0.0;
+            
+            // 타입별 사용 내역
+            List<Object[]> usageStats = usageLogRepository.getUsageStatsByType(monthStart, LocalDateTime.now());
+            Map<String, Long> usageByType = new HashMap<>();
+            for (Object[] stat : usageStats) {
+                String type = (String) stat[0];
+                Long count = (Long) stat[1];
+                usageByType.put(type, count);
+            }
+            
+            // 설정값
+            double monthlyBudget = 50.0;
+            int dailyLimit = 100;
+            
+            Map<String, Object> detailed = new HashMap<>();
+            detailed.put("todayCalls", todayCalls);
+            detailed.put("todayCost", todayCost);
+            detailed.put("monthCalls", monthCalls);
+            detailed.put("monthCost", monthCost);
+            detailed.put("monthlyBudget", monthlyBudget);
+            detailed.put("dailyLimit", dailyLimit);
+            detailed.put("usageByType", usageByType);
+            
+            return ResponseEntity.ok(ApiResponse.success(detailed));
+            
+        } catch (Exception e) {
+            log.error("AI 사용량 상세 조회 실패", e);
+            return ResponseEntity.ok(ApiResponse.error("AI 사용량 상세 조회 실패: " + e.getMessage()));
+        }
+    }
+    
+    /**
      * 이상 탐지 통계 조회 (테넌트별)
      * 
      * @param tenantId 테넌트 ID (선택)

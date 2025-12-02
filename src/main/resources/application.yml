@@ -277,3 +277,79 @@ kakao:
   alimtalk:
     api-key: ${KAKAO_ALIMTALK_API_KEY:dummy-kakao-key}
     sender-key: ${KAKAO_ALIMTALK_SENDER_KEY:dummy-sender-key}
+
+# =====================================================
+# 스케줄러 설정 (배치 작업 표준화)
+# =====================================================
+scheduler:
+  # 전역 설정
+  task:
+    scheduling:
+      pool:
+        size: 10  # 스케줄러 스레드 풀 크기
+      thread-name-prefix: scheduler-
+  
+  # 알림 설정
+  alert:
+    enabled: ${SCHEDULER_ALERT_ENABLED:true}
+    success-rate-threshold: ${SCHEDULER_SUCCESS_RATE_THRESHOLD:0.95}  # 95% 미만 시 알림
+  
+  # 개별 스케줄러 설정
+  # 1. 급여 배치 스케줄러
+  salary-batch:
+    enabled: ${SCHEDULER_SALARY_BATCH_ENABLED:true}
+    cron: ${SCHEDULER_SALARY_BATCH_CRON:0 0 2 * * ?}  # 매일 새벽 2시
+  
+  salary-batch-monitor:
+    enabled: ${SCHEDULER_SALARY_BATCH_MONITOR_ENABLED:true}
+    cron: ${SCHEDULER_SALARY_BATCH_MONITOR_CRON:0 0 * * * ?}  # 매시간 정각
+  
+  # 2. 구독 만료 스케줄러
+  subscription-expiration:
+    enabled: ${SCHEDULER_SUBSCRIPTION_EXPIRATION_ENABLED:true}
+    cron: ${SCHEDULER_SUBSCRIPTION_EXPIRATION_CRON:0 0 2 * * ?}  # 매일 새벽 2시
+  
+  # 3. 스케줄 자동 완료 스케줄러
+  schedule-auto-complete:
+    enabled: ${SCHEDULER_SCHEDULE_AUTO_COMPLETE_ENABLED:true}
+    cron: ${SCHEDULER_SCHEDULE_AUTO_COMPLETE_CRON:0 */10 * * * *}  # 매 10분마다
+  
+  # 4. 통계 생성 스케줄러
+  statistics-generation:
+    enabled: ${SCHEDULER_STATISTICS_GENERATION_ENABLED:true}
+    cron: ${SCHEDULER_STATISTICS_GENERATION_CRON:0 1 0 * * *}  # 매일 자정 1분 후
+  
+  # 5. 웰니스 알림 스케줄러
+  wellness-notification:
+    enabled: ${SCHEDULER_WELLNESS_NOTIFICATION_ENABLED:true}
+    cron: ${SCHEDULER_WELLNESS_NOTIFICATION_CRON:0 0 9 * * ?}  # 매일 오전 9시
+  
+  # 6. 상담일지 알림 스케줄러
+  consultation-record-alert:
+    enabled: ${SCHEDULER_CONSULTATION_RECORD_ALERT_ENABLED:true}
+    cron: ${SCHEDULER_CONSULTATION_RECORD_ALERT_CRON:0 0 9 * * *}  # 매일 오전 9시
+  
+  # 7. 워크플로우 자동화 스케줄러
+  workflow-automation:
+    enabled: ${SCHEDULER_WORKFLOW_AUTOMATION_ENABLED:true}
+    cron: ${SCHEDULER_WORKFLOW_AUTOMATION_CRON:0 */10 * * * *}  # 매 10분마다
+  
+  # 8. 은행 이체 처리 스케줄러
+  bank-transfer:
+    enabled: ${SCHEDULER_BANK_TRANSFER_ENABLED:true}
+    cron: ${SCHEDULER_BANK_TRANSFER_CRON:0 */5 * * * *}  # 매 5분마다
+  
+  # 9. 개인정보 파기 스케줄러
+  personal-data-destruction:
+    enabled: ${SCHEDULER_PERSONAL_DATA_DESTRUCTION_ENABLED:true}
+    cron: ${SCHEDULER_PERSONAL_DATA_DESTRUCTION_CRON:0 0 3 * * ?}  # 매일 새벽 3시
+  
+  # 10. 세션 정리 스케줄러
+  session-cleanup:
+    enabled: ${SCHEDULER_SESSION_CLEANUP_ENABLED:true}
+    cron: ${SCHEDULER_SESSION_CLEANUP_CRON:0 */5 * * * *}  # 매 5분마다
+  
+  # 11. 스키마 변경 감지 스케줄러
+  schema-change-detection:
+    enabled: ${SCHEDULER_SCHEMA_CHANGE_DETECTION_ENABLED:true}
+    cron: ${SCHEDULER_SCHEMA_CHANGE_DETECTION_CRON:0 0 2 * * ?}  # 매일 새벽 2시

@@ -5,7 +5,7 @@ import java.util.Map;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.PasswordConfigService;
-import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 public class PasswordConfigServiceImpl implements PasswordConfigService {
     
     private final CommonCodeRepository commonCodeRepository;
+    
+    @Value("${frontend.base-url:http://localhost:3000}")
+    private String frontendBaseUrl;
     
     // 공통코드 그룹 상수
     private static final String PASSWORD_POLICY_GROUP = "PASSWORD_POLICY";
@@ -65,7 +68,7 @@ public class PasswordConfigServiceImpl implements PasswordConfigService {
         config.put("fromName", getConfigValue(EMAIL_CONFIG_GROUP, "FROM_NAME", "마인드가든"));
         config.put("replyToEmail", getConfigValue(EMAIL_CONFIG_GROUP, "REPLY_TO_EMAIL", "support@mindgarden.com"));
         config.put("supportEmail", getConfigValue(EMAIL_CONFIG_GROUP, "SUPPORT_EMAIL", "support@mindgarden.com"));
-        config.put("resetPasswordUrl", getConfigValue(EMAIL_CONFIG_GROUP, "RESET_PASSWORD_URL", "http://localhost:3000/reset-password"));
+        config.put("resetPasswordUrl", getConfigValue(EMAIL_CONFIG_GROUP, "RESET_PASSWORD_URL", frontendBaseUrl + "/reset-password"));
         config.put("companyName", getConfigValue(EMAIL_CONFIG_GROUP, "COMPANY_NAME", "마인드가든"));
         
         return config;

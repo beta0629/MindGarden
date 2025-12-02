@@ -1,9 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
 
-import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 public class PasswordCommonCodeInitializer implements CommandLineRunner {
 
     private final CommonCodeRepository commonCodeRepository;
+    
+    @Value("${frontend.base-url:http://localhost:3000}")
+    private String frontendBaseUrl;
 
     @Override
     @Transactional
@@ -91,7 +94,7 @@ public class PasswordCommonCodeInitializer implements CommandLineRunner {
         createCommonCode("EMAIL_CONFIG", "FROM_NAME", "발신자 이름", "시스템 발신자 이름", 2, "{\"value\":\"마인드가든\"}");
         createCommonCode("EMAIL_CONFIG", "REPLY_TO_EMAIL", "회신 이메일", "회신 받을 이메일 주소", 3, "{\"value\":\"support@mindgarden.com\"}");
         createCommonCode("EMAIL_CONFIG", "SUPPORT_EMAIL", "지원 이메일", "고객 지원 이메일 주소", 4, "{\"value\":\"support@mindgarden.com\"}");
-        createCommonCode("EMAIL_CONFIG", "RESET_PASSWORD_URL", "재설정 URL", "비밀번호 재설정 페이지 URL", 5, "{\"value\":\"http://localhost:3000/reset-password\"}");
+        createCommonCode("EMAIL_CONFIG", "RESET_PASSWORD_URL", "재설정 URL", "비밀번호 재설정 페이지 URL", 5, "{\"value\":\"" + frontendBaseUrl + "/reset-password\"}");
         createCommonCode("EMAIL_CONFIG", "COMPANY_NAME", "회사명", "회사 또는 서비스명", 6, "{\"value\":\"마인드가든\"}");
     }
 

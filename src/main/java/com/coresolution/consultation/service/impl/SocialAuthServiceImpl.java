@@ -56,8 +56,8 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             return frontendBaseUrl;
         }
         
-        // 기본값
-        return "http://localhost:3000";
+        // 기본값 (환경 변수에서 가져옴)
+        return frontendBaseUrl;
     }
 
     @Override

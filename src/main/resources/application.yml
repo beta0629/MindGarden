@@ -159,7 +159,7 @@ erd:
 logging:
   level:
     # 애플리케이션 로그 (정상 로그 계속 남기기)
-    com.mindgarden: INFO
+    com.coresolution: INFO
     # Spring 관련 로그
     org.springframework.transaction: INFO
     org.springframework.orm.jpa: INFO
@@ -176,7 +176,7 @@ logging:
   
   # 로그 파일 설정은 logback-spring.xml에서 관리
   # file:
-  #   name: logs/mindgarden.log
+  #   name: logs/coresolution.log
   #   max-size: 100MB
   #   max-history: 30
   

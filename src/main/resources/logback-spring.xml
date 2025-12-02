@@ -10,9 +10,9 @@
 
     <!-- 일반 로그 파일 -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/mindgarden.log</file>
+        <file>logs/coresolution.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/mindgarden.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>logs/coresolution.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>10MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
@@ -67,7 +67,7 @@
     </appender>
 
     <!-- OAuth2 관련 로거 -->
-    <logger name="com.mindgarden.consultation.controller.OAuth2Controller" level="DEBUG" additivity="false">
+    <logger name="com.coresolution.consultation.controller.OAuth2Controller" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
         <appender-ref ref="OAUTH2_ERROR_FILE"/>

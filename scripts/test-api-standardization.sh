@@ -90,14 +90,24 @@ login() {
     
     log "관리자 로그인 시도: $ADMIN_EMAIL"
     
+    # 세션 쿠키를 저장할 파일
+    COOKIE_FILE="/tmp/mindgarden_cookies.txt"
+    rm -f "$COOKIE_FILE"
+    
     RESPONSE=$(curl -s -X POST "$API_URL/api/auth/login" \
         -H "Content-Type: application/json" \
+        -c "$COOKIE_FILE" \
         -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}")
     
+    # JWT 토큰 확인 (있으면 JWT, 없으면 세션 기반)
     JWT_TOKEN=$(echo "$RESPONSE" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
     
     if [ -n "$JWT_TOKEN" ]; then
-        success "로그인 성공 (토큰 길이: ${#JWT_TOKEN})"
+        success "로그인 성공 (JWT 토큰 길이: ${#JWT_TOKEN})"
+    elif echo "$RESPONSE" | grep -q '"success":true'; then
+        success "로그인 성공 (세션 기반)"
+        # 세션 기반이므로 JWT_TOKEN을 빈 문자열로 설정
+        JWT_TOKEN=""
     else
         fail "로그인 실패"
         echo "응답: $RESPONSE"
@@ -112,48 +122,82 @@ login() {
 test_monitoring_apis() {
     section "Phase 1: 모니터링 API 테스트"
     
+    # 쿠키 파일
+    COOKIE_FILE="/tmp/mindgarden_cookies.txt"
+    
+    # 인증 헤더 설정
+    if [ -n "$JWT_TOKEN" ]; then
+        AUTH_HEADER="Authorization: Bearer $JWT_TOKEN"
+    else
+        AUTH_HEADER=""
+    fi
+    
     # 1. 대시보드 조회
     log "모니터링 대시보드 조회..."
-    RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/dashboard" \
-        -H "Authorization: Bearer $JWT_TOKEN")
+    if [ -n "$JWT_TOKEN" ]; then
+        RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/dashboard" \
+            -H "$AUTH_HEADER")
+    else
+        RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/dashboard" \
+            -b "$COOKIE_FILE")
+    fi
     
-    if echo "$RESPONSE" | grep -q "success"; then
+    if echo "$RESPONSE" | grep -q "success\|dashboard"; then
         success "모니터링 대시보드 조회 성공"
     else
         fail "모니터링 대시보드 조회 실패"
+        log "응답: $RESPONSE"
     fi
     
     # 2. 메트릭 조회
     log "시스템 메트릭 조회 (최근 10분)..."
-    RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/metrics?minutes=10" \
-        -H "Authorization: Bearer $JWT_TOKEN")
+    if [ -n "$JWT_TOKEN" ]; then
+        RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/metrics?minutes=10" \
+            -H "$AUTH_HEADER")
+    else
+        RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/metrics?minutes=10" \
+            -b "$COOKIE_FILE")
+    fi
     
     if echo "$RESPONSE" | grep -q "success\|metrics"; then
         success "시스템 메트릭 조회 성공"
     else
         fail "시스템 메트릭 조회 실패"
+        log "응답: $RESPONSE"
     fi
     
     # 3. 이상 탐지 조회
     log "이상 탐지 목록 조회..."
-    RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/anomalies?severity=HIGH" \
-        -H "Authorization: Bearer $JWT_TOKEN")
+    if [ -n "$JWT_TOKEN" ]; then
+        RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/anomalies?severity=HIGH" \
+            -H "$AUTH_HEADER")
+    else
+        RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/anomalies?severity=HIGH" \
+            -b "$COOKIE_FILE")
+    fi
     
     if echo "$RESPONSE" | grep -q "success\|anomalies"; then
         success "이상 탐지 목록 조회 성공"
     else
         fail "이상 탐지 목록 조회 실패"
+        log "응답: $RESPONSE"
     fi
     
     # 4. 보안 위협 조회
     log "보안 위협 목록 조회 (최근 24시간)..."
-    RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/threats?hours=24" \
-        -H "Authorization: Bearer $JWT_TOKEN")
+    if [ -n "$JWT_TOKEN" ]; then
+        RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/threats?hours=24" \
+            -H "$AUTH_HEADER")
+    else
+        RESPONSE=$(curl -s -X GET "$API_URL/api/v1/monitoring/threats?hours=24" \
+            -b "$COOKIE_FILE")
+    fi
     
     if echo "$RESPONSE" | grep -q "success\|threats"; then
         success "보안 위협 목록 조회 성공"
     else
         fail "보안 위협 목록 조회 실패"
+        log "응답: $RESPONSE"
     fi
 }
 
@@ -164,26 +208,40 @@ test_monitoring_apis() {
 test_scheduler_apis() {
     section "Phase 2: 스케줄러 API 테스트"
     
+    COOKIE_FILE="/tmp/mindgarden_cookies.txt"
+    
     # 상담일지 알림 수동 실행
     log "상담일지 미작성 확인 수동 실행..."
-    RESPONSE=$(curl -s -X POST "$API_URL/api/admin/consultation-record-alerts/manual-check?daysBack=1" \
-        -H "Authorization: Bearer $JWT_TOKEN")
+    if [ -n "$JWT_TOKEN" ]; then
+        RESPONSE=$(curl -s -X POST "$API_URL/api/admin/consultation-record-alerts/manual-check?daysBack=1" \
+            -H "Authorization: Bearer $JWT_TOKEN")
+    else
+        RESPONSE=$(curl -s -X POST "$API_URL/api/admin/consultation-record-alerts/manual-check?daysBack=1" \
+            -b "$COOKIE_FILE")
+    fi
     
     if echo "$RESPONSE" | grep -q "success"; then
         success "상담일지 미작성 확인 수동 실행 성공"
     else
         fail "상담일지 미작성 확인 수동 실행 실패"
+        log "응답: $RESPONSE"
     fi
     
     # 상담일지 알림 시스템 상태 확인
     log "상담일지 알림 시스템 상태 확인..."
-    RESPONSE=$(curl -s -X GET "$API_URL/api/admin/consultation-record-alerts/status" \
-        -H "Authorization: Bearer $JWT_TOKEN")
+    if [ -n "$JWT_TOKEN" ]; then
+        RESPONSE=$(curl -s -X GET "$API_URL/api/admin/consultation-record-alerts/status" \
+            -H "Authorization: Bearer $JWT_TOKEN")
+    else
+        RESPONSE=$(curl -s -X GET "$API_URL/api/admin/consultation-record-alerts/status" \
+            -b "$COOKIE_FILE")
+    fi
     
     if echo "$RESPONSE" | grep -q "success\|systemStatus"; then
         success "상담일지 알림 시스템 상태 확인 성공"
     else
         fail "상담일지 알림 시스템 상태 확인 실패"
+        log "응답: $RESPONSE"
     fi
 }
 

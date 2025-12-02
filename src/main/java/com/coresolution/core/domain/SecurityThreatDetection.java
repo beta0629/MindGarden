@@ -63,6 +63,15 @@ public class SecurityThreatDetection {
     @Column(name = "confidence_score")
     private Double confidenceScore; // 0-1
     
+    @Column(name = "model_used", length = 50)
+    private String modelUsed; // RULE_BASED, OPENAI_GPT
+    
+    @Column(name = "ai_analysis", columnDefinition = "TEXT")
+    private String aiAnalysis; // AI 모델의 위협 분석 결과
+    
+    @Column(name = "ai_recommendation", columnDefinition = "TEXT")
+    private String aiRecommendation; // AI 모델의 권장 대응 조치
+    
     @Column(name = "blocked")
     @Builder.Default
     private Boolean blocked = false;

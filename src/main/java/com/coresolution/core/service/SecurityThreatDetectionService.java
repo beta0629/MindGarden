@@ -1,21 +1,26 @@
 package com.coresolution.core.service;
 
+import com.coresolution.core.config.AIMonitoringConfig;
 import com.coresolution.core.domain.SecurityThreatDetection;
 import com.coresolution.core.repository.SecurityThreatDetectionRepository;
+import com.coresolution.core.service.OpenAIMonitoringService.SecurityThreatAnalysisResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 보안 위협 탐지 서비스
+ * 보안 위협 탐지 서비스 (AI 기반)
  * 
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0 (AI Enhanced)
  * @since 2025-12-02
  */
 @Slf4j
@@ -26,45 +31,88 @@ public class SecurityThreatDetectionService {
     
     private final SecurityThreatDetectionRepository threatDetectionRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final AIMonitoringConfig aiConfig;
+    
+    @Autowired(required = false)
+    private OpenAIMonitoringService openAIMonitoringService;
     
     private static final int BRUTE_FORCE_THRESHOLD = 5; // 5회
     private static final int DDOS_THRESHOLD = 100; // 100회/분
     
     /**
-     * Brute Force 공격 탐지
+     * Brute Force 공격 탐지 (하이브리드)
      */
     public void detectBruteForce(String sourceIp, String userEmail, String targetUrl) {
         try {
             LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
             long attemptCount = threatDetectionRepository.countBySourceIpAndDetectedAtAfter(sourceIp, oneHourAgo);
             
-            if (attemptCount >= BRUTE_FORCE_THRESHOLD) {
-                double confidenceScore = Math.min((double) attemptCount / (BRUTE_FORCE_THRESHOLD * 2), 1.0);
-                String severity = getSeverity(confidenceScore);
-                
-                SecurityThreatDetection threat = SecurityThreatDetection.builder()
-                    .tenantId(null) // 시스템 레벨
-                    .threatType("BRUTE_FORCE")
-                    .severity(severity)
-                    .sourceIp(sourceIp)
-                    .targetUrl(targetUrl)
-                    .userEmail(userEmail)
-                    .attackPattern(String.format("로그인 실패 %d회", attemptCount))
-                    .confidenceScore(confidenceScore)
-                    .blocked(false)
-                    .autoBlocked(false)
-                    .detectedAt(LocalDateTime.now())
-                    .build();
-                
-                threatDetectionRepository.save(threat);
-                
-                log.warn("🚨 Brute Force 공격 탐지: ip={}, email={}, attempts={}, severity={}", 
-                    sourceIp, userEmail, attemptCount, severity);
-                
-                // 임계값 초과 시 자동 차단
-                if (attemptCount >= BRUTE_FORCE_THRESHOLD * 2) {
-                    autoBlockIp(sourceIp, "BRUTE_FORCE", threat.getId());
+            // 1단계: 규칙 기반 필터링
+            if (attemptCount < BRUTE_FORCE_THRESHOLD) {
+                return; // 정상 범위
+            }
+            
+            double confidenceScore = Math.min((double) attemptCount / (BRUTE_FORCE_THRESHOLD * 2), 1.0);
+            String severity = getSeverity(confidenceScore);
+            
+            // 2단계: AI 분석 (심각한 경우에만)
+            String aiAnalysis = null;
+            String aiRecommendation = null;
+            String modelUsed = "RULE_BASED";
+            
+            if (shouldUseAI() && attemptCount >= BRUTE_FORCE_THRESHOLD * 1.5) {
+                try {
+                    Map<String, Object> eventDetails = new HashMap<>();
+                    eventDetails.put("sourceIp", sourceIp);
+                    eventDetails.put("userEmail", userEmail);
+                    eventDetails.put("attemptCount", attemptCount);
+                    eventDetails.put("timeWindow", "1 hour");
+                    eventDetails.put("targetUrl", targetUrl);
+                    
+                    SecurityThreatAnalysisResult aiResult = 
+                        openAIMonitoringService.analyzeSecurityThreat("BRUTE_FORCE", eventDetails);
+                    
+                    if (aiResult != null && aiResult.isThreat()) {
+                        severity = aiResult.getSeverity();
+                        confidenceScore = aiResult.getThreatScore();
+                        aiAnalysis = aiResult.getAnalysis();
+                        aiRecommendation = aiResult.getRecommendation();
+                        modelUsed = "OPENAI_GPT";
+                        
+                        log.info("🤖 AI Brute Force 분석: ip={}, severity={}, score={}", 
+                            sourceIp, severity, confidenceScore);
+                    }
+                } catch (Exception e) {
+                    log.warn("AI 분석 실패, 규칙 기반으로 대체: {}", e.getMessage());
                 }
+            }
+            
+            // 3단계: 위협 저장
+            SecurityThreatDetection threat = SecurityThreatDetection.builder()
+                .tenantId(null)
+                .threatType("BRUTE_FORCE")
+                .severity(severity)
+                .sourceIp(sourceIp)
+                .targetUrl(targetUrl)
+                .userEmail(userEmail)
+                .attackPattern(String.format("로그인 실패 %d회", attemptCount))
+                .confidenceScore(confidenceScore)
+                .modelUsed(modelUsed)
+                .aiAnalysis(aiAnalysis)
+                .aiRecommendation(aiRecommendation)
+                .blocked(false)
+                .autoBlocked(false)
+                .detectedAt(LocalDateTime.now())
+                .build();
+            
+            threatDetectionRepository.save(threat);
+            
+            log.warn("🚨 Brute Force 공격 탐지: ip={}, email={}, attempts={}, severity={}, model={}", 
+                sourceIp, userEmail, attemptCount, severity, modelUsed);
+            
+            // 자동 차단
+            if (attemptCount >= BRUTE_FORCE_THRESHOLD * 2) {
+                autoBlockIp(sourceIp, "BRUTE_FORCE", threat.getId());
             }
         } catch (Exception e) {
             log.error("Brute Force 탐지 실패", e);
@@ -115,11 +163,11 @@ public class SecurityThreatDetectionService {
     }
     
     /**
-     * SQL Injection 탐지
+     * SQL Injection 탐지 (하이브리드)
      */
     public void detectSqlInjection(String sourceIp, String targetUrl, String payload) {
         try {
-            // SQL Injection 패턴 검사
+            // 1단계: 규칙 기반 패턴 검사
             String[] sqlPatterns = {
                 "' OR '1'='1",
                 "' OR 1=1--",
@@ -132,34 +180,76 @@ public class SecurityThreatDetectionService {
             };
             
             boolean isSqlInjection = false;
+            String matchedPattern = null;
             for (String pattern : sqlPatterns) {
                 if (payload != null && payload.toUpperCase().contains(pattern.toUpperCase())) {
                     isSqlInjection = true;
+                    matchedPattern = pattern;
                     break;
                 }
             }
             
-            if (isSqlInjection) {
-                SecurityThreatDetection threat = SecurityThreatDetection.builder()
-                    .tenantId(null)
-                    .threatType("SQL_INJECTION")
-                    .severity("HIGH")
-                    .sourceIp(sourceIp)
-                    .targetUrl(targetUrl)
-                    .attackPattern(payload)
-                    .confidenceScore(0.95)
-                    .blocked(false)
-                    .autoBlocked(false)
-                    .detectedAt(LocalDateTime.now())
-                    .build();
-                
-                threatDetectionRepository.save(threat);
-                
-                log.warn("🚨 SQL Injection 탐지: ip={}, url={}", sourceIp, targetUrl);
-                
-                // 자동 차단
-                autoBlockIp(sourceIp, "SQL_INJECTION", threat.getId());
+            if (!isSqlInjection) {
+                return; // 정상
             }
+            
+            // 2단계: AI 분석 (의심스러운 패턴)
+            String severity = "HIGH";
+            double confidenceScore = 0.95;
+            String aiAnalysis = null;
+            String aiRecommendation = null;
+            String modelUsed = "RULE_BASED";
+            
+            if (shouldUseAI()) {
+                try {
+                    Map<String, Object> eventDetails = new HashMap<>();
+                    eventDetails.put("sourceIp", sourceIp);
+                    eventDetails.put("targetUrl", targetUrl);
+                    eventDetails.put("payload", payload);
+                    eventDetails.put("matchedPattern", matchedPattern);
+                    eventDetails.put("payloadLength", payload.length());
+                    
+                    SecurityThreatAnalysisResult aiResult = 
+                        openAIMonitoringService.analyzeSecurityThreat("SQL_INJECTION", eventDetails);
+                    
+                    if (aiResult != null && aiResult.isThreat()) {
+                        severity = aiResult.getSeverity();
+                        confidenceScore = aiResult.getThreatScore();
+                        aiAnalysis = aiResult.getAnalysis();
+                        aiRecommendation = aiResult.getRecommendation();
+                        modelUsed = "OPENAI_GPT";
+                        
+                        log.info("🤖 AI SQL Injection 분석: ip={}, severity={}, score={}", 
+                            sourceIp, severity, confidenceScore);
+                    }
+                } catch (Exception e) {
+                    log.warn("AI 분석 실패, 규칙 기반으로 대체: {}", e.getMessage());
+                }
+            }
+            
+            // 3단계: 위협 저장
+            SecurityThreatDetection threat = SecurityThreatDetection.builder()
+                .tenantId(null)
+                .threatType("SQL_INJECTION")
+                .severity(severity)
+                .sourceIp(sourceIp)
+                .targetUrl(targetUrl)
+                .attackPattern(payload)
+                .confidenceScore(confidenceScore)
+                .modelUsed(modelUsed)
+                .aiAnalysis(aiAnalysis)
+                .aiRecommendation(aiRecommendation)
+                .blocked(false)
+                .autoBlocked(false)
+                .detectedAt(LocalDateTime.now())
+                .build();
+            
+            threatDetectionRepository.save(threat);
+            
+            log.warn("🚨 SQL Injection 탐지: ip={}, url={}, model={}", sourceIp, targetUrl, modelUsed);
+            
+            // 자동 차단
+            autoBlockIp(sourceIp, "SQL_INJECTION", threat.getId());
         } catch (Exception e) {
             log.error("SQL Injection 탐지 실패", e);
         }
@@ -199,6 +289,15 @@ public class SecurityThreatDetectionService {
             log.error("IP 차단 확인 실패: ip={}", sourceIp, e);
             return false;
         }
+    }
+    
+    /**
+     * AI 사용 여부 판단
+     */
+    private boolean shouldUseAI() {
+        return openAIMonitoringService != null && 
+               aiConfig != null && 
+               aiConfig.isEnabled();
     }
     
     /**

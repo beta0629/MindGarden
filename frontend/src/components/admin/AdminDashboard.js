@@ -22,6 +22,7 @@ import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
 import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 import ErpReportModal from '../erp/ErpReportModal';
 // 새로 추가된 모달 컴포넌트들
+import AdminDashboardMonitoring from './AdminDashboard/AdminDashboardMonitoring';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -1458,6 +1459,18 @@ const AdminDashboard = ({ user: propUser }) => {
                     isOpen={showErpReport}
                     onClose={() => setShowErpReport(false)}
                 />
+            )}
+
+            {/* AI 및 시스템 모니터링 - 관리자만 접근 가능 */}
+            {(() => {
+                const currentRole = (propUser || sessionUser)?.role;
+                const canViewMonitoring = currentRole === 'BRANCH_SUPER_ADMIN' || 
+                                         currentRole === 'HQ_ADMIN' || 
+                                         currentRole === 'SUPER_HQ_ADMIN' || 
+                                         currentRole === 'HQ_MASTER';
+                return canViewMonitoring;
+            })() && (
+                <AdminDashboardMonitoring user={propUser || sessionUser} />
             )}
 
             {/* 권한 관리 - 지점 수퍼 어드민 이상만 접근 가능 */}

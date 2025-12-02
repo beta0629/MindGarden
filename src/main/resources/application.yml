@@ -239,11 +239,6 @@ sms:
     mock-verification-code: ${SMS_MOCK_CODE:123456}  # 테스트용 고정 인증번호
 
 # OpenAI API 설정 (웰니스 컨텐츠 자동 생성)
-# AI 모델 설정 (확장 가능)
-ai:
-  model:
-    provider: ${AI_MODEL_PROVIDER:openai}  # openai, claude, gemini 등
-    
 openai:
   api:
     key: ${OPENAI_API_KEY:dummy-key-for-development}  # 환경 변수로 설정 (기본값 포함)
@@ -264,8 +259,12 @@ openai:
 #    url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1/models}
 #  model: ${GEMINI_MODEL:gemini-pro}
 
-# AI 모니터링 설정 (하이브리드 방식)
+# AI 모델 및 모니터링 설정 (통합)
 ai:
+  # AI 모델 설정 (확장 가능)
+  model:
+    provider: ${AI_MODEL_PROVIDER:openai}  # openai, claude, gemini 등
+  # AI 모니터링 설정 (하이브리드 방식)
   monitoring:
     enabled: ${AI_MONITORING_ENABLED:false}  # AI 모니터링 활성화 여부 (기본: 비활성화)
     hybrid:

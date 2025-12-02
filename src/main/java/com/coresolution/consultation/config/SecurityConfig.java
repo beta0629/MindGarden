@@ -3,6 +3,7 @@ package com.coresolution.consultation.config;
 import java.util.Arrays;
 import com.coresolution.core.filter.TenantContextFilter;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

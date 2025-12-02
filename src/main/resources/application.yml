@@ -285,13 +285,7 @@ ai:
       monthly-budget: 50.0  # 월 예산 (USD)
       alert-threshold: 80  # 예산 80% 도달 시 알림
 
-# 민감정보 보호 설정
-security:
-  data-masking:
-    enabled: ${DATA_MASKING_ENABLED:true}  # 민감정보 마스킹 활성화 (운영: true, 개발: false)
-    mask-in-logs: true  # 로그 출력 시 마스킹
-    mask-in-ai-analysis: true  # AI 분석 시 마스킹
-    mask-in-external-api: true  # 외부 API 전송 시 마스킹
+# 민감정보 보호 설정은 아래 security 섹션으로 통합됨
 
 # 온보딩 자동 승인 설정
 onboarding:
@@ -403,9 +397,16 @@ scheduler:
     cron: ${SCHEDULER_SCHEMA_CHANGE_DETECTION_CRON:0 0 2 * * ?}  # 매일 새벽 2시
 
 # =====================================================
-# 보안 설정 (보안 표준화)
+# 보안 설정 (보안 표준화 + 민감정보 보호)
 # =====================================================
 security:
+  # 민감정보 보호 (데이터 마스킹)
+  data-masking:
+    enabled: ${DATA_MASKING_ENABLED:true}  # 민감정보 마스킹 활성화 (운영: true, 개발: false)
+    mask-in-logs: true  # 로그 출력 시 마스킹
+    mask-in-ai-analysis: true  # AI 분석 시 마스킹
+    mask-in-external-api: true  # 외부 API 전송 시 마스킹
+  
   # 로그인 보안
   login:
     max-attempts: ${SECURITY_LOGIN_MAX_ATTEMPTS:5}  # 최대 로그인 시도 횟수

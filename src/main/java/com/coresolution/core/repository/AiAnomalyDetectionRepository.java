@@ -31,5 +31,20 @@ public interface AiAnomalyDetectionRepository extends JpaRepository<AiAnomalyDet
      * 최근 이상 탐지 조회
      */
     List<AiAnomalyDetection> findByDetectedAtAfterOrderByDetectedAtDesc(LocalDateTime since);
+    
+    /**
+     * 테넌트별 최근 이상 탐지 조회
+     */
+    List<AiAnomalyDetection> findByTenantIdAndDetectedAtAfterOrderByDetectedAtDesc(String tenantId, LocalDateTime since);
+    
+    /**
+     * 기간별 이상 탐지 조회
+     */
+    List<AiAnomalyDetection> findByDetectedAtBetween(LocalDateTime start, LocalDateTime end);
+    
+    /**
+     * 테넌트별 기간별 이상 탐지 조회
+     */
+    List<AiAnomalyDetection> findByTenantIdAndDetectedAtBetween(String tenantId, LocalDateTime start, LocalDateTime end);
 }
 

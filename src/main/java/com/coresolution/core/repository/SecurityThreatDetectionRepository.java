@@ -36,5 +36,20 @@ public interface SecurityThreatDetectionRepository extends JpaRepository<Securit
      * IP별 최근 1시간 위협 카운트
      */
     long countBySourceIpAndDetectedAtAfter(String sourceIp, LocalDateTime since);
+    
+    /**
+     * 테넌트별 최근 위협 조회
+     */
+    List<SecurityThreatDetection> findByTenantIdAndDetectedAtAfterOrderByDetectedAtDesc(String tenantId, LocalDateTime since);
+    
+    /**
+     * 기간별 위협 조회
+     */
+    List<SecurityThreatDetection> findByDetectedAtBetween(LocalDateTime start, LocalDateTime end);
+    
+    /**
+     * 테넌트별 기간별 위협 조회
+     */
+    List<SecurityThreatDetection> findByTenantIdAndDetectedAtBetween(String tenantId, LocalDateTime start, LocalDateTime end);
 }
 

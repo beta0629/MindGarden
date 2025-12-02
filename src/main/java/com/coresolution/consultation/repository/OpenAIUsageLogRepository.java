@@ -77,5 +77,17 @@ public interface OpenAIUsageLogRepository extends JpaRepository<OpenAIUsageLog, 
      * 최근 N개 로그 조회
      */
     List<OpenAIUsageLog> findTop10ByOrderByCreatedAtDesc();
+    
+    /**
+     * 특정 시점 이후 호출 횟수
+     */
+    long countByCreatedAtAfter(LocalDateTime since);
+    
+    /**
+     * 특정 시점 이후 총 비용
+     */
+    @Query("SELECT COALESCE(SUM(log.estimatedCost), 0) FROM OpenAIUsageLog log " +
+           "WHERE log.createdAt >= :since AND log.isSuccess = true")
+    Double sumEstimatedCostByCreatedAtAfter(@Param("since") LocalDateTime since);
 }
 

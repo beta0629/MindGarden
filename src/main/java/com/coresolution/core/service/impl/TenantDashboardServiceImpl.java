@@ -2,7 +2,9 @@ package com.coresolution.core.service.impl;
 import com.coresolution.core.context.TenantContextHolder;
 
 import java.text.MessageFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -11,13 +13,16 @@ import com.coresolution.core.constant.RoleConstants;
 import com.coresolution.core.domain.RoleTemplate;
 import com.coresolution.core.domain.TenantDashboard;
 import com.coresolution.core.domain.TenantRole;
+import com.coresolution.core.domain.WidgetDefinition;
 import com.coresolution.core.dto.TenantDashboardRequest;
 import com.coresolution.core.dto.TenantDashboardResponse;
+import com.coresolution.core.dto.WidgetDefinitionResponse;
 import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.repository.TenantDashboardRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.TenantDashboardService;
+import com.coresolution.core.service.WidgetGroupService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,6 +51,7 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
     private final RoleTemplateRepository roleTemplateRepository;
     private final TenantAccessControlService accessControlService;
     private final EntityManager entityManager;
+    private final WidgetGroupService widgetGroupService;
     
     @Override
     @Transactional(readOnly = true)
@@ -336,9 +342,10 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                     log.debug("선택된 템플릿이 없어 기본 설정 사용: roleName={}", roleName);
                 }
             } else {
-                // 메타 시스템: RoleTemplate의 default_widgets_json에서 가져오기
-                defaultConfig = getDefaultDashboardConfigFromTemplate(template, roleCode);
-                log.debug("템플릿 선택 정보가 없어 기본 설정 사용: roleName={}", roleName);
+                // ✅ 표준: 위젯 그룹 기반 설정 생성
+                defaultConfig = createDashboardConfigFromWidgetGroups(tenantId, businessType, roleCode);
+                log.debug("위젯 그룹 기반 대시보드 설정 생성: roleName={}, businessType={}, roleCode={}", 
+                        roleName, businessType, roleCode);
             }
             
             TenantDashboard dashboard = TenantDashboard.builder()
@@ -763,10 +770,115 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
     }
     
     /**
+     * 위젯 그룹 기반 대시보드 설정 생성
+     * 
+     * ✅ 표준: 위젯 그룹 시스템 사용 (하드코딩 제거)
+     * 
+     * @param tenantId 테넌트 ID
+     * @param businessType 업종
+     * @param roleCode 역할 코드
+     * @return 대시보드 설정 JSON
+     */
+    private String createDashboardConfigFromWidgetGroups(String tenantId, String businessType, String roleCode) {
+        try {
+            log.debug("위젯 그룹 기반 대시보드 설정 생성: tenantId={}, businessType={}, roleCode={}", 
+                    tenantId, businessType, roleCode);
+            
+            ObjectMapper mapper = new ObjectMapper();
+            com.fasterxml.jackson.databind.node.ObjectNode config = mapper.createObjectNode();
+            
+            // 버전 및 레이아웃 설정
+            config.put("version", "2.0");  // ✅ 위젯 그룹 시스템 버전
+            com.fasterxml.jackson.databind.node.ObjectNode layout = mapper.createObjectNode();
+            layout.put("type", "grid");
+            layout.put("columns", 3);
+            layout.put("gap", "md");
+            layout.put("responsive", true);
+            config.set("layout", layout);
+            
+            // ✅ 위젯 그룹 기반 위젯 조회
+            Map<String, List<WidgetDefinitionResponse>> groupedWidgets = 
+                    widgetGroupService.getGroupedWidgets(tenantId, businessType, roleCode);
+            
+            // 위젯 배열 생성
+            com.fasterxml.jackson.databind.node.ArrayNode widgets = mapper.createArrayNode();
+            
+            int row = 0;
+            for (Map.Entry<String, List<WidgetDefinitionResponse>> entry : groupedWidgets.entrySet()) {
+                String groupName = entry.getKey();
+                List<WidgetDefinitionResponse> groupWidgets = entry.getValue();
+                
+                log.debug("위젯 그룹 처리: groupName={}, widgetCount={}", groupName, groupWidgets.size());
+                
+                for (WidgetDefinitionResponse widget : groupWidgets) {
+                    com.fasterxml.jackson.databind.node.ObjectNode widgetNode = mapper.createObjectNode();
+                    
+                    // 위젯 기본 정보
+                    widgetNode.put("id", widget.getWidgetId());
+                    widgetNode.put("type", widget.getWidgetType());
+                    widgetNode.put("title", widget.getWidgetNameKo());
+                    widgetNode.put("group", groupName);
+                    
+                    // 권한 정보
+                    widgetNode.put("isSystemManaged", widget.getIsSystemManaged());
+                    widgetNode.put("isRequired", widget.getIsRequired());
+                    widgetNode.put("isDeletable", widget.getIsDeletable());
+                    widgetNode.put("isMovable", widget.getIsMovable());
+                    widgetNode.put("isConfigurable", widget.getIsConfigurable());
+                    
+                    // 위치 정보 (간단한 그리드 레이아웃)
+                    com.fasterxml.jackson.databind.node.ObjectNode position = mapper.createObjectNode();
+                    position.put("row", row);
+                    position.put("col", 0);
+                    position.put("span", 3);  // 전체 너비
+                    widgetNode.set("position", position);
+                    
+                    // 기본 설정 (JSON 파싱)
+                    if (widget.getDefaultConfig() != null) {
+                        try {
+                            JsonNode defaultConfigNode = mapper.readTree(widget.getDefaultConfig());
+                            widgetNode.set("config", defaultConfigNode);
+                        } catch (JsonProcessingException e) {
+                            log.warn("위젯 기본 설정 파싱 실패: widgetId={}", widget.getWidgetId(), e);
+                            widgetNode.set("config", mapper.createObjectNode());
+                        }
+                    } else {
+                        widgetNode.set("config", mapper.createObjectNode());
+                    }
+                    
+                    widgets.add(widgetNode);
+                    row++;
+                }
+            }
+            
+            config.set("widgets", widgets);
+            
+            // 테마 설정
+            com.fasterxml.jackson.databind.node.ObjectNode theme = mapper.createObjectNode();
+            theme.put("mode", "light");
+            theme.put("primaryColor", "#007bff");
+            config.set("theme", theme);
+            
+            log.info("위젯 그룹 기반 대시보드 설정 생성 완료: widgetCount={}", widgets.size());
+            
+            return mapper.writeValueAsString(config);
+            
+        } catch (Exception e) {
+            log.error("위젯 그룹 기반 대시보드 설정 생성 실패: tenantId={}, businessType={}, roleCode={}", 
+                    tenantId, businessType, roleCode, e);
+            // 실패 시 최소 설정 반환
+            return "{\"version\":\"2.0\",\"layout\":{\"type\":\"grid\",\"columns\":3},\"widgets\":[]}";
+        }
+    }
+    
+    /**
      * 기본 대시보드 설정 생성 (MVP용, Fallback)
      * 역할별 기본 위젯 3-5개 포함
      * 메타 시스템: 이 메서드는 RoleTemplate에 default_widgets_json이 없을 때만 사용됨
+     * 
+     * @deprecated 위젯 그룹 시스템으로 대체됨. createDashboardConfigFromWidgetGroups() 사용 권장
      */
+    @Deprecated
     private String createDefaultDashboardConfig(String roleCode) {
         try {
             ObjectMapper mapper = new ObjectMapper();

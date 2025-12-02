@@ -4,6 +4,7 @@ import com.coresolution.core.domain.SecurityThreatDetection;
 import com.coresolution.core.repository.SecurityThreatDetectionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(RedisTemplate.class)
 public class SecurityThreatDetectionService {
     
     private final SecurityThreatDetectionRepository threatDetectionRepository;

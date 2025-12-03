@@ -151,7 +151,9 @@ public class InputValidationConfig {
          * SQL Injection 시도 검사
          */
         private boolean isSqlInjectionAttempt(String requestPath, String queryString) {
-            String fullPath = requestPath + (queryString != null ? "?" + queryString : "");
+            // 숫자만 있는 경로 변수는 {id}로 변환하여 검사 (예: /api/consultation-messages/client/555 -> /api/consultation-messages/client/{id})
+            String sanitizedPath = requestPath.replaceAll("/\\d+", "/{id}");
+            String fullPath = sanitizedPath + (queryString != null ? "?" + queryString : "");
             
             for (Pattern pattern : SQL_INJECTION_PATTERNS) {
                 if (pattern.matcher(fullPath).matches()) {

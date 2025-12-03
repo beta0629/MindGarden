@@ -25,6 +25,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 })
 @EntityScan(basePackages = {
     "com.coresolution.core.domain",
+    "com.coresolution.core.entity",
     "com.coresolution.consultation.entity",
     "com.coresolution.user.entity"
 })

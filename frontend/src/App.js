@@ -52,6 +52,9 @@ import AcademyRegister from './components/academy/AcademyRegister';
 import DynamicDashboard from './components/dashboard/DynamicDashboard';
 import DashboardManagement from './components/admin/DashboardManagement';
 import WidgetBasedAdminDashboard from './components/admin/WidgetBasedAdminDashboard';
+import AdminDashboard from './components/admin/AdminDashboard';
+import ClientDashboard from './components/client/ClientDashboard';
+import CommonDashboard from './components/dashboard/CommonDashboard';
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
@@ -91,6 +94,11 @@ import WellnessNotificationDetail from './components/wellness/WellnessNotificati
 import WellnessManagement from './components/admin/WellnessManagement';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
 import TenantProfile from './components/tenant/TenantProfile';
+import AdminLayout from './components/layout/AdminLayout';
+import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
+import MenuPermissionManagement from './components/admin/MenuPermissionManagement';
+import PermissionGroupManagement from './components/admin/PermissionGroupManagement';
+import ProtectedRoute from './components/common/ProtectedRoute';
 import { SessionProvider, useSession } from './contexts/SessionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -342,10 +350,11 @@ function AppContent() {
             {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
             <Route path="/dashboard" element={<DynamicDashboard user={user} />} />
             
-            {/* 역할별 대시보드 라우트 - 동적 대시보드로 통합 (하위 호환성 유지) */}
-            <Route path="/client/dashboard" element={<DynamicDashboard user={user} />} />
-            <Route path="/consultant/dashboard" element={<DynamicDashboard user={user} />} />
-            <Route path="/admin/dashboard" element={<WidgetBasedAdminDashboard />} />
+            {/* 역할별 대시보드 라우트 - 레거시 대시보드 사용 (디자인 개선 전까지) */}
+            <Route path="/client/dashboard" element={<ClientDashboard user={user} />} />
+            <Route path="/consultant/dashboard" element={<CommonDashboard user={user} />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard user={user} />} />
+            <Route path="/admin/dashboard-widget" element={<WidgetBasedAdminDashboard />} />
             <Route path="/admin/dashboard-old" element={<DynamicDashboard user={user} />} />
             <Route path="/super_admin/dashboard" element={<DynamicDashboard user={user} />} />
             <Route path="/hq_admin/dashboard" element={<DynamicDashboard user={user} />} />
@@ -374,6 +383,22 @@ function AppContent() {
                 <PermissionManagement />
               </SimpleLayout>
             } />
+            
+            {/* 관리자 전용 메뉴 시스템 (ADMIN만 접근) */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="/admin/common-codes" replace />} />
+              <Route path="common-codes" element={<TenantCommonCodeManager />} />
+              <Route path="menu-permissions" element={<MenuPermissionManagement />} />
+              <Route path="permission-groups" element={<PermissionGroupManagement />} />
+              {/* 추후 추가될 관리자 페이지들 */}
+            </Route>
             
             {/* ERP 관리 */}
             <Route path="/erp/purchase" element={<PurchaseManagement />} />

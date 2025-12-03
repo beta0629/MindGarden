@@ -28,23 +28,51 @@ echo -e "${BLUE}📂 프로젝트 루트: ${PROJECT_ROOT}${NC}"
 mkdir -p logs
 
 # ===============================================
-# 1단계: 기존 프로세스 종료
+# 1단계: 기존 프로세스 및 포트 종료
 # ===============================================
-echo -e "${YELLOW}🛑 1단계: 기존 프로세스 종료${NC}"
+echo -e "${YELLOW}🛑 1단계: 기존 프로세스 및 포트 종료${NC}"
 
-# 백엔드 종료
+# 백엔드 프로세스 종료
 echo -e "${YELLOW}   백엔드 프로세스 종료...${NC}"
 pkill -f "spring-boot:run" 2>/dev/null || true
 pkill -f "consultation-management-system" 2>/dev/null || true
+pkill -f "ConsultationManagementApplication" 2>/dev/null || true
 
-# 프론트엔드 종료
+# 프론트엔드 프로세스 종료
 echo -e "${YELLOW}   프론트엔드 프로세스 종료...${NC}"
+pkill -f "react-scripts" 2>/dev/null || true
+pkill -f "node.*start" 2>/dev/null || true
+pkill -f "npm.*start" 2>/dev/null || true
+
+# 포트 종료 (백엔드)
+echo -e "${YELLOW}   백엔드 포트 종료 (8080)...${NC}"
+lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+
+# 포트 종료 (프론트엔드)
+echo -e "${YELLOW}   프론트엔드 포트 종료 (3000, 3001, 4300)...${NC}"
 lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 lsof -ti:3001 | xargs kill -9 2>/dev/null || true
 lsof -ti:4300 | xargs kill -9 2>/dev/null || true
 
-sleep 2
-echo -e "${GREEN}✅ 1단계 완료: 기존 프로세스 종료됨${NC}"
+# 포트 정리 대기
+echo -e "${YELLOW}   포트 정리 대기 중...${NC}"
+sleep 3
+
+# 포트 정리 확인
+echo -e "${YELLOW}   포트 정리 확인...${NC}"
+if lsof -ti:8080 > /dev/null 2>&1; then
+    echo -e "${RED}   ⚠️  포트 8080이 아직 사용 중입니다. 강제 종료 시도...${NC}"
+    lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+    sleep 1
+fi
+
+if lsof -ti:3000 > /dev/null 2>&1; then
+    echo -e "${RED}   ⚠️  포트 3000이 아직 사용 중입니다. 강제 종료 시도...${NC}"
+    lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+    sleep 1
+fi
+
+echo -e "${GREEN}✅ 1단계 완료: 기존 프로세스 및 포트 종료됨${NC}"
 echo
 
 # ===============================================

@@ -1,0 +1,24 @@
+/**
+ * 관리자 대시보드 테마
+ * 
+ * Phase 6: 대시보드 디자인 개선 - 역할별 테마
+ * ADMIN 역할 전용 테마 변수
+ * 
+ * 생성일: 2025-12-03
+ * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
+ */
+
+.dashboard-admin {
+    /* 역할별 Primary 색상 */
+    --card-primary: var(--mg-admin-primary);
+    --card-primary-light: var(--mg-admin-primary-light);
+    --card-primary-dark: var(--mg-admin-primary-dark);
+    --card-gradient: var(--mg-admin-gradient);
+    
+    /* 등급별 색상 (관리자) */
+    --grade-manager: var(--mg-grade-admin-manager);
+    --grade-director: var(--mg-grade-admin-director);
+    --grade-executive: var(--mg-grade-admin-executive);
+    --grade-super: var(--mg-grade-admin-super);
+}
+

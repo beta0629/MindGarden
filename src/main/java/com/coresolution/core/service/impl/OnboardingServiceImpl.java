@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.Tenant;
@@ -58,9 +59,9 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
     private final CommonCodeService commonCodeService;
+    private final CommonCodeRepository commonCodeRepository;
     private final OnboardingPreValidationService preValidationService;
     private final OnboardingErrorHandlingService errorHandlingService;
-    
     @jakarta.persistence.PersistenceContext
     private jakarta.persistence.EntityManager entityManager;
     
@@ -447,6 +448,17 @@ public class OnboardingServiceImpl implements OnboardingService {
                     log.warn("구독 tenant_id 업데이트 실패 (계속 진행): {}", e.getMessage());
                     // 구독 업데이트 실패해도 온보딩 프로세스는 계속 진행
                 }
+                
+            // 온보딩 승인 성공 후 추가 작업 (메인 트랜잭션 내에서 직접 실행)
+            // 프로시저가 역할을 생성한 후, 같은 트랜잭션 내에서 공통코드 삽입
+            try {
+                log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
+                initializeTenantAfterOnboarding(tenantId, request.getBusinessType(), actorId);
+            } catch (Exception e) {
+                log.error("온보딩 후 테넌트 초기화 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
+                    tenantId, e.getMessage(), e);
+                // 초기화 실패해도 온보딩 프로세스는 계속 진행
+            }
             }
         }
         
@@ -1031,5 +1043,213 @@ public class OnboardingServiceImpl implements OnboardingService {
         
         return null;
     }
+    
+    /**
+     * 온보딩 승인 후 테넌트 초기화 작업
+     * - 테넌트 공통코드 자동 삽입
+     * - 역할별 권한 그룹 자동 할당
+     * 
+     * 방어 코드: 모든 단계에서 오류가 발생해도 온보딩 프로세스는 계속 진행되도록 처리
+     * 
+     * @param tenantId 테넌트 ID
+     * @param businessType 업종 타입
+     * @param actorId 실행자 ID
+     */
+    private void initializeTenantAfterOnboarding(String tenantId, String businessType, String actorId) {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            log.warn("⚠️ 테넌트 ID가 없어 초기화 작업을 건너뜁니다.");
+            return;
+        }
+        
+        log.info("🔄 온보딩 후 테넌트 초기화 시작: tenantId={}, businessType={}", tenantId, businessType);
+        
+        // 1. 테넌트 공통코드 자동 삽입
+        try {
+            insertDefaultTenantCommonCodes(tenantId, actorId);
+        } catch (Exception e) {
+            log.error("❌ 테넌트 공통코드 삽입 실패 (계속 진행): tenantId={}, error={}", tenantId, e.getMessage(), e);
+            // 실패해도 계속 진행
+        }
+        
+        // 2. 권한 그룹 자동 할당은 프로시저 내에서 처리됨
+        // ApplyDefaultRoleTemplates 프로시저에서 관리자 역할에 대해 자동으로 권한 그룹 할당
+        log.info("ℹ️ 권한 그룹 할당은 프로시저에서 처리됨: tenantId={}", tenantId);
+        
+        log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
+    }
+    
+    /**
+     * 기본 테넌트 공통코드 삽입
+     * 프로시저가 실패한 경우를 대비한 Java 코드에서 직접 삽입
+     * 
+     * @param tenantId 테넌트 ID
+     * @param createdBy 생성자 ID
+     */
+    private void insertDefaultTenantCommonCodes(String tenantId, String createdBy) {
+        log.info("📋 테넌트 공통코드 삽입 시작: tenantId={}", tenantId);
+        
+        // 이미 공통코드가 있는지 확인
+        try {
+            List<CommonCode> existingCodes = commonCodeRepository.findByTenantId(tenantId);
+            if (existingCodes != null && !existingCodes.isEmpty()) {
+                log.info("⏭️ 테넌트 공통코드가 이미 존재합니다. 건너뜁니다: tenantId={}, count={}", 
+                    tenantId, existingCodes.size());
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ 기존 공통코드 확인 실패 (계속 진행): tenantId={}, error={}", tenantId, e.getMessage());
+        }
+        
+        int insertedCount = 0;
+        String createdByValue = createdBy != null ? createdBy : "SYSTEM_ONBOARDING";
+        
+        // 기본 상담 패키지 코드 (샘플)
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "INDIVIDUAL", 
+                "개인상담", "개인상담", "1:1 개인 심리상담", 
+                "{\"price\": 80000, \"duration\": 50, \"unit\": \"회\"}", 1, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "FAMILY", 
+                "가족상담", "가족상담", "가족 단위 상담", 
+                "{\"price\": 120000, \"duration\": 60, \"unit\": \"회\"}", 2, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "GROUP", 
+                "집단상담", "집단상담", "그룹 심리상담", 
+                "{\"price\": 50000, \"duration\": 90, \"unit\": \"회\"}", 3, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        // 기본 결제 방법 코드
+        try {
+            insertCommonCodeIfNotExists(tenantId, "PAYMENT_METHOD", "CASH", 
+                "현금", "현금", "현금 결제", null, 1, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 결제 방법 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "PAYMENT_METHOD", "CARD", 
+                "카드", "카드", "카드 결제", null, 2, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 결제 방법 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "PAYMENT_METHOD", "TRANSFER", 
+                "계좌이체", "계좌이체", "계좌이체 결제", null, 3, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 결제 방법 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        // 기본 전문 분야 코드
+        try {
+            insertCommonCodeIfNotExists(tenantId, "SPECIALTY", "DEPRESSION", 
+                "우울증", "우울증", "우울증 상담", null, 1, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 전문 분야 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "SPECIALTY", "ANXIETY", 
+                "불안장애", "불안장애", "불안장애 상담", null, 2, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 전문 분야 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "SPECIALTY", "FAMILY", 
+                "가족상담", "가족상담", "가족 상담", null, 3, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 전문 분야 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        // 기본 상담 유형 코드
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_TYPE", "FACE_TO_FACE", 
+                "대면상담", "대면상담", "대면 상담", null, 1, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담 유형 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_TYPE", "ONLINE", 
+                "비대면상담", "비대면상담", "비대면 상담", null, 2, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담 유형 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertCommonCodeIfNotExists(tenantId, "CONSULTATION_TYPE", "PHONE", 
+                "전화상담", "전화상담", "전화 상담", null, 3, createdByValue);
+            insertedCount++;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담 유형 코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        log.info("✅ 테넌트 공통코드 삽입 완료: tenantId={}, insertedCount={}", tenantId, insertedCount);
+    }
+    
+    /**
+     * 공통코드 삽입 (중복 체크 포함)
+     */
+    private void insertCommonCodeIfNotExists(String tenantId, String codeGroup, String codeValue,
+                                            String koreanName, String codeLabel, String description,
+                                            String extraData, Integer sortOrder, String createdBy) {
+        try {
+            // 중복 체크
+            Optional<CommonCode> existing = commonCodeRepository.findTenantCodeByGroupAndValue(
+                tenantId, codeGroup, codeValue);
+            
+            if (existing.isPresent()) {
+                log.debug("⏭️ 공통코드 이미 존재: tenantId={}, group={}, value={}", 
+                    tenantId, codeGroup, codeValue);
+                return;
+            }
+            
+            // 공통코드 생성
+            CommonCode code = CommonCode.builder()
+                .codeGroup(codeGroup)
+                .codeValue(codeValue)
+                .koreanName(koreanName)
+                .codeLabel(codeLabel)
+                .codeDescription(description)
+                .sortOrder(sortOrder != null ? sortOrder : 0)
+                .isActive(true)
+                .extraData(extraData)
+                .build();
+            
+            code.setTenantId(tenantId);
+            
+            commonCodeRepository.save(code);
+            log.debug("✅ 공통코드 삽입 완료: tenantId={}, group={}, value={}", 
+                tenantId, codeGroup, codeValue);
+                
+        } catch (Exception e) {
+            log.error("❌ 공통코드 삽입 실패: tenantId={}, group={}, value={}, error={}", 
+                tenantId, codeGroup, codeValue, e.getMessage());
+            throw e; // 상위로 전파하여 개별 처리
+        }
+    }
+    
 }
 

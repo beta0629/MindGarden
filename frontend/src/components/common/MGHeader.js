@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import './MGHeader.css';
+// 헤더 스타일은 main.css를 통해 _header.css에서 중앙화되어 로드됨
 
 const MGHeader = ({
   logo = 'CoreSolution',

@@ -1,0 +1,188 @@
+/**
+ * 관리자 메뉴 사이드바 UI 스타일
+ * 
+ * 표준화 준수:
+ * - CSS 변수만 사용 (--mg-* 접두사)
+ * - BEM 네이밍 (mg-{component}-{element}--{modifier})
+ * - 하드코딩 절대 금지
+ * 
+ * @author MindGarden
+ * @version 2.0.0
+ * @since 2025-12-03
+ */
+
+/* ==================== Sidebar Container ==================== */
+
+.mg-admin-sidebar {
+    width: var(--mg-sidebar-width, 280px);
+    background: var(--mg-gray-900);
+    color: var(--mg-white);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: var(--mg-z-sidebar, 100);
+}
+
+/* ==================== Header ==================== */
+
+.mg-sidebar-header {
+    padding: var(--mg-spacing-6);
+    border-bottom: var(--border-width) solid var(--cs-glass-white-10);
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-3);
+}
+
+.mg-header-icon {
+    font-size: var(--mg-font-size-2xl);
+    color: var(--mg-primary-400);
+}
+
+.mg-header-title {
+    font-size: var(--mg-font-size-lg);
+    font-weight: var(--mg-font-weight-semibold);
+    margin: 0;
+    color: var(--mg-white);
+}
+
+/* ==================== Navigation ==================== */
+
+.mg-admin-nav {
+    padding: var(--mg-spacing-4) 0;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.mg-menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* ==================== Menu Item ==================== */
+
+.mg-menu-item {
+    margin: var(--mg-spacing-1) var(--mg-spacing-3);
+}
+
+/* ==================== Menu Header (Parent Menu) ==================== */
+
+.mg-menu-header {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-3);
+    padding: var(--mg-spacing-3) var(--mg-spacing-4);
+    cursor: pointer;
+    border-radius: var(--mg-border-radius-md);
+    transition: background var(--mg-transition-base);
+    color: var(--cs-glass-white-70);
+}
+
+.mg-menu-header:hover {
+    background: var(--cs-glass-white-5);
+    color: var(--mg-white);
+}
+
+.mg-menu-header.mg-expanded {
+    background: var(--cs-glass-white-5);
+    color: var(--mg-white);
+}
+
+.mg-menu-arrow {
+    margin-left: auto;
+    font-size: var(--mg-font-size-xs);
+    transition: transform var(--mg-transition-base);
+}
+
+.mg-menu-header.mg-expanded .mg-menu-arrow {
+    transform: rotate(0deg);
+}
+
+/* ==================== Menu Link (Leaf Menu) ==================== */
+
+.mg-menu-link {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-3);
+    padding: var(--mg-spacing-3) var(--mg-spacing-4);
+    color: var(--cs-glass-white-70);
+    text-decoration: none;
+    border-radius: var(--mg-border-radius-md);
+    transition: all var(--mg-transition-base);
+}
+
+.mg-menu-link:hover {
+    background: var(--cs-glass-white-5);
+    color: var(--mg-white);
+}
+
+.mg-menu-link.mg-active {
+    background: var(--mg-primary-500);
+    color: var(--mg-white);
+}
+
+.mg-menu-link.mg-active:hover {
+    background: var(--mg-primary-600);
+}
+
+/* ==================== Menu Icon ==================== */
+
+.mg-menu-icon {
+    font-size: var(--mg-font-size-lg);
+    width: var(--mg-icon-size, var(--icon-size-xs));
+    text-align: center;
+}
+
+/* ==================== Menu Name ==================== */
+
+.mg-menu-name {
+    font-size: var(--mg-font-size-sm);
+    font-weight: var(--mg-font-weight-medium);
+}
+
+/* ==================== Submenu ==================== */
+
+.mg-submenu {
+    list-style: none;
+    padding: 0;
+    margin: var(--mg-spacing-1) 0 var(--mg-spacing-1) var(--mg-spacing-6);
+    animation: slideDown var(--mg-transition-base);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(calc(var(--spacing-sm) * -1));
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==================== Responsive ==================== */
+
+@media (max-width: 768px) {
+    .mg-admin-sidebar {
+        width: 100%;
+        position: relative;
+        height: auto;
+    }
+
+    .mg-sidebar-header {
+        padding: var(--mg-spacing-4);
+    }
+
+    .mg-menu-item {
+        margin: var(--mg-spacing-1) var(--mg-spacing-2);
+    }
+
+    .mg-submenu {
+        margin-left: var(--mg-spacing-4);
+    }
+}
+

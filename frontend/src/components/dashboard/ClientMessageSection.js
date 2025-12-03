@@ -12,8 +12,8 @@ import {
   Star
 } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
-// import notificationManager from '../../utils/notification';
-import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
+import notificationManager from '../../utils/notification';
+import UnifiedModal from '../../components/common/modals/UnifiedModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
@@ -144,8 +144,16 @@ const ClientMessageSection = ({ userId }) => {
       setUnreadCount(unread);
 
     } catch (error) {
-      console.error('메시지 로드 오류:', error);
-      notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
+      // 403 Forbidden은 권한 문제이므로 조용히 처리 (콘솔 오류 표시 안 함)
+      if (error.status === 403 || error.message?.includes('접근 권한')) {
+        // 권한 없음은 정상적인 상황일 수 있으므로 조용히 처리
+        setAllMessages([]);
+        setUnreadCount(0);
+      } else {
+        // 다른 오류만 콘솔에 표시
+        console.error('메시지 로드 오류:', error);
+        notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
+      }
     } finally {
       setLoading(false);
     }

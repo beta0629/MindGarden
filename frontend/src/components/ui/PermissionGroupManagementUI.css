@@ -1,0 +1,377 @@
+/**
+ * 권한 그룹 관리 UI 스타일
+ * 
+ * 표준화 준수:
+ * - CSS 변수만 사용 (--mg-* 접두사)
+ * - BEM 네이밍 (mg-{component}-{element}--{modifier})
+ * - 하드코딩 절대 금지
+ * 
+ * @author MindGarden
+ * @version 2.0.0
+ * @since 2025-12-03
+ */
+
+/* ==================== Container ==================== */
+
+.mg-permission-group-management {
+    padding: var(--mg-spacing-6);
+    background: var(--mg-gray-50);
+    min-height: 100vh;
+}
+
+/* ==================== Header ==================== */
+
+.mg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--mg-spacing-8);
+}
+
+.mg-title {
+    font-size: var(--mg-font-size-3xl);
+    font-weight: var(--mg-font-weight-bold);
+    color: var(--mg-gray-900);
+    margin: 0;
+}
+
+.mg-selected-role {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-2);
+    padding: var(--mg-spacing-3) var(--mg-spacing-4);
+    background: var(--mg-primary-50);
+    border: 1px solid var(--mg-primary-200);
+    border-radius: var(--mg-border-radius-md);
+    color: var(--mg-primary-700);
+    font-weight: var(--mg-font-weight-semibold);
+}
+
+/* ==================== Error Message ==================== */
+
+.mg-error-message {
+    padding: var(--mg-spacing-4);
+    background: var(--mg-error-50);
+    border: 1px solid var(--mg-error);
+    border-radius: var(--mg-border-radius-md);
+    color: var(--mg-error-700);
+    margin-bottom: var(--mg-spacing-6);
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-2);
+}
+
+.mg-error-icon {
+    font-size: var(--mg-font-size-xl);
+}
+
+/* ==================== Content Layout ==================== */
+
+.mg-content {
+    display: grid;
+    grid-template-columns: 20rem 1fr; /* 300px → rem 변환 */
+    gap: var(--mg-spacing-6);
+    min-height: 37.5rem; /* 600px → rem 변환 */
+}
+
+/* ==================== Sidebar (Role List) ==================== */
+
+.mg-sidebar {
+    background: var(--mg-white);
+    border-radius: var(--mg-border-radius-lg);
+    padding: var(--mg-spacing-6);
+    border: 1px solid var(--mg-gray-200);
+    box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-sidebar-title {
+    font-size: var(--mg-font-size-lg);
+    font-weight: var(--mg-font-weight-semibold);
+    color: var(--mg-gray-900);
+    margin-bottom: var(--mg-spacing-4);
+}
+
+.mg-role-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mg-role-item {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-3);
+    padding: var(--mg-spacing-4);
+    margin-bottom: var(--mg-spacing-1);
+    background: var(--mg-gray-50);
+    border: 1px solid var(--mg-gray-200);
+    border-radius: var(--mg-border-radius-md);
+    cursor: pointer;
+    transition: all var(--mg-transition-base);
+}
+
+.mg-role-item:hover {
+    background: var(--mg-gray-100);
+    border-color: var(--mg-primary-300);
+}
+
+.mg-role-item.mg-active {
+    background: var(--mg-primary-50);
+    border-color: var(--mg-primary);
+    color: var(--mg-primary-700);
+}
+
+.mg-role-icon {
+    font-size: var(--mg-font-size-xl);
+    color: var(--mg-gray-500);
+}
+
+.mg-role-item.mg-active .mg-role-icon {
+    color: var(--mg-primary);
+}
+
+.mg-role-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-1);
+    flex: 1;
+}
+
+.mg-role-name {
+    font-weight: var(--mg-font-weight-semibold);
+    color: var(--mg-gray-900);
+}
+
+.mg-role-item.mg-active .mg-role-name {
+    color: var(--mg-primary-700);
+}
+
+.mg-role-code {
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-gray-500);
+}
+
+.mg-role-item.mg-active .mg-role-code {
+    color: var(--mg-primary-600);
+}
+
+/* ==================== Main Content ==================== */
+
+.mg-main-content {
+    background: var(--mg-white);
+    border-radius: var(--mg-border-radius-lg);
+    padding: var(--mg-spacing-6);
+    border: 1px solid var(--mg-gray-200);
+    box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--mg-spacing-12);
+    text-align: center;
+    color: var(--mg-gray-500);
+}
+
+.mg-empty-icon {
+    font-size: var(--mg-font-size-4xl);
+    margin-bottom: var(--mg-spacing-4);
+    color: var(--mg-gray-400);
+}
+
+.mg-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--mg-spacing-8);
+    color: var(--mg-gray-500);
+}
+
+/* ==================== Permission Groups ==================== */
+
+.mg-permission-groups {
+    width: 100%;
+}
+
+.mg-permission-groups-header {
+    margin-bottom: var(--mg-spacing-6);
+}
+
+.mg-section-title {
+    font-size: var(--mg-font-size-xl);
+    font-weight: var(--mg-font-weight-bold);
+    color: var(--mg-gray-900);
+    margin-bottom: var(--mg-spacing-2);
+}
+
+.mg-section-description {
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-gray-600);
+    margin: 0;
+}
+
+.mg-permission-group-list {
+    width: 100%;
+}
+
+.mg-permission-group-tree {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mg-permission-group-tree.mg-nested {
+    margin-left: var(--mg-spacing-4);
+    border-left: 2px solid var(--mg-gray-200);
+    padding-left: var(--mg-spacing-4);
+}
+
+.mg-permission-group-item {
+    margin-bottom: var(--mg-spacing-2);
+}
+
+.mg-permission-group-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--mg-spacing-4);
+    background: var(--mg-gray-50);
+    border: 1px solid var(--mg-gray-200);
+    border-radius: var(--mg-border-radius-md);
+    transition: all var(--mg-transition-base);
+}
+
+.mg-permission-group-row:hover {
+    background: var(--mg-gray-100);
+    border-color: var(--mg-primary-300);
+}
+
+.mg-permission-group-info {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-3);
+    flex: 1;
+}
+
+.mg-group-icon {
+    font-size: var(--mg-font-size-lg);
+    color: var(--mg-primary);
+}
+
+.mg-group-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-1);
+}
+
+.mg-group-name {
+    font-weight: var(--mg-font-weight-semibold);
+    color: var(--mg-gray-900);
+}
+
+.mg-group-code {
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-gray-500);
+}
+
+.mg-group-description {
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-gray-600);
+}
+
+.mg-permission-group-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-2);
+}
+
+.mg-permission-badge {
+    padding: var(--mg-spacing-2) var(--mg-spacing-3);
+    border-radius: var(--mg-border-radius-sm);
+    font-size: var(--mg-font-size-sm);
+    font-weight: var(--mg-font-weight-medium);
+    background: var(--mg-gray-200);
+    color: var(--mg-gray-700);
+}
+
+.mg-permission-badge--active {
+    background: var(--mg-primary-100);
+    color: var(--mg-primary-700);
+}
+
+.mg-permission-grant-buttons {
+    display: flex;
+    gap: var(--mg-spacing-2);
+}
+
+.mg-btn {
+    padding: var(--mg-spacing-2) var(--mg-spacing-4);
+    border: 1px solid transparent;
+    border-radius: var(--mg-border-radius-md);
+    font-size: var(--mg-font-size-sm);
+    font-weight: var(--mg-font-weight-medium);
+    cursor: pointer;
+    transition: all var(--mg-transition-base);
+}
+
+.mg-btn-sm {
+    padding: var(--mg-spacing-1) var(--mg-spacing-3);
+    font-size: var(--mg-font-size-xs);
+}
+
+.mg-btn-primary {
+    background: var(--mg-primary);
+    color: var(--mg-white);
+    border-color: var(--mg-primary);
+}
+
+.mg-btn-primary:hover:not(:disabled) {
+    background: var(--mg-primary-600);
+    border-color: var(--mg-primary-600);
+}
+
+.mg-btn-danger {
+    background: var(--mg-error);
+    color: var(--mg-white);
+    border-color: var(--mg-error);
+}
+
+.mg-btn-danger:hover:not(:disabled) {
+    background: var(--mg-error-600);
+    border-color: var(--mg-error-600);
+}
+
+.mg-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mg-permission-group-children {
+    margin-top: var(--mg-spacing-2);
+}
+
+/* ==================== Responsive ==================== */
+
+@media (max-width: 768px) {
+    .mg-content {
+        grid-template-columns: 1fr;
+    }
+
+    .mg-sidebar {
+        margin-bottom: var(--mg-spacing-6);
+    }
+
+    .mg-permission-group-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--mg-spacing-3);
+    }
+
+    .mg-permission-group-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+

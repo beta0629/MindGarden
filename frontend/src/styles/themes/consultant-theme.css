@@ -1,0 +1,24 @@
+/**
+ * 상담사 대시보드 테마
+ * 
+ * Phase 6: 대시보드 디자인 개선 - 역할별 테마
+ * CONSULTANT 역할 전용 테마 변수
+ * 
+ * 생성일: 2025-12-03
+ * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
+ */
+
+.dashboard-consultant {
+    /* 역할별 Primary 색상 */
+    --card-primary: var(--mg-consultant-primary);
+    --card-primary-light: var(--mg-consultant-primary-light);
+    --card-primary-dark: var(--mg-consultant-primary-dark);
+    --card-gradient: var(--mg-consultant-gradient);
+    
+    /* 등급별 색상 (상담사) */
+    --grade-junior: var(--mg-grade-consultant-junior);
+    --grade-senior: var(--mg-grade-consultant-senior);
+    --grade-expert: var(--mg-grade-consultant-expert);
+    --grade-master: var(--mg-grade-consultant-master);
+}
+

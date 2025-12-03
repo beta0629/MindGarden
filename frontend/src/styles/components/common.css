@@ -14,25 +14,25 @@
 /* ===== CSS 변수 (디자인 가이드) ===== */
 :root {
     /* 색상 팔레트 */
-    --primary-color: #4A90E2;
-    --primary-dark: #357ABD;
-    --primary-light: #7BB3F0;
-    --secondary-color: #F5A623;
-    --secondary-dark: #D68910;
-    --secondary-light: #F7C653;
+    --primary-color: var(--mg-primary-500);
+    --primary-dark: var(--mg-primary-700);
+    --primary-light: var(--mg-primary-300);
+    --secondary-color: var(--mg-warning-500);
+    --secondary-dark: var(--mg-warning-700);
+    --secondary-light: var(--mg-warning-300);
     
     /* 중성 색상 */
     --white: var(--mg-white);
-    --gray-50: #F9FAFB;
-    --gray-100: #F3F4F6;
-    --gray-200: #E5E7EB;
-    --gray-300: #D1D5DB;
-    --gray-400: #9CA3AF;
-    --gray-500: #6B7280;
-    --gray-600: #4B5563;
-    --gray-700: #374151;
-    --gray-800: #1F2937;
-    --gray-900: #111827;
+    --gray-50: var(--mg-gray-50);
+    --gray-100: var(--mg-gray-100);
+    --gray-200: var(--mg-gray-200);
+    --gray-300: var(--mg-gray-300);
+    --gray-400: var(--mg-gray-400);
+    --gray-500: var(--mg-gray-500);
+    --gray-600: var(--mg-gray-600);
+    --gray-700: var(--mg-gray-700);
+    --gray-800: var(--mg-gray-800);
+    --gray-900: var(--mg-gray-900);
     --black: var(--mg-black);
     
     /* 상태 색상 */
@@ -58,10 +58,10 @@
     --border-focus: var(--primary-color);
     
     /* 그림자 */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px var(--mg-shadow-light), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px var(--mg-shadow-light), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px var(--mg-shadow-light), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-sm: var(--cs-shadow-sm);
+    --shadow-md: var(--cs-shadow-md);
+    --shadow-lg: var(--cs-shadow-lg);
+    --shadow-xl: var(--cs-shadow-xl);
     
     /* 간격 */
     --spacing-xs: 0.25rem;   /* 4px */
@@ -298,8 +298,8 @@ img {
 .loading-spinner-icon {
     width: 60px;
     height: 40px;
-    border: 4px solid #f3f4f6;
-    border-top: 4px solid var(--mg-primary-500);
+    border: var(--border-width-normal) solid var(--mg-gray-100);
+    border-top: var(--border-width-normal) solid var(--mg-primary-500);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 16px;
@@ -308,7 +308,7 @@ img {
 /* 로딩 텍스트 - 고정 */
 .loading-spinner-text {
     font-size: var(--font-size-base);
-    color: #6b7280;
+    color: var(--mg-gray-500);
     font-weight: 500;
     margin: 0;
     position: relative;
@@ -421,7 +421,7 @@ img {
     .no-print { display: none; }
     
     body {
-        background: white;
+        background: var(--mg-white);
         color: black;
     }
     
@@ -559,7 +559,7 @@ body {
 }
 
 .toast {
-  background: white;
+  background: var(--mg-white);
   border-radius: 8px;
   box-shadow: 0 4px 12px var(--mg-shadow-medium);
   padding: 1rem 1.5rem;
@@ -591,7 +591,7 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: white;
+  background: var(--mg-white);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   z-index: var(--z-modal-confirm, 10010);
@@ -659,7 +659,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--cs-glass-white-80);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -670,8 +670,8 @@ body {
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid var(--color-gray-200);
-  border-top: 4px solid var(--color-primary-500);
+  border: var(--border-width-normal) solid var(--color-gray-200);
+    border-top: var(--border-width-normal) solid var(--color-primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

@@ -10,47 +10,47 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
+  backdrop-filter: var(--backdrop-blur-sm);
 }
 
 .modal-container {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  background: var(--mg-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-xl);
   max-height: 95vh;
-  min-height: 400px;
+  min-height: var(--modal-min-height, 25rem);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: modalSlideIn 0.3s ease-out;
+  animation: modalSlideIn var(--transition-normal) ease-out;
   position: relative;
   z-index: var(--z-modal);
 }
 
 @keyframes modalSlideIn {
   from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
+    opacity: var(--opacity-hidden, 0);
+    transform: translateY(calc(var(--spacing-lg) * -1)) scale(0.95);
   }
   to {
-    opacity: 1;
+    opacity: var(--opacity-full, 1);
     transform: translateY(0) scale(1);
   }
 }
 
 /* 모달 크기별 스타일 */
 .modal-small {
-  max-width: 400px;
+  max-width: var(--modal-max-width-sm, 25rem);
   width: 90%;
 }
 
 .modal-medium {
-  max-width: 800px;
+  max-width: var(--modal-max-width-md, 50rem);
   width: 90%;
 }
 
 .modal-large {
-  max-width: 1200px;
+  max-width: var(--modal-max-width-lg, 75rem);
   width: 90%;
 }
 
@@ -65,17 +65,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--color-bg-secondary);
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-md);
+  border-bottom: var(--border-width) solid var(--color-bg-secondary);
   flex-shrink: 0;
-  background: white;
+  background: var(--mg-white);
   position: relative;
   z-index: var(--z-modal);
 }
 
 .modal-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin: 0;
 }
@@ -83,14 +83,14 @@
 .modal-close {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   color: var(--color-secondary);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  width: 32px;
-  height: 32px;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -102,12 +102,12 @@
 }
 
 .mg-modal__body {
-  padding: 24px;
+  padding: var(--spacing-lg);
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: var(--mg-white);
   position: relative;
   z-index: var(--z-modal);
 }
@@ -118,7 +118,7 @@
     width: 95%;
     margin: var(--spacing-base);
     max-height: 98vh;
-    min-height: 300px;
+    min-height: var(--modal-min-height-mobile, 18.75rem);
   }
   
   .modal-medium {
@@ -140,17 +140,17 @@
   }
   
   .mg-modal__body {
-    padding: 16px;
+    padding: var(--spacing-md);
   }
 }
 
 /* 모달 버튼 영역 */
 .modal-actions {
-  padding: 16px 24px;
-  border-top: 1px solid var(--color-bg-secondary);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: var(--border-width) solid var(--color-bg-secondary);
   background: var(--color-bg-secondary);
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-sm);
   justify-content: flex-end;
   flex-shrink: 0;
   position: relative;
@@ -158,18 +158,18 @@
 }
 
 .modal-actions .btn {
-  padding: 10px 20px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .modal-actions .mg-btn--primary {
   background: var(--color-primary);
-  color: white;
+  color: var(--mg-white);
 }
 
 .modal-actions .mg-btn--primary:hover {
@@ -178,17 +178,17 @@
 
 .modal-actions .mg-btn--secondary {
   background: var(--color-secondary);
-  color: white;
+  color: var(--mg-white);
 }
 
 .modal-actions .mg-btn--secondary:hover {
-  background: #545b62;
+  background: var(--mg-gray-600);
 }
 
 /* 모바일에서 버튼 영역 */
 @media (max-width: 768px) {
   .modal-actions {
-    padding: 12px 16px;
+    padding: var(--spacing-sm) var(--spacing-md);
     flex-direction: column;
   }
   
@@ -199,14 +199,14 @@
 
 @media (max-width: 480px) {
   .mg-modal__header {
-    padding: 16px 20px 12px;
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
   }
   
   .mg-modal__body {
-    padding: 20px;
+    padding: var(--spacing-md);
   }
   
   .modal-title {
-    font-size: 16px;
+    font-size: var(--font-size-base);
   }
 }

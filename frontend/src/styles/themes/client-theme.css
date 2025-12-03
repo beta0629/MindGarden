@@ -1,0 +1,24 @@
+/**
+ * 내담자 대시보드 테마
+ * 
+ * Phase 6: 대시보드 디자인 개선 - 역할별 테마
+ * CLIENT 역할 전용 테마 변수
+ * 
+ * 생성일: 2025-12-03
+ * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
+ */
+
+.dashboard-client {
+    /* 역할별 Primary 색상 */
+    --card-primary: var(--mg-client-primary);
+    --card-primary-light: var(--mg-client-primary-light);
+    --card-primary-dark: var(--mg-client-primary-dark);
+    --card-gradient: var(--mg-client-gradient);
+    
+    /* 등급별 색상 (내담자) */
+    --grade-bronze: var(--mg-grade-client-bronze);
+    --grade-silver: var(--mg-grade-client-silver);
+    --grade-gold: var(--mg-grade-client-gold);
+    --grade-platinum: var(--mg-grade-client-platinum);
+}
+

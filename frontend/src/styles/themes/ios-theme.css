@@ -53,11 +53,11 @@
   --color-info-light: #E5F7FE;
   --color-info-dark: #4BB5E6;
 
-  /* MindGarden 브랜드 색상 (연두빛) */
-  --color-mindgarden: #7ED321;
-  --color-mindgarden-light: #B8E994;
-  --color-mindgarden-dark: #6BCF7F;
-  --color-mindgarden-accent: #82CC6E;
+  /* MindGarden 브랜드 색상 (표준화) */
+  --color-mindgarden: var(--mg-primary-500);
+  --color-mindgarden-light: var(--mg-primary-300);
+  --color-mindgarden-dark: var(--mg-primary-700);
+  --color-mindgarden-accent: var(--mg-primary-400);
 
   /* iOS 그림자 */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
@@ -171,9 +171,9 @@
   --bg-secondary: #F5F5F7 !important;
   --bg-tertiary: var(--mg-gray-100) !important;
 
-  /* MindGarden 브랜드 색상 유지 */
-  --color-mindgarden: #7ED321 !important;
-  --color-mindgarden-light: #B8E994 !important;
-  --color-mindgarden-dark: #6BCF7F !important;
-  --color-mindgarden-accent: #82CC6E !important;
+  /* MindGarden 브랜드 색상 유지 (표준화) */
+  --color-mindgarden: var(--mg-primary-500) !important;
+  --color-mindgarden-light: var(--mg-primary-300) !important;
+  --color-mindgarden-dark: var(--mg-primary-700) !important;
+  --color-mindgarden-accent: var(--mg-primary-400) !important;
 }

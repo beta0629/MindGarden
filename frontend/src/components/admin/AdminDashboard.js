@@ -28,8 +28,12 @@ import { COMPONENT_CSS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
+import PermissionGroupGuard from '../common/PermissionGroupGuard';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
+import '../../styles/dashboard-tokens-extension.css';
+import '../../styles/dashboard-common-v3.css';
+import '../../styles/themes/admin-theme.css';
 import './AdminDashboard.new.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
@@ -1184,7 +1188,7 @@ const AdminDashboard = ({ user: propUser }) => {
             )}
 
             {/* ERP 관리 */}
-            {PermissionChecks.canAccessERP(userPermissions) && (
+            <PermissionGroupGuard groupCode="DASHBOARD_ERP">
                 <DashboardSection
                     title="ERP 관리"
                     subtitle="기업 자원 계획 시스템 관리"
@@ -1269,7 +1273,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         )}
                     </div>
                 </DashboardSection>
-            )}
+            </PermissionGroupGuard>
 
             {/* 지점 관리 */}
             {PermissionChecks.canViewHQDashboard(userPermissions) && (
@@ -1468,6 +1472,10 @@ const AdminDashboard = ({ user: propUser }) => {
                                          currentRole === 'HQ_ADMIN' || 
                                          currentRole === 'SUPER_HQ_ADMIN' || 
                                          currentRole === 'HQ_MASTER';
+                console.log('🔍 AI 모니터링 섹션 렌더링 체크:', 
+                    'currentRole:', currentRole,
+                    'canViewMonitoring:', canViewMonitoring
+                );
                 return canViewMonitoring;
             })() && (
                 <AdminDashboardMonitoring user={propUser || sessionUser} />

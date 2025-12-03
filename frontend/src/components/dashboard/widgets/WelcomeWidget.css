@@ -1,10 +1,10 @@
 /* 환영 위젯 스타일 */
 .welcome-widget {
     padding: var(--spacing-lg, 24px);
-    background: linear-gradient(135deg, var(--primary-color, #007bff) 0%, var(--primary-hover, #0056b3) 100%);
-    border-radius: var(--border-radius-lg, 12px);
-    color: var(--text-on-primary, #fff);
-    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+    background: linear-gradient(135deg, var(--primary-color, var(--mg-primary-500)) 0%, var(--primary-hover, var(--mg-primary-700)) 100%);
+    border-radius: var(--border-radius-lg);
+    color: var(--text-on-primary, var(--mg-white));
+    box-shadow: var(--shadow-md);
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -18,7 +18,7 @@
     justify-content: space-between;
     align-items: flex-start;
     padding-bottom: var(--spacing-md, 16px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: var(--border-width) solid var(--cs-glass-light);
 }
 
 .greeting-section {
@@ -29,12 +29,12 @@
     font-size: var(--font-size-2xl, 32px);
     font-weight: 700;
     margin: 0 0 var(--spacing-xs, 8px) 0;
-    color: var(--text-on-primary, #fff);
+    color: var(--text-on-primary, var(--mg-white));
 }
 
 .date-text {
     font-size: var(--font-size-md, 16px);
-    opacity: 0.9;
+    opacity: var(--opacity-hover, 0.9);
     margin: 0;
 }
 
@@ -43,22 +43,22 @@
 }
 
 .avatar-circle {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.2);
+    width: var(--avatar-size-md);
+    height: var(--avatar-size-md);
+    border-radius: var(--radius-full);
+    background-color: var(--cs-glass-light);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-xl, 24px);
-    font-weight: 700;
-    color: var(--text-on-primary, #fff);
-    border: 3px solid rgba(255, 255, 255, 0.3);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-on-primary, var(--mg-white));
+    border: var(--border-width-medium) solid var(--cs-glass-white-80);
 }
 
 /* 오늘의 요약 */
 .today-summary {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--cs-glass-white-80);
     border-radius: var(--border-radius-md, 8px);
     padding: var(--spacing-md, 16px);
 }
@@ -67,7 +67,7 @@
     font-size: var(--font-size-lg, 20px);
     font-weight: 600;
     margin: 0 0 var(--spacing-md, 16px) 0;
-    color: var(--text-on-primary, #fff);
+    color: var(--text-on-primary, var(--mg-white));
 }
 
 .summary-cards {
@@ -77,19 +77,19 @@
 }
 
 .summary-card {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: var(--cs-glass-white-90);
     border-radius: var(--border-radius-md, 8px);
     padding: var(--spacing-md, 16px);
     display: flex;
     align-items: center;
     gap: var(--spacing-sm, 12px);
-    transition: transform 0.2s, background-color 0.2s;
+    transition: transform var(--transition-fast), background-color var(--transition-fast);
     cursor: pointer;
 }
 
 .summary-card:hover {
-    transform: translateY(-2px);
-    background-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(calc(var(--spacing-xs) * -0.5));
+    background-color: var(--cs-glass-strong);
 }
 
 .card-icon {
@@ -105,18 +105,18 @@
 .card-number {
     font-size: var(--font-size-xl, 24px);
     font-weight: 700;
-    color: var(--text-on-primary, #fff);
+    color: var(--text-on-primary, var(--mg-white));
 }
 
 .card-label {
     font-size: var(--font-size-xs, 12px);
-    opacity: 0.9;
+    opacity: var(--opacity-hover, 0.9);
     white-space: nowrap;
 }
 
 /* 빠른 액션 */
 .quick-actions {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--cs-glass-white-80);
     border-radius: var(--border-radius-md, 8px);
     padding: var(--spacing-md, 16px);
 }
@@ -125,7 +125,7 @@
     font-size: var(--font-size-lg, 20px);
     font-weight: 600;
     margin: 0 0 var(--spacing-md, 16px) 0;
-    color: var(--text-on-primary, #fff);
+    color: var(--text-on-primary, var(--mg-white));
 }
 
 .action-buttons {
@@ -136,7 +136,7 @@
 
 .action-btn {
     flex: 1;
-    min-width: 140px;
+    min-width: var(--action-button-min-width, 8.75rem);
     padding: var(--spacing-sm, 12px) var(--spacing-md, 16px);
     border: none;
     border-radius: var(--border-radius-md, 8px);
@@ -147,23 +147,23 @@
     align-items: center;
     justify-content: center;
     gap: var(--spacing-xs, 8px);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(calc(var(--spacing-xs) * -0.5));
+    box-shadow: var(--shadow-md);
 }
 
 .action-btn.primary {
-    background-color: var(--text-on-primary, #fff);
-    color: var(--primary-color, #007bff);
+    background-color: var(--text-on-primary, var(--mg-white));
+    color: var(--primary-color, var(--mg-primary-500));
 }
 
 .action-btn.secondary {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: var(--text-on-primary, #fff);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: var(--cs-glass-light);
+    color: var(--text-on-primary, var(--mg-white));
+    border: var(--border-width) solid var(--cs-glass-white-80);
 }
 
 .btn-icon {
@@ -176,7 +176,7 @@
 
 /* 최근 활동 */
 .recent-activity {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--cs-glass-white-80);
     border-radius: var(--border-radius-md, 8px);
     padding: var(--spacing-md, 16px);
     margin-top: auto;
@@ -195,7 +195,7 @@
 
 .activity-text {
     flex: 1;
-    opacity: 0.95;
+    opacity: var(--opacity-hover, 0.95);
 }
 
 /* 반응형 디자인 */
@@ -210,8 +210,8 @@
     }
 
     .avatar-circle {
-        width: 50px;
-        height: 50px;
+        width: var(--avatar-size-sm);
+        height: var(--avatar-size-sm);
         font-size: var(--font-size-lg, 20px);
     }
 

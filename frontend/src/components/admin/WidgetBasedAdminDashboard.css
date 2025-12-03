@@ -1,7 +1,7 @@
 /* 위젯 기반 대시보드 스타일 */
 .widget-based-dashboard {
     padding: var(--spacing-lg, 24px);
-    max-width: 1400px;
+    max-width: var(--container-max-width-xl, 87.5rem);
     margin: 0 auto;
 }
 
@@ -12,7 +12,7 @@
     align-items: center;
     margin-bottom: var(--spacing-xl, 32px);
     padding-bottom: var(--spacing-lg, 24px);
-    border-bottom: 2px solid var(--border-color, #e0e0e0);
+    border-bottom: var(--border-width-normal) solid var(--border-color, var(--mg-gray-200));
     flex-wrap: wrap;
     gap: var(--spacing-md, 16px);
 }
@@ -26,13 +26,13 @@
 
 .header-content h1 {
     font-size: var(--font-size-2xl, 32px);
-    color: var(--primary-color, #007bff);
+    color: var(--primary-color, var(--mg-primary-500));
     margin: 0 0 var(--spacing-xs, 8px) 0;
 }
 
 .header-content .subtitle {
     font-size: var(--font-size-md, 16px);
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary, var(--mg-gray-600));
     margin: 0;
 }
 
@@ -45,51 +45,51 @@
 
 .dashboard-selector label {
     font-weight: 600;
-    color: var(--text-primary, #333);
+    color: var(--text-primary, var(--mg-gray-900));
 }
 
 .dashboard-selector select {
     padding: var(--spacing-sm, 12px) var(--spacing-md, 16px);
-    border: 1px solid var(--border-color, #ddd);
+    border: var(--border-width) solid var(--border-color, var(--mg-gray-300));
     border-radius: var(--border-radius-md, 8px);
     font-size: var(--font-size-md, 16px);
-    background-color: var(--bg-primary, #fff);
+    background-color: var(--bg-primary, var(--mg-white));
     cursor: pointer;
-    transition: border-color 0.2s;
+    transition: border-color var(--transition-fast);
 }
 
 .dashboard-selector select:hover {
-    border-color: var(--primary-color, #007bff);
+    border-color: var(--primary-color, var(--mg-primary-500));
 }
 
 .dashboard-selector select:focus {
     outline: none;
-    border-color: var(--primary-color, #007bff);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    border-color: var(--primary-color, var(--mg-primary-500));
+    box-shadow: 0 0 0 var(--spacing-xs) var(--cs-glass-blue-light);
 }
 
 /* 관리 모드 버튼 */
 .btn-manage-mode {
     padding: var(--spacing-sm, 12px) var(--spacing-lg, 24px);
-    border: 2px solid var(--primary-color, #007bff);
+    border: var(--border-width-normal) solid var(--primary-color, var(--mg-primary-500));
     border-radius: var(--border-radius-md, 8px);
     font-size: var(--font-size-md, 16px);
     font-weight: 600;
-    background-color: var(--bg-primary, #fff);
-    color: var(--primary-color, #007bff);
+    background-color: var(--bg-primary, var(--mg-white));
+    color: var(--primary-color, var(--mg-primary-500));
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all var(--transition-fast);
 }
 
 .btn-manage-mode:hover {
-    background-color: var(--primary-color, #007bff);
-    color: var(--text-on-primary, #fff);
+    background-color: var(--primary-color, var(--mg-primary-500));
+    color: var(--text-on-primary, var(--mg-white));
 }
 
 .btn-manage-mode.active {
-    background-color: var(--primary-color, #007bff);
-    color: var(--text-on-primary, #fff);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    background-color: var(--primary-color, var(--mg-primary-500));
+    color: var(--text-on-primary, var(--mg-white));
+    box-shadow: 0 0 0 var(--spacing-xs) var(--cs-glass-primary-20);
 }
 
 /* 위젯 그룹 컨테이너 */
@@ -101,10 +101,10 @@
 
 /* 위젯 그룹 */
 .widget-group {
-    background-color: var(--bg-secondary, #f8f9fa);
+    background-color: var(--bg-secondary, var(--mg-gray-50));
     border-radius: var(--border-radius-lg, 12px);
     padding: var(--spacing-lg, 24px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-sm);
 }
 
 .widget-group-header {
@@ -128,7 +128,7 @@
 
 .widget-group-header h2 {
     font-size: var(--font-size-xl, 24px);
-    color: var(--text-primary, #333);
+    color: var(--text-primary, var(--mg-gray-900));
     margin: 0 0 var(--spacing-xs, 8px) 0;
     display: flex;
     align-items: center;
@@ -137,22 +137,22 @@
 
 .widget-group-header h2::before {
     content: '';
-    width: 4px;
-    height: 24px;
-    background-color: var(--primary-color, #007bff);
-    border-radius: 2px;
+    width: var(--border-width-normal);
+    height: var(--icon-size-sm);
+    background-color: var(--primary-color, var(--mg-primary-500));
+    border-radius: var(--border-width);
 }
 
 .widget-group-description {
     font-size: var(--font-size-sm, 14px);
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary, var(--mg-gray-600));
     margin: 0;
 }
 
 .widget-count-badge {
-    background-color: var(--primary-color, #007bff);
-    color: var(--text-on-primary, #fff);
-    padding: 4px 12px;
+    background-color: var(--primary-color, var(--mg-primary-500));
+    color: var(--text-on-primary, var(--mg-white));
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--border-radius-sm, 4px);
     font-size: var(--font-size-xs, 12px);
     font-weight: 600;
@@ -167,12 +167,12 @@
 
 /* 위젯 카드 */
 .widget-card {
-    background-color: var(--bg-primary, #fff);
-    border: 1px solid var(--border-color, #e0e0e0);
+    background-color: var(--bg-primary, var(--mg-white));
+    border: var(--border-width) solid var(--border-color, var(--mg-gray-200));
     border-radius: var(--border-radius-md, 8px);
-    transition: transform 0.2s, box-shadow 0.2s;
-    min-height: 400px;
-    max-height: 600px;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    min-height: var(--card-min-height, 25rem);
+    max-height: var(--card-max-height, 37.5rem);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -188,7 +188,7 @@
 /* 위젯 플레이스홀더 (기본 위젯) */
 .widget-placeholder {
     padding: var(--spacing-lg, 24px);
-    min-height: 200px;
+    min-height: var(--card-min-height-sm, 12.5rem);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -197,9 +197,9 @@
 }
 
 .widget-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: var(--primary-color, #007bff);
+    transform: translateY(calc(var(--spacing-xs) * -0.5));
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-color, var(--mg-primary-500));
 }
 
 .widget-header {
@@ -207,32 +207,32 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-md, 16px);
-    background-color: var(--bg-secondary, #f8f9fa);
-    border-bottom: 2px solid var(--border-color, #e0e0e0);
+    background-color: var(--bg-secondary, var(--mg-gray-50));
+    border-bottom: var(--border-width-normal) solid var(--border-color, var(--mg-gray-200));
     gap: var(--spacing-sm, 12px);
     flex-wrap: wrap;
 }
 
 .widget-header h3 {
     font-size: var(--font-size-lg, 18px);
-    color: var(--text-primary, #333);
+    color: var(--text-primary, var(--mg-gray-900));
     margin: 0;
     flex: 1;
 }
 
 .system-badge {
-    background-color: var(--primary-color, #007bff);
-    color: var(--text-on-primary, #fff);
-    padding: 4px 8px;
+    background-color: var(--primary-color, var(--mg-primary-500));
+    color: var(--text-on-primary, var(--mg-white));
+    padding: var(--spacing-xs) var(--spacing-xs);
     border-radius: var(--border-radius-sm, 4px);
     font-size: var(--font-size-xs, 12px);
     font-weight: 600;
 }
 
 .required-badge {
-    background-color: var(--error-color, #dc3545);
-    color: var(--text-on-primary, #fff);
-    padding: 4px 8px;
+    background-color: var(--error-color, var(--mg-error-500));
+    color: var(--text-on-primary, var(--mg-white));
+    padding: var(--spacing-xs) var(--spacing-xs);
     border-radius: var(--border-radius-sm, 4px);
     font-size: var(--font-size-xs, 12px);
     font-weight: 600;
@@ -247,7 +247,7 @@
 
 .widget-description {
     font-size: var(--font-size-sm, 14px);
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary, var(--mg-gray-600));
     margin: 0;
     line-height: 1.5;
 }
@@ -257,22 +257,22 @@
     flex-wrap: wrap;
     gap: var(--spacing-sm, 12px);
     padding: var(--spacing-sm, 12px);
-    background-color: var(--bg-secondary, #f8f9fa);
+    background-color: var(--bg-secondary, var(--mg-gray-50));
     border-radius: var(--border-radius-sm, 4px);
 }
 
 .meta-item {
     font-size: var(--font-size-xs, 12px);
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary, var(--mg-gray-600));
 }
 
 .meta-item strong {
-    color: var(--text-primary, #333);
-    margin-right: 4px;
+    color: var(--text-primary, var(--mg-gray-900));
+    margin-right: var(--spacing-xs);
 }
 
 .meta-item.required {
-    color: var(--error-color, #dc3545);
+    color: var(--error-color, var(--mg-error-500));
 }
 
 .widget-actions {
@@ -292,41 +292,41 @@
 }
 
 .btn-delete {
-    background-color: var(--error-color, #dc3545);
-    color: var(--text-on-primary, #fff);
+    background-color: var(--error-color, var(--mg-error-500));
+    color: var(--text-on-primary, var(--mg-white));
 }
 
 .btn-delete:hover {
-    background-color: #c82333;
+    background-color: var(--mg-error-600);
 }
 
 .btn-config {
-    background-color: var(--primary-color, #007bff);
-    color: var(--text-on-primary, #fff);
+    background-color: var(--primary-color, var(--mg-primary-500));
+    color: var(--text-on-primary, var(--mg-white));
 }
 
 .btn-config:hover {
-    background-color: var(--primary-hover, #0056b3);
+    background-color: var(--primary-hover, var(--mg-primary-700));
 }
 
 /* 위젯 추가 버튼 */
 .btn-add-widget,
 .btn-add-widget-empty {
     padding: var(--spacing-xs, 8px) var(--spacing-md, 16px);
-    border: 2px dashed var(--primary-color, #007bff);
+    border: var(--border-width-normal) dashed var(--primary-color, var(--mg-primary-500));
     border-radius: var(--border-radius-md, 8px);
     font-size: var(--font-size-sm, 14px);
     font-weight: 600;
     background-color: transparent;
-    color: var(--primary-color, #007bff);
+    color: var(--primary-color, var(--mg-primary-500));
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all var(--transition-fast);
 }
 
 .btn-add-widget:hover,
 .btn-add-widget-empty:hover {
-    background-color: var(--primary-color, #007bff);
-    color: var(--text-on-primary, #fff);
+    background-color: var(--primary-color, var(--mg-primary-500));
+    color: var(--text-on-primary, var(--mg-white));
     border-style: solid;
 }
 
@@ -338,8 +338,8 @@
 
 /* 관리 모드 위젯 카드 */
 .widget-card.manage-mode {
-    border: 2px solid var(--primary-color, #007bff);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    border: var(--border-width-normal) solid var(--primary-color, var(--mg-primary-500));
+    box-shadow: 0 0 0 var(--spacing-xs) var(--cs-glass-blue-light);
 }
 
 .widget-badges {
@@ -349,9 +349,9 @@
 }
 
 .deletable-badge {
-    background-color: var(--warning-color, #ffc107);
-    color: var(--text-primary, #333);
-    padding: 4px 8px;
+    background-color: var(--warning-color, var(--mg-warning-500));
+    color: var(--text-primary, var(--mg-gray-900));
+    padding: var(--spacing-xs) var(--spacing-xs);
     border-radius: var(--border-radius-sm, 4px);
     font-size: var(--font-size-xs, 12px);
     font-weight: 600;
@@ -359,7 +359,7 @@
 
 .no-delete-msg {
     font-size: var(--font-size-xs, 12px);
-    color: var(--text-tertiary, #999);
+    color: var(--text-tertiary, var(--mg-gray-400));
     font-style: italic;
 }
 
@@ -367,27 +367,27 @@
 .empty-state {
     text-align: center;
     padding: var(--spacing-xl, 32px);
-    background-color: var(--bg-primary, #fff);
-    border: 2px dashed var(--border-color, #ddd);
+    background-color: var(--bg-primary, var(--mg-white));
+    border: var(--border-width-normal) dashed var(--border-color, var(--mg-gray-300));
     border-radius: var(--border-radius-md, 8px);
     grid-column: 1 / -1;
 }
 
 .empty-state h3 {
     font-size: var(--font-size-lg, 18px);
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary, var(--mg-gray-600));
     margin: 0 0 var(--spacing-sm, 12px) 0;
 }
 
 .empty-state p {
     font-size: var(--font-size-md, 16px);
-    color: var(--text-tertiary, #999);
+    color: var(--text-tertiary, var(--mg-gray-400));
     margin: 0 0 var(--spacing-xs, 8px) 0;
 }
 
 .empty-state small {
     font-size: var(--font-size-xs, 12px);
-    color: var(--text-tertiary, #999);
+    color: var(--text-tertiary, var(--mg-gray-400));
     font-family: monospace;
 }
 
@@ -398,7 +398,7 @@
     gap: var(--spacing-xl, 32px);
     margin-top: var(--spacing-xl, 32px);
     padding: var(--spacing-lg, 24px);
-    background-color: var(--bg-secondary, #f8f9fa);
+    background-color: var(--bg-secondary, var(--mg-gray-50));
     border-radius: var(--border-radius-md, 8px);
 }
 
@@ -411,13 +411,13 @@
 
 .stat-label {
     font-size: var(--font-size-sm, 14px);
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary, var(--mg-gray-600));
 }
 
 .stat-value {
     font-size: var(--font-size-xl, 24px);
     font-weight: 700;
-    color: var(--primary-color, #007bff);
+    color: var(--primary-color, var(--mg-primary-500));
 }
 
 /* 에러 컨테이너 */
@@ -427,7 +427,7 @@
 }
 
 .error-container h2 {
-    color: var(--error-color, #dc3545);
+    color: var(--error-color, var(--mg-error-500));
     margin-bottom: var(--spacing-md, 16px);
 }
 
@@ -439,12 +439,12 @@
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s;
-    background-color: var(--primary-color, #007bff);
-    color: var(--text-on-primary, #fff);
+    background-color: var(--primary-color, var(--mg-primary-500));
+    color: var(--text-on-primary, var(--mg-white));
 }
 
 .error-container button:hover {
-    background-color: var(--primary-hover, #0056b3);
+    background-color: var(--primary-hover, var(--mg-primary-700));
 }
 
 /* 반응형 */

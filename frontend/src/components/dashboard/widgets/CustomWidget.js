@@ -15,14 +15,10 @@ const CustomWidget = ({ widget, user }) => {
   const componentName = config.component;
   const props = config.props || {};
   
+  // component가 없으면 위젯을 렌더링하지 않음 (무한 로딩 방지)
   if (!componentName) {
-    return (
-      <div className="widget widget-custom widget-error">
-        <div className="widget-error-message">
-          커스텀 위젯에 component가 지정되지 않았습니다.
-        </div>
-      </div>
-    );
+    console.warn('커스텀 위젯에 component가 지정되지 않았습니다:', widget);
+    return null; // null 반환으로 위젯 숨김
   }
   
   // 동적 컴포넌트 로드 (향후 구현)

@@ -145,6 +145,12 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       if (response.status === 401) {
         return null;
       }
+      // 403 오류는 권한 문제이므로 조용히 처리 (에러 throw 안 함)
+      if (response.status === 403) {
+        const error = new Error('접근 권한이 없습니다.');
+        error.status = 403;
+        throw error; // catch 블록에서 처리할 수 있도록 throw
+      }
       // 404 오류는 리소스가 없을 수 있으므로 조용히 null 반환 (에러 throw 안 함)
       if (response.status === 404) {
         return null;
@@ -167,6 +173,13 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     // ApiResponse 래퍼가 없으면 그대로 반환
     return jsonData;
   } catch (error) {
+    // 403 오류는 권한 문제이므로 조용히 처리 (콘솔 오류 표시 안 함)
+    if (error.status === 403 || error.message?.includes('접근 권한')) {
+      // 조용히 에러를 다시 throw하여 호출자가 처리할 수 있도록 함
+      throw error;
+    }
+    
+    // 403이 아닌 오류만 콘솔에 표시
     console.error('GET 요청 오류:', error);
     
     // 네트워크 오류 시에도 세션 체크

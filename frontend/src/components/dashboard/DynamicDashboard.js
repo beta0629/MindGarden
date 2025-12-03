@@ -815,6 +815,15 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
     // 위젯별 카드 스타일 (위젯 설정 우선, 없으면 기본값)
     const widgetCardStyle = widget.cardStyle || defaultCardStyle;
     
+    // 위젯 컴포넌트 렌더링 (null 체크)
+    const widgetContent = <WidgetComponent widget={widget} user={user} />;
+    
+    // 위젯이 null을 반환하면 렌더링하지 않음 (무한 로딩 방지)
+    if (!widgetContent) {
+      console.warn(`위젯이 null을 반환했습니다: ${widget.type}`, widget);
+      return null;
+    }
+    
     return (
       <div 
         key={widget.id} 
@@ -826,7 +835,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
           cardStyle={widgetCardStyle}
           defaultCardStyle={defaultCardStyle}
         >
-          <WidgetComponent widget={widget} user={user} />
+          {widgetContent}
         </WidgetCardWrapper>
       </div>
     );

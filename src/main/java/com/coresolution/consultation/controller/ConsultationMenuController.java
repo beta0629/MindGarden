@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping({"/api/v1/menu", "/api/menu"}) // v1 경로 추가, 레거시 경로 유지
 @RequiredArgsConstructor
-public class MenuController extends BaseApiController {
+public class ConsultationMenuController extends BaseApiController {
     
     private final MenuService menuService;
     private final DynamicPermissionService dynamicPermissionService;

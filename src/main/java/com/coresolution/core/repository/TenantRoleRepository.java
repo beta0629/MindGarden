@@ -48,6 +48,12 @@ public interface TenantRoleRepository extends JpaRepository<TenantRole, Long> {
     Optional<TenantRole> findByTenantIdAndNameKo(String tenantId, String nameKo);
     
     /**
+     * tenant_id와 name_en으로 조회 (영문 역할명으로 조회)
+     */
+    @Query("SELECT tr FROM TenantRole tr WHERE tr.tenantId = ?1 AND tr.nameEn = ?2 AND tr.isDeleted = false")
+    Optional<TenantRole> findByTenantIdAndNameEnAndIsDeletedFalse(String tenantId, String nameEn);
+    
+    /**
      * role_template_id로 조회
      */
     @Query("SELECT tr FROM TenantRole tr WHERE tr.roleTemplateId = ?1 AND tr.isDeleted = false")

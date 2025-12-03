@@ -1,0 +1,18 @@
+/**
+ * 사무원 대시보드 테마
+ * 
+ * Phase 6: 대시보드 디자인 개선 - 역할별 테마
+ * STAFF 역할 전용 테마 변수
+ * 
+ * 생성일: 2025-12-03
+ * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
+ */
+
+.dashboard-staff {
+    /* 역할별 Primary 색상 */
+    --card-primary: var(--mg-staff-primary);
+    --card-primary-light: var(--mg-staff-primary-light);
+    --card-primary-dark: var(--mg-staff-primary-dark);
+    --card-gradient: var(--mg-staff-gradient);
+}
+

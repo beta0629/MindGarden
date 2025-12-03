@@ -10,8 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.service.CommonCodeService;
-import com.coresolution.consultation.service.MenuService;
-import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class MenuServiceImpl implements MenuService {
+public class ConsultationMenuServiceImpl implements com.coresolution.consultation.service.MenuService {
     
     private final CommonCodeService commonCodeService;
     private final ObjectMapper objectMapper = new ObjectMapper();

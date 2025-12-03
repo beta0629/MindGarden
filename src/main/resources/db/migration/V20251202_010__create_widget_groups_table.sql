@@ -105,6 +105,24 @@ INSERT INTO widget_groups (
 ('consultation-client-session', NULL, '상담 위젯', '상담 위젯', 'Session Widgets',
  'CONSULTATION', 'CLIENT', 2, '내 상담 정보', 'calendar', TRUE, 'SYSTEM');
 
+-- 상담소 - STAFF
+INSERT INTO widget_groups (
+    group_id, tenant_id, group_name, group_name_ko, group_name_en,
+    business_type, role_code, display_order, description, icon_name,
+    is_active, created_by
+) VALUES
+('consultation-staff-core', NULL, '핵심 위젯', '핵심 위젯', 'Core Widgets',
+ 'CONSULTATION', 'STAFF', 1, '필수 핵심 위젯', 'star', TRUE, 'SYSTEM'),
+
+('consultation-staff-management', NULL, '관리 위젯', '관리 위젯', 'Management Widgets',
+ 'CONSULTATION', 'STAFF', 2, '상담사/내담자/회기 관리', 'users', TRUE, 'SYSTEM'),
+
+('consultation-staff-statistics', NULL, '통계 위젯', '통계 위젯', 'Statistics Widgets',
+ 'CONSULTATION', 'STAFF', 3, '통계 및 분석', 'bar-chart', TRUE, 'SYSTEM'),
+
+('consultation-staff-system', NULL, '시스템 위젯', '시스템 위젯', 'System Widgets',
+ 'CONSULTATION', 'STAFF', 4, 'ERP 및 시스템 관리', 'settings', TRUE, 'SYSTEM');
+
 -- =====================================================
 -- 초기 데이터: 시스템 위젯 그룹 (학원)
 -- =====================================================

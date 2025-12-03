@@ -24,6 +24,9 @@ import RatableConsultationsSection from './RatableConsultationsSection';
 import ClientMessageSection from '../dashboard/ClientMessageSection';
 import HealingCard from '../common/HealingCard';
 import '../../styles/unified-design-tokens.css';
+import '../../styles/dashboard-tokens-extension.css';
+import '../../styles/dashboard-common-v3.css';
+import '../../styles/themes/client-theme.css';
 import './ClientDashboard.css';
 
 /**
@@ -418,38 +421,30 @@ const ClientDashboard = () => {
         <div className="client-dashboard__quick-actions">
           <h2 className="client-dashboard__section-title">빠른 메뉴</h2>
           <div className="client-dashboard__action-grid">
-            <button className="mg-button" 
-              variant="primary"
-              fullWidth={true}
+            <button 
+              className="mg-button mg-button--primary client-dashboard__action-btn"
               onClick={() => navigate('/client/schedule')}
-              className="client-dashboard__action-btn"
             >
               <Calendar size={24} />
               <span>상담 일정</span>
             </button>
-            <button className="mg-button" 
-              variant="success"
-              fullWidth={true}
+            <button 
+              className="mg-button mg-button--success client-dashboard__action-btn"
               onClick={() => navigate('/client/messages')}
-              className="client-dashboard__action-btn"
             >
               <MessageCircle size={24} />
               <span>메시지</span>
             </button>
-            <button className="mg-button" 
-              variant="info"
-              fullWidth={true}
+            <button 
+              className="mg-button mg-button--info client-dashboard__action-btn"
               onClick={() => navigate('/client/payment-history')}
-              className="client-dashboard__action-btn"
             >
               <CreditCard size={24} />
               <span>결제 내역</span>
             </button>
-            <button className="mg-button" 
-              variant="warning"
-              fullWidth={true}
+            <button 
+              className="mg-button mg-button--warning client-dashboard__action-btn"
               onClick={() => navigate('/client/settings')}
-              className="client-dashboard__action-btn"
             >
               <Heart size={24} />
               <span>내 정보</span>

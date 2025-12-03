@@ -1,18 +1,31 @@
-/* 공통 대시보드 스타일 - 새로운 디자인 시스템 적용 */
+/**
+ * 공통 대시보드 스타일 - 표준화 적용 버전
+ * 
+ * Phase 6: 대시보드 디자인 개선 - 표준화 및 디자인 중앙화
+ * 모든 하드코딩된 값을 CSS 변수로 교체
+ * 
+ * 생성일: 2025-12-03
+ * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
+ */
 
+/* ===== Import 공통 스타일 및 테마 ===== */
+@import '../../styles/dashboard-tokens-extension.css';
+@import '../../styles/dashboard-common-v3.css';
+
+/* ===== 공통 대시보드 레이아웃 ===== */
 .mg-dashboard-layout,
 .dashboard-container {
-    padding: var(--spacing-lg);
-    max-width: 1200px;
+    padding: var(--mg-spacing-lg);
+    max-width: var(--mg-layout-container-max, 1200px);
     margin: 0 auto;
-    background: var(--ios-bg-primary);
+    background: var(--mg-bg-dashboard);
     min-height: 100vh;
 }
 
 /* 대시보드 섹션 간격 통일 */
 .mg-dashboard-layout > *,
 .dashboard-container > * {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--mg-spacing-lg);
 }
 
 .mg-dashboard-layout > *:last-child,
@@ -23,7 +36,7 @@
 /* 상담사 대시보드 특별 간격 조정 */
 .mg-dashboard-layout.consultant .mg-card,
 .dashboard-container.consultant .mg-card {
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--mg-spacing-xl);
 }
 
 .mg-dashboard-layout.consultant .mg-card:last-child,
@@ -34,13 +47,13 @@
 /* 힐링 카드 래퍼 간격 */
 .mg-dashboard-layout.consultant .healing-card-wrapper,
 .dashboard-container.consultant .healing-card-wrapper {
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--mg-spacing-xl);
 }
 
 /* 상담사 대시보드 내 모든 섹션 간격 통일 */
 .mg-dashboard-layout.consultant > *,
 .dashboard-container.consultant > * {
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--mg-spacing-xl);
 }
 
 .mg-dashboard-layout.consultant > *:last-child,
@@ -48,26 +61,27 @@
     margin-bottom: 0;
 }
 
+/* 역할별 배경 색상 */
 .mg-dashboard-layout.client,
 .dashboard-container.client {
-    background: var(--ios-bg-secondary);
+    background: var(--mg-bg-dashboard);
 }
 
 .mg-dashboard-layout.consultant,
 .dashboard-container.consultant {
-    background: var(--ios-bg-primary);
+    background: var(--mg-bg-dashboard);
 }
 
 .mg-dashboard-layout.admin,
 .dashboard-container.admin {
-    background: var(--ios-bg-primary);
+    background: var(--mg-bg-dashboard);
 }
 
-/* 반응형 디자인 */
+/* ===== 반응형 디자인 ===== */
 @media (max-width: 767px) {
     .mg-dashboard-layout,
     .dashboard-container {
-        padding: var(--spacing-md);
+        padding: var(--mg-spacing-md);
     }
 }
 
@@ -75,6 +89,6 @@
 @media (min-width: 768px) and (max-width: 1024px) {
     .mg-dashboard-layout,
     .dashboard-container {
-        padding: var(--spacing-lg) var(--spacing-xl);
+        padding: var(--mg-spacing-lg) var(--mg-spacing-xl);
     }
 }

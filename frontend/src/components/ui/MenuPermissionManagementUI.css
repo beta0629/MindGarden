@@ -1,0 +1,380 @@
+/**
+ * 메뉴 권한 관리 UI 스타일
+ * 
+ * 표준화 준수:
+ * - CSS 변수만 사용 (--mg-* 접두사)
+ * - BEM 네이밍 (mg-{component}-{element}--{modifier})
+ * - 하드코딩 절대 금지
+ * 
+ * @author MindGarden
+ * @version 2.0.0
+ * @since 2025-12-03
+ */
+
+/* ==================== Container ==================== */
+
+.mg-menu-permission-management {
+    padding: var(--mg-spacing-6);
+    background: var(--mg-gray-50);
+    min-height: 100vh;
+}
+
+/* ==================== Header ==================== */
+
+.mg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--mg-spacing-8);
+}
+
+.mg-title {
+    font-size: var(--mg-font-size-3xl);
+    font-weight: var(--mg-font-weight-bold);
+    color: var(--mg-gray-900);
+    margin: 0;
+}
+
+/* ==================== Error Message ==================== */
+
+.mg-error-message {
+    padding: var(--mg-spacing-4);
+    background: var(--mg-error-50);
+    border: var(--border-width) solid var(--mg-error);
+    border-radius: var(--mg-border-radius-md);
+    color: var(--mg-error-700);
+    margin-bottom: var(--mg-spacing-6);
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-2);
+}
+
+.mg-error-icon {
+    font-size: var(--mg-font-size-xl);
+}
+
+/* ==================== Content Layout ==================== */
+
+.mg-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--mg-spacing-6);
+    min-height: 600px;
+}
+
+/* ==================== Sidebar (Role List) ==================== */
+
+.mg-sidebar {
+    background: var(--mg-white);
+    border-radius: var(--mg-border-radius-lg);
+    padding: var(--mg-spacing-6);
+    border: 1px solid var(--mg-gray-200);
+    box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-sidebar-title {
+    font-size: var(--mg-font-size-lg);
+    font-weight: var(--mg-font-weight-semibold);
+    color: var(--mg-gray-900);
+    margin-bottom: var(--mg-spacing-4);
+}
+
+.mg-role-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mg-role-item {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-3);
+    padding: var(--mg-spacing-4);
+    margin-bottom: var(--mg-spacing-1);
+    background: var(--mg-gray-50);
+    border: 1px solid var(--mg-gray-200);
+    border-radius: var(--mg-border-radius-md);
+    cursor: pointer;
+    transition: all var(--mg-transition-base);
+}
+
+.mg-role-item:hover {
+    background: var(--mg-primary-50);
+    border-color: var(--mg-primary-300);
+}
+
+.mg-role-item.mg-active {
+    background: var(--mg-primary-500);
+    border-color: var(--mg-primary-600);
+    color: var(--mg-white);
+}
+
+.mg-role-icon {
+    font-size: var(--mg-font-size-xl);
+}
+
+.mg-role-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-1);
+}
+
+.mg-role-name {
+    font-size: var(--mg-font-size-base);
+    font-weight: var(--mg-font-weight-medium);
+}
+
+.mg-role-code {
+    font-size: var(--mg-font-size-sm);
+    font-family: var(--mg-font-mono);
+    opacity: 0.7;
+}
+
+.mg-role-item.mg-active .mg-role-name,
+.mg-role-item.mg-active .mg-role-code {
+    color: var(--mg-white);
+}
+
+/* ==================== Main Content ==================== */
+
+.mg-main-content {
+    background: var(--mg-white);
+    border-radius: var(--mg-border-radius-lg);
+    padding: var(--mg-spacing-6);
+    border: 1px solid var(--mg-gray-200);
+    box-shadow: var(--mg-shadow-sm);
+}
+
+.mg-role-header {
+    margin-bottom: var(--mg-spacing-6);
+    padding-bottom: var(--mg-spacing-4);
+    border-bottom: 2px solid var(--mg-gray-200);
+}
+
+.mg-role-title {
+    font-size: var(--mg-font-size-xl);
+    font-weight: var(--mg-font-weight-bold);
+    color: var(--mg-gray-900);
+    margin-bottom: var(--mg-spacing-1);
+}
+
+.mg-role-description {
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-gray-600);
+    margin: 0;
+}
+
+/* ==================== Table ==================== */
+
+.mg-permission-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--mg-white);
+    border-radius: var(--mg-border-radius-md);
+    overflow: hidden;
+    border: 1px solid var(--mg-gray-200);
+    margin-bottom: var(--mg-spacing-6);
+}
+
+.mg-permission-table thead {
+    background: var(--mg-primary-500);
+    color: var(--mg-white);
+}
+
+.mg-permission-table th {
+    padding: var(--mg-spacing-4);
+    text-align: left;
+    font-weight: var(--mg-font-weight-semibold);
+    font-size: var(--mg-font-size-sm);
+}
+
+.mg-permission-table td {
+    padding: var(--mg-spacing-4);
+    border-bottom: 1px solid var(--mg-gray-200);
+    font-size: var(--mg-font-size-base);
+}
+
+.mg-permission-table tbody tr:hover {
+    background: var(--mg-gray-50);
+}
+
+.mg-menu-name {
+    font-weight: var(--mg-font-weight-semibold);
+    color: var(--mg-gray-900);
+}
+
+.mg-menu-code {
+    font-size: var(--mg-font-size-xs);
+    color: var(--mg-gray-500);
+    font-family: var(--mg-font-mono);
+}
+
+.mg-menu-path {
+    background: var(--mg-gray-100);
+    padding: var(--mg-spacing-1) var(--mg-spacing-2);
+    border-radius: var(--mg-border-radius-sm);
+    font-family: var(--mg-font-mono);
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-primary-600);
+}
+
+/* ==================== Badges ==================== */
+
+.mg-badge {
+    display: inline-block;
+    padding: var(--mg-spacing-1) var(--mg-spacing-3);
+    border-radius: var(--mg-border-radius-full);
+    font-size: var(--mg-font-size-xs);
+    font-weight: var(--mg-font-weight-medium);
+}
+
+.mg-badge.mg-location-dashboard {
+    background: var(--mg-primary-100);
+    color: var(--mg-primary-700);
+}
+
+.mg-badge.mg-location-admin_only {
+    background: var(--mg-error-100);
+    color: var(--mg-error-700);
+}
+
+.mg-badge.mg-location-both {
+    background: var(--mg-success-100);
+    color: var(--mg-success-700);
+}
+
+.mg-role-badge {
+    background: var(--mg-gray-200);
+    color: var(--mg-gray-700);
+}
+
+/* ==================== Checkbox ==================== */
+
+.mg-checkbox {
+    width: var(--mg-checkbox-size, 20px);
+    height: var(--mg-checkbox-size, 20px);
+    cursor: pointer;
+}
+
+.mg-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* ==================== Help Text ==================== */
+
+.mg-help-text {
+    display: flex;
+    gap: var(--mg-spacing-3);
+    padding: var(--mg-spacing-4);
+    background: var(--mg-primary-50);
+    border-left: 4px solid var(--mg-primary-500);
+    border-radius: var(--mg-border-radius-md);
+}
+
+.mg-help-icon {
+    font-size: var(--mg-font-size-xl);
+    color: var(--mg-primary-500);
+    flex-shrink: 0;
+}
+
+.mg-help-content {
+    flex: 1;
+}
+
+.mg-help-title {
+    font-weight: var(--mg-font-weight-semibold);
+    color: var(--mg-gray-900);
+    margin-bottom: var(--mg-spacing-2);
+}
+
+.mg-help-list {
+    margin: 0;
+    padding-left: var(--mg-spacing-5);
+    color: var(--mg-gray-700);
+}
+
+.mg-help-list li {
+    margin-bottom: var(--mg-spacing-1);
+    font-size: var(--mg-font-size-sm);
+}
+
+/* ==================== Empty State ==================== */
+
+.mg-empty-state {
+    text-align: center;
+    padding: var(--mg-spacing-12);
+    color: var(--mg-gray-600);
+}
+
+.mg-empty-icon {
+    font-size: var(--mg-font-size-4xl);
+    color: var(--mg-gray-400);
+    margin-bottom: var(--mg-spacing-4);
+}
+
+.mg-empty-text {
+    font-size: var(--mg-font-size-lg);
+    margin: 0;
+}
+
+/* ==================== Loading ==================== */
+
+.mg-loading {
+    text-align: center;
+    padding: var(--mg-spacing-8);
+    color: var(--mg-gray-600);
+    font-size: var(--mg-font-size-base);
+}
+
+/* ==================== Buttons ==================== */
+
+.mg-btn {
+    padding: var(--mg-spacing-2) var(--mg-spacing-4);
+    border-radius: var(--mg-border-radius-md);
+    font-size: var(--mg-font-size-base);
+    font-weight: var(--mg-font-weight-medium);
+    border: none;
+    cursor: pointer;
+    transition: all var(--mg-transition-base);
+}
+
+.mg-btn-primary {
+    background: var(--mg-primary-500);
+    color: var(--mg-white);
+}
+
+.mg-btn-primary:hover {
+    background: var(--mg-primary-600);
+}
+
+.mg-btn-primary:disabled {
+    background: var(--mg-gray-300);
+    cursor: not-allowed;
+}
+
+/* ==================== Responsive ==================== */
+
+@media (max-width: 768px) {
+    .mg-content {
+        grid-template-columns: 1fr;
+    }
+
+    .mg-sidebar {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .mg-permission-table {
+        font-size: var(--mg-font-size-sm);
+        display: block;
+        overflow-x: auto;
+    }
+
+    .mg-permission-table th,
+    .mg-permission-table td {
+        padding: var(--mg-spacing-2);
+    }
+}
+

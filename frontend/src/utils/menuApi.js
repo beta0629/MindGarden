@@ -1,0 +1,93 @@
+/**
+ * 메뉴 API 유틸리티
+ * 
+ * 표준화 준수:
+ * - API 버전 관리 (/api/v1/*)
+ * - 표준 에러 처리
+ * 
+ * @author MindGarden
+ * @version 2.0.0
+ * @since 2025-12-03
+ */
+
+import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+const MENU_API = `${API_BASE_URL}/api/v1/menus`;
+
+/**
+ * 사용자 메뉴 조회 (역할별)
+ */
+export const getUserMenus = async () => {
+    try {
+        const response = await axios.get(`${MENU_API}/user`, {
+            withCredentials: true
+        });
+        return response.data;
+    } catch (error) {
+        console.error('사용자 메뉴 조회 실패:', error);
+        throw error;
+    }
+};
+
+/**
+ * 관리자 전용 메뉴 조회
+ */
+export const getAdminMenus = async () => {
+    try {
+        const response = await axios.get(`${MENU_API}/admin`, {
+            withCredentials: true
+        });
+        return response.data;
+    } catch (error) {
+        console.error('관리자 메뉴 조회 실패:', error);
+        throw error;
+    }
+};
+
+/**
+ * 전체 메뉴 조회
+ */
+export const getAllMenus = async () => {
+    try {
+        const response = await axios.get(`${MENU_API}/all`, {
+            withCredentials: true
+        });
+        return response.data;
+    } catch (error) {
+        console.error('전체 메뉴 조회 실패:', error);
+        throw error;
+    }
+};
+
+/**
+ * 메뉴 코드로 조회
+ */
+export const getMenuByCode = async (menuCode) => {
+    try {
+        const response = await axios.get(`${MENU_API}/code/${menuCode}`, {
+            withCredentials: true
+        });
+        return response.data;
+    } catch (error) {
+        console.error('메뉴 조회 실패:', error);
+        throw error;
+    }
+};
+
+/**
+ * 메뉴 경로로 조회
+ */
+export const getMenuByPath = async (menuPath) => {
+    try {
+        const response = await axios.get(`${MENU_API}/path`, {
+            params: { path: menuPath },
+            withCredentials: true
+        });
+        return response.data;
+    } catch (error) {
+        console.error('메뉴 조회 실패:', error);
+        throw error;
+    }
+};
+

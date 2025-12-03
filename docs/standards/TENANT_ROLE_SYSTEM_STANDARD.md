@@ -1065,20 +1065,31 @@ if (!hasPermission) {
 | SUPER_HQ_ADMIN | ADMIN | 본사 개념 제거 |
 | HQ_MASTER | ADMIN | 본사 개념 제거 |
 
-### 호환성 유지
-기존 코드와의 호환성을 위해 `AdminRoleUtils.ADMIN_ROLES`에 레거시 역할 포함:
+### 중요: 브랜치 개념 완전 제거
 
+**브랜치 관련 역할은 더 이상 사용되지 않으며, 모든 코드에서 제거되어야 합니다.**
+
+**표준 관리자 역할만 사용**:
+- `ADMIN`: 기본 관리자
+- `TENANT_ADMIN`: 테넌트 관리자  
+- `PRINCIPAL`: 원장
+- `OWNER`: 사장
+
+**제거된 레거시 역할** (사용 금지):
+- ❌ `BRANCH_ADMIN`, `BRANCH_SUPER_ADMIN`, `BRANCH_MANAGER` (브랜치 개념 제거)
+- ❌ `HQ_ADMIN`, `SUPER_HQ_ADMIN`, `HQ_MASTER`, `HQ_SUPER_ADMIN` (본사 개념 제거)
+
+**코드 작성 시**:
 ```java
-public static final Set<UserRole> ADMIN_ROLES = Set.of(
-    UserRole.ADMIN,                  // ✅ 핵심 역할
-    UserRole.BRANCH_ADMIN,           // 🔄 레거시 호환
-    UserRole.BRANCH_SUPER_ADMIN,     // 🔄 레거시 호환
-    UserRole.BRANCH_MANAGER,         // 🔄 레거시 호환
-    UserRole.HQ_ADMIN,               // 🔄 레거시 호환
-    UserRole.SUPER_HQ_ADMIN,         // 🔄 레거시 호환
-    UserRole.HQ_MASTER,              // 🔄 레거시 호환
-    UserRole.HQ_SUPER_ADMIN          // 🔄 레거시 호환
-);
+// ✅ 올바른 예시: 표준 관리자 역할만 사용
+if (SessionUtils.isAdmin(session)) {
+    // 관리자 권한 처리
+}
+
+// ❌ 잘못된 예시: 레거시 브랜치 역할 체크 금지
+if (roleName.equals("BRANCH_SUPER_ADMIN")) {
+    // 사용 금지
+}
 ```
 
 ---

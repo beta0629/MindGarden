@@ -196,12 +196,27 @@ public class SecurityAuditService {
     }
 
     private boolean checkSQLInjection(Map<String, String[]> parameters, String requestURI) {
-        // URI 검사
+        // URI 검사 (숫자만 있는 경로 변수는 제외)
+        // 예: /api/consultation-messages/client/555 -> /api/consultation-messages/client/{id}로 변환하여 검사
+        String sanitizedURI = requestURI.replaceAll("/\\d+", "/{id}");
+        
+        // 숫자만 있는 경로 변수가 있는 경우 SQL 인젝션 검사에서 제외
+        // 예: /api/consultation-messages/client/555 -> 검사 제외
+        if (requestURI.matches(".*/\\d+$") || requestURI.matches(".*/\\d+\\?.*")) {
+            log.debug("🔍 SQL 인젝션 검사 스킵 - 숫자만 있는 경로 변수: {}", requestURI);
+            return false;
+        }
+        
+        log.debug("🔍 SQL 인젝션 검사 - 원본 URI: {}, 정제된 URI: {}", requestURI, sanitizedURI);
+        
         for (Pattern pattern : SQL_INJECTION_PATTERNS) {
-            if (pattern.matcher(requestURI).matches()) {
+            if (pattern.matcher(sanitizedURI).matches()) {
+                log.warn("⚠️ SQL 인젝션 패턴 매칭 - 정제된 URI: {}, 패턴: {}", sanitizedURI, pattern.pattern());
                 return true;
             }
         }
+        
+        log.debug("✅ SQL 인젝션 검사 통과 - 정제된 URI: {}", sanitizedURI);
         
         // 파라미터 검사
         for (String[] values : parameters.values()) {

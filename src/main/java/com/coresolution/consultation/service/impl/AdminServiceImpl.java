@@ -48,6 +48,11 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.domain.UserRoleAssignment;
+import com.coresolution.core.domain.TenantRole;
+import com.coresolution.core.repository.UserRoleAssignmentRepository;
+import com.coresolution.core.repository.TenantRoleRepository;
+import com.coresolution.core.service.UserRoleQueryService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -57,6 +62,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -83,6 +89,9 @@ public class AdminServiceImpl implements AdminService {
     private final FinancialTransactionRepository financialTransactionRepository;
     private final AmountManagementService amountManagementService;
     private final StoredProcedureService storedProcedureService;
+    private final UserRoleAssignmentRepository userRoleAssignmentRepository;
+    private final TenantRoleRepository tenantRoleRepository;
+    private final UserRoleQueryService userRoleQueryService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
@@ -123,13 +132,19 @@ public class AdminServiceImpl implements AdminService {
             consultant.setSpecialization(dto.getSpecialization());
             consultant.setBranch(branch); // 지점 할당
             consultant.setBranchCode(dto.getBranchCode()); // 지점코드 저장
+            consultant.setTenantId(tenantId); // 테넌트 ID 설정
             
             // Consultant로 캐스팅하여 certification 설정
             if (consultant instanceof Consultant) {
                 ((Consultant) consultant).setCertification(dto.getQualifications());
             }
             
-            return userRepository.save(consultant);
+            User savedConsultant = userRepository.save(consultant);
+            
+            // UserRoleAssignment 자동 생성 (없는 경우에만)
+            createUserRoleAssignment(savedConsultant, tenantId, UserRole.CONSULTANT);
+            
+            return savedConsultant;
         } else {
             // 새로운 상담사 생성
             Consultant consultant = new Consultant();
@@ -142,12 +157,18 @@ public class AdminServiceImpl implements AdminService {
             consultant.setIsActive(true);
             consultant.setBranch(branch); // 지점 할당
             consultant.setBranchCode(dto.getBranchCode()); // 지점코드 저장
+            consultant.setTenantId(tenantId); // 테넌트 ID 설정
             
             // 상담사 전용 정보 설정
             consultant.setSpecialty(dto.getSpecialization());
             consultant.setCertification(dto.getQualifications());
             
-            return userRepository.save(consultant);
+            User savedConsultant = userRepository.save(consultant);
+            
+            // UserRoleAssignment 자동 생성
+            createUserRoleAssignment(savedConsultant, tenantId, UserRole.CONSULTANT);
+            
+            return savedConsultant;
         }
     }
 
@@ -175,6 +196,16 @@ public class AdminServiceImpl implements AdminService {
         }
         */
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            // 세션에서 현재 사용자의 tenantId 가져오기
+            // (AdminController에서 세션을 통해 전달받아야 함)
+            log.warn("⚠️ TenantContext에 tenantId가 없습니다. 세션에서 조회 시도...");
+            // 세션에서 가져오는 로직은 컨트롤러에서 처리해야 하므로 여기서는 예외 발생
+            throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
+        }
+        
         // User 테이블에 CLIENT role로 저장
         User clientUser = User.builder()
                 .username(dto.getUsername())
@@ -188,7 +219,13 @@ public class AdminServiceImpl implements AdminService {
                 .branchCode(dto.getBranchCode()) // 지점코드 저장
                 .build();
         
+        // tenantId는 BaseEntity에서 상속받은 필드이므로 setter로 설정
+        clientUser.setTenantId(tenantId);
+        
         User savedUser = userRepository.save(clientUser);
+        
+        // UserRoleAssignment 자동 생성
+        createUserRoleAssignment(savedUser, tenantId, UserRole.CLIENT);
         
         // Client 객체로 변환하여 반환
         Client client = new Client();
@@ -5204,6 +5241,91 @@ public class AdminServiceImpl implements AdminService {
         
         // 기본값
         return "연차";
+    }
+    
+    /**
+     * UserRoleAssignment 자동 생성
+     * 
+     * @param user 사용자
+     * @param tenantId 테넌트 ID
+     * @param userRole 사용자 역할
+     */
+    private void createUserRoleAssignment(User user, String tenantId, UserRole userRole) {
+        try {
+            // UserRole을 TenantRole name_en으로 매핑
+            String roleNameEn = mapUserRoleToTenantRoleNameEn(userRole);
+            
+            // TenantRole 조회
+            Optional<TenantRole> tenantRoleOpt = tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(
+                tenantId, roleNameEn
+            );
+            
+            if (tenantRoleOpt.isEmpty()) {
+                log.warn("⚠️ TenantRole을 찾을 수 없습니다: tenantId={}, roleNameEn={}, userRole={}", 
+                    tenantId, roleNameEn, userRole);
+                return;
+            }
+            
+            TenantRole tenantRole = tenantRoleOpt.get();
+            
+            // 기존 할당 확인
+            boolean exists = userRoleAssignmentRepository.existsByUserAndTenantAndRoleAndBranch(
+                user.getId(), tenantId, tenantRole.getTenantRoleId(), null
+            );
+            
+            if (exists) {
+                log.info("✅ UserRoleAssignment가 이미 존재합니다: userId={}, tenantId={}, roleId={}", 
+                    user.getId(), tenantId, tenantRole.getTenantRoleId());
+                return;
+            }
+            
+            // UserRoleAssignment 생성
+            String assignmentId = UUID.randomUUID().toString();
+            UserRoleAssignment assignment = UserRoleAssignment.builder()
+                .assignmentId(assignmentId)
+                .userId(user.getId())
+                .tenantId(tenantId)
+                .tenantRoleId(tenantRole.getTenantRoleId())
+                .branchId(null)
+                .effectiveFrom(LocalDate.now())
+                .effectiveTo(null)
+                .isActive(true)
+                .assignedBy("SYSTEM")
+                .assignmentReason("관리자 등록 시 자동 할당")
+                .build();
+            
+            userRoleAssignmentRepository.save(assignment);
+            log.info("✅ UserRoleAssignment 생성 완료: userId={}, tenantId={}, roleId={}, assignmentId={}", 
+                user.getId(), tenantId, tenantRole.getTenantRoleId(), assignmentId);
+        } catch (Exception e) {
+            log.error("❌ UserRoleAssignment 생성 실패: userId={}, tenantId={}, userRole={}, error={}", 
+                user.getId(), tenantId, userRole, e.getMessage(), e);
+            // 예외를 던지지 않고 로그만 남김 (사용자 생성은 성공)
+        }
+    }
+    
+    /**
+     * UserRole을 TenantRole name_en으로 매핑
+     * 실제 TenantRole name_en과 일치시켜야 함
+     */
+    private String mapUserRoleToTenantRoleNameEn(UserRole userRole) {
+        if (userRole == null) {
+            return "Client";
+        }
+        
+        switch (userRole) {
+            case ADMIN:
+            case TENANT_ADMIN:
+            case PRINCIPAL:
+            case OWNER:
+                return "Director"; // 원장 (실제 TenantRole name_en)
+            case CONSULTANT:
+                return "Counselor"; // 상담사 (실제 TenantRole name_en)
+            case CLIENT:
+                return "Client"; // 내담자
+            default:
+                return "Client";
+        }
     }
     
     /**

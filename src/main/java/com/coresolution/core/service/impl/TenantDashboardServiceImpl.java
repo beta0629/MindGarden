@@ -342,9 +342,9 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
                     log.debug("선택된 템플릿이 없어 기본 설정 사용: roleName={}", roleName);
                 }
             } else {
-                // ✅ 표준: 위젯 그룹 기반 설정 생성
-                defaultConfig = createDashboardConfigFromWidgetGroups(tenantId, businessType, roleCode);
-                log.debug("위젯 그룹 기반 대시보드 설정 생성: roleName={}, businessType={}, roleCode={}", 
+                // ✅ 레거시 대시보드 설정 생성 (프론트엔드에서 레거시 컴포넌트 사용)
+                defaultConfig = createLegacyDashboardConfig(roleCode);
+                log.debug("레거시 대시보드 설정 생성: roleName={}, businessType={}, roleCode={}", 
                         roleName, businessType, roleCode);
             }
             
@@ -770,6 +770,66 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
     }
     
     /**
+     * 레거시 대시보드 설정 생성
+     * 프론트엔드에서 레거시 컴포넌트(AdminDashboard, ClientDashboard, CommonDashboard)를 사용
+     * 
+     * @param roleCode 역할 코드 (ADMIN, CONSULTANT, CLIENT, STAFF)
+     * @return 대시보드 설정 JSON
+     */
+    private String createLegacyDashboardConfig(String roleCode) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            com.fasterxml.jackson.databind.node.ObjectNode config = mapper.createObjectNode();
+            
+            // 레거시 대시보드 표시
+            config.put("version", "legacy");
+            config.put("isLegacy", true);
+            config.put("componentType", getLegacyComponentType(roleCode));
+            
+            // 레이아웃 설정 (레거시 컴포넌트가 자체 레이아웃 사용)
+            com.fasterxml.jackson.databind.node.ObjectNode layout = mapper.createObjectNode();
+            layout.put("type", "legacy");
+            config.set("layout", layout);
+            
+            // 위젯 배열은 비어있음 (레거시 컴포넌트가 자체 UI 사용)
+            com.fasterxml.jackson.databind.node.ArrayNode widgets = mapper.createArrayNode();
+            config.set("widgets", widgets);
+            
+            // 테마 설정
+            com.fasterxml.jackson.databind.node.ObjectNode theme = mapper.createObjectNode();
+            theme.put("mode", "light");
+            theme.put("primaryColor", "#007bff");
+            config.set("theme", theme);
+            
+            log.debug("레거시 대시보드 설정 생성 완료: roleCode={}, componentType={}", 
+                    roleCode, getLegacyComponentType(roleCode));
+            
+            return mapper.writeValueAsString(config);
+        } catch (JsonProcessingException e) {
+            log.error("레거시 대시보드 설정 생성 실패: roleCode={}", roleCode, e);
+            // 실패 시 최소 설정 반환
+            return "{\"version\":\"legacy\",\"isLegacy\":true,\"layout\":{\"type\":\"legacy\"},\"widgets\":[]}";
+        }
+    }
+    
+    /**
+     * 역할 코드에 따른 레거시 컴포넌트 타입 반환
+     */
+    private String getLegacyComponentType(String roleCode) {
+        String normalizedRoleCode = normalizeRoleCode(roleCode);
+        
+        if ("ADMIN".equals(normalizedRoleCode)) {
+            return "AdminDashboard";
+        } else if ("CLIENT".equals(normalizedRoleCode)) {
+            return "ClientDashboard";
+        } else if ("CONSULTANT".equals(normalizedRoleCode) || "STAFF".equals(normalizedRoleCode)) {
+            return "CommonDashboard";
+        } else {
+            return "CommonDashboard"; // 기본값
+        }
+    }
+    
+    /**
      * 위젯 그룹 기반 대시보드 설정 생성
      * 
      * ✅ 표준: 위젯 그룹 시스템 사용 (하드코딩 제거)
@@ -784,6 +844,10 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             log.debug("위젯 그룹 기반 대시보드 설정 생성: tenantId={}, businessType={}, roleCode={}", 
                     tenantId, businessType, roleCode);
             
+            // ✅ roleCode 변환: CONSULTATION_DIRECTOR -> ADMIN, CONSULTATION_COUNSELOR -> CONSULTANT 등
+            String normalizedRoleCode = normalizeRoleCode(roleCode);
+            log.debug("역할 코드 정규화: {} -> {}", roleCode, normalizedRoleCode);
+            
             ObjectMapper mapper = new ObjectMapper();
             com.fasterxml.jackson.databind.node.ObjectNode config = mapper.createObjectNode();
             
@@ -796,9 +860,9 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             layout.put("responsive", true);
             config.set("layout", layout);
             
-            // ✅ 위젯 그룹 기반 위젯 조회
+            // ✅ 위젯 그룹 기반 위젯 조회 (정규화된 roleCode 사용)
             Map<String, List<WidgetDefinitionResponse>> groupedWidgets = 
-                    widgetGroupService.getGroupedWidgets(tenantId, businessType, roleCode);
+                    widgetGroupService.getGroupedWidgets(tenantId, businessType, normalizedRoleCode);
             
             // 위젯 배열 생성
             com.fasterxml.jackson.databind.node.ArrayNode widgets = mapper.createArrayNode();
@@ -869,6 +933,38 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
             // 실패 시 최소 설정 반환
             return "{\"version\":\"2.0\",\"layout\":{\"type\":\"grid\",\"columns\":3},\"widgets\":[]}";
         }
+    }
+    
+    /**
+     * 역할 코드 정규화
+     * RoleTemplate의 template_code (예: CONSULTATION_DIRECTOR)를 
+     * 위젯 그룹의 role_code (예: ADMIN)로 변환
+     */
+    private String normalizeRoleCode(String roleCode) {
+        if (roleCode == null) {
+            return roleCode;
+        }
+        
+        // 이미 정규화된 경우 (ADMIN, CONSULTANT, CLIENT, STAFF)
+        if (roleCode.equals("ADMIN") || roleCode.equals("CONSULTANT") || 
+            roleCode.equals("CLIENT") || roleCode.equals("STAFF")) {
+            return roleCode;
+        }
+        
+        // RoleTemplate 형식 변환 (CONSULTATION_DIRECTOR -> ADMIN)
+        if (roleCode.contains("DIRECTOR") || roleCode.equals("ADMIN")) {
+            return "ADMIN";
+        } else if (roleCode.contains("COUNSELOR") || roleCode.equals("CONSULTANT")) {
+            return "CONSULTANT";
+        } else if (roleCode.contains("CLIENT")) {
+            return "CLIENT";
+        } else if (roleCode.contains("STAFF")) {
+            return "STAFF";
+        }
+        
+        // 변환 실패 시 원본 반환
+        log.warn("역할 코드 변환 실패, 원본 사용: {}", roleCode);
+        return roleCode;
     }
     
     /**

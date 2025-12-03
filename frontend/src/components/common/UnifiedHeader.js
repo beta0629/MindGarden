@@ -359,7 +359,7 @@ const UnifiedHeader = ({
         {/* 테넌트 전환 버튼 (멀티 테넌트 사용자인 경우) */}
         {renderTenantSwitchButton()}
         
-        {/* 알림 아이콘 */}
+        {/* 알림 아이콘 - 오른쪽으로 이동 */}
         {notificationAction}
         
         <div className="mg-header__user-info">
@@ -431,14 +431,14 @@ const UnifiedHeader = ({
             {renderLogo()}
           </div>
 
-          {/* 중앙 액션 영역 */}
+          {/* 중앙 액션 영역 - extraActions만 표시 */}
           {extraActions && (
             <div className="mg-header__actions">
               {extraActions}
             </div>
           )}
 
-          {/* 사용자 메뉴 영역 */}
+          {/* 사용자 메뉴 영역 - 알림 + 사용자 프로필 */}
           {renderUserMenu()}
         </div>
       </header>

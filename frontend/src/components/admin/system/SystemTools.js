@@ -47,13 +47,11 @@ const SystemTools = ({
         <div className="mg-v2-stats-grid">
             {tools.map((tool) => (
                 <div key={tool.id} className="mg-v2-dashboard-stat-card mg-system-tool-card">
-                    <button className="mg-button" 
-                        variant={tool.variant}
+                    <button 
+                        className="mg-system-tool-button mg-button--full-width" 
                         onClick={tool.onClick}
                         disabled={loading}
-                        className="mg-system-tool-button"
                         title={tool.description}
-                        fullWidth
                     >
                         <div className="mg-v2-system-tool-icon">
                             {tool.icon}

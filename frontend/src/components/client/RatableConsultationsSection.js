@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
-// import ConsultantRatingModal from './ConsultantRatingModal';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import ConsultantRatingModal from './ConsultantRatingModal';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
 import './RatableConsultationsSection.css';
 
@@ -62,18 +62,22 @@ const RatableConsultationsSection = () => {
       console.log('💖 API 응답 데이터:', result);
 
       if (result.success) {
-        console.log('💖 평가 가능한 상담 개수:', result.data?.length || 0);
-        setRatableSchedules(result.data || []);
+        // result.data가 배열인지 확인
+        const schedules = Array.isArray(result.data) ? result.data : [];
+        console.log('💖 평가 가능한 상담 개수:', schedules.length);
+        setRatableSchedules(schedules);
       } else {
         console.error('💖 평가 가능한 상담 조회 실패:', result.message);
         console.log('💖 테스트 데이터 표시');
         setShowTestData(true);
+        setRatableSchedules([]); // 빈 배열로 초기화
       }
 
     } catch (error) {
       console.error('💖 평가 가능한 상담 조회 오류:', error);
       console.log('💖 테스트 데이터 표시');
       setShowTestData(true);
+      setRatableSchedules([]); // 오류 시 빈 배열로 초기화
     } finally {
       setLoading(false);
     }
@@ -110,7 +114,7 @@ const RatableConsultationsSection = () => {
               <Heart size={24} />
               상담사님께 감사 인사를
             </h2>
-            {ratableSchedules.length > 0 && (
+            {Array.isArray(ratableSchedules) && ratableSchedules.length > 0 && (
               <span className="mg-badge mg-badge-primary ratable-consultations-badge">
                 {ratableSchedules.length}개
               </span>
@@ -133,7 +137,7 @@ const RatableConsultationsSection = () => {
                 데이터베이스 테이블 생성 중... 잠시 후 다시 시도해주세요
               </p>
             </div>
-          ) : ratableSchedules.length === 0 ? (
+          ) : !Array.isArray(ratableSchedules) || ratableSchedules.length === 0 ? (
             <div className="ratable-consultations-empty">
               <div className="ratable-consultations-empty__icon">
                 <Heart size={48} />
@@ -143,7 +147,7 @@ const RatableConsultationsSection = () => {
                 상담을 완료하시면 평가할 수 있어요
               </p>
             </div>
-          ) : (
+          ) : Array.isArray(ratableSchedules) ? (
             ratableSchedules.map(schedule => (
               <div key={schedule.scheduleId} className="ratable-consultation-item">
                 <div className="ratable-consultation-item__icon">
@@ -179,6 +183,13 @@ const RatableConsultationsSection = () => {
                 </button>
               </div>
             ))
+          ) : (
+            <div className="ratable-consultations-empty">
+              <div className="ratable-consultations-empty__icon">
+                <Wrench size={48} />
+              </div>
+              <p className="ratable-consultations-empty__text">데이터 형식 오류</p>
+            </div>
           )}
         </div>
       </div>

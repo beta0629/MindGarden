@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultationMessage;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ConsultationMessageService;
@@ -205,12 +206,38 @@ public class ConsultationMessageController extends BaseApiController {
             HttpSession session) {
         log.info("📨 내담자 메시지 목록 조회 - 내담자 ID: {}, 상담사 ID: {}", clientId, consultantId);
         
-        // 권한 체크 (간단한 인증 체크만)
+        // 인증 체크
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             log.warn("⚠️ 인증되지 않은 사용자");
             throw new RuntimeException("로그인이 필요합니다.");
         }
+        
+        log.info("🔍 현재 사용자 정보 - ID: {}, 역할: {}, 요청한 내담자 ID: {}", 
+            currentUser.getId(), currentUser.getRole(), clientId);
+        
+        // 동적 권한 체크
+        // 1. 내담자가 자신의 메시지를 조회하는 경우 허용
+        boolean isOwnMessage = currentUser.getRole() == UserRole.CLIENT && 
+                               currentUser.getId().equals(clientId);
+        
+        log.info("🔍 자신의 메시지 체크 - 사용자 ID: {}, 요청한 내담자 ID: {}, 일치 여부: {}, 역할: {}", 
+            currentUser.getId(), clientId, currentUser.getId().equals(clientId), currentUser.getRole());
+        
+        // 2. API 접근 권한이 있는 경우 허용 (관리자/상담사)
+        String apiPath = "/api/consultation-messages/client/" + clientId;
+        boolean hasApiAccess = dynamicPermissionService.hasApiAccess(currentUser, apiPath);
+        
+        log.info("🔍 API 접근 권한 체크 - API 경로: {}, 권한 여부: {}", apiPath, hasApiAccess);
+        
+        if (!isOwnMessage && !hasApiAccess) {
+            log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}, 요청한 내담자 ID: {}, 자신의 메시지: {}, API 권한: {}", 
+                currentUser.getId(), currentUser.getRole(), clientId, isOwnMessage, hasApiAccess);
+            throw new RuntimeException("접근 권한이 없습니다.");
+        }
+        
+        log.info("✅ 권한 확인 완료 - 사용자 ID: {}, 역할: {}, 요청한 내담자 ID: {}, 자신의 메시지: {}, API 권한: {}", 
+            currentUser.getId(), currentUser.getRole(), clientId, isOwnMessage, hasApiAccess);
         
         Page<ConsultationMessage> messages = consultationMessageService.getClientMessages(
             clientId, consultantId, status, isRead, isImportant, isUrgent, pageable);

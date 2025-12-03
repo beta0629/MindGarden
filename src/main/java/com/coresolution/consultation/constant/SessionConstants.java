@@ -117,6 +117,30 @@ public final class SessionConstants {
      */
     public static final String USER_PERMISSIONS = "USER_PERMISSIONS";
     
+    // ===== 표준화된 세션 속성명 상수 (하드코딩 방지) =====
+    
+    /**
+     * User 객체 키 (세션에 저장된 User 엔티티)
+     */
+    public static final String USER_OBJECT = "user";
+    
+    /**
+     * 테넌트 ID
+     */
+    public static final String TENANT_ID = "tenantId";
+    
+    /**
+     * 역할 ID (tenant_role_id)
+     */
+    public static final String ROLE_ID = "roleId";
+    
+    /**
+     * 세션 ID
+     */
+    public static final String SESSION_ID = "sessionId";
+    
+    // 참고: BRANCH_CODE는 제거됨 (브랜치 개념 제거 - TENANT_ROLE_SYSTEM_STANDARD.md 참조)
+    
     // ===== 세션 관리 관련 상수 =====
     
     /**

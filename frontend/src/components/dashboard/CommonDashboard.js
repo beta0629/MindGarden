@@ -9,6 +9,9 @@ import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
+import '../../styles/unified-design-tokens.css';
+import '../../styles/dashboard-tokens-extension.css';
+import '../../styles/dashboard-common-v3.css';
 import './CommonDashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
 import SimpleLayout from '../layout/SimpleLayout';

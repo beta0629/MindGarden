@@ -23,10 +23,15 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.TenantRepository;
+import com.coresolution.core.service.UserRoleQueryService;
+import com.coresolution.core.domain.UserRoleAssignment;
+import com.coresolution.core.repository.TenantRoleRepository;
+import com.coresolution.core.domain.TenantRole;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +62,8 @@ public class AuthController extends BaseApiController {
     private final UserSessionService userSessionService;
     private final DynamicPermissionService dynamicPermissionService;
     private final UserService userService;
+    private final UserRoleQueryService userRoleQueryService;
+    private final TenantRoleRepository tenantRoleRepository;
     
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
@@ -510,13 +517,73 @@ public class AuthController extends BaseApiController {
             SessionUtils.setCurrentUser(session, sessionUser);
             
             // 데이터베이스 세션 ID를 HTTP 세션에 저장 (중복 로그인 체크용)
-            session.setAttribute("sessionId", sessionId);
+            session.setAttribute(SessionConstants.SESSION_ID, sessionId);
             
-            // 사용자의 브랜치 코드를 세션에 저장
-            if (sessionUser.getBranchCode() != null) {
-                session.setAttribute("branchCode", sessionUser.getBranchCode());
-                log.info("🔧 세션에 브랜치 코드 저장: {}", sessionUser.getBranchCode());
+            // 표준화된 세션 속성 저장
+            // 1. 테넌트 ID 저장
+            if (sessionUser.getTenantId() != null) {
+                session.setAttribute(SessionConstants.TENANT_ID, sessionUser.getTenantId());
+                log.info("🔧 세션에 테넌트 ID 저장: {}", sessionUser.getTenantId());
             }
+            
+            // 2. 역할 ID (tenant_role_id) 조회 및 저장
+            if (sessionUser.getTenantId() != null) {
+                try {
+                    List<UserRoleAssignment> activeRoles = userRoleQueryService.getActiveRoles(
+                        sessionUser, sessionUser.getTenantId()
+                    );
+                    String roleId = null;
+                    
+                    if (!activeRoles.isEmpty()) {
+                        // UserRoleAssignment가 있으면 사용
+                        UserRoleAssignment primaryRole = activeRoles.get(0);
+                        roleId = primaryRole.getTenantRoleId();
+                        log.info("🔧 UserRoleAssignment에서 역할 ID 조회: {}", roleId);
+                    } else {
+                        // UserRoleAssignment가 없으면 User의 role을 기반으로 TenantRole 찾기
+                        log.warn("⚠️ 활성 역할 할당이 없습니다. User의 role을 기반으로 TenantRole 조회: userId={}, tenantId={}, role={}", 
+                            sessionUser.getId(), sessionUser.getTenantId(), sessionUser.getRole());
+                        
+                        // User의 role 이름으로 TenantRole 찾기
+                        String roleName = sessionUser.getRole().name();
+                        
+                        // UserRole enum 이름을 TenantRole name_en으로 매핑
+                        // 예: BRANCH_SUPER_ADMIN -> Admin, HQ_ADMIN -> Admin, ADMIN -> Admin
+                        String mappedRoleName = mapUserRoleToTenantRoleName(roleName);
+                        
+                        Optional<TenantRole> tenantRole = tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(
+                            sessionUser.getTenantId(), mappedRoleName
+                        );
+                        
+                        if (tenantRole.isPresent()) {
+                            roleId = tenantRole.get().getTenantRoleId();
+                            log.info("🔧 TenantRole에서 역할 ID 조회: roleName={}, mappedRoleName={}, roleId={}", 
+                                roleName, mappedRoleName, roleId);
+                        } else {
+                            // 매핑 실패 시 원본 roleName으로도 시도
+                            tenantRole = tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(
+                                sessionUser.getTenantId(), roleName
+                            );
+                            if (tenantRole.isPresent()) {
+                                roleId = tenantRole.get().getTenantRoleId();
+                                log.info("🔧 TenantRole에서 역할 ID 조회 (원본 이름): roleName={}, roleId={}", roleName, roleId);
+                            } else {
+                                log.warn("⚠️ TenantRole을 찾을 수 없습니다: tenantId={}, roleName={}, mappedRoleName={}", 
+                                    sessionUser.getTenantId(), roleName, mappedRoleName);
+                            }
+                        }
+                    }
+                    
+                    if (roleId != null) {
+                        session.setAttribute(SessionConstants.ROLE_ID, roleId);
+                        log.info("🔧 세션에 역할 ID 저장: {}", roleId);
+                    }
+                } catch (Exception e) {
+                    log.warn("⚠️ 역할 ID 조회 실패 (무시): {}", e.getMessage());
+                }
+            }
+            
+            // 참고: 브랜치 코드는 제거됨 (브랜치 개념 제거 - TENANT_ROLE_SYSTEM_STANDARD.md 참조)
             
             // 권한 캐시 클리어 (로그인 시 최신 권한 정보 로드)
             try {
@@ -1407,6 +1474,10 @@ public class AuthController extends BaseApiController {
         // 세션 업데이트
         SessionUtils.setCurrentUser(session, userToUpdate);
         
+        // 세션에 지점 코드 저장
+        // 참고: 브랜치 코드는 제거됨 (브랜치 개념 제거 - TENANT_ROLE_SYSTEM_STANDARD.md 참조)
+        // 브랜치 관련 세션 저장 로직 제거됨
+        
         log.info("✅ 사용자 지점 매핑 완료: userId={}, branchCode={}, branchName={}", 
             userToUpdate.getId(), branchCode, branchInfo.getBranchName());
         
@@ -1417,6 +1488,41 @@ public class AuthController extends BaseApiController {
         data.put("branchCode", branchCode);
         
         return success(data);
+    }
+    
+    /**
+     * UserRole enum 이름을 TenantRole name_en으로 매핑
+     * 
+     * 실제 TenantRole name_en과 일치시켜야 함
+     * 
+     * @param userRoleName UserRole enum 이름 (예: ADMIN, CONSULTANT, CLIENT)
+     * @return TenantRole name_en (예: Director, Counselor, Client)
+     */
+    private String mapUserRoleToTenantRoleName(String userRoleName) {
+        if (userRoleName == null) {
+            return null;
+        }
+        
+        // 표준 관리자 역할 -> Director (원장)
+        if ("ADMIN".equals(userRoleName) || 
+            "TENANT_ADMIN".equals(userRoleName) ||
+            "PRINCIPAL".equals(userRoleName) ||
+            "OWNER".equals(userRoleName)) {
+            return "Director"; // 실제 TenantRole name_en
+        }
+        
+        // 상담사 계열 -> Counselor
+        if ("CONSULTANT".equals(userRoleName)) {
+            return "Counselor"; // 실제 TenantRole name_en
+        }
+        
+        // 내담자 계열 -> Client
+        if ("CLIENT".equals(userRoleName)) {
+            return "Client";
+        }
+        
+        // 기본값: 원본 이름 반환
+        return userRoleName;
     }
 
     private String generateUniqueUsername(String email) {

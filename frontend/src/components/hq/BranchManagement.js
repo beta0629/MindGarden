@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import { 
     Container, Row, Col, Card, Button, Modal, Form, 
     Table, Badge, Alert, InputGroup, FormControl, 
@@ -247,7 +247,7 @@ const BranchManagement = () => {
                                                     height: '200px',
                                                     flexDirection: 'column'
                                                 }}>
-                                                    <div className="mg-loading">로딩중...</div>
+                                                    <UnifiedLoading type="inline" text="로딩 중..." />
                                                 </div>
                                             ) : (
                                                 <div style={{
@@ -700,7 +700,7 @@ const BranchManagement = () => {
                                                             height: '200px',
                                                             flexDirection: 'column'
                                                         }}>
-                                                            <div className="mg-loading">로딩중...</div>
+                                                            <UnifiedLoading type="inline" text="로딩 중..." />
                                                         </div>
                                                     ) : filteredUsers.length === 0 ? (
                                                         <div style={{

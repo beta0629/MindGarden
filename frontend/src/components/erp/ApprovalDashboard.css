@@ -183,3 +183,52 @@
     border-top-width: 2px;
   }
 }
+
+/* SuperAdminApprovalDashboard 인라인 스타일 제거용 CSS 클래스 */
+.super-admin-form-group {
+  margin-bottom: var(--mg-spacing-sm, 12px);
+}
+
+.super-admin-reason-box {
+  margin-top: var(--mg-spacing-xs, 4px);
+  padding: var(--mg-spacing-xs, 8px);
+  background-color: var(--mg-gray-100);
+  border-radius: var(--mg-border-radius-sm, 4px);
+  font-size: var(--mg-font-size-sm);
+}
+
+.super-admin-actions-container {
+  display: flex;
+  gap: var(--mg-spacing-xs, 8px);
+  justify-content: flex-end;
+  margin-top: var(--mg-spacing-md, 16px);
+}
+
+.super-admin-info-box {
+  padding: var(--mg-spacing-sm, 12px);
+  background-color: var(--mg-gray-100);
+  border-radius: var(--mg-border-radius-sm, 4px);
+  margin-bottom: var(--mg-spacing-md, 16px);
+}
+
+.super-admin-textarea {
+  width: 100%;
+  padding: var(--mg-spacing-xs, 8px);
+  border: 1px solid var(--mg-border-color, #ddd);
+  border-radius: var(--mg-border-radius-sm, 4px);
+  font-size: var(--mg-font-size-sm);
+}
+
+.super-admin-form-label {
+  display: block;
+  margin-bottom: var(--mg-spacing-xs, 8px);
+  font-weight: 600;
+}
+
+.super-admin-text-right {
+  text-align: right;
+}
+
+.super-admin-button-spacing {
+  margin-right: var(--mg-spacing-xs, 8px);
+}

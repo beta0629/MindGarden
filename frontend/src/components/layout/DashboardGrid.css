@@ -42,25 +42,38 @@
   gap: var(--spacing-xl);
 }
 
-/* 반응형 */
-@media (max-width: 1024px) {
-  .dashboard-grid-4 {
+/* ==================== Responsive ==================== */
+/* 표준화 원칙 준수: CSS 변수 사용, 모바일 우선 접근법 */
+
+/* 모바일 (기본): 1열 */
+.dashboard-grid-4,
+.dashboard-grid-3,
+.dashboard-grid-2 {
+  grid-template-columns: 1fr;
+}
+
+.dashboard-grid-auto {
+  grid-template-columns: 1fr;
+}
+
+/* 태블릿 이상 (768px~) */
+@media (min-width: 768px) {
+  .dashboard-grid-2 {
     grid-template-columns: repeat(2, 1fr);
   }
-  
-  .dashboard-grid-3 {
-    grid-template-columns: repeat(2, 1fr);
+
+  .dashboard-grid-auto {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   }
 }
 
-@media (max-width: 768px) {
-  .dashboard-grid-4,
-  .dashboard-grid-3,
-  .dashboard-grid-2 {
-    grid-template-columns: 1fr;
+/* 데스크톱 이상 (1024px~) */
+@media (min-width: 1024px) {
+  .dashboard-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
   }
-  
-  .dashboard-grid-auto {
-    grid-template-columns: 1fr;
+
+  .dashboard-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
   }
 }

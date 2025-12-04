@@ -71,7 +71,7 @@ const NewAdminDashboard = ({ user: propUser }) => {
         return (
             <SimpleLayout>
                 <div className="loading-container">
-                    <div className="mg-loading">로딩중...</div>
+                    <UnifiedLoading type="page" text="관리자 대시보드를 불러오는 중..." />
                     <p>관리자 대시보드를 불러오는 중...</p>
                 </div>
             </SimpleLayout>

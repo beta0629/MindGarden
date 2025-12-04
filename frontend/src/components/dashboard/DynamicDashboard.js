@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import { getCurrentUserDashboard, getDashboardComponentName } from '../../utils/dashboardUtils';
 import { useSession } from '../../contexts/SessionContext';

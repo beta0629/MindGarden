@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -336,7 +336,7 @@ const BudgetManagement = () => {
           <div className="erp-content">
           {loading && (
             <div className="budget-management-loading">
-              <div className="mg-loading">로딩중...</div>
+              <UnifiedLoading type="inline" text="로딩 중..." />
             </div>
           )}
 

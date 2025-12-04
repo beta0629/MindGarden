@@ -12,7 +12,7 @@ import {
 import { showError, showSuccess } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 // import { withFormSubmit } from '../../utils/formSubmitWrapper';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import { Button } from '../ui/Button/Button';
 import SimpleLayout from '../layout/SimpleLayout';
 
 // 하위 컴포넌트들 import
@@ -327,34 +327,38 @@ const ClientComprehensiveManagement = () => {
                 {/* 메인 탭 네비게이션 */}
                 <div className="mg-v2-section">
                     <div className="mg-v2-tabs">
-                        <button className="mg-button"
+                        <Button
                             variant={mainTab === 'comprehensive' ? 'primary' : 'outline'}
                             onClick={() => handleMainTabChange('comprehensive')}
                             className="mg-v2-tab"
+                            preventDoubleClick={true}
                         >
                             📊 내담자 종합관리
-                        </button>
-                        <button className="mg-button"
+                        </Button>
+                        <Button
                             variant={mainTab === 'consultation' ? 'primary' : 'outline'}
                             onClick={() => handleMainTabChange('consultation')}
                             className="mg-v2-tab"
+                            preventDoubleClick={true}
                         >
                             💬 상담 이력관리
-                        </button>
-                        <button className="mg-button"
+                        </Button>
+                        <Button
                             variant={mainTab === 'mapping' ? 'primary' : 'outline'}
                             onClick={() => handleMainTabChange('mapping')}
                             className="mg-v2-tab"
+                            preventDoubleClick={true}
                         >
                             🤝 매칭 관리
-                        </button>
-                        <button className="mg-button"
+                        </Button>
+                        <Button
                             variant={mainTab === 'statistics' ? 'primary' : 'outline'}
                             onClick={() => handleMainTabChange('statistics')}
                             className="mg-v2-tab"
+                            preventDoubleClick={true}
                         >
                             📈 통계 분석
-                        </button>
+                        </Button>
                     </div>
                 </div>
 

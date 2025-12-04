@@ -36,9 +36,10 @@
   cursor: pointer;
 }
 
+/* 표준화 원칙 준수: CSS 변수 사용, 일관된 호버 효과 */
 .mg-v2-card--clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px var(--mg-shadow-medium);
+  transform: var(--mg-card-hover-transform, translateY(-2px));
+  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
 }
 
 /* 카드 헤더 */

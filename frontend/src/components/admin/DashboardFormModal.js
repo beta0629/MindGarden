@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import { Button } from '../ui/Button/Button';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
@@ -1392,15 +1392,16 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
               {/* 액션 버튼 */}
               <div className="dashboard-form-modal-actions">
-                <button className="mg-button"
+                <Button
                   type="button"
                   variant="secondary"
                   onClick={onClose}
                   disabled={loading}
+                  preventDoubleClick={true}
                 >
                   취소
-                </button>
-                <button className="mg-button"
+                </Button>
+                <Button
                   type="button"
                   variant="primary"
                   disabled={loading}
@@ -1421,10 +1422,13 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                     // 직접 handleSubmit 호출
                     const fakeEvent = { preventDefault: () => {}, stopPropagation: () => {} };
                     await handleSubmit(fakeEvent);
-                  }}
+                    }}
+                  preventDoubleClick={true}
+                  loading={loading}
+                  loadingText="저장 중..."
                 >
-                  {loading ? '저장 중...' : (isEditMode ? '수정' : '생성')}
-                </button>
+                  {isEditMode ? '수정' : '생성'}
+                </Button>
               </div>
             </form>
           )}

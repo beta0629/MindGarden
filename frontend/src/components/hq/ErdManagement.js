@@ -22,7 +22,7 @@ import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 // import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import { Button } from '../ui/Button/Button';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import './ErdManagement.css';
@@ -341,13 +341,14 @@ const ErdManagement = () => {
             <Database className="title-icon" />
             <h1>ERD 관리</h1>
           </div>
-          <button className="mg-button"
+          <Button
             onClick={() => setShowGenerateModal(true)}
             variant="primary"
+            preventDoubleClick={true}
           >
             <Plus size={18} style={{ marginRight: '8px' }} />
             ERD 생성
-          </button>
+          </Button>
         </div>
 
         {/* 필터 및 검색 */}
@@ -390,13 +391,14 @@ const ErdManagement = () => {
               <option value="false">비활성</option>
             </select>
           </div>
-          <button className="mg-button"
+          <Button
             onClick={loadErds}
             variant="secondary"
+            preventDoubleClick={true}
           >
             <RefreshCw size={18} style={{ marginRight: '8px' }} />
             새로고침
-          </button>
+          </Button>
         </div>
 
         {/* 에러 메시지 */}
@@ -420,12 +422,13 @@ const ErdManagement = () => {
               <div className="empty-state">
                 <Database className="empty-icon" />
                 <p>ERD가 없습니다.</p>
-                <button className="mg-button"
+                <Button
                   onClick={() => setShowGenerateModal(true)}
                   variant="primary"
+                  preventDoubleClick={true}
                 >
                   ERD 생성하기
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="erd-grid">

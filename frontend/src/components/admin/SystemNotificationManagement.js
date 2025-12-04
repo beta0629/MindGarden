@@ -251,8 +251,8 @@ const SystemNotificationManagement = () => {
   // 권한 로딩 중
   if (permissionsLoading) {
     return (
-      <SimpleLayout title="시스템 공지 관리">
-        <div className="mg-loading">로딩중...</div>
+      <SimpleLayout title="시스템 공지 관리" loading={true} loadingText="권한을 확인하는 중...">
+        <UnifiedLoading type="page" text="권한을 확인하는 중..." />
       </SimpleLayout>
     );
   }
@@ -313,7 +313,7 @@ const SystemNotificationManagement = () => {
         </div>
 
         {/* 로딩 */}
-        {loading && <div className="mg-loading">로딩중...</div>}
+        {loading && <UnifiedLoading type="inline" text="로딩 중..." />}
 
         {/* 공지 목록 */}
         {!loading && (

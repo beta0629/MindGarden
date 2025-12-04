@@ -15,6 +15,9 @@
  */
 
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
+import MGCard from '../common/MGCard';
+import { Button } from '../ui/Button/Button';
 import './MenuPermissionManagementUI.css';
 
 const MenuPermissionManagementUI = ({
@@ -61,9 +64,13 @@ const MenuPermissionManagementUI = ({
             <div className="mg-header">
                 <h2 className="mg-title">메뉴 권한 설정</h2>
                 {selectedRole && (
-                    <button className="mg-btn mg-btn-primary" onClick={onBatchSave}>
+                    <Button 
+                        variant="primary"
+                        onClick={onBatchSave}
+                        preventDoubleClick={true}
+                    >
                         변경사항 저장
-                    </button>
+                    </Button>
                 )}
             </div>
 
@@ -79,7 +86,7 @@ const MenuPermissionManagementUI = ({
                 <div className="mg-sidebar">
                     <h3 className="mg-sidebar-title">역할 선택</h3>
                     {loading && !selectedRole ? (
-                        <div className="mg-loading">로딩 중...</div>
+                        <UnifiedLoading type="inline" text="로딩 중..." />
                     ) : (
                         <ul className="mg-role-list">
                             {roles.map(role => (
@@ -111,85 +118,93 @@ const MenuPermissionManagementUI = ({
                             </div>
 
                             {loading ? (
-                                <div className="mg-loading">로딩 중...</div>
+                                <UnifiedLoading type="inline" text="로딩 중..." />
                             ) : (
                                 <>
-                                    <table className="mg-permission-table">
-                                        <thead>
-                                            <tr>
-                                                <th>메뉴명</th>
-                                                <th>경로</th>
-                                                <th>위치</th>
-                                                <th>최소 요구 역할</th>
-                                                <th>조회</th>
-                                                <th>생성</th>
-                                                <th>수정</th>
-                                                <th>삭제</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {menuPermissions.map(menu => {
-                                                const canGrant = canGrantPermission(selectedRole.nameEn, menu.minRequiredRole);
-                                                
-                                                return (
-                                                    <tr key={menu.menuId}>
-                                                        <td>
+                                    <div className="mg-permission-cards-grid">
+                                        {menuPermissions.map(menu => {
+                                            const canGrant = canGrantPermission(selectedRole.nameEn, menu.minRequiredRole);
+                                            
+                                            return (
+                                                <MGCard key={menu.menuId} variant="default" className="mg-permission-card">
+                                                    {/* 카드 헤더 */}
+                                                    <div className="mg-permission-card__header">
+                                                        <div className="mg-permission-card__title-section">
                                                             <strong className="mg-menu-name">{menu.menuName}</strong>
-                                                            <br />
                                                             <small className="mg-menu-code">{menu.menuCode}</small>
-                                                        </td>
-                                                        <td><code className="mg-menu-path">{menu.menuPath}</code></td>
-                                                        <td>
+                                                        </div>
+                                                        <div className="mg-permission-card__badges">
                                                             <span className={`mg-badge mg-location-${menu.menuLocation.toLowerCase()}`}>
                                                                 {getLocationName(menu.menuLocation)}
                                                             </span>
-                                                        </td>
-                                                        <td>
                                                             <span className="mg-badge mg-role-badge">
                                                                 {menu.minRequiredRole}
                                                             </span>
-                                                        </td>
-                                                        <td>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={menu.canView || false}
-                                                                onChange={e => onPermissionChange(menu.menuId, 'canView', e.target.checked)}
-                                                                disabled={!canGrant}
-                                                                className="mg-checkbox"
-                                                            />
-                                                        </td>
-                                                        <td>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={menu.canCreate || false}
-                                                                onChange={e => onPermissionChange(menu.menuId, 'canCreate', e.target.checked)}
-                                                                disabled={!menu.canView || !canGrant}
-                                                                className="mg-checkbox"
-                                                            />
-                                                        </td>
-                                                        <td>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={menu.canUpdate || false}
-                                                                onChange={e => onPermissionChange(menu.menuId, 'canUpdate', e.target.checked)}
-                                                                disabled={!menu.canView || !canGrant}
-                                                                className="mg-checkbox"
-                                                            />
-                                                        </td>
-                                                        <td>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={menu.canDelete || false}
-                                                                onChange={e => onPermissionChange(menu.menuId, 'canDelete', e.target.checked)}
-                                                                disabled={!menu.canView || !canGrant}
-                                                                className="mg-checkbox"
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* 카드 본문 */}
+                                                    <div className="mg-permission-card__content">
+                                                        <div className="mg-permission-card__path">
+                                                            <code className="mg-menu-path">{menu.menuPath}</code>
+                                                        </div>
+                                                        
+                                                        {/* 권한 체크박스 그리드 */}
+                                                        <div className="mg-permission-card__permissions">
+                                                            <div className="mg-permission-item">
+                                                                <label className="mg-permission-label">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={menu.canView || false}
+                                                                        onChange={e => onPermissionChange(menu.menuId, 'canView', e.target.checked)}
+                                                                        disabled={!canGrant}
+                                                                        className="mg-checkbox"
+                                                                    />
+                                                                    <span>조회</span>
+                                                                </label>
+                                                            </div>
+                                                            <div className="mg-permission-item">
+                                                                <label className="mg-permission-label">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={menu.canCreate || false}
+                                                                        onChange={e => onPermissionChange(menu.menuId, 'canCreate', e.target.checked)}
+                                                                        disabled={!menu.canView || !canGrant}
+                                                                        className="mg-checkbox"
+                                                                    />
+                                                                    <span>생성</span>
+                                                                </label>
+                                                            </div>
+                                                            <div className="mg-permission-item">
+                                                                <label className="mg-permission-label">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={menu.canUpdate || false}
+                                                                        onChange={e => onPermissionChange(menu.menuId, 'canUpdate', e.target.checked)}
+                                                                        disabled={!menu.canView || !canGrant}
+                                                                        className="mg-checkbox"
+                                                                    />
+                                                                    <span>수정</span>
+                                                                </label>
+                                                            </div>
+                                                            <div className="mg-permission-item">
+                                                                <label className="mg-permission-label">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={menu.canDelete || false}
+                                                                        onChange={e => onPermissionChange(menu.menuId, 'canDelete', e.target.checked)}
+                                                                        disabled={!menu.canView || !canGrant}
+                                                                        className="mg-checkbox"
+                                                                    />
+                                                                    <span>삭제</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </MGCard>
+                                            );
+                                        })}
+                                    </div>
 
                                     <div className="mg-help-text">
                                         <i className="bi bi-info-circle mg-help-icon"></i>

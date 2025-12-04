@@ -4,8 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
 import { MessageSquare, Search, Filter, Users, User } from 'lucide-react';
-// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import SimpleLayout from '../layout/SimpleLayout';

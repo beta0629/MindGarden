@@ -65,7 +65,7 @@ const ApiPerformanceMonitoring = () => {
   };
 
   return (
-    <SimpleLayout>
+    <SimpleLayout title="API 성능 모니터링" loading={false}>
       <div className="api-performance-monitoring">
         <div className="page-header">
           <div className="header-left">

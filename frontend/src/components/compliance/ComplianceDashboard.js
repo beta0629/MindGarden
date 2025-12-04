@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import '../../styles/main.css';
 import './ComplianceDashboard.css';
@@ -91,10 +91,7 @@ const ComplianceDashboard = () => {
     if (loading) {
         return (
             <SimpleLayout title="컴플라이언스 관리">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>컴플라이언스 데이터를 불러오는 중...</p>
-                </div>
+                <UnifiedLoading type="page" text="컴플라이언스 데이터를 불러오는 중..." />
             </SimpleLayout>
         );
     }

@@ -73,12 +73,12 @@
   background-color: var(--mg-v2-primary-dark);
   border-color: var(--mg-v2-primary-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  box-shadow: var(--mg-button-hover-shadow);
 }
 
 .mg-v2-button--primary:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+  box-shadow: var(--mg-button-active-shadow);
 }
 
 .mg-v2-button--secondary {
@@ -91,7 +91,7 @@
   background-color: var(--mg-v2-secondary-dark);
   border-color: var(--mg-v2-secondary-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+  box-shadow: var(--mg-button-hover-shadow);
 }
 
 .mg-v2-button--success {
@@ -104,7 +104,7 @@
   background-color: var(--mg-v2-status-success-dark);
   border-color: var(--mg-v2-status-success-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  box-shadow: var(--mg-button-hover-shadow);
 }
 
 .mg-v2-button--warning {
@@ -117,7 +117,7 @@
   background-color: var(--mg-v2-status-warning-dark);
   border-color: var(--mg-v2-status-warning-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+  box-shadow: var(--mg-button-hover-shadow);
 }
 
 .mg-v2-button--error {
@@ -130,7 +130,7 @@
   background-color: var(--mg-v2-status-error-dark);
   border-color: var(--mg-v2-status-error-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  box-shadow: var(--mg-button-hover-shadow);
 }
 
 .mg-v2-button--info {
@@ -143,7 +143,7 @@
   background-color: var(--mg-v2-status-info-dark);
   border-color: var(--mg-v2-status-info-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+  box-shadow: var(--mg-button-hover-shadow);
 }
 
 .mg-v2-button--outline {
@@ -156,7 +156,7 @@
   background-color: var(--mg-v2-primary);
   color: var(--color-white);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  box-shadow: var(--mg-button-hover-shadow);
 }
 
 .mg-v2-button--ghost {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import { Button } from '../ui/Button/Button';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
@@ -618,14 +618,14 @@ const AdminDashboard = ({ user: propUser }) => {
         return (
             <div className="admin-dashboard">
                 <div className="admin-dashboard-content">
-                    <div className="mg-loading">로딩중...</div>
+                    <UnifiedLoading type="inline" text="로딩 중..." />
                 </div>
             </div>
         );
     }
 
     return (
-        <SimpleLayout>
+        <SimpleLayout title="관리자 대시보드" loading={false}>
         <div className="mg-dashboard-layout">
             {/* Dashboard Header */}
             <div className="mg-dashboard-header">
@@ -638,14 +638,15 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                     <div className="mg-dashboard-header-right">
-                        <button className="mg-button" 
+                        <Button 
                             variant="outline" 
                             size="small"
                             className="mg-dashboard-icon-btn" 
                             onClick={() => setShowStatisticsModal(true)}
+                            preventDoubleClick={true}
                         >
                             <BarChart />
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>

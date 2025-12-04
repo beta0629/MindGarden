@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import { Container, Row, Col, Tab, Tabs } from 'react-bootstrap';
-import { FaBuilding, FaChartBar, FaCog } from 'react-icons/fa';
+import { FaBuilding, FaCog } from 'react-icons/fa';
 import { useSession } from '../../contexts/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
 import BranchList from './BranchList';
 import BranchForm from './BranchForm';
 import BranchDetail from './BranchDetail';
-import BranchStatisticsDashboard from './BranchStatisticsDashboard';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
@@ -244,15 +243,6 @@ const HQBranchManagement = () => {
                             )}
                         </Tab>
 
-                        {/* 통계 대시보드 탭 */}
-                        <Tab eventKey="statistics" title={
-                            <span><FaChartBar className="me-2" />통계 대시보드</span>
-                        }>
-                            <BranchStatisticsDashboard
-                                selectedBranchId={selectedBranch?.id}
-                                onBranchSelect={handleBranchSelect}
-                            />
-                        </Tab>
                     </Tabs>
 
                     {/* 지점 폼 모달 */}

@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import UnifiedHeader from '../common/UnifiedHeader';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
@@ -88,9 +88,7 @@ const SimpleLayout = ({
           )}
           
           {loading ? (
-            <div className="loading-container">
-              <div className="mg-loading">로딩중...</div>
-            </div>
+            <UnifiedLoading type="page" text={loadingText} />
           ) : (
             children
           )}

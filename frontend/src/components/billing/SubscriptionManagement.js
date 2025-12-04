@@ -26,8 +26,9 @@ import {
   getCodeLabel,
 } from '../../utils/billingService';
 // import notificationManager from '../../utils/notification';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import SimpleLayout from '../layout/SimpleLayout';
+import MGButton from '../../components/common/MGButton';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import PaymentMethodRegistration from './PaymentMethodRegistration';
 import {
   BILLING_CSS,
@@ -285,7 +286,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
           <h3>{BILLING_MESSAGES.SUBSCRIPTION.SUBSCRIPTIONS_TITLE}</h3>
         </div>
         {loading ? (
-          <div className="mg-loading">로딩중...</div>
+          <UnifiedLoading type="inline" text="구독 정보를 불러오는 중..." />
         ) : subscriptions.length === 0 ? (
           <div className={BILLING_CSS.SUBSCRIPTION_MANAGEMENT.EMPTY}>
             <p>{BILLING_MESSAGES.SUBSCRIPTION.NO_SUBSCRIPTIONS}</p>
@@ -390,6 +391,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
         )}
       </div>
     </div>
+    </SimpleLayout>
   );
 };
 

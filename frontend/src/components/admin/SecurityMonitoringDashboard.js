@@ -102,7 +102,7 @@ const SecurityMonitoringDashboard = () => {
   };
 
   return (
-    <SimpleLayout>
+    <SimpleLayout title="보안 모니터링 대시보드" loading={false}>
       <div className="security-monitoring-dashboard">
         <div className={`page-header ${getHeaderStatusClass()}`}>
           <div className="header-left">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
@@ -420,16 +420,14 @@ const PaymentManagement = () => {
 
   if (loading) {
     return (
-      <SimpleLayout>
-        <div className="payment-management">
-          <div className="loading">로딩 중...</div>
-        </div>
+      <SimpleLayout title="결제 관리">
+        <UnifiedLoading type="page" text="결제 내역을 불러오는 중..." />
       </SimpleLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <SimpleLayout title="결제 관리">
       <div className="payment-management">
         <div className="payment-header">
           <h1>결제 관리</h1>

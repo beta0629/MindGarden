@@ -95,18 +95,19 @@
 }
 
 /* ===== 클릭 가능한 카드 ===== */
+/* 표준화 원칙 준수: CSS 변수 사용, 일관된 호버 효과 */
 .mg-card--clickable {
   cursor: pointer;
+  transition: var(--mg-card-transition, all 0.3s cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .mg-card--clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--primary-color);
+  transform: var(--mg-card-hover-transform, translateY(-2px));
+  box-shadow: var(--mg-card-hover-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
 }
 
 .mg-card--clickable:focus-visible {
-  outline: 2px solid var(--primary-color);
+  outline: 2px solid var(--mg-primary-500, var(--primary-color));
   outline-offset: 2px;
 }
 

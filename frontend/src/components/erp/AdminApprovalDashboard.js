@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
@@ -159,11 +159,15 @@ const AdminApprovalDashboard = () => {
   };
 
   if (loading) {
-    return <div className="mg-loading">로딩중...</div>;
+    return (
+      <SimpleLayout title="관리자 승인 대시보드">
+        <UnifiedLoading type="page" text="승인 대기 요청을 불러오는 중..." />
+      </SimpleLayout>
+    );
   }
 
   return (
-    <SimpleLayout>
+    <SimpleLayout title="관리자 승인 대시보드">
       <div className="approval-dashboard-container">
         <ErpHeader
           title="관리자 승인 대시보드"

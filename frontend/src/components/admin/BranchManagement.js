@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../constants/api';
 import { COLORS } from '../../constants/css';
 import { MESSAGES } from '../../constants/messages';
 import { Modal } from '../common/Modal';
-import { LoadingBar } from '../common/LoadingBar';
 import { showAlert } from '../../utils/alert';
 import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
@@ -54,7 +53,11 @@ const BranchManagement = () => {
     
     // 권한이 없는 경우 로딩 표시
     if (!user || (user.role !== 'HQ_ADMIN' && user.role !== 'SUPER_HQ_ADMIN')) {
-        return <LoadingBar />;
+        return (
+            <SimpleLayout title="지점 관리" loading={true} loadingText="권한을 확인하는 중...">
+                <UnifiedLoading type="page" text="권한을 확인하는 중..." />
+            </SimpleLayout>
+        );
     }
     
     // === 상태 관리 ===
@@ -359,7 +362,7 @@ const BranchManagement = () => {
                 </div>
             </div>
 
-            {loading && <LoadingBar />}
+            {loading && <UnifiedLoading type="inline" text="데이터를 불러오는 중..." />}
 
             {error && (
                 <div className="error-message">
@@ -515,7 +518,8 @@ const BranchManagement = () => {
                     onClose={() => setIsDetailModalOpen(false)}
                 />
             )}
-        </div>
+            </div>
+        </SimpleLayout>
     );
 };
 

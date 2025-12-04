@@ -14,6 +14,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../common/UnifiedLoading';
 import {
     getRoleMenuPermissions,
     grantMenuPermission,
@@ -187,16 +189,18 @@ const MenuPermissionManagement = () => {
     };
 
     return (
-        <MenuPermissionManagementUI
-            roles={roles}
-            selectedRole={selectedRole}
-            menuPermissions={menuPermissions}
-            loading={loading}
-            error={error}
-            onRoleSelect={handleRoleSelect}
-            onPermissionChange={handlePermissionChange}
-            onBatchSave={handleBatchSave}
-        />
+        <SimpleLayout title="메뉴 권한 관리" loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
+            <MenuPermissionManagementUI
+                roles={roles}
+                selectedRole={selectedRole}
+                menuPermissions={menuPermissions}
+                loading={loading}
+                error={error}
+                onRoleSelect={handleRoleSelect}
+                onPermissionChange={handlePermissionChange}
+                onBatchSave={handleBatchSave}
+            />
+        </SimpleLayout>
     );
 };
 

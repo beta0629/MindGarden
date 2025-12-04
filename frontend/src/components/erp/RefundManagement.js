@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpButton from './common/ErpButton';

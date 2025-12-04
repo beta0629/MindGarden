@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import { Button } from '../ui/Button/Button';
 import { FaUser, FaEdit, FaTrash, FaPlus, FaEye, FaUsers, FaLink, FaCalendarAlt, FaClipboardList } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -666,17 +666,18 @@ const ConsultantComprehensiveManagement = () => {
                                             </div>
                                             
                                             <div className="mg-v2-consultant-card__actions">
-                                                <button className="mg-button" 
+                                                <Button 
                                                     variant="primary"
                                                     size="small"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleOpenModal('edit', consultant);
                                                     }}
+                                                    preventDoubleClick={true}
                                                 >
                                                     수정
-                                                </button>
-                                                <button className="mg-button" 
+                                                </Button>
+                                                <Button 
                                                     variant="danger"
                                                     size="small"
                                                     onClick={(e) => {
@@ -684,9 +685,10 @@ const ConsultantComprehensiveManagement = () => {
                                                         setSelectedConsultant(consultant);
                                                         setShowDeleteConfirm(true);
                                                     }}
+                                                    preventDoubleClick={true}
                                                 >
                                                     삭제
-                                                </button>
+                                                </Button>
                                                             </div>
                                                                 </div>
                                                             </div>
@@ -706,10 +708,22 @@ const ConsultantComprehensiveManagement = () => {
                         
                         { /* 기본관리 기능들 */ }
                             <div className="mg-v2-form-actions">
-                            <button className="mg-button" variant="primary" className="mg-v2-button mg-v2-button-primary" onClick={ () => handleOpenModal('create') }>➕ 새 상담사 등록
-                            </button>
-                            <button className="mg-button" variant="primary" className="mg-v2-button mg-v2-button-secondary" onClick={ loadConsultants }>🔄 새로고침
-                            </button>
+                            <Button 
+                                variant="primary" 
+                                className="mg-v2-button mg-v2-button-primary" 
+                                onClick={() => handleOpenModal('create')}
+                                preventDoubleClick={true}
+                            >
+                                ➕ 새 상담사 등록
+                            </Button>
+                            <Button 
+                                variant="secondary" 
+                                className="mg-v2-button mg-v2-button-secondary" 
+                                onClick={loadConsultants}
+                                preventDoubleClick={true}
+                            >
+                                🔄 새로고침
+                            </Button>
                     </div>
 
                     { /* 상담사 목록 - 상담사 종합관리와 동일한 디자인 */ }
@@ -788,17 +802,18 @@ const ConsultantComprehensiveManagement = () => {
                                             </div>
                                             
                                             <div className="mg-v2-consultant-card__actions">
-                                        <button className="mg-button" 
+                                        <Button 
                                                     variant="primary"
                                                     size="small"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleOpenModal('edit', consultant);
                                             }}
+                                            preventDoubleClick={true}
                                         >
                                             수정
-                                        </button>
-                                        <button className="mg-button" 
+                                        </Button>
+                                        <Button 
                                                     variant="danger"
                                                     size="small"
                                             onClick={(e) => {
@@ -806,9 +821,10 @@ const ConsultantComprehensiveManagement = () => {
                                                         setSelectedConsultant(consultant);
                                                         setShowDeleteConfirm(true);
                                             }}
+                                            preventDoubleClick={true}
                                         >
                                             삭제
-                                        </button>
+                                        </Button>
                                             </div>
                                     </div>
                                 </div>

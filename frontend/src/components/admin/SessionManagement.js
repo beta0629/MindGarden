@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, Link2, Plus, Users, CheckCircle, TrendingUp, Clock, Zap } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
-// // import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../common/UnifiedLoading';
 import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import StatisticsDashboard from './StatisticsDashboard';
@@ -10,8 +10,6 @@ import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
 import ClientCard from '../ui/Card/ClientCard';
 import MappingCard from './MappingCard';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SessionExtensionModal from './mapping/SessionExtensionModal';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/unified-design-tokens.css';
@@ -288,11 +286,15 @@ const SessionManagement = () => {
     }, [loadData, loadMappingStatusCodes]);
 
     if (loading && mappings.length === 0) {
-        return <div className="mg-loading">로딩중...</div>;
+        return (
+            <SimpleLayout title="회기 관리" loading={true} loadingText="데이터를 불러오는 중...">
+                <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
+            </SimpleLayout>
+        );
     }
 
     return (
-        <SimpleLayout>
+        <SimpleLayout title="회기 관리" loading={loading && clients.length === 0} loadingText="데이터를 불러오는 중...">
             <div className="mg-dashboard-layout">
                 {/* Dashboard Header */}
                 <div className="mg-dashboard-header">

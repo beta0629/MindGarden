@@ -35,11 +35,15 @@
     font-family: var(--font-family-ios);
 }
 
+/* ==================== Responsive ==================== */
+/* 표준화 원칙 준수: CSS 변수 사용, 모바일 우선 접근법 */
+
+/* 모바일 (기본) */
 .simple-main {
     flex: 1;
-    padding: var(--spacing-lg);
-    /* 헤더가 sticky이므로 헤더 높이만큼 상단 여백 추가 (헤더가 콘텐츠에 겹치지 않도록) */
-    padding-top: calc(var(--header-height, 64px) + var(--spacing-lg));
+    padding: var(--spacing-md);
+    /* 헤더가 sticky이므로 헤더 높이만큼 상단 여백 추가 */
+    padding-top: calc(var(--header-height-mobile, 56px) + var(--spacing-md));
 }
 
 .simple-container {
@@ -59,12 +63,12 @@
 }
 
 .page-header {
-    margin-bottom: var(--spacing-xxl);
+    margin-bottom: var(--spacing-xl);
     text-align: center;
 }
 
 .page-title {
-    font-size: var(--font-size-xxxl);
+    font-size: var(--font-size-xxl);
     font-weight: var(--font-weight-bold);
     color: var(--ios-text-primary);
     margin: 0;
@@ -81,27 +85,52 @@
     width: 100%;
 }
 
-/* 반응형 디자인 */
-@media (max-width: 767px) {
+/* ==================== Responsive ==================== */
+/* 표준화 원칙 준수: CSS 변수 사용, 모바일 우선 접근법 */
+
+/* 모바일 (기본) */
+.simple-main {
+    flex: 1;
+    padding: var(--spacing-md);
+    /* 헤더가 sticky이므로 헤더 높이만큼 상단 여백 추가 */
+    padding-top: calc(var(--header-height-mobile, 56px) + var(--spacing-md));
+}
+
+.page-title {
+    font-size: var(--font-size-xxl);
+    font-weight: var(--font-weight-bold);
+    color: var(--ios-text-primary);
+    margin: 0;
+    text-shadow: 0 var(--spacing-xs, 0.125rem) var(--spacing-xs, 0.125rem) var(--mg-shadow-light);
+    font-family: var(--font-family-ios);
+}
+
+.page-header {
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+}
+
+/* 태블릿 이상 (768px~) */
+@media (min-width: 768px) {
     .simple-main {
-        padding: var(--spacing-md);
-        /* 모바일에서는 헤더 높이 조정 */
-        padding-top: calc(var(--header-height-mobile, 56px) + var(--spacing-md));
+        padding: var(--spacing-lg) var(--spacing-xl);
+        padding-top: calc(var(--header-height, 64px) + var(--spacing-lg));
     }
-    
+
     .page-title {
-        font-size: var(--font-size-xxl);
+        font-size: var(--font-size-xxxl);
     }
-    
+
     .page-header {
-        margin-bottom: var(--spacing-xl);
+        margin-bottom: var(--spacing-xxl);
     }
 }
 
-/* 아이패드 스타일 최적화 */
-@media (min-width: 768px) and (max-width: 1024px) {
+/* 데스크톱 이상 (1024px~) */
+@media (min-width: 1024px) {
     .simple-main {
-        padding: var(--spacing-lg) var(--spacing-xl);
+        padding: var(--spacing-lg);
+        padding-top: calc(var(--header-height, 64px) + var(--spacing-lg));
     }
 }
 

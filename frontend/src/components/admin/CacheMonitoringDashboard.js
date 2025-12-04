@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { FaDatabase, FaChartLine, FaClock, FaMemory, FaSync } from 'react-icons/fa';
 import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
@@ -84,7 +86,8 @@ const CacheMonitoringDashboard = () => {
   };
 
   return (
-    <div className="cache-monitoring-dashboard">
+    <SimpleLayout title="캐시 성능 모니터링" loading={loading} loadingText="캐시 통계를 불러오는 중...">
+      <div className="cache-monitoring-dashboard">
       <div className="dashboard-header">
         <h2>
           <FaDatabase className="header-icon" />
@@ -195,7 +198,8 @@ const CacheMonitoringDashboard = () => {
           </button>
         </div>
       )}
-    </div>
+      </div>
+    </SimpleLayout>
   );
 };
 

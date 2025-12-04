@@ -25,8 +25,8 @@ import {
   decryptPgKeysForOps
 } from '../../utils/pgOpsApi';
 import { showNotification } from '../../utils/notification';
-// import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgApprovalManagement.css';
 
@@ -309,8 +309,8 @@ const PgApprovalManagement = () => {
   
   if (sessionLoading || loading && pendingConfigs.length === 0) {
     return (
-      <SimpleLayout>
-        <div className="mg-loading">로딩중...</div>
+      <SimpleLayout title="PG 설정 승인 관리">
+        <UnifiedLoading type="page" text="PG 설정 목록을 불러오는 중..." />
       </SimpleLayout>
     );
   }
@@ -327,7 +327,7 @@ const PgApprovalManagement = () => {
   }
   
   return (
-    <SimpleLayout>
+    <SimpleLayout title="PG 설정 승인 관리">
       <div className="pg-approval-management">
         {/* 헤더 */}
         <div className="pg-approval-header">
@@ -602,7 +602,7 @@ const PgApprovalManagement = () => {
                       onClick={() => handleTestConnection(selectedConfig.configId)}
                       disabled={testingConnection === selectedConfig.configId}
                       loading={testingConnection === selectedConfig.configId}
-                      style={{ marginTop: '8px' }}
+                      className="mg-button-test-connection"
                     >
                       <RefreshCw size={16} />
                       지금 테스트하기

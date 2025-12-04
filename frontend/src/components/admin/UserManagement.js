@@ -203,7 +203,7 @@ const UserManagement = ({ onUpdate }) => {
     };
 
     return (
-        <SimpleLayout>
+        <SimpleLayout title="사용자 관리" loading={loading && filteredUsers.length === 0} loadingText="사용자 목록을 불러오는 중...">
             <div className="mg-v2-dashboard-layout">
                 {/* Dashboard Header */}
                 <div className="mg-v2-dashboard-header">
@@ -272,7 +272,7 @@ const UserManagement = ({ onUpdate }) => {
                             </button>
                         </div>
                         {loading ? (
-                            <div className="mg-loading">로딩중...</div>
+                            <UnifiedLoading type="inline" text="로딩 중..." />
                         ) : users.length === 0 ? (
                             <div className="mg-v2-empty-state">
                                 <FaUsers className="mg-v2-empty-state__icon" />

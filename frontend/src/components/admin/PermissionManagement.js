@@ -372,12 +372,9 @@ const PermissionManagement = () => {
 
     if (loading) {
         return (
-            <div className="mg-v2-permission-management">
-                <div className="mg-v2-loading-container">
-                    <div className="mg-v2-spinner"></div>
-                    <p>권한 정보 로딩 중...</p>
-                </div>
-            </div>
+            <SimpleLayout title="권한 관리" loading={true} loadingText="권한 정보를 불러오는 중...">
+                <UnifiedLoading type="page" text="권한 정보를 불러오는 중..." />
+            </SimpleLayout>
         );
     }
 
@@ -514,6 +511,8 @@ const PermissionManagement = () => {
                 </div>
             </div>
         </div>
+            </div>
+        </SimpleLayout>
     );
 };
 

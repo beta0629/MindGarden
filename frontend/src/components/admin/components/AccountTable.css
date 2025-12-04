@@ -1,0 +1,123 @@
+/**
+ * AccountTable 카드 형태 스타일
+ * 표준화 원칙 준수: 인라인 스타일 금지, CSS 변수 사용
+ */
+
+/* 카드 그리드 */
+.mg-v2-account-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md) 0;
+}
+
+/* 카드 헤더 */
+.account-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--mg-gray-200);
+}
+
+.account-card__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--mg-gray-900);
+}
+
+.primary-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--mg-primary-100);
+  color: var(--mg-primary-700);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 카드 본문 */
+.account-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.account-card__field {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-card__label {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--mg-gray-500);
+  margin-bottom: var(--spacing-xs);
+}
+
+.account-card__value {
+  font-size: var(--font-size-base);
+  color: var(--mg-gray-900);
+  font-weight: var(--font-weight-medium);
+}
+
+.account-card__value--secondary {
+  font-size: var(--font-size-sm);
+  color: var(--mg-gray-600);
+  font-weight: var(--font-weight-normal);
+}
+
+/* 상태 배지 */
+.account-card__status {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.account-card__status.active {
+  background-color: var(--mg-success-100);
+  color: var(--mg-success-700);
+}
+
+.account-card__status.inactive {
+  background-color: var(--mg-gray-100);
+  color: var(--mg-gray-700);
+}
+
+/* 카드 액션 */
+.account-card__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--mg-gray-200);
+}
+
+/* 반응형 - 표준화 원칙 준수: CSS 변수 사용, 모바일 우선 접근법 */
+
+/* 모바일 (기본): 1열 */
+.mg-v2-account-cards-grid {
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+}
+
+/* 태블릿 이상 (768px~) */
+@media (min-width: 768px) {
+  .mg-v2-account-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+  }
+}
+
+/* 데스크톱 이상 (1024px~) */
+@media (min-width: 1024px) {
+  .mg-v2-account-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-lg);
+  }
+}
+

@@ -354,27 +354,128 @@
     cursor: not-allowed;
 }
 
-/* ==================== Responsive ==================== */
+/* ==================== Permission Cards Grid ==================== */
 
-@media (max-width: 768px) {
+.mg-permission-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--mg-spacing-4);
+    padding: var(--mg-spacing-4) 0;
+}
+
+/* ==================== Permission Card ==================== */
+
+.mg-permission-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.mg-permission-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--mg-spacing-4);
+    padding-bottom: var(--mg-spacing-3);
+    border-bottom: 1px solid var(--mg-gray-200);
+}
+
+.mg-permission-card__title-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-1);
+    flex: 1;
+}
+
+.mg-permission-card__badges {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-1);
+    align-items: flex-end;
+}
+
+.mg-permission-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-3);
+}
+
+.mg-permission-card__path {
+    margin-bottom: var(--mg-spacing-2);
+}
+
+.mg-permission-card__permissions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--mg-spacing-2);
+}
+
+.mg-permission-item {
+    display: flex;
+    align-items: center;
+}
+
+.mg-permission-label {
+    display: flex;
+    align-items: center;
+    gap: var(--mg-spacing-2);
+    cursor: pointer;
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-gray-700);
+}
+
+.mg-permission-label:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* ==================== Responsive ==================== */
+/* 표준화 원칙 준수: CSS 변수 사용, 모바일 우선 접근법 */
+
+/* 모바일 (기본) */
+.mg-content {
+    grid-template-columns: 1fr;
+}
+
+.mg-sidebar {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.mg-permission-cards-grid {
+    grid-template-columns: 1fr;
+    gap: var(--mg-spacing-3);
+}
+
+.mg-permission-card__permissions {
+    grid-template-columns: 1fr;
+}
+
+/* 태블릿 이상 (768px~) */
+@media (min-width: 768px) {
     .mg-content {
-        grid-template-columns: 1fr;
+        grid-template-columns: 250px 1fr;
     }
 
     .mg-sidebar {
-        max-height: 300px;
-        overflow-y: auto;
+        max-height: none;
+        overflow-y: visible;
     }
 
-    .mg-permission-table {
-        font-size: var(--mg-font-size-sm);
-        display: block;
-        overflow-x: auto;
+    .mg-permission-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--mg-spacing-4);
     }
 
-    .mg-permission-table th,
-    .mg-permission-table td {
-        padding: var(--mg-spacing-2);
+    .mg-permission-card__permissions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 데스크톱 이상 (1024px~) */
+@media (min-width: 1024px) {
+    .mg-permission-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: var(--mg-spacing-4);
     }
 }
 

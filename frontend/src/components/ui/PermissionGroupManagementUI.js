@@ -15,6 +15,7 @@
  */
 
 import React from 'react';
+import UnifiedLoading from '../common/UnifiedLoading';
 import './PermissionGroupManagementUI.css';
 
 const PermissionGroupManagementUI = ({
@@ -160,7 +161,7 @@ const PermissionGroupManagementUI = ({
                 <div className="mg-sidebar">
                     <h3 className="mg-sidebar-title">역할 선택</h3>
                     {loading && !selectedRole ? (
-                        <div className="mg-loading">로딩 중...</div>
+                        <UnifiedLoading type="inline" text="로딩 중..." />
                     ) : (
                         <ul className="mg-role-list">
                             {roles.map(role => (
@@ -188,7 +189,7 @@ const PermissionGroupManagementUI = ({
                             <p>역할을 선택하여 권한을 설정하세요.</p>
                         </div>
                     ) : loading ? (
-                        <div className="mg-loading">권한 그룹을 불러오는 중...</div>
+                        <UnifiedLoading type="inline" text="권한 그룹을 불러오는 중..." />
                     ) : (
                         <div className="mg-permission-groups">
                             <div className="mg-permission-groups-header">

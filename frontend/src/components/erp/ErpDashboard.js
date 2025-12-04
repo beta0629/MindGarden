@@ -139,7 +139,11 @@ const ErpDashboard = ({ user: propUser }) => {
   };
 
   if (loading) {
-    return <div className="mg-loading">로딩중...</div>;
+    return (
+        <SimpleLayout title="ERP 관리 시스템" loading={true} loadingText="대시보드를 불러오는 중...">
+            <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
+        </SimpleLayout>
+    );
   }
 
   return (

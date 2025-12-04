@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import { DollarSign, Settings, FileText, Users, Calculator, Receipt } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import StatCard from '../ui/Card/StatCard';
@@ -340,7 +340,7 @@ const SalaryManagement = () => {
     };
 
     return (
-        <SimpleLayout>
+        <SimpleLayout title="급여 관리" loading={loading && consultants.length === 0} loadingText="데이터를 불러오는 중...">
             <div className="mg-dashboard-layout">
                 {/* Dashboard Header */}
                 <div className="mg-dashboard-header">
@@ -815,7 +815,7 @@ const SalaryManagement = () => {
 
             {loading && (
                 <div className="salary-management-loading-overlay">
-                    <div className="mg-loading">로딩중...</div>
+                    <UnifiedLoading type="inline" text="로딩 중..." />
                 </div>
             )}
 

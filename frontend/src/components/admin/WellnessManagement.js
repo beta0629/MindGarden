@@ -298,14 +298,14 @@ const WellnessManagement = () => {
 
     if (loading) {
         return (
-            <SimpleLayout>
-                <div className="mg-loading">로딩중...</div>
+            <SimpleLayout title="웰니스 알림 관리" loading={true} loadingText="데이터를 불러오는 중...">
+                <UnifiedLoading type="page" text="데이터를 불러오는 중..." />
             </SimpleLayout>
         );
     }
 
     return (
-        <SimpleLayout>
+        <SimpleLayout title="웰니스 알림 관리" loading={loading} loadingText="데이터를 불러오는 중...">
             <div className="mg-v2-container">
                 {/* 헤더 */}
                 <div className="mg-v2-section">

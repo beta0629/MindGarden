@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import { Button } from '../ui/Button/Button';
 import { useNavigate } from 'react-router-dom';
 import { Link2, Plus } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -829,20 +829,24 @@ const MappingManagement = () => {
 
                         { /* 모달 푸터 */ }
                         <div className="mapping-refund-modal-footer">
-                            <button className="mg-button"
+                            <Button
                                 variant="secondary"
-                                onClick={ handleCloseRefundModal }
-                                disabled={ loading }
+                                onClick={handleCloseRefundModal}
+                                disabled={loading}
+                                preventDoubleClick={true}
                             >
                                 취소
-                            </button>
-                            <button className="mg-button"
+                            </Button>
+                            <Button
                                 variant="danger"
-                                onClick={ handleRefundProcess }
-                                disabled={ loading || !refundReason.trim() }
+                                onClick={handleRefundProcess}
+                                disabled={loading || !refundReason.trim()}
+                                preventDoubleClick={true}
+                                loading={loading}
+                                loadingText="처리 중..."
                             >
-                                { loading ? '처리 중...' : '환불 처리' }
-                            </button>
+                                환불 처리
+                            </Button>
                         </div>
                     </div>
                 </div>

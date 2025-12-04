@@ -3,7 +3,12 @@
  * v0.dev 디자인 시스템 기반의 새로운 카드 디자인
  */
 
+/**
+ * MindGarden 공통 카드 컴포넌트
+ * 표준화 원칙 준수: CSS 클래스 사용, 인라인 스타일 금지
+ */
 import React from 'react';
+import './MGCard.css';
 
 const MGCard = ({
   children,
@@ -14,29 +19,34 @@ const MGCard = ({
   onClick,
   ...props
 }) => {
-  // 베이지/크림/올리브 그린 색상 시스템
-  const variantClasses = {
-    default: "bg-[var(--mg-cream)] shadow-sm border border-[#D2B48C]/20",
-    elevated: "bg-[var(--mg-cream)] shadow-lg border border-[#D2B48C]/20",
-    outlined: "bg-[var(--mg-cream)] border-2 border-[#D2B48C]",
-    glass: "bg-[var(--mg-cream)]/25 backdrop-blur-md border border-[#D2B48C]/18",
-  };
-
-  const paddingClasses = {
-    small: "p-4",
-    medium: "p-6",
-    large: "p-8",
-  };
-
-  const clickableClasses = onClick ? "cursor-pointer hover:shadow-md hover:-translate-y-1" : "";
+  const baseClasses = ['mg-card'];
   
-  const allClasses = [
-    "rounded-xl transition-all duration-300",
-    variantClasses[variant] || variantClasses.default,
-    paddingClasses[padding] || paddingClasses.medium,
-    clickableClasses,
-    className
-  ].filter(Boolean).join(' ');
+  // Variant 클래스
+  if (variant !== 'default') {
+    baseClasses.push(`mg-card--${variant}`);
+  }
+  
+  // Padding 클래스
+  if (padding !== 'medium') {
+    baseClasses.push(`mg-card--padding-${padding}`);
+  }
+  
+  // Shadow 클래스
+  if (shadow !== 'medium') {
+    baseClasses.push(`mg-card--shadow-${shadow}`);
+  }
+  
+  // 클릭 가능한 카드
+  if (onClick) {
+    baseClasses.push('mg-card--clickable');
+  }
+  
+  // 추가 클래스
+  if (className) {
+    baseClasses.push(className);
+  }
+  
+  const allClasses = baseClasses.filter(Boolean).join(' ');
 
   return (
     <div

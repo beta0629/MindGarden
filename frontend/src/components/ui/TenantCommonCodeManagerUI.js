@@ -10,6 +10,8 @@
  */
 
 import React from 'react';
+import MGCard from '../common/MGCard';
+import { Button } from '../ui/Button/Button';
 import './TenantCommonCodeManagerUI.css';
 
 const TenantCommonCodeManagerUI = ({
@@ -101,19 +103,21 @@ const TenantCommonCodeManagerUI = ({
                                 </div>
                                 <div className="mg-codes-actions">
                                     {selectedGroup.groupName === 'CONSULTATION_PACKAGE' && (
-                                        <button
-                                            className="mg-btn mg-btn-secondary"
+                                        <Button
+                                            variant="secondary"
                                             onClick={onQuickCreatePackage}
+                                            preventDoubleClick={true}
                                         >
                                             빠른 패키지 생성
-                                        </button>
+                                        </Button>
                                     )}
-                                    <button
-                                        className="mg-btn mg-btn-primary"
+                                    <Button
+                                        variant="primary"
                                         onClick={onCreateCode}
+                                        preventDoubleClick={true}
                                     >
                                         + 코드 추가
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
 
@@ -122,73 +126,85 @@ const TenantCommonCodeManagerUI = ({
                             ) : codes.length === 0 ? (
                                 <div className="mg-empty-state">
                                     <p>등록된 코드가 없습니다.</p>
-                                    <button className="mg-btn mg-btn-primary" onClick={onCreateCode}>
+                                    <Button 
+                                        variant="primary" 
+                                        onClick={onCreateCode}
+                                        preventDoubleClick={true}
+                                    >
                                         첫 코드 추가하기
-                                    </button>
+                                    </Button>
                                 </div>
                             ) : (
-                                <table className="mg-codes-table">
-                                    <thead>
-                                        <tr>
-                                            <th>코드 값</th>
-                                            <th>코드명</th>
-                                            <th>설명</th>
-                                            {(selectedGroup.groupName === 'CONSULTATION_PACKAGE' || 
-                                              selectedGroup.groupName === 'ASSESSMENT_TYPE') && (
-                                                <th>금액</th>
-                                            )}
-                                            <th>상태</th>
-                                            <th>순서</th>
-                                            <th>작업</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {codes.map(code => {
-                                            const extraData = parseExtraData(code.extraData);
-                                            return (
-                                                <tr key={code.id}>
-                                                    <td><code>{code.codeValue}</code></td>
-                                                    <td>{code.koreanName || code.codeLabel}</td>
-                                                    <td>{code.codeDescription}</td>
+                                <div className="mg-codes-cards-grid">
+                                    {codes.map(code => {
+                                        const extraData = parseExtraData(code.extraData);
+                                        return (
+                                            <MGCard key={code.id} variant="default" className="mg-code-card">
+                                                {/* 카드 헤더 */}
+                                                <div className="mg-code-card__header">
+                                                    <div className="mg-code-card__title-section">
+                                                        <code className="mg-code-value">{code.codeValue}</code>
+                                                        <h4 className="mg-code-name">{code.koreanName || code.codeLabel}</h4>
+                                                    </div>
+                                                    <button
+                                                        className={`mg-status-badge ${code.isActive ? 'mg-active' : 'mg-inactive'}`}
+                                                        onClick={() => onToggleActive(code.id, code.isActive)}
+                                                    >
+                                                        {code.isActive ? '활성' : '비활성'}
+                                                    </button>
+                                                </div>
+                                                
+                                                {/* 카드 본문 */}
+                                                <div className="mg-code-card__content">
+                                                    {code.codeDescription && (
+                                                        <div className="mg-code-card__field">
+                                                            <span className="mg-code-card__label">설명</span>
+                                                            <p className="mg-code-card__value">{code.codeDescription}</p>
+                                                        </div>
+                                                    )}
+                                                    
                                                     {(selectedGroup.groupName === 'CONSULTATION_PACKAGE' || 
                                                       selectedGroup.groupName === 'ASSESSMENT_TYPE') && (
-                                                        <td>
-                                                            {extraData?.price ? 
-                                                                `${extraData.price.toLocaleString()}원` : 
-                                                                '-'
-                                                            }
-                                                        </td>
+                                                        <div className="mg-code-card__field">
+                                                            <span className="mg-code-card__label">금액</span>
+                                                            <span className="mg-code-card__value">
+                                                                {extraData?.price ? 
+                                                                    `${extraData.price.toLocaleString()}원` : 
+                                                                    '-'
+                                                                }
+                                                            </span>
+                                                        </div>
                                                     )}
-                                                    <td>
-                                                        <button
-                                                            className={`mg-status-badge ${code.isActive ? 'mg-active' : 'mg-inactive'}`}
-                                                            onClick={() => onToggleActive(code.id, code.isActive)}
-                                                        >
-                                                            {code.isActive ? '활성' : '비활성'}
-                                                        </button>
-                                                    </td>
-                                                    <td>{code.sortOrder}</td>
-                                                    <td className="mg-actions-cell">
-                                                        <button
-                                                            className="mg-btn-icon"
-                                                            onClick={() => onEditCode(code)}
-                                                            title="수정"
-                                                        >
-                                                            ✏️
-                                                        </button>
-                                                        <button
-                                                            className="mg-btn-icon"
-                                                            onClick={() => onDeleteCode(code.id)}
-                                                            title="삭제"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
+                                                    
+                                                    <div className="mg-code-card__field">
+                                                        <span className="mg-code-card__label">순서</span>
+                                                        <span className="mg-code-card__value">{code.sortOrder}</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* 카드 액션 */}
+                                                <div className="mg-code-card__actions">
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="small"
+                                                        onClick={() => onEditCode(code)}
+                                                        preventDoubleClick={true}
+                                                    >
+                                                        수정
+                                                    </Button>
+                                                    <Button
+                                                        variant="danger"
+                                                        size="small"
+                                                        onClick={() => onDeleteCode(code.id)}
+                                                        preventDoubleClick={true}
+                                                    >
+                                                        삭제
+                                                    </Button>
+                                                </div>
+                                            </MGCard>
+                                        );
+                                    })}
+                                </div>
                             )}
                         </>
                     ) : (
@@ -295,12 +311,24 @@ const TenantCommonCodeManagerUI = ({
                                 </small>
                             </div>
                             <div className="mg-modal-actions">
-                                <button type="button" className="mg-btn mg-btn-secondary" onClick={onModalClose}>
+                                <Button 
+                                    type="button" 
+                                    variant="secondary" 
+                                    onClick={onModalClose}
+                                    preventDoubleClick={true}
+                                >
                                     취소
-                                </button>
-                                <button type="submit" className="mg-btn mg-btn-primary" disabled={loading}>
-                                    {loading ? '처리 중...' : (modalMode === 'create' ? '생성' : '수정')}
-                                </button>
+                                </Button>
+                                <Button 
+                                    type="submit" 
+                                    variant="primary" 
+                                    disabled={loading}
+                                    loading={loading}
+                                    loadingText="처리 중..."
+                                    preventDoubleClick={true}
+                                >
+                                    {modalMode === 'create' ? '생성' : '수정'}
+                                </Button>
                             </div>
                         </form>
                     </div>

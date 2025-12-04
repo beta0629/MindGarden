@@ -775,3 +775,8 @@
   }
 }
 
+/* 테스트 연결 버튼 간격 */
+.mg-button-test-connection {
+  margin-top: var(--mg-spacing-xs, 8px);
+}
+

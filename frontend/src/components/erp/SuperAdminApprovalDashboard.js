@@ -159,11 +159,15 @@ const SuperAdminApprovalDashboard = () => {
   };
 
   if (loading) {
-    return <div className="mg-loading">로딩중...</div>;
+    return (
+      <SimpleLayout title="수퍼 관리자 승인 대시보드">
+        <UnifiedLoading type="page" text="수퍼 관리자 승인 대기 요청을 불러오는 중..." />
+      </SimpleLayout>
+    );
   }
 
   return (
-    <SimpleLayout>
+    <SimpleLayout title="수퍼 관리자 승인 대시보드">
       <div className="approval-dashboard-container">
         <ErpHeader
           title="수퍼 관리자 승인 대시보드"
@@ -221,26 +225,15 @@ const SuperAdminApprovalDashboard = () => {
                 )}
                 
                 {request.reason && (
-                  <div className="mg-v2-form-group" style={{ marginBottom: '12px' }}>
+                  <div className="super-admin-form-group">
                     <strong>요청 사유:</strong>
-                    <div style={{ 
-                      marginTop: '4px', 
-                      padding: '8px', 
-                      backgroundColor: 'var(--mg-gray-100)', 
-                      borderRadius: '4px',
-                      fontSize: 'var(--font-size-sm)'
-                    }}>
+                    <div className="super-admin-reason-box">
                       {request.reason}
                     </div>
                   </div>
                 )}
 
-                <div style={{ 
-                  display: 'flex', 
-                  gap: '8px', 
-                  justifyContent: 'flex-end',
-                  marginTop: '16px'
-                }}>
+                <div className="super-admin-actions-container">
                   <ErpButton
                     variant="success"
                     size="small"
@@ -273,12 +266,7 @@ const SuperAdminApprovalDashboard = () => {
           <div>
             <div className="mg-v2-form-group">
               <h4>최종 승인할 구매 요청</h4>
-              <div style={{ 
-                padding: '12px', 
-                backgroundColor: 'var(--mg-gray-100)', 
-                borderRadius: '4px',
-                marginBottom: '16px'
-              }}>
+              <div className="super-admin-info-box">
                 <div><strong>아이템:</strong> {selectedRequest.item?.name}</div>
                 <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
                 <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>
@@ -287,11 +275,7 @@ const SuperAdminApprovalDashboard = () => {
             </div>
 
             <div className="mg-v2-form-group">
-              <label className="mg-v2-form-label"> 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600' 
-              }}>
+              <label className="super-admin-form-label">
                 최종 승인 코멘트 (선택사항)
               </label>
               <textarea
@@ -299,21 +283,15 @@ const SuperAdminApprovalDashboard = () => {
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="최종 승인 사유나 추가 코멘트를 입력하세요..."
                 rows="3"
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: 'var(--font-size-sm)'
-                }}
+                className="super-admin-textarea"
               />
             </div>
 
-            <div className="mg-v2-text-right">
+            <div className="super-admin-text-right">
               <ErpButton
                 variant="secondary"
                 onClick={() => setShowApprovalModal(false)}
-                style={{ marginRight: '8px' }}
+                className="super-admin-button-spacing"
               >
                 취소
               </ErpButton>
@@ -340,12 +318,7 @@ const SuperAdminApprovalDashboard = () => {
           <div>
             <div className="mg-v2-form-group">
               <h4>거부할 구매 요청</h4>
-              <div style={{ 
-                padding: '12px', 
-                backgroundColor: 'var(--mg-gray-100)', 
-                borderRadius: '4px',
-                marginBottom: '16px'
-              }}>
+              <div className="super-admin-info-box">
                 <div><strong>아이템:</strong> {selectedRequest.item?.name}</div>
                 <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
                 <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>
@@ -354,11 +327,7 @@ const SuperAdminApprovalDashboard = () => {
             </div>
 
             <div className="mg-v2-form-group">
-              <label className="mg-v2-form-label"> 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600' 
-              }}>
+              <label className="super-admin-form-label">
                 거부 사유 *
               </label>
               <textarea
@@ -367,21 +336,15 @@ const SuperAdminApprovalDashboard = () => {
                 placeholder="거부 사유를 입력하세요..."
                 rows="3"
                 required
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: 'var(--font-size-sm)'
-                }}
+                className="super-admin-textarea"
               />
             </div>
 
-            <div className="mg-v2-text-right">
+            <div className="super-admin-text-right">
               <ErpButton
                 variant="secondary"
                 onClick={() => setShowRejectionModal(false)}
-                style={{ marginRight: '8px' }}
+                className="super-admin-button-spacing"
               >
                 취소
               </ErpButton>

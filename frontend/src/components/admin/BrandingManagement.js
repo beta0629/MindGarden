@@ -8,11 +8,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { Upload, Save, RotateCcw, Eye, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { useBranding } from '../../hooks/useBranding';
 import { updateBrandingInfo, uploadLogo, getBrandingInfo } from '../../utils/brandingUtils';
-// // import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import './BrandingManagement.css';
 
@@ -284,18 +284,9 @@ const BrandingManagement = ({ onClose }) => {
     return previewBranding;
   };
 
-  if (isLoading) {
-    return (
-      <div className="branding-management">
-        <div className="branding-management__loading">
-          <div className="mg-loading">로딩중...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="branding-management">
+    <SimpleLayout title="브랜딩 관리" loading={isLoading} loadingText="브랜딩 정보를 불러오는 중...">
+      <div className="branding-management">
       <div className="branding-management__header">
         <h2 className="branding-management__title">브랜딩 관리</h2>
         <p className="branding-management__description">
@@ -515,7 +506,8 @@ const BrandingManagement = ({ onClose }) => {
           onClose={() => setShowPreview(false)}
         />
       )}
-    </div>
+      </div>
+    </SimpleLayout>
   );
 };
 

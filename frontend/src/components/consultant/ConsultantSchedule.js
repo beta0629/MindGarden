@@ -1,5 +1,5 @@
-// import React from 'react';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import React from 'react';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
 import { useSession } from '../../contexts/SessionContext';
@@ -22,8 +22,8 @@ const ConsultantSchedule = () => {
   if (sessionLoading) {
     console.log('⏳ ConsultantSchedule: 세션 로딩 중...');
     return (
-      <SimpleLayout>
-        <div className="mg-loading">로딩중...</div>
+      <SimpleLayout title="상담사 스케줄 관리">
+        <UnifiedLoading type="page" text="스케줄 정보를 불러오는 중..." />
       </SimpleLayout>
     );
   }
@@ -31,8 +31,8 @@ const ConsultantSchedule = () => {
   if (!user) {
     console.log('❌ ConsultantSchedule: 사용자 정보 없음');
     return (
-      <SimpleLayout>
-        <div className="mg-loading">로딩중...</div>
+      <SimpleLayout title="상담사 스케줄 관리">
+        <UnifiedLoading type="page" text="사용자 정보를 확인하는 중..." />
       </SimpleLayout>
     );
   }
@@ -40,7 +40,7 @@ const ConsultantSchedule = () => {
   console.log('✅ ConsultantSchedule: UnifiedScheduleComponent 렌더링 시작', { userRole: 'CONSULTANT', userId: user.id });
 
   return (
-    <SimpleLayout>
+    <SimpleLayout title="상담사 스케줄 관리">
       <UnifiedScheduleComponent 
         userRole="CONSULTANT"
         userId={user.id}

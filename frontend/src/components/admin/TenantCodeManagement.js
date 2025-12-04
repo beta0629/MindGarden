@@ -12,8 +12,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { notificationManager } from '../../utils/notificationManager';
-// import SimpleLayout from '../layout/SimpleLayout';
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { 
     FaBuilding, 
     FaGlobe, 
@@ -256,10 +256,9 @@ const TenantCodeManagement = () => {
 
         if (loading) {
             return (
-                <div className="loading-state">
-                    <div className="spinner"></div>
-                    <p>{UI_TEXT.LOADING_CODES}</p>
-                </div>
+                <SimpleLayout title="테넌트 코드 관리" loading={true} loadingText={UI_TEXT.LOADING_CODES}>
+                    <UnifiedLoading type="page" text={UI_TEXT.LOADING_CODES} />
+                </SimpleLayout>
             );
         }
 
@@ -512,7 +511,7 @@ const TenantCodeManagement = () => {
     };
 
     return (
-        <SimpleLayout>
+        <SimpleLayout title="테넌트 코드 관리" loading={loading && codes.length === 0} loadingText="코드를 불러오는 중...">
             <div className="tenant-code-management">
                 <div className="page-header">
                     <h1>{UI_TEXT.PAGE_TITLE}</h1>

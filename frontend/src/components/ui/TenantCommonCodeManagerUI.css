@@ -428,39 +428,154 @@
     border-top: 1px solid var(--mg-gray-200);
 }
 
-/* ==================== Responsive ==================== */
+/* ==================== Codes Cards Grid ==================== */
 
-@media (max-width: 768px) {
+.mg-codes-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--mg-spacing-4);
+    padding: var(--mg-spacing-4) 0;
+}
+
+/* ==================== Code Card ==================== */
+
+.mg-code-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.mg-code-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--mg-spacing-4);
+    padding-bottom: var(--mg-spacing-3);
+    border-bottom: 1px solid var(--mg-gray-200);
+}
+
+.mg-code-card__title-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-1);
+    flex: 1;
+}
+
+.mg-code-value {
+    font-family: var(--mg-font-mono);
+    font-size: var(--mg-font-size-sm);
+    color: var(--mg-primary-600);
+    background: var(--mg-primary-50);
+    padding: var(--mg-spacing-1) var(--mg-spacing-2);
+    border-radius: var(--mg-border-radius-sm);
+}
+
+.mg-code-name {
+    font-size: var(--mg-font-size-lg);
+    font-weight: var(--mg-font-weight-semibold);
+    color: var(--mg-gray-900);
+    margin: 0;
+}
+
+.mg-code-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-3);
+    margin-bottom: var(--mg-spacing-4);
+}
+
+.mg-code-card__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-1);
+}
+
+.mg-code-card__label {
+    font-size: var(--mg-font-size-xs);
+    color: var(--mg-gray-500);
+    font-weight: var(--mg-font-weight-medium);
+}
+
+.mg-code-card__value {
+    font-size: var(--mg-font-size-base);
+    color: var(--mg-gray-900);
+}
+
+.mg-code-card__actions {
+    display: flex;
+    gap: var(--mg-spacing-2);
+    padding-top: var(--mg-spacing-3);
+    border-top: 1px solid var(--mg-gray-200);
+}
+
+/* ==================== Responsive ==================== */
+/* 표준화 원칙 준수: CSS 변수 사용, 모바일 우선 접근법 */
+
+/* 모바일 (기본) */
+.mg-manager-content {
+    grid-template-columns: 1fr;
+}
+
+.mg-code-groups-panel {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.mg-codes-header {
+    flex-direction: column;
+    gap: var(--mg-spacing-4);
+}
+
+.mg-codes-actions {
+    width: 100%;
+    flex-direction: column;
+}
+
+.mg-codes-cards-grid {
+    grid-template-columns: 1fr;
+    gap: var(--mg-spacing-3);
+}
+
+.mg-form-row {
+    grid-template-columns: 1fr;
+}
+
+/* 태블릿 이상 (768px~) */
+@media (min-width: 768px) {
     .mg-manager-content {
-        grid-template-columns: 1fr;
+        grid-template-columns: 250px 1fr;
     }
 
     .mg-code-groups-panel {
-        max-height: 300px;
-        overflow-y: auto;
+        max-height: none;
+        overflow-y: visible;
     }
 
     .mg-codes-header {
-        flex-direction: column;
-        gap: var(--mg-spacing-4);
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
     }
 
     .mg-codes-actions {
-        width: 100%;
-        flex-direction: column;
+        width: auto;
+        flex-direction: row;
     }
 
-    .mg-codes-table {
-        font-size: var(--mg-font-size-sm);
-    }
-
-    .mg-codes-table th,
-    .mg-codes-table td {
-        padding: var(--mg-spacing-2);
+    .mg-codes-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--mg-spacing-4);
     }
 
     .mg-form-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* 데스크톱 이상 (1024px~) */
+@media (min-width: 1024px) {
+    .mg-codes-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: var(--mg-spacing-4);
     }
 }
 

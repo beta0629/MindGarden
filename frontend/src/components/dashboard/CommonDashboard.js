@@ -783,14 +783,14 @@ const CommonDashboard = ({ user: propUser }) => {
     return (
       <div className="tablet-dashboard-page">
         <div className="loading-container">
-          <div className="mg-loading">로딩중...</div>
+          <UnifiedLoading type="page" text="대시보드를 불러오는 중..." />
         </div>
       </div>
     );
   }
 
   return (
-    <SimpleLayout>
+    <SimpleLayout title="대시보드" loading={sessionLoading} loadingText="대시보드를 불러오는 중...">
       <div className={`mg-dashboard-layout dashboard-container ${user?.role?.toLowerCase() || ''}`}>
         
         {/* 웰컴 섹션 - 위젯으로 업그레이드 */}

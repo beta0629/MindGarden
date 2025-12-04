@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../common/UnifiedLoading';
 import { 
     Building2, DollarSign, TrendingUp, Calendar, 
     Filter, Download, Eye, ArrowUp, ArrowDown,
@@ -155,7 +155,7 @@ const TransactionTable = ({ transactions, loading }) => {
         return (
             <div className="mg-v2-card">
                 <div className="mg-v2-card__content">
-                    <div className="mg-loading">로딩중...</div>
+                    <UnifiedLoading type="inline" text="로딩 중..." />
                 </div>
             </div>
         );

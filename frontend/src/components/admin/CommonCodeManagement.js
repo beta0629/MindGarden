@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 // // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import MGButton from '../../components/common/MGButton'; // 임시 비활성화
+import { Button } from '../ui/Button/Button';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import {
     getCommonCodes,
@@ -669,7 +669,7 @@ const CommonCodeManagement = () => {
                     
                     { /* 필터 초기화 */ }
                     {(searchTerm || categoryFilter !== 'all') && (
-                        <button className="mg-button"
+                        <Button
                             variant="secondary"
                             size="small"
                             onClick={() => {
@@ -677,10 +677,11 @@ const CommonCodeManagement = () => {
                                 setCategoryFilter('all');
                             }}
                             className="mg-v2-filter-reset-btn"
+                            preventDoubleClick={true}
                         >
                             <i className="bi bi-x-circle"></i>
                             초기화
-                        </button>
+                        </Button>
                     )}
                 </div>
                 
@@ -748,27 +749,29 @@ const CommonCodeManagement = () => {
                         { selectedGroup } - 코드를 추가, 수정, 삭제할 수 있습니다.
                     </p>
                 </div>
-                <button className="mg-button" 
+                <Button 
                     variant="primary"
-                    onClick={ () => setShowAddForm(true) }
-                    disabled={ loading }
+                    onClick={() => setShowAddForm(true)}
+                    disabled={loading}
                     className="mg-v2-add-code-btn"
+                    preventDoubleClick={true}
                 >
                     + 새 코드 추가
-                </button>
+                </Button>
             </div>
 
             {showAddForm && (
                 <div className="add-code-form">
                     <div className="form-header">
                         <h3>{editingCode ? '코드 수정' : '새 코드 추가'}</h3>
-                        <button className="mg-button" 
+                        <Button 
                             variant="secondary"
                             size="small"
-                            onClick={ handleCancelForm }
+                            onClick={handleCancelForm}
+                            preventDoubleClick={true}
                         >
                             <i className="bi bi-x"></i>
-                        </button>
+                        </Button>
                     </div>
                     <form onSubmit={ editingCode ? handleUpdateCode : handleAddCode }>
                         <div className="form-row">
@@ -836,20 +839,23 @@ const CommonCodeManagement = () => {
                             </div>
                         </div>
                         <div className="form-actions">
-                            <button className="mg-button" 
+                            <Button 
                                 type="button" 
                                 variant="secondary"
-                                onClick={ handleCancelForm }
+                                onClick={handleCancelForm}
+                                preventDoubleClick={true}
                             >
                                 취소
-                            </button>
-                            <button className="mg-button" 
+                            </Button>
+                            <Button 
                                 type="submit" 
                                 variant="primary"
-                                disabled={ loading }
+                                disabled={loading}
+                                preventDoubleClick={true}
+                                loading={loading}
                             >
-                                { editingCode ? '수정' : '추가' }
-                            </button>
+                                {editingCode ? '수정' : '추가'}
+                            </Button>
                         </div>
                     </form>
                 </div>

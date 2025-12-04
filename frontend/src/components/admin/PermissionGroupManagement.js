@@ -14,6 +14,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../common/UnifiedLoading';
 import {
     getAllPermissionGroups,
     grantPermissionGroup,
@@ -224,18 +226,20 @@ const PermissionGroupManagement = () => {
     };
 
     return (
-        <PermissionGroupManagementUI
-            roles={roles}
-            selectedRole={selectedRole}
-            permissionGroups={permissionGroups}
-            rolePermissions={rolePermissions}
-            loading={loading}
-            error={error}
-            onRoleSelect={handleRoleSelect}
-            onGrantPermission={handleGrantPermission}
-            onRevokePermission={handleRevokePermission}
-            onBatchGrant={handleBatchGrant}
-        />
+        <SimpleLayout title="권한 그룹 관리" loading={loading && !selectedRole} loadingText="데이터를 불러오는 중...">
+            <PermissionGroupManagementUI
+                roles={roles}
+                selectedRole={selectedRole}
+                permissionGroups={permissionGroups}
+                rolePermissions={rolePermissions}
+                loading={loading}
+                error={error}
+                onRoleSelect={handleRoleSelect}
+                onGrantPermission={handleGrantPermission}
+                onRevokePermission={handleRevokePermission}
+                onBatchGrant={handleBatchGrant}
+            />
+        </SimpleLayout>
     );
 };
 

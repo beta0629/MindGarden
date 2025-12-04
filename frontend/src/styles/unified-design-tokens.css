@@ -17534,6 +17534,18 @@ button span, .btn span, [class*="btn-"] span, [class*="mg-btn"] span, [class*="m
   --mg-animation-slow: 500ms;
   --mg-animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
   
+  /* ===== BUTTON HOVER VARIABLES ===== */
+  /* 버튼 호버 효과 전용 변수들 */
+  --mg-button-hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --mg-button-active-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  --mg-button-hover-transform: translateY(-1px);
+  
+  /* ===== CARD HOVER VARIABLES ===== */
+  /* 카드 호버 효과 전용 변수들 */
+  --mg-card-hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --mg-card-hover-transform: translateY(-2px);
+  --mg-card-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
   /* ===== BREAKPOINT VARIABLES ===== */
   /* 반응형 브레이크포인트 */
   --mg-breakpoint-xs: 320px;

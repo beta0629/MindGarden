@@ -120,24 +120,21 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     };
 
     return (
-        <div className="consultant-management">
-            <div className="panel-header">
-                <h3 className="panel-title">
-                    <i className="bi bi-person-badge"></i>
-                    상담사 관리
-                </h3>
-                <Button size="sm" variant="primary" onClick={() => setShowModal(true)}>
-                    <FaPlus /> 등록
-                </Button>
-            </div>
-            <div className="panel-content">
-                {loading ? (
-                    <div className="text-center py-4">
-                        <div className="spinner-border spinner-border-sm" role="status">
-                            <span className="visually-hidden">로딩 중...</span>
-                        </div>
-                    </div>
-                ) : consultants.length === 0 ? (
+        <SimpleLayout title="상담사 관리" loading={loading && consultants.length === 0} loadingText="상담사 목록을 불러오는 중...">
+            <div className="consultant-management">
+                <div className="panel-header">
+                    <h3 className="panel-title">
+                        <i className="bi bi-person-badge"></i>
+                        상담사 관리
+                    </h3>
+                    <Button size="sm" variant="primary" onClick={() => setShowModal(true)}>
+                        <FaPlus /> 등록
+                    </Button>
+                </div>
+                <div className="panel-content">
+                    {loading ? (
+                        <UnifiedLoading type="inline" text="로딩 중..." />
+                    ) : consultants.length === 0 ? (
                     <div className="text-center py-4 text-muted">
                         <FaUserTie className="mb-3 consultant-management-empty-icon" />
                         <p>등록된 상담사가 없습니다.</p>
@@ -278,7 +275,8 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                     )}
                 </Modal.Body>
             </Modal>
-        </div>
+            </div>
+        </SimpleLayout>
     );
 };
 

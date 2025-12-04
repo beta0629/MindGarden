@@ -980,7 +980,7 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
                 const assignRequest = {
                   tenantId: tenantId,
                   tenantRoleId: formData.tenantRoleId,
-                  branchId: null, // 전체 브랜치
+                  // branchId 제거됨 - 브랜치 코드 제거 정책에 따라 테넌트 ID만 사용
                   effectiveFrom: new Date().toISOString().split('T')[0],
                   effectiveTo: null, // 무기한
                   assignmentReason: '대시보드 생성 시 자동 할당'

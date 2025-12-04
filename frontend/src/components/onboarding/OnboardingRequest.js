@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UnifiedNotification from '../common/UnifiedNotification';
+import UnifiedLoading from '../common/UnifiedLoading';
+import SimpleLayout from '../layout/SimpleLayout';
 import {
   createOnboardingRequest,
   getRootBusinessCategories,
@@ -170,9 +172,9 @@ const OnboardingRequest = () => {
   };
 
   return (
-    <div className="onboarding-request">
-      <div className="onboarding-request__container">
-        <h1 className="onboarding-request__title">서비스 신청</h1>
+    <SimpleLayout title="서비스 신청">
+      <div className="onboarding-request">
+        <div className="onboarding-request__container">
         <p className="onboarding-request__description">
           CoreSolution 서비스 이용을 위한 온보딩 요청을 제출해주세요.
         </p>
@@ -205,7 +207,11 @@ const OnboardingRequest = () => {
               업종 카테고리
             </label>
             {loadingCategories && businessCategories.length === 0 ? (
-              <div className="onboarding-request__loading">{MESSAGES.LOADING}</div>
+              <UnifiedLoading 
+                type="inline"
+                text={MESSAGES.LOADING}
+                variant="pulse"
+              />
             ) : businessCategories.length === 0 ? (
               <div className="onboarding-request__error">업종 카테고리를 불러올 수 없습니다.</div>
             ) : (
@@ -237,7 +243,11 @@ const OnboardingRequest = () => {
                 세부 업종 <span className="onboarding-request__required">*</span>
               </label>
               {loadingCategories && businessCategoryItems.length === 0 ? (
-                <div className="onboarding-request__loading">{MESSAGES.LOADING}</div>
+                <UnifiedLoading 
+                  type="inline"
+                  text={MESSAGES.LOADING}
+                  variant="pulse"
+                />
               ) : businessCategoryItems.length === 0 ? (
                 <div className="onboarding-request__help">선택한 카테고리에 해당하는 업종이 없습니다.</div>
               ) : (
@@ -287,7 +297,11 @@ const OnboardingRequest = () => {
               위험도
             </label>
             {loadingRiskLevels ? (
-              <div className="onboarding-request__loading">{MESSAGES.LOADING}</div>
+              <UnifiedLoading 
+                type="inline"
+                text={MESSAGES.LOADING}
+                variant="pulse"
+              />
             ) : riskLevelOptions.length === 0 ? (
               <select
                 id={FORM_FIELDS.RISK_LEVEL}
@@ -337,8 +351,9 @@ const OnboardingRequest = () => {
             </button>
           </div>
         </form>
+        </div>
       </div>
-    </div>
+    </SimpleLayout>
   );
 };
 

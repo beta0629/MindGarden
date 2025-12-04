@@ -228,14 +228,14 @@
 .card__icon--consultants { background: var(--ios-orange); }
 .card__icon--clients { background: var(--ios-red); }
 .card__icon--user-management { background: var(--ios-purple); }
-.card__icon--mappings { background: #af52de; }
+.card__icon--mappings { background: var(--ios-purple); }
 .card__icon--finance { background: var(--ios-pink); }
-.card__icon--revenue { background: #30d158; }
+.card__icon--revenue { background: var(--ios-green); }
 .card__icon--expense { background: var(--ios-yellow); }
-.card__icon--payment { background: #64d2ff; }
-.card__icon--reports { background: #bf5af2; }
+.card__icon--payment { background: var(--ios-blue); }
+.card__icon--reports { background: var(--ios-purple); }
 .card__icon--settings { background: var(--ios-gray); }
-.card__icon--recurring-expense { background: #32d74b; }
+.card__icon--recurring-expense { background: var(--ios-green); }
 
 .card__actions {
   display: flex;
@@ -323,13 +323,13 @@
 
 .stat-card__change--positive {
   background: rgba(40, 167, 69, 0.2);
-  color: #2e7d32;
+  color: var(--mg-success-700);
   box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
 }
 
 .stat-card__change--negative {
   background: rgba(220, 53, 69, 0.2);
-  color: #c62828;
+  color: var(--mg-error-700);
   box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { FaUser } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
@@ -306,10 +306,12 @@ const ClientComprehensiveManagement = () => {
 
     if (loading) {
         return (
-            <SimpleLayout>
-                <div className="mg-v2-container">
-                    <div className="mg-loading">로딩중...</div>
-                </div>
+            <SimpleLayout title="내담자 종합관리">
+                <UnifiedLoading 
+                    type="page"
+                    text="데이터를 불러오는 중..."
+                    variant="pulse"
+                />
             </SimpleLayout>
         );
     }

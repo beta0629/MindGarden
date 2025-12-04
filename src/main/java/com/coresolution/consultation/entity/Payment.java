@@ -87,7 +87,9 @@ public class Payment extends BaseEntity {
     private Long recipientId;
     
     /**
-     * 지점 ID (Branch 엔티티와 연결)
+     * @Deprecated - 🚨 레거시 호환: 브랜치 ID 기반 필터링 사용 금지
+     * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
+     * 새로운 코드에서는 사용하지 마세요. 테넌트 ID만 사용하세요.
      */
     @Column(name = "branch_id")
     private Long branchId;

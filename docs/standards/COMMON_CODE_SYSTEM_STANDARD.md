@@ -25,6 +25,51 @@ MindGarden 프로젝트의 공통코드 시스템 표준입니다. 시스템 공
 
 ## 🎯 공통코드 시스템 원칙
 
+### 0. 핵심 원칙: 모든 코드값은 공통코드에서 조회 ⭐⭐⭐⭐⭐
+
+**절대 금지 사항**:
+- ❌ 하드코딩된 문자열 사용 금지
+- ❌ 상수 클래스(Constants) 사용 금지
+- ❌ Enum 클래스의 하드코딩된 값 사용 금지
+- ❌ JavaScript/TypeScript의 하드코딩된 배열/객체 사용 금지
+
+**필수 사항**:
+- ✅ 모든 코드값은 데이터베이스 공통코드에서 조회
+- ✅ 시스템 공통코드 또는 테넌트 공통코드 사용
+- ✅ 공통코드 서비스를 통한 동적 조회
+- ✅ 프론트엔드는 공통코드 API를 통한 조회
+
+**예외 사항** (매우 제한적):
+- 시스템 내부적으로만 사용되는 기술적 상수 (예: HTTP 상태 코드)
+- 외부 API와의 통신에 필요한 고정값 (예: OAuth provider 이름)
+
+**구현 예시**:
+```java
+// ❌ 금지: 하드코딩
+if (status.equals("ACTIVE")) { ... }
+
+// ❌ 금지: 상수 클래스
+if (status.equals(MappingStatusConstants.ACTIVE)) { ... }
+
+// ✅ 권장: 공통코드 서비스
+List<CommonCode> statusCodes = commonCodeService.getActiveCommonCodesByGroup("MAPPING_STATUS");
+boolean isActive = statusCodes.stream()
+    .anyMatch(code -> code.getCodeValue().equals(status));
+```
+
+```javascript
+// ❌ 금지: 하드코딩
+const statusOptions = [
+  { value: 'BOOKED', label: '예약됨' },
+  { value: 'CONFIRMED', label: '확정됨' }
+];
+
+// ✅ 권장: 공통코드 API
+const statusOptions = await commonCodeApi.getCodesByGroup('SCHEDULE_STATUS');
+```
+
+---
+
 ### 1. 단일 테이블 전략
 ```
 common_codes 테이블 하나에 모든 코드 저장

@@ -12,9 +12,7 @@ import TabletRegister from './components/auth/TabletRegister';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
 import OAuth2Callback from './components/auth/OAuth2Callback';
-import BranchLogin from './components/auth/BranchLogin';
-import BranchSpecificLogin from './components/auth/BranchSpecificLogin';
-import HeadquartersLogin from './components/auth/HeadquartersLogin';
+// BranchLogin, BranchSpecificLogin, HeadquartersLogin 제거됨 - 브랜치 코드 제거 정책
 // 대시보드 컴포넌트는 DynamicDashboard에서 동적으로 로드됨
 import MyPage from './components/mypage/MyPage';
 import ConsultantSchedule from './components/consultant/ConsultantSchedule';
@@ -82,7 +80,6 @@ import SuperAdminApprovalDashboard from './components/erp/SuperAdminApprovalDash
 import ItemManagement from './components/erp/ItemManagement';
 import SalaryManagement from './components/erp/SalaryManagement';
 import TaxManagement from './components/erp/TaxManagement';
-import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
 import RefundManagement from './components/erp/RefundManagement';
 import ClientSchedule from './components/client/ClientSchedule';
 import ClientSessionManagement from './components/client/ClientSessionManagement';
@@ -106,7 +103,7 @@ import { sessionManager } from './utils/sessionManager';
 import duplicateLoginManager from './utils/duplicateLoginManager';
 import notificationManager from './utils/notification';
 // DuplicateLoginAlert는 UnifiedNotification으로 통합됨
-import BranchMappingModal from './components/common/BranchMappingModal';
+// BranchMappingModal 제거됨 - 브랜치 코드 제거 정책
 import DuplicateLoginModal from './components/common/DuplicateLoginModal';
 import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
@@ -154,7 +151,7 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
 function AppContent() {
-  const { user, sessionInfo, isLoading, checkSession, logout, branchMappingModal, setBranchMappingModal, handleBranchMappingSuccess } = useSession();
+  const { user, sessionInfo, isLoading, checkSession, logout } = useSession();
   
   // 테넌트별 브랜딩 시스템 초기화
   const { hasCustomBranding, companyName, primaryColor } = useTenantBranding({
@@ -342,10 +339,7 @@ function AppContent() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/oauth2/callback" element={<OAuth2Callback />} />
             
-            {/* 지점별 로그인 라우트 (레거시) */}
-            <Route path="/login/branch" element={<BranchLogin />} />
-            <Route path="/login/branch/:branchCode" element={<BranchSpecificLogin />} />
-            <Route path="/login/headquarters" element={<HeadquartersLogin />} />
+            {/* 지점별 로그인 라우트 제거됨 - 브랜치 코드 제거 정책 */}
             
             {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
             <Route path="/dashboard" element={<DynamicDashboard user={user} />} />
@@ -566,7 +560,6 @@ function AppContent() {
             {/* ERP 라우트 (기존) */}
             <Route path="/erp/dashboard" element={<ErpDashboard />} />
             <Route path="/erp/purchase-requests" element={<PurchaseRequestForm />} />
-            <Route path="/erp/finance-dashboard" element={<IntegratedFinanceDashboard />} />
             <Route path="/erp/refund-management" element={<RefundManagement />} />
             <Route path="/erp/approvals" element={<AdminApprovalDashboard />} />
             <Route path="/erp/super-approvals" element={<SuperAdminApprovalDashboard />} />
@@ -595,7 +588,6 @@ function AppContent() {
                 description="예산 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
               />
             } />
-            <Route path="/admin/erp/financial" element={<IntegratedFinanceDashboard />} />
             <Route path="/admin/erp/reports" element={
               <ComingSoon 
                 title="ERP 보고서"
@@ -642,14 +634,7 @@ function AppContent() {
             }}
           />
           
-          {/* 지점 매핑 모달 */}
-          <BranchMappingModal
-            isOpen={branchMappingModal.isOpen}
-            onClose={() => {
-              setBranchMappingModal({ isOpen: false, needsMapping: false });
-            }}
-            onSuccess={handleBranchMappingSuccess}
-          />
+          {/* 지점 매핑 모달 제거됨 - 브랜치 코드 제거 정책 */}
           
           {/* 중복 로그인 모달 */}
           <DuplicateLoginModal />

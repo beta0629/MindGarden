@@ -98,11 +98,11 @@
 - [ ] `BaseTenantEntityServiceImpl.java`
 - [ ] `ClassScheduleServiceImpl.java`
 
-#### Day 3: Entity에서 브랜치 필드 검토
-- [ ] Entity 클래스에서 `branchCode`, `branchId` 필드 확인
-- [ ] 레거시 호환성을 위한 NULL 허용 유지 확인
-- [ ] 새로운 코드에서 사용 금지 확인
-- [ ] 주석으로 레거시 호환 표시
+#### Day 3: Entity에서 브랜치 필드 검토 - 완료 ✅
+- [x] Entity 클래스에서 `branchCode`, `branchId` 필드 확인 완료 (13개 Entity)
+- [x] 레거시 호환성을 위한 NULL 허용 유지 확인 완료
+- [x] 새로운 코드에서 사용 금지 주석 추가 완료
+- [x] 주석으로 레거시 호환 표시 완료
 
 #### Day 4: Frontend 브랜치 코드 제거
 - [ ] `SessionContext.js` 브랜치 세션 제거
@@ -308,20 +308,95 @@
 
 ---
 
-### 3.3 상태값 하드코딩 제거 (3일)
+### 3.3 상태값 공통코드 전환 (5일) ⭐⭐⭐⭐⭐
 
-#### Day 1-2: 공통코드 테이블 조회로 전환
-- [ ] 상태값 하드코딩 검색
-- [ ] 공통코드 테이블 조회로 변경
-- [ ] 상태 체크 로직 동적화
+**목표**: 모든 상태값을 공통코드에서 동적으로 조회하도록 전환
 
-#### Day 3: 상태 체크 로직 동적화
-- [ ] 상태 전이 로직 동적화
-- [ ] 공통코드 기반 상태 관리
+**핵심 원칙**: [공통코드 시스템 표준](../../standards/COMMON_CODE_SYSTEM_STANDARD.md)에 따라 **모든 코드값은 공통코드에서 조회** 필수
+
+**발견된 위치**: 
+- Backend: `AdminController.java`, `ConsultationServiceImpl.java`, `TestDataController.java`
+- Frontend: `UnifiedScheduleComponent.js`, `ScheduleDetailModal.js`
+
+#### Day 1: 공통코드 데이터 확인 및 추가
+- [ ] `SCHEDULE_STATUS` 공통코드 확인/추가
+  - [ ] `AVAILABLE`, `BOOKED`, `CONFIRMED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` 등
+- [ ] `MAPPING_STATUS` 공통코드 확인/추가
+  - [ ] `ACTIVE`, `PENDING`, `APPROVED`, `REJECTED` 등
+- [ ] `CONSULTATION_STATUS` 공통코드 확인
+  - [ ] `REQUESTED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` 등
+- [ ] `PAYMENT_STATUS` 공통코드 확인
+  - [ ] `PENDING`, `CONFIRMED`, `FAILED`, `REFUNDED` 등
+- [ ] `USER_STATUS` 공통코드 확인
+  - [ ] `ACTIVE`, `INACTIVE`, `SUSPENDED`, `TERMINATED` 등
+- [ ] 마이그레이션 파일 생성 (필요 시)
+
+#### Day 2: Backend 유틸리티 클래스 생성
+- [ ] `StatusCodeHelper` 유틸리티 클래스 생성
+  - [ ] `src/main/java/com/coresolution/core/util/StatusCodeHelper.java`
+- [ ] 캐싱 로직 구현
+  - [ ] `ConcurrentHashMap` 기반 캐싱
+  - [ ] 캐시 무효화 메서드
+- [ ] 편의 메서드 구현
+  - [ ] `isStatus(String codeGroup, String codeValue, String status)`
+  - [ ] `getStatusCodes(String codeGroup)`
+  - [ ] `getStatusCodeValue(String codeGroup, String codeValue)`
+  - [ ] `getStatusKoreanName(String codeGroup, String codeValue)`
+
+#### Day 3: Backend 코드 수정
+- [ ] `AdminController.java` 수정
+  - [ ] `MappingStatusConstants` → `StatusCodeHelper` 사용
+  - [ ] `PaymentStatus` → `StatusCodeHelper` 사용
+  - [ ] `ConsultationStatus` → `StatusCodeHelper` 사용
+- [ ] `ConsultationServiceImpl.java` 수정
+  - [ ] `ConsultationStatus.COMPLETED` → 공통코드 조회
+  - [ ] `ConsultationStatus.REQUESTED` → 공통코드 조회
+- [ ] `TestDataController.java` 수정
+  - [ ] `MappingStatusConstants` → `StatusCodeHelper` 사용
+  - [ ] `ConsultationStatus` → `StatusCodeHelper` 사용
+- [ ] 상수 클래스 사용 제거 확인
+
+#### Day 4: Frontend 코드 수정
+- [ ] `UnifiedScheduleComponent.js` 수정
+  - [ ] 하드코딩된 상태 옵션 제거
+  - [ ] `commonCodeApi.getCodesByGroup('SCHEDULE_STATUS')` 사용
+  - [ ] 상태 비교 로직 수정
+- [ ] `ScheduleDetailModal.js` 수정
+  - [ ] 하드코딩된 상태 옵션 제거
+  - [ ] 공통코드 API 사용
+  - [ ] 상태 비교 로직 수정
+- [ ] 기타 Frontend 파일 수정 (필요 시)
+
+#### Day 5: 통합 테스트 및 검증
+- [ ] 전체 시스템 테스트
+  - [ ] 스케줄 상태 변경 테스트
+  - [ ] 매핑 상태 변경 테스트
+  - [ ] 상담 상태 변경 테스트
+- [ ] 성능 테스트 (캐싱 효과)
+  - [ ] 공통코드 조회 성능 확인
+  - [ ] 캐시 히트율 확인
+- [ ] 문서화 업데이트
+  - [ ] `STATUS_COMMON_CODE_MIGRATION_PLAN.md` 업데이트
+  - [ ] API 문서 업데이트
+
+**체크리스트**:
+- [ ] 필요한 공통코드 그룹 확인 및 추가
+- [ ] `StatusCodeHelper` 유틸리티 클래스 생성
+- [ ] Backend 상수 클래스 사용 제거
+- [ ] Frontend 하드코딩 제거
+- [ ] 공통코드 API 통합
+- [ ] 캐싱 적용 및 성능 검증
+- [ ] 전체 기능 테스트
 
 **완료 기준**:
 - ✅ 상태값 하드코딩 0개
+- ✅ 상수 클래스 사용: 다수 → 0개
 - ✅ 모든 상태가 공통코드로 관리
+- ✅ 공통코드 기반 조회: 0개 → 100%
+
+**참조 문서**:
+- [상태값 공통코드 전환 계획](./STATUS_COMMON_CODE_MIGRATION_PLAN.md)
+- [공통코드 시스템 표준](../../standards/COMMON_CODE_SYSTEM_STANDARD.md)
 
 ---
 
@@ -462,7 +537,7 @@
 | Phase 2.3 | API 응답 형식 통일 | 0% | 🔴 대기 | - |
 | Phase 3.1 | 역할 이름 하드코딩 제거 | 0% | 🔴 대기 | - |
 | Phase 3.2 | 색상 하드코딩 제거 | 0% | 🔴 대기 | - |
-| Phase 3.3 | 상태값 하드코딩 제거 | 0% | 🔴 대기 | - |
+| Phase 3.3 | 상태값 공통코드 전환 | 0% | 🔴 대기 | - |
 | Phase 3.4 | URL/경로 하드코딩 제거 | 0% | 🔴 대기 | - |
 | Phase 4.1 | 컴포넌트 템플릿 적용 | 0% | 🔴 대기 | - |
 | Phase 4.2 | 표준 컴포넌트 사용 | 0% | 🔴 대기 | - |
@@ -492,7 +567,7 @@
 ### Phase 3 완료 체크
 - [ ] 역할 이름 하드코딩 제거 완료 (0개)
 - [ ] 색상 하드코딩 제거 완료 (0개)
-- [ ] 상태값 하드코딩 제거 완료 (0개)
+- [ ] 상태값 공통코드 전환 완료 (0개 하드코딩, 100% 공통코드 조회)
 - [ ] URL/경로 하드코딩 제거 완료 (0개)
 
 ### Phase 4 완료 체크

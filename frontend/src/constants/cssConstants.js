@@ -55,10 +55,10 @@ export const COLORS = {
   // 성능 지표 색상
   PERFORMANCE: {
     EXCELLENT: 'var(--mg-success-500)',
-    GOOD: '#8BC34A',
+    GOOD: 'var(--mg-success-400)',
     AVERAGE: 'var(--mg-warning-500)',
     POOR: 'var(--mg-error-500)',
-    CRITICAL: '#D32F2F'
+    CRITICAL: 'var(--mg-error-700)'
   }
 };
 

@@ -19,10 +19,7 @@ const SessionState = {
     message: '',
     loginData: null
   }, // 중복 로그인 확인 모달 상태 추가
-  branchMappingModal: {
-    isOpen: false,
-    needsMapping: false
-  } // 지점 매핑 모달 상태 추가
+  // branchMappingModal 제거됨 - 브랜치 코드 제거 정책
 };
 
 // 액션 타입 정의
@@ -35,7 +32,7 @@ const SessionActionTypes = {
   SET_LAST_CHECK_TIME: 'SET_LAST_CHECK_TIME',
   SET_MODAL_OPEN: 'SET_MODAL_OPEN', // 모달 상태 액션 추가
   SET_DUPLICATE_LOGIN_MODAL: 'SET_DUPLICATE_LOGIN_MODAL', // 중복 로그인 모달 액션 추가
-  SET_BRANCH_MAPPING_MODAL: 'SET_BRANCH_MAPPING_MODAL', // 지점 매핑 모달 액션 추가
+  // SET_BRANCH_MAPPING_MODAL 제거됨 - 브랜치 코드 제거 정책
   SET_LOGGED_IN: 'SET_LOGGED_IN' // 로그인 상태 액션 추가
 };
 
@@ -97,11 +94,7 @@ const sessionReducer = (state, action) => {
         duplicateLoginModal: action.payload
       };
     
-    case SessionActionTypes.SET_BRANCH_MAPPING_MODAL:
-      return {
-        ...state,
-        branchMappingModal: action.payload
-      };
+    // SET_BRANCH_MAPPING_MODAL 케이스 제거됨 - 브랜치 코드 제거 정책
     
     case SessionActionTypes.SET_LOGGED_IN:
       return {
@@ -188,30 +181,7 @@ export const SessionProvider = ({ children }) => {
           dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
         }
         
-        // 지점 매핑 필요 여부 확인 (branchCode가 없으면 매핑 필요)
-        // 단, SUPER_HQ_ADMIN, HQ_MASTER만 지점 매핑 불필요 (본사 관리자)
-        const hqAdminRoles = ['SUPER_HQ_ADMIN', 'HQ_MASTER'];
-        
-        // 사용자 정보가 완전한지 확인 (branchCode와 needsBranchMapping이 모두 있어야 함)
-        const hasCompleteUserInfo = user.branchCode && user.needsBranchMapping !== undefined;
-        
-        if (!hasCompleteUserInfo) {
-          console.log('⚠️ 불완전한 사용자 정보, 백엔드에서 최신 정보 가져오기:', user);
-          // 불완전한 정보면 백엔드에서 최신 정보를 가져오도록 함
-          return;
-        }
-        
-        if ((user.needsBranchMapping || !user.branchCode) && !hqAdminRoles.includes(user.role)) {
-          console.log('🏢 지점 매핑 필요:', user);
-          dispatch({ 
-            type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, 
-            payload: { isOpen: true, needsMapping: true }
-          });
-        } else if (hqAdminRoles.includes(user.role)) {
-          console.log('✅ 본사 관리자 - 지점 매핑 불필요:', user.role);
-        } else {
-          console.log('✅ 지점 매핑 불필요:', user);
-        }
+        // 지점 매핑 로직 제거됨 - 브랜치 코드 제거 정책
         
         console.log('✅ 중앙 세션 확인 완료:', user);
       } else {
@@ -452,31 +422,7 @@ export const SessionProvider = ({ children }) => {
     dispatch({ type: SessionActionTypes.SET_DUPLICATE_LOGIN_MODAL, payload: modalState });
   }, []);
 
-  // 지점 매핑 모달 상태 관리 함수
-  const setBranchMappingModal = useCallback((modalState) => {
-    dispatch({ type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, payload: modalState });
-  }, []);
-
-  // 지점 매핑 성공 처리
-  const handleBranchMappingSuccess = useCallback((mappingData) => {
-    // 사용자 정보 업데이트
-    const updatedUser = {
-      ...state.user,
-      branchId: mappingData.branchId,
-      branchName: mappingData.branchName,
-      branchCode: mappingData.branchCode,
-      needsBranchMapping: false
-    };
-    
-    dispatch({ type: SessionActionTypes.SET_USER, payload: updatedUser });
-    dispatch({ 
-      type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, 
-      payload: { isOpen: false, needsMapping: false }
-    });
-    
-    // sessionManager에도 업데이트
-    sessionManager.setUser(updatedUser);
-  }, [state.user]);
+  // 지점 매핑 모달 관련 함수 제거됨 - 브랜치 코드 제거 정책
 
   const value = {
     // 상태
@@ -487,7 +433,7 @@ export const SessionProvider = ({ children }) => {
     error: state.error,
     isModalOpen: state.isModalOpen,
     duplicateLoginModal: state.duplicateLoginModal,
-    branchMappingModal: state.branchMappingModal,
+    // branchMappingModal 제거됨 - 브랜치 코드 제거 정책
     
     // 액션
     checkSession,
@@ -496,8 +442,7 @@ export const SessionProvider = ({ children }) => {
     logout,
     setModalOpen,
     setDuplicateLoginModal,
-    setBranchMappingModal,
-    handleBranchMappingSuccess,
+    // setBranchMappingModal, handleBranchMappingSuccess 제거됨 - 브랜치 코드 제거 정책
     
     // 유틸리티
     hasRole: (role) => state.user?.role === role,

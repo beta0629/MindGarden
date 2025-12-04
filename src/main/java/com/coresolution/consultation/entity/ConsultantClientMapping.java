@@ -123,8 +123,13 @@ public class ConsultantClientMapping extends BaseEntity {
     @Column(name = "terminated_at")
     private LocalDateTime terminatedAt;
 
+    /**
+     * @Deprecated - 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지
+     * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
+     * 새로운 코드에서는 사용하지 마세요. 테넌트 ID만 사용하세요.
+     */
     @Column(name = "branch_code", length = 20)
-    private String branchCode; // 지점코드
+    private String branchCode;
     
     // 할인 관련 필드
     @Column(name = "discount_code", length = 50)

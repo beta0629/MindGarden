@@ -24,6 +24,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminService;
+import com.coresolution.core.util.StatusCodeHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +58,7 @@ public class TestDataController {
     private final ConsultantClientMappingRepository mappingRepository;
     private final ConsultationRepository consultationRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StatusCodeHelper statusCodeHelper;
     
     @Value("${isDev:false}")
     private boolean isDev;
@@ -149,7 +151,7 @@ public class TestDataController {
                     .notes("스트레스 관련 상담 담당")
                     .responsibility("정신건강 상담")
                     .specialConsiderations("야근이 잦아 피로도가 높음")
-                    .status("ACTIVE")
+                    .status(statusCodeHelper.getStatusCode("MAPPING_STATUS", "ACTIVE") != null ? "ACTIVE" : "ACTIVE")
                     .assignedBy("1") // 관리자 ID
                     .build();
 
@@ -403,7 +405,7 @@ public class TestDataController {
             // 상담사와 내담자 찾기 (동적 조회)
             var allUsers = userRepository.findAll();
             var consultants = allUsers.stream()
-                .filter(user -> user.getRole() != null && user.getRole().name().equals("CONSULTANT"))
+                .filter(user -> user.getRole() != null && user.getRole() == UserRole.CONSULTANT)
                 .toList();
             var clients = clientRepository.findAll();
             
@@ -554,7 +556,7 @@ public class TestDataController {
             // 기존 상담사와 내담자 조회
             var allUsers = userRepository.findAll();
             var consultants = allUsers.stream()
-                .filter(user -> user.getRole() != null && user.getRole().name().equals("CONSULTANT"))
+                .filter(user -> user.getRole() != null && user.getRole() == UserRole.CONSULTANT)
                 .toList();
             var clients = clientRepository.findAll();
             
@@ -579,7 +581,7 @@ public class TestDataController {
             consultation1.setConsultationDate(LocalDate.now().minusDays(7));
             consultation1.setStartTime(LocalTime.of(14, 0));
             consultation1.setEndTime(LocalTime.of(15, 0));
-            consultation1.setStatus("COMPLETED");
+            consultation1.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "COMPLETED") != null ? "COMPLETED" : "COMPLETED");
             consultation1.setConsultationMethod("FACE_TO_FACE");
             consultation1.setConsultantNotes("첫 번째 상담 - 스트레스 관리에 대해 논의");
             consultation1.setCreatedAt(LocalDateTime.now().minusDays(7));
@@ -593,7 +595,7 @@ public class TestDataController {
             consultation2.setConsultationDate(LocalDate.now().minusDays(14));
             consultation2.setStartTime(LocalTime.of(10, 0));
             consultation2.setEndTime(LocalTime.of(11, 0));
-            consultation2.setStatus("COMPLETED");
+            consultation2.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "COMPLETED") != null ? "COMPLETED" : "COMPLETED");
             consultation2.setConsultationMethod("FACE_TO_FACE");
             consultation2.setConsultantNotes("두 번째 상담 - 불안 증상에 대한 상담");
             consultation2.setCreatedAt(LocalDateTime.now().minusDays(14));
@@ -607,7 +609,7 @@ public class TestDataController {
             consultation3.setConsultationDate(LocalDate.now().minusDays(21));
             consultation3.setStartTime(LocalTime.of(16, 0));
             consultation3.setEndTime(LocalTime.of(17, 0));
-            consultation3.setStatus("COMPLETED");
+            consultation3.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "COMPLETED") != null ? "COMPLETED" : "COMPLETED");
             consultation3.setConsultationMethod("FACE_TO_FACE");
             consultation3.setConsultantNotes("세 번째 상담 - 초기 상담 및 문제 파악");
             consultation3.setCreatedAt(LocalDateTime.now().minusDays(21));

@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/auth/tenant")
+@RequestMapping({"/api/v1/auth/tenant", "/api/auth/tenant"}) // v1 경로 추가, 레거시 경로 유지
 @RequiredArgsConstructor
 public class MultiTenantController extends BaseApiController {
     

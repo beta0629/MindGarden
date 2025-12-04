@@ -27,7 +27,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/tenants/{tenantId}/roles")
+@RequestMapping({"/api/v1/tenants/{tenantId}/roles", "/api/tenants/{tenantId}/roles"}) // v1 경로 추가, 레거시 경로 유지
 @RequiredArgsConstructor
 public class TenantRoleController extends BaseApiController {
     

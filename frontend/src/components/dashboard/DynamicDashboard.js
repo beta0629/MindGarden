@@ -15,6 +15,7 @@ import { getCurrentUserDashboard, getDashboardComponentName } from '../../utils/
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import notificationManager from '../../utils/notification';
+import { USER_ROLES } from '../../constants/roles';
 import DashboardGrid from '../layout/DashboardGrid';
 import { 
   getWidgetComponent,
@@ -35,14 +36,12 @@ import {
 import CommonDashboard from './CommonDashboard';
 import ClientDashboard from '../client/ClientDashboard';
 import AdminDashboard from '../admin/AdminDashboard';
-import HQDashboard from '../hq/HQDashboard';
 import AcademyDashboard from '../academy/AcademyDashboard';
 
 const DASHBOARD_COMPONENTS = {
   'CommonDashboard': CommonDashboard,
   'ClientDashboard': ClientDashboard,
   'AdminDashboard': AdminDashboard,
-  'HQDashboard': HQDashboard,
   'AcademyDashboard': AcademyDashboard
 };
 
@@ -229,7 +228,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   if (isLoading) {
     return (
       <SimpleLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <div className="mg-dashboard-loading">
           <div className="mg-loading">로딩중...</div>
         </div>
       </SimpleLayout>
@@ -239,16 +238,9 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
   if (error) {
     return (
       <SimpleLayout>
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column',
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          minHeight: '400px',
-          padding: '2rem'
-        }}>
-          <h2 style={{ color: 'var(--mg-error-500)', marginBottom: '1rem' }}>대시보드 로드 실패</h2>
-          <p style={{ color: 'var(--mg-secondary-500)', marginBottom: '1rem' }}>{error}</p>
+        <div className="mg-dashboard-error">
+          <h2 className="mg-dashboard-error__title">대시보드 로드 실패</h2>
+          <p className="mg-dashboard-error__message">{error}</p>
           <button 
             onClick={loadDashboard}
             style={{
@@ -1179,7 +1171,7 @@ const extractBusinessTypeFromUser = (user) => {
   }
   
   // 역할 기반 추정
-  if (user.role === 'CONSULTANT' || user.role === 'CLIENT') return 'CONSULTATION';
+  if (user.role === USER_ROLES.CONSULTANT || user.role === USER_ROLES.CLIENT) return 'CONSULTATION';
   if (user.role === 'TEACHER' || user.role === 'STUDENT') return 'ACADEMY';
   
   return 'CONSULTATION'; // 기본값

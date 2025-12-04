@@ -1,4 +1,5 @@
 import React from 'react';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import './CommonCodeList.css';
 
 /**
@@ -20,10 +21,11 @@ const CommonCodeList = ({
     if (loading) {
         return (
             <div className="common-code-list">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>공통코드를 불러오는 중...</p>
-                </div>
+                <UnifiedLoading 
+                    type="inline"
+                    text="공통코드를 불러오는 중..."
+                    variant="pulse"
+                />
             </div>
         );
     }

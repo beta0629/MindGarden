@@ -98,35 +98,35 @@ spring:
   #             - basic
   #           client-name: Instagram
 
-# JWT 설정 (기본값 포함)
+# JWT 설정 (프로파일별 설정에서 기본값 제공)
 jwt:
-  secret: ${JWT_SECRET:MindGardenJWTSecretKey2025!@#$%^&*()_+}
+  secret: ${JWT_SECRET}
   expiration: 3600000   # 1시간 (밀리초)
   refresh-expiration: 604800000  # 7일 (밀리초)
 
-# 개인정보 암호화 설정 (기본값 포함)
+# 개인정보 암호화 설정 (프로파일별 설정에서 기본값 제공)
 encryption:
   personal-data:
-    active-key-id: ${PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID:default}
-    key-versions: ${PERSONAL_DATA_ENCRYPTION_KEYS:MindGardenPersonalDataEncryptionKey2025!@#$%^&*()_+}
-    iv-versions: ${PERSONAL_DATA_ENCRYPTION_IVS:MindGardenPersonalDataEncryptionIV2025!@#$%^&*()_+}
-    key: ${PERSONAL_DATA_ENCRYPTION_KEY:MindGardenPersonalDataEncryptionKey2025!@#$%^&*()_+}
-    iv: ${PERSONAL_DATA_ENCRYPTION_IV:MindGardenPersonalDataEncryptionIV2025!@#$%^&*()_+}
+    active-key-id: ${PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID}
+    key-versions: ${PERSONAL_DATA_ENCRYPTION_KEYS}
+    iv-versions: ${PERSONAL_DATA_ENCRYPTION_IVS}
+    key: ${PERSONAL_DATA_ENCRYPTION_KEY}
+    iv: ${PERSONAL_DATA_ENCRYPTION_IV}
     algorithm: AES-256
     transformation: AES/CBC/PKCS5Padding
 
-# 결제 시스템 설정
+# 결제 시스템 설정 (프로파일별 설정에서 기본값 제공)
 payment:
   toss:
-    secret-key: ${PAYMENT_TOSS_SECRET_KEY:dummy-toss-secret}
-    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET:dummy-webhook-secret}
+    secret-key: ${PAYMENT_TOSS_SECRET_KEY}
+    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET}
     base-url: ${PAYMENT_TOSS_BASE_URL:https://api.tosspayments.com}
     simulation-mode: ${PAYMENT_TOSS_SIMULATION_MODE:true}
     test-payment-url: ${PAYMENT_TOSS_TEST_URL:https://checkout.tosspayments.com/v1/test/}
     test-payment-key-prefix: ${PAYMENT_TOSS_TEST_KEY_PREFIX:toss_test_}
   iamport:
-    api-key: ${PAYMENT_IAMPORT_API_KEY:dummy-iamport-key}
-    api-secret: ${PAYMENT_IAMPORT_API_SECRET:dummy-iamport-secret}
+    api-key: ${PAYMENT_IAMPORT_API_KEY}
+    api-secret: ${PAYMENT_IAMPORT_API_SECRET}
     base-url: ${PAYMENT_IAMPORT_BASE_URL:https://api.iamport.kr}
     simulation-mode: ${PAYMENT_IAMPORT_SIMULATION_MODE:true}
 
@@ -227,21 +227,21 @@ consultation:
 frontend:
   base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
 
-# SMS 인증 설정 (비용 절약을 위해 사용 여부 제어)
+# SMS 인증 설정 (프로파일별 설정에서 기본값 제공)
 sms:
   auth:
     enabled: ${SMS_AUTH_ENABLED:false}  # 기본값: 비활성화 (비용 절약)
     provider: ${SMS_PROVIDER:nhn}  # nhn, twilio, aligo 등
-    api-key: ${SMS_API_KEY:dummy-sms-key}
-    api-secret: ${SMS_API_SECRET:dummy-sms-secret}
-    sender-number: ${SMS_SENDER_NUMBER:01012345678}
+    api-key: ${SMS_API_KEY}
+    api-secret: ${SMS_API_SECRET}
+    sender-number: ${SMS_SENDER_NUMBER}
     test-mode: ${SMS_TEST_MODE:true}  # 테스트 모드 (실제 SMS 발송 안함)
     mock-verification-code: ${SMS_MOCK_CODE:123456}  # 테스트용 고정 인증번호
 
-# OpenAI API 설정 (웰니스 컨텐츠 자동 생성)
+# OpenAI API 설정 (프로파일별 설정에서 기본값 제공)
 openai:
   api:
-    key: ${OPENAI_API_KEY:dummy-key-for-development}  # 환경 변수로 설정 (기본값 포함)
+    key: ${OPENAI_API_KEY}
     url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
   model: ${OPENAI_MODEL:gpt-3.5-turbo}  # gpt-3.5-turbo 또는 gpt-4
   
@@ -296,29 +296,18 @@ onboarding:
     require-payment-method: ${ONBOARDING_AUTO_APPROVAL_REQUIRE_PAYMENT:false}  # 결제 수단 필수 여부 (false: 선택 사항)
     require-subscription: ${ONBOARDING_AUTO_APPROVAL_REQUIRE_SUBSCRIPTION:false}  # 구독 필수 여부 (false: 선택 사항)
 
-# Ops Portal 관리자 계정 설정
+# Ops Portal 관리자 계정 설정 (프로파일별 설정에서 기본값 제공)
 ops:
   admin:
-    username: ${OPS_ADMIN_USERNAME:superadmin@mindgarden.com}  # Ops Portal 관리자 아이디
-    password: ${OPS_ADMIN_PASSWORD:admin123}  # Ops Portal 관리자 비밀번호
+    username: ${OPS_ADMIN_USERNAME}
+    password: ${OPS_ADMIN_PASSWORD}
     role: ${OPS_ADMIN_ROLE:HQ_ADMIN}  # Ops Portal 관리자 역할
 
-# 환경변수 기본값 설정 (개발 환경용)
-personal-data:
-  encryption:
-    key: ${PERSONAL_DATA_ENCRYPTION_KEY:MindGardenPersonalDataEncryptionKey2025!@#$%^&*()_+}
-    iv: ${PERSONAL_DATA_ENCRYPTION_IV:MindGardenPersonalDataEncryptionIV2025!@#$%^&*()_+}
+# 환경변수 기본값 설정은 프로파일별 설정 파일에서 관리
 
-# 이메일 설정 (개발 환경용 기본값)
-mail:
-  username: ${MAIL_USERNAME:dummy@example.com}
-  password: ${MAIL_PASSWORD:dummy-password}
+# 이메일 설정은 프로파일별 설정 파일에서 관리
 
-# 카카오 알림톡 설정 (개발 환경용 기본값)
-kakao:
-  alimtalk:
-    api-key: ${KAKAO_ALIMTALK_API_KEY:dummy-kakao-key}
-    sender-key: ${KAKAO_ALIMTALK_SENDER_KEY:dummy-sender-key}
+# 카카오 알림톡 설정은 프로파일별 설정 파일에서 관리
 
 # =====================================================
 # 스케줄러 설정 (배치 작업 표준화)

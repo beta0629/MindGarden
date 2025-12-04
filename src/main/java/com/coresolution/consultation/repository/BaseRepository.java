@@ -71,24 +71,78 @@ public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<
     
     // ==================== 기간별 조회 ====================
     
+    /**
+     * 테넌트별 기간별 엔티티 조회 (테넌트 필터링)
+     */
+    @Query("SELECT e FROM #{#entityName} e WHERE e.tenantId = :tenantId AND e.createdAt BETWEEN :startDate AND :endDate AND e.isDeleted = false")
+    List<T> findByTenantIdAndCreatedAtBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    /**
+     * 테넌트별 기간별 엔티티 조회 (업데이트 날짜 기준, 테넌트 필터링)
+     */
+    @Query("SELECT e FROM #{#entityName} e WHERE e.tenantId = :tenantId AND e.updatedAt BETWEEN :startDate AND :endDate AND e.isDeleted = false")
+    List<T> findByTenantIdAndUpdatedAtBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 모든 테넌트 데이터 조회!
+     * findByTenantIdAndCreatedAtBetween() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT e FROM #{#entityName} e WHERE e.createdAt BETWEEN ?1 AND ?2 AND e.isDeleted = false")
     List<T> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
     
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 모든 테넌트 데이터 조회!
+     * findByTenantIdAndUpdatedAtBetween() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT e FROM #{#entityName} e WHERE e.updatedAt BETWEEN ?1 AND ?2 AND e.isDeleted = false")
     List<T> findByUpdatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
     
     // ==================== 최근 데이터 조회 ====================
     
+    /**
+     * 테넌트별 최근 활성 엔티티 조회 (테넌트 필터링)
+     */
+    @Query("SELECT e FROM #{#entityName} e WHERE e.tenantId = :tenantId AND e.isDeleted = false ORDER BY e.createdAt DESC")
+    List<T> findRecentActiveByTenantId(@Param("tenantId") String tenantId, Pageable pageable);
+    
+    /**
+     * 테넌트별 최근 업데이트된 활성 엔티티 조회 (테넌트 필터링)
+     */
+    @Query("SELECT e FROM #{#entityName} e WHERE e.tenantId = :tenantId AND e.isDeleted = false ORDER BY e.updatedAt DESC")
+    List<T> findRecentlyUpdatedActiveByTenantId(@Param("tenantId") String tenantId, Pageable pageable);
+    
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 모든 테넌트 데이터 조회!
+     * findRecentActiveByTenantId() 또는 findRecentActiveByCurrentTenant() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT e FROM #{#entityName} e WHERE e.isDeleted = false ORDER BY e.createdAt DESC")
     List<T> findRecentActive(Pageable pageable);
     
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 모든 테넌트 데이터 조회!
+     * findRecentlyUpdatedActiveByTenantId() 또는 findRecentlyUpdatedActiveByCurrentTenant() 사용 권장
+     */
+    @Deprecated
     @Query("SELECT e FROM #{#entityName} e WHERE e.isDeleted = false ORDER BY e.updatedAt DESC")
     List<T> findRecentlyUpdatedActive(Pageable pageable);
     
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 모든 테넌트 데이터 조회!
+     * findRecentActiveByCurrentTenant(int) 사용 권장
+     */
+    @Deprecated
     default List<T> findRecentActive(int limit) {
         return findRecentActive(Pageable.ofSize(limit));
     }
     
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 모든 테넌트 데이터 조회!
+     * findRecentlyUpdatedActiveByCurrentTenant(int) 사용 권장
+     */
+    @Deprecated
     default List<T> findRecentlyUpdatedActive(int limit) {
         return findRecentlyUpdatedActive(Pageable.ofSize(limit));
     }
@@ -198,6 +252,88 @@ public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<
         return countActive();
     }
     
+    /**
+     * 현재 테넌트 컨텍스트의 기간별 엔티티 조회 (생성일 기준)
+     * 
+     * @param startDate 시작일
+     * @param endDate 종료일
+     * @return 현재 테넌트의 기간별 엔티티 목록
+     */
+    default List<T> findByCreatedAtBetweenByCurrentTenant(LocalDateTime startDate, LocalDateTime endDate) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null && !tenantId.isEmpty()) {
+            return findByTenantIdAndCreatedAtBetween(tenantId, startDate, endDate);
+        }
+        // 테넌트 컨텍스트가 없으면 전체 조회 (HQ 관리자용)
+        return findByCreatedAtBetween(startDate, endDate);
+    }
+    
+    /**
+     * 현재 테넌트 컨텍스트의 기간별 엔티티 조회 (수정일 기준)
+     * 
+     * @param startDate 시작일
+     * @param endDate 종료일
+     * @return 현재 테넌트의 기간별 엔티티 목록
+     */
+    default List<T> findByUpdatedAtBetweenByCurrentTenant(LocalDateTime startDate, LocalDateTime endDate) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null && !tenantId.isEmpty()) {
+            return findByTenantIdAndUpdatedAtBetween(tenantId, startDate, endDate);
+        }
+        // 테넌트 컨텍스트가 없으면 전체 조회 (HQ 관리자용)
+        return findByUpdatedAtBetween(startDate, endDate);
+    }
+    
+    /**
+     * 현재 테넌트 컨텍스트의 최근 활성 엔티티 조회
+     * 
+     * @param pageable 페이징 정보
+     * @return 현재 테넌트의 최근 활성 엔티티 목록
+     */
+    default List<T> findRecentActiveByCurrentTenant(Pageable pageable) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null && !tenantId.isEmpty()) {
+            return findRecentActiveByTenantId(tenantId, pageable);
+        }
+        // 테넌트 컨텍스트가 없으면 전체 조회 (HQ 관리자용)
+        return findRecentActive(pageable);
+    }
+    
+    /**
+     * 현재 테넌트 컨텍스트의 최근 활성 엔티티 조회 (제한 개수)
+     * 
+     * @param limit 제한 개수
+     * @return 현재 테넌트의 최근 활성 엔티티 목록
+     */
+    default List<T> findRecentActiveByCurrentTenant(int limit) {
+        return findRecentActiveByCurrentTenant(Pageable.ofSize(limit));
+    }
+    
+    /**
+     * 현재 테넌트 컨텍스트의 최근 업데이트된 활성 엔티티 조회
+     * 
+     * @param pageable 페이징 정보
+     * @return 현재 테넌트의 최근 업데이트된 활성 엔티티 목록
+     */
+    default List<T> findRecentlyUpdatedActiveByCurrentTenant(Pageable pageable) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null && !tenantId.isEmpty()) {
+            return findRecentlyUpdatedActiveByTenantId(tenantId, pageable);
+        }
+        // 테넌트 컨텍스트가 없으면 전체 조회 (HQ 관리자용)
+        return findRecentlyUpdatedActive(pageable);
+    }
+    
+    /**
+     * 현재 테넌트 컨텍스트의 최근 업데이트된 활성 엔티티 조회 (제한 개수)
+     * 
+     * @param limit 제한 개수
+     * @return 현재 테넌트의 최근 업데이트된 활성 엔티티 목록
+     */
+    default List<T> findRecentlyUpdatedActiveByCurrentTenant(int limit) {
+        return findRecentlyUpdatedActiveByCurrentTenant(Pageable.ofSize(limit));
+    }
+    
     // ==================== 통계 ====================
     
     @Query("SELECT COUNT(e), COUNT(CASE WHEN e.isDeleted = true THEN 1 END), COUNT(CASE WHEN e.isDeleted = false THEN 1 END) FROM #{#entityName} e")
@@ -205,6 +341,17 @@ public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<
     
     // ==================== 정리 ====================
     
+    /**
+     * 테넌트별 오래된 삭제된 엔티티 영구 삭제 (테넌트 필터링)
+     */
+    @Query("DELETE FROM #{#entityName} e WHERE e.tenantId = :tenantId AND e.isDeleted = true AND e.deletedAt < :cutoffDate")
+    void cleanupOldDeletedByTenantId(@Param("tenantId") String tenantId, @Param("cutoffDate") LocalDateTime cutoffDate);
+    
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 모든 테넌트 데이터 영구 삭제 가능!
+     * cleanupOldDeletedByTenantId() 사용 권장
+     */
+    @Deprecated
     @Query("DELETE FROM #{#entityName} e WHERE e.isDeleted = true AND e.deletedAt < ?1")
     void cleanupOldDeleted(LocalDateTime cutoffDate);
     
@@ -223,9 +370,31 @@ public interface BaseRepository<T extends BaseEntity, ID> extends JpaRepository<
     
     // ==================== 소프트 삭제 ====================
     
+    /**
+     * 테넌트별 소프트 삭제 (테넌트 필터링)
+     */
+    @Query("UPDATE #{#entityName} e SET e.isDeleted = true, e.deletedAt = :deletedAt, e.version = e.version + 1 WHERE e.id = :id AND e.tenantId = :tenantId")
+    void softDeleteByIdAndTenantId(@Param("id") ID id, @Param("tenantId") String tenantId, @Param("deletedAt") LocalDateTime deletedAt);
+    
+    /**
+     * 테넌트별 엔티티 복구 (테넌트 필터링)
+     */
+    @Query("UPDATE #{#entityName} e SET e.isDeleted = false, e.deletedAt = null, e.version = e.version + 1 WHERE e.id = :id AND e.tenantId = :tenantId")
+    void restoreByIdAndTenantId(@Param("id") ID id, @Param("tenantId") String tenantId);
+    
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 모든 테넌트 데이터 삭제 가능!
+     * softDeleteByIdAndTenantId() 사용 권장
+     */
+    @Deprecated
     @Query("UPDATE #{#entityName} e SET e.isDeleted = true, e.deletedAt = ?2, e.version = e.version + 1 WHERE e.id = ?1")
     void softDeleteById(ID id, LocalDateTime deletedAt);
     
+    /**
+     * @Deprecated - 🚨 위험: 테넌트 필터링 없이 모든 테넌트 데이터 복구 가능!
+     * restoreByIdAndTenantId() 사용 권장
+     */
+    @Deprecated
     @Query("UPDATE #{#entityName} e SET e.isDeleted = false, e.deletedAt = null, e.version = e.version + 1 WHERE e.id = ?1")
     void restoreById(ID id);
 }

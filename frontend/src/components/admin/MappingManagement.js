@@ -6,7 +6,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
 // import notificationManager from '../../utils/notification';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { 
     MAPPING_API_ENDPOINTS, 
     MAPPING_MESSAGES,
@@ -639,12 +639,12 @@ const MappingManagement = () => {
     if (loading) {
         console.log('⏳ 로딩 상태 - UnifiedLoading 표시');
         return(
-            <SimpleLayout>
-                <div className="mapping-management">
-                    <div className="loading-container">
-                        <div className="mg-loading">로딩중...</div>
-                    </div>
-                </div>
+            <SimpleLayout title="매칭 관리">
+                <UnifiedLoading 
+                    type="page"
+                    text="데이터를 불러오는 중..."
+                    variant="pulse"
+                />
             </SimpleLayout>
         );
     }

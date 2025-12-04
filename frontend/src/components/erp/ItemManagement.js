@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
@@ -231,7 +231,15 @@ const ItemManagement = () => {
   };
 
   if (loading && items.length === 0) {
-    return <div className="mg-loading">로딩중...</div>;
+    return (
+      <SimpleLayout title="아이템 관리">
+        <UnifiedLoading 
+          type="page"
+          text="데이터를 불러오는 중..."
+          variant="pulse"
+        />
+      </SimpleLayout>
+    );
   }
 
   return (

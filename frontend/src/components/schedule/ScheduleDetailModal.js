@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiPut, apiGet } from '../../utils/ajax';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 // import ConsultationLogModal from '../consultant/ConsultationLogModal'; // 부모 컴포넌트에서 관리
 import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
@@ -37,68 +38,46 @@ const ScheduleDetailModal = ({
     // 내담자인지 확인
     const isClient = RoleUtils.isClient(user);
     
+    // 공통코드에서 조회한 상태값으로 비교하는 헬퍼 함수
+    const getStatusCodeValue = (codeValue) => {
+        const statusOption = scheduleStatusOptions.find(option => option.value === codeValue);
+        return statusOption ? statusOption.value : codeValue;
+    };
+    
+    // 상태값이 특정 값과 일치하는지 확인 (공통코드 기반)
+    const isStatus = (currentStatus, targetStatus) => {
+        if (!currentStatus) return false;
+        // 공통코드에서 조회한 값으로 비교
+        const currentCode = getStatusCodeValue(currentStatus);
+        const targetCode = getStatusCodeValue(targetStatus);
+        return currentCode === targetCode || currentStatus === targetStatus;
+    };
+    
 
-    // 일정 상태 코드 로드
+    // 일정 상태 코드 로드 (공통코드에서 동적으로 조회)
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/STATUS');
-            if (response && response.length > 0) {
-                // 우리가 원하는 6개 상태만 필터링
-                const allowedStatuses = ['AVAILABLE', 'BOOKED', 'CONFIRMED', 'VACATION', 'COMPLETED', 'CANCELLED'];
-                const filteredResponse = response.filter(code => allowedStatuses.includes(code.codeValue));
-                
-                setScheduleStatusOptions(filteredResponse.map(code => {
-                    let icon = '📋';
-                    let color = '#6b7280';
-                    
-                    switch (code.codeValue) {
-                        case 'AVAILABLE':
-                            icon = '✅';
-                            color = 'var(--mg-success-500)';
-                            break;
-                        case 'BOOKED':
-                            icon = '📅';
-                            color = 'var(--mg-primary-500)';
-                            break;
-                        case 'CONFIRMED':
-                            icon = '✅';
-                            color = 'var(--mg-info-500)';
-                            break;
-                        case 'VACATION':
-                            icon = '🏖️';
-                            color = 'var(--mg-warning-500)';
-                            break;
-                        case 'COMPLETED':
-                            icon = '✅';
-                            color = 'var(--mg-secondary-500)';
-                            break;
-                        case 'CANCELLED':
-                            icon = '❌';
-                            color = 'var(--mg-error-500)';
-                            break;
-                    }
-                    
-                    return {
-                        value: code.codeValue,
-                        label: code.codeLabel,
-                        icon: icon,
-                        color: color,
-                        description: code.codeDescription
-                    };
-                }));
+            // 공통코드 API 사용 (표준화된 방법)
+            const codes = await getCommonCodes('SCHEDULE_STATUS');
+            
+            if (codes && Array.isArray(codes) && codes.length > 0) {
+                setScheduleStatusOptions(codes.map(code => ({
+                    value: code.codeValue,
+                    label: code.koreanName || code.codeLabel,
+                    icon: code.icon || '📋',
+                    color: code.colorCode || 'var(--mg-gray-500)',
+                    description: code.codeDescription
+                })));
+            } else {
+                console.warn('📋 스케줄 상태 코드 데이터가 없습니다. 공통코드에서 조회하세요.');
+                setScheduleStatusOptions([]); // 하드코딩된 fallback 제거
             }
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
-            // 실패 시 기본값 설정 (enum 6개 상태만)
-            setScheduleStatusOptions([
-                { value: 'AVAILABLE', label: '가능', icon: '✅', color: 'var(--mg-success-500)', description: '예약 가능한 시간대' },
-                { value: 'BOOKED', label: '예약됨', icon: '📅', color: 'var(--mg-primary-500)', description: '예약된 일정' },
-                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: 'var(--mg-info-500)', description: '확정된 일정' },
-                { value: 'VACATION', label: '휴가', icon: '🏖️', color: 'var(--mg-warning-500)', description: '휴가로 인한 비활성' },
-                { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-secondary-500)', description: '완료된 일정' },
-                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: 'var(--mg-error-500)', description: '취소된 일정' }
-            ]);
+            // 하드코딩된 fallback 제거 - 공통코드에서만 조회
+            setScheduleStatusOptions([]);
+            notificationManager.error('스케줄 상태 코드를 불러올 수 없습니다. 관리자에게 문의하세요.');
         } finally {
             setLoadingCodes(false);
         }
@@ -152,10 +131,15 @@ const ScheduleDetailModal = ({
     };
 
     /**
-     * 휴가 이벤트인지 확인
+     * 휴가 이벤트인지 확인 (공통코드 기반)
      */
     const isVacationEvent = () => {
-        return scheduleData.status === 'VACATION' || 
+        // 공통코드에서 VACATION 상태값 조회
+        const vacationStatus = scheduleStatusOptions.find(opt => 
+            opt.value === 'VACATION' || opt.label?.includes('휴가')
+        )?.value || 'VACATION'; // fallback (공통코드 미로드 시)
+        
+        return isStatus(scheduleData.status, vacationStatus) || 
                scheduleData.consultationType === 'VACATION' ||
                scheduleData.scheduleType === 'VACATION';
     };
@@ -186,8 +170,13 @@ const ScheduleDetailModal = ({
             setLoading(true);
             console.log('❌ 스케줄 취소 요청:', scheduleData.id);
             
+            // 공통코드에서 CANCELLED 상태값 조회
+            const cancelledStatus = scheduleStatusOptions.find(opt => 
+                opt.value === 'CANCELLED' || opt.label?.includes('취소')
+            )?.value || 'CANCELLED'; // fallback (공통코드 미로드 시)
+            
             const response = await apiPut(`/api/schedules/${scheduleData.id}`, {
-                status: 'CANCELLED',
+                status: cancelledStatus,
                 description: '사용자에 의해 취소됨'
             });
             
@@ -479,7 +468,7 @@ const ScheduleDetailModal = ({
                     ) : !isClient ? (
                         // 일반 스케줄인 경우 - 통합 버튼 스타일 적용 (내담자 제외)
                         <>
-                            {(scheduleData.status === 'BOOKED' || scheduleData.status === '예약됨') && (
+                            {isStatus(scheduleData.status, 'BOOKED') && (
                                 <>
                                     <button 
                                         className="mg-btn mg-btn--info mg-btn--icon-left"
@@ -508,16 +497,22 @@ const ScheduleDetailModal = ({
                                 </>
                             )}
                             
-                            {(scheduleData.status === 'CONFIRMED' || scheduleData.status === '확정됨') && (
-                                <>
-                                    <button 
-                                        className="mg-btn mg-btn--success mg-btn--icon-left"
-                                        onClick={() => handleStatusChange('COMPLETED')}
-                                        disabled={loading}
-                                    >
-                                        <span className="mg-btn__icon">✅</span>
-                                        <span className="mg-btn__text">완료 처리</span>
-                                    </button>
+                            {isStatus(scheduleData.status, 'CONFIRMED') && (() => {
+                                // 공통코드에서 COMPLETED 상태값 조회
+                                const completedStatus = scheduleStatusOptions.find(opt => 
+                                    opt.value === 'COMPLETED' || opt.label?.includes('완료')
+                                )?.value || 'COMPLETED'; // fallback
+                                
+                                return (
+                                    <>
+                                        <button 
+                                            className="mg-btn mg-btn--success mg-btn--icon-left"
+                                            onClick={() => handleStatusChange(completedStatus)}
+                                            disabled={loading}
+                                        >
+                                            <span className="mg-btn__icon">✅</span>
+                                            <span className="mg-btn__text">완료 처리</span>
+                                        </button>
                                     <button 
                                         className="mg-btn mg-btn--info mg-btn--icon-left"
                                         onClick={handleWriteConsultationLog}
@@ -535,29 +530,44 @@ const ScheduleDetailModal = ({
                                         <span className="mg-btn__text">예약 취소</span>
                                     </button>
                                 </>
-                            )}
+                                );
+                            })()}
                             
-                            {(scheduleData.status === 'COMPLETED' || scheduleData.status === '완료됨') && (
-                                <button 
-                                    className="mg-btn mg-btn--warning mg-btn--icon-left"
-                                    onClick={() => handleStatusChange('BOOKED')}
-                                    disabled={loading}
-                                >
-                                    <span className="mg-btn__icon">🔄</span>
-                                    <span className="mg-btn__text">다시 예약</span>
-                                </button>
-                            )}
+                            {isStatus(scheduleData.status, 'COMPLETED') && (() => {
+                                // 공통코드에서 BOOKED 상태값 조회
+                                const bookedStatus = scheduleStatusOptions.find(opt => 
+                                    opt.value === 'BOOKED' || opt.label?.includes('예약')
+                                )?.value || 'BOOKED'; // fallback
+                                
+                                return (
+                                    <button 
+                                        className="mg-btn mg-btn--warning mg-btn--icon-left"
+                                        onClick={() => handleStatusChange(bookedStatus)}
+                                        disabled={loading}
+                                    >
+                                        <span className="mg-btn__icon">🔄</span>
+                                        <span className="mg-btn__text">다시 예약</span>
+                                    </button>
+                                );
+                            })()}
                             
-                            {(scheduleData.status === 'CANCELLED' || scheduleData.status === '취소') && (
-                                <button 
-                                    className="mg-btn mg-btn--warning mg-btn--icon-left"
-                                    onClick={() => handleStatusChange('BOOKED')}
-                                    disabled={loading}
-                                >
-                                    <span className="mg-btn__icon">🔄</span>
-                                    <span className="mg-btn__text">다시 예약</span>
-                                </button>
-                            )}
+                            {isStatus(scheduleData.status, 'CANCELLED') && (() => {
+                                // 공통코드에서 BOOKED 상태값 조회
+                                const bookedStatus = scheduleStatusOptions.find(opt => 
+                                    opt.value === 'BOOKED' || opt.label?.includes('예약')
+                                )?.value || 'BOOKED'; // fallback
+                                
+                                return (
+                                    <button 
+                                        className="mg-btn mg-btn--warning mg-btn--icon-left"
+                                        onClick={() => handleStatusChange(bookedStatus)}
+                                        disabled={loading}
+                                    >
+                                        <span className="mg-btn__icon">🔄</span>
+                                        <span className="mg-btn__text">다시 예약</span>
+                                    </button>
+                                );
+                            })()}
                         </>
                     ) : (
                         // 내담자인 경우 - 조회만 가능 메시지 표시

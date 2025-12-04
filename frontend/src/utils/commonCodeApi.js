@@ -48,7 +48,10 @@ const CORE_CODE_GROUPS = [
     'NOTIFICATION_TYPE',
     'GENDER',
     'BANK',
-    'ADDRESS_TYPE'
+    'ADDRESS_TYPE',
+    'ADMIN_GRADE',
+    'CONSULTANT_GRADE',
+    'CLIENT_GRADE'
 ];
 
 /**

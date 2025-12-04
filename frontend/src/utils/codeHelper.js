@@ -138,7 +138,7 @@ export const getCodeGroupColor = async (groupName) => {
  */
 export const getStatusColorSync = (codeValue) => {
     if (!codeValue) {
-        return '#6b7280';
+        return 'var(--mg-gray-500)';
     }
     
     // 기본 색상 매칭 (fallback) - 최소한의 매칭만 유지
@@ -148,7 +148,7 @@ export const getStatusColorSync = (codeValue) => {
         'false': 'var(--mg-error-500)'
     };
     
-    return defaultColorMap[codeValue] || '#6b7280';
+    return defaultColorMap[codeValue] || 'var(--mg-gray-500)';
 };
 
 /**
@@ -293,29 +293,29 @@ export const getStatusColor = async (codeValue, groupName) => {
     // 기본 색상 매칭 (fallback) - 확장된 매칭
     const defaultColorMap = {
         // 스케줄 상태
-        'AVAILABLE': '#e5e7eb',
+        'AVAILABLE': 'var(--mg-gray-200)',
         'BOOKED': 'var(--mg-primary-500)',
         'CONFIRMED': 'var(--mg-purple-500)',
         'IN_PROGRESS': 'var(--mg-warning-500)',
         'COMPLETED': 'var(--mg-success-500)',
         'CANCELLED': 'var(--mg-error-500)',
-        'BLOCKED': '#6b7280',
-        'UNDER_REVIEW': '#f97316',
-        'VACATION': '#06b6d4',
-        'NO_SHOW': '#dc2626',
-        'MAINTENANCE': '#6b7280',
+        'BLOCKED': 'var(--mg-gray-500)',
+        'UNDER_REVIEW': 'var(--mg-warning-500)',
+        'VACATION': 'var(--mg-info-500)',
+        'NO_SHOW': 'var(--mg-error-600)',
+        'MAINTENANCE': 'var(--mg-gray-500)',
         
         // 매칭 상태
         'PENDING_PAYMENT': 'var(--mg-warning-500)',
         'PAYMENT_CONFIRMED': 'var(--mg-info-500)',
         'ACTIVE': 'var(--mg-success-500)',
         'INACTIVE': 'var(--mg-secondary-500)',
-        'SUSPENDED': '#fd7e14',
+        'SUSPENDED': 'var(--mg-warning-600)',
         'TERMINATED': 'var(--mg-error-500)',
-        'SESSIONS_EXHAUSTED': '#6f42c1',
+        'SESSIONS_EXHAUSTED': 'var(--mg-primary-700)',
         
         // 사용자 상태
-        'PENDING': '#6b7280',
+        'PENDING': 'var(--mg-gray-500)',
         'APPROVED': 'var(--mg-success-500)',
         'REJECTED': 'var(--mg-error-500)',
         'PAYMENT_PENDING': 'var(--mg-warning-500)',
@@ -326,7 +326,7 @@ export const getStatusColor = async (codeValue, groupName) => {
         'false': 'var(--mg-error-500)'
     };
     
-    return defaultColorMap[codeValue] || '#6b7280';
+    return defaultColorMap[codeValue] || 'var(--mg-gray-500)';
 };
 
 /**

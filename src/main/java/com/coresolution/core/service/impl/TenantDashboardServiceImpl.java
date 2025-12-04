@@ -1,4 +1,6 @@
 package com.coresolution.core.service.impl;
+
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.core.context.TenantContextHolder;
 
 import java.text.MessageFormat;
@@ -946,18 +948,18 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         }
         
         // 이미 정규화된 경우 (ADMIN, CONSULTANT, CLIENT, STAFF)
-        if (roleCode.equals("ADMIN") || roleCode.equals("CONSULTANT") || 
-            roleCode.equals("CLIENT") || roleCode.equals("STAFF")) {
+        if (UserRole.ADMIN.name().equals(roleCode) || UserRole.CONSULTANT.name().equals(roleCode) || 
+            UserRole.CLIENT.name().equals(roleCode) || "STAFF".equals(roleCode)) {
             return roleCode;
         }
         
         // RoleTemplate 형식 변환 (CONSULTATION_DIRECTOR -> ADMIN)
-        if (roleCode.contains("DIRECTOR") || roleCode.equals("ADMIN")) {
-            return "ADMIN";
-        } else if (roleCode.contains("COUNSELOR") || roleCode.equals("CONSULTANT")) {
-            return "CONSULTANT";
+        if (roleCode.contains("DIRECTOR") || UserRole.ADMIN.name().equals(roleCode)) {
+            return UserRole.ADMIN.name();
+        } else if (roleCode.contains("COUNSELOR") || UserRole.CONSULTANT.name().equals(roleCode)) {
+            return UserRole.CONSULTANT.name();
         } else if (roleCode.contains("CLIENT")) {
-            return "CLIENT";
+            return UserRole.CLIENT.name();
         } else if (roleCode.contains("STAFF")) {
             return "STAFF";
         }

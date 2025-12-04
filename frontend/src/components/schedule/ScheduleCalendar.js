@@ -87,7 +87,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 const statusOptions = filteredResponse.map(code => ({
                     value: code.codeValue,
                     label: code.codeLabel,
-                    color: code.colorCode || '#6b7280',
+                    color: code.colorCode || 'var(--mg-gray-500)',
                     icon: code.icon || '📋',
                     description: code.codeDescription
                 }));

@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/auth/config")
+@RequestMapping({"/api/v1/auth/config", "/api/auth/config"}) // v1 경로 추가, 레거시 경로 유지
 @RequiredArgsConstructor
 public class OAuth2ConfigController {
 

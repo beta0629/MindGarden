@@ -341,6 +341,30 @@
   --mg-purple-800: var(--cs-purple-800);
   --mg-purple-900: var(--cs-purple-900);
   
+  /* Info 색상 (Blue 기반) */
+  --mg-info-50: var(--cs-blue-50);
+  --mg-info-100: var(--cs-blue-100);
+  --mg-info-200: var(--cs-blue-200);
+  --mg-info-300: var(--cs-blue-300);
+  --mg-info-400: var(--cs-blue-400);
+  --mg-info-500: var(--cs-blue-500);
+  --mg-info-600: var(--cs-blue-600);
+  --mg-info-700: var(--cs-blue-700);
+  --mg-info-800: var(--cs-blue-800);
+  --mg-info-900: var(--cs-blue-900);
+  
+  /* Pink 색상 */
+  --mg-pink-50: var(--cs-pink-50);
+  --mg-pink-100: var(--cs-pink-100);
+  --mg-pink-200: var(--cs-pink-200);
+  --mg-pink-300: var(--cs-pink-300);
+  --mg-pink-400: var(--cs-pink-400);
+  --mg-pink-500: var(--cs-pink-500);
+  --mg-pink-600: var(--cs-pink-600);
+  --mg-pink-700: var(--cs-pink-700);
+  --mg-pink-800: var(--cs-pink-800);
+  --mg-pink-900: var(--cs-pink-900);
+  
   --mg-white: var(--cs-white);
   --mg-black: var(--cs-black);
   --mg-gray-50: var(--cs-secondary-50);

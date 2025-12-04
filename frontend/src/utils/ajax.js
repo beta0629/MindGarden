@@ -59,7 +59,7 @@ const checkSessionAndRedirect = async (response) => {
     
     try {
       // 세션 체크 API 호출
-      const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+      const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
         credentials: 'include',
         method: 'GET'
       });

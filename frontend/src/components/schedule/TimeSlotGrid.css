@@ -6,6 +6,72 @@
   overflow-y: auto;
 }
 
+/* 시간 슬롯 기본 스타일 */
+.mg-v2-time-slot-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 2px solid var(--mg-gray-200);
+  border-radius: 8px;
+  background-color: var(--mg-white);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+  text-align: center;
+  position: relative;
+  font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+
+/* 상태별 스타일 */
+.mg-v2-time-slot-item--vacation {
+  border-color: var(--mg-warning-500);
+  background-color: var(--mg-warning-50);
+  cursor: not-allowed;
+}
+
+.mg-v2-time-slot-item--past {
+  background-color: var(--mg-gray-200);
+  color: var(--mg-gray-400);
+  cursor: not-allowed;
+  opacity: 0.5;
+  border: 1px solid var(--mg-gray-300);
+}
+
+.mg-v2-time-slot-item--selected {
+  border-color: var(--mg-success-500);
+  background-color: var(--mg-success-50);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  transform: translateY(-2px);
+  font-weight: 600;
+}
+
+.mg-v2-time-slot-item--conflict {
+  border-color: var(--mg-error-500);
+  background-color: var(--mg-error-50);
+}
+
+.mg-v2-time-slot-item--unavailable {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--mg-gray-100);
+}
+
+/* 호버 스타일 (가능한 슬롯만) */
+.mg-v2-time-slot-item:not(.mg-v2-time-slot-item--vacation):not(.mg-v2-time-slot-item--past):not(.mg-v2-time-slot-item--unavailable):hover {
+  border-color: var(--mg-primary-500);
+  background-color: var(--mg-primary-50);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+/* 시간 슬롯 아이콘 스타일 */
+.mg-v2-time-slot-icon {
+  /* CSS 변수는 JavaScript에서 설정 (동적 색상) */
+  color: var(--slot-icon-color, var(--mg-gray-500));
+}
+
 .time-slot-grid-loading {
   display: flex;
   justify-content: center;

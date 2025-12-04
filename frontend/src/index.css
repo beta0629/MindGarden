@@ -14,7 +14,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--mg-gray-100);
-  color: #333;
+  color: var(--mg-gray-800);
 }
 
 /* 전역 select 드롭다운 z-index 수정 */
@@ -243,5 +243,32 @@ code {
 }
 
 .btn:hover {
-  background: #0056b3;
+  background: var(--mg-primary-600);
+}
+
+/* ===== 대시보드 공통 스타일 ===== */
+.mg-dashboard-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.mg-dashboard-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.mg-dashboard-error__title {
+  color: var(--mg-error-500);
+  margin-bottom: 1rem;
+}
+
+.mg-dashboard-error__message {
+  color: var(--mg-secondary-500);
+  margin-bottom: 1rem;
 }

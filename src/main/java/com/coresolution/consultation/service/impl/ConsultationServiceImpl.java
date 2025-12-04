@@ -26,6 +26,7 @@ import com.coresolution.consultation.repository.ReviewRepository;
 import com.coresolution.consultation.service.ConsultationService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
 import org.slf4j.Logger;
@@ -75,6 +76,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Autowired
     private com.coresolution.consultation.repository.ScheduleRepository scheduleRepository;
+    
+    @Autowired
+    private StatusCodeHelper statusCodeHelper;
     
     // BaseTenantEntityServiceImpl에서 이미 주입받음 (accessControlService)
     
@@ -413,11 +417,25 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public List<Consultation> findByClientId(Long clientId) {
+        // 테넌트 컨텍스트에서 tenantId 가져오기
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null && !tenantId.isEmpty()) {
+            return consultationRepository.findByTenantIdAndClientId(tenantId, clientId);
+        }
+        // 테넌트 컨텍스트가 없는 경우 Deprecated 메서드 사용 (하위 호환성)
+        log.warn("⚠️ 테넌트 컨텍스트 없이 findByClientId() 호출됨: clientId={}", clientId);
         return consultationRepository.findByClientId(clientId);
     }
     
     @Override
     public List<Consultation> findByConsultantId(Long consultantId) {
+        // 테넌트 컨텍스트에서 tenantId 가져오기
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null && !tenantId.isEmpty()) {
+            return consultationRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
+        }
+        // 테넌트 컨텍스트가 없는 경우 Deprecated 메서드 사용 (하위 호환성)
+        log.warn("⚠️ 테넌트 컨텍스트 없이 findByConsultantId() 호출됨: consultantId={}", consultantId);
         return consultationRepository.findByConsultantId(consultantId);
     }
     
@@ -426,7 +444,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         log.info("🔍 상담사별 완료된 상담 건수 조회: 상담사ID={}, 기간={} ~ {}", consultantId, startDate, endDate);
         return consultationRepository.countByConsultantIdAndStatusAndCreatedAtBetween(
             consultantId, 
-            "COMPLETED", 
+            statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "COMPLETED") != null ? "COMPLETED" : "COMPLETED", 
             startDate.atStartOfDay(), 
             endDate.atTime(23, 59, 59)
         );
@@ -486,7 +504,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public Consultation createConsultationRequest(Consultation consultation) {
-        consultation.setStatus("REQUESTED");
+        consultation.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "REQUESTED") != null ? "REQUESTED" : "REQUESTED");
         consultation.setCreatedAt(LocalDateTime.now());
         consultation.setVersion(1L);
         
@@ -496,7 +514,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     @Override
     public Consultation confirmConsultation(Long consultationId, Long consultantId) {
         Consultation consultation = findActiveByIdOrThrow(consultationId);
-        consultation.setStatus("CONFIRMED");
+        consultation.setStatus(statusCodeHelper.getStatusCode("CONSULTATION_STATUS", "CONFIRMED") != null ? "CONFIRMED" : "CONFIRMED");
         consultation.setUpdatedAt(LocalDateTime.now());
         consultation.setVersion(consultation.getVersion() + 1);
         

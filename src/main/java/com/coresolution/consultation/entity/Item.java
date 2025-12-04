@@ -63,8 +63,13 @@ public class Item {
     @Column(length = 50)
     private String unit;
     
+    /**
+     * @Deprecated - 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지
+     * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
+     * 새로운 코드에서는 사용하지 마세요. 테넌트 ID만 사용하세요.
+     */
     @Column(name = "branch_code", length = 20)
-    private String branchCode; // 지점코드
+    private String branchCode;
     
     @Column(nullable = false)
     private Boolean isActive;

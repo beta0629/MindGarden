@@ -322,14 +322,18 @@ const ErdManagement = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout>
-        <div className="mg-loading">로딩중...</div>
+      <SimpleLayout title="ERD 관리">
+        <UnifiedLoading 
+          type="page"
+          text="세션 정보를 불러오는 중..."
+          variant="pulse"
+        />
       </SimpleLayout>
     );
   }
 
   return (
-    <SimpleLayout>
+    <SimpleLayout title="ERD 관리">
       <div className="erd-management-page">
         {/* 헤더 */}
         <div className="erd-management-header">
@@ -405,7 +409,11 @@ const ErdManagement = () => {
 
         {/* ERD 목록 */}
         {loading ? (
-          <div className="mg-loading">로딩중...</div>
+          <UnifiedLoading 
+            type="inline"
+            text="ERD 목록을 불러오는 중..."
+            variant="pulse"
+          />
         ) : (
           <div className="erd-list">
             {erds.length === 0 ? (
@@ -591,7 +599,11 @@ const ErdManagement = () => {
                     <div className="form-group">
                       <label>테이블 선택 *</label>
                       {loadingTables ? (
-                        <div className="loading-tables">테이블 목록을 불러오는 중...</div>
+                        <UnifiedLoading 
+                          type="inline"
+                          text="테이블 목록을 불러오는 중..."
+                          variant="pulse"
+                        />
                       ) : (
                         <div className="table-selection">
                           <div className="table-selection-header">

@@ -8,7 +8,8 @@
  */
 
 import { useSession } from '../contexts/SessionContext';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { getRoleCodesFromCommonCode, getRoleKoreanName } from '../utils/roleCodeUtils';
 
 /**
  * 권한 체크를 위한 Custom Hook
@@ -129,6 +130,42 @@ export const usePermissions = () => {
         ]);
     }, [hasAnyPermission]);
 
+    // 역할 코드 조회 (공통코드 기반)
+    const [roleCodes, setRoleCodes] = useState([]);
+    const [roleCodesLoading, setRoleCodesLoading] = useState(true);
+
+    useEffect(() => {
+        const loadRoleCodes = async () => {
+            try {
+                setRoleCodesLoading(true);
+                const codes = await getRoleCodesFromCommonCode();
+                setRoleCodes(codes);
+            } catch (error) {
+                console.error('역할 코드 로드 실패:', error);
+            } finally {
+                setRoleCodesLoading(false);
+            }
+        };
+        loadRoleCodes();
+    }, []);
+
+    /**
+     * 역할 코드의 한글명 조회
+     * @param {string} roleCode - 역할 코드
+     * @returns {Promise<string>} 한글명
+     */
+    const getRoleName = useCallback(async (roleCode) => {
+        return await getRoleKoreanName(roleCode);
+    }, []);
+
+    /**
+     * 모든 역할 코드 목록 조회
+     * @returns {Array} 역할 코드 목록
+     */
+    const getAllRoleCodes = useCallback(() => {
+        return roleCodes;
+    }, [roleCodes]);
+
     return {
         hasPermission,
         hasAnyPermission,
@@ -136,7 +173,12 @@ export const usePermissions = () => {
         canManageCodeGroup,
         canManageUsers,
         canManageMappings,
-        canViewStatistics
+        canViewStatistics,
+        // 역할 코드 관련
+        roleCodes,
+        roleCodesLoading,
+        getRoleName,
+        getAllRoleCodes
     };
 };
 

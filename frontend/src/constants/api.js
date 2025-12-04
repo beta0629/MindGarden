@@ -12,69 +12,69 @@ import ENV from './environment';
 // 기본 API 경로 (백엔드 서버 직접 연결)
 export const API_BASE_URL = ENV.API_BASE_URL;
 
-// 인증 관련 API
+// 인증 관련 API (표준 경로: /api/v1/auth)
 export const AUTH_API = {
   // 일반 로그인/회원가입
-  LOGIN: '/api/auth/login',
-  REGISTER: '/api/auth/register',
-  LOGOUT: '/api/auth/logout',
-  REFRESH_TOKEN: '/api/auth/refresh',
-  GET_CURRENT_USER: '/api/auth/me',
+  LOGIN: '/api/v1/auth/login',
+  REGISTER: '/api/v1/auth/register',
+  LOGOUT: '/api/v1/auth/logout',
+  REFRESH_TOKEN: '/api/v1/auth/refresh',
+  GET_CURRENT_USER: '/api/v1/auth/me',
   
   // 소셜 로그인
-  KAKAO_OAUTH: '/api/auth/oauth2/kakao',
-  NAVER_OAUTH: '/api/auth/oauth2/naver',
-  GOOGLE_OAUTH: '/api/auth/oauth2/google',
-  FACEBOOK_OAUTH: '/api/auth/oauth2/facebook',
+  KAKAO_OAUTH: '/api/v1/auth/oauth2/kakao',
+  NAVER_OAUTH: '/api/v1/auth/oauth2/naver',
+  GOOGLE_OAUTH: '/api/v1/auth/oauth2/google',
+  FACEBOOK_OAUTH: '/api/v1/auth/oauth2/facebook',
   
   // 소셜 간편 회원가입
-  SOCIAL_SIGNUP: '/api/auth/social/signup',
-  SOCIAL_STATUS: '/api/auth/social/status',
-  SOCIAL_UNLINK: '/api/auth/social/unlink',
+  SOCIAL_SIGNUP: '/api/v1/auth/social/signup',
+  SOCIAL_STATUS: '/api/v1/auth/social/status',
+  SOCIAL_UNLINK: '/api/v1/auth/social/unlink',
   
   // OAuth2 콜백
-  OAUTH2_CALLBACK: '/api/auth/oauth2/callback',
+  OAUTH2_CALLBACK: '/api/v1/auth/oauth2/callback',
   
   // OAuth2 설정
-  GET_OAUTH2_CONFIG: '/api/auth/config/oauth2',
+  GET_OAUTH2_CONFIG: '/api/v1/auth/config/oauth2',
   
   // OAuth2 인증 URL 생성
-  KAKAO_AUTHORIZE: '/api/auth/oauth2/kakao/authorize',
-  NAVER_AUTHORIZE: '/api/auth/oauth2/naver/authorize',
+  KAKAO_AUTHORIZE: '/api/v1/auth/oauth2/kakao/authorize',
+  NAVER_AUTHORIZE: '/api/v1/auth/oauth2/naver/authorize',
   
   // 중복 로그인 확인
-  CONFIRM_DUPLICATE_LOGIN: '/api/auth/confirm-duplicate-login'
+  CONFIRM_DUPLICATE_LOGIN: '/api/v1/auth/confirm-duplicate-login'
 };
 
-// 권한 관련 API
+// 권한 관련 API (표준 경로: /api/v1/admin/permissions)
 export const PERMISSIONS_API = {
-  MY_PERMISSIONS: '/api/admin/permissions/my-permissions',
-  CHECK_PERMISSION: '/api/admin/permissions/check-permission',
-  ROLE_PERMISSIONS: '/api/admin/permissions/role',
-  PERMISSION_ROLES: '/api/admin/permissions/permission',
-  ALL_PERMISSION_CODES: '/api/admin/permissions/codes'
+  MY_PERMISSIONS: '/api/v1/admin/permissions/my-permissions',
+  CHECK_PERMISSION: '/api/v1/admin/permissions/check-permission',
+  ROLE_PERMISSIONS: '/api/v1/admin/permissions/role',
+  PERMISSION_ROLES: '/api/v1/admin/permissions/permission',
+  ALL_PERMISSION_CODES: '/api/v1/admin/permissions/codes'
 };
 
-// 사용자 관련 API
+// 사용자 관련 API (표준 경로: /api/v1/users)
 export const USER_API = {
   // 프로필 관련
-  GET_PROFILE: '/api/users/profile',
-  UPDATE_PROFILE: '/api/users/profile',
-  DELETE_ACCOUNT: '/api/users/account',
-  UPLOAD_PROFILE_IMAGE: '/api/users/profile/image',
+  GET_PROFILE: '/api/v1/users/profile',
+  UPDATE_PROFILE: '/api/v1/users/profile',
+  DELETE_ACCOUNT: '/api/v1/users/account',
+  UPLOAD_PROFILE_IMAGE: '/api/v1/users/profile/image',
   
   // 사용자 정보
-  GET_USER_INFO: '/api/users',
-  UPDATE_USER_INFO: '/api/users',
-  DELETE_USER: '/api/users',
+  GET_USER_INFO: '/api/v1/users',
+  UPDATE_USER_INFO: '/api/v1/users',
+  DELETE_USER: '/api/v1/users',
   
   // 최근 활동
-  GET_RECENT_ACTIVITIES: '/api/users/recent-activities',
+  GET_RECENT_ACTIVITIES: '/api/v1/users/recent-activities',
   
   // 소셜 계정 관리
-  GET_SOCIAL_ACCOUNTS: '/api/users/social-accounts',
-  LINK_SOCIAL_ACCOUNT: '/api/users/social-accounts/link',
-  UNLINK_SOCIAL_ACCOUNT: '/api/users/social-accounts/unlink'
+  GET_SOCIAL_ACCOUNTS: '/api/v1/users/social-accounts',
+  LINK_SOCIAL_ACCOUNT: '/api/v1/users/social-accounts/link',
+  UNLINK_SOCIAL_ACCOUNT: '/api/v1/users/social-accounts/unlink'
 };
 
 // 마이페이지 관련 API
@@ -128,22 +128,22 @@ export const PROFILE_API = {
   }
 };
 
-// 메시지 관련 API
+// 메시지 관련 API (표준 경로: /api/v1/consultation-messages)
 export const MESSAGE_API = {
   // 메시지 전송
-  SEND_MESSAGE: '/api/consultation-messages',
+  SEND_MESSAGE: '/api/v1/consultation-messages',
   
   // 상담사 메시지 조회
-  GET_CONSULTANT_MESSAGES: (consultantId) => `/api/consultation-messages/consultant/${consultantId}`,
+  GET_CONSULTANT_MESSAGES: (consultantId) => `/api/v1/consultation-messages/consultant/${consultantId}`,
   
   // 내담자 메시지 조회
-  GET_CLIENT_MESSAGES: (clientId) => `/api/consultation-messages/client/${clientId}`,
+  GET_CLIENT_MESSAGES: (clientId) => `/api/v1/consultation-messages/client/${clientId}`,
   
   // 메시지 읽음 처리
-  MARK_AS_READ: (messageId) => `/api/consultation-messages/${messageId}/read`,
+  MARK_AS_READ: (messageId) => `/api/v1/consultation-messages/${messageId}/read`,
   
   // 메시지 상세 조회
-  GET_MESSAGE_DETAIL: (messageId) => `/api/consultation-messages/${messageId}`
+  GET_MESSAGE_DETAIL: (messageId) => `/api/v1/consultation-messages/${messageId}`
 };
 
 // 상담 관련 API
@@ -171,21 +171,21 @@ export const CONSULTATION_API = {
   GET_SESSION_INFO: '/api/consultations/session'
 };
 
-// 관리자 관련 API
+// 관리자 관련 API (표준 경로: /api/v1/admin)
 export const ADMIN_API = {
   // 사용자 관리
-  GET_ALL_USERS: '/api/admin/users',
-  UPDATE_ROLE: '/api/admin/users/role',
-  DEACTIVATE_USER: '/api/admin/users/deactivate',
+  GET_ALL_USERS: '/api/v1/admin/users',
+  UPDATE_ROLE: '/api/v1/admin/users/role',
+  DEACTIVATE_USER: '/api/v1/admin/users/deactivate',
   
   // 상담사 승인
-  GET_CONSULTANT_APPLICATIONS: '/api/admin/consultant-applications',
-  APPROVE_CONSULTANT: '/api/admin/consultant-applications/approve',
-  REJECT_CONSULTANT: '/api/admin/consultant-applications/reject',
+  GET_CONSULTANT_APPLICATIONS: '/api/v1/admin/consultant-applications',
+  APPROVE_CONSULTANT: '/api/v1/admin/consultant-applications/approve',
+  REJECT_CONSULTANT: '/api/v1/admin/consultant-applications/reject',
   
   // 시스템 관리
-  GET_SYSTEM_STATS: '/api/admin/system/stats',
-  GET_SYSTEM_LOGS: '/api/admin/system/logs'
+  GET_SYSTEM_STATS: '/api/v1/admin/system/stats',
+  GET_SYSTEM_LOGS: '/api/v1/admin/system/logs'
 };
 
 // 스케줄 관련 API (중앙화)
@@ -298,14 +298,14 @@ export const BUSINESS_CATEGORY_API = {
   TREE: '/api/business-categories/tree'
 };
 
-// 공통 코드 관련 API
+// 공통 코드 관련 API (표준 경로: /api/v1/common-codes)
 export const COMMON_CODE_API = {
   BASE: '/api/v1/common-codes',
   BY_GROUP: '/api/v1/common-codes',
-  GROUPS: '/api/common-codes/groups',
-  GROUP_ACTIVE: '/api/common-codes/group',
-  CORE_GROUPS: '/api/common-codes/core/groups',
-  TENANT_GROUPS: '/api/common-codes/tenant/groups'
+  GROUPS: '/api/v1/common-codes/groups',
+  GROUP_ACTIVE: '/api/v1/common-codes/group',
+  CORE_GROUPS: '/api/v1/common-codes/core/groups',
+  TENANT_GROUPS: '/api/v1/common-codes/tenant/groups'
 };
 
 // 전체 API 엔드포인트 객체

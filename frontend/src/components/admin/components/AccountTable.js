@@ -1,4 +1,5 @@
 import React from 'react';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import { 
   ACCOUNT_CSS_CLASSES 
 } from '../../../constants/css';
@@ -20,7 +21,11 @@ const AccountTable = ({
   if (loading) {
     return (
       <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_LIST}>
-        <div className="loading">{ACCOUNT_BUTTON_TEXT.PROCESSING}</div>
+        <UnifiedLoading 
+          type="inline"
+          text={ACCOUNT_BUTTON_TEXT.PROCESSING}
+          variant="pulse"
+        />
       </div>
     );
   }

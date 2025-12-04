@@ -22,7 +22,7 @@ import lombok.experimental.SuperBuilder;
  * @since 2024-12-19
  */
 @MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
+@EntityListeners({AuditingEntityListener.class, com.coresolution.core.listener.TenantEntityListener.class})
 @SuperBuilder
 @NoArgsConstructor
 public abstract class BaseEntity {

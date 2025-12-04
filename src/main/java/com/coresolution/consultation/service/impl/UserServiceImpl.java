@@ -303,6 +303,14 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public Optional<User> findByEmail(String email) {
+        // 테넌트 컨텍스트가 있으면 테넌트 필터링 적용
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null && !tenantId.isEmpty()) {
+            return userRepository.findByTenantIdAndEmail(tenantId, email);
+        }
+        // 테넌트 컨텍스트가 없는 경우 (인증 등 특수 케이스) - Deprecated 메서드 사용
+        // TODO: 향후 멀티 테넌트 사용자 지원을 위해 findAllByEmail() 사용 고려
+        log.warn("⚠️ 테넌트 컨텍스트 없이 findByEmail() 호출됨: {}", email);
         return userRepository.findByEmail(email);
     }
     

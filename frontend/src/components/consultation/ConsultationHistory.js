@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import { DASHBOARD_API } from '../../constants/api';
 import SimpleLayout from '../layout/SimpleLayout';
+import notificationManager from '../../utils/notification';
 import './ConsultationHistory.css';
 
 const ConsultationHistory = () => {
@@ -30,34 +32,31 @@ const ConsultationHistory = () => {
     }
   }, [user, sessionLoading, isLoggedIn]);
 
-  // 상담 상태 코드 로드
+  // 상담 상태 코드 로드 (공통코드 기반)
   useEffect(() => {
     const loadStatusCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/STATUS');
-        if (response && response.length > 0) {
-          const options = response.map(code => ({
+        // 공통코드 API 사용 (표준화된 방법)
+        const codes = await getCommonCodes('CONSULTATION_STATUS');
+        
+        if (codes && Array.isArray(codes) && codes.length > 0) {
+          const options = codes.map(code => ({
             value: code.codeValue,
-            label: code.codeLabel,
-            icon: code.icon,
-            color: code.colorCode
+            label: code.koreanName || code.codeLabel,
+            icon: code.icon || '📋',
+            color: code.colorCode || 'var(--mg-gray-500)'
           }));
           setStatusOptions(options);
+        } else {
+          console.warn('📋 상담 상태 코드 데이터가 없습니다. 공통코드에서 조회하세요.');
+          setStatusOptions([]); // 하드코딩된 fallback 제거
         }
       } catch (error) {
         console.error('상담 상태 코드 로드 실패:', error);
-        // 실패 시 기본값 설정
-        setStatusOptions([
-          { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)' },
-          { value: 'BOOKED', label: '예약', icon: '📅', color: 'var(--mg-primary-500)' },
-          { value: 'CONFIRMED', label: '확정', icon: '✅', color: 'var(--mg-success-500)' },
-          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-purple-500)' },
-          { value: 'COMPLETED', label: '완료', icon: '🎉', color: '#059669' },
-          { value: 'CANCELLED', label: '취소', icon: '❌', color: 'var(--mg-error-500)' },
-          { value: 'NO_SHOW', label: '무단결석', icon: '🚫', color: '#dc2626' },
-          { value: 'RESCHEDULED', label: '재예약', icon: '🔄', color: '#f97316' }
-        ]);
+        // 하드코딩된 fallback 제거 - 공통코드에서만 조회
+        setStatusOptions([]);
+        notificationManager.error('상담 상태 코드를 불러올 수 없습니다. 관리자에게 문의하세요.');
       } finally {
         setLoadingCodes(false);
       }
@@ -163,24 +162,24 @@ const ConsultationHistory = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout>
-        <div className="consultation-history-page">
-          <div className="loading-container">
-            <div className="mg-loading">로딩중...</div>
-          </div>
-        </div>
+      <SimpleLayout title="상담 내역">
+        <UnifiedLoading 
+          type="page"
+          text="세션 정보를 불러오는 중..."
+          variant="pulse"
+        />
       </SimpleLayout>
     );
   }
 
   if (loading) {
     return (
-      <SimpleLayout>
-        <div className="consultation-history-page">
-          <div className="loading-container">
-            <div className="mg-loading">로딩중...</div>
-          </div>
-        </div>
+      <SimpleLayout title="상담 내역">
+        <UnifiedLoading 
+          type="page"
+          text="상담 내역을 불러오는 중..."
+          variant="pulse"
+        />
       </SimpleLayout>
     );
   }

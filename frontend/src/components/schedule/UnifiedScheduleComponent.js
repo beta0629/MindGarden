@@ -11,6 +11,7 @@ import ScheduleLegend from '../ui/Schedule/ScheduleLegend';
 import ScheduleCalendarView from '../ui/Schedule/ScheduleCalendarView';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
+import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 // import './ScheduleCalendar.css'; // 제거: mindgarden-design-system.css 사용
 
@@ -79,7 +80,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     const getConsultantColor = (consultantId) => {
         const colors = [
             'var(--mg-primary-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-error-500)', 'var(--mg-purple-500)',
-            '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
+            'var(--mg-info-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-pink-500)', 'var(--mg-primary-600)'
         ];
         const colorIndex = consultantId % colors.length;
         return colors[colorIndex];
@@ -101,7 +102,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌇 오후 휴무';
-                backgroundColor = '#FF5722';
+                backgroundColor = 'var(--mg-error-700)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_1':
@@ -121,14 +122,14 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T16:00:00+09:00');
                 title = '🌆 오후 반반차 1';
-                backgroundColor = '#FF7043';
+                backgroundColor = 'var(--mg-error-600)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_2':
                 startDate.setHours(16, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌆 오후 반반차 2';
-                backgroundColor = '#FF7043';
+                backgroundColor = 'var(--mg-error-600)';
                 allDay = false;
                 break;
             case 'CUSTOM_TIME':
@@ -136,12 +137,12 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
                     endDate = new Date(date + 'T' + endTime + '+09:00');
                     title = '⏰ 사용자 정의 휴무';
-                    backgroundColor = '#9C27B0';
+                    backgroundColor = 'var(--mg-purple-700)';
                     allDay = false;
                 } else {
                     endDate = new Date(date + 'T23:59:59+09:00');
                     title = '⏰ 사용자 정의 휴무';
-                    backgroundColor = '#9C27B0';
+                    backgroundColor = 'var(--mg-purple-700)';
                 }
                 break;
             case 'ALL_DAY':
@@ -173,7 +174,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             allDay: allDay,
             backgroundColor: backgroundColor,
             borderColor: backgroundColor,
-            textColor: '#fff',
+            textColor: 'var(--mg-white)',
             className: 'vacation-event',
             extendedProps: {
                 type: 'vacation',
@@ -192,51 +193,48 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/STATUS');
-            console.log('📋 스케줄 상태 코드 응답:', response);
+            // 공통코드 API 사용 (표준화된 방법)
+            const codes = await getCommonCodes('SCHEDULE_STATUS');
+            console.log('📋 스케줄 상태 코드 응답:', codes);
             
-            if (response && Array.isArray(response) && response.length > 0) {
-                const statusOptions = await Promise.all(response.map(async (code) => {
+            if (codes && Array.isArray(codes) && codes.length > 0) {
+                const statusOptions = await Promise.all(codes.map(async (code) => {
                     try {
                         const [color, icon] = await Promise.all([
-                            getStatusColor(code.codeValue, 'STATUS'),
-                            getStatusIcon(code.codeValue, 'STATUS')
+                            getStatusColor(code.codeValue, 'SCHEDULE_STATUS'),
+                            getStatusIcon(code.codeValue, 'SCHEDULE_STATUS')
                         ]);
                         
                         return {
                             value: code.codeValue,
-                            label: code.codeLabel,
-                            color: color,
-                            icon: icon,
+                            label: code.koreanName || code.codeLabel,
+                            color: code.colorCode || color,
+                            icon: code.icon || icon,
                             description: code.codeDescription
                         };
                     } catch (error) {
                         console.error(`스케줄 상태 ${code.codeValue} 처리 오류:`, error);
                         return {
                             value: code.codeValue,
-                            label: code.codeLabel,
-                            color: '#6b7280',
-                            icon: '📋',
+                            label: code.koreanName || code.codeLabel,
+                            color: code.colorCode || 'var(--mg-gray-500)',
+                            icon: code.icon || '📋',
                             description: code.codeDescription
                         };
                     }
                 }));
                 
-                console.log('📋 변환된 상태 옵션 (동적 처리):', statusOptions);
+                console.log('📋 변환된 상태 옵션 (공통코드 기반):', statusOptions);
                 setScheduleStatusOptions(statusOptions);
             } else {
-                console.warn('📋 스케줄 상태 코드 데이터가 없습니다:', response);
+                console.warn('📋 스케줄 상태 코드 데이터가 없습니다. 공통코드에서 조회하세요.');
+                setScheduleStatusOptions([]); // 하드코딩된 fallback 제거
             }
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
-            setScheduleStatusOptions([
-                { value: 'BOOKED', label: '예약됨', icon: '📅', color: 'var(--mg-primary-500)', description: '예약된 일정' },
-                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: 'var(--mg-purple-500)', description: '확정된 일정' },
-                { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-warning-500)', description: '진행 중인 일정' },
-                { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: '#059669', description: '완료된 일정' },
-                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: 'var(--mg-error-500)', description: '취소된 일정' },
-                { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#6b7280', description: '차단된 시간' }
-            ]);
+            // 하드코딩된 fallback 제거 - 공통코드에서만 조회
+            setScheduleStatusOptions([]);
+            notificationManager.error('스케줄 상태 코드를 불러올 수 없습니다. 관리자에게 문의하세요.');
         } finally {
             setLoadingCodes(false);
         }
@@ -500,6 +498,11 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 }
             }
             
+            // 공통코드에서 VACATION 상태값 조회
+            const vacationStatus = scheduleStatusOptions.find(opt => 
+                opt.value === 'VACATION' || opt.label?.includes('휴가')
+            )?.value || 'VACATION'; // fallback (공통코드 미로드 시)
+            
             const scheduleData = {
                 id: event.extendedProps.consultantId,
                 title: event.title,
@@ -508,7 +511,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                 consultationType: 'VACATION',
                 startTime: event.allDay ? '하루 종일' : formatTime(event.start),
                 endTime: event.allDay ? '하루 종일' : formatTime(event.end),
-                status: 'VACATION',
+                status: vacationStatus,
                 description: event.extendedProps.reason || event.extendedProps.description || '휴가',
                 reason: event.extendedProps.reason || event.extendedProps.description || '휴가',
                 vacationType: event.extendedProps.vacationType,

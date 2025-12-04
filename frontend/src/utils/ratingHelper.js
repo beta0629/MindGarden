@@ -82,17 +82,17 @@ export const getRatingGrade = (rating) => {
     const numRating = parseFloat(rating) || 0;
     
     if (numRating >= 4.5) {
-        return { grade: 'S', color: '#ffd700', label: '최고' };
+        return { grade: 'S', color: 'var(--mg-warning-400)', label: '최고' };
     } else if (numRating >= 4.0) {
-        return { grade: 'A', color: 'var(--mg-error-500)', label: '우수' };
+        return { grade: 'A', color: 'var(--mg-success-500)', label: '우수' };
     } else if (numRating >= 3.5) {
-        return { grade: 'B', color: '#4ecdc4', label: '양호' };
+        return { grade: 'B', color: 'var(--mg-info-400)', label: '양호' };
     } else if (numRating >= 3.0) {
-        return { grade: 'C', color: '#45b7d1', label: '보통' };
+        return { grade: 'C', color: 'var(--mg-info-500)', label: '보통' };
     } else if (numRating >= 2.0) {
-        return { grade: 'D', color: '#f9ca24', label: '미흡' };
+        return { grade: 'D', color: 'var(--mg-warning-500)', label: '미흡' };
     } else {
-        return { grade: 'F', color: 'var(--mg-secondary-500)', label: '부족' };
+        return { grade: 'F', color: 'var(--mg-error-500)', label: '부족' };
     }
 };
 

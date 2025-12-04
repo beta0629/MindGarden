@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/business-categories")
+@RequestMapping({"/api/v1/business-categories", "/api/business-categories"}) // v1 경로 추가, 레거시 경로 유지
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class BusinessCategoryController extends BaseApiController {

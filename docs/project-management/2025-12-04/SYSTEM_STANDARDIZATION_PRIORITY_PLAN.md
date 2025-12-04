@@ -138,16 +138,29 @@
 
 ### 🟡 Priority 3: 하드코딩 제거 (2주)
 
-#### 3.1 역할 이름 하드코딩 제거 (3일) ⭐⭐⭐⭐
+#### 3.1 역할 이름 하드코딩 제거 (3일) ⭐⭐⭐⭐ ✅ 완료
 
 **목표**: 모든 역할 이름을 공통코드로 조회
 
 **발견된 위치**: Backend 5+ 파일, Frontend 14 파일
 
 **작업 계획**:
-1. **Day 1**: Backend 역할 문자열 제거
-2. **Day 2**: Frontend 역할 문자열 제거
-3. **Day 3**: 공통코드 조회 로직 적용
+1. **Day 1**: Backend 역할 문자열 제거 ✅
+2. **Day 2**: Frontend 역할 문자열 제거 ✅
+3. **Day 3**: 공통코드 조회 로직 적용 ✅
+
+---
+
+#### 3.2 색상 하드코딩 제거 (5일) ⭐⭐⭐ ✅ 완료
+
+**목표**: 모든 색상을 CSS 변수로 전환
+
+**발견된 위치**: Frontend 50+ 파일
+
+**작업 계획**:
+1. **Day 1-2**: CSS 파일 색상 정리 ✅
+2. **Day 3-4**: JavaScript 파일 인라인 스타일 제거 ✅
+3. **Day 5**: CSS 변수 시스템 적용 ✅
 
 ---
 
@@ -161,6 +174,64 @@
 1. **Day 1-2**: CSS 파일 색상 정리
 2. **Day 3-4**: JavaScript 파일 인라인 스타일 제거
 3. **Day 5**: CSS 변수 시스템 적용
+
+---
+
+#### 3.3 상태값 공통코드 전환 (5일) ⭐⭐⭐⭐⭐
+
+**목표**: 모든 상태값을 공통코드에서 동적으로 조회하도록 전환
+
+**핵심 원칙**: [공통코드 시스템 표준](../standards/COMMON_CODE_SYSTEM_STANDARD.md)에 따라 **모든 코드값은 공통코드에서 조회** 필수
+
+**발견된 위치**: 
+- Backend: `AdminController.java`, `ConsultationServiceImpl.java`, `TestDataController.java`
+- Frontend: `UnifiedScheduleComponent.js`, `ScheduleDetailModal.js`
+
+**작업 계획**:
+1. **Day 1**: 공통코드 데이터 확인 및 추가
+   - `SCHEDULE_STATUS` 공통코드 확인/추가
+   - `MAPPING_STATUS` 공통코드 확인/추가
+   - `CONSULTATION_STATUS` 공통코드 확인
+   - `PAYMENT_STATUS` 공통코드 확인
+   - `USER_STATUS` 공통코드 확인
+
+2. **Day 2**: Backend 유틸리티 클래스 생성
+   - `StatusCodeHelper` 유틸리티 클래스 생성
+   - 캐싱 로직 구현
+   - 편의 메서드 구현
+
+3. **Day 3**: Backend 코드 수정
+   - `AdminController.java`: 상수 클래스 → `StatusCodeHelper` 사용
+   - `ConsultationServiceImpl.java`: 상수 클래스 → 공통코드 조회
+   - `TestDataController.java`: 상수 클래스 → 공통코드 조회
+
+4. **Day 4**: Frontend 코드 수정
+   - `UnifiedScheduleComponent.js`: 하드코딩 제거, 공통코드 API 사용
+   - `ScheduleDetailModal.js`: 하드코딩 제거, 공통코드 API 사용
+   - 상태 비교 로직 수정
+
+5. **Day 5**: 통합 테스트 및 검증
+   - 전체 시스템 테스트
+   - 성능 테스트 (캐싱 효과)
+   - 문서화 업데이트
+
+**체크리스트**:
+- [ ] 필요한 공통코드 그룹 확인 및 추가
+- [ ] `StatusCodeHelper` 유틸리티 클래스 생성
+- [ ] Backend 상수 클래스 사용 제거
+- [ ] Frontend 하드코딩 제거
+- [ ] 공통코드 API 통합
+- [ ] 캐싱 적용 및 성능 검증
+- [ ] 전체 기능 테스트
+
+**예상 결과**:
+- 상수 클래스 사용: 다수 → 0개
+- 하드코딩된 상태값: 다수 → 0개
+- 공통코드 기반 조회: 0개 → 100%
+
+**참조 문서**:
+- [상태값 공통코드 전환 계획](./STATUS_COMMON_CODE_MIGRATION_PLAN.md)
+- [공통코드 시스템 표준](../standards/COMMON_CODE_SYSTEM_STANDARD.md)
 
 ---
 
@@ -187,7 +258,8 @@
 - Week 3: API 경로 표준화
 
 ### Phase 3: 하드코딩 제거 (2주)
-- Week 4-5: 역할 이름, 색상, 상태값 하드코딩 제거
+- Week 4: 역할 이름, 색상 하드코딩 제거
+- Week 5: 상태값 하드코딩 제거 → 상태값 공통코드 전환
 
 ### Phase 4: 프론트엔드 표준화 (2주)
 - Week 6-7: 컴포넌트 템플릿, 표준 컴포넌트 적용

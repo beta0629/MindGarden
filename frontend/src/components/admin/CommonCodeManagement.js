@@ -288,7 +288,9 @@ const CommonCodeManagement = () => {
                 // 카테고리별 필터링 로직
                 switch (categoryFilter) {
                     case 'user':
-                        return group.includes('USER') || group.includes('CLIENT') || group.includes('CONSULTANT');
+                        return group.includes('USER') || 
+                               group.includes(USER_ROLES.CLIENT) || 
+                               group.includes(USER_ROLES.CONSULTANT);
                     case 'system':
                         return group.includes('STATUS') || group.includes('PRIORITY') || group.includes('MAPPING');
                     case 'payment':
@@ -646,7 +648,7 @@ const CommonCodeManagement = () => {
                             onChange={ (e) => setSearchTerm(e.target.value) }
                             className="mg-v2-input"
                             onFocus={ (e) => e.target.style.borderColor = 'var(--mg-primary-500)' }
-                            onBlur={ (e) => e.target.style.borderColor = '#e1e5e9' }
+                            onBlur={ (e) => e.target.style.borderColor = 'var(--mg-gray-300)' }
                         />
                         <i className="bi bi-search mg-search-icon"></i>
                     </div>
@@ -683,13 +685,7 @@ const CommonCodeManagement = () => {
                 </div>
                 
                 { /* 필터 상태 표시 */ }
-                <div style={{
-                            fontSize: 'var(--font-size-sm)',
-                    color: 'var(--mg-secondary-500)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px'
-                }}>
+                <div className="mg-filter-status">
                     <i className="bi bi-info-circle"></i>
                     {searchTerm || categoryFilter !== 'all' ? (
                         <span>
@@ -799,11 +795,7 @@ const CommonCodeManagement = () => {
                                     className="form-control"
                                     placeholder="예: 활성, 비활성"
                                     required
-                                    style={{
-                                        color: '#000',
-                                        backgroundColor: '#fff',
-                                        border: '2px solid #e9ecef'
-                                    }}
+                                    className="form-control mg-form-input--legacy"
                                 />
                             </div>
                         </div>
@@ -816,11 +808,7 @@ const CommonCodeManagement = () => {
                                 className="form-control"
                                 rows="3"
                                 placeholder="코드에 대한 설명을 입력하세요."
-                                style={{
-                                    color: '#000',
-                                    backgroundColor: '#fff',
-                                    border: '2px solid #e9ecef'
-                                }}
+                                className="form-control mg-form-input"
                             />
                         </div>
                         <div className="form-row">
@@ -833,11 +821,7 @@ const CommonCodeManagement = () => {
                                     onChange={ (e) => setNewCodeData({...newCodeData, sortOrder: parseInt(e.target.value) || 0 })}
                                     className="form-control"
                                     min="0"
-                                    style={{
-                                        color: '#000',
-                                        backgroundColor: '#fff',
-                                        border: '2px solid #e9ecef'
-                                    }}
+                                    className="form-control mg-form-input--legacy"
                                 />
                             </div>
                             <div className="form-group">
@@ -889,7 +873,7 @@ const CommonCodeManagement = () => {
                                     backgroundColor: 'var(--mg-gray-100)',
                                     borderRadius: '12px',
                                     padding: '20px',
-                                    border: '2px solid #e9ecef',
+                                    border: '2px solid var(--mg-gray-200)',
                                     transition: 'all 0.3s ease',
                                     opacity: !code.isActive ? 0.6 : 1
                                 }}
@@ -902,7 +886,7 @@ const CommonCodeManagement = () => {
                                         <span style={{
                                             color: 'var(--mg-secondary-500)',
                                             fontSize: 'var(--font-size-xs)',
-                                            background: '#e9ecef',
+                                            background: 'var(--mg-gray-200)',
                                             padding: '2px 6px',
                                             borderRadius: '4px',
                                             fontFamily: 'monospace'
@@ -915,8 +899,8 @@ const CommonCodeManagement = () => {
                                         borderRadius: '20px',
                                         fontSize: 'var(--font-size-xs)',
                                         fontWeight: '500',
-                                        backgroundColor: code.isActive ? '#d4edda' : '#f8d7da',
-                                        color: code.isActive ? '#155724' : '#721c24'
+                                        backgroundColor: code.isActive ? 'var(--mg-success-100)' : 'var(--mg-error-100)',
+                                        color: code.isActive ? 'var(--mg-success-700)' : 'var(--mg-error-700)'
                                     }}>
                                         { code.isActive ? '활성' : '비활성' }
                                     </span>

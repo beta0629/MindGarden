@@ -25,7 +25,7 @@ export const getConsultantGradeStyles = async () => {
             const gradeStyles = {};
             codes.forEach(code => {
                 gradeStyles[code.codeValue] = {
-                    color: code.colorCode || '#6b7280',
+                    color: code.colorCode || 'var(--mg-gray-500)',
                     icon: code.icon || '⭐',
                     label: code.codeLabel || code.koreanName,
                     description: code.codeDescription
@@ -40,7 +40,7 @@ export const getConsultantGradeStyles = async () => {
             'CONSULTANT_JUNIOR': { color: 'var(--mg-warning-500)', icon: '⭐', label: '주니어 상담사' },
             'CONSULTANT_SENIOR': { color: 'var(--mg-warning-500)', icon: '⭐⭐', label: '시니어 상담사' },
             'CONSULTANT_EXPERT': { color: 'var(--mg-warning-500)', icon: '⭐⭐⭐', label: '엑스퍼트 상담사' },
-            'CONSULTANT_MASTER': { color: '#dc2626', icon: '👑', label: '마스터 상담사' }
+            'CONSULTANT_MASTER': { color: 'var(--mg-error-600)', icon: '👑', label: '마스터 상담사' }
         };
     }
 };

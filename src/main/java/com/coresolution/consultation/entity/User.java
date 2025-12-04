@@ -189,7 +189,10 @@ public class User extends BaseEntity {
     private Branch branch;
     
     /**
-     * 지점 코드 (등록 시 사용, 실제 지점 정보는 branch 필드에 저장)
+     * @Deprecated - 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지
+     * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
+     * 새로운 코드에서는 사용하지 마세요. branch 엔티티 필드를 사용하세요.
+     * 실제 지점 정보는 branch 필드에 저장됩니다.
      */
     @Column(name = "branch_code", length = 20)
     private String branchCode;

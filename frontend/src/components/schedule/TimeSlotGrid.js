@@ -707,70 +707,29 @@ const TimeSlotGrid = ({
                         <div className="mg-v2-time-slot-hour">{hour}:00</div>
                         <div className="mg-v2-time-slot-grid">
                             {groupedSlots[hour].map(slot => {
-                                // 인라인 스타일 정의
-                                const getSlotStyle = (slot) => {
-                                    const baseStyle = {
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        padding: '12px 8px',
-                                        border: '2px solid #e9ecef',
-                                        borderRadius: '8px',
-                                        backgroundColor: '#fff',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        minWidth: '80px',
-                                        textAlign: 'center',
-                                        position: 'relative',
-                                        fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                                    };
-
-                                    // 상태별 스타일 적용
+                                // CSS 클래스 기반 스타일링 (표준화 원칙 준수)
+                                const getSlotClassName = (slot) => {
+                                    const classes = ['mg-v2-time-slot-item'];
+                                    
                                     if (slot.vacation) {
-                                        baseStyle.borderColor = 'var(--mg-warning-500)';
-                                        baseStyle.backgroundColor = '#fff8e1';
-                                        baseStyle.cursor = 'not-allowed';
+                                        classes.push('mg-v2-time-slot-item--vacation');
                                     } else if (slot.past) {
-                                        baseStyle.backgroundColor = '#e9ecef';
-                                        baseStyle.color = '#adb5bd';
-                                        baseStyle.cursor = 'not-allowed';
-                                        baseStyle.opacity = '0.5';
-                                        baseStyle.border = '1px solid #dee2e6';
+                                        classes.push('mg-v2-time-slot-item--past');
                                     } else if (slot.selected) {
-                                        baseStyle.borderColor = 'var(--mg-success-500)';
-                                        baseStyle.backgroundColor = '#f8fff9';
-                                        baseStyle.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.25)';
-                                        baseStyle.transform = 'translateY(-2px)';
-                                        baseStyle.fontWeight = '600';
+                                        classes.push('mg-v2-time-slot-item--selected');
                                     } else if (slot.conflict) {
-                                        baseStyle.borderColor = 'var(--mg-error-500)';
-                                        baseStyle.backgroundColor = '#fff5f5';
+                                        classes.push('mg-v2-time-slot-item--conflict');
                                     } else if (!slot.available) {
-                                        baseStyle.opacity = '0.5';
-                                        baseStyle.cursor = 'not-allowed';
-                                        baseStyle.backgroundColor = 'var(--mg-gray-100)';
+                                        classes.push('mg-v2-time-slot-item--unavailable');
                                     }
-
-                                    return baseStyle;
-                                };
-
-                                const getHoverStyle = (slot) => {
-                                    if (slot.vacation || slot.past || !slot.available) {
-                                        return {};
-                                    }
-                                    return {
-                                        borderColor: 'var(--mg-primary-500)',
-                                        backgroundColor: '#f8f9ff',
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: '0 4px 8px rgba(0, 123, 255, 0.15)'
-                                    };
+                                    
+                                    return classes.join(' ');
                                 };
 
                                 return (
                                     <div
                                         key={slot.id}
-                                        style={getSlotStyle(slot)}
+                                        className={getSlotClassName(slot)}
                                         onClick={() => handleSlotClick(slot)}
                                         title={`${slot.time} - ${slot.endTime} (${duration}분)`}
                                         role="button"
@@ -778,17 +737,6 @@ const TimeSlotGrid = ({
                                         onKeyPress={(e) => {
                                             if (e.key === 'Enter' || e.key === ' ') {
                                                 handleSlotClick(slot);
-                                            }
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!slot.vacation && !slot.past && slot.available) {
-                                                Object.assign(e.target.style, getHoverStyle(slot));
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!slot.vacation && !slot.past && slot.available) {
-                                                const originalStyle = getSlotStyle(slot);
-                                                Object.assign(e.target.style, originalStyle);
                                             }
                                         }}
                                     >

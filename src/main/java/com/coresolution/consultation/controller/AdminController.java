@@ -35,6 +35,7 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
+import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -76,6 +77,7 @@ public class AdminController extends BaseApiController {
     private final ConsultantStatsService consultantStatsService;
     private final ClientStatsService clientStatsService;
     private final CommonCodeService commonCodeService;
+    private final StatusCodeHelper statusCodeHelper;
 
     // === 상담사 통계 통합 API ===
     
@@ -107,41 +109,17 @@ public class AdminController extends BaseApiController {
         }
         
         String tenantId = currentUser.getTenantId();
-        String branchCode = currentUser.getBranchCode();
-        log.info("🔍 현재 사용자 정보: tenantId={}, branchCode={}, 역할={}", tenantId, branchCode, currentUser.getRole());
+        log.info("🔍 현재 사용자 정보: tenantId={}, 역할={}", tenantId, currentUser.getRole());
         
-        // ⭐ 테넌트별 상담사 조회 (tenant_id 필터링)
-        List<Map<String, Object>> allStats;
+        // ⭐ 테넌트별 상담사 조회 (tenant_id 필터링만 사용)
+        List<Map<String, Object>> filteredStats;
         if (tenantId != null && !tenantId.isEmpty()) {
-            allStats = consultantStatsService.getAllConsultantsWithStatsByTenant(tenantId);
-            log.info("📊 테넌트별 상담사 조회: tenantId={}, 조회된 수={}", tenantId, allStats.size());
+            filteredStats = consultantStatsService.getAllConsultantsWithStatsByTenant(tenantId);
+            log.info("📊 테넌트별 상담사 조회: tenantId={}, 조회된 수={}", tenantId, filteredStats.size());
         } else {
             // 폴백: 전체 조회 (레거시 호환)
-            allStats = consultantStatsService.getAllConsultantsWithStats();
-            log.warn("⚠️ tenantId 없음, 전체 상담사 조회: 조회된 수={}", allStats.size());
-        }
-        
-        // 지점별 필터링
-        List<Map<String, Object>> filteredStats;
-        
-        // HQ 관리자는 모든 지점 조회 가능
-        if ("HQ_ADMIN".equals(currentUser.getRole()) || 
-            "SUPER_HQ_ADMIN".equals(currentUser.getRole()) || 
-            "HQ_MASTER".equals(currentUser.getRole())) {
-            filteredStats = allStats;
-            log.info("🏢 본사 관리자 - 모든 지점 상담사 조회");
-        } else {
-            // 지점별 필터링
-            filteredStats = allStats.stream()
-                .filter(item -> {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> consultantObj = (Map<String, Object>) item.get("consultant");
-                    if (consultantObj == null) return false;
-                    String consultantBranchCode = (String) consultantObj.get("branchCode");
-                    return branchCode != null && branchCode.equals(consultantBranchCode);
-                })
-                .collect(java.util.stream.Collectors.toList());
-            log.info("🏢 지점별 상담사 조회: 지점코드={}, 조회된 수={}/{}", branchCode, filteredStats.size(), allStats.size());
+            filteredStats = consultantStatsService.getAllConsultantsWithStats();
+            log.warn("⚠️ tenantId 없음, 전체 상담사 조회: 조회된 수={}", filteredStats.size());
         }
         
         Map<String, Object> data = new HashMap<>();
@@ -181,41 +159,17 @@ public class AdminController extends BaseApiController {
         }
         
         String tenantId = currentUser.getTenantId();
-        String branchCode = currentUser.getBranchCode();
-        log.info("🔍 현재 사용자 정보: tenantId={}, branchCode={}, 역할={}", tenantId, branchCode, currentUser.getRole());
+        log.info("🔍 현재 사용자 정보: tenantId={}, 역할={}", tenantId, currentUser.getRole());
         
-        // ⭐ 테넌트별 내담자 조회 (tenant_id 필터링)
-        List<Map<String, Object>> allStats;
+        // ⭐ 테넌트별 내담자 조회 (tenant_id 필터링만 사용)
+        List<Map<String, Object>> filteredStats;
         if (tenantId != null && !tenantId.isEmpty()) {
-            allStats = clientStatsService.getAllClientsWithStatsByTenant(tenantId);
-            log.info("📊 테넌트별 내담자 조회: tenantId={}, 조회된 수={}", tenantId, allStats.size());
+            filteredStats = clientStatsService.getAllClientsWithStatsByTenant(tenantId);
+            log.info("📊 테넌트별 내담자 조회: tenantId={}, 조회된 수={}", tenantId, filteredStats.size());
         } else {
             // 폴백: 전체 조회 (레거시 호환)
-            allStats = clientStatsService.getAllClientsWithStats();
-            log.warn("⚠️ tenantId 없음, 전체 내담자 조회: 조회된 수={}", allStats.size());
-        }
-        
-        // 지점별 필터링
-        List<Map<String, Object>> filteredStats;
-        
-        // HQ 관리자는 모든 지점 조회 가능
-        if ("HQ_ADMIN".equals(currentUser.getRole()) || 
-            "SUPER_HQ_ADMIN".equals(currentUser.getRole()) || 
-            "HQ_MASTER".equals(currentUser.getRole())) {
-            filteredStats = allStats;
-            log.info("🏢 본사 관리자 - 모든 지점 내담자 조회");
-        } else {
-            // 지점별 필터링
-            filteredStats = allStats.stream()
-                .filter(item -> {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> clientObj = (Map<String, Object>) item.get("client");
-                    if (clientObj == null) return false;
-                    String clientBranchCode = (String) clientObj.get("branchCode");
-                    return branchCode != null && branchCode.equals(clientBranchCode);
-                })
-                .collect(java.util.stream.Collectors.toList());
-            log.info("🏢 지점별 내담자 조회: 지점코드={}, 조회된 수={}/{}", branchCode, filteredStats.size(), allStats.size());
+            filteredStats = clientStatsService.getAllClientsWithStats();
+            log.warn("⚠️ tenantId 없음, 전체 내담자 조회: 조회된 수={}", filteredStats.size());
         }
         
         Map<String, Object> data = new HashMap<>();
@@ -284,31 +238,12 @@ public class AdminController extends BaseApiController {
         
         log.info("🔍 상담사 조회 권한 확인 완료: role={}", currentUser.getRole());
         
-        // 현재 로그인한 사용자의 지점코드 확인
-        String currentBranchCode = currentUser.getBranchCode();
-        log.info("🔍 현재 사용자 지점코드: {}, 역할: {}", currentBranchCode, currentUser.getRole());
+        // ⭐ 테넌트별 상담사 조회 (tenant_id 필터링만 사용)
+        String tenantId = currentUser.getTenantId();
+        log.info("🔍 현재 사용자 tenantId: {}, 역할: {}", tenantId, currentUser.getRole());
         
-        List<Map<String, Object>> allConsultants = adminService.getAllConsultantsWithSpecialty();
-        
-        // 권한에 따른 데이터 필터링
-        List<Map<String, Object>> consultantsWithSpecialty;
-        
-        // HQ_ADMIN, SUPER_HQ_ADMIN, HQ_MASTER만 모든 지점 조회 가능
-        if ("HQ_ADMIN".equals(currentUser.getRole()) || 
-            "SUPER_HQ_ADMIN".equals(currentUser.getRole()) || 
-            "HQ_MASTER".equals(currentUser.getRole())) {
-            // 본사 관리자는 모든 지점 내역 조회 가능
-            consultantsWithSpecialty = allConsultants;
-            log.info("🔍 본사 관리자 - 모든 지점 상담사 조회 권한");
-        } else {
-            // 지점별 필터링 (BRANCH_SUPER_ADMIN 포함 모든 지점 관리자는 자신의 지점만)
-            consultantsWithSpecialty = allConsultants.stream()
-                .filter(consultant -> currentBranchCode.equals(consultant.get("branchCode")))
-                .collect(java.util.stream.Collectors.toList());
-            log.info("🔍 지점별 상담사 조회: 지점코드={}, 역할={}", currentBranchCode, currentUser.getRole());
-        }
-        
-        log.info("🔍 상담사 목록 조회 완료 - 전체: {}, 필터링 후: {}", allConsultants.size(), consultantsWithSpecialty.size());
+        List<Map<String, Object>> consultantsWithSpecialty = adminService.getAllConsultantsWithSpecialty();
+        log.info("📊 상담사 조회 완료: 조회된 수={}", consultantsWithSpecialty.size());
         
         Map<String, Object> data = new HashMap<>();
         data.put("consultants", consultantsWithSpecialty);
@@ -317,97 +252,6 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
     
-    /**
-     * 지점별 상담사 목록 조회
-     */
-    @GetMapping("/consultants/by-branch/{branchId}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultantsByBranch(@PathVariable Long branchId, HttpSession session) {
-        log.info("🔍 지점별 상담사 목록 조회: branchId={}", branchId);
-        
-        // 동적 권한 체크
-        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CONSULTANT_MANAGE", dynamicPermissionService);
-        if (permissionResponse != null) {
-            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-        }
-        
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            log.warn("❌ 현재 사용자 정보가 없습니다.");
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
-        log.info("🔍 현재 사용자: role={}, branchCode={}", currentUser.getRole(), currentUser.getBranchCode());
-        
-        // 지점 정보 조회
-        log.info("🔍 지점 정보 조회 시작: branchId={}", branchId);
-        var branchResponse = branchService.getBranchResponse(branchId);
-        log.info("🔍 지점 정보 조회 결과: {}", branchResponse != null ? "성공" : "실패");
-        if (branchResponse == null) {
-            log.warn("❌ 지점 정보 조회 실패: branchId={}", branchId);
-            throw new IllegalArgumentException("존재하지 않는 지점입니다.");
-        }
-        
-        // 권한 확인 - BRANCH_SUPER_ADMIN은 자신의 지점만 조회 가능
-        if (currentUser.getRole() == com.coresolution.consultation.constant.UserRole.BRANCH_SUPER_ADMIN) {
-            Long currentUserBranchId = currentUser.getBranch() != null ? currentUser.getBranch().getId() : null;
-            if (currentUserBranchId == null || !currentUserBranchId.equals(branchId)) {
-                log.warn("❌ 지점 어드민이 다른 지점 조회 시도: 요청={}, 소속={}", branchId, currentUserBranchId);
-                throw new org.springframework.security.access.AccessDeniedException("해당 지점의 상담사 조회 권한이 없습니다.");
-            }
-        }
-        
-        // 지점별 상담사 조회
-        log.info("🔍 지점별 상담사 조회 시작: branchId={}", branchId);
-        List<User> branchConsultants = branchService.getBranchConsultants(branchId);
-        log.info("🔍 지점별 상담사 조회 완료: branchId={}, count={}", branchId, branchConsultants.size());
-        
-        // 상담사 등급별 색상/아이콘 정보 조회
-        Map<String, Map<String, String>> gradeStyles = new HashMap<>();
-        try {
-            List<com.coresolution.consultation.entity.CommonCode> gradeCodes = commonCodeService.getCommonCodesByGroup("CONSULTANT_GRADE");
-            for (com.coresolution.consultation.entity.CommonCode code : gradeCodes) {
-                Map<String, String> style = new HashMap<>();
-                style.put("color", code.getColorCode() != null ? code.getColorCode() : "#6b7280");
-                style.put("icon", code.getIcon() != null ? code.getIcon() : "⭐");
-                gradeStyles.put(code.getCodeValue(), style);
-            }
-        } catch (Exception e) {
-            log.warn("상담사 등급 스타일 조회 실패, 기본값 사용: {}", e.getMessage());
-        }
-        
-        // 상담사 정보를 Map 형태로 변환
-        List<Map<String, Object>> consultantsData = branchConsultants.stream()
-            .filter(consultant -> !consultant.getIsDeleted() && consultant.getIsActive()) // 삭제되지 않고 활성화된 상담사만
-            .map(consultant -> {
-                Map<String, Object> consultantData = new HashMap<>();
-                consultantData.put("id", consultant.getId());
-                consultantData.put("name", consultant.getUsername());
-                consultantData.put("email", consultant.getEmail());
-                consultantData.put("phoneNumber", consultant.getPhone());
-                consultantData.put("branchCode", consultant.getBranchCode());
-                consultantData.put("branchId", consultant.getBranch() != null ? consultant.getBranch().getId() : null);
-                consultantData.put("role", consultant.getRole().name());
-                consultantData.put("isActive", consultant.getIsActive());
-                consultantData.put("createdAt", consultant.getCreatedAt());
-                
-                // 상담사 등급별 색상/아이콘 추가
-                String grade = consultant.getGrade() != null ? consultant.getGrade() : "CONSULTANT_JUNIOR";
-                Map<String, String> style = gradeStyles.getOrDefault(grade, Map.of("color", "#6b7280", "icon", "⭐"));
-                consultantData.put("gradeColor", style.get("color"));
-                consultantData.put("gradeIcon", style.get("icon"));
-                consultantData.put("grade", grade);
-                
-                return consultantData;
-            })
-            .collect(java.util.stream.Collectors.toList());
-        
-        log.info("🔍 지점별 상담사 조회 완료: branchId={}, count={}", branchId, consultantsData.size());
-        
-        Map<String, Object> data = new HashMap<>();
-        data.put("consultants", consultantsData);
-        data.put("count", consultantsData.size());
-        
-        return success(data);
-    }
     
     /**
      * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
@@ -416,25 +260,13 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllConsultantsWithVacationInfo(@RequestParam String date, HttpSession session) {
         log.info("🔍 휴무 정보를 포함한 상담사 목록 조회: date={}", date);
         
-        // 현재 로그인한 사용자의 지점코드 확인
+        // ⭐ 테넌트별 상담사 조회 (tenant_id 필터링만 사용)
         User currentUser = SessionUtils.getCurrentUser(session);
-        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
-        log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+        String tenantId = currentUser != null ? currentUser.getTenantId() : null;
+        log.info("🔍 현재 사용자 tenantId: {}", tenantId);
         
-        List<Map<String, Object>> allConsultantsWithVacation = adminService.getAllConsultantsWithVacationInfo(date);
-        
-        // 지점코드로 필터링
-        List<Map<String, Object>> consultantsWithVacation = allConsultantsWithVacation.stream()
-            .filter(consultant -> {
-                if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
-                    return true; // 지점코드가 없으면 모든 상담사 조회
-                }
-                String consultantBranchCode = (String) consultant.get("branchCode");
-                return currentBranchCode.equals(consultantBranchCode);
-            })
-            .collect(java.util.stream.Collectors.toList());
-        
-        log.info("🔍 휴무 정보를 포함한 상담사 목록 조회 완료 - 전체: {}, 필터링 후: {}", allConsultantsWithVacation.size(), consultantsWithVacation.size());
+        List<Map<String, Object>> consultantsWithVacation = adminService.getAllConsultantsWithVacationInfo(date);
+        log.info("📊 휴무 정보를 포함한 상담사 조회 완료: 조회된 수={}", consultantsWithVacation.size());
         
         Map<String, Object> data = new HashMap<>();
         data.put("consultants", consultantsWithVacation);
@@ -457,19 +289,12 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        log.info("👤 현재 사용자: {} (역할: {}, 지점코드: {})", 
-                currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
+        log.info("👤 현재 사용자: {} (역할: {})", 
+                currentUser.getUsername(), currentUser.getRole());
         
-        // 지점 관리자인 경우 자신의 지점 상담사만 조회
-        Map<String, Object> vacationStats;
-        if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
-            log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회 (역할: {}, 지점: {})", 
-                    currentUser.getRole(), currentUser.getBranchCode());
-            vacationStats = adminService.getConsultantVacationStatsByBranch(period, currentUser.getBranchCode());
-        } else {
-            log.info("🏢 본사 관리자 - 모든 상담사 조회 (역할: {})", currentUser.getRole());
-            vacationStats = adminService.getConsultantVacationStats(period);
-        }
+        // ⭐ 테넌트별 상담사 휴무 통계 조회 (tenant_id 필터링만 사용)
+        Map<String, Object> vacationStats = adminService.getConsultantVacationStats(period);
+        log.info("📊 상담사 휴무 통계 조회 완료");
         
         return success(vacationStats);
     }
@@ -488,23 +313,12 @@ public class AdminController extends BaseApiController {
         }
         
         User currentUser = SessionUtils.getCurrentUser(session);
+        String tenantId = currentUser != null ? currentUser.getTenantId() : null;
+        log.info("🔍 현재 사용자 tenantId: {}", tenantId);
         
-        String currentBranchCode = currentUser.getBranchCode();
-        log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
-        
-        List<Client> allClients = adminService.getAllClients();
-        
-        // 지점코드로 필터링
-        List<Client> clients = allClients.stream()
-            .filter(client -> {
-                if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
-                    return true; // 지점코드가 없으면 모든 내담자 조회
-                }
-                return currentBranchCode.equals(client.getBranchCode());
-            })
-            .collect(java.util.stream.Collectors.toList());
-        
-        log.info("🔍 내담자 목록 조회 완료 - 전체: {}, 필터링 후: {}", allClients.size(), clients.size());
+        // ⭐ 테넌트별 내담자 조회 (tenant_id 필터링만 사용)
+        List<Client> clients = adminService.getAllClients();
+        log.info("📊 내담자 목록 조회 완료: 조회된 수={}", clients.size());
         
         Map<String, Object> data = new HashMap<>();
         data.put("clients", clients);
@@ -598,8 +412,8 @@ public class AdminController extends BaseApiController {
         List<Map<String, Object>> activeMappings = mappings.stream()
             .filter(mapping -> 
                 mapping.getPaymentStatus() != null && 
-                (mapping.getPaymentStatus().toString().equals("APPROVED") || 
-                 mapping.getPaymentStatus().toString().equals("PENDING"))
+                (statusCodeHelper.isStatus("PAYMENT_STATUS", mapping.getPaymentStatus().toString(), "APPROVED") || 
+                 statusCodeHelper.isStatus("PAYMENT_STATUS", mapping.getPaymentStatus().toString(), "PENDING"))
             )
             .map(mapping -> {
                 Map<String, Object> data = new java.util.HashMap<>();
@@ -613,7 +427,7 @@ public class AdminController extends BaseApiController {
                             "name", mapping.getClient().getName(),
                             "email", mapping.getClient().getEmail() != null ? mapping.getClient().getEmail() : "",
                             "phone", mapping.getClient().getPhone() != null ? mapping.getClient().getPhone() : "",
-                            "status", "ACTIVE", // Client 엔티티에 status 필드가 없으므로 기본값 사용
+                            "status", statusCodeHelper.getStatusCode("MAPPING_STATUS", "ACTIVE") != null ? "ACTIVE" : "ACTIVE", // Client 엔티티에 status 필드가 없으므로 기본값 사용
                             "createdAt", mapping.getClient().getCreatedAt() != null ? mapping.getClient().getCreatedAt().toString() : ""
                         ));
                     }
@@ -716,13 +530,13 @@ public class AdminController extends BaseApiController {
             // 통계 계산
             long totalMappings = mappings.size();
             long activeMappings = mappings.stream()
-                .filter(m -> "ACTIVE".equals(m.getStatus() != null ? m.getStatus().toString() : ""))
+                .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS", m.getStatus() != null ? m.getStatus().toString() : "", "ACTIVE"))
                 .count();
             long completedMappings = mappings.stream()
-                .filter(m -> "COMPLETED".equals(m.getStatus() != null ? m.getStatus().toString() : ""))
+                .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS", m.getStatus() != null ? m.getStatus().toString() : "", "COMPLETED"))
                 .count();
             long pendingMappings = mappings.stream()
-                .filter(m -> "PENDING".equals(m.getStatus() != null ? m.getStatus().toString() : ""))
+                .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS", m.getStatus() != null ? m.getStatus().toString() : "", "PENDING"))
                 .count();
             
             Map<String, Object> stats = new java.util.HashMap<>();
@@ -770,16 +584,16 @@ public class AdminController extends BaseApiController {
             // 통계 계산
             long totalToday = todaySchedules.size();
             long completedToday = todaySchedules.stream()
-                .filter(s -> "COMPLETED".equals(s.getStatus() != null ? s.getStatus().toString() : ""))
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS", s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
                 .count();
             long inProgressToday = todaySchedules.stream()
-                .filter(s -> "IN_PROGRESS".equals(s.getStatus() != null ? s.getStatus().toString() : ""))
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS", s.getStatus() != null ? s.getStatus().toString() : "", "IN_PROGRESS"))
                 .count();
             long cancelledToday = todaySchedules.stream()
-                .filter(s -> "CANCELLED".equals(s.getStatus() != null ? s.getStatus().toString() : ""))
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS", s.getStatus() != null ? s.getStatus().toString() : "", "CANCELLED"))
                 .count();
             long bookedToday = todaySchedules.stream()
-                .filter(s -> "BOOKED".equals(s.getStatus() != null ? s.getStatus().toString() : ""))
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS", s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
                 .count();
             
             Map<String, Object> stats = new java.util.HashMap<>();
@@ -2494,23 +2308,22 @@ public class AdminController extends BaseApiController {
     }
     
     /**
-     * 재무 거래 목록 조회 (지점별 필터링 적용)
+     * 재무 거래 목록 조회 (테넌트별 필터링 적용)
      */
     @GetMapping("/financial-transactions")
     public ResponseEntity<Map<String, Object>> getFinancialTransactions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String branchCode,
             @RequestParam(required = false) String transactionType,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             HttpSession session) {
         try {
-            log.info("🔍 재무 거래 목록 조회: 지점={}, 유형={}, 카테고리={}", branchCode, transactionType, category);
+            log.info("🔍 재무 거래 목록 조회: 유형={}, 카테고리={}", transactionType, category);
             
-            User sessionUser = SessionUtils.getCurrentUser(session);
-            if (sessionUser == null) {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
                 log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
@@ -2518,59 +2331,15 @@ public class AdminController extends BaseApiController {
                 return ResponseEntity.status(401).body(response);
             }
             
-            // 데이터베이스에서 최신 사용자 정보 조회 (branchCode 포함)
-            User currentUser = userService.findById(sessionUser.getId()).orElse(sessionUser);
+            String tenantId = currentUser.getTenantId();
+            log.info("👤 현재 사용자: 이메일={}, 역할={}, tenantId={}", 
+                    currentUser.getEmail(), currentUser.getRole(), tenantId);
             
-            log.info("👤 현재 사용자: 이메일={}, 역할={}, 지점코드={}", 
-                    currentUser.getEmail(), currentUser.getRole(), currentUser.getBranchCode());
-            
-            // 지점코드 결정: HQ_MASTER는 모든 지점, 나머지는 자신의 지점만
-            String targetBranchCode = branchCode;
-            UserRole role = currentUser.getRole();
-            
-            // 지점코드 결정 및 보안 검사
-            if (role != UserRole.HQ_MASTER && role != UserRole.SUPER_HQ_ADMIN) {
-                // 지점 관리자는 자신의 지점 데이터만 조회
-                targetBranchCode = currentUser.getBranchCode();
-                log.info("📍 지점 관리자 - 자기 지점만 조회: {}", targetBranchCode);
-                
-                // 지점코드가 null이면 세션 오류로 처리
-                if (targetBranchCode == null || targetBranchCode.isEmpty()) {
-                    log.error("❌ 지점 관리자의 지점코드가 없음 - 세션 오류, 재로그인 필요");
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("success", false);
-                    response.put("message", "세션이 만료되었습니다. 다시 로그인해주세요.");
-                    response.put("redirectToLogin", true);
-                    return ResponseEntity.status(401).body(response);
-                }
-            } else {
-                // 본사 관리자는 요청된 지점 또는 모든 지점 조회
-                log.info("📍 본사 관리자 - 요청 지점 조회: {}", targetBranchCode);
-            }
-            
-            // 재무 거래 목록 조회
-            org.springframework.data.domain.Page<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions;
-            if (targetBranchCode != null && !targetBranchCode.isEmpty() && !"HQ".equals(targetBranchCode)) {
-                // 특정 지점 데이터만 조회
-                transactions = financialTransactionService.getTransactionsByBranch(
-                    targetBranchCode, transactionType, category, startDate, endDate,
+            // ⭐ 테넌트별 재무 거래 목록 조회 (tenant_id 필터링만 사용)
+            org.springframework.data.domain.Page<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
+                financialTransactionService.getTransactions(
                     org.springframework.data.domain.PageRequest.of(page, size)
                 );
-            } else if ("HQ".equals(targetBranchCode) || (role == UserRole.HQ_MASTER || role == UserRole.SUPER_HQ_ADMIN)) {
-                // HQ 지점코드이거나 본사 관리자인 경우: 모든 지점 데이터 조회
-                transactions = financialTransactionService.getTransactions(
-                    org.springframework.data.domain.PageRequest.of(page, size)
-                );
-                log.info("📊 HQ 또는 본사 관리자 - 전체 데이터 조회");
-            } else {
-                // 그 외의 경우 세션 오류로 처리
-                log.error("❌ 유효하지 않은 지점코드 또는 권한: {} - 재로그인 필요", targetBranchCode);
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "세션이 만료되었습니다. 다시 로그인해주세요.");
-                response.put("redirectToLogin", true);
-                return ResponseEntity.status(401).body(response);
-            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -2579,9 +2348,8 @@ public class AdminController extends BaseApiController {
             response.put("totalPages", transactions.getTotalPages());
             response.put("currentPage", transactions.getNumber());
             response.put("size", transactions.getSize());
-            response.put("branchCode", targetBranchCode);
             
-            log.info("✅ 재무 거래 목록 조회 완료: 지점={}, 총 {}건", targetBranchCode, transactions.getTotalElements());
+            log.info("✅ 재무 거래 목록 조회 완료: tenantId={}, 총 {}건", tenantId, transactions.getTotalElements());
             
             return ResponseEntity.ok(response);
             
@@ -2658,10 +2426,8 @@ public class AdminController extends BaseApiController {
                 return ResponseEntity.status(401).body(response);
             }
             
-            // 세금 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
-            if (!currentUser.getRole().isAdmin() && 
-                !currentUser.getRole().isBranchSuperAdmin() && 
-                !currentUser.getRole().isHeadquartersAdmin()) {
+            // 세금 관리 권한 확인 (관리자만)
+            if (!currentUser.getRole().isAdmin()) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
                 response.put("message", "세금 관리 권한이 없습니다.");
@@ -2710,10 +2476,8 @@ public class AdminController extends BaseApiController {
                 return ResponseEntity.status(401).body(response);
             }
             
-            // 세금 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
-            if (!currentUser.getRole().isAdmin() && 
-                !currentUser.getRole().isBranchSuperAdmin() && 
-                !currentUser.getRole().isHeadquartersAdmin()) {
+            // 세금 관리 권한 확인 (관리자만)
+            if (!currentUser.getRole().isAdmin()) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
                 response.put("message", "세금 관리 권한이 없습니다.");

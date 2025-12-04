@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
@@ -206,7 +206,11 @@ const ConsultantMessages = () => {
   if (sessionLoading) {
     return (
       <SimpleLayout title="메시지 관리">
-        <div className="mg-loading">로딩중...</div>
+        <UnifiedLoading 
+          type="page"
+          text="세션 정보를 불러오는 중..."
+          variant="pulse"
+        />
       </SimpleLayout>
     );
   }
@@ -275,10 +279,11 @@ const ConsultantMessages = () => {
 
         {/* 로딩 상태 */}
         {loading && (
-          <div className="consultant-messages-loading-container">
-            <div className="mg-loading">로딩중...</div>
-            <p className="consultant-messages-loading-text">잠시만 기다려주세요...</p>
-          </div>
+          <UnifiedLoading 
+            type="page"
+            text="메시지를 불러오는 중..."
+            variant="pulse"
+          />
         )}
 
         {/* 메시지 목록 */}

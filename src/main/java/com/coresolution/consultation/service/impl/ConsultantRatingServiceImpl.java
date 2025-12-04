@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Branch;
@@ -22,6 +20,8 @@ import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -551,9 +551,9 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             } else {
                 try {
                     Branch branch = branchService.getBranchByCode(branchCode);
-                    branchConsultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                    List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
                     // isActive = true 필터링 (Java 스트림)
-                    branchConsultants = branchConsultants.stream()
+                    branchConsultants = consultants.stream()
                         .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                         .collect(Collectors.toList());
                 } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
@@ -561,7 +561,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                     branchConsultants = new ArrayList<>();
                 }
             }
-            List<Long> consultantIds = branchConsultants.stream()
+            final List<User> finalBranchConsultants = new ArrayList<>(branchConsultants); // 람다에서 사용하기 위한 final 변수
+            List<Long> consultantIds = finalBranchConsultants.stream()
                 .map(User::getId)
                 .collect(Collectors.toList());
             
@@ -570,6 +571,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             // 해당 지점 상담사들의 평가만 조회
             List<ConsultantRating> branchRatings = ratingRepository.findByTenantId(tenantId).stream()
                 .filter(rating -> consultantIds.contains(rating.getConsultant().getId()))
+                .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
                 .collect(Collectors.toList());
             
             Long totalRatings = (long) branchRatings.size();
@@ -636,9 +638,9 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             } else {
                 try {
                     Branch branch = branchService.getBranchByCode(branchCode);
-                    branchConsultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                    List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
                     // isActive = true 필터링 (Java 스트림)
-                    branchConsultants = branchConsultants.stream()
+                    branchConsultants = consultants.stream()
                         .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                         .collect(Collectors.toList());
                 } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
@@ -646,7 +648,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                     branchConsultants = new ArrayList<>();
                 }
             }
-            List<Long> consultantIds = branchConsultants.stream()
+            final List<User> finalBranchConsultants = new ArrayList<>(branchConsultants); // 람다에서 사용하기 위한 final 변수
+            List<Long> consultantIds = finalBranchConsultants.stream()
                 .map(User::getId)
                 .collect(Collectors.toList());
             
@@ -685,7 +688,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                     Long ratingCount = consultantCounts.getOrDefault(consultantId, 0L);
                     
                     // 상담사 정보 조회
-                    User consultant = branchConsultants.stream()
+                    User consultant = finalBranchConsultants.stream()
                         .filter(c -> c.getId().equals(consultantId))
                         .findFirst()
                         .orElse(null);

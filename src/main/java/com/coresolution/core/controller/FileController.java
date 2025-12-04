@@ -25,7 +25,7 @@ import java.nio.file.Paths;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping({"/api/v1/files", "/api/files"}) // v1 경로 추가, 레거시 경로 유지
 @Tag(name = "File", description = "파일 서빙 API")
 public class FileController {
     

@@ -15,7 +15,7 @@ export const API_ENDPOINTS = {
     GET_DASHBOARD_BY_ID: (id) => `/api/v1/tenant/dashboards/${id}`,
     
     // 브랜딩 정보
-    BRANDING: '/api/admin/branding',
+    BRANDING: '/api/v1/admin/branding',
     
     // 위젯 데이터 소스
     WIDGET_DATA: {
@@ -28,48 +28,48 @@ export const API_ENDPOINTS = {
     }
   },
 
-  // === 관리자 통계 API ===
+  // === 관리자 통계 API (표준 경로: /api/v1/admin) ===
   ADMIN: {
     // 상담사 관련
     CONSULTANTS: {
-      WITH_STATS: '/api/admin/consultants/with-stats',
-      WITH_VACATION: '/api/admin/consultants/with-vacation',
-      RATING_STATS: '/api/admin/consultant-rating-stats'
+      WITH_STATS: '/api/v1/admin/consultants/with-stats',
+      WITH_VACATION: '/api/v1/admin/consultants/with-vacation',
+      RATING_STATS: '/api/v1/admin/consultant-rating-stats'
     },
     
     // 내담자 관련
     CLIENTS: {
-      WITH_STATS: '/api/admin/clients/with-stats',
-      WITH_MAPPING_INFO: '/api/admin/clients/with-mapping-info'
+      WITH_STATS: '/api/v1/admin/clients/with-stats',
+      WITH_MAPPING_INFO: '/api/v1/admin/clients/with-mapping-info'
     },
     
     // 매칭 관련
     MAPPINGS: {
-      LIST: '/api/admin/mappings',
-      STATS: '/api/admin/mappings/stats',
-      ACTIVE: '/api/admin/mappings/active',
-      PENDING_PAYMENT: '/api/admin/mappings/pending-payment',
-      PAYMENT_CONFIRMED: '/api/admin/mappings/payment-confirmed',
-      PENDING_DEPOSIT: '/api/admin/mappings/pending-deposit',
-      SESSIONS_EXHAUSTED: '/api/admin/mappings/sessions-exhausted'
+      LIST: '/api/v1/admin/mappings',
+      STATS: '/api/v1/admin/mappings/stats',
+      ACTIVE: '/api/v1/admin/mappings/active',
+      PENDING_PAYMENT: '/api/v1/admin/mappings/pending-payment',
+      PAYMENT_CONFIRMED: '/api/v1/admin/mappings/payment-confirmed',
+      PENDING_DEPOSIT: '/api/v1/admin/mappings/pending-deposit',
+      SESSIONS_EXHAUSTED: '/api/v1/admin/mappings/sessions-exhausted'
     },
     
     // 통계 관련
     STATISTICS: {
-      OVERALL: '/api/admin/statistics/overall',
-      TRENDS: '/api/admin/statistics/trends',
-      CHART_DATA: '/api/admin/statistics/chart-data',
-      RECENT_ACTIVITY: '/api/admin/statistics/recent-activity',
-      CONSULTATION_COMPLETION: '/api/admin/statistics/consultation-completion',
-      VACATION: '/api/admin/vacation-statistics',
-      REFUND: '/api/admin/refund-statistics'
+      OVERALL: '/api/v1/admin/statistics/overall',
+      TRENDS: '/api/v1/admin/statistics/trends',
+      CHART_DATA: '/api/v1/admin/statistics/chart-data',
+      RECENT_ACTIVITY: '/api/v1/admin/statistics/recent-activity',
+      CONSULTATION_COMPLETION: '/api/v1/admin/statistics/consultation-completion',
+      VACATION: '/api/v1/admin/vacation-statistics',
+      REFUND: '/api/v1/admin/refund-statistics'
     },
     
     // 위젯 전용 API (새로 추가)
     WIDGETS: {
-      TODAY_STATS: '/api/admin/today-stats',
-      PENDING_DEPOSIT_STATS: '/api/admin/pending-deposit-stats',
-      SYSTEM_STATUS: '/api/admin/system-status'
+      TODAY_STATS: '/api/v1/admin/today-stats',
+      PENDING_DEPOSIT_STATS: '/api/v1/admin/pending-deposit-stats',
+      SYSTEM_STATUS: '/api/v1/admin/system-status'
     }
   },
   
@@ -86,17 +86,17 @@ export const API_ENDPOINTS = {
     }
   },
   
-  // === 인증 관련 API ===
+  // === 인증 관련 API (표준 경로: /api/v1/auth) ===
   AUTH: {
-    CURRENT_USER: '/api/auth/current-user',
-    LOGIN: '/api/auth/login',
-    LOGOUT: '/api/auth/logout'
+    CURRENT_USER: '/api/v1/auth/current-user',
+    LOGIN: '/api/v1/auth/login',
+    LOGOUT: '/api/v1/auth/logout'
   },
   
-  // === 공통 코드 API ===
+  // === 공통 코드 API (표준 경로: /api/v1/common-codes) ===
   COMMON_CODE: {
-    LIST: '/api/common-codes',
-    BY_GROUP: '/api/common-codes/group'
+    LIST: '/api/v1/common-codes',
+    BY_GROUP: '/api/v1/common-codes/group'
   }
 };
 

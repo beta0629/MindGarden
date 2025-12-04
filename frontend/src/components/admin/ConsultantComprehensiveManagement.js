@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { FaUser, FaEdit, FaTrash, FaPlus, FaEye, FaUsers, FaLink, FaCalendarAlt, FaClipboardList } from 'react-icons/fa';
-// import SimpleLayout from '../layout/SimpleLayout';
-import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
+import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { getUserStatusColor, getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { getCurrentUser } from '../../utils/session';
-import { getBranchNameByCode } from '../../utils/branchUtils';
+// getBranchNameByCode import 제거됨 - 브랜치 코드 제거 정책
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import { MGConfirmModal } from '../common/MGModal';
@@ -22,7 +22,6 @@ const ConsultantComprehensiveManagement = () => {
     const [mainTab, setMainTab] = useState('comprehensive');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
-    const [filterBranch, setFilterBranch] = useState('all');
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('view');
     const [formData, setFormData] = useState({
@@ -41,11 +40,7 @@ const ConsultantComprehensiveManagement = () => {
         try {
             console.log('🔄 상담사 목록 로딩 시작...');
             
-            // 현재 사용자의 지점코드 가져오기
-            const currentUser = getCurrentUser();
-            const userBranchCode = currentUser?.branchCode;
-            
-            console.log('👤 현재 사용자 지점코드:', userBranchCode);
+            // 브랜치 코드 제거 정책에 따라 지점코드 사용 제거됨
             
             // 통합 API 사용 (캐시 적용)
             const consultantsList = await getAllConsultantsWithStats();
@@ -67,7 +62,7 @@ const ConsultantComprehensiveManagement = () => {
                         phone: consultantEntity.phone,
                         role: consultantEntity.role,
                         isActive: consultantEntity.isActive,
-                        branchCode: consultantEntity.branchCode,
+                        // branchCode 제거됨 - 브랜치 코드 제거 정책
                         specialty: consultantEntity.specialty, // Consultant 엔티티의 specialty
                         specialtyDetails: consultantEntity.specialtyDetails, // Consultant 엔티티의 specialtyDetails
                         specialization: consultantEntity.specialization, // User 엔티티의 specialization
@@ -205,7 +200,7 @@ const ConsultantComprehensiveManagement = () => {
     }, []);
 
     // 필터링된 상담사 목록
-    const getFilteredConsultants = useMemo(() => { console.log('🔍 상담사 필터링 시작:', { searchTerm, filterStatus, filterBranch, consultants: consultants.length });
+    const getFilteredConsultants = useMemo(() => { console.log('🔍 상담사 필터링 시작:', { searchTerm, filterStatus, consultants: consultants.length });
         
         let filtered = consultants;
 
@@ -224,14 +219,11 @@ const ConsultantComprehensiveManagement = () => {
             filtered = filtered.filter(consultant => consultant.status === filterStatus);
         }
 
-        // 지점 필터링
-        if (filterBranch && filterBranch !== 'all') {
-            filtered = filtered.filter(consultant => consultant.branchCode === filterBranch);
-        }
+        // 지점 필터링 제거됨 - 브랜치 코드 제거 정책
 
         console.log('✅ 필터링 결과:', filtered.length, '명');
         return filtered;
-    }, [consultants, searchTerm, filterStatus, filterBranch]);
+    }, [consultants, searchTerm, filterStatus]);
 
     // 통계 계산
     const getOverallStats = useCallback(() => {
@@ -659,7 +651,7 @@ const ConsultantComprehensiveManagement = () => {
                                                         </div>
                                                 
                                                 <div className="mg-v2-consultant-card__detail-item">
-                                                    <span>🏢 지점: { getBranchNameByCode(consultant.branchCode) }</span>
+                                                    {/* 지점 정보 제거됨 - 브랜치 코드 제거 정책 */}
                                                             </div>
                                                 
                                                 <div className="mg-v2-consultant-card__detail-item">
@@ -781,7 +773,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 </div>
                                                 
                                                 <div className="mg-v2-consultant-card__detail-item">
-                                                    <span>🏢 지점: { getBranchNameByCode(consultant.branchCode) }</span>
+                                                    {/* 지점 정보 제거됨 - 브랜치 코드 제거 정책 */}
                                                 </div>
                                                 
                                                 <div className="mg-v2-consultant-card__detail-item">
@@ -978,7 +970,13 @@ const ConsultantComprehensiveManagement = () => {
             </div>
             )}
 
-            { loading && <div className="mg-loading">로딩중...</div> }
+            { loading && (
+                <UnifiedLoading 
+                    type="page"
+                    text="데이터를 불러오는 중..."
+                    variant="pulse"
+                />
+            ) }
             
             { /* 삭제 확인 모달 */ }
             <MGConfirmModal

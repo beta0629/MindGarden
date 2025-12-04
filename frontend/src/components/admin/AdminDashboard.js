@@ -1467,13 +1467,10 @@ const AdminDashboard = ({ user: propUser }) => {
 
             {/* AI 및 시스템 모니터링 - 관리자만 접근 가능 */}
             {(() => {
-                const currentRole = (propUser || sessionUser)?.role;
-                const canViewMonitoring = currentRole === 'BRANCH_SUPER_ADMIN' || 
-                                         currentRole === 'HQ_ADMIN' || 
-                                         currentRole === 'SUPER_HQ_ADMIN' || 
-                                         currentRole === 'HQ_MASTER';
+                const user = propUser || sessionUser;
+                const canViewMonitoring = RoleUtils.isAdmin(user);
                 console.log('🔍 AI 모니터링 섹션 렌더링 체크:', 
-                    'currentRole:', currentRole,
+                    'currentRole:', user?.role,
                     'canViewMonitoring:', canViewMonitoring
                 );
                 return canViewMonitoring;
@@ -1483,11 +1480,8 @@ const AdminDashboard = ({ user: propUser }) => {
 
             {/* 권한 관리 - 지점 수퍼 어드민 이상만 접근 가능 */}
             {(() => {
-                const currentRole = (propUser || sessionUser)?.role;
-                const canManagePermissions = currentRole === 'BRANCH_SUPER_ADMIN' || 
-                                           currentRole === 'HQ_ADMIN' || 
-                                           currentRole === 'SUPER_HQ_ADMIN' || 
-                                           currentRole === 'HQ_MASTER';
+                const user = propUser || sessionUser;
+                const canManagePermissions = RoleUtils.isAdmin(user);
                 console.log('🔍 권한 관리 섹션 렌더링 체크:', {
                     currentRole,
                     canManagePermissions,

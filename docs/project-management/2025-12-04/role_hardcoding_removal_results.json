@@ -1,0 +1,148 @@
+{
+  "modified_files": [
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/TenantDashboardServiceImpl.java",
+      "modified": true,
+      "replacements": [
+        {
+          "type": "equals_to_enum",
+          "original": ".equals(\"ADMIN\")",
+          "replacement": "== UserRole.ADMIN",
+          "role": "ADMIN"
+        },
+        {
+          "type": "equals_to_enum",
+          "original": ".equals(\"CONSULTANT\")",
+          "replacement": "== UserRole.CONSULTANT",
+          "role": "CONSULTANT"
+        },
+        {
+          "type": "equals_to_enum",
+          "original": ".equals(\"CLIENT\")",
+          "replacement": "== UserRole.CLIENT",
+          "role": "CLIENT"
+        },
+        {
+          "type": "equals_to_enum",
+          "original": ".equals(\"STAFF\")",
+          "replacement": "== UserRole.STAFF",
+          "role": "STAFF"
+        },
+        {
+          "type": "equals_to_enum",
+          "original": ".equals(\"ADMIN\")",
+          "replacement": "== UserRole.ADMIN",
+          "role": "ADMIN"
+        },
+        {
+          "type": "equals_to_enum",
+          "original": ".equals(\"CONSULTANT\")",
+          "replacement": "== UserRole.CONSULTANT",
+          "role": "CONSULTANT"
+        },
+        {
+          "type": "import_added",
+          "original": "",
+          "replacement": "import com.coresolution.consultation.constant.UserRole;",
+          "role": "UserRole"
+        }
+      ],
+      "error": null
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/controller/TestDataController.java",
+      "modified": true,
+      "replacements": [
+        {
+          "type": "name_equals_to_enum",
+          "original": ".name().equals(\"CONSULTANT\")",
+          "replacement": "== UserRole.CONSULTANT",
+          "role": "CONSULTANT"
+        },
+        {
+          "type": "name_equals_to_enum",
+          "original": ".name().equals(\"CONSULTANT\")",
+          "replacement": "== UserRole.CONSULTANT",
+          "role": "CONSULTANT"
+        }
+      ],
+      "error": null
+    }
+  ],
+  "replacements": [
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/TenantDashboardServiceImpl.java",
+      "type": "equals_to_enum",
+      "original": ".equals(\"ADMIN\")",
+      "replacement": "== UserRole.ADMIN",
+      "role": "ADMIN"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/TenantDashboardServiceImpl.java",
+      "type": "equals_to_enum",
+      "original": ".equals(\"CONSULTANT\")",
+      "replacement": "== UserRole.CONSULTANT",
+      "role": "CONSULTANT"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/TenantDashboardServiceImpl.java",
+      "type": "equals_to_enum",
+      "original": ".equals(\"CLIENT\")",
+      "replacement": "== UserRole.CLIENT",
+      "role": "CLIENT"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/TenantDashboardServiceImpl.java",
+      "type": "equals_to_enum",
+      "original": ".equals(\"STAFF\")",
+      "replacement": "== UserRole.STAFF",
+      "role": "STAFF"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/TenantDashboardServiceImpl.java",
+      "type": "equals_to_enum",
+      "original": ".equals(\"ADMIN\")",
+      "replacement": "== UserRole.ADMIN",
+      "role": "ADMIN"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/TenantDashboardServiceImpl.java",
+      "type": "equals_to_enum",
+      "original": ".equals(\"CONSULTANT\")",
+      "replacement": "== UserRole.CONSULTANT",
+      "role": "CONSULTANT"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/TenantDashboardServiceImpl.java",
+      "type": "import_added",
+      "original": "",
+      "replacement": "import com.coresolution.consultation.constant.UserRole;",
+      "role": "UserRole"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/controller/TestDataController.java",
+      "type": "name_equals_to_enum",
+      "original": ".name().equals(\"CONSULTANT\")",
+      "replacement": "== UserRole.CONSULTANT",
+      "role": "CONSULTANT"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/controller/TestDataController.java",
+      "type": "name_equals_to_enum",
+      "original": ".name().equals(\"CONSULTANT\")",
+      "replacement": "== UserRole.CONSULTANT",
+      "role": "CONSULTANT"
+    }
+  ],
+  "backed_up": [
+    "src/main/java/com/coresolution/core/service/impl/TenantDashboardServiceImpl.java",
+    "src/main/java/com/coresolution/consultation/controller/TestDataController.java"
+  ],
+  "errors": [],
+  "summary": {
+    "files_processed": 2,
+    "replacements_made": 9,
+    "backend_files": 2,
+    "frontend_files": 0
+  }
+}

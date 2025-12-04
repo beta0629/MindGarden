@@ -1,0 +1,2447 @@
+{
+  "timestamp": "2025-12-04T11:26:15.296269",
+  "dry_run": true,
+  "summary": {
+    "total_files": 284,
+    "total_occurrences": 2022,
+    "modified_files": 0,
+    "removed_occurrences": 0
+  },
+  "files_analyzed": 284,
+  "files_modified": 0,
+  "files_backed_up": 0,
+  "errors": [],
+  "analyzed_files": [
+    {
+      "file": "src/main/java/com/coresolution/core/dto/UserRoleAssignmentRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 36,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/UserRoleAssignmentResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 61,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/TuitionPaymentResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 27,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/ClassScheduleResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 27,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/ClassRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 31,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/SettlementResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 34,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/AttendanceRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 32,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/ClassEnrollmentResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 28,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/AcademyConsultationRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 63,
+          "content": "private String branchCode;"
+        },
+        {
+          "pattern": "branchId",
+          "line": 66,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 2,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/TuitionPaymentRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 31,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/ClassResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 27,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/BillingScheduleRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 30,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/AcademyConsultationCompleteRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 49,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/ClassScheduleRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 31,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/BillingScheduleResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 28,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/InvoiceResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 34,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/SettlementCalculateRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 30,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/CourseResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 27,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/InvoiceRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 31,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/CourseRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 30,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/AttendanceResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 28,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/ClassEnrollmentRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 32,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/dto/academy/SettlementItemResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 34,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/UserRoleAssignmentRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 53,
+          "content": "\"AND (ura.branchId = ?3 OR ura.branchId IS NULL) \" +"
+        },
+        {
+          "pattern": "branchId",
+          "line": 57,
+          "content": "\"ORDER BY ura.branchId NULLS LAST, ura.effectiveFrom DESC\")"
+        },
+        {
+          "pattern": "branchId",
+          "line": 59,
+          "content": "Long userId, String tenantId, Long branchId, LocalDate date);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 69,
+          "content": "\"ORDER BY ura.branchId NULLS LAST, ura.effectiveFrom DESC\")"
+        },
+        {
+          "pattern": "branchId",
+          "line": 81,
+          "content": "\"ORDER BY ura.tenantId, ura.branchId NULLS LAST, ura.effectiveFrom DESC\")"
+        },
+        {
+          "pattern": "branchId",
+          "line": 93,
+          "content": "\"AND (ura.branchId = ?3 OR ura.branchId IS NULL) \" +"
+        },
+        {
+          "pattern": "branchId",
+          "line": 94,
+          "content": "\"ORDER BY CASE WHEN ura.branchId = ?3 THEN 0 ELSE 1 END, \" +"
+        },
+        {
+          "pattern": "branchId",
+          "line": 98,
+          "content": "Long userId, String tenantId, Long branchId, LocalDate date);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 128,
+          "content": "\"WHERE ura.branchId = ?1 AND ura.isDeleted = false\")"
+        },
+        {
+          "pattern": "branchId",
+          "line": 129,
+          "content": "List<UserRoleAssignment> findByBranchId(Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 137,
+          "content": "\"AND (ura.branchId = ?4 OR (?4 IS NULL AND ura.branchId IS NULL)) \" +"
+        },
+        {
+          "pattern": "branchId",
+          "line": 140,
+          "content": "Long userId, String tenantId, String tenantRoleId, Long branchId);"
+        }
+      ],
+      "count": 12,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/academy/ClassRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 38,
+          "content": "List<Class> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 48,
+          "content": "List<Class> findByTenantIdAndBranchIdAndCourseIdAndIsDeletedFalse(String tenantId, Long branchId, St"
+        },
+        {
+          "pattern": "branchId",
+          "line": 59,
+          "content": "@Query(\"SELECT c FROM Class c WHERE c.tenantId = :tenantId AND c.branchId = :branchId AND c.status ="
+        },
+        {
+          "pattern": "branchId",
+          "line": 60,
+          "content": "List<Class> findRecruitingClassesByTenantIdAndBranchId(@Param(\"tenantId\") String tenantId, @Param(\"b"
+        },
+        {
+          "pattern": "branchId",
+          "line": 65,
+          "content": "List<Class> findByTenantIdAndBranchIdAndTeacherIdAndIsActiveTrueAndIsDeletedFalse(String tenantId, L"
+        },
+        {
+          "pattern": "branchId",
+          "line": 70,
+          "content": "List<Class> findByTenantIdAndBranchIdAndStatusAndIsActiveTrueAndIsDeletedFalse(String tenantId, Long"
+        },
+        {
+          "pattern": "branchId",
+          "line": 75,
+          "content": "@Query(\"SELECT c FROM Class c WHERE c.tenantId = :tenantId AND c.branchId = :branchId AND c.status ="
+        },
+        {
+          "pattern": "branchId",
+          "line": 76,
+          "content": "List<Class> findAvailableClassesByTenantIdAndBranchId(@Param(\"tenantId\") String tenantId, @Param(\"br"
+        },
+        {
+          "pattern": "branchId",
+          "line": 81,
+          "content": "@Query(\"SELECT c FROM Class c WHERE c.tenantId = :tenantId AND c.branchId = :branchId AND c.startDat"
+        },
+        {
+          "pattern": "branchId",
+          "line": 82,
+          "content": "List<Class> findClassesByDateRange(@Param(\"tenantId\") String tenantId, @Param(\"branchId\") Long branc"
+        }
+      ],
+      "count": 10,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/academy/CourseRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 36,
+          "content": "List<Course> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 41,
+          "content": "@Query(\"SELECT c FROM Course c WHERE c.tenantId = :tenantId AND c.branchId IS NULL AND c.isDeleted ="
+        },
+        {
+          "pattern": "branchId",
+          "line": 53,
+          "content": "@Query(\"SELECT c FROM Course c WHERE c.tenantId = :tenantId AND (c.branchId = :branchId OR c.branchI"
+        },
+        {
+          "pattern": "branchId",
+          "line": 54,
+          "content": "List<Course> findActiveCoursesByTenantIdAndBranchId(@Param(\"tenantId\") String tenantId, @Param(\"bran"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/academy/ClassScheduleRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 37,
+          "content": "List<ClassSchedule> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 47,
+          "content": "List<ClassSchedule> findByTenantIdAndBranchIdAndClassIdAndIsDeletedFalse(String tenantId, Long branc"
+        }
+      ],
+      "count": 2,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/academy/AttendanceRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 38,
+          "content": "List<Attendance> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 59,
+          "content": "@Query(\"SELECT a FROM Attendance a WHERE a.tenantId = :tenantId AND a.branchId = :branchId AND a.att"
+        },
+        {
+          "pattern": "branchId",
+          "line": 60,
+          "content": "List<Attendance> findAttendancesByDate(@Param(\"tenantId\") String tenantId, @Param(\"branchId\") Long b"
+        },
+        {
+          "pattern": "branchId",
+          "line": 71,
+          "content": "List<Attendance> findByTenantIdAndBranchIdAndStatusAndIsDeletedFalse(String tenantId, Long branchId,"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/academy/AcademySettlementItemRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 40,
+          "content": "List<AcademySettlementItem> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long branchI"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/academy/AcademyTuitionPaymentRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 36,
+          "content": "List<AcademyTuitionPayment> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long branchI"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/academy/AcademyBillingScheduleRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 36,
+          "content": "List<AcademyBillingSchedule> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long branch"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/academy/AcademySettlementRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 36,
+          "content": "List<AcademySettlement> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 42,
+          "content": "String tenantId, Long branchId, String settlementPeriod);"
+        }
+      ],
+      "count": 2,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/academy/ClassEnrollmentRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 39,
+          "content": "List<ClassEnrollment> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 72,
+          "content": "List<ClassEnrollment> findByTenantIdAndBranchIdAndStatusAndIsActiveTrueAndIsDeletedFalse(String tena"
+        },
+        {
+          "pattern": "branchId",
+          "line": 77,
+          "content": "@Query(\"SELECT e FROM ClassEnrollment e WHERE e.tenantId = :tenantId AND e.branchId = :branchId AND "
+        },
+        {
+          "pattern": "branchId",
+          "line": 78,
+          "content": "List<ClassEnrollment> findEnrollmentsByPaymentStatus(@Param(\"tenantId\") String tenantId, @Param(\"bra"
+        },
+        {
+          "pattern": "branchId",
+          "line": 83,
+          "content": "@Query(\"SELECT e FROM ClassEnrollment e WHERE e.tenantId = :tenantId AND e.branchId = :branchId AND "
+        },
+        {
+          "pattern": "branchId",
+          "line": 84,
+          "content": "List<ClassEnrollment> findPendingPaymentEnrollments(@Param(\"tenantId\") String tenantId, @Param(\"bran"
+        }
+      ],
+      "count": 6,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/repository/academy/AcademyInvoiceRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 36,
+          "content": "List<AcademyInvoice> findByTenantIdAndBranchIdAndIsDeletedFalse(String tenantId, Long branchId);"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/context/TenantContext.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 14,
+          "content": "private static final ThreadLocal<String> branchId = new ThreadLocal<>();"
+        },
+        {
+          "pattern": "branchId",
+          "line": 41,
+          "content": "public static void setBranchId(String branchId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 42,
+          "content": "TenantContext.branchId.set(branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 51,
+          "content": "return branchId.get();"
+        },
+        {
+          "pattern": "branchId",
+          "line": 69,
+          "content": "return branchId.get() != null;"
+        },
+        {
+          "pattern": "branchId",
+          "line": 129,
+          "content": "branchId.remove();"
+        },
+        {
+          "pattern": "branchId",
+          "line": 140,
+          "content": "public static void set(String tenantId, String branchId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 142,
+          "content": "setBranchId(branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 152,
+          "content": "public static void set(String tenantId, String branchId, String businessType) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 154,
+          "content": "setBranchId(branchId);"
+        }
+      ],
+      "count": 10,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/context/TenantContextHolder.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 46,
+          "content": "String branchId = TenantContext.getBranchId();"
+        },
+        {
+          "pattern": "branchId",
+          "line": 47,
+          "content": "if (branchId == null || branchId.isEmpty()) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 50,
+          "content": "return branchId;"
+        },
+        {
+          "pattern": "branchId",
+          "line": 99,
+          "content": "public static void setBranchId(String branchId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 100,
+          "content": "if (branchId != null && !branchId.isEmpty()) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 101,
+          "content": "TenantContext.setBranchId(branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 102,
+          "content": "log.debug(\"Branch context set: {}\", branchId);"
+        },
+        {
+          "pattern": "BranchId",
+          "line": 167,
+          "content": "log.debug(\"Tenant Context - TenantId: {}, BranchId: {}, BusinessType: {}\","
+        }
+      ],
+      "count": 8,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/config/TenantContextTaskDecorator.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 47,
+          "content": "String branchId = TenantContext.getBranchId();"
+        },
+        {
+          "pattern": "branchId",
+          "line": 53,
+          "content": "log.debug(\"🔄 [TaskDecorator] Context 복사: tenantId={}, branchId={}, businessType={}\","
+        },
+        {
+          "pattern": "branchId",
+          "line": 54,
+          "content": "tenantId, branchId, businessType);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 62,
+          "content": "TenantContext.setBranchId(branchId);"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/controller/UserRoleAssignmentController.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 101,
+          "content": "@RequestParam(required = false) Long branchId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 102,
+          "content": "log.info(\"🔍 현재 활성 역할 조회: userId={}, tenantId={}, branchId={}\", userId, tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 104,
+          "content": "UserRoleAssignmentResponse role = assignmentService.getCurrentActiveRole(userId, tenantId, branchId)"
+        }
+      ],
+      "count": 3,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/controller/academy/AcademyClassScheduleController.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 51,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 54,
+          "content": "log.debug(\"시간표 목록 조회 요청: branchId={}, classId={}\", branchId, classId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 71,
+          "content": "List<ClassScheduleResponse> schedules = scheduleService.getSchedules(tenantId, branchId, classId);"
+        }
+      ],
+      "count": 3,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/controller/academy/AcademyCourseController.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 53,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 57,
+          "content": "log.debug(\"강좌 목록 조회 요청: branchId={}, category={}, subject={}\", branchId, category, subject);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 75,
+          "content": "List<CourseResponse> courses = courseService.getCourses(tenantId, branchId, category, subject);"
+        }
+      ],
+      "count": 3,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/controller/academy/AcademyEnrollmentController.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 51,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 56,
+          "content": "log.debug(\"수강 등록 목록 조회 요청: branchId={}, classId={}, consumerId={}, status={}\","
+        },
+        {
+          "pattern": "branchId",
+          "line": 57,
+          "content": "branchId, classId, consumerId, status);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 75,
+          "content": "tenantId, branchId, classId, consumerId, status"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/controller/academy/AcademyClassController.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 56,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 60,
+          "content": "log.debug(\"반 목록 조회 요청: branchId={}, courseId={}, status={}\", branchId, courseId, status);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 77,
+          "content": "List<ClassResponse> classes = classService.getClasses(tenantId, branchId, courseId, status);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 265,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 267,
+          "content": "log.debug(\"모집 중인 반 목록 조회 요청: branchId={}\", branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 284,
+          "content": "List<ClassResponse> classes = classService.getRecruitingClasses(tenantId, branchId);"
+        }
+      ],
+      "count": 6,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/controller/academy/AcademyBillingController.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 49,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 51,
+          "content": "log.debug(\"청구 스케줄 목록 조회 요청: branchId={}\", branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 68,
+          "content": "List<BillingScheduleResponse> schedules = billingService.getBillingSchedules(tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 253,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 258,
+          "content": "log.debug(\"청구서 목록 조회 요청: branchId={}, enrollmentId={}, consumerId={}, status={}\","
+        },
+        {
+          "pattern": "branchId",
+          "line": 259,
+          "content": "branchId, enrollmentId, consumerId, status);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 276,
+          "content": "List<InvoiceResponse> invoices = billingService.getInvoices(tenantId, branchId, enrollmentId, consum"
+        },
+        {
+          "pattern": "branchId",
+          "line": 445,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 447,
+          "content": "log.debug(\"연체 청구서 조회 요청: branchId={}\", branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 464,
+          "content": "List<InvoiceResponse> invoices = billingService.getOverdueInvoices(tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 477,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 482,
+          "content": "log.debug(\"결제 목록 조회 요청: branchId={}, invoiceId={}, enrollmentId={}, consumerId={}\","
+        },
+        {
+          "pattern": "branchId",
+          "line": 483,
+          "content": "branchId, invoiceId, enrollmentId, consumerId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 500,
+          "content": "List<TuitionPaymentResponse> payments = billingService.getPayments(tenantId, branchId, invoiceId, en"
+        }
+      ],
+      "count": 14,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/controller/academy/AcademyAttendanceController.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 56,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 61,
+          "content": "log.debug(\"출석 목록 조회 요청: branchId={}, enrollmentId={}, scheduleId={}, date={}\","
+        },
+        {
+          "pattern": "branchId",
+          "line": 62,
+          "content": "branchId, enrollmentId, scheduleId, date);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 80,
+          "content": "tenantId, branchId, enrollmentId, scheduleId, date"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/controller/academy/AcademyConsultationController.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 64,
+          "content": "log.info(\"학원 상담 예약 생성 요청: clientId={}, branchId={}\", request.getClientId(), request.getBranchId());"
+        },
+        {
+          "pattern": "branchId",
+          "line": 138,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 140,
+          "content": "log.debug(\"학원 상담 예약 목록 조회: clientId={}, consultantId={}, status={}, branchId={}\","
+        },
+        {
+          "pattern": "branchId",
+          "line": 141,
+          "content": "clientId, consultantId, status, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 374,
+          "content": ".branchId(enrollmentInfo.getBranchId())"
+        }
+      ],
+      "count": 5,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/controller/academy/AcademySettlementController.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 49,
+          "content": "@RequestParam(required = false) Long branchId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 53,
+          "content": "log.debug(\"정산 목록 조회 요청: branchId={}, period={}, status={}\", branchId, settlementPeriod, status);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 70,
+          "content": "List<SettlementResponse> settlements = settlementService.getSettlements(tenantId, branchId, settleme"
+        },
+        {
+          "pattern": "branchId",
+          "line": 113,
+          "content": "log.info(\"정산 계산 요청: period={}, branchId={}\", request.getSettlementPeriod(), request.getBranchId());"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/controller/academy/AcademyRegistrationController.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 81,
+          "content": "branchInfo.put(\"branchCode\", branch.getBranchCode());"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 174,
+          "content": "log.warn(\"브랜치 설정 실패: branchCode={}, error={}\", request.getBranchCode(), e.getMessage());"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 283,
+          "content": "log.warn(\"브랜치 설정 실패: branchCode={}, error={}\", request.getBranchCode(), e.getMessage());"
+        }
+      ],
+      "count": 3,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/BaseTenantService.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 33,
+          "content": "List<RES> findAll(String tenantId, Long branchId);"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/UserRoleAssignmentService.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 53,
+          "content": "UserRoleAssignmentResponse getCurrentActiveRole(Long userId, String tenantId, Long branchId);"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/BaseTenantEntityService.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 32,
+          "content": "List<T> findAllByTenant(String tenantId, Long branchId);"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/UserRoleAssignmentServiceImpl.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 58,
+          "content": "log.info(\"역할 할당: userId={}, tenantId={}, tenantRoleId={}, branchId={}\","
+        },
+        {
+          "pattern": "branchId",
+          "line": 85,
+          "content": ".branchId(request.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 121,
+          "content": "public UserRoleAssignmentResponse getCurrentActiveRole(Long userId, String tenantId, Long branchId) "
+        },
+        {
+          "pattern": "branchId",
+          "line": 122,
+          "content": "log.debug(\"현재 활성 역할 조회: userId={}, tenantId={}, branchId={}\", userId, tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 127,
+          "content": ".findActiveRoleByUserAndTenantAndBranch(userId, tenantId, branchId, LocalDate.now())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 166,
+          "content": ".branchId(assignment.getBranchId())"
+        }
+      ],
+      "count": 6,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/BaseTenantEntityServiceImpl.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 57,
+          "content": "protected abstract List<T> findEntitiesByTenantAndBranch(String tenantId, Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 63,
+          "content": "public List<T> findAllByTenant(String tenantId, Long branchId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 64,
+          "content": "log.debug(\"목록 조회: tenantId={}, branchId={}\", tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 70,
+          "content": "return findEntitiesByTenantAndBranch(tenantId, branchId);"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/BaseTenantServiceImpl.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 90,
+          "content": "protected abstract List<T> findEntitiesByTenantAndBranch(String tenantId, Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 96,
+          "content": "public List<RES> findAll(String tenantId, Long branchId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 97,
+          "content": "log.debug(\"목록 조회: tenantId={}, branchId={}\", tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 103,
+          "content": "List<T> entities = findEntitiesByTenantAndBranch(tenantId, branchId);"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/academy/ClassServiceImpl.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 40,
+          "content": "public List<ClassResponse> getClasses(String tenantId, Long branchId, String courseId, Class.ClassSt"
+        },
+        {
+          "pattern": "branchId",
+          "line": 41,
+          "content": "log.debug(\"반 목록 조회: tenantId={}, branchId={}, courseId={}, status={}\", tenantId, branchId, courseId,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 45,
+          "content": "if (courseId != null && branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 46,
+          "content": "classes = classRepository.findByTenantIdAndBranchIdAndCourseIdAndIsDeletedFalse(tenantId, branchId, "
+        },
+        {
+          "pattern": "branchId",
+          "line": 47,
+          "content": "} else if (branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 48,
+          "content": "classes = classRepository.findByTenantIdAndBranchIdAndIsDeletedFalse(tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 98,
+          "content": ".branchId(request.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 239,
+          "content": "public List<ClassResponse> getRecruitingClasses(String tenantId, Long branchId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 240,
+          "content": "log.debug(\"모집 중인 반 목록 조회: tenantId={}, branchId={}\", tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 242,
+          "content": "List<Class> classes = classRepository.findRecruitingClassesByTenantIdAndBranchId(tenantId, branchId)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 272,
+          "content": ".branchId(classEntity.getBranchId())"
+        }
+      ],
+      "count": 11,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/impl/academy/CourseServiceImpl.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 37,
+          "content": "public List<CourseResponse> getCourses(String tenantId, Long branchId, String category, String subje"
+        },
+        {
+          "pattern": "branchId",
+          "line": 38,
+          "content": "log.debug(\"강좌 목록 조회: tenantId={}, branchId={}, category={}, subject={}\", tenantId, branchId, categor"
+        },
+        {
+          "pattern": "branchId",
+          "line": 42,
+          "content": "if (branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 43,
+          "content": "courses = courseRepository.findActiveCoursesByTenantIdAndBranchId(tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 94,
+          "content": ".branchId(request.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 259,
+          "content": ".branchId(course.getBranchId())"
+        }
+      ],
+      "count": 6,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/AcademySettlementService.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 23,
+          "content": "List<SettlementResponse> getSettlements(String tenantId, Long branchId, String settlementPeriod, Set"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/AttendanceService.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 24,
+          "content": "List<AttendanceResponse> getAttendances(String tenantId, Long branchId, String enrollmentId, String "
+        },
+        {
+          "pattern": "branchId",
+          "line": 59,
+          "content": "List<AttendanceResponse> getAttendancesByDate(String tenantId, Long branchId, LocalDate date);"
+        }
+      ],
+      "count": 2,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/ClassService.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 22,
+          "content": "List<ClassResponse> getClasses(String tenantId, Long branchId, String courseId, Class.ClassStatus st"
+        },
+        {
+          "pattern": "branchId",
+          "line": 52,
+          "content": "List<ClassResponse> getRecruitingClasses(String tenantId, Long branchId);"
+        }
+      ],
+      "count": 2,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/CourseService.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 21,
+          "content": "List<CourseResponse> getCourses(String tenantId, Long branchId, String category, String subject);"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/AcademyBillingService.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 23,
+          "content": "List<BillingScheduleResponse> getBillingSchedules(String tenantId, Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 55,
+          "content": "List<InvoiceResponse> getInvoices(String tenantId, Long branchId, String enrollmentId, Long consumer"
+        },
+        {
+          "pattern": "branchId",
+          "line": 85,
+          "content": "List<InvoiceResponse> getOverdueInvoices(String tenantId, Long branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 92,
+          "content": "List<TuitionPaymentResponse> getPayments(String tenantId, Long branchId, String invoiceId, String en"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/ClassEnrollmentService.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 22,
+          "content": "List<ClassEnrollmentResponse> getEnrollments(String tenantId, Long branchId, String classId, Long co"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/ClassScheduleService.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 22,
+          "content": "List<ClassScheduleResponse> getSchedules(String tenantId, Long branchId, String classId);"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/impl/ClassEnrollmentServiceImpl.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 39,
+          "content": "public List<ClassEnrollmentResponse> getEnrollments(String tenantId, Long branchId, String classId, "
+        },
+        {
+          "pattern": "branchId",
+          "line": 48,
+          "content": "} else if (branchId != null && status != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 49,
+          "content": "enrollments = enrollmentRepository.findByTenantIdAndBranchIdAndStatusAndIsActiveTrueAndIsDeletedFals"
+        },
+        {
+          "pattern": "branchId",
+          "line": 50,
+          "content": "} else if (branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 51,
+          "content": "enrollments = enrollmentRepository.findByTenantIdAndBranchIdAndIsDeletedFalse(tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 90,
+          "content": ".branchId(request.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 217,
+          "content": ".branchId(enrollment.getBranchId())"
+        }
+      ],
+      "count": 7,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/impl/AttendanceServiceImpl.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 55,
+          "content": "public List<AttendanceResponse> getAttendances(String tenantId, Long branchId, String enrollmentId, "
+        },
+        {
+          "pattern": "branchId",
+          "line": 56,
+          "content": "log.debug(\"출결 목록 조회: tenantId={}, branchId={}, enrollmentId={}, scheduleId={}, date={}\","
+        },
+        {
+          "pattern": "branchId",
+          "line": 57,
+          "content": "tenantId, branchId, enrollmentId, scheduleId, date);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 67,
+          "content": "} else if (date != null && branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 68,
+          "content": "attendances = attendanceRepository.findAttendancesByDate(tenantId, branchId, date);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 69,
+          "content": "} else if (branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 70,
+          "content": "attendances = attendanceRepository.findByTenantIdAndBranchIdAndIsDeletedFalse(tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 116,
+          "content": ".branchId(request.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 234,
+          "content": "public List<AttendanceResponse> getAttendancesByDate(String tenantId, Long branchId, LocalDate date)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 235,
+          "content": "log.debug(\"날짜별 출결 조회: tenantId={}, branchId={}, date={}\", tenantId, branchId, date);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 239,
+          "content": "List<Attendance> attendances = attendanceRepository.findAttendancesByDate(tenantId, branchId, date);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 465,
+          "content": ".branchId(attendance.getBranchId())"
+        }
+      ],
+      "count": 12,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/impl/ClassScheduleServiceImpl.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 40,
+          "content": "public List<ClassScheduleResponse> getSchedules(String tenantId, Long branchId, String classId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 44,
+          "content": "if (classId != null && branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 45,
+          "content": "schedules = scheduleRepository.findByTenantIdAndBranchIdAndClassIdAndIsDeletedFalse(tenantId, branch"
+        },
+        {
+          "pattern": "branchId",
+          "line": 48,
+          "content": "} else if (branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 49,
+          "content": "schedules = scheduleRepository.findByTenantIdAndBranchIdAndIsDeletedFalse(tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 91,
+          "content": ".branchId(request.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 246,
+          "content": ".branchId(schedule.getBranchId())"
+        }
+      ],
+      "count": 7,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/impl/AcademyBillingServiceImpl.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 46,
+          "content": "public List<BillingScheduleResponse> getBillingSchedules(String tenantId, Long branchId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 50,
+          "content": "if (branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 51,
+          "content": "schedules = billingScheduleRepository.findByTenantIdAndBranchIdAndIsDeletedFalse(tenantId, branchId)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 82,
+          "content": ".branchId(request.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 202,
+          "content": ".branchId(enrollment.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 236,
+          "content": "public List<InvoiceResponse> getInvoices(String tenantId, Long branchId, String enrollmentId, Long c"
+        },
+        {
+          "pattern": "branchId",
+          "line": 245,
+          "content": "} else if (branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 246,
+          "content": "invoices = invoiceRepository.findByTenantIdAndBranchIdAndIsDeletedFalse(tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 309,
+          "content": ".branchId(request.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 417,
+          "content": "public List<InvoiceResponse> getOverdueInvoices(String tenantId, Long branchId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 423,
+          "content": "if (branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 425,
+          "content": ".filter(i -> branchId.equals(i.getBranchId()))"
+        },
+        {
+          "pattern": "branchId",
+          "line": 438,
+          "content": "public List<TuitionPaymentResponse> getPayments(String tenantId, Long branchId, String invoiceId, St"
+        },
+        {
+          "pattern": "branchId",
+          "line": 449,
+          "content": "} else if (branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 450,
+          "content": "payments = paymentRepository.findByTenantIdAndBranchIdAndIsDeletedFalse(tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 494,
+          "content": ".branchId(request.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 741,
+          "content": ".branchId(schedule.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 767,
+          "content": ".branchId(invoice.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 801,
+          "content": ".branchId(payment.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 839,
+          "content": "private String generateInvoiceNumber(String tenantId, Long branchId) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 867,
+          "content": "private String generateReceiptNumber(String tenantId, Long branchId) {"
+        }
+      ],
+      "count": 21,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/service/academy/impl/AcademySettlementServiceImpl.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 53,
+          "content": "public List<SettlementResponse> getSettlements(String tenantId, Long branchId, String settlementPeri"
+        },
+        {
+          "pattern": "branchId",
+          "line": 58,
+          "content": "if (branchId != null) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 59,
+          "content": "settlements = settlementRepository.findByTenantIdAndBranchIdAndIsDeletedFalse(tenantId, branchId);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 110,
+          "content": "log.info(\"정산 계산 시작: tenantId={}, branchId={}, period={}\","
+        },
+        {
+          "pattern": "branchId",
+          "line": 137,
+          "content": ".branchId(request.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 301,
+          "content": "for (Long branchId : branchIds) {"
+        },
+        {
+          "pattern": "branchId",
+          "line": 305,
+          "content": "tenantId, branchId, settlementPeriod);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 308,
+          "content": "log.debug(\"이미 존재하는 정산: branchId={}, period={}\", branchId, settlementPeriod);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 313,
+          "content": ".branchId(branchId)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 323,
+          "content": "log.error(\"정산 계산 실패: branchId={}, period={}\", branchId, settlementPeriod, e);"
+        },
+        {
+          "pattern": "branchId",
+          "line": 336,
+          "content": "private SettlementCalculationResult calculateRevenue(String tenantId, Long branchId, LocalDate perio"
+        },
+        {
+          "pattern": "branchId",
+          "line": 340,
+          "content": ".filter(p -> branchId == null || branchId.equals(p.getBranchId()))"
+        },
+        {
+          "pattern": "branchId",
+          "line": 368,
+          "content": "private BigDecimal calculateTeacherSettlement(String tenantId, Long branchId, LocalDate periodStart,"
+        },
+        {
+          "pattern": "branchId",
+          "line": 389,
+          "content": ".branchId(settlement.getBranchId())"
+        },
+        {
+          "pattern": "branchId",
+          "line": 424,
+          "content": ".branchId(item.getBranchId())"
+        }
+      ],
+      "count": 15,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/UserRoleAssignment.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 30,
+          "content": "@Index(name = \"idx_user_role_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 36,
+          "content": "columnNames = {\"user_id\", \"tenant_id\", \"tenant_role_id\", \"branch_id\"})"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 73,
+          "content": "@Column(name = \"branch_id\")"
+        },
+        {
+          "pattern": "branchId",
+          "line": 74,
+          "content": "private Long branchId;"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 126,
+          "content": "@JoinColumn(name = \"branch_id\", referencedColumnName = \"id\", insertable = false, updatable = false)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 158,
+          "content": "return branchId == null;"
+        },
+        {
+          "pattern": "branchId",
+          "line": 165,
+          "content": "return branchId != null;"
+        }
+      ],
+      "count": 7,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/academy/ClassEnrollment.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 32,
+          "content": "@Index(name = \"idx_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 35,
+          "content": "@Index(name = \"idx_tenant_branch\", columnList = \"tenant_id,branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 107,
+          "content": "@Column(name = \"branch_id\", nullable = false)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 108,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/academy/AcademySettlementItem.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 30,
+          "content": "@Index(name = \"idx_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 33,
+          "content": "@Index(name = \"idx_tenant_branch\", columnList = \"tenant_id,branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 85,
+          "content": "@Column(name = \"branch_id\")"
+        },
+        {
+          "pattern": "branchId",
+          "line": 86,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/academy/ClassSchedule.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 31,
+          "content": "@Index(name = \"idx_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 33,
+          "content": "@Index(name = \"idx_tenant_branch\", columnList = \"tenant_id,branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 73,
+          "content": "@Column(name = \"branch_id\", nullable = false)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 74,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/academy/AcademyTuitionPayment.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 30,
+          "content": "@Index(name = \"idx_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 36,
+          "content": "@Index(name = \"idx_tenant_branch\", columnList = \"tenant_id,branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 102,
+          "content": "@Column(name = \"branch_id\", nullable = false)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 103,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/academy/Attendance.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 32,
+          "content": "@Index(name = \"idx_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 35,
+          "content": "@Index(name = \"idx_tenant_branch\", columnList = \"tenant_id,branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 106,
+          "content": "@Column(name = \"branch_id\", nullable = false)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 107,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/academy/Class.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 31,
+          "content": "@Index(name = \"idx_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 33,
+          "content": "@Index(name = \"idx_tenant_branch\", columnList = \"tenant_id,branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 82,
+          "content": "@Column(name = \"branch_id\", nullable = false)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 83,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/academy/AcademyInvoice.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 31,
+          "content": "@Index(name = \"idx_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 39,
+          "content": "@Index(name = \"idx_tenant_branch\", columnList = \"tenant_id,branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 87,
+          "content": "@Column(name = \"branch_id\", nullable = false)"
+        },
+        {
+          "pattern": "branchId",
+          "line": 88,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/academy/Course.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 33,
+          "content": "@Index(name = \"idx_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 34,
+          "content": "@Index(name = \"idx_tenant_branch\", columnList = \"tenant_id,branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 80,
+          "content": "@Column(name = \"branch_id\")"
+        },
+        {
+          "pattern": "branchId",
+          "line": 81,
+          "content": "private Long branchId;"
+        },
+        {
+          "pattern": "branchId",
+          "line": 253,
+          "content": "return branchId == null;"
+        }
+      ],
+      "count": 5,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/academy/AcademySettlement.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 31,
+          "content": "@Index(name = \"idx_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 32,
+          "content": "@Index(name = \"idx_tenant_branch\", columnList = \"tenant_id,branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 80,
+          "content": "@Column(name = \"branch_id\")"
+        },
+        {
+          "pattern": "branchId",
+          "line": 81,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/core/domain/academy/AcademyBillingSchedule.java",
+      "occurrences": [
+        {
+          "pattern": "branch_id",
+          "line": 30,
+          "content": "@Index(name = \"idx_branch_id\", columnList = \"branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 31,
+          "content": "@Index(name = \"idx_tenant_branch\", columnList = \"tenant_id,branch_id\"),"
+        },
+        {
+          "pattern": "branch_id",
+          "line": 96,
+          "content": "@Column(name = \"branch_id\")"
+        },
+        {
+          "pattern": "branchId",
+          "line": 97,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/ClientRegistrationRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 58,
+          "content": "private String branchCode;"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 93,
+          "content": ".branchCode(dto.getBranchCode())"
+        }
+      ],
+      "count": 2,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/BranchStatisticsDto.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 27,
+          "content": "private Long branchId;"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 28,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 2,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/AccountResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 21,
+          "content": "private Long branchId;"
+        },
+        {
+          "pattern": "branchId",
+          "line": 35,
+          "content": ".branchId(account.getBranchId())"
+        }
+      ],
+      "count": 2,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/RegisterRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 70,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/SocialLoginResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 81,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/BranchStatisticsResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 23,
+          "content": "private Long branchId;"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 24,
+          "content": "private String branchCode;"
+        },
+        {
+          "pattern": "branchId",
+          "line": 82,
+          "content": ".branchId(dto.getBranchId())"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 83,
+          "content": ".branchCode(dto.getBranchCode())"
+        }
+      ],
+      "count": 4,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/AccountRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 27,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/ConsultantRegistrationDto.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 36,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/PaymentResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 72,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/BranchResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 28,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/BranchLoginResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 41,
+          "content": "private Long branchId;"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 43,
+          "content": "private String branchCode;"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 52,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 3,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/ConsultantRegistrationRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 52,
+          "content": "private String branchCode;"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 84,
+          "content": ".branchCode(dto.getBranchCode())"
+        }
+      ],
+      "count": 2,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/AuthResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 110,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/SocialSignupRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 99,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/BranchCreateRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 32,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/BranchLoginRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 30,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/PaymentCreateRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 80,
+          "content": "private Long branchId;"
+        },
+        {
+          "pattern": "branchId",
+          "line": 152,
+          "content": ".branchId(this.branchId)"
+        }
+      ],
+      "count": 2,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/FinancialTransactionRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 58,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/ClientRegistrationDto.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 39,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/FinancialTransactionResponse.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 41,
+          "content": "private String branchCode;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/dto/PaymentRequest.java",
+      "occurrences": [
+        {
+          "pattern": "branchId",
+          "line": 81,
+          "content": "private Long branchId;"
+        }
+      ],
+      "count": 1,
+      "file_type": "backend"
+    },
+    {
+      "file": "src/main/java/com/coresolution/consultation/repository/ConsultantPerformanceRepository.java",
+      "occurrences": [
+        {
+          "pattern": "branchCode",
+          "line": 46,
+          "content": "\"AND cp.consultant.branchCode = :branchCode \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 51,
+          "content": "@Param(\"branchCode\") String branchCode,"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 79,
+          "content": "\"AND cp.consultant.branchCode = :branchCode \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 84,
+          "content": "@Param(\"branchCode\") String branchCode);"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 92,
+          "content": "\"AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 98,
+          "content": "@Param(\"branchCode\") String branchCode);"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 118,
+          "content": "@Query(\"SELECT cp.consultant.branchCode, \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 126,
+          "content": "\"GROUP BY cp.consultant.branchCode \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 142,
+          "content": "\"AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 148,
+          "content": "@Param(\"branchCode\") String branchCode);"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 171,
+          "content": "\"AND cp.consultant.branchCode = :branchCode \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 175,
+          "content": "@Param(\"branchCode\") String branchCode,"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 202,
+          "content": "\"AND cp.consultant.branchCode = :branchCode \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 206,
+          "content": "@Param(\"branchCode\") String branchCode);"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 214,
+          "content": "\"AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 219,
+          "content": "@Param(\"branchCode\") String branchCode);"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 239,
+          "content": "@Query(\"SELECT cp.consultant.branchCode, \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 246,
+          "content": "\"GROUP BY cp.consultant.branchCode \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 261,
+          "content": "\"AND (:branchCode IS NULL OR cp.consultant.branchCode = :branchCode) \" +"
+        },
+        {
+          "pattern": "branchCode",
+          "line": 266,
+          "content": "@Param(\"branchCode\") String branchCode);"
+        }
+      ],
+      "count": 20,
+      "file_type": "backend"
+    }
+  ],
+  "modified_files": []
+}

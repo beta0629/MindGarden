@@ -102,19 +102,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         log.info("Spring Security 컨텍스트에 인증 정보 설정 완료: path={}, username={}, authorities={}", 
                             requestPath, username, authorities);
                         
-                        // Phase 3: JWT 토큰에서 tenantId, branchId 추출하여 TenantContextHolder 설정
+                        // Phase 3: JWT 토큰에서 tenantId 추출하여 TenantContextHolder 설정
                         try {
                             String tenantId = jwtService.extractTenantId(token);
-                            Long branchId = jwtService.extractBranchId(token);
                             
                             if (tenantId != null && !tenantId.isEmpty()) {
                                 TenantContextHolder.setTenantId(tenantId);
                                 log.debug("Tenant context set from JWT token: {}", tenantId);
-                            }
-                            
-                            if (branchId != null) {
-                                TenantContextHolder.setBranchId(branchId.toString());
-                                log.debug("Branch context set from JWT token: {}", branchId);
                             }
                         } catch (Exception e) {
                             log.warn("JWT 토큰에서 테넌트 정보 추출 실패: {}", e.getMessage());

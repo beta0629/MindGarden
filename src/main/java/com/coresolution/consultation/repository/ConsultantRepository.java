@@ -70,14 +70,6 @@ public interface ConsultantRepository extends BaseRepository<Consultant, Long> {
     @Query("SELECT c FROM Consultant c WHERE c.isDeleted = false AND c.isActive = true")
     List<Consultant> findActiveConsultants();
     
-    // === 지점별 삭제되지 않은 상담사 조회 ===
-    @Query("SELECT c FROM Consultant c WHERE c.branchCode = :branchCode AND c.isDeleted = false")
-    List<Consultant> findByBranchCodeAndIsDeletedFalse(@Param("branchCode") String branchCode);
-    
-    // === 지점별 활성 상담사만 조회 ===
-    @Query("SELECT c FROM Consultant c WHERE c.branchCode = :branchCode AND c.isDeleted = false AND c.isActive = true")
-    List<Consultant> findActiveConsultantsByBranchCode(@Param("branchCode") String branchCode);
-    
     // === BaseRepository 메서드 오버라이드 ===
     // Consultant 엔티티는 branchId 필드가 없음 (branchCode만 있음)
     // findAllByTenantIdAndBranchId 메서드를 오버라이드하여 branchId를 무시하도록 함

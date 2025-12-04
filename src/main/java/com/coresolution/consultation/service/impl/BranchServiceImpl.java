@@ -467,19 +467,9 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             return new ArrayList<>();
         }
         Branch branch = findActiveByIdOrThrow(branchId);
-        List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
+        // 브랜치 엔티티로 조회 (브랜치 코드 사용 제거)
+        return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
                 tenantId, branch, UserRole.CONSULTANT);
-        
-        // branchId가 null인 상담사들도 branchCode로 매칭하여 추가
-        List<User> additionalConsultants = userRepository.findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername(
-                tenantId, branch.getBranchCode(), UserRole.CONSULTANT);
-        
-        // 중복 제거를 위해 ID 기준으로 합치기
-        Map<Long, User> consultantMap = new HashMap<>();
-        consultants.forEach(consultant -> consultantMap.put(consultant.getId(), consultant));
-        additionalConsultants.forEach(consultant -> consultantMap.put(consultant.getId(), consultant));
-        
-        return new ArrayList<>(consultantMap.values());
     }
     
     @Override

@@ -173,8 +173,11 @@ public interface UserRepository extends BaseRepository<User, Long> {
     List<User> findByRoleAndIsActiveTrueDeprecated(UserRole role);
     
     /**
-     * 역할별 활성 사용자 조회 (지점코드 포함) (tenantId 필터링)
+     * @Deprecated - 🚨 브랜치 개념 제거: 브랜치 코드 기반 필터링 사용 금지
+     * 새로운 코드에서는 tenantId만 사용하여 조회하세요.
+     * 사용 예시: findByRoleAndIsActive(tenantId, role, true)
      */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isActive = true AND u.branchCode = :branchCode AND u.isDeleted = false")
     List<User> findByRoleAndIsActiveTrueAndBranchCode(@Param("tenantId") String tenantId, @Param("role") UserRole role, @Param("branchCode") String branchCode);
     
@@ -349,8 +352,11 @@ public interface UserRepository extends BaseRepository<User, Long> {
     List<User> findByRoleAndIsActiveDeprecated(UserRole role, Boolean isActive);
     
     /**
-     * 지점별 사용자 조회 (tenantId 필터링)
+     * @Deprecated - 🚨 브랜치 개념 제거: 브랜치 코드 기반 필터링 사용 금지
+     * 새로운 코드에서는 tenantId만 사용하여 조회하세요.
+     * 사용 예시: findByRoleAndIsActive(tenantId, role, isActive)
      */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND (:isActive IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
     List<User> findByBranchCodeAndIsActive(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode, @Param("isActive") Boolean isActive);
     

@@ -50,11 +50,6 @@ public class TenantContextFilter implements Filter {
      */
     private static final String SESSION_TENANT_ID = "tenantId";
     
-    /**
-     * 세션에서 branch_id를 저장하는 키
-     */
-    private static final String SESSION_BRANCH_ID = "branchId";
-    
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -64,18 +59,12 @@ public class TenantContextFilter implements Filter {
         
         try {
             String tenantId = extractTenantId(httpRequest, session);
-            String branchId = extractBranchId(httpRequest, session);
             String businessType = extractBusinessType(httpRequest, session);
             
             // TenantContext에 설정
             if (tenantId != null && !tenantId.isEmpty()) {
                 TenantContextHolder.setTenantId(tenantId);
                 log.debug("Tenant context set from filter: {}", tenantId);
-            }
-            
-            if (branchId != null && !branchId.isEmpty()) {
-                TenantContextHolder.setBranchId(branchId);
-                log.debug("Branch context set from filter: {}", branchId);
             }
             
             if (businessType != null && !businessType.isEmpty()) {
@@ -215,55 +204,6 @@ public class TenantContextFilter implements Filter {
             }
         }
         
-        return null;
-    }
-    
-    /**
-     * branch_id 추출
-     * 
-     * @param request HTTP 요청
-     * @param session HTTP 세션
-     * @return branch_id (없으면 null)
-     */
-    private String extractBranchId(HttpServletRequest request, HttpSession session) {
-        // 1. HTTP 헤더에서 추출 (우선순위 1)
-        String branchId = request.getHeader("X-Branch-Id");
-        if (branchId != null && !branchId.isEmpty()) {
-            log.debug("Branch ID extracted from header: {}", branchId);
-            return branchId;
-        }
-        
-        // 2. 세션에서 User 정보를 통해 branch_id 조회 (우선순위 2)
-        if (session != null) {
-            User user = SessionUtils.getCurrentUser(session);
-            if (user != null) {
-                // User의 branchCode 사용 (branch_id는 User 엔티티에 없을 수 있음)
-                if (user.getBranchCode() != null) {
-                    // branchCode를 branch_id로 사용 (임시)
-                    // 향후 User 엔티티에 branch_id 필드가 추가되면 그걸 사용
-                    session.setAttribute(SESSION_BRANCH_ID, user.getBranchCode());
-                    log.debug("Branch ID extracted from user branchCode: {}", user.getBranchCode());
-                    return user.getBranchCode();
-                }
-            }
-            
-            // 3. 세션에 저장된 branch_id 사용 (우선순위 3)
-            Object sessionBranchId = session.getAttribute(SESSION_BRANCH_ID);
-            if (sessionBranchId != null) {
-                log.debug("Branch ID extracted from session: {}", sessionBranchId);
-                return sessionBranchId.toString();
-            }
-            
-            // 4. 세션의 branchCode 사용 (기존 시스템 호환성)
-            Object branchCode = session.getAttribute("branchCode");
-            if (branchCode != null) {
-                log.debug("Branch ID extracted from session branchCode: {}", branchCode);
-                return branchCode.toString();
-            }
-        }
-        
-        // 5. branch_id를 찾을 수 없는 경우
-        log.trace("Branch ID not found in request");
         return null;
     }
     

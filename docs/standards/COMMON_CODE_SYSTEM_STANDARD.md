@@ -14,6 +14,7 @@ MindGarden 프로젝트의 공통코드 시스템 표준입니다. 시스템 공
 - [데이터베이스 스키마 표준](./DATABASE_SCHEMA_STANDARD.md)
 - [API 설계 표준](./API_DESIGN_STANDARD.md)
 - [테넌트 역할 시스템 표준](./TENANT_ROLE_SYSTEM_STANDARD.md)
+- [공통코드 드롭다운 자동화 표준](./COMMON_CODE_DROPDOWN_STANDARD.md)
 
 ### 구현 위치
 - **엔티티**: `src/main/java/com/coresolution/consultation/entity/CommonCode.java`
@@ -694,11 +695,44 @@ PUT /api/v1/common-codes/1
 
 ---
 
+## 🔄 드롭다운 자동화
+
+모든 드롭다운은 DB 코드 기반으로 자동 로딩되어야 합니다.
+
+### 관련 표준 문서
+자세한 내용은 [공통코드 드롭다운 자동화 표준](./COMMON_CODE_DROPDOWN_STANDARD.md)을 참조하세요.
+
+### 핵심 원칙
+1. **DB 코드 기반**: 모든 선택 옵션은 DB에서 조회 (하드코딩 절대 금지)
+2. **자동 로딩**: 사용자 입력 없이 자동으로 드롭다운 채우기
+3. **공통 컴포넌트 사용**: `CommonCodeSelect` 컴포넌트로 일관된 UI/UX 제공
+
+### 빠른 예시
+```javascript
+import CommonCodeSelect from '../common/CommonCodeSelect';
+
+// ✅ 권장: DB 코드 기반 자동 로딩
+<CommonCodeSelect
+    codeGroup="USER_STATUS"
+    value={status}
+    onChange={setStatus}
+/>
+
+// ❌ 금지: 하드코딩된 옵션
+const options = [
+    { value: 'ACTIVE', label: '활성' },
+    { value: 'INACTIVE', label: '비활성' }
+];
+```
+
+---
+
 ## 📞 문의
 
 공통코드 시스템 표준 관련 문의:
 - 백엔드 팀
 - 데이터베이스 팀
+- 프론트엔드 팀
 
-**최종 업데이트**: 2025-12-02
+**최종 업데이트**: 2025-12-03
 

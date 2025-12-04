@@ -48,39 +48,48 @@ public class OAuth2ConfigController {
      */
     @GetMapping("/oauth2")
     public ResponseEntity<Map<String, Object>> getOAuth2Config(HttpServletRequest request) {
-        // 환경에 따른 동적 baseUrl 생성
-        String baseUrl = getBaseUrlFromRequest(request);
-        
-        log.info("OAuth2 설정 정보 요청 - 서버 포트: {}", serverPort);
-        log.info("카카오 클라이언트 ID: {}", kakaoClientId);
-        log.info("카카오 리다이렉트 URI: {}", kakaoRedirectUri);
-        log.info("네이버 클라이언트 ID: {}", naverClientId);
-        log.info("네이버 리다이렉트 URI: {}", naverRedirectUri);
-        
-        // 디버깅: 실제 필드 값 확인
-        log.info("DEBUG - kakaoRedirectUri 필드 값: '{}'", kakaoRedirectUri);
-        log.info("DEBUG - kakaoRedirectUri 길이: {}", kakaoRedirectUri.length());
-        // 디버깅 로그는 제거 (하드코딩된 URL 비교 제거)
-        
-        // 동적 baseUrl을 사용해서 리다이렉트 URI 생성
-        String dynamicKakaoRedirectUri = baseUrl + "/api/auth/kakao/callback";
-        String dynamicNaverRedirectUri = baseUrl + "/api/auth/naver/callback";
-        
-        Map<String, Object> config = Map.of(
-            "kakao", Map.of(
-                "clientId", kakaoClientId,
-                "redirectUri", dynamicKakaoRedirectUri,
-                "authUrl", "https://kauth.kakao.com/oauth/authorize"
-            ),
-            "naver", Map.of(
-                "clientId", naverClientId,
-                "redirectUri", dynamicNaverRedirectUri,
-                "authUrl", "https://nid.naver.com/oauth2.0/authorize"
-            )
-        );
-        
-        log.info("OAuth2 설정 반환: {}", config);
-        return ResponseEntity.ok(config);
+        try {
+            // 환경에 따른 동적 baseUrl 생성
+            String baseUrl = getBaseUrlFromRequest(request);
+            
+            log.info("OAuth2 설정 정보 요청 - 서버 포트: {}", serverPort);
+            
+            // 동적 baseUrl을 사용해서 리다이렉트 URI 생성
+            String dynamicKakaoRedirectUri = baseUrl + "/api/auth/kakao/callback";
+            String dynamicNaverRedirectUri = baseUrl + "/api/auth/naver/callback";
+            
+            Map<String, Object> config = Map.of(
+                "kakao", Map.of(
+                    "clientId", kakaoClientId != null && !kakaoClientId.isEmpty() ? kakaoClientId : "dummy",
+                    "redirectUri", dynamicKakaoRedirectUri,
+                    "authUrl", "https://kauth.kakao.com/oauth/authorize"
+                ),
+                "naver", Map.of(
+                    "clientId", naverClientId != null && !naverClientId.isEmpty() ? naverClientId : "dummy",
+                    "redirectUri", dynamicNaverRedirectUri,
+                    "authUrl", "https://nid.naver.com/oauth2.0/authorize"
+                )
+            );
+            
+            log.info("OAuth2 설정 반환: {}", config);
+            return ResponseEntity.ok(config);
+        } catch (Exception e) {
+            log.error("❌ OAuth2 설정 조회 실패", e);
+            // 기본값 반환 (오류 시에도 프론트엔드가 동작하도록)
+            Map<String, Object> fallbackConfig = Map.of(
+                "kakao", Map.of(
+                    "clientId", "dummy",
+                    "redirectUri", "http://localhost:8080/api/auth/kakao/callback",
+                    "authUrl", "https://kauth.kakao.com/oauth/authorize"
+                ),
+                "naver", Map.of(
+                    "clientId", "dummy",
+                    "redirectUri", "http://localhost:8080/api/auth/naver/callback",
+                    "authUrl", "https://nid.naver.com/oauth2.0/authorize"
+                )
+            );
+            return ResponseEntity.ok(fallbackConfig);
+        }
     }
     
     /**
@@ -91,11 +100,11 @@ public class OAuth2ConfigController {
     private String getBaseUrlFromRequest(HttpServletRequest request) {
         // 1. 환경변수가 설정되어 있으면 우선 사용
         if (oauth2BaseUrl != null && !oauth2BaseUrl.isEmpty()) {
+            log.debug("OAuth2 BaseUrl (환경변수): {}", oauth2BaseUrl);
             return oauth2BaseUrl;
         }
         
         // 2. 요청에서 동적으로 생성 (프록시 헤더 고려)
-        // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
         String scheme = request.getHeader("X-Forwarded-Proto");
         if (scheme == null || scheme.isEmpty()) {
             scheme = request.getScheme();
@@ -114,10 +123,10 @@ public class OAuth2ConfigController {
             serverName = serverName.split(":")[0];
         }
         
-        // 개발 환경 (localhost) - 환경변수가 없으면 현재 요청 기준으로 생성
+        int serverPort = request.getServerPort();
+        
+        // 개발 환경 (localhost)
         if ("localhost".equals(serverName) || "127.0.0.1".equals(serverName)) {
-            int serverPort = request.getServerPort();
-            // 개발 환경에서도 실제 포트 사용
             if (serverPort == 80 || serverPort == 443) {
                 return scheme + "://" + serverName;
             } else {
@@ -125,15 +134,14 @@ public class OAuth2ConfigController {
             }
         }
         
-        // 운영/개발 환경 (실제 도메인) - 포트는 scheme에 따라 결정
+        // 운영/개발 환경 (실제 도메인)
         if ("https".equals(scheme)) {
             return scheme + "://" + serverName;
         } else {
-            int serverPort = request.getServerPort();
-        if (serverPort == 80 || serverPort == 443) {
-            return scheme + "://" + serverName;
-        } else {
-            return scheme + "://" + serverName + ":" + serverPort;
+            if (serverPort == 80 || serverPort == 443) {
+                return scheme + "://" + serverName;
+            } else {
+                return scheme + "://" + serverName + ":" + serverPort;
             }
         }
     }

@@ -146,6 +146,12 @@ public class CssThemeController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultantColors(@RequestParam(defaultValue = "default") String themeName) {
         log.info("🎨 상담사별 색상 조회: {}", themeName);
         
+        // 기본 색상 (fallback)
+        List<String> defaultColors = java.util.Arrays.asList(
+            "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+            "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#6366f1"
+        );
+        
         List<String> colors;
         try {
             // CONSULTANT 카테고리의 색상들 조회
@@ -154,23 +160,19 @@ public class CssThemeController extends BaseApiController {
             // 색상 배열로 변환
             colors = consultantColors.stream()
                 .map(CssColorSettings::getColorValue)
+                .filter(color -> color != null && !color.trim().isEmpty())
                 .collect(java.util.stream.Collectors.toList());
             
             // 기본 색상이 없는 경우 fallback 색상 제공
             if (colors.isEmpty()) {
-                colors = java.util.Arrays.asList(
-                    "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
-                    "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#6366f1"
-                );
+                log.warn("⚠️ 상담사별 색상이 없어 기본 색상을 사용합니다: themeName={}", themeName);
+                colors = defaultColors;
             }
         } catch (Exception e) {
-            log.error("❌ 상담사별 색상 조회 실패: {}", themeName, e);
+            log.error("❌ 상담사별 색상 조회 실패: themeName={}", themeName, e);
             
             // 에러 시 기본 색상 반환
-            colors = java.util.Arrays.asList(
-                "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
-                "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#6366f1"
-            );
+            colors = defaultColors;
             themeName = "default";
         }
         

@@ -259,12 +259,33 @@ public class CommonCodeController extends BaseApiController {
     @GetMapping
     public ResponseEntity<ApiResponse<CommonCodeListResponse>> findAll(
             @RequestParam(required = false) String codeGroup) {
+        // 파라미터 정제 및 검증
+        if (codeGroup != null) {
+            // 콜론(:) 이후 제거 (잘못된 형식 처리: NOTIFICATION_TYPE:1 -> NOTIFICATION_TYPE)
+            if (codeGroup.contains(":")) {
+                codeGroup = codeGroup.split(":")[0];
+                log.warn("⚠️ 잘못된 codeGroup 파라미터 형식 감지. 정제 후 사용: {}", codeGroup);
+            }
+            
+            // 공백 제거 및 대문자 변환
+            codeGroup = codeGroup.trim().toUpperCase();
+            
+            // 빈 문자열 체크
+            if (codeGroup.isEmpty()) {
+                codeGroup = null;
+            }
+        }
+        
         log.info("공통코드 목록 조회 요청: codeGroup={}", codeGroup);
         
-        CommonCodeListResponse response = commonCodeService.findAll(codeGroup);
-        
-        log.info("공통코드 목록 조회 완료: totalCount={}", response.getTotalCount());
-        return success(response);
+        try {
+            CommonCodeListResponse response = commonCodeService.findAll(codeGroup);
+            log.info("공통코드 목록 조회 완료: totalCount={}", response.getTotalCount());
+            return success(response);
+        } catch (Exception e) {
+            log.error("❌ 공통코드 목록 조회 실패: codeGroup={}", codeGroup, e);
+            throw new RuntimeException("공통코드 조회 중 오류가 발생했습니다.", e);
+        }
     }
     
     /**

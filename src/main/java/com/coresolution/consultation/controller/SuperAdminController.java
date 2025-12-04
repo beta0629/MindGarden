@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/super-admin")
+@RequestMapping({"/api/v1/super-admin", "/api/super-admin"})
 @RequiredArgsConstructor
 public class SuperAdminController extends BaseApiController {
     

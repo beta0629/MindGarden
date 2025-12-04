@@ -112,11 +112,12 @@ const AIMonitoringWidget = ({ widget, user }) => {
   const renderContent = () => {
     const { anomalies = [], threats = [], aiUsage = {} } = data || {};
 
-    // 최근 이상 탐지 (최대 3개)
-    const recentAnomalies = anomalies.slice(0, 3);
+    // 최근 이상 탐지 (표준화 원칙: 최대 10개)
+    const maxItems = WIDGET_CONSTANTS.DASHBOARD_LIMITS.MAX_ITEMS;
+    const recentAnomalies = anomalies.slice(0, maxItems);
     
-    // 최근 보안 위협 (최대 3개)
-    const recentThreats = threats.slice(0, 3);
+    // 최근 보안 위협 (표준화 원칙: 최대 10개)
+    const recentThreats = threats.slice(0, maxItems);
 
     // 통계 요약
     const criticalCount = [...anomalies, ...threats].filter(

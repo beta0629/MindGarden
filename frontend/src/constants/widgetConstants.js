@@ -125,6 +125,13 @@ export const WIDGET_CONSTANTS = {
     FULL_WIDTH: { colspan: 4, rowspan: 1 }
   },
   
+  // 대시보드 데이터 표시 제한 (표준화 원칙)
+  DASHBOARD_LIMITS: {
+    MAX_ITEMS: 10, // 대시보드에 표시할 최대 데이터 개수
+    MAX_STAT_CARDS: 10, // 통계 카드 최대 개수
+    DEFAULT_ITEMS: 5 // 기본 표시 개수
+  },
+  
   // 애니메이션 지속시간 (CSS 변수와 연동)
   ANIMATION_DURATION: {
     FAST: 'var(--mg-duration-fast)',

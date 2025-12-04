@@ -33,7 +33,7 @@ export const loadCodeGroupMetadata = async () => {
             groups = await getCodeGroups();
         } catch (error) {
             // 하위 호환성: 기존 API 사용
-            const response = await apiGet('/api/common-codes/groups/list');
+            const response = await apiGet('/api/v1/common-codes/groups/list');
             groups = Array.isArray(response) ? response : [];
         }
         

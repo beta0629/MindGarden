@@ -14,6 +14,7 @@ import '../../styles/dashboard-tokens-extension.css';
 import '../../styles/dashboard-common-v3.css';
 import './CommonDashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
+import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import SimpleLayout from '../layout/SimpleLayout';
 import WelcomeSection from './WelcomeSection';
 import WelcomeWidget from './widgets/WelcomeWidget';
@@ -121,7 +122,7 @@ const CommonDashboard = ({ user: propUser }) => {
         // 최근 스케줄을 활동으로 변환
         const recentSchedules = schedules
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-          .slice(0, 5); // 최근 5개만
+          .slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS); // 표준화 원칙: 최대 10개 (기본 5개)
         
         recentSchedules.forEach(schedule => {
           const scheduleDate = new Date(schedule.date);
@@ -309,7 +310,7 @@ const CommonDashboard = ({ user: propUser }) => {
             return hasValidClientName || hasValidConsultantName || hasValidTitle;
           })
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-          .slice(0, 5); // 최근 5개만
+          .slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS); // 표준화 원칙: 최대 10개 (기본 5개)
         
         recentSchedules.forEach(schedule => {
           // 스케줄 데이터 유효성 검사
@@ -809,7 +810,7 @@ const CommonDashboard = ({ user: propUser }) => {
         
         {/* 기존 WelcomeSection (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 WelcomeSection (비교용)</small>
             <WelcomeSection 
               user={user} 
@@ -837,7 +838,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 ClientPersonalizedMessages (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && RoleUtils.isClient(user) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 ClientPersonalizedMessages (비교용)</small>
             <ClientPersonalizedMessages 
               user={user}
@@ -866,7 +867,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 ClientPaymentSessionsSection (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && RoleUtils.isClient(user) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 ClientPaymentSessionsSection (비교용)</small>
             <ClientPaymentSessionsSection userId={user.id} />
           </div>
@@ -890,7 +891,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 RatableConsultationsSection (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && RoleUtils.isClient(user) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 RatableConsultationsSection (비교용)</small>
             <RatableConsultationsSection />
           </div>
@@ -915,7 +916,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 ConsultantClientSection (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && RoleUtils.isConsultant(user) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 ConsultantClientSection (비교용)</small>
             <ConsultantClientSection userId={user.id} />
           </div>
@@ -940,7 +941,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 ConsultantRatingDisplay (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && RoleUtils.isConsultant(user) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 ConsultantRatingDisplay (비교용)</small>
             <ConsultantRatingDisplay consultantId={user.id} />
           </div>
@@ -966,7 +967,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 ConsultationRecordSection (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && RoleUtils.isConsultant(user) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 ConsultationRecordSection (비교용)</small>
             <ConsultationRecordSection consultantId={user.id} />
           </div>
@@ -990,7 +991,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 HealingCard (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && (RoleUtils.isClient(user) || RoleUtils.isConsultant(user)) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 HealingCard (비교용)</small>
             <HealingCard userRole={user?.role} />
           </div>
@@ -1012,7 +1013,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 ScheduleQuickAccess (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 ScheduleQuickAccess (비교용)</small>
             <ScheduleQuickAccess user={user} />
           </div>
@@ -1037,7 +1038,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 SummaryPanels (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && (RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 SummaryPanels (비교용)</small>
             <SummaryPanels 
               user={user} 
@@ -1054,7 +1055,7 @@ const CommonDashboard = ({ user: propUser }) => {
         
         {/* 기존 QuickActions (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 QuickActions (비교용)</small>
             <QuickActions user={user} />
           </div>
@@ -1076,7 +1077,7 @@ const CommonDashboard = ({ user: propUser }) => {
         
         {/* 기존 RecentActivities (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 RecentActivities (비교용)</small>
             <RecentActivities consultationData={consultationData} />
           </div>
@@ -1101,7 +1102,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 SystemNotificationSection (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && RoleUtils.isConsultant(user) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 SystemNotificationSection (비교용)</small>
             <SystemNotificationSection />
           </div>
@@ -1126,7 +1127,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 ErpPurchaseRequestPanel (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && RoleUtils.isConsultant(user) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 ErpPurchaseRequestPanel (비교용)</small>
             <ErpPurchaseRequestPanel user={user} />
           </div>
@@ -1152,7 +1153,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
         {/* 기존 ClientMessageSection (비교용 - 개발 후 제거) */}
         {process.env.NODE_ENV === 'development' && RoleUtils.isClient(user) && (
-          <div style={{ opacity: 0.3, border: '2px dashed var(--cs-gray-400)', margin: 'var(--cs-spacing-sm) 0', padding: 'var(--cs-spacing-sm)' }}>
+          <div className="dev-placeholder">
             <small>기존 ClientMessageSection (비교용)</small>
             <ClientMessageSection userId={user.id} />
           </div>

@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/compliance")
+@RequestMapping({"/api/v1/admin/compliance", "/api/admin/compliance"})
 @RequiredArgsConstructor
 public class ComplianceController {
     
@@ -103,30 +103,21 @@ public class ComplianceController {
     public Map<String, Object> updatePersonalDataProcessingPolicy(@RequestBody Map<String, Object> policyData) {
         log.info("개인정보 처리방침 업데이트 요청");
         
-        try {
-            // 처리방침 업데이트 로직 (실제 구현 필요)
-            // 1. 처리방침 내용 검증
-            // 2. 법적 요구사항 준수 확인
-            // 3. 처리방침 업데이트
-            // 4. 사용자 통지
-            
-            Map<String, Object> result = Map.of(
-                "status", "success",
-                "message", "개인정보 처리방침이 성공적으로 업데이트되었습니다.",
-                "updatedAt", LocalDateTime.now(),
-                "nextReviewDate", LocalDateTime.now().plusMonths(3)
-            );
-            
-            log.info("개인정보 처리방침 업데이트 완료");
-            return result;
-            
-        } catch (Exception e) {
-            log.error("개인정보 처리방침 업데이트 실패: {}", e.getMessage(), e);
-            return Map.of(
-                "status", "error",
-                "message", "개인정보 처리방침 업데이트에 실패했습니다: " + e.getMessage()
-            );
-        }
+        // 처리방침 업데이트 로직 (실제 구현 필요)
+        // 1. 처리방침 내용 검증
+        // 2. 법적 요구사항 준수 확인
+        // 3. 처리방침 업데이트
+        // 4. 사용자 통지
+        
+        Map<String, Object> result = Map.of(
+            "status", "success",
+            "message", "개인정보 처리방침이 성공적으로 업데이트되었습니다.",
+            "updatedAt", LocalDateTime.now(),
+            "nextReviewDate", LocalDateTime.now().plusMonths(3)
+        );
+        
+        log.info("개인정보 처리방침 업데이트 완료");
+        return result;
     }
     
     /**
@@ -136,45 +127,36 @@ public class ComplianceController {
     public Map<String, Object> executePersonalDataImpactAssessment() {
         log.info("개인정보 영향평가 실행 요청");
         
-        try {
-            // 1. 개인정보 처리 현황 조사
-            LocalDateTime startDate = LocalDateTime.now().minusMonths(6);
-            LocalDateTime endDate = LocalDateTime.now();
-            
-            Map<String, Object> processingStatus = complianceService.getPersonalDataProcessingStatus(startDate, endDate);
-            Map<String, Object> destructionStatus = personalDataDestructionService.getPersonalDataDestructionStatus();
-            
-            // 2. 위험도 분석
-            Map<String, Object> riskAnalysis = analyzePersonalDataRisks(processingStatus);
-            
-            // 3. 영향도 평가
-            Map<String, Object> impactAssessment = assessPersonalDataImpact(processingStatus, riskAnalysis);
-            
-            // 4. 개선방안 도출
-            Map<String, Object> improvementPlan = createImprovementPlan(riskAnalysis, impactAssessment);
-            
-            // 5. 평가 결과 저장
-            Map<String, Object> result = new java.util.HashMap<>();
-            result.put("status", "success");
-            result.put("message", "개인정보 영향평가가 성공적으로 실행되었습니다.");
-            result.put("executedAt", LocalDateTime.now());
-            result.put("nextExecutionDate", LocalDateTime.now().plusMonths(6));
-            result.put("processingStatus", processingStatus);
-            result.put("destructionStatus", destructionStatus);
-            result.put("riskAnalysis", riskAnalysis);
-            result.put("impactAssessment", impactAssessment);
-            result.put("improvementPlan", improvementPlan);
-            
-            log.info("개인정보 영향평가 실행 완료");
-            return result;
-            
-        } catch (Exception e) {
-            log.error("개인정보 영향평가 실행 실패: {}", e.getMessage(), e);
-            return Map.of(
-                "status", "error",
-                "message", "개인정보 영향평가 실행에 실패했습니다: " + e.getMessage()
-            );
-        }
+        // 1. 개인정보 처리 현황 조사
+        LocalDateTime startDate = LocalDateTime.now().minusMonths(6);
+        LocalDateTime endDate = LocalDateTime.now();
+        
+        Map<String, Object> processingStatus = complianceService.getPersonalDataProcessingStatus(startDate, endDate);
+        Map<String, Object> destructionStatus = personalDataDestructionService.getPersonalDataDestructionStatus();
+        
+        // 2. 위험도 분석
+        Map<String, Object> riskAnalysis = analyzePersonalDataRisks(processingStatus);
+        
+        // 3. 영향도 평가
+        Map<String, Object> impactAssessment = assessPersonalDataImpact(processingStatus, riskAnalysis);
+        
+        // 4. 개선방안 도출
+        Map<String, Object> improvementPlan = createImprovementPlan(riskAnalysis, impactAssessment);
+        
+        // 5. 평가 결과 저장
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("status", "success");
+        result.put("message", "개인정보 영향평가가 성공적으로 실행되었습니다.");
+        result.put("executedAt", LocalDateTime.now());
+        result.put("nextExecutionDate", LocalDateTime.now().plusMonths(6));
+        result.put("processingStatus", processingStatus);
+        result.put("destructionStatus", destructionStatus);
+        result.put("riskAnalysis", riskAnalysis);
+        result.put("impactAssessment", impactAssessment);
+        result.put("improvementPlan", improvementPlan);
+        
+        log.info("개인정보 영향평가 실행 완료");
+        return result;
     }
     
     /**
@@ -184,30 +166,21 @@ public class ComplianceController {
     public Map<String, Object> createPersonalDataProtectionEducationPlan(@RequestBody Map<String, Object> educationData) {
         log.info("개인정보보호 교육 계획 수립 요청");
         
-        try {
-            // 교육 계획 수립 로직 (실제 구현 필요)
-            // 1. 교육 대상자 식별
-            // 2. 교육 프로그램 설계
-            // 3. 교육 일정 수립
-            // 4. 교육 자료 준비
-            
-            Map<String, Object> result = Map.of(
-                "status", "success",
-                "message", "개인정보보호 교육 계획이 성공적으로 수립되었습니다.",
-                "createdAt", LocalDateTime.now(),
-                "plannedStartDate", LocalDateTime.now().plusWeeks(2)
-            );
-            
-            log.info("개인정보보호 교육 계획 수립 완료");
-            return result;
-            
-        } catch (Exception e) {
-            log.error("개인정보보호 교육 계획 수립 실패: {}", e.getMessage(), e);
-            return Map.of(
-                "status", "error",
-                "message", "개인정보보호 교육 계획 수립에 실패했습니다: " + e.getMessage()
-            );
-        }
+        // 교육 계획 수립 로직 (실제 구현 필요)
+        // 1. 교육 대상자 식별
+        // 2. 교육 프로그램 설계
+        // 3. 교육 일정 수립
+        // 4. 교육 자료 준비
+        
+        Map<String, Object> result = Map.of(
+            "status", "success",
+            "message", "개인정보보호 교육 계획이 성공적으로 수립되었습니다.",
+            "createdAt", LocalDateTime.now(),
+            "plannedStartDate", LocalDateTime.now().plusWeeks(2)
+        );
+        
+        log.info("개인정보보호 교육 계획 수립 완료");
+        return result;
     }
     
     /**
@@ -217,32 +190,23 @@ public class ComplianceController {
     public Map<String, Object> reportPersonalDataBreach(@RequestBody Map<String, Object> breachData) {
         log.info("개인정보 침해사고 신고 요청");
         
-        try {
-            // 침해사고 신고 로직 (실제 구현 필요)
-            // 1. 침해사고 정보 수집
-            // 2. 피해 범위 파악
-            // 3. 개인정보보호위원회 신고
-            // 4. 피해자 통지
-            // 5. 대응팀 구성
-            
-            Map<String, Object> result = Map.of(
-                "status", "success",
-                "message", "개인정보 침해사고가 성공적으로 신고되었습니다.",
-                "reportedAt", LocalDateTime.now(),
-                "reportNumber", "BREACH-" + System.currentTimeMillis(),
-                "nextAction", "개인정보보호위원회 신고 (24시간 이내)"
-            );
-            
-            log.info("개인정보 침해사고 신고 완료");
-            return result;
-            
-        } catch (Exception e) {
-            log.error("개인정보 침해사고 신고 실패: {}", e.getMessage(), e);
-            return Map.of(
-                "status", "error",
-                "message", "개인정보 침해사고 신고에 실패했습니다: " + e.getMessage()
-            );
-        }
+        // 침해사고 신고 로직 (실제 구현 필요)
+        // 1. 침해사고 정보 수집
+        // 2. 피해 범위 파악
+        // 3. 개인정보보호위원회 신고
+        // 4. 피해자 통지
+        // 5. 대응팀 구성
+        
+        Map<String, Object> result = Map.of(
+            "status", "success",
+            "message", "개인정보 침해사고가 성공적으로 신고되었습니다.",
+            "reportedAt", LocalDateTime.now(),
+            "reportNumber", "BREACH-" + System.currentTimeMillis(),
+            "nextAction", "개인정보보호위원회 신고 (24시간 이내)"
+        );
+        
+        log.info("개인정보 침해사고 신고 완료");
+        return result;
     }
     
     /**
@@ -252,31 +216,22 @@ public class ComplianceController {
     public Map<String, Object> getComplianceDashboard() {
         log.info("컴플라이언스 대시보드 데이터 조회");
         
-        try {
-            // 대시보드 데이터 수집
-            Map<String, Object> overallStatus = complianceService.getComplianceOverallStatus();
-            Map<String, Object> processingStatus = complianceService.getPersonalDataProcessingStatus(
-                LocalDateTime.now().minusMonths(1), LocalDateTime.now());
-            Map<String, Object> impactAssessment = complianceService.getPersonalDataImpactAssessment();
-            
-            // 대시보드 구성
-            Map<String, Object> dashboard = Map.of(
-                "overallStatus", overallStatus,
-                "processingStatus", processingStatus,
-                "impactAssessment", impactAssessment,
-                "lastUpdated", LocalDateTime.now(),
-                "status", "success"
-            );
-            
-            return dashboard;
-            
-        } catch (Exception e) {
-            log.error("컴플라이언스 대시보드 데이터 조회 실패: {}", e.getMessage(), e);
-            return Map.of(
-                "status", "error",
-                "message", "컴플라이언스 대시보드 데이터 조회에 실패했습니다: " + e.getMessage()
-            );
-        }
+        // 대시보드 데이터 수집
+        Map<String, Object> overallStatus = complianceService.getComplianceOverallStatus();
+        Map<String, Object> processingStatus = complianceService.getPersonalDataProcessingStatus(
+            LocalDateTime.now().minusMonths(1), LocalDateTime.now());
+        Map<String, Object> impactAssessment = complianceService.getPersonalDataImpactAssessment();
+        
+        // 대시보드 구성
+        Map<String, Object> dashboard = Map.of(
+            "overallStatus", overallStatus,
+            "processingStatus", processingStatus,
+            "impactAssessment", impactAssessment,
+            "lastUpdated", LocalDateTime.now(),
+            "status", "success"
+        );
+        
+        return dashboard;
     }
     
     /**

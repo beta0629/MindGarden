@@ -25,8 +25,9 @@ const MGPageHeader = ({
     }
   };
 
+  // 표준화 원칙: 의미 있는 HTML 태그 사용 (header)
   return (
-    <div className={`mg-page-header ${className}`} {...props}>
+    <header className={`mg-page-header ${className}`} {...props}>
       <div className="mg-page-header__content">
         {showBackButton && (
           <button 
@@ -70,7 +71,7 @@ const MGPageHeader = ({
           </div>
         )}
       </div>
-    </div>
+    </header>
   );
 };
 

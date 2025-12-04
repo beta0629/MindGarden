@@ -115,6 +115,29 @@ public class StatusCodeHelper {
     }
     
     /**
+     * 공통코드 그룹에서 코드값으로 코드값 조회 (라벨/한글명으로도 검색 가능)
+     * 
+     * @param codeGroup 공통코드 그룹
+     * @param searchValue 검색할 값 (코드값, 라벨, 한글명)
+     * @return 코드값 (없으면 null)
+     */
+    public String getStatusCodeValue(String codeGroup, String searchValue) {
+        if (searchValue == null) {
+            return null;
+        }
+        
+        List<CommonCode> codes = getStatusCodes(codeGroup);
+        for (CommonCode code : codes) {
+            if (searchValue.equals(code.getCodeValue()) || 
+                searchValue.equals(code.getCodeLabel()) ||
+                (code.getKoreanName() != null && searchValue.equals(code.getKoreanName()))) {
+                return code.getCodeValue();
+            }
+        }
+        return null;
+    }
+    
+    /**
      * 상태값이 유효한지 확인 (공통코드에 존재하는지)
      * 
      * @param codeGroup 공통코드 그룹

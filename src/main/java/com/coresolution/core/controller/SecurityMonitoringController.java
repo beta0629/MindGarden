@@ -21,7 +21,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/security")
+@RequestMapping({"/api/v1/admin/security", "/api/admin/security"})
 @RequiredArgsConstructor
 public class SecurityMonitoringController {
 

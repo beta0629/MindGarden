@@ -47,7 +47,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/test")
+@RequestMapping({"/api/v1/test", "/api/test"})
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class TestDataController {

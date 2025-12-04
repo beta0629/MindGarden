@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGCard from '../common/MGCard';
+import { Button } from '../ui/Button/Button';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -109,7 +111,7 @@ const ImprovedTaxManagement = () => {
 
   const loadTaxSettings = async () => {
     try {
-      const response = await apiGet('/api/common-codes/TAX_CATEGORY');
+      const response = await apiGet('/api/v1/common-codes/TAX_CATEGORY');
       if (response.success) {
         setTaxCategories(response.data || []);
       } else {
@@ -371,74 +373,82 @@ const ImprovedTaxManagement = () => {
                       </button>
                     </div>
                     
-                    <div className="erp-table-container">
-                      <table className="erp-table">
-                        <thead>
-                          <tr>
-                            <th>세금명</th>
-                            <th>카테고리</th>
-                            <th>금액</th>
-                            <th>세율</th>
-                            <th>세금액</th>
-                            <th>납부일</th>
-                            <th>상태</th>
-                            <th>액션</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {taxData.length > 0 ? (
-                            taxData.map((tax) => (
-                              <tr key={tax.id}>
-                                <td>
-                                  <div>
-                                    <strong>{tax.name}</strong>
-                                    {tax.description && (
-                                      <div className="text-muted small">{tax.description}</div>
-                                    )}
-                                  </div>
-                                </td>
-                                <td>{tax.category}</td>
-                                <td className="text-end">{formatCurrency(tax.amount)}</td>
-                                <td className="text-end">{tax.taxRate}%</td>
-                                <td className="text-end fw-bold text-primary">
+                    {/* 세금 항목 카드 그리드 (표준화 원칙: 테이블 → 카드 전환) */}
+                    <div className="mg-tax-cards-grid">
+                      {taxData.length > 0 ? (
+                        taxData.map((tax) => (
+                          <MGCard 
+                            key={tax.id}
+                            variant="default"
+                            className="mg-tax-card"
+                          >
+                            <div className="mg-tax-card__header">
+                              <div className="mg-tax-card__title-section">
+                                <h3 className="mg-tax-card__name">{tax.name}</h3>
+                                {tax.description && (
+                                  <div className="mg-tax-card__description">{tax.description}</div>
+                                )}
+                              </div>
+                              <div className="mg-tax-card__status">
+                                <span className={`erp-status ${getStatusColor(tax.status)}`}>
+                                  {getStatusLabel(tax.status)}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="mg-tax-card__body">
+                              <div className="mg-tax-card__field">
+                                <span className="mg-tax-card__label">카테고리</span>
+                                <span className="mg-tax-card__value">{tax.category}</span>
+                              </div>
+                              <div className="mg-tax-card__field">
+                                <span className="mg-tax-card__label">금액</span>
+                                <span className="mg-tax-card__value">{formatCurrency(tax.amount)}</span>
+                              </div>
+                              <div className="mg-tax-card__field">
+                                <span className="mg-tax-card__label">세율</span>
+                                <span className="mg-tax-card__value">{tax.taxRate}%</span>
+                              </div>
+                              <div className="mg-tax-card__field">
+                                <span className="mg-tax-card__label">세금액</span>
+                                <span className="mg-tax-card__value mg-tax-card__value--tax-amount">
                                   {formatCurrency(tax.amount * (tax.taxRate / 100))}
-                                </td>
-                                <td>{formatDate(tax.dueDate)}</td>
-                                <td>
-                                  <span className={`erp-status ${getStatusColor(tax.status)}`}>
-                                    {getStatusLabel(tax.status)}
-                                  </span>
-                                </td>
-                                <td>
-                                  <div className="d-flex gap-1">
-                                    <button 
-                                      className="btn btn-sm btn-outline-primary"
-                                      onClick={() => setEditingTax(tax)}
-                                    >
-                                      <i className="bi bi-pencil"></i>
-                                    </button>
-                                    <button 
-                                      className="btn btn-sm btn-outline-danger"
-                                      onClick={() => handleDeleteTaxItem(tax.id)}
-                                    >
-                                      <i className="bi bi-trash"></i>
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan="8" className="text-center py-4">
-                                <div className="text-muted">
-                                  <i className="bi bi-calculator tax-management-empty-icon"></i>
-                                  <p className="mt-2 mb-0">세금 항목이 없습니다.</p>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
+                                </span>
+                              </div>
+                              <div className="mg-tax-card__field">
+                                <span className="mg-tax-card__label">납부일</span>
+                                <span className="mg-tax-card__value">{formatDate(tax.dueDate)}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="mg-tax-card__footer">
+                              <div className="mg-tax-card__actions">
+                                <Button
+                                  variant="outline"
+                                  size="small"
+                                  onClick={() => setEditingTax(tax)}
+                                  preventDoubleClick={true}
+                                >
+                                  <i className="bi bi-pencil"></i> 수정
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="small"
+                                  onClick={() => handleDeleteTaxItem(tax.id)}
+                                  preventDoubleClick={true}
+                                >
+                                  <i className="bi bi-trash"></i> 삭제
+                                </Button>
+                              </div>
+                            </div>
+                          </MGCard>
+                        ))
+                      ) : (
+                        <div className="mg-tax-empty">
+                          <i className="bi bi-calculator mg-tax-empty__icon"></i>
+                          <p className="mg-tax-empty__text">세금 항목이 없습니다.</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

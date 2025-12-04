@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGCard from '../common/MGCard';
+import { Button } from '../ui/Button/Button';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../constants/api';
@@ -373,90 +375,87 @@ const BranchManagement = () => {
                 </div>
             )}
 
-            {/* 지점 목록 테이블 */}
-            <div className="branch-table-container">
-                <table className="branch-table mg-v2-table">
-                    <thead>
-                        <tr>
-                            <th onClick={() => handleSort('branchCode')} className="sortable">
-                                지점코드 {sortBy === 'branchCode' && (sortDirection === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th onClick={() => handleSort('branchName')} className="sortable">
-                                지점명 {sortBy === 'branchName' && (sortDirection === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th onClick={() => handleSort('branchType')} className="sortable">
-                                유형 {sortBy === 'branchType' && (sortDirection === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th onClick={() => handleSort('branchStatus')} className="sortable">
-                                상태 {sortBy === 'branchStatus' && (sortDirection === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th>주소</th>
-                            <th>연락처</th>
-                            <th>지점장</th>
-                            <th>상담사/내담자</th>
-                            <th>액션</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {branches.map((branch) => (
-                            <tr key={branch.id}>
-                                <td data-label="지점코드">{branch.branchCode}</td>
-                                <td data-label="지점명">
-                                    <span 
-                                        className="branch-name-link"
-                                        onClick={() => handleDetailClick(branch)}
-                                    >
-                                        {branch.branchName}
-                                    </span>
-                                </td>
-                                <td data-label="유형">
+            {/* 지점 목록 카드 (표준화 원칙: 테이블 → 카드 전환) */}
+            <div className="mg-branch-cards-grid">
+                {branches.map((branch) => (
+                    <MGCard 
+                        key={branch.id}
+                        variant="default"
+                        className="mg-branch-card"
+                    >
+                        <div className="mg-branch-card__header">
+                            <div className="mg-branch-card__title-section">
+                                <h3 
+                                    className="mg-branch-card__name clickable"
+                                    onClick={() => handleDetailClick(branch)}
+                                >
+                                    {branch.branchName}
+                                </h3>
+                                <div className="mg-branch-card__badges">
                                     <span className={`branch-type-badge ${branch.branchType.toLowerCase()}`}>
                                         {BRANCH_TYPE[branch.branchType]}
                                     </span>
-                                </td>
-                                <td data-label="상태">
                                     <span className={`branch-status-badge ${branch.branchStatus.toLowerCase()}`}>
                                         {BRANCH_STATUS[branch.branchStatus]}
                                     </span>
-                                </td>
-                                <td data-label="주소">{branch.fullAddress || '-'}</td>
-                                <td data-label="연락처">{branch.phoneNumber || '-'}</td>
-                                <td data-label="지점장">{branch.managerName || '미지정'}</td>
-                                <td data-label="상담사/내담자">
+                                </div>
+                            </div>
+                            <div className="mg-branch-card__code">
+                                {branch.branchCode}
+                            </div>
+                        </div>
+                        <div className="mg-branch-card__body">
+                            <div className="mg-branch-card__field">
+                                <span className="mg-branch-card__label">주소</span>
+                                <span className="mg-branch-card__value">{branch.fullAddress || '-'}</span>
+                            </div>
+                            <div className="mg-branch-card__field">
+                                <span className="mg-branch-card__label">연락처</span>
+                                <span className="mg-branch-card__value">{branch.phoneNumber || '-'}</span>
+                            </div>
+                            <div className="mg-branch-card__field">
+                                <span className="mg-branch-card__label">지점장</span>
+                                <span className="mg-branch-card__value">{branch.managerName || '미지정'}</span>
+                            </div>
+                            <div className="mg-branch-card__field">
+                                <span className="mg-branch-card__label">상담사/내담자</span>
+                                <span className="mg-branch-card__value">
                                     {branch.currentConsultants || 0} / {branch.currentClients || 0}
-                                </td>
-                                <td data-label="액션">
-                                    <div className="action-buttons">
-                                        <button 
-                                            onClick={() => handleEditClick(branch)}
-                                            className="btn-edit"
-                                            title="수정"
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button 
-                                            onClick={() => deleteBranch(branch.id)}
-                                            className="btn-delete"
-                                            title="삭제"
-                                        >
-                                            🗑️
-                                        </button>
-                                        <select
-                                            value={branch.branchStatus}
-                                            onChange={(e) => handleStatusChange(branch, e.target.value)}
-                                            className="status-select"
-                                            title="상태 변경"
-                                        >
-                                            {Object.entries(BRANCH_STATUS).map(([key, value]) => (
-                                                <option key={key} value={key}>{value}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                </span>
+                            </div>
+                        </div>
+                        <div className="mg-branch-card__footer">
+                            <div className="mg-branch-card__actions">
+                                <Button
+                                    variant="outline"
+                                    size="small"
+                                    onClick={() => handleEditClick(branch)}
+                                    preventDoubleClick={true}
+                                >
+                                    수정
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="small"
+                                    onClick={() => deleteBranch(branch.id)}
+                                    preventDoubleClick={true}
+                                >
+                                    삭제
+                                </Button>
+                                <select
+                                    value={branch.branchStatus}
+                                    onChange={(e) => handleStatusChange(branch, e.target.value)}
+                                    className="mg-branch-card__status-select"
+                                    title="상태 변경"
+                                >
+                                    {Object.entries(BRANCH_STATUS).map(([key, value]) => (
+                                        <option key={key} value={key}>{value}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </MGCard>
+                ))}
             </div>
 
             {/* 페이지네이션 */}

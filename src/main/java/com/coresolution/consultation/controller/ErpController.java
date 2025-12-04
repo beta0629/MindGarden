@@ -25,10 +25,13 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.ErpService;
 import com.coresolution.consultation.service.FinancialTransactionService;
 import com.coresolution.consultation.service.RecurringExpenseService;
+import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.util.PaginationUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -63,6 +66,32 @@ import lombok.extern.slf4j.Slf4j;
 @PreAuthorize("isAuthenticated()")
 public class ErpController extends BaseApiController {
     
+    /**
+     * 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+     * DynamicPermissionService를 통해 권한 체크
+     */
+    private ResponseEntity<?> checkErpAccess(HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(Map.of(
+                "success", false,
+                "message", "로그인이 필요합니다.",
+                "redirectToLogin", true
+            ));
+        }
+        
+        // 표준화 원칙: 데이터베이스 기반 권한 체크 (ERP_ACCESS 권한 필요)
+        if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
+            log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
+            return ResponseEntity.status(403).body(Map.of(
+                "success", false,
+                "message", "ERP 접근 권한이 없습니다. 관리자만 접근 가능합니다."
+            ));
+        }
+        
+        return null; // 권한 있음
+    }
+    
     private final ErpService erpService;
     private final FinancialTransactionService financialTransactionService;
     private final RecurringExpenseService recurringExpenseService;
@@ -79,25 +108,15 @@ public class ErpController extends BaseApiController {
     @GetMapping("/items")
     public ResponseEntity<Map<String, Object>> getAllItems(HttpSession session) {
         try {
+            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+            ResponseEntity<?> accessCheck = checkErpAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+            
             log.info("모든 아이템 조회 요청");
             
-            // 동적 권한 체크
-            User currentUser = (User) session.getAttribute("user");
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다.",
-                    "redirectToLogin", true
-                ));
-            }
-            
-            // ERP 접근 권한 확인
-            if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "ERP 접근 권한이 없습니다."
-                ));
-            }
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             String currentBranchCode = currentUser.getBranchCode();
             log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
@@ -261,9 +280,9 @@ public class ErpController extends BaseApiController {
     @PostMapping("/items")
     public ResponseEntity<Map<String, Object>> createItem(@Valid @RequestBody ItemCreateRequest request, HttpSession session) {
         try {
-            // 권한 확인
+            // 표준화 원칙: AdminRoleUtils 사용
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!currentUser.getRole().equals(UserRole.ADMIN) && !currentUser.getRole().equals(UserRole.HQ_MASTER))) {
+            if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
                 log.warn("아이템 생성 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
@@ -307,9 +326,9 @@ public class ErpController extends BaseApiController {
     @PutMapping("/items/{id}")
     public ResponseEntity<Map<String, Object>> updateItem(@PathVariable Long id, @Valid @RequestBody ItemUpdateRequest request, HttpSession session) {
         try {
-            // 권한 확인
+            // 표준화 원칙: AdminRoleUtils 사용
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!currentUser.getRole().equals(UserRole.ADMIN) && !currentUser.getRole().equals(UserRole.HQ_MASTER))) {
+            if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
                 log.warn("아이템 수정 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
@@ -358,13 +377,13 @@ public class ErpController extends BaseApiController {
     @DeleteMapping("/items/{id}")
     public ResponseEntity<Map<String, Object>> deleteItem(@PathVariable Long id, HttpSession session) {
         try {
-            // 권한 확인 (수퍼어드민만)
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !currentUser.getRole().equals(UserRole.HQ_MASTER)) {
-                log.warn("아이템 삭제 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+            ResponseEntity<?> accessCheck = checkErpAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
+            
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             log.info("아이템 삭제 요청: id={}", id);
             
@@ -397,9 +416,9 @@ public class ErpController extends BaseApiController {
     @PutMapping("/items/{id}/stock")
     public ResponseEntity<Map<String, Object>> updateItemStock(@PathVariable Long id, @RequestParam Integer quantity, HttpSession session) {
         try {
-            // 권한 확인
+            // 표준화 원칙: AdminRoleUtils 사용
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!currentUser.getRole().equals(UserRole.ADMIN) && !currentUser.getRole().equals(UserRole.HQ_MASTER))) {
+            if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
                 log.warn("아이템 재고 업데이트 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
@@ -1371,13 +1390,13 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/finance/dashboard")
     public ResponseEntity<Map<String, Object>> getFinanceDashboard(
-            @RequestParam(required = false) String branchCode,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             HttpSession session) {
         try {
             // 동적 권한 체크
-            User currentUser = (User) session.getAttribute("user");
+            // 표준화 원칙: SessionUtils 사용
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.status(401).body(Map.of(
                     "success", false,
@@ -1399,70 +1418,42 @@ public class ErpController extends BaseApiController {
                 ));
             }
             
-            log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 사용자지점={}, 요청지점={}", 
-                    currentUser.getEmail(), currentUser.getBranchCode(), branchCode);
+            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null) {
+                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            }
             
-            // 지점 선택 로직
-            String targetBranchCode = branchCode;
-            UserRole role = currentUser.getRole();
+            log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 테넌트={}", 
+                    currentUser.getEmail(), tenantId);
             
-            // 본사 사용자 권한 확인
-            boolean isHQUser = UserRole.HQ_MASTER.equals(role) || UserRole.SUPER_HQ_ADMIN.equals(role) || "HQ".equals(currentUser.getBranchCode());
-            
-            if (isHQUser) {
-                // 본사 사용자: 요청된 지점 또는 통합 데이터 조회
-                if (targetBranchCode == null || targetBranchCode.isEmpty()) {
-                    // 지점 선택 안함: 통합 데이터 조회
-                    log.info("📊 본사 사용자 - 통합 데이터 조회");
-                    Map<String, Object> financeData = erpService.getIntegratedFinanceDashboard();
-                    
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("success", true);
-                    response.put("message", "통합 재무 대시보드 데이터를 성공적으로 조회했습니다.");
-                    response.put("data", financeData);
-                    response.put("branchCode", "HQ");
-                    response.put("branchType", "integrated");
-                    
-                    return ResponseEntity.ok(response);
+            // 테넌트 컨텍스트 설정
+            TenantContextHolder.setTenantId(tenantId);
+            try {
+                // 테넌트별 데이터 조회 (날짜 파라미터 전달)
+                Map<String, Object> financeData;
+                if (startDate != null && endDate != null) {
+                    LocalDate start = LocalDate.parse(startDate);
+                    LocalDate end = LocalDate.parse(endDate);
+                    // 레거시 호환: getBranchFinanceDashboard는 내부적으로 tenantId 사용하도록 변경 필요
+                    // 임시로 null 전달 (Service에서 tenantId 사용하도록 수정 필요)
+                    financeData = erpService.getBranchFinanceDashboard(null, start, end);
+                    log.info("✅ 테넌트별 재무 대시보드 데이터 조회 완료: 테넌트={}, 기간={}~{}", tenantId, startDate, endDate);
                 } else {
-                    // 특정 지점 선택: 해당 지점 데이터 조회
-                    log.info("📍 본사 사용자 - 지점별 데이터 조회: {}", targetBranchCode);
+                    financeData = erpService.getBranchFinanceDashboard(null);
+                    log.info("✅ 테넌트별 재무 대시보드 데이터 조회 완료: 테넌트={} (전체 기간)", tenantId);
                 }
-            } else {
-                // 지점 사용자: 자기 지점 데이터만 조회 (요청 지점코드 무시)
-                targetBranchCode = currentUser.getBranchCode();
-                log.info("🏢 지점 사용자 - 자기 지점만 조회: {} (요청된 지점 {} 무시)", targetBranchCode, branchCode);
                 
-                if (targetBranchCode == null || targetBranchCode.isEmpty()) {
-                    log.error("❌ 지점 사용자의 지점코드가 없음 - 세션 오류");
-                    return ResponseEntity.status(401).body(Map.of(
-                        "success", false,
-                        "message", "세션이 만료되었습니다. 다시 로그인해주세요.",
-                        "redirectToLogin", true
-                    ));
-                }
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "재무 대시보드 데이터를 성공적으로 조회했습니다.");
+                response.put("data", financeData);
+                response.put("tenantId", tenantId);
+                
+                return ResponseEntity.ok(response);
+            } finally {
+                TenantContextHolder.clear();
             }
-            
-            // 지점별 데이터 조회 (날짜 파라미터 전달)
-            Map<String, Object> financeData;
-            if (startDate != null && endDate != null) {
-                LocalDate start = LocalDate.parse(startDate);
-                LocalDate end = LocalDate.parse(endDate);
-                financeData = erpService.getBranchFinanceDashboard(targetBranchCode, start, end);
-                log.info("✅ 지점별 재무 대시보드 데이터 조회 완료: 지점={}, 기간={}~{}", targetBranchCode, startDate, endDate);
-            } else {
-                financeData = erpService.getBranchFinanceDashboard(targetBranchCode);
-                log.info("✅ 지점별 재무 대시보드 데이터 조회 완료: 지점={} (전체 기간)", targetBranchCode);
-            }
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "재무 대시보드 데이터를 성공적으로 조회했습니다.");
-            response.put("data", financeData);
-            response.put("branchCode", targetBranchCode);
-            response.put("branchType", "branch");
-            
-            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("재무 대시보드 데이터 조회 실패", e);
@@ -1478,41 +1469,41 @@ public class ErpController extends BaseApiController {
     public ResponseEntity<Map<String, Object>> getFinanceStatistics(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
-            @RequestParam(required = false) String branchCode,
             HttpSession session) {
         try {
-            // 비용처리 권한 확인 (어드민, 지점 수퍼 관리자, HQ 마스터 허용)
+            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+            ResponseEntity<?> accessCheck = checkErpAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+            
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                !UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
-                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
+            
+            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null) {
+                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
             }
             
-            // 지점코드 결정
-            String targetBranchCode = branchCode;
-            UserRole role = currentUser.getRole();
-            
-            if (role != UserRole.HQ_MASTER && role != UserRole.SUPER_HQ_ADMIN) {
-                // 일반 관리자는 자신의 지점 데이터만 조회 가능
-                targetBranchCode = currentUser.getBranchCode();
-                log.info("📍 지점 관리자 권한: 자동으로 지점코드 설정 = {}", targetBranchCode);
+            // 테넌트 컨텍스트 설정
+            TenantContextHolder.setTenantId(tenantId);
+            try {
+                log.info("수입/지출 통계 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
+                
+                // 레거시 호환: getBranchFinanceStatistics는 내부적으로 tenantId 사용하도록 변경 필요
+                // 임시로 null 전달 (Service에서 tenantId 사용하도록 수정 필요)
+                Map<String, Object> statistics = erpService.getBranchFinanceStatistics(null, startDate, endDate);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "수입/지출 통계를 성공적으로 조회했습니다.");
+                response.put("data", statistics);
+                response.put("tenantId", tenantId);
+                
+                return ResponseEntity.ok(response);
+            } finally {
+                TenantContextHolder.clear();
             }
-            
-            log.info("수입/지출 통계 조회 요청: {} ~ {}, 지점={}", startDate, endDate, targetBranchCode);
-            
-            Map<String, Object> statistics = erpService.getBranchFinanceStatistics(targetBranchCode, startDate, endDate);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "수입/지출 통계를 성공적으로 조회했습니다.");
-            response.put("data", statistics);
-            response.put("branchCode", targetBranchCode);
-            
-            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("수입/지출 통계 조회 실패", e);
@@ -1530,25 +1521,37 @@ public class ErpController extends BaseApiController {
             @RequestParam(required = false) String endDate,
             HttpSession session) {
         try {
-            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+            ResponseEntity<?> accessCheck = checkErpAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
             
-            log.info("카테고리별 분석 조회 요청: {} ~ {}", startDate, endDate);
+            User currentUser = SessionUtils.getCurrentUser(session);
             
-            Map<String, Object> analysis = erpService.getCategoryAnalysis(startDate, endDate);
+            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null) {
+                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            }
             
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "카테고리별 분석을 성공적으로 조회했습니다.");
-            response.put("data", analysis);
-            
-            return ResponseEntity.ok(response);
+            // 테넌트 컨텍스트 설정
+            TenantContextHolder.setTenantId(tenantId);
+            try {
+                log.info("카테고리별 분석 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
+                
+                Map<String, Object> analysis = erpService.getCategoryAnalysis(startDate, endDate);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "카테고리별 분석을 성공적으로 조회했습니다.");
+                response.put("data", analysis);
+                response.put("tenantId", tenantId);
+                
+                return ResponseEntity.ok(response);
+            } finally {
+                TenantContextHolder.clear();
+            }
             
         } catch (Exception e) {
             log.error("카테고리별 분석 조회 실패", e);
@@ -1565,36 +1568,44 @@ public class ErpController extends BaseApiController {
             @RequestParam(required = false) String reportDate,
             HttpSession session) {
         try {
-            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+            ResponseEntity<?> accessCheck = checkErpAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
             
-            log.info("일간 재무 리포트 조회 요청: {}", reportDate);
+            User currentUser = SessionUtils.getCurrentUser(session);
+            
+            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null) {
+                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            }
             
             // 기본값으로 오늘 날짜 사용
             if (reportDate == null) {
                 reportDate = java.time.LocalDate.now().toString();
             }
             
-            // 현재 사용자의 지점코드 전달 (지점 사용자는 자신의 지점만, HQ는 전체)
-            String branchCode = currentUser.getBranchCode();
-            if (UserRole.HQ_MASTER.equals(currentUser.getRole()) || UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole())) {
-                branchCode = null; // HQ는 전체 데이터 조회
+            // 테넌트 컨텍스트 설정
+            TenantContextHolder.setTenantId(tenantId);
+            try {
+                log.info("일간 재무 리포트 조회 요청: {}, 테넌트={}", reportDate, tenantId);
+                
+                // 레거시 호환: getDailyFinanceReport는 내부적으로 tenantId 사용하도록 변경 필요
+                // 임시로 null 전달 (Service에서 tenantId 사용하도록 수정 필요)
+                Map<String, Object> dailyReport = erpService.getDailyFinanceReport(reportDate, null);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "일간 재무 리포트를 성공적으로 조회했습니다.");
+                response.put("data", dailyReport);
+                response.put("tenantId", tenantId);
+                
+                return ResponseEntity.ok(response);
+            } finally {
+                TenantContextHolder.clear();
             }
-            
-            Map<String, Object> dailyReport = erpService.getDailyFinanceReport(reportDate, branchCode);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "일간 재무 리포트를 성공적으로 조회했습니다.");
-            response.put("data", dailyReport);
-            
-            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("일간 재무 리포트 조회 실패", e);
@@ -1612,39 +1623,47 @@ public class ErpController extends BaseApiController {
             @RequestParam(required = false) String month,
             HttpSession session) {
         try {
-            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
+            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+            ResponseEntity<?> accessCheck = checkErpAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+            
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+            
+            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null) {
+                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
             }
             
-            log.info("월간 재무 리포트 조회 요청: {}-{}", year, month);
-            
-            // 기본값으로 현재 년월 사용
-            if (year == null) {
-                year = String.valueOf(java.time.LocalDate.now().getYear());
+            // 테넌트 컨텍스트 설정
+            TenantContextHolder.setTenantId(tenantId);
+            try {
+                log.info("월간 재무 리포트 조회 요청: {}-{}, 테넌트={}", year, month, tenantId);
+                
+                // 기본값으로 현재 년월 사용
+                if (year == null) {
+                    year = String.valueOf(java.time.LocalDate.now().getYear());
+                }
+                if (month == null) {
+                    month = String.valueOf(java.time.LocalDate.now().getMonthValue());
+                }
+                
+                // 레거시 호환: getMonthlyFinanceReport는 내부적으로 tenantId 사용하도록 변경 필요
+                // 임시로 null 전달 (Service에서 tenantId 사용하도록 수정 필요)
+                Map<String, Object> monthlyReport = erpService.getMonthlyFinanceReport(year, month, null);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "월간 재무 리포트를 성공적으로 조회했습니다.");
+                response.put("data", monthlyReport);
+                response.put("tenantId", tenantId);
+                
+                return ResponseEntity.ok(response);
+            } finally {
+                TenantContextHolder.clear();
             }
-            if (month == null) {
-                month = String.valueOf(java.time.LocalDate.now().getMonthValue());
-            }
-            
-            // 현재 사용자의 지점코드 전달 (지점 사용자는 자신의 지점만, HQ는 전체)
-            String branchCode = currentUser.getBranchCode();
-            if (UserRole.HQ_MASTER.equals(currentUser.getRole()) || UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole())) {
-                branchCode = null; // HQ는 전체 데이터 조회
-            }
-            
-            Map<String, Object> monthlyReport = erpService.getMonthlyFinanceReport(year, month, branchCode);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "월간 재무 리포트를 성공적으로 조회했습니다.");
-            response.put("data", monthlyReport);
-            
-            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("월간 재무 리포트 조회 실패", e);
@@ -1661,30 +1680,42 @@ public class ErpController extends BaseApiController {
             @RequestParam(required = false) String year,
             HttpSession session) {
         try {
-            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+            ResponseEntity<?> accessCheck = checkErpAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
             
-            log.info("년간 재무 리포트 조회 요청: {}", year);
+            User currentUser = SessionUtils.getCurrentUser(session);
+            
+            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null) {
+                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
+            }
             
             // 기본값으로 현재 년도 사용
             if (year == null) {
                 year = String.valueOf(java.time.LocalDate.now().getYear());
             }
             
-            Map<String, Object> yearlyReport = erpService.getYearlyFinanceReport(year);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "년간 재무 리포트를 성공적으로 조회했습니다.");
-            response.put("data", yearlyReport);
-            
-            return ResponseEntity.ok(response);
+            // 테넌트 컨텍스트 설정
+            TenantContextHolder.setTenantId(tenantId);
+            try {
+                log.info("년간 재무 리포트 조회 요청: {}, 테넌트={}", year, tenantId);
+                
+                Map<String, Object> yearlyReport = erpService.getYearlyFinanceReport(year);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "년간 재무 리포트를 성공적으로 조회했습니다.");
+                response.put("data", yearlyReport);
+                response.put("tenantId", tenantId);
+                
+                return ResponseEntity.ok(response);
+            } finally {
+                TenantContextHolder.clear();
+            }
             
         } catch (Exception e) {
             log.error("년간 재무 리포트 조회 실패", e);
@@ -1750,42 +1781,41 @@ public class ErpController extends BaseApiController {
     public ResponseEntity<Map<String, Object>> getIncomeStatement(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
-            @RequestParam(required = false) String branchCode,
             HttpSession session) {
         try {
-            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
+            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+            ResponseEntity<?> accessCheck = checkErpAccess(session);
+            if (accessCheck != null) {
+                return (ResponseEntity<Map<String, Object>>) accessCheck;
+            }
+            
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+            
+            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+            String tenantId = SessionUtils.getTenantId(session);
+            if (tenantId == null) {
+                throw new RuntimeException("테넌트 정보를 찾을 수 없습니다.");
             }
             
-            // 브랜치 코드 결정
-            String targetBranchCode = null;
-            if (UserRole.HQ_MASTER.equals(currentUser.getRole()) || UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole())) {
-                // HQ 사용자는 요청된 브랜치 코드 사용 (없으면 전체)
-                targetBranchCode = branchCode;
-            } else {
-                // 지점 관리자는 자신의 브랜치만 조회
-                targetBranchCode = currentUser.getBranchCode();
-                if (targetBranchCode == null || targetBranchCode.isEmpty()) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "지점 코드가 없습니다.", "redirectToLogin", true));
-                }
+            // 테넌트 컨텍스트 설정
+            TenantContextHolder.setTenantId(tenantId);
+            try {
+                log.info("손익계산서 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
+                
+                // 레거시 호환: getIncomeStatement는 내부적으로 tenantId 사용하도록 변경 필요
+                // 임시로 null 전달 (Service에서 tenantId 사용하도록 수정 필요)
+                Map<String, Object> incomeStatement = erpService.getIncomeStatement(startDate, endDate, null);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "손익계산서를 성공적으로 조회했습니다.");
+                response.put("data", incomeStatement);
+                response.put("tenantId", tenantId);
+                
+                return ResponseEntity.ok(response);
+            } finally {
+                TenantContextHolder.clear();
             }
-            
-            log.info("손익계산서 조회 요청: {} ~ {}, 브랜치: {}", startDate, endDate, targetBranchCode);
-            
-            Map<String, Object> incomeStatement = erpService.getIncomeStatement(startDate, endDate, targetBranchCode);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "손익계산서를 성공적으로 조회했습니다.");
-            response.put("data", incomeStatement);
-            
-            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("손익계산서 조회 실패", e);
@@ -1877,9 +1907,10 @@ public class ErpController extends BaseApiController {
             
             log.info("수입/지출 거래 목록 조회 요청: 지점={}", targetBranchCode);
             
+            // 표준화 원칙: 페이지 크기 최대 20개로 제한
             Page<FinancialTransactionResponse> transactionPage = financialTransactionService.getTransactionsByBranch(
                 targetBranchCode, transactionType, category, startDate, endDate,
-                PageRequest.of(page, size)
+                PaginationUtils.createPageable(page, size)
             );
             List<FinancialTransactionResponse> transactions = transactionPage.getContent();
             

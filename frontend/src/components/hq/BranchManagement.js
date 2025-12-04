@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { 
-    Container, Row, Col, Card, Button, Modal, Form, 
+    Container, Row, Col, Card, Button as BootstrapButton, Modal, Form, 
     Table, Badge, Alert, InputGroup, FormControl, 
     FormSelect, FormCheck, Spinner, ButtonGroup,
     Tabs, Tab
 } from 'react-bootstrap';
+import Button from '../ui/Button/Button';
 import { 
     FaBuilding, FaUsers, FaUserTie, FaUser, FaCrown, 
     FaSearch, FaFilter, FaExchangeAlt, FaPlus, FaEdit,
@@ -220,10 +221,10 @@ const BranchManagement = () => {
                                         <Card.Header>
                                             <div className="d-flex justify-content-between align-items-center">
                                                 <h5 className="mb-0 d-flex align-items-center">
-                                                    <FaBuilding className="me-2" style={{ color: 'var(--color-primary)' }} />
+                                                    <FaBuilding className="me-2 mg-icon-primary" />
                                                     지점 목록 ({branches.length}개)
                                                 </h5>
-                                                <Button
+                                                <BootstrapButton
                                                     variant="primary"
                                                     size="sm"
                                                     onClick={() => setShowBranchRegistrationModal(true)}
@@ -231,7 +232,7 @@ const BranchManagement = () => {
                                                 >
                                                     <FaPlus className="me-1" />
                                                     지점 등록
-                                                </Button>
+                                                </BootstrapButton>
                                             </div>
                                         </Card.Header>
                                         <Card.Body style={{
@@ -1052,13 +1053,14 @@ const BranchManagement = () => {
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowTransferModal(false)}>
+                        <BootstrapButton variant="secondary" onClick={() => setShowTransferModal(false)}>
                             취소
-                        </Button>
+                        </BootstrapButton>
                         <Button 
                             variant="primary" 
                             onClick={handleBulkTransfer}
                             disabled={!transferForm.targetBranchCode}
+                            preventDoubleClick={true}
                         >
                             <FaExchangeAlt className="me-2" />
                             이동 실행

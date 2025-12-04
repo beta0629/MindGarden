@@ -142,16 +142,16 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
       const result = await response.json();
       
       if (response.ok && result.success) {
-        alert(result.message || '위젯이 추가되었습니다');
+        notificationManager.success(result.message || '위젯이 추가되었습니다');
         setShowAddModal(false);
         fetchGroupedWidgets(); // 새로고침
         if (onWidgetChange) onWidgetChange();
       } else {
-        alert(result.message || '위젯 추가에 실패했습니다');
+        notificationManager.error(result.message || '위젯 추가에 실패했습니다');
       }
     } catch (error) {
       console.error('위젯 추가 실패:', error);
-      alert('위젯 추가 중 오류가 발생했습니다');
+      notificationManager.error('위젯 추가 중 오류가 발생했습니다');
     }
   };
   
@@ -159,7 +159,10 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
    * 위젯 삭제 핸들러
    */
   const handleDeleteWidget = async (widgetId) => {
-    if (!confirm('이 위젯을 삭제하시겠습니까?')) {
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm('이 위젯을 삭제하시겠습니까?', resolve);
+    });
+    if (!confirmed) {
       return;
     }
     
@@ -178,15 +181,15 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
       const result = await response.json();
       
       if (response.ok && result.success) {
-        alert(result.message || '위젯이 삭제되었습니다');
+        notificationManager.success(result.message || '위젯이 삭제되었습니다');
         fetchGroupedWidgets(); // 새로고침
         if (onWidgetChange) onWidgetChange();
       } else {
-        alert(result.message || '위젯 삭제에 실패했습니다');
+        notificationManager.error(result.message || '위젯 삭제에 실패했습니다');
       }
     } catch (error) {
       console.error('위젯 삭제 실패:', error);
-      alert('위젯 삭제 중 오류가 발생했습니다');
+      notificationManager.error('위젯 삭제 중 오류가 발생했습니다');
     }
   };
   
@@ -195,7 +198,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
    */
   const handleConfigureWidget = (widgetId) => {
     // TODO: 위젯 설정 모달 구현
-    alert('위젯 설정 기능은 추후 구현 예정입니다');
+    notificationManager.info('위젯 설정 기능은 추후 구현 예정입니다');
   };
   
   /**

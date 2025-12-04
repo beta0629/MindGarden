@@ -110,8 +110,8 @@
     text-align: center;
 }
 
-/* 태블릿 이상 (768px~) */
-@media (min-width: 768px) {
+/* 태블릿 이상 (표준화 원칙: CSS 변수 사용) */
+@media (min-width: var(--breakpoint-tablet, 768px)) {
     .simple-main {
         padding: var(--spacing-lg) var(--spacing-xl);
         padding-top: calc(var(--header-height, 64px) + var(--spacing-lg));
@@ -126,8 +126,8 @@
     }
 }
 
-/* 데스크톱 이상 (1024px~) */
-@media (min-width: 1024px) {
+/* 데스크톱 이상 (표준화 원칙: CSS 변수 사용) */
+@media (min-width: var(--breakpoint-desktop, 1024px)) {
     .simple-main {
         padding: var(--spacing-lg);
         padding-top: calc(var(--header-height, 64px) + var(--spacing-lg));
@@ -196,8 +196,8 @@
     }
 }
 
-/* 반응형: 모바일에서 알림 버튼 크기 조정 */
-@media (max-width: 767px) {
+/* 반응형: 모바일에서 알림 버튼 크기 조정 (표준화 원칙: CSS 변수 사용) */
+@media (max-width: calc(var(--breakpoint-tablet, 768px) - 1px)) {
     .notification-button {
         width: var(--header-avatar-size-mobile, 32px);
         height: var(--header-avatar-size-mobile, 32px);

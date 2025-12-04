@@ -82,9 +82,9 @@ const SimpleLayout = ({
       <main className="simple-main">
         <div className="simple-container">
           {title && (
-            <div className="page-header">
+            <header className="page-header">
               <h1 className="page-title">{title}</h1>
-            </div>
+            </header>
           )}
           
           {loading ? (

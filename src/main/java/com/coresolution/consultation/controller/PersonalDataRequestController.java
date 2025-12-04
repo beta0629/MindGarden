@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/personal-data-request")
+@RequestMapping({"/api/v1/personal-data-request", "/api/personal-data-request"})
 @RequiredArgsConstructor
 public class PersonalDataRequestController {
     
@@ -45,47 +45,35 @@ public class PersonalDataRequestController {
             HttpSession session,
             HttpServletRequest request) {
         
-        try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
-            }
-            
-            log.info("개인정보 열람 요청: userId={}", currentUser.getId());
-            
-            // 개인정보 접근 로그 기록
-            personalDataAccessLogService.logPersonalDataAccess(
-                currentUser.getId().toString(),
-                currentUser.getName(),
-                "USER_INFO",
-                "READ",
-                currentUser.getId().toString(),
-                currentUser.getName(),
-                "사용자 본인 열람 요청",
-                "SUCCESS",
-                "USER_" + currentUser.getId(),
-                "개인정보 열람 요청",
-                request
-            );
-            
-            // 개인정보 열람 요청 처리
-            Map<String, Object> result = personalDataRequestService.requestPersonalDataAccess(
-                currentUser.getId(),
-                request
-            );
-            
-            return ResponseEntity.ok(result);
-            
-        } catch (Exception e) {
-            log.error("개인정보 열람 요청 실패: {}", e.getMessage(), e);
-            return ResponseEntity.status(500).body(Map.of(
-                "success", false,
-                "message", "개인정보 열람 요청 처리 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new RuntimeException("로그인이 필요합니다.");
         }
+        
+        log.info("개인정보 열람 요청: userId={}", currentUser.getId());
+        
+        // 개인정보 접근 로그 기록
+        personalDataAccessLogService.logPersonalDataAccess(
+            currentUser.getId().toString(),
+            currentUser.getName(),
+            "USER_INFO",
+            "READ",
+            currentUser.getId().toString(),
+            currentUser.getName(),
+            "사용자 본인 열람 요청",
+            "SUCCESS",
+            "USER_" + currentUser.getId(),
+            "개인정보 열람 요청",
+            request
+        );
+        
+        // 개인정보 열람 요청 처리
+        Map<String, Object> result = personalDataRequestService.requestPersonalDataAccess(
+            currentUser.getId(),
+            request
+        );
+        
+        return ResponseEntity.ok(result);
     }
     
     /**
@@ -98,43 +86,25 @@ public class PersonalDataRequestController {
             HttpSession session,
             HttpServletRequest request) {
         
-        try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
-            }
-            
-            String reason = requestBody.getOrDefault("reason", "사용자 요청");
-            String password = requestBody.get("password"); // 본인 확인용 비밀번호
-            
-            log.info("개인정보 삭제 요청: userId={}, reason={}", currentUser.getId(), reason);
-            
-            // 개인정보 삭제 요청 처리
-            Map<String, Object> result = personalDataRequestService.requestPersonalDataDeletion(
-                currentUser.getId(),
-                password,
-                reason,
-                request
-            );
-            
-            return ResponseEntity.ok(result);
-            
-        } catch (IllegalArgumentException e) {
-            log.warn("개인정보 삭제 요청 검증 실패: {}", e.getMessage());
-            return ResponseEntity.status(400).body(Map.of(
-                "success", false,
-                "message", e.getMessage()
-            ));
-        } catch (Exception e) {
-            log.error("개인정보 삭제 요청 실패: {}", e.getMessage(), e);
-            return ResponseEntity.status(500).body(Map.of(
-                "success", false,
-                "message", "개인정보 삭제 요청 처리 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new RuntimeException("로그인이 필요합니다.");
         }
+        
+        String reason = requestBody.getOrDefault("reason", "사용자 요청");
+        String password = requestBody.get("password"); // 본인 확인용 비밀번호
+        
+        log.info("개인정보 삭제 요청: userId={}, reason={}", currentUser.getId(), reason);
+        
+        // 개인정보 삭제 요청 처리
+        Map<String, Object> result = personalDataRequestService.requestPersonalDataDeletion(
+            currentUser.getId(),
+            password,
+            reason,
+            request
+        );
+        
+        return ResponseEntity.ok(result);
     }
     
     /**
@@ -146,38 +116,26 @@ public class PersonalDataRequestController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
         
-        try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
-            }
-            
-            // 기본값 설정 (최근 1년)
-            if (startDate == null) {
-                startDate = LocalDateTime.now().minusYears(1);
-            }
-            if (endDate == null) {
-                endDate = LocalDateTime.now();
-            }
-            
-            Map<String, Object> result = personalDataRequestService.getRequestStatus(
-                currentUser.getId(),
-                startDate,
-                endDate
-            );
-            
-            return ResponseEntity.ok(result);
-            
-        } catch (Exception e) {
-            log.error("개인정보 요청 현황 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.status(500).body(Map.of(
-                "success", false,
-                "message", "요청 현황 조회 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new RuntimeException("로그인이 필요합니다.");
         }
+        
+        // 기본값 설정 (최근 1년)
+        if (startDate == null) {
+            startDate = LocalDateTime.now().minusYears(1);
+        }
+        if (endDate == null) {
+            endDate = LocalDateTime.now();
+        }
+        
+        Map<String, Object> result = personalDataRequestService.getRequestStatus(
+            currentUser.getId(),
+            startDate,
+            endDate
+        );
+        
+        return ResponseEntity.ok(result);
     }
     
     /**
@@ -188,28 +146,16 @@ public class PersonalDataRequestController {
     public ResponseEntity<Map<String, Object>> getPersonalDataProcessingStatus(
             HttpSession session) {
         
-        try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
-            }
-            
-            Map<String, Object> result = personalDataRequestService.getPersonalDataProcessingStatus(
-                currentUser.getId()
-            );
-            
-            return ResponseEntity.ok(result);
-            
-        } catch (Exception e) {
-            log.error("개인정보 처리 현황 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.status(500).body(Map.of(
-                "success", false,
-                "message", "개인정보 처리 현황 조회 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new RuntimeException("로그인이 필요합니다.");
         }
+        
+        Map<String, Object> result = personalDataRequestService.getPersonalDataProcessingStatus(
+            currentUser.getId()
+        );
+        
+        return ResponseEntity.ok(result);
     }
 }
 

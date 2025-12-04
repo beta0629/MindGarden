@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGCard from '../common/MGCard';
+import { Button } from '../ui/Button/Button';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
@@ -519,129 +521,139 @@ const FinancialManagement = () => {
                     </div>
                   </div>
                   
-                  <div className="erp-table-container">
-                    <table className="erp-table">
-                      <thead>
-                        <tr>
-                          <th>거래 번호</th>
-                          <th>거래 유형</th>
-                          <th>카테고리</th>
-                          <th>매칭 정보</th>
-                          <th>금액</th>
-                          <th>상태</th>
-                          <th>거래일</th>
-                          <th>액션</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {transactions.length > 0 ? (
-                          transactions.map((transaction) => (
-                            <tr key={transaction.id}>
-                              <td>
-                                <div className="mg-v2-form-group" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedTransaction(transaction);
-                                      setShowDetailModal(true);
-                                    }}
-                                    className="mg-v2-button mg-v2-button--link"
-                                  >
-                                    #{transaction.id}
-                                  </button>
-                                  {/* 매핑 연동 거래 표시 */}
-                                  {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' || 
-                                    transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
-                                    transaction.description?.includes('상담료 입금 확인') ||
-                                    transaction.description?.includes('상담료 환불')) && (
-                                    <span className="mg-v2-badge mg-v2-badge--primary">
-                                      🔗 매핑연동
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td>
-                                <span className="erp-badge">
-                                  {transaction.transactionType}
+                  {/* 거래 내역 카드 그리드 (표준화 원칙: 테이블 → 카드 전환, 인라인 스타일 제거) */}
+                  <div className="mg-financial-transaction-cards-grid">
+                    {transactions.length > 0 ? (
+                      transactions.map((transaction) => (
+                        <MGCard 
+                          key={transaction.id}
+                          variant="default"
+                          className="mg-financial-transaction-card"
+                        >
+                          <div className="mg-financial-transaction-card__header">
+                            <div className="mg-financial-transaction-card__id-section">
+                              <Button
+                                variant="link"
+                                size="small"
+                                onClick={() => {
+                                  setSelectedTransaction(transaction);
+                                  setShowDetailModal(true);
+                                }}
+                                preventDoubleClick={true}
+                                className="mg-financial-transaction-card__id-button"
+                              >
+                                #{transaction.id}
+                              </Button>
+                              {/* 매핑 연동 거래 표시 */}
+                              {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' || 
+                                transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' ||
+                                transaction.description?.includes('상담료 입금 확인') ||
+                                transaction.description?.includes('상담료 환불')) && (
+                                <span className="mg-v2-badge mg-v2-badge--primary">
+                                  🔗 매핑연동
                                 </span>
-                              </td>
-                              <td>
-                                <div>
-                                  {transaction.category}
-                                  {/* 매핑 연동 거래 세부 정보 */}
-                                  {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
-                                    <div className="mg-v2-text-xs mg-v2-text-success" style={{ marginTop: '2px' }}>
-                                      💰 입금확인 자동생성
-                                    </div>
-                                  )}
-                                  {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' && (
-                                    <div className="mg-v2-text-xs mg-v2-text-danger" style={{ marginTop: '2px' }}>
-                                      📤 환불처리 자동생성
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                              <td>
+                              )}
+                            </div>
+                            <div className="mg-financial-transaction-card__date">
+                              {formatDate(transaction.transactionDate)}
+                            </div>
+                          </div>
+                          
+                          <div className="mg-financial-transaction-card__body">
+                            <div className="mg-financial-transaction-card__field">
+                              <span className="mg-financial-transaction-card__label">거래 유형</span>
+                              <span className="erp-badge">
+                                {transaction.transactionType}
+                              </span>
+                            </div>
+                            
+                            <div className="mg-financial-transaction-card__field">
+                              <span className="mg-financial-transaction-card__label">카테고리</span>
+                              <div className="mg-financial-transaction-card__category">
+                                <span>{transaction.category}</span>
+                                {/* 매핑 연동 거래 세부 정보 */}
+                                {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
+                                  <div className="mg-financial-transaction-card__auto-generated mg-financial-transaction-card__auto-generated--success">
+                                    💰 입금확인 자동생성
+                                  </div>
+                                )}
+                                {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' && (
+                                  <div className="mg-financial-transaction-card__auto-generated mg-financial-transaction-card__auto-generated--danger">
+                                    📤 환불처리 자동생성
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="mg-financial-transaction-card__field">
+                              <span className="mg-financial-transaction-card__label">매칭 정보</span>
+                              <div className="mg-financial-transaction-card__matching-info">
                                 {transaction.consultantName || transaction.clientName ? (
-                                  <div style={{ fontSize: '0.9rem' }}>
-                                    <div style={{ fontWeight: '500', color: '#2563eb' }}>
+                                  <>
+                                    <div className="mg-financial-transaction-card__consultant">
                                       👤 {transaction.consultantName || '상담사 정보 없음'}
                                     </div>
-                                    <div style={{ marginTop: '4px', color: '#16a34a' }}>
+                                    <div className="mg-financial-transaction-card__client">
                                       👥 {transaction.clientName || '내담자 정보 없음'}
                                     </div>
-                                  </div>
+                                  </>
                                 ) : (
-                                  <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>-</span>
+                                  <span className="mg-financial-transaction-card__no-info">-</span>
                                 )}
-                              </td>
-                              <td className="text-end">
-                                <span className={`fw-bold ${transaction.amount >= 0 ? 'text-success' : 'text-danger'}`}>
-                                  {transaction.amount >= 0 ? '+' : ''}{formatCurrency(transaction.amount)}
-                                </span>
-                              </td>
-                              <td>
-                                <span className={`erp-status ${transaction.status?.toLowerCase()}`}>
-                                  {getStatusLabel(transaction.status)}
-                                </span>
-                              </td>
-                              <td>{formatDate(transaction.transactionDate)}</td>
-                              <td>
-                                <div className="d-flex gap-1">
-                                  <button 
-                                    className="mg-btn mg-btn--sm mg-btn--outline mg-btn--primary"
-                                    onClick={() => handleViewTransaction(transaction)}
-                                  >
-                                    <i className="bi bi-eye"></i>
-                                  </button>
-                                  <button 
-                                    className="mg-btn mg-btn--sm mg-btn--outline mg-btn--secondary"
-                                    onClick={() => handleEditTransaction(transaction)}
-                                  >
-                                    <i className="bi bi-pencil"></i>
-                                  </button>
-                                  <button 
-                                    className="mg-btn mg-btn--sm mg-btn--outline mg-btn--danger"
-                                    onClick={() => handleDeleteTransaction(transaction)}
-                                    title="삭제"
-                                  >
-                                    <i className="bi bi-trash"></i>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="8" className="text-center py-4">
-                              <div className="text-muted">
-                                <i className="bi bi-inbox" style={{ fontSize: '2rem' }}></i>
-                                <p className="mt-2 mb-0">거래 내역이 없습니다.</p>
                               </div>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                            </div>
+                            
+                            <div className="mg-financial-transaction-card__field">
+                              <span className="mg-financial-transaction-card__label">금액</span>
+                              <span className={`mg-financial-transaction-card__amount ${transaction.amount >= 0 ? 'mg-financial-transaction-card__amount--success' : 'mg-financial-transaction-card__amount--danger'}`}>
+                                {transaction.amount >= 0 ? '+' : ''}{formatCurrency(transaction.amount)}
+                              </span>
+                            </div>
+                            
+                            <div className="mg-financial-transaction-card__field">
+                              <span className="mg-financial-transaction-card__label">상태</span>
+                              <span className={`erp-status ${transaction.status?.toLowerCase()}`}>
+                                {getStatusLabel(transaction.status)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="mg-financial-transaction-card__footer">
+                            <div className="mg-financial-transaction-card__actions">
+                              <Button
+                                variant="outline"
+                                size="small"
+                                onClick={() => handleViewTransaction(transaction)}
+                                preventDoubleClick={true}
+                              >
+                                <i className="bi bi-eye"></i> 보기
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="small"
+                                onClick={() => handleEditTransaction(transaction)}
+                                preventDoubleClick={true}
+                              >
+                                <i className="bi bi-pencil"></i> 수정
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="small"
+                                onClick={() => handleDeleteTransaction(transaction)}
+                                preventDoubleClick={true}
+                              >
+                                <i className="bi bi-trash"></i> 삭제
+                              </Button>
+                            </div>
+                          </div>
+                        </MGCard>
+                      ))
+                    ) : (
+                      <div className="mg-financial-transaction-empty">
+                        <i className="bi bi-inbox mg-financial-transaction-empty__icon"></i>
+                        <p className="mg-financial-transaction-empty__text">거래 내역이 없습니다.</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* 페이지네이션 */}

@@ -150,7 +150,10 @@ const WidgetBasedAdminDashboard = () => {
 
     // 위젯 삭제
     const handleDeleteWidget = async (widgetId, groupId) => {
-        if (!window.confirm('이 위젯을 삭제하시겠습니까?')) return;
+        const confirmed = await new Promise((resolve) => {
+            notificationManager.confirm('이 위젯을 삭제하시겠습니까?', resolve);
+        });
+        if (!confirmed) return;
         
         try {
             const response = await axios.delete(

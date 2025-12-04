@@ -92,3 +92,11 @@
         padding: var(--mg-spacing-lg) var(--mg-spacing-xl);
     }
 }
+
+/* 개발 모드 placeholder 스타일 */
+.dev-placeholder {
+    opacity: 0.3;
+    border: 2px dashed var(--cs-gray-400);
+    margin: var(--cs-spacing-sm) 0;
+    padding: var(--cs-spacing-sm);
+}

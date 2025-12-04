@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2025-01-27
  */
 @RestController
-@RequestMapping("/api/admin/business-time")
+@RequestMapping({"/api/v1/admin/business-time", "/api/admin/business-time"})
 @RequiredArgsConstructor
 @Slf4j
 public class BusinessTimeController {
@@ -32,23 +32,15 @@ public class BusinessTimeController {
      */
     @GetMapping("/settings")
     public ResponseEntity<Map<String, Object>> getBusinessTimeSettings() {
-        try {
-            Map<String, Object> settings = businessTimeService.getAllBusinessTimeSettings();
-            
-            log.info("🕐 업무 시간 설정 조회 성공: {}", settings);
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", settings,
-                "message", "업무 시간 설정을 성공적으로 조회했습니다."
-            ));
-        } catch (Exception e) {
-            log.error("❌ 업무 시간 설정 조회 실패", e);
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "업무 시간 설정 조회에 실패했습니다: " + e.getMessage()
-            ));
-        }
+        Map<String, Object> settings = businessTimeService.getAllBusinessTimeSettings();
+        
+        log.info("🕐 업무 시간 설정 조회 성공: {}", settings);
+        
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "data", settings,
+            "message", "업무 시간 설정을 성공적으로 조회했습니다."
+        ));
     }
     
     /**
@@ -57,35 +49,21 @@ public class BusinessTimeController {
     @PostMapping("/settings")
     public ResponseEntity<Map<String, Object>> updateBusinessTimeSettings(
             @RequestBody Map<String, Object> settings) {
-        try {
-            log.info("🕐 업무 시간 설정 업데이트 요청: {}", settings);
-            
-            // 입력값 검증
-            validateBusinessTimeSettings(settings);
-            
-            // 설정 업데이트
-            businessTimeService.updateBusinessTimeSettings(settings);
-            
-            log.info("✅ 업무 시간 설정 업데이트 성공");
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "업무 시간 설정이 성공적으로 업데이트되었습니다.",
-                "data", businessTimeService.getAllBusinessTimeSettings()
-            ));
-        } catch (IllegalArgumentException e) {
-            log.warn("⚠️ 업무 시간 설정 검증 실패: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", e.getMessage()
-            ));
-        } catch (Exception e) {
-            log.error("❌ 업무 시간 설정 업데이트 실패", e);
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "업무 시간 설정 업데이트에 실패했습니다: " + e.getMessage()
-            ));
-        }
+        log.info("🕐 업무 시간 설정 업데이트 요청: {}", settings);
+        
+        // 입력값 검증
+        validateBusinessTimeSettings(settings);
+        
+        // 설정 업데이트
+        businessTimeService.updateBusinessTimeSettings(settings);
+        
+        log.info("✅ 업무 시간 설정 업데이트 성공");
+        
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "message", "업무 시간 설정이 성공적으로 업데이트되었습니다.",
+            "data", businessTimeService.getAllBusinessTimeSettings()
+        ));
     }
     
     /**
@@ -94,27 +72,19 @@ public class BusinessTimeController {
     @GetMapping("/check-time")
     public ResponseEntity<Map<String, Object>> checkBusinessTime(
             @RequestParam String time) {
-        try {
-            boolean isBusinessTime = businessTimeService.isBusinessTime(
-                java.time.LocalTime.parse(time)
-            );
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", Map.of(
-                    "time", time,
-                    "isBusinessTime", isBusinessTime,
-                    "isLunchTime", businessTimeService.isLunchTime(java.time.LocalTime.parse(time))
-                ),
-                "message", isBusinessTime ? "업무 시간입니다." : "업무 시간이 아닙니다."
-            ));
-        } catch (Exception e) {
-            log.error("❌ 업무 시간 확인 실패: {}", time, e);
-            return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "업무 시간 확인에 실패했습니다: " + e.getMessage()
-            ));
-        }
+        boolean isBusinessTime = businessTimeService.isBusinessTime(
+            java.time.LocalTime.parse(time)
+        );
+        
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "data", Map.of(
+                "time", time,
+                "isBusinessTime", isBusinessTime,
+                "isLunchTime", businessTimeService.isLunchTime(java.time.LocalTime.parse(time))
+            ),
+            "message", isBusinessTime ? "업무 시간입니다." : "업무 시간이 아닙니다."
+        ));
     }
     
     /**

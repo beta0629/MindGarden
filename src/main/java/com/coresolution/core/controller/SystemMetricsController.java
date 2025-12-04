@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/monitoring/system-metrics")
+@RequestMapping({"/api/v1/monitoring/system-metrics", "/api/monitoring/system-metrics"})
 @RequiredArgsConstructor
 public class SystemMetricsController {
     

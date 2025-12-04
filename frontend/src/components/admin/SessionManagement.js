@@ -116,7 +116,7 @@ const SessionManagement = () => {
     const loadMappingStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/common-codes/MAPPING_STATUS');
+            const response = await apiGet('/api/v1/common-codes/MAPPING_STATUS');
             if (response && response.length > 0) {
                 const options = response.map(code => ({
                     value: code.codeValue,

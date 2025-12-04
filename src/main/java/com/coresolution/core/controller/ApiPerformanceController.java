@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/performance")
+@RequestMapping({"/api/v1/admin/performance", "/api/admin/performance"})
 @RequiredArgsConstructor
 public class ApiPerformanceController {
 

@@ -82,12 +82,13 @@ public class UserController extends BaseApiController {
      */
     @GetMapping("/role/{role}")
     public ResponseEntity<ApiResponse<List<User>>> getByRole(@PathVariable String role, HttpSession session) {
-        // 동적 권한 체크
-        User currentUser = (User) session.getAttribute("user");
+        // 표준화 원칙: SessionUtils 사용
+        User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("인증이 필요합니다.");
         }
         
+        // 동적 권한 체크
         if (!dynamicPermissionService.hasPermission(currentUser, "USER_MANAGE")) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }

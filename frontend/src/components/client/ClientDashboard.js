@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
+import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
@@ -217,7 +218,7 @@ const ClientDashboard = () => {
         const upcomingSchedules = schedules.filter(schedule => {
           const scheduleDate = new Date(schedule.date);
           return scheduleDate > today && schedule.status === 'CONFIRMED';
-        }).slice(0, 3);
+        }).slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS);
 
         // 완료된 상담 수
         const completedCount = schedules.filter(s => s.status === 'COMPLETED').length;
@@ -314,9 +315,13 @@ const ClientDashboard = () => {
           </div>
         </div>
 
-        {/* 주요 통계 카드 - 밝고 화사한 색상 */}
+        {/* 주요 통계 카드 - 밝고 화사한 색상 (표준화 원칙: 모든 카드에 링크 필수) */}
         <div className="client-dashboard__stats">
-          <div className="client-dashboard__stat-card client-dashboard__stat-card--primary">
+          <div 
+            className="client-dashboard__stat-card client-dashboard__stat-card--primary clickable"
+            onClick={() => navigate('/client/consultations?filter=today')}
+            title="오늘의 상담 상세 보기"
+          >
             <div className="client-dashboard__stat-icon">
               <Calendar />
             </div>
@@ -328,7 +333,11 @@ const ClientDashboard = () => {
             </div>
           </div>
 
-          <div className="client-dashboard__stat-card client-dashboard__stat-card--success">
+          <div 
+            className="client-dashboard__stat-card client-dashboard__stat-card--success clickable"
+            onClick={() => navigate('/client/consultations?filter=completed')}
+            title="완료한 상담 상세 보기"
+          >
             <div className="client-dashboard__stat-icon">
               <CheckCircle />
             </div>
@@ -340,7 +349,11 @@ const ClientDashboard = () => {
             </div>
           </div>
 
-          <div className="client-dashboard__stat-card client-dashboard__stat-card--info">
+          <div 
+            className="client-dashboard__stat-card client-dashboard__stat-card--info clickable"
+            onClick={() => navigate('/client/consultations?filter=weekly')}
+            title="이번 주 상담 상세 보기"
+          >
             <div className="client-dashboard__stat-icon">
               <TrendingUp />
             </div>
@@ -352,7 +365,11 @@ const ClientDashboard = () => {
             </div>
           </div>
 
-          <div className="client-dashboard__stat-card client-dashboard__stat-card--warning">
+          <div 
+            className="client-dashboard__stat-card client-dashboard__stat-card--warning clickable"
+            onClick={() => navigate('/client/mappings')}
+            title="남은 회기 상세 보기"
+          >
             <div className="client-dashboard__stat-icon">
               <Heart />
             </div>
@@ -376,7 +393,12 @@ const ClientDashboard = () => {
             </div>
             <div className="client-dashboard__schedule-list">
               {consultationData.upcomingSchedules.map((schedule, index) => (
-                <div key={index} className="client-dashboard__schedule-item">
+                <div 
+                  key={index} 
+                  className="client-dashboard__schedule-item clickable"
+                  onClick={() => navigate(`/client/consultations/${schedule.id || index}`)}
+                  title="상담 상세 보기"
+                >
                   <div className="client-dashboard__schedule-date">
                     <div className="client-dashboard__schedule-day">
                       {new Date(schedule.date).getDate()}

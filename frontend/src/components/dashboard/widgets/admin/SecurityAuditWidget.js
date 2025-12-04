@@ -130,8 +130,9 @@ const SecurityAuditWidget = ({ widget, user }) => {
   const renderContent = () => {
     const { audits = [], summary = {} } = data || {};
 
-    // 최근 감사 로그 (최대 5개)
-    const recentAudits = audits.slice(0, 5);
+    // 최근 감사 로그 (표준화 원칙: 최대 10개)
+    const maxItems = WIDGET_CONSTANTS.DASHBOARD_LIMITS.MAX_ITEMS;
+    const recentAudits = audits.slice(0, maxItems);
 
     // 통계
     const totalEvents = summary.totalEvents || 0;

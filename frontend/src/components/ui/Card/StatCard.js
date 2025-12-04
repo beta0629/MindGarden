@@ -18,6 +18,7 @@ import React from 'react';
  * @param {string} [props.change] - 변화율 (예: "+12.5%")
  * @param {string} [props.changeType] - 변화 타입 ('positive'|'negative')
  * @param {string} [props.className=''] - 추가 CSS 클래스
+ * @param {Function} [props.onClick] - 클릭 핸들러 (표준화 원칙: 모든 카드에 링크 필수)
  * 
  * @example
  * <StatCard
@@ -26,6 +27,7 @@ import React from 'react';
  *   label="총 사용자"
  *   change="+12.5%"
  *   changeType="positive"
+ *   onClick={() => navigate('/admin/users')}
  * />
  */
 const StatCard = ({
@@ -36,13 +38,34 @@ const StatCard = ({
   changeType,
   className = '',
   loading = false,
+  onClick,
   ...props
 }) => {
   // loading 속성을 DOM에 전달하지 않도록 제거
   const { loading: _, ...domProps } = props;
   
+  // 표준화 원칙: onClick이 있으면 클릭 가능한 카드로 표시
+  const cardClasses = [
+    'mg-dashboard-stat-card',
+    onClick ? 'mg-dashboard-stat-card--clickable' : '',
+    className
+  ].filter(Boolean).join(' ');
+  
   return (
-    <div className={`mg-dashboard-stat-card ${className}`.trim()} {...domProps}>
+    <div 
+      className={cardClasses}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick(e);
+        }
+      } : undefined}
+      title={onClick ? `${label} 상세 보기` : undefined}
+      {...domProps}
+    >
       {icon && (
         <div className="mg-dashboard-stat-icon">
           {icon}

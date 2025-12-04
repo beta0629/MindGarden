@@ -7,8 +7,8 @@ import com.coresolution.consultation.entity.ConsultantRating;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.util.PaginationUtils;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -146,7 +146,8 @@ public class ConsultantRatingController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultantRatings(@PathVariable Long consultantId,
                                                  @RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        // 표준화 원칙: 페이지 크기 최대 20개로 제한
+        Pageable pageable = PaginationUtils.createPageable(page, size);
         Page<ConsultantRating> ratings = ratingService.getConsultantRatings(consultantId, pageable);
 
         Map<String, Object> data = new HashMap<>();
@@ -164,7 +165,8 @@ public class ConsultantRatingController extends BaseApiController {
     @GetMapping("/ranking")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultantRanking(@RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(defaultValue = "20") int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        // 표준화 원칙: 페이지 크기 최대 20개로 제한
+        Pageable pageable = PaginationUtils.createPageable(page, size);
         List<Map<String, Object>> ranking = ratingService.getConsultantRanking(pageable);
 
         Map<String, Object> data = new HashMap<>();

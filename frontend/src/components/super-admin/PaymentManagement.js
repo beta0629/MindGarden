@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
+import MGCard from '../common/MGCard';
+import { Button } from '../ui/Button/Button';
 import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
@@ -53,7 +55,7 @@ const PaymentManagement = () => {
     const loadPaymentStatusCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/common-codes/PAYMENT_STATUS');
+        const response = await apiGet('/api/v1/common-codes/PAYMENT_STATUS');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,
@@ -89,7 +91,7 @@ const PaymentManagement = () => {
   const loadPaymentGatewayCodes = useCallback(async () => {
     try {
       setLoadingGatewayCodes(true);
-      const response = await apiGet('/api/common-codes/PAYMENT_METHOD');
+      const response = await apiGet('/api/v1/common-codes/PAYMENT_METHOD');
       if (response && response.length > 0) {
         setPaymentGatewayOptions(response.map(code => ({
           value: code.codeValue,
@@ -122,7 +124,7 @@ const PaymentManagement = () => {
   const loadPaymentMethodCodes = useCallback(async () => {
     try {
       setLoadingMethodCodes(true);
-      const response = await apiGet('/api/common-codes/PAYMENT_METHOD');
+      const response = await apiGet('/api/v1/common-codes/PAYMENT_METHOD');
       if (response && response.length > 0) {
         setPaymentMethodOptions(response.map(code => ({
           value: code.codeValue,
@@ -585,83 +587,121 @@ const PaymentManagement = () => {
           </div>
         )}
 
-        {/* 결제 목록 */}
+        {/* 결제 목록 카드 (표준화 원칙: 테이블 → 카드 전환) */}
         <div className="payment-list">
-          <div className="table-container">
-            <table className="payment-table">
-              <thead>
-                <tr>
-                  <th>
+          {/* 전체 선택 체크박스 */}
+          {payments.length > 0 && (
+            <div className="mg-payment-select-all">
+              <label className="mg-payment-select-all__label">
+                <input
+                  type="checkbox"
+                  checked={selectedPayments.length === payments.length && payments.length > 0}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="mg-payment-select-all__checkbox"
+                />
+                <span>전체 선택</span>
+              </label>
+            </div>
+          )}
+          
+          {/* 결제 카드 그리드 */}
+          <div className="mg-payment-cards-grid">
+            {payments.map((payment) => (
+              <MGCard 
+                key={payment.id}
+                variant="default"
+                className={`mg-payment-card ${selectedPayments.includes(payment.id) ? 'mg-payment-card--selected' : ''}`}
+              >
+                <div className="mg-payment-card__header">
+                  <label className="mg-payment-card__checkbox-label">
                     <input
                       type="checkbox"
-                      checked={selectedPayments.length === payments.length && payments.length > 0}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      checked={selectedPayments.includes(payment.id)}
+                      onChange={(e) => handleSelectPayment(payment.id, e.target.checked)}
+                      className="mg-payment-card__checkbox"
                     />
-                  </th>
-                  <th>결제 ID</th>
-                  <th>주문 ID</th>
-                  <th>금액</th>
-                  <th>상태</th>
-                  <th>방법</th>
-                  <th>대행사</th>
-                  <th>결제자</th>
-                  <th>생성일</th>
-                  <th>승인일</th>
-                  <th>액션</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((payment) => (
-                  <tr key={payment.id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedPayments.includes(payment.id)}
-                        onChange={(e) => handleSelectPayment(payment.id, e.target.checked)}
-                      />
-                    </td>
-                    <td>{payment.paymentId}</td>
-                    <td>{payment.orderId}</td>
-                    <td>{formatCurrency(payment.amount)}</td>
-                    <td>{getStatusBadge(payment.status)}</td>
-                    <td>{payment.method}</td>
-                    <td>{payment.provider}</td>
-                    <td>{payment.payerId}</td>
-                    <td>{formatDate(payment.createdAt)}</td>
-                    <td>{payment.approvedAt ? formatDate(payment.approvedAt) : '-'}</td>
-                    <td>
-                      <div className="action-buttons">
-                        {payment.status === 'PENDING' && (
-                          <button
-                            className="btn btn-sm btn-success"
-                            onClick={() => handleStatusUpdate(payment.paymentId, 'APPROVED')}
-                          >
-                            승인
-                          </button>
-                        )}
-                        {payment.status === 'PENDING' && (
-                          <button
-                            className="btn btn-sm btn-danger"
-                            onClick={() => handleStatusUpdate(payment.paymentId, 'CANCELLED')}
-                          >
-                            취소
-                          </button>
-                        )}
-                        {payment.status === 'APPROVED' && (
-                          <button
-                            className="btn btn-sm btn-warning"
-                            onClick={() => handleRefund(payment.paymentId, payment.amount)}
-                          >
-                            환불
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </label>
+                  <div className="mg-payment-card__id-section">
+                    <div className="mg-payment-card__payment-id">{payment.paymentId}</div>
+                    <div className="mg-payment-card__order-id">주문: {payment.orderId}</div>
+                  </div>
+                </div>
+                
+                <div className="mg-payment-card__body">
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">금액</span>
+                    <span className="mg-payment-card__value mg-payment-card__value--amount">
+                      {formatCurrency(payment.amount)}
+                    </span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">상태</span>
+                    <span className="mg-payment-card__value">
+                      {getStatusBadge(payment.status)}
+                    </span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">결제 방법</span>
+                    <span className="mg-payment-card__value">{payment.method || '-'}</span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">대행사</span>
+                    <span className="mg-payment-card__value">{payment.provider || '-'}</span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">결제자</span>
+                    <span className="mg-payment-card__value">{payment.payerId || '-'}</span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">생성일</span>
+                    <span className="mg-payment-card__value">{formatDate(payment.createdAt)}</span>
+                  </div>
+                  <div className="mg-payment-card__field">
+                    <span className="mg-payment-card__label">승인일</span>
+                    <span className="mg-payment-card__value">
+                      {payment.approvedAt ? formatDate(payment.approvedAt) : '-'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="mg-payment-card__footer">
+                  <div className="mg-payment-card__actions">
+                    {payment.status === 'PENDING' && (
+                      <Button
+                        variant="success"
+                        size="small"
+                        onClick={() => handleStatusUpdate(payment.paymentId, 'APPROVED')}
+                        preventDoubleClick={true}
+                      >
+                        승인
+                      </Button>
+                    )}
+                    {payment.status === 'PENDING' && (
+                      <Button
+                        variant="danger"
+                        size="small"
+                        onClick={() => handleStatusUpdate(payment.paymentId, 'CANCELLED')}
+                        preventDoubleClick={true}
+                      >
+                        취소
+                      </Button>
+                    )}
+                    {payment.status === 'APPROVED' && (
+                      <Button
+                        variant="warning"
+                        size="small"
+                        onClick={() => handleRefund(payment.paymentId, payment.amount)}
+                        preventDoubleClick={true}
+                      >
+                        환불
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </MGCard>
+            ))}
           </div>
+        </div>
 
           {/* 페이지네이션 */}
           <div className="pagination">

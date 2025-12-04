@@ -20,7 +20,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/session-sync")
+@RequestMapping({"/api/v1/admin/session-sync", "/api/admin/session-sync"})
 @RequiredArgsConstructor
 public class SessionSyncController extends BaseApiController {
     

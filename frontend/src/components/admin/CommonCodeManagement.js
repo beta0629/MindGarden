@@ -175,7 +175,7 @@ const CommonCodeManagement = () => {
                 setCodeGroups(groups);
             } else {
                 // 하위 호환성: 기존 API 사용
-                const response = await apiGet('/api/common-codes/groups/list');
+                const response = await apiGet('/api/v1/common-codes/groups/list');
                 if (response && response.length > 0) {
                     // 권한에 따라 코드 그룹 필터링
                     const filteredGroups = response.filter(groupCode => {

@@ -47,7 +47,7 @@
 }
 
 /* ===== 통계 카드 ===== */
-.mg-stat-card {
+.mg-dashboard-stat-card {
     background: var(--mg-bg-card);
     border-radius: var(--mg-radius-lg);
     padding: var(--mg-spacing-xl);
@@ -57,10 +57,28 @@
     border: var(--border-width) solid var(--mg-border-light);
 }
 
+.mg-dashboard-stat-card:hover,
 .mg-stat-card:hover {
     transform: translateY(calc(var(--spacing-xs) * -1));
     box-shadow: var(--mg-shadow-xl);
     border-color: var(--mg-border);
+}
+
+/* 표준화 원칙: 클릭 가능한 통계 카드 스타일 */
+.mg-dashboard-stat-card--clickable {
+    cursor: pointer;
+    transition: all var(--mg-transition-normal) var(--mg-easing);
+}
+
+.mg-dashboard-stat-card--clickable:hover {
+    transform: translateY(calc(var(--spacing-xs) * -1));
+    box-shadow: var(--mg-shadow-xl);
+    border-color: var(--mg-primary-300);
+}
+
+.mg-dashboard-stat-card--clickable:active {
+    transform: translateY(0);
+    box-shadow: var(--mg-shadow-md);
 }
 
 .mg-stat-card-gradient {
@@ -264,7 +282,8 @@
 }
 
 /* ===== 반응형 ===== */
-@media (max-width: 768px) {
+/* 표준화 원칙: CSS 변수 사용, 모바일 우선 설계 */
+@media (max-width: calc(var(--breakpoint-tablet, 768px) - 1px)) {
     .mg-dashboard-layout {
         padding: var(--mg-spacing-md);
     }

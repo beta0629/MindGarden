@@ -11,6 +11,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
+import Button from '../ui/Button/Button';
 import { getCurrentUserDashboard, getDashboardComponentName } from '../../utils/dashboardUtils';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
@@ -241,19 +242,14 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
         <div className="mg-dashboard-error">
           <h2 className="mg-dashboard-error__title">대시보드 로드 실패</h2>
           <p className="mg-dashboard-error__message">{error}</p>
-          <button 
+          <Button 
             onClick={loadDashboard}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: 'var(--mg-primary-500)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            variant="primary"
+            preventDoubleClick={true}
+            className="mg-dashboard-error__retry-button"
           >
             다시 시도
-          </button>
+          </Button>
         </div>
       </SimpleLayout>
     );
@@ -789,20 +785,21 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
       );
     }
     
-    const widgetStyle = {};
+    // 위젯 크기 스타일 (CSS 변수로 처리)
+    const widgetStyleVars = {};
     if (widget.size) {
-      if (widget.size.width) widgetStyle.width = widget.size.width;
-      if (widget.size.height) widgetStyle.height = widget.size.height;
-      if (widget.size.minWidth) widgetStyle.minWidth = widget.size.minWidth;
-      if (widget.size.minHeight) widgetStyle.minHeight = widget.size.minHeight;
-      if (widget.size.maxWidth) widgetStyle.maxWidth = widget.size.maxWidth;
-      if (widget.size.maxHeight) widgetStyle.maxHeight = widget.size.maxHeight;
+      if (widget.size.width) widgetStyleVars['--widget-width'] = widget.size.width;
+      if (widget.size.height) widgetStyleVars['--widget-height'] = widget.size.height;
+      if (widget.size.minWidth) widgetStyleVars['--widget-min-width'] = widget.size.minWidth;
+      if (widget.size.minHeight) widgetStyleVars['--widget-min-height'] = widget.size.minHeight;
+      if (widget.size.maxWidth) widgetStyleVars['--widget-max-width'] = widget.size.maxWidth;
+      if (widget.size.maxHeight) widgetStyleVars['--widget-max-height'] = widget.size.maxHeight;
     }
     
     // Grid 레이아웃의 경우 span 적용
     const gridColumnSpan = layoutType === 'grid' && widget.position?.span 
-      ? `span ${widget.position.span}` 
-      : undefined;
+      ? `grid-col-span-${widget.position.span}` 
+      : '';
     
     // 위젯별 카드 스타일 (위젯 설정 우선, 없으면 기본값)
     const widgetCardStyle = widget.cardStyle || defaultCardStyle;
@@ -819,8 +816,8 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
     return (
       <div 
         key={widget.id} 
-        style={widgetStyle}
-        className={gridColumnSpan ? `grid-col-span-${widget.position.span}` : ''}
+        className={`widget-container ${gridColumnSpan}`}
+        style={Object.keys(widgetStyleVars).length > 0 ? widgetStyleVars : undefined}
       >
         <WidgetCardWrapper 
           widget={widget}
@@ -845,7 +842,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
       
       case 'list':
         return (
-          <div className="dashboard-list" style={{ display: 'flex', flexDirection: 'column', gap: `var(--spacing-${gap})` }}>
+          <div className="dashboard-list" style={{ gap: `var(--spacing-${gap})` }}>
             {sortedWidgets.map(renderWidget)}
           </div>
         );

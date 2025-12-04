@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/security/audit")
+@RequestMapping({"/api/v1/security/audit", "/api/security/audit"})
 @RequiredArgsConstructor
 public class SecurityAuditController {
     

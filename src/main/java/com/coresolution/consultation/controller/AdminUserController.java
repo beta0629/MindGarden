@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/user-management")
+@RequestMapping({"/api/v1/admin/user-management", "/api/admin/user-management"})
 @RequiredArgsConstructor
 public class AdminUserController {
     

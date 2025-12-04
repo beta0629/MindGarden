@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin-simple")
+@RequestMapping({"/api/v1/admin-simple", "/api/admin-simple"})
 @RequiredArgsConstructor
 public class SimpleAdminController extends BaseApiController {
 

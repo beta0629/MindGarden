@@ -12,6 +12,7 @@ import com.coresolution.consultation.service.SystemNotificationService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.util.PaginationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -76,7 +77,8 @@ public class SystemNotificationController extends BaseApiController {
         
         log.info("📢 사용자 공지 목록 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
         
-        Pageable pageable = PageRequest.of(page, size);
+        // 표준화 원칙: 페이지 크기 최대 20개로 제한
+        Pageable pageable = PaginationUtils.createPageable(page, size);
         Page<SystemNotification> notifications = systemNotificationService.getNotificationsForUser(userId, userRole, pageable);
         
         // 응답 데이터 변환
@@ -324,7 +326,8 @@ public class SystemNotificationController extends BaseApiController {
         
         log.info("📢 관리자용 전체 공지 조회 - 대상: {}, 상태: {}", targetType, status);
         
-        Pageable pageable = PageRequest.of(page, size);
+        // 표준화 원칙: 페이지 크기 최대 20개로 제한
+        Pageable pageable = PaginationUtils.createPageable(page, size);
         Page<SystemNotification> notifications = systemNotificationService.getAllNotificationsForAdmin(targetType, status, pageable);
         
         List<Map<String, Object>> notificationList = new ArrayList<>();

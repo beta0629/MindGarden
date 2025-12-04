@@ -8,6 +8,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import SimpleLayout from '../layout/SimpleLayout';
+import MGCard from '../common/MGCard';
 import '../../styles/unified-design-tokens.css';
 
 /**
@@ -49,7 +50,7 @@ const AdminMessages = () => {
       
       // 관리자는 모든 메시지 조회
       console.log('🌐 API 호출: /api/consultation-messages/all');
-      const response = await apiGet('/api/consultation-messages/all');
+      const response = await apiGet('/api/v1/consultation-messages/all');
       console.log('📨 API 응답:', response);
       
       if (response && response.success) {
@@ -263,133 +264,56 @@ const AdminMessages = () => {
             </div>
           ) : (
             <>
-              {/* 데스크탑 테이블 */}
-              <div className="mg-v2-table-container mg-desktop-only mg-mobile-table">
-                <table className="mg-v2-table">
-                  <thead>
-                    <tr>
-                      <th>상태</th>
-                      <th>유형</th>
-                      <th>제목</th>
-                      <th>발신자</th>
-                      <th>수신자</th>
-                      <th>날짜</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMessages.map((message) => (
-                      <tr 
-                        key={message.id}
-                        onClick={(e) => {
-                          console.log('🖱️ 테이블 행 클릭 이벤트:', message.id);
-                          e.stopPropagation();
-                          handleMessageClick(message);
-                        }}
-                        className={`mg-v2-message-row-clickable ${!message.isRead ? 'mg-v2-table-row-unread' : ''}`}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <td>
-                          <span className={`mg-v2-badge ${!message.isRead ? 'mg-v2-badge-primary' : 'mg-v2-badge-secondary'}`}>
-                            {!message.isRead ? '읽지 않음' : '읽음'}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="mg-v2-message-badge-container">
-                            <span 
-                              className="mg-v2-badge mg-v2-message-badge"
-                            >
-                              {MESSAGE_TYPES[message.messageType]?.label || '일반'}
-                            </span>
-                            {message.isImportant && (
-                              <span className="mg-v2-badge mg-v2-badge-warning">중요</span>
-                            )}
-                            {message.isUrgent && (
-                              <span className="mg-v2-badge mg-v2-badge-danger">긴급</span>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <div className={`mg-v2-message-title ${!message.isRead ? 'mg-v2-message-title-unread' : ''}`}>
-                            {message.title}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="mg-v2-message-sender-container">
-                            <User size={16} />
-                            {message.senderName}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="mg-v2-message-receiver-container">
-                            <Users size={16} />
-                            {message.receiverName}
-                          </div>
-                        </td>
-                        <td>
-                          {new Date(message.createdAt).toLocaleDateString('ko-KR', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* 모바일 카드 리스트 */}
-              <div className="mg-mobile-only mg-v2-message-mobile-list mg-mobile-card-stack">
+              {/* 메시지 카드 리스트 (표준화 원칙: 테이블 → 카드 전환, 데스크탑/모바일 통일) */}
+              <div className="mg-v2-message-cards-grid">
                 {filteredMessages.map((message) => (
-                  <div 
+                  <MGCard
                     key={message.id}
+                    variant="default"
+                    className={`mg-v2-message-card ${!message.isRead ? 'mg-v2-message-card-unread' : ''}`}
                     onClick={(e) => {
                       console.log('🖱️ 카드 클릭 이벤트:', message.id);
                       e.stopPropagation();
                       handleMessageClick(message);
                     }}
-                    className={`mg-v2-card mg-v2-message-mobile-card ${!message.isRead ? 'mg-v2-message-mobile-card-unread' : ''}`}
-                    style={{ cursor: 'pointer' }}
                   >
-                    {/* 상단: 상태 + 유형 배지 */}
-                    <div className="mg-v2-message-mobile-header">
+                    {/* 상단: 상태 + 유형 배지 (표준화 원칙: CSS 클래스 사용) */}
+                    <div className="mg-v2-message-card__header">
                       <span className={`mg-v2-badge ${!message.isRead ? 'mg-v2-badge-primary' : 'mg-v2-badge-secondary'}`}>
                         {!message.isRead ? '읽지 않음' : '읽음'}
                       </span>
-                      <span 
-                        className="mg-v2-badge mg-v2-message-badge"
-                      >
-                        {MESSAGE_TYPES[message.messageType]?.label || '일반'}
-                      </span>
-                      {message.isImportant && (
-                        <span className="mg-v2-badge mg-v2-badge-warning">중요</span>
-                      )}
-                      {message.isUrgent && (
-                        <span className="mg-v2-badge mg-v2-badge-danger">긴급</span>
-                      )}
+                      <div className="mg-v2-message-badge-container">
+                        <span className="mg-v2-badge mg-v2-message-badge">
+                          {MESSAGE_TYPES[message.messageType]?.label || '일반'}
+                        </span>
+                        {message.isImportant && (
+                          <span className="mg-v2-badge mg-v2-badge-warning">중요</span>
+                        )}
+                        {message.isUrgent && (
+                          <span className="mg-v2-badge mg-v2-badge-danger">긴급</span>
+                        )}
+                      </div>
                     </div>
 
                     {/* 제목 */}
-                    <div className={`mg-v2-message-mobile-title ${!message.isRead ? 'mg-v2-message-mobile-title-unread' : ''}`}>
+                    <div className={`mg-v2-message-card__title ${!message.isRead ? 'mg-v2-message-card__title--unread' : ''}`}>
                       {message.title}
                     </div>
 
                     {/* 발신자/수신자 */}
-                    <div className="mg-v2-message-mobile-participants">
-                      <div className="mg-v2-message-mobile-participant">
+                    <div className="mg-v2-message-card__participants">
+                      <div className="mg-v2-message-card__participant">
                         <User size={14} />
                         <span>발신: {message.senderName}</span>
                       </div>
-                      <div className="mg-v2-message-mobile-participant">
+                      <div className="mg-v2-message-card__participant">
                         <Users size={14} />
                         <span>수신: {message.receiverName}</span>
                       </div>
                     </div>
 
                     {/* 날짜 */}
-                    <div className="mg-v2-message-mobile-date">
+                    <div className="mg-v2-message-card__date">
                       {new Date(message.createdAt).toLocaleDateString('ko-KR', {
                         year: 'numeric',
                         month: '2-digit',
@@ -398,7 +322,7 @@ const AdminMessages = () => {
                         minute: '2-digit'
                       })}
                     </div>
-                  </div>
+                  </MGCard>
                 ))}
               </div>
             </>

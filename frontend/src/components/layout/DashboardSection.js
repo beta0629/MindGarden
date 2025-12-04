@@ -26,9 +26,10 @@ const DashboardSection = ({
     }
   };
 
+  // 표준화 원칙: 의미 있는 HTML 태그 사용 (section, header)
   return (
     <section className={`dashboard-section ${className}`}>
-      <div className="dashboard-section-header">
+      <header className="dashboard-section-header">
         <div className="dashboard-section-title-wrapper">
           {icon && <span className="dashboard-section-icon">{icon}</span>}
           <h2 className="dashboard-section-title">{title}</h2>
@@ -43,7 +44,7 @@ const DashboardSection = ({
           )}
         </div>
         {actions && <div className="dashboard-section-actions">{actions}</div>}
-      </div>
+      </header>
       
       {!isCollapsed && (
         <div className="dashboard-section-content">

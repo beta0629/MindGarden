@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import MGCard from '../common/MGCard';
 import { 
     Building2, DollarSign, TrendingUp, Calendar, 
     Filter, Download, Eye, ArrowUp, ArrowDown,
@@ -189,41 +190,44 @@ const TransactionTable = ({ transactions, loading }) => {
                 </button>
             </div>
             <div className="mg-v2-card__content">
-                <div className="mg-v2-table-container">
-                    <table className="mg-v2-table">
-                        <thead>
-                            <tr>
-                                <th>날짜</th>
-                                <th>카테고리</th>
-                                <th>거래 유형</th>
-                                <th>설명</th>
-                                <th>금액</th>
-                                <th>상태</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {transactions.map((transaction, index) => (
-                                <tr key={index}>
-                                    <td data-label="날짜">{transaction.date}</td>
-                                    <td data-label="카테고리">
-                                        <span className={`mg-badge mg-badge--${transaction.category === 'REVENUE' ? 'success' : 'warning'}`}>
-                                            {transaction.category === 'REVENUE' ? '수입' : '지출'}
-                                        </span>
-                                    </td>
-                                    <td data-label="거래 유형">{transaction.transactionType}</td>
-                                    <td data-label="설명">{transaction.description}</td>
-                                    <td data-label="금액" className={`mg-v2-text--${transaction.category === 'REVENUE' ? 'success' : 'danger'}`}>
+                {/* 거래 내역 카드 그리드 (표준화 원칙: 테이블 → 카드 전환) */}
+                <div className="mg-transaction-cards-grid">
+                    {transactions.map((transaction, index) => (
+                        <MGCard 
+                            key={index}
+                            variant="default"
+                            className="mg-transaction-card"
+                        >
+                            <div className="mg-transaction-card__header">
+                                <div className="mg-transaction-card__date">{transaction.date}</div>
+                                <div className="mg-transaction-card__badges">
+                                    <span className={`mg-badge mg-badge--${transaction.category === 'REVENUE' ? 'success' : 'warning'}`}>
+                                        {transaction.category === 'REVENUE' ? '수입' : '지출'}
+                                    </span>
+                                    <span className={`mg-badge mg-badge--${transaction.status === 'CONFIRMED' ? 'success' : 'secondary'}`}>
+                                        {transaction.status === 'CONFIRMED' ? '확정' : '대기'}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div className="mg-transaction-card__body">
+                                <div className="mg-transaction-card__field">
+                                    <span className="mg-transaction-card__label">거래 유형</span>
+                                    <span className="mg-transaction-card__value">{transaction.transactionType}</span>
+                                </div>
+                                <div className="mg-transaction-card__field">
+                                    <span className="mg-transaction-card__label">설명</span>
+                                    <span className="mg-transaction-card__value">{transaction.description}</span>
+                                </div>
+                                <div className="mg-transaction-card__field">
+                                    <span className="mg-transaction-card__label">금액</span>
+                                    <span className={`mg-transaction-card__value mg-transaction-card__value--${transaction.category === 'REVENUE' ? 'success' : 'danger'}`}>
                                         {transaction.category === 'REVENUE' ? '+' : '-'}{transaction.amount?.toLocaleString()}원
-                                    </td>
-                                    <td data-label="상태">
-                                        <span className={`mg-badge mg-badge--${transaction.status === 'CONFIRMED' ? 'success' : 'secondary'}`}>
-                                            {transaction.status === 'CONFIRMED' ? '확정' : '대기'}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                    </span>
+                                </div>
+                            </div>
+                        </MGCard>
+                    ))}
                 </div>
             </div>
         </div>
@@ -249,7 +253,7 @@ const BranchFinancialManagement = () => {
     // 지점 목록 로드
     const loadBranches = useCallback(async () => {
         try {
-            const response = await apiGet('/api/hq/branch-management/branches');
+            const response = await apiGet('/api/v1/hq/branch-management/branches');
             if (response.success) {
                 setBranches(response.data || []);
                 if (response.data && response.data.length > 0) {

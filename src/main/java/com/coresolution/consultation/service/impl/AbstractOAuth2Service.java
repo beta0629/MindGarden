@@ -16,6 +16,7 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuth2Service;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     protected final UserSocialAccountRepository userSocialAccountRepository;
     protected final JwtService jwtService;
     protected final DynamicPermissionService dynamicPermissionService;
+    protected final PersonalDataEncryptionUtil encryptionUtil;
 
 
     @Override
@@ -229,11 +231,12 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createUserFromSocial(SocialUserInfo socialUserInfo) {
+        // 표준화 원칙: 개인정보 필드 암호화 필수 (name, phone, email)
         // 1. Client 엔티티로 사용자 생성
         Client client = Client.builder()
-                .name(socialUserInfo.getName())
-                .email(socialUserInfo.getEmail())
-                .phone(socialUserInfo.getPhone())
+                .name(encryptionUtil.safeEncrypt(socialUserInfo.getName()))
+                .email(encryptionUtil.safeEncrypt(socialUserInfo.getEmail()))
+                .phone(socialUserInfo.getPhone() != null ? encryptionUtil.safeEncrypt(socialUserInfo.getPhone()) : null)
                 .branchCode(AdminConstants.DEFAULT_BRANCH_CODE) // 소셜 로그인 사용자는 기본 본사 지점코드 사용
                 .isDeleted(false)
                 .build();
@@ -244,8 +247,8 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         // 2. 소셜 계정 정보 생성 (Client를 User로 변환)
         User user = new User();
         user.setId(client.getId());
-        user.setEmail(client.getEmail());
-        user.setName(client.getName());
+        user.setEmail(client.getEmail()); // 이미 암호화됨
+        user.setName(client.getName()); // 이미 암호화됨
         user.setRole(UserRole.CLIENT);
         user.setBranchCode(AdminConstants.DEFAULT_BRANCH_CODE); // 소셜 로그인 사용자는 기본 본사 지점코드 사용
         

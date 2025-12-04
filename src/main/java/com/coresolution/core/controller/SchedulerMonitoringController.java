@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/scheduler")
+@RequestMapping({"/api/v1/scheduler", "/api/scheduler"})
 @RequiredArgsConstructor
 public class SchedulerMonitoringController {
     

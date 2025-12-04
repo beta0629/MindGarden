@@ -36,6 +36,7 @@ import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.util.StatusCodeHelper;
+import com.coresolution.core.util.PaginationUtils;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -387,11 +388,11 @@ public class AdminController extends BaseApiController {
         log.info("🔍 현재 사용자 정보 - ID: {}, 이메일: {}, 역할: {}, 브랜치코드: {}", 
                 currentUser.getId(), currentUser.getEmail(), currentUser.getRole(), currentUser.getBranchCode());
         
-        // 사용자의 브랜치 코드 가져오기 (세션에서 또는 사용자 정보에서)
-        String currentBranchCode = (String) session.getAttribute("branchCode");
-        if (currentBranchCode == null && currentUser.getBranchCode() != null) {
-            currentBranchCode = currentUser.getBranchCode();
-            log.info("🔧 세션에 브랜치 코드가 없어 사용자 정보에서 가져옴: {}", currentBranchCode);
+        // 표준화 원칙: 브랜치 코드는 더 이상 사용하지 않음 (테넌트 기반 시스템)
+        // 레거시 호환을 위해 사용자 정보에서만 가져옴
+        String currentBranchCode = currentUser.getBranchCode();
+        if (currentBranchCode != null) {
+            log.info("🔧 사용자 정보에서 브랜치 코드 가져옴 (레거시 호환): {}", currentBranchCode);
         }
         
         // 상담사는 브랜치 코드가 없어도 자신의 매칭을 조회할 수 있음
@@ -2065,7 +2066,8 @@ public class AdminController extends BaseApiController {
         log.info("🔍 사용자 목록 조회: includeInactive={}, role={}, branchCode={}", includeInactive, role, branchCode);
         
         // 권한 확인
-        User currentUser = (User) session.getAttribute("user");
+        // 표준화 원칙: SessionUtils 사용
+        User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
@@ -2121,7 +2123,8 @@ public class AdminController extends BaseApiController {
         log.info("🔧 사용자 역할 변경: userId={}, newRole={}", userId, newRole);
         
         // 권한 확인
-        User currentUser = (User) session.getAttribute("user");
+        // 표준화 원칙: SessionUtils 사용
+        User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
@@ -2164,7 +2167,8 @@ public class AdminController extends BaseApiController {
         log.info("🔍 사용자 상세 정보 조회: ID={}", id);
         
         // 권한 확인
-        User currentUser = (User) session.getAttribute("user");
+        // 표준화 원칙: SessionUtils 사용
+        User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null || (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster())) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
@@ -2199,7 +2203,8 @@ public class AdminController extends BaseApiController {
         log.info("🔍 사용자 소셜 계정 정보 조회: ID={}", id);
         
         // 권한 확인
-        User currentUser = (User) session.getAttribute("user");
+        // 표준화 원칙: SessionUtils 사용
+        User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null || (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster())) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
@@ -2336,9 +2341,10 @@ public class AdminController extends BaseApiController {
                     currentUser.getEmail(), currentUser.getRole(), tenantId);
             
             // ⭐ 테넌트별 재무 거래 목록 조회 (tenant_id 필터링만 사용)
+            // 표준화 원칙: 페이지 크기 최대 20개로 제한
             org.springframework.data.domain.Page<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(
-                    org.springframework.data.domain.PageRequest.of(page, size)
+                    PaginationUtils.createPageable(page, size)
                 );
             
             Map<String, Object> response = new HashMap<>();
@@ -2535,9 +2541,9 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 페이지네이션 설정
+            // 페이지네이션 설정 (표준화 원칙: 페이지 크기 최대 20개로 제한)
             org.springframework.data.domain.Pageable pageable = 
-                org.springframework.data.domain.PageRequest.of(page, size);
+                PaginationUtils.createPageable(page, size);
             
             // 상담일지 조회
             org.springframework.data.domain.Page<com.coresolution.consultation.entity.ConsultationRecord> consultationRecords = 

@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping({"/api/v1/user", "/api/user"})
 @RequiredArgsConstructor
 public class ThemeController extends BaseApiController {
 

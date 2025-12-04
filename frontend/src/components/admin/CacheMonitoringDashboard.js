@@ -4,6 +4,7 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import { FaDatabase, FaChartLine, FaClock, FaMemory, FaSync } from 'react-icons/fa';
 import { DataTransformer, PerformanceUtils } from '../../utils/performanceUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
+import notificationManager from '../../utils/notification';
 import './CacheMonitoringDashboard.css';
 
 const CacheMonitoringDashboard = () => {
@@ -35,19 +36,22 @@ const CacheMonitoringDashboard = () => {
 
   // 모든 캐시 클리어
   const clearAllCaches = async () => {
-    if (!window.confirm(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_CONFIRM)) return;
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_CONFIRM, resolve);
+    });
+    if (!confirmed) return;
     
     try {
       const response = await fetch(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.API_ENDPOINTS.CLEAR_ALL, { method: 'DELETE' });
       if (response.ok) {
-        alert(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_SUCCESS);
+        notificationManager.success(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_SUCCESS);
         fetchCacheStats();
       } else {
-        alert(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_ERROR);
+        notificationManager.error(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_ERROR);
       }
     } catch (error) {
       console.error('캐시 삭제 오류:', error);
-      alert(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_ERROR);
+      notificationManager.error(WIDGET_CONSTANTS.CACHE_MONITORING_WIDGET.MESSAGES.CLEAR_ERROR);
     }
   };
 

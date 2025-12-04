@@ -30,18 +30,19 @@ const DashboardSection = ({
   className = '',
   ...props
 }) => {
+  // 표준화 원칙: 의미 있는 HTML 태그 사용 (section, header)
   return (
-    <div className={`mg-dashboard-section ${className}`.trim()} {...props}>
+    <section className={`mg-dashboard-section ${className}`.trim()} {...props}>
       {(title || headerRight) && (
-        <div className="mg-dashboard-section-header">
+        <header className="mg-dashboard-section-header">
           {title && <h3 className="mg-dashboard-section-title">{title}</h3>}
           {headerRight}
-        </div>
+        </header>
       )}
       <div className="mg-dashboard-section-content">
         {children}
       </div>
-    </div>
+    </section>
   );
 };
 

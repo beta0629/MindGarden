@@ -25,7 +25,7 @@ import {
   getBillingCycleCodes,
   getCodeLabel,
 } from '../../utils/billingService';
-// import notificationManager from '../../utils/notification';
+import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import MGButton from '../../components/common/MGButton';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -183,7 +183,10 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
    * 구독 취소
    */
   const handleCancelSubscription = async (subscriptionId) => {
-    if (!window.confirm(BILLING_MESSAGES.SUBSCRIPTION.CANCEL_CONFIRM)) {
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(BILLING_MESSAGES.SUBSCRIPTION.CANCEL_CONFIRM, resolve);
+    });
+    if (!confirmed) {
       return;
     }
 

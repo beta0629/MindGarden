@@ -159,7 +159,10 @@ const TenantCodeManagement = () => {
 
     // 코드 삭제
     const handleDeleteCode = async (codeId) => {
-        if (!window.confirm(NOTIFICATION_MESSAGES.DELETE_CONFIRM)) return;
+        const confirmed = await new Promise((resolve) => {
+            notificationManager.confirm(NOTIFICATION_MESSAGES.DELETE_CONFIRM, resolve);
+        });
+        if (!confirmed) return;
 
         try {
             const { deleteCommonCode } = await import('../../utils/commonCodeApi');

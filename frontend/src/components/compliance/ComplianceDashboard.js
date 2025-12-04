@@ -41,13 +41,13 @@ const ComplianceDashboard = () => {
                 policyRes,
                 destructionRes
             ] = await Promise.all([
-                fetch('/api/admin/compliance/overall'),
-                fetch('/api/admin/compliance/personal-data-processing'),
-                fetch('/api/admin/compliance/impact-assessment'),
-                fetch('/api/admin/compliance/breach-response'),
-                fetch('/api/admin/compliance/education'),
-                fetch('/api/admin/compliance/policy'),
-                fetch('/api/admin/personal-data-destruction/status')
+                fetch('/api/v1/admin/compliance/overall'),
+                fetch('/api/v1/admin/compliance/personal-data-processing'),
+                fetch('/api/v1/admin/compliance/impact-assessment'),
+                fetch('/api/v1/admin/compliance/breach-response'),
+                fetch('/api/v1/admin/compliance/education'),
+                fetch('/api/v1/admin/compliance/policy'),
+                fetch('/api/v1/admin/personal-data-destruction/status')
             ]);
 
             if (overallRes.ok) setOverallStatus(await overallRes.json());
@@ -332,19 +332,19 @@ const ComplianceDashboard = () => {
             <div className="action-buttons">
                 <button 
                     className="action-button primary"
-                    onClick={() => window.open('/api/admin/compliance/impact-assessment/execute', '_blank')}
+                    onClick={() => window.open('/api/v1/admin/compliance/impact-assessment/execute', '_blank')}
                 >
                     📊 영향평가 실행
                 </button>
                 <button 
                     className="action-button secondary"
-                    onClick={() => window.open('/api/admin/personal-data-destruction/execute/all', '_blank')}
+                    onClick={() => window.open('/api/v1/admin/personal-data-destruction/execute/all', '_blank')}
                 >
                     🗑️ 전체 파기 실행
                 </button>
                 <button 
                     className="action-button tertiary"
-                    onClick={() => window.open('/api/admin/compliance/education/plan', '_blank')}
+                    onClick={() => window.open('/api/v1/admin/compliance/education/plan', '_blank')}
                 >
                     🎓 교육 계획 수립
                 </button>

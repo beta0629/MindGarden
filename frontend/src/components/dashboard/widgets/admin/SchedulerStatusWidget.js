@@ -101,8 +101,9 @@ const SchedulerStatusWidget = ({ widget, user }) => {
   const renderContent = () => {
     const { executions = [], summary = {} } = data || {};
 
-    // 최근 실행 내역 (최대 5개)
-    const recentExecutions = executions.slice(0, 5);
+    // 최근 실행 내역 (표준화 원칙: 최대 10개)
+    const maxItems = WIDGET_CONSTANTS.DASHBOARD_LIMITS.MAX_ITEMS;
+    const recentExecutions = executions.slice(0, maxItems);
 
     // 성공률 계산
     const totalExecutions = summary.totalExecutions || 0;

@@ -12,8 +12,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.coresolution.consultation.constant.AdminConstants;
-import com.coresolution.consultation.constant.MappingStatusConstants;
+import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationDto;
@@ -92,15 +91,19 @@ public class AdminServiceImpl implements AdminService {
     private final UserRoleAssignmentRepository userRoleAssignmentRepository;
     private final TenantRoleRepository tenantRoleRepository;
     private final UserRoleQueryService userRoleQueryService;
+    private final StatusCodeHelper statusCodeHelper;
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
-        // 전화번호 암호화
+        // 표준화 원칙: 개인정보 필드 암호화 필수 (name, phone, email)
+        String encryptedName = encryptionUtil.safeEncrypt(dto.getName());
         String encryptedPhone = null;
         if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
-            encryptedPhone = encryptionUtil.encrypt(dto.getPhone());
+            encryptedPhone = encryptionUtil.safeEncrypt(dto.getPhone());
             log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(dto.getPhone()));
         }
+        String encryptedEmail = encryptionUtil.safeEncrypt(dto.getEmail());
+        log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
         
         // 지점코드 처리 (레거시 시스템, 필요시 사용)
         Branch branch = null;
@@ -124,9 +127,9 @@ public class AdminServiceImpl implements AdminService {
         if (existingConsultant.isPresent()) {
             // 삭제된 상담사가 있으면 기존 데이터를 업데이트
             User consultant = existingConsultant.get();
-            consultant.setEmail(dto.getEmail());
+            consultant.setEmail(encryptedEmail);
             consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
-            consultant.setName(dto.getName());
+            consultant.setName(encryptedName);
             consultant.setPhone(encryptedPhone);
             consultant.setIsActive(true); // 활성화
             consultant.setSpecialization(dto.getSpecialization());
@@ -149,9 +152,9 @@ public class AdminServiceImpl implements AdminService {
             // 새로운 상담사 생성
             Consultant consultant = new Consultant();
             consultant.setUsername(dto.getUsername());
-            consultant.setEmail(dto.getEmail());
+            consultant.setEmail(encryptedEmail);
             consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
-            consultant.setName(dto.getName());
+            consultant.setName(encryptedName);
             consultant.setPhone(encryptedPhone);
             consultant.setRole(UserRole.CONSULTANT);
             consultant.setIsActive(true);
@@ -174,12 +177,15 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public Client registerClient(ClientRegistrationDto dto) {
-        // 전화번호 암호화
+        // 표준화 원칙: 개인정보 필드 암호화 필수 (name, phone, email)
+        String encryptedName = encryptionUtil.safeEncrypt(dto.getName());
         String encryptedPhone = null;
         if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
-            encryptedPhone = encryptionUtil.encrypt(dto.getPhone());
+            encryptedPhone = encryptionUtil.safeEncrypt(dto.getPhone());
             log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(dto.getPhone()));
         }
+        String encryptedEmail = encryptionUtil.safeEncrypt(dto.getEmail());
+        log.info("🔐 관리자 내담자 등록 시 이름, 이메일 암호화 완료");
         
         // 지점코드 처리 (레거시 시스템, 테넌트 시스템에서는 불필요)
         Branch branch = null;
@@ -209,9 +215,9 @@ public class AdminServiceImpl implements AdminService {
         // User 테이블에 CLIENT role로 저장
         User clientUser = User.builder()
                 .username(dto.getUsername())
-                .email(dto.getEmail())
+                .email(encryptedEmail)
                 .password(passwordEncoder.encode(dto.getPassword()))
-                .name(dto.getName())
+                .name(encryptedName)
                 .phone(encryptedPhone)
                 .role(UserRole.CLIENT)
                 .isActive(true)
@@ -1662,9 +1668,12 @@ public class AdminServiceImpl implements AdminService {
         User consultant = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Consultant not found"));
         
-        consultant.setName(dto.getName());
-        consultant.setEmail(dto.getEmail());
-        consultant.setPhone(dto.getPhone());
+        // 표준화 원칙: 개인정보 필드 암호화 필수 (name, phone, email)
+        consultant.setName(encryptionUtil.safeEncrypt(dto.getName()));
+        consultant.setEmail(encryptionUtil.safeEncrypt(dto.getEmail()));
+        if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
+            consultant.setPhone(encryptionUtil.safeEncrypt(dto.getPhone()));
+        }
         
         // 전문분야 필드 처리 추가
         if (dto.getSpecialization() != null) {
@@ -1700,9 +1709,12 @@ public class AdminServiceImpl implements AdminService {
         User clientUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
         
-        clientUser.setName(dto.getName());
-        clientUser.setEmail(dto.getEmail());
-        clientUser.setPhone(dto.getPhone());
+        // 표준화 원칙: 개인정보 필드 암호화 필수 (name, phone, email)
+        clientUser.setName(encryptionUtil.safeEncrypt(dto.getName()));
+        clientUser.setEmail(encryptionUtil.safeEncrypt(dto.getEmail()));
+        if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
+            clientUser.setPhone(encryptionUtil.safeEncrypt(dto.getPhone()));
+        }
         
         User savedUser = userRepository.save(clientUser);
         
@@ -3620,86 +3632,42 @@ public class AdminServiceImpl implements AdminService {
      * 환불 관련 공통 코드 초기화 (없으면 자동 생성)
      */
     /**
-     * 공통코드에서 매칭 상태 조회
+     * 공통코드에서 매칭 상태 조회 (StatusCodeHelper 사용)
      */
     private String getMappingStatusCode(String statusName) {
-        try {
-            List<CommonCode> statusCodes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(MappingStatusConstants.MAPPING_STATUS_GROUP);
-            for (CommonCode code : statusCodes) {
-                if (code.getCodeLabel().equals(statusName) || code.getCodeValue().equals(statusName)) {
-                    String codeValue = code.getCodeValue();
-                    // enum에 존재하는지 검증
-                    try {
-                        ConsultantClientMapping.MappingStatus.valueOf(codeValue);
-                        return codeValue;
-                    } catch (IllegalArgumentException e) {
-                        log.warn("⚠️ 공통코드의 매칭 상태 값이 enum에 없음: {}, 원본 값 사용: {}", codeValue, statusName);
-                        // enum에 없는 값이면 원본 반환 (enum에 존재하는 값일 가능성)
-                        return statusName;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("매칭 상태 코드 조회 실패: {}", statusName, e);
+        String codeValue = statusCodeHelper.getStatusCodeValue("MAPPING_STATUS", statusName);
+        if (codeValue != null) {
+            return codeValue;
         }
-        // enum에 존재하는지 최종 검증
-        try {
-            ConsultantClientMapping.MappingStatus.valueOf(statusName);
-            return statusName;
-        } catch (IllegalArgumentException e) {
-            log.warn("⚠️ 매칭 상태 값이 enum에 없음: {}, 기본값 사용: PENDING_PAYMENT", statusName);
-            return "PENDING_PAYMENT"; // 안전한 기본값
-        }
+        // 공통코드에 없으면 원본 값 반환 (enum 검증은 호출부에서 처리)
+        log.warn("⚠️ 매칭 상태 코드를 공통코드에서 찾을 수 없음: {}, 원본 값 사용", statusName);
+        return statusName;
     }
 
     /**
-     * 공통코드에서 결제 상태 조회
+     * 공통코드에서 결제 상태 조회 (StatusCodeHelper 사용)
      */
     private String getPaymentStatusCode(String statusName) {
-        try {
-            List<CommonCode> statusCodes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(MappingStatusConstants.PAYMENT_STATUS_GROUP);
-            for (CommonCode code : statusCodes) {
-                if (code.getCodeLabel().equals(statusName) || code.getCodeValue().equals(statusName)) {
-                    String codeValue = code.getCodeValue();
-                    // enum에 존재하는지 검증
-                    try {
-                        ConsultantClientMapping.PaymentStatus.valueOf(codeValue);
-                        return codeValue;
-                    } catch (IllegalArgumentException e) {
-                        log.warn("⚠️ 공통코드의 결제 상태 값이 enum에 없음: {}, 원본 값 사용: {}", codeValue, statusName);
-                        // enum에 없는 값이면 원본 반환 (enum에 존재하는 값일 가능성)
-                        return statusName;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("결제 상태 코드 조회 실패: {}", statusName, e);
+        String codeValue = statusCodeHelper.getStatusCodeValue("PAYMENT_STATUS", statusName);
+        if (codeValue != null) {
+            return codeValue;
         }
-        // enum에 존재하는지 최종 검증
-        try {
-            ConsultantClientMapping.PaymentStatus.valueOf(statusName);
-            return statusName;
-        } catch (IllegalArgumentException e) {
-            log.warn("⚠️ 결제 상태 값이 enum에 없음: {}, 기본값 사용: PENDING", statusName);
-            return "PENDING"; // 안전한 기본값
-        }
+        // 공통코드에 없으면 원본 값 반환 (enum 검증은 호출부에서 처리)
+        log.warn("⚠️ 결제 상태 코드를 공통코드에서 찾을 수 없음: {}, 원본 값 사용", statusName);
+        return statusName;
     }
 
     /**
-     * 공통코드에서 스케줄 상태 조회
+     * 공통코드에서 스케줄 상태 조회 (StatusCodeHelper 사용)
      */
     private String getScheduleStatusCode(String statusName) {
-        try {
-            List<CommonCode> statusCodes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(MappingStatusConstants.SCHEDULE_STATUS_GROUP);
-            for (CommonCode code : statusCodes) {
-                if (code.getCodeLabel().equals(statusName) || code.getCodeValue().equals(statusName)) {
-                    return code.getCodeValue();
-                }
-            }
-        } catch (Exception e) {
-            log.error("스케줄 상태 코드 조회 실패: {}", statusName, e);
+        String codeValue = statusCodeHelper.getStatusCodeValue("SCHEDULE_STATUS", statusName);
+        if (codeValue != null) {
+            return codeValue;
         }
-        return statusName; // 기본값으로 원본 반환
+        // 공통코드에 없으면 원본 값 반환
+        log.warn("⚠️ 스케줄 상태 코드를 공통코드에서 찾을 수 없음: {}, 원본 값 사용", statusName);
+        return statusName;
     }
 
     private void initializeRefundCommonCodes() {

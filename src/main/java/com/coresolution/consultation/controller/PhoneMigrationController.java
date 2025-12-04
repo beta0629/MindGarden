@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/migration")
+@RequestMapping({"/api/v1/admin/migration", "/api/admin/migration"})
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class PhoneMigrationController {
@@ -34,26 +34,15 @@ public class PhoneMigrationController {
      */
     @GetMapping("/phone/status")
     public ResponseEntity<Map<String, Object>> checkPhoneEncryptionStatus() {
-        try {
-            log.info("🔍 전화번호 암호화 상태 확인 요청");
-            
-            phoneMigrationService.checkPhoneEncryptionStatus();
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "전화번호 암호화 상태 확인이 완료되었습니다. 로그를 확인하세요.");
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            log.error("❌ 전화번호 암호화 상태 확인 실패", e);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "전화번호 암호화 상태 확인에 실패했습니다: " + e.getMessage());
-            
-            return ResponseEntity.internalServerError().body(response);
-        }
+        log.info("🔍 전화번호 암호화 상태 확인 요청");
+        
+        phoneMigrationService.checkPhoneEncryptionStatus();
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "전화번호 암호화 상태 확인이 완료되었습니다. 로그를 확인하세요.");
+        
+        return ResponseEntity.ok(response);
     }
     
     /**
@@ -62,25 +51,14 @@ public class PhoneMigrationController {
      */
     @PostMapping("/phone/encrypt")
     public ResponseEntity<Map<String, Object>> migratePhoneNumbers() {
-        try {
-            log.info("🔄 전화번호 암호화 마이그레이션 요청");
-            
-            phoneMigrationService.migratePhoneNumbers();
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "전화번호 암호화 마이그레이션이 완료되었습니다. 로그를 확인하세요.");
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            log.error("❌ 전화번호 암호화 마이그레이션 실패", e);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "전화번호 암호화 마이그레이션에 실패했습니다: " + e.getMessage());
-            
-            return ResponseEntity.internalServerError().body(response);
-        }
+        log.info("🔄 전화번호 암호화 마이그레이션 요청");
+        
+        phoneMigrationService.migratePhoneNumbers();
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "전화번호 암호화 마이그레이션이 완료되었습니다. 로그를 확인하세요.");
+        
+        return ResponseEntity.ok(response);
     }
 }

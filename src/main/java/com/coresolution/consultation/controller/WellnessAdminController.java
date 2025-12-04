@@ -42,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/wellness")
+@RequestMapping({"/api/v1/admin/wellness", "/api/admin/wellness"})
 @RequiredArgsConstructor
 public class WellnessAdminController extends BaseApiController {
     

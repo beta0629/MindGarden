@@ -23,6 +23,7 @@ import {
     toggleTenantCodeActive,
     createConsultationPackage
 } from '../../utils/tenantCommonCodeApi';
+import notificationManager from '../../utils/notification';
 import TenantCommonCodeManagerUI from '../ui/TenantCommonCodeManagerUI';
 
 const TenantCommonCodeManager = () => {
@@ -166,7 +167,7 @@ const TenantCommonCodeManager = () => {
             if (response.success) {
                 setShowModal(false);
                 loadCodes(selectedGroup.groupName);
-                alert(modalMode === 'create' ? '코드가 생성되었습니다.' : '코드가 수정되었습니다.');
+                notificationManager.success(modalMode === 'create' ? '코드가 생성되었습니다.' : '코드가 수정되었습니다.');
             } else {
                 setError(response.message || '작업 실패');
             }
@@ -182,7 +183,10 @@ const TenantCommonCodeManager = () => {
      * 코드 삭제
      */
     const handleDeleteCode = async (codeId) => {
-        if (!window.confirm('정말 삭제하시겠습니까?')) {
+        const confirmed = await new Promise((resolve) => {
+            notificationManager.confirm('정말 삭제하시겠습니까?', resolve);
+        });
+        if (!confirmed) {
             return;
         }
 
@@ -192,7 +196,7 @@ const TenantCommonCodeManager = () => {
             const response = await deleteTenantCode(codeId);
             if (response.success) {
                 loadCodes(selectedGroup.groupName);
-                alert('코드가 삭제되었습니다.');
+                notificationManager.success('코드가 삭제되었습니다.');
             } else {
                 setError(response.message || '삭제 실패');
             }
@@ -248,14 +252,14 @@ const TenantCommonCodeManager = () => {
             .then(response => {
                 if (response.success) {
                     loadCodes('CONSULTATION_PACKAGE');
-                    alert('상담 패키지가 생성되었습니다.');
+                    notificationManager.success('상담 패키지가 생성되었습니다.');
                 } else {
-                    alert('생성 실패: ' + response.message);
+                    notificationManager.error('생성 실패: ' + response.message);
                 }
             })
             .catch(err => {
                 console.error('패키지 생성 오류:', err);
-                alert('패키지 생성 중 오류가 발생했습니다.');
+                notificationManager.error('패키지 생성 중 오류가 발생했습니다.');
             });
     };
 

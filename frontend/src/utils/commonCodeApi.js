@@ -263,7 +263,7 @@ export const getCodeGroups = async () => {
         }
         
         // 하위 호환성: 기존 API 사용
-        const legacyResponse = await apiGet('/api/common-codes/groups/list');
+        const legacyResponse = await apiGet('/api/v1/common-codes/groups/list');
         if (Array.isArray(legacyResponse)) {
             return legacyResponse;
         }

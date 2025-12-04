@@ -14,6 +14,63 @@
 @import '../../styles/dashboard-common-v3.css';
 @import '../../styles/themes/admin-theme.css';
 
+/* ===== 휴가 현황 카드 그리드 (표준화 원칙: 테이블 → 카드 전환) ===== */
+.mg-vacation-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--mg-card-min-width, 20rem), 1fr));
+    gap: var(--mg-spacing-lg);
+    margin-top: var(--mg-spacing-lg);
+}
+
+.mg-vacation-card {
+    transition: all var(--mg-transition-normal) var(--mg-easing);
+}
+
+.mg-vacation-card:hover {
+    transform: translateY(calc(var(--mg-spacing-xs) * -1));
+    box-shadow: var(--mg-shadow-lg);
+}
+
+.mg-vacation-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--mg-spacing-md);
+    padding-bottom: var(--mg-spacing-md);
+    border-bottom: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+.mg-vacation-card__name {
+    font-size: var(--mg-font-lg);
+    font-weight: var(--mg-font-semibold);
+    color: var(--mg-text-primary);
+    margin-bottom: var(--mg-spacing-xs);
+}
+
+.mg-vacation-card__email {
+    font-size: var(--mg-font-sm);
+    color: var(--mg-text-secondary);
+}
+
+.mg-vacation-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-md);
+}
+
+.mg-vacation-card__field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--mg-spacing-sm);
+}
+
+.mg-vacation-card__label {
+    font-size: var(--mg-font-sm);
+    color: var(--mg-text-secondary);
+    font-weight: var(--mg-font-medium);
+}
+
 /* ===== 메인 컨테이너 ===== */
 .mg-v2-admin-dashboard {
     padding: var(--mg-spacing-xl);
@@ -182,7 +239,8 @@
 }
 
 /* ===== 반응형 디자인 ===== */
-@media (max-width: 768px) {
+/* 표준화 원칙: CSS 변수 사용, 모바일 우선 설계 */
+@media (max-width: calc(var(--breakpoint-tablet, 768px) - 1px)) {
     .mg-v2-admin-dashboard {
         padding: var(--mg-spacing-md);
     }
@@ -245,7 +303,7 @@
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: calc(var(--breakpoint-mobile, 480px) - 1px)) {
     .mg-v2-admin-dashboard-header {
         padding: var(--mg-spacing-md);
     }

@@ -153,7 +153,10 @@ const MenuPermissionManagement = () => {
      * 일괄 저장
      */
     const handleBatchSave = async () => {
-        if (!window.confirm('변경사항을 저장하시겠습니까?')) {
+        const confirmed = await new Promise((resolve) => {
+            notificationManager.confirm('변경사항을 저장하시겠습니까?', resolve);
+        });
+        if (!confirmed) {
             return;
         }
 
@@ -175,7 +178,7 @@ const MenuPermissionManagement = () => {
             const response = await batchUpdateMenuPermissions(selectedRole.tenantRoleId, requests);
 
             if (response.success) {
-                alert('저장되었습니다.');
+                notificationManager.success('저장되었습니다.');
                 fetchMenuPermissions(selectedRole.tenantRoleId);
             } else {
                 setError(response.message || '저장 실패');

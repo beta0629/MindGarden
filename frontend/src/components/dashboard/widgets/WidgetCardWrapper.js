@@ -99,24 +99,27 @@ const WidgetCardWrapper = ({ widget, cardStyle, defaultCardStyle, children }) =>
     style.className || ''
   ].filter(Boolean).join(' ');
 
-  // 인라인 스타일 생성
-  const inlineStyle = {};
+  // CSS 변수로 동적 스타일 처리
+  const styleVars = {};
   if (style.backgroundColor) {
-    inlineStyle.backgroundColor = style.backgroundColor;
+    styleVars['--card-bg-color'] = style.backgroundColor;
   }
   if (style.borderColor) {
-    inlineStyle.borderColor = style.borderColor;
-    inlineStyle.borderWidth = style.borderWidth || '1px';
-    inlineStyle.borderStyle = 'solid';
+    styleVars['--card-border-color'] = style.borderColor;
+    styleVars['--card-border-width'] = style.borderWidth || '1px';
   }
   if (style.customStyle) {
-    Object.assign(inlineStyle, style.customStyle);
+    // customStyle의 속성들을 CSS 변수로 변환
+    Object.keys(style.customStyle).forEach(key => {
+      const cssVarName = `--card-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+      styleVars[cssVarName] = style.customStyle[key];
+    });
   }
 
   return (
     <div 
       className={cardClasses}
-      style={inlineStyle}
+      style={Object.keys(styleVars).length > 0 ? styleVars : undefined}
       data-widget-id={widget?.id}
       data-widget-type={widget?.type}
     >

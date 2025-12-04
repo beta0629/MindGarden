@@ -7,6 +7,7 @@ import PerformanceWidget from './widgets/PerformanceWidget';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { SecurityDataManager } from '../../utils/securityUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
+import notificationManager from '../../utils/notification';
 import './SecurityMonitoringDashboard.css';
 
 /**
@@ -58,7 +59,7 @@ const SecurityMonitoringDashboard = () => {
       }
     } catch (error) {
       console.error('보안 보고서 다운로드 오류:', error);
-      alert(WIDGET_CONSTANTS.SECURITY_WIDGET.MESSAGES.ERROR);
+      notificationManager.error(WIDGET_CONSTANTS.SECURITY_WIDGET.MESSAGES.ERROR);
     }
   };
 

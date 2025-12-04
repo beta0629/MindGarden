@@ -19,7 +19,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/cache")
+@RequestMapping({"/api/v1/admin/cache", "/api/admin/cache"})
 @RequiredArgsConstructor
 public class CacheManagementController {
 

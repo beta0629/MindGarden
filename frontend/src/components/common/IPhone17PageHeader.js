@@ -25,8 +25,9 @@ const IPhone17PageHeader = ({
   className = '',
   style = {}
 }) => {
+  // 표준화 원칙: 의미 있는 HTML 태그 사용 (header)
   return (
-    <div 
+    <header 
       className={`iphone17-page-header ${className}`}
       style={style}
     >
@@ -61,7 +62,7 @@ const IPhone17PageHeader = ({
           </div>
         )}
       </div>
-    </div>
+    </header>
   );
 };
 

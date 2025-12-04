@@ -1,7 +1,7 @@
 # 권한 시스템 표준
 
-**버전**: 2.0.0  
-**최종 업데이트**: 2025-12-02  
+**버전**: 2.1.0  
+**최종 업데이트**: 2025-12-04  
 **상태**: 공식 표준 (테넌트 기반으로 전환)
 
 ---
@@ -168,8 +168,14 @@ public static ResponseEntity<?> checkPermission(
 ### ERP 관리
 | 권한 코드 | 설명 | 대상 API |
 |----------|------|---------|
+| `ERP_ACCESS` | ERP 접근 | 모든 /api/erp/** (데이터베이스 기반 권한 체크) |
 | `ERP_MANAGE` | ERP 관리 | POST/PUT/DELETE /api/erp/** |
 | `ERP_VIEW` | ERP 조회 | GET /api/erp/** |
+
+**중요**: ERP 접근 권한은 데이터베이스에서 관리됩니다.
+- 하드코딩된 `SessionUtils.isAdmin()` 체크 제거
+- `DynamicPermissionService.hasPermission(user, "ERP_ACCESS")` 사용
+- 모든 ERP 엔드포인트에서 `checkErpAccess()` 메서드로 권한 체크
 
 ---
 
@@ -199,25 +205,44 @@ public ResponseEntity<?> registerConsultant(
 }
 ```
 
-#### ADMIN 전용 API (권한 체크 생략 가능)
+#### ERP 접근 권한 체크 (데이터베이스 기반)
 ```java
-@PostMapping("/api/admin/dashboard")
-public ResponseEntity<?> createDashboard(
-    @RequestBody DashboardDto dto,
-    HttpSession session
-) {
-    // ADMIN만 접근 가능한 API는 권한 체크 생략 가능
-    // (세션 체크만으로 충분)
-    User currentUser = (User) session.getAttribute("currentUser");
-    if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
-        return ResponseEntity.status(403).body(Map.of(
-            "success", false,
-            "message", "관리자 권한이 필요합니다."
-        ));
+@GetMapping("/api/erp/dashboard")
+public ResponseEntity<Map<String, Object>> getErpDashboard(HttpSession session) {
+    // ERP 접근 권한은 데이터베이스에서 관리
+    ResponseEntity<?> accessCheck = checkErpAccess(session);
+    if (accessCheck != null) {
+        return (ResponseEntity<Map<String, Object>>) accessCheck;
     }
     
     // 비즈니스 로직 실행
-    return dashboardService.createDashboard(dto);
+    return erpService.getDashboard();
+}
+
+/**
+ * ERP 접근 권한 체크 (데이터베이스 기반)
+ */
+private ResponseEntity<?> checkErpAccess(HttpSession session) {
+    User currentUser = SessionUtils.getCurrentUser(session);
+    if (currentUser == null) {
+        return ResponseEntity.status(401).body(Map.of(
+            "success", false,
+            "message", "로그인이 필요합니다.",
+            "redirectToLogin", true
+        ));
+    }
+    
+    // 데이터베이스에서 ERP_ACCESS 권한 체크
+    if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
+        log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", 
+                currentUser.getEmail(), currentUser.getRole());
+        return ResponseEntity.status(403).body(Map.of(
+            "success", false,
+            "message", "ERP 접근 권한이 없습니다. 관리자만 접근 가능합니다."
+        ));
+    }
+    
+    return null; // 권한 있음
 }
 ```
 
@@ -400,10 +425,21 @@ if (user.getRole() == UserRole.ADMIN) {
     // 특정 역할만 처리
 }
 
+// ❌ 금지 (ERP 접근 권한)
+if (!SessionUtils.isAdmin(session)) {
+    return ResponseEntity.status(403).body(...);
+}
+
 // ✅ 권장
 ResponseEntity<?> permissionCheck = PermissionCheckUtils.checkPermission(
     session, "CONSULTANT_MANAGE", dynamicPermissionService
 );
+
+// ✅ 권장 (ERP 접근 권한 - 데이터베이스 기반)
+ResponseEntity<?> accessCheck = checkErpAccess(session);
+if (accessCheck != null) {
+    return accessCheck;
+}
 ```
 
 ### 2. 지점 코드 기반 권한 체크
@@ -468,5 +504,5 @@ public ResponseEntity<?> registerConsultant(
 - 아키텍처 팀
 - 백엔드 팀
 
-**최종 업데이트**: 2025-12-02
+**최종 업데이트**: 2025-12-04
 

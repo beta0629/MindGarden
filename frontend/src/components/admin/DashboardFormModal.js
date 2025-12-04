@@ -314,7 +314,10 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
 
   // 역할 제거
   const handleDeleteRole = async (tenantRoleId, roleName) => {
-    if (!window.confirm(`"${roleName}" 역할을 삭제하시겠습니까?\n\n주의: 이 역할에 할당된 사용자가 있으면 삭제할 수 없습니다.`)) {
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(`"${roleName}" 역할을 삭제하시겠습니까?\n\n주의: 이 역할에 할당된 사용자가 있으면 삭제할 수 없습니다.`, resolve);
+    });
+    if (!confirmed) {
       return;
     }
 

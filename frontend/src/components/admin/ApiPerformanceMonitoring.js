@@ -7,6 +7,7 @@ import PerformanceWidget from './widgets/PerformanceWidget';
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { ApiPerformanceReportGenerator } from '../../utils/apiPerformanceUtils';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
+import notificationManager from '../../utils/notification';
 import './ApiPerformanceMonitoring.css';
 
 /**
@@ -31,21 +32,24 @@ const ApiPerformanceMonitoring = () => {
   // 통계 초기화
   const handleClearStats = async () => {
     const messages = WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.MESSAGES;
-    if (!window.confirm(messages.CLEAR_CONFIRM)) return;
+    const confirmed = await new Promise((resolve) => {
+      notificationManager.confirm(messages.CLEAR_CONFIRM, resolve);
+    });
+    if (!confirmed) return;
     
     try {
       const response = await fetch(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.API_ENDPOINTS.CLEAR_STATS, { 
         method: 'DELETE' 
       });
       if (response.ok) {
-        alert(messages.CLEAR_SUCCESS);
+        notificationManager.success(messages.CLEAR_SUCCESS);
         handleRefresh();
       } else {
-        alert(messages.CLEAR_ERROR);
+        notificationManager.error(messages.CLEAR_ERROR);
       }
     } catch (error) {
       console.error('통계 초기화 오류:', error);
-      alert(messages.CLEAR_ERROR);
+      notificationManager.error(messages.CLEAR_ERROR);
     }
   };
 
@@ -60,7 +64,7 @@ const ApiPerformanceMonitoring = () => {
       }
     } catch (error) {
       console.error('보고서 다운로드 오류:', error);
-      alert(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.MESSAGES.DOWNLOAD_ERROR);
+      notificationManager.error(WIDGET_CONSTANTS.API_PERFORMANCE_WIDGET.MESSAGES.DOWNLOAD_ERROR);
     }
   };
 

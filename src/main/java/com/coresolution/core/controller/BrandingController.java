@@ -32,7 +32,7 @@ import jakarta.servlet.http.HttpSession;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/branding")
+@RequestMapping({"/api/v1/admin/branding", "/api/admin/branding"})
 @RequiredArgsConstructor
 @Tag(name = "Branding", description = "브랜딩 관리 API")
 public class BrandingController extends BaseApiController {

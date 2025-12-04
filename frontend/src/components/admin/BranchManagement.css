@@ -123,7 +123,127 @@
     border-color: var(--branch-primary-color);
 }
 
-/* 테이블 컨테이너 */
+/* 지점 카드 그리드 (표준화 원칙: 테이블 → 카드 전환, CSS 변수 사용) */
+.mg-branch-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--mg-card-min-width, 20rem), 1fr));
+    gap: var(--mg-spacing-lg);
+    margin-top: var(--mg-spacing-lg);
+}
+
+.mg-branch-card {
+    transition: all var(--mg-transition-normal) var(--mg-easing);
+}
+
+.mg-branch-card:hover {
+    transform: translateY(calc(var(--mg-spacing-xs) * -1));
+    box-shadow: var(--mg-shadow-lg);
+}
+
+.mg-branch-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--mg-spacing-md);
+    padding-bottom: var(--mg-spacing-md);
+    border-bottom: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+.mg-branch-card__title-section {
+    flex: 1;
+}
+
+.mg-branch-card__name {
+    font-size: var(--mg-font-lg);
+    font-weight: var(--mg-font-semibold);
+    color: var(--mg-text-primary);
+    margin-bottom: var(--mg-spacing-xs);
+}
+
+.mg-branch-card__name.clickable {
+    cursor: pointer;
+    color: var(--mg-primary-600);
+    transition: color var(--mg-transition-fast) var(--mg-easing);
+}
+
+.mg-branch-card__name.clickable:hover {
+    color: var(--mg-primary-700);
+    text-decoration: underline;
+}
+
+.mg-branch-card__badges {
+    display: flex;
+    gap: var(--mg-spacing-xs);
+    flex-wrap: wrap;
+}
+
+.mg-branch-card__code {
+    font-size: var(--mg-font-xs);
+    color: var(--mg-text-tertiary);
+    font-family: monospace;
+}
+
+.mg-branch-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-spacing-sm);
+    margin-bottom: var(--mg-spacing-md);
+}
+
+.mg-branch-card__field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--mg-spacing-sm);
+    padding: var(--mg-spacing-xs) 0;
+}
+
+.mg-branch-card__label {
+    font-size: var(--mg-font-sm);
+    color: var(--mg-text-secondary);
+    font-weight: var(--mg-font-medium);
+}
+
+.mg-branch-card__value {
+    font-size: var(--mg-font-sm);
+    color: var(--mg-text-primary);
+    text-align: right;
+}
+
+.mg-branch-card__footer {
+    padding-top: var(--mg-spacing-md);
+    border-top: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+.mg-branch-card__actions {
+    display: flex;
+    gap: var(--mg-spacing-sm);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.mg-branch-card__status-select {
+    padding: var(--mg-spacing-xs) var(--mg-spacing-sm);
+    border: var(--border-width-normal) solid var(--mg-border);
+    border-radius: var(--mg-radius-sm);
+    font-size: var(--mg-font-sm);
+    background: var(--mg-bg-card);
+    color: var(--mg-text-primary);
+    cursor: pointer;
+    transition: all var(--mg-transition-fast) var(--mg-easing);
+}
+
+.mg-branch-card__status-select:hover {
+    border-color: var(--mg-primary-500);
+}
+
+.mg-branch-card__status-select:focus {
+    outline: none;
+    border-color: var(--mg-primary-500);
+    box-shadow: 0 0 0 2px rgba(var(--mg-primary-500-rgb, 59, 130, 246), 0.1);
+}
+
+/* 레거시 테이블 스타일 (호환성 유지) */
 .branch-table-container {
     background: var(--branch-white);
     border-radius: var(--branch-border-radius);
@@ -132,7 +252,6 @@
     margin-bottom: 24px;
 }
 
-/* 테이블 스타일 */
 .branch-table {
     width: 100%;
     border-collapse: collapse;
@@ -541,8 +660,8 @@
     margin: 0;
 }
 
-/* 반응형 디자인 */
-@media (max-width: 1024px) {
+/* 반응형 디자인 (표준화 원칙: CSS 변수 사용) */
+@media (max-width: calc(var(--breakpoint-desktop, 1024px) - 1px)) {
     .branch-management {
         padding: 16px;
     }
@@ -573,7 +692,7 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: calc(var(--breakpoint-tablet, 768px) - 1px)) {
     .branch-management-header {
         flex-direction: column;
         gap: 16px;
@@ -606,7 +725,7 @@
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: calc(var(--breakpoint-mobile, 480px) - 1px)) {
     .branch-management {
         padding: 12px;
     }

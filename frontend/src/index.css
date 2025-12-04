@@ -272,3 +272,43 @@ code {
   color: var(--mg-secondary-500);
   margin-bottom: 1rem;
 }
+
+.mg-dashboard-error__retry-button {
+  padding: 0.5rem 1rem;
+  background-color: var(--mg-primary-500);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.mg-dashboard-error__retry-button:hover {
+  background-color: var(--mg-primary-600);
+}
+
+/* 대시보드 레이아웃 스타일 */
+.dashboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.dashboard-masonry {
+  column-gap: var(--spacing-md);
+}
+
+/* 위젯 컨테이너 스타일 (CSS 변수 사용) */
+.widget-container {
+  width: var(--widget-width, auto);
+  height: var(--widget-height, auto);
+  min-width: var(--widget-min-width, auto);
+  min-height: var(--widget-min-height, auto);
+  max-width: var(--widget-max-width, none);
+  max-height: var(--widget-max-height, none);
+}
+
+/* 아이콘 색상 유틸리티 */
+.mg-icon-primary {
+  color: var(--color-primary);
+}

@@ -4,6 +4,7 @@ import { Button } from '../ui/Button/Button';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
+import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport, FaBell, FaDatabase, FaRocket, FaShieldAlt } from 'react-icons/fa';
 import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt, MessageSquare, Sparkles, XCircle } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -11,6 +12,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 �
 import SystemStatus from './system/SystemStatus';
 import DashboardSection from '../layout/DashboardSection';
 import StatCard from '../ui/Card/StatCard';
+import MGCard from '../common/MGCard';
 import { API_BASE_URL } from '../../constants/api';
 import SystemTools from './system/SystemTools';
 import PermissionManagement from './PermissionManagement';
@@ -232,12 +234,12 @@ const AdminDashboard = ({ user: propUser }) => {
         setLoading(true);
         try {
             const [consultantsRes, clientsRes, mappingsRes, ratingRes, vacationRes, consultationRes] = await Promise.all([
-                fetch('/api/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0]),
-                fetch('/api/admin/clients/with-mapping-info'),
-                fetch('/api/admin/mappings'),
-                fetch('/api/admin/consultant-rating-stats'),
-                fetch('/api/admin/vacation-statistics?period=month'),
-                fetch('/api/admin/statistics/consultation-completion')
+                fetch('/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0]),
+                fetch('/api/v1/admin/clients/with-mapping-info'),
+                fetch('/api/v1/admin/mappings'),
+                fetch('/api/v1/admin/consultant-rating-stats'),
+                fetch('/api/v1/admin/vacation-statistics?period=month'),
+                fetch('/api/v1/admin/statistics/consultation-completion')
             ]);
 
             let totalConsultants = 0;
@@ -342,7 +344,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const loadRefundStats = useCallback(async () => {
         try {
-            const response = await fetch('/api/admin/refund-statistics?period=month');
+            const response = await fetch('/api/v1/admin/refund-statistics?period=month');
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.data.summary) {
@@ -362,7 +364,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadPendingDepositStats = useCallback(async () => {
         try {
             console.log('🔍 입금 확인 대기 통계 로드 시작...');
-            const response = await fetch('/api/admin/mappings/pending-deposit');
+            const response = await fetch('/api/v1/admin/mappings/pending-deposit');
             console.log('🔍 API 응답 상태:', response.status);
             
             if (response.ok) {
@@ -414,7 +416,7 @@ const AdminDashboard = ({ user: propUser }) => {
     // 스케줄 자동 완료 처리
     const handleAutoCompleteSchedules = async () => {
         try {
-            const response = await csrfTokenManager.post('/api/admin/schedules/auto-complete');
+            const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete');
 
             if (response.ok) {
                 const result = await response.json();
@@ -433,7 +435,7 @@ const AdminDashboard = ({ user: propUser }) => {
     // 스케줄 자동 완료 처리 및 상담일지 미작성 알림
     const handleAutoCompleteWithReminder = async () => {
         try {
-            const response = await csrfTokenManager.post('/api/admin/schedules/auto-complete-with-reminder');
+            const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete-with-reminder');
 
             if (response.ok) {
                 const result = await response.json();
@@ -453,7 +455,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const handleMergeDuplicateMappings = async () => {
         try {
             // 먼저 중복 매칭 조회
-            const checkResponse = await fetch('/api/admin/duplicate-mappings');
+            const checkResponse = await fetch('/api/v1/admin/duplicate-mappings');
             if (!checkResponse.ok) {
                 showToast('중복 매칭 조회에 실패했습니다.', 'danger');
                 return;
@@ -475,7 +477,7 @@ const AdminDashboard = ({ user: propUser }) => {
     }
             
             // 중복 매칭 통합 실행
-            const response = await csrfTokenManager.post('/api/admin/merge-duplicate-mappings');
+            const response = await csrfTokenManager.post('/api/v1/admin/merge-duplicate-mappings');
 
             if (response.ok) {
                 const result = await response.json();
@@ -500,7 +502,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const createTestData = async () => {
         try {
-            const response = await csrfTokenManager.post('/api/test/create-test-data');
+            const response = await csrfTokenManager.post('/api/v1/test/create-test-data');
 
             if (response.ok) {
                 showToast('테스트 데이터가 성공적으로 생성되었습니다.');
@@ -520,8 +522,8 @@ const AdminDashboard = ({ user: propUser }) => {
         setLoading(true);
         try {
             const [serverRes, dbRes] = await Promise.all([
-                fetch('/api/health/server'),
-                fetch('/api/health/database')
+                fetch('/api/v1/health/server'),
+                fetch('/api/v1/health/database')
             ]);
 
             const serverStatus = serverRes.ok ? 'healthy' : 'error';
@@ -688,21 +690,25 @@ const AdminDashboard = ({ user: propUser }) => {
                         icon={<User />}
                         value={stats.totalConsultants}
                         label="상담사"
+                        onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}
                     />
                     <StatCard
                         icon={<Users />}
                         value={stats.totalClients}
                         label="내담자"
+                        onClick={() => navigate(ADMIN_ROUTES.CLIENT_COMPREHENSIVE)}
                     />
                     <StatCard
                         icon={<Link2 />}
                         value={stats.totalMappings}
                         label="매칭"
+                        onClick={() => navigate(ADMIN_ROUTES.MAPPING_MANAGEMENT)}
                     />
                     <StatCard
                         icon={<CheckCircle />}
                         value={stats.activeMappings}
                         label="활성 매칭"
+                        onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=ACTIVE`)}
                     />
                 </div>
             </DashboardSection>
@@ -727,16 +733,19 @@ const AdminDashboard = ({ user: propUser }) => {
                                 icon={<AlertTriangle />}
                                 value={`${pendingDepositStats.count}건`}
                                 label="입금 확인 대기"
+                                onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`)}
                             />
                             <StatCard
                                 icon={<DollarSign />}
                                 value={`${pendingDepositStats.totalAmount.toLocaleString()}원`}
                                 label="대기 중인 금액"
+                                onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`)}
                             />
                             <StatCard
                                 icon={<Clock />}
                                 value={`${pendingDepositStats.oldestHours}시간`}
                                 label="최장 대기 시간"
+                                onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=PENDING_PAYMENT`)}
                             />
                             <StatCard
                                 icon={<Settings />}
@@ -787,48 +796,49 @@ const AdminDashboard = ({ user: propUser }) => {
                         />
                     </div>
                     
-                    {/* 상담사별 휴가 현황 테이블 */}
+                    {/* 상담사별 휴가 현황 카드 (표준화 원칙: 테이블 → 카드 전환) */}
                     {stats.vacationStats?.consultantStats && stats.vacationStats.consultantStats.length > 0 && (
-                        <div className="mg-v2-table-container">
-                            <table className="mg-v2-table">
-                                <thead>
-                                    <tr>
-                                        <th>상담사</th>
-                                        <th>이메일</th>
-                                        <th>휴가일수</th>
-                                        <th>최근 휴가</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {stats.vacationStats.consultantStats.slice(0, 10).map((consultant) => (
-                                        <tr key={consultant.consultantId}>
-                                            <td data-label="상담사">
-                                                <div className="mg-flex mg-v2-items-center mg-gap-2">
-                                                    <div className="mg-avatar mg-avatar-sm mg-avatar-primary">
-                                                        {getAvatarInitial(consultant.consultantName)}
-                                                    </div>
-                                                    {consultant.consultantName}
-                                                </div>
-                                            </td>
-                                            <td data-label="이메일">{consultant.consultantEmail}</td>
-                                            <td data-label="휴가일수">
-                                                <span className="mg-v2-badge mg-v2-badge-primary">
-                                                    {(consultant.vacationDays || 0).toFixed(1)}일
-                                                </span>
-                                            </td>
-                                            <td data-label="최근 휴가">
-                                                <div className="mg-flex mg-v2-items-center mg-gap-1">
-                                                    <Clock />
+                        <div className="mg-vacation-cards-grid">
+                            {stats.vacationStats.consultantStats.slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.MAX_ITEMS).map((consultant) => (
+                                <MGCard 
+                                    key={consultant.consultantId}
+                                    variant="default"
+                                    className="mg-vacation-card"
+                                    onClick={() => navigate(`${ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE}?id=${consultant.consultantId}`)}
+                                >
+                                    <div className="mg-vacation-card__header">
+                                        <div className="mg-flex mg-v2-items-center mg-gap-2">
+                                            <div className="mg-avatar mg-avatar-sm mg-avatar-primary">
+                                                {getAvatarInitial(consultant.consultantName)}
+                                            </div>
+                                            <div>
+                                                <div className="mg-vacation-card__name">{consultant.consultantName}</div>
+                                                <div className="mg-vacation-card__email">{consultant.consultantEmail}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mg-vacation-card__body">
+                                        <div className="mg-vacation-card__field">
+                                            <span className="mg-vacation-card__label">휴가일수</span>
+                                            <span className="mg-v2-badge mg-v2-badge-primary">
+                                                {(consultant.vacationDays || 0).toFixed(1)}일
+                                            </span>
+                                        </div>
+                                        <div className="mg-vacation-card__field">
+                                            <span className="mg-vacation-card__label">최근 휴가</span>
+                                            <div className="mg-flex mg-v2-items-center mg-gap-1">
+                                                <Clock size={14} />
+                                                <span>
                                                     {consultant.lastVacationDate ? 
                                                         new Date(consultant.lastVacationDate).toLocaleDateString('ko-KR') : 
                                                         '-'
                                                     }
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </MGCard>
+                            ))}
                         </div>
                     )}
                             </DashboardSection>
@@ -865,16 +875,19 @@ const AdminDashboard = ({ user: propUser }) => {
                                     icon={<Heart />}
                                     value={`${stats.consultantRatingStats?.totalRatings || 0}개`}
                                     label="총 평가 수"
+                                    onClick={() => navigate(ADMIN_ROUTES.STATISTICS)}
                                 />
                                 <StatCard
                                     icon={<Trophy />}
                                     value={(stats.consultantRatingStats?.averageScore || 0).toFixed(1)}
                                     label="전체 평균 점수"
+                                    onClick={() => navigate(ADMIN_ROUTES.STATISTICS)}
                                 />
                                 <StatCard
                                     icon={<Users />}
                                     value={`${stats.consultantRatingStats?.topConsultants?.length || 0}명`}
                                     label="평가받은 상담사"
+                                    onClick={() => navigate(ADMIN_ROUTES.CONSULTANT_COMPREHENSIVE)}
                                 />
                             </div>
                             
@@ -895,21 +908,25 @@ const AdminDashboard = ({ user: propUser }) => {
                             icon={<Receipt />}
                             value={`${refundStats.totalRefundCount}건`}
                             label="환불 건수"
+                            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                         <StatCard
                             icon={<Calendar />}
                             value={`${refundStats.totalRefundedSessions}회`}
                             label="환불 회기"
+                            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                         <StatCard
                             icon={<DollarSign />}
                             value={`${refundStats.totalRefundAmount.toLocaleString()}원`}
                             label="환불 금액"
+                            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                         <StatCard
                             icon={<TrendingUp />}
                             value={`${refundStats.averageRefundPerCase.toLocaleString()}원`}
                             label="평균 환불액"
+                            onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?tab=refunds`)}
                         />
                     </div>
                 </DashboardSection>
@@ -926,11 +943,13 @@ const AdminDashboard = ({ user: propUser }) => {
                                 icon={<CheckCircle />}
                                 value={`${stats.consultationStats?.totalCompleted || 0}건`}
                                 label="총 완료 상담"
+                                onClick={() => navigate(ADMIN_ROUTES.SESSIONS)}
                             />
                             <StatCard
                                 icon={<TrendingUp />}
                                 value={`${stats.consultationStats?.completionRate || 0}%`}
                                 label="완료율"
+                                onClick={() => navigate(ADMIN_ROUTES.STATISTICS)}
                             />
                             <StatCard
                                 icon={<PieChart />}
@@ -944,7 +963,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-chart-container">
                                 <h4 className="mg-chart-title">월별 상담 완료 현황</h4>
                                 <div className="mg-chart-grid">
-                                    {stats.consultationStats.monthlyData.slice(0, 6).map((data, index) => {
+                                    {stats.consultationStats.monthlyData.slice(0, WIDGET_CONSTANTS.DASHBOARD_LIMITS.DEFAULT_ITEMS).map((data, index) => {
                                         const maxCount = Math.max(...stats.consultationStats.monthlyData.map(d => d.completedCount));
                                         const heightPercent = Math.max(20, (data.completedCount / maxCount) * 100);
                                         return (

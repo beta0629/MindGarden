@@ -490,7 +490,409 @@
   justify-content: flex-end;
 }
 
-/* 테이블 */
+/* 재무 거래 카드 그리드 (표준화 원칙: 테이블 → 카드 전환, CSS 변수 사용) */
+.mg-financial-transaction-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--mg-card-min-width, 20rem), 1fr));
+  gap: var(--mg-spacing-lg);
+}
+
+.mg-financial-transaction-card {
+  transition: all var(--mg-transition-normal) var(--mg-easing);
+}
+
+.mg-financial-transaction-card:hover {
+  transform: translateY(calc(var(--mg-spacing-xs) * -1));
+  box-shadow: var(--mg-shadow-lg);
+}
+
+.mg-financial-transaction-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-md);
+  border-bottom: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+.mg-financial-transaction-card__id-section {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-xs);
+  flex-wrap: wrap;
+}
+
+.mg-financial-transaction-card__id-button {
+  font-weight: var(--mg-font-semibold);
+}
+
+.mg-financial-transaction-card__date {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-secondary);
+}
+
+.mg-financial-transaction-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.mg-financial-transaction-card__field {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-xs) 0;
+}
+
+.mg-financial-transaction-card__label {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-secondary);
+  font-weight: var(--mg-font-medium);
+  flex-shrink: 0;
+}
+
+.mg-financial-transaction-card__category {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+  text-align: right;
+}
+
+.mg-financial-transaction-card__auto-generated {
+  font-size: var(--mg-font-xs);
+  margin-top: var(--mg-spacing-xs);
+}
+
+.mg-financial-transaction-card__auto-generated--success {
+  color: var(--mg-success-600);
+}
+
+.mg-financial-transaction-card__auto-generated--danger {
+  color: var(--mg-error-600);
+}
+
+.mg-financial-transaction-card__matching-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-xs);
+  text-align: right;
+}
+
+.mg-financial-transaction-card__consultant {
+  font-size: var(--mg-font-sm);
+  font-weight: var(--mg-font-medium);
+  color: var(--mg-primary-600);
+}
+
+.mg-financial-transaction-card__client {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-success-600);
+  margin-top: var(--mg-spacing-xs);
+}
+
+.mg-financial-transaction-card__no-info {
+  color: var(--mg-text-tertiary);
+  font-size: var(--mg-font-xs);
+}
+
+.mg-financial-transaction-card__amount {
+  font-weight: var(--mg-font-semibold);
+  font-size: var(--mg-font-base);
+  text-align: right;
+}
+
+.mg-financial-transaction-card__amount--success {
+  color: var(--mg-success-600);
+}
+
+.mg-financial-transaction-card__amount--danger {
+  color: var(--mg-error-600);
+}
+
+.mg-financial-transaction-card__footer {
+  padding-top: var(--mg-spacing-md);
+  border-top: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+.mg-financial-transaction-card__actions {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mg-financial-transaction-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--mg-spacing-xxxl);
+  color: var(--mg-text-tertiary);
+}
+
+.mg-financial-transaction-empty__icon {
+  font-size: var(--mg-font-2xl);
+  margin-bottom: var(--mg-spacing-md);
+  opacity: 0.5;
+}
+
+.mg-financial-transaction-empty__text {
+  margin: var(--mg-spacing-md) 0 0 0;
+  font-size: var(--mg-font-base);
+}
+
+/* 구매 요청 카드 그리드 (표준화 원칙: 테이블 → 카드 전환, CSS 변수 사용) */
+.mg-purchase-request-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--mg-card-min-width, 20rem), 1fr));
+  gap: var(--mg-spacing-lg);
+}
+
+.mg-purchase-request-card {
+  transition: all var(--mg-transition-normal) var(--mg-easing);
+}
+
+.mg-purchase-request-card:hover {
+  transform: translateY(calc(var(--mg-spacing-xs) * -1));
+  box-shadow: var(--mg-shadow-lg);
+}
+
+.mg-purchase-request-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-md);
+  border-bottom: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+.mg-purchase-request-card__id {
+  font-size: var(--mg-font-lg);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-text-primary);
+}
+
+.mg-purchase-request-card__date {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-secondary);
+}
+
+.mg-purchase-request-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.mg-purchase-request-card__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-xs) 0;
+}
+
+.mg-purchase-request-card__label {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-secondary);
+  font-weight: var(--mg-font-medium);
+}
+
+.mg-purchase-request-card__value {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-primary);
+  text-align: right;
+}
+
+.mg-purchase-request-card__footer {
+  padding-top: var(--mg-spacing-md);
+  border-top: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+/* 구매 주문 카드 그리드 (표준화 원칙: 테이블 → 카드 전환, CSS 변수 사용) */
+.mg-purchase-order-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--mg-card-min-width, 20rem), 1fr));
+  gap: var(--mg-spacing-lg);
+}
+
+.mg-purchase-order-card {
+  transition: all var(--mg-transition-normal) var(--mg-easing);
+}
+
+.mg-purchase-order-card:hover {
+  transform: translateY(calc(var(--mg-spacing-xs) * -1));
+  box-shadow: var(--mg-shadow-lg);
+}
+
+.mg-purchase-order-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-md);
+  border-bottom: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+.mg-purchase-order-card__id {
+  font-size: var(--mg-font-lg);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-text-primary);
+}
+
+.mg-purchase-order-card__date {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-secondary);
+}
+
+.mg-purchase-order-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.mg-purchase-order-card__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-xs) 0;
+}
+
+.mg-purchase-order-card__label {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-secondary);
+  font-weight: var(--mg-font-medium);
+}
+
+.mg-purchase-order-card__value {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-primary);
+  text-align: right;
+}
+
+.mg-purchase-order-card__value--amount {
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-primary-600);
+  font-size: var(--mg-font-base);
+}
+
+.mg-purchase-order-card__footer {
+  padding-top: var(--mg-spacing-md);
+  border-top: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+/* 세금 항목 카드 그리드 (표준화 원칙: 테이블 → 카드 전환, CSS 변수 사용) */
+.mg-tax-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--mg-card-min-width, 20rem), 1fr));
+  gap: var(--mg-spacing-lg);
+}
+
+.mg-tax-card {
+  transition: all var(--mg-transition-normal) var(--mg-easing);
+}
+
+.mg-tax-card:hover {
+  transform: translateY(calc(var(--mg-spacing-xs) * -1));
+  box-shadow: var(--mg-shadow-lg);
+}
+
+.mg-tax-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--mg-spacing-md);
+  padding-bottom: var(--mg-spacing-md);
+  border-bottom: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+.mg-tax-card__title-section {
+  flex: 1;
+}
+
+.mg-tax-card__name {
+  font-size: var(--mg-font-lg);
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-text-primary);
+  margin: 0 0 var(--mg-spacing-xs) 0;
+}
+
+.mg-tax-card__description {
+  font-size: var(--mg-font-xs);
+  color: var(--mg-text-tertiary);
+  margin-top: var(--mg-spacing-xs);
+}
+
+.mg-tax-card__status {
+  flex-shrink: 0;
+}
+
+.mg-tax-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.mg-tax-card__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-xs) 0;
+}
+
+.mg-tax-card__label {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-secondary);
+  font-weight: var(--mg-font-medium);
+}
+
+.mg-tax-card__value {
+  font-size: var(--mg-font-sm);
+  color: var(--mg-text-primary);
+  text-align: right;
+}
+
+.mg-tax-card__value--tax-amount {
+  font-weight: var(--mg-font-semibold);
+  color: var(--mg-primary-600);
+  font-size: var(--mg-font-base);
+}
+
+.mg-tax-card__footer {
+  padding-top: var(--mg-spacing-md);
+  border-top: var(--border-width-normal) solid var(--mg-border-light);
+}
+
+.mg-tax-card__actions {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mg-tax-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--mg-spacing-xxxl);
+  color: var(--mg-text-tertiary);
+}
+
+.mg-tax-empty__icon {
+  font-size: var(--mg-font-2xl);
+  margin-bottom: var(--mg-spacing-md);
+  opacity: 0.5;
+}
+
+.mg-tax-empty__text {
+  margin: var(--mg-spacing-md) 0 0 0;
+  font-size: var(--mg-font-base);
+}
+
+/* 레거시 테이블 스타일 (호환성 유지) */
 .erp-system .erp-table-container {
   background: white;
   border-radius: 10px;
@@ -619,8 +1021,8 @@
   margin-bottom: 20px;
 }
 
-/* 반응형 디자인 */
-@media (max-width: 768px) {
+/* 반응형 디자인 (표준화 원칙: CSS 변수 사용) */
+@media (max-width: calc(var(--breakpoint-tablet, 768px) - 1px)) {
   .erp-system .erp-container {
     padding: 10px;
   }

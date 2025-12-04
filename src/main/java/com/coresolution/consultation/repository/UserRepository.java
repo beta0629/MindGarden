@@ -173,22 +173,6 @@ public interface UserRepository extends BaseRepository<User, Long> {
     List<User> findByRoleAndIsActiveTrueDeprecated(UserRole role);
     
     /**
-     * @Deprecated - 🚨 브랜치 개념 제거: 브랜치 코드 기반 필터링 사용 금지
-     * 새로운 코드에서는 tenantId만 사용하여 조회하세요.
-     * 사용 예시: findByRoleAndIsActive(tenantId, role, true)
-     */
-    @Deprecated
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isActive = true AND u.branchCode = :branchCode AND u.isDeleted = false")
-    List<User> findByRoleAndIsActiveTrueAndBranchCode(@Param("tenantId") String tenantId, @Param("role") UserRole role, @Param("branchCode") String branchCode);
-    
-    /**
-     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
-     */
-    @Deprecated
-    @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isActive = true AND u.branchCode = ?2 AND u.isDeleted = false")
-    List<User> findByRoleAndIsActiveTrueAndBranchCodeDeprecated(UserRole role, String branchCode);
-    
-    /**
      * 역할별 사용자 페이징 조회 (tenantId 필터링)
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false")
@@ -350,22 +334,6 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Deprecated
     @Query("SELECT u FROM User u WHERE u.role = ?1 AND (?2 IS NULL OR u.isActive = ?2) AND u.isDeleted = false")
     List<User> findByRoleAndIsActiveDeprecated(UserRole role, Boolean isActive);
-    
-    /**
-     * @Deprecated - 🚨 브랜치 개념 제거: 브랜치 코드 기반 필터링 사용 금지
-     * 새로운 코드에서는 tenantId만 사용하여 조회하세요.
-     * 사용 예시: findByRoleAndIsActive(tenantId, role, isActive)
-     */
-    @Deprecated
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND (:isActive IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
-    List<User> findByBranchCodeAndIsActive(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode, @Param("isActive") Boolean isActive);
-    
-    /**
-     * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
-     */
-    @Deprecated
-    @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND (?2 IS NULL OR u.isActive = ?2) AND u.isDeleted = false")
-    List<User> findByBranchCodeAndIsActiveDeprecated(String branchCode, Boolean isActive);
     
     /**
      * 역할 + 지점별 사용자 조회 (tenantId 필터링)

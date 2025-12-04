@@ -4105,13 +4105,30 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("📊 지점별 상담 완료 건수 통계 조회: period={}, branchCode={}", period, branchCode);
             
-            // 특정 지점의 활성 상담사만 조회
+            // 특정 지점의 활성 상담사만 조회 (브랜치 엔티티 기반)
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new ArrayList<>();
             }
-            List<User> consultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(tenantId, UserRole.CONSULTANT, branchCode);
+            
+            // 브랜치 코드가 null이면 빈 리스트 반환
+            if (branchCode == null || branchCode.trim().isEmpty()) {
+                return new ArrayList<>();
+            }
+            
+            List<User> consultants;
+            try {
+                Branch branch = branchService.getBranchByCode(branchCode);
+                consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                // isActive = true 필터링 (Java 스트림)
+                consultants = consultants.stream()
+                    .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                    .collect(Collectors.toList());
+            } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+                log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+                consultants = new ArrayList<>();
+            }
             log.info("👥 지점 {} 활성 상담사 수: {}명", branchCode, consultants.size());
             
             List<Map<String, Object>> statistics = new ArrayList<>();
@@ -4593,8 +4610,20 @@ public class AdminServiceImpl implements AdminService {
                     users = userRepository.findByRoleAndIsActive(tenantId, userRole, includeInactive ? null : true);
                 }
             } else if (branchCode != null && !branchCode.isEmpty()) {
-                // 지점별 조회
-                users = userRepository.findByBranchCodeAndIsActive(tenantId, branchCode, includeInactive ? null : true);
+                // 지점별 조회 (브랜치 엔티티 기반)
+                try {
+                    Branch branch = branchService.getBranchByCode(branchCode);
+                    users = userRepository.findByBranchAndIsDeletedFalseOrderByUsername(tenantId, branch);
+                    // isActive 필터링 (Java 스트림)
+                    if (!includeInactive) {
+                        users = users.stream()
+                            .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                            .collect(Collectors.toList());
+                    }
+                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+                    users = new ArrayList<>();
+                }
             } else {
                 // 전체 조회
                 if (includeInactive) {
@@ -4903,8 +4932,23 @@ public class AdminServiceImpl implements AdminService {
                 return new HashMap<>();
             }
             
-            // 특정 지점의 활성 상담사 목록 조회
-            List<User> activeConsultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(tenantId, UserRole.CONSULTANT, branchCode);
+            // 특정 지점의 활성 상담사 목록 조회 (브랜치 엔티티 기반)
+            List<User> activeConsultants;
+            if (branchCode == null || branchCode.trim().isEmpty()) {
+                activeConsultants = new ArrayList<>();
+            } else {
+                try {
+                    Branch branch = branchService.getBranchByCode(branchCode);
+                    activeConsultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                    // isActive = true 필터링 (Java 스트림)
+                    activeConsultants = activeConsultants.stream()
+                        .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                        .collect(Collectors.toList());
+                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+                    activeConsultants = new ArrayList<>();
+                }
+            }
             log.info("👥 지점 {} 활성 상담사 수: {}명", branchCode, activeConsultants.size());
             
             // 상담사별 휴가 통계

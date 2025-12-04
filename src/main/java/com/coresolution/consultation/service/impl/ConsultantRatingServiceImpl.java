@@ -11,12 +11,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.ConsultantRating;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -46,6 +48,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final RealTimeStatisticsService realTimeStatisticsService;
+    private final BranchService branchService;
 
     @Override
     public ConsultantRating createRating(Long scheduleId, Long clientId, Integer heartScore, 
@@ -541,9 +544,23 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
 
             Map<String, Object> stats = new HashMap<>();
 
-            // 해당 지점의 상담사들 조회
-            List<User> branchConsultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(
-                tenantId, UserRole.CONSULTANT, branchCode);
+            // 해당 지점의 상담사들 조회 (브랜치 엔티티 기반)
+            List<User> branchConsultants;
+            if (branchCode == null || branchCode.trim().isEmpty()) {
+                branchConsultants = new ArrayList<>();
+            } else {
+                try {
+                    Branch branch = branchService.getBranchByCode(branchCode);
+                    branchConsultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                    // isActive = true 필터링 (Java 스트림)
+                    branchConsultants = branchConsultants.stream()
+                        .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                        .collect(Collectors.toList());
+                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+                    branchConsultants = new ArrayList<>();
+                }
+            }
             List<Long> consultantIds = branchConsultants.stream()
                 .map(User::getId)
                 .collect(Collectors.toList());
@@ -612,9 +629,23 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 return new ArrayList<>();
             }
             
-            // 해당 지점의 상담사들 조회
-            List<User> branchConsultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(
-                tenantId, UserRole.CONSULTANT, branchCode);
+            // 해당 지점의 상담사들 조회 (브랜치 엔티티 기반)
+            List<User> branchConsultants;
+            if (branchCode == null || branchCode.trim().isEmpty()) {
+                branchConsultants = new ArrayList<>();
+            } else {
+                try {
+                    Branch branch = branchService.getBranchByCode(branchCode);
+                    branchConsultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                    // isActive = true 필터링 (Java 스트림)
+                    branchConsultants = branchConsultants.stream()
+                        .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                        .collect(Collectors.toList());
+                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+                    branchConsultants = new ArrayList<>();
+                }
+            }
             List<Long> consultantIds = branchConsultants.stream()
                 .map(User::getId)
                 .collect(Collectors.toList());

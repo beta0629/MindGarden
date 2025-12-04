@@ -10,6 +10,7 @@ import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.dto.ProfileImageInfo;
+import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.BaseRepository;
 import com.coresolution.consultation.repository.UserRepository;
@@ -810,7 +811,25 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findByBranchCode(String branchCode) {
         String tenantId = TenantContextHolder.getTenantId();
-        return userRepository.findByBranchCode(tenantId, branchCode);
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            return new ArrayList<>();
+        }
+        
+        // 브랜치 코드가 null이면 빈 리스트 반환
+        if (branchCode == null || branchCode.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        try {
+            // 브랜치 코드로 브랜치 엔티티 조회
+            Branch branch = branchService.getBranchByCode(branchCode);
+            // 표준 메서드 사용 (브랜치 엔티티 기반)
+            return userRepository.findByBranchAndIsDeletedFalseOrderByUsername(tenantId, branch);
+        } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+            log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+            return new ArrayList<>();
+        }
     }
     
     @Override

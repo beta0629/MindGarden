@@ -4,11 +4,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.consultation.service.SalaryBatchService;
@@ -36,6 +39,7 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
     private final PlSqlSalaryManagementService plSqlSalaryManagementService;
     private final SalaryScheduleService salaryScheduleService;
     private final CommonCodeService commonCodeService;
+    private final BranchService branchService;
     
     @Override
     @Transactional
@@ -208,8 +212,18 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
             // 전체 지점
             return userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
         } else {
-            // 특정 지점
-            return userRepository.findByRoleAndIsActiveTrueAndBranchCode(tenantId, UserRole.CONSULTANT, branchCode);
+            // 특정 지점 (브랜치 엔티티 기반)
+            try {
+                Branch branch = branchService.getBranchByCode(branchCode);
+                List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                // isActive = true 필터링 (Java 스트림)
+                return consultants.stream()
+                    .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                    .collect(Collectors.toList());
+            } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+                log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+                return new ArrayList<>();
+            }
         }
     }
 }

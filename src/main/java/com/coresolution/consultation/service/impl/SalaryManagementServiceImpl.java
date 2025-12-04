@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
@@ -14,6 +15,7 @@ import com.coresolution.consultation.repository.ConsultantSalaryProfileRepositor
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.SalaryTaxCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final SalaryTaxCalculationRepository salaryTaxCalculationRepository;
     private final UserRepository userRepository;
+    private final BranchService branchService;
     
     @Override
     public List<ConsultantSalaryProfile> getAllSalaryProfiles(String branchCode) {
@@ -102,7 +105,18 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         if (branchCode == null) {
             return userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
         } else {
-            return userRepository.findByRoleAndIsActiveTrueAndBranchCode(tenantId, UserRole.CONSULTANT, branchCode);
+            // 브랜치 엔티티 기반 조회
+            try {
+                Branch branch = branchService.getBranchByCode(branchCode);
+                List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                // isActive = true 필터링 (Java 스트림)
+                return consultants.stream()
+                    .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                    .collect(Collectors.toList());
+            } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+                log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+                return List.of();
+            }
         }
     }
     

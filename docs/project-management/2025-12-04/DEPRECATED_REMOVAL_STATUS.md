@@ -16,9 +16,9 @@
 
 ## 📋 Deprecated 메서드 사용 현황
 
-### ConsultantRepository (사용되지 않음 - 제거 가능)
-1. `findByBranchCodeAndIsDeletedFalse(String branchCode)` - **사용처 없음** ✅ 제거 가능
-2. `findActiveConsultantsByBranchCode(String branchCode)` - **사용처 없음** ✅ 제거 가능
+### ConsultantRepository (제거 완료 ✅)
+1. `findByBranchCodeAndIsDeletedFalse(String branchCode)` - **제거 완료** ✅
+2. `findActiveConsultantsByBranchCode(String branchCode)` - **제거 완료** ✅
 
 ### UserRepository (여러 곳에서 사용 중)
 1. `findByRoleAndIsActiveTrueAndBranchCode()` - **사용 중** (6개 파일)
@@ -42,10 +42,10 @@
 
 ## 🎯 제거 계획
 
-### Phase 1: 사용되지 않는 Deprecated 메서드 제거 (즉시 가능)
-- [ ] ConsultantRepository의 Deprecated 메서드 2개 제거
-  - `findByBranchCodeAndIsDeletedFalse()`
-  - `findActiveConsultantsByBranchCode()`
+### Phase 1: 사용되지 않는 Deprecated 메서드 제거 (완료 ✅)
+- [x] ConsultantRepository의 Deprecated 메서드 2개 제거 완료
+  - `findByBranchCodeAndIsDeletedFalse()` ✅
+  - `findActiveConsultantsByBranchCode()` ✅
 
 ### Phase 2: 사용되는 Deprecated 메서드 교체 (단계적 진행)
 - [ ] `findByRoleAndIsActiveTrueAndBranchCode()` 사용처 교체 (6개 파일)
@@ -60,9 +60,9 @@
 
 ## 📝 다음 작업
 
-1. **즉시 제거 가능**: ConsultantRepository의 Deprecated 메서드 2개
-2. **단계적 교체 필요**: UserRepository의 Deprecated 메서드들 (8개 파일)
-3. **특별 처리 필요**: BranchRepository의 `findByBranchCodeAndIsDeletedFalse()` (초기화 서비스에서 사용)
+1. **✅ 완료**: ConsultantRepository의 Deprecated 메서드 2개 제거 완료
+2. **⏳ 진행 중**: UserRepository의 Deprecated 메서드들 교체 (8개 파일)
+3. **⏳ 대기 중**: BranchRepository의 `findByBranchCodeAndIsDeletedFalse()` (초기화 서비스에서 사용)
 
 ---
 

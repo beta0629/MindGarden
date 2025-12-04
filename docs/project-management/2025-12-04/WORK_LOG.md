@@ -46,7 +46,7 @@
 
 **Backend 상위 사용 파일**:
 1. `ScheduleServiceImpl.java` - 97개
-2. `BranchServiceImpl.java` - 87개
+2. `BranchServiceImpl.java` - 87개 → **수정 완료**
 3. `AdminServiceImpl.java` - 83개
 4. `BranchController.java` - 71개
 5. `StatisticsServiceImpl.java` - 64개
@@ -133,8 +133,101 @@ return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
     tenantId, branch, UserRole.CONSULTANT);
 ```
 
+### 2. ConsultantRepository Deprecated 메서드 제거 완료 (2025-12-04)
+- [x] `findByBranchCodeAndIsDeletedFalse()` 제거
+- [x] `findActiveConsultantsByBranchCode()` 제거
+
+**제거 이유**: 사용처가 없어서 깔끔하게 완전 제거
+
+### 3. 커밋 완료 (2025-12-04)
+- [x] 변경사항 커밋 및 푸시 완료
+- [x] 커밋 해시: `a915e7b4`
+
+### 4. 계획 수립 완료 (2025-12-04)
+- [x] Deprecated 메서드 교체 작업 계획 문서 작성
+  - `DEPRECATED_REMOVAL_PLAN.md`
+  - `STANDARD_METHOD_MAPPING.md`
+- [x] Phase 1: 표준 메서드 확인 및 교체 패턴 정리 완료
+
+### 5. UserServiceImpl 수정 완료 (2025-12-04)
+- [x] `findByBranchCode()` 메서드 수정 완료
+  - 브랜치 코드 → 브랜치 엔티티로 변경
+  - 표준 메서드 사용 (`findByBranchAndIsDeletedFalseOrderByUsername`)
+  - null 체크 및 예외 처리 추가
+
+**수정 내용**:
+```java
+// 제거 전
+return userRepository.findByBranchCode(tenantId, branchCode);
+
+// 제거 후
+Branch branch = branchService.getBranchByCode(branchCode);
+return userRepository.findByBranchAndIsDeletedFalseOrderByUsername(tenantId, branch);
+```
+
+### 6. AdminServiceImpl 수정 완료 (2025-12-04)
+- [x] 라인 4597: `findByBranchCodeAndIsActive()` 교체 완료
+- [x] 라인 4114: `findByRoleAndIsActiveTrueAndBranchCode()` 교체 완료
+- [x] 라인 4919: `findByRoleAndIsActiveTrueAndBranchCode()` 교체 완료
+
+**수정 내용**:
+- 브랜치 코드 → 브랜치 엔티티로 변경
+- 표준 메서드 사용 (`findByBranchAndIsDeletedFalseOrderByUsername`, `findByBranchAndRoleAndIsDeletedFalseOrderByUsername`)
+- isActive 필터링은 Java 스트림으로 처리
+- null 체크 및 예외 처리 추가
+
 **다음 작업**:
-- 사용되지 않는 Deprecated 메서드 확인 및 제거
-- AdminServiceImpl, UserServiceImpl에서 브랜치 코드 사용 확인
+- 나머지 Service 파일들에서 Deprecated 메서드 교체 (5개 파일, 7곳)
 
 ---
+
+## 진행 상황 요약
+
+### ✅ 완료
+1. TenantContextFilter 및 JwtAuthenticationFilter에서 브랜치 로직 제거
+2. BranchServiceImpl에서 브랜치 코드 사용 제거
+3. ConsultantRepository의 사용되지 않는 Deprecated 메서드 2개 제거
+4. 커밋 및 푸시 완료
+5. 계획 수립 완료
+6. UserServiceImpl에서 브랜치 코드 사용 제거
+7. AdminServiceImpl에서 Deprecated 메서드 교체 완료 (3곳)
+
+### ⏳ 진행 중
+1. 나머지 Service 파일들에서 Deprecated 메서드 교체 (5개 파일, 7곳)
+   - SalaryManagementServiceImpl.java (1곳)
+   - StatisticsTestDataServiceImpl.java (2곳)
+   - SalaryBatchServiceImpl.java (1곳)
+   - ConsultantRatingServiceImpl.java (2곳)
+
+### 📋 대기 중
+1. Frontend 브랜치 코드 제거
+2. 전체 코드베이스 검증
+
+---
+
+### 7. Phase 2 완료 (2025-12-04)
+- [x] SalaryManagementServiceImpl.java - 1곳 교체 완료
+- [x] StatisticsTestDataServiceImpl.java - 2곳 교체 완료
+- [x] SalaryBatchServiceImpl.java - 1곳 교체 완료
+- [x] ConsultantRatingServiceImpl.java - 2곳 교체 완료
+
+**수정 내용**:
+- 모든 Service 파일에 BranchService 주입 추가
+- 브랜치 코드 → 브랜치 엔티티로 변경
+- 표준 메서드 사용 (`findByBranchAndRoleAndIsDeletedFalseOrderByUsername`)
+- isActive 필터링은 Java 스트림으로 처리
+- null 체크 및 예외 처리 추가
+
+### 8. Phase 3 완료 (2025-12-04)
+- [x] 모든 사용처 교체 확인 완료
+- [x] UserRepository에서 Deprecated 브랜치 코드 메서드 제거 완료
+  - `findByRoleAndIsActiveTrueAndBranchCode()` 제거
+  - `findByBranchCodeAndIsActive()` 제거
+- [x] 최종 검증 완료 (grep 결과: 사용처 없음)
+
+**Phase 3 결과**:
+- 브랜치 코드 기반 Deprecated 메서드 완전 제거
+- 모든 Service 파일에서 표준 메서드 사용으로 전환 완료
+- 코드베이스 정리 완료
+
+**최종 업데이트**: 2025-12-04 (Phase 3 완료 - Deprecated 메서드 제거 및 최종 검증 완료)

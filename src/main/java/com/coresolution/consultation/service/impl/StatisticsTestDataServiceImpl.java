@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Random;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.ConsultantRating;
 import com.coresolution.consultation.entity.FinancialTransaction;
 import com.coresolution.consultation.entity.Schedule;
@@ -19,6 +20,7 @@ import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.StatisticsTestDataService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
     private final UserRepository userRepository;
     private final FinancialTransactionRepository financialTransactionRepository;
     private final ConsultantRatingRepository consultantRatingRepository;
+    private final BranchService branchService;
     
     private final Random random = new Random();
     
@@ -63,9 +66,23 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 return result;
             }
             
-            // 해당 지점의 상담사들 조회
-            List<User> consultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(
-                tenantId, UserRole.CONSULTANT, branchCode);
+            // 해당 지점의 상담사들 조회 (브랜치 엔티티 기반)
+            List<User> consultants;
+            if (branchCode == null || branchCode.trim().isEmpty()) {
+                consultants = new ArrayList<>();
+            } else {
+                try {
+                    Branch branch = branchService.getBranchByCode(branchCode);
+                    consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
+                    // isActive = true 필터링 (Java 스트림)
+                    consultants = consultants.stream()
+                        .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                        .collect(java.util.stream.Collectors.toList());
+                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+                    consultants = new ArrayList<>();
+                }
+            }
             
             if (consultants.isEmpty()) {
                 result.put("success", false);
@@ -73,9 +90,23 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 return result;
             }
             
-            // 해당 지점의 내담자들 조회 (없으면 상담사를 내담자로 사용)
-            List<User> clients = userRepository.findByRoleAndIsActiveTrueAndBranchCode(
-                tenantId, UserRole.CLIENT, branchCode);
+            // 해당 지점의 내담자들 조회 (없으면 상담사를 내담자로 사용) (브랜치 엔티티 기반)
+            List<User> clients;
+            if (branchCode == null || branchCode.trim().isEmpty()) {
+                clients = new ArrayList<>();
+            } else {
+                try {
+                    Branch branch = branchService.getBranchByCode(branchCode);
+                    clients = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CLIENT);
+                    // isActive = true 필터링 (Java 스트림)
+                    clients = clients.stream()
+                        .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                        .collect(java.util.stream.Collectors.toList());
+                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+                    clients = new ArrayList<>();
+                }
+            }
             
             if (clients.isEmpty()) {
                 // 테스트용으로 상담사를 내담자로 사용

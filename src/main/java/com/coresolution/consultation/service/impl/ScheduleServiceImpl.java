@@ -1218,23 +1218,37 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     /**
      * 관리자 역할 여부 확인
+     * 표준화 2025-12-05: 표준 관리자 역할만 사용 (UserRole enum 활용)
      */
     private boolean isAdminRole(String userRole) {
-        return ScheduleConstants.ROLE_ADMIN.equals(userRole) || 
-               ScheduleConstants.ROLE_HQ_MASTER.equals(userRole) || 
-               ScheduleConstants.ROLE_BRANCH_HQ_MASTER.equals(userRole) ||
-               ScheduleConstants.ROLE_BRANCH_MANAGER.equals(userRole) ||
-               ScheduleConstants.ROLE_BRANCH_SUPER_ADMIN.equals(userRole) ||
-               ScheduleConstants.ROLE_HQ_ADMIN.equals(userRole) ||
-               ScheduleConstants.ROLE_SUPER_HQ_ADMIN.equals(userRole);
+        if (userRole == null) {
+            return false;
+        }
+        try {
+            UserRole role = UserRole.fromString(userRole);
+            return role != null && role.isAdmin();
+        } catch (Exception e) {
+            log.warn("역할 확인 실패: {}", userRole, e);
+            return false;
+        }
     }
     
 
     /**
      * 상담사 역할 여부 확인
+     * 표준화 2025-12-05: UserRole enum 활용
      */
     private boolean isConsultantRole(String userRole) {
-        return ScheduleConstants.ROLE_CONSULTANT.equals(userRole);
+        if (userRole == null) {
+            return false;
+        }
+        try {
+            UserRole role = UserRole.fromString(userRole);
+            return role != null && role.isConsultant();
+        } catch (Exception e) {
+            log.warn("역할 확인 실패: {}", userRole, e);
+            return false;
+        }
     }
 
     /**

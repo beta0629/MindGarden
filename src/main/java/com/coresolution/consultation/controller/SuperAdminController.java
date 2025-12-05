@@ -60,11 +60,11 @@ public class SuperAdminController extends BaseApiController {
             @Valid @RequestBody SuperAdminCreateRequest request,
             HttpSession session) {
         
-        // 현재 사용자가 수퍼어드민인지 확인
+        // 현재 사용자가 관리자인지 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
         User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null || (!currentUser.getRole().equals(UserRole.HQ_MASTER.getValue()) && !currentUser.getRole().equals(UserRole.HQ_MASTER.getValue()))) {
+        if (currentUser == null || !currentUser.getRole().isAdmin()) {
             log.warn("수퍼어드민 계정 생성 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
-            throw new RuntimeException("수퍼어드민 권한이 필요합니다.");
+            throw new RuntimeException("관리자 권한이 필요합니다.");
         }
         
         // 이메일 중복 확인
@@ -105,7 +105,8 @@ public class SuperAdminController extends BaseApiController {
             throw new RuntimeException("로그인이 필요합니다.");
         }
         
-        boolean isSuperAdmin = currentUser.getRole().equals(UserRole.HQ_MASTER.getValue()) || currentUser.getRole().equals(UserRole.HQ_MASTER.getValue());
+        // 표준화 2025-12-05: 표준 관리자 역할만 사용
+        boolean isSuperAdmin = currentUser.getRole().isAdmin();
         
         Map<String, Object> data = new HashMap<>();
         data.put("isSuperAdmin", isSuperAdmin);
@@ -141,10 +142,10 @@ public class SuperAdminController extends BaseApiController {
      */
     @GetMapping("/finance/dashboard")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getFinanceDashboard(HttpSession session) {
-        // 수퍼어드민 권한 확인
+        // 관리자 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
         User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && !UserRole.HQ_MASTER.equals(currentUser.getRole()))) {
-            throw new RuntimeException("수퍼어드민 권한이 필요합니다.");
+        if (currentUser == null || !currentUser.getRole().isAdmin()) {
+            throw new RuntimeException("관리자 권한이 필요합니다.");
         }
         
         log.info("재무 대시보드 데이터 조회 요청: {}", currentUser.getEmail());

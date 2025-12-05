@@ -2647,6 +2647,30 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
    - 변경 내용: 레거시 역할 체크를 표준 역할로 변경
    - 사용자 조회 및 역할 변경 권한 확인에서 표준 역할만 사용
 
+9. **StoredProcedureServiceImpl 수정**
+   - 파일: `MindGarden/src/main/java/com/coresolution/consultation/service/impl/StoredProcedureServiceImpl.java`
+   - 변경 내용: 레거시 역할 체크를 `isAdmin()`으로 변경
+   - 이전: `role == UserRole.HQ_MASTER || role == UserRole.SUPER_HQ_ADMIN || role == UserRole.HQ_ADMIN || role == UserRole.ADMIN`
+   - 이후: `role.isAdmin()`
+
+10. **DynamicPermissionServiceImpl 수정**
+    - 파일: `MindGarden/src/main/java/com/coresolution/consultation/service/impl/DynamicPermissionServiceImpl.java`
+    - 변경 내용: 표준 관리자 역할만 사용하도록 수정
+    - 이전: `ADMIN`, `BRANCH_SUPER_ADMIN`, `HQ_ADMIN`, `SUPER_HQ_ADMIN`, `HQ_MASTER`
+    - 이후: `ADMIN`, `TENANT_ADMIN`, `PRINCIPAL`, `OWNER`
+
+11. **WorkflowAutomationServiceImpl 수정**
+    - 파일: `MindGarden/src/main/java/com/coresolution/consultation/service/impl/WorkflowAutomationServiceImpl.java`
+    - 변경 내용: 표준 관리자 역할만 사용하도록 수정
+    - 이전: `ADMIN`, `BRANCH_SUPER_ADMIN`, `HQ_MASTER`
+    - 이후: `ADMIN`, `TENANT_ADMIN`, `PRINCIPAL`, `OWNER`
+
+12. **PermissionInitializationServiceImpl 수정**
+    - 파일: `MindGarden/src/main/java/com/coresolution/consultation/service/impl/PermissionInitializationServiceImpl.java`
+    - 변경 내용: 표준 역할 권한 설정 추가, 레거시 역할은 하위 호환성 유지
+    - 표준 관리자 역할 권한 설정 추가: `ADMIN`, `TENANT_ADMIN`, `PRINCIPAL`, `OWNER`
+    - 레거시 역할 권한은 하위 호환성을 위해 유지하되 주석 추가
+
 ### 남은 작업
 
 - 기타 Controller/Service 파일: 레거시 역할 사용 부분 표준 역할로 변경 필요

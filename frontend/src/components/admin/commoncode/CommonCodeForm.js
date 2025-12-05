@@ -58,16 +58,12 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                 { value: 'RESPONSIBILITY', label: '책임', icon: '👤', color: 'var(--mg-warning-500)', description: '책임 및 역할' },
                 { value: 'CONSULTATION_TYPE', label: '상담 유형', icon: '💬', color: 'var(--mg-purple-500)', description: '상담의 유형' },
                 { value: 'GENDER', label: '성별', icon: '⚧', color: 'var(--mg-error-500)', description: '사용자 성별' },
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #06b6d4 -> var(--mg-custom-06b6d4)
-                { value: 'ROLE', label: '역할', icon: '👑', color: '#06b6d4', description: '사용자 역할' },
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f97316 -> var(--mg-custom-f97316)
-                { value: 'STATUS', label: '상태', icon: '🔄', color: '#f97316', description: '일반적인 상태' },
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
-                { value: 'PRIORITY', label: '우선순위', icon: '⚡', color: '#dc2626', description: '우선순위 구분' },
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #7c3aed -> var(--mg-custom-7c3aed)
-                { value: 'NOTIFICATION_TYPE', label: '알림 유형', icon: '🔔', color: '#7c3aed', description: '알림의 유형' },
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
-                { value: 'STATUS', label: '일정 상태', icon: '📅', color: '#059669', description: '일정의 상태' }
+                // 표준화 2025-12-05: CSS 변수 사용 (fallback 색상값)
+                { value: 'ROLE', label: '역할', icon: '👑', color: 'var(--mg-info-500)', description: '사용자 역할' },
+                { value: 'STATUS', label: '상태', icon: '🔄', color: 'var(--mg-warning-500)', description: '일반적인 상태' },
+                { value: 'PRIORITY', label: '우선순위', icon: '⚡', color: 'var(--mg-error-500)', description: '우선순위 구분' },
+                { value: 'NOTIFICATION_TYPE', label: '알림 유형', icon: '🔔', color: 'var(--mg-primary-500)', description: '알림의 유형' },
+                { value: 'STATUS', label: '일정 상태', icon: '📅', color: 'var(--mg-success-500)', description: '일정의 상태' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -327,8 +323,8 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                     type="color"
                                     id="colorCode"
                                     name="colorCode"
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                                    value={formData.colorCode || '#6b7280'}
+                                    {/* 표준화 2025-12-05: CSS 변수 사용 (fallback) */}
+                                    value={formData.colorCode || 'var(--mg-gray-500)'}
                                     onChange={handleChange}
                                     className="form-control color-picker"
                                 />
@@ -337,8 +333,8 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                     value={formData.colorCode}
                                     onChange={handleChange}
                                     className="form-control color-text"
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                                    placeholder="#6b7280"
+                                    {/* 표준화 2025-12-05: CSS 변수 사용 권장 */}
+                                    placeholder="var(--mg-gray-500) 또는 #hex"
                                     pattern="^#[0-9A-Fa-f]{6}$"
                                 />
                             </div>

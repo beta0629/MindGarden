@@ -57,8 +57,8 @@ const CommonCodeList = ({
                                     {code.codeGroup}
                                 </span>
                                 <h4 className="code-label">
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                                    {code.icon && <span className="code-icon" style={{ color: code.colorCode || '#6b7280' }}>{code.icon}</span>}
+                                    {/* 표준화 2025-12-05: CSS 변수 사용 */}
+                                    {code.icon && <span className="code-icon" style={{ color: code.colorCode || 'var(--mg-gray-500)' }}>{code.icon}</span>}
                                     {code.codeLabel}
                                 </h4>
                             </div>
@@ -105,8 +105,8 @@ const CommonCodeList = ({
                                         {code.icon && (
                                             <div className="info-item">
                                                 <label>아이콘:</label>
-                                                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
-                                                <span className="code-icon-display" style={{ color: code.colorCode || '#6b7280' }}>
+                                                {/* 표준화 2025-12-05: CSS 변수 사용 */}
+                                                <span className="code-icon-display" style={{ color: code.colorCode || 'var(--mg-gray-500)' }}>
                                                     {code.icon}
                                                 </span>
                                             </div>

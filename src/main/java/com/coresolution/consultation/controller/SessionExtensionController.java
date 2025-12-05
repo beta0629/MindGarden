@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping({"/api/v1/admin/session-extensions", "/api/admin/session-extensions"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/admin/session-extensions") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class SessionExtensionController extends BaseApiController {
     

@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping({"/api/v1/clients/profile", "/api/client/profile"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/clients/profile") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class ClientProfileController extends BaseApiController {
 

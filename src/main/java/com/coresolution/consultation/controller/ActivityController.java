@@ -19,7 +19,7 @@ import jakarta.servlet.http.HttpSession;
  * 활동 내역 컨트롤러
  */
 @RestController
-@RequestMapping({"/api/v1/activities", "/api/activities"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/activities") // 표준화 2025-12-05: 레거시 경로 제거
 @CrossOrigin(origins = "*")
 public class ActivityController {
 

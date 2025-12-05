@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping({"/api/v1/healing", "/api/healing"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/healing") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class HealingContentController extends BaseApiController {
     

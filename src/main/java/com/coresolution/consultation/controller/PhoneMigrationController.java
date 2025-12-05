@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping({"/api/v1/admin/migration", "/api/admin/migration"})
+@RequestMapping("/api/v1/admin/migration") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class PhoneMigrationController {

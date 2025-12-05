@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping({"/api/v1/admin/plsql-mapping-sync", "/api/admin/plsql-mapping-sync"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/admin/plsql-mapping-sync") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class PlSqlMappingSyncController {
     

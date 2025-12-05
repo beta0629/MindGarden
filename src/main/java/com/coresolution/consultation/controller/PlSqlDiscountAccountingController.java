@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping({"/api/v1/admin/plsql-discount-accounting", "/api/admin/plsql-discount-accounting"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/admin/plsql-discount-accounting") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class PlSqlDiscountAccountingController {
     

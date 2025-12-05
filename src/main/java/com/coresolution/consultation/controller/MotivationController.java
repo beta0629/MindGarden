@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 동기부여 컨트롤러
  */
 @RestController
-@RequestMapping({"/api/v1/motivation", "/api/motivation"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/motivation") // 표준화 2025-12-05: 레거시 경로 제거
 @CrossOrigin(origins = "*")
 public class MotivationController {
     

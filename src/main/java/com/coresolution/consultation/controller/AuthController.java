@@ -548,7 +548,7 @@ public class AuthController extends BaseApiController {
                         String roleName = sessionUser.getRole().name();
                         
                         // UserRole enum 이름을 TenantRole name_en으로 매핑
-                        // 예: BRANCH_SUPER_ADMIN -> Admin, HQ_ADMIN -> Admin, ADMIN -> Admin
+                        // 표준화 2025-12-05: 표준 관리자 역할만 사용 (ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER)
                         String mappedRoleName = mapUserRoleToTenantRoleName(roleName);
                         
                         Optional<TenantRole> tenantRole = tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(

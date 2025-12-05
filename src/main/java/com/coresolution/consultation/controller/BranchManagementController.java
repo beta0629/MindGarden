@@ -34,7 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/hq/branch-management") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
-// @PreAuthorize("hasRole('HQ_MASTER') or hasRole('SUPER_HQ_ADMIN') or hasRole('HQ_ADMIN') or hasRole('ADMIN')")
+// 표준화 2025-12-05: 표준 관리자 역할만 사용 (ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER)
+// @PreAuthorize("hasRole('ADMIN') or hasRole('TENANT_ADMIN') or hasRole('PRINCIPAL') or hasRole('OWNER')")
 public class BranchManagementController {
     
     private final UserService userService;

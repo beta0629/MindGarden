@@ -117,8 +117,8 @@ public class PurchaseRequest extends BaseEntity {
         PENDING("대기중"),
         ADMIN_APPROVED("관리자 승인"),
         ADMIN_REJECTED("관리자 거부"),
-        HQ_MASTER_APPROVED("수퍼 관리자 승인"),
-        HQ_MASTER_REJECTED("수퍼 관리자 거부"),
+        HQ_MASTER_APPROVED("수퍼 관리자 승인"), // 표준화 2025-12-05: 레거시 상태값 (하위 호환성 유지)
+        HQ_MASTER_REJECTED("수퍼 관리자 거부"), // 표준화 2025-12-05: 레거시 상태값 (하위 호환성 유지)
         COMPLETED("완료"),
         CANCELLED("취소");
         

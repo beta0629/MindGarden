@@ -2671,16 +2671,28 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
     - 표준 관리자 역할 권한 설정 추가: `ADMIN`, `TENANT_ADMIN`, `PRINCIPAL`, `OWNER`
     - 레거시 역할 권한은 하위 호환성을 위해 유지하되 주석 추가
 
+13. **SuperAdminController 수정**
+    - 파일: `MindGarden/src/main/java/com/coresolution/consultation/controller/SuperAdminController.java`
+    - 변경 내용: `HQ_MASTER` 체크를 `isAdmin()`으로 변경
+    - 모든 수퍼어드민 권한 확인 메서드에서 표준 역할만 사용
+
+14. **HQBranchController 수정**
+    - 파일: `MindGarden/src/main/java/com/coresolution/consultation/controller/HQBranchController.java`
+    - 변경 내용: 레거시 역할(`HQ_ADMIN`, `SUPER_HQ_ADMIN`)을 표준 관리자 역할로 변경
+    - 이전: `HQ_ADMIN`, `SUPER_HQ_ADMIN`, `ADMIN`
+    - 이후: `ADMIN`, `TENANT_ADMIN`, `PRINCIPAL`, `OWNER`
+
+15. **ScheduleServiceImpl 수정**
+    - 파일: `MindGarden/src/main/java/com/coresolution/consultation/service/impl/ScheduleServiceImpl.java`
+    - 변경 내용: 레거시 역할 체크를 `UserRole` enum으로 변경
+    - `isAdminRole()`: `ScheduleConstants` 상수 대신 `UserRole.fromString()` 및 `isAdmin()` 사용
+    - `isConsultantRole()`: `ScheduleConstants` 상수 대신 `UserRole.fromString()` 및 `isConsultant()` 사용
+
 ### 남은 작업
 
 - 기타 Controller/Service 파일: 레거시 역할 사용 부분 표준 역할로 변경 필요
-  - `SuperAdminController`: 레거시 역할 사용 부분 수정 필요
-  - `HQBranchController`: 레거시 역할 사용 부분 수정 필요
-  - `ScheduleServiceImpl`: 레거시 역할 사용 부분 수정 필요
-  - `StoredProcedureServiceImpl`: 레거시 역할 사용 부분 수정 필요
-  - `PermissionInitializationServiceImpl`: 레거시 역할 사용 부분 수정 필요
-  - `WorkflowAutomationServiceImpl`: 레거시 역할 사용 부분 수정 필요
-  - `DynamicPermissionServiceImpl`: 레거시 역할 사용 부분 수정 필요
+  - `AuthController`: 레거시 역할 매핑 주석 확인 필요
+  - `BranchManagementController`: 주석 처리된 레거시 역할 확인 필요
   - 기타 Service 파일들
 - 레거시 역할 enum 정의: 하위 호환성을 위해 유지하되, 실제 코드에서는 사용하지 않도록 주석 추가 필요
 

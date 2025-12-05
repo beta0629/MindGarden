@@ -214,42 +214,18 @@ public class BranchDataFilterServiceImpl implements BranchDataFilterService {
     }
     
     /**
-     * 본사 관리자인지 확인 (공통 코드 기반)
+     * 관리자인지 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
      * @param user 사용자
-     * @return 본사 관리자 여부
+     * @return 관리자 여부
+     * @deprecated 표준화 2025-12-05: 본사 개념이 제거되었습니다. UserRole.isAdmin()을 직접 사용하세요.
      */
+    @Deprecated
     private boolean isHeadquartersAdmin(User user) {
         if (user == null || user.getRole() == null) {
             return false;
         }
         
-        try {
-            // 공통 코드에서 본사 관리자 역할들 조회
-            List<Map<String, Object>> hqAdminRoles = commonCodeService.getActiveCodesByGroup("ROLE");
-            
-            for (Map<String, Object> roleCode : hqAdminRoles) {
-                String codeValue = (String) roleCode.get("codeValue");
-                if ("HQ_MASTER".equals(codeValue) || 
-                    "HQ_ADMIN".equals(codeValue) || 
-                    "SUPER_HQ_ADMIN".equals(codeValue) ||
-                    "HQ_SUPER_ADMIN".equals(codeValue)) {
-                    
-                    // 사용자의 역할과 비교
-                    if (user.getRole().name().equals(codeValue)) {
-                        return true;
-                    }
-                }
-            }
-            
-            // 기존 enum 방식도 유지 (호환성)
-            UserRole role = user.getRole();
-            return role.isHeadquartersAdmin() || role.isMaster();
-            
-        } catch (Exception e) {
-            log.warn("공통 코드에서 본사 관리자 역할 확인 실패, 기본 방식 사용: {}", e.getMessage());
-            // 기본 enum 방식 사용
-            UserRole role = user.getRole();
-            return role.isHeadquartersAdmin() || role.isMaster();
-        }
+        // 표준화 2025-12-05: 표준 관리자 역할만 체크
+        return user.getRole().isAdmin();
     }
 }

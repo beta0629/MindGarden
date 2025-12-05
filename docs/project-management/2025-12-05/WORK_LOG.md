@@ -2170,23 +2170,38 @@ if (user.getBranchCode() != null && branchRepository != null) {
 
 ---
 
-#### 6. Service 계층 브랜치 코드 제거 작업 시작 ⏳
+#### 6. Service 계층 브랜치 코드 제거 작업 진행 중 ⏳
 
 **현황**:
-- Service 계층에서 브랜치 코드 사용: 74개 파일 발견
+- Service 계층에서 브랜치 코드 사용: 42개 파일 발견
 - 우선순위: 핵심 서비스부터 처리
 
-**작업 계획**:
-1. AdminServiceImpl: branchCode 사용 제거
-2. ScheduleServiceImpl: branchCode 사용 제거
-3. 다른 Service 파일들 순차적 처리
+**완료된 작업**:
+- [x] AdminServiceImpl: branchCode 사용 제거
+  - `branchCode` 파라미터 제거 또는 레거시 호환 처리
+  - `getRefundStatistics`, `getRefundHistory`, `getConsultationCompletionStatisticsByBranch`, `getScheduleStatisticsByBranch`, `getCurrentUserBranchCode` 메서드 수정
+- [x] ScheduleServiceImpl: branchCode 사용 제거
+  - `createConsultantSchedule` 메서드에서 `branchCode` 파라미터 제거
+  - `findEntitiesByTenantAndBranch` 메서드에서 `branchId` 체크 제거
+  - `updateDailyStatistics` 호출 시 `branchCode` 제거
+- [x] StatisticsServiceImpl: branchCode 사용 제거
+  - `updateDailyStatistics` 메서드에서 `TenantContextHolder.getRequiredTenantId()` 사용
+  - `getDailyStatistics` 메서드에서 테넌트 기반 조회로 변경
+  - `getMonthlyAggregatedStatistics` 메서드에서 테넌트 기반 집계로 변경
+  - `DailyStatisticsRepository`에 `findByTenantIdAndStatDate`, `findByTenantIdAndStatDateBetween` 메서드 추가
 
-**진행률**: 0% (시작 전)
+**작업 계획**:
+1. ✅ AdminServiceImpl: branchCode 사용 제거 (완료)
+2. ✅ ScheduleServiceImpl: branchCode 사용 제거 (완료)
+3. ✅ StatisticsServiceImpl: branchCode 사용 제거 (완료)
+4. ⏳ 다른 Service 파일들 순차적 처리
+
+**진행률**: 20% (3/15 핵심 서비스 완료)
 
 ---
 
 **남은 작업**:
-- ⏳ Service 계층에서 branchCode 사용 제거 (74개 파일)
+- ⏳ Service 계층에서 branchCode 사용 제거 (39개 파일 남음)
 - ⏳ Entity에서 branchId 필드 검토 (레거시 호환)
 - ⏳ Frontend 브랜치 코드 제거
 

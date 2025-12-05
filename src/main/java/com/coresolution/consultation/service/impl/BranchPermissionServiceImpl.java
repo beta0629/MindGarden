@@ -258,7 +258,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
         }
         
         UserRole role = user.getRole();
-        return role.isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 || role.isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거;
+        return isAdminRoleFromCommonCode(role);
     }
     
     /**
@@ -270,7 +270,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
         }
         
         UserRole role = user.getRole();
-        return role.isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 || role.isStaffRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거;
+        return isAdminRoleFromCommonCode(role) || isStaffRoleFromCommonCode(role);
     }
     
     /**

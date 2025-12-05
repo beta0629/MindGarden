@@ -25,9 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class BranchCodeInitService
+public class BranchCodeInitService {
+    
     private final CommonCodeService commonCodeService;
- {
     
     private final CommonCodeRepository commonCodeRepository;
     private final UserRepository userRepository;
@@ -227,7 +227,4 @@ private boolean isStaffRoleFromCommonCode(UserRole role) {
         return role == UserRole.STAFF;
 
     }
-
-}
-
 }

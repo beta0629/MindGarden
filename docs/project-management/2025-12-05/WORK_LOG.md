@@ -2207,6 +2207,10 @@ if (user.getBranchCode() != null && branchRepository != null) {
 - [x] StatisticsTestDataServiceImpl: branchCode 사용 제거
   - 모든 테스트 데이터 생성 메서드에서 branchCode 파라미터 무시, tenantId 사용
   - `createTestSchedules`, `createCompletedConsultations`, `createTestFinancialTransactions`, `createTestRatings` 등 수정
+- [x] ConsultantStatsServiceImpl: branchCode 응답 제거
+  - 응답 Map에서 branchCode 필드 제거 (주석 처리)
+- [x] ClientStatsServiceImpl: branchCode 응답 제거
+  - 응답 Map에서 branchCode 필드 제거 (주석 처리)
 
 **작업 계획**:
 1. ✅ AdminServiceImpl: branchCode 사용 제거 (완료)
@@ -2217,9 +2221,11 @@ if (user.getBranchCode() != null && branchRepository != null) {
 6. ✅ FinancialTransactionServiceImpl: branchCode 사용 제거 (완료)
 7. ✅ RealTimeStatisticsServiceImpl: branchCode 사용 제거 (완료)
 8. ✅ StatisticsTestDataServiceImpl: branchCode 사용 제거 (완료)
-9. ⏳ 다른 Service 파일들 순차적 처리
+9. ✅ ConsultantStatsServiceImpl: branchCode 응답 제거 (완료)
+10. ✅ ClientStatsServiceImpl: branchCode 응답 제거 (완료)
+11. ⏳ 다른 Service 파일들 순차적 처리
 
-**진행률**: 53% (8/15 핵심 서비스 완료)
+**진행률**: 67% (10/15 핵심 서비스 완료)
 
 ---
 

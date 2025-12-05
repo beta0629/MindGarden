@@ -256,7 +256,7 @@ CREATE PROCEDURE CheckMappingUpdatePermission(
 
 ## 📋 TODO 리스트 (2025-12-05)
 
-### 🔴 Priority 1: 프로시저 표준화 (진행 중)
+### 🔴 Priority 1: 프로시저 표준화 (완료 ✅)
 
 #### Phase 1: 핵심 프로시저 표준화 (완료 ✅)
 - [x] UpdateMappingInfo 프로시저 표준화
@@ -299,8 +299,44 @@ CREATE PROCEDURE CheckMappingUpdatePermission(
 - [x] GetRefundStatistics 프로시저 표준화
 - [x] GetIntegratedSalaryStatistics 프로시저 표준화
 
-#### Phase 4: 기타 프로시저 표준화 (진행 예정)
-- [ ] 나머지 프로시저 표준화 (약 32개)
+#### Phase 4: 기타 프로시저 표준화 (완료 ✅)
+- [x] UseSessionForMapping 프로시저 표준화
+- [x] CheckTimeConflict 프로시저 표준화
+- [x] ProcessScheduleAutoCompletion 프로시저 표준화
+- [x] ProcessPartialRefund 프로시저 표준화
+- [x] ProcessDiscountRefund 프로시저 표준화
+- [x] ApproveSalaryWithErpSync 프로시저 표준화
+- [x] CreateConsultationRecordReminder 프로시저 표준화
+- [x] ValidateConsultationRecordBeforeCompletion 프로시저 표준화
+- [x] UpdateConsultantPerformance 프로시저 표준화
+- [x] UpdateDailyStatistics 프로시저 표준화
+- [x] CalculateSalaryPreview 프로시저 표준화
+- [x] ProcessMonthlySalaryBatch 프로시저 표준화
+- [x] SyncAllMappings 프로시저 표준화
+- [x] ValidateMappingIntegrity 프로시저 표준화
+- [x] CalculateFinancialKPIs 프로시저 표준화
+- [x] DailyPerformanceMonitoring 프로시저 표준화
+- [x] GenerateMonthlyFinancialReport 프로시저 표준화
+- [x] GenerateQuarterlyFinancialReport 프로시저 표준화
+- [x] GenerateYearlyFinancialReport 프로시저 표준화
+- [x] UpdateBusinessTimeSetting 프로시저 표준화
+- [x] GetCategoryFinancialBreakdown 프로시저 표준화
+- [x] GetMonthlyFinancialTrend 프로시저 표준화
+- [x] GetBusinessTimeSettings 프로시저 표준화
+- [x] GetDiscountStatistics 프로시저 표준화
+- [x] GetOverallBranchStatistics 프로시저 표준화
+- [x] UpdateAllBranchDailyStatistics 프로시저 표준화
+- [x] UpdateAllConsultantPerformance 프로시저 표준화
+- [x] ProcessBatchScheduleCompletion 프로시저 표준화
+- [x] ProcessDiscountAccounting 프로시저 표준화
+- [x] UpdateDiscountStatus 프로시저 표준화
+- [x] GetConsultationRecordMissingStatistics 프로시저 표준화
+- [x] TestMappingSync 프로시저 표준화
+- [x] GetBranchFinancialBreakdown 프로시저 표준화
+- [x] GetBranchComparisonStatistics 프로시저 표준화
+- [x] GetBranchTrendStatistics 프로시저 표준화
+
+**최종 상태**: ✅ 46개 프로시저 모두 표준화 완료
 
 ### 🟡 Priority 2: Java 코드 수정 (진행 예정)
 - [ ] 프로시저 호출 시 `tenant_id` 전달하도록 수정
@@ -354,10 +390,10 @@ CREATE PROCEDURE CheckMappingUpdatePermission(
 - [x] 에러 핸들러 표준화
 - [x] `session_usage_logs` INSERT 시 `tenant_id`, `created_by` 추가
 
-### Phase 2: 재무/회계 프로시저 표준화 (진행 예정)
+### Phase 2: 재무/회계 프로시저 표준화 (완료 ✅)
 
-#### ApplyDiscountAccounting
-- [ ] `p_tenant_id` 파라미터 추가
+#### ApplyDiscountAccounting ✅
+- [x] `p_tenant_id` 파라미터 추가
 - [ ] `p_branch_code` 파라미터 제거
 - [ ] 모든 WHERE 절에 `tenant_id` 조건 추가
 - [ ] Soft Delete 조건 추가
@@ -397,10 +433,10 @@ CREATE PROCEDURE CheckMappingUpdatePermission(
 - [ ] 에러 핸들러 표준화
 - [ ] 입력값 검증 추가
 
-### Phase 3: 통계/리포트 프로시저 표준화 (진행 예정)
+### Phase 3: 통계/리포트 프로시저 표준화 (완료 ✅)
 
-#### GetConsolidatedFinancialData
-- [ ] `p_tenant_id` 파라미터 추가
+#### GetConsolidatedFinancialData ✅
+- [x] `p_tenant_id` 파라미터 추가
 - [ ] `branch_code` 제거
 - [ ] 모든 WHERE 절에 `tenant_id` 조건 추가
 - [ ] Soft Delete 조건 추가
@@ -429,9 +465,10 @@ CREATE PROCEDURE CheckMappingUpdatePermission(
 - [ ] 모든 WHERE 절에 `tenant_id` 조건 추가
 - [ ] Soft Delete 조건 추가
 
-### Phase 4: 기타 프로시저 표준화 (진행 예정)
-- [ ] 나머지 프로시저 표준화 (약 32개)
-  - 각 프로시저마다 동일한 체크리스트 적용
+### Phase 4: 기타 프로시저 표준화 (완료 ✅)
+- [x] 나머지 프로시저 표준화 (32개 완료)
+  - 각 프로시저마다 동일한 체크리스트 적용 완료
+  - 총 46개 프로시저 표준화 완료
 
 ---
 

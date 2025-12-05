@@ -424,13 +424,13 @@ export const TABLET_LOGIN_CONSTANTS = {
     SMS: 'sms'
   },
   
-  // API 엔드포인트
+  // API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용)
   API_ENDPOINTS: {
-    LOGIN: '/api/auth/login',
-    SMS_SEND: '/api/auth/sms/send',
-    SMS_VERIFY: '/api/auth/sms/verify',
-    OAUTH_CONFIG: '/api/auth/oauth2/config',
-    OAUTH_CALLBACK: '/api/auth/oauth2/callback'
+    LOGIN: '/api/v1/auth/login',
+    SMS_SEND: '/api/v1/auth/sms/send',
+    SMS_VERIFY: '/api/v1/auth/sms/verify',
+    OAUTH_CONFIG: '/api/v1/auth/config/oauth2',
+    OAUTH_CALLBACK: '/api/v1/auth/oauth2/callback'
   },
   
   // 메시지
@@ -480,13 +480,13 @@ export const TABLET_LOGIN_CONSTANTS = {
 
 // 재무 대시보드 상수
 export const FINANCE_DASHBOARD_CONSTANTS = {
-  // API 엔드포인트
+  // API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용)
   API_ENDPOINTS: {
-    DASHBOARD: '/api/super-admin/finance/dashboard',
-    STATISTICS: '/api/super-admin/finance/statistics',
-    PAYMENTS: '/api/super-admin/finance/payments',
-    REVENUE: '/api/super-admin/finance/revenue',
-    EXPENSES: '/api/super-admin/finance/expenses'
+    DASHBOARD: '/api/v1/super-admin/finance/dashboard',
+    STATISTICS: '/api/v1/super-admin/finance/statistics',
+    PAYMENTS: '/api/v1/super-admin/finance/payments',
+    REVENUE: '/api/v1/super-admin/finance/revenue',
+    EXPENSES: '/api/v1/super-admin/finance/expenses'
   },
   
   // 통계 타입
@@ -552,11 +552,11 @@ export const FINANCE_DASHBOARD_CONSTANTS = {
 
 // 결제 확인 모달 상수
 export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
-  // API 엔드포인트
+  // API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용)
   API_ENDPOINTS: {
-    CONFIRM_PAYMENT: '/api/admin/mapping/payment/confirm',
-    CANCEL_PAYMENT: '/api/admin/mapping/payment/cancel',
-    GET_PAYMENT_DETAILS: '/api/admin/mapping/payment/details'
+    CONFIRM_PAYMENT: '/api/v1/admin/mapping/payment/confirm',
+    CANCEL_PAYMENT: '/api/v1/admin/mapping/payment/cancel',
+    GET_PAYMENT_DETAILS: '/api/v1/admin/mapping/payment/details'
   },
   
   // 결제 상태
@@ -613,11 +613,11 @@ export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
 
 // 클라이언트 선택기 상수
 export const CLIENT_SELECTOR_CONSTANTS = {
-  // API 엔드포인트
+  // API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용)
   API_ENDPOINTS: {
-    CHECK_MAPPING: '/api/schedules/client/mapping/check',
-    GET_CLIENT_MAPPINGS: '/api/schedules/client/mappings',
-    GET_CLIENT_HISTORY: '/api/schedules/client/history'
+    CHECK_MAPPING: '/api/v1/schedules/client/mapping/check',
+    GET_CLIENT_MAPPINGS: '/api/v1/schedules/client/mappings',
+    GET_CLIENT_HISTORY: '/api/v1/schedules/client/history'
   },
   
   // 매핑 상태

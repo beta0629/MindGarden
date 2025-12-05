@@ -17,14 +17,14 @@ export const API_ENDPOINTS = {
     // 브랜딩 정보
     BRANDING: '/api/v1/admin/branding',
     
-    // 위젯 데이터 소스
+    // 위젯 데이터 소스 (표준화 2025-12-05: /api/v1/ 경로 적용)
     WIDGET_DATA: {
       CONSULTATIONS_OVERALL: '/api/v1/consultations/statistics/overall',
       CONSULTATIONS_TRENDS: '/api/v1/consultations/statistics/trends',
       CONSULTATIONS_SUMMARY: '/api/v1/consultations/summary',
-      SYSTEM_NOTIFICATIONS: '/api/system-notifications/active',
-      SYSTEM_STATUS: '/api/system/status',
-      SYSTEM_PERFORMANCE: '/api/system/performance'
+      SYSTEM_NOTIFICATIONS: '/api/v1/system-notifications/active',
+      SYSTEM_STATUS: '/api/v1/system/status',
+      SYSTEM_PERFORMANCE: '/api/v1/system/performance'
     }
   },
 
@@ -73,16 +73,16 @@ export const API_ENDPOINTS = {
     }
   },
   
-  // === 시스템 관련 API ===
+  // === 시스템 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용) ===
   SYSTEM: {
     NOTIFICATIONS: {
-      ACTIVE: '/api/system-notifications/active',
-      LIST: '/api/system-notifications'
+      ACTIVE: '/api/v1/system-notifications/active',
+      LIST: '/api/v1/system-notifications'
     },
     
     MONITORING: {
-      STATUS: '/api/system/status',
-      PERFORMANCE: '/api/system/performance'
+      STATUS: '/api/v1/system/status',
+      PERFORMANCE: '/api/v1/system/performance'
     }
   },
   
@@ -150,15 +150,15 @@ export const COMMON_API_URLS = {
     API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE
 };
 
-// 🔍 디버깅용 엔드포인트 매핑
+// 🔍 디버깅용 엔드포인트 매핑 (표준화 2025-12-05: 레거시 경로 제거)
 export const ENDPOINT_MAPPING = {
-  // 기존 → 표준화
-  '/api/admin/consultants/with-vacation': API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_VACATION,
-  '/api/admin/clients/with-mapping-info': API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-  '/api/admin/mappings': API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
-  '/api/admin/consultant-rating-stats': API_ENDPOINTS.ADMIN.CONSULTANTS.RATING_STATS,
-  '/api/admin/vacation-statistics': API_ENDPOINTS.ADMIN.STATISTICS.VACATION,
-  '/api/admin/statistics/consultation-completion': API_ENDPOINTS.ADMIN.STATISTICS.CONSULTATION_COMPLETION
+  // 기존 → 표준화 (레거시 경로는 더 이상 사용하지 않음)
+  '/api/v1/admin/consultants/with-vacation': API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_VACATION,
+  '/api/v1/admin/clients/with-mapping-info': API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
+  '/api/v1/admin/mappings': API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
+  '/api/v1/admin/consultant-rating-stats': API_ENDPOINTS.ADMIN.CONSULTANTS.RATING_STATS,
+  '/api/v1/admin/vacation-statistics': API_ENDPOINTS.ADMIN.STATISTICS.VACATION,
+  '/api/v1/admin/statistics/consultation-completion': API_ENDPOINTS.ADMIN.STATISTICS.CONSULTATION_COMPLETION
 };
 
 // 📊 엔드포인트 검증 함수

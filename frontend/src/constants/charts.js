@@ -295,13 +295,13 @@ export const PAGINATION = {
   MAX_VISIBLE_PAGES: 5
 };
 
-// ==================== API 엔드포인트 ====================
+// ==================== API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용) ====================
 export const CHART_API = {
-  STATISTICS: '/api/schedules/admin/statistics',
-  TRENDS: '/api/schedules/trends',
-  CONSULTANT_STATS: '/api/consultants/statistics',
-  CLIENT_STATS: '/api/clients/statistics',
-  REVENUE_STATS: '/api/revenue/statistics'
+  STATISTICS: '/api/v1/admin/schedules/statistics',
+  TRENDS: '/api/v1/schedules/trends',
+  CONSULTANT_STATS: '/api/v1/consultants/statistics',
+  CLIENT_STATS: '/api/v1/clients/statistics',
+  REVENUE_STATS: '/api/v1/revenue/statistics'
 };
 
 // ==================== 차트 애니메이션 ====================

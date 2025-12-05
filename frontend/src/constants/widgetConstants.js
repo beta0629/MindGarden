@@ -173,9 +173,9 @@ export const API_PERFORMANCE_WIDGET = {
   },
   
   API_ENDPOINTS: {
-    STATS: '/api/admin/performance/stats',
-    SLOW_APIS: '/api/admin/performance/slow-apis',
-    ERROR_PRONE_APIS: '/api/admin/performance/error-prone-apis'
+    STATS: '/api/v1/admin/performance/stats',
+    SLOW_APIS: '/api/v1/admin/performance/slow-apis',
+    ERROR_PRONE_APIS: '/api/v1/admin/performance/error-prone-apis'
   },
   
   THRESHOLDS: {

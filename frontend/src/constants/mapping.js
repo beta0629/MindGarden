@@ -218,16 +218,16 @@ export const DEFAULT_MAPPING_CONFIG = {
     RESPONSIBILITY: '정신건강 상담'
 };
 
-// 매칭 API 엔드포인트
+// 매칭 API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const MAPPING_API_ENDPOINTS = {
-    LIST: '/api/admin/mappings',
-    CREATE: '/api/admin/mappings',
-    UPDATE: '/api/admin/mappings',
-    DELETE: '/api/admin/mappings',
-    APPROVE: '/api/admin/mappings',
-    REJECT: '/api/admin/mappings',
-    TEST_CREATE: '/api/test/create-mapping',
-    TEST_MAPPING: '/api/test/mapping'
+    LIST: '/api/v1/admin/mappings',
+    CREATE: '/api/v1/admin/mappings',
+    UPDATE: '/api/v1/admin/mappings',
+    DELETE: '/api/v1/admin/mappings',
+    APPROVE: '/api/v1/admin/mappings',
+    REJECT: '/api/v1/admin/mappings',
+    TEST_CREATE: '/api/v1/test/create-mapping',
+    TEST_MAPPING: '/api/v1/test/mapping'
 };
 
 // 매칭 메시지

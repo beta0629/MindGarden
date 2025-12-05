@@ -3,32 +3,32 @@
  * 개발 가이드 준수 - 상수화 필수 원칙
  */
 
-// ===== API 엔드포인트 =====
+// ===== API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용) =====
 export const API_ENDPOINTS = {
   // 통계 API (실제 존재하는 엔드포인트)
-  OVERALL_STATISTICS: '/api/admin/statistics/overall',
-  TREND_STATISTICS: '/api/admin/statistics/trends',
-  SESSION_STATISTICS: '/api/admin/sessions/statistics',
+  OVERALL_STATISTICS: '/api/v1/admin/statistics/overall',
+  TREND_STATISTICS: '/api/v1/admin/statistics/trends',
+  SESSION_STATISTICS: '/api/v1/admin/sessions/statistics',
   
   // 시스템 API (실제 존재하는 엔드포인트)
-  SYSTEM_STATUS: '/api/admin/statistics-management/plsql/status',
-  SYSTEM_TOOLS: '/api/admin/system-tools',
+  SYSTEM_STATUS: '/api/v1/admin/statistics-management/plsql/status',
+  SYSTEM_TOOLS: '/api/v1/admin/system-tools',
   
   // ERP API
-  ERP_REPORT: '/api/erp/reports',
+  ERP_REPORT: '/api/v1/erp/reports',
   
   // 성능 지표 API
-  PERFORMANCE_METRICS: '/api/admin/statistics/performance',
+  PERFORMANCE_METRICS: '/api/v1/admin/statistics/performance',
   
   // 전문분야 관리 API
-  SPECIALTY_MANAGEMENT: '/api/admin/consultants/specialties',
+  SPECIALTY_MANAGEMENT: '/api/v1/admin/consultants/specialties',
   
   // 재발 지출 API
-  RECURRING_EXPENSES: '/api/admin/finance/recurring-expenses',
+  RECURRING_EXPENSES: '/api/v1/admin/finance/recurring-expenses',
   
   // 권한 관리 API
-  PERMISSIONS: '/api/admin/permissions',
-  USER_PERMISSIONS: '/api/admin/users/{id}/permissions'
+  PERMISSIONS: '/api/v1/permissions',
+  USER_PERMISSIONS: '/api/v1/admin/users/{id}/permissions'
 };
 
 // ===== UI 텍스트 =====

@@ -206,14 +206,9 @@ public class PermissionManagementController extends BaseApiController {
 
         log.info("🔍 현재 사용자: {} ({})", currentUser.getEmail(), currentUser.getRole());
 
-        // 관리자 역할 확인 (BRANCH_ADMIN 이상만 권한 관리 가능)
-        String currentUserRole = currentUser.getRole().name();
-        boolean isAdmin = "ADMIN".equals(currentUserRole) || 
-                         "BRANCH_SUPER_ADMIN".equals(currentUserRole) || 
-                         "BRANCH_ADMIN".equals(currentUserRole) ||
-                         "SUPER_HQ_ADMIN".equals(currentUserRole) || 
-                         "HQ_ADMIN".equals(currentUserRole) || 
-                         "HQ_MASTER".equals(currentUserRole);
+        // 관리자 역할 확인 (표준화 2025-12-05: enum 활용)
+        UserRole currentUserRole = currentUser.getRole();
+        boolean isAdmin = currentUserRole.isAdmin();
         
         log.info("🔍 관리자 권한 확인: isAdmin={}", isAdmin);
         
@@ -222,7 +217,6 @@ public class PermissionManagementController extends BaseApiController {
             throw new RuntimeException("권한이 없습니다. 관리자만 권한을 관리할 수 있습니다.");
         }
 
-        // currentUserRole은 이미 위에서 선언됨
         log.info("🔍 관리 가능한 권한 조회 요청: 사용자 역할={}", currentUserRole);
 
         // 사용자 역할에 따라 관리 가능한 권한만 필터링
@@ -239,14 +233,14 @@ public class PermissionManagementController extends BaseApiController {
             .collect(Collectors.toList());
         log.info("🔍 데이터베이스 권한 목록 조회 완료: 권한 수={}", allPermissions.size());
         
-        List<Map<String, Object>> manageablePermissions = filterManageablePermissions(currentUserRole, allPermissions);
+        List<Map<String, Object>> manageablePermissions = filterManageablePermissions(currentUserRole.name(), allPermissions);
 
         log.info("✅ 관리 가능한 권한 조회 완료: 역할={}, 권한수={}", currentUserRole, manageablePermissions.size());
 
         Map<String, Object> data = new HashMap<>();
         data.put("permissions", manageablePermissions);
         data.put("count", manageablePermissions.size());
-        data.put("userRole", currentUserRole);
+        data.put("userRole", currentUserRole.name());
 
         return success(data);
     }
@@ -281,16 +275,11 @@ public class PermissionManagementController extends BaseApiController {
             throw new RuntimeException("인증이 필요합니다.");
         }
         
-        // 관리자 역할 확인 (BRANCH_ADMIN 이상만 권한 관리 가능)
-        String currentUserRole = currentUser.getRole().name();
+        // 관리자 역할 확인 (표준화 2025-12-05: enum 활용)
+        UserRole currentUserRole = currentUser.getRole();
         log.info("🔍 권한 저장 요청: 사용자 역할={}, 이메일={}", currentUserRole, currentUser.getEmail());
         
-        boolean isAdmin = "ADMIN".equals(currentUserRole) || 
-                         "BRANCH_SUPER_ADMIN".equals(currentUserRole) || 
-                         "BRANCH_ADMIN".equals(currentUserRole) ||
-                         "SUPER_HQ_ADMIN".equals(currentUserRole) || 
-                         "HQ_ADMIN".equals(currentUserRole) || 
-                         "HQ_MASTER".equals(currentUserRole);
+        boolean isAdmin = currentUserRole.isAdmin();
         
         log.info("🔍 관리자 권한 확인: isAdmin={}", isAdmin);
         
@@ -307,40 +296,40 @@ public class PermissionManagementController extends BaseApiController {
             throw new RuntimeException("roleName과 permissionCodes가 필요합니다.");
         }
         
-        // 역할 계층 구조에 따른 권한 변경 제한
-        // currentUserRole은 이미 위에서 선언됨
+        // 역할 계층 구조에 따른 권한 변경 제한 (표준화 2025-12-05: enum 활용)
+        UserRole roleNameEnum = UserRole.fromString(roleName);
         boolean canManageRole = false;
         
         // 자신의 역할에 대한 권한 변경은 항상 허용
-        if (currentUserRole.equals(roleName)) {
+        if (currentUserRole == roleNameEnum) {
             log.info("✅ 자신의 역할 권한 변경 요청 - 허용");
             canManageRole = true;
         }
         // HQ 마스터는 모든 역할 관리 가능
-        else if ("HQ_MASTER".equals(currentUserRole)) {
+        else if (currentUserRole == UserRole.HQ_MASTER) {
             canManageRole = true;
         }
         // SUPER_HQ_ADMIN은 HQ_MASTER를 제외한 모든 역할 관리 가능
-        else if ("SUPER_HQ_ADMIN".equals(currentUserRole)) {
-            canManageRole = !"HQ_MASTER".equals(roleName);
+        else if (currentUserRole == UserRole.SUPER_HQ_ADMIN) {
+            canManageRole = roleNameEnum != UserRole.HQ_MASTER;
         }
         // HQ_ADMIN은 본사 관리자 이하 역할 관리 가능
-        else if ("HQ_ADMIN".equals(currentUserRole)) {
-            canManageRole = !"HQ_MASTER".equals(roleName) && !"SUPER_HQ_ADMIN".equals(roleName);
+        else if (currentUserRole == UserRole.HQ_ADMIN) {
+            canManageRole = roleNameEnum != UserRole.HQ_MASTER && roleNameEnum != UserRole.SUPER_HQ_ADMIN;
         }
         // ADMIN은 지점 관련 역할만 관리 가능
-        else if ("ADMIN".equals(currentUserRole)) {
-            canManageRole = "BRANCH_SUPER_ADMIN".equals(roleName) || "BRANCH_ADMIN".equals(roleName) || 
-                           "CONSULTANT".equals(roleName) || "CLIENT".equals(roleName);
+        else if (currentUserRole == UserRole.ADMIN) {
+            canManageRole = roleNameEnum == UserRole.BRANCH_SUPER_ADMIN || roleNameEnum == UserRole.BRANCH_ADMIN || 
+                           roleNameEnum == UserRole.CONSULTANT || roleNameEnum == UserRole.CLIENT;
         }
         // BRANCH_SUPER_ADMIN은 지점 내 하위 역할만 관리 가능
-        else if ("BRANCH_SUPER_ADMIN".equals(currentUserRole)) {
-            canManageRole = "BRANCH_ADMIN".equals(roleName) || "CONSULTANT".equals(roleName) || 
-                           "CLIENT".equals(roleName);
+        else if (currentUserRole == UserRole.BRANCH_SUPER_ADMIN) {
+            canManageRole = roleNameEnum == UserRole.BRANCH_ADMIN || roleNameEnum == UserRole.CONSULTANT || 
+                           roleNameEnum == UserRole.CLIENT;
         }
         // BRANCH_ADMIN은 상담사, 내담자만 관리 가능
-        else if ("BRANCH_ADMIN".equals(currentUserRole)) {
-            canManageRole = "CONSULTANT".equals(roleName) || "CLIENT".equals(roleName);
+        else if (currentUserRole == UserRole.BRANCH_ADMIN) {
+            canManageRole = roleNameEnum == UserRole.CONSULTANT || roleNameEnum == UserRole.CLIENT;
         }
         
         if (!canManageRole) {

@@ -138,8 +138,10 @@ public class BranchManagementController {
                     .collect(Collectors.groupingBy(u -> u.getRole().name(), Collectors.counting()));
             log.info("지점 {} 역할별 카운트: {}", branchCode, roleCount);
             
-            // 관리자 역할 목록 (지점별로 다름)
-            Set<String> adminRoles = Set.of("ADMIN", "HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER", "HQ_SUPER_ADMIN", "BRANCH_SUPER_ADMIN");
+            // 관리자 역할 목록 (표준화 2025-12-05: enum 활용)
+            Set<String> adminRoles = java.util.Arrays.stream(UserRole.getAdminRoles())
+                    .map(UserRole::name)
+                    .collect(java.util.stream.Collectors.toSet());
             
             Map<String, Object> statistics = new HashMap<>();
             statistics.put("branchCode", branchCode);

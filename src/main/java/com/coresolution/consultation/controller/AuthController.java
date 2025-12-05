@@ -1503,21 +1503,20 @@ public class AuthController extends BaseApiController {
             return null;
         }
         
-        // 표준 관리자 역할 -> Director (원장)
-        if ("ADMIN".equals(userRoleName) || 
-            "TENANT_ADMIN".equals(userRoleName) ||
-            "PRINCIPAL".equals(userRoleName) ||
-            "OWNER".equals(userRoleName)) {
+        // 표준 관리자 역할 -> Director (원장) (표준화 2025-12-05: enum 활용)
+        UserRole role = UserRole.fromString(userRoleName);
+        if (role == UserRole.ADMIN || role == UserRole.TENANT_ADMIN || 
+            role == UserRole.PRINCIPAL || role == UserRole.OWNER) {
             return "Director"; // 실제 TenantRole name_en
         }
         
         // 상담사 계열 -> Counselor
-        if ("CONSULTANT".equals(userRoleName)) {
+        if (role == UserRole.CONSULTANT) {
             return "Counselor"; // 실제 TenantRole name_en
         }
         
         // 내담자 계열 -> Client
-        if ("CLIENT".equals(userRoleName)) {
+        if (role == UserRole.CLIENT) {
             return "Client";
         }
         

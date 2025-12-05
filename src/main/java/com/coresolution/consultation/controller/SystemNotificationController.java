@@ -148,14 +148,14 @@ public class SystemNotificationController extends BaseApiController {
                     data.put("id", notification.getId());
                     data.put("targetType", notification.getTargetType());
                     
-                    // targetType을 기반으로 targetRoles 생성
+                    // targetType을 기반으로 targetRoles 생성 (표준화 2025-12-05: enum 활용)
                     List<String> targetRoles = new ArrayList<>();
                     if ("ALL".equals(notification.getTargetType())) {
                         targetRoles.add("ALL");
                     } else if ("CONSULTANT".equals(notification.getTargetType())) {
-                        targetRoles.add("CONSULTANT");
+                        targetRoles.add(UserRole.CONSULTANT.name());
                     } else if ("CLIENT".equals(notification.getTargetType())) {
-                        targetRoles.add("CLIENT");
+                        targetRoles.add(UserRole.CLIENT.name());
                     }
                     data.put("targetRoles", targetRoles);
                     

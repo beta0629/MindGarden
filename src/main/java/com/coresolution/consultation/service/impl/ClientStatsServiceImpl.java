@@ -225,7 +225,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         clientMap.put("gender", client.getGender());
         // 브랜치 개념 제거: branchCode는 레거시 호환용으로만 유지 (표준화 2025-12-05)
         // clientMap.put("branchCode", client.getBranchCode());
-        clientMap.put("role", "CLIENT");
+        clientMap.put("role", UserRole.CLIENT.name());
         clientMap.put("status", "ACTIVE");
         clientMap.put("isActive", true);
         clientMap.put("isDeleted", client.getIsDeleted());

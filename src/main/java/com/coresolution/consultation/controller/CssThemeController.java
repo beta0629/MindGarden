@@ -154,8 +154,8 @@ public class CssThemeController extends BaseApiController {
         
         List<String> colors;
         try {
-            // CONSULTANT 카테고리의 색상들 조회
-            List<CssColorSettings> consultantColors = cssThemeService.getThemeColorsByCategory(themeName, "CONSULTANT");
+            // CONSULTANT 카테고리의 색상들 조회 (표준화 2025-12-05: enum 활용)
+            List<CssColorSettings> consultantColors = cssThemeService.getThemeColorsByCategory(themeName, com.coresolution.consultation.constant.UserRole.CONSULTANT.name());
             
             // 색상 배열로 변환
             colors = consultantColors.stream()

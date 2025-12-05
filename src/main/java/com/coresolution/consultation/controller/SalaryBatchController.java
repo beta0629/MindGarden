@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.SalaryBatchService;
@@ -100,9 +101,9 @@ public class SalaryBatchController {
                 ));
             }
             
-            // 관리자 권한 확인
-            if (!"MASTER_ADMIN".equals(currentUser.getRole().name()) && 
-                !"BRANCH_SUPER_ADMIN".equals(currentUser.getRole().name())) {
+            // 관리자 권한 확인 (표준화 2025-12-05: enum 활용)
+            UserRole userRole = currentUser.getRole();
+            if (userRole != UserRole.HQ_MASTER && userRole != UserRole.BRANCH_SUPER_ADMIN) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "급여 배치 실행 권한이 없습니다."

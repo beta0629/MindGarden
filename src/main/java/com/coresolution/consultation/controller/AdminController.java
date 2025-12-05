@@ -996,7 +996,7 @@ public class AdminController extends BaseApiController {
                         consultantInfo.put("name", mapping.getConsultant().getName());
                         consultantInfo.put("email", mapping.getConsultant().getEmail());
                         consultantInfo.put("phone", mapping.getConsultant().getPhone());
-                        consultantInfo.put("role", mapping.getConsultant().getRole() != null ? mapping.getConsultant().getRole().toString() : "CONSULTANT");
+                        consultantInfo.put("role", mapping.getConsultant().getRole() != null ? mapping.getConsultant().getRole().toString() : com.coresolution.consultation.constant.UserRole.CONSULTANT.name());
                         data.put("consultant", consultantInfo);
                     } else {
                         data.put("consultantId", null);
@@ -1015,7 +1015,7 @@ public class AdminController extends BaseApiController {
                         clientInfo.put("name", mapping.getClient().getName());
                         clientInfo.put("email", mapping.getClient().getEmail());
                         clientInfo.put("phone", mapping.getClient().getPhone());
-                        clientInfo.put("role", mapping.getClient().getRole() != null ? mapping.getClient().getRole().toString() : "CLIENT");
+                        clientInfo.put("role", mapping.getClient().getRole() != null ? mapping.getClient().getRole().toString() : com.coresolution.consultation.constant.UserRole.CLIENT.name());
                         data.put("client", clientInfo);
                     } else {
                         data.put("clientId", null);
@@ -3082,9 +3082,9 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 권한 체크 (Admin 역할이면 허용)
-            String userRole = currentUser.getRole().name();
-            boolean hasAdminRole = userRole.contains("ADMIN") || userRole.contains("MASTER");
+            // 권한 체크 (표준화 2025-12-05: enum 활용)
+            com.coresolution.consultation.constant.UserRole userRole = currentUser.getRole();
+            boolean hasAdminRole = userRole != null && userRole.isAdmin();
             boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "ADMIN_CONSULTATION_VIEW");
             
             if (!hasAdminRole && !hasPermission) {

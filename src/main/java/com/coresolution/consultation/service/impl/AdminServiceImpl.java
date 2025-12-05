@@ -4467,7 +4467,7 @@ public class AdminServiceImpl implements AdminService {
                 schedule.getConsultantId(),
                 schedule.getClientId(),
                 null, // consultationId는 null
-                "ADMIN", // 발신자 타입
+                com.coresolution.consultation.constant.UserRole.ADMIN.name(), // 발신자 타입 (표준화 2025-12-05: enum 활용)
                 title,
                 content,
                 "REMINDER", // 메시지 타입

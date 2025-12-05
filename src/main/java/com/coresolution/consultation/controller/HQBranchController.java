@@ -95,8 +95,13 @@ public class HQBranchController extends BaseApiController {
     public ResponseEntity<List<User>> getManagerCandidates() {
         try {
             log.info("API 호출: 지점 관리자 후보 목록 조회");
+            // 표준화 2025-12-05: enum 활용
             List<User> managers = userService.findByRoleInAndIsDeletedFalse(
-                List.of("HQ_ADMIN", "SUPER_HQ_ADMIN", "ADMIN")
+                java.util.Arrays.stream(new com.coresolution.consultation.constant.UserRole[]{
+                    com.coresolution.consultation.constant.UserRole.HQ_ADMIN,
+                    com.coresolution.consultation.constant.UserRole.SUPER_HQ_ADMIN,
+                    com.coresolution.consultation.constant.UserRole.ADMIN
+                }).map(com.coresolution.consultation.constant.UserRole::name).collect(java.util.stream.Collectors.toList())
             );
             return ResponseEntity.ok(managers);
         } catch (Exception e) {

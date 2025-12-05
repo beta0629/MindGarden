@@ -230,7 +230,7 @@ public class ConsultantRecordsController {
             Map<String, Object> result = new HashMap<>();
             
             // 1. 스케줄 데이터 조회 (기존 메서드 사용)
-            List<Schedule> schedules = scheduleService.findSchedulesByUserRole(consultantId, "CONSULTANT");
+            List<Schedule> schedules = scheduleService.findSchedulesByUserRole(consultantId, UserRole.CONSULTANT.name());
             
             // 2. 상담기록 데이터 조회
             Pageable pageable = PageRequest.of(0, 100);
@@ -288,7 +288,7 @@ public class ConsultantRecordsController {
             List<Map<String, Object>> cleanedRecords = new ArrayList<>();
             
             // 1. 스케줄 데이터 조회 (기존 메서드 사용)
-            List<Schedule> schedules = scheduleService.findSchedulesByUserRole(consultantId, "CONSULTANT");
+            List<Schedule> schedules = scheduleService.findSchedulesByUserRole(consultantId, UserRole.CONSULTANT.name());
             
             // 2. 불일치 데이터 조회
             Pageable pageable = PageRequest.of(0, 100);

@@ -162,11 +162,13 @@ public class ScheduleController extends BaseApiController {
         
         log.info("📅 상담사별 특정 날짜 스케줄 조회: 상담사 {}, 날짜 {}, 요청자 역할 {}", consultantId, date, userRole);
         
-        // 관리자 권한 확인 (userRole이 제공된 경우에만)
-        if (userRole != null && !"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
-            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
-            log.warn("❌ 관리자 권한 없음: {}", userRole);
-            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+        // 관리자 권한 확인 (표준화 2025-12-05: enum 활용)
+        if (userRole != null) {
+            UserRole role = UserRole.fromString(userRole);
+            if (!role.isAdmin()) {
+                log.warn("❌ 관리자 권한 없음: {}", userRole);
+                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+            }
         }
         
         List<Schedule> schedules = scheduleService.findByConsultantIdAndDate(consultantId, date);
@@ -185,11 +187,13 @@ public class ScheduleController extends BaseApiController {
         
         log.info("📅 상담사 자신의 스케줄 조회: 상담사 {}, 요청자 역할 {}", consultantId, userRole);
         
-        // 관리자 권한 확인 (userRole이 제공된 경우에만)
-        if (userRole != null && !"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
-            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
-            log.warn("❌ 관리자 권한 없음: {}", userRole);
-            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+        // 관리자 권한 확인 (표준화 2025-12-05: enum 활용)
+        if (userRole != null) {
+            UserRole role = UserRole.fromString(userRole);
+            if (!role.isAdmin()) {
+                log.warn("❌ 관리자 권한 없음: {}", userRole);
+                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
+            }
         }
         
         List<Schedule> schedules = scheduleService.findByConsultantId(consultantId);
@@ -263,12 +267,12 @@ public class ScheduleController extends BaseApiController {
         
         List<ScheduleDto> schedules;
         if (startDate != null && endDate != null) {
-            List<Schedule> scheduleList = scheduleService.findSchedulesByUserRoleAndDateBetween(consultantId, "CONSULTANT", startDate, endDate);
+            List<Schedule> scheduleList = scheduleService.findSchedulesByUserRoleAndDateBetween(consultantId, UserRole.CONSULTANT.name(), startDate, endDate);
             schedules = scheduleList.stream()
                 .map(schedule -> convertToScheduleDto(schedule))
                 .collect(java.util.stream.Collectors.toList());
         } else {
-            schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, "CONSULTANT");
+            schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, UserRole.CONSULTANT.name());
         }
         
         Map<String, Object> data = new HashMap<>();
@@ -495,7 +499,7 @@ public class ScheduleController extends BaseApiController {
         Map<String, Object> statistics;
         
         // 사용자 역할에 따라 다른 통계 반환
-        if ("CONSULTANT".equals(userRole)) {
+        if (userRole != null && UserRole.fromString(userRole) == UserRole.CONSULTANT) {
             // 상담사는 자신의 오늘 통계만 조회
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
@@ -747,7 +751,7 @@ public class ScheduleController extends BaseApiController {
             records = consultationRecordService.getConsultationRecordsByConsultationId(consultationIdLong);
         } else if (consultantId != null) {
             // 상담사별 조회 (페이지네이션 없이 최근 10개)
-            records = consultationRecordService.getRecentConsultationRecords(consultantId, "CONSULTANT", 10);
+            records = consultationRecordService.getRecentConsultationRecords(consultantId, UserRole.CONSULTANT.name(), 10);
         } else {
             records = new ArrayList<>();
         }
@@ -1032,15 +1036,10 @@ public class ScheduleController extends BaseApiController {
             return isAdmin;
         } catch (Exception e) {
             log.error("❌ 관리자 권한 확인 실패: error={}", e.getMessage(), e);
-            // 기본값으로 하드코딩된 역할 확인 (fallback)
-            boolean isAdmin = "ADMIN".equals(user.getRole().name()) || 
-                   "HQ_MASTER".equals(user.getRole().name()) || 
-                   "BRANCH_HQ_MASTER".equals(user.getRole().name()) ||
-                   "BRANCH_SUPER_ADMIN".equals(user.getRole().name()) ||
-                   "HQ_ADMIN".equals(user.getRole().name()) ||
-                   "SUPER_HQ_ADMIN".equals(user.getRole().name());
+            // fallback: UserRole enum의 isAdmin() 메서드 사용 (표준화 2025-12-05)
+            boolean isAdmin = user.getRole() != null && user.getRole().isAdmin();
             log.info("🔍 관리자 권한 확인 (fallback): userRole={}, isAdmin={}", 
-                user.getRole().name(), isAdmin);
+                user.getRole() != null ? user.getRole().name() : "null", isAdmin);
             return isAdmin;
         }
     }

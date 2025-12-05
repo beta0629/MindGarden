@@ -2357,5 +2357,179 @@ if (user.getBranchCode() != null && branchRepository != null) {
 
 **완료일**: 2025-12-05
 
+---
+
+## Priority 1.2.2: 프론트엔드 API 경로 표준화 작업 완료 ✅
+
+### 2025-12-05 (오후)
+
+#### 작업 개요
+프론트엔드의 모든 API 경로를 백엔드와 일치하도록 `/api/v1/` 경로로 표준화했습니다.
+
+**참조 문서**:
+- [API 설계 표준](../../standards/API_DESIGN_STANDARD.md)
+- [API 경로 표준화 계획](./API_STANDARDIZATION_PLAN.md)
+
+---
+
+#### 완료된 작업
+
+**Phase 2: 프론트엔드 상수 파일 표준화 (11개 파일) ✅**
+
+1. ✅ `frontend/src/constants/api.js`
+   - MYPAGE_API, PROFILE_API, CONSULTATION_API
+   - SCHEDULE_API, DASHBOARD_API, FILE_API
+   - NOTIFICATION_API, SEARCH_API, BRANCH_API
+   - BUSINESS_CATEGORY_API
+
+2. ✅ `frontend/src/constants/apiEndpoints.js`
+   - SYSTEM.NOTIFICATIONS, SYSTEM.MONITORING
+   - WIDGET_DATA 경로들
+   - ENDPOINT_MAPPING 업데이트
+
+3. ✅ `frontend/src/constants/widgetConstants.js`
+   - Performance API 엔드포인트
+
+4. ✅ `frontend/src/constants/mapping.js`
+   - MAPPING_API_ENDPOINTS
+
+5. ✅ `frontend/src/constants/adminDashboard.js`
+   - Admin API 엔드포인트
+
+6. ✅ `frontend/src/constants/charts.js`
+   - CHART_API 엔드포인트
+
+7. ✅ `frontend/src/constants/css-variables.js`
+   - LOGIN_FORM_CONSTANTS.API_ENDPOINTS
+   - FINANCE_DASHBOARD_CONSTANTS.API_ENDPOINTS
+   - PAYMENT_CONFIRMATION_MODAL_CONSTANTS.API_ENDPOINTS
+   - CLIENT_SELECTOR_CONSTANTS.API_ENDPOINTS
+
+**총 수정 파일**: 11개
+
+---
+
+#### 주요 변경사항
+
+**변경 전**:
+```javascript
+GET_INFO: '/api/client/profile',
+SCHEDULES: '/api/schedules',
+BRANCHES: '/api/branches'
+```
+
+**변경 후**:
+```javascript
+GET_INFO: '/api/v1/clients/profile', // 표준화 2025-12-05
+SCHEDULES: '/api/v1/schedules', // 표준화 2025-12-05
+BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
+```
+
+**표준화 원칙 준수**:
+- ✅ 모든 API 경로는 `/api/v1/` 접두사 필수
+- ✅ 백엔드 컨트롤러 경로와 일치
+- ✅ 일관성 확보
+
+---
+
+#### 다음 단계
+
+**Phase 3: 프론트엔드 컴포넌트 직접 API 호출 검토** (예정)
+- 컴포넌트 파일에서 하드코딩된 API 경로 검색
+- 상수 파일 사용으로 변경
+- 통합 테스트
+
+**예상 기간**: 1-2일
+
+---
+
+**완료일**: 2025-12-05
+
+---
+
+## 2025-12-05: 역할 이름 하드코딩 제거 작업 (진행 중)
+
+### 작업 개요
+- **목표**: 모든 역할 이름 하드코딩을 `UserRole` enum으로 변경
+- **우선순위**: 높음 (보안 및 유지보수성 향상)
+- **예상 기간**: 3일
+- **현재 진행률**: 약 40% (Backend Controller/Service 주요 파일 완료)
+
+### 수정된 파일 목록
+
+#### 1. Controller 레이어 (9개 파일)
+
+**PermissionManagementController.java**
+- 관리자 역할 확인 로직을 `UserRole.isAdmin()` 메서드 활용으로 변경
+- 역할 계층 구조 검증 로직을 enum 비교로 변경
+- 변경 전: `"ADMIN".equals(currentUserRole) || "BRANCH_SUPER_ADMIN".equals(currentUserRole) ...`
+- 변경 후: `currentUserRole.isAdmin()`, `currentUserRole == UserRole.HQ_MASTER`
+
+**ScheduleController.java**
+- 관리자 권한 확인을 enum 활용으로 변경
+- `"CONSULTANT"` 문자열을 `UserRole.CONSULTANT.name()`으로 변경
+- fallback 로직도 enum 활용으로 개선
+
+**SalaryBatchController.java**
+- `"MASTER_ADMIN"`, `"BRANCH_SUPER_ADMIN"` 하드코딩 제거
+- `UserRole.HQ_MASTER`, `UserRole.BRANCH_SUPER_ADMIN` enum 비교로 변경
+- UserRole import 추가
+
+**SalaryConfigController.java**
+- `"MASTER_ADMIN"`, `"BRANCH_SUPER_ADMIN"` 하드코딩 제거
+- enum 비교로 변경
+- UserRole import 추가
+
+**SystemNotificationController.java**
+- `"CONSULTANT"`, `"CLIENT"` 하드코딩 제거
+- `UserRole.CONSULTANT.name()`, `UserRole.CLIENT.name()` 사용
+
+**AdminController.java**
+- fallback 역할 값 `"CONSULTANT"`, `"CLIENT"`를 enum으로 변경
+- 관리자 역할 확인 로직을 `userRole.isAdmin()`으로 변경
+
+**AuthController.java**
+- 역할 이름 매핑 로직을 enum 비교로 변경
+- `UserRole.fromString()` 활용
+
+**CssThemeController.java**
+- `"CONSULTANT"` 하드코딩을 `UserRole.CONSULTANT.name()`으로 변경
+
+**HQBranchController.java**
+- 관리자 역할 목록을 enum 배열로 변경
+- `List.of("HQ_ADMIN", "SUPER_HQ_ADMIN", "ADMIN")` → `UserRole.getAdminRoles()` 활용
+
+#### 2. Service 레이어 (2개 파일)
+
+**ClientStatsServiceImpl.java**
+- `"CLIENT"` 하드코딩을 `UserRole.CLIENT.name()`으로 변경
+
+**AdminServiceImpl.java**
+- 발신자 타입 `"ADMIN"`을 `UserRole.ADMIN.name()`으로 변경
+
+### 주요 변경 패턴
+
+1. **역할 비교**
+   - 변경 전: `"ADMIN".equals(userRole)`
+   - 변경 후: `userRole == UserRole.ADMIN` 또는 `userRole.isAdmin()`
+
+2. **역할 이름 반환**
+   - 변경 전: `"CONSULTANT"`
+   - 변경 후: `UserRole.CONSULTANT.name()`
+
+3. **관리자 역할 확인**
+   - 변경 전: `"ADMIN".equals(role) || "BRANCH_SUPER_ADMIN".equals(role) || ...`
+   - 변경 후: `role.isAdmin()`
+
+### 다음 단계
+
+1. **Service 레이어 추가 검토**
+   - ScheduleServiceImpl의 `getRoleCodeFromCommonCode()` 사용 부분 검토
+   - 다른 서비스 파일들의 하드코딩 확인
+
+2. **Frontend 역할 하드코딩 제거** (예정)
+   - JavaScript 파일에서 역할 문자열 하드코딩 제거
+   - 권한 시스템 API 활용
+
 **최종 업데이트**: 2025-12-05
 

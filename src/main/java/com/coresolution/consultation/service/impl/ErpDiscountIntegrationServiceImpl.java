@@ -85,30 +85,23 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
     
     @Override
     public Map<String, Object> getDiscountAccountingSummary(String branchCode, String startDate, String endDate) {
-        log.info("📊 할인 회계 요약 조회: BranchCode={}, Period={} ~ {}", branchCode, startDate, endDate);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 할인 회계 요약 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
         try {
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            LocalDate start = LocalDate.parse(startDate);
+            LocalDate end = LocalDate.parse(endDate);
             
-            // 1. 할인 거래 조회
+            // 1. 할인 거래 조회 (테넌트 기반, branchCode 필터링 제거)
             var discountTransactions = financialTransactionRepository
-                .findByTenantId(tenantId)
-                .stream()
-                .filter(ft -> "DISCOUNT".equals(ft.getTransactionType()) && 
-                             branchCode.equals(ft.getBranchCode()) &&
-                             ft.getTransactionDate().isAfter(LocalDateTime.parse(startDate + "T00:00:00").toLocalDate()) &&
-                             ft.getTransactionDate().isBefore(LocalDateTime.parse(endDate + "T23:59:59").toLocalDate()))
-                .collect(Collectors.toList());
+                .findByTenantIdAndTransactionTypeAndTransactionDateBetweenAndIsDeletedFalse(
+                    tenantId, FinancialTransaction.TransactionType.DISCOUNT, start, end);
             
-            // 2. 매출 거래 조회
+            // 2. 매출 거래 조회 (테넌트 기반, branchCode 필터링 제거)
             var revenueTransactions = financialTransactionRepository
-                .findByTenantId(tenantId)
-                .stream()
-                .filter(ft -> "INCOME".equals(ft.getTransactionType()) && 
-                             branchCode.equals(ft.getBranchCode()) &&
-                             ft.getTransactionDate().isAfter(LocalDateTime.parse(startDate + "T00:00:00").toLocalDate()) &&
-                             ft.getTransactionDate().isBefore(LocalDateTime.parse(endDate + "T23:59:59").toLocalDate()))
-                .collect(Collectors.toList());
+                .findByTenantIdAndTransactionTypeAndTransactionDateBetweenAndIsDeletedFalse(
+                    tenantId, FinancialTransaction.TransactionType.INCOME, start, end);
             
             // 3. 통계 계산
             BigDecimal totalRevenue = revenueTransactions.stream()
@@ -160,23 +153,17 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
     
     @Override
     public Map<String, Object> validateDiscountAccountingIntegrity(String branchCode) {
-        log.info("🔍 할인 회계 무결성 검증: BranchCode={}", branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🔍 할인 회계 무결성 검증: tenantId={}", tenantId);
         
         try {
-            String tenantId = TenantContextHolder.getRequiredTenantId();
-            
-            // 1. 매출 거래와 할인 거래 매칭 검증
+            // 1. 매출 거래와 할인 거래 매칭 검증 (테넌트 기반, branchCode 필터링 제거)
             var revenueTransactions = financialTransactionRepository
-                .findByTenantId(tenantId)
-                .stream()
-                .filter(ft -> "INCOME".equals(ft.getTransactionType()) && branchCode.equals(ft.getBranchCode()))
-                .collect(Collectors.toList());
+                .findByTenantIdAndTransactionTypeAndIsDeletedFalse(tenantId, FinancialTransaction.TransactionType.INCOME);
             
             var discountTransactions = financialTransactionRepository
-                .findByTenantId(tenantId)
-                .stream()
-                .filter(ft -> "DISCOUNT".equals(ft.getTransactionType()) && branchCode.equals(ft.getBranchCode()))
-                .collect(Collectors.toList());
+                .findByTenantIdAndTransactionTypeAndIsDeletedFalse(tenantId, FinancialTransaction.TransactionType.DISCOUNT);
             
             // 2. 무결성 검증
             Map<String, Object> integrityCheck = new HashMap<>();
@@ -204,13 +191,13 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
             result.put("data", integrityCheck);
             result.put("message", "할인 회계 무결성 검증 완료");
             
-            log.info("✅ 할인 회계 무결성 검증 완료: BranchCode={}, MatchedPairs={}/{}", 
-                     branchCode, matchedPairs, revenueTransactions.size());
+            log.info("✅ 할인 회계 무결성 검증 완료: tenantId={}, MatchedPairs={}/{}", 
+                     tenantId, matchedPairs, revenueTransactions.size());
             
             return result;
             
         } catch (Exception e) {
-            log.error("❌ 할인 회계 무결성 검증 실패: BranchCode={}, 오류={}", branchCode, e.getMessage(), e);
+            log.error("❌ 할인 회계 무결성 검증 실패: tenantId={}, 오류={}", tenantId, e.getMessage(), e);
             
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);

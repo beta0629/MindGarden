@@ -247,6 +247,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
     
+    /**
      * 상담사별 급여 계산 내역 조회 (프론트엔드 호환성)
      */
     @Override

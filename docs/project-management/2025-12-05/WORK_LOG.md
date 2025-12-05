@@ -2223,6 +2223,17 @@ if (user.getBranchCode() != null && branchRepository != null) {
   - `executeMonthlySalaryBatch` 메서드에서 branchCode 파라미터 무시
   - `getTargetConsultants` 메서드에서 branchCode 필터링 제거, 테넌트 전체 상담사 조회
   - `getBatchStatus` 메서드에서 branchCode 필터링 제거
+- [x] DiscountAccountingServiceImpl: branchCode 사용 제거
+  - `getRefundableDiscounts` 메서드에서 branchCode 파라미터 무시
+  - `getDiscountRefundStatistics` 메서드에서 branchCode 파라미터 무시
+- [x] ErpServiceImpl: branchCode 사용 제거
+  - `getBranchFinanceDashboard` (2개 오버로드) 메서드에서 branchCode 필터링 제거
+  - `getBranchFinanceStatistics` 메서드에서 branchCode 필터링 제거
+  - `getBranchErpStatisticsBySession` 메서드에서 branchCode 파라미터 무시
+  - `getBalanceSheet` 메서드에서 branchCode 필터링 제거
+  - `getIncomeStatement` 메서드에서 branchCode 필터링 제거
+  - `getDailyFinanceReport` 메서드에서 branchCode 필터링 제거, 테넌트 기반 조회로 변경
+  - `getMonthlyFinanceReport` 메서드에서 branchCode 필터링 제거, 테넌트 기반 조회로 변경
 
 **작업 계획**:
 1. ✅ AdminServiceImpl: branchCode 사용 제거 (완료)
@@ -2237,9 +2248,11 @@ if (user.getBranchCode() != null && branchRepository != null) {
 10. ✅ ClientStatsServiceImpl: branchCode 응답 제거 (완료)
 11. ✅ SalaryManagementServiceImpl: branchCode 사용 제거 (완료)
 12. ✅ SalaryBatchServiceImpl: branchCode 사용 제거 (완료)
-13. ⏳ 다른 Service 파일들 순차적 처리
+13. ✅ DiscountAccountingServiceImpl: branchCode 사용 제거 (완료)
+14. ✅ ErpServiceImpl: branchCode 사용 제거 (완료)
+15. ⏳ 다른 Service 파일들 순차적 처리
 
-**진행률**: 80% (12/15 핵심 서비스 완료)
+**진행률**: 93% (14/15 핵심 서비스 완료)
 
 ---
 

@@ -83,7 +83,7 @@ public class AdminController extends BaseApiController {
     private final CommonCodeService commonCodeService;
     private final StatusCodeHelper statusCodeHelper;
 
-    
+    /**
      * 상담사 통계 정보 조회 (캐시 사용)
      * GET /api/admin/consultants/with-stats/{id}
      */
@@ -96,6 +96,7 @@ public class AdminController extends BaseApiController {
         return success(stats);
     }
     
+    /**
      * 전체 상담사 통계 정보 조회 (테넌트별 필터링)
      * GET /api/admin/consultants/with-stats
      */
@@ -127,7 +128,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
     
-    
+    /**
      * 내담자 통계 정보 조회 (캐시 사용)
      * GET /api/admin/clients/with-stats/{id}
      */
@@ -140,6 +141,7 @@ public class AdminController extends BaseApiController {
         return success(stats);
     }
     
+    /**
      * 전체 내담자 통계 정보 조회 (캐시 사용 + 지점별 필터링)
      * GET /api/admin/clients/with-stats
      */
@@ -171,6 +173,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
     
+    /**
      * 회기관리 통계 조회
      */
     @GetMapping("/sessions/statistics")
@@ -187,6 +190,7 @@ public class AdminController extends BaseApiController {
         return success(statistics);
     }
 
+    /**
      * 회기관리 목록 조회
      */
     @GetMapping("/sessions")
@@ -206,7 +210,8 @@ public class AdminController extends BaseApiController {
         
         return success(data);
     }
-
+    
+    /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
      */
     @GetMapping("/consultants")
@@ -235,7 +240,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
     
-    
+    /**
      * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
      */
     @GetMapping("/consultants/with-vacation")
@@ -256,6 +261,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+    /**
      * 상담사별 휴가 통계 조회
      */
     @GetMapping("/vacation-statistics")
@@ -277,6 +283,7 @@ public class AdminController extends BaseApiController {
         return success(vacationStats);
     }
 
+    /**
      * 내담자 목록 조회
      */
     @GetMapping("/clients")
@@ -302,6 +309,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+    /**
      * 통합 내담자 데이터 조회 (매칭 정보, 결제 상태, 남은 세션 등 포함)
      */
     @GetMapping("/clients/with-mapping-info")
@@ -333,6 +341,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+    /**
      * 상담사별 매칭된 내담자 목록 조회 (스케줄 등록용)
      */
     @GetMapping("/mappings/consultant/{consultantId}/clients")
@@ -422,6 +431,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+    /**
      * 내담자별 매칭 조회
      */
     @GetMapping("/mappings/client")
@@ -467,6 +477,7 @@ public class AdminController extends BaseApiController {
         return success("내담자별 매칭 조회 성공", data);
     }
 
+    /**
      * 매칭 통계 정보 조회 (위젯용)
      * GET /api/admin/mappings/stats
      */
@@ -514,6 +525,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+    /**
      * 오늘의 통계 조회 (위젯용)
      * GET /api/admin/today-stats
      */
@@ -568,6 +580,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+    /**
      * 입금 대기 통계 조회 (위젯용)
      * GET /api/admin/pending-deposit-stats
      */
@@ -621,6 +634,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+    /**
      * 오늘의 스케줄 조회 (관리자용)
      * GET /api/admin/schedules/today
      */
@@ -2462,9 +2476,7 @@ public class AdminController extends BaseApiController {
                 "message", "상담일지 삭제에 실패했습니다: " + e.getMessage()
             ));
         }
-    }
-    
-     * 중복 매칭 조회
+    }\1/**\n\1 * 중복 매칭 조회
      */
     @GetMapping("/duplicate-mappings")
     public ResponseEntity<ApiResponse<Map<String, Object>>> findDuplicateMappings(HttpSession session) {
@@ -2488,6 +2500,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
     
+    /**
      * 중복 매칭 통합
      */
     @PostMapping("/merge-duplicate-mappings")

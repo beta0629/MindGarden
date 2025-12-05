@@ -495,7 +495,7 @@ INSERT INTO common_codes (
 SELECT 
     t.tenant_id, 'ROLE', 'ADMIN', '사장', '사장', '요식업 사장 역할',
     1, TRUE, FALSE, 0, NOW(), NOW(),
-    '{"isAdmin": true, "roleType": "ADMIN", "isDefault": true, "businessType": "RESTAURANT"}' 
+    '{"isAdmin": true, "roleType": "ADMIN", "isDefault": true, "businessType": "FOOD_SERVICE"}' 
 FROM tenants t
 WHERE t.business_type = 'FOOD_SERVICE'
   AND NOT EXISTS (
@@ -510,7 +510,7 @@ INSERT INTO common_codes (
 SELECT 
     t.tenant_id, 'ROLE', 'CONSULTANT', '요리사', '요리사', '요리사 역할',
     2, TRUE, FALSE, 0, NOW(), NOW(),
-    '{"isAdmin": false, "roleType": "CONSULTANT", "isDefault": true, "businessType": "RESTAURANT"}' 
+    '{"isAdmin": false, "roleType": "CONSULTANT", "isDefault": true, "businessType": "FOOD_SERVICE"}' 
 FROM tenants t
 WHERE t.business_type = 'FOOD_SERVICE'
   AND NOT EXISTS (
@@ -525,7 +525,7 @@ INSERT INTO common_codes (
 SELECT 
     t.tenant_id, 'ROLE', 'CLIENT', '고객', '고객', '고객 역할',
     3, TRUE, FALSE, 0, NOW(), NOW(),
-    '{"isAdmin": false, "roleType": "CLIENT", "isDefault": true, "businessType": "RESTAURANT"}' 
+    '{"isAdmin": false, "roleType": "CLIENT", "isDefault": true, "businessType": "FOOD_SERVICE"}' 
 FROM tenants t
 WHERE t.business_type = 'FOOD_SERVICE'
   AND NOT EXISTS (
@@ -540,7 +540,7 @@ INSERT INTO common_codes (
 SELECT 
     t.tenant_id, 'ROLE', 'STAFF', '직원', '직원', '직원 역할',
     4, TRUE, FALSE, 0, NOW(), NOW(),
-    '{"isAdmin": false, "isStaff": true, "roleType": "STAFF", "isDefault": true, "businessType": "RESTAURANT"}' 
+    '{"isAdmin": false, "isStaff": true, "roleType": "STAFF", "isDefault": true, "businessType": "FOOD_SERVICE"}' 
 FROM tenants t
 WHERE t.business_type = 'FOOD_SERVICE'
   AND NOT EXISTS (

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { FaUsers, FaEdit, FaUser, FaUserTie, FaCrown, FaBuilding, FaSearch, FaFilter, FaSync, FaTimes } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
+import { USER_ROLES } from '../../constants/roles';
 // import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import SimpleLayout from '../layout/SimpleLayout';
@@ -135,8 +136,8 @@ const UserManagement = ({ onUpdate }) => {
     const handleRoleChange = async (e) => {
         e.preventDefault();
         
-        // 내담자→상담사 변경 시 확인 메시지
-        if (selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT') {
+        // 내담자→상담사 변경 시 확인 메시지 (표준화 2025-12-05: 상수 활용)
+        if (selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT) {
             const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(
                 `${selectedUser.name}님을 상담사로 변경하시겠습니까?\n\n` +
@@ -155,7 +156,7 @@ const UserManagement = ({ onUpdate }) => {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                const message = selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' 
+                const message = selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT 
                     ? `${selectedUser.name}님이 상담사로 성공적으로 변경되었습니다.`
                     : result.message || '사용자 역할이 성공적으로 변경되었습니다.';
                 toast(message, 'success');
@@ -244,10 +245,10 @@ const UserManagement = ({ onUpdate }) => {
                                 onChange={(e) => setSelectedRole(e.target.value)}
                             >
                                 <option value="">모든 역할</option>
-                                <option value="CLIENT">내담자</option>
-                                <option value="CONSULTANT">상담사</option>
-                                <option value="ADMIN">관리자</option>
-                                <option value="BRANCH_SUPER_ADMIN">최고관리자</option>
+                                <option value={USER_ROLES.CLIENT}>내담자</option>
+                                <option value={USER_ROLES.CONSULTANT}>상담사</option>
+                                <option value={USER_ROLES.ADMIN}>관리자</option>
+                                <option value={USER_ROLES.BRANCH_SUPER_ADMIN}>최고관리자</option>
                             </select>
                             <label className="user-mgmt-checkbox-label">
                                 <input

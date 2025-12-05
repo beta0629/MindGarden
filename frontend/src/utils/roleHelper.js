@@ -3,6 +3,8 @@
  * 백엔드에서 동적으로 역할 정보를 로드하여 사용
  */
 
+import { USER_ROLES } from '../constants/roles';
+
 let roleDataCache = null;
 let lastFetchTime = null;
 const CACHE_DURATION = 10 * 60 * 1000; // 10분 캐시
@@ -72,8 +74,8 @@ export const getRoleDisplayName = async (role, branchName = null) => {
         const roleInfo = roleData[role];
         
         if (roleInfo && roleInfo.displayName) {
-            // 지점 정보가 있는 경우 추가
-            if (branchName && (role === 'ADMIN' || role === 'BRANCH_MANAGER' || role === 'BRANCH_SUPER_ADMIN')) {
+            // 지점 정보가 있는 경우 추가 (표준화 2025-12-05: 상수 활용)
+            if (branchName && (role === USER_ROLES.ADMIN || role === USER_ROLES.BRANCH_MANAGER || role === USER_ROLES.BRANCH_SUPER_ADMIN)) {
                 return `${roleInfo.displayName} (${branchName})`;
             }
             return roleInfo.displayName;
@@ -95,8 +97,8 @@ export const getRoleDisplayNameEn = async (role, branchName = null) => {
         const roleInfo = roleData[role];
         
         if (roleInfo && roleInfo.displayNameEn) {
-            // 지점 정보가 있는 경우 추가
-            if (branchName && (role === 'ADMIN' || role === 'BRANCH_MANAGER' || role === 'BRANCH_SUPER_ADMIN')) {
+            // 지점 정보가 있는 경우 추가 (표준화 2025-12-05: 상수 활용)
+            if (branchName && (role === USER_ROLES.ADMIN || role === USER_ROLES.BRANCH_MANAGER || role === USER_ROLES.BRANCH_SUPER_ADMIN)) {
                 return `${roleInfo.displayNameEn} (${branchName})`;
             }
             return roleInfo.displayNameEn;

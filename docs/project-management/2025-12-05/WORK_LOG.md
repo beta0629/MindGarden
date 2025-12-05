@@ -3056,6 +3056,9 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
 - `feat: SalaryManagementController, SalaryConfigController, AuthController에 헬퍼 메서드 추가`
 - `feat: BranchPermissionServiceImpl, BranchCodeInitService에 헬퍼 메서드 추가 및 수정`
 - `feat: 모든 Controller/Service 파일에 헬퍼 메서드 추가 완료`
+- `feat: 비즈니스 타입별 테넌트 역할 코드 마이그레이션 추가`
+- `fix: 비즈니스 타입별 역할 코드 마이그레이션 수정 (FOOD_SERVICE, TAEKWONDO, TUTORING 추가)`
+- `fix: FOOD_SERVICE extra_data의 businessType 수정`
 
 ---
 

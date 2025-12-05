@@ -958,6 +958,13 @@ public class OnboardingServiceImpl implements OnboardingService {
         try {
             insertDefaultTenantCommonCodes(tenantId, actorId);
         } catch (Exception e) {
+            log.warn("⚠️ 기본 공통코드 삽입 실패 (건너뜀): {}", e.getMessage());
+        }
+        
+        try {
+            insertTenantRoleCodes(tenantId, businessType, actorId);
+        } catch (Exception e) {
+            log.warn("⚠️ 테넌트 역할 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
         log.info("ℹ️ 권한 그룹 할당은 프로시저에서 처리됨: tenantId={}", tenantId);
@@ -1117,6 +1124,113 @@ public class OnboardingServiceImpl implements OnboardingService {
         } catch (Exception e) {
                 tenantId, codeGroup, codeValue, e.getMessage());
             throw e; // 상위로 전파하여 개별 처리
+        }
+    }
+    
+    /**
+     * 테넌트별 비즈니스 타입별 역할 코드 생성
+     * 표준화 2025-12-05: 비즈니스 타입에 따라 역할 코드 자동 생성
+     * 
+     * @param tenantId 테넌트 ID
+     * @param businessType 비즈니스 타입
+     * @param createdBy 생성자 ID
+     */
+    private void insertTenantRoleCodes(String tenantId, String businessType, String createdBy) {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            log.warn("⚠️ 테넌트 ID가 없어 역할 코드 생성 건너뜁니다.");
+            return;
+        }
+        
+        if (businessType == null || businessType.trim().isEmpty()) {
+            log.warn("⚠️ 비즈니스 타입이 없어 역할 코드 생성 건너뜁니다: tenantId={}", tenantId);
+            return;
+        }
+        
+        log.info("🔄 테넌트 역할 코드 생성 시작: tenantId={}, businessType={}", tenantId, businessType);
+        
+        String createdByValue = createdBy != null ? createdBy : "SYSTEM_ONBOARDING";
+        int insertedCount = 0;
+        
+        try {
+            // 상담소(CONSULTATION)
+            if ("CONSULTATION".equals(businessType)) {
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "원장", "원장", "상담소 원장 역할",
+                    "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}", 1, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "상담사", "상담사", "상담사 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}", 2, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "내담자", "내담자", "내담자 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}", 3, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "사무원", "사무원", "사무원 역할",
+                    "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"CONSULTATION\"}", 4, createdByValue);
+                insertedCount = 4;
+            }
+            // 학원(ACADEMY)
+            else if ("ACADEMY".equals(businessType)) {
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "원장", "원장", "학원 원장 역할",
+                    "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}", 1, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "강사", "강사", "강사 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}", 2, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "학생", "학생", "학생 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}", 3, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "PARENT", "학부모", "학부모", "학부모 역할 (학원 전용)",
+                    "{\"isAdmin\": false, \"roleType\": \"PARENT\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}", 4, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "행정직원", "행정직원", "행정직원 역할",
+                    "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"ACADEMY\"}", 5, createdByValue);
+                insertedCount = 5;
+            }
+            // 요식업(FOOD_SERVICE)
+            else if ("FOOD_SERVICE".equals(businessType)) {
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "사장", "사장", "요식업 사장 역할",
+                    "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}", 1, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "요리사", "요리사", "요리사 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}", 2, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "고객", "고객", "고객 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}", 3, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "직원", "직원", "직원 역할",
+                    "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"FOOD_SERVICE\"}", 4, createdByValue);
+                insertedCount = 4;
+            }
+            // 태권도(TAEKWONDO)
+            else if ("TAEKWONDO".equals(businessType)) {
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "관장", "관장", "태권도 관장 역할",
+                    "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"TAEKWONDO\"}", 1, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "사범", "사범", "태권도 사범 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"TAEKWONDO\"}", 2, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "학생", "학생", "태권도 학생 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"TAEKWONDO\"}", 3, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "직원", "직원", "태권도 직원 역할",
+                    "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"TAEKWONDO\"}", 4, createdByValue);
+                insertedCount = 4;
+            }
+            // 과외(TUTORING)
+            else if ("TUTORING".equals(businessType)) {
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "원장", "원장", "과외 원장 역할",
+                    "{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"TUTORING\"}", 1, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "강사", "강사", "과외 강사 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"TUTORING\"}", 2, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "학생", "학생", "과외 학생 역할",
+                    "{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"TUTORING\"}", 3, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "직원", "직원", "과외 직원 역할",
+                    "{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"TUTORING\"}", 4, createdByValue);
+                insertedCount = 4;
+            }
+            // 기타 비즈니스 타입
+            else {
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "ADMIN", "관리자", "관리자", "관리자 역할",
+                    String.format("{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true, \"businessType\": \"%s\"}", businessType), 1, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CONSULTANT", "전문가", "전문가", "전문가 역할",
+                    String.format("{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true, \"businessType\": \"%s\"}", businessType), 2, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "CLIENT", "고객", "고객", "고객 역할",
+                    String.format("{\"isAdmin\": false, \"roleType\": \"CLIENT\", \"isDefault\": true, \"businessType\": \"%s\"}", businessType), 3, createdByValue);
+                insertCommonCodeIfNotExists(tenantId, "ROLE", "STAFF", "직원", "직원", "직원 역할",
+                    String.format("{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true, \"businessType\": \"%s\"}", businessType), 4, createdByValue);
+                insertedCount = 4;
+            }
+            
+            log.info("✅ 테넌트 역할 코드 생성 완료: tenantId={}, businessType={}, count={}", tenantId, businessType, insertedCount);
+        } catch (Exception e) {
+            log.error("❌ 테넌트 역할 코드 생성 실패: tenantId={}, businessType={}, error={}", tenantId, businessType, e.getMessage(), e);
+            throw e;
         }
     }
     

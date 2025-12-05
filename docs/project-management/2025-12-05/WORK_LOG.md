@@ -2211,6 +2211,18 @@ if (user.getBranchCode() != null && branchRepository != null) {
   - 응답 Map에서 branchCode 필드 제거 (주석 처리)
 - [x] ClientStatsServiceImpl: branchCode 응답 제거
   - 응답 Map에서 branchCode 필드 제거 (주석 처리)
+- [x] SalaryManagementServiceImpl: branchCode 사용 제거
+  - `getAllSalaryProfiles` 메서드에서 branchCode 필터링 제거
+  - `getConsultantsForSalary` 메서드에서 branchCode 필터링 제거, 테넌트 전체 상담사 조회
+  - `getSalaryCalculations` 메서드에서 branchCode 필터링 제거
+  - `getSalaryStatistics`, `getTopPerformers`, `calculateTotalSalaryCost` 메서드에서 branchCode 파라미터 무시
+  - `getSalaryCalculations(Long, String)` 메서드에서 branchCode 필터링 제거
+  - `getTaxDetails` 메서드에서 branchCode 검증 제거
+  - `getTaxStatistics` 메서드에서 branchCode 파라미터 무시
+- [x] SalaryBatchServiceImpl: branchCode 사용 제거
+  - `executeMonthlySalaryBatch` 메서드에서 branchCode 파라미터 무시
+  - `getTargetConsultants` 메서드에서 branchCode 필터링 제거, 테넌트 전체 상담사 조회
+  - `getBatchStatus` 메서드에서 branchCode 필터링 제거
 
 **작업 계획**:
 1. ✅ AdminServiceImpl: branchCode 사용 제거 (완료)
@@ -2223,9 +2235,11 @@ if (user.getBranchCode() != null && branchRepository != null) {
 8. ✅ StatisticsTestDataServiceImpl: branchCode 사용 제거 (완료)
 9. ✅ ConsultantStatsServiceImpl: branchCode 응답 제거 (완료)
 10. ✅ ClientStatsServiceImpl: branchCode 응답 제거 (완료)
-11. ⏳ 다른 Service 파일들 순차적 처리
+11. ✅ SalaryManagementServiceImpl: branchCode 사용 제거 (완료)
+12. ✅ SalaryBatchServiceImpl: branchCode 사용 제거 (완료)
+13. ⏳ 다른 Service 파일들 순차적 처리
 
-**진행률**: 67% (10/15 핵심 서비스 완료)
+**진행률**: 80% (12/15 핵심 서비스 완료)
 
 ---
 

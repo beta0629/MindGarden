@@ -42,7 +42,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     private final BranchService branchService;
     
     @Override
-    public List<ConsultantSalaryProfile> getAllSalaryProfiles(String branchCode) {
+    public List<ConsultantSalaryProfile> getAllSalaryProfiles() {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📋 급여 프로필 목록 조회: tenantId={}", tenantId);
         
@@ -82,7 +82,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
     
     @Override
-    public List<User> getConsultantsForSalary(String branchCode) {
+    public List<User> getConsultantsForSalary() {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("👥 급여용 상담사 목록 조회: tenantId={}", tenantId);
         
@@ -130,7 +130,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
     
     @Override
-    public List<SalaryCalculation> getSalaryCalculations(String branchCode, LocalDate startDate, LocalDate endDate) {
+    public List<SalaryCalculation> getSalaryCalculations(LocalDate startDate, LocalDate endDate) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📋 급여 계산 목록 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
@@ -180,11 +180,11 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
     
     @Override
-    public Map<String, Object> getSalaryStatistics(String branchCode, LocalDate startDate, LocalDate endDate) {
+    public Map<String, Object> getSalaryStatistics(LocalDate startDate, LocalDate endDate) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📊 급여 통계 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
-        List<SalaryCalculation> calculations = getSalaryCalculations(null, startDate, endDate); // branchCode는 레거시 호환용
+        List<SalaryCalculation> calculations = getSalaryCalculations(startDate, endDate);
         
         BigDecimal totalGrossSalary = calculations.stream()
                 .map(SalaryCalculation::getGrossSalary)
@@ -212,12 +212,12 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
     
     @Override
-    public List<Map<String, Object>> getTopPerformers(String branchCode, LocalDate startDate, LocalDate endDate, int limit) {
+    public List<Map<String, Object>> getTopPerformers(LocalDate startDate, LocalDate endDate, int limit) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("🏆 상위 성과자 조회: tenantId={}, Period={} ~ {}, Limit={}", 
                 tenantId, startDate, endDate, limit);
         
-        List<SalaryCalculation> calculations = getSalaryCalculations(null, startDate, endDate); // branchCode는 레거시 호환용
+        List<SalaryCalculation> calculations = getSalaryCalculations(startDate, endDate);
         
         return calculations.stream()
                 .sorted((a, b) -> b.getNetSalary().compareTo(a.getNetSalary()))
@@ -235,11 +235,11 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
     
     @Override
-    public BigDecimal calculateTotalSalaryCost(String branchCode, LocalDate startDate, LocalDate endDate) {
+    public BigDecimal calculateTotalSalaryCost(LocalDate startDate, LocalDate endDate) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("💰 총 급여 비용 계산: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
-        List<SalaryCalculation> calculations = getSalaryCalculations(null, startDate, endDate); // branchCode는 레거시 호환용
+        List<SalaryCalculation> calculations = getSalaryCalculations(startDate, endDate);
         
         return calculations.stream()
                 .map(SalaryCalculation::getNetSalary)
@@ -249,8 +249,9 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
      * 상담사별 급여 계산 내역 조회 (프론트엔드 호환성)
      */
     @Override
-    public List<SalaryCalculation> getSalaryCalculations(Long consultantId, String branchCode) {
-        log.info("💰 상담사별 급여 계산 조회: ConsultantId={}", consultantId);
+    public List<SalaryCalculation> getSalaryCalculations(Long consultantId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("💰 상담사별 급여 계산 조회: ConsultantId={}, tenantId={}", consultantId, tenantId);
         
         return salaryCalculationRepository.findAll().stream()
             .filter(calc -> calc.getConsultant().getId().equals(consultantId))
@@ -260,8 +261,9 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
      * 세금 상세 내역 조회 (프론트엔드 호환성)
      */
     @Override
-    public Map<String, Object> getTaxDetails(Long calculationId, String branchCode) {
-        log.info("💰 세금 상세 조회: CalculationId={}", calculationId);
+    public Map<String, Object> getTaxDetails(Long calculationId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("💰 세금 상세 조회: CalculationId={}, tenantId={}", calculationId, tenantId);
         
         SalaryCalculation calculation = salaryCalculationRepository.findById(calculationId)
             .orElseThrow(() -> new RuntimeException("급여 계산 정보를 찾을 수 없습니다: " + calculationId));
@@ -291,7 +293,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
      * 세금 통계 조회 (프론트엔드 호환성)
      */
     @Override
-    public Map<String, Object> getTaxStatistics(String period, String branchCode) {
+    public Map<String, Object> getTaxStatistics(String period) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("💰 세금 통계 조회: Period={}, tenantId={}", period, tenantId);
         
@@ -306,7 +308,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
         
-        List<SalaryCalculation> calculations = getSalaryCalculations(null, startDate, endDate); // branchCode는 레거시 호환용
+        List<SalaryCalculation> calculations = getSalaryCalculations(startDate, endDate);
         
         BigDecimal totalGrossSalary = calculations.stream()
             .map(SalaryCalculation::getGrossSalary)

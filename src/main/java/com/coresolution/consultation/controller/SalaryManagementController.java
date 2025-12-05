@@ -65,8 +65,7 @@ public class SalaryManagementController {
             User currentUser = SessionUtils.getCurrentUser(session);
             
             log.info("개별 급여 프로필 조회: 상담사 ID {}", consultantId);
-            String branchCode = currentUser.getBranchCode();
-            List<ConsultantSalaryProfile> profiles = salaryManagementService.getAllSalaryProfiles(branchCode);
+            List<ConsultantSalaryProfile> profiles = salaryManagementService.getAllSalaryProfiles();
             
             // 해당 상담사의 프로필 찾기
             ConsultantSalaryProfile consultantProfile = profiles.stream()
@@ -113,8 +112,7 @@ public class SalaryManagementController {
             }
             
             log.info("급여 프로필 조회: 사용자 {}, 지점 {}", currentUser.getName(), currentUser.getBranchCode());
-            String branchCode = currentUser.getBranchCode();
-            List<ConsultantSalaryProfile> profiles = salaryManagementService.getAllSalaryProfiles(branchCode);
+            List<ConsultantSalaryProfile> profiles = salaryManagementService.getAllSalaryProfiles();
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -147,8 +145,7 @@ public class SalaryManagementController {
             }
             
             log.info("상담사 목록 조회: 사용자 {}, 지점 {}", currentUser.getName(), currentUser.getBranchCode());
-            String branchCode = currentUser.getBranchCode();
-            List<User> consultants = salaryManagementService.getConsultantsForSalary(branchCode);
+            List<User> consultants = salaryManagementService.getConsultantsForSalary();
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -181,8 +178,7 @@ public class SalaryManagementController {
             }
             
             log.info("급여 계산 조회: 사용자 {}, 상담사 ID {}", currentUser.getName(), consultantId);
-            String branchCode = currentUser.getBranchCode();
-            List<SalaryCalculation> calculations = salaryManagementService.getSalaryCalculations(consultantId, branchCode);
+            List<SalaryCalculation> calculations = salaryManagementService.getSalaryCalculations(consultantId);
             
             // 엔티티를 DTO로 변환하여 JSON 직렬화 문제 해결
             List<Map<String, Object>> calculationDtos = calculations.stream()
@@ -272,8 +268,7 @@ public class SalaryManagementController {
             }
             
             log.info("세금 상세 조회: 사용자 {}, 계산 ID {}", currentUser.getName(), calculationId);
-            String branchCode = currentUser.getBranchCode();
-            Map<String, Object> taxDetails = salaryManagementService.getTaxDetails(calculationId, branchCode);
+            Map<String, Object> taxDetails = salaryManagementService.getTaxDetails(calculationId);
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -316,8 +311,7 @@ public class SalaryManagementController {
             }
             
             log.info("세금 통계 조회: 사용자 {}, 기간 {}", currentUser.getName(), period);
-            String branchCode = currentUser.getBranchCode();
-            Map<String, Object> statistics = salaryManagementService.getTaxStatistics(period, branchCode);
+            Map<String, Object> statistics = salaryManagementService.getTaxStatistics(period);
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -522,9 +516,8 @@ public class SalaryManagementController {
                 ));
             }
             
-            String branchCode = currentUser.getBranchCode();
             List<SalaryCalculation> calculations = salaryManagementService.getSalaryCalculations(
-                branchCode, startDate, endDate
+                startDate, endDate
             );
             
             return ResponseEntity.ok(Map.of(

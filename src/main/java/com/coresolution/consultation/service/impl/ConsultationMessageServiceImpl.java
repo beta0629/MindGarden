@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultationMessage;
 import com.coresolution.consultation.repository.ConsultationMessageRepository;
 import com.coresolution.consultation.service.ConsultationMessageService;
@@ -103,8 +104,8 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         message.setStatus("SENT");
         message.setSentAt(LocalDateTime.now());
         
-        // 발신자/수신자 ID 설정
-        if ("CONSULTANT".equals(senderType)) {
+        // 발신자/수신자 ID 설정 (표준화 2025-12-05: enum 활용)
+        if (UserRole.CONSULTANT.name().equals(senderType)) {
             message.setSenderId(consultantId);
             message.setReceiverId(clientId);
         } else {
@@ -150,13 +151,13 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         reply.setSentAt(LocalDateTime.now());
         reply.setReplyToMessageId(originalMessageId);
         
-        // 발신자/수신자 ID 설정 (원본과 반대)
-        if ("CONSULTANT".equals(originalMessage.getSenderType())) {
-            reply.setSenderType("CLIENT");
+        // 발신자/수신자 ID 설정 (원본과 반대) (표준화 2025-12-05: enum 활용)
+        if (UserRole.CONSULTANT.name().equals(originalMessage.getSenderType())) {
+            reply.setSenderType(UserRole.CLIENT.name());
             reply.setSenderId(originalMessage.getClientId());
             reply.setReceiverId(originalMessage.getConsultantId());
         } else {
-            reply.setSenderType("CONSULTANT");
+            reply.setSenderType(UserRole.CONSULTANT.name());
             reply.setSenderId(originalMessage.getConsultantId());
             reply.setReceiverId(originalMessage.getClientId());
         }

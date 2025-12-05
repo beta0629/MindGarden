@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.SystemNotification;
 import com.coresolution.consultation.entity.SystemNotificationRead;
 import com.coresolution.consultation.repository.SystemNotificationReadRepository;
@@ -38,10 +39,12 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         List<String> targetTypes = new ArrayList<>();
         targetTypes.add("ALL"); // 전체 공지는 모두 포함
         
-        if ("CONSULTANT".equals(userRole) || "ROLE_CONSULTANT".equals(userRole)) {
-            targetTypes.add("CONSULTANT");
-        } else if ("CLIENT".equals(userRole) || "ROLE_CLIENT".equals(userRole)) {
-            targetTypes.add("CLIENT");
+        // 표준화 2025-12-05: enum 활용
+        UserRole role = UserRole.fromString(userRole);
+        if (role == UserRole.CONSULTANT) {
+            targetTypes.add(UserRole.CONSULTANT.name());
+        } else if (role == UserRole.CLIENT) {
+            targetTypes.add(UserRole.CLIENT.name());
         }
         
         return targetTypes;

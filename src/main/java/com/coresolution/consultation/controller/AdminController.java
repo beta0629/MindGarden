@@ -1739,7 +1739,7 @@ public class AdminController extends BaseApiController {
                 currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
         
         List<Map<String, Object>> statistics;
-        if (currentUser.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 // ⚠️ 표준화 2025-12-05: isAdminRoleFromCommonCode()로 변경 필요 (공통코드 기반 동적 조회) && currentUser.getBranchCode() != null) {
+        if (isAdminRoleFromCommonCode(currentUser.getRole()) && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회 (역할: {}, 지점: {})", 
                     currentUser.getRole(), currentUser.getBranchCode());
             statistics = adminService.getConsultationCompletionStatisticsByBranch(period, currentUser.getBranchCode());
@@ -1850,7 +1850,7 @@ public class AdminController extends BaseApiController {
                 currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
         
         Map<String, Object> statistics;
-        if (currentUser.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 // ⚠️ 표준화 2025-12-05: isAdminRoleFromCommonCode()로 변경 필요 (공통코드 기반 동적 조회) && currentUser.getBranchCode() != null) {
+        if (isAdminRoleFromCommonCode(currentUser.getRole()) && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 스케줄만 조회 (역할: {}, 지점: {})", 
                     currentUser.getRole(), currentUser.getBranchCode());
             statistics = adminService.getScheduleStatisticsByBranch(currentUser.getBranchCode());
@@ -2523,7 +2523,7 @@ public class AdminController extends BaseApiController {
                 currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
         
         Map<String, Object> statistics;
-        if (currentUser.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 // ⚠️ 표준화 2025-12-05: isAdminRoleFromCommonCode()로 변경 필요 (공통코드 기반 동적 조회) && currentUser.getBranchCode() != null) {
+        if (isAdminRoleFromCommonCode(currentUser.getRole()) && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회 (역할: {}, 지점: {})", 
                     currentUser.getRole(), currentUser.getBranchCode());
             statistics = consultantRatingService.getAdminRatingStatisticsByBranch(currentUser.getBranchCode());
@@ -2864,6 +2864,73 @@ public class AdminController extends BaseApiController {
                 "success", false,
                 "message", "상담 이력 조회 중 오류가 발생했습니다: " + e.getMessage()
             ));
+        }
+    }
+    
+    /**
+     * 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
+     * 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
+     * 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음
+     * @param role 사용자 역할
+     * @return 관리자 역할 여부
+     */
+    private boolean isAdminRoleFromCommonCode(UserRole role) {
+        if (role == null) {
+            return false;
+        }
+        try {
+            // 공통코드에서 관리자 역할 목록 조회 (codeGroup='ROLE', extraData에 isAdmin=true)
+            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
+            if (roleCodes == null || roleCodes.isEmpty()) {
+                // 폴백: 표준 관리자 역할만 체크 (브랜치/HQ 개념 제거)
+                return role == UserRole.ADMIN || 
+                       role == UserRole.TENANT_ADMIN || 
+                       role == UserRole.PRINCIPAL || 
+                       role == UserRole.OWNER;
+            }
+            // 공통코드에서 관리자 역할인지 확인
+            String roleName = role.name();
+            return roleCodes.stream()
+                .anyMatch(code -> code.getCodeValue().equals(roleName) && 
+                              (code.getExtraData() != null && 
+                               (code.getExtraData().contains("\"isAdmin\":true") || 
+                                code.getExtraData().contains("\"roleType\":\"ADMIN\""))));
+        } catch (Exception e) {
+            log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
+            // 폴백: 표준 관리자 역할만 체크
+            return role == UserRole.ADMIN || 
+                   role == UserRole.TENANT_ADMIN || 
+                   role == UserRole.PRINCIPAL || 
+                   role == UserRole.OWNER;
+        }
+    }
+    
+    /**
+     * 공통코드에서 사무원 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
+     * BRANCH_MANAGER → STAFF로 통합
+     * @param role 사용자 역할
+     * @return 사무원 역할 여부
+     */
+    private boolean isStaffRoleFromCommonCode(UserRole role) {
+        if (role == null) {
+            return false;
+        }
+        try {
+            // 공통코드에서 사무원 역할 목록 조회
+            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
+            if (roleCodes == null || roleCodes.isEmpty()) {
+                return role == UserRole.STAFF;
+            }
+            // 공통코드에서 사무원 역할인지 확인
+            String roleName = role.name();
+            return roleCodes.stream()
+                .anyMatch(code -> code.getCodeValue().equals(roleName) && 
+                              (code.getExtraData() != null && 
+                               (code.getExtraData().contains("\"isStaff\":true") || 
+                                code.getExtraData().contains("\"roleType\":\"STAFF\""))));
+        } catch (Exception e) {
+            log.warn("공통코드에서 사무원 역할 조회 실패, 폴백 사용: {}", role, e);
+            return role == UserRole.STAFF;
         }
     }
 }

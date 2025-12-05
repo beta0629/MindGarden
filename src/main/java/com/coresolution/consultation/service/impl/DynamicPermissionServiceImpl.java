@@ -253,13 +253,12 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
         log.info("권한 캐시 새로고침");
         clearPermissionCache();
         
-        // 주요 권한들을 미리 캐시에 로드 (표준화 2025-12-05: enum 활용)
+        // 주요 권한들을 미리 캐시에 로드 (표준화 2025-12-05: 표준 관리자 역할만 사용)
         List<String> commonRoles = List.of(
             UserRole.ADMIN.name(), 
-            UserRole.BRANCH_SUPER_ADMIN.name(), 
-            UserRole.HQ_ADMIN.name(), 
-            UserRole.SUPER_HQ_ADMIN.name(), 
-            UserRole.HQ_MASTER.name()
+            UserRole.TENANT_ADMIN.name(), 
+            UserRole.PRINCIPAL.name(), 
+            UserRole.OWNER.name()
         );
         List<String> commonPermissions = List.of(
             "ACCESS_ERP_DASHBOARD", 

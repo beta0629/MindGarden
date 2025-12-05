@@ -181,13 +181,22 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "ACCESS_CONSULTATION_RECORDS"
         );
         
-        // 권한 매핑 생성 (표준화 2025-12-05: enum 활용)
-        createRolePermissions(UserRole.BRANCH_SUPER_ADMIN.name(), branchSuperAdminPermissions);
+        // 권한 매핑 생성 (표준화 2025-12-05: 표준 역할만 사용)
+        // 표준 관리자 역할 권한 설정
         createRolePermissions(UserRole.ADMIN.name(), adminPermissions);
+        createRolePermissions(UserRole.TENANT_ADMIN.name(), adminPermissions); // 테넌트 관리자는 ADMIN과 동일 권한
+        createRolePermissions(UserRole.PRINCIPAL.name(), adminPermissions); // 원장은 ADMIN과 동일 권한
+        createRolePermissions(UserRole.OWNER.name(), hqMasterPermissions); // 사장은 모든 권한
+        
+        // 레거시 역할 권한 설정 (하위 호환성 유지, 사용 금지)
+        // 표준화 2025-12-05: 레거시 역할은 더 이상 사용하지 않지만, 하위 호환성을 위해 권한은 유지
+        createRolePermissions(UserRole.BRANCH_SUPER_ADMIN.name(), branchSuperAdminPermissions);
         createRolePermissions(UserRole.BRANCH_ADMIN.name(), branchAdminPermissions);
         createRolePermissions(UserRole.HQ_ADMIN.name(), hqAdminPermissions);
         createRolePermissions(UserRole.SUPER_HQ_ADMIN.name(), superHqAdminPermissions);
         createRolePermissions(UserRole.HQ_MASTER.name(), hqMasterPermissions);
+        
+        // 일반 역할 권한 설정
         createRolePermissions(UserRole.CONSULTANT.name(), consultantPermissions);
         createRolePermissions(UserRole.CLIENT.name(), clientPermissions);
         

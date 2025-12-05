@@ -2625,10 +2625,39 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
    - 이전: `userRole != UserRole.HQ_MASTER && userRole != UserRole.BRANCH_SUPER_ADMIN`
    - 이후: `!userRole.isAdmin()`
 
+5. **PermissionManagementController 수정**
+   - 파일: `MindGarden/src/main/java/com/coresolution/consultation/controller/PermissionManagementController.java`
+   - 변경 내용: 레거시 역할 체크를 표준 역할로 변경
+   - `filterManageablePermissions`: 레거시 역할 체크를 `isAdmin()`으로 변경
+   - `setRolePermissions`: 레거시 역할 계층 구조를 표준 역할로 단순화
+
+6. **AdminRoleUtils 수정**
+   - 파일: `MindGarden/src/main/java/com/coresolution/consultation/util/AdminRoleUtils.java`
+   - 변경 내용: 표준 관리자 역할만 사용하도록 수정, 레거시 메서드 Deprecated 처리
+   - `ADMIN_ROLES`: 표준 관리자 역할만 포함
+   - `isHqAdmin()`, `isBranchAdmin()`, `isBranchSuperAdmin()`, `isHqMaster()`: Deprecated 처리
+
+7. **ErpController 수정**
+   - 파일: `MindGarden/src/main/java/com/coresolution/consultation/controller/ErpController.java`
+   - 변경 내용: 레거시 역할 체크(`HQ_MASTER`, `BRANCH_SUPER_ADMIN`, `SUPER_HQ_ADMIN`)를 `isAdmin()`으로 변경
+   - 모든 비용처리 권한 확인 메서드에서 표준 역할만 사용
+
+8. **AdminController 수정**
+   - 파일: `MindGarden/src/main/java/com/coresolution/consultation/controller/AdminController.java`
+   - 변경 내용: 레거시 역할 체크를 표준 역할로 변경
+   - 사용자 조회 및 역할 변경 권한 확인에서 표준 역할만 사용
+
 ### 남은 작업
 
-- `PermissionManagementController`: 레거시 역할 사용 부분 표준 역할로 변경 필요
 - 기타 Controller/Service 파일: 레거시 역할 사용 부분 표준 역할로 변경 필요
+  - `SuperAdminController`: 레거시 역할 사용 부분 수정 필요
+  - `HQBranchController`: 레거시 역할 사용 부분 수정 필요
+  - `ScheduleServiceImpl`: 레거시 역할 사용 부분 수정 필요
+  - `StoredProcedureServiceImpl`: 레거시 역할 사용 부분 수정 필요
+  - `PermissionInitializationServiceImpl`: 레거시 역할 사용 부분 수정 필요
+  - `WorkflowAutomationServiceImpl`: 레거시 역할 사용 부분 수정 필요
+  - `DynamicPermissionServiceImpl`: 레거시 역할 사용 부분 수정 필요
+  - 기타 Service 파일들
 - 레거시 역할 enum 정의: 하위 호환성을 위해 유지하되, 실제 코드에서는 사용하지 않도록 주석 추가 필요
 
 ### 참조 문서

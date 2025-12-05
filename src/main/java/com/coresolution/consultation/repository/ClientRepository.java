@@ -67,29 +67,32 @@ public interface ClientRepository extends BaseRepository<Client, Long> {
     List<Client> findByPreferredLanguage(@Param("language") String language);
     
     // === BaseRepository 메서드 오버라이드 ===
-    // Client 엔티티는 branchId 필드가 없음 (branchCode만 있음)
-    // findAllByTenantIdAndBranchId 메서드를 오버라이드하여 branchId를 무시하도록 함
+    // 브랜치 개념 제거: findAllByTenantIdAndBranchId 메서드는 Deprecated 처리됨 (표준화 2025-12-05)
     
     /**
      * 테넌트 ID로 활성 클라이언트 조회
-     * Client 엔티티는 branchId 필드가 없으므로 branchId를 무시
      * 
      * @param tenantId 테넌트 UUID
      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
      * @return 활성 클라이언트 목록
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findByTenantIdAndIsDeletedFalse(String)}를 사용하세요.
      */
+    @Deprecated
     @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (:branchId IS NULL OR 1=1)")
     List<Client> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
      * 테넌트 ID로 활성 클라이언트 조회 (페이징)
-     * Client 엔티티는 branchId 필드가 없으므로 branchId를 무시
      * 
      * @param tenantId 테넌트 UUID
      * @param branchId 지점 ID (무시됨, 쿼리에서 사용하지 않음)
      * @param pageable 페이징 정보
      * @return 활성 클라이언트 페이지
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link BaseRepository#findAllByTenantId(String, Pageable)}를 사용하세요.
      */
+    @Deprecated
     @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (:branchId IS NULL OR 1=1)")
     org.springframework.data.domain.Page<Client> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, org.springframework.data.domain.Pageable pageable);
 }

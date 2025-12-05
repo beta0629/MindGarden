@@ -880,8 +880,21 @@ public interface UserRepository extends BaseRepository<User, Long> {
     List<User> findByBranchAndIsDeletedFalseOrderByUsernameDeprecated(com.coresolution.consultation.entity.Branch branch);
     
     /**
-     * 지점별 사용자 수 조회 (tenantId 필터링)
+     * 테넌트별 사용자 수 조회 (브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @return 사용자 수
      */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false")
+    long countUsersByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * 지점별 사용자 수 조회 (tenantId 필터링)
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #countUsersByTenantId(String)}를 사용하세요.
+     */
+    @Deprecated
     @Query("SELECT u.branch.id, u.branch.branchName, COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName ORDER BY u.branch.branchName")
     List<Object[]> countUsersByBranch(@Param("tenantId") String tenantId);
     
@@ -893,8 +906,21 @@ public interface UserRepository extends BaseRepository<User, Long> {
     List<Object[]> countUsersByBranchDeprecated();
     
     /**
-     * 지점이 없는 사용자들 조회 (tenantId 필터링)
+     * 테넌트별 모든 사용자 조회 (브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @return 사용자 목록
      */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false ORDER BY u.username")
+    List<User> findAllUsersByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * 지점이 없는 사용자들 조회 (tenantId 필터링)
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findAllUsersByTenantId(String)}를 사용하세요.
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch IS NULL AND u.isDeleted = false ORDER BY u.username")
     List<User> findUsersWithoutBranch(@Param("tenantId") String tenantId);
     
@@ -906,8 +932,21 @@ public interface UserRepository extends BaseRepository<User, Long> {
     List<User> findUsersWithoutBranchDeprecated();
     
     /**
-     * 지점별 역할별 사용자 수 조회 (tenantId 필터링)
+     * 테넌트별 역할별 사용자 수 조회 (브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @return 역할별 사용자 수 목록 [role, count]
      */
+    @Query("SELECT u.role, COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.role ORDER BY u.role")
+    List<Object[]> countUsersByRole(@Param("tenantId") String tenantId);
+    
+    /**
+     * 지점별 역할별 사용자 수 조회 (tenantId 필터링)
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #countUsersByRole(String)}를 사용하세요.
+     */
+    @Deprecated
     @Query("SELECT u.branch.id, u.branch.branchName, u.role, COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName, u.role ORDER BY u.branch.branchName, u.role")
     List<Object[]> countUsersByBranchAndRole(@Param("tenantId") String tenantId);
     

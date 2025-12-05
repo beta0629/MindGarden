@@ -70,8 +70,22 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
     Page<Payment> findByRecipientIdAndIsDeletedFalse(Long recipientId, Pageable pageable);
     
     /**
-     * 지점 ID로 결제 목록 조회
+     * 테넌트별 결제 목록 조회 (브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @param pageable 페이징 정보
+     * @return 결제 페이지
      */
+    @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.isDeleted = false")
+    Page<Payment> findByTenantIdAndIsDeletedFalse(@Param("tenantId") String tenantId, Pageable pageable);
+    
+    /**
+     * 지점 ID로 결제 목록 조회
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findByTenantIdAndIsDeletedFalse(String, Pageable)}를 사용하세요.
+     */
+    @Deprecated
     Page<Payment> findByBranchIdAndIsDeletedFalse(Long branchId, Pageable pageable);
     
     /**
@@ -107,8 +121,25 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
             Long payerId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     
     /**
-     * 지점 ID와 날짜 범위로 결제 목록 조회
+     * 테넌트별 날짜 범위로 결제 목록 조회 (브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @param startDate 시작일
+     * @param endDate 종료일
+     * @param pageable 페이징 정보
+     * @return 결제 페이지
      */
+    @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.createdAt BETWEEN :startDate AND :endDate AND p.isDeleted = false")
+    Page<Payment> findByTenantIdAndCreatedAtBetweenAndIsDeletedFalse(
+            @Param("tenantId") String tenantId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    /**
+     * 지점 ID와 날짜 범위로 결제 목록 조회
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findByTenantIdAndCreatedAtBetweenAndIsDeletedFalse(String, LocalDateTime, LocalDateTime, Pageable)}를 사용하세요.
+     */
+    @Deprecated
     Page<Payment> findByBranchIdAndCreatedAtBetweenAndIsDeletedFalse(
             Long branchId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     
@@ -125,8 +156,21 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
     BigDecimal getTotalAmountByPayerId(@Param("payerId") Long payerId);
     
     /**
-     * 지점별 총 결제 금액 조회
+     * 테넌트별 총 결제 금액 조회 (브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @return 총 결제 금액
      */
+    @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.tenantId = :tenantId AND p.status = 'APPROVED' AND p.isDeleted = false")
+    BigDecimal getTotalAmountByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * 지점별 총 결제 금액 조회
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #getTotalAmountByTenantId(String)}를 사용하세요.
+     */
+    @Deprecated
     @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.branchId = :branchId AND p.status = 'APPROVED' AND p.isDeleted = false")
     BigDecimal getTotalAmountByBranchId(@Param("branchId") Long branchId);
     
@@ -171,8 +215,27 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
     List<Object[]> getMonthlyPaymentStatistics(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
     
     /**
-     * 지점별 월별 결제 통계 조회
+     * 테넌트별 월별 결제 통계 조회 (브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @param startDate 시작일
+     * @param endDate 종료일
+     * @return 월별 결제 통계 목록 [YEAR, MONTH, COUNT, SUM]
      */
+    @Query("SELECT YEAR(p.createdAt), MONTH(p.createdAt), COUNT(p), SUM(p.amount) " +
+           "FROM Payment p WHERE p.tenantId = :tenantId AND p.status = 'APPROVED' AND p.isDeleted = false " +
+           "AND p.createdAt BETWEEN :startDate AND :endDate " +
+           "GROUP BY YEAR(p.createdAt), MONTH(p.createdAt) " +
+           "ORDER BY YEAR(p.createdAt), MONTH(p.createdAt)")
+    List<Object[]> getTenantMonthlyPaymentStatistics(@Param("tenantId") String tenantId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    /**
+     * 지점별 월별 결제 통계 조회
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #getTenantMonthlyPaymentStatistics(String, LocalDateTime, LocalDateTime)}를 사용하세요.
+     */
+    @Deprecated
     @Query("SELECT p.branchId, YEAR(p.createdAt), MONTH(p.createdAt), COUNT(p), SUM(p.amount) " +
            "FROM Payment p WHERE p.status = 'APPROVED' AND p.isDeleted = false " +
            "AND p.createdAt BETWEEN :startDate AND :endDate " +
@@ -211,29 +274,32 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
     Long sumConfirmedAmountByCreatedAtBefore(LocalDateTime dateTime);
     
     // === BaseRepository 메서드 오버라이드 ===
-    // Payment 엔티티는 branchId 필드가 있음
-    // findAllByTenantIdAndBranchId 메서드를 @Query로 구현
+    // 브랜치 개념 제거: findAllByTenantIdAndBranchId 메서드는 Deprecated 처리됨 (표준화 2025-12-05)
     
     /**
      * 테넌트 ID와 지점 ID로 활성 결제 조회
-     * Payment 엔티티는 branchId 필드가 있음
      * 
      * @param tenantId 테넌트 UUID
      * @param branchId 지점 ID
      * @return 활성 결제 목록
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findByTenantIdAndIsDeletedFalse(String, Pageable)}를 사용하세요.
      */
+    @Deprecated
     @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.branchId = :branchId AND p.isDeleted = false")
     List<Payment> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
     /**
      * 테넌트 ID와 지점 ID로 활성 결제 조회 (페이징)
-     * Payment 엔티티는 branchId 필드가 있음
      * 
      * @param tenantId 테넌트 UUID
      * @param branchId 지점 ID
      * @param pageable 페이징 정보
      * @return 활성 결제 페이지
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findByTenantIdAndIsDeletedFalse(String, Pageable)}를 사용하세요.
      */
+    @Deprecated
     @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.branchId = :branchId AND p.isDeleted = false")
     Page<Payment> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);
 }

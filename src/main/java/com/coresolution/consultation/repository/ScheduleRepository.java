@@ -106,8 +106,22 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     List<Schedule> findByDateAndConsultantIdAndIsDeletedFalse(LocalDate date, Long consultantId);
     
     /**
-     * 날짜별 지점 스케줄 조회 (tenantId 필터링)
+     * 테넌트별 날짜별 스케줄 조회 (브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @param date 날짜
+     * @return 스케줄 목록
      */
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.date = :date AND s.isDeleted = false")
+    List<Schedule> findByTenantIdAndDate(@Param("tenantId") String tenantId, @Param("date") LocalDate date);
+    
+    /**
+     * 날짜별 지점 스케줄 조회 (tenantId 필터링)
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findByTenantIdAndDate(String, LocalDate)}를 사용하세요.
+     */
+    @Deprecated
     List<Schedule> findByTenantIdAndDateAndBranchCode(String tenantId, LocalDate date, String branchCode);
     
     /**

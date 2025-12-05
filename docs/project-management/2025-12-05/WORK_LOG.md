@@ -2136,15 +2136,39 @@ if (user.getBranchCode() != null && branchRepository != null) {
 - 새로운 메서드 추가 (브랜치 개념 제거)
 - 모든 Deprecated 메서드에 레거시 호환 주석 추가
 
-**진행률**: 약 30% (UserRepository 일부 완료)
+**진행률**: 100% (UserRepository 완료)
 
-**완료일**: 2025-12-05 (진행 중)
+**완료일**: 2025-12-05
+
+---
+
+#### 5. 다른 Repository 파일들 표준화 ✅
+
+**작업 내용**:
+- [x] ConsultantRepository: `findAllByTenantIdAndBranchId` 메서드 Deprecated 처리
+- [x] ScheduleRepository: `findByTenantIdAndDateAndBranchCode` Deprecated 처리 및 대체 메서드 추가
+- [x] ScheduleRepository: `findAllByTenantIdAndBranchId` 메서드 Deprecated 처리
+- [x] ClientRepository: `findAllByTenantIdAndBranchId` 메서드 Deprecated 처리
+- [x] PaymentRepository: 브랜치 관련 메서드들 Deprecated 처리 및 대체 메서드 추가
+  - `findByBranchIdAndIsDeletedFalse` → `findByTenantIdAndIsDeletedFalse`
+  - `findByBranchIdAndCreatedAtBetweenAndIsDeletedFalse` → `findByTenantIdAndCreatedAtBetweenAndIsDeletedFalse`
+  - `getTotalAmountByBranchId` → `getTotalAmountByTenantId`
+  - `getBranchMonthlyPaymentStatistics` → `getTenantMonthlyPaymentStatistics`
+  - `findAllByTenantIdAndBranchId` Deprecated 처리
+- [x] ConsultationMessageRepository: `findAllByTenantIdAndBranchId` 메서드 Deprecated 처리
+- [x] AlertRepository: `findAllByTenantIdAndBranchId` 메서드 Deprecated 처리
+- [x] ConsultationRepository: `findAllByTenantIdAndBranchId` 메서드 Deprecated 처리
+
+**처리 방식**:
+- 레거시 호환성을 위해 메서드는 유지하되 `@Deprecated` 표시
+- 새로운 메서드 추가 (브랜치 개념 제거)
+- 모든 Deprecated 메서드에 레거시 호환 주석 추가
+
+**완료일**: 2025-12-05
 
 ---
 
 **남은 작업**:
-- ⏳ UserRepository 나머지 브랜치 관련 메서드 Deprecated 처리
-- ⏳ 다른 Repository 파일들 브랜치 관련 메서드 검토 및 Deprecated 처리
 - ⏳ Entity에서 branchId 필드 검토 (레거시 호환)
 - ⏳ Service 계층에서 branchCode 사용 제거
 - ⏳ Frontend 브랜치 코드 제거

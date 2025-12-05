@@ -2072,17 +2072,13 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        // 어드민 또는 지점어드민 권한 확인
-        if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster() && 
-            !currentUser.getRole().equals(UserRole.BRANCH_SUPER_ADMIN)) {
+        // 관리자 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
+        if (!currentUser.getRole().isAdmin()) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        // 지점어드민인 경우 자신의 지점 사용자만 조회 가능
-        String targetBranchCode = branchCode;
-        if (currentUser.getRole().equals(UserRole.BRANCH_SUPER_ADMIN)) {
-            targetBranchCode = currentUser.getBranchCode();
-        }
+        // 지점코드 결정 (표준화 2025-12-05: 브랜치 개념 제거, tenantId만 사용)
+        String targetBranchCode = branchCode; // 레거시 호환용 (사용하지 않음)
         
         List<User> users = adminService.getUsers(includeInactive, role, targetBranchCode);
         
@@ -2131,10 +2127,8 @@ public class AdminController extends BaseApiController {
         
         // 어드민 또는 지점어드민 권한 확인
         UserRole userRole = currentUser.getRole();
-        boolean hasPermission = userRole.isAdmin() || userRole.isMaster() || 
-                              userRole.equals(UserRole.BRANCH_SUPER_ADMIN) ||
-                              userRole.equals(UserRole.HQ_ADMIN) ||
-                              userRole.equals(UserRole.SUPER_HQ_ADMIN);
+        // 표준화 2025-12-05: 표준 관리자 역할만 사용
+        boolean hasPermission = userRole.isAdmin();
         
         if (!hasPermission) {
             log.warn("❌ 사용자 역할 변경 권한 없음: role={}", userRole);

@@ -132,12 +132,14 @@ public enum UserRole {
         return this == HQ_SUPER_ADMIN || this == HQ_MASTER;
     }
     
-    // 모든 관리자 역할인지 확인
+    // 모든 관리자 역할인지 확인 (표준화 2025-12-05: 표준 관리자 역할만 체크)
+    // 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
+    // 레거시 역할(BRANCH_SUPER_ADMIN, HQ_ADMIN 등)은 더 이상 사용하지 않음
     public boolean isAdmin() {
-        return this == HQ_ADMIN || this == SUPER_HQ_ADMIN || this == HQ_MASTER ||
-               this == BRANCH_SUPER_ADMIN || this == ADMIN ||
-               this == HQ_SUPER_ADMIN || this == BRANCH_MANAGER || // 기존 호환성
-               this == PRINCIPAL || this == OWNER || this == TENANT_ADMIN; // 새로운 역할
+        return this == ADMIN || 
+               this == TENANT_ADMIN || 
+               this == PRINCIPAL || 
+               this == OWNER;
     }
     
     // 수퍼어드민 또는 일반 관리자인지 확인
@@ -175,10 +177,9 @@ public enum UserRole {
         return new UserRole[]{ADMIN, BRANCH_SUPER_ADMIN, HQ_MASTER}; // HQ_MASTER만 지점 내역 조회 가능
     }
     
-    // 모든 관리자 역할 목록 반환
+    // 모든 관리자 역할 목록 반환 (표준화 2025-12-05: 표준 관리자 역할만 반환)
     public static UserRole[] getAdminRoles() {
-        return new UserRole[]{ADMIN, HQ_ADMIN, SUPER_HQ_ADMIN, HQ_MASTER, BRANCH_SUPER_ADMIN,
-                              PRINCIPAL, OWNER, TENANT_ADMIN};
+        return new UserRole[]{ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER};
     }
     
     // 상담사 역할 목록 반환

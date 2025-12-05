@@ -249,20 +249,21 @@ public class PermissionManagementController extends BaseApiController {
     /**
      * 사용자 역할에 따라 관리 가능한 권한 필터링
      * 동적으로 데이터베이스에서 현재 사용자의 권한을 조회하여 필터링
+     * 표준화 2025-12-05: 표준 관리자 역할만 사용 (ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER)
      */
     private List<Map<String, Object>> filterManageablePermissions(String userRole, List<Map<String, Object>> allPermissions) {
         log.info("🔍 동적 권한 필터링 시작: 사용자 역할={}", userRole);
         
-        // HQ_MASTER는 모든 권한 관리 가능
-        if ("HQ_MASTER".equals(userRole)) {
-            log.info("✅ HQ_MASTER는 모든 권한 관리 가능");
+        // 표준 관리자 역할 확인 (표준화 2025-12-05: 레거시 역할 제거)
+        UserRole role = UserRole.fromString(userRole);
+        if (role != null && role.isAdmin()) {
+            log.info("✅ 표준 관리자 역할 {}은 모든 권한 관리 가능", userRole);
             return allPermissions;
         }
         
-        // SUPER_HQ_ADMIN, HQ_ADMIN, ADMIN, BRANCH_SUPER_ADMIN, BRANCH_ADMIN은 본인보다 하위 권한만 관리
-        // 여기서는 단순화하여 모든 권한을 반환 (추후 역할 계층 구조에 따라 필터링 가능)
-        log.info("✅ 사용자 역할 {}은 모든 권한 관리 가능", userRole);
-        return allPermissions;
+        // 관리자가 아닌 경우 빈 리스트 반환
+        log.warn("❌ 관리자 역할이 아님: {}", userRole);
+        return List.of();
     }
 
     /**
@@ -296,7 +297,7 @@ public class PermissionManagementController extends BaseApiController {
             throw new RuntimeException("roleName과 permissionCodes가 필요합니다.");
         }
         
-        // 역할 계층 구조에 따른 권한 변경 제한 (표준화 2025-12-05: enum 활용)
+        // 역할 계층 구조에 따른 권한 변경 제한 (표준화 2025-12-05: 표준 역할만 사용)
         UserRole roleNameEnum = UserRole.fromString(roleName);
         boolean canManageRole = false;
         
@@ -305,31 +306,13 @@ public class PermissionManagementController extends BaseApiController {
             log.info("✅ 자신의 역할 권한 변경 요청 - 허용");
             canManageRole = true;
         }
-        // HQ 마스터는 모든 역할 관리 가능
-        else if (currentUserRole == UserRole.HQ_MASTER) {
-            canManageRole = true;
-        }
-        // SUPER_HQ_ADMIN은 HQ_MASTER를 제외한 모든 역할 관리 가능
-        else if (currentUserRole == UserRole.SUPER_HQ_ADMIN) {
-            canManageRole = roleNameEnum != UserRole.HQ_MASTER;
-        }
-        // HQ_ADMIN은 본사 관리자 이하 역할 관리 가능
-        else if (currentUserRole == UserRole.HQ_ADMIN) {
-            canManageRole = roleNameEnum != UserRole.HQ_MASTER && roleNameEnum != UserRole.SUPER_HQ_ADMIN;
-        }
-        // ADMIN은 지점 관련 역할만 관리 가능
-        else if (currentUserRole == UserRole.ADMIN) {
-            canManageRole = roleNameEnum == UserRole.BRANCH_SUPER_ADMIN || roleNameEnum == UserRole.BRANCH_ADMIN || 
-                           roleNameEnum == UserRole.CONSULTANT || roleNameEnum == UserRole.CLIENT;
-        }
-        // BRANCH_SUPER_ADMIN은 지점 내 하위 역할만 관리 가능
-        else if (currentUserRole == UserRole.BRANCH_SUPER_ADMIN) {
-            canManageRole = roleNameEnum == UserRole.BRANCH_ADMIN || roleNameEnum == UserRole.CONSULTANT || 
-                           roleNameEnum == UserRole.CLIENT;
-        }
-        // BRANCH_ADMIN은 상담사, 내담자만 관리 가능
-        else if (currentUserRole == UserRole.BRANCH_ADMIN) {
-            canManageRole = roleNameEnum == UserRole.CONSULTANT || roleNameEnum == UserRole.CLIENT;
+        // 표준 관리자 역할은 다른 표준 관리자 역할과 일반 역할(CONSULTANT, CLIENT) 관리 가능
+        // 표준화 2025-12-05: 레거시 역할 제거, 표준 관리자 역할만 사용
+        else if (currentUserRole.isAdmin()) {
+            // 표준 관리자는 다른 표준 관리자 역할, 상담사, 내담자 역할 관리 가능
+            if (roleNameEnum.isAdmin() || roleNameEnum == UserRole.CONSULTANT || roleNameEnum == UserRole.CLIENT) {
+                canManageRole = true;
+            }
         }
         
         if (!canManageRole) {

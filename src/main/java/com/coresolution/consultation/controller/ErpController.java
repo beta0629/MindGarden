@@ -1733,28 +1733,15 @@ public class ErpController extends BaseApiController {
             @RequestParam(required = false) String branchCode,
             HttpSession session) {
         try {
-            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
+            // 관리자 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+            if (currentUser == null || !currentUser.getRole().isAdmin()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
             
-            // 브랜치 코드 결정
-            String targetBranchCode = null;
-            if (UserRole.HQ_MASTER.equals(currentUser.getRole()) || UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole())) {
-                // HQ 사용자는 요청된 브랜치 코드 사용 (없으면 전체)
-                targetBranchCode = branchCode;
-            } else {
-                // 지점 관리자는 자신의 브랜치만 조회
-                targetBranchCode = currentUser.getBranchCode();
-                if (targetBranchCode == null || targetBranchCode.isEmpty()) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "지점 코드가 없습니다.", "redirectToLogin", true));
-                }
-            }
+            // 브랜치 코드 결정 (표준화 2025-12-05: 브랜치 개념 제거, tenantId만 사용)
+            String targetBranchCode = branchCode; // 레거시 호환용 (사용하지 않음)
             
             log.info("대차대조표 조회 요청: {}, 브랜치: {}", reportDate, targetBranchCode);
             
@@ -1834,13 +1821,9 @@ public class ErpController extends BaseApiController {
             @Valid @RequestBody FinancialTransactionRequest request,
             HttpSession session) {
         try {
-            // 비용처리 권한 확인 (어드민, 지점 수퍼 관리자, HQ 마스터 허용)
+            // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || 
-                (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                 !UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                 !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) &&
-                 !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+            if (currentUser == null || !currentUser.getRole().isAdmin()) {
                 log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
@@ -1895,15 +1878,8 @@ public class ErpController extends BaseApiController {
                     .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
             
-            // 지점코드 결정: HQ_MASTER는 모든 지점, 나머지는 자신의 지점만
-            String targetBranchCode = branchCode;
-            UserRole role = currentUser.getRole();
-            
-            if (role != UserRole.HQ_MASTER && role != UserRole.SUPER_HQ_ADMIN) {
-                // 일반 관리자는 자신의 지점 데이터만 조회 가능
-                targetBranchCode = currentUser.getBranchCode();
-                log.info("📍 지점 관리자 권한: 자동으로 지점코드 설정 = {}", targetBranchCode);
-            }
+            // 지점코드 결정 (표준화 2025-12-05: 브랜치 개념 제거, tenantId만 사용)
+            String targetBranchCode = branchCode; // 레거시 호환용 (사용하지 않음)
             
             log.info("수입/지출 거래 목록 조회 요청: 지점={}", targetBranchCode);
             

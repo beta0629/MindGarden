@@ -2579,3 +2579,63 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
 
 **최종 업데이트**: 2025-12-05
 
+---
+
+## 표준화 문서 재검토 및 역할 표준 준수 작업
+
+**작업 시간**: 2025-12-05  
+**작업자**: AI Assistant  
+**작업 내용**: 표준화 문서(TENANT_ROLE_SYSTEM_STANDARD.md) 재검토 및 역할 표준 준수
+
+### 표준화 문서 확인 결과
+
+**표준 관리자 역할** (표준화 문서 기준):
+- `ADMIN`: 기본 관리자
+- `TENANT_ADMIN`: 테넌트 관리자
+- `PRINCIPAL`: 원장
+- `OWNER`: 사장
+
+**레거시 역할 사용 금지** (표준화 문서 기준):
+- ❌ `BRANCH_ADMIN`, `BRANCH_SUPER_ADMIN`, `BRANCH_MANAGER` (브랜치 개념 제거)
+- ❌ `HQ_ADMIN`, `SUPER_HQ_ADMIN`, `HQ_MASTER`, `HQ_SUPER_ADMIN` (본사 개념 제거)
+
+### 수정 완료 사항
+
+1. **UserRole.isAdmin() 메서드 수정**
+   - 파일: `MindGarden/src/main/java/com/coresolution/consultation/constant/UserRole.java`
+   - 변경 내용: 레거시 역할 제거, 표준 관리자 역할만 체크
+   - 이전: `HQ_ADMIN`, `SUPER_HQ_ADMIN`, `HQ_MASTER`, `BRANCH_SUPER_ADMIN` 등 포함
+   - 이후: `ADMIN`, `TENANT_ADMIN`, `PRINCIPAL`, `OWNER`만 체크
+
+2. **UserRole.getAdminRoles() 메서드 수정**
+   - 파일: `MindGarden/src/main/java/com/coresolution/consultation/constant/UserRole.java`
+   - 변경 내용: 표준 관리자 역할만 반환
+   - 이전: 레거시 역할 포함
+   - 이후: 표준 관리자 역할만 반환
+
+3. **SalaryBatchController 수정**
+   - 파일: `MindGarden/src/main/java/com/coresolution/consultation/controller/SalaryBatchController.java`
+   - 변경 내용: 레거시 역할 체크(`HQ_MASTER`, `BRANCH_SUPER_ADMIN`)를 `isAdmin()`으로 변경
+   - 이전: `userRole != UserRole.HQ_MASTER && userRole != UserRole.BRANCH_SUPER_ADMIN`
+   - 이후: `!userRole.isAdmin()`
+
+4. **SalaryConfigController 수정**
+   - 파일: `MindGarden/src/main/java/com/coresolution/consultation/controller/SalaryConfigController.java`
+   - 변경 내용: 레거시 역할 체크를 `isAdmin()`으로 변경 및 `UserRole` import 추가
+   - 이전: `userRole != UserRole.HQ_MASTER && userRole != UserRole.BRANCH_SUPER_ADMIN`
+   - 이후: `!userRole.isAdmin()`
+
+### 남은 작업
+
+- `PermissionManagementController`: 레거시 역할 사용 부분 표준 역할로 변경 필요
+- 기타 Controller/Service 파일: 레거시 역할 사용 부분 표준 역할로 변경 필요
+- 레거시 역할 enum 정의: 하위 호환성을 위해 유지하되, 실제 코드에서는 사용하지 않도록 주석 추가 필요
+
+### 참조 문서
+
+- `MindGarden/docs/standards/TENANT_ROLE_SYSTEM_STANDARD.md` (라인 1068-1093)
+  - 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
+  - 레거시 역할 사용 금지 명시
+
+**최종 업데이트**: 2025-12-05
+

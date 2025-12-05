@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.DailyHealingContent;
 import com.coresolution.consultation.entity.OpenAIUsageLog;
 import com.coresolution.consultation.repository.DailyHealingContentRepository;

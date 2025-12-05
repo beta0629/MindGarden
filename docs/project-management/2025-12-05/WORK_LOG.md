@@ -2527,15 +2527,22 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
    - 변경 전: `"ADMIN".equals(role) || "BRANCH_SUPER_ADMIN".equals(role) || ...`
    - 변경 후: `role.isAdmin()`
 
+### 완료된 작업
+
+1. ✅ **ScheduleServiceImpl 수정 완료**
+   - `getRoleCodeFromCommonCode("CLIENT")`, `getRoleCodeFromCommonCode("CONSULTANT")` → enum 활용
+   - 역할 비교 로직도 enum 활용으로 변경
+
 ### 다음 단계
 
-1. **Service 레이어 추가 검토**
-   - ScheduleServiceImpl의 `getRoleCodeFromCommonCode()` 사용 부분 검토
-   - 다른 서비스 파일들의 하드코딩 확인
+1. **남은 Backend 파일 검토** (진행 중)
+   - 다른 Controller/Service 파일들의 하드코딩 확인 및 수정
 
 2. **Frontend 역할 하드코딩 제거** (예정)
    - JavaScript 파일에서 역할 문자열 하드코딩 제거
    - 권한 시스템 API 활용
+
+**작업 진행률**: 약 50% (Backend Controller/Service 주요 파일 완료)
 
 **최종 업데이트**: 2025-12-05
 

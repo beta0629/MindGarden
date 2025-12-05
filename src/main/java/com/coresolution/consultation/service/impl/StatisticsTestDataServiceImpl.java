@@ -137,14 +137,16 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
     
     @Override
     public Map<String, Object> createCompletedConsultations(LocalDate targetDate, String branchCode, int completedCount) {
-        log.info("✅ 완료된 상담 데이터 생성 시작: date={}, branch={}, count={}", 
-                 targetDate, branchCode, completedCount);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("✅ 완료된 상담 데이터 생성 시작: date={}, tenantId={}, count={}", 
+                 targetDate, tenantId, completedCount);
         
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 해당 날짜/지점의 CONFIRMED 스케줄들 조회
-            List<Schedule> confirmedSchedules = scheduleRepository.findByDateAndBranchCode(targetDate, branchCode)
+            // 해당 날짜의 CONFIRMED 스케줄들 조회 (테넌트 기반)
+            List<Schedule> confirmedSchedules = scheduleRepository.findByTenantIdAndDate(tenantId, targetDate)
                 .stream()
                 .filter(s -> s.getStatus() == ScheduleStatus.CONFIRMED)
                 .collect(java.util.stream.Collectors.toList());
@@ -437,7 +439,9 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
     
     @Override
     public Map<String, Object> createDiverseTestScenarios(LocalDate targetDate, String branchCode) {
-        log.info("🎭 다양한 시나리오 테스트 데이터 생성 시작: date={}, branch={}", targetDate, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🎭 다양한 시나리오 테스트 데이터 생성 시작: date={}, tenantId={}", targetDate, tenantId);
         
         Map<String, Object> result = new HashMap<>();
         

@@ -1,5 +1,7 @@
 package com.coresolution.consultation.controller;
 
+// 표준화 2025-12-05: 브랜치/HQ 개념 제거, 역할 체크를 공통코드 기반 동적 조회로 통합 (TENANT_ROLE_SYSTEM_STANDARD.md 준수)
+
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -116,8 +118,8 @@ public class SalaryConfigController {
             
             // 급여 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
             if (!currentUser.getRole().isAdmin() && 
-                !currentUser.getRole().isBranchSuperAdmin() && 
-                !currentUser.getRole().isHeadquartersAdmin()) {
+                !currentUser.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 && 
+                !currentUser.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
                     "message", "급여 관리 권한이 없습니다."

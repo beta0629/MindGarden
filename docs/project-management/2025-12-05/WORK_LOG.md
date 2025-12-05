@@ -2973,5 +2973,66 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
 
 ---
 
-**최종 업데이트**: 2025-12-05 20:00
+---
+
+## 📋 2025-12-05 역할 시스템 통합 표준화 작업
+
+### 작업 개요
+- **목표**: 브랜치/HQ 개념 완전 제거 및 공통코드 기반 동적 역할 조회로 통합
+- **표준 문서**: 
+  - `TENANT_ROLE_SYSTEM_STANDARD.md` - 브랜치/HQ 개념 완전 제거
+  - `COMMON_CODE_SYSTEM_STANDARD.md` - 모든 역할은 공통코드에서 동적 조회
+
+### 레거시 역할 제거 및 통합
+- **브랜치 관련 역할 제거**:
+  - `BRANCH_ADMIN` → `ADMIN` (테넌트 관리자로 통합)
+  - `BRANCH_SUPER_ADMIN` → `ADMIN` (테넌트 관리자로 통합)
+  - `BRANCH_MANAGER` → `STAFF` (사무원으로 변경)
+- **HQ 관련 역할 제거**:
+  - `HQ_ADMIN` → `ADMIN` (본사 개념 제거)
+  - `SUPER_HQ_ADMIN` → `ADMIN` (본사 개념 제거)
+  - `HQ_MASTER` → `ADMIN` (본사 개념 제거)
+  - `HQ_SUPER_ADMIN` → `ADMIN` (본사 개념 제거)
+
+### 표준 관리자 역할
+- `ADMIN`: 기본 관리자
+- `TENANT_ADMIN`: 테넌트 관리자
+- `PRINCIPAL`: 원장
+- `OWNER`: 사장
+
+### 수정된 파일 (12개)
+1. `AdminController.java` - 레거시 역할 체크를 공통코드 기반으로 변경
+2. `AuthController.java` - 레거시 역할 체크 제거
+3. `SalaryConfigController.java` - 레거시 역할 체크 제거
+4. `SalaryManagementController.java` - 레거시 역할 체크 제거
+5. `ScheduleController.java` - 레거시 역할 체크 제거
+6. `BranchCodeInitService.java` - 브랜치 관련 역할 제거
+7. `BranchPermissionServiceImpl.java` - 브랜치 관련 역할 제거
+8. `CommonCodeConstants.java` - 역할 상수 정리
+9. `SecurityUtils.java` - 레거시 역할 체크 제거
+10. `ScheduleConstants.java` - 역할 상수 정리
+11. `UserRole.java` - 레거시 역할 메서드 @Deprecated 처리
+12. `UserRoles.java` - 레거시 역할 제거
+
+### 주요 변경 사항
+- **공통코드 기반 동적 역할 조회**: 모든 역할 체크를 `CommonCodeService`를 통한 동적 조회로 변경
+- **헬퍼 메서드 추가**: `isAdminRoleFromCommonCode()`, `isStaffRoleFromCommonCode()` 메서드 추가
+- **레거시 메서드 제거**: `isHeadquartersAdmin()`, `isBranchAdmin()` 등 레거시 메서드 사용 금지
+
+### 생성된 스크립트
+- `scripts/standardization/role_unified_standardization.py` - 통합 표준화 스크립트
+- `scripts/standardization/role_dynamic_standardization.py` - 동적 역할 조회 스크립트
+- `scripts/standardization/role_standardization.py` - 역할 표준화 스크립트
+
+### 다음 단계
+1. CommonCodeService 의존성 주입 확인
+2. 공통코드에 ROLE 코드 그룹 설정 확인
+3. 헬퍼 메서드 실제 구현 검토 및 테스트
+
+#### 커밋
+- `refactor: 브랜치/HQ 개념 제거 및 공통코드 기반 동적 역할 조회로 통합 (12개 파일)`
+
+---
+
+**최종 업데이트**: 2025-12-05 21:00
 

@@ -13,8 +13,8 @@ public final class UserRoles {
     public static final String CLIENT = "CLIENT";
     public static final String CONSULTANT = "CONSULTANT";
     public static final String ADMIN = "ADMIN";
-    public static final String HQ_MASTER = "HQ_MASTER";
-    public static final String BRANCH_MANAGER = "BRANCH_MANAGER";
+    public static final String HQ_MASTER = "ADMIN" // 표준화 2025-12-05: 브랜치/HQ 개념 제거;
+    public static final String BRANCH_MANAGER = "STAFF" // 표준화 2025-12-05: 브랜치/HQ 개념 제거;
     public static final String BRANCH_HQ_MASTER = "BRANCH_HQ_MASTER";
     
     // 역할 그룹
@@ -85,4 +85,136 @@ public final class UserRoles {
             default: return "알 수 없음";
         }
     }
+
+/**
+
+ * 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
+
+ * 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
+
+ * 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음
+
+ * @param role 사용자 역할
+
+ * @return 관리자 역할 여부
+
+ */
+
+private boolean isAdminRoleFromCommonCode(UserRole role) {
+
+    if (role == null) {
+
+        return false;
+
+    }
+
+    try {
+
+        // 공통코드에서 관리자 역할 목록 조회 (codeGroup='ROLE', extraData에 isAdmin=true)
+
+        List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
+
+        if (roleCodes == null || roleCodes.isEmpty()) {
+
+            // 폴백: 표준 관리자 역할만 체크 (브랜치/HQ 개념 제거)
+
+            return role == UserRole.ADMIN || 
+
+                   role == UserRole.TENANT_ADMIN || 
+
+                   role == UserRole.PRINCIPAL || 
+
+                   role == UserRole.OWNER;
+
+        }
+
+        // 공통코드에서 관리자 역할인지 확인
+
+        String roleName = role.name();
+
+        return roleCodes.stream()
+
+            .anyMatch(code -> code.getCodeValue().equals(roleName) && 
+
+                          (code.getExtraData() != null && 
+
+                           (code.getExtraData().contains("\"isAdmin\":true") || 
+
+                            code.getExtraData().contains("\"roleType\":\"ADMIN\""))));
+
+    } catch (Exception e) {
+
+        log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
+
+        // 폴백: 표준 관리자 역할만 체크
+
+        return role == UserRole.ADMIN || 
+
+               role == UserRole.TENANT_ADMIN || 
+
+               role == UserRole.PRINCIPAL || 
+
+               role == UserRole.OWNER;
+
+    }
+
+}
+
+
+/**
+
+ * 공통코드에서 사무원 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
+
+ * BRANCH_MANAGER → STAFF로 통합
+
+ * @param role 사용자 역할
+
+ * @return 사무원 역할 여부
+
+ */
+
+private boolean isStaffRoleFromCommonCode(UserRole role) {
+
+    if (role == null) {
+
+        return false;
+
+    }
+
+    try {
+
+        // 공통코드에서 사무원 역할 목록 조회
+
+        List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
+
+        if (roleCodes == null || roleCodes.isEmpty()) {
+
+            return role == UserRole.STAFF;
+
+        }
+
+        // 공통코드에서 사무원 역할인지 확인
+
+        String roleName = role.name();
+
+        return roleCodes.stream()
+
+            .anyMatch(code -> code.getCodeValue().equals(roleName) && 
+
+                          (code.getExtraData() != null && 
+
+                           (code.getExtraData().contains("\"isStaff\":true") || 
+
+                            code.getExtraData().contains("\"roleType\":\"STAFF\""))));
+
+    } catch (Exception e) {
+
+        log.warn("공통코드에서 사무원 역할 조회 실패, 폴백 사용: {}", role, e);
+
+        return role == UserRole.STAFF;
+
+    }
+
+}
+
 }

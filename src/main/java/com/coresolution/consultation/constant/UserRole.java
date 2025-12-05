@@ -1,5 +1,7 @@
 package com.coresolution.consultation.constant;
 
+// 표준화 2025-12-05: 브랜치/HQ 개념 제거, 역할 체크를 공통코드 기반 동적 조회로 통합 (TENANT_ROLE_SYSTEM_STANDARD.md 준수)
+
 /**
  * 사용자 역할 enum 정의
  * 
@@ -226,20 +228,20 @@ public enum UserRole {
                 case "ROOT":
                 case "MASTER":
                     return HQ_MASTER;
-                case "HQ_ADMIN":
+                case "ADMIN" // 표준화 2025-12-05: 브랜치/HQ 개념 제거:
                 case "HEADQUARTERS_ADMIN":
                 case "HEADQUARTERSADMIN":
                     return HQ_ADMIN;
-                case "SUPER_HQ_ADMIN":
+                case "ADMIN" // 표준화 2025-12-05: 브랜치/HQ 개념 제거:
                 case "SUPER_HEADQUARTERS_ADMIN":
                 case "SUPERHEADQUARTERSADMIN":
                 case "HEADQUARTERS_SUPER_ADMIN":
                     return SUPER_HQ_ADMIN;
-                case "BRANCH_MANAGER":
+                case "STAFF" // 표준화 2025-12-05: 브랜치/HQ 개념 제거:
                 case "BRANCHMANAGER":
                 case "MANAGER":
                     return BRANCH_MANAGER;
-                case "BRANCH_SUPER_ADMIN":
+                case "ADMIN" // 표준화 2025-12-05: 브랜치/HQ 개념 제거:
                 case "BRANCHSUPERADMIN":
                 case "BRANCH_SUPERADMIN":
                     return BRANCH_SUPER_ADMIN;
@@ -260,4 +262,136 @@ public enum UserRole {
             }
         }
     }
+
+/**
+
+ * 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
+
+ * 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
+
+ * 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음
+
+ * @param role 사용자 역할
+
+ * @return 관리자 역할 여부
+
+ */
+
+private boolean isAdminRoleFromCommonCode(UserRole role) {
+
+    if (role == null) {
+
+        return false;
+
+    }
+
+    try {
+
+        // 공통코드에서 관리자 역할 목록 조회 (codeGroup='ROLE', extraData에 isAdmin=true)
+
+        List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
+
+        if (roleCodes == null || roleCodes.isEmpty()) {
+
+            // 폴백: 표준 관리자 역할만 체크 (브랜치/HQ 개념 제거)
+
+            return role == UserRole.ADMIN || 
+
+                   role == UserRole.TENANT_ADMIN || 
+
+                   role == UserRole.PRINCIPAL || 
+
+                   role == UserRole.OWNER;
+
+        }
+
+        // 공통코드에서 관리자 역할인지 확인
+
+        String roleName = role.name();
+
+        return roleCodes.stream()
+
+            .anyMatch(code -> code.getCodeValue().equals(roleName) && 
+
+                          (code.getExtraData() != null && 
+
+                           (code.getExtraData().contains("\"isAdmin\":true") || 
+
+                            code.getExtraData().contains("\"roleType\":\"ADMIN\""))));
+
+    } catch (Exception e) {
+
+        log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
+
+        // 폴백: 표준 관리자 역할만 체크
+
+        return role == UserRole.ADMIN || 
+
+               role == UserRole.TENANT_ADMIN || 
+
+               role == UserRole.PRINCIPAL || 
+
+               role == UserRole.OWNER;
+
+    }
+
+}
+
+
+/**
+
+ * 공통코드에서 사무원 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
+
+ * BRANCH_MANAGER → STAFF로 통합
+
+ * @param role 사용자 역할
+
+ * @return 사무원 역할 여부
+
+ */
+
+private boolean isStaffRoleFromCommonCode(UserRole role) {
+
+    if (role == null) {
+
+        return false;
+
+    }
+
+    try {
+
+        // 공통코드에서 사무원 역할 목록 조회
+
+        List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
+
+        if (roleCodes == null || roleCodes.isEmpty()) {
+
+            return role == UserRole.STAFF;
+
+        }
+
+        // 공통코드에서 사무원 역할인지 확인
+
+        String roleName = role.name();
+
+        return roleCodes.stream()
+
+            .anyMatch(code -> code.getCodeValue().equals(roleName) && 
+
+                          (code.getExtraData() != null && 
+
+                           (code.getExtraData().contains("\"isStaff\":true") || 
+
+                            code.getExtraData().contains("\"roleType\":\"STAFF\""))));
+
+    } catch (Exception e) {
+
+        log.warn("공통코드에서 사무원 역할 조회 실패, 폴백 사용: {}", role, e);
+
+        return role == UserRole.STAFF;
+
+    }
+
+}
+
 }

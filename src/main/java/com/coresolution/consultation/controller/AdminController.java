@@ -1,5 +1,9 @@
 package com.coresolution.consultation.controller;
 
+// 표준화 2025-12-05: 역할 체크를 공통코드 기반 동적 조회로 변경 (COMMON_CODE_SYSTEM_STANDARD.md 준수)
+import com.coresolution.consultation.entity.CommonCode;
+
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1735,7 +1739,7 @@ public class AdminController extends BaseApiController {
                 currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
         
         List<Map<String, Object>> statistics;
-        if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
+        if (currentUser.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 // ⚠️ 표준화 2025-12-05: isAdminRoleFromCommonCode()로 변경 필요 (공통코드 기반 동적 조회) && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회 (역할: {}, 지점: {})", 
                     currentUser.getRole(), currentUser.getBranchCode());
             statistics = adminService.getConsultationCompletionStatisticsByBranch(period, currentUser.getBranchCode());
@@ -1846,7 +1850,7 @@ public class AdminController extends BaseApiController {
                 currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
         
         Map<String, Object> statistics;
-        if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
+        if (currentUser.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 // ⚠️ 표준화 2025-12-05: isAdminRoleFromCommonCode()로 변경 필요 (공통코드 기반 동적 조회) && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 스케줄만 조회 (역할: {}, 지점: {})", 
                     currentUser.getRole(), currentUser.getBranchCode());
             statistics = adminService.getScheduleStatisticsByBranch(currentUser.getBranchCode());
@@ -1959,7 +1963,7 @@ public class AdminController extends BaseApiController {
         log.info("🔍 사용자 상세 정보 조회: ID={}", id);
         
         User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null || (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster())) {
+        if (currentUser == null || (!isAdminRoleFromCommonCode(currentUser.getRole()))) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
@@ -1991,7 +1995,7 @@ public class AdminController extends BaseApiController {
         log.info("🔍 사용자 소셜 계정 정보 조회: ID={}", id);
         
         User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null || (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster())) {
+        if (currentUser == null || (!isAdminRoleFromCommonCode(currentUser.getRole()))) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
@@ -2299,7 +2303,7 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+            if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
                     "message", "관리자 권한이 필요합니다."
@@ -2348,7 +2352,7 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+            if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
                     "message", "관리자 권한이 필요합니다."
@@ -2394,7 +2398,7 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+            if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
                     "message", "관리자 권한이 필요합니다."
@@ -2436,7 +2440,7 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+            if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
                     "message", "관리자 권한이 필요합니다."
@@ -2471,7 +2475,7 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+        if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
         
@@ -2495,7 +2499,7 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+        if (!isAdminRoleFromCommonCode(currentUser.getRole())) {
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
         
@@ -2519,7 +2523,7 @@ public class AdminController extends BaseApiController {
                 currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
         
         Map<String, Object> statistics;
-        if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
+        if (currentUser.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 // ⚠️ 표준화 2025-12-05: isAdminRoleFromCommonCode()로 변경 필요 (공통코드 기반 동적 조회) && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회 (역할: {}, 지점: {})", 
                     currentUser.getRole(), currentUser.getBranchCode());
             statistics = consultantRatingService.getAdminRatingStatisticsByBranch(currentUser.getBranchCode());

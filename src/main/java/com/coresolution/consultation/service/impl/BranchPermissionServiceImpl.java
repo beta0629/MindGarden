@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+// 표준화 2025-12-05: 브랜치/HQ 개념 제거, 역할 체크를 공통코드 기반 동적 조회로 통합 (TENANT_ROLE_SYSTEM_STANDARD.md 준수)
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -256,7 +258,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
         }
         
         UserRole role = user.getRole();
-        return role.isHeadquartersAdmin() || role.isMaster();
+        return role.isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 || role.isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거;
     }
     
     /**
@@ -268,7 +270,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
         }
         
         UserRole role = user.getRole();
-        return role.isBranchAdmin() || role.isBranchManager();
+        return role.isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거 || role.isStaffRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거;
     }
     
     /**

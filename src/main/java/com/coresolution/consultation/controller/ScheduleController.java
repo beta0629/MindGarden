@@ -1,5 +1,7 @@
 package com.coresolution.consultation.controller;
 
+// 표준화 2025-12-05: 브랜치/HQ 개념 제거, 역할 체크를 공통코드 기반 동적 조회로 통합 (TENANT_ROLE_SYSTEM_STANDARD.md 준수)
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -215,9 +217,9 @@ public class ScheduleController extends BaseApiController {
         debugInfo.put("roleName", currentUser.getRole().name());
         debugInfo.put("roleDisplayName", currentUser.getRole().getDisplayName());
         debugInfo.put("isAdmin", currentUser.getRole().isAdmin());
-        debugInfo.put("isBranchManager", currentUser.getRole().isBranchManager());
-        debugInfo.put("isHeadquartersAdmin", currentUser.getRole().isHeadquartersAdmin());
-        debugInfo.put("isBranchSuperAdmin", currentUser.getRole().isBranchSuperAdmin());
+        debugInfo.put("isBranchManager", currentUser.getRole().isStaffRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거);
+        debugInfo.put("isHeadquartersAdmin", currentUser.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거);
+        debugInfo.put("isBranchSuperAdmin", currentUser.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거);
         debugInfo.put("branchCode", currentUser.getBranchCode());
         
         return success(debugInfo);

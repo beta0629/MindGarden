@@ -1,5 +1,9 @@
 package com.coresolution.consultation.controller;
 
+// 표준화 2025-12-05: 브랜치/HQ 개념 제거, 역할 체크를 공통코드 기반 동적 조회로 통합 (TENANT_ROLE_SYSTEM_STANDARD.md 준수)
+import com.coresolution.consultation.entity.CommonCode;
+
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +55,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/auth") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
-public class AuthController extends BaseApiController {
+public class AuthController
+    private final CommonCodeService commonCodeService;
+ extends BaseApiController {
     
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserRepository userRepository;
@@ -1090,7 +1096,7 @@ public class AuthController extends BaseApiController {
                 }
             } else if (request.getLoginType() == BranchLoginRequest.LoginType.HEADQUARTERS) {
                 // 본사 로그인인 경우, 본사 관리자 역할인지 확인
-                if (!user.getRole().isHeadquartersAdmin()) {
+                if (!user.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거) {
                     throw new IllegalArgumentException("본사 로그인은 본사 관리자만 가능합니다.");
                 }
             }
@@ -1381,7 +1387,7 @@ public class AuthController extends BaseApiController {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             
             // 본사 관리자 역할인지 확인
-            if (!user.getRole().isHeadquartersAdmin()) {
+            if (!user.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거) {
                 throw new IllegalArgumentException("본사 로그인은 본사 관리자만 가능합니다.");
             }
             

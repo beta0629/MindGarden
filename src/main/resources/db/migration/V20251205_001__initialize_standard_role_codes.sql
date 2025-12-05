@@ -487,7 +487,7 @@ WHERE t.business_type = 'ACADEMY'
     WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'STAFF'
   );
 
--- 요식업(RESTAURANT) 비즈니스 타입 테넌트에 역할 코드 생성
+-- 요식업(FOOD_SERVICE) 비즈니스 타입 테넌트에 역할 코드 생성
 INSERT INTO common_codes (
     tenant_id, code_group, code_value, code_label, korean_name, code_description, 
     sort_order, is_active, is_deleted, version, created_at, updated_at, extra_data
@@ -497,7 +497,7 @@ SELECT
     1, TRUE, FALSE, 0, NOW(), NOW(),
     '{"isAdmin": true, "roleType": "ADMIN", "isDefault": true, "businessType": "RESTAURANT"}' 
 FROM tenants t
-WHERE t.business_type = 'RESTAURANT'
+WHERE t.business_type = 'FOOD_SERVICE'
   AND NOT EXISTS (
     SELECT 1 FROM common_codes 
     WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'ADMIN'
@@ -512,7 +512,7 @@ SELECT
     2, TRUE, FALSE, 0, NOW(), NOW(),
     '{"isAdmin": false, "roleType": "CONSULTANT", "isDefault": true, "businessType": "RESTAURANT"}' 
 FROM tenants t
-WHERE t.business_type = 'RESTAURANT'
+WHERE t.business_type = 'FOOD_SERVICE'
   AND NOT EXISTS (
     SELECT 1 FROM common_codes 
     WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'CONSULTANT'
@@ -527,7 +527,7 @@ SELECT
     3, TRUE, FALSE, 0, NOW(), NOW(),
     '{"isAdmin": false, "roleType": "CLIENT", "isDefault": true, "businessType": "RESTAURANT"}' 
 FROM tenants t
-WHERE t.business_type = 'RESTAURANT'
+WHERE t.business_type = 'FOOD_SERVICE'
   AND NOT EXISTS (
     SELECT 1 FROM common_codes 
     WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'CLIENT'
@@ -542,7 +542,129 @@ SELECT
     4, TRUE, FALSE, 0, NOW(), NOW(),
     '{"isAdmin": false, "isStaff": true, "roleType": "STAFF", "isDefault": true, "businessType": "RESTAURANT"}' 
 FROM tenants t
-WHERE t.business_type = 'RESTAURANT'
+WHERE t.business_type = 'FOOD_SERVICE'
+  AND NOT EXISTS (
+    SELECT 1 FROM common_codes 
+    WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'STAFF'
+  );
+
+-- 태권도(TAEKWONDO) 비즈니스 타입 테넌트에 역할 코드 생성
+INSERT INTO common_codes (
+    tenant_id, code_group, code_value, code_label, korean_name, code_description, 
+    sort_order, is_active, is_deleted, version, created_at, updated_at, extra_data
+)
+SELECT 
+    t.tenant_id, 'ROLE', 'ADMIN', '관장', '관장', '태권도 관장 역할',
+    1, TRUE, FALSE, 0, NOW(), NOW(),
+    '{"isAdmin": true, "roleType": "ADMIN", "isDefault": true, "businessType": "TAEKWONDO"}' 
+FROM tenants t
+WHERE t.business_type = 'TAEKWONDO'
+  AND NOT EXISTS (
+    SELECT 1 FROM common_codes 
+    WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'ADMIN'
+  );
+
+INSERT INTO common_codes (
+    tenant_id, code_group, code_value, code_label, korean_name, code_description, 
+    sort_order, is_active, is_deleted, version, created_at, updated_at, extra_data
+)
+SELECT 
+    t.tenant_id, 'ROLE', 'CONSULTANT', '사범', '사범', '태권도 사범 역할',
+    2, TRUE, FALSE, 0, NOW(), NOW(),
+    '{"isAdmin": false, "roleType": "CONSULTANT", "isDefault": true, "businessType": "TAEKWONDO"}' 
+FROM tenants t
+WHERE t.business_type = 'TAEKWONDO'
+  AND NOT EXISTS (
+    SELECT 1 FROM common_codes 
+    WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'CONSULTANT'
+  );
+
+INSERT INTO common_codes (
+    tenant_id, code_group, code_value, code_label, korean_name, code_description, 
+    sort_order, is_active, is_deleted, version, created_at, updated_at, extra_data
+)
+SELECT 
+    t.tenant_id, 'ROLE', 'CLIENT', '학생', '학생', '태권도 학생 역할',
+    3, TRUE, FALSE, 0, NOW(), NOW(),
+    '{"isAdmin": false, "roleType": "CLIENT", "isDefault": true, "businessType": "TAEKWONDO"}' 
+FROM tenants t
+WHERE t.business_type = 'TAEKWONDO'
+  AND NOT EXISTS (
+    SELECT 1 FROM common_codes 
+    WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'CLIENT'
+  );
+
+INSERT INTO common_codes (
+    tenant_id, code_group, code_value, code_label, korean_name, code_description, 
+    sort_order, is_active, is_deleted, version, created_at, updated_at, extra_data
+)
+SELECT 
+    t.tenant_id, 'ROLE', 'STAFF', '직원', '직원', '태권도 직원 역할',
+    4, TRUE, FALSE, 0, NOW(), NOW(),
+    '{"isAdmin": false, "isStaff": true, "roleType": "STAFF", "isDefault": true, "businessType": "TAEKWONDO"}' 
+FROM tenants t
+WHERE t.business_type = 'TAEKWONDO'
+  AND NOT EXISTS (
+    SELECT 1 FROM common_codes 
+    WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'STAFF'
+  );
+
+-- 과외(TUTORING) 비즈니스 타입 테넌트에 역할 코드 생성
+INSERT INTO common_codes (
+    tenant_id, code_group, code_value, code_label, korean_name, code_description, 
+    sort_order, is_active, is_deleted, version, created_at, updated_at, extra_data
+)
+SELECT 
+    t.tenant_id, 'ROLE', 'ADMIN', '원장', '원장', '과외 원장 역할',
+    1, TRUE, FALSE, 0, NOW(), NOW(),
+    '{"isAdmin": true, "roleType": "ADMIN", "isDefault": true, "businessType": "TUTORING"}' 
+FROM tenants t
+WHERE t.business_type = 'TUTORING'
+  AND NOT EXISTS (
+    SELECT 1 FROM common_codes 
+    WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'ADMIN'
+  );
+
+INSERT INTO common_codes (
+    tenant_id, code_group, code_value, code_label, korean_name, code_description, 
+    sort_order, is_active, is_deleted, version, created_at, updated_at, extra_data
+)
+SELECT 
+    t.tenant_id, 'ROLE', 'CONSULTANT', '강사', '강사', '과외 강사 역할',
+    2, TRUE, FALSE, 0, NOW(), NOW(),
+    '{"isAdmin": false, "roleType": "CONSULTANT", "isDefault": true, "businessType": "TUTORING"}' 
+FROM tenants t
+WHERE t.business_type = 'TUTORING'
+  AND NOT EXISTS (
+    SELECT 1 FROM common_codes 
+    WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'CONSULTANT'
+  );
+
+INSERT INTO common_codes (
+    tenant_id, code_group, code_value, code_label, korean_name, code_description, 
+    sort_order, is_active, is_deleted, version, created_at, updated_at, extra_data
+)
+SELECT 
+    t.tenant_id, 'ROLE', 'CLIENT', '학생', '학생', '과외 학생 역할',
+    3, TRUE, FALSE, 0, NOW(), NOW(),
+    '{"isAdmin": false, "roleType": "CLIENT", "isDefault": true, "businessType": "TUTORING"}' 
+FROM tenants t
+WHERE t.business_type = 'TUTORING'
+  AND NOT EXISTS (
+    SELECT 1 FROM common_codes 
+    WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'CLIENT'
+  );
+
+INSERT INTO common_codes (
+    tenant_id, code_group, code_value, code_label, korean_name, code_description, 
+    sort_order, is_active, is_deleted, version, created_at, updated_at, extra_data
+)
+SELECT 
+    t.tenant_id, 'ROLE', 'STAFF', '직원', '직원', '과외 직원 역할',
+    4, TRUE, FALSE, 0, NOW(), NOW(),
+    '{"isAdmin": false, "isStaff": true, "roleType": "STAFF", "isDefault": true, "businessType": "TUTORING"}' 
+FROM tenants t
+WHERE t.business_type = 'TUTORING'
   AND NOT EXISTS (
     SELECT 1 FROM common_codes 
     WHERE tenant_id = t.tenant_id AND code_group = 'ROLE' AND code_value = 'STAFF'

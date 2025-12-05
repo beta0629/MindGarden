@@ -3024,13 +3024,38 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
 - `scripts/standardization/role_dynamic_standardization.py` - 동적 역할 조회 스크립트
 - `scripts/standardization/role_standardization.py` - 역할 표준화 스크립트
 
+### 헬퍼 메서드 추가 완료 (2025-12-05 추가 작업) ✅
+
+**추가된 헬퍼 메서드**:
+- `isAdminRoleFromCommonCode(UserRole role)`: 공통코드에서 관리자 역할인지 동적 확인
+- `isStaffRoleFromCommonCode(UserRole role)`: 공통코드에서 사무원 역할인지 동적 확인
+
+**수정된 파일 (7개)**:
+1. `AdminController.java` - 헬퍼 메서드 추가, 주석 오류 수정
+2. `ScheduleController.java` - 헬퍼 메서드 추가, 잘못된 호출 방식 수정
+3. `SalaryManagementController.java` - 헬퍼 메서드 추가, 중복 호출 제거
+4. `SalaryConfigController.java` - 헬퍼 메서드 추가, 잘못된 호출 방식 수정
+5. `AuthController.java` - 헬퍼 메서드 추가, 문법 오류 수정 (CommonCodeService 필드 선언 위치)
+6. `BranchPermissionServiceImpl.java` - 헬퍼 메서드 추가, 잘못된 호출 방식 수정
+7. `BranchCodeInitService.java` - 문법 오류 수정 (CommonCodeService 필드 선언 위치)
+
+**주요 수정 사항**:
+- 잘못된 호출 방식 수정: `currentUser.getRole().isAdminRoleFromCommonCode()` → `isAdminRoleFromCommonCode(currentUser.getRole())`
+- 중복 호출 제거: `!currentUser.getRole().isAdminRoleFromCommonCode() && !currentUser.getRole().isAdminRoleFromCommonCode()` → `!isAdminRoleFromCommonCode(currentUser.getRole())`
+- `role.isAdmin()` → `isAdminRoleFromCommonCode(role)` 변경
+
 ### 다음 단계
-1. CommonCodeService 의존성 주입 확인
-2. 공통코드에 ROLE 코드 그룹 설정 확인
-3. 헬퍼 메서드 실제 구현 검토 및 테스트
+1. ✅ CommonCodeService 의존성 주입 확인 - 완료
+2. ✅ 헬퍼 메서드 실제 구현 검토 및 테스트 - 완료
+3. 공통코드에 ROLE 코드 그룹 설정 확인 및 데이터 마이그레이션
 
 #### 커밋
 - `refactor: 브랜치/HQ 개념 제거 및 공통코드 기반 동적 역할 조회로 통합 (12개 파일)`
+- `fix: AdminController 주석 오류 수정 및 헬퍼 메서드 완성`
+- `feat: ScheduleController에 헬퍼 메서드 추가 및 역할 체크 수정`
+- `feat: SalaryManagementController, SalaryConfigController, AuthController에 헬퍼 메서드 추가`
+- `feat: BranchPermissionServiceImpl, BranchCodeInitService에 헬퍼 메서드 추가 및 수정`
+- `feat: 모든 Controller/Service 파일에 헬퍼 메서드 추가 완료`
 
 ---
 

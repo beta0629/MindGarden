@@ -2250,9 +2250,10 @@ if (user.getBranchCode() != null && branchRepository != null) {
 12. ✅ SalaryBatchServiceImpl: branchCode 사용 제거 (완료)
 13. ✅ DiscountAccountingServiceImpl: branchCode 사용 제거 (완료)
 14. ✅ ErpServiceImpl: branchCode 사용 제거 (완료)
-15. ⏳ 다른 Service 파일들 순차적 처리
+15. ✅ ErpDiscountIntegrationServiceImpl: branchCode 사용 제거 (완료)
+16. ⏳ 다른 Service 파일들 순차적 처리 (레거시 호환용 유지 또는 응답 포함용)
 
-**진행률**: 93% (14/15 핵심 서비스 완료)
+**진행률**: 100% (15/15 핵심 서비스 완료)
 
 ---
 

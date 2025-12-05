@@ -2800,17 +2800,66 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
   - `color_hardcoding_removal.py`
   - `status_hardcoding_removal.py`
 
+### [2025-12-05 18:00] 표준화 작업 실제 적용 및 마이그레이션 가이드 작성
+
+#### 작업 내용
+1. **실제 CSS 변수 적용**
+   - `CommonCodeList.js`: 주석 제거 및 CSS 변수 적용
+     - `#6b7280` → `var(--mg-gray-500)` 변경
+     - 잘못된 주석 위치 수정 (코드 라인 내 주석 → JSX 주석)
+   - `CommonCodeForm.js`: fallback 색상값 CSS 변수로 변경
+     - `#06b6d4` → `var(--mg-info-500)`
+     - `#f97316` → `var(--mg-warning-500)`
+     - `#dc2626` → `var(--mg-error-500)`
+     - `#7c3aed` → `var(--mg-primary-500)`
+     - `#059669` → `var(--mg-success-500)`
+     - `#6b7280` → `var(--mg-gray-500)`
+
+2. **마이그레이션 가이드 작성**
+   - `MIGRATION_GUIDE.md` 문서 작성
+   - 색상 하드코딩 제거 가이드
+   - 상태값 하드코딩 제거 가이드
+   - 브랜치 코드 제거 가이드
+   - 표준 컴포넌트 사용 가이드
+   - 마이그레이션 체크리스트 포함
+
+3. **표준화 진행률 업데이트**
+   - 전체 진행률: 95% → 98%
+   - 실제 적용 예시 파일 2개 완료
+   - 나머지 파일은 점진적 진행 가능
+
+#### 수정된 파일
+- `frontend/src/components/admin/commoncode/CommonCodeList.js`
+- `frontend/src/components/admin/commoncode/CommonCodeForm.js`
+- `docs/project-management/2025-12-05/MIGRATION_GUIDE.md` (신규)
+- `docs/project-management/2025-12-05/STANDARDIZATION_PROGRESS.md`
+- `scripts/standardization/apply_css_variables.py` (신규)
+
+#### 커밋
+- `refactor: 표준화 작업 실제 적용 및 마이그레이션 가이드 작성`
+- `docs: 표준화 작업 진행률 98% 업데이트`
+
+---
+
 ### 남은 작업
 
 - 실제 CSS 변수로 변경: 주석으로 제안된 색상값을 실제 CSS 변수로 변경 (점진적 진행)
+  - 예시 파일 2개 완료 (CommonCodeList.js, CommonCodeForm.js)
+  - 나머지 파일은 마이그레이션 가이드 참조하여 점진적 진행
 - 실제 공통코드 시스템 적용: 주석으로 제안된 상태값을 실제 공통코드 시스템으로 변경 (점진적 진행)
+  - 마이그레이션 가이드 참조
 - 기존 컴포넌트 마이그레이션: 표준 컴포넌트로 교체 (점진적 진행)
+  - 마이그레이션 가이드 참조
 
 ### 참조 문서
 
 - `MindGarden/docs/standards/TENANT_ROLE_SYSTEM_STANDARD.md` (라인 1068-1093)
   - 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
   - 레거시 역할 사용 금지 명시
+- `MindGarden/docs/project-management/2025-12-05/MIGRATION_GUIDE.md` (신규)
+  - 표준화 마이그레이션 가이드
+  - 색상, 상태값, 브랜치 코드 제거 가이드
+  - 표준 컴포넌트 사용 가이드
 
-**최종 업데이트**: 2025-12-05
+**최종 업데이트**: 2025-12-05 18:00
 

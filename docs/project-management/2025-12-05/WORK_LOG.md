@@ -2110,7 +2110,7 @@ if (user.getBranchCode() != null && branchRepository != null) {
 
 #### 현재 진행 상황
 
-**Priority 1.1 진행률**: **20%** (3/15 작업 완료)
+**Priority 1.1 진행률**: **50%** (7/15 작업 완료)
 
 **완료된 작업**:
 - ✅ TenantContextFilter에서 브랜치 추출 로직 제거
@@ -2168,9 +2168,26 @@ if (user.getBranchCode() != null && branchRepository != null) {
 
 ---
 
+---
+
+#### 6. Service 계층 브랜치 코드 제거 작업 시작 ⏳
+
+**현황**:
+- Service 계층에서 브랜치 코드 사용: 74개 파일 발견
+- 우선순위: 핵심 서비스부터 처리
+
+**작업 계획**:
+1. AdminServiceImpl: branchCode 사용 제거
+2. ScheduleServiceImpl: branchCode 사용 제거
+3. 다른 Service 파일들 순차적 처리
+
+**진행률**: 0% (시작 전)
+
+---
+
 **남은 작업**:
+- ⏳ Service 계층에서 branchCode 사용 제거 (74개 파일)
 - ⏳ Entity에서 branchId 필드 검토 (레거시 호환)
-- ⏳ Service 계층에서 branchCode 사용 제거
 - ⏳ Frontend 브랜치 코드 제거
 
 ---

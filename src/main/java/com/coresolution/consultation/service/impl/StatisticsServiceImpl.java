@@ -33,7 +33,6 @@ import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.service.CommonCodeService;
 import java.math.RoundingMode;
-import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -68,19 +67,23 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public DailyStatistics updateDailyStatistics(LocalDate date, String branchCode) {
-        log.info("📊 일별 통계 업데이트 시작: date={}, branchCode={}", date, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        log.info("📊 일별 통계 업데이트 시작: date={}", date);
 
         try {
-            // 기존 통계 조회 또는 새로 생성
+            // 테넌트 ID 가져오기
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            
+            // 기존 통계 조회 또는 새로 생성 (브랜치 개념 제거)
             DailyStatistics statistics = dailyStatisticsRepository
-                .findByStatDateAndBranchCode(date, branchCode)
+                .findByTenantIdAndStatDate(tenantId, date)
                 .orElse(DailyStatistics.builder()
                     .statDate(date)
-                    .branchCode(branchCode)
+                    .tenantId(tenantId)
                     .build());
 
-            // 해당 날짜의 스케줄 조회
-            List<Schedule> daySchedules = scheduleRepository.findByDateAndBranchCode(date, branchCode);
+            // 해당 날짜의 스케줄 조회 (테넌트 기반)
+            List<Schedule> daySchedules = scheduleRepository.findByTenantIdAndDate(tenantId, date);
             log.debug("🔍 조회된 스케줄 수: {}", daySchedules.size());
 
             // 스케줄 통계 계산
@@ -150,13 +153,13 @@ public class StatisticsServiceImpl implements StatisticsService {
             }
 
             DailyStatistics savedStatistics = dailyStatisticsRepository.save(statistics);
-            log.info("✅ 일별 통계 업데이트 완료: date={}, branchCode={}, consultations={}", 
-                date, branchCode, savedStatistics.getTotalConsultations());
+            log.info("✅ 일별 통계 업데이트 완료: date={}, tenantId={}, consultations={}", 
+                date, tenantId, savedStatistics.getTotalConsultations());
 
             return savedStatistics;
 
         } catch (Exception e) {
-            log.error("❌ 일별 통계 업데이트 실패: date={}, branchCode={}", date, branchCode, e);
+            log.error("❌ 일별 통계 업데이트 실패: date={}", date, e);
             throw new RuntimeException("일별 통계 업데이트 중 오류가 발생했습니다.", e);
         }
     }
@@ -164,45 +167,62 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     @Transactional(readOnly = true)
     public DailyStatistics getDailyStatistics(LocalDate date, String branchCode) {
-        return dailyStatisticsRepository.findByStatDateAndBranchCode(date, branchCode)
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return dailyStatisticsRepository.findByTenantIdAndStatDate(tenantId, date)
             .orElse(null);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<DailyStatistics> getDailyStatistics(LocalDate startDate, LocalDate endDate, String branchCode) {
-        if (branchCode != null) {
-            return dailyStatisticsRepository.findByBranchCodeAndStatDateBetweenOrderByStatDateDesc(
-                branchCode, startDate, endDate);
-        } else {
-            return dailyStatisticsRepository.findByStatDateBetweenOrderByStatDateDesc(startDate, endDate);
-        }
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return dailyStatisticsRepository.findByTenantIdAndStatDateBetween(tenantId, startDate, endDate);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getMonthlyAggregatedStatistics(String yearMonth, String branchCode) {
-        log.info("📊 월별 집계 통계 조회: yearMonth={}, branchCode={}", yearMonth, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 월별 집계 통계 조회: yearMonth={}, tenantId={}", yearMonth, tenantId);
 
         try {
             LocalDate startDate = LocalDate.parse(yearMonth + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
-            List<Object[]> results = dailyStatisticsRepository.getMonthlyAggregatedStatistics(
-                startDate, endDate, branchCode);
+            // 테넌트 기반으로 통계 조회
+            List<DailyStatistics> statisticsList = dailyStatisticsRepository.findByTenantIdAndStatDateBetween(
+                tenantId, startDate, endDate);
 
             Map<String, Object> aggregatedStats = new HashMap<>();
             
-            if (!results.isEmpty()) {
-                Object[] result = results.get(0);
-                aggregatedStats.put("branchCode", result[0]);
-                aggregatedStats.put("totalConsultations", result[1]);
-                aggregatedStats.put("completedConsultations", result[2]);
-                aggregatedStats.put("totalRevenue", result[3]);
-                aggregatedStats.put("avgRating", result[4]);
+            if (!statisticsList.isEmpty()) {
+                int totalConsultations = statisticsList.stream()
+                    .mapToInt(DailyStatistics::getTotalConsultations)
+                    .sum();
+                int completedConsultations = statisticsList.stream()
+                    .mapToInt(DailyStatistics::getCompletedConsultations)
+                    .sum();
+                BigDecimal totalRevenue = statisticsList.stream()
+                    .map(DailyStatistics::getTotalRevenue)
+                    .filter(r -> r != null)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal avgRating = statisticsList.stream()
+                    .map(DailyStatistics::getAvgRating)
+                    .filter(r -> r != null)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .divide(BigDecimal.valueOf(statisticsList.size()), 2, RoundingMode.HALF_UP);
+
+                aggregatedStats.put("tenantId", tenantId);
+                aggregatedStats.put("totalConsultations", totalConsultations);
+                aggregatedStats.put("completedConsultations", completedConsultations);
+                aggregatedStats.put("totalRevenue", totalRevenue);
+                aggregatedStats.put("avgRating", avgRating);
             } else {
                 // 기본값 설정
-                aggregatedStats.put("branchCode", branchCode);
+                aggregatedStats.put("tenantId", tenantId);
                 aggregatedStats.put("totalConsultations", 0);
                 aggregatedStats.put("completedConsultations", 0);
                 aggregatedStats.put("totalRevenue", BigDecimal.ZERO);
@@ -214,7 +234,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             return aggregatedStats;
 
         } catch (Exception e) {
-            log.error("❌ 월별 집계 통계 조회 실패: yearMonth={}, branchCode={}", yearMonth, branchCode, e);
+            log.error("❌ 월별 집계 통계 조회 실패: yearMonth={}, tenantId={}", yearMonth, tenantId, e);
             throw new RuntimeException("월별 집계 통계 조회 중 오류가 발생했습니다.", e);
         }
     }

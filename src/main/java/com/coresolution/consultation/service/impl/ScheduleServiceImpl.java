@@ -550,10 +550,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         try {
             // 1. 통계 자동 업데이트
             log.info("📊 상담 완료 후 통계 자동 업데이트 시작: scheduleId={}", scheduleId);
-            // 지점 코드는 사용자에서 조회
-            User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
-            String branchCode = consultant != null ? consultant.getBranchCode() : "DEFAULT";
-            statisticsService.updateDailyStatistics(schedule.getDate(), branchCode);
+            // 브랜치 개념 제거: branchCode 조회 제거됨 (표준화 2025-12-05)
+            // 통계 업데이트는 테넌트 기반으로 처리
+            statisticsService.updateDailyStatistics(schedule.getDate(), null);
             statisticsService.updateConsultantPerformance(schedule.getConsultantId(), schedule.getDate());
             
             // 2. 성과 알림 자동 발송

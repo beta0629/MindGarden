@@ -21,14 +21,28 @@ public interface DailyStatisticsRepository extends JpaRepository<DailyStatistics
 
     /**
      * 특정 날짜와 지점의 통계 조회
+     * @deprecated 브랜치 개념 제거됨. {@link #findByTenantIdAndStatDate(String, LocalDate)}를 사용하세요.
      */
+    @Deprecated
     Optional<DailyStatistics> findByStatDateAndBranchCode(LocalDate statDate, String branchCode);
 
     /**
-     * 특정 지점의 기간별 통계 조회
+     * 특정 테넌트와 날짜의 통계 조회
      */
+    Optional<DailyStatistics> findByTenantIdAndStatDate(String tenantId, LocalDate statDate);
+
+    /**
+     * 특정 지점의 기간별 통계 조회
+     * @deprecated 브랜치 개념 제거됨. {@link #findByTenantIdAndStatDateBetween(String, LocalDate, LocalDate)}를 사용하세요.
+     */
+    @Deprecated
     List<DailyStatistics> findByBranchCodeAndStatDateBetweenOrderByStatDateDesc(
             String branchCode, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 특정 테넌트의 기간별 통계 조회
+     */
+    List<DailyStatistics> findByTenantIdAndStatDateBetween(String tenantId, LocalDate startDate, LocalDate endDate);
 
     /**
      * 전체 지점의 기간별 통계 조회

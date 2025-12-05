@@ -105,20 +105,9 @@ public class AdminServiceImpl implements AdminService {
         String encryptedEmail = encryptionUtil.safeEncrypt(dto.getEmail());
         log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
         
-        // 지점코드 처리 (레거시 시스템, 필요시 사용)
+        // 브랜치 개념 제거: 지점코드 처리 로직 제거됨 (표준화 2025-12-05)
+        // 테넌트 기반 시스템에서는 브랜치 개념이 불필요하므로 branch는 항상 null
         Branch branch = null;
-        /*
-        if (dto.getBranchCode() != null && !dto.getBranchCode().trim().isEmpty()) {
-            try {
-                branch = branchService.getBranchByCode(dto.getBranchCode());
-                log.info("🔐 관리자 상담사 등록 시 지점 할당: branchCode={}, branchName={}", 
-                    dto.getBranchCode(), branch.getBranchName());
-            } catch (Exception e) {
-                log.error("❌ 지점 코드 처리 중 오류: branchCode={}, error={}", dto.getBranchCode(), e.getMessage());
-                throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + dto.getBranchCode());
-            }
-        }
-        */
         
         // 같은 username을 가진 삭제된 상담사가 있는지 확인
         String tenantId = TenantContextHolder.getTenantId();
@@ -133,8 +122,7 @@ public class AdminServiceImpl implements AdminService {
             consultant.setPhone(encryptedPhone);
             consultant.setIsActive(true); // 활성화
             consultant.setSpecialization(dto.getSpecialization());
-            consultant.setBranch(branch); // 지점 할당
-            consultant.setBranchCode(dto.getBranchCode()); // 지점코드 저장
+            // 브랜치 개념 제거: branch 및 branchCode 설정 제거됨 (표준화 2025-12-05)
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
             
             // Consultant로 캐스팅하여 certification 설정
@@ -158,8 +146,7 @@ public class AdminServiceImpl implements AdminService {
             consultant.setPhone(encryptedPhone);
             consultant.setRole(UserRole.CONSULTANT);
             consultant.setIsActive(true);
-            consultant.setBranch(branch); // 지점 할당
-            consultant.setBranchCode(dto.getBranchCode()); // 지점코드 저장
+            // 브랜치 개념 제거: branch 및 branchCode 설정 제거됨 (표준화 2025-12-05)
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
             
             // 상담사 전용 정보 설정
@@ -187,20 +174,9 @@ public class AdminServiceImpl implements AdminService {
         String encryptedEmail = encryptionUtil.safeEncrypt(dto.getEmail());
         log.info("🔐 관리자 내담자 등록 시 이름, 이메일 암호화 완료");
         
-        // 지점코드 처리 (레거시 시스템, 테넌트 시스템에서는 불필요)
+        // 브랜치 개념 제거: 지점코드 처리 로직 제거됨 (표준화 2025-12-05)
+        // 테넌트 기반 시스템에서는 브랜치 개념이 불필요하므로 branch는 항상 null
         Branch branch = null;
-        /*
-        if (dto.getBranchCode() != null && !dto.getBranchCode().trim().isEmpty()) {
-            try {
-                branch = branchService.getBranchByCode(dto.getBranchCode());
-                log.info("🔐 관리자 내담자 등록 시 지점 할당: branchCode={}, branchName={}", 
-                    dto.getBranchCode(), branch.getBranchName());
-            } catch (Exception e) {
-                log.error("❌ 지점 코드 처리 중 오류: branchCode={}, error={}", dto.getBranchCode(), e.getMessage());
-                throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + dto.getBranchCode());
-            }
-        }
-        */
         
         // 테넌트 ID 가져오기
         String tenantId = TenantContextHolder.getTenantId();

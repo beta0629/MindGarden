@@ -130,7 +130,8 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
                     consultantMap.put("id", consultant.getId());
                     consultantMap.put("name", consultant.getName());
                     consultantMap.put("role", consultant.getRole() != null ? consultant.getRole().name() : null);
-                    consultantMap.put("branchCode", consultant.getBranchCode());
+                    // 브랜치 개념 제거: branchCode는 레거시 호환용으로만 유지 (표준화 2025-12-05)
+                    // consultantMap.put("branchCode", consultant.getBranchCode());
                     consultantMap.put("isActive", consultant.getIsActive());
                     consultantMap.put("isDeleted", consultant.getIsDeleted());
                     

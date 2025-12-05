@@ -56,17 +56,17 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
             }
             
             User consultant = consultantOpt.get();
-            String branchCode = consultant.getBranchCode();
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             LocalDate scheduleDate = schedule.getDate();
             
             // 2. 일별 통계 업데이트 (PL/SQL 우선 사용)
             if (plSqlStatisticsService.isProcedureAvailable()) {
-                log.info("🚀 PL/SQL 프로시저를 사용한 일별 통계 업데이트: branchCode={}, date={}", branchCode, scheduleDate);
-                String result = plSqlStatisticsService.updateDailyStatistics(branchCode, scheduleDate);
+                log.info("🚀 PL/SQL 프로시저를 사용한 일별 통계 업데이트: tenantId={}, date={}", tenantId, scheduleDate);
+                String result = plSqlStatisticsService.updateDailyStatistics(null, scheduleDate); // branchCode는 레거시 호환용
                 log.debug("PL/SQL 일별 통계 결과: {}", result);
             } else {
-                log.info("📊 Java 방식 일별 통계 업데이트 (PL/SQL 비활성): branchCode={}, date={}", branchCode, scheduleDate);
-                updateDailyStatistics(branchCode, scheduleDate);
+                log.info("📊 Java 방식 일별 통계 업데이트 (PL/SQL 비활성): tenantId={}, date={}", tenantId, scheduleDate);
+                updateDailyStatistics(null, scheduleDate); // branchCode는 레거시 호환용
             }
             
             // 3. 상담사별 성과 업데이트 (PL/SQL 우선 사용)
@@ -121,42 +121,45 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     
     @Override
     public void updateDailyStatistics(String branchCode, LocalDate date) {
-        log.debug("📊 지점별 일별 통계 실시간 업데이트: branchCode={}, date={}", branchCode, date);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.debug("📊 일별 통계 실시간 업데이트: tenantId={}, date={}", tenantId, date);
         
         try {
-            // 기존 일별 통계 조회
+            // 기존 일별 통계 조회 (테넌트 기반)
             Optional<DailyStatistics> existingStats = 
-                dailyStatisticsRepository.findByStatDateAndBranchCode(date, branchCode);
+                dailyStatisticsRepository.findByTenantIdAndStatDate(tenantId, date);
             
             if (existingStats.isPresent()) {
                 // 기존 데이터 업데이트
                 DailyStatistics stats = existingStats.get();
-                recalculateDailyMetrics(stats, branchCode, date);
+                recalculateDailyMetrics(stats, tenantId, date);
                 dailyStatisticsRepository.save(stats);
-                log.debug("✅ 기존 일별 통계 업데이트 완료: branchCode={}", branchCode);
+                log.debug("✅ 기존 일별 통계 업데이트 완료: tenantId={}", tenantId);
             } else {
                 // 새로운 일별 통계 생성
-                DailyStatistics newStats = createNewDailyStatistics(branchCode, date);
+                DailyStatistics newStats = createNewDailyStatistics(tenantId, date);
                 dailyStatisticsRepository.save(newStats);
-                log.debug("✅ 새로운 일별 통계 생성 완료: branchCode={}", branchCode);
+                log.debug("✅ 새로운 일별 통계 생성 완료: tenantId={}", tenantId);
             }
             
         } catch (Exception e) {
-            log.error("❌ 일별 통계 업데이트 실패: branchCode={}, date={}, 오류={}", 
-                     branchCode, date, e.getMessage(), e);
+            log.error("❌ 일별 통계 업데이트 실패: tenantId={}, date={}, 오류={}", 
+                     tenantId, date, e.getMessage(), e);
         }
     }
     
     @Override
     public void updateStatisticsOnMappingChange(Long consultantId, Long clientId, String branchCode) {
-        log.info("🔗 매핑 변경시 통계 업데이트: consultantId={}, clientId={}, branchCode={}", 
-                 consultantId, clientId, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        log.info("🔗 매핑 변경시 통계 업데이트: consultantId={}, clientId={}", 
+                 consultantId, clientId);
         
         try {
             LocalDate today = LocalDate.now();
             
             // 오늘 날짜 기준으로 통계 업데이트
-            updateDailyStatistics(branchCode, today);
+            updateDailyStatistics(null, today); // branchCode는 레거시 호환용
             updateConsultantPerformance(consultantId, today);
             
             log.info("✅ 매핑 변경시 통계 업데이트 완료");
@@ -168,11 +171,12 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     
     @Override
     public void updateFinancialStatisticsOnPayment(String branchCode, Long amount, LocalDate date) {
-        log.info("💰 결제 완료시 재무 통계 업데이트: branchCode={}, amount={}, date={}", 
-                 branchCode, amount, date);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        log.info("💰 결제 완료시 재무 통계 업데이트: amount={}, date={}", 
+                 amount, date);
         
         try {
-            updateDailyStatistics(branchCode, date);
+            updateDailyStatistics(null, date); // branchCode는 레거시 호환용
             log.info("✅ 결제 완료시 재무 통계 업데이트 완료");
             
         } catch (Exception e) {
@@ -182,11 +186,12 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     
     @Override
     public void updateStatisticsOnRefund(Long consultantId, String branchCode, Long refundAmount, LocalDate date) {
-        log.info("💸 환불 발생시 통계 업데이트: consultantId={}, branchCode={}, refundAmount={}, date={}", 
-                 consultantId, branchCode, refundAmount, date);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        log.info("💸 환불 발생시 통계 업데이트: consultantId={}, refundAmount={}, date={}", 
+                 consultantId, refundAmount, date);
         
         try {
-            updateDailyStatistics(branchCode, date);
+            updateDailyStatistics(null, date); // branchCode는 레거시 호환용
             updateConsultantPerformance(consultantId, date);
             log.info("✅ 환불 발생시 통계 업데이트 완료");
             
@@ -234,7 +239,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     /**
      * 일별 지표 재계산
      */
-    private void recalculateDailyMetrics(DailyStatistics stats, String branchCode, LocalDate date) {
+    private void recalculateDailyMetrics(DailyStatistics stats, String tenantId, LocalDate date) {
         // TODO: 실제 스케줄, 매핑, 거래 데이터를 기반으로 일별 지표 재계산
         // 현재는 기본 로직만 구현
         
@@ -293,10 +298,10 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     /**
      * 새로운 일별 통계 생성
      */
-    private DailyStatistics createNewDailyStatistics(String branchCode, LocalDate date) {
+    private DailyStatistics createNewDailyStatistics(String tenantId, LocalDate date) {
         DailyStatistics stats = new DailyStatistics();
         stats.setStatDate(date);
-        stats.setBranchCode(branchCode);
+        stats.setTenantId(tenantId);
         stats.setTotalConsultations(1);
         stats.setCompletedConsultations(1);
         stats.setCancelledConsultations(0);

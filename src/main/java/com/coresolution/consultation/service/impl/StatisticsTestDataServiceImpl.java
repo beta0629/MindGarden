@@ -51,62 +51,34 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
     
     @Override
     public Map<String, Object> createTestSchedules(LocalDate targetDate, String branchCode, int scheduleCount) {
-        log.info("📅 테스트 스케줄 데이터 생성 시작: date={}, branch={}, count={}", 
-                 targetDate, branchCode, scheduleCount);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📅 테스트 스케줄 데이터 생성 시작: date={}, tenantId={}, count={}", 
+                 targetDate, tenantId, scheduleCount);
         
         Map<String, Object> result = new HashMap<>();
         List<Long> createdScheduleIds = new ArrayList<>();
         
         try {
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null) {
-                log.error("❌ tenantId가 설정되지 않았습니다");
-                result.put("success", false);
-                result.put("message", "tenantId가 설정되지 않았습니다");
-                return result;
-            }
-            
-            // 해당 지점의 상담사들 조회 (브랜치 엔티티 기반)
-            List<User> consultants;
-            if (branchCode == null || branchCode.trim().isEmpty()) {
-                consultants = new ArrayList<>();
-            } else {
-                try {
-                    Branch branch = branchService.getBranchByCode(branchCode);
-                    consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
-                    // isActive = true 필터링 (Java 스트림)
-                    consultants = consultants.stream()
-                        .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
-                        .collect(java.util.stream.Collectors.toList());
-                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
-                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
-                    consultants = new ArrayList<>();
-                }
-            }
+            // 테넌트 전체 상담사들 조회
+            List<User> consultants = userRepository.findByTenantIdAndRole(tenantId, UserRole.CONSULTANT);
+            // isActive = true 필터링 (Java 스트림)
+            consultants = consultants.stream()
+                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                .collect(java.util.stream.Collectors.toList());
             
             if (consultants.isEmpty()) {
                 result.put("success", false);
-                result.put("message", "해당 지점에 활성 상담사가 없습니다: " + branchCode);
+                result.put("message", "테넌트에 활성 상담사가 없습니다: " + tenantId);
                 return result;
             }
             
-            // 해당 지점의 내담자들 조회 (없으면 상담사를 내담자로 사용) (브랜치 엔티티 기반)
-            List<User> clients;
-            if (branchCode == null || branchCode.trim().isEmpty()) {
-                clients = new ArrayList<>();
-            } else {
-                try {
-                    Branch branch = branchService.getBranchByCode(branchCode);
-                    clients = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CLIENT);
-                    // isActive = true 필터링 (Java 스트림)
-                    clients = clients.stream()
-                        .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
-                        .collect(java.util.stream.Collectors.toList());
-                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
-                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
-                    clients = new ArrayList<>();
-                }
-            }
+            // 테넌트 전체 내담자들 조회 (없으면 상담사를 내담자로 사용)
+            List<User> clients = userRepository.findByTenantIdAndRole(tenantId, UserRole.CLIENT);
+            // isActive = true 필터링 (Java 스트림)
+            clients = clients.stream()
+                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                .collect(java.util.stream.Collectors.toList());
             
             if (clients.isEmpty()) {
                 // 테스트용으로 상담사를 내담자로 사용
@@ -124,7 +96,10 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 Schedule schedule = new Schedule();
                 schedule.setConsultantId(consultant.getId());
                 schedule.setClientId(client.getId());
-                schedule.setBranchCode(branchCode);
+                // branchCode는 레거시 호환을 위해 유지 (필드가 있으면 설정)
+                if (branchCode != null && !branchCode.trim().isEmpty()) {
+                    schedule.setBranchCode(branchCode);
+                }
                 schedule.setDate(targetDate);
                 schedule.setStartTime(startTime);
                 schedule.setEndTime(endTime);
@@ -238,7 +213,10 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 BigDecimal amount = BigDecimal.valueOf(50000 + random.nextInt(50001));
                 
                 FinancialTransaction transaction = new FinancialTransaction();
-                transaction.setBranchCode(branchCode);
+                // branchCode는 레거시 호환을 위해 유지 (필드가 있으면 설정)
+                if (branchCode != null && !branchCode.trim().isEmpty()) {
+                    transaction.setBranchCode(branchCode);
+                }
                 transaction.setAmount(amount);
                 transaction.setTransactionType(FinancialTransaction.TransactionType.INCOME);
                 transaction.setRelatedEntityType("CONSULTATION_INCOME");

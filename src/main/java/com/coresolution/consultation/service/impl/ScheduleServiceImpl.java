@@ -41,7 +41,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Optional;
 
-/**
  * 스케줄 관리 서비스 구현체
  * BaseTenantEntityServiceImpl을 상속하여 테넌트 필터링 및 접근 제어 지원
  * 
@@ -66,7 +65,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final StatisticsService statisticsService;
     private final ConsultationMessageService consultationMessageService;
     private final com.coresolution.core.service.DashboardIntegrationService dashboardIntegrationService;
-    // BaseTenantEntityServiceImpl에서 이미 주입받음 (accessControlService)
     
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -95,7 +93,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         this.dashboardIntegrationService = dashboardIntegrationService;
     }
     
-    // ==================== BaseTenantEntityServiceImpl 추상 메서드 구현 ====================
     
     @Override
     protected Optional<Schedule> findEntityById(Long id) {
@@ -111,30 +108,23 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
     
-    // 상수는 ScheduleConstants 클래스에서 관리
 
-    // ==================== 기본 CRUD 메서드 ====================
 
     @Override
     public Schedule createSchedule(Schedule schedule) {
         log.info("📅 스케줄 생성: {}", schedule.getTitle());
         
-        // 테넌트 ID 자동 설정 및 BaseTenantEntityService의 create 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         Schedule createdSchedule;
         if (tenantId != null) {
             createdSchedule = create(tenantId, schedule);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             createdSchedule = scheduleRepository.save(schedule);
         }
         
-        // 🔄 워크플로우 자동화: 예약 생성 → 자동 알림 → 리마인더
         try {
-            // 1. 예약 확인 알림 자동 발송
             log.info("🔔 예약 생성 후 자동 알림 발송: scheduleId={}", createdSchedule.getId());
             
-            // 내담자에게 예약 확인 알림
             String clientMessage = String.format("상담 예약이 완료되었습니다.\n" +
                 "📅 날짜: %s\n" +
                 "⏰ 시간: %s - %s", 
@@ -155,7 +145,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 false  // isUrgent
             );
             
-            // 상담사에게 새로운 예약 알림
             String consultantMessage = String.format("새로운 상담 예약이 있습니다.\n" +
                 "📅 날짜: %s\n" +
                 "⏰ 시간: %s - %s", 
@@ -180,18 +169,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             
         } catch (Exception e) {
             log.error("❌ 예약 생성 워크플로우 자동화 실패: scheduleId={}", createdSchedule.getId(), e);
-            // 알림 발송 실패해도 예약 생성은 유지
         }
         
-        // 🔄 대시보드 통합 처리: ERP 연동 및 위젯 새로고침
         try {
-            // tenantId는 이미 위에서 정의됨 (122번 라인)
             if (tenantId != null) {
-                // 매핑 ID 조회 (ERP 연동용)
                 Long mappingId = null;
                 if (schedule.getConsultantId() != null && schedule.getClientId() != null) {
-                    // TODO: 매핑 ID 조회 로직 추가
-                    // mappingId = mappingRepository.findByConsultantIdAndClientId(...)
                 }
                 
                 dashboardIntegrationService.handleScheduleCreated(
@@ -202,7 +185,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             }
         } catch (Exception e) {
             log.error("❌ 대시보드 통합 처리 실패: scheduleId={}", createdSchedule.getId(), e);
-            // 통합 처리 실패해도 스케줄 생성은 유지
         }
         
         return createdSchedule;
@@ -213,25 +195,20 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("📝 스케줄 수정: ID {}", id);
         Schedule existingSchedule = findById(id);
         
-        // 테넌트 접근 제어
         if (existingSchedule.getTenantId() != null) {
             accessControlService.validateTenantAccess(existingSchedule.getTenantId());
         }
         
-        // 부분 업데이트
         copyScheduleFields(updateData, existingSchedule);
         
-        // BaseTenantEntityService의 update 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && existingSchedule.getTenantId() != null) {
             return update(tenantId, existingSchedule);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             return scheduleRepository.save(existingSchedule);
         }
     }
     
-    /**
      * Schedule 필드 복사 (부분 업데이트용)
      */
     private void copyScheduleFields(Schedule source, Schedule target) {
@@ -253,12 +230,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("🗑️ 스케줄 삭제: ID {}", id);
         Schedule schedule = findById(id);
         
-        // BaseTenantEntityService의 delete 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             delete(tenantId, id);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             if (schedule.getTenantId() != null) {
                 accessControlService.validateTenantAccess(schedule.getTenantId());
             }
@@ -274,12 +249,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     @Override
     public List<Schedule> findAll() {
-        // 테넌트 컨텍스트에서 tenantId 가져오기
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             return findAllByTenant(tenantId, null);
         }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
         return scheduleRepository.findAllActiveByCurrentTenant();
     }
 
@@ -287,36 +260,23 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public org.springframework.data.domain.Page<Schedule> findAll(org.springframework.data.domain.Pageable pageable) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
-            // BaseRepository의 findAllByTenantId 메서드 사용
             return scheduleRepository.findAllByTenantId(tenantId, pageable);
         }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
         return scheduleRepository.findAll(pageable);
     }
 
-    // ==================== 상담사별 스케줄 관리 ====================
 
     @Override
     public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date, 
                                           LocalTime startTime, LocalTime endTime, String title, String description) {
         log.info("📅 상담사 스케줄 생성: 상담사 {}, 내담자 {}, 날짜 {}", consultantId, clientId, date);
         
-        // 1. 매칭 상태 검증 (임시로 우회)
-        // if (!validateMappingForSchedule(consultantId, clientId)) {
-        //     throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
-        // }
         
-        // 2. 회기 수 검증 (임시로 우회)
-        // if (!validateRemainingSessions(consultantId, clientId)) {
-        //     throw new RuntimeException("사용 가능한 회기가 없습니다.");
-        // }
         
-        // 3. 시간 충돌 검사
         if (hasTimeConflict(consultantId, date, startTime, endTime, null)) {
             throw new RuntimeException("해당 시간대에 이미 스케줄이 존재합니다.");
         }
         
-        // 4. 스케줄 생성
         Schedule schedule = new Schedule();
         schedule.setConsultantId(consultantId);
         schedule.setClientId(clientId);
@@ -326,11 +286,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setTitle(title);
         schedule.setDescription(description);
         schedule.setScheduleType(ScheduleConstants.TYPE_CONSULTATION);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         schedule.setStatus(ScheduleStatus.BOOKED);
         
         Schedule savedSchedule = scheduleRepository.save(schedule);
         
-        // 5. 회기 사용 처리
         useSessionForMapping(consultantId, clientId);
         
         log.info("✅ 상담사 스케줄 생성 완료: ID {}", savedSchedule.getId());
@@ -342,22 +302,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                                           LocalTime startTime, LocalTime endTime, String title, String description, String consultationType, String branchCode) {
         log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}", consultantId, clientId, date, consultationType);
         
-        // 1. 매칭 상태 검증 (임시로 우회)
-        // if (!validateMappingForSchedule(consultantId, clientId)) {
-        //     throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
-        // }
         
-        // 2. 회기 수 검증 (임시로 우회)
-        // if (!validateRemainingSessions(consultantId, clientId)) {
-        //     throw new RuntimeException("사용 가능한 회기가 없습니다.");
-        // }
         
-        // 3. 시간 충돌 검사
         if (hasTimeConflict(consultantId, date, startTime, endTime, null)) {
             throw new RuntimeException("해당 시간대에 이미 스케줄이 존재합니다.");
         }
         
-        // 4. 스케줄 생성
         Schedule schedule = new Schedule();
         schedule.setConsultantId(consultantId);
         schedule.setClientId(clientId);
@@ -367,13 +317,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setTitle(title);
         schedule.setDescription(description);
         schedule.setScheduleType(ScheduleConstants.TYPE_CONSULTATION);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         schedule.setStatus(ScheduleStatus.BOOKED);
         schedule.setConsultationType(consultationType); // 상담 유형 설정
         schedule.setBranchCode(branchCode); // 지점코드 설정
         
         Schedule savedSchedule = scheduleRepository.save(schedule);
         
-        // 5. 회기 사용 처리
         useSessionForMapping(consultantId, clientId);
         
         log.info("✅ 상담사 스케줄 생성 완료 (상담유형 포함): ID {}, 상담유형: {}", savedSchedule.getId(), consultationType);
@@ -387,25 +337,20 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("📅 상담사 스케줄 생성 (유형 기반): 상담사 {}, 내담자 {}, 날짜 {}, 유형 {}", 
                 consultantId, clientId, date, consultationType.getDisplayName());
         
-        // 1. 매칭 상태 검증
         if (!validateMappingForSchedule(consultantId, clientId)) {
             throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
         }
         
-        // 2. 회기 수 검증
         if (!validateRemainingSessions(consultantId, clientId)) {
             throw new RuntimeException("사용 가능한 회기가 없습니다.");
         }
         
-        // 3. 시간 충돌 검사 (상담 유형 기반)
         if (hasTimeConflictWithType(consultantId, date, startTime, consultationType, null)) {
             throw new RuntimeException("해당 시간대에 이미 스케줄이 존재하거나 시간이 충돌합니다.");
         }
         
-        // 4. 종료 시간 자동 계산
         LocalTime endTime = calculateEndTime(startTime, consultationType);
         
-        // 5. 스케줄 생성
         Schedule schedule = new Schedule();
         schedule.setConsultantId(consultantId);
         schedule.setClientId(clientId);
@@ -415,12 +360,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setTitle(title);
         schedule.setDescription(description);
         schedule.setScheduleType(ScheduleConstants.TYPE_CONSULTATION);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         schedule.setStatus(ScheduleStatus.BOOKED);
         schedule.setNotes("상담 유형: " + consultationType.getDisplayName() + " (" + consultationType.getDefaultDurationMinutes() + "분)");
         
         Schedule savedSchedule = scheduleRepository.save(schedule);
         
-        // 6. 회기 사용 처리
         useSessionForMapping(consultantId, clientId);
         
         log.info("✅ 상담사 스케줄 생성 완료 (유형 기반): ID {}, 상담 유형: {}, 시간: {} - {}", 
@@ -430,7 +375,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     @Override
     public List<Schedule> findByConsultantId(Long consultantId) {
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
@@ -442,7 +386,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     @Override
     public List<Schedule> findByConsultantIdAndDate(Long consultantId, LocalDate date) {
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
@@ -454,7 +397,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     @Override
     public List<Schedule> findByConsultantIdAndDateBetween(Long consultantId, LocalDate startDate, LocalDate endDate) {
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
@@ -464,11 +406,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return scheduleRepository.findByTenantIdAndConsultantIdAndDateBetween(tenantId, consultantId, startDate, endDate);
     }
 
-    // ==================== 내담자별 스케줄 관리 ====================
 
     @Override
     public List<Schedule> findByClientId(Long clientId) {
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
@@ -480,7 +420,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     @Override
     public List<Schedule> findByClientIdAndDate(Long clientId, LocalDate date) {
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
@@ -492,7 +431,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     @Override
     public List<Schedule> findByClientIdAndDateBetween(Long clientId, LocalDate startDate, LocalDate endDate) {
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
@@ -502,7 +440,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return scheduleRepository.findByTenantIdAndClientIdAndDateBetween(tenantId, clientId, startDate, endDate);
     }
 
-    // ==================== 스케줄 상태 관리 ====================
 
     @Override
     public Schedule bookSchedule(Long scheduleId, Long consultationId, Long clientId) {
@@ -516,6 +453,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public Schedule cancelSchedule(Long scheduleId, String reason) {
         log.info("❌ 스케줄 취소: ID {}, 사유: {}", scheduleId, reason);
         Schedule schedule = findById(scheduleId);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         schedule.setStatus(ScheduleStatus.CANCELLED);
         schedule.setDescription(reason);
         return scheduleRepository.save(schedule);
@@ -526,10 +464,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("✅ 예약 확정: ID {}, 관리자 메모: {}", scheduleId, adminNote);
         Schedule schedule = findById(scheduleId);
         
-        // 예약 확정 상태로 변경
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         schedule.setStatus(ScheduleStatus.CONFIRMED);
         
-        // 관리자 메모 추가
         String currentDescription = schedule.getDescription() != null ? schedule.getDescription() : "";
         String newDescription = currentDescription + 
             (currentDescription.isEmpty() ? "" : "\n") + 
@@ -543,25 +480,20 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public Schedule completeSchedule(Long scheduleId) {
         log.info("✅ 스케줄 완료: ID {}", scheduleId);
         Schedule schedule = findById(scheduleId);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         schedule.setStatus(ScheduleStatus.COMPLETED);
         
         Schedule completedSchedule = scheduleRepository.save(schedule);
         
-        // 🔄 워크플로우 자동화: 상담 완료 → 통계 업데이트 → 성과 알림
         try {
-            // 1. 통계 자동 업데이트
             log.info("📊 상담 완료 후 통계 자동 업데이트 시작: scheduleId={}", scheduleId);
-            // 브랜치 개념 제거: branchCode 조회 제거됨 (표준화 2025-12-05)
-            // 통계 업데이트는 테넌트 기반으로 처리
             statisticsService.updateDailyStatistics(schedule.getDate(), null);
             statisticsService.updateConsultantPerformance(schedule.getConsultantId(), schedule.getDate());
             
-            // 2. 성과 알림 자동 발송
             log.info("🔔 상담 완료 후 성과 알림 자동 발송: consultantId={}", schedule.getConsultantId());
             String message = String.format("상담이 완료되었습니다. (일시: %s %s-%s)", 
                 schedule.getDate(), schedule.getStartTime(), schedule.getEndTime());
             
-            // 상담사에게 완료 알림
             consultationMessageService.sendMessage(
                 schedule.getConsultantId(), 
                 schedule.getClientId(), 
@@ -574,7 +506,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 false  // isUrgent
             );
             
-            // 3. 내담자에게 평가 요청 알림
             String ratingMessage = "상담이 완료되었습니다. 상담사에 대한 평가를 남겨주세요.";
             consultationMessageService.sendMessage(
                 schedule.getClientId(), 
@@ -592,7 +523,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             
         } catch (Exception e) {
             log.error("❌ 워크플로우 자동화 실패: scheduleId={}", scheduleId, e);
-            // 통계 업데이트 실패해도 스케줄 완료는 유지
         }
         
         return completedSchedule;
@@ -606,19 +536,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return scheduleRepository.save(schedule);
     }
 
-    // ==================== 스케줄 검증 및 검사 ====================
 
     @Override
     public boolean hasTimeConflict(Long consultantId, LocalDate date, LocalTime startTime, LocalTime endTime, Long excludeScheduleId) {
         log.debug("⏰ 시간 충돌 검사 (기본): 상담사 {}, 날짜 {}, 시간 {} - {}", consultantId, date, startTime, endTime);
         
-        // 1. 휴가 검사 - 상담사가 해당 날짜에 휴가인지 확인
         if (consultantAvailabilityService.isConsultantOnVacation(consultantId, date, startTime, endTime)) {
             log.warn("🚫 휴가 중인 상담사: 상담사 {}, 날짜 {}", consultantId, date);
             return true;
         }
         
-        // 2. 기존 스케줄과의 시간 충돌 검사
         List<Schedule> existingSchedules = findByConsultantIdAndDate(consultantId, date);
         
         for (Schedule existing : existingSchedules) {
@@ -626,7 +553,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 continue; // 자기 자신은 제외
             }
             
-            // 시간 겹침 검사
             if (isTimeOverlapping(startTime, endTime, existing.getStartTime(), existing.getEndTime())) {
                 log.debug("시간 충돌 발견: 기존 스케줄 {} ({} - {})", existing.getId(), existing.getStartTime(), existing.getEndTime());
                 return true;
@@ -642,21 +568,17 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.debug("⏰ 시간 충돌 검사 (유형 기반): 상담사 {}, 날짜 {}, 시작시간 {}, 상담유형 {}", 
                 consultantId, date, startTime, consultationType.getDisplayName());
         
-        // 1. 상담 시간 + 쉬는 시간 계산
         LocalTime endTime = calculateEndTime(startTime, consultationType);
         
-        // 2. 휴가 검사 - 상담사가 해당 날짜에 휴가인지 확인
         if (consultantAvailabilityService.isConsultantOnVacation(consultantId, date, startTime, endTime)) {
             log.warn("🚫 휴가 중인 상담사: 상담사 {}, 날짜 {}", consultantId, date);
             return true;
         }
         
-        // 3. 기본 시간 충돌 검사
         if (hasTimeConflict(consultantId, date, startTime, endTime, excludeScheduleId)) {
             return true;
         }
         
-        // 4. 쉬는 시간을 고려한 추가 검사
         List<Schedule> existingSchedules = findByConsultantIdAndDate(consultantId, date);
         
         for (Schedule existing : existingSchedules) {
@@ -664,7 +586,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 continue; // 자기 자신은 제외
             }
             
-            // 기존 스케줄과의 간격 검사 (최소 10분)
             if (isTimeTooClose(startTime, endTime, existing.getStartTime(), existing.getEndTime())) {
                 log.debug("시간 간격 부족 발견: 기존 스케줄 {} ({} - {})", existing.getId(), existing.getStartTime(), existing.getEndTime());
                 return true;
@@ -679,8 +600,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.debug("🔗 매칭 상태 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        // 활성 상태의 매칭이 있는지 확인
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
         
         for (ConsultantClientMapping mapping : activeMappings) {
@@ -700,8 +621,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.debug("📊 회기 수 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        // 활성 상태의 매칭에서 남은 회기 수 확인
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
         
         for (ConsultantClientMapping mapping : activeMappings) {
@@ -719,7 +640,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return false;
     }
 
-    // ==================== 시간 관리 ====================
 
     @Override
     public LocalTime calculateEndTime(LocalTime startTime, ConsultationType consultationType) {
@@ -735,12 +655,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     @Override
     public int calculateMaxConsultationTimePerDay(Long consultantId, LocalDate date) {
-        // 기본 업무 시간: ScheduleConstants에서 관리
         int maxWorkMinutes = ScheduleConstants.WORKDAY_TOTAL_HOURS * ScheduleConstants.MINUTES_PER_HOUR;
         
-        // 이미 예약된 시간 계산
         List<Schedule> existingSchedules = findByConsultantIdAndDate(consultantId, date);
         int usedMinutes = existingSchedules.stream()
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             .filter(s -> ScheduleStatus.BOOKED.equals(s.getStatus()))
             .mapToInt(s -> {
                 if (s.getStartTime() != null && s.getEndTime() != null) {
@@ -753,7 +672,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return maxWorkMinutes - usedMinutes;
     }
 
-    // ==================== 스케줄 통계 및 분석 ====================
 
     @Override
     public Map<String, Object> getConsultantScheduleStats(Long consultantId, LocalDate startDate, LocalDate endDate) {
@@ -763,8 +681,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalSchedules", schedules.size());
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         stats.put("bookedSchedules", schedules.stream().filter(s -> ScheduleStatus.BOOKED.equals(s.getStatus())).count());
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         stats.put("completedSchedules", schedules.stream().filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus())).count());
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         stats.put("cancelledSchedules", schedules.stream().filter(s -> ScheduleStatus.CANCELLED.equals(s.getStatus())).count());
         
         return stats;
@@ -778,8 +699,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalSchedules", schedules.size());
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         stats.put("bookedSchedules", schedules.stream().filter(s -> ScheduleStatus.BOOKED.equals(s.getStatus())).count());
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         stats.put("completedSchedules", schedules.stream().filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus())).count());
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         stats.put("cancelledSchedules", schedules.stream().filter(s -> ScheduleStatus.CANCELLED.equals(s.getStatus())).count());
         
         return stats;
@@ -801,13 +725,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return stats;
     }
 
-    // ==================== 권한 기반 스케줄 조회 ====================
 
     @Override
     public List<Schedule> findSchedulesByUserRole(Long userId, String userRole) {
         log.info("🔐 권한 기반 스케줄 조회: 사용자 {}, 역할 {}", userId, userRole);
         
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         
         String tenantId = TenantContextHolder.getTenantId();
@@ -817,15 +739,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         
         if (isAdminRole(userRole)) {
-            // 관리자: 모든 스케줄 조회
             log.info("👑 관리자 권한으로 모든 스케줄 조회");
             return scheduleRepository.findByTenantId(tenantId);
         } else if (isConsultantRole(userRole)) {
-            // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
             return scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId);
         } else {
-            // 일반 사용자: 접근 권한 없음
             log.warn("❌ 권한 없음: 사용자 {}, 역할 {}", userId, userRole);
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }
@@ -835,15 +754,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public List<Schedule> findSchedulesByUserRoleAndDate(Long userId, String userRole, LocalDate date) {
         log.info("🔐 권한 기반 특정 날짜 스케줄 조회: 사용자 {}, 역할 {}, 날짜 {}", userId, userRole, date);
         
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         if (isAdminRole(userRole)) {
-            // 관리자: 해당 날짜의 모든 스케줄 조회
             return scheduleRepository.findByTenantIdAndDate(tenantId, date);
         } else if (isConsultantRole(userRole)) {
-            // 상담사: 해당 날짜의 자신의 스케줄만 조회
             return scheduleRepository.findByTenantIdAndConsultantIdAndDate(tenantId, userId, date);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
@@ -854,15 +770,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public List<Schedule> findSchedulesByUserRoleAndDateBetween(Long userId, String userRole, LocalDate startDate, LocalDate endDate) {
         log.info("🔐 권한 기반 날짜 범위 스케줄 조회: 사용자 {}, 역할 {}, 기간 {} ~ {}", userId, userRole, startDate, endDate);
         
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         if (isAdminRole(userRole)) {
-            // 관리자: 해당 기간의 모든 스케줄 조회
             return scheduleRepository.findByTenantIdAndDateBetween(tenantId, startDate, endDate);
         } else if (isConsultantRole(userRole)) {
-            // 상담사: 해당 기간의 자신의 스케줄만 조회
             return scheduleRepository.findByTenantIdAndConsultantIdAndDateBetween(tenantId, userId, startDate, endDate);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
@@ -876,14 +789,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         try {
             Map<String, Object> statistics = new HashMap<>();
             
-            // 날짜 범위 설정
             LocalDate start = startDate != null ? LocalDate.parse(startDate) : null;
             LocalDate end = endDate != null ? LocalDate.parse(endDate) : null;
             
-            // tenantId 가져오기
             String tenantId = TenantContextHolder.getTenantId();
             
-            // 전체 스케줄 수 (날짜 범위 적용)
             log.info("📊 전체 스케줄 수 조회 중...");
             long totalSchedules;
             if (start != null && end != null) {
@@ -898,28 +808,39 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             statistics.put("totalSchedules", totalSchedules);
             log.info("📊 전체 스케줄 수: {}", totalSchedules);
             
-            // 상태별 스케줄 수 (날짜 범위 적용)
             log.info("📊 상태별 스케줄 수 조회 중...");
             long bookedSchedules, completedSchedules, cancelledSchedules, inProgressSchedules;
             
             if (start != null && end != null) {
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 bookedSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.BOOKED.name(), start, end);
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 completedSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED.name(), start, end);
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 cancelledSchedules = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED.name(), start, end);
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else if (start != null) {
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 bookedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.BOOKED.name(), start);
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 completedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.COMPLETED.name(), start);
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 cancelledSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(tenantId, ScheduleStatus.CANCELLED.name(), start);
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else if (end != null) {
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 bookedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.BOOKED.name(), end);
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 completedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.COMPLETED.name(), end);
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 cancelledSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(tenantId, ScheduleStatus.CANCELLED.name(), end);
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else {
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 bookedSchedules = scheduleRepository.countByStatus(tenantId, ScheduleStatus.BOOKED.name());
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 completedSchedules = scheduleRepository.countByStatus(tenantId, ScheduleStatus.COMPLETED.name());
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 cancelledSchedules = scheduleRepository.countByStatus(tenantId, ScheduleStatus.CANCELLED.name());
                 inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             }
@@ -932,12 +853,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.info("📊 상태별 스케줄 수 - 예약: {}, 완료: {}, 취소: {}, 진행중: {}", 
                     bookedSchedules, completedSchedules, cancelledSchedules, inProgressSchedules);
             
-            // 오늘의 통계
             LocalDate today = LocalDate.now();
             log.info("📊 오늘의 통계 조회 중... (날짜: {})", today);
             long totalToday = scheduleRepository.countByDate(tenantId, today);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long bookedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.BOOKED);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long completedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.COMPLETED);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long cancelledToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.CANCELLED);
             long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             
@@ -950,10 +873,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.info("📊 오늘의 통계 - 총: {}, 예약: {}, 완료: {}, 취소: {}, 진행중: {}", 
                     totalToday, bookedToday, completedToday, cancelledToday, inProgressToday);
             
-            // 추가 상세 통계
             log.info("📊 추가 상세 통계 조회 중...");
             
-            // 내담자 증감 통계 (이번 달 vs 지난 달)
             LocalDate thisMonthStart = today.withDayOfMonth(1);
             LocalDate lastMonthStart = thisMonthStart.minusMonths(1);
             LocalDate lastMonthEnd = thisMonthStart.minusDays(1);
@@ -968,7 +889,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             statistics.put("clientGrowth", clientGrowth);
             statistics.put("clientGrowthRate", Math.round(clientGrowthRate * 100.0) / 100.0);
             
-            // 상담사 증감 통계
             long thisMonthConsultants = scheduleRepository.countDistinctConsultantsByDateBetween(tenantId, thisMonthStart, today);
             long lastMonthConsultants = scheduleRepository.countDistinctConsultantsByDateBetween(tenantId, lastMonthStart, lastMonthEnd);
             long consultantGrowth = thisMonthConsultants - lastMonthConsultants;
@@ -979,8 +899,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             statistics.put("consultantGrowth", consultantGrowth);
             statistics.put("consultantGrowthRate", Math.round(consultantGrowthRate * 100.0) / 100.0);
             
-            // 상담 완료율 통계
             long totalSchedulesInPeriod = scheduleRepository.countByDateBetween(tenantId, thisMonthStart, today);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long completedSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED.name(), thisMonthStart, today);
             double completionRate = totalSchedulesInPeriod > 0 ? ((double) completedSchedulesInPeriod / totalSchedulesInPeriod) * 100 : 0;
             
@@ -988,17 +908,18 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             statistics.put("completedSchedulesInPeriod", completedSchedulesInPeriod);
             statistics.put("completionRate", Math.round(completionRate * 100.0) / 100.0);
             
-            // 취소율 통계
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long cancelledSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED.name(), thisMonthStart, today);
             double cancellationRate = totalSchedulesInPeriod > 0 ? ((double) cancelledSchedulesInPeriod / totalSchedulesInPeriod) * 100 : 0;
             
             statistics.put("cancelledSchedulesInPeriod", cancelledSchedulesInPeriod);
             statistics.put("cancellationRate", Math.round(cancellationRate * 100.0) / 100.0);
             
-            // 주간 통계 (최근 7일)
             LocalDate weekAgo = today.minusDays(7);
             long weeklySchedules = scheduleRepository.countByDateBetween(tenantId, weekAgo, today);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long weeklyCompleted = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.COMPLETED.name(), weekAgo, today);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long weeklyCancelled = scheduleRepository.countByStatusAndDateBetween(tenantId, ScheduleStatus.CANCELLED.name(), weekAgo, today);
             
             statistics.put("weeklySchedules", weeklySchedules);
@@ -1017,7 +938,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
-    /**
      * 오늘의 스케줄 통계 조회
      */
     @Override
@@ -1028,27 +948,25 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         LocalDate today = LocalDate.now();
         Map<String, Object> statistics = new HashMap<>();
         
-        // 오늘의 총 상담 수
         long totalToday = scheduleRepository.countByDate(tenantId, today);
         statistics.put("totalToday", totalToday);
         
-        // 오늘의 완료된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long completedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.COMPLETED);
         statistics.put("completedToday", completedToday);
         
-        // 오늘의 진행중인 상담 수
         long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
         statistics.put("inProgressToday", inProgressToday);
         
-        // 오늘의 취소된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long cancelledToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.CANCELLED);
         statistics.put("cancelledToday", cancelledToday);
         
-        // 오늘의 예약된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long bookedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.BOOKED);
         statistics.put("bookedToday", bookedToday);
         
-        // 오늘의 확인된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long confirmedToday = scheduleRepository.countByDateAndStatus(tenantId, today, ScheduleStatus.CONFIRMED);
         statistics.put("confirmedToday", confirmedToday);
         
@@ -1058,7 +976,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return statistics;
     }
     
-    /**
      * 테넌트별 오늘의 스케줄 통계 조회
      */
     @Override
@@ -1068,27 +985,25 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         LocalDate today = LocalDate.now();
         Map<String, Object> statistics = new HashMap<>();
         
-        // 테넌트별 오늘의 총 상담 수
         long totalToday = scheduleRepository.countByTenantIdAndDate(tenantId, today);
         statistics.put("totalToday", totalToday);
         
-        // 테넌트별 오늘의 완료된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long completedToday = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, today, ScheduleStatus.COMPLETED);
         statistics.put("completedToday", completedToday);
         
-        // 테넌트별 오늘의 진행중인 상담 수
         long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
         statistics.put("inProgressToday", inProgressToday);
         
-        // 테넌트별 오늘의 취소된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long cancelledToday = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, today, ScheduleStatus.CANCELLED);
         statistics.put("cancelledToday", cancelledToday);
         
-        // 테넌트별 오늘의 예약된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long bookedToday = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, today, ScheduleStatus.BOOKED);
         statistics.put("bookedToday", bookedToday);
         
-        // 테넌트별 오늘의 확인된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long confirmedToday = scheduleRepository.countByTenantIdAndDateAndStatus(tenantId, today, ScheduleStatus.CONFIRMED);
         statistics.put("confirmedToday", confirmedToday);
         
@@ -1098,7 +1013,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return statistics;
     }
     
-    /**
      * 특정 상담사의 오늘의 스케줄 통계 조회
      */
     @Override
@@ -1109,27 +1023,25 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         LocalDate today = LocalDate.now();
         Map<String, Object> statistics = new HashMap<>();
         
-        // 해당 상담사의 오늘 총 상담 수
         long totalToday = scheduleRepository.countByDateAndConsultantId(tenantId, today, consultantId);
         statistics.put("totalToday", totalToday);
         
-        // 해당 상담사의 오늘 완료된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long completedToday = scheduleRepository.countByDateAndStatusAndConsultantId(tenantId, today, ScheduleStatus.COMPLETED, consultantId);
         statistics.put("completedToday", completedToday);
         
-        // 해당 상담사의 오늘 진행중인 상담 수
         long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
         statistics.put("inProgressToday", inProgressToday);
         
-        // 해당 상담사의 오늘 취소된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long cancelledToday = scheduleRepository.countByDateAndStatusAndConsultantId(tenantId, today, ScheduleStatus.CANCELLED, consultantId);
         statistics.put("cancelledToday", cancelledToday);
         
-        // 해당 상담사의 오늘 예약된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long bookedToday = scheduleRepository.countByDateAndStatusAndConsultantId(tenantId, today, ScheduleStatus.BOOKED, consultantId);
         statistics.put("bookedToday", bookedToday);
         
-        // 해당 상담사의 오늘 확인된 상담 수
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         long confirmedToday = scheduleRepository.countByDateAndStatusAndConsultantId(tenantId, today, ScheduleStatus.CONFIRMED, consultantId);
         statistics.put("confirmedToday", confirmedToday);
         
@@ -1139,36 +1051,29 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return statistics;
     }
 
-    // ==================== 유틸리티 메서드 ====================
 
-    /**
      * 시간 겹침 여부 확인
      */
     private boolean isTimeOverlapping(LocalTime start1, LocalTime end1, LocalTime start2, LocalTime end2) {
         return start1.isBefore(end2) && start2.isBefore(end1);
     }
 
-    /**
      * 시간 간격이 너무 가까운지 확인 (최소 10분 간격 필요)
      */
     private boolean isTimeTooClose(LocalTime start1, LocalTime end1, LocalTime start2, LocalTime end2) {
-        // 첫 번째 스케줄이 두 번째 스케줄보다 먼저 끝나는 경우
         if (end1.isBefore(start2)) {
             long gapMinutes = ChronoUnit.MINUTES.between(end1, start2);
             return gapMinutes < ScheduleConstants.BREAK_TIME_MINUTES;
         }
         
-        // 두 번째 스케줄이 첫 번째 스케줄보다 먼저 끝나는 경우
         if (end2.isBefore(start1)) {
             long gapMinutes = ChronoUnit.MINUTES.between(end2, start1);
             return gapMinutes < ScheduleConstants.BREAK_TIME_MINUTES;
         }
         
-        // 시간이 겹치는 경우
         return true;
     }
 
-    /**
      * 매칭의 회기 사용 처리
      */
     private void useSessionForMapping(Long consultantId, Long clientId) {
@@ -1176,6 +1081,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
         
         for (ConsultantClientMapping mapping : activeMappings) {
@@ -1183,7 +1089,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 mapping.getClient().getId().equals(clientId)) {
                 
                 try {
-                    // 매칭을 다시 조회하여 최신 상태 확인
                     ConsultantClientMapping freshMapping = mappingRepository.findById(mapping.getId())
                             .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다: " + mapping.getId()));
                     
@@ -1194,14 +1099,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     freshMapping.useSession();
                     mappingRepository.save(freshMapping);
                     
-                    // 🔄 회기 사용 후 전체 시스템 동기화
                     try {
                         sessionSyncService.syncAfterSessionUsage(mapping.getId(), consultantId, clientId);
                         log.info("✅ 회기 사용 후 동기화 완료: mappingId={}", mapping.getId());
                     } catch (Exception syncError) {
                         log.error("❌ 회기 사용 후 동기화 실패: mappingId={}, error={}", 
                                  mapping.getId(), syncError.getMessage(), syncError);
-                        // 동기화 실패해도 회기 사용은 완료된 상태로 유지
                     }
                     
                     log.info("✅ 회기 사용 완료: 남은 회기 수 {}", mapping.getRemainingSessions());
@@ -1214,11 +1117,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
-    // ==================== 권한 검증 헬퍼 메서드 ====================
 
-    /**
      * 관리자 역할 여부 확인
-     * 표준화 2025-12-05: 표준 관리자 역할만 사용 (UserRole enum 활용)
      */
     private boolean isAdminRole(String userRole) {
         if (userRole == null) {
@@ -1234,9 +1134,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
     
 
-    /**
      * 상담사 역할 여부 확인
-     * 표준화 2025-12-05: UserRole enum 활용
      */
     private boolean isConsultantRole(String userRole) {
         if (userRole == null) {
@@ -1251,40 +1149,33 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
-    /**
      * 권한 기반 스케줄 조회 (상담사 이름 포함)
      */
     @Override
     public List<ScheduleDto> findSchedulesWithNamesByUserRole(Long userId, String userRole) {
         log.info("🔐 권한 기반 스케줄 조회 (이름 포함): 사용자 {}, 역할 {}", userId, userRole);
         
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         List<Schedule> schedules;
         if (isAdminRole(userRole)) {
-            // 관리자: 모든 스케줄 조회
             log.info("👑 관리자 권한으로 모든 스케줄 조회");
             schedules = scheduleRepository.findByTenantId(tenantId);
         } else if (isConsultantRole(userRole)) {
-            // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
             schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId);
         } else if (getRoleCodeFromCommonCode(UserRole.CLIENT.name()).equals(userRole)) {
-            // 내담자: 자신의 스케줄만 조회
             log.info("👤 내담자 권한으로 자신의 스케줄만 조회: {}", userId);
             schedules = scheduleRepository.findByTenantIdAndClientId(tenantId, userId);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }
         
-        // Schedule을 ScheduleDto로 변환 (상담사 이름 포함)
         List<ScheduleDto> scheduleDtos = schedules.stream()
             .map(this::convertToScheduleDto)
             .collect(java.util.stream.Collectors.toList());
         
-        // 휴가 데이터 추가
         List<ScheduleDto> vacationDtos = getVacationSchedules(userId, userRole);
         scheduleDtos.addAll(vacationDtos);
         
@@ -1294,39 +1185,32 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return scheduleDtos;
     }
 
-    /**
      * 권한 기반 페이지네이션 스케줄 조회 (상담사 이름 포함)
      */
     @Override
     public Page<ScheduleDto> findSchedulesWithNamesByUserRolePaged(Long userId, String userRole, Pageable pageable) {
         log.info("🔐 권한 기반 페이지네이션 스케줄 조회 (이름 포함): 사용자 {}, 역할 {}, 페이지 {}", userId, userRole, pageable.getPageNumber());
         
-        // 먼저 자동 완료 처리 실행
         autoCompleteExpiredSchedules();
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Page<Schedule> schedulePage;
         if (isAdminRole(userRole)) {
-            // 관리자: 모든 스케줄 조회
             log.info("👑 관리자 권한으로 모든 스케줄 페이지네이션 조회");
             schedulePage = scheduleRepository.findByTenantId(tenantId, pageable);
         } else if (isConsultantRole(userRole)) {
-            // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
             schedulePage = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId, pageable);
         } else if (getRoleCodeFromCommonCode(UserRole.CLIENT.name()).equals(userRole)) {
-            // 내담자: 자신의 스케줄만 조회
             log.info("👤 내담자 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
             schedulePage = scheduleRepository.findByTenantIdAndClientId(tenantId, userId, pageable);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }
         
-        // Schedule을 ScheduleDto로 변환 (상담사 이름 포함)
         return schedulePage.map(this::convertToScheduleDto);
     }
 
-    /**
      * 휴가 데이터를 ScheduleDto로 변환
      */
     private List<ScheduleDto> getVacationSchedules(Long userId, String userRole) {
@@ -1334,13 +1218,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         List<Vacation> vacations;
         if (isAdminRole(userRole)) {
-            // 관리자: 모든 상담사의 휴가 조회
             vacations = vacationRepository.findByIsDeletedFalseOrderByVacationDateAsc();
         } else if (isConsultantRole(userRole)) {
-            // 상담사: 자신의 휴가만 조회
             vacations = vacationRepository.findByConsultantIdAndIsDeletedFalseOrderByVacationDateAsc(userId);
         } else {
-            // 내담자: 휴가 조회 권한 없음
             return new ArrayList<>();
         }
         
@@ -1349,7 +1230,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .collect(java.util.stream.Collectors.toList());
     }
     
-    /**
      * Vacation 엔티티를 ScheduleDto로 변환
      */
     private ScheduleDto convertVacationToScheduleDto(Vacation vacation) {
@@ -1368,20 +1248,17 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         dto.setCreatedAt(vacation.getCreatedAt());
         dto.setUpdatedAt(vacation.getUpdatedAt());
         
-        // 상담사 이름 조회
         User consultant = userRepository.findById(vacation.getConsultantId()).orElse(null);
         if (consultant != null) {
             dto.setConsultantName(consultant.getName());
         }
         
-        // 휴가 제목 생성
         String vacationTitle = getVacationTitle(vacation);
         dto.setTitle(vacationTitle);
         
         return dto;
     }
     
-    /**
      * 휴가 제목 생성
      */
     private String getVacationTitle(Vacation vacation) {
@@ -1395,12 +1272,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return consultantName + " - " + vacationTypeTitle;
     }
     
-    /**
      * 휴가 타입별 제목 반환 (데이터베이스 코드 사용)
      */
     private String getVacationTypeTitle(Vacation.VacationType type) {
         try {
-            // 데이터베이스에서 휴가 타입 코드 조회
             String codeName = commonCodeService.getCodeName("VACATION_TYPE", type.name());
             if (!codeName.equals(type.name())) {
                 return codeName; // 데이터베이스에서 찾은 한글명 반환
@@ -1409,7 +1284,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.warn("휴가 타입 코드 조회 실패: {} -> 기본값 사용", type.name());
         }
         
-        // 데이터베이스에서 찾지 못한 경우 기본값 사용
         switch (type) {
             case MORNING:
                 return "🌅 오전 휴가 (09:00-13:00)";
@@ -1436,11 +1310,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
-    /**
      * Schedule 엔티티를 ScheduleDto로 변환 (상담사 이름 포함)
      */
     private ScheduleDto convertToScheduleDto(Schedule schedule) {
-        // 상담사 정보 조회
         String consultantName = "알 수 없음";
         String clientName = "알 수 없음";
         
@@ -1459,7 +1331,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 consultantName = consultant.getName() + " (비활성)";
             }
             
-            // 클라이언트 정보가 있다면 조회
             if (schedule.getClientId() != null) {
                 User client = userRepository.findById(schedule.getClientId()).orElse(null);
                 log.info("👥 내담자 조회 결과: client={}, isActive={}", 
@@ -1498,7 +1369,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .build();
     }
 
-    /**
      * 상태값을 한글로 변환 (데이터베이스 기반)
      */
     private String convertStatusToKorean(String status) {
@@ -1512,7 +1382,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
-    /**
      * 스케줄 타입을 한글로 변환 (데이터베이스 기반)
      */
     private String convertScheduleTypeToKorean(String scheduleType) {
@@ -1526,7 +1395,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
-    /**
      * 상담 유형을 한글로 변환 (데이터베이스 기반)
      */
     private String convertConsultationTypeToKorean(String consultationType) {
@@ -1540,9 +1408,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
-    // ==================== 자동 완료 처리 메서드 ====================
 
-    /**
      * 시간이 지난 확정된 스케줄을 자동으로 완료 처리
      */
     @Override
@@ -1562,14 +1428,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         int completedCount = 0;
         
         try {
-            // 1. 오늘 날짜이고 현재 시간을 지난 확정된 스케줄 조회
             List<Schedule> todayExpiredSchedules = scheduleRepository.findExpiredConfirmedSchedules(tenantId, today, currentTime);
             
             for (Schedule schedule : todayExpiredSchedules) {
                 try {
-                    // 최신 버전으로 다시 조회하여 버전 충돌 방지
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                         latestSchedule.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(latestSchedule);
@@ -1583,15 +1449,17 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 }
             }
             
-            // 2. 지난 날짜의 예약된/확정된 스케줄 조회 (오늘 이전)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             List<Schedule> pastBookedSchedules = scheduleRepository.findByDateBeforeAndStatus(tenantId, today, ScheduleStatus.BOOKED);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             List<Schedule> pastConfirmedSchedules = scheduleRepository.findByDateBeforeAndStatus(tenantId, today, ScheduleStatus.CONFIRMED);
             
-            // 예약됨 상태의 지난 스케줄 처리
             for (Schedule schedule : pastBookedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                         latestSchedule.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(latestSchedule);
@@ -1605,11 +1473,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 }
             }
             
-            // 확정됨 상태의 지난 스케줄 처리
             for (Schedule schedule : pastConfirmedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                         latestSchedule.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(latestSchedule);
@@ -1630,7 +1499,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("🔄 자동 완료 처리 완료: {}개 스케줄 처리됨", completedCount);
     }
 
-    /**
      * 특정 스케줄이 시간이 지났는지 확인
      */
     @Override
@@ -1643,11 +1511,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         LocalDate today = now.toLocalDate();
         LocalTime currentTime = now.toLocalTime();
         
-        // 오늘 날짜이고 현재 시간이 종료 시간을 지났는지 확인
         return today.equals(schedule.getDate()) && currentTime.isAfter(schedule.getEndTime());
     }
 
-    /**
      * 스케줄 상태를 한글로 변환 (공개 메서드)
      */
     @Override
@@ -1655,7 +1521,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return convertStatusToKorean(status);
     }
 
-    /**
      * 스케줄 타입을 한글로 변환 (공개 메서드)
      */
     @Override
@@ -1663,7 +1528,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return convertScheduleTypeToKorean(scheduleType);
     }
 
-    /**
      * 상담 유형을 한글로 변환 (공개 메서드)
      */
     @Override
@@ -1671,7 +1535,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return convertConsultationTypeToKorean(consultationType);
     }
     
-    /**
      * 특정 날짜의 스케줄 조회 (드래그 앤 드롭용) - tenantId 필터링 적용
      */
     @Override
@@ -1679,16 +1542,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("📅 특정 날짜 스케줄 조회: date={}, consultantId={}", date, consultantId);
         
         try {
-            // 현재 테넌트 ID 가져오기 (1차 필터링 - 필수)
             String tenantIdStr = accessControlService.getCurrentTenantId().toString();
             log.info("🔒 tenantId 필터링: {}", tenantIdStr);
             
             if (consultantId != null) {
-                // 특정 상담사의 해당 날짜 스케줄 조회 (2차 필터링 - 선택적)
                 log.info("🔒 consultantId 필터링: {}", consultantId);
                 return scheduleRepository.findByTenantIdAndDateAndConsultantIdAndIsDeletedFalse(tenantIdStr, date, consultantId);
             } else {
-                // 테넌트의 모든 상담사의 해당 날짜 스케줄 조회
                 return scheduleRepository.findByTenantIdAndDateAndIsDeletedFalse(tenantIdStr, date);
             }
         } catch (Exception e) {
@@ -1698,18 +1558,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
     
-    // ==================== 지점별 스케줄 관리 ====================
     
     @Override
     public List<Schedule> getBranchSchedules(Long branchId, LocalDate startDate, LocalDate endDate) {
         log.info("🏢 지점별 스케줄 조회: branchId={}, startDate={}, endDate={}", branchId, startDate, endDate);
         
         try {
-            // 지점 조회
             Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
             
-            // 지점의 상담사들 조회
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
@@ -1722,7 +1579,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 return new ArrayList<>();
             }
             
-            // 상담사들의 스케줄 조회
             List<Schedule> allSchedules = new ArrayList<>();
             for (User consultant : consultants) {
                 List<Schedule> consultantSchedules = scheduleRepository.findByConsultantIdAndDateBetween(
@@ -1747,7 +1603,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 branchId, consultantId, startDate, endDate);
         
         try {
-            // 상담사가 해당 지점에 속하는지 확인
             User consultant = userRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
             
@@ -1755,7 +1610,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + consultantId + ", branchId=" + branchId);
             }
             
-            // 상담사의 스케줄 조회
             List<Schedule> schedules = scheduleRepository.findByConsultantIdAndDateBetween(consultantId, startDate, endDate);
             
             log.info("지점별 상담사 스케줄 조회 완료: branchId={}, consultantId={}, 스케줄 수={}", 
@@ -1783,7 +1637,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             statistics.put("endDate", endDate);
             statistics.put("totalSchedules", schedules.size());
             
-            // 상태별 통계
             long completedCount = schedules.stream()
                 .filter(s -> "완료".equals(s.getStatus()))
                 .count();
@@ -1798,7 +1651,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             statistics.put("pendingSchedules", pendingCount);
             statistics.put("cancelledSchedules", cancelledCount);
             
-            // 상담사별 통계
             Map<Long, Long> consultantStats = schedules.stream()
                 .collect(Collectors.groupingBy(
                     Schedule::getConsultantId,
@@ -1822,11 +1674,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("📅 지점별 상담사 스케줄 현황 조회: branchId={}, date={}", branchId, date);
         
         try {
-            // 지점 조회
             Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
             
-            // 지점의 상담사들 조회
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
@@ -1870,7 +1720,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("🏢 지점별 스케줄 생성: branchId={}, schedule={}", branchId, schedule.getTitle());
         
         try {
-            // 상담사가 해당 지점에 속하는지 확인
             if (schedule.getConsultantId() != null) {
                 User consultant = userRepository.findById(schedule.getConsultantId())
                     .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + schedule.getConsultantId()));
@@ -1880,7 +1729,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 }
             }
             
-            // 스케줄 생성
             Schedule savedSchedule = scheduleRepository.save(schedule);
             
             log.info("지점별 스케줄 생성 완료: branchId={}, scheduleId={}", branchId, savedSchedule.getId());
@@ -1898,11 +1746,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("🏢 지점별 스케줄 수정: branchId={}, scheduleId={}", branchId, scheduleId);
         
         try {
-            // 기존 스케줄 조회
             Schedule existingSchedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new IllegalArgumentException("스케줄을 찾을 수 없습니다: " + scheduleId));
             
-            // 상담사가 해당 지점에 속하는지 확인
             if (existingSchedule.getConsultantId() != null) {
                 User consultant = userRepository.findById(existingSchedule.getConsultantId())
                     .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + existingSchedule.getConsultantId()));
@@ -1912,7 +1758,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 }
             }
             
-            // 스케줄 수정
             Schedule updatedSchedule = updateSchedule(scheduleId, schedule);
             
             log.info("지점별 스케줄 수정 완료: branchId={}, scheduleId={}", branchId, scheduleId);
@@ -1930,11 +1775,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("🏢 지점별 스케줄 삭제: branchId={}, scheduleId={}", branchId, scheduleId);
         
         try {
-            // 기존 스케줄 조회
             Schedule existingSchedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new IllegalArgumentException("스케줄을 찾을 수 없습니다: " + scheduleId));
             
-            // 상담사가 해당 지점에 속하는지 확인
             if (existingSchedule.getConsultantId() != null) {
                 User consultant = userRepository.findById(existingSchedule.getConsultantId())
                     .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + existingSchedule.getConsultantId()));
@@ -1944,7 +1787,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 }
             }
             
-            // 스케줄 삭제
             scheduleRepository.deleteById(scheduleId);
             
             log.info("지점별 스케줄 삭제 완료: branchId={}, scheduleId={}", branchId, scheduleId);
@@ -1961,7 +1803,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 branchId, consultantId, startTime, endTime);
         
         try {
-            // 상담사가 해당 지점에 속하는지 확인
             User consultant = userRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
             
@@ -1969,7 +1810,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + consultantId + ", branchId=" + branchId);
             }
             
-            // 시간대 중복 확인
             LocalDate date = startTime.toLocalDate();
             List<Schedule> existingSchedules = scheduleRepository.findByConsultantIdAndDate(consultantId, date);
             
@@ -1995,7 +1835,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("⏰ 지점별 스케줄 가능 시간 조회: branchId={}, consultantId={}, date={}", branchId, consultantId, date);
         
         try {
-            // 상담사가 해당 지점에 속하는지 확인
             User consultant = userRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
             
@@ -2003,10 +1842,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + consultantId + ", branchId=" + branchId);
             }
             
-            // 기존 스케줄 조회
             List<Schedule> existingSchedules = scheduleRepository.findByConsultantIdAndDate(consultantId, date);
             
-            // 가능한 시간대 계산 (10시-20시, 1시간 단위)
             List<Map<String, Object>> availableSlots = new ArrayList<>();
             LocalTime startHour = LocalTime.of(10, 0);
             LocalTime endHour = LocalTime.of(20, 0);
@@ -2016,7 +1853,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 LocalDateTime slotStart = date.atTime(time);
                 LocalDateTime slotEndDateTime = date.atTime(slotEnd);
                 
-                // 중복 확인
                 boolean isConflict = false;
                 for (Schedule existingSchedule : existingSchedules) {
                     if (isTimeOverlap(slotStart, slotEndDateTime,
@@ -2048,35 +1884,26 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
     
-    /**
      * 시간대 중복 확인 헬퍼 메서드
      */
     private boolean isTimeOverlap(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {
         return start1.isBefore(end2) && start2.isBefore(end1);
     }
     
-    /**
-     * 공통코드에서 역할 코드 조회
      */
     private String getRoleCodeFromCommonCode(String roleName) {
         try {
             String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.USER_ROLE_GROUP, roleName);
-            return codeValue != null ? codeValue : roleName; // 공통코드에 없으면 원본 반환
         } catch (Exception e) {
-            log.warn("공통코드에서 역할 코드 조회 실패: {}, 기본값 사용", roleName, e);
             return roleName;
         }
     }
     
-    /**
-     * 공통코드에서 메시지 타입 코드 조회
      */
     private String getMessageTypeFromCommonCode(String messageTypeName) {
         try {
             String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.MESSAGE_TYPE_GROUP, messageTypeName);
-            return codeValue != null ? codeValue : messageTypeName; // 공통코드에 없으면 원본 반환
         } catch (Exception e) {
-            log.warn("공통코드에서 메시지 타입 코드 조회 실패: {}, 기본값 사용", messageTypeName, e);
             return messageTypeName;
         }
     }

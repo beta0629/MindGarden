@@ -1,4 +1,3 @@
-/**
  * API 엔드포인트 표준화
  * 
  * @author CoreSolution
@@ -6,18 +5,13 @@
  * @since 2025-11-28
  */
 
-// 🎯 표준화된 API 엔드포인트 정의
 export const API_ENDPOINTS = {
-  // === 다이나믹 대시보드 API ===
   DASHBOARD: {
-    // 대시보드 조회
     GET_USER_DASHBOARD: '/api/v1/tenant/dashboards',
     GET_DASHBOARD_BY_ID: (id) => `/api/v1/tenant/dashboards/${id}`,
     
-    // 브랜딩 정보
     BRANDING: '/api/v1/admin/branding',
     
-    // 위젯 데이터 소스 (표준화 2025-12-05: /api/v1/ 경로 적용)
     WIDGET_DATA: {
       CONSULTATIONS_OVERALL: '/api/v1/consultations/statistics/overall',
       CONSULTATIONS_TRENDS: '/api/v1/consultations/statistics/trends',
@@ -28,25 +22,22 @@ export const API_ENDPOINTS = {
     }
   },
 
-  // === 관리자 통계 API (표준 경로: /api/v1/admin) ===
   ADMIN: {
-    // 상담사 관련
     CONSULTANTS: {
       WITH_STATS: '/api/v1/admin/consultants/with-stats',
       WITH_VACATION: '/api/v1/admin/consultants/with-vacation',
       RATING_STATS: '/api/v1/admin/consultant-rating-stats'
     },
     
-    // 내담자 관련
     CLIENTS: {
       WITH_STATS: '/api/v1/admin/clients/with-stats',
       WITH_MAPPING_INFO: '/api/v1/admin/clients/with-mapping-info'
     },
     
-    // 매칭 관련
     MAPPINGS: {
       LIST: '/api/v1/admin/mappings',
       STATS: '/api/v1/admin/mappings/stats',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       ACTIVE: '/api/v1/admin/mappings/active',
       PENDING_PAYMENT: '/api/v1/admin/mappings/pending-payment',
       PAYMENT_CONFIRMED: '/api/v1/admin/mappings/payment-confirmed',
@@ -54,7 +45,6 @@ export const API_ENDPOINTS = {
       SESSIONS_EXHAUSTED: '/api/v1/admin/mappings/sessions-exhausted'
     },
     
-    // 통계 관련
     STATISTICS: {
       OVERALL: '/api/v1/admin/statistics/overall',
       TRENDS: '/api/v1/admin/statistics/trends',
@@ -65,7 +55,6 @@ export const API_ENDPOINTS = {
       REFUND: '/api/v1/admin/refund-statistics'
     },
     
-    // 위젯 전용 API (새로 추가)
     WIDGETS: {
       TODAY_STATS: '/api/v1/admin/today-stats',
       PENDING_DEPOSIT_STATS: '/api/v1/admin/pending-deposit-stats',
@@ -73,9 +62,9 @@ export const API_ENDPOINTS = {
     }
   },
   
-  // === 시스템 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용) ===
   SYSTEM: {
     NOTIFICATIONS: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       ACTIVE: '/api/v1/system-notifications/active',
       LIST: '/api/v1/system-notifications'
     },
@@ -86,25 +75,21 @@ export const API_ENDPOINTS = {
     }
   },
   
-  // === 인증 관련 API (표준 경로: /api/v1/auth) ===
   AUTH: {
     CURRENT_USER: '/api/v1/auth/current-user',
     LOGIN: '/api/v1/auth/login',
     LOGOUT: '/api/v1/auth/logout'
   },
   
-  // === 공통 코드 API (표준 경로: /api/v1/common-codes) ===
   COMMON_CODE: {
     LIST: '/api/v1/common-codes',
     BY_GROUP: '/api/v1/common-codes/group'
   }
 };
 
-// 🔧 API 엔드포인트 헬퍼 함수들
 export const buildApiUrl = (endpoint, params = {}) => {
   let url = endpoint;
   
-  // 쿼리 파라미터 추가
   if (Object.keys(params).length > 0) {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
@@ -121,38 +106,31 @@ export const buildApiUrl = (endpoint, params = {}) => {
   return url;
 };
 
-// 날짜 관련 헬퍼
 export const buildDateParams = (date = new Date()) => {
   return {
     date: date.toISOString().split('T')[0]
   };
 };
 
-// 기간 관련 헬퍼
 export const buildPeriodParams = (period = 'month') => {
   return {
     period
   };
 };
 
-// 🎯 자주 사용되는 API URL 조합
 export const COMMON_API_URLS = {
-  // 오늘 날짜 기준 상담사 휴가 정보
   CONSULTANTS_WITH_VACATION_TODAY: () => 
     buildApiUrl(API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_VACATION, buildDateParams()),
     
-  // 월간 휴가 통계
   VACATION_STATS_MONTHLY: () => 
     buildApiUrl(API_ENDPOINTS.ADMIN.STATISTICS.VACATION, buildPeriodParams('month')),
     
-  // 활성 시스템 알림
   ACTIVE_NOTIFICATIONS: () => 
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE
 };
 
-// 🔍 디버깅용 엔드포인트 매핑 (표준화 2025-12-05: 레거시 경로 제거)
 export const ENDPOINT_MAPPING = {
-  // 기존 → 표준화 (레거시 경로는 더 이상 사용하지 않음)
   '/api/v1/admin/consultants/with-vacation': API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_VACATION,
   '/api/v1/admin/clients/with-mapping-info': API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
   '/api/v1/admin/mappings': API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
@@ -161,7 +139,6 @@ export const ENDPOINT_MAPPING = {
   '/api/v1/admin/statistics/consultation-completion': API_ENDPOINTS.ADMIN.STATISTICS.CONSULTATION_COMPLETION
 };
 
-// 📊 엔드포인트 검증 함수
 export const validateEndpoint = (endpoint) => {
   const allEndpoints = Object.values(API_ENDPOINTS)
     .flatMap(category => 
@@ -177,7 +154,6 @@ export const validateEndpoint = (endpoint) => {
   return allEndpoints.includes(endpoint);
 };
 
-// 🎯 엔드포인트 사용 통계 (개발용)
 export const logEndpointUsage = (endpoint) => {
   if (process.env.NODE_ENV === 'development') {
     console.log(`🔗 API 호출: ${endpoint}`);

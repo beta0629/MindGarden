@@ -2,7 +2,6 @@ import React from 'react';
 import ErpCard from '../common/ErpCard';
 import ErpButton from '../common/ErpButton';
 
-/**
  * 환불 이력 테이블 컴포넌트
  */
 const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
@@ -13,9 +12,10 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
     const getErpStatusBadge = (status) => {
         const statusConfig = {
             'SENT': { text: '전송완료', color: 'var(--mg-success-500)' },
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'PENDING': { text: '전송대기', color: 'var(--mg-warning-500)' },
             'FAILED': { text: '전송실패', color: 'var(--mg-error-500)' },
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'CONFIRMED': { text: '확인완료', color: '#6f42c1' }
         };
 
@@ -114,7 +114,6 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
                 <div style={{ 
                     textAlign: 'center', 
                     padding: '40px',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
                     color: '#666',
                     fontSize: 'var(--font-size-base)'
                 }}>

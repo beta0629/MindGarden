@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 테스트용 데이터 생성 컨트롤러
  * 
  * @author MindGarden
@@ -47,7 +46,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/test") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class TestDataController {
@@ -66,13 +64,11 @@ public class TestDataController {
     @Value("${spring.profiles.active:prod}")
     private String activeProfile;
 
-    /**
      * 테스트용 데이터 생성 (상담사, 내담자, 매핑)
      * 개발 모드에서만 동작
      */
     @PostMapping("/create-test-data")
     public ResponseEntity<?> createTestData() {
-        // 운영 환경에서 실행 방지 (더 강화된 체크)
         if (!isDev && !"local".equals(activeProfile)) {
             log.warn("🚫 운영 환경에서 테스트 데이터 생성 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
@@ -84,7 +80,6 @@ public class TestDataController {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 1. 어드민 계정 생성
             User adminUser = User.builder()
                     .username("admin@mindgarden.com")
                     .email("admin@mindgarden.com")
@@ -100,7 +95,6 @@ public class TestDataController {
             result.put("admin", savedAdmin);
             log.info("✅ 어드민 생성 완료: {}", savedAdmin.getEmail());
 
-            // 2. 상담사 등록
             ConsultantRegistrationDto consultantDto = ConsultantRegistrationDto.builder()
                     .username("consultant1@mindgarden.com")
                     .password("password123")
@@ -120,7 +114,6 @@ public class TestDataController {
             result.put("consultant", consultant);
             log.info("✅ 상담사 생성 완료: {}", consultant.getEmail());
 
-            // 3. 내담자 등록
             ClientRegistrationDto clientDto = ClientRegistrationDto.builder()
                     .username("client1@example.com")
                     .password("client123")
@@ -143,7 +136,6 @@ public class TestDataController {
             result.put("client", client);
             log.info("✅ 내담자 생성 완료: {}", client.getName());
 
-            // 4. 상담사-내담자 매핑 생성
             ConsultantClientMappingDto mappingDto = ConsultantClientMappingDto.builder()
                     .consultantId(consultant.getId())
                     .clientId(client.getId())
@@ -173,13 +165,11 @@ public class TestDataController {
         }
     }
 
-    /**
      * 추가 상담사 등록 (개발 모드에서만 동작)
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-consultant")
     public ResponseEntity<?> createConsultant(@RequestBody ConsultantRegistrationDto request) {
-        // 운영 환경에서 실행 방지 (더 강화된 체크)
         if (!isDev && !"local".equals(activeProfile)) {
             log.warn("🚫 운영 환경에서 테스트 상담사 등록 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
@@ -199,13 +189,11 @@ public class TestDataController {
         }
     }
 
-    /**
      * 추가 내담자 등록 (개발 모드에서만 동작)
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-client")
     public ResponseEntity<?> createClient(@RequestBody ClientRegistrationDto request) {
-        // 운영 환경에서 실행 방지 (더 강화된 체크)
         if (!isDev && !"local".equals(activeProfile)) {
             log.warn("🚫 운영 환경에서 테스트 내담자 등록 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
@@ -225,13 +213,11 @@ public class TestDataController {
         }
     }
 
-    /**
      * 추가 매핑 생성 (개발 모드에서만 동작)
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-mapping")
     public ResponseEntity<?> createMapping(@RequestBody ConsultantClientMappingDto request) {
-        // 운영 환경에서 실행 방지 (더 강화된 체크)
         if (!isDev && !"local".equals(activeProfile)) {
             log.warn("🚫 운영 환경에서 테스트 매핑 생성 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
@@ -252,13 +238,11 @@ public class TestDataController {
         }
     }
 
-    /**
      * 생성된 데이터 조회 (개발 모드에서만 동작)
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @GetMapping("/data")
     public ResponseEntity<?> getTestData() {
-        // 운영 환경에서 실행 방지 (더 강화된 체크)
         if (!isDev && !"local".equals(activeProfile)) {
             log.warn("🚫 운영 환경에서 테스트 데이터 조회 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
@@ -284,13 +268,11 @@ public class TestDataController {
         }
     }
     
-    /**
      * 사용자 역할 데이터 마이그레이션 (ROLE_ 접두사 제거)
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/migrate-user-roles")
     public ResponseEntity<?> migrateUserRoles() {
-        // 운영 환경에서 실행 방지 (더 강화된 체크)
         if (!isDev && !"local".equals(activeProfile)) {
             log.warn("🚫 운영 환경에서 데이터 마이그레이션 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
@@ -300,7 +282,6 @@ public class TestDataController {
         log.info("🔄 사용자 역할 데이터 마이그레이션 시작...");
         
         try {
-            // 간단한 방법: getAllClients()에서 발생하는 오류 개수만 확인
             log.info("현재 내담자 목록 조회 테스트...");
             adminService.getAllClients();
             
@@ -317,7 +298,6 @@ public class TestDataController {
         }
     }
 
-    /**
      * 간단한 내담자 생성
      * POST /api/test/client
      */
@@ -333,7 +313,6 @@ public class TestDataController {
         try {
             log.info("👤 테스트용 내담자 생성 시작");
 
-            // 기존 내담자 확인 (ClientRepository 사용)
             var existingClients = clientRepository.findAll();
             log.info("🔍 ClientRepository에서 조회된 내담자 수: {}", existingClients.size());
             if (!existingClients.isEmpty()) {
@@ -347,7 +326,6 @@ public class TestDataController {
                 ));
             }
 
-            // AdminService를 사용하여 내담자 생성
             ClientRegistrationDto clientDto = ClientRegistrationDto.builder()
                     .username("client@test.com")
                     .password("password123")
@@ -386,7 +364,6 @@ public class TestDataController {
         }
     }
 
-    /**
      * 테스트용 매핑 생성 (상담사-내담자 매핑)
      * POST /api/test/mapping
      */
@@ -402,7 +379,6 @@ public class TestDataController {
         try {
             log.info("🔗 테스트용 매핑 생성 시작");
 
-            // 상담사와 내담자 찾기 (동적 조회)
             var allUsers = userRepository.findAll();
             var consultants = allUsers.stream()
                 .filter(user -> user.getRole() != null && user.getRole() == UserRole.CONSULTANT)
@@ -426,11 +402,9 @@ public class TestDataController {
             User consultant = consultants.get(0);
             Client clientEntity = clients.get(0);
 
-            // UserRole 확인 (enum 비교는 안전하게)
             log.info("상담사 역할: {}", consultant.getRole());
             log.info("내담자 ID: {}", clientEntity.getId());
 
-            // 기존 매핑이 있는지 확인 (임시로 false로 설정)
             boolean existingMapping = false;
             if (existingMapping) {
                 return ResponseEntity.ok(Map.of(
@@ -440,7 +414,6 @@ public class TestDataController {
                 ));
             }
 
-            // Client를 User로 변환
             User clientUser = userRepository.findById(clientEntity.getId()).orElse(null);
             if (clientUser == null) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -449,12 +422,13 @@ public class TestDataController {
                 ));
             }
             
-            // 새 매핑 생성
             ConsultantClientMapping mapping = new ConsultantClientMapping();
             mapping.setConsultant(consultant);  // User 타입
             mapping.setClient(clientUser);  // User 타입으로 설정
             mapping.setStartDate(LocalDateTime.now());  // 필수 필드 추가
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             mapping.setStatus(MappingStatus.ACTIVE);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             mapping.setPaymentStatus(PaymentStatus.APPROVED);
             mapping.setTotalSessions(10);
             mapping.setRemainingSessions(10);
@@ -492,7 +466,6 @@ public class TestDataController {
         }
     }
 
-    /**
      * 테스트용 상담사 생성
      */
     @PostMapping("/consultant")
@@ -506,7 +479,6 @@ public class TestDataController {
             String name = (String) request.get("name");
             String phone = (String) request.get("phone");
             
-            // 상담사 등록 DTO 생성
             ConsultantRegistrationDto dto = new ConsultantRegistrationDto();
             dto.setUsername(username);
             dto.setEmail(email);
@@ -514,7 +486,6 @@ public class TestDataController {
             dto.setName(name);
             dto.setPhone(phone);
             
-            // AdminService를 통해 상담사 등록
             User consultant = adminService.registerConsultant(dto);
             
             log.info("✅ 테스트용 상담사 생성 완료: ID={}, 이름={}", consultant.getId(), consultant.getName());
@@ -537,7 +508,6 @@ public class TestDataController {
         }
     }
     
-    /**
      * 테스트용 상담 데이터 생성
      * POST /api/test/consultation
      */
@@ -553,7 +523,6 @@ public class TestDataController {
         try {
             log.info("📋 테스트용 상담 데이터 생성 시작");
 
-            // 기존 상담사와 내담자 조회
             var allUsers = userRepository.findAll();
             var consultants = allUsers.stream()
                 .filter(user -> user.getRole() != null && user.getRole() == UserRole.CONSULTANT)
@@ -570,10 +539,8 @@ public class TestDataController {
             User consultant = consultants.get(0);
             Client client = clients.get(0);
 
-            // 과거 상담 데이터 생성 (히스토리용)
             List<Consultation> consultations = new ArrayList<>();
             
-            // 1주일 전 상담
             Consultation consultation1 = new Consultation();
             consultation1.setClientId(client.getId());
             consultation1.setConsultantId(consultant.getId());
@@ -587,7 +554,6 @@ public class TestDataController {
             consultation1.setCreatedAt(LocalDateTime.now().minusDays(7));
             consultations.add(consultation1);
 
-            // 2주일 전 상담
             Consultation consultation2 = new Consultation();
             consultation2.setClientId(client.getId());
             consultation2.setConsultantId(consultant.getId());
@@ -601,7 +567,6 @@ public class TestDataController {
             consultation2.setCreatedAt(LocalDateTime.now().minusDays(14));
             consultations.add(consultation2);
 
-            // 3주일 전 상담
             Consultation consultation3 = new Consultation();
             consultation3.setClientId(client.getId());
             consultation3.setConsultantId(consultant.getId());
@@ -615,7 +580,6 @@ public class TestDataController {
             consultation3.setCreatedAt(LocalDateTime.now().minusDays(21));
             consultations.add(consultation3);
 
-            // 데이터베이스에 저장
             List<Consultation> savedConsultations = consultationRepository.saveAll(consultations);
 
             log.info("✅ 테스트용 상담 데이터 생성 완료: {}건", savedConsultations.size());
@@ -637,7 +601,6 @@ public class TestDataController {
         }
     }
 
-    /**
      * 테스트 사용자 삭제
      * POST /api/test/delete-user
      */
@@ -653,7 +616,6 @@ public class TestDataController {
         try {
             log.info("🗑️ 테스트 사용자 삭제: {}", email);
 
-            // 사용자 조회
             Optional<User> userOpt = userRepository.findByEmail(email);
             if (userOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -664,7 +626,6 @@ public class TestDataController {
 
             User user = userOpt.get();
             
-            // 사용자 삭제 (소프트 삭제)
             user.setIsDeleted(true);
             user.setDeletedAt(LocalDateTime.now());
             user.setUpdatedAt(LocalDateTime.now());
@@ -690,7 +651,6 @@ public class TestDataController {
         }
     }
     
-    /**
      * 테스트 사용자 비밀번호 재설정
      * POST /api/test/reset-password
      */
@@ -706,7 +666,6 @@ public class TestDataController {
         try {
             log.info("🔑 테스트 사용자 비밀번호 재설정: {}", email);
 
-            // 사용자 조회
             Optional<User> userOpt = userRepository.findByEmail(email);
             if (userOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -717,7 +676,6 @@ public class TestDataController {
 
             User user = userOpt.get();
             
-            // 비밀번호 재설정 (단일 인코딩만 적용)
             user.setPassword(passwordEncoder.encode(newPassword));
             user.setUpdatedAt(LocalDateTime.now());
             user.setVersion(user.getVersion() + 1);

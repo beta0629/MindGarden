@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 할인 회계 처리 서비스 구현체
  * 
  * @author MindGarden
@@ -46,17 +45,14 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         try {
             BigDecimal discountAmount = originalAmount.subtract(finalAmount);
             
-            // 1. 매출 거래 생성 (원래 금액)
             FinancialTransaction revenueTransaction = createRevenueTransaction(
                 mapping, originalAmount, discount
             );
             
-            // 2. 할인 거래 생성 (할인 금액)
             FinancialTransaction discountTransaction = createDiscountTransaction(
                 mapping, discountAmount, discount
             );
             
-            // 3. 매핑에 할인 정보 저장
             mapping.setDiscountCode(discount.getCode());
             mapping.setDiscountAmount(discountAmount.longValue());
             mapping.setOriginalAmount(originalAmount.longValue());
@@ -65,7 +61,6 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
             
             mappingRepository.save(mapping);
             
-            // 4. 결과 생성
             DiscountAccountingResult result = new DiscountAccountingResult();
             result.setMappingId(mapping.getId());
             result.setOriginalAmount(originalAmount);
@@ -104,7 +99,6 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
             ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
-            // 1. 매출 거래 취소
             List<FinancialTransaction> revenueTransactions = financialTransactionRepository
                 .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                     mappingId, "CONSULTANT_CLIENT_MAPPING"
@@ -115,13 +109,11 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
                 .orElse(null);
             
             if (revenueTransaction != null) {
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 revenueTransaction.setStatus(FinancialTransaction.TransactionStatus.CANCELLED);
-                // revenueTransaction.setCancelledAt(LocalDateTime.now());
-                // revenueTransaction.setCancellationReason(reason);
                 financialTransactionRepository.save(revenueTransaction);
             }
             
-            // 2. 할인 거래 취소
             List<FinancialTransaction> discountTransactions = financialTransactionRepository
                 .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                     mappingId, "CONSULTANT_CLIENT_MAPPING"
@@ -132,13 +124,11 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
                 .orElse(null);
             
             if (discountTransaction != null) {
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 discountTransaction.setStatus(FinancialTransaction.TransactionStatus.CANCELLED);
-                // discountTransaction.setCancelledAt(LocalDateTime.now());
-                // discountTransaction.setCancellationReason(reason);
                 financialTransactionRepository.save(discountTransaction);
             }
             
-            // 3. 매핑 할인 정보 초기화
             mapping.setDiscountCode(null);
             mapping.setDiscountAmount(null);
             mapping.setOriginalAmount(null);
@@ -176,14 +166,12 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         log.info("💰 할인 회계 거래 수정: MappingID={}, NewFinalAmount={}", mappingId, newFinalAmount);
         
         try {
-            // 1. 기존 할인 회계 거래 취소
             Map<String, Object> cancelResult = cancelDiscountAccounting(mappingId, "할인 수정으로 인한 취소");
             
             if (!(Boolean) cancelResult.get("success")) {
                 return cancelResult;
             }
             
-            // 2. 새로운 할인 회계 거래 생성
             ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
@@ -221,7 +209,6 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
             ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
-            // 매출 거래 조회
             List<FinancialTransaction> revenueTransactions = financialTransactionRepository
                 .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                     mappingId, "CONSULTANT_CLIENT_MAPPING"
@@ -231,7 +218,6 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
                 .findFirst()
                 .orElse(null);
             
-            // 할인 거래 조회
             List<FinancialTransaction> discountTransactions = financialTransactionRepository
                 .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                     mappingId, "CONSULTANT_CLIENT_MAPPING"
@@ -276,7 +262,6 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
             ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
-            // 매출 거래 검증
             List<FinancialTransaction> revenueTransactions = financialTransactionRepository
                 .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                     mappingId, "CONSULTANT_CLIENT_MAPPING"
@@ -286,7 +271,6 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
                 .findFirst()
                 .orElse(null);
             
-            // 할인 거래 검증
             List<FinancialTransaction> discountTransactions = financialTransactionRepository
                 .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
                     mappingId, "CONSULTANT_CLIENT_MAPPING"
@@ -319,9 +303,7 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         }
     }
     
-    // ==================== Private Helper Methods ====================
     
-    /**
      * 매출 거래 생성
      */
     private FinancialTransaction createRevenueTransaction(
@@ -339,15 +321,14 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         transaction.setRelatedEntityType("CONSULTANT_CLIENT_MAPPING");
         transaction.setBranchCode(mapping.getBranchCode());
         transaction.setTransactionDate(LocalDateTime.now().toLocalDate());
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         transaction.setStatus(FinancialTransaction.TransactionStatus.COMPLETED);
         transaction.setCreatedAt(LocalDateTime.now());
         
-        // 할인 정보는 description에 포함됨
         
         return financialTransactionRepository.save(transaction);
     }
     
-    /**
      * 할인 거래 생성
      */
     private FinancialTransaction createDiscountTransaction(
@@ -365,15 +346,14 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         transaction.setRelatedEntityType("CONSULTANT_CLIENT_MAPPING");
         transaction.setBranchCode(mapping.getBranchCode());
         transaction.setTransactionDate(LocalDateTime.now().toLocalDate());
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         transaction.setStatus(FinancialTransaction.TransactionStatus.COMPLETED);
         transaction.setCreatedAt(LocalDateTime.now());
         
-        // 할인 정보는 description에 포함됨
         
         return financialTransactionRepository.save(transaction);
     }
     
-    // ==================== Additional Required Methods ====================
     
     @Override
     public Map<String, Object> processDiscountRefund(Long mappingId, BigDecimal refundAmount, String refundReason, String processedBy) {
@@ -413,7 +393,6 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
     
     @Override
     public Map<String, Object> getRefundableDiscounts(String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("💰 환불 가능한 할인 조회: tenantId={}", tenantId);
         
@@ -427,7 +406,6 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
     
     @Override
     public Map<String, Object> getDiscountRefundStatistics(String branchCode, String startDate, String endDate) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📊 할인 환불 통계 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         

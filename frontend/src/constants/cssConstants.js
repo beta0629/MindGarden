@@ -1,4 +1,3 @@
-/**
  * CSS 상수 관리 시스템
  * 모든 CSS 관련 상수를 중앙 집중식으로 관리
  * 
@@ -7,9 +6,7 @@
  * @since 2025-11-26
  */
 
-// ===== 색상 시스템 =====
 export const COLORS = {
-  // 기본 색상
   PRIMARY: 'var(--mg-primary-500)',
   SECONDARY: 'var(--mg-secondary-600)',
   SUCCESS: 'var(--mg-success-500)',
@@ -17,7 +14,6 @@ export const COLORS = {
   ERROR: 'var(--mg-error-500)',
   INFO: 'var(--mg-primary-500)',
   
-  // 배경 색상
   BACKGROUND: {
     PRIMARY: 'var(--mg-white)',
     SECONDARY: 'var(--mg-gray-100)',
@@ -26,7 +22,6 @@ export const COLORS = {
     LIGHT: 'var(--mg-white)'
   },
   
-  // 텍스트 색상
   TEXT: {
     PRIMARY: 'var(--mg-gray-800)',
     SECONDARY: 'var(--mg-gray-600)',
@@ -35,7 +30,6 @@ export const COLORS = {
     DARK: 'var(--mg-black)'
   },
   
-  // 테두리 색상
   BORDER: {
     DEFAULT: 'var(--mg-gray-300)',
     LIGHT: 'var(--cs-gray-100)',
@@ -43,16 +37,19 @@ export const COLORS = {
     FOCUS: 'var(--mg-primary-500)'
   },
   
-  // 상태별 색상
   STATUS: {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     ACTIVE: 'var(--mg-success-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     INACTIVE: 'var(--cs-gray-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: 'var(--mg-warning-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     COMPLETED: 'var(--mg-success-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CANCELLED: 'var(--mg-error-500)'
   },
   
-  // 성능 지표 색상
   PERFORMANCE: {
     EXCELLENT: 'var(--mg-success-500)',
     GOOD: 'var(--mg-success-400)',
@@ -62,7 +59,6 @@ export const COLORS = {
   }
 };
 
-// ===== 간격 시스템 =====
 export const SPACING = {
   XS: '4px',
   SM: '8px',
@@ -73,7 +69,6 @@ export const SPACING = {
   XXXL: '64px'
 };
 
-// ===== 폰트 시스템 =====
 export const TYPOGRAPHY = {
   FONT_FAMILY: {
     PRIMARY: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -107,7 +102,6 @@ export const TYPOGRAPHY = {
   }
 };
 
-// ===== 레이아웃 시스템 =====
 export const LAYOUT = {
   BORDER_RADIUS: {
     NONE: '0',
@@ -152,7 +146,6 @@ export const LAYOUT = {
   }
 };
 
-// ===== 애니메이션 시스템 =====
 export const ANIMATION = {
   DURATION: {
     FAST: '0.15s',
@@ -176,7 +169,6 @@ export const ANIMATION = {
   }
 };
 
-// ===== 컴포넌트별 상수 =====
 export const COMPONENT_STYLES = {
   BUTTON: {
     HEIGHT: {
@@ -220,7 +212,6 @@ export const COMPONENT_STYLES = {
   }
 };
 
-// ===== 상태별 스타일 =====
 export const STATE_STYLES = {
   HOVER: {
     TRANSFORM: ANIMATION.TRANSFORM.TRANSLATE_UP,
@@ -244,11 +235,9 @@ export const STATE_STYLES = {
   }
 };
 
-// ===== CSS 변수 생성 함수 =====
 export const generateCSSVariables = () => {
   const cssVars = {};
   
-  // 색상 변수
   Object.entries(COLORS).forEach(([key, value]) => {
     if (typeof value === 'object') {
       Object.entries(value).forEach(([subKey, subValue]) => {
@@ -259,12 +248,10 @@ export const generateCSSVariables = () => {
     }
   });
   
-  // 간격 변수
   Object.entries(SPACING).forEach(([key, value]) => {
     cssVars[`--spacing-${key.toLowerCase()}`] = value;
   });
   
-  // 타이포그래피 변수
   Object.entries(TYPOGRAPHY.FONT_SIZE).forEach(([key, value]) => {
     cssVars[`--font-size-${key.toLowerCase()}`] = value;
   });
@@ -273,7 +260,6 @@ export const generateCSSVariables = () => {
     cssVars[`--font-weight-${key.toLowerCase()}`] = value;
   });
   
-  // 레이아웃 변수
   Object.entries(LAYOUT.BORDER_RADIUS).forEach(([key, value]) => {
     cssVars[`--border-radius-${key.toLowerCase()}`] = value;
   });
@@ -285,22 +271,16 @@ export const generateCSSVariables = () => {
   return cssVars;
 };
 
-// ===== 유틸리티 함수 =====
 export const CSS_UTILS = {
-  // 반응형 브레이크포인트 생성
   mediaQuery: (breakpoint) => `@media (min-width: ${LAYOUT.BREAKPOINTS[breakpoint]})`,
   
-  // 그리드 시스템
   gridColumns: (columns) => `repeat(${columns}, 1fr)`,
   
-  // Flexbox 유틸리티
   flexCenter: 'display: flex; align-items: center; justify-content: center;',
   flexBetween: 'display: flex; align-items: center; justify-content: space-between;',
   
-  // 텍스트 유틸리티
   textEllipsis: 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
   
-  // 시각적 숨김
   visuallyHidden: 'position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;'
 };
 

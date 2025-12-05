@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-/**
  * 테넌트 구독 엔티티
  * 
  * @author CoreSolution
@@ -26,7 +25,6 @@ import java.time.LocalDate;
 @EqualsAndHashCode(callSuper = true)
 public class TenantSubscription extends BaseEntity {
     
-    /**
      * 구독 상태 열거형
      */
     public enum SubscriptionStatus {
@@ -49,7 +47,6 @@ public class TenantSubscription extends BaseEntity {
         }
     }
     
-    /**
      * 청구 주기 열거형
      */
     public enum BillingCycle {
@@ -68,25 +65,21 @@ public class TenantSubscription extends BaseEntity {
         }
     }
     
-    /**
      * 구독 UUID (고유 식별자)
      */
     @Column(name = "subscription_id", length = 36, unique = true, nullable = false)
     private String subscriptionId;
     
-    /**
      * 테넌트 ID (온보딩 중이면 null, 승인 후 업데이트)
      */
     @Column(name = "tenant_id", length = 36, nullable = true)
     private String tenantId;
     
-    /**
      * 요금제 ID
      */
     @Column(name = "plan_id", length = 36, nullable = false)
     private String planId;
     
-    /**
      * 상태 (DRAFT, PENDING_ACTIVATION, ACTIVE, SUSPENDED, CANCELLED, TERMINATED)
      */
     @Enumerated(EnumType.STRING)
@@ -94,19 +87,16 @@ public class TenantSubscription extends BaseEntity {
     @Builder.Default
     private SubscriptionStatus status = SubscriptionStatus.DRAFT;
     
-    /**
      * 유효 시작일
      */
     @Column(name = "effective_from", nullable = false)
     private LocalDate effectiveFrom;
     
-    /**
      * 유효 종료일
      */
     @Column(name = "effective_to")
     private LocalDate effectiveTo;
     
-    /**
      * 청구 주기
      */
     @Enumerated(EnumType.STRING)
@@ -114,49 +104,42 @@ public class TenantSubscription extends BaseEntity {
     @Builder.Default
     private BillingCycle billingCycle = BillingCycle.MONTHLY;
     
-    /**
      * 결제 수단
      */
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;
     
-    /**
      * 자동 갱신 여부
      */
     @Column(name = "auto_renewal")
     @Builder.Default
     private Boolean autoRenewal = true;
     
-    /**
      * 다음 청구일
      */
     @Column(name = "next_billing_date")
     private LocalDate nextBillingDate;
     
-    /**
      * 테넌트 (참조)
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", referencedColumnName = "tenant_id", insertable = false, updatable = false)
     private Tenant tenant;
     
-    /**
      * 요금제 (참조)
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id", referencedColumnName = "plan_id", insertable = false, updatable = false)
     private PricingPlan plan;
     
-    // 비즈니스 메서드
     
-    /**
      * 활성 상태 확인
      */
     public boolean isActive() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return status == SubscriptionStatus.ACTIVE && !isDeleted();
     }
     
-    /**
      * 유효 기간 확인
      */
     public boolean isEffective(LocalDate date) {

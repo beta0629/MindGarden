@@ -38,7 +38,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
  * ConsultationService 구현체
  * API 설계 문서에 명시된 상담 관리 비즈니스 로직 구현
  * 테넌트 접근 제어 통합
@@ -81,7 +80,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     @Autowired
     private StatusCodeHelper statusCodeHelper;
     
-    // BaseTenantEntityServiceImpl에서 이미 주입받음 (accessControlService)
     
     public ConsultationServiceImpl(
             ConsultationRepository consultationRepository,
@@ -90,7 +88,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         this.consultationRepository = consultationRepository;
     }
     
-    // ==================== BaseTenantEntityServiceImpl 추상 메서드 구현 ====================
     
     @Override
     protected Optional<Consultation> findEntityById(Long id) {
@@ -100,42 +97,34 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     @Override
     protected List<Consultation> findEntitiesByTenantAndBranch(String tenantId, Long branchId) {
         if (branchId != null) {
-            // branchId가 있으면 branch_id로 필터링
             return consultationRepository.findAllByTenantIdAndBranchId(tenantId, branchId);
         } else {
-            // branchId가 없으면 tenant_id만으로 필터링
             return consultationRepository.findAllByTenantId(tenantId);
         }
     }
     
-    // ==================== BaseService 구현 메서드들 (BaseTenantEntityService 위임) ====================
     
     @Override
     public Consultation save(Consultation consultation) {
         if (consultation.getId() == null) {
-            // 새 상담 생성 시
             if (consultation.getStatus() == null) {
                 consultation.setStatus("REQUESTED");
             }
             
-            // BaseTenantEntityService의 create 메서드 사용
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId != null) {
                 return create(tenantId, consultation);
             } else {
-                // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
                 consultation.setCreatedAt(LocalDateTime.now());
                 consultation.setVersion(1L);
                 consultation.setUpdatedAt(LocalDateTime.now());
                 return consultationRepository.save(consultation);
             }
         } else {
-            // 기존 상담 수정 시 BaseTenantEntityService의 update 메서드 사용
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId != null && consultation.getTenantId() != null) {
                 return update(tenantId, consultation);
             } else {
-                // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
                 if (consultation.getTenantId() != null) {
                     accessControlService.validateTenantAccess(consultation.getTenantId());
                 }
@@ -165,12 +154,10 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public Consultation update(Consultation consultation) {
-        // BaseTenantEntityService의 update 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && consultation.getTenantId() != null) {
             return update(tenantId, consultation);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             Consultation existingConsultation = consultationRepository.findById(consultation.getId())
                     .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + consultation.getId()));
             
@@ -187,12 +174,10 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public Consultation partialUpdate(Long id, Consultation updateData) {
-        // BaseTenantEntityService의 partialUpdate 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             return partialUpdate(tenantId, id, updateData);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             Consultation existingConsultation = consultationRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + id));
             
@@ -200,7 +185,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 accessControlService.validateTenantAccess(existingConsultation.getTenantId());
             }
             
-            // 부분 업데이트: null이 아닌 필드만 업데이트
             copyConsultationFields(updateData, existingConsultation);
             
             existingConsultation.setUpdatedAt(LocalDateTime.now());
@@ -210,7 +194,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         }
     }
     
-    /**
      * Consultation 필드 복사 (부분 업데이트용)
      */
     private void copyConsultationFields(Consultation source, Consultation target) {
@@ -257,11 +240,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         copyConsultationFields(source, target);
     }
     
-    // ==================== BaseTenantEntityService 훅 메서드 오버라이드 ====================
     
     @Override
     public void beforeCreate(String tenantId, Consultation entity) {
-        // 상담 생성 전 비즈니스 로직
         if (entity.getStatus() == null) {
             entity.setStatus("REQUESTED");
         }
@@ -269,18 +250,14 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void afterCreate(String tenantId, Consultation entity) {
-        // 상담 생성 후 비즈니스 로직 (이메일 발송 등)
-        // 기존 비즈니스 로직 유지
     }
     
     @Override
     public void softDeleteById(Long id) {
-        // BaseTenantEntityService의 delete 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             delete(tenantId, id);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             Consultation consultation = consultationRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("상담을 찾을 수 없습니다: " + id));
             
@@ -317,24 +294,20 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public List<Consultation> findAllActive() {
-        // 테넌트 컨텍스트에서 tenantId 가져오기
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             return findAllByTenant(tenantId, null);
         }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
         return consultationRepository.findAllActiveByCurrentTenant();
     }
     
     @Override
     public Optional<Consultation> findActiveById(Long id) {
-        // 테넌트 컨텍스트에서 tenantId 가져오기
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             return findByIdAndTenant(tenantId, id)
                     .filter(c -> !c.getIsDeleted());
         }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
         return consultationRepository.findActiveById(id);
     }
     
@@ -414,28 +387,23 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         return consultationRepository.isDuplicateExcludingIdAll(excludeId, fieldName, fieldValue, includeDeleted);
     }
     
-    // === ConsultationService 특화 메서드들 ===
     
     @Override
     public List<Consultation> findByClientId(Long clientId) {
-        // 테넌트 컨텍스트에서 tenantId 가져오기
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && !tenantId.isEmpty()) {
             return consultationRepository.findByTenantIdAndClientId(tenantId, clientId);
         }
-        // 테넌트 컨텍스트가 없는 경우 Deprecated 메서드 사용 (하위 호환성)
         log.warn("⚠️ 테넌트 컨텍스트 없이 findByClientId() 호출됨: clientId={}", clientId);
         return consultationRepository.findByClientId(clientId);
     }
     
     @Override
     public List<Consultation> findByConsultantId(Long consultantId) {
-        // 테넌트 컨텍스트에서 tenantId 가져오기
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && !tenantId.isEmpty()) {
             return consultationRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
         }
-        // 테넌트 컨텍스트가 없는 경우 Deprecated 메서드 사용 (하위 호환성)
         log.warn("⚠️ 테넌트 컨텍스트 없이 findByConsultantId() 호출됨: consultantId={}", consultantId);
         return consultationRepository.findByConsultantId(consultantId);
     }
@@ -501,7 +469,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                                                          isFirstSession, startDate, endDate);
     }
     
-    // === 상담 예약 및 관리 ===
     
     @Override
     public Consultation createConsultationRequest(Consultation consultation) {
@@ -521,7 +488,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         
         Consultation savedConsultation = save(consultation);
         
-        // 상담 예약 확인 이메일 발송
         sendConsultationConfirmation(consultationId);
         
         return savedConsultation;
@@ -537,7 +503,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         
         Consultation savedConsultation = save(consultation);
         
-        // 상담 취소 변경 알림 이메일 발송
         sendConsultationChangeNotification(consultationId, "취소");
         
         return savedConsultation;
@@ -554,7 +519,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         
         Consultation savedConsultation = save(consultation);
         
-        // 상담 일정 변경 알림 이메일 발송
         sendConsultationChangeNotification(consultationId, "일정 변경");
         
         return savedConsultation;
@@ -580,7 +544,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         consultation.setUpdatedAt(LocalDateTime.now());
         consultation.setVersion(consultation.getVersion() + 1);
         
-        // 상담 시간 계산
         if (consultation.getStartTime() != null && consultation.getEndTime() != null) {
             long durationMinutes = java.time.Duration.between(
                 consultation.getStartTime(), consultation.getEndTime()).toMinutes();
@@ -589,10 +552,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         
         Consultation savedConsultation = save(consultation);
         
-        // 스케줄 상태 동기화
         syncScheduleStatus(consultationId);
         
-        // 상담 완료 알림 이메일 발송
         sendConsultationCompletionNotification(consultationId);
         
         return savedConsultation;
@@ -619,14 +580,11 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         return save(consultation);
     }
     
-    // === 상담 스케줄링 ===
     
     @Override
     public List<Map<String, Object>> getAvailableTimeSlots(Long consultantId, LocalDate date) {
-        // 상담사별 상담 가능 시간 조회 로직
         List<Map<String, Object>> availableSlots = new ArrayList<>();
         
-        // 기본 상담 시간대 (9:00-18:00, 1시간 단위)
         for (int hour = 9; hour < 18; hour++) {
             Map<String, Object> slot = new HashMap<>();
             slot.put("startTime", LocalTime.of(hour, 0));
@@ -640,7 +598,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public List<Map<String, Object>> getConsultantSchedule(Long consultantId, LocalDate startDate, LocalDate endDate) {
-        // 상담사별 상담 스케줄 조회 로직
         List<Map<String, Object>> schedule = new ArrayList<>();
         
         List<Consultation> consultations = findByConsultantId(consultantId);
@@ -665,7 +622,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public List<Map<String, Object>> getClientSchedule(Long clientId, LocalDate startDate, LocalDate endDate) {
-        // 클라이언트별 상담 스케줄 조회 로직
         List<Map<String, Object>> schedule = new ArrayList<>();
         
         List<Consultation> consultations = findByClientId(clientId);
@@ -705,7 +661,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             historyItem.put("consultationType", "INDIVIDUAL"); // 기본값으로 설정
             historyItem.put("consultantId", consultation.getConsultantId());
             
-            // 상담사 정보 조회
             if (consultation.getConsultantId() != null) {
                 try {
                     Optional<Consultant> consultantOpt = consultantRepository.findById(consultation.getConsultantId());
@@ -727,7 +682,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             history.add(historyItem);
         }
         
-        // 최신 순으로 정렬
         history.sort((a, b) -> {
             LocalDate dateA = (LocalDate) a.get("consultationDate");
             LocalDate dateB = (LocalDate) b.get("consultationDate");
@@ -740,7 +694,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public boolean hasTimeConflict(Long consultantId, LocalDateTime startTime, LocalDateTime endTime) {
-        // 상담 시간 충돌 검사 로직
         List<Consultation> existingConsultations = findByConsultantId(consultantId);
         
         for (Consultation consultation : existingConsultations) {
@@ -762,18 +715,14 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         return false; // 시간 충돌 없음
     }
     
-    // === 상담 평가 및 리뷰 ===
     
     @Override
     public void addConsultationReview(Long consultationId, int rating, String review, String clientId) {
-        // 상담 평가 등록 로직
         log.info("상담 평가 등록: consultationId={}, rating={}, clientId={}", consultationId, rating, clientId);
         
         Consultation consultation = findActiveByIdOrThrow(consultationId);
         
-        // Review 엔티티 생성 및 저장 로직 구현
         try {
-            // Review 엔티티 생성 및 저장
             Review reviewEntity = Review.builder()
                     .consultationId(consultationId)
                     .clientId(Long.parseLong(clientId))
@@ -797,14 +746,11 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void updateConsultationReview(Long consultationId, int rating, String review) {
-        // 상담 평가 수정 로직
         log.info("상담 평가 수정: consultationId={}, rating={}", consultationId, rating);
         
         Consultation consultation = findActiveByIdOrThrow(consultationId);
         
-        // Review 엔티티 수정 로직 구현
         try {
-            // Review 엔티티 조회 및 수정
             Review reviewEntity = reviewRepository.findByConsultationIdAndClientIdAndIsDeletedFalse(
                 consultationId, Long.parseLong(consultation.getClientId().toString())).orElse(null);
             
@@ -812,7 +758,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 reviewEntity.updateReview(rating, review);
                 reviewRepository.save(reviewEntity);
             } else {
-                // 기존 리뷰가 없으면 새로 생성
                 Review newReview = Review.builder()
                         .consultationId(consultationId)
                         .clientId(Long.parseLong(consultation.getClientId().toString()))
@@ -836,7 +781,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public Map<String, Object> getConsultationReview(Long consultationId) {
-        // 상담 평가 조회 로직
         log.info("상담 평가 조회: consultationId={}", consultationId);
         
         Map<String, Object> review = new HashMap<>();
@@ -846,7 +790,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         review.put("clientId", "");
         
         try {
-            // Review 엔티티에서 실제 데이터 조회 로직 구현
             List<Review> reviewEntities = reviewRepository.findByConsultationIdAndIsDeletedFalse(consultationId);
             if (!reviewEntities.isEmpty()) {
                 Review reviewEntity = reviewEntities.get(0); // 첫 번째 리뷰 사용
@@ -872,7 +815,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public double getConsultantAverageRating(Long consultantId) {
-        // 상담사별 평균 평점 조회 로직
         log.info("상담사별 평균 평점 조회: consultantId={}", consultantId);
         
         List<Consultation> consultations = findByConsultantId(consultantId);
@@ -882,7 +824,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         }
         
         try {
-            // Review 엔티티에서 실제 평점 데이터 조회 로직 구현
             List<Review> reviews = reviewRepository.findByConsultantIdAndIsDeletedFalse(consultantId);
             if (reviews.isEmpty()) {
                 log.info("상담사별 리뷰가 없음: consultantId={}", consultantId);
@@ -904,23 +845,18 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         }
     }
     
-    // === 상담 기록 관리 ===
     
     @Override
     public void addConsultationNote(Long consultationId, String note, String authorId) {
-        // 상담 노트 추가 로직
         log.info("상담 노트 추가: consultationId={}, authorId={}", consultationId, authorId);
         
         @SuppressWarnings("unused")
         Consultation consultation = findActiveByIdOrThrow(consultationId);
         
-        // Note 엔티티 생성 및 저장 로직 구현
         try {
-            // Note 엔티티 생성 및 저장
             Note noteEntity = Note.builder()
                     .consultationId(consultationId)
                     .authorId(authorId)
-                    .authorType(UserRole.CONSULTANT.name()) // 기본값 (표준화 2025-12-05: enum 활용)
                     .noteText(note)
                     .noteType("CONSULTATION") // 기본값
                     .isPrivate(false)
@@ -940,11 +876,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void updateConsultationNote(Long noteId, String note) {
-        // 상담 노트 수정 로직
         log.info("상담 노트 수정: noteId={}", noteId);
         
         try {
-            // Note 엔티티 수정 로직 구현
             Note noteEntity = noteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다: " + noteId));
             
@@ -961,11 +895,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void deleteConsultationNote(Long noteId) {
-        // 상담 노트 삭제 로직
         log.info("상담 노트 삭제: noteId={}", noteId);
         
         try {
-            // Note 엔티티 삭제 로직 구현
             Note noteEntity = noteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다: " + noteId));
             
@@ -982,13 +914,11 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public List<Map<String, Object>> getConsultationNotes(Long consultationId) {
-        // 상담 노트 목록 조회 로직
         log.info("상담 노트 목록 조회: consultationId={}", consultationId);
         
         List<Map<String, Object>> notes = new ArrayList<>();
         
         try {
-            // Note 엔티티에서 실제 데이터 조회 로직 구현
             List<Note> noteEntities = noteRepository.findByConsultationIdAndIsDeletedFalse(consultationId);
             for (Note noteEntity : noteEntities) {
                 Map<String, Object> note = new HashMap<>();
@@ -1016,25 +946,18 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public byte[] exportConsultationRecord(Long consultationId, String format) {
-        // 상담 기록 내보내기 로직
         log.info("상담 기록 내보내기: consultationId={}, format={}", consultationId, format);
         
         try {
-            // 실제 내보내기 로직 구현
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
-            // PDF, Excel, Word 등 다양한 형식 지원
             if ("PDF".equalsIgnoreCase(format)) {
-                // PDF 내보내기 로직
                 return exportToPdf(consultation);
             } else if ("EXCEL".equalsIgnoreCase(format)) {
-                // Excel 내보내기 로직
                 return exportToExcel(consultation);
             } else if ("WORD".equalsIgnoreCase(format)) {
-                // Word 내보내기 로직
                 return exportToWord(consultation);
             } else {
-                // 기본 텍스트 형식
                 return exportToText(consultation);
             }
             
@@ -1046,22 +969,12 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     }
     
     private byte[] exportToPdf(Consultation consultation) {
-        // PDF 내보내기 구현
         log.info("PDF 내보내기: consultationId={}", consultation.getId());
         
         try {
-            // 실제 PDF 생성 로직 구현 (iText, Apache PDFBox 등 사용)
-            // 현재는 텍스트를 PDF 형식으로 변환하는 기본 구현
             String content = generateConsultationContent(consultation);
             
-            // PDF 생성 시뮬레이션 (실제 구현에서는 iText 또는 Apache PDFBox 사용)
-            // Document document = new Document();
-            // PdfWriter.getInstance(document, outputStream);
-            // document.open();
-            // document.add(new Paragraph(content));
-            // document.close();
             
-            // 현재는 텍스트를 바이트 배열로 반환
             return content.getBytes("UTF-8");
             
         } catch (Exception e) {
@@ -1071,12 +984,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     }
     
     private byte[] exportToExcel(Consultation consultation) {
-        // Excel 내보내기 구현
         log.info("Excel 내보내기: consultationId={}", consultation.getId());
         
         try {
-            // 실제 Excel 생성 로직 구현 (Apache POI 사용)
-            // 현재는 CSV 형식으로 Excel 데이터 생성
             StringBuilder csvContent = new StringBuilder();
             csvContent.append("상담 ID,상담 날짜,상담 시간,상담 상태,상담 방법,우선순위,위험도,상담 노트,준비 노트\n");
             csvContent.append(consultation.getId()).append(",");
@@ -1089,12 +999,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             csvContent.append("\"").append(consultation.getConsultantNotes()).append("\",");
             csvContent.append("\"").append(consultation.getPreparationNotes()).append("\"\n");
             
-            // Excel 생성 시뮬레이션 (실제 구현에서는 Apache POI 사용)
-            // Workbook workbook = new XSSFWorkbook();
-            // Sheet sheet = workbook.createSheet("상담 기록");
-            // Row headerRow = sheet.createRow(0);
-            // headerRow.createCell(0).setCellValue("상담 ID");
-            // ...
             
             return csvContent.toString().getBytes("UTF-8");
             
@@ -1105,20 +1009,12 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     }
     
     private byte[] exportToWord(Consultation consultation) {
-        // Word 내보내기 구현
         log.info("Word 내보내기: consultationId={}", consultation.getId());
         
         try {
-            // 실제 Word 생성 로직 구현 (Apache POI 사용)
             String content = generateConsultationContent(consultation);
             
-            // Word 문서 생성 시뮬레이션 (실제 구현에서는 Apache POI 사용)
-            // XWPFDocument document = new XWPFDocument();
-            // XWPFParagraph paragraph = document.createParagraph();
-            // XWPFRun run = paragraph.createRun();
-            // run.setText(content);
             
-            // 현재는 RTF 형식으로 Word 문서 생성
             StringBuilder rtfContent = new StringBuilder();
             rtfContent.append("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}");
             rtfContent.append("\\f0\\fs24 ");
@@ -1134,7 +1030,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     }
     
     private byte[] exportToText(Consultation consultation) {
-        // 텍스트 내보내기 구현
         log.info("텍스트 내보내기: consultationId={}", consultation.getId());
         
         StringBuilder content = new StringBuilder();
@@ -1153,7 +1048,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     }
     
     private String generateConsultationContent(Consultation consultation) {
-        // 상담 내용 생성 헬퍼 메서드
         StringBuilder content = new StringBuilder();
         content.append("=== 상담 기록 ===\n");
         content.append("상담 ID: ").append(consultation.getId()).append("\n");
@@ -1173,11 +1067,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         return content.toString();
     }
     
-    // === 긴급 상담 관리 ===
     
     @Override
     public Consultation requestEmergencyConsultation(Long clientId, String emergencyReason) {
-        // 긴급 상담 요청 로직
         log.info("긴급 상담 요청: clientId={}, reason={}", clientId, emergencyReason);
         
         try {
@@ -1190,7 +1082,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             consultation.setClientId(clientId);
             consultation.setPreparationNotes("긴급 상담 요청: " + emergencyReason);
             
-            // Client 엔티티 설정 로직 구현
             try {
                 Client client = clientRepository.findById(clientId)
                     .orElseThrow(() -> new RuntimeException("클라이언트를 찾을 수 없습니다: " + clientId));
@@ -1203,7 +1094,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             Consultation savedConsultation = save(consultation);
             
-            // 긴급 상담 알림 발송
             sendEmergencyConsultationNotification(savedConsultation.getId(), emergencyReason);
             
             log.info("긴급 상담 요청 완료: consultationId={}, clientId={}", savedConsultation.getId(), clientId);
@@ -1220,7 +1110,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         try {
             log.info("긴급 상담 알림 발송: consultationId={}", consultationId);
             
-            // 관리자에게 긴급 상담 알림 이메일 발송
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
@@ -1229,7 +1118,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put("emergencyReason", emergencyReason);
             variables.put("alertMessage", "긴급 상담 요청이 접수되었습니다. 즉시 확인해주세요.");
             
-            // 관리자 이메일로 긴급 알림 발송
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
                     "admin@mindgarden.com", // 관리자 이메일
@@ -1251,7 +1139,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public Consultation assignEmergencyConsultation(Long consultationId, Long consultantId) {
-        // 긴급 상담 할당 로직
         log.info("긴급 상담 할당: consultationId={}, consultantId={}", consultationId, consultantId);
         
         try {
@@ -1261,7 +1148,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             consultation.setVersion(consultation.getVersion() + 1);
             consultation.setConsultantId(consultantId);
             
-            // Consultant 엔티티 설정 로직 구현
             try {
                 Consultant consultant = consultantRepository.findById(consultantId)
                     .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
@@ -1274,7 +1160,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             Consultation savedConsultation = save(consultation);
             
-            // 긴급 상담 할당 알림 발송
             sendEmergencyAssignmentNotification(savedConsultation.getId(), consultantId);
             
             log.info("긴급 상담 할당 완료: consultationId={}, consultantId={}", consultationId, consultantId);
@@ -1292,7 +1177,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         try {
             log.info("긴급 상담 할당 알림 발송: consultationId={}, consultantId={}", consultationId, consultantId);
             
-            // 상담사에게 긴급 상담 할당 알림 이메일 발송
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
@@ -1301,7 +1185,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put("consultantId", consultantId);
             variables.put("alertMessage", "긴급 상담이 할당되었습니다. 즉시 확인해주세요.");
             
-            // 상담사 이메일로 긴급 할당 알림 발송
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
                     "consultant@mindgarden.com", // 상담사 이메일
@@ -1323,13 +1206,11 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void updateEmergencyPriority(Long consultationId, int priority) {
-        // 긴급 상담 우선순위 조정 로직
         log.info("긴급 상담 우선순위 조정: consultationId={}, priority={}", consultationId, priority);
         
         try {
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
-            // 우선순위 필드 설정 로직 구현
             String priorityLevel;
             switch (priority) {
                 case 1:
@@ -1368,11 +1249,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         return findByIsEmergency(true);
     }
     
-    // === 상담 통계 및 분석 ===
     
     @Override
     public Map<String, Object> getOverallConsultationStatistics() {
-        // 전체 상담 통계 조회 로직
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("totalConsultations", countActive());
         statistics.put("completedConsultations", countConsultationsByStatus("COMPLETED"));
@@ -1383,7 +1262,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public Map<String, Object> getConsultationStatisticsByStatus() {
-        // 상태별 상담 통계 조회 로직
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("REQUESTED", countConsultationsByStatus("REQUESTED"));
         statistics.put("CONFIRMED", countConsultationsByStatus("CONFIRMED"));
@@ -1400,7 +1278,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Map<String, Object> statistics = new HashMap<>();
         
         try {
-            // 실제 우선순위별 통계 계산
             List<Consultation> allConsultations = findAllActive();
             
             long lowCount = allConsultations.stream()
@@ -1442,7 +1319,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Map<String, Object> statistics = new HashMap<>();
         
         try {
-            // 실제 위험도별 통계 계산
             List<Consultation> allConsultations = findAllActive();
             
             long lowCount = allConsultations.stream()
@@ -1479,7 +1355,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Map<String, Object> statistics = new HashMap<>();
         
         try {
-            // 실제 상담 방법별 통계 계산
             List<Consultation> allConsultations = findAllActive();
             
             long faceToFaceCount = allConsultations.stream()
@@ -1516,7 +1391,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public Map<String, Object> getConsultationStatisticsByDate(LocalDate startDate, LocalDate endDate) {
-        // 날짜별 상담 통계 조회 로직
         Map<String, Object> statistics = new HashMap<>();
         List<Consultation> consultations = findByConsultationDateBetween(startDate, endDate);
         statistics.put("totalConsultations", consultations.size());
@@ -1532,7 +1406,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Map<String, Object> statistics = new HashMap<>();
         
         try {
-            // 실제 클라이언트별 통계 계산
             List<Consultation> clientConsultations = findByClientId(clientId);
             
             long totalConsultations = clientConsultations.size();
@@ -1581,7 +1454,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Map<String, Object> statistics = new HashMap<>();
         
         try {
-            // 실제 상담사별 통계 계산
             List<Consultation> consultantConsultations = findByConsultantId(consultantId);
             
             long totalConsultations = consultantConsultations.size();
@@ -1598,7 +1470,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     .filter(c -> "IN_PROGRESS".equals(c.getStatus()))
                     .count();
             
-            // 평균 상담 시간 계산
             double averageDuration = consultantConsultations.stream()
                     .filter(c -> c.getDurationMinutes() != null && c.getDurationMinutes() > 0)
                     .mapToInt(Consultation::getDurationMinutes)
@@ -1639,7 +1510,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         Map<String, Object> analysis = new HashMap<>();
         
         try {
-            // 실제 성과 분석 로직 구현
             List<Consultation> consultations = findByConsultationDateBetween(startDate, endDate);
             
             int totalConsultations = consultations.size();
@@ -1653,21 +1523,18 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             double completionRate = totalConsultations > 0 ? (double) completedConsultations / totalConsultations * 100 : 0.0;
             double cancellationRate = totalConsultations > 0 ? (double) cancelledConsultations / totalConsultations * 100 : 0.0;
             
-            // 평균 상담 시간 계산
             double averageDuration = consultations.stream()
                     .filter(c -> c.getDurationMinutes() != null && c.getDurationMinutes() > 0)
                     .mapToInt(Consultation::getDurationMinutes)
                     .average()
                     .orElse(0.0);
             
-            // 상담 방법별 분포
             Map<String, Long> methodDistribution = consultations.stream()
                     .collect(java.util.stream.Collectors.groupingBy(
                             c -> c.getConsultationMethod() != null ? c.getConsultationMethod() : "UNKNOWN",
                             java.util.stream.Collectors.counting()
                     ));
             
-            // 우선순위별 분포
             Map<String, Long> priorityDistribution = consultations.stream()
                     .collect(java.util.stream.Collectors.groupingBy(
                             c -> c.getPriority() != null ? c.getPriority() : "UNKNOWN",
@@ -1705,19 +1572,14 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         return analysis;
     }
     
-    // === 상담 품질 관리 ===
     
     @Override
     public void evaluateConsultationQuality(Long consultationId, Map<String, Object> qualityMetrics) {
-        // 상담 품질 평가 로직
         log.info("상담 품질 평가: consultationId={}, metrics={}", consultationId, qualityMetrics);
         
         try {
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
-            // 품질 평가 데이터 저장 로직 구현
-            // QualityEvaluation 엔티티가 생성되면 실제 구현
-            // 현재는 상담 엔티티에 품질 평가 데이터를 JSON 형태로 저장
             Map<String, Object> qualityData = new HashMap<>();
             qualityData.put("overallScore", qualityMetrics.get("overallScore"));
             qualityData.put("communicationScore", qualityMetrics.get("communicationScore"));
@@ -1728,7 +1590,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             qualityData.put("evaluationNotes", qualityMetrics.get("evaluationNotes"));
             qualityData.put("evaluatedAt", LocalDateTime.now().toString());
             
-            // JSON으로 직렬화하여 상담 노트에 저장
             com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
             String qualityJson = objectMapper.writeValueAsString(qualityData);
             
@@ -1754,7 +1615,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public Map<String, Object> generateQualityReport(Long consultantId, LocalDate startDate, LocalDate endDate) {
-        // 상담 품질 보고서 생성 로직
         log.info("상담 품질 보고서 생성: consultantId={}, startDate={}, endDate={}", 
                 consultantId, startDate, endDate);
         
@@ -1764,17 +1624,14 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         report.put("endDate", endDate);
         
         try {
-            // 실제 품질 보고서 생성 로직 구현
             List<Consultation> consultations = findByConsultantId(consultantId);
             
-            // 기간 필터링
             List<Consultation> filteredConsultations = consultations.stream()
                     .filter(c -> c.getConsultationDate() != null && 
                             !c.getConsultationDate().isBefore(startDate) && 
                             !c.getConsultationDate().isAfter(endDate))
                     .collect(java.util.stream.Collectors.toList());
             
-            // 품질 평가 데이터 분석
             double totalScore = 0.0;
             int evaluationCount = 0;
             List<String> improvementAreas = new ArrayList<>();
@@ -1811,7 +1668,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             double overallQuality = evaluationCount > 0 ? totalScore / evaluationCount : 0.0;
             
-            // 개선 영역 분석
             if (overallQuality < 3.0) {
                 improvementAreas.add("전반적인 상담 품질 향상이 필요합니다.");
             }
@@ -1841,33 +1697,27 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public List<String> getQualityImprovementSuggestions(Long consultantId) {
-        // 상담 품질 개선 제안 로직
         log.info("상담 품질 개선 제안 조회: consultantId={}", consultantId);
         
         List<String> suggestions = new ArrayList<>();
         
         try {
-            // 실제 개선 제안 로직 구현
             List<Consultation> consultations = findByConsultantId(consultantId);
             
-            // 최근 30일간의 상담 데이터 분석
             LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
             List<Consultation> recentConsultations = consultations.stream()
                     .filter(c -> c.getConsultationDate() != null && 
                             !c.getConsultationDate().isBefore(thirtyDaysAgo))
                     .collect(java.util.stream.Collectors.toList());
             
-            // 기본 제안사항
             suggestions.add("더 적극적인 경청이 필요합니다.");
             suggestions.add("상담 시간을 더 정확하게 지켜주세요.");
             suggestions.add("클라이언트의 감정 상태를 더 세심하게 관찰해주세요.");
             
-            // 데이터 기반 개선 제안
             if (recentConsultations.size() < 5) {
                 suggestions.add("상담 빈도를 늘려 경험을 쌓아보세요.");
             }
             
-            // 취소율 분석
             long cancelledCount = recentConsultations.stream()
                     .filter(c -> "CANCELLED".equals(c.getStatus()))
                     .count();
@@ -1878,7 +1728,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 suggestions.add("상담 취소율이 높습니다. 일정 관리와 소통을 개선해보세요.");
             }
             
-            // 완료율 분석
             long completedCount = recentConsultations.stream()
                     .filter(c -> "COMPLETED".equals(c.getStatus()))
                     .count();
@@ -1889,7 +1738,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 suggestions.add("상담 완료율을 높이기 위해 클라이언트와의 소통을 강화해보세요.");
             }
             
-            // 긴급 상담 비율 분석
             long emergencyCount = recentConsultations.stream()
                     .filter(c -> Boolean.TRUE.equals(c.getIsEmergency()))
                     .count();
@@ -1903,7 +1751,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("상담 품질 개선 제안 조회 실패: consultantId={}, error={}", consultantId, e.getMessage(), e);
-            // 기본 제안사항 반환
             suggestions.add("더 적극적인 경청이 필요합니다.");
             suggestions.add("상담 시간을 더 정확하게 지켜주세요.");
             suggestions.add("클라이언트의 감정 상태를 더 세심하게 관찰해주세요.");
@@ -1912,21 +1759,17 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         return suggestions;
     }
     
-    // === 상담 비용 관리 ===
     
     @Override
     public Map<String, Object> calculateConsultationCost(Long consultationId) {
-        // 상담 비용 계산 로직
         log.info("상담 비용 계산: consultationId={}", consultationId);
         
         Map<String, Object> cost = new HashMap<>();
         cost.put("consultationId", consultationId);
         
         try {
-            // 실제 비용 계산 로직 구현
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
-            // 기본 상담 비용 (상담 방법별 차등)
             int baseCost = 50000; // 기본 50,000원
             if ("VIDEO_CALL".equals(consultation.getConsultationMethod())) {
                 baseCost = 45000; // 화상 상담 10% 할인
@@ -1936,19 +1779,16 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 baseCost = 30000; // 채팅 상담 40% 할인
             }
             
-            // 긴급 상담 추가 비용
             if (Boolean.TRUE.equals(consultation.getIsEmergency())) {
                 baseCost += 20000; // 긴급 상담 20,000원 추가
             }
             
-            // 우선순위별 추가 비용
             if ("URGENT".equals(consultation.getPriority())) {
                 baseCost += 10000; // 긴급 우선순위 10,000원 추가
             } else if ("HIGH".equals(consultation.getPriority())) {
                 baseCost += 5000; // 높은 우선순위 5,000원 추가
             }
             
-            // 상담 시간에 따른 비용 조정
             if (consultation.getDurationMinutes() != null) {
                 int duration = consultation.getDurationMinutes();
                 if (duration > 60) {
@@ -1956,10 +1796,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 }
             }
             
-            // 할인 적용 (기본 0원)
             int discountAmount = 0;
             
-            // 최종 비용 계산
             int finalCost = Math.max(0, baseCost - discountAmount);
             
             cost.put("baseCost", baseCost);
@@ -1984,23 +1822,18 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void applyDiscount(Long consultationId, String discountType, double discountAmount) {
-        // 상담 비용 할인 적용 로직
         log.info("상담 비용 할인 적용: consultationId={}, discountType={}, discountAmount={}", 
                 consultationId, discountType, discountAmount);
         
         try {
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
-            // 할인 정보 저장 로직 구현
-            // Discount 엔티티가 생성되면 실제 구현
-            // 현재는 상담 엔티티에 할인 정보를 JSON 형태로 저장
             Map<String, Object> discountData = new HashMap<>();
             discountData.put("discountType", discountType);
             discountData.put("discountAmount", discountAmount);
             discountData.put("appliedAt", LocalDateTime.now().toString());
             discountData.put("isActive", true);
             
-            // JSON으로 직렬화하여 상담 노트에 저장
             com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
             String discountJson = objectMapper.writeValueAsString(discountData);
             
@@ -2026,15 +1859,11 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void settleConsultationCost(Long consultationId, String paymentMethod) {
-        // 상담 비용 정산 로직
         log.info("상담 비용 정산: consultationId={}, paymentMethod={}", consultationId, paymentMethod);
         
         try {
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
-            // 결제 정보 저장 로직 구현
-            // Payment 엔티티가 생성되면 실제 구현
-            // 현재는 상담 엔티티에 결제 정보를 JSON 형태로 저장
             Map<String, Object> costInfo = calculateConsultationCost(consultationId);
             Map<String, Object> paymentData = new HashMap<>();
             paymentData.put("paymentMethod", paymentMethod);
@@ -2047,7 +1876,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             paymentData.put("isEmergency", costInfo.get("isEmergency"));
             paymentData.put("priority", costInfo.get("priority"));
             
-            // JSON으로 직렬화하여 상담 노트에 저장
             com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
             String paymentJson = objectMapper.writeValueAsString(paymentData);
             
@@ -2070,7 +1898,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         }
     }
     
-    // === 상담 알림 및 리마인더 ===
     
     @Override
     public void sendConsultationConfirmation(Long consultationId) {
@@ -2079,11 +1906,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
-            // 클라이언트 이메일 조회 (실제 구현에서는 UserService를 통해 조회)
             String clientEmail = "client@example.com"; // UserService를 통한 실제 클라이언트 이메일 조회 필요
             String clientName = "클라이언트"; // UserService를 통한 실제 클라이언트 이름 조회 필요
             
-            // 이메일 템플릿 변수 설정
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
             variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
@@ -2094,7 +1919,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put(EmailConstants.VAR_APPOINTMENT_TIME, consultation.getStartTime() != null ? consultation.getStartTime().toString() : "");
             variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // 실제 상담사 이름 조회 필요
             
-            // 템플릿 기반 이메일 발송
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_APPOINTMENT_CONFIRMATION,
                     clientEmail,
@@ -2120,11 +1944,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
-            // 클라이언트 이메일 조회 (실제 구현에서는 UserService를 통해 조회)
             String clientEmail = "client@example.com"; // 실제 클라이언트 이메일 조회 필요
             String clientName = "클라이언트"; // 실제 클라이언트 이름 조회 필요
             
-            // 이메일 템플릿 변수 설정
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
             variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
@@ -2135,7 +1957,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put(EmailConstants.VAR_APPOINTMENT_TIME, consultation.getStartTime() != null ? consultation.getStartTime().toString() : "");
             variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // 실제 상담사 이름 조회 필요
             
-            // 템플릿 기반 이메일 발송
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_APPOINTMENT_REMINDER,
                     clientEmail,
@@ -2161,11 +1982,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
-            // 클라이언트 이메일 조회 (실제 구현에서는 UserService를 통해 조회)
             String clientEmail = "client@example.com"; // 실제 클라이언트 이메일 조회 필요
             String clientName = "클라이언트"; // 실제 클라이언트 이름 조회 필요
             
-            // 이메일 템플릿 변수 설정
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
             variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
@@ -2178,7 +1997,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put("changeType", changeType);
             variables.put("changeMessage", "상담 일정이 " + changeType + "되었습니다.");
             
-            // 템플릿 기반 이메일 발송
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
                     clientEmail,
@@ -2204,11 +2022,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
-            // 클라이언트 이메일 조회 (실제 구현에서는 UserService를 통해 조회)
             String clientEmail = "client@example.com"; // 실제 클라이언트 이메일 조회 필요
             String clientName = "클라이언트"; // 실제 클라이언트 이름 조회 필요
             
-            // 이메일 템플릿 변수 설정
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
             variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
@@ -2220,7 +2036,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // 실제 상담사 이름 조회 필요
             variables.put("completionMessage", "상담이 성공적으로 완료되었습니다. 감사합니다.");
             
-            // 템플릿 기반 이메일 발송
             EmailResponse response = emailService.sendTemplateEmail(
                     EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
                     clientEmail,
@@ -2239,23 +2054,19 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         }
     }
     
-    // === 상담 검색 및 필터링 ===
     
     @Override
     public Page<Consultation> searchConsultations(Map<String, Object> searchCriteria, Pageable pageable) {
-        // 고급 상담 검색 로직
         log.info("고급 상담 검색: criteria={}, page={}, size={}", 
                 searchCriteria, pageable.getPageNumber(), pageable.getPageSize());
         
         try {
-            // 실제 검색 로직 구현
             List<Consultation> allConsultations = findAllActive();
             List<Consultation> filteredConsultations = new ArrayList<>();
             
             for (Consultation consultation : allConsultations) {
                 boolean matches = true;
                 
-                // 클라이언트 ID 필터
                 if (searchCriteria.containsKey("clientId")) {
                     Long clientId = (Long) searchCriteria.get("clientId");
                     if (!clientId.equals(consultation.getClientId())) {
@@ -2263,7 +2074,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     }
                 }
                 
-                // 상담사 ID 필터
                 if (searchCriteria.containsKey("consultantId")) {
                     Long consultantId = (Long) searchCriteria.get("consultantId");
                     if (!consultantId.equals(consultation.getConsultantId())) {
@@ -2271,7 +2081,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     }
                 }
                 
-                // 상태 필터
                 if (searchCriteria.containsKey("status")) {
                     String status = (String) searchCriteria.get("status");
                     if (!status.equals(consultation.getStatus())) {
@@ -2279,7 +2088,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     }
                 }
                 
-                // 우선순위 필터
                 if (searchCriteria.containsKey("priority")) {
                     String priority = (String) searchCriteria.get("priority");
                     if (!priority.equals(consultation.getPriority())) {
@@ -2287,7 +2095,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     }
                 }
                 
-                // 위험도 필터
                 if (searchCriteria.containsKey("riskLevel")) {
                     String riskLevel = (String) searchCriteria.get("riskLevel");
                     if (!riskLevel.equals(consultation.getRiskLevel())) {
@@ -2295,7 +2102,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     }
                 }
                 
-                // 상담 방법 필터
                 if (searchCriteria.containsKey("consultationMethod")) {
                     String method = (String) searchCriteria.get("consultationMethod");
                     if (!method.equals(consultation.getConsultationMethod())) {
@@ -2303,7 +2109,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     }
                 }
                 
-                // 긴급 상담 필터
                 if (searchCriteria.containsKey("isEmergency")) {
                     Boolean isEmergency = (Boolean) searchCriteria.get("isEmergency");
                     if (!isEmergency.equals(consultation.getIsEmergency())) {
@@ -2311,7 +2116,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     }
                 }
                 
-                // 날짜 범위 필터
                 if (searchCriteria.containsKey("startDate") && searchCriteria.containsKey("endDate")) {
                     LocalDate startDate = (LocalDate) searchCriteria.get("startDate");
                     LocalDate endDate = (LocalDate) searchCriteria.get("endDate");
@@ -2327,7 +2131,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 }
             }
             
-            // 페이지네이션 적용
             int start = (int) pageable.getOffset();
             int end = Math.min(start + pageable.getPageSize(), filteredConsultations.size());
             List<Consultation> pageContent = filteredConsultations.subList(start, end);
@@ -2348,28 +2151,22 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public List<Consultation> searchConsultationHistory(Long clientId, Map<String, Object> searchCriteria) {
-        // 상담 히스토리 검색 로직
         return findByClientId(clientId);
     }
     
     @Override
     public List<Consultation> searchConsultantHistory(Long consultantId, Map<String, Object> searchCriteria) {
-        // 상담사별 상담 히스토리 검색 로직
         return findByConsultantId(consultantId);
     }
     
-    // === 상담 데이터 관리 ===
     
     @Override
     public void backupConsultationData(LocalDate startDate, LocalDate endDate) {
-        // 상담 데이터 백업 로직
         log.info("상담 데이터 백업: startDate={}, endDate={}", startDate, endDate);
         
         try {
-            // 실제 백업 로직 구현
             List<Consultation> consultations = findByConsultationDateBetween(startDate, endDate);
             
-            // 백업 데이터 생성
             Map<String, Object> backupData = new HashMap<>();
             backupData.put("backupDate", LocalDateTime.now());
             backupData.put("startDate", startDate);
@@ -2377,10 +2174,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             backupData.put("consultationCount", consultations.size());
             backupData.put("consultations", consultations);
             
-            // 실제 백업 저장소에 저장 (파일, S3, 데이터베이스 등)
             String backupId = java.util.UUID.randomUUID().toString();
             
-            // 파일 시스템에 백업 저장
             try {
                 String backupDir = System.getProperty("user.home") + "/mindgarden/backups";
                 java.io.File backupDirFile = new java.io.File(backupDir);
@@ -2392,7 +2187,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                     java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".json";
                 String backupFilePath = backupDir + "/" + backupFileName;
                 
-                // JSON으로 백업 데이터 저장
                 com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 objectMapper.writeValue(new java.io.File(backupFilePath), backupData);
                 
@@ -2414,12 +2208,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void restoreConsultationData(String backupId) {
-        // 상담 데이터 복원 로직
         log.info("상담 데이터 복원: backupId={}", backupId);
         
         try {
-            // 실제 복원 로직 구현
-            // 실제 백업 저장소에서 데이터 조회
             String backupDir = System.getProperty("user.home") + "/mindgarden/backups";
             java.io.File backupDirFile = new java.io.File(backupDir);
             
@@ -2427,7 +2218,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 throw new RuntimeException("백업 디렉토리가 존재하지 않습니다: " + backupDir);
             }
             
-            // 백업 파일 찾기
             java.io.File[] backupFiles = backupDirFile.listFiles((dir, name) -> name.contains(backupId));
             if (backupFiles == null || backupFiles.length == 0) {
                 throw new RuntimeException("백업 파일을 찾을 수 없습니다: " + backupId);
@@ -2435,18 +2225,15 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             java.io.File backupFile = backupFiles[0];
             
-            // JSON에서 백업 데이터 로드
             com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
             @SuppressWarnings("unchecked")
             Map<String, Object> backupData = objectMapper.readValue(backupFile, Map.class);
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> consultationMaps = (List<Map<String, Object>>) backupData.get("consultations");
             
-            // 복원된 데이터를 데이터베이스에 저장
             int restoredCount = 0;
             for (Map<String, Object> consultationMap : consultationMaps) {
                 try {
-                    // Map을 Consultation 객체로 변환
                     Consultation consultation = new Consultation();
                     consultation.setId(null); // 새 ID 생성
                     consultation.setClientId((Long) consultationMap.get("clientId"));
@@ -2485,19 +2272,15 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void archiveConsultationData(LocalDate beforeDate) {
-        // 상담 데이터 아카이브 로직
         log.info("상담 데이터 아카이브: beforeDate={}", beforeDate);
         
         try {
-            // 실제 아카이브 로직 구현
             List<Consultation> consultations = findAllActive();
             List<Consultation> archivedConsultations = new ArrayList<>();
             
             for (Consultation consultation : consultations) {
                 if (consultation.getConsultationDate() != null && 
                     consultation.getConsultationDate().isBefore(beforeDate)) {
-                    // 아카이브 대상 상담을 별도 저장소로 이동
-                    // 아카이브 저장소에 저장
                     try {
                         String archiveDir = System.getProperty("user.home") + "/mindgarden/archives";
                         java.io.File archiveDirFile = new java.io.File(archiveDir);
@@ -2509,7 +2292,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                             consultation.getConsultationDate().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")) + ".json";
                         String archiveFilePath = archiveDir + "/" + archiveFileName;
                         
-                        // 상담 데이터를 JSON으로 아카이브 저장
                         Map<String, Object> archiveData = new HashMap<>();
                         archiveData.put("consultationId", consultation.getId());
                         archiveData.put("clientId", consultation.getClientId());
@@ -2549,18 +2331,15 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public void cleanupConsultationData(LocalDate beforeDate) {
-        // 상담 데이터 정리 로직
         log.info("상담 데이터 정리: beforeDate={}", beforeDate);
         
         try {
-            // 실제 정리 로직 구현
             List<Consultation> consultations = findAllActive();
             List<Consultation> cleanupConsultations = new ArrayList<>();
             
             for (Consultation consultation : consultations) {
                 if (consultation.getConsultationDate() != null && 
                     consultation.getConsultationDate().isBefore(beforeDate)) {
-                    // 정리 대상 상담을 소프트 삭제
                     consultation.setIsDeleted(true);
                     consultation.setDeletedAt(LocalDateTime.now());
                     consultation.setUpdatedAt(LocalDateTime.now());
@@ -2580,7 +2359,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         }
     }
     
-    // === 기존 메서드들 (인터페이스와 일치하도록 수정) ===
     
     @Override
     public long countConsultationsByStatus(String status) {
@@ -2602,19 +2380,19 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         return consultationRepository.findById(id);
     }
     
-    /**
      * 상담 완료 시 스케줄 상태 동기화
      */
     private void syncScheduleStatus(Long consultationId) {
         try {
             log.info("🔄 스케줄 상태 동기화 시작: consultationId={}", consultationId);
             
-            // 해당 상담과 연결된 스케줄 조회
             List<com.coresolution.consultation.entity.Schedule> schedules = 
                 scheduleRepository.findByConsultationId(consultationId);
             
             for (com.coresolution.consultation.entity.Schedule schedule : schedules) {
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 if (!ScheduleStatus.COMPLETED.equals(schedule.getStatus())) {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     schedule.setStatus(ScheduleStatus.COMPLETED);
                     schedule.setUpdatedAt(java.time.LocalDateTime.now());
                     scheduleRepository.save(schedule);
@@ -2626,7 +2404,6 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
         } catch (Exception e) {
             log.error("❌ 스케줄 상태 동기화 실패: consultationId={}, error={}", consultationId, e.getMessage(), e);
-            // 동기화 실패해도 상담 완료는 진행 (비즈니스 로직 우선)
         }
     }
 }

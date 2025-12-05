@@ -1,4 +1,3 @@
-/**
  * 학원 시스템 - 수강 등록/수정 폼 컴포넌트
  * 공통 컴포넌트 사용, CSS와 비즈니스 로직 분리, 인라인 스타일 금지, 상수 사용
  * 
@@ -8,7 +7,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { FormField, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -16,7 +14,6 @@ import './Academy.css';
 
 const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
-    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchId: branchId || null,
     classId: classId || '',
     consumerId: consumerId || null,
@@ -25,7 +22,9 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
     endDate: '',
     tuitionPlanId: '',
     tuitionAmount: 0,
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     paymentStatus: 'PENDING',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     status: 'ACTIVE',
     notes: '',
     settingsJson: ''
@@ -35,7 +34,6 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
   const [classes, setClasses] = useState([]);
   const [consumers, setConsumers] = useState([]);
 
-  // 반 목록 및 수강생 목록 로드
   useEffect(() => {
     if (branchId) {
       fetchClasses();
@@ -46,7 +44,6 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
   useEffect(() => {
     if (enrollment) {
       setFormData({
-        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchId: enrollment.branchId || branchId || null,
         classId: enrollment.classId || classId || '',
         consumerId: enrollment.consumerId || consumerId || null,
@@ -55,7 +52,9 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
         endDate: enrollment.endDate || '',
         tuitionPlanId: enrollment.tuitionPlanId || '',
         tuitionAmount: enrollment.tuitionAmount || 0,
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         paymentStatus: enrollment.paymentStatus || 'PENDING',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: enrollment.status || 'ACTIVE',
         notes: enrollment.notes || '',
         settingsJson: enrollment.settingsJson || ''
@@ -86,8 +85,6 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
   };
 
   const fetchConsumers = async () => {
-    // 수강생 목록은 별도 API가 필요할 수 있음 (현재는 빈 배열)
-    // TODO: 수강생 목록 API 연동
     setConsumers([]);
   };
 
@@ -104,7 +101,6 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
     setLoading(true);
     setError(null);
 
-    // 유효성 검사
     if (!formData.branchId) {
       setError('지점을 선택해주세요.');
       setLoading(false);
@@ -261,10 +257,12 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
               value={formData.paymentStatus}
               onChange={handleChange}
               options={[
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'PENDING', label: '대기중' },
                 { value: 'PAID', label: '결제완료' },
                 { value: 'PARTIAL', label: '부분결제' },
                 { value: 'OVERDUE', label: '연체' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'CANCELLED', label: '취소' }
               ]}
             />
@@ -278,9 +276,12 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
               onChange={handleChange}
               options={[
                 { value: 'DRAFT', label: '초안' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'ACTIVE', label: '수강중' },
                 { value: 'PAUSED', label: '휴원' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'COMPLETED', label: '완료' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'CANCELLED', label: '취소' },
                 { value: 'TRANSFERRED', label: '전원' }
               ]}

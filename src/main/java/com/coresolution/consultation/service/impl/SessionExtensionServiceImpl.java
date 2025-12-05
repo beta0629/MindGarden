@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 회기 추가 요청 서비스 구현체
  * 
  * @author MindGarden
@@ -53,21 +52,19 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         log.info("회기 추가 요청 생성: mappingId={}, requesterId={}, sessions={}", 
                 mappingId, requesterId, additionalSessions);
         
-        // 매핑 정보 조회
         ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
         
-        // 요청자 정보 조회
         User requester = userService.findActiveById(requesterId)
                 .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId));
         
-        // 회기 추가 요청 생성
         SessionExtensionRequest request = SessionExtensionRequest.builder()
                 .mapping(mapping)
                 .requester(requester)
                 .additionalSessions(additionalSessions)
                 .packageName(packageName)
                 .packagePrice(packagePrice)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(SessionExtensionRequest.ExtensionStatus.PENDING)
                 .reason(reason)
                 .build();
@@ -86,27 +83,21 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         SessionExtensionRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
         
-        // 현금 결제의 경우 참조번호를 null로 설정
         String finalPaymentReference = "CASH".equals(paymentMethod) ? null : paymentReference;
         
-        // 1. 입금 확인 처리
         request.confirmPayment(paymentMethod, finalPaymentReference);
         
-        // 2. 자동 관리자 승인 처리 (시스템 관리자로 처리)
         User systemAdmin = userService.findActiveById(1L) // 시스템 관리자 ID
                 .orElseThrow(() -> new RuntimeException("시스템 관리자를 찾을 수 없습니다"));
         
         request.approveByAdmin(systemAdmin);
         request.setAdminComment("입금 확인 후 자동 승인 처리");
         
-        // 3. 즉시 완료 처리 (실제 회기 추가)
         request.complete();
         
         SessionExtensionRequest savedRequest = requestRepository.save(request);
         
-        // 4. 매핑에 회기 추가 및 동기화 (PL/SQL 서비스 사용)
         try {
-            // PL/SQL 서비스를 통한 회기 추가 처리
             Map<String, Object> plSqlResult = plSqlMappingSyncService.addSessionsToMapping(
                 request.getMapping().getId(),
                 request.getAdditionalSessions(),
@@ -121,35 +112,31 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
             } else {
                 log.warn("⚠️ PL/SQL 회기 추가 처리 실패: requestId={}, message={}", 
                         savedRequest.getId(), plSqlResult.get("message"));
-                // PL/SQL 실패 시 기본 동기화 서비스 사용
                 sessionSyncService.syncAfterSessionExtension(savedRequest);
             }
             
-            // 기본 동기화 서비스도 호출 (이중 보장)
             sessionSyncService.syncAfterSessionExtension(savedRequest);
             log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
         } catch (Exception e) {
             log.error("❌ 회기 추가 후 동기화 실패: requestId={}, error={}", 
                      savedRequest.getId(), e.getMessage(), e);
-            // 동기화 실패해도 회기 추가는 완료된 상태로 유지
         }
         
-        // 5. 매핑 상태도 자동으로 ACTIVE로 변경 및 결제 정보 동기화
         try {
             ConsultantClientMapping mapping = request.getMapping();
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             mapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
             mapping.setAdminApprovalDate(LocalDateTime.now());
             mapping.setApprovedBy("시스템 자동 승인");
             
-            // 결제 정보를 매핑에도 동기화
             mapping.setPaymentMethod(paymentMethod);
             mapping.setPaymentReference(finalPaymentReference);
             mapping.setPaymentDate(LocalDateTime.now());
             
             mappingRepository.save(mapping);
             
-            // 🚀 실시간 통계 업데이트 추가
             try {
                 realTimeStatisticsService.updateStatisticsOnMappingChange(
                     mapping.getConsultant().getId(), 
@@ -157,7 +144,6 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
                     mapping.getBranchCode()
                 );
                 
-                // 결제 완료시 재무 통계 업데이트
                 if (mapping.getPaymentAmount() != null) {
                     realTimeStatisticsService.updateFinancialStatisticsOnPayment(
                         mapping.getBranchCode(), 
@@ -177,24 +163,20 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
             log.error("❌ 매핑 상태 활성화 실패: {}", e.getMessage(), e);
         }
         
-        // 6. ERP 시스템에 결제 정보 전송
         try {
             sendSessionExtensionToErp(savedRequest, paymentMethod, finalPaymentReference);
             log.info("✅ ERP 시스템 연동 완료: requestId={}", savedRequest.getId());
         } catch (Exception e) {
             log.error("❌ ERP 시스템 연동 실패: requestId={}, error={}", 
                      savedRequest.getId(), e.getMessage(), e);
-            // ERP 연동 실패해도 회기 추가는 완료된 상태로 유지
         }
 
-        // 7. 이메일 알림 발송
         try {
             sendPaymentConfirmationEmail(savedRequest);
             log.info("✅ 입금 확인 이메일 발송 완료: requestId={}", savedRequest.getId());
         } catch (Exception e) {
             log.error("❌ 입금 확인 이메일 발송 실패: requestId={}, error={}", 
                      savedRequest.getId(), e.getMessage(), e);
-            // 이메일 발송 실패해도 회기 추가는 완료된 상태로 유지
         }
         
         log.info("✅ 입금 확인 및 자동 승인 완료: requestId={}, status={}", 
@@ -243,16 +225,12 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         SessionExtensionRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
         
-        // 회기 추가는 SessionSyncService에서 처리
         
-        // 요청 완료 처리
         request.complete();
         
         SessionExtensionRequest savedRequest = requestRepository.save(request);
         
-        // 🔄 회기 추가 후 전체 시스템 동기화 (PL/SQL 서비스 사용)
         try {
-            // PL/SQL 서비스를 통한 회기 추가 처리
             Map<String, Object> plSqlResult = plSqlMappingSyncService.addSessionsToMapping(
                 request.getMapping().getId(),
                 request.getAdditionalSessions(),
@@ -269,13 +247,11 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
                         savedRequest.getId(), plSqlResult.get("message"));
             }
             
-            // 기본 동기화 서비스도 호출 (이중 보장)
             sessionSyncService.syncAfterSessionExtension(savedRequest);
             log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
         } catch (Exception e) {
             log.error("❌ 회기 추가 후 동기화 실패: requestId={}, error={}", 
                      savedRequest.getId(), e.getMessage(), e);
-            // 동기화 실패해도 회기 추가는 완료된 상태로 유지
         }
         
         log.info("✅ 회기 추가 완료: requestId={}, mappingId={}, sessions={}", 
@@ -340,17 +316,14 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         
         Map<String, Object> statistics = new HashMap<>();
         
-        // 전체 요청 수
         long totalRequests = requestRepository.count();
         statistics.put("totalRequests", totalRequests);
         
-        // 상태별 요청 수
         for (SessionExtensionRequest.ExtensionStatus status : SessionExtensionRequest.ExtensionStatus.values()) {
             long count = requestRepository.findByStatusOrderByCreatedAtDesc(status).size();
             statistics.put(status.name().toLowerCase() + "Count", count);
         }
         
-        // 최근 7일간 요청 수
         LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
         List<Object[]> weekStats = requestRepository.getRequestStatsByPeriod(weekAgo, LocalDateTime.now());
         statistics.put("weekStats", weekStats);
@@ -393,7 +366,6 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         return statistics;
     }
     
-    /**
      * ERP 시스템에 회기 추가 결제 정보 전송 (매칭 시스템과 동일한 방식)
      */
     private void sendSessionExtensionToErp(SessionExtensionRequest request, String paymentMethod, String paymentReference) {
@@ -402,7 +374,6 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
             
             ConsultantClientMapping mapping = request.getMapping();
             
-            // ERP 전송 데이터 구성 (매칭 시스템과 동일한 구조)
             Map<String, Object> erpData = new HashMap<>();
             erpData.put("transactionType", "SESSION_EXTENSION_PAYMENT");
             erpData.put("requestId", request.getId());
@@ -423,11 +394,9 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
             erpData.put("reason", request.getReason());
             erpData.put("erpTransactionId", "EXT_" + request.getId() + "_" + System.currentTimeMillis());
             
-            // ERP API 호출 (매칭 시스템과 동일한 방식)
             String erpUrl = getErpSessionExtensionApiUrl();
             Map<String, String> headers = getErpHeaders();
             
-            // HTTP 요청 전송
             boolean success = sendToErpSystem(erpUrl, erpData, headers);
             
             if (success) {
@@ -444,28 +413,21 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         }
     }
     
-    /**
      * ERP 시스템으로 실제 데이터 전송 (매칭 시스템과 동일한 방식)
      */
     private boolean sendToErpSystem(String url, Map<String, Object> data, Map<String, String> headers) {
         try {
-            // 실제 ERP 시스템의 API 스펙에 맞게 구현
-            // 예시: REST API 호출
             
             org.springframework.http.HttpHeaders httpHeaders = new org.springframework.http.HttpHeaders();
             httpHeaders.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
             
-            // ERP 인증 헤더 추가
             if (headers != null) {
                 headers.forEach(httpHeaders::set);
             }
             
             org.springframework.http.HttpEntity<Map<String, Object>> request = new org.springframework.http.HttpEntity<>(data, httpHeaders);
             
-            // RestTemplate을 사용한 HTTP 요청 (실제 구현 시 주입받아 사용)
-            // ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
             
-            // 현재는 모의 처리 (실제 ERP 연동 시 주석 해제하고 위 코드 사용)
             log.info("🎭 모의 ERP 전송: URL={}, Data={}, Request={}", url, data.get("erpTransactionId"), request != null ? "준비됨" : "null");
             return true;
             
@@ -475,15 +437,12 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         }
     }
     
-    /**
      * ERP 회기 추가 API URL 가져오기 (매칭 시스템과 동일한 방식)
      */
     private String getErpSessionExtensionApiUrl() {
-        // 실제 ERP 시스템의 회기 추가 API URL
         return System.getProperty("erp.session.extension.api.url", "http://erp.company.com/api/session-extension");
     }
     
-    /**
      * ERP 인증 헤더 생성 (매칭 시스템과 동일한 방식)
      */
     private Map<String, String> getErpHeaders() {
@@ -495,28 +454,24 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         return headers;
     }
 
-    /**
      * 입금 확인 이메일 발송
      */
     private void sendPaymentConfirmationEmail(SessionExtensionRequest request) {
         try {
             log.info("📧 입금 확인 이메일 발송 시작: requestId={}", request.getId());
             
-            // 요청자 정보 조회
             User requester = request.getRequester();
             if (requester == null || requester.getEmail() == null) {
                 log.warn("⚠️ 이메일 발송 실패: 요청자 정보 또는 이메일이 없습니다. requestId={}", request.getId());
                 return;
             }
             
-            // 매핑 정보 조회
             ConsultantClientMapping mapping = request.getMapping();
             if (mapping == null) {
                 log.warn("⚠️ 이메일 발송 실패: 매핑 정보가 없습니다. requestId={}", request.getId());
                 return;
             }
             
-            // 이메일 템플릿 변수 설정
             Map<String, Object> variables = new HashMap<>();
             variables.put("userName", requester.getName() != null ? requester.getName() : "고객님");
             variables.put("userEmail", requester.getEmail());
@@ -535,7 +490,6 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
                          mapping.getClient().getName() : "내담자");
             variables.put("confirmationDate", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH:mm")));
             
-            // 이메일 발송
             EmailResponse response = emailService.sendTemplateEmail(
                 EmailConstants.TEMPLATE_SESSION_EXTENSION_CONFIRMATION,
                 requester.getEmail(),

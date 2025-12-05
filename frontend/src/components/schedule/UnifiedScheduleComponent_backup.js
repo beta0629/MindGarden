@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -11,7 +10,6 @@ import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import './ScheduleCalendar.css';
 
-/**
  * FullCalendar 기반 스케줄 관리 컴포넌트
  * 
  * @author MindGarden
@@ -31,12 +29,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     
-    // 상담사 필터링 상태
     const [consultants, setConsultants] = useState([]);
     const [selectedConsultantId, setSelectedConsultantId] = useState('');
     const [loadingConsultants, setLoadingConsultants] = useState(false);
 
-    // 시간 포맷팅 함수
     const formatTime = (timeObj) => {
         if (!timeObj) return '시간 미정';
         try {
@@ -50,7 +46,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     };
 
-    // 일정 상태 코드 로드
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
@@ -58,10 +53,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.log('📋 스케줄 상태 코드 응답:', response);
             
             if (response && Array.isArray(response) && response.length > 0) {
-                // 동적 색상/아이콘 처리로 변경
                 const statusOptions = await Promise.all(response.map(async (code) => {
                     try {
-                        // 동적으로 색상과 아이콘 조회
                         const [color, icon] = await Promise.all([
                             getStatusColor(code.codeValue, 'STATUS'),
                             getStatusIcon(code.codeValue, 'STATUS')
@@ -76,11 +69,9 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         };
                     } catch (error) {
                         console.error(`스케줄 상태 ${code.codeValue} 처리 오류:`, error);
-                        // 오류 시 기본값 반환
                         return {
                             value: code.codeValue,
                             label: code.codeLabel,
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                             color: '#6b7280',
                             icon: '📋',
                             description: code.codeDescription
@@ -95,15 +86,17 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             }
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
-            // 실패 시 기본값 설정
             setScheduleStatusOptions([
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'BOOKED', label: '예약됨', icon: '📅', color: 'var(--mg-primary-500)', description: '예약된 일정' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: 'var(--mg-purple-500)', description: '확정된 일정' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-warning-500)', description: '진행 중인 일정' },
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: '#059669', description: '완료된 일정' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'CANCELLED', label: '취소됨', icon: '❌', color: 'var(--mg-error-500)', description: '취소된 일정' },
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                 { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#6b7280', description: '차단된 시간' }
             ]);
         } finally {
@@ -111,7 +104,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, []);
 
-    // 상담사 목록 로드
     const loadConsultants = useCallback(async () => {
         try {
             setLoadingConsultants(true);
@@ -128,7 +120,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, []);
 
-    /**
      * 상태값을 한글로 변환 (동적 로드)
      */
     const convertStatusToKorean = (status) => {
@@ -136,7 +127,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         return statusOption ? statusOption.label : status || "알 수 없음";
     };
 
-    /**
      * 스케줄 데이터 로드
      */
     const loadSchedules = useCallback(async () => {
@@ -144,10 +134,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         try {
             console.log('📅 스케줄 로드 시작:', { userId, userRole, selectedConsultantId });
             
-            // API URL 결정
             let url = `/api/schedules?userId=${userId}&userRole=${userRole}`;
             
-            // 어드민인 경우 상담사 필터링 지원
             if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
                 url = '/api/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
@@ -158,7 +146,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 }
             }
             
-            // 실제 API 호출 (캐시 방지를 위해 timestamp 추가)
             const timestamp = new Date().getTime();
             const separator = url.includes('?') ? '&' : '?';
             const response = await apiGet(`${url}${separator}_t=${timestamp}`);
@@ -167,7 +154,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             if (response && response.success) {
                 console.log('📅 API 응답 데이터:', response);
                 
-                // API 응답 구조에 따라 데이터 추출
                 const schedules = response.data || response;
                 
                 if (Array.isArray(schedules)) {
@@ -209,7 +195,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 console.warn('📅 API 응답 실패:', response);
             }
 
-            // 어드민인 경우 모든 상담사의 휴가 데이터 로드
             let vacationEvents = [];
             if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
                 try {
@@ -217,7 +202,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
                     const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
                     
-                    // 날짜 범위로 휴가 조회 (date 파라미터 제거)
                     const vacationResponse = await fetch(`/api/consultant/vacations`, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
@@ -228,11 +212,9 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         const vacationResult = await vacationResponse.json();
                         console.log('🏖️ 어드민 휴가 API 응답:', vacationResult);
                         if (vacationResult.success && vacationResult.data) {
-                            // 모든 상담사의 휴가 데이터를 이벤트로 변환
                             Object.entries(vacationResult.data).forEach(([consultantId, consultantVacations]) => {
                                 console.log('🏖️ 상담사 휴가 데이터:', consultantId, consultantVacations);
                                 Object.entries(consultantVacations).forEach(([date, vacationData]) => {
-                                    // 상담사 이름을 휴가 데이터에 추가 (이미 백엔드에서 제공됨)
                                     if (!vacationData.consultantName) {
                                         vacationData.consultantName = `상담사 ${consultantId}`;
                                     }
@@ -250,7 +232,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 }
             }
 
-            // 스케줄 이벤트와 휴가 이벤트 합치기
             const allEvents = [...scheduleEvents, ...vacationEvents];
             setEvents(allEvents);
             console.log('📅 모든 이벤트 데이터 로드 완료:', allEvents);
@@ -261,18 +242,15 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, [userId, userRole, selectedConsultantId]);
 
-    // 스케줄 데이터 로드
     useEffect(() => {
         loadSchedules();
         loadScheduleStatusCodes();
         
-        // 어드민인 경우 상담사 목록도 로드
         if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
             loadConsultants();
         }
     }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole, selectedConsultantId]);
 
-    /**
      * 휴가 데이터를 캘린더 이벤트로 변환
      */
     const convertVacationToEvent = (vacationData, consultantId, date) => {
@@ -291,7 +269,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌇 오후 휴무';
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FF5722 -> var(--mg-custom-FF5722)
                 backgroundColor = '#FF5722';
                 allDay = false;
                 break;
@@ -312,7 +289,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T16:00:00+09:00');
                 title = '🌆 오후 반반차 1';
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FF7043 -> var(--mg-custom-FF7043)
                 backgroundColor = '#FF7043';
                 allDay = false;
                 break;
@@ -320,7 +296,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 startDate.setHours(16, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌆 오후 반반차 2';
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FF7043 -> var(--mg-custom-FF7043)
                 backgroundColor = '#FF7043';
                 allDay = false;
                 break;
@@ -329,33 +304,27 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
                     endDate = new Date(date + 'T' + endTime + '+09:00');
                     title = '⏰ 사용자 정의 휴무';
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9C27B0 -> var(--mg-custom-9C27B0)
                     backgroundColor = '#9C27B0';
                     allDay = false;
                 } else {
                     endDate = new Date(date + 'T23:59:59+09:00');
                     title = '⏰ 사용자 정의 휴무';
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9C27B0 -> var(--mg-custom-9C27B0)
                     backgroundColor = '#9C27B0';
                 }
                 break;
             case 'ALL_DAY':
             case 'FULL_DAY':
-                // 종일 휴가 처리
                 endDate = new Date(date + 'T23:59:59+09:00');
                 title = '🏖️ 하루 종일 휴무';
                 backgroundColor = 'var(--mg-error-500)';
                 allDay = true;
                 break;
             default:
-                // 기타 휴가 유형
                 if (startTime && endTime) {
-                    // 시간 정보가 있는 경우
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
                     endDate = new Date(date + 'T' + endTime + '+09:00');
                     allDay = false;
                 } else {
-                    // 시간 정보가 없는 경우 하루 종일
                     endDate = new Date(date + 'T23:59:59+09:00');
                     allDay = true;
                 }
@@ -372,7 +341,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             allDay: allDay,
             backgroundColor: backgroundColor,
             borderColor: backgroundColor,
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
             textColor: '#fff',
             className: 'vacation-event',
             extendedProps: {
@@ -388,7 +356,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         };
     };
 
-    /**
      * 상담사별 색상 반환
      */
     const getConsultantColor = (consultantId) => {
@@ -398,26 +365,19 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             'var(--mg-warning-500)', // 주황색
             'var(--mg-error-500)', // 빨간색
             'var(--mg-purple-500)', // 보라색
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #06b6d4 -> var(--mg-custom-06b6d4)
             '#06b6d4', // 청록색
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #84cc16 -> var(--mg-custom-84cc16)
             '#84cc16', // 라임색
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f97316 -> var(--mg-custom-f97316)
             '#f97316', // 오렌지색
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ec4899 -> var(--mg-custom-ec4899)
             '#ec4899', // 핑크색
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6366f1 -> var(--mg-custom-6366f1)
             '#6366f1'  // 인디고색
         ];
         
-        // 상담사 ID를 기반으로 일관된 색상 할당
         const colorIndex = consultantId % colors.length;
         return colors[colorIndex];
     };
 
 
 
-    /**
      * 상담 유형을 한글로 변환
      */
     const convertConsultationTypeToKorean = (consultationType) => {
@@ -431,17 +391,20 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         return typeMap[consultationType] || consultationType || "알 수 없음";
     };
 
-    /**
      * 스케줄 상태에 따른 색상 반환
      */
     const getEventColor = (status) => {
         switch (status) {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             case 'BOOKED':
                 return 'var(--mg-primary-500)'; // 파란색 - 예약됨
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             case 'IN_PROGRESS':
                 return 'var(--mg-success-500)'; // 초록색 - 진행중
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             case 'COMPLETED':
                 return 'var(--mg-secondary-500)'; // 회색 - 완료
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             case 'CANCELLED':
                 return 'var(--mg-error-500)'; // 빨간색 - 취소
             case 'BLOCKED':
@@ -451,7 +414,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     };
 
-    /**
      * 날짜 클릭 이벤트 핸들러
      */
     const handleDateClick = (info) => {
@@ -464,7 +426,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         });
         console.log('📅 ScheduleCalendar 컴포넌트에서 날짜 클릭 처리');
         
-        // 과거 날짜인지 확인
         const clickedDate = new Date(info.date);
         const today = new Date();
         today.setHours(0, 0, 0, 0); // 오늘 날짜의 시작 시간으로 설정
@@ -472,9 +433,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         
         const isPastDate = clickedDate < today;
         
-        // 관리자 또는 상담사만 스케줄 생성 가능
         if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'CONSULTANT') {
-            // 과거 날짜인 경우 새로운 스케줄 등록 불가 알림
             if (isPastDate) {
                 alert('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다.\n기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;
@@ -489,7 +448,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     };
 
-    /**
      * 스케줄 등록 클릭 핸들러
      */
     const handleScheduleClick = () => {
@@ -500,7 +458,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }, 100);
     };
 
-    /**
      * 휴가 등록 클릭 핸들러
      */
     const handleVacationClick = () => {
@@ -511,7 +468,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }, 100);
     };
 
-    /**
      * 기존 이벤트 클릭 이벤트 핸들러
      */
     const handleEventClick = (info) => {
@@ -520,11 +476,9 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         
         const event = info.event;
         
-        // 휴가 이벤트인지 확인
         if (event.extendedProps.type === 'vacation') {
             console.log('🏖️ 휴가 이벤트 클릭');
             
-            // 휴가 이벤트용 데이터 설정
             let consultantName = event.extendedProps.consultantName;
             if (!consultantName || consultantName === 'undefined' || consultantName === '알 수 없음') {
                 if (event.extendedProps.consultantId && event.extendedProps.consultantId !== 'undefined') {
@@ -554,7 +508,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             return;
         }
         
-        // 일반 스케줄 이벤트 처리
         console.log('📋 상담 유형 원본:', event.extendedProps.consultationType);
         console.log('👤 이벤트 상담사 정보:', {
             consultantId: event.extendedProps.consultantId,
@@ -566,7 +519,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         const koreanStatus = event.extendedProps.statusKorean || convertStatusToKorean(event.extendedProps.status);
         const koreanConsultationType = convertConsultationTypeToKorean(event.extendedProps.consultationType);
         
-        // 상담사 이름이 없거나 undefined인 경우 처리
         let consultantName = event.extendedProps.consultantName;
         const consultantId = event.extendedProps.consultantId;
         
@@ -579,7 +531,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.warn('⚠️ 상담사 이름이 없음, ID로 대체:', consultantName);
         }
         
-        // 클라이언트 이름 처리
         let clientName = event.extendedProps.clientName;
         const clientId = event.extendedProps.clientId;
         
@@ -594,7 +545,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         console.log('📋 변환된 상담 유형:', koreanConsultationType);
         console.log('👤 최종 상담사 이름:', consultantName);
 
-        // 스케줄 상세 정보 설정
         const scheduleData = {
             id: event.extendedProps.id,
             title: event.title,
@@ -610,7 +560,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setIsDetailModalOpen(true);
     };
 
-    /**
      * 이벤트 드래그 앤 드롭 핸들러
      */
     const handleEventDrop = async (info) => {
@@ -634,7 +583,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             });
 
             if (!response.ok) {
-                // 실패 시 원래 위치로 되돌리기
                 info.revert();
                 alert('스케줄 이동에 실패했습니다.');
             } else {
@@ -647,7 +595,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     };
 
-    /**
      * 모달 닫기
      */
     const handleModalClose = () => {
@@ -656,7 +603,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setSelectedInfo(null);
     };
 
-    /**
      * 스케줄 생성 완료 후 콜백
      */
     const handleScheduleCreated = async () => {
@@ -666,7 +612,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         console.log('✅ 캘린더 새로고침 완료');
     };
 
-    /**
      * 상세 모달 닫기 핸들러
      */
     const handleDetailModalClose = () => {
@@ -674,14 +619,12 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setSelectedSchedule(null);
     };
 
-    /**
      * 스케줄 업데이트 후 처리
      */
     const handleScheduleUpdated = () => {
         loadSchedules(); // 스케줄 목록 새로고침
     };
 
-    /**
      * 강제 새로고침 함수
      */
     const forceRefresh = useCallback(async () => {
@@ -736,7 +679,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         <div className="legend-title">상담사별 색상</div>
                         <div className="legend-items consultant-legend">
                             {consultants.filter(consultant => 
-                                // 활성 상담사이면서 실제 스케줄이 있는 경우만 표시
                                 consultant.isActive !== false && 
                                 events.some(event => event.extendedProps?.consultantId === consultant.id)
                             ).map((consultant, index) => (
@@ -768,7 +710,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 ))
                             ) : (
                                 <div key="loading-status" className="legend-item">
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
                                     <span className="legend-color" style={{ backgroundColor: '#e5e7eb' }}></span>
                                     <span>로딩 중</span>
                                 </div>
@@ -874,7 +815,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
                             <h3 style={{ margin: '0 0 8px 0', color: '#2c3e50' }}>
                                 📅 {selectedDate ? selectedDate.toLocaleDateString('ko-KR', {
                                     year: 'numeric',
@@ -893,7 +833,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '16px',
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                     border: '2px solid #e9ecef',
                                     borderRadius: '8px',
                                     background: 'white',
@@ -904,11 +843,9 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 }}
                                 onMouseOver={(e) => {
                                     e.target.style.borderColor = 'var(--mg-primary-500)';
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8f9ff -> var(--mg-custom-f8f9ff)
                                     e.target.style.background = '#f8f9ff';
                                 }}
                                 onMouseOut={(e) => {
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                     e.target.style.borderColor = '#e9ecef';
                                     e.target.style.background = 'white';
                                 }}
@@ -927,7 +864,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         padding: '16px',
-                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                         border: '2px solid #e9ecef',
                                         borderRadius: '8px',
                                         background: 'white',
@@ -938,11 +874,9 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     }}
                                     onMouseOver={(e) => {
                                         e.target.style.borderColor = 'var(--mg-warning-500)';
-                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fffbf0 -> var(--mg-custom-fffbf0)
                                         e.target.style.background = '#fffbf0';
                                     }}
                                     onMouseOut={(e) => {
-                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                         e.target.style.borderColor = '#e9ecef';
                                         e.target.style.background = 'white';
                                     }}
@@ -969,7 +903,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     transition: 'all 0.3s ease'
                                 }}
                                 onMouseOver={(e) => {
-                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #5a6268 -> var(--mg-custom-5a6268)
                                     e.target.style.background = '#5a6268';
                                     e.target.style.transform = 'translateY(-1px)';
                                 }}
@@ -1005,11 +938,9 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
 export default ScheduleCalendar;
 
-// CSS 스타일
 const styles = `
 .schedule-calendar {
     padding: 20px;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8fafc -> var(--mg-custom-f8fafc)
     background: #f8fafc;
     min-height: 100vh;
 }
@@ -1041,19 +972,16 @@ const styles = `
 }
 
 .refresh-button:hover {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2563eb -> var(--mg-custom-2563eb)
     background: #2563eb;
     transform: translateY(-1px);
 }
 
 .refresh-button:active {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d4ed8 -> var(--mg-custom-1d4ed8)
     background: #1d4ed8;
     transform: translateY(0);
 }
 
 .calendar-header h2 {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1e293b -> var(--mg-custom-1e293b)
     color: #1e293b;
     margin: 0;
     font-size: 24px;
@@ -1075,7 +1003,6 @@ const styles = `
 .legend-title {
     font-size: 14px;
     font-weight: 600;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #475569 -> var(--mg-custom-475569)
     color: #475569;
     margin-bottom: 5px;
 }
@@ -1096,7 +1023,6 @@ const styles = `
     align-items: center;
     gap: 6px;
     font-size: 13px;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #64748b -> var(--mg-custom-64748b)
     color: #64748b;
 }
 
@@ -1107,11 +1033,9 @@ const styles = `
     flex-shrink: 0;
 }
 
-// ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
 .legend-color.available { background-color: #e5e7eb; }
 .legend-color.booked { background-color: var(--mg-primary-500); }
 .legend-color.in-progress { background-color: var(--mg-success-500); }
-// ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
 .legend-color.completed { background-color: #6b7280; }
 .legend-color.cancelled { background-color: var(--mg-error-500); }
 .legend-color.blocked { background-color: var(--mg-warning-500); }
@@ -1122,7 +1046,6 @@ const styles = `
     left: 0;
     right: 0;
     bottom: 0;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.8) -> var(--mg-custom-color)
     background: rgba(255, 255, 255, 0.8);
     display: flex;
     align-items: center;
@@ -1130,9 +1053,7 @@ const styles = `
     z-index: 1000;
 }
 
-/* 하드코딩된 로딩 스타일 제거됨 - UnifiedLoading 컴포넌트 사용 */
 
-/* FullCalendar 커스터마이징 */
 .fc {
     background: white;
     border-radius: 12px;
@@ -1142,16 +1063,13 @@ const styles = `
 
 .fc-toolbar {
     padding: 20px;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8fafc -> var(--mg-custom-f8fafc)
     background: #f8fafc;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e2e8f0 -> var(--mg-custom-e2e8f0)
     border-bottom: 1px solid #e2e8f0;
 }
 
 .fc-toolbar-title {
     font-size: 20px;
     font-weight: 600;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1e293b -> var(--mg-custom-1e293b)
     color: #1e293b;
 }
 
@@ -1167,22 +1085,18 @@ const styles = `
 }
 
 .fc-button:hover {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2563eb -> var(--mg-custom-2563eb)
     background: #2563eb;
     transform: translateY(-1px);
 }
 
 .fc-button:active {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d4ed8 -> var(--mg-custom-1d4ed8)
     background: #1d4ed8;
     transform: translateY(0);
 }
 
 .fc-button-primary:not(:disabled):active,
 .fc-button-primary:not(:disabled).fc-button-active {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d4ed8 -> var(--mg-custom-1d4ed8)
     background: #1d4ed8;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d4ed8 -> var(--mg-custom-1d4ed8)
     border-color: #1d4ed8;
 }
 
@@ -1212,28 +1126,23 @@ const styles = `
 
 .fc-timegrid-slot-label {
     font-size: 12px;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #64748b -> var(--mg-custom-64748b)
     color: #64748b;
 }
 
 .fc-daygrid-day-number {
     font-weight: 500;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
     color: #374151;
 }
 
 .fc-day-today {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef3c7 -> var(--mg-custom-fef3c7)
     background-color: #fef3c7;
 }
 
 .fc-day-today .fc-daygrid-day-number {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d97706 -> var(--mg-custom-d97706)
     color: #d97706;
     font-weight: 600;
 }
 
-/* 반응형 디자인 */
 @media (max-width: 768px) {
     .calendar-header {
         flex-direction: column;
@@ -1268,7 +1177,6 @@ const styles = `
 }
 `;
 
-// 스타일을 DOM에 추가
 if (typeof document !== 'undefined') {
     const styleSheet = document.createElement('style');
     styleSheet.textContent = styles;

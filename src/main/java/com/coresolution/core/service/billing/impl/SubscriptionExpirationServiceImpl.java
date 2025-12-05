@@ -13,7 +13,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
  * 구독 만료 처리 서비스 구현체
  * 
  * @author CoreSolution
@@ -34,6 +33,7 @@ public class SubscriptionExpirationServiceImpl implements SubscriptionExpiration
         
         LocalDate today = LocalDate.now();
         List<TenantSubscription> expiredSubscriptions = subscriptionRepository
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .findByTenantIdAndStatusAndIsDeletedFalse(null, TenantSubscription.SubscriptionStatus.ACTIVE)
                 .stream()
                 .filter(sub -> sub.getEffectiveTo() != null && sub.getEffectiveTo().isBefore(today))
@@ -42,6 +42,7 @@ public class SubscriptionExpirationServiceImpl implements SubscriptionExpiration
         int processedCount = 0;
         for (TenantSubscription subscription : expiredSubscriptions) {
             try {
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 subscription.setStatus(TenantSubscription.SubscriptionStatus.SUSPENDED);
                 subscription.setAutoRenewal(false);
                 subscriptionRepository.save(subscription);
@@ -65,6 +66,7 @@ public class SubscriptionExpirationServiceImpl implements SubscriptionExpiration
         LocalDate targetDate = LocalDate.now().plusDays(days);
         
         return subscriptionRepository
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .findByTenantIdAndStatusAndIsDeletedFalse(null, TenantSubscription.SubscriptionStatus.ACTIVE)
                 .stream()
                 .filter(sub -> sub.getEffectiveTo() != null && 
@@ -83,6 +85,7 @@ public class SubscriptionExpirationServiceImpl implements SubscriptionExpiration
         
         final LocalDate finalDate = date;
         return subscriptionRepository
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .findByTenantIdAndStatusAndIsDeletedFalse(null, TenantSubscription.SubscriptionStatus.ACTIVE)
                 .stream()
                 .filter(sub -> sub.getEffectiveTo() != null && sub.getEffectiveTo().isBefore(finalDate))

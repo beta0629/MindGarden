@@ -19,7 +19,6 @@ import {
 } from '../../constants/onboarding';
 import './OnboardingStatus.css';
 
-/**
  * 온보딩 상태 조회 페이지
  * 온보딩 요청 상태를 조회하는 컴포넌트
  * 
@@ -40,7 +39,6 @@ const OnboardingStatus = () => {
   const [statusCodesMap, setStatusCodesMap] = useState({});
   const [riskLevelCodesMap, setRiskLevelCodesMap] = useState({});
 
-  // 상태 옵션 (동적으로 생성)
   const statusOptions = [
     { value: '', label: MESSAGES.ALL },
     ...statusCodes.map(code => ({
@@ -49,12 +47,10 @@ const OnboardingStatus = () => {
     }))
   ];
 
-  // 공통 코드 로드
   useEffect(() => {
     loadCommonCodes();
   }, []);
 
-  // 요청 목록 로드
   useEffect(() => {
     if (!loadingCodes) {
       loadRequests();
@@ -65,7 +61,6 @@ const OnboardingStatus = () => {
     try {
       setLoadingCodes(true);
       
-      // 온보딩 상태 코드 로드
       const statusCodesData = await getOnboardingStatusCodes();
       const statusOptions = convertCodesToOptions(statusCodesData);
       setStatusCodes(statusOptions);
@@ -73,13 +68,11 @@ const OnboardingStatus = () => {
       const statusMap = convertCodesToMap(statusCodesData);
       setStatusCodesMap(statusMap);
       
-      // 위험도 코드 로드
       const riskLevelCodesData = await getRiskLevelCodes();
       const riskLevelMap = convertCodesToMap(riskLevelCodesData);
       setRiskLevelCodesMap(riskLevelMap);
     } catch (err) {
       console.error('공통 코드 로드 실패:', err);
-      // 에러는 조용히 처리 (기본값 사용)
     } finally {
       setLoadingCodes(false);
     }
@@ -127,15 +120,16 @@ const OnboardingStatus = () => {
   };
 
   const getStatusColor = (status) => {
-    // 공통 코드에서 색상 정보를 가져오거나 기본 색상 사용
     if (statusCodesMap[status] && statusCodesMap[status].color) {
       return statusCodesMap[status].color;
     }
-    // 기본 색상 매핑
     const defaultColorMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': DEFAULT_COLORS.PENDING,
       'IN_REVIEW': DEFAULT_COLORS.IN_REVIEW,
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'APPROVED': DEFAULT_COLORS.APPROVED,
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'REJECTED': DEFAULT_COLORS.REJECTED,
       'ON_HOLD': DEFAULT_COLORS.ON_HOLD
     };

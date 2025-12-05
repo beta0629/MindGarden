@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import TimeSelectionModal from './TimeSelectionModal';
@@ -8,9 +7,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
-// import './ScheduleCalendar.css'; // 제거: mindgarden-design-system.css 사용
 
-// 분리된 컴포넌트들 import
 import ScheduleCalendarHeader from './ScheduleCalendar/ScheduleCalendarHeader';
 import ScheduleCalendarLegend from './ScheduleCalendar/ScheduleCalendarLegend';
 import ScheduleCalendarCore from './ScheduleCalendar/ScheduleCalendarCore';
@@ -27,7 +24,6 @@ import {
     isTimeSlotBooked
 } from './ScheduleCalendar/ScheduleCalendarUtils';
 
-/**
  * FullCalendar 기반 스케줄 관리 컴포넌트 (리팩토링됨)
  * 
  * @author MindGarden
@@ -35,15 +31,12 @@ import {
  * @since 2024-12-19
  */
 const ScheduleCalendar = ({ userRole, userId }) => {
-    // 세션 정보 가져오기
     const { user: sessionUser } = useSession();
     
-    // 현재 사용자 정보 결정
     const currentUser = sessionUser;
     const currentUserRole = userRole || currentUser?.role || 'CLIENT';
     const currentUserId = userId || currentUser?.id;
     
-    // 상태 관리
     const [events, setEvents] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedInfo, setSelectedInfo] = useState(null);
@@ -59,19 +52,16 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     
-    // 모바일 달력 확대 기능 상태
     const [isMobileZoomOpen, setIsMobileZoomOpen] = useState(false);
     const [mobileZoomDate, setMobileZoomDate] = useState(null);
     const [mobileZoomSchedules, setMobileZoomSchedules] = useState([]);
     const [isMobile, setIsMobile] = useState(false);
     const [forceMobileMode, setForceMobileMode] = useState(false);
     
-    // 상담사 필터링 상태
     const [consultants, setConsultants] = useState([]);
     const [selectedConsultantId, setSelectedConsultantId] = useState('');
     const [loadingConsultants, setLoadingConsultants] = useState(false);
 
-    // 일정 상태 코드 로드
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
@@ -79,11 +69,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.log('📋 스케줄 상태 코드 응답:', response);
             
             if (response && Array.isArray(response) && response.length > 0) {
-                // 우리가 원하는 6개 상태만 필터링
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 const allowedStatuses = ['AVAILABLE', 'BOOKED', 'CONFIRMED', 'VACATION', 'COMPLETED', 'CANCELLED'];
                 const filteredResponse = response.filter(code => allowedStatuses.includes(code.codeValue));
                 
-                // DB에서 색상/아이콘 동적 로드
                 const statusOptions = filteredResponse.map(code => ({
                     value: code.codeValue,
                     label: code.codeLabel,
@@ -99,13 +88,16 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             }
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
-            // 실패 시 기본값 설정 (enum 6개 상태만)
             setScheduleStatusOptions([
                 { value: 'AVAILABLE', label: '가능', icon: '✅', color: 'var(--mg-success-500)', description: '예약 가능한 시간대' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'BOOKED', label: '예약됨', icon: '📅', color: 'var(--mg-primary-500)', description: '예약된 일정' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: 'var(--mg-info-500)', description: '확정된 일정' },
                 { value: 'VACATION', label: '휴가', icon: '🏖️', color: 'var(--mg-warning-500)', description: '휴가로 인한 비활성' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-secondary-500)', description: '완료된 일정' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'CANCELLED', label: '취소됨', icon: '❌', color: 'var(--mg-error-500)', description: '취소된 일정' }
             ]);
         } finally {
@@ -113,9 +105,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, []);
 
-    // 상담사 목록 로드
     const loadConsultants = useCallback(async () => {
-        // 내담자는 상담사 목록을 불러오지 않음
         if (currentUserRole === 'CLIENT') {
             console.log('👤 내담자 - 상담사 목록 로드 생략');
             setConsultants([]);
@@ -125,25 +115,19 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         try {
             setLoadingConsultants(true);
             
-            // 디버깅을 위한 사용자 정보 로그
             console.log('🔍 사용자 정보 확인:', {
                 currentUser,
                 currentUserRole,
-                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchId: currentUser?.branchId,
-                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: currentUser?.branchCode
             });
             
-            // 사용자 역할에 따른 API 엔드포인트 결정
             let apiEndpoint = '/api/admin/consultants';
             
-            // 지점 어드민인 경우 자신의 지점 상담사만 조회
             console.log('🔍 조건 확인:', {
                 currentUserRole,
                 isBranchSuperAdmin: currentUserRole === 'BRANCH_SUPER_ADMIN',
                 hasBranchId: !!currentUser?.branchId,
-                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchId: currentUser?.branchId
             });
             
@@ -155,7 +139,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     role: currentUserRole,
                     isBranchSuperAdmin: currentUserRole === 'BRANCH_SUPER_ADMIN',
                     hasBranchId: !!currentUser?.branchId,
-                    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                     branchId: currentUser?.branchId
                 });
             }
@@ -176,7 +159,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, [currentUserRole, currentUser?.branchId]);
 
-    /**
      * 스케줄 데이터 로드
      */
     const loadSchedules = useCallback(async () => {
@@ -184,10 +166,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         try {
             console.log('📅 스케줄 로드 시작:', { currentUserId, currentUserRole, selectedConsultantId });
             
-            // API URL 결정
             let url = `/api/schedules?userId=${currentUserId}&userRole=${currentUserRole}`;
             
-            // 어드민인 경우 상담사 필터링 지원
             if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN' || currentUserRole === 'HQ_MASTER' || currentUserRole === 'SUPER_HQ_ADMIN') {
                 url = '/api/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
@@ -198,7 +178,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 }
             }
             
-            // 실제 API 호출 (캐시 방지를 위해 timestamp 추가)
             const timestamp = new Date().getTime();
             const separator = url.includes('?') ? '&' : '?';
             const response = await apiGet(`${url}${separator}_t=${timestamp}`);
@@ -207,7 +186,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             if (response && response.success) {
                 console.log('📅 API 응답 데이터:', response);
                 
-                // API 응답 구조에 따라 데이터 추출
                 const schedules = response.data || response;
                 
                 if (Array.isArray(schedules)) {
@@ -219,7 +197,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             hasConsultantName: !!schedule.consultantName,
                             scheduleData: schedule
                         });
-                        // 휴가는 노란색, 나머지는 상담사별 색상 사용
                         const isVacation = schedule.status === 'VACATION';
                         const eventColor = isVacation ? getEventColor(schedule.status) : getConsultantColor(schedule.consultantId);
                         
@@ -253,7 +230,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 console.warn('📅 API 응답 실패:', response);
             }
 
-            // 어드민인 경우 모든 상담사의 휴가 데이터 로드
             const vacationEvents = [];
             if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') {
                 try {
@@ -261,7 +237,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
                     const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
                     
-                    // 날짜 범위로 휴가 조회 (date 파라미터 제거)
                     const vacationResponse = await fetch(`/api/consultant/vacations`, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
@@ -275,7 +250,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         if (vacationResult.success && vacationResult.data) {
                             const vacationData = vacationResult.data;
                             
-                            // 각 상담사의 휴가를 이벤트로 변환
                             Object.keys(vacationData).forEach(consultantId => {
                                 const consultantVacations = vacationData[consultantId];
                                 consultantVacations.forEach(vacation => {
@@ -290,7 +264,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 }
             }
 
-            // 모든 이벤트 합치기
             const allEvents = [...scheduleEvents, ...vacationEvents];
             setEvents(allEvents);
             
@@ -302,7 +275,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, [currentUserId, currentUserRole, selectedConsultantId, scheduleStatusOptions]);
 
-    // 모바일 확대 기능
     const openMobileZoom = useCallback((date, dayEvents = []) => {
         setMobileZoomDate(date);
         setMobileZoomSchedules(dayEvents);
@@ -326,7 +298,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setIsModalOpen(true);
     }, [closeMobileZoom, mobileZoomDate]);
 
-    // 모바일 감지
     useEffect(() => {
         const checkMobile = () => {
             const newIsMobile = checkIsMobile(forceMobileMode);
@@ -343,27 +314,22 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         return () => window.removeEventListener('resize', checkMobile);
     }, [forceMobileMode]);
 
-    // 초기 데이터 로드
     useEffect(() => {
         loadScheduleStatusCodes();
         loadConsultants();
     }, [loadScheduleStatusCodes, loadConsultants]);
 
-    // 스케줄 데이터 로드
     useEffect(() => {
         loadSchedules();
     }, [loadSchedules]);
 
-    // 상담사 필터 변경 시 스케줄 다시 로드
     useEffect(() => {
         loadSchedules();
     }, [selectedConsultantId, loadSchedules]);
 
-    // 이벤트 핸들러들
     const handleDateClick = (info) => {
         console.log('📅 날짜 클릭:', info);
         
-        // 내담자는 날짜 클릭 불가
         if (currentUserRole === 'CLIENT') {
             notificationManager.info('일정은 상담사가 관리합니다.');
             return;
@@ -373,13 +339,11 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             const clickedDate = new Date(info.date);
             const today = new Date();
             
-            // 오늘 이전 날짜는 클릭 불가
             if (clickedDate < today.setHours(0, 0, 0, 0)) {
                 notificationManager.warning('과거 날짜는 선택할 수 없습니다.');
                 return;
             }
             
-            // 모바일에서는 확대 모드로 표시
             const dayEvents = events.filter(event => {
                 const eventDate = new Date(event.start);
                 return eventDate.toDateString() === clickedDate.toDateString();
@@ -387,7 +351,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             
             openMobileZoom(info.dateStr, dayEvents);
         } else {
-            // 데스크톱에서는 기존 로직
             if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') {
                 const clickedDate = new Date(info.date);
                 const today = new Date();
@@ -430,10 +393,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         console.log('📅 이벤트 end:', event.end);
         console.log('📅 이벤트 title:', event.title);
         
-        // FullCalendar 이벤트 객체에서 스케줄 데이터 추출
         let scheduleData = event;
         if (event.extendedProps) {
-            // FullCalendar의 이벤트 객체인 경우 extendedProps 사용
             const eventStart = event.start instanceof Date ? event.start : new Date(event.start);
             const eventEnd = event.end instanceof Date ? event.end : new Date(event.end);
             
@@ -472,7 +433,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             const newStart = event.start;
             const newEnd = event.end;
             
-            // API 호출로 일정 업데이트
             const response = await fetch(`/api/schedules/${event.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -488,7 +448,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 notificationManager.success('일정이 업데이트되었습니다.');
                 loadSchedules(); // 스케줄 다시 로드
             } else {
-                // 실패 시 원래 위치로 되돌리기
                 info.revert();
                 notificationManager.error('일정 업데이트에 실패했습니다.');
             }

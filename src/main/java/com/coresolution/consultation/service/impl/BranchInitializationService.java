@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * Branch 테이블 초기 데이터 생성 서비스
  * 애플리케이션 시작 시 MAIN001 본점 데이터를 자동 생성
  * 
@@ -33,17 +32,16 @@ public class BranchInitializationService implements CommandLineRunner {
         initializeMainBranch();
     }
     
-    /**
      * MAIN001 본점 데이터 초기화
      */
     private void initializeMainBranch() {
         try {
-            // MAIN001 지점이 이미 존재하는지 확인 (삭제되지 않은 것만)
             var existingBranch = branchRepository.findByBranchCodeAndIsDeletedFalse("MAIN001");
             if (existingBranch.isPresent()) {
                 Branch branch = existingBranch.get();
-                // 상태가 PLANNING이면 ACTIVE로 변경
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 if (branch.getBranchStatus() != Branch.BranchStatus.ACTIVE) {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     branch.setBranchStatus(Branch.BranchStatus.ACTIVE);
                     branch.setBranchName("본점");
                     branchRepository.save(branch);
@@ -54,7 +52,6 @@ public class BranchInitializationService implements CommandLineRunner {
                 return;
             }
             
-            // MAIN001 본점 생성
             Branch mainBranch = Branch.builder()
                 .branchCode("MAIN001")
                 .branchName("본점")
@@ -69,6 +66,7 @@ public class BranchInitializationService implements CommandLineRunner {
                 .maxConsultants(50)
                 .maxClients(1000)
                 .description("마인드가든 본점")
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .branchStatus(Branch.BranchStatus.ACTIVE)
                 .build();
             

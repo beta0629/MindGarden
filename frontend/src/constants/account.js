@@ -1,12 +1,11 @@
-/**
  * 계좌 관리 관련 상수 정의
  */
 
 import { createApiUrl } from './environment';
 
-// API 엔드포인트
 export const ACCOUNT_API_ENDPOINTS = {
   BASE: createApiUrl('/api/accounts'),
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: createApiUrl('/api/accounts/active'),
   BANKS: createApiUrl('/api/accounts/banks'),
   STATISTICS: createApiUrl('/api/accounts/statistics'),
@@ -14,7 +13,6 @@ export const ACCOUNT_API_ENDPOINTS = {
   PRIMARY: createApiUrl('/api/accounts/primary')
 };
 
-// HTTP 메서드
 export const HTTP_METHODS = {
   GET: 'GET',
   POST: 'POST',
@@ -23,37 +21,35 @@ export const HTTP_METHODS = {
   PATCH: 'PATCH'
 };
 
-// HTTP 헤더
 export const HTTP_HEADERS = {
   CONTENT_TYPE: 'Content-Type',
   APPLICATION_JSON: 'application/json'
 };
 
-// 계좌 상태
 export const ACCOUNT_STATUS = {
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: 'active',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   INACTIVE: 'inactive'
 };
 
-// 계좌 상태 라벨
 export const ACCOUNT_STATUS_LABELS = {
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: '활성',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   INACTIVE: '비활성'
 };
 
-// 기본 계좌 설정
 export const ACCOUNT_PRIMARY = {
   TRUE: true,
   FALSE: false
 };
 
-// 기본 계좌 라벨
 export const ACCOUNT_PRIMARY_LABELS = {
   TRUE: '기본',
   FALSE: ''
 };
 
-// 폼 필드명
 export const ACCOUNT_FORM_FIELDS = {
   BANK_CODE: 'bankCode',
   BANK_NAME: 'bankName',
@@ -65,7 +61,6 @@ export const ACCOUNT_FORM_FIELDS = {
   DESCRIPTION: 'description'
 };
 
-// 폼 라벨
 export const ACCOUNT_FORM_LABELS = {
   BANK: '은행',
   ACCOUNT_NUMBER: '계좌번호',
@@ -76,7 +71,6 @@ export const ACCOUNT_FORM_LABELS = {
   IS_ACTIVE: '활성 상태'
 };
 
-// 폼 플레이스홀더
 export const ACCOUNT_FORM_PLACEHOLDERS = {
   BANK_SELECT: '은행을 선택하세요',
   ACCOUNT_NUMBER: '계좌번호를 입력하세요',
@@ -85,7 +79,6 @@ export const ACCOUNT_FORM_PLACEHOLDERS = {
   DESCRIPTION: '계좌 설명 (선택사항)'
 };
 
-// 버튼 텍스트
 export const ACCOUNT_BUTTON_TEXT = {
   REGISTER: '계좌 등록',
   EDIT: '수정',
@@ -99,11 +92,11 @@ export const ACCOUNT_BUTTON_TEXT = {
   SET_PRIMARY: '기본설정'
 };
 
-// 메시지
 export const ACCOUNT_MESSAGES = {
   SUCCESS: {
     CREATED: '계좌가 등록되었습니다.',
     UPDATED: '계좌가 수정되었습니다.',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     DELETED: '계좌가 삭제되었습니다.',
     STATUS_CHANGED: '계좌 상태가 변경되었습니다.',
     PRIMARY_SET: '기본 계좌로 설정되었습니다.'
@@ -122,7 +115,6 @@ export const ACCOUNT_MESSAGES = {
   }
 };
 
-// 계좌번호 검증 정규식
 export const ACCOUNT_VALIDATION = {
   ACCOUNT_NUMBER_PATTERN: /^[0-9-]+$/,
   MIN_ACCOUNT_NUMBER_LENGTH: 10,
@@ -131,7 +123,6 @@ export const ACCOUNT_VALIDATION = {
   MAX_DESCRIPTION_LENGTH: 500
 };
 
-// 테이블 컬럼
 export const ACCOUNT_TABLE_COLUMNS = {
   BANK: '은행',
   ACCOUNT_NUMBER: '계좌번호',
@@ -143,7 +134,6 @@ export const ACCOUNT_TABLE_COLUMNS = {
   ACTIONS: '작업'
 };
 
-// 페이지 제목
 export const ACCOUNT_PAGE_TITLES = {
   MAIN: '계좌 관리',
   CREATE: '계좌 등록',

@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Info, XCircle, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
-// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import { getMappingStatusKoreanNameSync, getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 
-/**
  * 매칭 상세보기 모달 컴포넌트
  * - 매칭의 모든 정보를 상세히 표시
  * - ERP 연동 상태, 금액 일관성 등 확인
@@ -54,12 +52,15 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
     const getStatusBadge = (status) => {
         const statusConfig = {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'ACTIVE': { className: 'status-active' },
             'PENDING_PAYMENT': { className: 'status-pending' },
             'PAYMENT_CONFIRMED': { className: 'status-confirmed' },
             'TERMINATED': { className: 'status-terminated' },
             'SESSIONS_EXHAUSTED': { className: 'status-exhausted' },
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'INACTIVE': { className: 'status-inactive' },
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'SUSPENDED': { className: 'status-suspended' }
         };
         
@@ -75,8 +76,11 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
     const getPaymentStatusBadge = (paymentStatus) => {
         const statusConfig = {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'PENDING': { className: 'payment-pending' },
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'APPROVED': { className: 'payment-approved' },
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'REJECTED': { className: 'payment-rejected' }
         };
         
@@ -352,8 +356,11 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                                 {transaction.type === 'INCOME' ? '수입' : '지출'}
                                                             </span>
                                                             <span className={`transaction-status ${transaction.status ? transaction.status.toLowerCase() : 'unknown'}`}>
+                                                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                                 {transaction.status === 'PENDING' ? '대기중' : 
+                                                                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                                  transaction.status === 'COMPLETED' ? '완료' :
+                                                                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                                  transaction.status === 'REJECTED' ? '거부' :
                                                                  transaction.status || '알 수 없음'}
                                                             </span>

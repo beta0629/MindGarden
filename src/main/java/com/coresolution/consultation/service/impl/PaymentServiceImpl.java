@@ -33,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Optional;
 
-/**
  * 결제 서비스 구현체
  * BaseTenantEntityServiceImpl을 상속하여 테넌트 필터링 및 접근 제어 지원
  * 
@@ -54,7 +53,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final StatisticsService statisticsService;
     private final ConsultationMessageService consultationMessageService;
     private final CommonCodeService commonCodeService;
-    // BaseTenantEntityServiceImpl에서 이미 주입받음 (accessControlService)
     
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -75,7 +73,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.commonCodeService = commonCodeService;
     }
     
-    // ==================== BaseTenantEntityServiceImpl 추상 메서드 구현 ====================
     
     @Override
     protected Optional<Payment> findEntityById(Long id) {
@@ -95,23 +92,21 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     public PaymentResponse createPayment(PaymentRequest request) {
         log.info("결제 생성 요청: {}", request);
         
-        // 결제 금액 검증
         validatePaymentAmount(request.getAmount());
         
-        // 중복 결제 방지
         if (paymentRepository.existsByOrderIdAndStatusAndIsDeletedFalse(
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 request.getOrderId(), Payment.PaymentStatus.APPROVED)) {
             throw new RuntimeException("이미 승인된 주문입니다.");
         }
         
-        // 테넌트 ID 자동 설정
         String tenantId = TenantContextHolder.getTenantId();
         
-        // 결제 엔티티 생성
         Payment payment = Payment.builder()
                 .paymentId(generatePaymentId())
                 .orderId(request.getOrderId())
                 .amount(request.getAmount())
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(Payment.PaymentStatus.PENDING)
                 .method(Payment.PaymentMethod.valueOf(request.getMethod()))
                 .provider(Payment.PaymentProvider.valueOf(request.getProvider()))
@@ -122,16 +117,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 .expiresAt(LocalDateTime.now().plusMinutes(request.getTimeoutMinutes()))
                 .build();
         
-        // BaseTenantEntityService의 create 메서드 사용
         if (tenantId != null) {
             payment = create(tenantId, payment);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             payment = paymentRepository.save(payment);
         }
         log.info("결제 생성 완료: ID={}, PaymentID={}", payment.getId(), payment.getPaymentId());
         
-        // 외부 결제 시스템 연동 (토스페이먼츠/아임포트)
         String paymentUrl = createExternalPayment(payment);
         
         return buildPaymentResponse(payment, paymentUrl);
@@ -173,7 +165,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     public Page<PaymentResponse> getAllPayments(Pageable pageable) {
         log.info("전체 결제 목록 조회");
         
-        // BaseRepository의 테넌트 필터링 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         Page<Payment> payments = tenantId != null 
             ? paymentRepository.findAllByTenantId(tenantId, pageable)
@@ -186,7 +177,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     public List<Payment> getAllPayments() {
         log.info("전체 결제 목록 조회 (페이지네이션 없음)");
         
-        // BaseRepository의 테넌트 필터링 메서드 사용
         return paymentRepository.findAllActiveByCurrentTenant();
     }
     
@@ -197,33 +187,26 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
         
-        // 테넌트 접근 제어
         if (payment.getTenantId() != null) {
             accessControlService.validateTenantAccess(payment.getTenantId());
         }
         
-        // 상태 변경 검증
         validateStatusTransition(payment.getStatus(), status);
         
         payment.setStatus(status);
         
-        // BaseTenantEntityService의 update 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && payment.getTenantId() != null) {
             payment = update(tenantId, payment);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             payment = paymentRepository.save(payment);
         }
         
-        // 상태별 추가 처리
         switch (status) {
             case APPROVED:
                 payment.setApprovedAt(LocalDateTime.now());
                 
-                // 🔄 워크플로우 자동화: 결제 완료 → 자동 매핑 → 통계 반영
                 try {
-                    // 1. 결제 승인 시 자동으로 수입 거래 생성 (부가세 포함)
                     String category = getPaymentCategory(payment);
                     String subcategory = getPaymentSubcategory(payment);
                     
@@ -232,10 +215,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     log.info("💚 결제 승인으로 인한 수입 거래 자동 생성: PaymentID={}, 카테고리={}, 금액={}", 
                         paymentId, category, payment.getAmount());
                     
-                    // 2. 자동 매핑 생성 (상담사-내담자 관계)
                     if (payment.getPayerId() != null && payment.getRecipientId() != null) {
                         try {
-                            // ConsultantClientMappingDto 생성
                             ConsultantClientMappingDto mappingDto = ConsultantClientMappingDto.builder()
                                 .consultantId(payment.getRecipientId())
                                 .clientId(payment.getPayerId())
@@ -253,20 +234,17 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                                 .notes("결제 완료로 인한 자동 매핑 생성 - PaymentID: " + payment.getId())
                                 .build();
                             
-                            // 매핑 생성
                             adminService.createMapping(mappingDto);
                             log.info("🔗 결제 완료 후 자동 매핑 생성: 상담사={}, 내담자={}, PaymentID={}", 
                                 payment.getRecipientId(), payment.getPayerId(), payment.getId());
                         } catch (Exception e) {
                             log.error("⚠️ 자동 매핑 생성 실패 (결제는 정상 처리됨): PaymentID={}, error={}", 
                                 payment.getId(), e.getMessage(), e);
-                            // 매핑 생성 실패해도 결제는 정상 처리되므로 계속 진행
                         }
                     } else {
                         log.debug("자동 매핑 생성 건너뜀: payerId 또는 recipientId가 없음 - PaymentID={}", payment.getId());
                     }
                     
-                    // 3. 통계 자동 업데이트
                     try {
                         statisticsService.updateDailyStatistics(LocalDateTime.now().toLocalDate(), 
                             payment.getBranchId().toString());
@@ -275,7 +253,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                         log.error("통계 업데이트 실패: {}", e.getMessage(), e);
                     }
                     
-                    // 4. 결제 완료 알림 자동 발송
                     try {
                         String paymentMessage = String.format("결제가 완료되었습니다.\n" +
                             "💰 금액: %s원\n" +
@@ -303,7 +280,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                         log.error("결제 완료 알림 발송 실패: {}", e.getMessage(), e);
                     }
                     
-                    // 5. 수입에서 자동 적립금 생성
                     try {
                         reserveFundService.autoReserveFromIncome(payment.getAmount(), 
                             "결제 수입 - " + payment.getDescription());
@@ -317,7 +293,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     
                 } catch (Exception e) {
                     log.error("❌ 결제 완료 워크플로우 자동화 실패: PaymentID={}", paymentId, e);
-                    // 워크플로우 실패해도 결제 상태는 업데이트
                 }
                 break;
             case CANCELLED:
@@ -330,7 +305,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             case PROCESSING:
             case FAILED:
             case EXPIRED:
-                // 추가 처리 없음
                 break;
         }
         
@@ -347,12 +321,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
         
-        // 취소 가능 여부 검증
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (payment.getStatus() != Payment.PaymentStatus.PENDING && 
             payment.getStatus() != Payment.PaymentStatus.PROCESSING) {
             throw new RuntimeException("취소할 수 없는 결제 상태입니다.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         payment.setStatus(Payment.PaymentStatus.CANCELLED);
         payment.setCancelledAt(LocalDateTime.now());
         payment.setFailureReason(reason);
@@ -370,12 +345,11 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
         
-        // 환불 가능 여부 검증
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
             throw new RuntimeException("환불할 수 없는 결제 상태입니다.");
         }
         
-        // 환불 금액 검증
         BigDecimal refundAmount = amount != null ? amount : payment.getAmount();
         if (refundAmount.compareTo(payment.getAmount()) > 0) {
             throw new RuntimeException("환불 금액이 결제 금액을 초과할 수 없습니다.");
@@ -396,21 +370,17 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         log.info("Webhook 처리: {}", webhookRequest.getPaymentId());
         
         try {
-            // Webhook 검증
             if (!verifyWebhook(webhookRequest)) {
                 log.warn("Webhook 검증 실패: {}", webhookRequest.getPaymentId());
                 return false;
             }
             
-            // 결제 조회
             Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(webhookRequest.getPaymentId())
                     .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
             
-            // 결제 상태 업데이트
             Payment.PaymentStatus newStatus = Payment.PaymentStatus.valueOf(webhookRequest.getStatus());
             updatePaymentStatus(webhookRequest.getPaymentId(), newStatus);
             
-            // 외부 데이터 저장
             payment.setExternalResponse(webhookRequest.getExternalData().toString());
             payment.setWebhookData(webhookRequest.toString());
             paymentRepository.save(payment);
@@ -432,6 +402,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return payment.getStatus() == Payment.PaymentStatus.APPROVED && 
                payment.getAmount().compareTo(amount) == 0;
     }
@@ -459,11 +430,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         
         Map<String, Object> statistics = new HashMap<>();
         
-        // 총 결제 금액
         BigDecimal totalAmount = paymentRepository.getTotalAmountByDateRange(startDate, endDate);
         statistics.put("totalAmount", totalAmount != null ? totalAmount : BigDecimal.ZERO);
         
-        // 결제 상태별 건수
         List<Object[]> statusCounts = paymentRepository.getPaymentCountByStatus();
         Map<String, Long> statusStatistics = statusCounts.stream()
                 .collect(Collectors.toMap(
@@ -472,7 +441,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 ));
         statistics.put("statusCounts", statusStatistics);
         
-        // 결제 방법별 건수
         List<Object[]> methodCounts = paymentRepository.getPaymentCountByMethod();
         Map<String, Long> methodStatistics = methodCounts.stream()
                 .collect(Collectors.toMap(
@@ -481,7 +449,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 ));
         statistics.put("methodCounts", methodStatistics);
         
-        // 결제 대행사별 건수
         List<Object[]> providerCounts = paymentRepository.getPaymentCountByProvider();
         Map<String, Long> providerStatistics = providerCounts.stream()
                 .collect(Collectors.toMap(
@@ -500,11 +467,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         
         Map<String, Object> statistics = new HashMap<>();
         
-        // 지점별 총 결제 금액
         BigDecimal totalAmount = paymentRepository.getTotalAmountByBranchId(branchId);
         statistics.put("totalAmount", totalAmount != null ? totalAmount : BigDecimal.ZERO);
         
-        // 지점별 월별 통계
         List<Object[]> monthlyStats = paymentRepository.getBranchMonthlyPaymentStatistics(startDate, endDate);
         List<Map<String, Object>> monthlyStatistics = monthlyStats.stream()
                 .map(row -> {
@@ -529,7 +494,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         
         Map<String, Object> statistics = new HashMap<>();
         
-        // 결제자별 총 결제 금액
         BigDecimal totalAmount = paymentRepository.getTotalAmountByPayerId(payerId);
         statistics.put("totalAmount", totalAmount != null ? totalAmount : BigDecimal.ZERO);
         
@@ -563,7 +527,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     public Map<String, Object> getPaymentMethodStatistics(LocalDateTime startDate, LocalDateTime endDate) {
         log.info("결제 방법별 통계 조회: {} ~ {}", startDate, endDate);
         
-        // 결제 방법별 건수 조회 (날짜 범위 필터링은 추후 구현)
         List<Object[]> methodCounts = paymentRepository.getPaymentCountByMethod();
         
         Map<String, Long> methodStatistics = methodCounts.stream()
@@ -583,7 +546,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     public Map<String, Object> getPaymentProviderStatistics(LocalDateTime startDate, LocalDateTime endDate) {
         log.info("결제 대행사별 통계 조회: {} ~ {}", startDate, endDate);
         
-        // 결제 대행사별 건수 조회 (날짜 범위 필터링은 추후 구현)
         List<Object[]> providerCounts = paymentRepository.getPaymentCountByProvider();
         
         Map<String, Long> providerStatistics = providerCounts.stream()
@@ -598,7 +560,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         return statistics;
     }
     
-    // ==================== Private Methods ====================
     
     private void validatePaymentAmount(BigDecimal amount) {
         if (amount.compareTo(BigDecimal.valueOf(PaymentConstants.MIN_PAYMENT_AMOUNT)) < 0) {
@@ -610,7 +571,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
     
     private void validateStatusTransition(Payment.PaymentStatus currentStatus, Payment.PaymentStatus newStatus) {
-        // 상태 전환 검증 로직
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (currentStatus == Payment.PaymentStatus.APPROVED && newStatus == Payment.PaymentStatus.PENDING) {
             throw new RuntimeException("승인된 결제는 대기 상태로 변경할 수 없습니다.");
         }
@@ -625,13 +586,11 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 payment.getPaymentId(), payment.getAmount(), payment.getMethod());
         
         try {
-            // 결제 금액 유효성 검사
             if (payment.getAmount().compareTo(BigDecimal.valueOf(PaymentConstants.MIN_PAYMENT_AMOUNT)) < 0 || 
                 payment.getAmount().compareTo(BigDecimal.valueOf(PaymentConstants.MAX_PAYMENT_AMOUNT)) > 0) {
                 throw new IllegalArgumentException(PaymentConstants.ERROR_INVALID_PAYMENT_AMOUNT);
             }
             
-            // 외부 결제 시스템 API 호출을 위한 요청 데이터 구성
             Map<String, Object> paymentRequest = new HashMap<>();
             paymentRequest.put("paymentId", payment.getPaymentId());
             paymentRequest.put("amount", payment.getAmount());
@@ -642,11 +601,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             paymentRequest.put("returnUrl", PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + "/return");
             paymentRequest.put("cancelUrl", PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + "/cancel");
             
-            // 실제 외부 API 호출 (현재는 시뮬레이션)
             String apiUrl = PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + PaymentConstants.EXTERNAL_PAYMENT_CREATE_ENDPOINT;
             log.info("외부 결제 API 호출: {}", apiUrl);
             
-            // API 호출 시뮬레이션
             String paymentUrl = simulateExternalPaymentApi(paymentRequest);
             
             log.info(PaymentConstants.SUCCESS_PAYMENT_CREATED);
@@ -659,8 +616,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
     
     private String simulateExternalPaymentApi(Map<String, Object> paymentRequest) {
-        // 실제 구현에서는 RestTemplate 또는 WebClient를 사용하여 HTTP API 호출
-        // 현재는 시뮬레이션을 위한 임시 URL 생성
         String paymentId = (String) paymentRequest.get("paymentId");
         return PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + "/pay/" + paymentId;
     }
@@ -669,7 +624,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         log.info("Webhook 서명 검증 시작: paymentId={}", webhookRequest.getPaymentId());
         
         try {
-            // Webhook 서명 검증 로직
             String receivedSignature = webhookRequest.getSignature();
             String timestamp = webhookRequest.getTimestamp() != null ? webhookRequest.getTimestamp().toString() : null;
             String payload = webhookRequest.getExternalData() != null ? webhookRequest.getExternalData().toString() : "";
@@ -680,7 +634,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 return false;
             }
             
-            // 타임스탬프 유효성 검사 (5분 이내)
             long currentTime = System.currentTimeMillis() / 1000;
             long webhookTime = Long.parseLong(timestamp);
             if (Math.abs(currentTime - webhookTime) > 300) { // 5분 = 300초
@@ -688,7 +641,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 return false;
             }
             
-            // 서명 검증 (실제 구현에서는 HMAC-SHA256 사용)
             String expectedSignature = generateWebhookSignature(payload, timestamp);
             boolean isValid = expectedSignature.equals(receivedSignature);
             
@@ -707,13 +659,10 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
     
     private String generateWebhookSignature(String payload, String timestamp) {
-        // 실제 구현에서는 HMAC-SHA256을 사용하여 서명 생성
-        // 현재는 시뮬레이션을 위한 간단한 해시 생성
         String data = payload + timestamp + PaymentConstants.WEBHOOK_SECRET_KEY;
         return "sha256=" + Integer.toHexString(data.hashCode());
     }
     
-    /**
      * 결제 방법에 따른 수입 카테고리 분류
      */
     private String getPaymentCategory(Payment payment) {
@@ -731,7 +680,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         }
     }
     
-    /**
      * 결제 방법에 따른 수입 세부 카테고리 분류
      */
     private String getPaymentSubcategory(Payment payment) {
@@ -773,28 +721,20 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 .build();
     }
     
-    /**
-     * 공통코드에서 역할 코드 조회
      */
     private String getRoleCodeFromCommonCode(String roleName) {
         try {
             String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.USER_ROLE_GROUP, roleName);
-            return codeValue != null ? codeValue : roleName; // 공통코드에 없으면 원본 반환
         } catch (Exception e) {
-            log.warn("공통코드에서 역할 코드 조회 실패: {}, 기본값 사용", roleName, e);
             return roleName;
         }
     }
     
-    /**
-     * 공통코드에서 메시지 타입 코드 조회
      */
     private String getMessageTypeFromCommonCode(String messageTypeName) {
         try {
             String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.MESSAGE_TYPE_GROUP, messageTypeName);
-            return codeValue != null ? codeValue : messageTypeName; // 공통코드에 없으면 원본 반환
         } catch (Exception e) {
-            log.warn("공통코드에서 메시지 타입 코드 조회 실패: {}, 기본값 사용", messageTypeName, e);
             return messageTypeName;
         }
     }

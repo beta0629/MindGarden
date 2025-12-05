@@ -8,7 +8,6 @@ import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
 import notificationManager from '../../utils/notification';
 
-/**
  * 수퍼어드민 결제 관리 컴포넌트
  * - 결제 내역 조회 및 관리
  * - 결제 통계 및 분석
@@ -50,7 +49,6 @@ const PaymentManagement = () => {
     loadStatistics();
   }, [filters, pagination.currentPage]);
 
-  // 결제 상태 코드 로드
   useEffect(() => {
     const loadPaymentStatusCodes = async () => {
       try {
@@ -68,17 +66,16 @@ const PaymentManagement = () => {
         }
       } catch (error) {
         console.error('결제 상태 코드 로드 실패:', error);
-        // 실패 시 기본값 설정
         setPaymentStatusOptions([
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           { value: 'PENDING', label: '대기중', icon: '⏳', color: 'var(--mg-warning-500)', description: '결제 대기 중' },
           { value: 'PROCESSING', label: '처리중', icon: '🔄', color: 'var(--mg-primary-500)', description: '결제 처리 중' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           { value: 'APPROVED', label: '승인됨', icon: '✅', color: 'var(--mg-success-500)', description: '결제 승인 완료' },
           { value: 'FAILED', label: '실패', icon: '❌', color: 'var(--mg-error-500)', description: '결제 실패' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           { value: 'CANCELLED', label: '취소됨', icon: '🚫', color: '#6b7280', description: '결제 취소' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f97316 -> var(--mg-custom-f97316)
           { value: 'REFUNDED', label: '환불됨', icon: '↩️', color: '#f97316', description: '결제 환불' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
           { value: 'EXPIRED', label: '만료됨', icon: '⏰', color: '#374151', description: '결제 만료' },
           { value: 'PARTIAL_REFUND', label: '부분환불', icon: '↩️', color: 'var(--mg-warning-500)', description: '부분 환불' }
         ]);
@@ -90,7 +87,6 @@ const PaymentManagement = () => {
     loadPaymentStatusCodes();
   }, []);
 
-  // 결제 게이트웨이 코드 로드
   const loadPaymentGatewayCodes = useCallback(async () => {
     try {
       setLoadingGatewayCodes(true);
@@ -106,17 +102,11 @@ const PaymentManagement = () => {
       }
     } catch (error) {
       console.error('결제 게이트웨이 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       setPaymentGatewayOptions([
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #0064FF -> var(--mg-custom-0064FF)
         { value: 'TOSS', label: '토스페이먼츠', icon: '💙', color: '#0064FF', description: '토스페이먼츠 결제' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #34495E -> var(--mg-custom-34495E)
         { value: 'IAMPORT', label: '아임포트', icon: '🏦', color: '#34495E', description: '아임포트 결제' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FEE500 -> var(--mg-custom-FEE500)
         { value: 'KAKAO', label: '카카오페이', icon: '💛', color: '#FEE500', description: '카카오페이 결제' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #03C75A -> var(--mg-custom-03C75A)
         { value: 'NAVER', label: '네이버페이', icon: '💚', color: '#03C75A', description: '네이버페이 결제' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #0070BA -> var(--mg-custom-0070BA)
         { value: 'PAYPAL', label: '페이팔', icon: '💳', color: '#0070BA', description: '페이팔 결제' }
       ]);
     } finally {
@@ -128,7 +118,6 @@ const PaymentManagement = () => {
     loadPaymentGatewayCodes();
   }, [loadPaymentGatewayCodes]);
 
-  // 결제 방법 코드 로드
   const loadPaymentMethodCodes = useCallback(async () => {
     try {
       setLoadingMethodCodes(true);
@@ -144,7 +133,6 @@ const PaymentManagement = () => {
       }
     } catch (error) {
       console.error('결제 방법 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       setPaymentMethodOptions([
         { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
         { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
@@ -294,7 +282,6 @@ const PaymentManagement = () => {
     }).format(amount);
   };
 
-  // 실제 서비스 기능들
   const exportPayments = async () => {
     try {
       const params = new URLSearchParams({
@@ -331,7 +318,6 @@ const PaymentManagement = () => {
   };
 
   const showPaymentAnalytics = () => {
-    // 결제 분석 모달 또는 페이지로 이동
     notificationManager.show('결제 분석 기능은 개발 중입니다.', 'info');
   };
 
@@ -358,6 +344,7 @@ const PaymentManagement = () => {
         
         const body = action === 'refund' 
           ? { amount: payments.find(p => p.id === paymentId)?.amount }
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           : { status: action === 'approve' ? 'APPROVED' : 'CANCELLED' };
 
         return fetch(endpoint, {
@@ -409,7 +396,6 @@ const PaymentManagement = () => {
   };
 
   const getStatusBadge = (status) => {
-    // 동적으로 로드된 결제 상태 옵션에서 찾기
     const statusOption = paymentStatusOptions.find(option => option.value === status);
     
     if (statusOption) {
@@ -420,7 +406,6 @@ const PaymentManagement = () => {
       );
     }
     
-    // 기본값
     return (
       <span className="badge badge-secondary">
         ❓ {status}
@@ -474,12 +459,14 @@ const PaymentManagement = () => {
           <div className="stat-card">
             <div className="stat-title">승인된 결제</div>
             <div className="stat-value">
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               {statistics.statusCounts?.APPROVED || 0}건
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-title">대기 중인 결제</div>
             <div className="stat-value">
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               {statistics.statusCounts?.PENDING || 0}건
             </div>
           </div>
@@ -674,26 +661,31 @@ const PaymentManagement = () => {
                 
                 <div className="mg-payment-card__footer">
                   <div className="mg-payment-card__actions">
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     {payment.status === 'PENDING' && (
                       <Button
                         variant="success"
                         size="small"
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         onClick={() => handleStatusUpdate(payment.paymentId, 'APPROVED')}
                         preventDoubleClick={true}
                       >
                         승인
                       </Button>
                     )}
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     {payment.status === 'PENDING' && (
                       <Button
                         variant="danger"
                         size="small"
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         onClick={() => handleStatusUpdate(payment.paymentId, 'CANCELLED')}
                         preventDoubleClick={true}
                       >
                         취소
                       </Button>
                     )}
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     {payment.status === 'APPROVED' && (
                       <Button
                         variant="warning"

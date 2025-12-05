@@ -1,4 +1,3 @@
-/**
  * 매칭 관련 상수 정의 (동적 처리 지원)
  * 
  * @author MindGarden
@@ -7,80 +6,82 @@
  * @updated 2025-09-14 - 하드코딩된 색상/아이콘 매칭을 동적 처리로 변경
  */
 
-// 매칭 상태 상수
 export const MAPPING_STATUS = {
     PENDING_PAYMENT: 'PENDING_PAYMENT',
     PAYMENT_CONFIRMED: 'PAYMENT_CONFIRMED',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     ACTIVE: 'ACTIVE',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     INACTIVE: 'INACTIVE',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     SUSPENDED: 'SUSPENDED',
     TERMINATED: 'TERMINATED',
     SESSIONS_EXHAUSTED: 'SESSIONS_EXHAUSTED'
 };
 
-// 매칭 상태 한글명 (동적 처리로 변경 - getMappingStatusKoreanName 함수 사용)
-// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_LABELS = {
     [MAPPING_STATUS.PENDING_PAYMENT]: '결제 대기',
     [MAPPING_STATUS.PAYMENT_CONFIRMED]: '결제 확인',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.ACTIVE]: '활성',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.INACTIVE]: '비활성',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.SUSPENDED]: '일시정지',
     [MAPPING_STATUS.TERMINATED]: '종료',
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '회기 소진'
 };
 
-// 매칭 상태 색상 (동적 처리로 변경 - getStatusColor 함수 사용)
-// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_COLORS = {
     [MAPPING_STATUS.PENDING_PAYMENT]: 'var(--mg-warning-500)',
     [MAPPING_STATUS.PAYMENT_CONFIRMED]: 'var(--mg-info-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.ACTIVE]: 'var(--mg-success-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.INACTIVE]: 'var(--mg-secondary-500)',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.SUSPENDED]: '#fd7e14',
     [MAPPING_STATUS.TERMINATED]: 'var(--mg-error-500)',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#6f42c1'
 };
 
-// 매칭 상태 배경색 (동적 처리로 변경 - 색상 기반 자동 생성)
-// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_BG_COLORS = {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
     [MAPPING_STATUS.PENDING_PAYMENT]: '#fff3cd',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1ecf1 -> var(--mg-custom-d1ecf1)
     [MAPPING_STATUS.PAYMENT_CONFIRMED]: '#d1ecf1',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.ACTIVE]: '#d4edda',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.INACTIVE]: 'var(--mg-gray-100)',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ffeaa7 -> var(--mg-custom-ffeaa7)
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.SUSPENDED]: '#ffeaa7',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
     [MAPPING_STATUS.TERMINATED]: '#f8d7da',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e2e3f1 -> var(--mg-custom-e2e3f1)
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#e2e3f1'
 };
 
-// 결제 상태 상수
 export const PAYMENT_STATUS = {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: 'PENDING',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CONFIRMED: 'CONFIRMED',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     APPROVED: 'APPROVED',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     REJECTED: 'REJECTED',
     REFUNDED: 'REFUNDED'
 };
 
-// 결제 상태 한글명
 export const PAYMENT_STATUS_LABELS = {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [PAYMENT_STATUS.PENDING]: '대기',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [PAYMENT_STATUS.CONFIRMED]: '확인됨',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [PAYMENT_STATUS.APPROVED]: '승인됨',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [PAYMENT_STATUS.REJECTED]: '거부됨',
     [PAYMENT_STATUS.REFUNDED]: '환불됨'
 };
 
-// 매칭 액션 상수
 export const MAPPING_ACTIONS = {
     APPROVE: 'approve',
     REJECT: 'reject',
@@ -92,7 +93,6 @@ export const MAPPING_ACTIONS = {
     ACTIVATE: 'activate'
 };
 
-// 매칭 액션 버튼 설정
 export const MAPPING_ACTION_BUTTONS = {
     [MAPPING_ACTIONS.APPROVE]: {
         label: '승인',
@@ -136,10 +136,10 @@ export const MAPPING_ACTION_BUTTONS = {
     }
 };
 
-// 매칭 통계 아이콘 (동적 처리로 변경 - getStatusIcon 함수 사용)
-// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_ICONS = {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: '⏳',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     ACTIVE: '✅',
     PAYMENT_CONFIRMED: '💰',
     TOTAL: '📊',
@@ -147,10 +147,10 @@ export const MAPPING_STAT_ICONS = {
     SESSIONS_EXHAUSTED: '🔚'
 };
 
-// 매칭 통계 라벨 (동적 처리로 변경 - getMappingStatusKoreanName 함수 사용)
-// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_LABELS = {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: '결제 대기',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     ACTIVE: '활성 매칭',
     PAYMENT_CONFIRMED: '결제 확인',
     TOTAL: '전체 매칭',
@@ -158,49 +158,42 @@ export const MAPPING_STAT_LABELS = {
     SESSIONS_EXHAUSTED: '회기 소진'
 };
 
-// 매칭 통계 색상 (동적 처리로 변경 - getStatusColor 함수 사용)
-// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_COLORS = {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: 'var(--mg-warning-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     ACTIVE: 'var(--mg-success-500)',
     PAYMENT_CONFIRMED: 'var(--mg-info-500)',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
     TOTAL: '#6f42c1',
     TERMINATED: 'var(--mg-error-500)',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
     SESSIONS_EXHAUSTED: '#fd7e14'
 };
 
-// 매칭 통계 배경색 (동적 처리로 변경 - 색상 기반 자동 생성)
-// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_BG_COLORS = {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: '#fff3cd',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     ACTIVE: '#d4edda',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1ecf1 -> var(--mg-custom-d1ecf1)
     PAYMENT_CONFIRMED: '#d1ecf1',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e2e3f1 -> var(--mg-custom-e2e3f1)
     TOTAL: '#e2e3f1',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
     TERMINATED: '#f8d7da',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ffeaa7 -> var(--mg-custom-ffeaa7)
     SESSIONS_EXHAUSTED: '#ffeaa7'
 };
 
-// 매칭 필터 옵션
 export const MAPPING_FILTER_OPTIONS = [
     { value: 'ALL', label: '전체' },
     { value: MAPPING_STATUS.PENDING_PAYMENT, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.PENDING_PAYMENT] },
     { value: MAPPING_STATUS.PAYMENT_CONFIRMED, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.PAYMENT_CONFIRMED] },
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     { value: MAPPING_STATUS.ACTIVE, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.ACTIVE] },
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     { value: MAPPING_STATUS.INACTIVE, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.INACTIVE] },
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     { value: MAPPING_STATUS.SUSPENDED, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.SUSPENDED] },
     { value: MAPPING_STATUS.TERMINATED, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.TERMINATED] },
     { value: MAPPING_STATUS.SESSIONS_EXHAUSTED, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.SESSIONS_EXHAUSTED] }
 ];
 
-// 매칭 생성 단계
 export const MAPPING_CREATION_STEPS = {
     CONSULTANT_SELECTION: 1,
     CLIENT_SELECTION: 2,
@@ -208,7 +201,6 @@ export const MAPPING_CREATION_STEPS = {
     COMPLETION: 4
 };
 
-// 매칭 생성 단계 라벨
 export const MAPPING_CREATION_STEP_LABELS = {
     [MAPPING_CREATION_STEPS.CONSULTANT_SELECTION]: '상담사 선택',
     [MAPPING_CREATION_STEPS.CLIENT_SELECTION]: '내담자 선택',
@@ -216,16 +208,12 @@ export const MAPPING_CREATION_STEP_LABELS = {
     [MAPPING_CREATION_STEPS.COMPLETION]: '완료'
 };
 
-// 패키지 옵션 (공통 코드에서 동적으로 로드됨)
 export const PACKAGE_OPTIONS = [];
 
-// 결제 방법 옵션 (공통 코드에서 동적으로 로드됨)
 export const PAYMENT_METHOD_OPTIONS = [];
 
-// 담당 업무 옵션 (공통 코드에서 동적으로 로드됨)
 export const RESPONSIBILITY_OPTIONS = [];
 
-// 기본 매칭 설정
 export const DEFAULT_MAPPING_CONFIG = {
     TOTAL_SESSIONS: 10,
     PACKAGE_NAME: '기본 10회기 패키지',
@@ -234,7 +222,6 @@ export const DEFAULT_MAPPING_CONFIG = {
     RESPONSIBILITY: '정신건강 상담'
 };
 
-// 매칭 API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const MAPPING_API_ENDPOINTS = {
     LIST: '/api/v1/admin/mappings',
     CREATE: '/api/v1/admin/mappings',
@@ -246,7 +233,6 @@ export const MAPPING_API_ENDPOINTS = {
     TEST_MAPPING: '/api/v1/test/mapping'
 };
 
-// 매칭 메시지
 export const MAPPING_MESSAGES = {
     LOADING: '매칭 목록을 불러오는 중...',
     LOAD_FAILED: '매칭 목록을 불러오는데 실패했습니다.',

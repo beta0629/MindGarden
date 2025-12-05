@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiPut, apiGet } from '../../utils/ajax';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
-// import ConsultationLogModal from '../consultant/ConsultationLogModal'; // 부모 컴포넌트에서 관리
 import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
 import '../../styles/main.css';
 
-/**
  * 스케줄 상세 정보 및 관리 모달
  * - 스케줄 정보 표시
  * - 예약 취소 기능
@@ -30,35 +27,28 @@ const ScheduleDetailModal = ({
     const [loading, setLoading] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    // 상담일지 모달은 부모 컴포넌트에서 관리
     const [adminNote, setAdminNote] = useState('');
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     
-    // 내담자인지 확인
     const isClient = RoleUtils.isClient(user);
     
-    // 공통코드에서 조회한 상태값으로 비교하는 헬퍼 함수
     const getStatusCodeValue = (codeValue) => {
         const statusOption = scheduleStatusOptions.find(option => option.value === codeValue);
         return statusOption ? statusOption.value : codeValue;
     };
     
-    // 상태값이 특정 값과 일치하는지 확인 (공통코드 기반)
     const isStatus = (currentStatus, targetStatus) => {
         if (!currentStatus) return false;
-        // 공통코드에서 조회한 값으로 비교
         const currentCode = getStatusCodeValue(currentStatus);
         const targetCode = getStatusCodeValue(targetStatus);
         return currentCode === targetCode || currentStatus === targetStatus;
     };
     
 
-    // 일정 상태 코드 로드 (공통코드에서 동적으로 조회)
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            // 공통코드 API 사용 (표준화된 방법)
             const codes = await getCommonCodes('SCHEDULE_STATUS');
             
             if (codes && Array.isArray(codes) && codes.length > 0) {
@@ -70,12 +60,10 @@ const ScheduleDetailModal = ({
                     description: code.codeDescription
                 })));
             } else {
-                console.warn('📋 스케줄 상태 코드 데이터가 없습니다. 공통코드에서 조회하세요.');
                 setScheduleStatusOptions([]); // 하드코딩된 fallback 제거
             }
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
-            // 하드코딩된 fallback 제거 - 공통코드에서만 조회
             setScheduleStatusOptions([]);
             notificationManager.error('스케줄 상태 코드를 불러올 수 없습니다. 관리자에게 문의하세요.');
         } finally {
@@ -93,7 +81,6 @@ const ScheduleDetailModal = ({
         return null;
     }
 
-    /**
      * 상담 유형을 한글로 변환
      */
     const convertConsultationTypeToKorean = (consultationType) => {
@@ -107,7 +94,6 @@ const ScheduleDetailModal = ({
         return typeMap[consultationType] || consultationType || "알 수 없음";
     };
 
-    /**
      * 상태값을 한글로 변환 (동적 로드)
      */
     const convertStatusToKorean = (status) => {
@@ -115,14 +101,17 @@ const ScheduleDetailModal = ({
         return statusOption ? statusOption.label : status || "알 수 없음";
     };
 
-    /**
      * 상태값에 따른 색상 클래스 반환
      */
     const getStatusColorClass = (status) => {
         const statusMap = {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'BOOKED': 'info',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'CONFIRMED': 'success',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'COMPLETED': 'secondary',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'CANCELLED': 'danger',
             'VACATION': 'warning',
             'AVAILABLE': 'success'
@@ -130,21 +119,16 @@ const ScheduleDetailModal = ({
         return statusMap[status] || 'secondary';
     };
 
-    /**
-     * 휴가 이벤트인지 확인 (공통코드 기반)
      */
     const isVacationEvent = () => {
-        // 공통코드에서 VACATION 상태값 조회
         const vacationStatus = scheduleStatusOptions.find(opt => 
             opt.value === 'VACATION' || opt.label?.includes('휴가')
-        )?.value || 'VACATION'; // fallback (공통코드 미로드 시)
         
         return isStatus(scheduleData.status, vacationStatus) || 
                scheduleData.consultationType === 'VACATION' ||
                scheduleData.scheduleType === 'VACATION';
     };
 
-    /**
      * 휴가 유형을 표시용으로 변환
      */
     const getVacationTypeDisplay = (vacationType) => {
@@ -162,7 +146,6 @@ const ScheduleDetailModal = ({
         return typeMap[vacationType] || '🏖️ 휴가';
     };
 
-    /**
      * 예약 취소 처리
      */
     const handleCancelSchedule = async () => {
@@ -170,10 +153,9 @@ const ScheduleDetailModal = ({
             setLoading(true);
             console.log('❌ 스케줄 취소 요청:', scheduleData.id);
             
-            // 공통코드에서 CANCELLED 상태값 조회
             const cancelledStatus = scheduleStatusOptions.find(opt => 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 opt.value === 'CANCELLED' || opt.label?.includes('취소')
-            )?.value || 'CANCELLED'; // fallback (공통코드 미로드 시)
             
             const response = await apiPut(`/api/schedules/${scheduleData.id}`, {
                 status: cancelledStatus,
@@ -196,7 +178,6 @@ const ScheduleDetailModal = ({
         }
     };
 
-    /**
      * 상태 변경 처리
      */
     const handleStatusChange = async (newStatus) => {
@@ -223,7 +204,6 @@ const ScheduleDetailModal = ({
         }
     };
 
-    /**
      * 상담일지 작성 처리
      */
     const handleWriteConsultationLog = () => {
@@ -233,14 +213,11 @@ const ScheduleDetailModal = ({
         }
         
         console.log('📝 상담일지 작성 요청:', scheduleData.id);
-        // 현재 모달을 닫고 부모 컴포넌트에서 상담일지 모달 열기
         onClose();
         onConsultationLogOpen?.(scheduleData);
     };
 
-    // 상담일지 저장 완료 처리는 부모 컴포넌트에서 관리
 
-    /**
      * 예약 변경 처리 - 드래그 앤 드롭 모드로 전환
      */
     const handleEditSchedule = () => {
@@ -251,19 +228,15 @@ const ScheduleDetailModal = ({
         
         console.log('✏️ 예약 변경 요청 - 드래그 앤 드롭 모드:', scheduleData.id);
         
-        // 부모 컴포넌트에 드래그 앤 드롭 모드 활성화 요청
         if (onScheduleUpdated) {
-            // 드래그 앤 드롭 모드로 전환하는 콜백 호출
             onScheduleUpdated('edit', scheduleData);
         }
         
-        // 모달 닫기
         onClose();
         
         notificationManager.info('드래그 앤 드롭으로 예약을 변경할 수 있습니다.');
     };
 
-    /**
      * 예약 확정 처리
      */
     const handleConfirmSchedule = async () => {
@@ -297,7 +270,6 @@ const ScheduleDetailModal = ({
         }
     };
 
-    /**
      * 취소 확인 모달
      */
     const renderCancelConfirm = () => (
@@ -329,7 +301,6 @@ const ScheduleDetailModal = ({
         </div>
     );
 
-    /**
      * 예약 확정 확인 모달
      */
     const renderConfirmModal = () => (
@@ -389,7 +360,6 @@ const ScheduleDetailModal = ({
                     </div>
                     
                     {!isVacationEvent() && (() => {
-                        // title에서 이름 파싱: "김선희 - 이재학" 형식
                         let parsedConsultantName = scheduleData.consultantName;
                         let parsedClientName = scheduleData.clientName;
                         
@@ -419,7 +389,6 @@ const ScheduleDetailModal = ({
                     })()}
                     
                     {isVacationEvent() ? (
-                        // 휴가 이벤트인 경우
                         <>
                             <div className="info-row">
                                 <span className="label">휴가 사유:</span>
@@ -431,7 +400,6 @@ const ScheduleDetailModal = ({
                             </div>
                         </>
                     ) : (
-                        // 일반 스케줄인 경우
                         <>
                             <div className="info-row">
                                 <span className="label">상담 유형:</span>
@@ -456,7 +424,6 @@ const ScheduleDetailModal = ({
 
                 <div className="mg-modal__actions mg-modal__actions--horizontal">
                     {isVacationEvent() ? (
-                        // 휴가 이벤트인 경우 - 휴가 관련 정보 표시
                         <div className="schedule-detail-vacation-notice">
                             <p className="schedule-detail-vacation-title">
                                 🏖️ 이 이벤트는 상담사의 휴가입니다.
@@ -466,8 +433,8 @@ const ScheduleDetailModal = ({
                             </p>
                         </div>
                     ) : !isClient ? (
-                        // 일반 스케줄인 경우 - 통합 버튼 스타일 적용 (내담자 제외)
                         <>
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                             {isStatus(scheduleData.status, 'BOOKED') && (
                                 <>
                                     <button 
@@ -497,10 +464,12 @@ const ScheduleDetailModal = ({
                                 </>
                             )}
                             
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                             {isStatus(scheduleData.status, 'CONFIRMED') && (() => {
-                                // 공통코드에서 COMPLETED 상태값 조회
                                 const completedStatus = scheduleStatusOptions.find(opt => 
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     opt.value === 'COMPLETED' || opt.label?.includes('완료')
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                 )?.value || 'COMPLETED'; // fallback
                                 
                                 return (
@@ -533,10 +502,12 @@ const ScheduleDetailModal = ({
                                 );
                             })()}
                             
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                             {isStatus(scheduleData.status, 'COMPLETED') && (() => {
-                                // 공통코드에서 BOOKED 상태값 조회
                                 const bookedStatus = scheduleStatusOptions.find(opt => 
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     opt.value === 'BOOKED' || opt.label?.includes('예약')
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                 )?.value || 'BOOKED'; // fallback
                                 
                                 return (
@@ -551,10 +522,12 @@ const ScheduleDetailModal = ({
                                 );
                             })()}
                             
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                             {isStatus(scheduleData.status, 'CANCELLED') && (() => {
-                                // 공통코드에서 BOOKED 상태값 조회
                                 const bookedStatus = scheduleStatusOptions.find(opt => 
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     opt.value === 'BOOKED' || opt.label?.includes('예약')
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                 )?.value || 'BOOKED'; // fallback
                                 
                                 return (
@@ -570,7 +543,6 @@ const ScheduleDetailModal = ({
                             })()}
                         </>
                     ) : (
-                        // 내담자인 경우 - 조회만 가능 메시지 표시
                         <div className="mg-v2-info-box mg-v2-text-center mg-v2-text-secondary">
                             <p className="mg-v2-text-base">
                                 📅 예약 정보를 확인하실 수 있습니다.

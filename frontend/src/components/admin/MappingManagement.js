@@ -5,7 +5,6 @@ import { Link2, Plus } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
-// import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { 
     MAPPING_API_ENDPOINTS, 
@@ -25,7 +24,6 @@ import MappingEditModal from './MappingEditModal';
 import '../../styles/unified-design-tokens.css';
 import './MappingManagement.css';
 
-/**
  * 매칭 관리 페이지 컴포넌트
  * - 매칭 목록 조회 및 관리
  * - 매칭 상태 변경 (승인, 거부 등)
@@ -50,20 +48,16 @@ const MappingManagement = () => {
     const [pendingMappings, setPendingMappings] = useState([]);
     const [mappingStatusInfo, setMappingStatusInfo] = useState({});
     
-    // 환불 처리 관련 상태
     const [showRefundModal, setShowRefundModal] = useState(false);
     const [refundMapping, setRefundMapping] = useState(null);
     const [refundReason, setRefundReason] = useState('');
     
-    // 부분 환불 관련 상태
     const [showPartialRefundModal, setShowPartialRefundModal] = useState(false);
     const [partialRefundMapping, setPartialRefundMapping] = useState(null);
     
-    // 상세보기 관련 상태
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [detailMapping, setDetailMapping] = useState(null);
     
-    // 매칭 수정 관련 상태
     const [showEditModal, setShowEditModal] = useState(false);
     const [editMapping, setEditMapping] = useState(null);
     const [isLoadingMappings, setIsLoadingMappings] = useState(false);
@@ -80,7 +74,6 @@ const MappingManagement = () => {
         try {
             console.log('🌐 API 호출 시작:', MAPPING_API_ENDPOINTS.LIST);
             
-            // 직접 fetch 사용 (API_BASE_URL 상수 사용)
             const response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
                 method: 'GET',
                 headers: {
@@ -102,13 +95,11 @@ const MappingManagement = () => {
                 setMappings(data.data || []);
             } else {
                 console.log('⚠️ API 실패, 테스트 데이터 사용');
-                // API 실패 시 테스트 데이터 사용
                 const testData = getTestMappings();
                 setMappings(testData);
             }
         } catch (error) {
             console.error('❌ 매칭 목록 로드 실패:', error);
-            // 오류 시 테스트 데이터 사용
             const testData = getTestMappings();
             setMappings(testData);
         } finally {
@@ -119,12 +110,10 @@ const MappingManagement = () => {
         }
     };
 
-    // 데이터 로드
     useEffect(() => {
         loadMappings();
         loadMappingStatusInfo();
         
-        // 3초 후 강제로 로딩 상태 해제 (임시 해결책)
         const timeout = setTimeout(() => {
             console.log('⏰ 3초 타임아웃 - 강제로 로딩 상태 해제');
             setLoading(false);
@@ -133,60 +122,63 @@ const MappingManagement = () => {
         return() => clearTimeout(timeout);
     }, []);
 
-    // 페이지 로드 시 스크롤을 맨 위로 이동
     useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
 
-    // 상태값 한글명 변환 함수
     const getStatusKoreanName = (status) => {
         const statusMap = {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'ACTIVE': '활성',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'INACTIVE': '비활성',
             'PENDING_PAYMENT': '결제 대기',
             'PAYMENT_CONFIRMED': '결제 확인',
             'TERMINATED': '종료됨',
             'SESSIONS_EXHAUSTED': '회기 소진',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'SUSPENDED': '일시정지'
         };
         return statusMap[status] || status;
     };
 
-    // 상태별 색상 매칭 함수
     const getStatusColor = (status) => {
         const colorMap = {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'ACTIVE': 'var(--color-success)',           // 녹색 - 활성
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'INACTIVE': 'var(--color-text-secondary)',  // 회색 - 비활성
             'PENDING_PAYMENT': 'var(--color-warning)',  // 주황색 - 결제 대기
             'PAYMENT_CONFIRMED': 'var(--color-info)',   // 파란색 - 결제 확인
             'TERMINATED': 'var(--color-danger)',        // 빨간색 - 종료됨
             'SESSIONS_EXHAUSTED': 'var(--color-warning)', // 주황색 - 회기 소진
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'SUSPENDED': 'var(--color-text-secondary)'  // 회색 - 일시정지
         };
         return colorMap[status] || 'var(--color-primary)';
     };
 
-    // 상태별 아이콘 매칭 함수
     const getStatusIcon = (status) => {
         const iconMap = {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'ACTIVE': '✅',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'INACTIVE': '⏸️',
             'PENDING_PAYMENT': '⏳',
             'PAYMENT_CONFIRMED': '💰',
             'TERMINATED': '🚫',  // X 대신 금지 표시 사용
             'SESSIONS_EXHAUSTED': '⚠️',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'SUSPENDED': '⏸️'
         };
         return iconMap[status] || '📋';
     };
 
-    // 매칭 상태 정보 일괄 로드
     const loadMappingStatusInfo = async() => {
         try {
             const response = await apiGet('/api/common-codes/MAPPING_STATUS');
             if (response && response.length > 0) {
                 const statusInfoMap = {};
                 
-                // 각 상태별 정보를 맵으로 정리
                 response.forEach(code => {
                     statusInfoMap[code.codeValue] = {
                         label: code.koreanName || code.codeLabel,
@@ -195,15 +187,15 @@ const MappingManagement = () => {
                     };
                 });
                 
-                // 매칭 테이블 추가 (API 코드값과 실제 사용 코드값 간의 매칭)
                 const statusMapping = {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'ACTIVE': 'ACTIVE_MAPPING',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'INACTIVE': 'INACTIVE_MAPPING',
                     'TERMINATED': 'TERMINATED_MAPPING',
                     'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
                 };
                 
-                // 매칭 테이블을 통해 추가 매칭 생성
                 Object.entries(statusMapping).forEach(([actualStatus, apiStatus]) => {
                     if (statusInfoMap[apiStatus]) {
                         statusInfoMap[actualStatus] = statusInfoMap[apiStatus];
@@ -214,39 +206,40 @@ const MappingManagement = () => {
                 console.log('✅ 매칭 상태 정보 로드 완료:', statusInfoMap);
                 console.log('✅ 매칭 상태 정보 키들:', Object.keys(statusInfoMap));
             } else {
-                // 기본값 설정
                 setMappingStatusInfo({
                     'PENDING_PAYMENT': { label: '입금대기', color: 'var(--mg-warning-500)', icon: '⏳' },
                     'PAYMENT_CONFIRMED': { label: '입금확인', color: 'var(--mg-info-500)', icon: '💰' },
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'ACTIVE': { label: '활성', color: 'var(--mg-success-500)', icon: '✅' },
                     'TERMINATED': { label: '종료', color: 'var(--mg-error-500)', icon: '❌' },
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
                     'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6f42c1', icon: '🔚' },
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'INACTIVE': { label: '비활성', color: 'var(--mg-secondary-500)', icon: '⚪' },
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'SUSPENDED': { label: '일시정지', color: '#fd7e14', icon: '⏸️' },
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     'CANCELLED': { label: '취소', color: 'var(--mg-error-500)', icon: '🚫' }
                 });
             }
         } catch (error) {
             console.error('매칭 상태 정보 로드 오류:', error);
-            // 오류 시 기본값 설정
             setMappingStatusInfo({
                 'PENDING_PAYMENT': { label: '입금대기', color: 'var(--mg-warning-500)', icon: '⏳' },
                 'PAYMENT_CONFIRMED': { label: '입금확인', color: 'var(--mg-info-500)', icon: '💰' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 'ACTIVE': { label: '활성', color: 'var(--mg-success-500)', icon: '✅' },
                 'TERMINATED': { label: '종료', color: 'var(--mg-error-500)', icon: '❌' },
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
                 'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6f42c1', icon: '🔚' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 'INACTIVE': { label: '비활성', color: 'var(--mg-secondary-500)', icon: '⚪' },
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 'SUSPENDED': { label: '일시정지', color: '#fd7e14', icon: '⏸️' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 'CANCELLED': { label: '취소', color: 'var(--mg-error-500)', icon: '🚫' }
             });
         }
     };
 
-    // 테스트용 매칭 데이터
     const getTestMappings = () => {
         return [
             {
@@ -257,7 +250,9 @@ const MappingManagement = () => {
                 consultantId: 1,
                 consultantName: '김상담',
                 clientName: '이내담',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 status: 'ACTIVE',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 paymentStatus: 'APPROVED',
                 totalSessions: DEFAULT_MAPPING_CONFIG.TOTAL_SESSIONS,
                 remainingSessions: 7,
@@ -276,6 +271,7 @@ const MappingManagement = () => {
                 consultantName: '박상담',
                 clientName: '최내담',
                 status: 'PENDING_PAYMENT',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 paymentStatus: 'PENDING',
                 totalSessions: 5,
                 remainingSessions: 5,
@@ -294,6 +290,7 @@ const MappingManagement = () => {
                 consultantName: '김상담',
                 clientName: '정내담',
                 status: 'SESSIONS_EXHAUSTED',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 paymentStatus: 'APPROVED',
                 totalSessions: 8,
                 remainingSessions: 0,
@@ -311,7 +308,9 @@ const MappingManagement = () => {
                 consultantId: 4,
                 consultantName: '테스트상담사',
                 clientName: '테스트내담자001',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 status: 'ACTIVE',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 paymentStatus: 'APPROVED',
                 totalSessions: 10,
                 remainingSessions: 8,
@@ -329,7 +328,9 @@ const MappingManagement = () => {
                 consultantId: 5,
                 consultantName: '박상담사',
                 clientName: '테스트내담자002',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 status: 'ACTIVE',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 paymentStatus: 'APPROVED',
                 totalSessions: 15,
                 remainingSessions: 12,
@@ -342,7 +343,6 @@ const MappingManagement = () => {
         ];
     };
 
-    // 매칭 승인
     const handleApproveMapping = async (mappingId) => {
         try {
             const response = await apiPost(`/api/admin/mappings/${mappingId}/approve`, {
@@ -361,19 +361,14 @@ const MappingManagement = () => {
         }
     };
 
-    // 결제 확인 (모달에서 처리됨)
     const handleConfirmPayment = async (mappingId) => {
-        // 모달에서 처리되므로 여기서는 목록만 새로고침
         loadMappings();
     };
 
-    // 입금 확인 (모달에서 처리됨)
     const handleConfirmDeposit = async (mappingId) => {
-        // 모달에서 처리되므로 여기서는 목록만 새로고침
         loadMappings();
     };
 
-    // 매칭 거부
     const handleRejectMapping = async (mappingId) => {
         try {
             const response = await apiPost(`/api/admin/mappings/${mappingId}/reject`, {
@@ -392,19 +387,16 @@ const MappingManagement = () => {
         }
     };
 
-    // 매칭 생성 완료 핸들러
     const handleMappingCreated = () => {
         setShowCreateModal(false);
         loadMappings();
     };
 
-    // 상담사 변경 핸들러
     const handleTransferConsultant = (mapping) => {
         setSelectedMapping(mapping);
         setShowTransferModal(true);
     };
 
-    // 상담사 변경 완료 핸들러
     const handleTransferCompleted = (newMapping) => {
         setShowTransferModal(false);
         setSelectedMapping(null);
@@ -412,21 +404,18 @@ const MappingManagement = () => {
         notificationManager.success('상담사가 성공적으로 변경되었습니다.');
     };
 
-    // 상담사 변경 이력 보기 핸들러
     const handleViewTransferHistory = (clientId) => {
         setSelectedClientId(clientId);
         setShowTransferHistory(true);
     };
 
-    // 상담사 변경 이력 닫기 핸들러
     const handleCloseTransferHistory = () => {
         setShowTransferHistory(false);
         setSelectedClientId(null);
     };
 
-    // 환불 처리 핸들러 (부분 환불)
     const handleRefundMapping = (mapping) => {
-        // ACTIVE 상태이고 남은 회기가 있는 매칭만 환불 가능
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (mapping.status !== 'ACTIVE') {
             notificationManager.warning('활성 상태의 매칭만 환불 처리할 수 있습니다.');
             return;
@@ -437,32 +426,27 @@ const MappingManagement = () => {
             return;
         }
 
-        // 부분 환불 모달 열기
         setPartialRefundMapping(mapping);
         setShowPartialRefundModal(true);
     };
 
-    // 전체 환불 처리 핸들러 (기존 로직 유지)
     const handleFullRefundMapping = (mapping) => {
         setRefundMapping(mapping);
         setRefundReason('');
         setShowRefundModal(true);
     };
     
-    // 상세보기 핸들러
     const handleViewMapping = (mapping) => {
         setDetailMapping(mapping);
         setShowDetailModal(true);
     };
 
-    // 환불 모달 닫기
     const handleCloseRefundModal = () => {
         setShowRefundModal(false);
         setRefundMapping(null);
         setRefundReason('');
     };
 
-    // 환불 처리 실행
     const handleRefundProcess = async() => {
         if (!refundReason.trim()) {
             notificationManager.warning('⚠️ 환불 사유를 반드시 입력해주세요.');
@@ -494,7 +478,6 @@ const MappingManagement = () => {
                 handleCloseRefundModal();
                 loadMappings(); // 데이터 새로고침
                 
-                // 스케줄 컴포넌트에 환불 처리 완료 이벤트 발송
                 window.dispatchEvent(new CustomEvent('refundProcessed', {
                     detail: {
                         mappingId: refundMapping.id,
@@ -515,21 +498,17 @@ const MappingManagement = () => {
         }
     };
 
-    // 매칭 수정 핸들러들
     const handleEditMapping = (mapping) => {
         setEditMapping(mapping);
         setShowEditModal(true);
     };
 
     const handleEditSuccess = (updatedData) => {
-        // 매칭 목록 새로고침
         loadMappings();
-        // 수정 모달 닫기
         setShowEditModal(false);
         setEditMapping(null);
     };
 
-    // 매칭 삭제 핸들러
     const handleDeleteMapping = async (mapping) => { const confirmMessage = `${mapping.clientName }과의 매칭을 취소하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`;
         const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(confirmMessage, resolve);
@@ -541,7 +520,6 @@ const MappingManagement = () => {
         try {
             setLoading(true);
             
-            // DELETE 요청으로 매칭 삭제 (동적 권한 시스템 사용)
             const response = await fetch(`/api/admin/mappings/${mapping.id}`, {
                 method: 'DELETE',
                 headers: {
@@ -566,7 +544,6 @@ const MappingManagement = () => {
         }
     };
 
-    // 필터 핸들러들
     const handleStatusChange = (status) => {
         setFilterStatus(status);
     };
@@ -580,13 +557,12 @@ const MappingManagement = () => {
         setSearchTerm('');
     };
 
-    // 통계 카드 클릭 핸들러
     const handleStatCardClick = (stat) => {
         switch (stat.action) {
             case 'payment':
-                // 결제 확인 모달 열기
                 if (stat.value > 0) {
                     const pendingMappings = mappings.filter(mapping => 
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         mapping.status === 'PENDING' || mapping.paymentStatus === 'PENDING'
                     );
                     setPendingMappings(pendingMappings);
@@ -597,21 +573,17 @@ const MappingManagement = () => {
                 }
                 break;
             case 'view':
-                // 해당 상태의 매칭만 필터링
                 setFilterStatus(stat.id);
                 notificationManager.info(`${ stat.label } 매칭을 필터링합니다.`);
                 break;
             case 'view_all':
-                // 전체 매칭 표시
                 setFilterStatus('ALL');
                 notificationManager.info('전체 매칭을 표시합니다.');
                 break;
         }
     };
 
-    // 결제 확인 모달 핸들러
     const handlePaymentConfirmed = (updatedMappings) => {
-        // 매칭 목록 새로고침
         loadMappings();
         setShowPaymentModal(false);
         setPendingMappings([]);
@@ -622,7 +594,6 @@ const MappingManagement = () => {
         setPendingMappings([]);
     };
 
-    // 필터링된 매칭 목록 (최신 순으로 정렬)
     const filteredMappings = mappings
         .filter(mapping => {
             const matchesStatus = filterStatus === 'ALL' || mapping.status === filterStatus;
@@ -634,7 +605,6 @@ const MappingManagement = () => {
             return matchesStatus && matchesSearch;
         })
         .sort((a, b) => {
-            // 최신 순으로 정렬 (ID가 큰 것이 최신)
             return b.id - a.id;
         });
 

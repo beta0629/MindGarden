@@ -1,4 +1,3 @@
-/**
  * Schedule Registration Widget - 표준화된 위젯
  * 상담소 특화 일정 등록 위젯
  * 
@@ -16,14 +15,12 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './ScheduleRegistrationWidget.css';
 
 const ScheduleRegistrationWidget = ({ widget, user }) => {
-  // 권한 확인: 관리자와 상담사만 접근 가능
   if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
     return null;
   }
 
   const navigate = useNavigate();
 
-  // 데이터 소스 설정
   const getDataSourceConfig = () => {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 형식
     
@@ -36,7 +33,6 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
           params: { 
             limit: widget.config?.maxItems || 10,
             ...(widget.config?.showTodayOnly !== false && { date: today }),
-            // 상담사인 경우 자신의 일정만 조회
             ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
           }
         },
@@ -54,7 +50,6 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
     };
   };
 
-  // Transform 함수: API 응답 데이터를 위젯 형태로 변환
   const transform = (rawData) => {
     if (!rawData) return { schedules: [], todayStats: null, hasData: false };
 
@@ -73,7 +68,6 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
     };
   };
 
-  // 위젯 설정에 데이터 소스 동적 설정
   const widgetWithDataSource = {
     ...widget,
     config: {
@@ -83,7 +77,6 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
     }
   };
 
-  // 표준화된 위젯 훅 사용
   const {
     data,
     loading,
@@ -95,29 +88,35 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
     cache: true
   });
 
-  // 일정 상태별 스타일 클래스
   const getStatusClass = (status) => {
     const statusMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': 'status-completed',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'IN_PROGRESS': 'status-in-progress',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CANCELLED': 'status-cancelled',
       'UPCOMING': 'status-upcoming',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': 'status-pending'
     };
     return statusMap[status] || 'status-unknown';
   };
 
-  // 일정 상태별 아이콘
   const getStatusIcon = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return <CheckCircle className="status-icon" />;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'IN_PROGRESS':
         return <Users className="status-icon" />;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'CANCELLED':
         return <XCircle className="status-icon" />;
       case 'UPCOMING':
         return <Calendar className="status-icon" />;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return <Clock className="status-icon" />;
       default:
@@ -125,34 +124,33 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
     }
   };
 
-  // 일정 상태 한글명
   const getStatusLabel = (status) => {
     const statusLabels = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': '완료',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'IN_PROGRESS': '진행중',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CANCELLED': '취소',
       'UPCOMING': '예정',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': '대기'
     };
     return statusLabels[status] || '미지정';
   };
 
-  // 일정 상세보기
   const handleViewSchedule = (scheduleId) => {
     navigate(`/schedules/${scheduleId}`);
   };
 
-  // 새 일정 생성
   const handleCreateSchedule = () => {
     navigate('/schedules/new');
   };
 
-  // 일정 관리 페이지로 이동
   const handleViewAll = () => {
     navigate('/schedules');
   };
 
-  // 날짜/시간 포맷팅
   const formatDateTime = (dateTimeString) => {
     if (!dateTimeString) return '-';
     const date = new Date(dateTimeString);
@@ -164,7 +162,6 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
     });
   };
 
-  // 시간만 포맷팅
   const formatTime = (dateTimeString) => {
     if (!dateTimeString) return '-';
     const date = new Date(dateTimeString);
@@ -174,14 +171,12 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
     });
   };
 
-  // 오늘인지 체크
   const isToday = (dateString) => {
     const today = new Date().toDateString();
     const targetDate = new Date(dateString).toDateString();
     return today === targetDate;
   };
 
-  // 렌더링 내용
   const renderContent = () => {
     if (!hasData) {
       return (
@@ -355,7 +350,6 @@ const ScheduleRegistrationWidget = ({ widget, user }) => {
     );
   };
 
-  // 헤더 설정
   const headerConfig = {
     icon: <Calendar className="widget-header-icon" />,
     subtitle: '상담 일정 관리',

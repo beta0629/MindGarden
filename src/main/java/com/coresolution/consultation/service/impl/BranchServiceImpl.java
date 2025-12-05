@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import java.time.LocalDateTime;
 
-/**
  * 지점 서비스 구현체
  * BaseTenantEntityServiceImpl을 상속하여 테넌트 필터링 및 접근 제어 지원
  * 
@@ -56,7 +55,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         this.userRepository = userRepository;
     }
     
-    // ==================== BaseTenantEntityServiceImpl 추상 메서드 구현 ====================
     
     @Override
     protected Optional<Branch> findEntityById(Long id) {
@@ -72,36 +70,30 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         }
     }
     
-    // ==================== BaseService 구현 메서드 ====================
     
     @Override
     public BaseRepository<Branch, Long> getRepository() {
         return branchRepository;
     }
     
-    // === 기본 CRUD 메서드 ===
     
     @Override
     public BranchResponse createBranch(BranchCreateRequest request) {
         log.info("지점 생성 요청: {}", request.getBranchName());
         
-        // 유효성 검사
         validateBranchCreation(request);
         
-        // 상위 지점 조회 (있는 경우)
         Branch parentBranch = null;
         if (request.getParentBranchId() != null) {
             parentBranch = findActiveByIdOrThrow(request.getParentBranchId());
         }
         
-        // 지점장 조회 (있는 경우)
         User manager = null;
         if (request.getManagerId() != null) {
             manager = userRepository.findById(request.getManagerId())
                     .orElseThrow(() -> new EntityNotFoundException("지점장을 찾을 수 없습니다."));
         }
         
-        // 지점 엔티티 생성
         Branch branch = Branch.builder()
                 .branchCode(request.getBranchCode())
                 .branchName(request.getBranchName())
@@ -126,12 +118,10 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
                 .websiteUrl(request.getWebsiteUrl())
                 .build();
         
-        // BaseTenantEntityService의 create 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             branch = create(tenantId, branch);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             branch = save(branch);
         }
         log.info("지점 생성 완료: ID={}, 코드={}", branch.getId(), branch.getBranchCode());
@@ -145,10 +135,8 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         
         Branch branch = findActiveByIdOrThrow(branchId);
         
-        // 유효성 검사
         validateBranchUpdate(branch, request);
         
-        // 필드 업데이트
         if (request.getBranchName() != null) {
             branch.setBranchName(request.getBranchName());
         }
@@ -198,14 +186,12 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             branch.setWebsiteUrl(request.getWebsiteUrl());
         }
         
-        // 지점장 변경
         if (request.getManagerId() != null) {
             User manager = userRepository.findById(request.getManagerId())
                     .orElseThrow(() -> new EntityNotFoundException("지점장을 찾을 수 없습니다."));
             branch.setManager(manager);
         }
         
-        // BaseTenantEntityService의 update 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && branch.getTenantId() != null) {
             branch = update(tenantId, branch);
@@ -231,7 +217,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
                 .orElseThrow(() -> new EntityNotFoundException("지점을 찾을 수 없습니다: " + branchCode));
     }
     
-    // === 조회 메서드 ===
     
     @Override
     @Transactional(readOnly = true)
@@ -302,7 +287,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         return branchPage.map(this::convertToResponse);
     }
     
-    // === 지점 관리 메서드 ===
     
     @Override
     public void assignManager(Long branchId, Long managerId) {
@@ -312,7 +296,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         User manager = userRepository.findById(managerId)
                 .orElseThrow(() -> new EntityNotFoundException("지점장을 찾을 수 없습니다."));
         
-        // 기존 지점장이 관리하는 다른 지점이 있는지 확인
         List<Branch> existingManagedBranches = branchRepository.findByManagerAndIsDeletedFalse(manager);
         if (!existingManagedBranches.isEmpty()) {
             log.warn("이미 다른 지점을 관리하는 지점장입니다: {}", manager.getUsername());
@@ -344,9 +327,10 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         
         branch.setBranchStatus(newStatus);
         
-        // 상태별 추가 처리
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (newStatus == Branch.BranchStatus.ACTIVE && branch.getOpeningDate() == null) {
             branch.setOpeningDate(LocalDate.now());
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         } else if (newStatus == Branch.BranchStatus.CLOSED) {
             branch.setClosingDate(LocalDate.now());
         }
@@ -359,20 +343,22 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     
     @Override
     public void activateBranch(Long branchId) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         changeBranchStatus(branchId, Branch.BranchStatus.ACTIVE);
     }
     
     @Override
     public void deactivateBranch(Long branchId) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         changeBranchStatus(branchId, Branch.BranchStatus.SUSPENDED);
     }
     
     @Override
     public void closeBranch(Long branchId) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         changeBranchStatus(branchId, Branch.BranchStatus.CLOSED);
     }
     
-    // === 사용자 관리 메서드 ===
     
     @Override
     public void assignConsultantToBranch(Long branchId, Long consultantId) {
@@ -382,7 +368,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         User consultant = userRepository.findById(consultantId)
                 .orElseThrow(() -> new EntityNotFoundException("상담사를 찾을 수 없습니다."));
         
-        // 수용 인원 확인
         if (!isConsultantCapacityAvailable(branchId)) {
             throw new ValidationException("지점의 상담사 수용 인원을 초과했습니다.");
         }
@@ -402,7 +387,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         User client = userRepository.findById(clientId)
                 .orElseThrow(() -> new EntityNotFoundException("내담자를 찾을 수 없습니다."));
         
-        // 수용 인원 확인
         if (!isClientCapacityAvailable(branchId)) {
             throw new ValidationException("지점의 내담자 수용 인원을 초과했습니다.");
         }
@@ -439,12 +423,10 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         Branch fromBranch = findActiveByIdOrThrow(fromBranchId);
         Branch toBranch = findActiveByIdOrThrow(toBranchId);
         
-        // 현재 지점 확인
         if (user.getBranch() == null || !user.getBranch().getId().equals(fromBranchId)) {
             throw new ValidationException("사용자가 해당 지점에 소속되어 있지 않습니다.");
         }
         
-        // 목표 지점 수용 인원 확인
         if (user.getRole() == com.coresolution.consultation.constant.UserRole.CONSULTANT && !isConsultantCapacityAvailable(toBranchId)) {
             throw new ValidationException("목표 지점의 상담사 수용 인원을 초과했습니다.");
         } else if (user.getRole() == com.coresolution.consultation.constant.UserRole.CLIENT && !isClientCapacityAvailable(toBranchId)) {
@@ -467,7 +449,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             return new ArrayList<>();
         }
         Branch branch = findActiveByIdOrThrow(branchId);
-        // 브랜치 엔티티로 조회 (브랜치 코드 사용 제거)
         return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
                 tenantId, branch, UserRole.CONSULTANT);
     }
@@ -485,7 +466,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
                 tenantId, branch, UserRole.CLIENT);
     }
     
-    // === 통계 및 분석 메서드 ===
     
     @Override
     @Transactional(readOnly = true)
@@ -499,7 +479,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         statistics.put("branchType", branch.getBranchType());
         statistics.put("branchStatus", branch.getBranchStatus());
         
-        // 사용자 통계
         List<User> consultants = getBranchConsultants(branchId);
         List<User> clients = getBranchClients(branchId);
         
@@ -508,7 +487,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         statistics.put("maxConsultants", branch.getMaxConsultants());
         statistics.put("maxClients", branch.getMaxClients());
         
-        // 수용률 계산
         if (branch.getMaxConsultants() != null && branch.getMaxConsultants() > 0) {
             double consultantUtilization = (double) consultants.size() / branch.getMaxConsultants() * 100;
             statistics.put("consultantUtilization", Math.round(consultantUtilization * 100.0) / 100.0);
@@ -583,7 +561,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         return typeCounts;
     }
     
-    // === 유효성 검사 메서드 ===
     
     @Override
     @Transactional(readOnly = true)
@@ -642,7 +619,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         return clients.size() < branch.getMaxClients();
     }
     
-    // === 관계 관리 메서드 ===
     
     @Override
     public void setParentBranch(Long branchId, Long parentBranchId) {
@@ -651,7 +627,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         Branch branch = findActiveByIdOrThrow(branchId);
         Branch parentBranch = findActiveByIdOrThrow(parentBranchId);
         
-        // 순환 참조 방지
         if (isCircularReference(branch, parentBranch)) {
             throw new ValidationException("순환 참조가 발생합니다.");
         }
@@ -700,7 +675,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
                 .orElse(List.of());
     }
     
-    // === 설정 관리 메서드 ===
     
     @Override
     public void updateBranchSettings(Long branchId, String settings) {
@@ -749,22 +723,18 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         log.info("지점 수용 인원 업데이트 완료: {}", branch.getBranchName());
     }
     
-    // === Private 메서드 ===
     
     private void validateBranchCreation(BranchCreateRequest request) {
-        // 지점 코드 중복 확인
         if (isBranchCodeDuplicate(request.getBranchCode())) {
             throw new ValidationException("이미 존재하는 지점 코드입니다: " + request.getBranchCode());
         }
         
-        // 지점명 중복 확인
         if (isBranchNameDuplicate(request.getBranchName(), request.getParentBranchId())) {
             throw new ValidationException("동일한 상위 지점에 같은 이름의 지점이 존재합니다: " + request.getBranchName());
         }
     }
     
     private void validateBranchUpdate(Branch branch, BranchUpdateRequest request) {
-        // 지점명 중복 확인
         if (request.getBranchName() != null && 
             isBranchNameDuplicate(request.getBranchName(), 
                     branch.getParentBranch() != null ? branch.getParentBranch().getId() : null, 
@@ -836,7 +806,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     private BranchResponse convertToResponseWithHierarchy(Branch branch) {
         BranchResponse response = convertToResponse(branch);
         
-        // 하위 지점들 추가
         if (branch.getSubBranches() != null && !branch.getSubBranches().isEmpty()) {
             List<BranchResponse> subBranchResponses = branch.getSubBranches().stream()
                     .filter(subBranch -> !subBranch.getIsDeleted())
@@ -848,18 +817,14 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         return response;
     }
     
-    // === 통계 메서드 구현 ===
     
     @Override
     public Map<String, Object> getAllBranchesStatistics() {
         log.info("전체 지점 통계 조회");
         
         try {
-            // PL/SQL 프로시저 호출을 위한 임시 구현
-            // 실제로는 @Query 또는 @Procedure를 사용하여 PL/SQL 호출
             Map<String, Object> stats = new HashMap<>();
             
-            // 기본 통계 데이터
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
@@ -867,11 +832,11 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             }
             
             long totalBranches = branchRepository.count();
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long activeBranches = branchRepository.countByBranchStatusAndIsDeletedFalse(Branch.BranchStatus.ACTIVE);
             long totalUsers = userRepository.count();
             long activeUsers = userRepository.countByIsActiveTrueAndIsDeletedFalse(tenantId);
             
-            // 역할별 사용자 수
             long totalConsultants = userRepository.countByRoleAndIsDeletedFalse(tenantId, UserRole.CONSULTANT);
             long activeConsultants = userRepository.countByRoleAndIsActiveTrueAndIsDeletedFalse(tenantId, UserRole.CONSULTANT);
             long totalClients = userRepository.countByRoleAndIsDeletedFalse(tenantId, UserRole.CLIENT);
@@ -902,7 +867,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         log.info("지점 비교 통계 조회 - 기간: {}, 지표: {}", period, metric);
         
         try {
-            // 지점별 기본 통계 조회
             List<Branch> branches = branchRepository.findByIsDeletedFalseOrderByBranchName();
             List<Map<String, Object>> comparison = branches.stream()
                 .map(branch -> {
@@ -912,7 +876,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
                     branchStats.put("branchCode", branch.getBranchCode());
                     branchStats.put("branchStatus", branch.getBranchStatus());
                     
-                    // 지점별 사용자 수
                     String tenantId = TenantContextHolder.getTenantId();
                     long userCount = tenantId != null ? userRepository.countByBranchIdAndIsDeletedFalse(tenantId, branch.getId()) : 0;
                     long activeUserCount = tenantId != null ? userRepository.countByBranchIdAndIsActiveTrueAndIsDeletedFalse(tenantId, branch.getId()) : 0;
@@ -942,7 +905,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         log.info("지점 추이 분석 통계 조회 - 기간: {}, 지표: {}, 지점ID: {}", period, metric, branchId);
         
         try {
-            // 기간 계산
             LocalDate endDate = LocalDate.now();
             LocalDate startDate;
             
@@ -965,9 +927,7 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
             
             List<Map<String, Object>> trendData = new java.util.ArrayList<>();
             
-            // 일별 사용자 생성 추이
             if ("DAILY_USERS".equals(metric)) {
-                // 실제로는 복잡한 쿼리로 일별 데이터를 조회
                 for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
                     Map<String, Object> dailyData = new HashMap<>();
                     dailyData.put("date", date);
@@ -977,7 +937,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
                     trendData.add(dailyData);
                 }
             } else {
-                // 기본 추이 데이터
                 Map<String, Object> defaultData = new HashMap<>();
                 defaultData.put("period", period);
                 defaultData.put("metric", metric);
@@ -995,7 +954,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         }
     }
     
-    // ==================== BaseService 구현 메서드 (BaseTenantEntityService 위임) ====================
     
     @Override
     public Branch save(Branch branch) {
@@ -1034,7 +992,6 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
         }
         Branch existing = branchRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("지점을 찾을 수 없습니다: " + id));
-        // 부분 업데이트 로직은 updateBranch에서 처리
         return branchRepository.save(existing);
     }
     

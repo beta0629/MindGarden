@@ -22,7 +22,6 @@ import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './ClientPaymentHistory.css';
 
-/**
  * 내담자 결제 내역 페이지
  * 디자인 시스템 적용 버전
  */
@@ -54,7 +53,9 @@ const ClientPaymentHistory = () => {
 
       const totalAmount = mappings.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
       const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       const completedPayments = mappings.filter(mapping => mapping.paymentStatus === 'CONFIRMED').length;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       const pendingPayments = mappings.filter(mapping => mapping.paymentStatus === 'PENDING').length;
 
       setPaymentData({
@@ -75,8 +76,11 @@ const ClientPaymentHistory = () => {
 
   const getStatusText = (status) => {
     const statusMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CONFIRMED': '결제완료',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': '결제대기',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'REJECTED': '결제실패',
       'REFUNDED': '환불완료'
     };
@@ -85,8 +89,11 @@ const ClientPaymentHistory = () => {
 
   const getStatusClass = (status) => {
     const classMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CONFIRMED': 'success',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': 'warning',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'REJECTED': 'danger',
       'REFUNDED': 'secondary'
     };
@@ -121,7 +128,9 @@ const ClientPaymentHistory = () => {
 
   const filteredMappings = paymentData?.mappings?.filter(mapping => {
     if (filter === 'all') return true;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if (filter === 'completed') return mapping.paymentStatus === 'CONFIRMED';
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if (filter === 'pending') return mapping.paymentStatus === 'PENDING';
     if (filter === 'refunded') return mapping.paymentStatus === 'REFUNDED';
     return true;

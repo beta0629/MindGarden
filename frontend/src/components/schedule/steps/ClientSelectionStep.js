@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-// import ClientSelector from '../ClientSelector';
 import MappingCreationModal from '../../admin/MappingCreationModal';
 import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import { API_BASE_URL } from '../../../constants/api';
 import './ClientSelectionStep.css';
 
-/**
  * 내담자 선택 단계 컴포넌트
  * - 결제 승인된 내담자만 표시
  * - 세션 정보 확인
@@ -29,7 +27,6 @@ const ClientSelectionStep = ({
         loadClients();
     }, [selectedConsultant]);
 
-    /**
      * 내담자 목록 로드 (선택된 상담사와 매핑된 결제 승인된 내담자만)
      */
     const loadClients = async () => {
@@ -43,7 +40,6 @@ const ClientSelectionStep = ({
         try {
             console.log('👤 내담자 목록 로드 시작 - 상담사:', selectedConsultant.name);
             
-            // 선택된 상담사와 매핑된 내담자만 조회
             const response = await fetch(`${API_BASE_URL}/api/admin/mappings/consultant/${selectedConsultant.originalId || selectedConsultant.id}/clients`, {
                 method: 'GET',
                 headers: {
@@ -56,7 +52,6 @@ const ClientSelectionStep = ({
                 const responseData = await response.json();
                 console.log('👤 API 응답 데이터:', responseData);
                 
-                // 백엔드 API 응답 구조: { success: true, data: [...], count: ... }
                 const mappingsData = responseData.data || [];
                 
                 if (!Array.isArray(mappingsData)) {
@@ -65,14 +60,12 @@ const ClientSelectionStep = ({
                     return;
                 }
                 
-                // 매핑 데이터에서 내담자 정보 추출 (중복 제거)
                 const clientMap = new Map();
                 
                 mappingsData.forEach((mapping) => {
                     const clientId = mapping.client.id;
                     
                     if (!clientMap.has(clientId)) {
-                        // 새로운 내담자 - 첫 번째 매핑 정보 사용
                         clientMap.set(clientId, {
                             ...mapping.client,
                             id: `client-${clientId}`,
@@ -86,13 +79,11 @@ const ClientSelectionStep = ({
                             usedSessions: mapping.usedSessions
                         });
                     } else {
-                        // 기존 내담자 - 회기수 합산
                         const existingClient = clientMap.get(clientId);
                         existingClient.remainingSessions += mapping.remainingSessions;
                         existingClient.totalSessions = (existingClient.totalSessions || 0) + (mapping.totalSessions || 0);
                         existingClient.usedSessions = (existingClient.usedSessions || 0) + (mapping.usedSessions || 0);
                         
-                        // 여러 매핑이 있는 경우 메모에 표시
                         if (existingClient.packageName !== mapping.packageName) {
                             existingClient.packageName = `${existingClient.packageName}, ${mapping.packageName}`;
                         }
@@ -105,19 +96,16 @@ const ClientSelectionStep = ({
                 console.log('👤 내담자 목록 로드 완료 - 상담사별 필터링:', availableClients.length, '명');
             } else {
                 console.error('내담자 목록 로드 실패:', response.status);
-                // API가 없으면 전체 매핑에서 필터링
                 await loadClientsFromAllMappings();
             }
         } catch (error) {
             console.error('내담자 목록 로드 실패:', error);
-            // API 오류 시 전체 매핑에서 필터링
             await loadClientsFromAllMappings();
         } finally {
             setLoading(false);
         }
     };
 
-    /**
      * 전체 매핑에서 상담사별 필터링 (백업 방법)
      */
     const loadClientsFromAllMappings = async () => {
@@ -137,22 +125,20 @@ const ClientSelectionStep = ({
                 const mappings = responseData.data || responseData;
                 
                 if (Array.isArray(mappings)) {
-                    // 선택된 상담사와 매핑된 내담자만 필터링
                     const filteredMappings = mappings.filter(mapping => 
                         mapping.consultant && 
                         mapping.consultant.id === (selectedConsultant.originalId || selectedConsultant.id) &&
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         mapping.paymentStatus === 'APPROVED' && 
                         mapping.remainingSessions > 0
                     );
                     
-                    // 중복 제거 로직 적용
                     const clientMap = new Map();
                     
                     filteredMappings.forEach((mapping) => {
                         const clientId = mapping.client.id;
                         
                         if (!clientMap.has(clientId)) {
-                            // 새로운 내담자 - 첫 번째 매핑 정보 사용
                             clientMap.set(clientId, {
                                 ...mapping.client,
                                 id: `client-${clientId}`,
@@ -166,13 +152,11 @@ const ClientSelectionStep = ({
                                 usedSessions: mapping.usedSessions
                             });
                         } else {
-                            // 기존 내담자 - 회기수 합산
                             const existingClient = clientMap.get(clientId);
                             existingClient.remainingSessions += mapping.remainingSessions;
                             existingClient.totalSessions = (existingClient.totalSessions || 0) + (mapping.totalSessions || 0);
                             existingClient.usedSessions = (existingClient.usedSessions || 0) + (mapping.usedSessions || 0);
                             
-                            // 여러 매핑이 있는 경우 메모에 표시
                             if (existingClient.packageName !== mapping.packageName) {
                                 existingClient.packageName = `${existingClient.packageName}, ${mapping.packageName}`;
                             }
@@ -190,14 +174,12 @@ const ClientSelectionStep = ({
         }
     };
 
-    /**
      * 내담자 선택 핸들러
      */
     const handleClientSelect = (client) => {
         onClientSelect(client);
     };
 
-    /**
      * 매핑 생성 완료 핸들러
      */
     const handleMappingCreated = () => {

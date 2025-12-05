@@ -23,7 +23,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
  * ERP 구매 요청 엔티티
  * 상담사가 비품 구매를 요청할 때 사용
  * 
@@ -79,15 +78,11 @@ public class PurchaseRequest extends BaseEntity {
     @JoinColumn(name = "super_admin_approver_id")
     private User superAdminApprover;
     
-    // @Column
     private LocalDateTime superAdminApprovedAt;
     
-    // @Column(length = 500)
     private String superAdminComment;
     
-    // @Column(nullable = false, updatable = false)
     
-    // @Column(nullable = false)
     
     @Column(name = "is_active", nullable = false)
     @Builder.Default
@@ -96,6 +91,7 @@ public class PurchaseRequest extends BaseEntity {
     @PrePersist
     protected void onCreate() {
         if (status == null) {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             status = PurchaseRequestStatus.PENDING;
         }
         if (totalAmount == null && unitPrice != null && quantity != null) {
@@ -110,15 +106,12 @@ public class PurchaseRequest extends BaseEntity {
         }
     }
     
-    /**
      * 구매 요청 상태 열거형
      */
     public enum PurchaseRequestStatus {
         PENDING("대기중"),
         ADMIN_APPROVED("관리자 승인"),
         ADMIN_REJECTED("관리자 거부"),
-        HQ_MASTER_APPROVED("수퍼 관리자 승인"), // 표준화 2025-12-05: 레거시 상태값 (하위 호환성 유지)
-        HQ_MASTER_REJECTED("수퍼 관리자 거부"), // 표준화 2025-12-05: 레거시 상태값 (하위 호환성 유지)
         COMPLETED("완료"),
         CANCELLED("취소");
         

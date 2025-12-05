@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 회기 동기화 서비스 구현체
  * 
  * @author MindGarden
@@ -40,7 +39,6 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         try {
             ConsultantClientMapping mapping = extensionRequest.getMapping();
             
-            // 1. 회기 추가 처리
             mapping.addSessions(
                 extensionRequest.getAdditionalSessions(),
                 extensionRequest.getPackageName(),
@@ -48,16 +46,12 @@ public class SessionSyncServiceImpl implements SessionSyncService {
             );
             mappingRepository.save(mapping);
             
-            // 2. 매핑 상태 검증
             validateMappingStatus(mapping);
             
-            // 3. 회기 수 검증
             validateSessionCounts(mapping);
             
-            // 4. 관련된 모든 매핑 동기화
             syncRelatedMappings(mapping);
             
-            // 5. 사용 로그 기록
             logSessionUsage(mapping.getId(), "EXTENSION", 
                           extensionRequest.getAdditionalSessions(), 
                           "회기 추가: " + extensionRequest.getReason());
@@ -81,20 +75,15 @@ public class SessionSyncServiceImpl implements SessionSyncService {
             ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                     .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
-            // 회기 사용은 이미 ScheduleServiceImpl에서 처리되었으므로 중복 처리하지 않음
             log.info("📋 매핑 상태 확인: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}", 
                     mappingId, mapping.getTotalSessions(), mapping.getUsedSessions(), mapping.getRemainingSessions());
             
-            // 2. 회기 수 검증 (단회기 패키지 고려)
             validateSessionCountsForUsage(mapping);
             
-            // 3. 매핑 상태 검증
             validateMappingStatus(mapping);
             
-            // 4. 관련된 모든 매핑 동기화
             syncRelatedMappings(mapping);
             
-            // 5. 사용 로그 기록
             logSessionUsage(mappingId, "USAGE", 1, 
                           "상담 완료: consultantId=" + consultantId + ", clientId=" + clientId);
             
@@ -116,10 +105,8 @@ public class SessionSyncServiceImpl implements SessionSyncService {
             ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                     .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
-            // 회기 수 검증
             validateSessionCounts(mapping);
             
-            // 상태 검증
             validateMappingStatus(mapping);
             
             log.info("✅ 매핑 회기 수 검증 완료: mappingId={}", mappingId);
@@ -197,13 +184,11 @@ public class SessionSyncServiceImpl implements SessionSyncService {
             
             for (ConsultantClientMapping mapping : allMappings) {
                 try {
-                    // 회기 수 불일치 확인
                     if (mapping.getTotalSessions() != (mapping.getUsedSessions() + mapping.getRemainingSessions())) {
                         log.warn("⚠️ 회기 수 불일치 발견: mappingId={}, total={}, used={}, remaining={}", 
                                 mapping.getId(), mapping.getTotalSessions(), 
                                 mapping.getUsedSessions(), mapping.getRemainingSessions());
                         
-                        // 자동 수정: remainingSessions = totalSessions - usedSessions
                         int correctRemaining = mapping.getTotalSessions() - mapping.getUsedSessions();
                         mapping.setRemainingSessions(Math.max(0, correctRemaining));
                         mappingRepository.save(mapping);
@@ -231,8 +216,6 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         log.info("📝 회기 사용 로그: mappingId={}, action={}, sessions={}, reason={}", 
                 mappingId, action, sessions, reason);
         
-        // 향후 회기 사용 로그 테이블이 있다면 여기에 저장
-        // 현재는 로그로만 기록
     }
     
     @Override
@@ -243,14 +226,13 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         Map<String, Object> status = new HashMap<>();
         
         try {
-            // 전체 매핑 수
             long totalMappings = mappingRepository.count();
             
-            // 상태별 매핑 수
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long activeMappings = mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE).size();
             long exhaustedMappings = mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED).size();
             
-            // 회기 추가 요청 수
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long pendingRequests = requestRepository.findByStatusOrderByCreatedAtDesc(SessionExtensionRequest.ExtensionStatus.PENDING).size();
             long confirmedRequests = requestRepository.findByStatusOrderByCreatedAtDesc(SessionExtensionRequest.ExtensionStatus.PAYMENT_CONFIRMED).size();
             long approvedRequests = requestRepository.findByStatusOrderByCreatedAtDesc(SessionExtensionRequest.ExtensionStatus.ADMIN_APPROVED).size();
@@ -271,7 +253,6 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         return status;
     }
     
-    /**
      * 매핑 상태 검증
      */
     private void validateMappingStatus(ConsultantClientMapping mapping) {
@@ -279,7 +260,6 @@ public class SessionSyncServiceImpl implements SessionSyncService {
             log.warn("⚠️ 매핑 상태 불일치: mappingId={}, remainingSessions={}, status={}", 
                     mapping.getId(), mapping.getRemainingSessions(), mapping.getStatus());
             
-            // 자동 수정
             mapping.setStatus(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED);
             mapping.setEndDate(LocalDateTime.now());
             mappingRepository.save(mapping);
@@ -288,7 +268,6 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         }
     }
     
-    /**
      * 회기 수 검증
      */
     private void validateSessionCounts(ConsultantClientMapping mapping) {
@@ -309,7 +288,6 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         }
     }
     
-    /**
      * 회기 사용 후 검증 (단회기 패키지 고려)
      */
     private void validateSessionCountsForUsage(ConsultantClientMapping mapping) {
@@ -320,21 +298,18 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         log.info("🔍 회기 사용 후 검증: mappingId={}, total={}, used={}, remaining={}", 
                 mapping.getId(), total, used, remaining);
         
-        // 기본 회기 수 검증
         if (total != (used + remaining)) {
             throw new RuntimeException(String.format(
                 "회기 수 불일치: mappingId=%d, total=%d, used=%d, remaining=%d", 
                 mapping.getId(), total, used, remaining));
         }
         
-        // 단회기 패키지의 경우 remaining이 0이어도 정상
         if (remaining < 0) {
             throw new RuntimeException(String.format(
                 "잔여 회기 수 음수: mappingId=%d, remaining=%d", 
                 mapping.getId(), remaining));
         }
         
-        // 단회기 패키지인 경우 remaining이 0이면 정상적으로 완료된 상태
         if (total == 1 && used == 1 && remaining == 0) {
             log.info("✅ 단회기 패키지 정상 완료: mappingId={}", mapping.getId());
             return;
@@ -343,20 +318,16 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         log.info("✅ 회기 사용 후 검증 완료: mappingId={}", mapping.getId());
     }
     
-    /**
      * 관련된 모든 매핑 동기화
      */
     private void syncRelatedMappings(ConsultantClientMapping mapping) {
         try {
-            // 현재 테넌트 ID 가져오기
             String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
             if (tenantId == null) {
                 log.warn("⚠️ tenantId가 설정되지 않아 관련 매핑 동기화를 건너뜁니다");
                 return;
             }
             
-            // 같은 상담사-내담자 조합의 다른 매핑들도 동기화
-            // 먼저 상담사 ID로 매핑들을 찾고, 그 중에서 같은 내담자 ID를 가진 것들을 필터링
             List<ConsultantClientMapping> consultantMappings = mappingRepository
                     .findByConsultantIdAndStatusNot(tenantId, mapping.getConsultant().getId(), 
                             ConsultantClientMapping.MappingStatus.TERMINATED);

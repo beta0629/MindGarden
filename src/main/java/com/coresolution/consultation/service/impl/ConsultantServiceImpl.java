@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * ConsultantService 구현체
  * API 설계 문서에 명시된 상담사 관리 비즈니스 로직 구현
  * BaseTenantEntityServiceImpl을 상속하여 테넌트 필터링 및 접근 제어 지원
@@ -49,7 +48,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     @Autowired
     private PersonalDataEncryptionUtil encryptionUtil;
     
-    // BaseTenantEntityServiceImpl에서 이미 주입받음 (accessControlService)
     
     public ConsultantServiceImpl(
             ConsultantRepository consultantRepository,
@@ -58,7 +56,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         this.consultantRepository = consultantRepository;
     }
     
-    // ==================== BaseTenantEntityServiceImpl 추상 메서드 구현 ====================
     
     @Override
     protected Optional<Consultant> findEntityById(Long id) {
@@ -74,7 +71,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         }
     }
     
-    /**
      * 전화번호 마스킹 처리
      */
     private String maskPhone(String phone) {
@@ -84,7 +80,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
     
-    // ==================== BaseService 구현 메서드들 (BaseTenantEntityService 위임) ====================
     
     @Override
     public com.coresolution.consultation.repository.BaseRepository<Consultant, Long> getRepository() {
@@ -94,21 +89,17 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     @Override
     public Consultant save(Consultant consultant) {
         if (consultant.getId() == null) {
-            // 새 상담사 생성 시 BaseTenantEntityService의 create 메서드 사용
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId != null) {
                 return create(tenantId, consultant);
             } else {
-                // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
                 return consultantRepository.save(consultant);
             }
         } else {
-            // 기존 상담사 수정 시 BaseTenantEntityService의 update 메서드 사용
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId != null && consultant.getTenantId() != null) {
                 return update(tenantId, consultant);
             } else {
-                // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
                 if (consultant.getTenantId() != null) {
                     accessControlService.validateTenantAccess(consultant.getTenantId());
                 }
@@ -124,12 +115,10 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public Consultant update(Consultant consultant) {
-        // BaseTenantEntityService의 update 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null && consultant.getTenantId() != null) {
             return update(tenantId, consultant);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             Consultant existingConsultant = consultantRepository.findById(consultant.getId())
                     .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultant.getId()));
             
@@ -146,12 +135,10 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         Consultant existingConsultant = consultantRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + id));
         
-        // 테넌트 접근 제어
         if (existingConsultant.getTenantId() != null) {
             accessControlService.validateTenantAccess(existingConsultant.getTenantId());
         }
         
-        // 부분 업데이트: null이 아닌 필드만 업데이트
         if (updateData.getSpecialty() != null) {
             existingConsultant.setSpecialty(updateData.getSpecialty());
         }
@@ -159,12 +146,10 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
             existingConsultant.setYearsOfExperience(updateData.getYearsOfExperience());
         }
         if (updateData.getAverageRating() != null) {
-            // 평점 유효성 검사
             if (updateData.getAverageRating() < ConsultantConstants.MIN_RATING || 
                 updateData.getAverageRating() > ConsultantConstants.MAX_RATING) {
                 throw new IllegalArgumentException(ConsultantConstants.ERROR_INVALID_RATING);
             }
-            // 평점 업데이트 (실제 구현에서는 평점 계산 로직 필요)
             log.info("상담사 평점 업데이트: consultantId={}, newRating={}", id, updateData.getAverageRating());
         }
         if (updateData.getIsAvailable() != null) {
@@ -176,12 +161,10 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public void softDeleteById(Long id) {
-        // BaseTenantEntityService의 delete 메서드 사용
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             delete(tenantId, id);
         } else {
-            // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
             Consultant consultant = consultantRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + id));
             
@@ -210,24 +193,20 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public List<Consultant> findAllActive() {
-        // 테넌트 컨텍스트에서 tenantId 가져오기
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             return findAllByTenant(tenantId, null);
         }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
         return consultantRepository.findAllActiveByCurrentTenant();
     }
     
     @Override
     public Optional<Consultant> findActiveById(Long id) {
-        // 테넌트 컨텍스트에서 tenantId 가져오기
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
             return findByIdAndTenant(tenantId, id)
                     .filter(c -> !c.getIsDeleted());
         }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
         Optional<Consultant> consultant = consultantRepository.findById(id);
         return consultant.isPresent() && !consultant.get().getIsDeleted() ? consultant : Optional.empty();
     }
@@ -284,17 +263,14 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public void cleanupOldDeleted(java.time.LocalDateTime cutoffDate) {
-        // 구현 필요시 추가
     }
     
     @Override
     public org.springframework.data.domain.Page<Consultant> findAllActive(Pageable pageable) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId != null) {
-            // BaseRepository의 findAllByTenantId 메서드 사용
             return consultantRepository.findAllByTenantId(tenantId, pageable);
         }
-        // 테넌트 컨텍스트가 없으면 기존 방식 사용 (하위 호환성)
         List<Consultant> activeConsultants = consultantRepository.findByIsDeletedFalse();
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), activeConsultants.size());
@@ -341,7 +317,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         return consultantRepository.isDuplicateExcludingIdAll(excludeId, fieldName, fieldValue, includeDeleted);
     }
     
-    // === ConsultantService 특화 메서드들 ===
     
     @Override
     public List<Consultant> findBySpecialty(String specialty) {
@@ -381,7 +356,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         
         List<Consultant> consultants = consultantRepository.findByIsDeletedFalse();
         
-        // 각 상담사의 전화번호 복호화
         consultants.forEach(consultant -> {
             if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
                 try {
@@ -408,40 +382,35 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         return consultantRepository.findById(id);
     }
     
-    // === 내담자 관리 ===
     
     @Override
     public Page<Client> findClientsByConsultantId(Long consultantId, String status, Pageable pageable) {
         log.info("상담사별 내담자 조회: consultantId={}, status={}", consultantId, status);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 현재 테넌트 ID 가져오기
         String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new org.springframework.data.domain.PageImpl<>(new java.util.ArrayList<>(), pageable, 0);
         }
         
-        // 매칭을 통해 내담자 조회 (tenantId 필터링)
         List<ConsultantClientMapping> mappings;
         if (status != null && !status.trim().isEmpty()) {
-            // 특정 상태의 매칭만 조회
             ConsultantClientMapping.MappingStatus mappingStatus = ConsultantClientMapping.MappingStatus.valueOf(status);
             mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 mappingStatus == ConsultantClientMapping.MappingStatus.ACTIVE ? 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 ConsultantClientMapping.MappingStatus.INACTIVE : ConsultantClientMapping.MappingStatus.ACTIVE);
         } else {
-            // 모든 활성 매칭 조회
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
         }
         
-        // 매칭에서 클라이언트 정보 추출 (User를 Client로 변환)
         List<Client> clients = mappings.stream()
                 .map(mapping -> {
                     User user = mapping.getClient();
@@ -458,7 +427,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
                 .distinct()
                 .collect(java.util.stream.Collectors.toList());
         
-        // 페이지네이션 적용
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), clients.size());
         List<Client> pageContent = clients.subList(start, end);
@@ -470,21 +438,18 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Optional<Client> findClientByConsultantId(Long consultantId, Long clientId) {
         log.info("상담사별 특정 내담자 조회: consultantId={}, clientId={}", consultantId, clientId);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 현재 테넌트 ID 가져오기
         String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return Optional.empty();
         }
         
-        // 매칭을 통해 특정 내담자 조회 (tenantId 필터링)
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
         
         return mappings.stream()
@@ -508,14 +473,11 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Client updateClientProfile(Long consultantId, Long clientId, Client updateData) {
         log.info("상담사별 내담자 프로필 업데이트: consultantId={}, clientId={}", consultantId, clientId);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 내담자 존재 확인 및 업데이트 (실제 구현에서는 매칭 테이블을 통해 조회)
         return updateData;
     }
     
@@ -523,7 +485,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Map<String, Object> getClientStatistics(Long consultantId) {
         log.info("상담사별 내담자 통계 조회: consultantId={}", consultantId);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
@@ -538,17 +499,14 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         return stats;
     }
     
-    // === 스케줄 관리 ===
     
     @Override
     public List<Map<String, Object>> getAvailableSlots(Long consultantId, LocalDate date) {
         log.info("상담사별 사용 가능한 시간대 조회: consultantId={}, date={}", consultantId, date);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
         List<Map<String, Object>> slots = new ArrayList<>();
@@ -568,19 +526,15 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         log.info("상담사 스케줄 등록: consultantId={}, date={}, startTime={}, endTime={}", 
                 consultantId, date, startTime, endTime);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 시간 유효성 검사
         if (startTime.isAfter(endTime)) {
             throw new IllegalArgumentException("시작 시간은 종료 시간보다 빨라야 합니다.");
         }
         
-        // 스케줄 등록 로직 (실제 구현에서는 Schedule 엔티티에 저장)
         log.info(ConsultantConstants.SUCCESS_SCHEDULE_REGISTERED);
     }
     
@@ -589,19 +543,15 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         log.info("상담사 스케줄 수정: consultantId={}, scheduleId={}, date={}, startTime={}, endTime={}", 
                 consultantId, scheduleId, date, startTime, endTime);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 시간 유효성 검사
         if (startTime.isAfter(endTime)) {
             throw new IllegalArgumentException("시작 시간은 종료 시간보다 빨라야 합니다.");
         }
         
-        // 스케줄 수정 로직 (실제 구현에서는 Schedule 엔티티 업데이트)
         log.info(ConsultantConstants.SUCCESS_SCHEDULE_UPDATED);
     }
     
@@ -609,34 +559,26 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void deleteSchedule(Long consultantId, Long scheduleId) {
         log.info("상담사 스케줄 삭제: consultantId={}, scheduleId={}", consultantId, scheduleId);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 스케줄 삭제 로직 (실제 구현에서는 Schedule 엔티티 삭제)
         log.info(ConsultantConstants.SUCCESS_SCHEDULE_DELETED);
     }
     
-    // === 상담 관리 ===
     
     @Override
     public List<Map<String, Object>> getConsultationBookings(Long consultantId, String status) {
         log.info("상담사별 상담 예약 조회: consultantId={}, status={}", consultantId, status);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 상담 예약 조회 (실제 구현에서는 Consultation 엔티티를 통해 조회)
         List<Map<String, Object>> bookings = new ArrayList<>();
         
-        // 임시 데이터 (실제 구현에서는 데이터베이스에서 조회)
         Map<String, Object> sampleBooking = new HashMap<>();
         sampleBooking.put("consultationId", 1L);
         sampleBooking.put("clientId", 1L);
@@ -655,14 +597,11 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void confirmConsultation(Long consultationId, Long consultantId) {
         log.info("상담 확정: consultationId={}, consultantId={}", consultationId, consultantId);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 상담 확정 로직 (실제 구현에서는 Consultation 엔티티 업데이트)
         log.info("상담이 확정되었습니다: consultationId={}", consultationId);
     }
     
@@ -670,14 +609,11 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void cancelConsultation(Long consultationId, Long consultantId) {
         log.info("상담 취소: consultationId={}, consultantId={}", consultationId, consultantId);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 상담 취소 로직 (실제 구현에서는 Consultation 엔티티 상태 업데이트)
         log.info("상담이 취소되었습니다: consultationId={}", consultationId);
     }
     
@@ -685,41 +621,32 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void completeConsultation(Long consultationId, Long consultantId, String notes, int rating) {
         log.info("상담 완료: consultationId={}, consultantId={}, rating={}", consultationId, consultantId, rating);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 평점 유효성 검사
         if (rating < ConsultantConstants.MIN_RATING || rating > ConsultantConstants.MAX_RATING) {
             throw new IllegalArgumentException(ConsultantConstants.ERROR_INVALID_RATING);
         }
         
-        // 상담 완료 로직 (실제 구현에서는 Consultation 엔티티 업데이트 및 평점 저장)
         log.info("상담이 완료되었습니다: consultationId={}, notes={}, rating={}", consultationId, notes, rating);
     }
     
-    // === 통계 및 분석 ===
     
     @Override
     public Map<String, Object> getConsultationStatistics(Long consultantId, LocalDate startDate, LocalDate endDate) {
         log.info("상담사별 상담 통계 조회: consultantId={}, startDate={}, endDate={}", consultantId, startDate, endDate);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 기간 유효성 검사
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("시작일은 종료일보다 빨라야 합니다.");
         }
         
-        // 상담 통계 조회 (실제 구현에서는 Consultation 엔티티를 통해 조회)
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalConsultations", 10);
         stats.put("completedConsultations", 8);
@@ -741,19 +668,15 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Map<String, Object> getRevenueStatistics(Long consultantId, LocalDate startDate, LocalDate endDate) {
         log.info("상담사별 수익 통계 조회: consultantId={}, startDate={}, endDate={}", consultantId, startDate, endDate);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 기간 유효성 검사
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("시작일은 종료일보다 빨라야 합니다.");
         }
         
-        // 수익 통계 조회 (실제 구현에서는 Payment 엔티티를 통해 조회)
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalRevenue", 500000.0);
         stats.put("averageRevenue", 50000.0);
@@ -773,14 +696,11 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public Map<String, Object> getSatisfactionAnalysis(Long consultantId) {
         log.info("상담사별 만족도 분석: consultantId={}", consultantId);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 만족도 분석 (실제 구현에서는 Review 엔티티를 통해 조회)
         Map<String, Object> analysis = new HashMap<>();
         analysis.put("averageRating", consultant.getAverageRating());
         analysis.put("totalReviews", 15);
@@ -797,7 +717,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         return analysis;
     }
     
-    // === 프로필 관리 ===
     
     @Override
     public Consultant updateProfile(Long consultantId, Consultant updateData) {
@@ -822,18 +741,14 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void updateCertifications(Long consultantId, List<String> certifications) {
         log.info("상담사 자격증 업데이트: consultantId={}, certifications={}", consultantId, certifications);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 자격증 업데이트 로직 (실제 구현에서는 Certification 엔티티에 저장)
         log.info("자격증이 업데이트되었습니다: {}건", certifications != null ? certifications.size() : 0);
     }
     
-    // === 상태 관리 ===
     
     @Override
     public void updateStatus(Long consultantId, String status) {
@@ -841,7 +756,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         
         Consultant consultant = findActiveByIdOrThrow(consultantId);
         
-        // 상태 유효성 검사
         if (status == null || (!ConsultantConstants.STATUS_ACTIVE.equals(status) && 
             !ConsultantConstants.STATUS_INACTIVE.equals(status) && 
             !ConsultantConstants.STATUS_PENDING.equals(status) && 
@@ -849,7 +763,6 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
             throw new IllegalArgumentException("유효하지 않은 상태입니다: " + status);
         }
         
-        // 상태 업데이트 로직 (실제 구현에서는 User 엔티티의 status 필드 업데이트)
         log.info("상담사 상태가 업데이트되었습니다: {}", status);
         save(consultant);
     }
@@ -866,19 +779,15 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         log.info("상담사 휴가 등록: consultantId={}, startDate={}, endDate={}, reason={}", 
                 consultantId, startDate, endDate, reason);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 휴가 기간 유효성 검사
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("휴가 시작일은 종료일보다 빨라야 합니다.");
         }
         
-        // 휴가 등록 로직 (실제 구현에서는 Vacation 엔티티에 저장)
         log.info("휴가가 등록되었습니다: {} ~ {}", startDate, endDate);
     }
     
@@ -886,14 +795,11 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     public void cancelVacation(Long consultantId, Long vacationId) {
         log.info("상담사 휴가 취소: consultantId={}, vacationId={}", consultantId, vacationId);
         
-        // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
-        // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 휴가 취소 로직 (실제 구현에서는 Vacation 엔티티 상태 업데이트)
         log.info("휴가가 취소되었습니다: vacationId={}", vacationId);
     }
 }

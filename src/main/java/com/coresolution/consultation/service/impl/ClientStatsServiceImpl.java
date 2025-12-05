@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 내담자 통계 정보 조회 서비스 구현
  * - 내담자 정보와 통계를 통합 조회
  * - 중앙화된 데이터 관리
@@ -50,16 +49,12 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         
         Client client = convertToClient(user);
         
-        // Client를 Map으로 변환
         Map<String, Object> clientMap = convertClientToMap(client);
         
-        // 활성 매핑 수 계산
         long currentConsultants = calculateCurrentConsultants(clientId);
         
-        // 통계 정보
         Map<String, Object> stats = calculateClientStats(clientId);
         
-        // Map.of()는 null을 허용하지 않으므로 HashMap 사용
         Map<String, Object> result = new HashMap<>();
         result.put("client", clientMap);
         result.put("currentConsultants", currentConsultants);
@@ -73,7 +68,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     public List<Map<String, Object>> getAllClientsWithStats() {
         log.info("📊 전체 내담자 통계 조회 (DB) - 레거시 호환");
         
-        // 삭제되지 않고 활성인 CLIENT 역할 사용자만 조회
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
@@ -85,14 +79,12 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return buildClientStatsList(clientUsers);
     }
     
-    /**
      * 테넌트별 내담자 통계 조회 (신규 추가)
      */
     @Cacheable(value = "clientsWithStats", key = "'tenant:' + #tenantId")
     public List<Map<String, Object>> getAllClientsWithStatsByTenant(String tenantId) {
         log.info("📊 테넌트별 내담자 통계 조회: tenantId={}", tenantId);
         
-        // 테넌트별 삭제되지 않고 활성인 CLIENT 역할 사용자만 조회
         List<com.coresolution.consultation.entity.User> clientUsers = userRepository
                 .findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
         
@@ -101,7 +93,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return buildClientStatsList(clientUsers);
     }
     
-    /**
      * 내담자 목록을 통계와 함께 Map 리스트로 변환 (공통 로직)
      */
     private List<Map<String, Object>> buildClientStatsList(List<com.coresolution.consultation.entity.User> clientUsers) {
@@ -110,13 +101,11 @@ public class ClientStatsServiceImpl implements ClientStatsService {
                 .map(user -> {
                     Client client = convertToClient(user);
                     
-                    // Client를 Map으로 변환
                     Map<String, Object> clientMap = convertClientToMap(client);
                     
                     long currentConsultants = calculateCurrentConsultants(client.getId());
                     Map<String, Object> stats = calculateClientStats(client.getId());
                     
-                    // Map.of()는 null을 허용하지 않으므로 HashMap 사용
                     Map<String, Object> result = new HashMap<>();
                     result.put("client", clientMap);
                     result.put("currentConsultants", currentConsultants);
@@ -129,19 +118,19 @@ public class ClientStatsServiceImpl implements ClientStatsService {
 
     @Override
     public Long calculateCurrentConsultants(Long clientId) {
-        // 현재 테넌트 ID 가져오기
         String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return 0L;
         }
         
-        // clientId로 매핑 카운트 조회 (tenantId 필터링)
         return (long) mappingRepository.findByClientIdAndStatusNot(
             tenantId,
             clientId, 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             ConsultantClientMapping.MappingStatus.INACTIVE
         ).stream()
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE || 
                         m.getStatus() == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
             .count();
@@ -155,13 +144,10 @@ public class ClientStatsServiceImpl implements ClientStatsService {
             return new HashMap<>();
         }
         
-        // 총 상담 횟수
         long totalSessions = scheduleRepository.countByClientId(tenantId, clientId);
         
-        // 완료된 상담 횟수
         long completedSessions = scheduleRepository.countByClientId(tenantId, clientId);
         
-        // 완료율 계산
         double completionRate = totalSessions > 0 
             ? (double) completedSessions / totalSessions * 100 
             : 0;
@@ -174,7 +160,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return stats;
     }
     
-    /**
      * User를 Client로 변환 (개인정보 복호화 포함)
      */
     private Client convertToClient(com.coresolution.consultation.entity.User user) {
@@ -182,7 +167,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         client.setId(user.getId());
         client.setName(user.getName());
         
-        // 이메일 복호화
         if (user.getEmail() != null) {
             try {
                 client.setEmail(encryptionUtil.decrypt(user.getEmail()));
@@ -192,7 +176,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
             }
         }
         
-        // 전화번호 복호화
         if (user.getPhone() != null) {
             try {
                 client.setPhone(encryptionUtil.decrypt(user.getPhone()));
@@ -212,7 +195,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return client;
     }
     
-    /**
      * Client 엔티티를 Map으로 변환
      */
     private Map<String, Object> convertClientToMap(Client client) {
@@ -223,8 +205,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         clientMap.put("phone", client.getPhone());
         clientMap.put("birthDate", client.getBirthDate());
         clientMap.put("gender", client.getGender());
-        // 브랜치 개념 제거: branchCode는 레거시 호환용으로만 유지 (표준화 2025-12-05)
-        // clientMap.put("branchCode", client.getBranchCode());
         clientMap.put("role", UserRole.CLIENT.name());
         clientMap.put("status", "ACTIVE");
         clientMap.put("isActive", true);
@@ -234,7 +214,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return clientMap;
     }
     
-    /**
      * 캐시 무효화 (매핑 변경 시 호출)
      * 
      * @param clientId 내담자 ID
@@ -244,7 +223,6 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         log.info("🗑️ 캐시 무효화: clientId={}", clientId);
     }
     
-    /**
      * 전체 캐시 무효화
      */
     @CacheEvict(value = {"clientsWithStats", "clientCurrentConsultants"}, allEntries = true)

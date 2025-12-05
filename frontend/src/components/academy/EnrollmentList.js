@@ -1,4 +1,3 @@
-/**
  * 학원 시스템 - 수강 등록 목록 컴포넌트
  * 공통 컴포넌트 사용, CSS와 비즈니스 로직 분리, 인라인 스타일 금지, 상수 사용
  * 
@@ -8,7 +7,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-// import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { DataTable, ErrorState } from './shared';
 import { ACADEMY_API, ACADEMY_MESSAGES } from '../../constants/academy';
 import { API_BASE_URL } from '../../constants/api';
@@ -19,7 +17,6 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 수강 등록 목록 조회
   const fetchEnrollments = async () => {
     setLoading(true);
     setError(null);
@@ -57,7 +54,6 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
     fetchEnrollments();
   }, [branchId, classId, consumerId]);
 
-  // 수강 취소
   const handleCancel = async (enrollmentId) => {
     if (!window.confirm('정말 수강을 취소하시겠습니까?')) {
       return;
@@ -86,7 +82,6 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
     }
   };
 
-  // 테이블 컬럼 정의
   const columns = [
     { key: 'enrollmentId', label: '등록 ID', render: (enrollment) => enrollment.enrollmentId || '-' },
     { key: 'classId', label: '반 ID', render: (enrollment) => enrollment.classId || '-' },
@@ -99,6 +94,7 @@ const EnrollmentList = ({ branchId, classId, consumerId, onEnrollmentSelect, onC
     { key: 'tuitionAmount', label: '수강료', render: (enrollment) => enrollment.tuitionAmount ? `${enrollment.tuitionAmount.toLocaleString()}원` : '-' },
     { key: 'actions', label: '작업', render: (enrollment) => (
       <div className="academy-actions">
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         {enrollment.status !== 'CANCELLED' && (
           <button className="mg-button"
             variant="danger"

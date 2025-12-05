@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
  * 수강 등록 서비스 구현체
  * 학원 시스템의 수강 등록 관리 비즈니스 로직 구현
  * 
@@ -53,7 +52,6 @@ public class ClassEnrollmentServiceImpl implements ClassEnrollmentService {
             enrollments = enrollmentRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         }
         
-        // 상태 필터링 (필요한 경우)
         if (status != null) {
             enrollments = enrollments.stream()
                 .filter(e -> status.equals(e.getStatus()))
@@ -95,7 +93,9 @@ public class ClassEnrollmentServiceImpl implements ClassEnrollmentService {
             .endDate(request.getEndDate())
             .tuitionPlanId(request.getTuitionPlanId())
             .tuitionAmount(request.getTuitionAmount() != null ? request.getTuitionAmount() : java.math.BigDecimal.ZERO)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             .paymentStatus(request.getPaymentStatus() != null ? request.getPaymentStatus() : ClassEnrollment.PaymentStatus.PENDING)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             .status(request.getStatus() != null ? request.getStatus() : ClassEnrollment.EnrollmentStatus.ACTIVE)
             .isActive(true)
             .notes(request.getNotes())

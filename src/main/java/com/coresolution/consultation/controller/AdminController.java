@@ -58,7 +58,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/admin") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AdminController extends BaseApiController {
@@ -80,9 +79,7 @@ public class AdminController extends BaseApiController {
     private final CommonCodeService commonCodeService;
     private final StatusCodeHelper statusCodeHelper;
 
-    // === 상담사 통계 통합 API ===
     
-    /**
      * 상담사 통계 정보 조회 (캐시 사용)
      * GET /api/admin/consultants/with-stats/{id}
      */
@@ -95,7 +92,6 @@ public class AdminController extends BaseApiController {
         return success(stats);
     }
     
-    /**
      * 전체 상담사 통계 정보 조회 (테넌트별 필터링)
      * GET /api/admin/consultants/with-stats
      */
@@ -103,7 +99,6 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllConsultantsWithStats(HttpSession session) {
         log.info("📊 전체 상담사 통계 조회 API 호출");
         
-        // 현재 사용자 정보 가져오기
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
@@ -112,13 +107,11 @@ public class AdminController extends BaseApiController {
         String tenantId = currentUser.getTenantId();
         log.info("🔍 현재 사용자 정보: tenantId={}, 역할={}", tenantId, currentUser.getRole());
         
-        // ⭐ 테넌트별 상담사 조회 (tenant_id 필터링만 사용)
         List<Map<String, Object>> filteredStats;
         if (tenantId != null && !tenantId.isEmpty()) {
             filteredStats = consultantStatsService.getAllConsultantsWithStatsByTenant(tenantId);
             log.info("📊 테넌트별 상담사 조회: tenantId={}, 조회된 수={}", tenantId, filteredStats.size());
         } else {
-            // 폴백: 전체 조회 (레거시 호환)
             filteredStats = consultantStatsService.getAllConsultantsWithStats();
             log.warn("⚠️ tenantId 없음, 전체 상담사 조회: 조회된 수={}", filteredStats.size());
         }
@@ -130,9 +123,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
     
-    // === 내담자 통계 통합 API ===
     
-    /**
      * 내담자 통계 정보 조회 (캐시 사용)
      * GET /api/admin/clients/with-stats/{id}
      */
@@ -145,7 +136,6 @@ public class AdminController extends BaseApiController {
         return success(stats);
     }
     
-    /**
      * 전체 내담자 통계 정보 조회 (캐시 사용 + 지점별 필터링)
      * GET /api/admin/clients/with-stats
      */
@@ -153,7 +143,6 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllClientsWithStats(HttpSession session) {
         log.info("📊 전체 내담자 통계 조회 API 호출");
         
-        // 현재 사용자 정보 가져오기
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
@@ -162,13 +151,11 @@ public class AdminController extends BaseApiController {
         String tenantId = currentUser.getTenantId();
         log.info("🔍 현재 사용자 정보: tenantId={}, 역할={}", tenantId, currentUser.getRole());
         
-        // ⭐ 테넌트별 내담자 조회 (tenant_id 필터링만 사용)
         List<Map<String, Object>> filteredStats;
         if (tenantId != null && !tenantId.isEmpty()) {
             filteredStats = clientStatsService.getAllClientsWithStatsByTenant(tenantId);
             log.info("📊 테넌트별 내담자 조회: tenantId={}, 조회된 수={}", tenantId, filteredStats.size());
         } else {
-            // 폴백: 전체 조회 (레거시 호환)
             filteredStats = clientStatsService.getAllClientsWithStats();
             log.warn("⚠️ tenantId 없음, 전체 내담자 조회: 조회된 수={}", filteredStats.size());
         }
@@ -180,39 +167,33 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
     
-    /**
      * 회기관리 통계 조회
      */
     @GetMapping("/sessions/statistics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSessionStatistics(HttpSession session) {
         log.info("🔍 회기관리 통계 조회");
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        // 회기관리 통계 데이터 조회
         Map<String, Object> statistics = adminService.getSessionStatistics();
         
         return success(statistics);
     }
 
-    /**
      * 회기관리 목록 조회
      */
     @GetMapping("/sessions")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSessions(HttpSession session) {
         log.info("🔍 회기관리 목록 조회");
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        // 회기관리 목록 데이터 조회
         List<Map<String, Object>> sessions = adminService.getSessions();
         
         Map<String, Object> data = new HashMap<>();
@@ -222,14 +203,12 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
      */
     @GetMapping("/consultants")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllConsultants(HttpSession session) {
         log.info("🔍 상담사 목록 조회");
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CONSULTANT_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
@@ -239,7 +218,6 @@ public class AdminController extends BaseApiController {
         
         log.info("🔍 상담사 조회 권한 확인 완료: role={}", currentUser.getRole());
         
-        // ⭐ 테넌트별 상담사 조회 (tenant_id 필터링만 사용)
         String tenantId = currentUser.getTenantId();
         log.info("🔍 현재 사용자 tenantId: {}, 역할: {}", tenantId, currentUser.getRole());
         
@@ -254,14 +232,12 @@ public class AdminController extends BaseApiController {
     }
     
     
-    /**
      * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
      */
     @GetMapping("/consultants/with-vacation")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllConsultantsWithVacationInfo(@RequestParam String date, HttpSession session) {
         log.info("🔍 휴무 정보를 포함한 상담사 목록 조회: date={}", date);
         
-        // ⭐ 테넌트별 상담사 조회 (tenant_id 필터링만 사용)
         User currentUser = SessionUtils.getCurrentUser(session);
         String tenantId = currentUser != null ? currentUser.getTenantId() : null;
         log.info("🔍 현재 사용자 tenantId: {}", tenantId);
@@ -276,14 +252,12 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 상담사별 휴가 통계 조회
      */
     @GetMapping("/vacation-statistics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultantVacationStats(@RequestParam(defaultValue = "month") String period, HttpSession session) {
         log.info("📊 상담사별 휴가 통계 조회: period={}", period);
         
-        // 현재 사용자 정보 확인
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             log.error("❌ 로그인된 사용자 정보가 없습니다");
@@ -293,21 +267,18 @@ public class AdminController extends BaseApiController {
         log.info("👤 현재 사용자: {} (역할: {})", 
                 currentUser.getUsername(), currentUser.getRole());
         
-        // ⭐ 테넌트별 상담사 휴무 통계 조회 (tenant_id 필터링만 사용)
         Map<String, Object> vacationStats = adminService.getConsultantVacationStats(period);
         log.info("📊 상담사 휴무 통계 조회 완료");
         
         return success(vacationStats);
     }
 
-    /**
      * 내담자 목록 조회
      */
     @GetMapping("/clients")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllClients(HttpSession session) {
         log.info("🔍 내담자 목록 조회");
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CLIENT_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
@@ -317,7 +288,6 @@ public class AdminController extends BaseApiController {
         String tenantId = currentUser != null ? currentUser.getTenantId() : null;
         log.info("🔍 현재 사용자 tenantId: {}", tenantId);
         
-        // ⭐ 테넌트별 내담자 조회 (tenant_id 필터링만 사용)
         List<Client> clients = adminService.getAllClients();
         log.info("📊 내담자 목록 조회 완료: 조회된 수={}", clients.size());
         
@@ -328,21 +298,18 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 통합 내담자 데이터 조회 (매칭 정보, 결제 상태, 남은 세션 등 포함)
      */
     @GetMapping("/clients/with-mapping-info")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllClientsWithMappingInfo(HttpSession session) {
         log.info("🔍 통합 내담자 데이터 조회");
         
-        // 현재 로그인한 사용자의 지점코드 확인
         User currentUser = SessionUtils.getCurrentUser(session);
         String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
         log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
         
         List<Map<String, Object>> allClientsWithMappingInfo = adminService.getAllClientsWithMappingInfo();
         
-        // 지점코드로 필터링
         List<Map<String, Object>> clientsWithMappingInfo = allClientsWithMappingInfo.stream()
             .filter(client -> {
                 if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
@@ -362,25 +329,21 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 상담사별 매칭된 내담자 목록 조회 (스케줄 등록용)
      */
     @GetMapping("/mappings/consultant/{consultantId}/clients")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientsByConsultantMapping(@PathVariable Long consultantId, HttpSession session) {
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        // 세션에서 현재 사용자 정보 가져오기
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다");
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다");
         }
         
-        // 세션의 사용자 정보가 불완전할 수 있으므로 이메일로 데이터베이스에서 다시 조회
         User fullUser = userService.findByEmail(currentUser.getEmail())
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         currentUser = fullUser; // Update currentUser with the fully loaded object
@@ -388,28 +351,22 @@ public class AdminController extends BaseApiController {
         log.info("🔍 현재 사용자 정보 - ID: {}, 이메일: {}, 역할: {}, 브랜치코드: {}", 
                 currentUser.getId(), currentUser.getEmail(), currentUser.getRole(), currentUser.getBranchCode());
         
-        // 표준화 원칙: 브랜치 코드는 더 이상 사용하지 않음 (테넌트 기반 시스템)
-        // 레거시 호환을 위해 사용자 정보에서만 가져옴
         String currentBranchCode = currentUser.getBranchCode();
         if (currentBranchCode != null) {
             log.info("🔧 사용자 정보에서 브랜치 코드 가져옴 (레거시 호환): {}", currentBranchCode);
         }
         
-        // 상담사는 브랜치 코드가 없어도 자신의 매칭을 조회할 수 있음
-        // 상담사 대시보드에서 호출되는 API이므로 브랜치 코드 체크 제거
         if (currentBranchCode == null) {
             log.info("🔧 브랜치 코드가 없지만 상담사 매칭 조회는 계속 진행");
         }
         
         log.info("🔍 상담사별 매칭된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
         
-        // URL의 consultantId로 상담사 정보를 찾아서 매칭 조회
         User targetConsultant = userService.findById(consultantId)
             .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
         
         List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantEmail(targetConsultant.getEmail());
         
-        // 결제 승인된 매칭만 필터링 (세션 소진 여부와 관계없이 모든 매칭 표시)
         List<Map<String, Object>> activeMappings = mappings.stream()
             .filter(mapping -> 
                 mapping.getPaymentStatus() != null && 
@@ -421,7 +378,6 @@ public class AdminController extends BaseApiController {
                 try {
                     data.put("id", mapping.getId());
                     
-                    // Client 정보 안전하게 추출
                     if (mapping.getClient() != null) {
                         data.put("client", Map.of(
                             "id", mapping.getClient().getId(),
@@ -462,7 +418,6 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 내담자별 매칭 조회
      */
     @GetMapping("/mappings/client")
@@ -470,7 +425,6 @@ public class AdminController extends BaseApiController {
         log.info("🔍 내담자별 매칭 조회: 내담자 ID={}", clientId);
         List<ConsultantClientMapping> mappings = adminService.getMappingsByClient(clientId);
         
-        // 매칭 정보를 상세하게 변환
         List<Map<String, Object>> mappingData = mappings.stream()
             .map(mapping -> {
                 Map<String, Object> mappingInfo = new HashMap<>();
@@ -488,7 +442,6 @@ public class AdminController extends BaseApiController {
                 mappingInfo.put("createdAt", mapping.getCreatedAt());
                 mappingInfo.put("assignedAt", mapping.getAssignedAt());
                 
-                // 상담사 정보
                 if (mapping.getConsultant() != null) {
                     Map<String, Object> consultantInfo = new HashMap<>();
                     consultantInfo.put("consultantId", mapping.getConsultant().getId());
@@ -510,7 +463,6 @@ public class AdminController extends BaseApiController {
         return success("내담자별 매칭 조회 성공", data);
     }
 
-    /**
      * 매칭 통계 정보 조회 (위젯용)
      * GET /api/admin/mappings/stats
      */
@@ -519,16 +471,13 @@ public class AdminController extends BaseApiController {
         log.info("📊 매칭 통계 조회 API 호출");
         
         try {
-            // 권한 체크
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
             if (permissionResponse != null) {
                 throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
             }
             
-            // 모든 매칭 조회
             List<ConsultantClientMapping> mappings = adminService.getAllMappings();
             
-            // 통계 계산
             long totalMappings = mappings.size();
             long activeMappings = mappings.stream()
                 .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS", m.getStatus() != null ? m.getStatus().toString() : "", "ACTIVE"))
@@ -561,7 +510,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 오늘의 통계 조회 (위젯용)
      * GET /api/admin/today-stats
      */
@@ -570,19 +518,15 @@ public class AdminController extends BaseApiController {
         log.info("📊 오늘의 통계 조회 API 호출");
         
         try {
-            // 권한 체크
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "DASHBOARD_VIEW", dynamicPermissionService);
             if (permissionResponse != null) {
                 throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
             }
             
-            // 오늘 날짜
             java.time.LocalDate today = java.time.LocalDate.now();
             
-            // 오늘의 스케줄 조회 (모든 상담사)
             List<com.coresolution.consultation.entity.Schedule> todaySchedules = scheduleService.getSchedulesByDate(today, null);
             
-            // 통계 계산
             long totalToday = todaySchedules.size();
             long completedToday = todaySchedules.stream()
                 .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS", s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
@@ -620,7 +564,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 입금 대기 통계 조회 (위젯용)
      * GET /api/admin/pending-deposit-stats
      */
@@ -629,22 +572,18 @@ public class AdminController extends BaseApiController {
         log.info("📊 입금 대기 통계 조회 API 호출");
         
         try {
-            // 권한 체크
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
             if (permissionResponse != null) {
                 throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
             }
             
-            // 입금 대기 매칭 조회
             List<ConsultantClientMapping> pendingDeposits = adminService.getPendingDepositMappings();
             
-            // 통계 계산
             long count = pendingDeposits.size();
             long totalAmount = pendingDeposits.stream()
                 .mapToLong(m -> m.getPackagePrice() != null ? m.getPackagePrice().longValue() : 0L)
                 .sum();
             
-            // 가장 오래된 대기 시간 계산 (시간 단위)
             long oldestHours = 0;
             if (!pendingDeposits.isEmpty()) {
                 java.time.LocalDateTime now = java.time.LocalDateTime.now();
@@ -678,7 +617,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 오늘의 스케줄 조회 (관리자용)
      * GET /api/admin/schedules/today
      */
@@ -687,7 +625,6 @@ public class AdminController extends BaseApiController {
         log.info("📅 오늘의 스케줄 조회 API 호출");
         
         try {
-            // 권한 체크
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SCHEDULE_VIEW", dynamicPermissionService);
             if (permissionResponse != null) {
                 throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
@@ -696,7 +633,6 @@ public class AdminController extends BaseApiController {
             java.time.LocalDate today = java.time.LocalDate.now();
             List<com.coresolution.consultation.entity.Schedule> schedules = scheduleService.getSchedulesByDate(today, null);
             
-            // 필요한 정보만 추출
             List<Map<String, Object>> scheduleData = schedules.stream()
                 .map(s -> {
                     Map<String, Object> data = new java.util.HashMap<>();
@@ -718,7 +654,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 재무 요약 조회
      * GET /api/admin/finance/summary
      */
@@ -727,13 +662,11 @@ public class AdminController extends BaseApiController {
         log.info("💰 재무 요약 조회 API 호출");
         
         try {
-            // 권한 체크
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "FINANCE_VIEW", dynamicPermissionService);
             if (permissionResponse != null) {
                 throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
             }
             
-            // 재무 요약 데이터 (기본 구현)
             Map<String, Object> summary = new java.util.HashMap<>();
             summary.put("totalRevenue", 0);
             summary.put("pendingPayments", 0);
@@ -748,32 +681,27 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 매칭 목록 조회 (중앙화 - 모든 매칭 조회)
      */
     @GetMapping("/mappings")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllMappings(HttpSession session) {
         log.info("🔍 매칭 목록 조회 (중앙화)");
         
-        // 권한 체크 (운영 환경과 동일)
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        // 모든 매칭 조회 (지점 필터링 제거)
         List<ConsultantClientMapping> mappings = adminService.getAllMappings();
         
         log.info("🔍 매칭 목록 조회 완료 - 총 {}개", mappings.size());
 
-        // 직렬화 문제를 피하기 위해 필요한 정보만 추출 (안전한 방식)
         List<Map<String, Object>> mappingData = mappings.stream()
             .map(mapping -> {
                 Map<String, Object> data = new java.util.HashMap<>();
                 try {
                     data.put("id", mapping.getId());
 
-                    // Consultant 정보 안전하게 추출
                     if (mapping.getConsultant() != null) {
                         data.put("consultantId", mapping.getConsultant().getId());
                         data.put("consultantName", mapping.getConsultant().getName());
@@ -782,7 +710,6 @@ public class AdminController extends BaseApiController {
                         data.put("consultantName", "알 수 없음");
                     }
 
-                    // Client 정보 안전하게 추출
                     if (mapping.getClient() != null) {
                         data.put("clientId", mapping.getClient().getId());
                         data.put("clientName", mapping.getClient().getName());
@@ -831,9 +758,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    // ==================== 매칭 수정 시스템 ====================
     
-    /**
      * 매칭 정보 수정 (ERP 연동)
      */
     @PostMapping("/mappings/{mappingId}/update")
@@ -843,19 +768,16 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("🔄 매칭 정보 수정 요청: mappingId={}, request={}", mappingId, updateRequest);
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        // 세션에서 현재 사용자 정보 가져오기
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        // 권한 확인
         Map<String, Object> permissionResult = storedProcedureService.checkMappingUpdatePermission(
             mappingId, currentUser.getId(), currentUser.getRole().toString());
         
@@ -863,12 +785,10 @@ public class AdminController extends BaseApiController {
             throw new IllegalArgumentException((String) permissionResult.get("reason"));
         }
         
-        // 요청 데이터 추출
         String newPackageName = (String) updateRequest.get("packageName");
         Double newPackagePrice = ((Number) updateRequest.get("packagePrice")).doubleValue();
         Integer newTotalSessions = ((Number) updateRequest.get("totalSessions")).intValue();
         
-        // 매칭 정보 수정 (PL/SQL 프로시저 호출)
         Map<String, Object> updateResult = storedProcedureService.updateMappingInfo(
             mappingId, newPackageName, newPackagePrice, newTotalSessions, currentUser.getName());
         
@@ -882,9 +802,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    // ==================== 입금 승인 시스템 ====================
 
-    /**
      * 입금 대기 중인 매칭 목록 조회
      */
     @GetMapping("/mappings/pending-payment")
@@ -899,7 +817,6 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 입금 확인된 매칭 목록 조회
      */
     @GetMapping("/mappings/payment-confirmed")
@@ -914,27 +831,23 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 입금 확인 대기 중인 매칭 목록 조회
      */
     @GetMapping("/mappings/pending-deposit")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingDepositMappings(HttpSession session) {
         log.info("🔔 입금 확인 대기 매칭 조회 요청");
         
-        // 권한 확인
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        // 관리자 권한 확인
         if (!currentUser.getRole().isAdmin()) {
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
         
         List<ConsultantClientMapping> pendingMappings = adminService.getPendingDepositMappings();
         
-        // 대기 시간 계산하여 응답 구성
         List<Map<String, Object>> responseData = pendingMappings.stream()
             .map(mapping -> {
                 Map<String, Object> mappingData = new HashMap<>();
@@ -947,7 +860,6 @@ public class AdminController extends BaseApiController {
                 mappingData.put("paymentMethod", mapping.getPaymentMethod());
                 mappingData.put("paymentReference", mapping.getPaymentReference());
                 
-                // 대기 시간 계산 (결제일 기준)
                 if (mapping.getPaymentDate() != null) {
                     long hoursElapsed = java.time.Duration.between(
                         mapping.getPaymentDate(), 
@@ -970,7 +882,6 @@ public class AdminController extends BaseApiController {
         return success("입금 확인 대기 매칭 조회 완료", data);
     }
 
-    /**
      * 활성 매칭 목록 조회 (승인 완료)
      */
     @GetMapping("/mappings/active")
@@ -978,19 +889,16 @@ public class AdminController extends BaseApiController {
         log.info("🔍 활성 매칭 목록 조회");
         List<ConsultantClientMapping> mappings = adminService.getActiveMappings();
         
-        // 직렬화 문제를 피하기 위해 필요한 정보만 추출 (안전한 방식)
         List<Map<String, Object>> mappingData = mappings.stream()
             .map(mapping -> {
                 Map<String, Object> data = new java.util.HashMap<>();
                 try {
                     data.put("id", mapping.getId());
 
-                    // Consultant 정보 안전하게 추출
                     if (mapping.getConsultant() != null) {
                         data.put("consultantId", mapping.getConsultant().getId());
                         data.put("consultantName", mapping.getConsultant().getName());
                         
-                        // Consultant 객체도 포함
                         Map<String, Object> consultantInfo = new java.util.HashMap<>();
                         consultantInfo.put("id", mapping.getConsultant().getId());
                         consultantInfo.put("name", mapping.getConsultant().getName());
@@ -1004,12 +912,10 @@ public class AdminController extends BaseApiController {
                         data.put("consultant", null);
                     }
 
-                    // Client 정보 안전하게 추출
                     if (mapping.getClient() != null) {
                         data.put("clientId", mapping.getClient().getId());
                         data.put("clientName", mapping.getClient().getName());
                         
-                        // Client 정보를 안전하게 추출
                         Map<String, Object> clientInfo = new java.util.HashMap<>();
                         clientInfo.put("id", mapping.getClient().getId());
                         clientInfo.put("name", mapping.getClient().getName());
@@ -1056,7 +962,6 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 회기 소진된 매칭 목록 조회
      */
     @GetMapping("/mappings/sessions-exhausted")
@@ -1071,7 +976,6 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 개별 매칭 조회
      */
     @GetMapping("/mappings/{mappingId}")
@@ -1083,7 +987,6 @@ public class AdminController extends BaseApiController {
             throw new IllegalArgumentException("매칭을 찾을 수 없습니다.");
         }
         
-        // 안전한 데이터 추출 (프록시 객체 직렬화 문제 방지)
         Map<String, Object> mappingData = new HashMap<>();
         mappingData.put("id", mapping.getId());
         mappingData.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
@@ -1099,7 +1002,6 @@ public class AdminController extends BaseApiController {
         mappingData.put("assignedAt", mapping.getAssignedAt());
         mappingData.put("createdAt", mapping.getCreatedAt());
         
-        // Consultant 정보 안전하게 추출
         if (mapping.getConsultant() != null) {
             Map<String, Object> consultantData = new HashMap<>();
             consultantData.put("id", mapping.getConsultant().getId());
@@ -1108,7 +1010,6 @@ public class AdminController extends BaseApiController {
             mappingData.put("consultant", consultantData);
         }
         
-        // Client 정보 안전하게 추출
         if (mapping.getClient() != null) {
             Map<String, Object> clientData = new HashMap<>();
             clientData.put("id", mapping.getClient().getId());
@@ -1120,7 +1021,6 @@ public class AdminController extends BaseApiController {
         return success(mappingData);
     }
 
-    /**
      * 결제 확인 (미수금 상태)
      */
     @PostMapping("/mappings/{mappingId}/confirm-payment")
@@ -1141,7 +1041,6 @@ public class AdminController extends BaseApiController {
         
         log.info("💰 매칭 ID {} 결제 확인 완료 (미수금 상태)", mappingId);
         
-        // 안전한 데이터 추출 (프록시 객체 직렬화 문제 방지)
         Map<String, Object> mappingData = new HashMap<>();
         mappingData.put("id", mapping.getId());
         mappingData.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
@@ -1155,7 +1054,6 @@ public class AdminController extends BaseApiController {
         mappingData.put("packageName", mapping.getPackageName());
         mappingData.put("packagePrice", mapping.getPackagePrice());
         
-        // Consultant 정보 안전하게 추출
         if (mapping.getConsultant() != null) {
             Map<String, Object> consultantData = new HashMap<>();
             consultantData.put("id", mapping.getConsultant().getId());
@@ -1164,7 +1062,6 @@ public class AdminController extends BaseApiController {
             mappingData.put("consultant", consultantData);
         }
         
-        // Client 정보 안전하게 추출
         if (mapping.getClient() != null) {
             Map<String, Object> clientData = new HashMap<>();
             clientData.put("id", mapping.getClient().getId());
@@ -1176,7 +1073,6 @@ public class AdminController extends BaseApiController {
         return success("입금이 확인되었습니다. 이제 관리자 승인을 기다려주세요.", mappingData);
     }
 
-    /**
      * 관리자 승인
      */
     @PostMapping("/mappings/{mappingId}/approve")
@@ -1189,7 +1085,6 @@ public class AdminController extends BaseApiController {
         
         ConsultantClientMapping mapping = adminService.approveMapping(mappingId, adminName);
         
-        // 안전한 데이터 추출 (프록시 객체 직렬화 문제 방지)
         Map<String, Object> mappingData = new HashMap<>();
         mappingData.put("id", mapping.getId());
         mappingData.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
@@ -1206,7 +1101,6 @@ public class AdminController extends BaseApiController {
         mappingData.put("remainingSessions", mapping.getRemainingSessions());
         mappingData.put("usedSessions", mapping.getUsedSessions());
         
-        // Consultant 정보 안전하게 추출
         if (mapping.getConsultant() != null) {
             Map<String, Object> consultantData = new HashMap<>();
             consultantData.put("id", mapping.getConsultant().getId());
@@ -1215,7 +1109,6 @@ public class AdminController extends BaseApiController {
             mappingData.put("consultant", consultantData);
         }
         
-        // Client 정보 안전하게 추출
         if (mapping.getClient() != null) {
             Map<String, Object> clientData = new HashMap<>();
             clientData.put("id", mapping.getClient().getId());
@@ -1227,7 +1120,6 @@ public class AdminController extends BaseApiController {
         return success("매칭이 승인되었습니다. 이제 스케줄을 작성할 수 있습니다.", mappingData);
     }
 
-    /**
      * 관리자 거부
      */
     @PostMapping("/mappings/{mappingId}/reject")
@@ -1243,7 +1135,6 @@ public class AdminController extends BaseApiController {
         return success("매칭이 거부되었습니다.", mapping);
     }
 
-    /**
      * 회기 사용 처리
      */
     @PostMapping("/mappings/{mappingId}/use-session")
@@ -1255,7 +1146,6 @@ public class AdminController extends BaseApiController {
         return success("회기가 사용되었습니다.", mapping);
     }
 
-    /**
      * 회기 추가 (연장)
      */
     @PostMapping("/mappings/{mappingId}/extend-sessions")
@@ -1274,14 +1164,12 @@ public class AdminController extends BaseApiController {
         return success("회기가 추가되었습니다.", mapping);
     }
 
-    /**
      * 상담사 등록
      */
     @PostMapping("/consultants")
     public ResponseEntity<ApiResponse<User>> registerConsultant(@RequestBody ConsultantRegistrationDto dto, HttpSession session) {
         log.info("🔧 상담사 등록: {}", dto.getUsername());
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CONSULTANT_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
@@ -1289,12 +1177,9 @@ public class AdminController extends BaseApiController {
         
         User currentUser = SessionUtils.getCurrentUser(session);
         
-        // 지점코드 자동 설정 로직 (레거시 시스템, 현재 사용 안 함)
-        /*
         if (currentUser != null) {
             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
-            // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
                 (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
                 dto.setBranchCode(currentUser.getBranchCode());
@@ -1302,7 +1187,6 @@ public class AdminController extends BaseApiController {
             }
         }
         
-        // 지점코드 필수 검증 (레거시 시스템)
         if (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty()) {
             log.error("❌ 지점코드가 없습니다. 상담사 등록을 거부합니다.");
             throw new IllegalArgumentException("지점코드는 필수입니다. 관리자에게 문의하세요.");
@@ -1313,7 +1197,6 @@ public class AdminController extends BaseApiController {
         return created("상담사가 성공적으로 등록되었습니다", consultant);
     }
 
-    /**
      * 내담자 등록
      */
     @PostMapping("/clients")
@@ -1321,7 +1204,6 @@ public class AdminController extends BaseApiController {
         log.info("🔧 내담자 등록: {}", dto.getName());
         log.info("🔧 요청 데이터: branchCode={}", dto.getBranchCode());
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CLIENT_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
@@ -1331,12 +1213,9 @@ public class AdminController extends BaseApiController {
         
         log.info("🔧 세션 사용자: {}", currentUser.getName());
         
-        // 지점코드 자동 설정 로직 (레거시 시스템, 필요시 사용)
-        /*
         if (currentUser != null) {
             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
-            // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
                 (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
                 dto.setBranchCode(currentUser.getBranchCode());
@@ -1344,7 +1223,6 @@ public class AdminController extends BaseApiController {
             }
         }
         
-        // 지점코드 필수 검증 (레거시 시스템)
         if (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty()) {
             log.error("❌ 지점코드가 없습니다. 등록을 거부합니다.");
             throw new IllegalArgumentException("지점코드는 필수입니다. 관리자에게 문의하세요.");
@@ -1359,14 +1237,12 @@ public class AdminController extends BaseApiController {
     }
 
 
-    /**
      * 매칭 생성
      */
     @PostMapping("/mappings")
     public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> createMapping(@RequestBody ConsultantClientMappingDto dto, HttpSession session) {
         log.info("🔧 매칭 생성 시작: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
         
-        // 세션 체크 및 권한 확인 (운영 환경과 동일)
         User currentUser = SessionUtils.getCurrentUser(session);
         log.info("🔧 SessionUtils.getCurrentUser() 결과: {}", currentUser);
         
@@ -1375,7 +1251,6 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
@@ -1386,28 +1261,23 @@ public class AdminController extends BaseApiController {
         
         ConsultantClientMapping mapping = adminService.createMapping(dto);
         
-        // 생성된 매칭의 지점코드 확인
         log.info("🔧 생성된 매칭 지점코드: {}", mapping.getBranchCode());
         
-        // 엔티티를 DTO로 변환하여 반환 (LazyInitializationException 방지)
         ConsultantClientMappingResponse response = ConsultantClientMappingResponse.fromEntity(mapping);
         
         return created("매칭이 성공적으로 생성되었습니다", response);
     }
 
-    /**
      * 상담사 정보 수정
      */
     @PutMapping("/consultants/{id}")
     public ResponseEntity<ApiResponse<User>> updateConsultant(@PathVariable Long id, @RequestBody ConsultantRegistrationDto dto, HttpSession session) {
         log.info("🔧 상담사 정보 수정: ID={}", id);
         
-        // 세션에서 현재 사용자의 지점 정보 가져오기
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser != null) {
             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
-            // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
                 (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
                 dto.setBranchCode(currentUser.getBranchCode());
@@ -1419,7 +1289,6 @@ public class AdminController extends BaseApiController {
         return updated("상담사 정보가 성공적으로 수정되었습니다", consultant);
     }
 
-    /**
      * 상담사 등급 업데이트
      */
     @PutMapping("/consultants/{id}/grade")
@@ -1437,19 +1306,16 @@ public class AdminController extends BaseApiController {
         return updated("상담사 등급이 성공적으로 업데이트되었습니다", data);
     }
 
-    /**
      * 내담자 정보 수정
      */
     @PutMapping("/clients/{id}")
     public ResponseEntity<ApiResponse<Client>> updateClient(@PathVariable Long id, @RequestBody ClientRegistrationDto dto, HttpSession session) {
         log.info("🔧 내담자 정보 수정: ID={}", id);
         
-        // 세션에서 현재 사용자의 지점 정보 가져오기
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser != null) {
             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
-            // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
                 (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
                 dto.setBranchCode(currentUser.getBranchCode());
@@ -1461,21 +1327,18 @@ public class AdminController extends BaseApiController {
         return updated("내담자 정보가 성공적으로 수정되었습니다", client);
     }
 
-    /**
      * 매칭 정보 수정
      */
     @PutMapping("/mappings/{id}")
     public ResponseEntity<ApiResponse<ConsultantClientMapping>> updateMapping(@PathVariable Long id, @RequestBody ConsultantClientMappingDto dto, HttpSession session) {
         log.info("🔧 매칭 정보 수정: ID={}", id);
         
-        // 동적 권한 체크 (MAPPING_MANAGE 권한 사용)
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
             log.warn("❌ 매칭 수정 권한 없음: MAPPING_MANAGE");
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        // 세션에서 현재 사용자 정보 가져오기 (프로시저 호출 시 사용)
         User currentUser = SessionUtils.getCurrentUser(session);
         String updatedBy = currentUser != null ? currentUser.getName() : "System";
         
@@ -1483,7 +1346,6 @@ public class AdminController extends BaseApiController {
         return updated("매칭 정보가 성공적으로 수정되었습니다", mapping);
     }
 
-    /**
      * 상담사 삭제 (비활성화)
      */
     @DeleteMapping("/consultants/{id}")
@@ -1493,7 +1355,6 @@ public class AdminController extends BaseApiController {
         return deleted("상담사가 성공적으로 삭제되었습니다");
     }
 
-    /**
      * 상담사 삭제 (다른 상담사로 이전 포함)
      */
     @PostMapping("/consultants/{id}/delete-with-transfer")
@@ -1509,7 +1370,6 @@ public class AdminController extends BaseApiController {
         return deleted("상담사가 성공적으로 이전 처리되어 삭제되었습니다");
     }
 
-    /**
      * 상담사 삭제 가능 여부 확인
      */
     @GetMapping("/consultants/{id}/deletion-status")
@@ -1520,7 +1380,6 @@ public class AdminController extends BaseApiController {
         return success(status);
     }
 
-    /**
      * 내담자 삭제 (비활성화)
      */
     @DeleteMapping("/clients/{id}")
@@ -1530,7 +1389,6 @@ public class AdminController extends BaseApiController {
         return deleted("내담자가 성공적으로 삭제되었습니다");
     }
 
-    /**
      * 내담자 삭제 가능 여부 확인
      */
     @GetMapping("/clients/{id}/deletion-status")
@@ -1541,20 +1399,17 @@ public class AdminController extends BaseApiController {
         return success(status);
     }
 
-    /**
      * 매칭 삭제 (비활성화)
      */
     @DeleteMapping("/mappings/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteMapping(@PathVariable Long id, HttpSession session) {
         log.info("🔧 매칭 삭제: ID={}", id);
         
-        // 현재 사용자 정보 로깅
         User currentUser = SessionUtils.getCurrentUser(session);
         log.info("📋 현재 사용자: {}, Role: {}", 
             currentUser != null ? currentUser.getEmail() : "null",
             currentUser != null ? currentUser.getRole() : "null");
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_DELETE", dynamicPermissionService);
         if (permissionResponse != null) {
             log.error("❌ 권한 체크 실패: {}", permissionResponse.getBody());
@@ -1566,7 +1421,6 @@ public class AdminController extends BaseApiController {
         return deleted("매칭이 성공적으로 삭제되었습니다");
     }
 
-    /**
      * 매칭 강제 종료 (전체 환불 처리)
      */
     @PostMapping("/mappings/{id}/terminate")
@@ -1577,7 +1431,6 @@ public class AdminController extends BaseApiController {
         return success("매칭이 성공적으로 종료되었습니다");
     }
 
-    /**
      * 매칭 부분 환불 처리 (지정된 회기수만 환불)
      */
     @PostMapping("/mappings/{id}/partial-refund")
@@ -1602,14 +1455,12 @@ public class AdminController extends BaseApiController {
         return success(String.format("%d회기 부분 환불이 성공적으로 처리되었습니다", refundSessions));
     }
 
-    /**
      * 환불 통계 조회
      */
     @GetMapping("/refund-statistics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getRefundStatistics(@RequestParam(defaultValue = "month") String period, HttpSession session) {
         log.info("📊 환불 통계 조회: period={}", period);
         
-        // 현재 로그인한 사용자의 지점코드 확인
         User currentUser = SessionUtils.getCurrentUser(session);
         String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
         log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
@@ -1619,7 +1470,6 @@ public class AdminController extends BaseApiController {
         return success(statistics);
     }
 
-    /**
      * 환불 이력 조회
      */
     @GetMapping("/refund-history")
@@ -1631,7 +1481,6 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📋 환불 이력 조회: page={}, size={}, period={}, status={}", page, size, period, status);
         
-        // 현재 사용자 정보 확인
         User currentUser = SessionUtils.getCurrentUser(session);
         String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
         log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
@@ -1641,7 +1490,6 @@ public class AdminController extends BaseApiController {
         return success(result);
     }
 
-    /**
      * ERP 동기화 상태 확인
      */
     @GetMapping("/erp-sync-status")
@@ -1652,9 +1500,7 @@ public class AdminController extends BaseApiController {
         return success(status);
     }
 
-    // ==================== 상담사 변경 시스템 ====================
 
-    /**
      * 상담사 변경 처리
      */
     @PostMapping("/mappings/transfer")
@@ -1664,7 +1510,6 @@ public class AdminController extends BaseApiController {
         
         ConsultantClientMapping newMapping = adminService.transferConsultant(request);
         
-        // 안전한 데이터 추출 (프록시 객체 직렬화 문제 방지)
         Map<String, Object> mappingData = new HashMap<>();
         mappingData.put("id", newMapping.getId());
         mappingData.put("status", newMapping.getStatus() != null ? newMapping.getStatus().toString() : "UNKNOWN");
@@ -1676,7 +1521,6 @@ public class AdminController extends BaseApiController {
         mappingData.put("assignedAt", newMapping.getAssignedAt());
         mappingData.put("createdAt", newMapping.getCreatedAt());
         
-        // Consultant 정보 안전하게 추출
         if (newMapping.getConsultant() != null) {
             Map<String, Object> consultantData = new HashMap<>();
             consultantData.put("id", newMapping.getConsultant().getId());
@@ -1685,7 +1529,6 @@ public class AdminController extends BaseApiController {
             mappingData.put("consultant", consultantData);
         }
         
-        // Client 정보 안전하게 추출
         if (newMapping.getClient() != null) {
             Map<String, Object> clientData = new HashMap<>();
             clientData.put("id", newMapping.getClient().getId());
@@ -1697,7 +1540,6 @@ public class AdminController extends BaseApiController {
         return success("상담사가 성공적으로 변경되었습니다.", mappingData);
     }
 
-    /**
      * 내담자별 상담사 변경 이력 조회
      */
     @GetMapping("/clients/{clientId}/transfer-history")
@@ -1705,7 +1547,6 @@ public class AdminController extends BaseApiController {
         log.info("🔍 내담자 ID {} 상담사 변경 이력 조회", clientId);
         List<ConsultantClientMapping> transferHistory = adminService.getTransferHistory(clientId);
         
-        // 안전한 데이터 추출
         List<Map<String, Object>> historyData = transferHistory.stream()
             .map(mapping -> {
                 Map<String, Object> data = new HashMap<>();
@@ -1717,7 +1558,6 @@ public class AdminController extends BaseApiController {
                 data.put("startDate", mapping.getStartDate());
                 data.put("endDate", mapping.getEndDate());
                 
-                // Consultant 정보 안전하게 추출
                 if (mapping.getConsultant() != null) {
                     Map<String, Object> consultantData = new HashMap<>();
                     consultantData.put("id", mapping.getConsultant().getId());
@@ -1737,7 +1577,6 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 입금 확인 (현금 수입)
      */
     @PostMapping("/mappings/{mappingId}/confirm-deposit")
@@ -1745,7 +1584,6 @@ public class AdminController extends BaseApiController {
             @PathVariable Long mappingId,
             @RequestBody Map<String, Object> request,
             HttpSession session) {
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
@@ -1758,7 +1596,6 @@ public class AdminController extends BaseApiController {
         
         log.info("💰 요청 데이터 - depositReference: {}", depositReference);
         
-        // 매핑 상태 사전 확인
         ConsultantClientMapping existingMapping = adminService.getMappingById(mappingId);
         if (existingMapping == null) {
             log.error("❌ 매핑 ID {}를 찾을 수 없습니다", mappingId);
@@ -1772,7 +1609,6 @@ public class AdminController extends BaseApiController {
         
         log.info("💰 매칭 ID {} 입금 확인 완료 (현금 수입)", mappingId);
         
-        // 안전한 데이터 추출 (프록시 객체 직렬화 문제 방지)
         Map<String, Object> mappingData = new HashMap<>();
         mappingData.put("id", mapping.getId());
         mappingData.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
@@ -1786,7 +1622,6 @@ public class AdminController extends BaseApiController {
         mappingData.put("packageName", mapping.getPackageName());
         mappingData.put("packagePrice", mapping.getPackagePrice());
         
-        // Consultant 정보 안전하게 추출
         if (mapping.getConsultant() != null) {
             Map<String, Object> consultantData = new HashMap<>();
             consultantData.put("id", mapping.getConsultant().getId());
@@ -1795,7 +1630,6 @@ public class AdminController extends BaseApiController {
             mappingData.put("consultant", consultantData);
         }
         
-        // Client 정보 안전하게 추출
         if (mapping.getClient() != null) {
             Map<String, Object> clientData = new HashMap<>();
             clientData.put("id", mapping.getClient().getId());
@@ -1807,7 +1641,6 @@ public class AdminController extends BaseApiController {
         return success("입금이 성공적으로 확인되었습니다.", mappingData);
     }
 
-    /**
      * 매칭 결제 확인
      */
     @PostMapping("/mapping/payment/confirm")
@@ -1824,14 +1657,11 @@ public class AdminController extends BaseApiController {
             throw new IllegalArgumentException("매칭 ID가 필요합니다.");
         }
         
-        // 실제 결제 확인 로직 구현
         log.info("결제 확인 처리: mappingIds={}, method={}, amount={}, note={}", 
             mappingIds, paymentMethod, amount, note);
         
-        // 매칭 상태 업데이트 및 ERP 연동
         for (Long mappingId : mappingIds) {
             try {
-                // AdminService의 confirmPayment 메서드 사용 (ERP 연동 포함)
                 adminService.confirmPayment(mappingId, paymentMethod, 
                     "ADMIN_CONFIRMED_" + System.currentTimeMillis(), 
                     amount != null ? amount.longValue() : 0L);
@@ -1851,7 +1681,6 @@ public class AdminController extends BaseApiController {
         return success("결제가 성공적으로 확인되었습니다.", data);
     }
     
-    /**
      * 매칭 결제 취소
      */
     @PostMapping("/mapping/payment/cancel")
@@ -1865,20 +1694,16 @@ public class AdminController extends BaseApiController {
             throw new IllegalArgumentException("매칭 ID가 필요합니다.");
         }
         
-        // 실제 결제 취소 로직 구현
         log.info("결제 취소 처리: mappingIds={}", mappingIds);
         
-        // 매칭 상태 업데이트
         for (Long mappingId : mappingIds) {
             try {
                 ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
                 if (mapping != null) {
-                    // 결제 상태를 취소됨으로 변경
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
                     mapping.setUpdatedAt(java.time.LocalDateTime.now());
                     
-                    // 매칭 저장 (AdminService의 updateMapping은 DTO를 받으므로 직접 저장)
-                    // adminService.updateMapping(mappingId, mapping);
                     log.info("매칭 ID {} 결제 취소 완료", mappingId);
                 }
             } catch (Exception e) {
@@ -1893,7 +1718,6 @@ public class AdminController extends BaseApiController {
         return success("결제가 성공적으로 취소되었습니다.", data);
     }
 
-    /**
      * 상담사별 상담 완료 건수 통계 조회
      */
     @GetMapping("/statistics/consultation-completion")
@@ -1901,7 +1725,6 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) String period, HttpSession session) {
         log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
         
-        // 현재 사용자 정보 확인
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             log.error("❌ 로그인된 사용자 정보가 없습니다");
@@ -1911,7 +1734,6 @@ public class AdminController extends BaseApiController {
         log.info("👤 현재 사용자: {} (역할: {}, 지점코드: {})", 
                 currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
         
-        // 지점 관리자인 경우 자신의 지점 상담사만 조회
         List<Map<String, Object>> statistics;
         if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회 (역할: {}, 지점: {})", 
@@ -1930,7 +1752,6 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 상담사별 스케줄 조회 (필터링)
      */
     @GetMapping("/schedules")
@@ -1945,21 +1766,17 @@ public class AdminController extends BaseApiController {
         List<Map<String, Object>> schedules;
         
         if (consultantId != null) {
-            // 특정 상담사의 스케줄만 조회
             schedules = adminService.getSchedulesByConsultantId(consultantId);
         } else {
-            // 모든 스케줄 조회 (기존 로직)
             schedules = adminService.getAllSchedules();
         }
         
-        // 상태 필터링
         if (status != null && !status.isEmpty() && !"ALL".equals(status)) {
             schedules = schedules.stream()
                 .filter(schedule -> status.equals(schedule.get("status")))
                 .collect(java.util.stream.Collectors.toList());
         }
         
-        // 날짜 필터링
         if (startDate != null && !startDate.isEmpty()) {
             schedules = schedules.stream()
                 .filter(schedule -> {
@@ -1991,20 +1808,17 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
-    /**
      * 스케줄 자동 완료 처리 (수동 실행)
      */
     @PostMapping("/schedules/auto-complete")
     public ResponseEntity<ApiResponse<Void>> autoCompleteSchedules() {
         log.info("🔄 스케줄 자동 완료 처리 수동 실행");
         
-        // 스케줄 서비스를 통해 자동 완료 처리 실행
         scheduleService.autoCompleteExpiredSchedules();
         
         return success("스케줄 자동 완료 처리가 실행되었습니다.");
     }
 
-    /**
      * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행)
      */
     @PostMapping("/schedules/auto-complete-with-reminder")
@@ -2016,14 +1830,12 @@ public class AdminController extends BaseApiController {
         return success(result);
     }
 
-    /**
      * 스케줄 상태별 통계 조회
      */
     @GetMapping("/schedules/statistics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getScheduleStatistics(@RequestParam(required = false) String userRole, HttpSession session) {
         log.info("📊 스케줄 상태별 통계 조회 요청 - 사용자 역할: {}", userRole);
         
-        // 현재 사용자 정보 확인
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             log.warn("❌ 인증되지 않은 사용자");
@@ -2033,7 +1845,6 @@ public class AdminController extends BaseApiController {
         log.info("👤 현재 사용자: {} (역할: {}, 지점코드: {})", 
                 currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
         
-        // 지점 관리자인 경우 자신의 지점 스케줄만 조회
         Map<String, Object> statistics;
         if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 스케줄만 조회 (역할: {}, 지점: {})", 
@@ -2054,7 +1865,6 @@ public class AdminController extends BaseApiController {
         return success(statistics);
     }
     
-    /**
      * 사용자 목록 조회
      */
     @GetMapping("/users")
@@ -2065,24 +1875,19 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("🔍 사용자 목록 조회: includeInactive={}, role={}, branchCode={}", includeInactive, role, branchCode);
         
-        // 권한 확인
-        // 표준화 원칙: SessionUtils 사용
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        // 관리자 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
         if (!currentUser.getRole().isAdmin()) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        // 지점코드 결정 (표준화 2025-12-05: 브랜치 개념 제거, tenantId만 사용)
         String targetBranchCode = branchCode; // 레거시 호환용 (사용하지 않음)
         
         List<User> users = adminService.getUsers(includeInactive, role, targetBranchCode);
         
-        // 안전한 사용자 정보만 추출하여 반환
         List<Map<String, Object>> userList = users.stream()
             .map(user -> {
                 Map<String, Object> userData = new HashMap<>();
@@ -2108,7 +1913,6 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
     
-    /**
      * 사용자 역할 변경
      */
     @PutMapping("/users/{userId}/role")
@@ -2118,16 +1922,12 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("🔧 사용자 역할 변경: userId={}, newRole={}", userId, newRole);
         
-        // 권한 확인
-        // 표준화 원칙: SessionUtils 사용
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        // 어드민 또는 지점어드민 권한 확인
         UserRole userRole = currentUser.getRole();
-        // 표준화 2025-12-05: 표준 관리자 역할만 사용
         boolean hasPermission = userRole.isAdmin();
         
         if (!hasPermission) {
@@ -2135,7 +1935,6 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        // 역할 변경 실행
         User updatedUser = adminService.changeUserRole(userId, newRole);
         
         if (updatedUser == null) {
@@ -2153,15 +1952,12 @@ public class AdminController extends BaseApiController {
         return updated("사용자 역할이 성공적으로 변경되었습니다.", data);
     }
     
-    /**
      * 사용자 상세 정보 조회
      */
     @GetMapping("/users/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getUserById(@PathVariable Long id, HttpSession session) {
         log.info("🔍 사용자 상세 정보 조회: ID={}", id);
         
-        // 권한 확인
-        // 표준화 원칙: SessionUtils 사용
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null || (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster())) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
@@ -2172,7 +1968,6 @@ public class AdminController extends BaseApiController {
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }
         
-        // 안전한 사용자 정보만 추출하여 반환
         Map<String, Object> userData = new HashMap<>();
         userData.put("id", user.getId());
         userData.put("name", user.getName() != null ? user.getName() : "");
@@ -2189,21 +1984,17 @@ public class AdminController extends BaseApiController {
         return success(userData);
     }
     
-    /**
      * 사용자 소셜 계정 정보 조회
      */
     @GetMapping("/users/{id}/social-accounts")
     public ResponseEntity<ApiResponse<List<?>>> getUserSocialAccounts(@PathVariable Long id, HttpSession session) {
         log.info("🔍 사용자 소셜 계정 정보 조회: ID={}", id);
         
-        // 권한 확인
-        // 표준화 원칙: SessionUtils 사용
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null || (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster())) {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        // 사용자의 소셜 계정 목록 조회
         var socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(id);
         
         log.info("✅ 사용자 소셜 계정 정보 조회 완료: ID={}, count={}", id, socialAccounts.size());
@@ -2211,7 +2002,6 @@ public class AdminController extends BaseApiController {
         return success(socialAccounts);
     }
     
-    /**
      * 사용자 역할 정보 조회 (동적 표시명) - 기존 호환성
      */
     @GetMapping("/user-roles")
@@ -2219,7 +2009,6 @@ public class AdminController extends BaseApiController {
         return getUserRoles();
     }
     
-    /**
      * 사용자 역할 정보 조회 (동적 표시명)
      */
     @GetMapping("/users/roles")
@@ -2241,7 +2030,6 @@ public class AdminController extends BaseApiController {
         return success(roleInfo);
     }
     
-    /**
      * 역할별 영문 표시명 매칭
      */
     private String getEnglishDisplayName(UserRole role) {
@@ -2267,7 +2055,6 @@ public class AdminController extends BaseApiController {
         }
     }
     
-    /**
      * 메뉴 목록 조회 (사용자 역할별)
      */
     @GetMapping("/menus")
@@ -2283,7 +2070,6 @@ public class AdminController extends BaseApiController {
                 return ResponseEntity.status(401).body(response);
             }
             
-            // 사용자 역할에 따른 메뉴 목록 반환
             Map<String, Object> menuStructure = menuService.getMenuStructureByRole(currentUser.getRole());
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> menus = (List<Map<String, Object>>) menuStructure.get("menus");
@@ -2306,7 +2092,6 @@ public class AdminController extends BaseApiController {
         }
     }
     
-    /**
      * 재무 거래 목록 조회 (테넌트별 필터링 적용)
      */
     @GetMapping("/financial-transactions")
@@ -2334,8 +2119,6 @@ public class AdminController extends BaseApiController {
             log.info("👤 현재 사용자: 이메일={}, 역할={}, tenantId={}", 
                     currentUser.getEmail(), currentUser.getRole(), tenantId);
             
-            // ⭐ 테넌트별 재무 거래 목록 조회 (tenant_id 필터링만 사용)
-            // 표준화 원칙: 페이지 크기 최대 20개로 제한
             org.springframework.data.domain.Page<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(
                     PaginationUtils.createPageable(page, size)
@@ -2364,7 +2147,6 @@ public class AdminController extends BaseApiController {
         }
     }
     
-    /**
      * 예산 목록 조회
      */
     @GetMapping("/budgets")
@@ -2383,7 +2165,6 @@ public class AdminController extends BaseApiController {
                 return ResponseEntity.status(401).body(response);
             }
             
-            // 예산 목록 조회
             java.util.List<com.coresolution.consultation.entity.Budget> budgets = erpService.getAllActiveBudgets();
             
             Map<String, Object> response = new HashMap<>();
@@ -2407,7 +2188,6 @@ public class AdminController extends BaseApiController {
         }
     }
     
-    /**
      * 세금 계산 목록 조회
      */
     @GetMapping("/tax/calculations")
@@ -2426,7 +2206,6 @@ public class AdminController extends BaseApiController {
                 return ResponseEntity.status(401).body(response);
             }
             
-            // 세금 관리 권한 확인 (관리자만)
             if (!currentUser.getRole().isAdmin()) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
@@ -2434,7 +2213,6 @@ public class AdminController extends BaseApiController {
                 return ResponseEntity.status(403).body(response);
             }
             
-            // 세금 계산 목록 조회 (임시 데이터)
             List<Map<String, Object>> taxCalculations = new ArrayList<>();
             
             Map<String, Object> response = new HashMap<>();
@@ -2458,7 +2236,6 @@ public class AdminController extends BaseApiController {
         }
     }
     
-    /**
      * 세금 계산 항목 생성
      */
     @PostMapping("/tax/calculations")
@@ -2476,7 +2253,6 @@ public class AdminController extends BaseApiController {
                 return ResponseEntity.status(401).body(response);
             }
             
-            // 세금 관리 권한 확인 (관리자만)
             if (!currentUser.getRole().isAdmin()) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
@@ -2484,7 +2260,6 @@ public class AdminController extends BaseApiController {
                 return ResponseEntity.status(403).body(response);
             }
             
-            // 세금 계산 항목 생성 로직 (향후 구현)
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "세금 계산 항목이 생성되었습니다.");
@@ -2503,9 +2278,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    // ==================== 상담일지 관리 (관리자 전용) ====================
 
-    /**
      * 관리자용 상담일지 목록 조회
      */
     @GetMapping("/consultation-records")
@@ -2518,7 +2291,6 @@ public class AdminController extends BaseApiController {
         try {
             log.info("📝 관리자용 상담일지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
             
-            // 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.status(401).body(Map.of(
@@ -2527,7 +2299,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 관리자 권한 확인
             if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
@@ -2535,11 +2306,9 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 페이지네이션 설정 (표준화 원칙: 페이지 크기 최대 20개로 제한)
             org.springframework.data.domain.Pageable pageable = 
                 PaginationUtils.createPageable(page, size);
             
-            // 상담일지 조회
             org.springframework.data.domain.Page<com.coresolution.consultation.entity.ConsultationRecord> consultationRecords = 
                 consultationRecordService.getConsultationRecords(consultantId, clientId, pageable);
             
@@ -2562,7 +2331,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 관리자용 상담일지 상세 조회
      */
     @GetMapping("/consultation-records/{recordId}")
@@ -2572,7 +2340,6 @@ public class AdminController extends BaseApiController {
         try {
             log.info("📝 관리자용 상담일지 상세 조회 - 기록 ID: {}", recordId);
             
-            // 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.status(401).body(Map.of(
@@ -2581,7 +2348,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 관리자 권한 확인
             if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
@@ -2589,7 +2355,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 상담일지 조회
             com.coresolution.consultation.entity.ConsultationRecord record = consultationRecordService.getConsultationRecordById(recordId);
             
             if (record == null) {
@@ -2611,7 +2376,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 관리자용 상담일지 수정
      */
     @PutMapping("/consultation-records/{recordId}")
@@ -2622,7 +2386,6 @@ public class AdminController extends BaseApiController {
         try {
             log.info("📝 관리자용 상담일지 수정 - 기록 ID: {}", recordId);
             
-            // 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.status(401).body(Map.of(
@@ -2631,7 +2394,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 관리자 권한 확인
             if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
@@ -2639,7 +2401,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 상담일지 수정
             com.coresolution.consultation.entity.ConsultationRecord updatedRecord = consultationRecordService.updateConsultationRecord(recordId, recordData);
             
             Map<String, Object> response = new HashMap<>();
@@ -2658,7 +2419,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 관리자용 상담일지 삭제
      */
     @DeleteMapping("/consultation-records/{recordId}")
@@ -2668,7 +2428,6 @@ public class AdminController extends BaseApiController {
         try {
             log.info("📝 관리자용 상담일지 삭제 - 기록 ID: {}", recordId);
             
-            // 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.status(401).body(Map.of(
@@ -2677,7 +2436,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 관리자 권한 확인
             if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
@@ -2685,7 +2443,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 상담일지 삭제
             consultationRecordService.deleteConsultationRecord(recordId);
             
             Map<String, Object> response = new HashMap<>();
@@ -2703,20 +2460,17 @@ public class AdminController extends BaseApiController {
         }
     }
     
-    /**
      * 중복 매칭 조회
      */
     @GetMapping("/duplicate-mappings")
     public ResponseEntity<ApiResponse<Map<String, Object>>> findDuplicateMappings(HttpSession session) {
         log.info("🔍 중복 매칭 조회");
         
-        // 권한 확인
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        // 관리자 권한 확인
         if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
@@ -2730,20 +2484,17 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
     
-    /**
      * 중복 매칭 통합
      */
     @PostMapping("/merge-duplicate-mappings")
     public ResponseEntity<ApiResponse<Map<String, Object>>> mergeDuplicateMappings(HttpSession session) {
         log.info("🔄 중복 매칭 통합 시작");
         
-        // 권한 확인
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        // 관리자 권한 확인
         if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
@@ -2753,14 +2504,12 @@ public class AdminController extends BaseApiController {
         return success(result);
     }
 
-    /**
      * 관리자용 상담사 평가 통계 조회
      */
     @GetMapping("/consultant-rating-stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultantRatingStatistics(HttpSession session) {
         log.info("💖 관리자 평가 통계 조회 요청");
         
-        // 현재 사용자 정보 확인
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
@@ -2769,7 +2518,6 @@ public class AdminController extends BaseApiController {
         log.info("👤 현재 사용자: {} (역할: {}, 지점코드: {})", 
                 currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
         
-        // 지점 관리자인 경우 자신의 지점 상담사만 조회
         Map<String, Object> statistics;
         if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
             log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회 (역할: {}, 지점: {})", 
@@ -2784,7 +2532,6 @@ public class AdminController extends BaseApiController {
     }
 
 
-    /**
      * 상담사 전문분야 업데이트
      */
     @PutMapping("/consultants/{consultantId}/specialty")
@@ -2801,7 +2548,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
 
-            // 권한 체크
             if (!dynamicPermissionService.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
@@ -2839,7 +2585,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 전문분야 통계 조회 (통합 상담사 데이터 사용, 지점별 필터링 + 삭제 제외)
      */
     @GetMapping("/statistics/specialty")
@@ -2853,7 +2598,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
 
-            // 권한 체크
             if (!dynamicPermissionService.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
@@ -2861,10 +2605,8 @@ public class AdminController extends BaseApiController {
                 ));
             }
 
-            // 통합 상담사 데이터 사용 (이미 지점별 + 삭제 제외 필터링됨)
             List<Map<String, Object>> consultantsList = consultantStatsService.getAllConsultantsWithStats();
             
-            // 통계 계산
             long totalConsultants = consultantsList.size();
             long specialtySet = 0;
             Set<String> specialtyTypesSet = new HashSet<>();
@@ -2875,13 +2617,11 @@ public class AdminController extends BaseApiController {
                     String specialty = (String) consultantMap.get("specialty");
                     String specialization = (String) consultantMap.get("specialization");
                     
-                    // 전문분야 설정 여부 체크
                     if ((specialty != null && !specialty.trim().isEmpty()) || 
                         (specialization != null && !specialization.trim().isEmpty())) {
                         specialtySet++;
                     }
                     
-                    // 전문분야 종류 수집
                     if (specialty != null && !specialty.trim().isEmpty()) {
                         specialtyTypesSet.add(specialty.trim());
                     }
@@ -2919,7 +2659,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 반복 지출 목록 조회
      */
     @GetMapping("/recurring-expenses")
@@ -2933,7 +2672,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
 
-            // 동적 권한 체크
             if (!dynamicPermissionService.hasPermission(currentUser, "FINANCIAL_VIEW")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
@@ -2941,7 +2679,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
 
-            // 실제 데이터 조회 (현재는 빈 배열, 향후 FinancialTransactionService 연동)
             List<Map<String, Object>> expenses = new ArrayList<>();
 
             return ResponseEntity.ok(Map.of(
@@ -2960,7 +2697,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 반복 지출 통계 조회
      */
     @GetMapping("/statistics/recurring-expenses")
@@ -2974,7 +2710,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
 
-            // 동적 권한 체크
             if (!dynamicPermissionService.hasPermission(currentUser, "FINANCIAL_VIEW")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
@@ -2982,7 +2717,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
 
-            // 실제 통계 데이터 조회 (현재는 빈 통계, 향후 FinancialTransactionService 연동)
             Map<String, Object> statistics = Map.of(
                 "totalExpenses", 0,
                 "totalAmount", 0,
@@ -3005,7 +2739,6 @@ public class AdminController extends BaseApiController {
         }
     }
 
-    /**
      * 지출 카테고리 목록 조회
      */
     @GetMapping("/expense-categories")
@@ -3019,7 +2752,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
 
-            // 동적 권한 체크
             if (!dynamicPermissionService.hasPermission(currentUser, "FINANCIAL_VIEW")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
@@ -3027,7 +2759,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
 
-            // 실제 카테고리 데이터 조회 (현재는 빈 배열, 향후 CommonCodeService 연동)
             List<Map<String, Object>> categories = new ArrayList<>();
 
             return ResponseEntity.ok(Map.of(
@@ -3046,7 +2777,6 @@ public class AdminController extends BaseApiController {
         }
     }
     
-    /**
      * 운영 환경 여부 확인
      */
     private boolean isProductionEnvironment() {
@@ -3057,7 +2787,6 @@ public class AdminController extends BaseApiController {
                "production".equals(activeProfile) || "production".equals(envProfile);
     }
 
-    /**
      * 상담 이력 조회
      */
     @GetMapping("/consultations")
@@ -3076,7 +2805,6 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 권한 체크 (표준화 2025-12-05: enum 활용)
             com.coresolution.consultation.constant.UserRole userRole = currentUser.getRole();
             boolean hasAdminRole = userRole != null && userRole.isAdmin();
             boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, "ADMIN_CONSULTATION_VIEW");
@@ -3089,12 +2817,10 @@ public class AdminController extends BaseApiController {
                 ));
             }
             
-            // 상담 이력 조회
             Pageable pageable = Pageable.ofSize(100); // 최대 100개
             Page<ConsultationRecord> consultationRecords = consultationRecordService.getConsultationRecords(
                 consultantId, clientId, pageable);
             
-            // 조회 결과를 Map으로 변환
             List<Map<String, Object>> consultations = consultationRecords.getContent().stream()
                 .map(record -> {
                     Map<String, Object> consultation = new HashMap<>();

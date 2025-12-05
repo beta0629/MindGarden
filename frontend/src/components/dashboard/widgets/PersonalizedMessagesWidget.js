@@ -1,4 +1,3 @@
-/**
  * Personalized Messages Widget - 표준화된 맞춤형 메시지 위젯
  * ClientPersonalizedMessages를 위젯으로 변환 + 실제 API 연동
  * 
@@ -26,12 +25,10 @@ import './PersonalizedMessagesWidget.css';
 import '../ClientPersonalizedMessages.css';
 
 const PersonalizedMessagesWidget = ({ widget, user }) => {
-  // 내담자 전용 위젯 (다른 역할은 표시하지 않음)
   if (!RoleUtils.isClient(user)) {
     return null;
   }
 
-  // 데이터 소스 설정 (내담자 전용)
   const getDataSourceConfig = () => ({
     type: 'api',
     cache: true,
@@ -44,7 +41,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     }
   });
 
-  // 위젯 설정에 데이터 소스 동적 설정
   const widgetWithDataSource = {
     ...widget,
     config: {
@@ -53,7 +49,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     }
   };
 
-  // 표준화된 위젯 훅 사용 (상담 데이터)
   const {
     data: consultationData,
     loading,
@@ -67,7 +62,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     retryCount: 3
   });
 
-  // 추가 상태 관리
   const [clientStatus, setClientStatus] = useState(null);
   const [isConsultantModalOpen, setIsConsultantModalOpen] = useState(false);
   const [isConsultationGuideModalOpen, setIsConsultationGuideModalOpen] = useState(false);
@@ -75,7 +69,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
 
   const navigate = useNavigate();
 
-  // 클라이언트 상태 로드 (별도 API)
   useEffect(() => {
     const loadClientStatus = async () => {
       if (!user?.id) return;
@@ -103,7 +96,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     loadClientStatus();
   }, [user?.id]);
 
-  // 아이콘 매핑
   const iconMap = {
     'heart': Heart,
     'user-plus': UserPlus,
@@ -119,7 +111,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     'message-square': MessageSquare
   };
 
-  // 오늘의 팁 생성
   const getDailyTip = () => {
     const tips = [
       '하루 5분 명상으로 마음의 평화를 찾아보세요',
@@ -135,7 +126,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     return tips[dayIndex];
   };
 
-  // 내담자 상태 분석
   const analyzeClientStatus = () => {
     const status = {
       hasMapping: false,
@@ -151,25 +141,25 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     if (clientStatus?.mappingStatus) {
       status.hasMapping = true;
       status.mappingStatus = clientStatus.mappingStatus;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       status.hasActiveMapping = clientStatus.mappingStatus === 'ACTIVE';
     }
 
     if (consultationData?.schedules?.length > 0) {
-      // 향후 상담 체크
       const futureConsultations = consultationData.schedules.filter(schedule => {
         const scheduleDate = new Date(`${schedule.date} ${schedule.startTime}`);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         return scheduleDate > new Date() && schedule.status === 'CONFIRMED';
       });
       status.hasUpcomingConsultations = futureConsultations.length > 0;
 
-      // 완료된 상담 체크
       const completedConsultations = consultationData.schedules.filter(schedule => {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         return schedule.status === 'COMPLETED';
       });
       status.hasCompletedConsultations = completedConsultations.length > 0;
     }
 
-    // 신규 사용자 체크
     const accountAge = user?.createdAt ? 
       (Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24) : 0;
     status.isNewClient = accountAge < 7; // 7일 이내 가입
@@ -177,14 +167,12 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     return status;
   };
 
-  // 맞춤형 메시지 생성
   const generatePersonalizedMessages = () => {
     if (!clientStatus) return [];
 
     const status = analyzeClientStatus();
     const messages = [];
 
-    // 1. 상담 관련 메시지 (우선순위 높음)
     if (!status.hasMapping) {
       messages.push({
         id: 'consultant-mapping',
@@ -198,6 +186,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
       const nextConsultation = consultationData.schedules
         .filter(schedule => {
           const scheduleDate = new Date(`${schedule.date} ${schedule.startTime}`);
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           return scheduleDate > new Date() && schedule.status === 'CONFIRMED';
         })
         .sort((a, b) => new Date(`${a.date} ${a.startTime}`) - new Date(`${b.date} ${b.startTime}`))[0];
@@ -241,7 +230,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
       });
     }
 
-    // 2. 오늘의 팁 또는 결제 관련 메시지
     messages.push({
       id: 'today-tip',
       icon: 'lightbulb',
@@ -251,7 +239,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
       action: 'tip'
     });
 
-    // 3. 상담사 목록 또는 활동 메시지
     const isProduction = process.env.NODE_ENV === 'production' || window.location.hostname === 'm-garden.co.kr';
     
     if (isProduction) {
@@ -275,7 +262,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
         });
       }
     } else {
-      // 개발 환경에서는 상담 가이드 메시지 추가
       messages.push({
         id: 'consultation-guide',
         icon: 'book',
@@ -289,7 +275,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     return messages;
   };
 
-  // 카드 클릭 핸들러
   const handleCardClick = (action) => {
     if (isLoading) return;
     
@@ -348,7 +333,6 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
     }
   };
 
-  // 메시지 생성
   const personalizedMessages = generatePersonalizedMessages();
 
   return (

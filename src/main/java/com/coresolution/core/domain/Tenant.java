@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-/**
  * 테넌트 엔티티
  * 멀티테넌시의 최상위 엔티티로, 각 사업장(입점사)을 나타냄
  * 
@@ -38,7 +37,6 @@ import java.time.LocalDate;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Tenant extends BaseEntity {
     
-    /**
      * 테넌트 상태 열거형
      */
     public enum TenantStatus {
@@ -58,9 +56,7 @@ public class Tenant extends BaseEntity {
         }
     }
     
-    // === 기본 정보 ===
     
-    /**
      * 테넌트 UUID (고유 식별자)
      */
     @NotBlank(message = "테넌트 ID는 필수입니다")
@@ -68,7 +64,6 @@ public class Tenant extends BaseEntity {
     @Column(name = "tenant_id", nullable = false, unique = true, length = 36, updatable = false)
     private String tenantId;
     
-    /**
      * 테넌트명
      */
     @NotBlank(message = "테넌트명은 필수입니다")
@@ -76,7 +71,6 @@ public class Tenant extends BaseEntity {
     @Column(name = "name", nullable = false, length = 255)
     private String name;
     
-    /**
      * 업종 타입 (동적으로 business_categories 테이블에서 조회)
      * business_category_items.business_type과 매핑됨
      */
@@ -85,137 +79,114 @@ public class Tenant extends BaseEntity {
     @Column(name = "business_type", nullable = false, length = 50)
     private String businessType;
     
-    /**
      * 테넌트 상태
      */
     @NotNull(message = "테넌트 상태는 필수입니다")
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
     private TenantStatus status = TenantStatus.PENDING;
     
-    // === 구독 정보 ===
     
-    /**
      * 구독 요금제 ID
      */
     @Column(name = "subscription_plan_id")
     private Long subscriptionPlanId;
     
-    /**
      * 구독 상태
      */
     @Column(name = "subscription_status", length = 20)
     @Builder.Default
     private String subscriptionStatus = "INACTIVE";
     
-    /**
      * 구독 시작일
      */
     @Column(name = "subscription_start_date")
     private LocalDate subscriptionStartDate;
     
-    /**
      * 구독 종료일
      */
     @Column(name = "subscription_end_date")
     private LocalDate subscriptionEndDate;
     
-    // === 연락처 정보 ===
     
-    /**
      * 연락 이메일
      */
     @Size(max = 100, message = "이메일은 100자 이하여야 합니다")
     @Column(name = "contact_email", length = 100)
     private String contactEmail;
     
-    /**
      * 연락 전화번호
      */
     @Size(max = 20, message = "전화번호는 20자 이하여야 합니다")
     @Column(name = "contact_phone", length = 20)
     private String contactPhone;
     
-    /**
      * 담당자명
      */
     @Size(max = 100, message = "담당자명은 100자 이하여야 합니다")
     @Column(name = "contact_person", length = 100)
     private String contactPerson;
     
-    // === 주소 정보 ===
     
-    /**
      * 우편번호
      */
     @Size(max = 10, message = "우편번호는 10자 이하여야 합니다")
     @Column(name = "postal_code", length = 10)
     private String postalCode;
     
-    /**
      * 주소
      */
     @Size(max = 255, message = "주소는 255자 이하여야 합니다")
     @Column(name = "address", length = 255)
     private String address;
     
-    /**
      * 상세 주소
      */
     @Size(max = 255, message = "상세 주소는 255자 이하여야 합니다")
     @Column(name = "address_detail", length = 255)
     private String addressDetail;
     
-    // === 설정 정보 ===
     
-    /**
      * 테넌트별 설정 (JSON)
      */
     @Column(name = "settings_json", columnDefinition = "JSON")
     private String settingsJson;
     
-    /**
      * 브랜딩 정보 (로고, 색상 등, JSON)
      */
     @Column(name = "branding_json", columnDefinition = "JSON")
     private String brandingJson;
     
-    // === 연관 관계 ===
     
-    /**
      * 테넌트 소속 지점들
      * 주의: Branch 엔티티는 아직 tenant_id 필드가 추가되지 않았을 수 있음
      * 점진적 마이그레이션을 위해 @OneToMany는 나중에 추가 가능
      */
-    // @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private List<Branch> branches;
     
-    // === 비즈니스 메서드 ===
     
-    /**
      * 테넌트가 활성 상태인지 확인
      */
     public boolean isActive() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return TenantStatus.ACTIVE.equals(this.status);
     }
     
-    /**
      * 테넌트가 종료되었는지 확인
      */
     public boolean isClosed() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return TenantStatus.CLOSED.equals(this.status);
     }
     
-    /**
      * 테넌트가 일시정지 상태인지 확인
      */
     public boolean isSuspended() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return TenantStatus.SUSPENDED.equals(this.status);
     }
     
-    /**
      * 테넌트 주소 전체
      */
     public String getFullAddress() {

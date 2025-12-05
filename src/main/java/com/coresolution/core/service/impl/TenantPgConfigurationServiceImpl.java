@@ -29,7 +29,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
  * 테넌트 PG 설정 서비스 구현체
  * 
  * @author CoreSolution
@@ -51,7 +50,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
     private final EmailService emailService;
     private final TenantAccessControlService accessControlService;
     
-    // ==================== 테넌트 PG 설정 관리 ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -90,10 +88,8 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .findByConfigIdAndIsDeletedFalse(configId)
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
-        // 접근 제어 검증
         accessControlService.validateConfigurationAccess(configuration, tenantId);
         
-        // 변경 이력 조회
         List<TenantPgConfigurationHistoryResponse> history = historyRepository
                 .findByConfigIdOrderByChangedAtDesc(configId)
                 .stream()
@@ -140,23 +136,19 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         log.info("테넌트 PG 설정 생성: tenantId={}, pgProvider={}, requestedBy={}", 
                 tenantId, request.getPgProvider(), requestedBy);
         
-        // 입력값 검증
         validateConfigurationRequest(request);
         
-        // 중복 확인: 같은 테넌트에 같은 PG Provider의 활성 설정이 있는지 확인
         boolean exists = configurationRepository.existsByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 tenantId, request.getPgProvider(), PgConfigurationStatus.ACTIVE);
         
         if (exists) {
             throw new IllegalStateException("이미 활성화된 PG 설정이 존재합니다: " + request.getPgProvider());
         }
         
-        // API Key, Secret Key 암호화 (안전한 암호화 사용 - 이미 암호화된 경우 재암호화 방지)
-        // PersonalDataEncryptionService.encrypt()는 내부적으로 safeEncrypt()를 사용
         String encryptedApiKey = encryptionService.encrypt(request.getApiKey());
         String encryptedSecretKey = encryptionService.encrypt(request.getSecretKey());
         
-        // 암호화 검증 (암호화가 제대로 되었는지 확인)
         if (!encryptionService.isEncrypted(encryptedApiKey)) {
             throw new IllegalStateException("API Key 암호화에 실패했습니다");
         }
@@ -164,11 +156,9 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             throw new IllegalStateException("Secret Key 암호화에 실패했습니다");
         }
         
-        // 활성 키로 암호화되었는지 확인 (키 로테이션 대비)
         encryptedApiKey = encryptionService.ensureActiveKey(encryptedApiKey);
         encryptedSecretKey = encryptionService.ensureActiveKey(encryptedSecretKey);
         
-        // 엔티티 생성
         TenantPgConfiguration configuration = TenantPgConfiguration.builder()
                 .configId(UUID.randomUUID().toString())
                 .tenantId(tenantId)
@@ -182,7 +172,9 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .returnUrl(request.getReturnUrl())
                 .cancelUrl(request.getCancelUrl())
                 .testMode(request.getTestMode() != null ? request.getTestMode() : false)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(PgConfigurationStatus.PENDING)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .approvalStatus(ApprovalStatus.PENDING)
                 .requestedBy(requestedBy)
                 .requestedAt(LocalDateTime.now())
@@ -192,7 +184,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         
         configuration = configurationRepository.save(configuration);
         
-        // 변경 이력 기록
         historyService.saveHistory(configuration.getConfigId(), 
                 TenantPgConfigurationHistory.ChangeType.CREATED,
                 null, 
@@ -215,16 +206,13 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .findByConfigIdAndIsDeletedFalse(configId)
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
-        // 접근 제어 검증
         accessControlService.validateConfigurationAccess(configuration, tenantId);
         
         String oldStatus = configuration.getStatus().name();
         
-        // API Key, Secret Key 암호화 (안전한 암호화 사용)
         String newEncryptedApiKey = encryptionService.encrypt(request.getApiKey());
         String newEncryptedSecretKey = encryptionService.encrypt(request.getSecretKey());
         
-        // 암호화 검증
         if (!encryptionService.isEncrypted(newEncryptedApiKey)) {
             throw new IllegalStateException("API Key 암호화에 실패했습니다");
         }
@@ -232,15 +220,12 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             throw new IllegalStateException("Secret Key 암호화에 실패했습니다");
         }
         
-        // 활성 키로 암호화되었는지 확인 (키 로테이션 대비)
         newEncryptedApiKey = encryptionService.ensureActiveKey(newEncryptedApiKey);
         newEncryptedSecretKey = encryptionService.ensureActiveKey(newEncryptedSecretKey);
         
-        // 기존 암호화된 키와 비교하여 변경 여부 확인
         boolean apiKeyChanged = !newEncryptedApiKey.equals(configuration.getApiKeyEncrypted());
         boolean secretKeyChanged = !newEncryptedSecretKey.equals(configuration.getSecretKeyEncrypted());
         
-        // 수정 시 재승인 필요
         configuration.setPgProvider(request.getPgProvider());
         configuration.setPgName(request.getPgName());
         configuration.setApiKeyEncrypted(newEncryptedApiKey);
@@ -251,19 +236,19 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         configuration.setReturnUrl(request.getReturnUrl());
         configuration.setCancelUrl(request.getCancelUrl());
         configuration.setTestMode(request.getTestMode() != null ? request.getTestMode() : false);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setStatus(PgConfigurationStatus.PENDING);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setApprovalStatus(ApprovalStatus.PENDING);
         configuration.setSettingsJson(request.getSettingsJson());
         configuration.setNotes(request.getNotes());
         
         configuration = configurationRepository.save(configuration);
         
-        // 변경 이력 기록 (변경된 필드 정보 포함)
         String changeNotes = String.format("PG 설정 수정 - 재승인 필요%s%s", 
                 apiKeyChanged ? " (API Key 변경됨)" : "",
                 secretKeyChanged ? " (Secret Key 변경됨)" : "");
         
-        // 현재 사용자 정보 가져오기 (세션에서)
         String updatedBy = getCurrentUserId();
         
         historyService.saveHistory(configuration.getConfigId(), 
@@ -285,10 +270,8 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .findByConfigIdAndIsDeletedFalse(configId)
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
-        // 접근 제어 검증
         accessControlService.validateConfigurationAccess(configuration, tenantId);
         
-        // Soft delete
         configuration.setIsDeleted(true);
         configuration.setDeletedAt(java.time.LocalDateTime.now());
         configurationRepository.save(configuration);
@@ -296,7 +279,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         log.info("테넌트 PG 설정 삭제 완료: configId={}", configId);
     }
     
-    // ==================== 운영 포털 승인 관리 ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -307,15 +289,19 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         
         if (tenantId != null && pgProvider != null) {
             configurations = configurationRepository.findByTenantIdAndApprovalStatusAndIsDeletedFalse(
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     tenantId, ApprovalStatus.PENDING);
             configurations = configurations.stream()
                     .filter(c -> c.getPgProvider() == pgProvider)
                     .collect(Collectors.toList());
         } else if (tenantId != null) {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             configurations = configurationRepository.findPendingApprovalsByTenant(tenantId, ApprovalStatus.PENDING);
         } else if (pgProvider != null) {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             configurations = configurationRepository.findPendingApprovalsByProvider(pgProvider, ApprovalStatus.PENDING);
         } else {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             configurations = configurationRepository.findPendingApprovals(ApprovalStatus.PENDING);
         }
         
@@ -334,38 +320,35 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .findByConfigIdAndIsDeletedFalse(configId)
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
-        // 승인 전 검증
         validateApprovalRequest(configuration, request);
         
-        // 연결 테스트 (요청된 경우 또는 기본적으로 실행)
         boolean shouldTestConnection = request.getTestConnection() == null || request.getTestConnection();
         if (shouldTestConnection) {
             ConnectionTestResponse testResult = testConnectionBeforeApproval(configId);
             if (!testResult.getSuccess()) {
                 log.warn("PG 연결 테스트 실패: configId={}, message={}", configId, testResult.getMessage());
-                // 연결 테스트 실패 시에도 승인 가능하도록 설정 (운영 정책에 따라 변경 가능)
-                // throw new IllegalStateException("PG 연결 테스트 실패: " + testResult.getMessage());
             }
         }
         
         String oldStatus = configuration.getStatus().name();
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setApprovalStatus(ApprovalStatus.APPROVED);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setStatus(PgConfigurationStatus.APPROVED);
         configuration.setApprovedBy(request.getApprovedBy());
         configuration.setApprovedAt(LocalDateTime.now());
         
         configuration = configurationRepository.save(configuration);
         
-        // 변경 이력 기록
         historyService.saveHistory(configuration.getConfigId(), 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 TenantPgConfigurationHistory.ChangeType.APPROVED,
                 oldStatus, 
                 configuration.getStatus().name(),
                 request.getApprovedBy(),
                 request.getApprovalNote());
         
-        // 승인 알림 발송
         sendApprovalNotification(configuration, request.getApprovalNote());
         
         log.info("PG 설정 승인 완료: configId={}", configId);
@@ -382,26 +365,26 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .findByConfigIdAndIsDeletedFalse(configId)
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
-        // 거부 전 검증
         validateRejectionRequest(configuration, request);
         
         String oldStatus = configuration.getStatus().name();
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setApprovalStatus(ApprovalStatus.REJECTED);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setStatus(PgConfigurationStatus.REJECTED);
         configuration.setRejectionReason(request.getRejectionReason());
         
         configuration = configurationRepository.save(configuration);
         
-        // 변경 이력 기록
         historyService.saveHistory(configuration.getConfigId(), 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 TenantPgConfigurationHistory.ChangeType.REJECTED,
                 oldStatus, 
                 configuration.getStatus().name(),
                 request.getRejectedBy(),
                 request.getRejectionReason());
         
-        // 거부 알림 발송
         sendRejectionNotification(configuration, request.getRejectionReason());
         
         log.info("PG 설정 거부 완료: configId={}", configId);
@@ -416,16 +399,17 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .findByConfigIdAndIsDeletedFalse(configId)
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (configuration.getStatus() != PgConfigurationStatus.APPROVED) {
             throw new IllegalStateException("승인된 PG 설정만 활성화할 수 있습니다");
         }
         
         String oldStatus = configuration.getStatus().name();
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setStatus(PgConfigurationStatus.ACTIVE);
         configuration = configurationRepository.save(configuration);
         
-        // 변경 이력 기록
         historyService.saveHistory(configuration.getConfigId(), 
                 TenantPgConfigurationHistory.ChangeType.ACTIVATED,
                 oldStatus, 
@@ -447,10 +431,10 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         
         String oldStatus = configuration.getStatus().name();
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setStatus(PgConfigurationStatus.INACTIVE);
         configuration = configurationRepository.save(configuration);
         
-        // 변경 이력 기록
         historyService.saveHistory(configuration.getConfigId(), 
                 TenantPgConfigurationHistory.ChangeType.DEACTIVATED,
                 oldStatus, 
@@ -462,7 +446,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         return toResponse(configuration);
     }
     
-    // ==================== PG 연결 테스트 ====================
     
     @Override
     public ConnectionTestResponse testConnection(String tenantId, String configId) {
@@ -472,7 +455,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .findByConfigIdAndIsDeletedFalse(configId)
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
         
-        // 접근 제어 검증
         accessControlService.validateConfigurationAccess(configuration, tenantId);
         
         return performConnectionTest(configuration);
@@ -489,9 +471,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         return performConnectionTest(configuration);
     }
     
-    // ==================== Private Helper Methods ====================
     
-    /**
      * PG 설정 요청 검증
      */
     private void validateConfigurationRequest(TenantPgConfigurationRequest request) {
@@ -507,27 +487,21 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             throw new IllegalArgumentException("Secret Key는 필수입니다");
         }
         
-        // PG Provider별 추가 검증
         switch (request.getPgProvider()) {
             case TOSS:
-                // 토스페이먼츠는 Secret Key만 필요
                 break;
             case IAMPORT:
-                // 아임포트는 API Key와 Secret Key 모두 필요
                 break;
             case KAKAO:
             case NAVER:
-                // 카카오페이, 네이버페이는 추가 검증 필요
                 break;
             case PAYPAL:
             case STRIPE:
-                // 해외 PG는 추가 검증 필요
                 break;
             default:
                 throw new IllegalArgumentException("지원하지 않는 PG Provider: " + request.getPgProvider());
         }
         
-        // URL 형식 검증 (있는 경우)
         if (request.getWebhookUrl() != null && !request.getWebhookUrl().trim().isEmpty()) {
             if (!isValidUrl(request.getWebhookUrl())) {
                 throw new IllegalArgumentException("Webhook URL 형식이 올바르지 않습니다");
@@ -547,7 +521,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
     }
     
-    /**
      * URL 형식 검증
      */
     private boolean isValidUrl(String url) {
@@ -559,7 +532,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
     }
     
-    /**
      * PG 연결 테스트 수행
      */
     private ConnectionTestResponse performConnectionTest(TenantPgConfiguration configuration) {
@@ -573,7 +545,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         long startTime = System.currentTimeMillis();
         
         try {
-            // 암호화된 키 복호화 검증
             String apiKey;
             String secretKey;
             
@@ -610,7 +581,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 return response;
             }
             
-            // 해당 PG Provider를 지원하는 연결 테스트 서비스 찾기
             PgConnectionTestService testService = connectionTestServices.stream()
                     .filter(service -> service.supports(configuration.getPgProvider()))
                     .findFirst()
@@ -630,7 +600,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 return response;
             }
             
-            // 연결 테스트 수행
             log.debug("PG 연결 테스트 서비스 호출: configId={}, provider={}, service={}", 
                     configId, provider, testService.getClass().getSimpleName());
             
@@ -648,7 +617,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                         response.getMessage(), duration);
             }
             
-            // 테스트 결과 저장
             saveConnectionTestResult(configuration, response);
             
             return response;
@@ -671,7 +639,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
     }
     
-    /**
      * 연결 테스트 결과 저장
      * 
      * <p>연결 테스트 결과를 PG 설정에 저장하고, 변경 이력에도 기록합니다.</p>
@@ -683,7 +650,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         log.debug("연결 테스트 결과 저장 시작: configId={}, result={}", configId, result);
         
         try {
-            // 연결 테스트 결과 저장
             configuration.setLastConnectionTestAt(response.getTestedAt());
             configuration.setConnectionTestResult(response.getResult());
             configuration.setConnectionTestMessage(response.getMessage());
@@ -691,7 +657,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             
             configurationRepository.save(configuration);
             
-            // 연결 테스트 이력 기록 (변경 이력에 기록)
             String changeDetails = String.format(
                     "연결 테스트 수행 - 결과: %s, 메시지: %s", 
                     response.getResult(), 
@@ -712,11 +677,9 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         } catch (Exception e) {
             log.error("연결 테스트 결과 저장 중 오류 발생: configId={}, result={}, error={}", 
                     configId, result, e.getMessage(), e);
-            // 저장 실패해도 테스트 결과는 반환 (이미 수행된 테스트이므로)
         }
     }
     
-    /**
      * 엔티티를 응답 DTO로 변환
      */
     private TenantPgConfigurationResponse toResponse(TenantPgConfiguration configuration) {
@@ -749,7 +712,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .build();
     }
     
-    /**
      * 변경 이력을 응답 DTO로 변환
      */
     private TenantPgConfigurationHistoryResponse toHistoryResponse(TenantPgConfigurationHistory history) {
@@ -766,7 +728,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .build();
     }
     
-    /**
      * 현재 사용자 ID 가져오기
      * SecurityContext에서 인증된 사용자 정보를 가져옵니다.
      */
@@ -783,14 +744,13 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         } catch (Exception e) {
             log.warn("현재 사용자 정보를 가져오는 중 오류 발생: {}", e.getMessage());
         }
-        // 인증 정보가 없는 경우 기본값 반환
         return "system";
     }
     
-    /**
      * 승인 요청 검증
      */
     private void validateApprovalRequest(TenantPgConfiguration configuration, PgConfigurationApproveRequest request) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (configuration.getApprovalStatus() != ApprovalStatus.PENDING) {
             throw new IllegalStateException("승인 대기 중인 PG 설정이 아닙니다. 현재 상태: " + configuration.getApprovalStatus());
         }
@@ -799,30 +759,28 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             throw new IllegalArgumentException("승인자는 필수입니다");
         }
         
-        // 테넌트 존재 확인
         Tenant tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(configuration.getTenantId())
                 .orElse(null);
         if (tenant == null) {
             throw new IllegalStateException("테넌트를 찾을 수 없습니다: " + configuration.getTenantId());
         }
         
-        // 이미 활성화된 같은 PG Provider 설정이 있는지 확인
         boolean hasActiveConfig = configurationRepository.existsByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
                 configuration.getTenantId(), 
                 configuration.getPgProvider(), 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 PgConfigurationStatus.ACTIVE);
         
         if (hasActiveConfig) {
             log.warn("이미 활성화된 PG 설정이 존재합니다: tenantId={}, provider={}", 
                     configuration.getTenantId(), configuration.getPgProvider());
-            // 경고만 하고 계속 진행 (기존 설정을 비활성화하거나 덮어쓸 수 있음)
         }
     }
     
-    /**
      * 거부 요청 검증
      */
     private void validateRejectionRequest(TenantPgConfiguration configuration, PgConfigurationRejectRequest request) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (configuration.getApprovalStatus() != ApprovalStatus.PENDING) {
             throw new IllegalStateException("승인 대기 중인 PG 설정이 아닙니다. 현재 상태: " + configuration.getApprovalStatus());
         }
@@ -835,13 +793,11 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             throw new IllegalArgumentException("거부 사유는 필수입니다");
         }
         
-        // 거부 사유 길이 검증
         if (request.getRejectionReason().length() < 10) {
             throw new IllegalArgumentException("거부 사유는 최소 10자 이상 입력해야 합니다");
         }
     }
     
-    /**
      * 승인 알림 발송
      */
     private void sendApprovalNotification(TenantPgConfiguration configuration, String approvalNote) {
@@ -885,11 +841,9 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             
         } catch (Exception e) {
             log.error("승인 알림 발송 실패: {}", e.getMessage(), e);
-            // 알림 실패해도 승인 프로세스는 계속 진행
         }
     }
     
-    /**
      * 거부 알림 발송
      */
     private void sendRejectionNotification(TenantPgConfiguration configuration, String rejectionReason) {
@@ -931,11 +885,9 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             
         } catch (Exception e) {
             log.error("거부 알림 발송 실패: {}", e.getMessage(), e);
-            // 알림 실패해도 거부 프로세스는 계속 진행
         }
     }
     
-    // ==================== 결제 시스템 통합용 ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -945,15 +897,15 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         List<TenantPgConfiguration> configurations;
         
         if (pgProvider != null) {
-            // 특정 PG 제공자의 활성화된 설정 조회
             Optional<TenantPgConfiguration> config = configurationRepository
                     .findByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
                             tenantId, 
                             pgProvider, 
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                             PgConfigurationStatus.ACTIVE);
             
             if (config.isPresent()) {
-                // 승인된 설정만 반환
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 if (config.get().getApprovalStatus() == ApprovalStatus.APPROVED) {
                     configurations = List.of(config.get());
                 } else {
@@ -963,13 +915,13 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 configurations = List.of();
             }
         } else {
-            // 모든 활성화된 설정 조회
             configurations = configurationRepository.findActiveConfigurations(
                     tenantId, 
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     PgConfigurationStatus.ACTIVE);
             
-            // 승인된 설정만 필터링
             configurations = configurations.stream()
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     .filter(c -> c.getApprovalStatus() == ApprovalStatus.APPROVED)
                     .collect(Collectors.toList());
         }
@@ -990,11 +942,11 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             throw new IllegalArgumentException("PG 제공자는 필수입니다");
         }
         
-        // 활성화되고 승인된 설정 조회
         Optional<TenantPgConfiguration> config = configurationRepository
                 .findByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
                         tenantId, 
                         pgProvider, 
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         PgConfigurationStatus.ACTIVE);
         
         if (config.isEmpty()) {
@@ -1004,28 +956,24 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         
         TenantPgConfiguration configuration = config.get();
         
-        // 승인 상태 확인
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (configuration.getApprovalStatus() != ApprovalStatus.APPROVED) {
             log.debug("PG 설정이 승인되지 않음: tenantId={}, pgProvider={}, approvalStatus={}", 
                     tenantId, pgProvider, configuration.getApprovalStatus());
             return null;
         }
         
-        // 접근 제어 검증
         accessControlService.validateConfigurationAccess(configuration, tenantId);
         
-        // 변경 이력 조회
         List<TenantPgConfigurationHistoryResponse> history = historyRepository
                 .findByConfigIdOrderByChangedAtDesc(configuration.getConfigId())
                 .stream()
                 .map(this::toHistoryResponse)
                 .collect(Collectors.toList());
         
-        // 상세 응답 생성 (기존 toResponse 메서드 사용 후 history 추가)
         TenantPgConfigurationDetailResponse response = new TenantPgConfigurationDetailResponse();
         TenantPgConfigurationResponse baseResponse = toResponse(configuration);
         
-        // BaseResponse의 모든 필드를 DetailResponse에 복사
         response.setConfigId(baseResponse.getConfigId());
         response.setTenantId(baseResponse.getTenantId());
         response.setPgProvider(baseResponse.getPgProvider());

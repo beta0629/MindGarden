@@ -22,7 +22,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/**
  * 구독 서비스 구현
  * 
  * @author CoreSolution
@@ -41,7 +40,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionRefundService refundService;
     private final SubscriptionPlanChangeService planChangeService;
     
-    /**
      * PG 결제 대행사 서비스 (선택적 주입)
      * 실제 PG 결제 API 호출에 사용
      * Note: 테넌트별 PG 설정이 필요하므로 추후 TenantPgConfigurationService와 통합 필요
@@ -54,19 +52,15 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public SubscriptionResponse createSubscription(SubscriptionCreateRequest request) {
         log.info("구독 생성 요청: planId={}, tenantId={}", request.planId(), request.tenantId());
         
-        // 요금제 확인
         if (!pricingPlanRepository.findByPlanId(request.planId()).isPresent()) {
             throw new IllegalArgumentException("요금제를 찾을 수 없습니다: " + request.planId());
         }
         
-        // 결제 수단 확인
         paymentMethodRepository.findByPaymentMethodId(request.paymentMethodId())
                 .orElseThrow(() -> new IllegalArgumentException("결제 수단을 찾을 수 없습니다: " + request.paymentMethodId()));
         
-        // 청구 주기 파싱
         TenantSubscription.BillingCycle billingCycle = parseBillingCycle(request.billingCycle());
         
-        // 구독 엔티티 생성
         TenantSubscription subscription = TenantSubscription.builder()
                 .subscriptionId(UUID.randomUUID().toString())
                 .tenantId(request.tenantId())
@@ -78,7 +72,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .autoRenewal(request.autoRenewal() != null ? request.autoRenewal() : true)
                 .build();
         
-        // 다음 청구일 계산
         subscription.setNextBillingDate(calculateNextBillingDate(LocalDate.now(), billingCycle));
         
         subscription = subscriptionRepository.save(subscription);
@@ -95,27 +88,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         TenantSubscription subscription = subscriptionRepository.findBySubscriptionId(subscriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("구독을 찾을 수 없습니다: " + subscriptionId));
         
-        // 상태 변경: DRAFT -> PENDING_ACTIVATION -> ACTIVE
         if (subscription.getStatus() == TenantSubscription.SubscriptionStatus.DRAFT) {
             subscription.setStatus(TenantSubscription.SubscriptionStatus.PENDING_ACTIVATION);
         }
         
-        // 실제 PG 결제 수행 (첫 결제)
-        // Note: 테넌트별 PG 설정이 필요하므로 추후 TenantPgConfigurationService와 통합 필요
-        // Note: PaymentRequest 생성 및 PaymentGatewayService.createPayment() 호출 필요
-        // 현재는 상태만 ACTIVE로 변경 (실제 PG 연동은 추후 구현)
         if (paymentGatewayService != null) {
-            // TODO: 실제 PG 결제 API 호출 구현
-            // 1. PricingPlan에서 금액 조회
-            // 2. PaymentRequest 생성
-            // 3. PaymentGatewayService.createPayment() 호출
-            // 4. 결제 성공 시 paymentId를 TenantSubscription에 저장
             log.debug("PG 결제 API 호출 준비 완료 (구현 대기 중): subscriptionId={}", subscriptionId);
         } else {
             log.warn("⚠️ PaymentGatewayService가 주입되지 않아 PG 결제 API 호출 건너뜀: subscriptionId={}", 
                 subscriptionId);
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         subscription.setStatus(TenantSubscription.SubscriptionStatus.ACTIVE);
         subscription.setEffectiveFrom(LocalDate.now());
         
@@ -152,11 +136,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         TenantSubscription subscription = subscriptionRepository.findBySubscriptionId(subscriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("구독을 찾을 수 없습니다: " + subscriptionId));
         
-        // ACTIVE 상태만 취소 가능
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (subscription.getStatus() != TenantSubscription.SubscriptionStatus.ACTIVE) {
             throw new IllegalStateException("활성 상태의 구독만 취소할 수 있습니다. 현재 상태: " + subscription.getStatus());
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         subscription.setStatus(TenantSubscription.SubscriptionStatus.CANCELLED);
         subscription.setEffectiveTo(LocalDate.now());
         subscription.setAutoRenewal(false);
@@ -175,8 +160,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         TenantSubscription subscription = subscriptionRepository.findBySubscriptionId(subscriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("구독을 찾을 수 없습니다: " + subscriptionId));
         
-        // ACTIVE 또는 SUSPENDED 상태만 만료 가능
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (subscription.getStatus() != TenantSubscription.SubscriptionStatus.ACTIVE &&
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             subscription.getStatus() != TenantSubscription.SubscriptionStatus.SUSPENDED) {
             throw new IllegalStateException("활성 또는 일시정지 상태의 구독만 만료할 수 있습니다. 현재 상태: " + subscription.getStatus());
         }
@@ -199,11 +185,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         TenantSubscription subscription = subscriptionRepository.findBySubscriptionId(subscriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("구독을 찾을 수 없습니다: " + subscriptionId));
         
-        // ACTIVE 상태만 일시정지 가능
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (subscription.getStatus() != TenantSubscription.SubscriptionStatus.ACTIVE) {
             throw new IllegalStateException("활성 상태의 구독만 일시정지할 수 있습니다. 현재 상태: " + subscription.getStatus());
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         subscription.setStatus(TenantSubscription.SubscriptionStatus.SUSPENDED);
         
         subscription = subscriptionRepository.save(subscription);
@@ -220,11 +207,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         TenantSubscription subscription = subscriptionRepository.findBySubscriptionId(subscriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("구독을 찾을 수 없습니다: " + subscriptionId));
         
-        // SUSPENDED 상태만 재개 가능
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (subscription.getStatus() != TenantSubscription.SubscriptionStatus.SUSPENDED) {
             throw new IllegalStateException("일시정지 상태의 구독만 재개할 수 있습니다. 현재 상태: " + subscription.getStatus());
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         subscription.setStatus(TenantSubscription.SubscriptionStatus.ACTIVE);
         
         subscription = subscriptionRepository.save(subscription);
@@ -241,23 +229,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         TenantSubscription subscription = subscriptionRepository.findBySubscriptionId(subscriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("구독을 찾을 수 없습니다: " + subscriptionId));
         
-        // 환불 가능 여부 확인
         if (!refundService.canRefund(subscriptionId, refundDays)) {
             throw new IllegalStateException("환불할 수 없는 구독입니다.");
         }
         
-        // 환불 금액 계산 및 처리
         BigDecimal refundAmount = refundService.processRefund(subscriptionId, reason, refundDays);
         
-        // 구독 상태 변경
         if (refundDays == null) {
-            // 전체 환불: 구독 취소
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             subscription.setStatus(TenantSubscription.SubscriptionStatus.CANCELLED);
             subscription.setEffectiveTo(LocalDate.now());
             subscription.setAutoRenewal(false);
         } else {
-            // 부분 환불: 상태 유지 (필요시 SUSPENDED로 변경 가능)
-            // 부분 환불은 구독을 유지하되, 환불 금액만 처리
         }
         
         subscription = subscriptionRepository.save(subscription);
@@ -273,7 +256,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         log.info("구독 업그레이드 요청: subscriptionId={}, newPlanId={}, applyImmediately={}", 
             subscriptionId, newPlanId, applyImmediately);
         
-        // 요금제 변경 처리
         BigDecimal priceDifference = planChangeService.processPlanChange(subscriptionId, newPlanId, applyImmediately);
         
         if (priceDifference.compareTo(BigDecimal.ZERO) <= 0) {
@@ -295,7 +277,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         log.info("구독 다운그레이드 요청: subscriptionId={}, newPlanId={}, applyImmediately={}", 
             subscriptionId, newPlanId, applyImmediately);
         
-        // 요금제 변경 처리
         BigDecimal priceDifference = planChangeService.processPlanChange(subscriptionId, newPlanId, applyImmediately);
         
         if (priceDifference.compareTo(BigDecimal.ZERO) >= 0) {
@@ -317,7 +298,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         log.info("구독 요금제 변경 요청: subscriptionId={}, newPlanId={}, applyImmediately={}", 
             subscriptionId, newPlanId, applyImmediately);
         
-        // 요금제 변경 처리 (업그레이드/다운그레이드 자동 판단)
         BigDecimal priceDifference = planChangeService.processPlanChange(subscriptionId, newPlanId, applyImmediately);
         
         TenantSubscription subscription = subscriptionRepository.findBySubscriptionId(subscriptionId)

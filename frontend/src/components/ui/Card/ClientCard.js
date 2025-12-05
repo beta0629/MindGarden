@@ -1,7 +1,6 @@
 import React from 'react';
 import { User, Calendar, Clock, TrendingUp, MessageCircle, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 
-/**
  * 공통 내담자 카드 컴포넌트
  * - 디자인 시스템 v2.0 적용
  * - 글라스모피즘 효과
@@ -23,18 +22,18 @@ const ClientCard = ({
     showProgress = true,
     className = ''
 }) => {
-    /**
      * 상태에 따른 클래스명 반환
      */
     const getStatusClass = () => {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (client.status === 'ACTIVE' || client.status === '진행중') return 'active';
         if (client.status === 'SCHEDULED' || client.status === '예약됨') return 'scheduled';
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         if (client.status === 'COMPLETED' || client.status === '완료') return 'completed';
         if (client.status === 'PAUSED' || client.status === '일시정지') return 'paused';
         return 'default';
     };
 
-    /**
      * 상태에 따른 텍스트 반환
      */
     const getStatusText = () => {
@@ -48,7 +47,6 @@ const ClientCard = ({
         }
     };
 
-    /**
      * 상태에 따른 아이콘 반환
      */
     const getStatusIcon = () => {
@@ -62,7 +60,6 @@ const ClientCard = ({
         }
     };
 
-    /**
      * 이니셜 반환
      */
     const getInitial = () => {
@@ -72,7 +69,6 @@ const ClientCard = ({
         return '?';
     };
 
-    /**
      * 클릭 핸들러
      */
     const handleClick = () => {
@@ -81,7 +77,6 @@ const ClientCard = ({
         }
     };
 
-    /**
      * 진행률 계산
      */
     const getProgressPercentage = () => {
@@ -94,7 +89,6 @@ const ClientCard = ({
         return 0;
     };
 
-    /**
      * 세션 정보 반환
      */
     const getSessionInfo = () => {
@@ -103,7 +97,6 @@ const ClientCard = ({
         return { total, completed };
     };
 
-    // 컴팩트 카드 렌더링
     const renderCompactCard = () => (
         <div
             className={`mg-client-card mg-client-card--compact ${selected ? 'mg-client-card--selected' : ''} ${className}`}
@@ -144,7 +137,6 @@ const ClientCard = ({
         </div>
     );
 
-    // 상세 카드 렌더링
     const renderDetailedCard = () => (
         <div
             className={`mg-client-card mg-client-card--detailed ${selected ? 'mg-client-card--selected' : ''} ${className}`}
@@ -232,7 +224,6 @@ const ClientCard = ({
                             className="mg-button mg-button-outline mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                // 내담자 상세 정보 모달 열기
                             }}
                         >
                             <MessageCircle size={16} />
@@ -242,7 +233,6 @@ const ClientCard = ({
                             className="mg-button mg-button-ghost mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                // 전화 걸기
                             }}
                         >
                             <Phone size={16} />
@@ -253,7 +243,6 @@ const ClientCard = ({
         </div>
     );
 
-    // 모바일 카드 렌더링
     const renderMobileCard = () => (
         <div
             className={`mg-client-card mg-client-card--mobile ${selected ? 'mg-client-card--selected' : ''} ${className}`}
@@ -327,7 +316,6 @@ const ClientCard = ({
                             className="mg-button mg-button-outline mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                // 내담자 상세 정보 모달 열기
                             }}
                         >
                             <MessageCircle size={16} />
@@ -338,7 +326,6 @@ const ClientCard = ({
         </div>
     );
 
-    // 모바일 간단 카드 렌더링 (스케줄 모달용)
     const renderMobileSimpleCard = () => (
         <div
             className={`mg-client-card mg-client-card--mobile-simple ${selected ? 'mg-client-card--selected' : ''} ${getStatusClass() === 'unavailable' ? 'mg-client-card--unavailable' : ''} ${className}`}
@@ -375,7 +362,6 @@ const ClientCard = ({
         </div>
     );
 
-    // 변형에 따른 렌더링
     switch (variant) {
         case 'compact':
             return renderCompactCard();

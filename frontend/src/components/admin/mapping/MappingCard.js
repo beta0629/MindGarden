@@ -3,7 +3,6 @@ import { User, Calendar, Package, CreditCard, Clock, CheckCircle, Database } fro
 import MappingPaymentModal from './MappingPaymentModal';
 import MappingDepositModal from './MappingDepositModal';
 
-/**
  * 매칭 카드 컴포넌트 - 글래스모피즘 디자인
  * SessionManagement 디자인 시스템 기반
  */
@@ -43,7 +42,7 @@ const MappingCard = ({
     };
 
     const isErpIntegrated = () => {
-        // 입금 확인 완료되거나 ACTIVE 상태일 때 ERP 연동됨으로 간주
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         return mapping.status === 'ACTIVE' || 
                mapping.status === 'DEPOSIT_PENDING' ||
                mapping.depositConfirmed === true ||

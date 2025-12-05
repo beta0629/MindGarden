@@ -17,7 +17,6 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // 데이터 소스 설정 (사용자별 구매 요청)
   const getDataSourceConfig = () => ({
     type: 'api',
     cache: true,
@@ -28,7 +27,6 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
     }
   });
 
-  // 위젯 설정에 데이터 소스 동적 설정
   const widgetWithDataSource = {
     ...widget,
     config: {
@@ -37,7 +35,6 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
     }
   };
 
-  // 표준화된 위젯 훅 사용 (구매 요청 데이터)
   const {
     data: requests,
     loading,
@@ -51,7 +48,6 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
     retryCount: 3
   });
 
-  // 구매 요청 통계 계산
   const calculatePurchaseStats = (requests) => {
     if (!requests || !Array.isArray(requests)) {
       return {
@@ -62,10 +58,12 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
     }
 
     const pendingCount = requests.filter(req => 
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       req.status === 'PENDING' || req.status === 'SUBMITTED'
     ).length;
     
     const approvedCount = requests.filter(req => 
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       req.status === 'APPROVED' || req.status === 'COMPLETED'
     ).length;
     
@@ -78,7 +76,6 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
 
   const purchaseData = calculatePurchaseStats(requests);
 
-  // 네비게이션 핸들러들
   const handleNewPurchaseRequest = () => {
     navigate('/erp/purchase-requests');
   };
@@ -87,7 +84,6 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
     navigate('/erp/purchase-management');
   };
 
-  // 위젯 헤더 설정 (아코디언 방식)
   const headerConfig = {
     title: (
       <div 
@@ -109,13 +105,11 @@ const ErpPurchaseRequestWidget = ({ widget, user }) => {
     )
   };
 
-  // 위젯 콘텐츠 (아코디언 확장 시에만 표시)
   const renderContent = () => {
     if (!isExpanded) {
       return null;
     }
 
-    // 빈 상태 (요청 없음)
     if (isEmpty || purchaseData.totalRequests === 0) {
       return (
         <div className="erp-purchase-empty">

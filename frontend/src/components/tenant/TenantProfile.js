@@ -1,4 +1,3 @@
-/**
  * 테넌트 프로필/설정 페이지
  * 
  * 테넌트 상태, 구독 정보, 결제 수단을 통합 관리하는 페이지
@@ -13,7 +12,6 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { Building2, CreditCard, Calendar, DollarSign, CheckCircle, XCircle, AlertCircle, Plus, Trash2, Edit2 } from 'lucide-react';
 import { getPaymentMethods, getSubscriptions } from '../../utils/billingService';
-// // import SubscriptionManagement from '../billing/SubscriptionManagement';
 import PaymentMethodRegistration from '../billing/PaymentMethodRegistration';
 import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -33,7 +31,6 @@ const TenantProfile = () => {
 
   const tenantId = sessionInfo?.tenantId || user?.tenantId;
 
-  // 인증 체크: 로그인하지 않은 사용자는 로그인 페이지로 리다이렉트
   useEffect(() => {
     if (sessionLoading) {
       return; // 세션 로딩 중에는 대기
@@ -45,7 +42,6 @@ const TenantProfile = () => {
       return;
     }
 
-    // 테넌트 ID가 없으면 대시보드로 리다이렉트
     if (!tenantId) {
       console.log('⚠️ 테넌트 ID 없음 - 대시보드로 리다이렉트');
       navigate('/dashboard', { replace: true });
@@ -61,7 +57,6 @@ const TenantProfile = () => {
     }
   }, [tenantId, isLoggedIn, user]);
 
-  /**
    * 테넌트 정보 로드
    */
   const loadTenantInfo = async () => {
@@ -89,7 +84,6 @@ const TenantProfile = () => {
     }
   };
 
-  /**
    * 구독 정보 로드
    */
   const loadSubscriptions = async () => {
@@ -103,7 +97,6 @@ const TenantProfile = () => {
     }
   };
 
-  /**
    * 결제 수단 목록 로드
    */
   const loadPaymentMethods = async () => {
@@ -117,7 +110,6 @@ const TenantProfile = () => {
     }
   };
 
-  /**
    * 결제 수단 삭제
    */
   const handleDeletePaymentMethod = async (paymentMethodId) => {
@@ -143,7 +135,6 @@ const TenantProfile = () => {
     }
   };
 
-  /**
    * 기본 결제 수단 설정
    */
   const handleSetDefaultPaymentMethod = async (paymentMethodId) => {
@@ -165,17 +156,21 @@ const TenantProfile = () => {
     }
   };
 
-  /**
    * 테넌트 상태 배지 렌더링
    */
   const renderStatusBadge = (status) => {
     const statusConfig = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       PENDING: { label: '대기 중', color: 'warning', icon: AlertCircle },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       ACTIVE: { label: '활성', color: 'success', icon: CheckCircle },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       SUSPENDED: { label: '일시정지', color: 'danger', icon: XCircle },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       CLOSED: { label: '종료', color: 'secondary', icon: XCircle }
     };
 
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const config = statusConfig[status] || statusConfig.PENDING;
     const Icon = config.icon;
 
@@ -187,7 +182,6 @@ const TenantProfile = () => {
     );
   };
 
-  // 세션 로딩 중이거나 인증되지 않은 경우
   if (sessionLoading || !isLoggedIn || !user) {
     return (
       <SimpleLayout>
@@ -196,7 +190,6 @@ const TenantProfile = () => {
     );
   }
 
-  // 테넌트 ID가 없는 경우
   if (!tenantId) {
     return (
       <SimpleLayout>

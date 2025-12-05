@@ -15,7 +15,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
  * ERP 동기화 로그 엔티티
  * ERP 시스템과의 데이터 동기화 이력 관리
  * 
@@ -72,7 +71,6 @@ public class ErpSyncLog {
     @Column(name = "duration_seconds")
     private Long durationSeconds;
 
-    // 동기화 타입 enum
     public enum SyncType {
         FINANCIAL("재무데이터"),
         SALARY("급여데이터"),
@@ -91,7 +89,6 @@ public class ErpSyncLog {
         }
     }
 
-    // 동기화 상태 enum
     public enum SyncStatus {
         STARTED("시작"),
         IN_PROGRESS("진행중"),
@@ -110,15 +107,14 @@ public class ErpSyncLog {
         }
     }
 
-    // 동기화 완료 처리
     public void markAsCompleted(int recordsProcessed) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = SyncStatus.COMPLETED;
         this.recordsProcessed = recordsProcessed;
         this.completedAt = LocalDateTime.now();
         calculateDuration();
     }
 
-    // 동기화 실패 처리
     public void markAsFailed(String errorMessage) {
         this.status = SyncStatus.FAILED;
         this.errorMessage = errorMessage;
@@ -126,24 +122,22 @@ public class ErpSyncLog {
         calculateDuration();
     }
 
-    // 진행 중으로 상태 변경
     public void markAsInProgress() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = SyncStatus.IN_PROGRESS;
     }
 
-    // 소요 시간 계산
     private void calculateDuration() {
         if (startedAt != null && completedAt != null) {
             this.durationSeconds = java.time.Duration.between(startedAt, completedAt).getSeconds();
         }
     }
 
-    // 성공 여부 확인
     public boolean isSuccessful() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return SyncStatus.COMPLETED.equals(this.status);
     }
 
-    // 처리 속도 계산 (레코드/초)
     public double getProcessingRate() {
         if (durationSeconds != null && durationSeconds > 0 && recordsProcessed != null && recordsProcessed > 0) {
             return recordsProcessed.doubleValue() / durationSeconds;

@@ -19,7 +19,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
  * 성과 알림 엔티티
  * 상담사 성과 저하 시 자동 알림 생성
  * 
@@ -64,6 +63,7 @@ public class PerformanceAlert extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
     @Builder.Default
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
     private AlertStatus status = AlertStatus.PENDING;
 
     @Column(name = "created_at", nullable = false)
@@ -76,7 +76,6 @@ public class PerformanceAlert extends BaseEntity {
     @Column(name = "read_at")
     private LocalDateTime readAt;
 
-    // 알림 레벨 enum
     public enum AlertLevel {
         CRITICAL("위험"),
         WARNING("경고"),
@@ -93,7 +92,6 @@ public class PerformanceAlert extends BaseEntity {
         }
     }
 
-    // 알림 상태 enum
     public enum AlertStatus {
         PENDING("대기"),
         SENT("발송완료"),
@@ -111,24 +109,20 @@ public class PerformanceAlert extends BaseEntity {
         }
     }
 
-    // 알림 발송 처리
     public void markAsSent() {
         this.status = AlertStatus.SENT;
         this.sentAt = LocalDateTime.now();
     }
 
-    // 알림 읽음 처리
     public void markAsRead() {
         this.status = AlertStatus.READ;
         this.readAt = LocalDateTime.now();
     }
 
-    // 알림 무시 처리
     public void markAsDismissed() {
         this.status = AlertStatus.DISMISSED;
     }
 
-    // 중요도 점수 반환 (정렬용)
     public int getPriorityScore() {
         switch (alertLevel) {
             case CRITICAL:

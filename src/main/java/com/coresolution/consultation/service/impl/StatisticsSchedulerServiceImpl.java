@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 통계 자동화 스케줄러 서비스 구현체
  * 
  * @author MindGarden
@@ -27,7 +26,6 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
     private final PlSqlStatisticsService plSqlStatisticsService;
     private final ErpSyncLogRepository erpSyncLogRepository;
     
-    /**
      * 일별 통계 자동 업데이트 스케줄러
      * 매일 자정 1분 후 실행 (cron: 0 1 0 * * *)
      */
@@ -43,11 +41,11 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             String result = plSqlStatisticsService.updateAllBranchDailyStatistics(yesterday);
             LocalDateTime endTime = LocalDateTime.now();
             
-            // ERP 동기화 로그 기록
             ErpSyncLog syncLog = ErpSyncLog.builder()
                 .syncType(ErpSyncLog.SyncType.FINANCIAL)
                 .syncDate(startTime)
                 .recordsProcessed(getBranchCount(yesterday))
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(ErpSyncLog.SyncStatus.COMPLETED)
                 .startedAt(startTime)
                 .completedAt(endTime)
@@ -61,7 +59,6 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         } catch (Exception e) {
             LocalDateTime endTime = LocalDateTime.now();
             
-            // 실패 로그 기록
             ErpSyncLog syncLog = ErpSyncLog.builder()
                 .syncType(ErpSyncLog.SyncType.FINANCIAL)
                 .syncDate(startTime)
@@ -79,7 +76,6 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         }
     }
     
-    /**
      * 상담사 성과 자동 업데이트 스케줄러
      * 매일 자정 3분 후 실행 (cron: 0 3 0 * * *)
      */
@@ -95,11 +91,11 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             String result = plSqlStatisticsService.updateAllConsultantPerformance(yesterday);
             LocalDateTime endTime = LocalDateTime.now();
             
-            // ERP 동기화 로그 기록
             ErpSyncLog syncLog = ErpSyncLog.builder()
                 .syncType(ErpSyncLog.SyncType.SALARY)
                 .syncDate(startTime)
                 .recordsProcessed(getConsultantCount(yesterday))
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(ErpSyncLog.SyncStatus.COMPLETED)
                 .startedAt(startTime)
                 .completedAt(endTime)
@@ -113,7 +109,6 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         } catch (Exception e) {
             LocalDateTime endTime = LocalDateTime.now();
             
-            // 실패 로그 기록
             ErpSyncLog syncLog = ErpSyncLog.builder()
                 .syncType(ErpSyncLog.SyncType.SALARY)
                 .syncDate(startTime)
@@ -131,7 +126,6 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         }
     }
     
-    /**
      * 성과 모니터링 자동 실행 스케줄러
      * 매일 자정 5분 후 실행 (cron: 0 5 0 * * *)
      */
@@ -147,11 +141,11 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             int alertCount = plSqlStatisticsService.performDailyPerformanceMonitoring(yesterday);
             LocalDateTime endTime = LocalDateTime.now();
             
-            // ERP 동기화 로그 기록
             ErpSyncLog syncLog = ErpSyncLog.builder()
                 .syncType(ErpSyncLog.SyncType.CUSTOMER)
                 .syncDate(startTime)
                 .recordsProcessed(alertCount)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(ErpSyncLog.SyncStatus.COMPLETED)
                 .startedAt(startTime)
                 .completedAt(endTime)
@@ -165,7 +159,6 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         } catch (Exception e) {
             LocalDateTime endTime = LocalDateTime.now();
             
-            // 실패 로그 기록
             ErpSyncLog syncLog = ErpSyncLog.builder()
                 .syncType(ErpSyncLog.SyncType.CUSTOMER)
                 .syncDate(startTime)
@@ -194,13 +187,10 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         log.info("📊 수동 통계 업데이트 실행: targetDate={}", targetDate);
         
         try {
-            // 1. 일별 통계 업데이트
             String dailyResult = plSqlStatisticsService.updateAllBranchDailyStatistics(targetDate);
             
-            // 2. 상담사 성과 업데이트
             String performanceResult = plSqlStatisticsService.updateAllConsultantPerformance(targetDate);
             
-            // 3. 성과 모니터링
             int alertCount = plSqlStatisticsService.performDailyPerformanceMonitoring(targetDate);
             
             String result = String.format(
@@ -223,7 +213,6 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         try {
             boolean plsqlAvailable = plSqlStatisticsService.isProcedureAvailable();
             
-            // 최근 동기화 로그 확인
             LocalDate today = LocalDate.now();
             long todayLogs = erpSyncLogRepository.countBySyncDateAfter(today.atStartOfDay());
             
@@ -237,21 +226,15 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         }
     }
     
-    /**
      * 특정 날짜의 지점 수 조회 (통계용)
      */
     private int getBranchCount(LocalDate date) {
-        // 실제 구현에서는 Schedule 테이블에서 해당 날짜의 고유 지점 수를 조회
-        // 임시로 1 반환
         return 1;
     }
     
-    /**
      * 특정 날짜의 상담사 수 조회 (통계용)
      */
     private int getConsultantCount(LocalDate date) {
-        // 실제 구현에서는 Schedule 테이블에서 해당 날짜의 고유 상담사 수를 조회
-        // 임시로 1 반환
         return 1;
     }
 }

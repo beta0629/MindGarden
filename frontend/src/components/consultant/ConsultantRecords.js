@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { useNavigate } from 'react-router-dom';
@@ -13,29 +12,29 @@ const ConsultantRecords = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   const [filterStatus, setFilterStatus] = useState('COMPLETED');
   const [statusOptions, setStatusOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
 
-  // 상태 코드 로드
   const loadStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
       const response = await apiGet('/api/common-codes/STATUS');
       if (response && response.length > 0) {
-        // 상담기록에 적합한 상태만 필터링
         const consultationStatuses = response.filter(code => 
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           ['COMPLETED', 'PENDING'].includes(code.codeValue)
         );
         
-        // 전체 옵션을 맨 앞에 추가
         const allOptions = [
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
           { value: 'ALL', label: '전체', icon: '📋', color: '#6b7280', description: '모든 상담기록' },
           ...consultationStatuses.map(code => ({
             value: code.codeValue,
             label: code.codeLabel,
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             icon: code.icon || (code.codeValue === 'COMPLETED' ? '✅' : '⏳'),
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             color: code.colorCode || (code.codeValue === 'COMPLETED' ? 'var(--mg-success-500)' : 'var(--mg-warning-500)'),
             description: code.description || `${code.codeLabel}된 상담기록`
           }))
@@ -45,11 +44,11 @@ const ConsultantRecords = () => {
       }
     } catch (error) {
       console.error('상태 코드 로드 실패:', error);
-      // 실패 시 기본값 설정 (상담기록에 맞는 상태)
       setStatusOptions([
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
         { value: 'ALL', label: '전체', icon: '📋', color: '#6b7280', description: '모든 상담기록' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '완료된 상담기록' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '대기 중인 상담기록' }
       ]);
     } finally {
@@ -57,7 +56,6 @@ const ConsultantRecords = () => {
     }
   }, []);
 
-  // 데이터 로드
   useEffect(() => {
     console.log('🔄 상담기록 useEffect 실행:', {
       sessionLoading,
@@ -82,12 +80,10 @@ const ConsultantRecords = () => {
 
       console.log('👤 상담사 상담 기록 로드:', user?.id);
       
-      // 사용자 ID 확인
       if (!user?.id) {
         throw new Error('사용자 정보를 찾을 수 없습니다.');
       }
 
-      // 상담사의 상담 기록 가져오기
       const response = await apiGet(`/api/consultant/${user.id}/consultation-records`);
       
       if (response.success) {
@@ -107,7 +103,6 @@ const ConsultantRecords = () => {
     } catch (err) {
       console.error('❌ 상담 기록 로드 중 오류:', err);
       
-      // 더 구체적인 오류 메시지 제공
       let errorMessage = '상담 기록을 불러오는 중 오류가 발생했습니다.';
       
       if (err.response?.status === 401) {
@@ -128,7 +123,6 @@ const ConsultantRecords = () => {
     }
   };
 
-  // 검색 및 필터링
   const filteredRecords = records.filter(record => {
     const matchesSearch = record.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          record.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,20 +133,22 @@ const ConsultantRecords = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // 상담 기록 상세 보기
   const handleViewRecord = (recordId) => {
     navigate(`/consultant/consultation-record-view/${recordId}`);
   };
 
-  // 상태별 색상 반환
   const getStatusColor = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return 'var(--mg-success-500)';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'IN_PROGRESS':
         return 'var(--mg-warning-500)';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'CANCELLED':
         return 'var(--mg-error-500)';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return 'var(--mg-secondary-500)';
       default:
@@ -160,15 +156,18 @@ const ConsultantRecords = () => {
     }
   };
 
-  // 상태별 라벨 반환
   const getStatusLabel = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return '완료';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'IN_PROGRESS':
         return '진행중';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'CANCELLED':
         return '취소';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return '대기';
       default:

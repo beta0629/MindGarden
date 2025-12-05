@@ -1,4 +1,3 @@
-/**
  * 스케줄 리스트 컴포넌트
  * 
  * @author MindGarden
@@ -10,7 +9,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { apiGet } from '../../utils/ajax';
 import { SCHEDULE_API } from '../../constants/api';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import CustomSelect from './CustomSelect';
 import { 
   SORT_OPTIONS, 
@@ -45,17 +43,14 @@ const ScheduleList = ({
   const [pageSize, setPageSize] = useState(PAGINATION.DEFAULT_PAGE_SIZE);
   const [totalCount, setTotalCount] = useState(0);
   
-  // 필터 옵션 상태
   const [filterOptions, setFilterOptions] = useState([]);
   const [sortOptions, setSortOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
   
-  // 상담사 필터링 상태
   const [consultants, setConsultants] = useState([]);
   const [selectedConsultantId, setSelectedConsultantId] = useState('');
   const [loadingConsultants, setLoadingConsultants] = useState(false);
 
-  // 필터 옵션 로드
   const loadFilterOptions = useCallback(async () => {
     try {
       setLoadingCodes(true);
@@ -71,15 +66,13 @@ const ScheduleList = ({
       }
     } catch (error) {
       console.error('필터 옵션 로드 실패:', error);
-      // 실패 시 기본값 설정
       setFilterOptions([
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
         { value: 'ALL', label: '전체', icon: '📋', color: '#6b7280', description: '모든 일정' },
         { value: 'TODAY', label: '오늘', icon: '📅', color: 'var(--mg-primary-500)', description: '오늘 일정' },
         { value: 'THIS_WEEK', label: '이번 주', icon: '📅', color: 'var(--mg-success-500)', description: '이번 주 일정' },
         { value: 'THIS_MONTH', label: '이번 달', icon: '📅', color: 'var(--mg-warning-500)', description: '이번 달 일정' },
         { value: 'UPCOMING', label: '예정된 일정', icon: '⏰', color: 'var(--mg-purple-500)', description: '예정된 일정' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'COMPLETED', label: '완료된 일정', icon: '✅', color: '#059669', description: '완료된 일정' }
       ]);
     } finally {
@@ -87,7 +80,6 @@ const ScheduleList = ({
     }
   }, []);
 
-  // 정렬 옵션 로드
   const loadSortOptions = useCallback(async () => {
     try {
       setLoadingCodes(true);
@@ -103,14 +95,12 @@ const ScheduleList = ({
       }
     } catch (error) {
       console.error('정렬 옵션 로드 실패:', error);
-      // 실패 시 기본값 설정
       setSortOptions([
         { value: 'DATE_ASC', label: '날짜 오름차순', icon: '📅', color: 'var(--mg-primary-500)', description: '날짜 오름차순 정렬' },
         { value: 'DATE_DESC', label: '날짜 내림차순', icon: '📅', color: 'var(--mg-error-500)', description: '날짜 내림차순 정렬' },
         { value: 'TITLE_ASC', label: '제목 오름차순', icon: '🔤', color: 'var(--mg-success-500)', description: '제목 오름차순 정렬' },
         { value: 'TITLE_DESC', label: '제목 내림차순', icon: '🔤', color: 'var(--mg-warning-500)', description: '제목 내림차순 정렬' },
         { value: 'STATUS_ASC', label: '상태 오름차순', icon: '🔄', color: 'var(--mg-purple-500)', description: '상태 오름차순 정렬' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #06b6d4 -> var(--mg-custom-06b6d4)
         { value: 'STATUS_DESC', label: '상태 내림차순', icon: '🔄', color: '#06b6d4', description: '상태 내림차순 정렬' }
       ]);
     } finally {
@@ -118,7 +108,6 @@ const ScheduleList = ({
     }
   }, []);
 
-  // 상담사 목록 로드
   const loadConsultants = useCallback(async () => {
     try {
       setLoadingConsultants(true);
@@ -135,7 +124,6 @@ const ScheduleList = ({
     }
   }, []);
 
-  // 스케줄 데이터 로드
   const loadSchedules = async () => {
     setLoading(true);
     setError(false);
@@ -149,7 +137,6 @@ const ScheduleList = ({
         userRole: userRole
       };
       
-      // 어드민인 경우 상담사 필터링 지원
       if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_BRANCH_SUPER_ADMIN' || 
           userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
         url = '/api/admin/schedules';
@@ -176,20 +163,17 @@ const ScheduleList = ({
     }
   };
 
-  // 컴포넌트 마운트 시 스케줄 로드
   useEffect(() => {
     loadSchedules();
     loadFilterOptions();
     loadSortOptions();
     
-    // 어드민인 경우 상담사 목록도 로드
     if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_BRANCH_SUPER_ADMIN' || 
         userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
       loadConsultants();
     }
   }, [userId, userRole, loadFilterOptions, loadSortOptions, loadConsultants]);
 
-  // 상담사 선택 변경 시 스케줄 다시 로드
   useEffect(() => {
     if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_BRANCH_SUPER_ADMIN' || 
         userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
@@ -197,11 +181,9 @@ const ScheduleList = ({
     }
   }, [selectedConsultantId]);
 
-  // 검색 및 필터링된 스케줄 계산
   const getFilteredSchedules = () => {
     let filtered = [...schedules];
 
-    // 검색어 필터링
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(schedule => 
@@ -212,7 +194,6 @@ const ScheduleList = ({
       );
     }
 
-    // 상태별 필터링
     if (filterBy !== FILTER_OPTIONS.ALL) {
       if (filterBy === FILTER_OPTIONS.TODAY) {
         const today = new Date().toISOString().split('T')[0];
@@ -241,7 +222,6 @@ const ScheduleList = ({
     return filtered;
   };
 
-  // 정렬된 스케줄 계산
   const getSortedSchedules = (schedules) => {
     const sorted = [...schedules];
     
@@ -271,14 +251,12 @@ const ScheduleList = ({
     return sorted;
   };
 
-  // 페이지네이션된 스케줄 계산
   const getPaginatedSchedules = (schedules) => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     return schedules.slice(startIndex, endIndex);
   };
 
-  // 최종 표시할 스케줄 계산
   const getDisplaySchedules = () => {
     const filtered = getFilteredSchedules();
     const sorted = getSortedSchedules(filtered);
@@ -286,42 +264,35 @@ const ScheduleList = ({
     return paginated;
   };
 
-  // 페이지 수 계산
   const getTotalPages = () => {
     const filtered = getFilteredSchedules();
     return Math.ceil(filtered.length / pageSize);
   };
 
-  // 검색 핸들러
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
 
-  // 정렬 핸들러
   const handleSort = (e) => {
     setSortBy(e.target.value);
     setCurrentPage(1);
   };
 
-  // 필터 핸들러
   const handleFilter = (e) => {
     setFilterBy(e.target.value);
     setCurrentPage(1);
   };
 
-  // 페이지 크기 변경 핸들러
   const handlePageSizeChange = (e) => {
     setPageSize(parseInt(e.target.value));
     setCurrentPage(1);
   };
 
-  // 페이지 변경 핸들러
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  // 새로고침 핸들러
   const handleRefresh = () => {
     loadSchedules();
   };

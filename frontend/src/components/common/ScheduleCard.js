@@ -1,4 +1,3 @@
-/**
  * 스케줄 카드 컴포넌트
  * 
  * @author MindGarden
@@ -29,7 +28,6 @@ const ScheduleCard = ({
   onComplete,
   showActions = true 
 }) => {
-  // 날짜 포맷팅
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -41,19 +39,16 @@ const ScheduleCard = ({
     });
   };
 
-  // 시간 포맷팅
   const formatTime = (timeString) => {
     if (!timeString) return '';
     return timeString.substring(0, 5); // HH:mm 형식으로 변환
   };
 
-  // 액션 버튼 렌더링
   const renderActionButtons = () => {
     if (!showActions) return null;
 
     const actions = [];
 
-    // 기본 액션들
     if (onView) {
       actions.push(
         <button
@@ -67,7 +62,7 @@ const ScheduleCard = ({
       );
     }
 
-    // 상태별 액션들
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if (schedule.status === 'BOOKED' && onConfirm) {
       actions.push(
         <button
@@ -81,6 +76,7 @@ const ScheduleCard = ({
       );
     }
 
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if (schedule.status === 'CONFIRMED' && onComplete) {
       actions.push(
         <button
@@ -94,6 +90,7 @@ const ScheduleCard = ({
       );
     }
 
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if ((schedule.status === 'BOOKED' || schedule.status === 'CONFIRMED') && onCancel) {
       actions.push(
         <button

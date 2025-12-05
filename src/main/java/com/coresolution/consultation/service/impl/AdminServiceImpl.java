@@ -95,7 +95,6 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
-        // 표준화 원칙: 개인정보 필드 암호화 필수 (name, phone, email)
         String encryptedName = encryptionUtil.safeEncrypt(dto.getName());
         String encryptedPhone = null;
         if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
@@ -105,16 +104,12 @@ public class AdminServiceImpl implements AdminService {
         String encryptedEmail = encryptionUtil.safeEncrypt(dto.getEmail());
         log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
         
-        // 브랜치 개념 제거: 지점코드 처리 로직 제거됨 (표준화 2025-12-05)
-        // 테넌트 기반 시스템에서는 브랜치 개념이 불필요하므로 branch는 항상 null
         Branch branch = null;
         
-        // 같은 username을 가진 삭제된 상담사가 있는지 확인
         String tenantId = TenantContextHolder.getTenantId();
         Optional<User> existingConsultant = userRepository.findByTenantIdAndUsernameAndIsActive(tenantId, dto.getUsername(), false);
         
         if (existingConsultant.isPresent()) {
-            // 삭제된 상담사가 있으면 기존 데이터를 업데이트
             User consultant = existingConsultant.get();
             consultant.setEmail(encryptedEmail);
             consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
@@ -122,22 +117,18 @@ public class AdminServiceImpl implements AdminService {
             consultant.setPhone(encryptedPhone);
             consultant.setIsActive(true); // 활성화
             consultant.setSpecialization(dto.getSpecialization());
-            // 브랜치 개념 제거: branch 및 branchCode 설정 제거됨 (표준화 2025-12-05)
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
             
-            // Consultant로 캐스팅하여 certification 설정
             if (consultant instanceof Consultant) {
                 ((Consultant) consultant).setCertification(dto.getQualifications());
             }
             
             User savedConsultant = userRepository.save(consultant);
             
-            // UserRoleAssignment 자동 생성 (없는 경우에만)
             createUserRoleAssignment(savedConsultant, tenantId, UserRole.CONSULTANT);
             
             return savedConsultant;
         } else {
-            // 새로운 상담사 생성
             Consultant consultant = new Consultant();
             consultant.setUsername(dto.getUsername());
             consultant.setEmail(encryptedEmail);
@@ -146,16 +137,13 @@ public class AdminServiceImpl implements AdminService {
             consultant.setPhone(encryptedPhone);
             consultant.setRole(UserRole.CONSULTANT);
             consultant.setIsActive(true);
-            // 브랜치 개념 제거: branch 및 branchCode 설정 제거됨 (표준화 2025-12-05)
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
             
-            // 상담사 전용 정보 설정
             consultant.setSpecialty(dto.getSpecialization());
             consultant.setCertification(dto.getQualifications());
             
             User savedConsultant = userRepository.save(consultant);
             
-            // UserRoleAssignment 자동 생성
             createUserRoleAssignment(savedConsultant, tenantId, UserRole.CONSULTANT);
             
             return savedConsultant;
@@ -164,7 +152,6 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public Client registerClient(ClientRegistrationDto dto) {
-        // 표준화 원칙: 개인정보 필드 암호화 필수 (name, phone, email)
         String encryptedName = encryptionUtil.safeEncrypt(dto.getName());
         String encryptedPhone = null;
         if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
@@ -174,21 +161,14 @@ public class AdminServiceImpl implements AdminService {
         String encryptedEmail = encryptionUtil.safeEncrypt(dto.getEmail());
         log.info("🔐 관리자 내담자 등록 시 이름, 이메일 암호화 완료");
         
-        // 브랜치 개념 제거: 지점코드 처리 로직 제거됨 (표준화 2025-12-05)
-        // 테넌트 기반 시스템에서는 브랜치 개념이 불필요하므로 branch는 항상 null
         Branch branch = null;
         
-        // 테넌트 ID 가져오기
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
-            // 세션에서 현재 사용자의 tenantId 가져오기
-            // (AdminController에서 세션을 통해 전달받아야 함)
             log.warn("⚠️ TenantContext에 tenantId가 없습니다. 세션에서 조회 시도...");
-            // 세션에서 가져오는 로직은 컨트롤러에서 처리해야 하므로 여기서는 예외 발생
             throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
         }
         
-        // User 테이블에 CLIENT role로 저장
         User clientUser = User.builder()
                 .username(dto.getUsername())
                 .email(encryptedEmail)
@@ -201,15 +181,12 @@ public class AdminServiceImpl implements AdminService {
                 .branchCode(dto.getBranchCode()) // 지점코드 저장
                 .build();
         
-        // tenantId는 BaseEntity에서 상속받은 필드이므로 setter로 설정
         clientUser.setTenantId(tenantId);
         
         User savedUser = userRepository.save(clientUser);
         
-        // UserRoleAssignment 자동 생성
         createUserRoleAssignment(savedUser, tenantId, UserRole.CLIENT);
         
-        // Client 객체로 변환하여 반환
         Client client = new Client();
         client.setId(savedUser.getId());
         client.setName(savedUser.getName());
@@ -230,13 +207,10 @@ public class AdminServiceImpl implements AdminService {
         User consultant = userRepository.findById(dto.getConsultantId())
                 .orElseThrow(() -> new RuntimeException("Consultant not found"));
         
-        // Client는 User를 상속받으므로 userRepository로 조회
         User clientUser = userRepository.findById(dto.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
-        // 지점코드 설정 (레거시 시스템, 테넌트 시스템에서는 불필요)
         String branchCode = null;
-        /*
         branchCode = consultant.getBranchCode();
         if (branchCode == null || branchCode.trim().isEmpty()) {
             branchCode = clientUser.getBranchCode();
@@ -246,19 +220,16 @@ public class AdminServiceImpl implements AdminService {
         }
         */
         
-        // 기존 매칭이 있는지 확인 (중복 결과 처리)
         List<ConsultantClientMapping> existingMappings = mappingRepository
             .findByConsultantAndClient(consultant, clientUser);
         
         if (!existingMappings.isEmpty()) {
-            // 기존 매칭이 있는 경우 모든 기존 매칭을 자동 종료 처리
             log.info("🔍 기존 매칭 발견, 자동 종료 처리: 상담사={}, 내담자={}, 기존 매칭 수={}", 
                 consultant.getName(), clientUser.getName(), existingMappings.size());
             
             String terminatedStatus = getMappingStatusCode("TERMINATED");
             
             for (ConsultantClientMapping existingMapping : existingMappings) {
-                // 기존 매칭을 자동 종료 처리
                 try {
                 existingMapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
                 } catch (IllegalArgumentException e) {
@@ -269,7 +240,6 @@ public class AdminServiceImpl implements AdminService {
                 existingMapping.setNotes((existingMapping.getNotes() != null ? existingMapping.getNotes() + "\n" : "") + 
                     "새로운 매칭 생성으로 인한 자동 종료 - 회기 자동 소진");
                 
-                // 남은 회기를 사용된 회기로 이동 (자동 소진)
                 int remainingSessions = existingMapping.getRemainingSessions();
                 if (remainingSessions > 0) {
                     existingMapping.setUsedSessions(existingMapping.getUsedSessions() + remainingSessions);
@@ -286,7 +256,6 @@ public class AdminServiceImpl implements AdminService {
             }
         }
         
-        // 새로운 매칭 생성 (기존 매칭이 없거나 다른 지점인 경우)
         log.info("🆕 새로운 매칭 생성: 상담사={}, 내담자={}, 지점={}", 
             consultant.getName(), clientUser.getName(), branchCode);
             
@@ -296,11 +265,9 @@ public class AdminServiceImpl implements AdminService {
         mapping.setStartDate(dto.getStartDate() != null ? 
             dto.getStartDate().atStartOfDay() : 
             LocalDateTime.now());
-        // 새 매칭은 입금 확인 후 활성화되도록 설정
         String defaultMappingStatus = getMappingStatusCode("PENDING_PAYMENT");
         String defaultPaymentStatus = getPaymentStatusCode("PENDING");
         
-        // 안전한 enum 변환 (enum에 없는 값이면 기본값 사용)
         try {
         mapping.setStatus(dto.getStatus() != null ? 
             ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus()) : 
@@ -337,7 +304,6 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.save(mapping);
     }
 
-    /**
      * 입금 확인 처리
      */
     @Override
@@ -345,12 +311,10 @@ public class AdminServiceImpl implements AdminService {
         ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
-        // 금액 검증 로직 추가
         if (paymentAmount != null && mapping.getPackagePrice() != null) {
             if (!paymentAmount.equals(mapping.getPackagePrice())) {
                 log.warn("⚠️ 금액 불일치 감지: MappingID={}, PaymentAmount={}, PackagePrice={}", 
                     mappingId, paymentAmount, mapping.getPackagePrice());
-                // 경고는 하지만 처리는 계속 진행 (관리자가 의도적으로 다른 금액을 입력했을 수 있음)
             }
         }
         
@@ -359,9 +323,7 @@ public class AdminServiceImpl implements AdminService {
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
-        // 입금 확인 시 자동으로 ERP 수입 거래 생성
         try {
-            // 추가 매칭인지 확인
             boolean isAdditionalMapping = savedMapping.getNotes() != null && 
                                         savedMapping.getNotes().contains("[추가 매칭]");
             
@@ -377,13 +339,11 @@ public class AdminServiceImpl implements AdminService {
                 mappingId, paymentAmount, isAdditionalMapping);
         } catch (Exception e) {
             log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
-            // 거래 생성 실패해도 입금 확인은 완료
         }
         
         return savedMapping;
     }
     
-    /**
      * 상담료 수입 거래 자동 생성 (중앙화된 금액 관리 사용)
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -392,21 +352,18 @@ public class AdminServiceImpl implements AdminService {
             createConsultationIncomeTransaction(mapping);
         } catch (Exception e) {
             log.error("💰 [비동기] 상담료 수입 거래 생성 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage());
-            // 비동기로 처리하므로 예외를 던지지 않음
         }
     }
 
     private void createConsultationIncomeTransaction(ConsultantClientMapping mapping) {
         log.info("💰 [중앙화] 상담료 수입 거래 생성 시작: MappingID={}", mapping.getId());
         
-        // 1. 중복 거래 방지 (중앙화된 서비스 사용)
         if (amountManagementService.isDuplicateTransaction(mapping.getId(), 
                 com.coresolution.consultation.entity.FinancialTransaction.TransactionType.INCOME)) {
             log.warn("🚫 중복 거래 방지: MappingID={}에 대한 수입 거래가 이미 존재합니다.", mapping.getId());
             return;
         }
         
-        // 2. 정확한 거래 금액 결정 (중앙화된 서비스 사용)
         Long accurateAmount = amountManagementService.getAccurateTransactionAmount(mapping);
         
         if (accurateAmount == null || accurateAmount <= 0) {
@@ -414,7 +371,6 @@ public class AdminServiceImpl implements AdminService {
             return;
         }
         
-        // 3. 금액 일관성 검사 (중앙화된 서비스 사용)
         AmountManagementService.AmountConsistencyResult consistency = 
             amountManagementService.checkAmountConsistency(mapping.getId());
         
@@ -423,11 +379,8 @@ public class AdminServiceImpl implements AdminService {
             log.warn("💡 권장사항: {}", consistency.getRecommendation());
         }
         
-        // 4. ERP 거래 생성 (현재 사용자의 지점코드 포함)
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
-                .category("CONSULTATION") // 공통코드 사용
-                .subcategory("INDIVIDUAL_CONSULTATION") // 공통코드 사용
                 .amount(java.math.BigDecimal.valueOf(accurateAmount))
                 .description(String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]", 
                     mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
@@ -440,11 +393,9 @@ public class AdminServiceImpl implements AdminService {
                 .taxIncluded(false) // 상담료는 부가세 면세
                 .build();
         
-        // 5. 시스템 자동 거래 생성 (권한 검사 우회)
         com.coresolution.consultation.dto.FinancialTransactionResponse response = 
             financialTransactionService.createTransaction(request, null);
         
-        // 6. 입금 확인된 거래는 즉시 완료 상태로 변경
         try {
             com.coresolution.consultation.entity.FinancialTransaction transaction = 
                 financialTransactionRepository.findById(response.getId()).orElse(null);
@@ -458,7 +409,6 @@ public class AdminServiceImpl implements AdminService {
             log.error("거래 완료 처리 실패: {}", e.getMessage(), e);
         }
         
-        // 6. 금액 변경 이력 기록 (중앙화된 서비스 사용)
         if (mapping.getPaymentAmount() != null && !accurateAmount.equals(mapping.getPaymentAmount())) {
             amountManagementService.recordAmountChange(mapping.getId(), 
                 mapping.getPaymentAmount(), accurateAmount, 
@@ -469,14 +419,12 @@ public class AdminServiceImpl implements AdminService {
             mapping.getId(), accurateAmount);
     }
     
-    /**
      * 추가 회기 수입 거래 자동 생성 (추가 매칭용)
      */
     private void createAdditionalSessionIncomeTransaction(ConsultantClientMapping mapping, Long additionalPaymentAmount) {
         log.info("💰 [중앙화] 추가 회기 수입 거래 생성 시작: MappingID={}, AdditionalAmount={}", 
             mapping.getId(), additionalPaymentAmount);
         
-        // 추가 결제 금액 사용 (전체 패키지 가격이 아닌 실제 추가 결제 금액)
         Long transactionAmount = additionalPaymentAmount != null ? additionalPaymentAmount : 0L;
         
         if (transactionAmount <= 0) {
@@ -484,13 +432,10 @@ public class AdminServiceImpl implements AdminService {
             return;
         }
         
-        // 추가 회기수 추출 시도
         int additionalSessions = extractAdditionalSessionsFromNotes(mapping.getNotes());
         
-        // ERP 거래 생성
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
-                .category("CONSULTATION") // 공통코드 사용
                 .subcategory("ADDITIONAL_CONSULTATION") // 추가 회기 세부카테고리
                 .amount(java.math.BigDecimal.valueOf(transactionAmount))
                 .description(String.format("추가 회기 상담료 입금 확인 - %s (%d회 추가, %s) [추가금액: %,d원]", 
@@ -504,11 +449,9 @@ public class AdminServiceImpl implements AdminService {
                 .taxIncluded(false) // 상담료는 부가세 면세
                 .build();
         
-        // 시스템 자동 거래 생성 (권한 검사 우회)
         com.coresolution.consultation.dto.FinancialTransactionResponse response = 
             financialTransactionService.createTransaction(request, null);
         
-        // 입금 확인된 거래는 즉시 완료 상태로 변경
         try {
             com.coresolution.consultation.entity.FinancialTransaction transaction = 
                 financialTransactionRepository.findById(response.getId()).orElse(null);
@@ -526,7 +469,6 @@ public class AdminServiceImpl implements AdminService {
             mapping.getId(), transactionAmount, additionalSessions);
     }
     
-    /**
      * Notes에서 추가 회기수 추출
      */
     private int extractAdditionalSessionsFromNotes(String notes) {
@@ -535,16 +477,13 @@ public class AdminServiceImpl implements AdminService {
         }
         
         try {
-            // "[추가 매칭]" 다음에 있는 숫자 추출 시도
             String[] lines = notes.split("\n");
             for (String line : lines) {
                 if (line.contains("[추가 매칭]")) {
-                    // "10회", "20회" 같은 패턴에서 숫자 추출
                     if (line.matches(".*\\d+회.*")) {
                         String sessionStr = line.replaceAll(".*?(\\d+)회.*", "$1");
                         return Integer.parseInt(sessionStr);
                     }
-                    // 기본값으로 10회 반환
                     return 10;
                 }
             }
@@ -555,7 +494,6 @@ public class AdminServiceImpl implements AdminService {
         return 10; // 기본값
     }
     
-    /**
      * 상담료 환불 거래 자동 생성
      */
     private void createConsultationRefundTransaction(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
@@ -569,7 +507,6 @@ public class AdminServiceImpl implements AdminService {
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
-                .category("CONSULTATION") // 공통코드 사용
                 .subcategory("CONSULTATION_REFUND") // 환불 세부카테고리
                 .amount(java.math.BigDecimal.valueOf(refundAmount))
                 .description(String.format("상담료 환불 - %s (%d회기 환불, 사유: %s)", 
@@ -582,14 +519,12 @@ public class AdminServiceImpl implements AdminService {
                 .taxIncluded(false) // 환불은 부가세 면세
                 .build();
         
-        // 시스템 자동 거래 생성 (권한 검사 우회)
         financialTransactionService.createTransaction(request, null);
         
         log.info("✅ 상담료 환불 거래 생성 완료: MappingID={}, RefundAmount={}", 
             mapping.getId(), refundAmount);
     }
     
-    /**
      * 부분 환불 상담료 거래 자동 생성 (중앙화된 금액 관리 사용)
      */
     private void createPartialConsultationRefundTransaction(ConsultantClientMapping mapping, int refundSessions, long refundAmount, String reason) {
@@ -601,10 +536,7 @@ public class AdminServiceImpl implements AdminService {
             return;
         }
         
-        // 1. 중복 거래 방지 (부분 환불은 여러 번 가능하므로 중복 체크 스킵)
-        // 부분 환불은 여러 번 발생할 수 있으므로 중복 체크를 하지 않음
         
-        // 2. 금액 일관성 검사 (중앙화된 서비스 사용)
         AmountManagementService.AmountConsistencyResult consistency = 
             amountManagementService.checkAmountConsistency(mapping.getId());
         
@@ -613,10 +545,8 @@ public class AdminServiceImpl implements AdminService {
             log.warn("💡 권장사항: {}", consistency.getRecommendation());
         }
         
-        // 3. ERP 환불 거래 생성
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
-                .category("CONSULTATION") // 공통코드 사용
                 .subcategory("CONSULTATION_PARTIAL_REFUND") // 부분 환불 세부카테고리
                 .amount(java.math.BigDecimal.valueOf(refundAmount))
                 .description(String.format("상담료 부분 환불 - %s (%d회기 부분 환불, 사유: %s) [남은회기: %d회]", 
@@ -631,11 +561,9 @@ public class AdminServiceImpl implements AdminService {
                 .taxIncluded(false) // 환불은 부가세 면세
                 .build();
         
-        // 4. 시스템 자동 거래 생성 (권한 검사 우회)
         com.coresolution.consultation.dto.FinancialTransactionResponse response = 
             financialTransactionService.createTransaction(request, null);
         
-        // 5. 부분 환불 거래는 즉시 완료 상태로 변경
         try {
             com.coresolution.consultation.entity.FinancialTransaction transaction = 
                 financialTransactionRepository.findById(response.getId()).orElse(null);
@@ -649,7 +577,6 @@ public class AdminServiceImpl implements AdminService {
             log.error("부분 환불 거래 완료 처리 실패: {}", e.getMessage(), e);
         }
         
-        // 6. 금액 변경 이력 기록 (중앙화된 서비스 사용)
         try {
             Long originalAmount = mapping.getPackagePrice();
             Long newEffectiveAmount = originalAmount != null ? originalAmount - refundAmount : null;
@@ -668,7 +595,6 @@ public class AdminServiceImpl implements AdminService {
             mapping.getId(), refundSessions, refundAmount);
     }
 
-    /**
      * 결제 확인 처리 (미수금 상태)
      */
     @Override
@@ -680,7 +606,6 @@ public class AdminServiceImpl implements AdminService {
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
-        // 🚀 실시간 통계 업데이트 추가
         try {
             realTimeStatisticsService.updateStatisticsOnMappingChange(
                 savedMapping.getConsultant().getId(), 
@@ -693,32 +618,27 @@ public class AdminServiceImpl implements AdminService {
             log.error("❌ 결제 확인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
         }
         
-        // 결제 확인 시 자동으로 ERP 미수금(매출채권) 거래 생성
         try {
             createReceivablesTransaction(savedMapping);
             log.info("💚 매칭 결제 확인으로 인한 미수금 거래 자동 생성: MappingID={}", mappingId);
         } catch (Exception e) {
             log.error("미수금 거래 자동 생성 실패: {}", e.getMessage(), e);
-            // 거래 생성 실패해도 결제 확인은 완료
         }
         
         return savedMapping;
     }
     
-    /**
      * 미수금(매출채권) 거래 생성
      */
     private void createReceivablesTransaction(ConsultantClientMapping mapping) {
         log.info("💰 [미수금] 매출채권 거래 생성 시작: MappingID={}", mapping.getId());
         
-        // 1. 중복 거래 방지
         if (amountManagementService.isDuplicateTransaction(mapping.getId(), 
                 com.coresolution.consultation.entity.FinancialTransaction.TransactionType.RECEIVABLES)) {
             log.warn("🚫 중복 거래 방지: MappingID={}에 대한 미수금 거래가 이미 존재합니다.", mapping.getId());
             return;
         }
         
-        // 2. 정확한 거래 금액 결정
         Long accurateAmount = amountManagementService.getAccurateTransactionAmount(mapping);
         
         if (accurateAmount == null || accurateAmount <= 0) {
@@ -726,11 +646,8 @@ public class AdminServiceImpl implements AdminService {
             return;
         }
         
-        // 3. ERP 미수금 거래 생성
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("RECEIVABLES") // 미수금 거래 타입
-                .category("CONSULTATION") // 공통코드 사용
-                .subcategory("INDIVIDUAL_CONSULTATION") // 공통코드 사용
                 .amount(java.math.BigDecimal.valueOf(accurateAmount))
                 .description(String.format("상담료 결제 확인 (미수금) - %s (%s) [금액: %,d원]", 
                     mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
@@ -743,7 +660,6 @@ public class AdminServiceImpl implements AdminService {
                 .taxIncluded(false) // 상담료는 부가세 면세
                 .build();
         
-        // 4. 시스템 자동 거래 생성 (권한 검사 우회)
         com.coresolution.consultation.dto.FinancialTransactionResponse response = 
             financialTransactionService.createTransaction(request, null);
         
@@ -755,7 +671,6 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 입금 확인 처리 (현금 수입)
      */
     @Override
@@ -767,7 +682,6 @@ public class AdminServiceImpl implements AdminService {
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
-        // 🚀 실시간 통계 업데이트 추가
         try {
             realTimeStatisticsService.updateStatisticsOnMappingChange(
                 savedMapping.getConsultant().getId(), 
@@ -775,7 +689,6 @@ public class AdminServiceImpl implements AdminService {
                 savedMapping.getBranchCode()
             );
             
-            // 입금 완료시 재무 통계 업데이트
             if (savedMapping.getPaymentAmount() != null) {
                 realTimeStatisticsService.updateFinancialStatisticsOnPayment(
                     savedMapping.getBranchCode(), 
@@ -789,19 +702,16 @@ public class AdminServiceImpl implements AdminService {
             log.error("❌ 입금 확인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
         }
         
-        // 입금 확인 시 자동으로 ERP 현금 수입 거래 생성 (별도 트랜잭션으로 처리)
         try {
             createConsultationIncomeTransactionAsync(savedMapping);
             log.info("💚 매칭 입금 확인으로 인한 상담료 수입 거래 자동 생성: MappingID={}", mappingId);
         } catch (Exception e) {
             log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
-            // 거래 생성 실패해도 입금 확인은 완료
         }
         
         return savedMapping;
     }
 
-    /**
      * 관리자 승인
      */
     @Override
@@ -813,7 +723,6 @@ public class AdminServiceImpl implements AdminService {
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
-        // 🚀 실시간 통계 업데이트 추가
         try {
             realTimeStatisticsService.updateStatisticsOnMappingChange(
                 savedMapping.getConsultant().getId(), 
@@ -829,7 +738,6 @@ public class AdminServiceImpl implements AdminService {
         return savedMapping;
     }
 
-    /**
      * 관리자 거부
      */
     @Override
@@ -845,7 +753,6 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.save(mapping);
     }
 
-    /**
      * 회기 사용 처리
      */
     @Override
@@ -858,7 +765,6 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.save(mapping);
     }
 
-    /**
      * 회기 추가 (연장) - 기존 메서드 (즉시 처리)
      * @deprecated 워크플로우를 통한 회기 추가를 권장합니다.
      */
@@ -875,7 +781,6 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.save(mapping);
     }
     
-    /**
      * 회기 추가 요청 생성 (워크플로우 방식)
      */
     public ConsultantClientMapping createSessionExtensionRequest(Long mappingId, Long requesterId, 
@@ -884,23 +789,18 @@ public class AdminServiceImpl implements AdminService {
         log.info("🔄 회기 추가 요청 생성: mappingId={}, requesterId={}, sessions={}", 
                 mappingId, requesterId, additionalSessions);
         
-        // 매칭 정보 조회
         ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다: " + mappingId));
         
-        // 요청자 정보 검증
         if (!userRepository.existsById(requesterId)) {
             throw new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId);
         }
         
-        // 회기 추가 요청 생성 (SessionExtensionService 사용)
-        // 이 메서드는 기존 AdminService에 유지하되, 실제 처리는 SessionExtensionService로 위임
         log.info("✅ 회기 추가 요청 생성 완료 - SessionExtensionService를 통해 처리됩니다.");
         
         return mapping;
     }
 
-    /**
      * 입금 대기 중인 매칭 목록 조회
      */
     @Override
@@ -912,7 +812,6 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toList());
     }
 
-    /**
      * 입금 확인된 매칭 목록 조회
      */
     @Override
@@ -924,7 +823,6 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toList());
     }
 
-    /**
      * 입금 확인 대기 중인 매칭 목록 조회 (결제 확인 완료, 입금 확인 대기)
      */
     @Override
@@ -938,7 +836,6 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toList());
     }
 
-    /**
      * 활성 매칭 목록 조회 (승인 완료)
      */
     @Override
@@ -946,7 +843,6 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.findActiveMappingsWithDetails();
     }
 
-    /**
      * 회기 소진된 매칭 목록 조회
      */
     @Override
@@ -963,30 +859,26 @@ public class AdminServiceImpl implements AdminService {
         try {
             Map<String, Object> statistics = new HashMap<>();
             
-            // 전체 매칭 수
             long totalMappings = mappingRepository.count();
             statistics.put("totalMappings", totalMappings);
             
-            // 활성 매칭 수
             String tenantId = TenantContextHolder.getRequiredTenantId();
             long activeMappings = mappingRepository.findByTenantId(tenantId).stream()
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
                     .count();
             statistics.put("activeMappings", activeMappings);
             
-            // 회기 소진된 매칭 수
             long sessionsExhaustedMappings = mappingRepository.findByTenantId(tenantId).stream()
                     .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED)
                     .count();
             statistics.put("sessionsExhaustedMappings", sessionsExhaustedMappings);
             
-            // 총 회기 수
             int totalSessions = mappingRepository.findByTenantId(tenantId).stream()
                     .mapToInt(mapping -> mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0)
                     .sum();
             statistics.put("totalSessions", totalSessions);
             
-            // 사용된 회기 수
             int usedSessions = mappingRepository.findByTenantId(tenantId).stream()
                     .mapToInt(mapping -> {
                         if (mapping.getTotalSessions() != null && mapping.getRemainingSessions() != null) {
@@ -997,7 +889,6 @@ public class AdminServiceImpl implements AdminService {
                     .sum();
             statistics.put("usedSessions", usedSessions);
             
-            // 남은 회기 수
             int remainingSessions = mappingRepository.findByTenantId(tenantId).stream()
                     .mapToInt(mapping -> mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0)
                     .sum();
@@ -1045,7 +936,6 @@ public class AdminServiceImpl implements AdminService {
                 .map(consultant -> (User) consultant)
                 .collect(Collectors.toList());
         
-        // 각 상담사의 전화번호 복호화
         consultants.forEach(consultant -> {
             if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
                 try {
@@ -1066,7 +956,6 @@ public class AdminServiceImpl implements AdminService {
     public List<Map<String, Object>> getAllConsultantsWithSpecialty() {
         List<Consultant> consultants = consultantRepository.findActiveConsultants();
         
-        // 상담사 등급별 색상/아이콘 정보 조회
         Map<String, Map<String, String>> gradeStyles = new HashMap<>();
         try {
             List<CommonCode> gradeCodes = commonCodeService.getCommonCodesByGroup("CONSULTANT_GRADE");
@@ -1087,7 +976,6 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("name", consultant.getName());
                 consultantData.put("email", consultant.getEmail());
                 
-                // 전화번호 복호화
                 String decryptedPhone = null;
                 if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
                     try {
@@ -1106,29 +994,25 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("createdAt", consultant.getCreatedAt());
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 
-                // 상담사 등급별 색상/아이콘 추가
                 String grade = consultant.getGrade() != null ? consultant.getGrade() : "CONSULTANT_JUNIOR";
                 Map<String, String> style = gradeStyles.getOrDefault(grade, Map.of("color", "#6b7280", "icon", "⭐"));
                 consultantData.put("gradeColor", style.get("color"));
                 consultantData.put("gradeIcon", style.get("icon"));
                 consultantData.put("grade", grade);
                 
-                // Consultant 엔티티의 추가 정보 가져오기
-                // 현재 테넌트 ID 가져오기
                 String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
                 
-                // 실제 활성 매핑 수를 계산 (tenantId 필터링)
                 long actualCurrentClients = tenantId != null ? 
                     mappingRepository.countByConsultantIdAndStatusIn(
                         tenantId,
                         consultant.getId(), 
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
                     ) : 0L;
                 consultantData.put("currentClients", (int) actualCurrentClients);
                 consultantData.put("maxClients", consultant.getMaxClients());
                 consultantData.put("totalClients", consultant.getTotalClients());
                 consultantData.put("totalConsultations", consultant.getTotalConsultations());
-                // ConsultantRatingService를 사용해서 실제 평가 데이터 조회
                 try {
                     Map<String, Object> ratingStats = consultantRatingService.getConsultantRatingStats(consultant.getId());
                     if (ratingStats != null && !ratingStats.isEmpty()) {
@@ -1146,7 +1030,6 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("yearsOfExperience", consultant.getYearsOfExperience());
                 consultantData.put("isAvailable", consultant.getIsAvailable());
                 
-                // 전문분야 정보 처리
                 String specialization = consultant.getSpecialization();
                 if (specialization != null && !specialization.trim().isEmpty()) {
                     consultantData.put("specialization", specialization);
@@ -1161,7 +1044,6 @@ public class AdminServiceImpl implements AdminService {
             .collect(Collectors.toList());
     }
     
-    /**
      * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
      */
     @Override
@@ -1170,7 +1052,6 @@ public class AdminServiceImpl implements AdminService {
         
         List<Consultant> consultants = consultantRepository.findActiveConsultants();
         
-        // 모든 상담사의 휴무 정보 조회
         Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
         
         return consultants.stream()
@@ -1180,7 +1061,6 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("name", consultant.getName());
                 consultantData.put("email", consultant.getEmail());
                 
-                // 전화번호 복호화
                 String decryptedPhone = null;
                 if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
                     try {
@@ -1198,22 +1078,19 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("createdAt", consultant.getCreatedAt());
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 
-                // Consultant 엔티티의 추가 정보 가져오기
-                // 현재 테넌트 ID 가져오기
                 String tenantId2 = com.coresolution.core.context.TenantContext.getTenantId();
                 
-                // 실제 활성 매핑 수를 계산 (tenantId 필터링)
                 long actualCurrentClients = tenantId2 != null ? 
                     mappingRepository.countByConsultantIdAndStatusIn(
                         tenantId2,
                         consultant.getId(), 
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
                     ) : 0L;
                 consultantData.put("currentClients", (int) actualCurrentClients);
                 consultantData.put("maxClients", consultant.getMaxClients());
                 consultantData.put("totalClients", consultant.getTotalClients());
                 consultantData.put("totalConsultations", consultant.getTotalConsultations());
-                // ConsultantRatingService를 사용해서 실제 평가 데이터 조회
                 try {
                     Map<String, Object> ratingStats = consultantRatingService.getConsultantRatingStats(consultant.getId());
                     if (ratingStats != null && !ratingStats.isEmpty()) {
@@ -1231,7 +1108,6 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("yearsOfExperience", consultant.getYearsOfExperience());
                 consultantData.put("isAvailable", consultant.getIsAvailable());
                 
-                // 전문분야 정보 처리
                 String specialization = consultant.getSpecialization();
                 if (specialization != null && !specialization.trim().isEmpty()) {
                     consultantData.put("specialization", specialization);
@@ -1241,13 +1117,11 @@ public class AdminServiceImpl implements AdminService {
                     consultantData.put("specializationDetails", new ArrayList<>());
                 }
                 
-                // 휴무 정보 추가
                 String consultantId = consultant.getId().toString();
                 @SuppressWarnings("unchecked")
                 Map<String, Object> consultantVacations = (Map<String, Object>) allVacations.get(consultantId);
                 
                 if (consultantVacations != null && consultantVacations.containsKey(date)) {
-                    // 해당 날짜에 휴가가 있는 경우
                     @SuppressWarnings("unchecked")
                     Map<String, Object> vacationInfo = (Map<String, Object>) consultantVacations.get(date);
                     consultantData.put("isOnVacation", true);
@@ -1257,18 +1131,15 @@ public class AdminServiceImpl implements AdminService {
                     consultantData.put("vacationEndTime", vacationInfo.get("endTime"));
                     consultantData.put("vacationConsultantName", vacationInfo.get("consultantName"));
                     
-                    // 휴무 상태 구분
                     consultantData.put("busy", true); // 휴가 중이므로 바쁨
                     consultantData.put("isVacation", true); // 휴가 상태임을 명시
                 } else {
-                    // 해당 날짜에 휴가가 없는 경우
                     consultantData.put("isOnVacation", false);
                     consultantData.put("vacationType", null);
                     consultantData.put("vacationReason", null);
                     consultantData.put("vacationStartTime", null);
                     consultantData.put("vacationEndTime", null);
                     
-                    // 일반 상태 (스케줄에 따라 바쁨 여부 결정)
                     consultantData.put("busy", false); // 기본적으로 여유
                     consultantData.put("isVacation", false); // 휴가 아님
                 }
@@ -1278,7 +1149,6 @@ public class AdminServiceImpl implements AdminService {
             .collect(Collectors.toList());
     }
     
-    /**
      * 데이터베이스에서 전문분야 상세 정보 조회
      */
     private List<Map<String, String>> getSpecializationDetailsFromDB(String specialization) {
@@ -1286,15 +1156,12 @@ public class AdminServiceImpl implements AdminService {
             return new ArrayList<>();
         }
         
-        // 전문분야 코드들을 배열로 분리
         String[] codes = specialization.split(",");
         List<Map<String, String>> details = new ArrayList<>();
         
         for (String code : codes) {
             code = code.trim();
             if (!code.isEmpty()) {
-                // 실제로는 CodeValueRepository를 사용해서 조회해야 함
-                // 여기서는 임시로 하드코딩된 매칭 사용
                 Map<String, String> detail = new HashMap<>();
                 detail.put("code", code);
                 detail.put("name", getSpecialtyNameByCode(code));
@@ -1305,7 +1172,6 @@ public class AdminServiceImpl implements AdminService {
         return details;
     }
     
-    /**
      * 코드로 전문분야 이름 조회 (한글 통일)
      */
     private String getSpecialtyNameByCode(String code) {
@@ -1313,7 +1179,6 @@ public class AdminServiceImpl implements AdminService {
             return "미설정";
         }
         
-        // 이미 한글로 된 경우 그대로 반환
         if (code.matches(".*[가-힣].*")) {
             return code;
         }
@@ -1341,7 +1206,6 @@ public class AdminServiceImpl implements AdminService {
         return specialtyMap.getOrDefault(code, code);
     }
     
-    /**
      * 사용자 개인정보 복호화
      */
     private User decryptUserPersonalData(User user) {
@@ -1350,29 +1214,24 @@ public class AdminServiceImpl implements AdminService {
         }
         
         try {
-            // 이름 복호화 (암호화된 데이터인지 확인)
             if (user.getName() != null && !user.getName().trim().isEmpty()) {
                 if (isEncryptedData(user.getName())) {
                     user.setName(encryptionUtil.decrypt(user.getName()));
                 }
-                // 암호화되지 않은 데이터는 그대로 유지
             }
             
-            // 닉네임 복호화
             if (user.getNickname() != null && !user.getNickname().trim().isEmpty()) {
                 if (isEncryptedData(user.getNickname())) {
                     user.setNickname(encryptionUtil.decrypt(user.getNickname()));
                 }
             }
             
-            // 전화번호 복호화
             if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
                 if (isEncryptedData(user.getPhone())) {
                     user.setPhone(encryptionUtil.decrypt(user.getPhone()));
                 }
             }
             
-            // 성별 복호화
             if (user.getGender() != null && !user.getGender().trim().isEmpty()) {
                 if (isEncryptedData(user.getGender())) {
                     user.setGender(encryptionUtil.decrypt(user.getGender()));
@@ -1380,14 +1239,12 @@ public class AdminServiceImpl implements AdminService {
             }
             
         } catch (Exception e) {
-            // 복호화 실패 시 원본 데이터 유지
             log.warn("사용자 개인정보 복호화 실패: {}", e.getMessage());
         }
         
         return user;
     }
     
-    /**
      * 데이터가 암호화된 데이터인지 확인
      * Base64 패턴과 길이로 판단
      */
@@ -1396,17 +1253,14 @@ public class AdminServiceImpl implements AdminService {
             return false;
         }
         
-        // Base64 패턴 확인 (A-Z, a-z, 0-9, +, /, =)
         if (!data.matches("^[A-Za-z0-9+/]*={0,2}$")) {
             return false;
         }
         
-        // 암호화된 데이터는 일반적으로 20자 이상
         if (data.length() < 20) {
             return false;
         }
         
-        // 한글이나 특수문자가 포함된 경우 평문으로 판단
         if (data.matches(".*[가-힣].*") || data.matches(".*[^A-Za-z0-9+/=].*")) {
             return false;
         }
@@ -1414,7 +1268,6 @@ public class AdminServiceImpl implements AdminService {
         return true;
     }
 
-    /**
      * 전화번호 하이픈 포맷팅
      * 01012345678 -> 010-1234-5678
      */
@@ -1423,14 +1276,11 @@ public class AdminServiceImpl implements AdminService {
             return phone;
         }
         
-        // 숫자만 추출
         String numbers = phone.replaceAll("[^0-9]", "");
         
-        // 11자리 휴대폰 번호 형식 (010-1234-5678)
         if (numbers.length() == 11 && numbers.startsWith("01")) {
             return numbers.substring(0, 3) + "-" + numbers.substring(3, 7) + "-" + numbers.substring(7);
         }
-        // 10자리 전화번호 형식 (02-1234-5678, 031-123-4567 등)
         else if (numbers.length() == 10) {
             if (numbers.startsWith("02")) {
                 return numbers.substring(0, 2) + "-" + numbers.substring(2, 6) + "-" + numbers.substring(6);
@@ -1438,18 +1288,15 @@ public class AdminServiceImpl implements AdminService {
                 return numbers.substring(0, 3) + "-" + numbers.substring(3, 6) + "-" + numbers.substring(6);
             }
         }
-        // 8자리 전화번호 형식 (031-123-4567의 앞자리 생략 등)
         else if (numbers.length() == 8) {
             return numbers.substring(0, 4) + "-" + numbers.substring(4);
         }
         
-        // 형식이 맞지 않는 경우 원본 반환
         return phone;
     }
 
     @Override
     public List<Client> getAllClients() {
-        // User 테이블에서 활성 CLIENT role 사용자들을 조회하고 Client 정보와 조인
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
@@ -1459,18 +1306,15 @@ public class AdminServiceImpl implements AdminService {
         
         log.info("🔍 내담자 조회 - 총 {}명", clientUsers.size());
         
-        // 각 내담자 정보를 상세히 로깅 (복호화 전)
         for (User user : clientUsers) {
             log.info("👤 내담자 원본 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}, 역할: {}", 
                 user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getIsActive(), user.getIsDeleted(), user.getRole());
         }
         
-        // 각 내담자의 개인정보 복호화
         clientUsers = clientUsers.stream()
             .map(user -> decryptUserPersonalData(user))
             .collect(Collectors.toList());
         
-        // 삭제된 사용자도 포함해서 전체 조회해보기
         List<User> allUsers = userRepository.findByTenantId(tenantId);
         List<User> allClientUsers = allUsers.stream()
             .filter(user -> user.getRole() == UserRole.CLIENT)
@@ -1484,18 +1328,15 @@ public class AdminServiceImpl implements AdminService {
         
         return clientUsers.stream()
             .map(user -> {
-                // User 정보를 Client로 매칭 (이미 복호화된 데이터 사용)
                 Client client = new Client();
                 client.setId(user.getId());
                 client.setName(user.getName());
                 client.setEmail(user.getEmail());
                 
-                // 전화번호 처리 - null이거나 빈 문자열인 경우 기본값 설정 (SNS 가입자 고려)
                 String phone = user.getPhone();
                 if (phone == null || phone.trim().isEmpty()) {
                     phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
                 } else {
-                    // 전화번호 하이픈 포맷팅 (010-1234-5678)
                     phone = formatPhoneNumber(phone);
                 }
                 client.setPhone(phone);
@@ -1507,7 +1348,6 @@ public class AdminServiceImpl implements AdminService {
                 client.setCreatedAt(user.getCreatedAt());
                 client.setUpdatedAt(user.getUpdatedAt());
                 
-                // 디버깅을 위한 로깅 (복호화 후)
                 log.info("👤 내담자 최종 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 삭제상태: {}", 
                     user.getId(), user.getName(), user.getEmail(), phone, user.getIsDeleted());
                 
@@ -1521,7 +1361,6 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔍 통합 내담자 데이터 조회 시작");
             
-            // 활성 내담자만 조회
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
@@ -1530,29 +1369,24 @@ public class AdminServiceImpl implements AdminService {
             List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
             log.info("🔍 내담자 수: {}", clientUsers.size());
             
-            // 모든 매칭 조회
             List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetails();
             log.info("🔍 매칭 수: {}", allMappings.size());
             
             List<Map<String, Object>> result = new ArrayList<>();
             
             for (User user : clientUsers) {
-                // 개인정보 복호화
                 User decryptedUser = decryptUserPersonalData(user);
                 
                 Map<String, Object> clientData = new HashMap<>();
                 
-                // 기본 내담자 정보 (복호화된 데이터 사용)
                 clientData.put("id", decryptedUser.getId());
                 clientData.put("name", decryptedUser.getName());
                 clientData.put("email", decryptedUser.getEmail() != null ? decryptedUser.getEmail() : "");
                 
-                // 전화번호 복호화 처리 (SNS 가입자 고려)
                 String phone = decryptedUser.getPhone();
                 if (phone == null || phone.trim().isEmpty()) {
                     phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
                 } else {
-                    // 전화번호 하이픈 포맷팅 (010-1234-5678)
                     phone = formatPhoneNumber(phone);
                 }
                 clientData.put("phone", phone);
@@ -1569,7 +1403,6 @@ public class AdminServiceImpl implements AdminService {
                 log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
                     decryptedUser.getId(), decryptedUser.getName(), phone);
                 
-                // 해당 내담자의 매칭 정보들
                 List<Map<String, Object>> mappings = allMappings.stream()
                     .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId().equals(decryptedUser.getId()))
                     .map(mapping -> {
@@ -1595,20 +1428,17 @@ public class AdminServiceImpl implements AdminService {
                 clientData.put("mappings", mappings);
                 clientData.put("mappingCount", mappings.size());
                 
-                // 활성 매칭 수 (승인된 매칭)
                 long activeMappingCount = mappings.stream()
                     .filter(mapping -> "APPROVED".equals(mapping.get("status")))
                     .count();
                 clientData.put("activeMappingCount", activeMappingCount);
                 
-                // 총 남은 세션 수
                 int totalRemainingSessions = mappings.stream()
                     .filter(mapping -> "APPROVED".equals(mapping.get("status")))
                     .mapToInt(mapping -> (Integer) mapping.get("remainingSessions"))
                     .sum();
                 clientData.put("totalRemainingSessions", totalRemainingSessions);
                 
-                // 결제 상태별 매칭 수
                 Map<String, Long> paymentStatusCount = mappings.stream()
                     .collect(Collectors.groupingBy(
                         mapping -> (String) mapping.get("paymentStatus"),
@@ -1633,7 +1463,6 @@ public class AdminServiceImpl implements AdminService {
         try {
             return mappingRepository.findAllWithDetails();
         } catch (Exception e) {
-            // enum 변환 오류 등으로 인해 조회 실패시 빈 목록 반환
             System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();
         }
@@ -1644,19 +1473,16 @@ public class AdminServiceImpl implements AdminService {
         User consultant = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Consultant not found"));
         
-        // 표준화 원칙: 개인정보 필드 암호화 필수 (name, phone, email)
         consultant.setName(encryptionUtil.safeEncrypt(dto.getName()));
         consultant.setEmail(encryptionUtil.safeEncrypt(dto.getEmail()));
         if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
             consultant.setPhone(encryptionUtil.safeEncrypt(dto.getPhone()));
         }
         
-        // 전문분야 필드 처리 추가
         if (dto.getSpecialization() != null) {
             consultant.setSpecialization(dto.getSpecialization());
         }
         
-        // 비밀번호 변경 처리 추가
         if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
             log.info("🔧 상담사 비밀번호 변경: ID={}", id);
             consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
@@ -1685,7 +1511,6 @@ public class AdminServiceImpl implements AdminService {
         User clientUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
         
-        // 표준화 원칙: 개인정보 필드 암호화 필수 (name, phone, email)
         clientUser.setName(encryptionUtil.safeEncrypt(dto.getName()));
         clientUser.setEmail(encryptionUtil.safeEncrypt(dto.getEmail()));
         if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
@@ -1694,7 +1519,6 @@ public class AdminServiceImpl implements AdminService {
         
         User savedUser = userRepository.save(clientUser);
         
-        // Client 객체로 변환하여 반환
         Client client = new Client();
         client.setId(savedUser.getId());
         client.setName(savedUser.getName());
@@ -1718,12 +1542,10 @@ public class AdminServiceImpl implements AdminService {
         log.info("🔄 매핑 정보 수정: id={}, packageName={}, packagePrice={}, totalSessions={}", 
                 id, dto.getPackageName(), dto.getPackagePrice(), dto.getTotalSessions());
         
-        // 기존 값 저장 (프로시저 호출 시 사용)
         String oldPackageName = mapping.getPackageName();
         Long oldPackagePrice = mapping.getPackagePrice();
         Integer oldTotalSessions = mapping.getTotalSessions();
         
-        // 패키지 정보 업데이트
         if (dto.getPackageName() != null) {
             mapping.setPackageName(dto.getPackageName());
         }
@@ -1731,14 +1553,11 @@ public class AdminServiceImpl implements AdminService {
             mapping.setPackagePrice(dto.getPackagePrice());
         }
         
-        // 회기 수 업데이트
         if (dto.getTotalSessions() != null) {
             mapping.setTotalSessions(dto.getTotalSessions());
-            // remainingSessions도 함께 업데이트 (totalSessions - usedSessions)
             mapping.setRemainingSessions(dto.getTotalSessions() - mapping.getUsedSessions());
         }
         
-        // 상태 업데이트
         if (dto.getStatus() != null) {
             mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus()));
         }
@@ -1748,7 +1567,6 @@ public class AdminServiceImpl implements AdminService {
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
-        // 패키지 정보가 변경된 경우 프로시저 호출하여 ERP 재무 거래 동기화
         boolean packageChanged = (dto.getPackageName() != null && oldPackageName != null && !dto.getPackageName().equals(oldPackageName)) ||
                                 (dto.getPackageName() != null && oldPackageName == null) ||
                                 (dto.getPackagePrice() != null && oldPackagePrice != null && !dto.getPackagePrice().equals(oldPackagePrice)) ||
@@ -1760,7 +1578,6 @@ public class AdminServiceImpl implements AdminService {
             try {
                 log.info("🔄 패키지 정보 변경 감지, ERP 재무 거래 동기화 프로시저 호출: mappingId={}", id);
                 
-                // updatedBy는 컨트롤러에서 전달된 로그인 사용자 정보 사용 (없으면 매핑의 상담사 정보 또는 시스템)
                 String procedureUpdatedBy = updatedBy != null && !updatedBy.isEmpty() 
                     ? updatedBy 
                     : (savedMapping.getConsultant() != null && savedMapping.getConsultant().getName() != null
@@ -1784,12 +1601,9 @@ public class AdminServiceImpl implements AdminService {
                 }
             } catch (Exception e) {
                 log.error("❌ ERP 재무 거래 동기화 프로시저 호출 실패: mappingId={}", id, e);
-                // 프로시저 실패해도 매핑 업데이트는 완료되도록 예외는 발생시키지 않음
-                // (ERP 동기화는 부가 기능이므로 매핑 수정 자체는 성공 처리)
             }
         }
         
-        // 🚀 실시간 통계 업데이트 (프로시저 통계 + 실시간 대시보드 통계)
         try {
             if (savedMapping.getConsultant() != null && savedMapping.getClient() != null) {
                 realTimeStatisticsService.updateStatisticsOnMappingChange(
@@ -1798,7 +1612,6 @@ public class AdminServiceImpl implements AdminService {
                     savedMapping.getBranchCode()
                 );
                 
-                // 패키지 가격 변경 시 재무 통계도 업데이트
                 if (packageChanged && savedMapping.getPackagePrice() != null) {
                     realTimeStatisticsService.updateFinancialStatisticsOnPayment(
                         savedMapping.getBranchCode(), 
@@ -1811,7 +1624,6 @@ public class AdminServiceImpl implements AdminService {
             }
         } catch (Exception e) {
             log.error("❌ 매핑 수정시 실시간 통계 업데이트 실패: mappingId={}, error={}", id, e.getMessage(), e);
-            // 통계 업데이트 실패해도 매핑 수정은 완료되도록 예외는 발생시키지 않음
         }
         
         log.info("✅ 매핑 정보 수정 완료: id={}, packageName={}, packagePrice={}, totalSessions={}", 
@@ -1833,14 +1645,12 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("상담사가 아닌 사용자는 삭제할 수 없습니다.");
         }
         
-        // 현재 테넌트 ID 가져오기
         String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             throw new RuntimeException("테넌트 정보를 확인할 수 없습니다.");
         }
         
-        // 1. 해당 상담사의 활성 매핑 조회 (tenantId 필터링)
         List<ConsultantClientMapping> activeMappings = mappingRepository
                 .findByConsultantIdAndStatusNot(tenantId, id, ConsultantClientMapping.MappingStatus.TERMINATED);
         
@@ -1851,7 +1661,6 @@ public class AdminServiceImpl implements AdminService {
                 activeMappings.size()));
         }
         
-        // 2. 해당 상담사의 예정된 스케줄 조회 (오늘 포함)
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
         
         if (!futureSchedules.isEmpty()) {
@@ -1861,7 +1670,6 @@ public class AdminServiceImpl implements AdminService {
                 futureSchedules.size()));
         }
         
-        // 3. 상담사 비활성화
         consultant.setIsActive(false);
         userRepository.save(consultant);
         
@@ -1875,7 +1683,6 @@ public class AdminServiceImpl implements AdminService {
                 consultantId, transferToConsultantId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        // 1. 삭제할 상담사와 이전 대상 상담사 검증
         User consultantToDelete = userRepository.findById(consultantId)
                 .orElseThrow(() -> new RuntimeException("삭제할 상담사를 찾을 수 없습니다."));
         
@@ -1894,7 +1701,6 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("이전 대상 상담사가 비활성 상태입니다.");
         }
         
-        // 2. 활성 매칭들을 새로운 상담사로 이전
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getConsultant().getId().equals(consultantId))
@@ -1905,23 +1711,19 @@ public class AdminServiceImpl implements AdminService {
             String transferReason = String.format("상담사 삭제로 인한 이전: %s -> %s. 사유: %s", 
                     consultantToDelete.getName(), transferToConsultant.getName(), reason);
             
-            // 이전 대상 상담사와 내담자 조합으로 기존 매칭이 있는지 확인 (중복 방지)
             List<ConsultantClientMapping> existingTransferMappings = 
                 mappingRepository.findByTenantIdAndConsultantAndClient(tenantId, transferToConsultant, mapping.getClient());
             
-            // 활성 매칭이 있는지 확인
             String activeStatus = getMappingStatusCode("ACTIVE");
             Optional<ConsultantClientMapping> existingActiveMapping = existingTransferMappings.stream()
                 .filter(m -> m.getStatus().name().equals(activeStatus))
                 .findFirst();
             
             if (existingActiveMapping.isPresent()) {
-                // 기존 활성 매칭에 회기수 합산
                 ConsultantClientMapping existing = existingActiveMapping.get();
                 log.info("🔍 이전 대상 상담사와 내담자 간 기존 활성 매칭 발견, 회기수 합산: 내담자={}, 상담사={}", 
                     mapping.getClient().getName(), transferToConsultant.getName());
                 
-                // 회기수 합산
                 int totalSessions = existing.getTotalSessions() + mapping.getTotalSessions();
                 int remainingSessions = existing.getRemainingSessions() + mapping.getRemainingSessions();
                 int usedSessions = existing.getUsedSessions() + mapping.getUsedSessions();
@@ -1930,7 +1732,6 @@ public class AdminServiceImpl implements AdminService {
                 existing.setRemainingSessions(remainingSessions);
                 existing.setUsedSessions(usedSessions);
                 
-                // 결제 정보 업데이트 (더 큰 금액으로)
                 if (mapping.getPackagePrice() != null && 
                     (existing.getPackagePrice() == null || mapping.getPackagePrice() > existing.getPackagePrice())) {
                     existing.setPackagePrice(mapping.getPackagePrice());
@@ -1945,8 +1746,9 @@ public class AdminServiceImpl implements AdminService {
                     existing.setPaymentReference(mapping.getPaymentReference());
                 }
                 
-                // 결제 상태 업데이트 (APPROVED 우선)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 if (mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.APPROVED) {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     existing.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
                 }
                 
@@ -1958,7 +1760,6 @@ public class AdminServiceImpl implements AdminService {
                 
                 log.info("✅ 기존 매칭에 회기수 합산 완료: 총 회기수={}, 남은 회기수={}", totalSessions, remainingSessions);
             } else {
-                // 새로운 매칭 생성
                 log.info("🆕 새로운 매칭 생성: 내담자={}, 상담사={}", 
                     mapping.getClient().getName(), transferToConsultant.getName());
                 
@@ -1987,7 +1788,6 @@ public class AdminServiceImpl implements AdminService {
                 log.info("✅ 새로운 매칭 생성 완료: 회기수={}", mapping.getTotalSessions());
             }
             
-            // 기존 매칭 종료 (TERMINATED로 변경)
             mapping.transferToNewConsultant(transferReason, "SYSTEM_AUTO_TRANSFER");
             mappingRepository.save(mapping);
             
@@ -1995,7 +1795,6 @@ public class AdminServiceImpl implements AdminService {
                     mapping.getClient().getName(), transferToConsultant.getName());
         }
         
-        // 3. 예정된 스케줄들을 새로운 상담사로 이전 (오늘 포함)
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateGreaterThanEqual(tenantId, consultantId, LocalDate.now());
         
         for (Schedule schedule : futureSchedules) {
@@ -2008,7 +1807,6 @@ public class AdminServiceImpl implements AdminService {
                     schedule.getId(), transferToConsultant.getName());
         }
         
-        // 4. 상담사 비활성화
         consultantToDelete.setIsActive(false);
         userRepository.save(consultantToDelete);
         
@@ -2029,14 +1827,12 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("상담사가 아닌 사용자입니다.");
         }
         
-        // 1. 활성 매칭 조회
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getConsultant().getId().equals(consultantId))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
         
-        // 2. 예정된 스케줄 조회 (오늘 포함, 활성 상태만)
         String bookedStatus = getScheduleStatusCode("BOOKED");
         String confirmedStatus = getScheduleStatusCode("CONFIRMED");
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndConsultantIdAndDateGreaterThanEqual(tenantId, consultantId, LocalDate.now())
@@ -2051,18 +1847,15 @@ public class AdminServiceImpl implements AdminService {
         result.put("canDeleteDirectly", activeMappings.isEmpty() && futureSchedules.isEmpty());
         result.put("requiresTransfer", !activeMappings.isEmpty() || !futureSchedules.isEmpty());
         
-        // 상세 정보
         Map<String, Object> details = new HashMap<>();
         details.put("activeMappingCount", activeMappings.size());
         details.put("futureScheduleCount", futureSchedules.size());
         
-        // 오늘과 미래 스케줄을 분리하여 표시
         long todayScheduleCount = futureSchedules.stream()
                 .filter(schedule -> schedule.getDate().equals(LocalDate.now()))
                 .count();
         details.put("todayScheduleCount", (int) todayScheduleCount);
         
-        // 활성 매칭된 내담자 목록
         List<Map<String, Object>> mappedClients = activeMappings.stream()
                 .map(mapping -> {
                     Map<String, Object> clientInfo = new HashMap<>();
@@ -2075,7 +1868,6 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toList());
         details.put("mappedClients", mappedClients);
         
-        // 예정된 스케줄 목록 (최대 5개만)
         List<Map<String, Object>> upcomingSchedules = futureSchedules.stream()
                 .limit(5)
                 .map(schedule -> {
@@ -2093,7 +1885,6 @@ public class AdminServiceImpl implements AdminService {
         
         result.put("details", details);
         
-        // 메시지 생성
         StringBuilder message = new StringBuilder();
         if (activeMappings.isEmpty() && futureSchedules.isEmpty()) {
             message.append("해당 상담사는 안전하게 삭제할 수 있습니다.");
@@ -2133,14 +1924,12 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("내담자가 아닌 사용자는 삭제할 수 없습니다.");
         }
         
-        // 1. 해당 내담자의 활성 매칭 조회
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getClient().getId().equals(id))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
         
-        // 2. 남은 회기가 있는 매칭 확인
         List<ConsultantClientMapping> mappingsWithRemainingSessions = activeMappings.stream()
                 .filter(mapping -> mapping.getRemainingSessions() > 0)
                 .collect(Collectors.toList());
@@ -2158,7 +1947,6 @@ public class AdminServiceImpl implements AdminService {
                 mappingsWithRemainingSessions.size(), totalRemainingSessions));
         }
         
-        // 3. 결제 대기 중인 매칭 확인
         String pendingPaymentStatus = getPaymentStatusCode("PENDING");
         List<ConsultantClientMapping> pendingPaymentMappings = activeMappings.stream()
                 .filter(mapping -> mapping.getPaymentStatus().name().equals(pendingPaymentStatus))
@@ -2171,10 +1959,8 @@ public class AdminServiceImpl implements AdminService {
                 pendingPaymentMappings.size()));
         }
         
-        // 4. 해당 내담자의 예정된 스케줄 조회 (오늘 포함)
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
         
-        // 활성 스케줄만 필터링 (BOOKED, CONFIRMED 상태)
         String bookedStatus = getScheduleStatusCode("BOOKED");
         String confirmedStatus = getScheduleStatusCode("CONFIRMED");
         List<Schedule> activeSchedules = futureSchedules.stream()
@@ -2185,7 +1971,6 @@ public class AdminServiceImpl implements AdminService {
         if (!activeSchedules.isEmpty()) {
             log.warn("⚠️ 내담자에게 {} 개의 예정된 스케줄이 있습니다.", activeSchedules.size());
             
-            // 스케줄 상세 정보 로깅
             for (Schedule schedule : activeSchedules) {
                 User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
                 log.warn("📅 예정 스케줄: ID={}, 날짜={}, 시간={}-{}, 상담사={} (활성:{})", 
@@ -2199,7 +1984,6 @@ public class AdminServiceImpl implements AdminService {
                 activeSchedules.size()));
         }
         
-        // 5. 모든 미래 스케줄 취소 (삭제된 상담사와의 스케줄 포함)
         List<Schedule> allFutureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, id, LocalDate.now());
         int cancelledScheduleCount = 0;
         
@@ -2212,6 +1996,7 @@ public class AdminServiceImpl implements AdminService {
                     consultant != null ? consultant.getName() : "알 수 없음",
                     consultant != null ? consultant.getIsActive() : "알 수 없음");
                 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 schedule.setStatus(ScheduleStatus.CANCELLED);
                 schedule.setNotes(schedule.getNotes() != null ? 
                     schedule.getNotes() + "\n[내담자 삭제로 인한 자동 취소]" :
@@ -2224,7 +2009,6 @@ public class AdminServiceImpl implements AdminService {
         
         log.info("📅 내담자 삭제로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
         
-        // 6. 내담자 비활성화
         client.setIsActive(false);
         userRepository.save(client);
         
@@ -2243,25 +2027,21 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("내담자가 아닌 사용자입니다.");
         }
         
-        // 1. 활성 매칭 조회
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getClient().getId().equals(clientId))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
         
-        // 2. 남은 회기가 있는 매칭 확인
         List<ConsultantClientMapping> mappingsWithRemainingSessions = activeMappings.stream()
                 .filter(mapping -> mapping.getRemainingSessions() > 0)
                 .collect(Collectors.toList());
         
-        // 3. 결제 대기 중인 매칭 확인
         String pendingPaymentStatus = getPaymentStatusCode("PENDING");
         List<ConsultantClientMapping> pendingPaymentMappings = activeMappings.stream()
                 .filter(mapping -> mapping.getPaymentStatus().name().equals(pendingPaymentStatus))
                 .collect(Collectors.toList());
         
-        // 4. 예정된 스케줄 조회 (오늘 포함, 활성 스케줄만)
         String bookedStatus = getScheduleStatusCode("BOOKED");
         String confirmedStatus = getScheduleStatusCode("CONFIRMED");
         List<Schedule> futureSchedules = scheduleRepository.findByTenantIdAndClientIdAndDateGreaterThanEqual(tenantId, clientId, LocalDate.now())
@@ -2281,7 +2061,6 @@ public class AdminServiceImpl implements AdminService {
         result.put("canDeleteDirectly", canDeleteDirectly);
         result.put("requiresCleanup", !canDeleteDirectly);
         
-        // 상세 정보
         Map<String, Object> details = new HashMap<>();
         details.put("activeMappingCount", activeMappings.size());
         details.put("remainingSessionCount", mappingsWithRemainingSessions.stream()
@@ -2289,7 +2068,6 @@ public class AdminServiceImpl implements AdminService {
         details.put("pendingPaymentCount", pendingPaymentMappings.size());
         details.put("futureScheduleCount", futureSchedules.size());
         
-        // 남은 회기가 있는 매칭 정보
         List<Map<String, Object>> sessionMappings = mappingsWithRemainingSessions.stream()
                 .map(mapping -> {
                     Map<String, Object> mappingInfo = new HashMap<>();
@@ -2303,7 +2081,6 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toList());
         details.put("sessionMappings", sessionMappings);
         
-        // 결제 대기 매칭 정보
         List<Map<String, Object>> paymentMappings = pendingPaymentMappings.stream()
                 .map(mapping -> {
                     Map<String, Object> mappingInfo = new HashMap<>();
@@ -2318,7 +2095,6 @@ public class AdminServiceImpl implements AdminService {
         
         result.put("details", details);
         
-        // 메시지 생성
         StringBuilder message = new StringBuilder();
         if (canDeleteDirectly) {
             message.append("해당 내담자는 안전하게 삭제할 수 있습니다.");
@@ -2368,26 +2144,21 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("이미 종료된 매칭입니다.");
         }
         
-        // 환불 금액 계산
         int refundedSessions = mapping.getRemainingSessions();
         long refundAmount = 0;
         if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
             refundAmount = (mapping.getPackagePrice() * refundedSessions) / mapping.getTotalSessions();
         }
         
-        // ERP 시스템에 환불 데이터 전송
         try {
             sendRefundToErp(mapping, refundedSessions, refundAmount, reason);
         } catch (Exception e) {
             log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
-            // ERP 전송 실패해도 내부 처리는 계속 진행 (나중에 재시도 가능)
         }
         
-        // 매칭 종료 처리
         mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
         mapping.setTerminatedAt(LocalDateTime.now());
         
-        // 종료 사유 추가
         String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
         String terminationNote = String.format("[%s 강제 종료] %s (환불: %d회기, %,d원)", 
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), 
@@ -2398,13 +2169,11 @@ public class AdminServiceImpl implements AdminService {
         String updatedNotes = currentNotes.isEmpty() ? terminationNote : currentNotes + "\n" + terminationNote;
         mapping.setNotes(updatedNotes);
         
-        // 남은 회기를 0으로 설정 (환불 처리됨을 의미)
         mapping.setRemainingSessions(0);
         mapping.setUsedSessions(mapping.getTotalSessions()); // 전체를 사용한 것으로 처리하지 않고 실제 사용한 만큼만
         
         mappingRepository.save(mapping);
         
-        // 관련된 미래 스케줄들 취소 처리
         try {
             log.info("🔍 환불 처리 관련 스케줄 조회 시작: 상담사ID={}, 내담자ID={}, 오늘날짜={}", 
                     mapping.getConsultant().getId(), mapping.getClient().getId(), LocalDate.now());
@@ -2447,10 +2216,8 @@ public class AdminServiceImpl implements AdminService {
             
         } catch (Exception e) {
             log.error("❌ 관련 스케줄 취소 처리 실패: MappingID={}", id, e);
-            // 스케줄 취소 실패해도 매칭 종료는 완료된 상태로 유지
         }
         
-        // 내담자에게 환불 완료 알림 발송
         try {
             User client = mapping.getClient();
             if (client != null) {
@@ -2466,7 +2233,6 @@ public class AdminServiceImpl implements AdminService {
             }
         } catch (Exception e) {
             log.error("❌ 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
-            // 알림 발송 실패해도 환불 처리는 완료된 상태로 유지
         }
         
         log.info("✅ 매칭 강제 종료 완료: ID={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
@@ -2486,7 +2252,6 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("이미 종료된 매칭입니다.");
         }
         
-        // 가장 최근 추가된 패키지 정보 추출
         Map<String, Object> lastAddedPackage = getLastAddedPackageInfo(mapping);
         int lastAddedSessions = (Integer) lastAddedPackage.getOrDefault("sessions", 0);
         Long lastAddedPrice = (Long) lastAddedPackage.getOrDefault("price", 0L);
@@ -2495,7 +2260,6 @@ public class AdminServiceImpl implements AdminService {
         log.info("📦 가장 최근 추가된 패키지 정보: 회기수={}, 가격={}, 패키지명={}", 
                 lastAddedSessions, lastAddedPrice, lastAddedPackageName);
         
-        // 환불 가능한 회기수 검증
         if (refundSessions <= 0) {
             throw new RuntimeException("환불 회기수는 1 이상이어야 합니다.");
         }
@@ -2506,7 +2270,6 @@ public class AdminServiceImpl implements AdminService {
                 refundSessions, mapping.getRemainingSessions()));
         }
         
-        // 청약 철회 기간 검증 (15일 이후 환불 제한)
         if (mapping.getPaymentDate() != null) {
             LocalDateTime paymentDate = mapping.getPaymentDate();
             LocalDateTime now = LocalDateTime.now();
@@ -2526,24 +2289,20 @@ public class AdminServiceImpl implements AdminService {
             log.warn("⚠️ 결제일 정보가 없어 청약 철회 기간을 확인할 수 없습니다.");
         }
         
-        // 최근 추가분 기준 환불 권장 (강제하지 않음)
         if (lastAddedSessions > 0 && refundSessions > lastAddedSessions) {
             log.warn("⚠️ 환불 요청 회기수({})가 최근 추가분({})보다 많습니다. 단회기 또는 임의 회기수 환불로 처리됩니다.", 
                     refundSessions, lastAddedSessions);
         }
         
-        // 환불 금액 계산 (유연한 방식)
         long refundAmount = 0;
         String calculationMethod = "";
         
         if (lastAddedSessions > 0 && lastAddedPrice > 0 && refundSessions <= lastAddedSessions) {
-            // 최근 추가된 패키지 범위 내에서 환불하는 경우
             refundAmount = (lastAddedPrice * refundSessions) / lastAddedSessions;
             calculationMethod = "최근 추가 패키지 기준";
             log.info("💰 최근 추가 패키지 기준 환불: 추가가격={}, 추가회기={}, 환불회기={}, 환불금액={}", 
                     lastAddedPrice, lastAddedSessions, refundSessions, refundAmount);
         } else if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
-            // 전체 패키지 기준으로 비례 계산 (단회기, 임의 회기수, 패키지 초과 환불)
             refundAmount = (mapping.getPackagePrice() * refundSessions) / mapping.getTotalSessions();
             calculationMethod = "전체 패키지 비례 계산";
             log.info("💰 전체 패키지 비례 계산: 전체가격={}, 전체회기={}, 환불회기={}, 환불금액={}", 
@@ -2556,31 +2315,25 @@ public class AdminServiceImpl implements AdminService {
         log.info("💰 부분 환불 금액 계산 완료: 환불회기={}, 계산방식={}, 환불금액={}원", 
                 refundSessions, calculationMethod, refundAmount);
         
-        // ERP 시스템에 환불 데이터 전송
         try {
             sendRefundToErp(mapping, refundSessions, refundAmount, reason);
             log.info("💚 부분 환불 ERP 전송 성공: MappingID={}, RefundSessions={}, RefundAmount={}", 
                 id, refundSessions, refundAmount);
         } catch (Exception e) {
             log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
-            // ERP 전송 실패해도 내부 처리는 계속 진행 (나중에 재시도 가능)
         }
         
-        // 부분 환불 ERP 거래 생성 (수익 감소 반영)
         try {
             createPartialConsultationRefundTransaction(mapping, refundSessions, refundAmount, reason);
             log.info("💚 부분 환불 거래 자동 생성 완료: MappingID={}, RefundSessions={}, RefundAmount={}", 
                 id, refundSessions, refundAmount);
         } catch (Exception e) {
             log.error("❌ 부분 환불 거래 자동 생성 실패: {}", e.getMessage(), e);
-            // 거래 생성 실패해도 부분 환불 처리는 완료
         }
         
-        // 회기수 조정 (부분 환불이므로 매칭은 유지)
         mapping.setRemainingSessions(mapping.getRemainingSessions() - refundSessions);
         mapping.setTotalSessions(mapping.getTotalSessions() - refundSessions);
         
-        // 환불 처리 노트 추가
         String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
         String refundNote = String.format("[부분 환불] %s - 사유: %s, 환불 회기: %d회, 환불 금액: %,d원, 남은 회기: %d회", 
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), 
@@ -2592,8 +2345,6 @@ public class AdminServiceImpl implements AdminService {
         String updatedNotes = currentNotes.isEmpty() ? refundNote : currentNotes + "\n" + refundNote;
         mapping.setNotes(updatedNotes);
         
-        // 매칭 상태는 유지 (전체 환불이 아니므로)
-        // 단, 남은 회기가 0이 되면 자동으로 회기 소진 처리
         if (mapping.getRemainingSessions() <= 0) {
             String sessionsExhaustedStatus = getMappingStatusCode("SESSIONS_EXHAUSTED");
             mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(sessionsExhaustedStatus));
@@ -2603,13 +2354,11 @@ public class AdminServiceImpl implements AdminService {
         
         mappingRepository.save(mapping);
         
-        // 내담자에게 부분 환불 완료 알림 발송
         try {
             User client = mapping.getClient();
             if (client != null) {
                 log.info("📤 부분 환불 완료 알림 발송 시작: 내담자={}", client.getName());
                 
-                // 기존 알림 서비스 활용 (부분 환불 메시지로 수정)
                 boolean notificationSent = notificationService.sendRefundCompleted(client, refundSessions, refundAmount);
                 
                 if (notificationSent) {
@@ -2620,7 +2369,6 @@ public class AdminServiceImpl implements AdminService {
             }
         } catch (Exception e) {
             log.error("❌ 부분 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
-            // 알림 발송 실패해도 환불 처리는 완료된 상태로 유지
         }
         
         log.info("✅ 부분 환불 완료: ID={}, 환불회기={}, 환불금액={}, 남은회기={}, 총회기={}, 상담사={}, 내담자={}", 
@@ -2638,16 +2386,13 @@ public class AdminServiceImpl implements AdminService {
         log.info("📊 환불 통계 조회 시작: period={}, branchCode={}", period, branchCode);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        // 환불 관련 공통 코드 초기화 (없으면 생성)
         initializeRefundCommonCodes();
         
         LocalDateTime startDate;
         LocalDateTime endDate = LocalDateTime.now();
         
-        // 공통 코드에서 기간 설정 정보 조회
         startDate = getRefundPeriodStartDate(period);
         
-        // 1. 전체 환불된 매칭 조회 (강제 종료된 매칭)
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
@@ -2656,7 +2401,6 @@ public class AdminServiceImpl implements AdminService {
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
                 .collect(Collectors.toList());
         
-        // 지점별 필터링 적용
         List<ConsultantClientMapping> terminatedMappings = allTerminatedMappings.stream()
                 .filter(mapping -> {
                     if (branchCode == null || branchCode.trim().isEmpty()) {
@@ -2666,12 +2410,10 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .collect(Collectors.toList());
         
-        // 2. 부분 환불 거래 조회 (FinancialTransaction에서)
         List<com.coresolution.consultation.entity.FinancialTransaction> allPartialRefundTransactions = 
             financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
                 com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
         
-        // 지점별 필터링 적용
         List<com.coresolution.consultation.entity.FinancialTransaction> partialRefundTransactions = allPartialRefundTransactions.stream()
                 .filter(transaction -> {
                     if (branchCode == null || branchCode.trim().isEmpty()) {
@@ -2681,7 +2423,6 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .collect(Collectors.toList());
         
-        // 3. 전체 환불 통계 계산
         int totalTerminatedRefundCount = terminatedMappings.size();
         int totalTerminatedRefundedSessions = terminatedMappings.stream()
                 .mapToInt(mapping -> mapping.getTotalSessions() - mapping.getUsedSessions())
@@ -2697,7 +2438,6 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .sum();
         
-        // 4. 부분 환불 통계 계산
         int totalPartialRefundCount = partialRefundTransactions.size();
         int totalPartialRefundedSessions = partialRefundTransactions.stream()
                 .mapToInt(transaction -> extractRefundSessionsFromDescription(transaction.getDescription()))
@@ -2707,15 +2447,12 @@ public class AdminServiceImpl implements AdminService {
                 .mapToLong(transaction -> transaction.getAmount().longValue())
                 .sum();
         
-        // 5. 전체 통계 합계
         int totalRefundCount = totalTerminatedRefundCount + totalPartialRefundCount;
         int totalRefundedSessions = totalTerminatedRefundedSessions + totalPartialRefundedSessions;
         long totalRefundAmount = totalTerminatedRefundAmount + totalPartialRefundAmount;
         
-        // 6. 상담사별 환불 통계 (전체 환불 + 부분 환불)
         Map<String, Map<String, Object>> consultantRefundStats = new HashMap<>();
         
-        // 전체 환불 통계 추가
         Map<String, Map<String, Object>> terminatedStats = terminatedMappings.stream()
                 .collect(Collectors.groupingBy(
                     mapping -> mapping.getConsultant().getName(),
@@ -2739,7 +2476,6 @@ public class AdminServiceImpl implements AdminService {
                     )
                 ));
         
-        // 부분 환불 통계 추가
         Map<String, Map<String, Object>> partialStats = partialRefundTransactions.stream()
                 .collect(Collectors.groupingBy(
                     transaction -> {
@@ -2760,7 +2496,6 @@ public class AdminServiceImpl implements AdminService {
                     )
                 ));
         
-        // 통계 합치기
         consultantRefundStats.putAll(terminatedStats);
         partialStats.forEach((consultant, stats) -> {
             if (consultantRefundStats.containsKey(consultant)) {
@@ -2773,13 +2508,11 @@ public class AdminServiceImpl implements AdminService {
             }
         });
         
-        // 7. 월별 환불 추이 (최근 6개월) - 전체 환불 + 부분 환불
         List<Map<String, Object>> monthlyTrend = new ArrayList<>();
         for (int i = 5; i >= 0; i--) {
             LocalDate monthStart = LocalDate.now().minusMonths(i).withDayOfMonth(1);
             LocalDate monthEnd = monthStart.plusMonths(1).minusDays(1);
             
-            // 해당 월의 전체 환불
             List<ConsultantClientMapping> monthlyTerminatedRefunds = terminatedMappings.stream()
                     .filter(mapping -> {
                         LocalDate terminatedDate = mapping.getTerminatedAt().toLocalDate();
@@ -2787,7 +2520,6 @@ public class AdminServiceImpl implements AdminService {
                     })
                     .collect(Collectors.toList());
             
-            // 해당 월의 부분 환불
             List<com.coresolution.consultation.entity.FinancialTransaction> monthlyPartialRefunds = partialRefundTransactions.stream()
                     .filter(transaction -> {
                         LocalDate transactionDate = transaction.getTransactionDate();
@@ -2814,14 +2546,11 @@ public class AdminServiceImpl implements AdminService {
             monthlyTrend.add(monthData);
         }
         
-        // 8. 환불 사유별 통계 (전체 환불 + 부분 환불)
         Map<String, Integer> refundReasonStats = new HashMap<>();
         
-        // 전체 환불 사유 통계
         Map<String, Integer> terminatedReasonStats = terminatedMappings.stream()
                 .collect(Collectors.groupingBy(
                     mapping -> {
-                        // 노트에서 환불 사유 추출
                         String notes = mapping.getNotes();
                         String rawReason = "기타";
                         if (notes != null && notes.contains("강제 종료]")) {
@@ -2830,13 +2559,11 @@ public class AdminServiceImpl implements AdminService {
                                 rawReason = parts[1].split("\n")[0];
                             }
                         }
-                        // 공통 코드 기반으로 표준화
                         return standardizeRefundReason(rawReason);
                     },
                     Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
                 ));
         
-        // 부분 환불 사유 통계
         Map<String, Integer> partialReasonStats = partialRefundTransactions.stream()
                 .collect(Collectors.groupingBy(
                     transaction -> {
@@ -2846,16 +2573,13 @@ public class AdminServiceImpl implements AdminService {
                     Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
                 ));
         
-        // 사유 통계 합치기
         refundReasonStats.putAll(terminatedReasonStats);
         partialReasonStats.forEach((reason, count) -> {
             refundReasonStats.merge(reason, count, Integer::sum);
         });
         
-        // 9. 최근 환불 목록 (전체 환불 + 부분 환불, 최근 10건)
         List<Map<String, Object>> recentRefunds = new ArrayList<>();
         
-        // 전체 환불 목록 추가
         terminatedMappings.stream()
                 .sorted((a, b) -> b.getTerminatedAt().compareTo(a.getTerminatedAt()))
                 .map(mapping -> {
@@ -2870,7 +2594,6 @@ public class AdminServiceImpl implements AdminService {
                             : 0);
                     refund.put("terminatedAt", mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
                     
-                    // 환불 사유 추출
                     String notes = mapping.getNotes();
                     String reason = "기타";
                     if (notes != null && notes.contains("강제 종료]")) {
@@ -2885,13 +2608,11 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .forEach(recentRefunds::add);
         
-        // 부분 환불 목록 추가
         partialRefundTransactions.stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .map(transaction -> {
                     Map<String, Object> refund = new HashMap<>();
                     
-                    // 관련 매칭 정보 조회
                     ConsultantClientMapping mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
                     
                     if (mapping != null) {
@@ -2903,7 +2624,6 @@ public class AdminServiceImpl implements AdminService {
                         refund.put("refundAmount", transaction.getAmount().longValue());
                         refund.put("terminatedAt", transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
                         
-                        // 환불 사유 추출
                         String reason = extractRefundReasonFromDescription(transaction.getDescription());
                         refund.put("reason", reason);
                     } else {
@@ -2921,7 +2641,6 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .forEach(recentRefunds::add);
         
-        // 날짜순으로 정렬하고 최근 10건만 선택
         recentRefunds.sort((a, b) -> {
             String dateA = (String) a.get("terminatedAt");
             String dateB = (String) b.get("terminatedAt");
@@ -2932,13 +2651,11 @@ public class AdminServiceImpl implements AdminService {
             recentRefunds = recentRefunds.subList(0, 10);
         }
         
-        // 10. 결과 구성
         Map<String, Object> result = new HashMap<>();
         result.put("period", period);
         result.put("startDate", startDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         result.put("endDate", endDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         
-        // 전체 통계
         Map<String, Object> summary = new HashMap<>();
         summary.put("totalRefundCount", totalRefundCount);
         summary.put("totalRefundedSessions", totalRefundedSessions);
@@ -2946,7 +2663,6 @@ public class AdminServiceImpl implements AdminService {
         summary.put("averageRefundPerCase", totalRefundCount > 0 ? totalRefundAmount / totalRefundCount : 0);
         result.put("summary", summary);
         
-        // 상세 통계
         result.put("consultantStats", consultantRefundStats);
         result.put("monthlyTrend", monthlyTrend);
         result.put("refundReasonStats", refundReasonStats);
@@ -2966,7 +2682,6 @@ public class AdminServiceImpl implements AdminService {
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
         
-        // 1. 전체 환불된 매칭 조회 (강제 종료된 매칭)
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> terminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
@@ -2975,17 +2690,14 @@ public class AdminServiceImpl implements AdminService {
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
                 .collect(Collectors.toList());
         
-        // 2. 부분 환불 거래 조회 (FinancialTransaction에서)
         List<com.coresolution.consultation.entity.FinancialTransaction> partialRefundTransactions = 
             financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
                 com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
         
-        // 3. 부분 환불 데이터를 환불 이력 형식으로 변환
         List<Map<String, Object>> partialRefundHistory = partialRefundTransactions.stream()
                 .map(transaction -> {
                     Map<String, Object> refund = new HashMap<>();
                     
-                    // 관련 매칭 정보 조회
                     ConsultantClientMapping mapping = null;
                     if (transaction.getRelatedEntityId() != null) {
                         mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
@@ -3000,7 +2712,6 @@ public class AdminServiceImpl implements AdminService {
                         refund.put("totalSessions", mapping.getTotalSessions());
                         refund.put("usedSessions", mapping.getUsedSessions());
                         
-                        // 부분 환불 정보 (거래에서 추출)
                         refund.put("refundedSessions", extractRefundSessionsFromDescription(transaction.getDescription()));
                         refund.put("refundAmount", transaction.getAmount().longValue());
                         refund.put("terminatedAt", transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
@@ -3008,12 +2719,10 @@ public class AdminServiceImpl implements AdminService {
                         refund.put("erpStatus", "SENT");
                         refund.put("erpReference", "ERP_" + mapping.getId() + "_" + transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
                         
-                        // 환불 사유 추출
                         String reason = extractRefundReasonFromDescription(transaction.getDescription());
                         refund.put("refundReason", reason);
                         refund.put("standardizedReason", standardizeRefundReason(reason));
                     } else {
-                        // 매칭 정보를 찾을 수 없는 경우
                         refund.put("mappingId", transaction.getRelatedEntityId());
                         refund.put("clientName", "알 수 없음");
                         refund.put("consultantName", "알 수 없음");
@@ -3035,7 +2744,6 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .collect(Collectors.toList());
         
-        // 4. 전체 환불된 매칭 데이터 구성
         List<Map<String, Object>> terminatedRefundHistory = terminatedMappings.stream()
                 .map(mapping -> {
                     Map<String, Object> refund = new HashMap<>();
@@ -3048,7 +2756,6 @@ public class AdminServiceImpl implements AdminService {
                     refund.put("usedSessions", mapping.getUsedSessions());
                     refund.put("refundedSessions", mapping.getTotalSessions() - mapping.getUsedSessions());
                     
-                    // 환불 금액 계산
                     long refundAmount = 0;
                     if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
                         int refundedSessions = mapping.getTotalSessions() - mapping.getUsedSessions();
@@ -3061,14 +2768,12 @@ public class AdminServiceImpl implements AdminService {
                     refund.put("erpStatus", "SENT");
                     refund.put("erpReference", "ERP_" + mapping.getId() + "_" + mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
                     
-                    // 환불 사유 추출
                     String notes = mapping.getNotes();
                     String reason = "기타";
                     if (notes != null && notes.contains("강제 종료]")) {
                         String[] parts = notes.split("강제 종료] ");
                         if (parts.length > 1) {
                             String fullReason = parts[1].split("\n")[0];
-                            // 환불 정보 부분 제거하고 사유만 추출
                             if (fullReason.contains(" (환불:")) {
                                 reason = fullReason.split(" \\(환불:")[0];
                             } else {
@@ -3083,26 +2788,22 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .collect(Collectors.toList());
         
-        // 5. 전체 환불 이력 합치기 (부분 환불 + 전체 환불)
         List<Map<String, Object>> allRefundHistory = new ArrayList<>();
         allRefundHistory.addAll(partialRefundHistory);
         allRefundHistory.addAll(terminatedRefundHistory);
         
-        // 6. 날짜순으로 정렬 (최신순)
         allRefundHistory.sort((a, b) -> {
             String dateA = (String) a.get("terminatedAt");
             String dateB = (String) b.get("terminatedAt");
             return dateB.compareTo(dateA);
         });
         
-        // 7. 페이징 처리
         int totalElements = allRefundHistory.size();
         int startIndex = page * size;
         int endIndex = Math.min(startIndex + size, totalElements);
         
         List<Map<String, Object>> pagedRefundHistory = allRefundHistory.subList(startIndex, endIndex);
         
-        // 8. 페이지 정보 구성
         Map<String, Object> pageInfo = new HashMap<>();
         pageInfo.put("currentPage", page);
         pageInfo.put("pageSize", size);
@@ -3111,7 +2812,6 @@ public class AdminServiceImpl implements AdminService {
         pageInfo.put("hasNext", endIndex < totalElements);
         pageInfo.put("hasPrevious", page > 0);
         
-        // 9. 결과 반환
         Map<String, Object> result = new HashMap<>();
         result.put("refundHistory", pagedRefundHistory);
         result.put("pageInfo", pageInfo);
@@ -3132,7 +2832,6 @@ public class AdminServiceImpl implements AdminService {
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
         
-        // 1. 전체 환불된 매칭 조회 (강제 종료된 매칭)
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
@@ -3141,7 +2840,6 @@ public class AdminServiceImpl implements AdminService {
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
                 .collect(Collectors.toList());
         
-        // 지점별 필터링 적용
         List<ConsultantClientMapping> terminatedMappings = allTerminatedMappings.stream()
                 .filter(mapping -> {
                     if (branchCode == null || branchCode.trim().isEmpty()) {
@@ -3151,12 +2849,10 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .collect(Collectors.toList());
         
-        // 2. 부분 환불 거래 조회 (FinancialTransaction에서)
         List<com.coresolution.consultation.entity.FinancialTransaction> allPartialRefundTransactions = 
             financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
                 com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
         
-        // 지점별 필터링 적용
         List<com.coresolution.consultation.entity.FinancialTransaction> partialRefundTransactions = allPartialRefundTransactions.stream()
                 .filter(transaction -> {
                     if (branchCode == null || branchCode.trim().isEmpty()) {
@@ -3166,12 +2862,10 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .collect(Collectors.toList());
         
-        // 3. 부분 환불 데이터를 환불 이력 형식으로 변환
         List<Map<String, Object>> partialRefundHistory = partialRefundTransactions.stream()
                 .map(transaction -> {
                     Map<String, Object> refund = new HashMap<>();
                     
-                    // 관련 매칭 정보 조회
                     ConsultantClientMapping mapping = null;
                     if (transaction.getRelatedEntityId() != null) {
                         mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
@@ -3202,7 +2896,6 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .collect(Collectors.toList());
         
-        // 4. 전체 환불 데이터를 환불 이력 형식으로 변환
         List<Map<String, Object>> terminatedRefundHistory = terminatedMappings.stream()
                 .map(mapping -> {
                     Map<String, Object> refund = new HashMap<>();
@@ -3215,14 +2908,12 @@ public class AdminServiceImpl implements AdminService {
                         ((mapping.getPackagePrice() * (mapping.getTotalSessions() - mapping.getUsedSessions())) / mapping.getTotalSessions()) : 0L);
                     refund.put("terminatedAt", mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
                     
-                    // 환불 사유 추출
                     String notes = mapping.getNotes();
                     String reason = "기타";
                     if (notes != null && notes.contains("강제 종료]")) {
                         String[] parts = notes.split("강제 종료] ");
                         if (parts.length > 1) {
                             String fullReason = parts[1].split("\n")[0];
-                            // 환불 정보 부분 제거하고 사유만 추출
                             if (fullReason.contains(" (환불:")) {
                                 reason = fullReason.split(" \\(환불:")[0];
                             } else {
@@ -3237,26 +2928,22 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .collect(Collectors.toList());
         
-        // 5. 전체 환불 이력 합치기 (부분 환불 + 전체 환불)
         List<Map<String, Object>> allRefundHistory = new ArrayList<>();
         allRefundHistory.addAll(partialRefundHistory);
         allRefundHistory.addAll(terminatedRefundHistory);
         
-        // 6. 날짜순으로 정렬 (최신순)
         allRefundHistory.sort((a, b) -> {
             String dateA = (String) a.get("terminatedAt");
             String dateB = (String) b.get("terminatedAt");
             return dateB.compareTo(dateA);
         });
         
-        // 7. 페이징 처리
         int totalElements = allRefundHistory.size();
         int startIndex = page * size;
         int endIndex = Math.min(startIndex + size, totalElements);
         
         List<Map<String, Object>> pagedRefundHistory = allRefundHistory.subList(startIndex, endIndex);
         
-        // 8. 페이지 정보 구성
         Map<String, Object> pageInfo = new HashMap<>();
         pageInfo.put("currentPage", page);
         pageInfo.put("pageSize", size);
@@ -3265,7 +2952,6 @@ public class AdminServiceImpl implements AdminService {
         pageInfo.put("hasNext", endIndex < totalElements);
         pageInfo.put("hasPrevious", page > 0);
         
-        // 9. 결과 반환
         Map<String, Object> result = new HashMap<>();
         result.put("refundHistory", pagedRefundHistory);
         result.put("pageInfo", pageInfo);
@@ -3279,13 +2965,11 @@ public class AdminServiceImpl implements AdminService {
         return result;
     }
     
-    /**
      * 환불 설명에서 환불 회기수 추출
      */
     private int extractRefundSessionsFromDescription(String description) {
         if (description == null) return 0;
         
-        // "상담료 부분 환불 - 패키지명 (5회기 부분 환불, 사유: ...)" 형식에서 회기수 추출
         try {
             if (description.contains("회기 부분 환불")) {
                 String[] parts = description.split("회기 부분 환불");
@@ -3300,7 +2984,6 @@ public class AdminServiceImpl implements AdminService {
         return 0;
     }
     
-    /**
      * 환불 설명에서 환불 사유 추출
      */
     private String extractRefundReasonFromDescription(String description) {
@@ -3328,11 +3011,9 @@ public class AdminServiceImpl implements AdminService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // ERP 시스템 연결 상태 확인
             boolean erpAvailable = checkErpConnection();
             result.put("erpSystemAvailable", erpAvailable);
             
-            // 최근 환불 처리 건수 (24시간 내)
             LocalDateTime yesterday = LocalDateTime.now().minusHours(24);
             String tenantId = TenantContextHolder.getRequiredTenantId();
             List<ConsultantClientMapping> recentRefunds = mappingRepository.findByTenantId(tenantId).stream()
@@ -3345,12 +3026,10 @@ public class AdminServiceImpl implements AdminService {
             result.put("recentRefundCount", recentRefunds.size());
             result.put("lastSyncTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             
-            // ERP 전송 성공률 (모의)
             result.put("erpSuccessRate", 95.5);
             result.put("pendingErpRequests", 2);
             result.put("failedErpRequests", 1);
             
-            // 회계 처리 상태
             Map<String, Object> accountingStatus = new HashMap<>();
             accountingStatus.put("processedToday", recentRefunds.size());
             accountingStatus.put("pendingApproval", 0);
@@ -3376,18 +3055,13 @@ public class AdminServiceImpl implements AdminService {
         return result;
     }
 
-    /**
      * ERP 시스템 연결 상태 확인
      */
     private boolean checkErpConnection() {
         try {
-            // 실제 ERP 시스템 연결 확인 로직
-            // 현재는 모의 처리
             String erpUrl = getErpRefundApiUrl();
             log.info("🔍 ERP 연결 확인: URL={}", erpUrl);
             
-            // 실제 구현 시 HTTP 헬스체크 호출
-            // return restTemplate.getForEntity(erpUrl + "/health", String.class).getStatusCode() == HttpStatus.OK;
             
             return true; // 모의 연결 성공
             
@@ -3397,21 +3071,17 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
-    /**
      * 환불 통계 기간에 따른 시작 날짜 계산 (공통 코드 기반)
      */
     private LocalDateTime getRefundPeriodStartDate(String period) {
         try {
-            // 공통 코드에서 REFUND_PERIOD 그룹 조회
             List<CommonCode> periodCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_PERIOD");
             
             for (CommonCode code : periodCodes) {
                 if (code.getCodeValue().equalsIgnoreCase(period)) {
-                    // extra_data에서 일수/개월수 정보 추출
                     String extraData = code.getExtraData();
                     if (extraData != null && !extraData.isEmpty()) {
                         try {
-                            // JSON 파싱
                             if (extraData.contains("\"days\"")) {
                                 int days = Integer.parseInt(extraData.replaceAll(".*\"days\":(\\d+).*", "$1"));
                                 return LocalDate.now().minusDays(days - 1).atStartOfDay();
@@ -3433,11 +3103,9 @@ public class AdminServiceImpl implements AdminService {
             log.error("환불 기간 공통 코드 조회 실패: period={}", period, e);
         }
         
-        // 기본값: 1개월
         return LocalDate.now().minusMonths(1).atStartOfDay();
     }
 
-    /**
      * 환불 사유 표준화 (공통 코드 기반)
      */
     private String standardizeRefundReason(String rawReason) {
@@ -3446,7 +3114,6 @@ public class AdminServiceImpl implements AdminService {
         }
         
         try {
-            // 공통 코드에서 REFUND_REASON 그룹 조회
             List<CommonCode> reasonCodes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc("REFUND_REASON");
             
             String reason = rawReason.toLowerCase().trim();
@@ -3455,12 +3122,10 @@ public class AdminServiceImpl implements AdminService {
                 String codeLabel = code.getCodeLabel();
                 String codeValue = code.getCodeValue();
                 
-                // 라벨과 코드값으로 직접 매칭
                 if (reason.contains(codeLabel.toLowerCase()) || reason.contains(codeValue.toLowerCase())) {
                     return codeLabel;
                 }
                 
-                // extra_data의 키워드로 매칭
                 String extraData = code.getExtraData();
                 if (extraData != null && extraData.contains("\"keywords\"")) {
                     try {
@@ -3485,23 +3150,19 @@ public class AdminServiceImpl implements AdminService {
             log.error("환불 사유 공통 코드 조회 실패: rawReason={}", rawReason, e);
         }
         
-        // 특별한 경우 처리
         if (rawReason.toLowerCase().contains("환불테스트")) {
             return "환불테스트";
         }
         
-        // 기본값: 기타
         return "기타";
     }
 
-    /**
      * ERP 시스템에 환불 데이터 전송
      */
     private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
         try {
             log.info("🔄 ERP 환불 데이터 전송 시작: MappingID={}", mapping.getId());
             
-            // ERP 전송 데이터 구성
             Map<String, Object> erpData = new HashMap<>();
             erpData.put("refundType", "CONSULTATION_REFUND");
             erpData.put("mappingId", mapping.getId());
@@ -3520,23 +3181,19 @@ public class AdminServiceImpl implements AdminService {
             erpData.put("branchCode", getCurrentUserBranchCode());
             erpData.put("requestId", "REF_" + mapping.getId() + "_" + System.currentTimeMillis());
             
-            // ERP API 호출
             String erpUrl = getErpRefundApiUrl();
             Map<String, String> headers = getErpHeaders();
             
-            // HTTP 요청 전송 (실제 ERP 시스템에 맞게 구현)
             boolean success = sendToErpSystem(erpUrl, erpData, headers);
             
             if (success) {
                 log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
                 
-                // ERP 전송 성공 시 FinancialTransaction에 환불 거래 생성
                 createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, reason);
                 log.info("💚 환불 거래 자동 생성 완료: MappingID={}, RefundAmount={}", 
                     mapping.getId(), refundAmount);
             } else {
                 log.warn("⚠️ ERP 환불 데이터 전송 실패: MappingID={}", mapping.getId());
-                // 실패 시 재시도 큐에 추가하거나 알림 발송 등 처리
             }
             
         } catch (Exception e) {
@@ -3545,28 +3202,21 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
-    /**
      * ERP 시스템으로 실제 데이터 전송
      */
     private boolean sendToErpSystem(String url, Map<String, Object> data, Map<String, String> headers) {
         try {
-            // 실제 ERP 시스템의 API 스펙에 맞게 구현
-            // 예시: REST API 호출
             
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_JSON);
             
-            // ERP 인증 헤더 추가
             if (headers != null) {
                 headers.forEach(httpHeaders::set);
             }
             
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(data, httpHeaders);
             
-            // RestTemplate을 사용한 HTTP 요청 (실제 구현 시 주입받아 사용)
-            // ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
             
-            // 현재는 모의 처리 (실제 ERP 연동 시 주석 해제하고 위 코드 사용)
             log.info("🎭 모의 ERP 전송: URL={}, Data={}, Request={}", url, data.get("requestId"), request != null ? "준비됨" : "null");
             return true;
             
@@ -3576,15 +3226,12 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
-    /**
      * ERP 환불 API URL 가져오기
      */
     private String getErpRefundApiUrl() {
-        // 실제 ERP 시스템의 환불 API URL
         return System.getProperty("erp.refund.api.url", "http://erp.company.com/api/refund");
     }
 
-    /**
      * ERP 인증 헤더 생성
      */
     private Map<String, String> getErpHeaders() {
@@ -3595,65 +3242,47 @@ public class AdminServiceImpl implements AdminService {
         return headers;
     }
 
-    /**
      * 현재 사용자의 지점 코드 가져오기
      */
     private String getCurrentUserBranchCode() {
-        // 현재 로그인한 사용자의 지점 코드 반환
-        // 실제 구현 시 SecurityContext 등에서 가져오기
         return "MAIN001"; // 임시 기본값
     }
 
-    /**
      * 환불 관련 공통 코드 초기화 (없으면 자동 생성)
      */
-    /**
-     * 공통코드에서 매칭 상태 조회 (StatusCodeHelper 사용)
      */
     private String getMappingStatusCode(String statusName) {
         String codeValue = statusCodeHelper.getStatusCodeValue("MAPPING_STATUS", statusName);
         if (codeValue != null) {
             return codeValue;
         }
-        // 공통코드에 없으면 원본 값 반환 (enum 검증은 호출부에서 처리)
-        log.warn("⚠️ 매칭 상태 코드를 공통코드에서 찾을 수 없음: {}, 원본 값 사용", statusName);
         return statusName;
     }
 
-    /**
-     * 공통코드에서 결제 상태 조회 (StatusCodeHelper 사용)
      */
     private String getPaymentStatusCode(String statusName) {
         String codeValue = statusCodeHelper.getStatusCodeValue("PAYMENT_STATUS", statusName);
         if (codeValue != null) {
             return codeValue;
         }
-        // 공통코드에 없으면 원본 값 반환 (enum 검증은 호출부에서 처리)
-        log.warn("⚠️ 결제 상태 코드를 공통코드에서 찾을 수 없음: {}, 원본 값 사용", statusName);
         return statusName;
     }
 
-    /**
-     * 공통코드에서 스케줄 상태 조회 (StatusCodeHelper 사용)
      */
     private String getScheduleStatusCode(String statusName) {
         String codeValue = statusCodeHelper.getStatusCodeValue("SCHEDULE_STATUS", statusName);
         if (codeValue != null) {
             return codeValue;
         }
-        // 공통코드에 없으면 원본 값 반환
-        log.warn("⚠️ 스케줄 상태 코드를 공통코드에서 찾을 수 없음: {}, 원본 값 사용", statusName);
         return statusName;
     }
 
     private void initializeRefundCommonCodes() {
         try {
-            // REFUND_PERIOD 그룹 확인 및 생성
             List<CommonCode> periodCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_PERIOD");
             if (periodCodes.isEmpty()) {
                 log.info("🔧 REFUND_PERIOD 공통 코드 그룹 생성 중...");
                 
-                // 환불 통계 기간 코드들 생성
                 createCommonCode("REFUND_PERIOD", "TODAY", "오늘", "{\"days\":1}", 1);
                 createCommonCode("REFUND_PERIOD", "WEEK", "최근 7일", "{\"days\":7}", 2);
                 createCommonCode("REFUND_PERIOD", "MONTH", "최근 1개월", "{\"months\":1}", 3);
@@ -3663,12 +3292,10 @@ public class AdminServiceImpl implements AdminService {
                 log.info("✅ REFUND_PERIOD 공통 코드 생성 완료");
             }
             
-            // REFUND_REASON 그룹 확인 및 생성
             List<CommonCode> reasonCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_REASON");
             if (reasonCodes.isEmpty()) {
                 log.info("🔧 REFUND_REASON 공통 코드 그룹 생성 중...");
                 
-                // 환불 사유 코드들 생성
                 createCommonCode("REFUND_REASON", "CUSTOMER_REQUEST", "고객 요청", "{\"keywords\":\"고객,요청,개인사정\"}", 1);
                 createCommonCode("REFUND_REASON", "SERVICE_UNSATISFIED", "서비스 불만족", "{\"keywords\":\"불만족,서비스,품질\"}", 2);
                 createCommonCode("REFUND_REASON", "CONSULTANT_CHANGE", "상담사 변경", "{\"keywords\":\"상담사,변경,교체\"}", 3);
@@ -3682,12 +3309,10 @@ public class AdminServiceImpl implements AdminService {
                 log.info("✅ REFUND_REASON 공통 코드 생성 완료");
             }
             
-            // REFUND_STATUS 그룹 확인 및 생성
             List<CommonCode> statusCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_STATUS");
             if (statusCodes.isEmpty()) {
                 log.info("🔧 REFUND_STATUS 공통 코드 그룹 생성 중...");
                 
-                // 환불 상태 코드들 생성
                 createCommonCode("REFUND_STATUS", "REQUESTED", "환불 요청", "{\"color\":\"#ffc107\"}", 1);
                 createCommonCode("REFUND_STATUS", "APPROVED", "환불 승인", "{\"color\":\"#28a745\"}", 2);
                 createCommonCode("REFUND_STATUS", "PROCESSING", "환불 처리중", "{\"color\":\"#17a2b8\"}", 3);
@@ -3702,7 +3327,6 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
-    /**
      * 공통 코드 생성 헬퍼 메서드
      */
     private void createCommonCode(String codeGroup, String codeValue, String codeLabel, String extraData, int sortOrder) {
@@ -3727,7 +3351,6 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId) {
-        // 현재 테넌트 ID 가져오기
         String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
@@ -3736,7 +3359,6 @@ public class AdminServiceImpl implements AdminService {
         
         List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(tenantId, consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
         
-        // 매칭된 사용자 정보 복호화
         for (ConsultantClientMapping mapping : mappings) {
             if (mapping.getConsultant() != null) {
                 decryptUserPersonalData(mapping.getConsultant());
@@ -3753,20 +3375,17 @@ public class AdminServiceImpl implements AdminService {
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId, String branchCode) {
         log.info("🔍 상담사별 매칭 조회 - 상담사 ID: {}, 브랜치 코드: {}", consultantId, branchCode);
         
-        // 현재 테넌트 ID 가져오기
         String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
         }
         
-        // 브랜치 코드로 필터링된 매칭 조회 (tenantId 필터링)
         List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndBranchCodeAndStatusNot(
             tenantId, consultantId, branchCode, ConsultantClientMapping.MappingStatus.TERMINATED);
         
         log.info("🔍 브랜치 코드 필터링된 매칭 수: {}", mappings.size());
         
-        // 매칭된 사용자 정보 복호화
         for (ConsultantClientMapping mapping : mappings) {
             if (mapping.getConsultant() != null) {
                 decryptUserPersonalData(mapping.getConsultant());
@@ -3784,20 +3403,17 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔍 내담자별 매칭 조회 시작: clientId={}", clientId);
             
-            // 현재 테넌트 ID 가져오기
             String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new ArrayList<>();
             }
             
-            // 안전한 매칭 조회 (tenantId 필터링)
             List<ConsultantClientMapping> mappings = new ArrayList<>();
             try {
                 mappings = mappingRepository.findByClientIdAndStatusNot(tenantId, clientId, ConsultantClientMapping.MappingStatus.TERMINATED);
                 log.info("🔍 내담자별 매칭 조회 완료: clientId={}, 매칭 수={}", clientId, mappings.size());
                 
-                // 매칭된 사용자 정보 복호화
                 for (ConsultantClientMapping mapping : mappings) {
                     if (mapping.getConsultant() != null) {
                         decryptUserPersonalData(mapping.getConsultant());
@@ -3813,14 +3429,12 @@ public class AdminServiceImpl implements AdminService {
                 
             } catch (Exception e) {
                 log.error("❌ 매칭 조회 중 오류: clientId={}, error={}", clientId, e.getMessage(), e);
-                // 오류 시 빈 목록 반환
                 mappings = new ArrayList<>();
             }
             
             return mappings;
         } catch (Exception e) {
             log.error("❌ 내담자별 매칭 조회 실패: clientId={}, error={}", clientId, e.getMessage(), e);
-            // 오류 시 빈 목록 반환
             return new ArrayList<>();
         }
     }
@@ -3830,7 +3444,6 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.findById(mappingId).orElse(null);
     }
 
-    // ==================== 상담사 변경 시스템 ====================
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -3838,15 +3451,14 @@ public class AdminServiceImpl implements AdminService {
         log.info("상담사 변경 처리 시작: 기존 매칭 ID={}, 새 상담사 ID={}", 
                 request.getCurrentMappingId(), request.getNewConsultantId());
         
-        // 1. 기존 매칭 조회 및 검증
         ConsultantClientMapping currentMapping = mappingRepository.findById(request.getCurrentMappingId())
                 .orElseThrow(() -> new RuntimeException("기존 매칭을 찾을 수 없습니다."));
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (currentMapping.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
             throw new RuntimeException("활성 상태의 매칭만 상담사를 변경할 수 있습니다.");
         }
         
-        // 2. 새 상담사 조회 및 검증
         User newConsultant = userRepository.findById(request.getNewConsultantId())
                 .orElseThrow(() -> new RuntimeException("새 상담사를 찾을 수 없습니다."));
         
@@ -3854,7 +3466,6 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("상담사가 아닌 사용자입니다.");
         }
         
-        // 3. 기존 매칭 종료 처리
         String transferReason = String.format("상담사 변경: %s -> %s. 사유: %s", 
                 currentMapping.getConsultant().getName(), 
                 newConsultant.getName(), 
@@ -3863,12 +3474,13 @@ public class AdminServiceImpl implements AdminService {
         currentMapping.transferToNewConsultant(transferReason, request.getTransferredBy());
         mappingRepository.save(currentMapping);
         
-        // 4. 새 매칭 생성
         ConsultantClientMapping newMapping = new ConsultantClientMapping();
         newMapping.setConsultant(newConsultant);
         newMapping.setClient(currentMapping.getClient());
         newMapping.setStartDate(LocalDateTime.now());
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         newMapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         newMapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED); // 이전 매칭에서 승인된 상태 유지
         newMapping.setTotalSessions(request.getTotalSessions() != null ? 
                 request.getTotalSessions() : currentMapping.getRemainingSessions());
@@ -3915,14 +3527,11 @@ public class AdminServiceImpl implements AdminService {
             log.info("🔍 상담사별 스케줄 조회: consultantId={}", consultantId);
             String tenantId = TenantContextHolder.getRequiredTenantId();
             
-            // 상담사 존재 확인
             userRepository.findById(consultantId)
                     .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
             
-            // 상담사의 스케줄 조회
             List<Schedule> schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
             
-            // 스케줄을 Map 형태로 변환
             List<Map<String, Object>> scheduleMaps = schedules.stream()
                     .map(schedule -> {
                         Map<String, Object> scheduleMap = new HashMap<>();
@@ -3935,10 +3544,8 @@ public class AdminServiceImpl implements AdminService {
                         scheduleMap.put("status", schedule.getStatus());
                         scheduleMap.put("notes", schedule.getNotes());
                         
-                        // 내담자 정보 추가
                         if (schedule.getClientId() != null) {
                             scheduleMap.put("clientId", schedule.getClientId());
-                            // 내담자 이름은 별도로 조회해야 함
                             try {
                                 User clientUser = userRepository.findById(schedule.getClientId()).orElse(null);
                                 if (clientUser != null) {
@@ -3974,7 +3581,6 @@ public class AdminServiceImpl implements AdminService {
             log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
             String tenantId = TenantContextHolder.getRequiredTenantId();
             
-            // 활성 상담사만 조회
             List<Consultant> consultantEntities = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
             List<User> consultants = consultantEntities.stream()
                     .map(consultant -> (User) consultant)
@@ -3984,28 +3590,22 @@ public class AdminServiceImpl implements AdminService {
             
             for (User consultant : consultants) {
                 try {
-                    // 기간 설정
                     LocalDate startDate, endDate;
                     if (period != null && !period.isEmpty()) {
-                        // 기간 파싱 (예: "2025-09")
                         String[] parts = period.split("-");
                         int year = Integer.parseInt(parts[0]);
                         int month = Integer.parseInt(parts[1]);
                         startDate = LocalDate.of(year, month, 1);
                         endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
                     } else {
-                        // 전체 기간 (올해)
                         startDate = LocalDate.of(LocalDate.now().getYear(), 1, 1);
                         endDate = LocalDate.of(LocalDate.now().getYear(), 12, 31);
                     }
                     
-                    // 상담 완료 건수 조회 (스케줄 기준)
                     int completedCount = getCompletedScheduleCount(consultant.getId(), startDate, endDate);
                     
-                    // 총 상담 건수 조회 (스케줄 기준)
                     long totalCount = getTotalScheduleCount(consultant.getId());
                     
-                    // 상담사 정보와 통계 데이터 매칭
                     Map<String, Object> consultantStats = new HashMap<>();
                     consultantStats.put("consultantId", consultant.getId());
                     consultantStats.put("consultantName", consultant.getName());
@@ -4028,7 +3628,6 @@ public class AdminServiceImpl implements AdminService {
                 }
             }
             
-            // 완료 건수 기준으로 내림차순 정렬
             statistics.sort((a, b) -> {
                 Integer countA = (Integer) a.get("completedCount");
                 Integer countB = (Integer) b.get("completedCount");
@@ -4049,14 +3648,12 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("📊 지점별 상담 완료 건수 통계 조회: period={}, branchCode={}", period, branchCode);
             
-            // 특정 지점의 활성 상담사만 조회 (브랜치 엔티티 기반)
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new ArrayList<>();
             }
             
-            // 브랜치 코드가 null이면 빈 리스트 반환
             if (branchCode == null || branchCode.trim().isEmpty()) {
                 return new ArrayList<>();
             }
@@ -4065,7 +3662,6 @@ public class AdminServiceImpl implements AdminService {
             try {
                 Branch branch = branchService.getBranchByCode(branchCode);
                 consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
-                // isActive = true 필터링 (Java 스트림)
                 consultants = consultants.stream()
                     .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                     .collect(Collectors.toList());
@@ -4079,28 +3675,22 @@ public class AdminServiceImpl implements AdminService {
             
             for (User consultant : consultants) {
                 try {
-                    // 기간 설정
                     LocalDate startDate, endDate;
                     if (period != null && !period.isEmpty()) {
-                        // 기간 파싱 (예: "2025-09")
                         String[] parts = period.split("-");
                         int year = Integer.parseInt(parts[0]);
                         int month = Integer.parseInt(parts[1]);
                         startDate = LocalDate.of(year, month, 1);
                         endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
                     } else {
-                        // 전체 기간 (올해)
                         startDate = LocalDate.of(LocalDate.now().getYear(), 1, 1);
                         endDate = LocalDate.of(LocalDate.now().getYear(), 12, 31);
                     }
                     
-                    // 상담 완료 건수 조회 (스케줄 기준)
                     int completedCount = getCompletedScheduleCount(consultant.getId(), startDate, endDate);
                     
-                    // 총 상담 건수 조회 (스케줄 기준)
                     long totalCount = getTotalScheduleCount(consultant.getId());
                     
-                    // 상담사 정보와 통계 데이터 매칭
                     Map<String, Object> consultantStats = new HashMap<>();
                     consultantStats.put("consultantId", consultant.getId());
                     consultantStats.put("consultantName", consultant.getName());
@@ -4124,7 +3714,6 @@ public class AdminServiceImpl implements AdminService {
                 }
             }
             
-            // 완료 건수 기준으로 내림차순 정렬
             statistics.sort((a, b) -> {
                 Integer countA = (Integer) a.get("completedCount");
                 Integer countB = (Integer) b.get("completedCount");
@@ -4145,11 +3734,9 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔍 모든 스케줄 조회");
             
-            // 모든 스케줄 조회
             String tenantId = TenantContextHolder.getRequiredTenantId();
             List<Schedule> schedules = scheduleRepository.findByTenantId(tenantId);
             
-            // 스케줄을 Map 형태로 변환
             List<Map<String, Object>> scheduleMaps = schedules.stream()
                     .map(schedule -> {
                         Map<String, Object> scheduleMap = new HashMap<>();
@@ -4163,7 +3750,6 @@ public class AdminServiceImpl implements AdminService {
                         scheduleMap.put("notes", schedule.getNotes());
                         scheduleMap.put("consultantId", schedule.getConsultantId());
                         
-                        // 상담사 정보 추가
                         if (schedule.getConsultantId() != null) {
                             try {
                                 User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
@@ -4187,7 +3773,6 @@ public class AdminServiceImpl implements AdminService {
                             scheduleMap.put("consultantEmail", "");
                         }
                         
-                        // 내담자 정보 추가
                         if (schedule.getClientId() != null) {
                             scheduleMap.put("clientId", schedule.getClientId());
                             try {
@@ -4228,13 +3813,11 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("📊 스케줄 상태별 통계 조회 시작");
             
-            // 모든 스케줄 조회
             log.debug("🔍 모든 스케줄 조회 중...");
             String tenantId = TenantContextHolder.getRequiredTenantId();
             List<Schedule> allSchedules = scheduleRepository.findByTenantId(tenantId);
             log.info("📋 조회된 스케줄 수: {}", allSchedules.size());
             
-            // 상태별 카운트
             log.debug("📊 상태별 카운트 계산 중...");
             Map<String, Long> statusCount = allSchedules.stream()
                 .collect(Collectors.groupingBy(
@@ -4247,10 +3830,10 @@ public class AdminServiceImpl implements AdminService {
                 ));
             log.info("📊 상태별 카운트: {}", statusCount);
             
-            // 상담사별 완료 건수 (스케줄 기준)
             log.debug("👥 상담사별 완료 건수 계산 중...");
             Map<Long, Long> consultantCompletedCount = allSchedules.stream()
                 .filter(schedule -> {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     boolean isCompleted = ScheduleStatus.COMPLETED.equals(schedule.getStatus());
                     if (isCompleted) {
                         log.trace("완료된 스케줄 ID {}: 상담사 ID = {}", schedule.getId(), schedule.getConsultantId());
@@ -4268,14 +3851,20 @@ public class AdminServiceImpl implements AdminService {
             statistics.put("totalSchedules", allSchedules.size());
             statistics.put("statusCount", statusCount);
             statistics.put("consultantCompletedCount", consultantCompletedCount);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             statistics.put("completedSchedules", statusCount.getOrDefault(ScheduleStatus.COMPLETED.name(), 0L));
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             statistics.put("bookedSchedules", statusCount.getOrDefault(ScheduleStatus.BOOKED.name(), 0L));
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             statistics.put("cancelledSchedules", statusCount.getOrDefault(ScheduleStatus.CANCELLED.name(), 0L));
             
             log.info("✅ 스케줄 통계 조회 완료: 총 {}개, 완료 {}개, 예약 {}개, 취소 {}개", 
                     allSchedules.size(), 
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     statusCount.getOrDefault(ScheduleStatus.COMPLETED.name(), 0L),
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     statusCount.getOrDefault(ScheduleStatus.BOOKED.name(), 0L),
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     statusCount.getOrDefault(ScheduleStatus.CANCELLED.name(), 0L));
             return statistics;
             
@@ -4290,7 +3879,6 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("📊 스케줄 상태별 통계 조회 시작 (지점별): branchCode={}", branchCode);
             
-            // 해당 지점의 스케줄만 조회
             log.debug("🔍 지점별 스케줄 조회 중...");
             String tenantId = TenantContextHolder.getRequiredTenantId();
             List<Schedule> allSchedules = scheduleRepository.findByTenantId(tenantId);
@@ -4299,7 +3887,6 @@ public class AdminServiceImpl implements AdminService {
                     .collect(Collectors.toList());
             log.info("📋 조회된 스케줄 수: {} (전체: {}, 지점: {})", branchSchedules.size(), allSchedules.size(), branchCode);
             
-            // 상태별 카운트
             log.debug("📊 상태별 카운트 계산 중...");
             Map<String, Long> statusCount = branchSchedules.stream()
                 .collect(Collectors.groupingBy(
@@ -4312,10 +3899,10 @@ public class AdminServiceImpl implements AdminService {
                 ));
             log.info("📊 상태별 카운트: {}", statusCount);
             
-            // 상담사별 완료 건수 (스케줄 기준)
             log.debug("👥 상담사별 완료 건수 계산 중...");
             Map<Long, Long> consultantCompletedCount = branchSchedules.stream()
                 .filter(schedule -> {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     boolean isCompleted = ScheduleStatus.COMPLETED.equals(schedule.getStatus());
                     if (isCompleted) {
                         log.trace("완료된 스케줄 ID {}: 상담사 ID = {}", schedule.getId(), schedule.getConsultantId());
@@ -4333,15 +3920,21 @@ public class AdminServiceImpl implements AdminService {
             statistics.put("totalSchedules", branchSchedules.size());
             statistics.put("statusCount", statusCount);
             statistics.put("consultantCompletedCount", consultantCompletedCount);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             statistics.put("completedSchedules", statusCount.getOrDefault(ScheduleStatus.COMPLETED.name(), 0L));
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             statistics.put("bookedSchedules", statusCount.getOrDefault(ScheduleStatus.BOOKED.name(), 0L));
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             statistics.put("cancelledSchedules", statusCount.getOrDefault(ScheduleStatus.CANCELLED.name(), 0L));
             statistics.put("branchCode", branchCode);
             
             log.info("✅ 스케줄 통계 조회 완료 (지점별): 총 {}개, 완료 {}개, 예약 {}개, 취소 {}개", 
                     branchSchedules.size(), 
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     statusCount.getOrDefault(ScheduleStatus.COMPLETED.name(), 0L),
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     statusCount.getOrDefault(ScheduleStatus.BOOKED.name(), 0L),
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     statusCount.getOrDefault(ScheduleStatus.CANCELLED.name(), 0L));
             return statistics;
             
@@ -4365,8 +3958,8 @@ public class AdminServiceImpl implements AdminService {
                 return errorResult;
             }
             
-            // 1. 지난 스케줄 중 완료되지 않은 것들 조회
             List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 tenantId, LocalDate.now(), ScheduleStatus.BOOKED);
             
             int completedCount = 0;
@@ -4375,17 +3968,15 @@ public class AdminServiceImpl implements AdminService {
             
             for (Schedule schedule : expiredSchedules) {
                 try {
-                    // 스케줄을 완료 상태로 변경
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     schedule.setStatus(ScheduleStatus.COMPLETED);
                     schedule.setUpdatedAt(LocalDateTime.now());
                     scheduleRepository.save(schedule);
                     completedCount++;
                     
-                    // 상담일지 작성 여부 확인 (consultations 테이블에 해당 스케줄의 상담 기록이 있는지 확인)
                     boolean hasConsultationRecord = checkConsultationRecord(schedule);
                     
                     if (!hasConsultationRecord) {
-                        // 상담일지 미작성 시 상담사에게 메시지 발송
                         sendConsultationReminderMessage(schedule);
                         reminderSentCount++;
                         
@@ -4420,14 +4011,10 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 상담일지 작성 여부 확인
      */
     private boolean checkConsultationRecord(Schedule schedule) {
         try {
-            // consultations 테이블에서 해당 스케줄과 관련된 상담 기록이 있는지 확인
-            // 여기서는 간단히 스케줄 ID나 날짜/시간으로 매칭하는 로직을 구현
-            // 실제로는 더 정확한 매칭 로직이 필요할 수 있음
             return false; // 임시로 항상 false 반환 (상담일지 미작성으로 간주)
         } catch (Exception e) {
             log.warn("상담일지 작성 여부 확인 실패: {}", e.getMessage());
@@ -4435,7 +4022,6 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 상담일지 작성 독려 메시지 발송
      */
     private void sendConsultationReminderMessage(Schedule schedule) {
@@ -4462,12 +4048,10 @@ public class AdminServiceImpl implements AdminService {
                 schedule.getClientId() // 실제로는 내담자 이름을 조회해야 함
             );
             
-            // 상담사에게 메시지 발송
             consultationMessageService.sendMessage(
                 schedule.getConsultantId(),
                 schedule.getClientId(),
                 null, // consultationId는 null
-                com.coresolution.consultation.constant.UserRole.ADMIN.name(), // 발신자 타입 (표준화 2025-12-05: enum 활용)
                 title,
                 content,
                 "REMINDER", // 메시지 타입
@@ -4484,12 +4068,12 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 상담사별 완료된 스케줄 건수 조회 (기간별)
      */
     private int getCompletedScheduleCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
         try {
             List<Schedule> completedSchedules = scheduleRepository.findByConsultantIdAndStatusAndDateBetween(
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 consultantId, ScheduleStatus.COMPLETED, startDate, endDate);
             return completedSchedules.size();
         } catch (Exception e) {
@@ -4498,7 +4082,6 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 상담사별 총 스케줄 건수 조회
      */
     private long getTotalScheduleCount(Long consultantId) {
@@ -4515,7 +4098,6 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 전화번호 마스킹
      */
     private String maskPhone(String phone) {
@@ -4544,21 +4126,16 @@ public class AdminServiceImpl implements AdminService {
             List<User> users;
             
             if (role != null && !role.isEmpty()) {
-                // 역할별 조회
                 UserRole userRole = UserRole.valueOf(role);
                 if (branchCode != null && !branchCode.isEmpty()) {
-                    // 역할 + 지점별 조회
                     users = userRepository.findByRoleAndBranchCodeAndIsActive(tenantId, userRole, branchCode, includeInactive ? null : true);
                 } else {
-                    // 역할별 조회
                     users = userRepository.findByRoleAndIsActive(tenantId, userRole, includeInactive ? null : true);
                 }
             } else if (branchCode != null && !branchCode.isEmpty()) {
-                // 지점별 조회 (브랜치 엔티티 기반)
                 try {
                     Branch branch = branchService.getBranchByCode(branchCode);
                     users = userRepository.findByBranchAndIsDeletedFalseOrderByUsername(tenantId, branch);
-                    // isActive 필터링 (Java 스트림)
                     if (!includeInactive) {
                         users = users.stream()
                             .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
@@ -4569,7 +4146,6 @@ public class AdminServiceImpl implements AdminService {
                     users = new ArrayList<>();
                 }
             } else {
-                // 전체 조회
                 if (includeInactive) {
                     users = userRepository.findByTenantId(tenantId);
                 } else {
@@ -4602,19 +4178,16 @@ public class AdminServiceImpl implements AdminService {
     public User changeUserRole(Long userId, String newRole) {
         log.info("🔧 사용자 역할 변경: userId={}, newRole={}", userId, newRole);
         try {
-            // 사용자 조회
             User user = userRepository.findById(userId).orElse(null);
             if (user == null) {
                 log.warn("❌ 사용자를 찾을 수 없습니다: userId={}", userId);
                 return null;
             }
             
-            // 새로운 역할로 변경
             UserRole role = UserRole.valueOf(newRole);
             user.setRole(role);
             user.setUpdatedAt(LocalDateTime.now());
             
-            // 저장
             User savedUser = userRepository.save(user);
             
             log.info("✅ 사용자 역할 변경 완료: userId={}, oldRole={}, newRole={}", 
@@ -4636,11 +4209,10 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔄 중복 매칭 통합 시작");
             
-            // 모든 활성 매칭 조회
             List<ConsultantClientMapping> allMappings = mappingRepository
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
             
-            // 상담사-내담자 조합별로 그룹화
             Map<String, List<ConsultantClientMapping>> groupedMappings = allMappings.stream()
                 .collect(Collectors.groupingBy(mapping -> 
                     mapping.getConsultant().getId() + "-" + mapping.getClient().getId()));
@@ -4654,12 +4226,10 @@ public class AdminServiceImpl implements AdminService {
                         mappings.get(0).getClient().getName(),
                         mappings.size());
                     
-                    // 가장 최근 매칭을 기준으로 통합
                     ConsultantClientMapping primaryMapping = mappings.stream()
                         .max(Comparator.comparing(ConsultantClientMapping::getCreatedAt))
                         .orElse(mappings.get(0));
                     
-                    // 나머지 매칭들의 정보를 통합
                     int totalSessions = mappings.stream()
                         .mapToInt(ConsultantClientMapping::getTotalSessions)
                         .sum();
@@ -4668,7 +4238,6 @@ public class AdminServiceImpl implements AdminService {
                         .sum();
                     int remainingSessions = totalSessions - usedSessions;
                     
-                    // 통합된 정보로 업데이트
                     primaryMapping.setTotalSessions(totalSessions);
                     primaryMapping.setUsedSessions(usedSessions);
                     primaryMapping.setRemainingSessions(remainingSessions);
@@ -4677,7 +4246,6 @@ public class AdminServiceImpl implements AdminService {
                     mappingRepository.save(primaryMapping);
                     mergedCount++;
                     
-                    // 나머지 매칭들 삭제
                     List<ConsultantClientMapping> toDelete = mappings.stream()
                         .filter(m -> !m.getId().equals(primaryMapping.getId()))
                         .collect(Collectors.toList());
@@ -4720,11 +4288,10 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔍 중복 매칭 조회 시작");
             
-            // 모든 활성 매칭 조회
             List<ConsultantClientMapping> allMappings = mappingRepository
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
             
-            // 상담사-내담자 조합별로 그룹화
             Map<String, List<ConsultantClientMapping>> groupedMappings = allMappings.stream()
                 .collect(Collectors.groupingBy(mapping -> 
                     mapping.getConsultant().getId() + "-" + mapping.getClient().getId()));
@@ -4763,7 +4330,6 @@ public class AdminServiceImpl implements AdminService {
         return duplicates;
     }
     
-    // ==================== 휴가 통계 구현 ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -4773,7 +4339,6 @@ public class AdminServiceImpl implements AdminService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 기간 설정 (미래 휴가도 포함)
             LocalDate startDate = getVacationPeriodStartDate(period);
             LocalDate endDate = LocalDate.now().plusMonths(1); // 미래 1개월까지 포함
             
@@ -4785,11 +4350,9 @@ public class AdminServiceImpl implements AdminService {
                 return new HashMap<>();
             }
             
-            // 활성 상담사 목록 조회
             List<User> activeConsultants = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
             log.info("👥 활성 상담사 수: {}명", activeConsultants.size());
             
-            // 상담사별 휴가 통계
             List<Map<String, Object>> consultantStats = new ArrayList<>();
             double totalVacationDays = 0.0;
             
@@ -4799,23 +4362,18 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("consultantName", consultant.getName());
                 consultantData.put("email", consultant.getEmail());
                 
-                // 해당 기간의 휴가 조회 (가중치 적용)
                 double vacationCount = getConsultantVacationCount(consultant.getId(), startDate, endDate);
                 consultantData.put("vacationDays", vacationCount);
                 
-                // 휴가 유형별 분석 (개수 기준)
                 Map<String, Integer> vacationByType = getVacationCountByType(consultant.getId(), startDate, endDate);
                 consultantData.put("vacationByType", vacationByType);
                 
-                // 휴가 유형별 일수 분석 (가중치 적용)
                 Map<String, Double> vacationDaysByType = getVacationDaysByType(consultant.getId(), startDate, endDate);
                 consultantData.put("vacationDaysByType", vacationDaysByType);
                 
-                // 디버깅 로그 추가
                 log.info("🏖️ 상담사 {} 휴가 통계: 총 {}일, 유형별 개수={}, 유형별 일수={}", 
                     consultant.getName(), vacationCount, vacationByType, vacationDaysByType);
                 
-                // 최근 휴가 일자
                 LocalDate lastVacationDate = getLastVacationDate(consultant.getId());
                 consultantData.put("lastVacationDate", lastVacationDate != null ? lastVacationDate.toString() : null);
                 
@@ -4823,14 +4381,12 @@ public class AdminServiceImpl implements AdminService {
                 totalVacationDays += vacationCount;
             }
             
-            // 전체 통계
             Map<String, Object> summary = new HashMap<>();
             summary.put("totalConsultants", activeConsultants.size());
             summary.put("totalVacationDays", totalVacationDays);
             summary.put("averageVacationDays", activeConsultants.size() > 0 ? 
                 (double) totalVacationDays / activeConsultants.size() : 0.0);
             
-            // 휴가 많은 상담사 TOP 3
             List<Map<String, Object>> topVacationConsultants = consultantStats.stream()
                 .sorted((a, b) -> Double.compare((Double) b.get("vacationDays"), (Double) a.get("vacationDays")))
                 .limit(3)
@@ -4864,7 +4420,6 @@ public class AdminServiceImpl implements AdminService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 기간 설정 (미래 휴가도 포함)
             LocalDate startDate = getVacationPeriodStartDate(period);
             LocalDate endDate = LocalDate.now().plusMonths(1); // 미래 1개월까지 포함
             
@@ -4876,7 +4431,6 @@ public class AdminServiceImpl implements AdminService {
                 return new HashMap<>();
             }
             
-            // 특정 지점의 활성 상담사 목록 조회 (브랜치 엔티티 기반)
             List<User> activeConsultants;
             if (branchCode == null || branchCode.trim().isEmpty()) {
                 activeConsultants = new ArrayList<>();
@@ -4884,7 +4438,6 @@ public class AdminServiceImpl implements AdminService {
                 try {
                     Branch branch = branchService.getBranchByCode(branchCode);
                     activeConsultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
-                    // isActive = true 필터링 (Java 스트림)
                     activeConsultants = activeConsultants.stream()
                         .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                         .collect(Collectors.toList());
@@ -4895,7 +4448,6 @@ public class AdminServiceImpl implements AdminService {
             }
             log.info("👥 지점 {} 활성 상담사 수: {}명", branchCode, activeConsultants.size());
             
-            // 상담사별 휴가 통계
             List<Map<String, Object>> consultantStats = new ArrayList<>();
             double totalVacationDays = 0.0;
             
@@ -4906,12 +4458,10 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("consultantEmail", consultant.getEmail());
                 consultantData.put("branchCode", consultant.getBranchCode());
                 
-                // 상담사의 휴가 일수 조회
                 double vacationDays = getConsultantVacationCount(consultant.getId(), startDate, endDate);
                 consultantData.put("vacationDays", vacationDays);
                 totalVacationDays += vacationDays;
                 
-                // 휴가 유형별 통계 (기본값)
                 Map<String, Double> vacationByType = new HashMap<>();
                 vacationByType.put("annual", vacationDays);
                 vacationByType.put("sick", 0.0);
@@ -4921,18 +4471,15 @@ public class AdminServiceImpl implements AdminService {
                 consultantStats.add(consultantData);
             }
             
-            // 휴가 일수 기준으로 정렬 (내림차순)
             consultantStats.sort((a, b) -> Double.compare(
                 (Double) b.get("vacationDays"), 
                 (Double) a.get("vacationDays")
             ));
             
-            // 상위 휴가 상담사 (상위 5명)
             List<Map<String, Object>> topVacationConsultants = consultantStats.stream()
                 .limit(5)
                 .collect(Collectors.toList());
             
-            // 요약 정보
             Map<String, Object> summary = new HashMap<>();
             summary.put("totalConsultants", activeConsultants.size());
             summary.put("totalVacationDays", totalVacationDays);
@@ -4956,7 +4503,6 @@ public class AdminServiceImpl implements AdminService {
         return result;
     }
     
-    /**
      * 휴가 기간 시작일 계산
      */
     private LocalDate getVacationPeriodStartDate(String period) {
@@ -4979,19 +4525,16 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 상담사의 특정 기간 휴가 일수 조회 (가중치 적용)
      */
     private double getConsultantVacationCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
         try {
-            // consultantAvailabilityService를 통해 실제 휴가 정보 조회
             List<Map<String, Object>> vacations = consultantAvailabilityService.getVacations(
                 consultantId, 
                 startDate.toString(), 
                 endDate.toString()
             );
             
-            // 승인된 휴가만 가중치 적용하여 계산
             double totalDays = vacations.stream()
                 .filter(vacation -> Boolean.TRUE.equals(vacation.get("isApproved")))
                 .mapToDouble(vacation -> getVacationWeight((String) vacation.get("type")))
@@ -5006,7 +4549,6 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 휴가 유형별 가중치 반환
      */
     private double getVacationWeight(String vacationType) {
@@ -5015,7 +4557,6 @@ public class AdminServiceImpl implements AdminService {
         }
         
         switch (vacationType.toUpperCase()) {
-            // 반반차 (0.25일)
             case "MORNING_HALF_1": // 오전 반반차 1
             case "MORNING_HALF_2": // 오전 반반차 2  
             case "AFTERNOON_HALF_1": // 오후 반반차 1
@@ -5024,7 +4565,6 @@ public class AdminServiceImpl implements AdminService {
             case "QUARTER_DAY":
                 return 0.25;
                 
-            // 반차 (0.5일)
             case "MORNING": // 오전 반차
             case "AFTERNOON": // 오후 반차
             case "MORNING_HALF_DAY": // 오전반차
@@ -5033,7 +4573,6 @@ public class AdminServiceImpl implements AdminService {
             case "HALF_DAY":
                 return 0.5;
                 
-            // 종일 휴가 (1.0일)
             case "ALL_DAY": // 하루 종일
             case "FULL_DAY": // 종일
             case "FULL":
@@ -5042,27 +4581,23 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 휴가 유형별 개수 조회
      */
     private Map<String, Integer> getVacationCountByType(Long consultantId, LocalDate startDate, LocalDate endDate) {
         Map<String, Integer> vacationByType = new HashMap<>();
         
         try {
-            // consultantAvailabilityService를 통해 실제 휴가 정보 조회
             List<Map<String, Object>> vacations = consultantAvailabilityService.getVacations(
                 consultantId, 
                 startDate.toString(), 
                 endDate.toString()
             );
             
-            // 휴가 유형별로 그룹화하여 카운트
             for (Map<String, Object> vacation : vacations) {
                 if (Boolean.TRUE.equals(vacation.get("isApproved"))) {
                     String typeName = (String) vacation.get("typeName");
                     String type = (String) vacation.get("type");
                     
-                    // typeName이 없으면 type으로부터 생성
                     if (typeName == null && type != null) {
                         typeName = mapVacationTypeToCategory(type);
                     }
@@ -5073,7 +4608,6 @@ public class AdminServiceImpl implements AdminService {
                 }
             }
             
-            // 기본 휴가 유형들이 없으면 0으로 설정
             if (!vacationByType.containsKey("연차")) vacationByType.put("연차", 0);
             if (!vacationByType.containsKey("반차")) vacationByType.put("반차", 0);
             if (!vacationByType.containsKey("반반차")) vacationByType.put("반반차", 0);
@@ -5089,21 +4623,18 @@ public class AdminServiceImpl implements AdminService {
         return vacationByType;
     }
     
-    /**
      * 휴가 유형별 일수 조회 (가중치 적용)
      */
     private Map<String, Double> getVacationDaysByType(Long consultantId, LocalDate startDate, LocalDate endDate) {
         Map<String, Double> vacationDaysByType = new HashMap<>();
         
         try {
-            // consultantAvailabilityService를 통해 실제 휴가 정보 조회
             List<Map<String, Object>> vacations = consultantAvailabilityService.getVacations(
                 consultantId, 
                 startDate.toString(), 
                 endDate.toString()
             );
             
-            // 휴가 유형별로 그룹화하여 일수 계산 (가중치 적용)
             log.info("🔍 상담사 {} 휴가 데이터 분석 시작: 총 {}개 휴가", consultantId, vacations.size());
             
             for (Map<String, Object> vacation : vacations) {
@@ -5114,7 +4645,6 @@ public class AdminServiceImpl implements AdminService {
                     String type = (String) vacation.get("type");
                     double weight = getVacationWeight(type);
                     
-                    // typeName이 없으면 type으로부터 생성
                     if (typeName == null && type != null) {
                         typeName = mapVacationTypeToCategory(type);
                     }
@@ -5131,7 +4661,6 @@ public class AdminServiceImpl implements AdminService {
             
             log.info("📊 최종 휴가 유형별 일수: {}", vacationDaysByType);
             
-            // 기본 휴가 유형들이 없으면 0으로 설정
             if (!vacationDaysByType.containsKey("연차")) vacationDaysByType.put("연차", 0.0);
             if (!vacationDaysByType.containsKey("반차")) vacationDaysByType.put("반차", 0.0);
             if (!vacationDaysByType.containsKey("반반차")) vacationDaysByType.put("반반차", 0.0);
@@ -5147,19 +4676,16 @@ public class AdminServiceImpl implements AdminService {
         return vacationDaysByType;
     }
     
-    /**
      * 최근 휴가 일자 조회
      */
     private LocalDate getLastVacationDate(Long consultantId) {
         try {
-            // 전체 기간에서 최근 휴가 조회
             List<Map<String, Object>> vacations = consultantAvailabilityService.getVacations(
                 consultantId, 
                 null, // 전체 기간
                 null
             );
             
-            // 승인된 휴가 중 가장 최근 날짜 찾기
             return vacations.stream()
                 .filter(vacation -> Boolean.TRUE.equals(vacation.get("isApproved")))
                 .map(vacation -> {
@@ -5180,7 +4706,6 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 휴가 유형을 카테고리로 매칭 (한글명도 처리)
      */
     private String mapVacationTypeToCategory(String vacationType) {
@@ -5190,33 +4715,27 @@ public class AdminServiceImpl implements AdminService {
         
         String type = vacationType.toUpperCase();
         
-        // 영문 코드 매칭
         switch (type) {
-            // 반반차
             case "MORNING_HALF_1":
             case "MORNING_HALF_2":
             case "AFTERNOON_HALF_1":
             case "AFTERNOON_HALF_2":
                 return "반반차";
                 
-            // 반차
             case "MORNING":
             case "AFTERNOON":
             case "MORNING_HALF_DAY":
             case "AFTERNOON_HALF_DAY":
                 return "반차";
                 
-            // 개인사정
             case "CUSTOM_TIME":
                 return "개인사정";
                 
-            // 연차 (종일)
             case "ALL_DAY":
             case "FULL_DAY":
                 return "연차";
         }
         
-        // 한글명 매칭 (ConsultantAvailabilityServiceImpl에서 반환하는 한글명 처리)
         if (vacationType.contains("반반차") || vacationType.contains("HALF_1") || vacationType.contains("HALF_2")) {
             return "반반차";
         } else if (vacationType.contains("반차") || vacationType.contains("오전") || vacationType.contains("오후")) {
@@ -5227,11 +4746,9 @@ public class AdminServiceImpl implements AdminService {
             return "연차";
         }
         
-        // 기본값
         return "연차";
     }
     
-    /**
      * UserRoleAssignment 자동 생성
      * 
      * @param user 사용자
@@ -5240,10 +4757,8 @@ public class AdminServiceImpl implements AdminService {
      */
     private void createUserRoleAssignment(User user, String tenantId, UserRole userRole) {
         try {
-            // UserRole을 TenantRole name_en으로 매핑
             String roleNameEn = mapUserRoleToTenantRoleNameEn(userRole);
             
-            // TenantRole 조회
             Optional<TenantRole> tenantRoleOpt = tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(
                 tenantId, roleNameEn
             );
@@ -5256,7 +4771,6 @@ public class AdminServiceImpl implements AdminService {
             
             TenantRole tenantRole = tenantRoleOpt.get();
             
-            // 기존 할당 확인
             boolean exists = userRoleAssignmentRepository.existsByUserAndTenantAndRoleAndBranch(
                 user.getId(), tenantId, tenantRole.getTenantRoleId(), null
             );
@@ -5267,7 +4781,6 @@ public class AdminServiceImpl implements AdminService {
                 return;
             }
             
-            // UserRoleAssignment 생성
             String assignmentId = UUID.randomUUID().toString();
             UserRoleAssignment assignment = UserRoleAssignment.builder()
                 .assignmentId(assignmentId)
@@ -5288,11 +4801,9 @@ public class AdminServiceImpl implements AdminService {
         } catch (Exception e) {
             log.error("❌ UserRoleAssignment 생성 실패: userId={}, tenantId={}, userRole={}, error={}", 
                 user.getId(), tenantId, userRole, e.getMessage(), e);
-            // 예외를 던지지 않고 로그만 남김 (사용자 생성은 성공)
         }
     }
     
-    /**
      * UserRole을 TenantRole name_en으로 매핑
      * 실제 TenantRole name_en과 일치시켜야 함
      */
@@ -5316,7 +4827,6 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
-    /**
      * 매칭의 notes에서 가장 최근 추가된 패키지 정보 추출
      */
     private Map<String, Object> getLastAddedPackageInfo(ConsultantClientMapping mapping) {
@@ -5332,16 +4842,12 @@ public class AdminServiceImpl implements AdminService {
         }
         
         try {
-            // notes에서 추가 매칭이나 회기 추가 관련 정보 추출
             String[] noteLines = notes.split("\n");
             
-            // 가장 최근 추가 정보를 찾기 위해 역순으로 검색
             for (int i = noteLines.length - 1; i >= 0; i--) {
                 String line = noteLines[i].trim();
                 
-                // "[추가 매칭]" 패턴 검색
                 if (line.contains("[추가 매칭]")) {
-                    // 추가 매칭 시 기본 패키지 정보 사용
                     result.put("sessions", 10); // 기본 패키지 회기수
                     result.put("price", mapping.getPackagePrice() != null ? mapping.getPackagePrice() : 0L);
                     result.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName() : "추가 패키지");
@@ -5349,17 +4855,13 @@ public class AdminServiceImpl implements AdminService {
                     break;
                 }
                 
-                // "회기 추가" 패턴 검색
                 if (line.contains("회기 추가") || line.contains("EXTENSION")) {
-                    // 회기 추가 로그에서 정보 추출 시도
                     try {
-                        // "회기 추가: 10회" 같은 패턴에서 숫자 추출
                         if (line.matches(".*\\d+회.*")) {
                             String sessionStr = line.replaceAll(".*?(\\d+)회.*", "$1");
                             int sessions = Integer.parseInt(sessionStr);
                             result.put("sessions", sessions);
                             
-                            // 가격 정보도 추출 시도
                             if (line.matches(".*\\d+원.*")) {
                                 String priceStr = line.replaceAll(".*?(\\d+)원.*", "$1");
                                 Long price = Long.parseLong(priceStr.replaceAll(",", ""));
@@ -5375,9 +4877,7 @@ public class AdminServiceImpl implements AdminService {
                 }
             }
             
-            // 추가 정보가 없으면 표준 패키지 단위로 추정
             if ((Integer) result.get("sessions") == 0) {
-                // 총 회기수가 10의 배수라면 가장 최근 10회 단위로 추정
                 int totalSessions = mapping.getTotalSessions();
                 if (totalSessions >= 10) {
                     int estimatedLastPackage = totalSessions % 10 == 0 ? 10 : totalSessions % 10;
@@ -5385,7 +4885,6 @@ public class AdminServiceImpl implements AdminService {
                     
                     result.put("sessions", estimatedLastPackage);
                     
-                    // 비례 계산으로 가격 추정
                     if (mapping.getPackagePrice() != null && totalSessions > 0) {
                         Long estimatedPrice = (mapping.getPackagePrice() * estimatedLastPackage) / totalSessions;
                         result.put("price", estimatedPrice);
@@ -5410,7 +4909,6 @@ public class AdminServiceImpl implements AdminService {
         log.info("🔍 상담사 이메일로 매칭 조회 - 이메일: {}", consultantEmail);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        // 이메일로 상담사 찾기
         Optional<User> consultantOpt = userRepository.findByTenantIdAndEmail(tenantId, consultantEmail);
         if (consultantOpt.isEmpty()) {
             log.warn("❌ 상담사를 찾을 수 없습니다 - 이메일: {}", consultantEmail);
@@ -5421,7 +4919,6 @@ public class AdminServiceImpl implements AdminService {
         log.info("🔍 찾은 상담사 정보 - ID: {}, 이름: {}, 역할: {}, 브랜치코드: {}", 
                 consultant.getId(), consultant.getName(), consultant.getRole(), consultant.getBranchCode());
         
-        // TERMINATED가 아닌 모든 매칭 조회 (ACTIVE, PAYMENT_CONFIRMED 등) - tenantId 필터링
         List<ConsultantClientMapping> allMappings = mappingRepository.findByConsultantId(tenantId, consultant.getId());
         List<ConsultantClientMapping> mappings = allMappings.stream()
             .filter(mapping -> mapping.getStatus() != ConsultantClientMapping.MappingStatus.TERMINATED)
@@ -5429,7 +4926,6 @@ public class AdminServiceImpl implements AdminService {
         
         log.info("🔍 상담사별 매칭 수: {}", mappings.size());
         
-        // 각 매칭의 상세 정보 로깅
         for (ConsultantClientMapping mapping : mappings) {
             log.info("🔍 매칭 정보 - ID: {}, 상담사ID: {}, 내담자ID: {}, 결제상태: {}, 상태: {}", 
                     mapping.getId(), 
@@ -5438,7 +4934,6 @@ public class AdminServiceImpl implements AdminService {
                     mapping.getPaymentStatus(), mapping.getStatus());
         }
         
-        // 매칭된 사용자 정보 복호화
         for (ConsultantClientMapping mapping : mappings) {
             if (mapping.getConsultant() != null) {
                 decryptUserPersonalData(mapping.getConsultant());

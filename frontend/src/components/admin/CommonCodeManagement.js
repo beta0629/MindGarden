@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { Button } from '../ui/Button/Button';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import {
@@ -26,8 +25,6 @@ import { usePermissions } from '../../hooks/usePermissions';
 import SimpleLayout from '../layout/SimpleLayout';
 import './ImprovedCommonCodeManagement.css';
 
-/**
- * 개선된 공통코드 관리 컴포넌트
  * - 2단계 구조: 코드그룹 선택 → 코드 목록 관리
  * - 직관적인 UI/UX 제공
  * - 관리자 친화적 인터페이스
@@ -37,11 +34,9 @@ import './ImprovedCommonCodeManagement.css';
  * @since 2025-09-13
  */
 const CommonCodeManagement = () => {
-    // 세션 정보
     const { user } = useSession();
     const { canManageCodeGroup } = usePermissions();
     
-    // 권한 체크 함수들 - RoleUtils 사용
     const hasErpCodePermission = () => {
         return RoleUtils.hasRole(user, USER_ROLES.BRANCH_SUPER_ADMIN) ||
                RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER);
@@ -107,7 +102,6 @@ const CommonCodeManagement = () => {
         return hasGeneralCodePermission();
     };
     
-    // 상태 관리
     const [currentStep, setCurrentStep] = useState(1); // 1: 그룹 선택, 2: 코드 관리
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [codeGroups, setCodeGroups] = useState([]);
@@ -116,18 +110,14 @@ const CommonCodeManagement = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingCode, setEditingCode] = useState(null);
 
-    // 코드그룹 메타데이터 상태
     const [groupMetadata, setGroupMetadata] = useState([]);
     const [metadataLoaded, setMetadataLoaded] = useState(false);
     
-    // 필터 상태
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
 
-    // 코드그룹 메타데이터 로드
     const loadMetadata = useCallback(async() => {
         try {
-            // 캐시 초기화 후 새 데이터 로드
             clearCodeGroupCache();
             const metadata = await loadCodeGroupMetadata();
             setGroupMetadata(metadata);
@@ -139,17 +129,14 @@ const CommonCodeManagement = () => {
         }
     }, []);
 
-    // 동적 코드그룹 한글명 조회
     const getGroupKoreanName = useCallback((groupName) => {
         return getCodeGroupKoreanNameSync(groupName);
     }, []);
 
-    // 동적 코드그룹 아이콘 조회
     const getGroupIcon = useCallback((groupName) => {
         return getCodeGroupIconSync(groupName);
     }, []);
 
-    // 새 코드 폼 데이터
     const [newCodeData, setNewCodeData] = useState({
         codeGroup: '',
         codeValue: '',
@@ -165,19 +152,15 @@ const CommonCodeManagement = () => {
         koreanName: ''
     });
 
-    // 코드그룹 목록 로드
     const loadCodeGroups = useCallback(async() => {
         try {
             setLoading(true);
-            // 표준화된 API 사용
             const groups = await getCodeGroups();
             if (groups && groups.length > 0) {
                 setCodeGroups(groups);
             } else {
-                // 하위 호환성: 기존 API 사용
                 const response = await apiGet('/api/v1/common-codes/groups/list');
                 if (response && response.length > 0) {
-                    // 권한에 따라 코드 그룹 필터링
                     const filteredGroups = response.filter(groupCode => {
                         return hasCodeGroupPermission(groupCode);
                     });
@@ -194,16 +177,13 @@ const CommonCodeManagement = () => {
         }
     }, [user?.role]);
 
-    // 특정 그룹의 코드 목록 로드
     const loadGroupCodes = useCallback(async (groupName) => {
         try {
             setLoading(true);
-            // 표준화된 API 사용
             const codes = await getCommonCodes(groupName);
             if (codes && codes.length > 0) {
                 setGroupCodes(codes);
             } else {
-                // 하위 호환성: 기존 API 사용
                 const response = await apiGet(`/api/common-codes/${groupName}`);
                 if (response && response.length > 0) {
                     setGroupCodes(response);
@@ -223,9 +203,7 @@ const CommonCodeManagement = () => {
         }
     }, [user?.role]);
 
-    // 코드그룹 선택
     const handleGroupSelect = (group) => {
-        // 권한 체크
         if (!hasCodeGroupPermission(group)) {
             if (isHqCodeGroup(group)) {
                 notificationManager.error('HQ 관련 코드 그룹은 HQ 역할만 접근할 수 있습니다.');
@@ -246,7 +224,6 @@ const CommonCodeManagement = () => {
         loadGroupCodes(group);
     };
 
-    // 그룹 선택으로 돌아가기
     const handleBackToGroups = () => {
         setCurrentStep(1);
         setSelectedGroup(null);
@@ -255,37 +232,30 @@ const CommonCodeManagement = () => {
         setEditingCode(null);
     };
 
-    // 필터링된 코드 그룹 반환
     const getFilteredCodeGroups = () => {
         let filtered = codeGroups;
 
-        // 검색어 필터링 (그룹명, 한글명, 변환된 한글명)
         if (searchTerm) {
             filtered = filtered.filter(group => {
                 const koreanName = getCodeGroupKoreanNameSync(group);
                 const convertedKorean = convertGroupNameToKorean(group);
                 const searchLower = searchTerm.toLowerCase();
                 
-                // 영문 그룹명 검색
                 const groupMatch = group.toLowerCase().includes(searchLower);
                 
-                // 메타데이터 한글명 검색
                 const koreanMatch = koreanName.toLowerCase().includes(searchLower);
                 
-                // 변환된 한글명 검색
                 const convertedMatch = convertedKorean.toLowerCase().includes(searchLower);
                 
                 return groupMatch || koreanMatch || convertedMatch;
             });
         }
 
-        // 카테고리 필터링 (메타데이터 기반)
         if (categoryFilter !== 'all' && groupMetadata.length > 0) {
             filtered = filtered.filter(group => {
                 const metadata = groupMetadata.find(m => m.groupName === group);
                 if (!metadata) return false;
                 
-                // 카테고리별 필터링 로직
                 switch (categoryFilter) {
                     case 'user':
                         return group.includes('USER') || 
@@ -308,10 +278,8 @@ const CommonCodeManagement = () => {
         return filtered;
     };
 
-    // 코드 그룹명을 한글로 변환하는 함수 (fallback용)
     const convertGroupNameToKorean = (groupName) => {
         const koreanMappings = {
-            // 사용자 관련
             'USER_ROLE': '사용자역할',
             'USER_STATUS': '사용자상태',
             'USER_GRADE': '사용자등급',
@@ -321,7 +289,6 @@ const CommonCodeManagement = () => {
             'RESPONSIBILITY': '담당분야',
             'SPECIALTY': '전문분야',
             
-            // 시스템 관련
             'STATUS': '상태',
             'PRIORITY': '우선순위',
             'MAPPING_STATUS': '매핑상태',
@@ -329,7 +296,6 @@ const CommonCodeManagement = () => {
             'PERMISSION': '권한',
             'ROLE_PERMISSION': '역할권한',
             
-            // 결제/급여 관련
             'PAYMENT_METHOD': '결제방법',
             'PAYMENT_STATUS': '결제상태',
             'PAYMENT_PROVIDER': '결제제공자',
@@ -341,7 +307,6 @@ const CommonCodeManagement = () => {
             'BUDGET_CATEGORY': '예산카테고리',
             'BUDGET_STATUS': '예산상태',
             
-            // 상담 관련
             'CONSULTATION_PACKAGE': '상담패키지',
             'CONSULTATION_STATUS': '상담상태',
             'CONSULTATION_TYPE': '상담유형',
@@ -357,7 +322,6 @@ const CommonCodeManagement = () => {
             'SESSION_PACKAGE': '회기패키지',
             'PACKAGE_TYPE': '패키지유형',
             
-            // ERP 관련
             'PURCHASE_STATUS': '구매상태',
             'PURCHASE_CATEGORY': '구매카테고리',
             'FINANCIAL_CATEGORY': '재무카테고리',
@@ -371,11 +335,9 @@ const CommonCodeManagement = () => {
             'ITEM_CATEGORY': '항목카테고리',
             'TRANSACTION_TYPE': '거래유형',
             
-            // 휴가 관련
             'VACATION_TYPE': '휴가유형',
             'VACATION_STATUS': '휴가상태',
             
-            // 보고서 관련
             'REPORT_PERIOD': '보고서기간',
             'YEAR_RANGE': '년도범위',
             'MONTH_RANGE': '월범위',
@@ -383,7 +345,6 @@ const CommonCodeManagement = () => {
             'DATE_RANGE_FILTER': '날짜범위필터',
             'CHART_TYPE_FILTER': '차트유형필터',
             
-            // 메뉴 관련
             'MENU': '메뉴',
             'MENU_CATEGORY': '메뉴카테고리',
             'ADMIN_MENU': '관리자메뉴',
@@ -393,7 +354,6 @@ const CommonCodeManagement = () => {
             'BRANCH_SUPER_ADMIN_MENU': '지점수퍼관리자메뉴',
             'COMMON_MENU': '공통메뉴',
             
-            // 기타
             'APPROVAL_STATUS': '승인상태',
             'BANK': '은행',
             'CURRENCY': '통화',
@@ -406,14 +366,12 @@ const CommonCodeManagement = () => {
             'NOTIFICATION_CHANNEL': '알림채널',
             'DURATION': '기간',
             'SORT_OPTION': '정렬옵션',
-            'COMMON_CODE_GROUP': '공통코드그룹',
             'PRIORITY_LEVEL': '우선순위레벨'
         };
         
         return koreanMappings[groupName] || groupName;
     };
 
-    // 카테고리명 반환
     const getCategoryName = (category) => {
         const categoryNames = {
             'all': '전체',
@@ -426,7 +384,6 @@ const CommonCodeManagement = () => {
         return categoryNames[category] || category;
     };
 
-    // 새 코드 추가
     const handleAddCode = async (e) => {
         e.preventDefault();
         
@@ -437,7 +394,6 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            // 표준화된 API 사용
             const codeData = {
                 codeGroup: selectedGroup,
                 codeValue: newCodeData.codeValue,
@@ -488,7 +444,6 @@ const CommonCodeManagement = () => {
         }
     };
 
-    // 코드 삭제
     const handleDeleteCode = async (codeId) => {
         const confirmed = await new Promise((resolve) => {
       notificationManager.confirm('정말로 이 코드를 삭제하시겠습니까?', resolve);
@@ -499,7 +454,6 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            // 표준화된 API 사용
             await deleteCommonCode(codeId);
             notificationManager.success('코드가 삭제되었습니다!');
             loadGroupCodes(selectedGroup);
@@ -515,11 +469,9 @@ const CommonCodeManagement = () => {
         }
     };
 
-    // 코드 상태 토글
     const handleToggleStatus = async (codeId, currentStatus) => {
         try {
             setLoading(true);
-            // 표준화된 API 사용
             await toggleCommonCodeStatus(codeId);
             notificationManager.success('코드 상태가 변경되었습니다!');
             loadGroupCodes(selectedGroup);
@@ -535,7 +487,6 @@ const CommonCodeManagement = () => {
         }
     };
 
-    // 코드 수정
     const handleEditCode = (code) => {
         setEditingCode(code);
         setNewCodeData({
@@ -555,7 +506,6 @@ const CommonCodeManagement = () => {
         setShowAddForm(true);
     };
 
-    // 코드 업데이트
     const handleUpdateCode = async (e) => {
         e.preventDefault();
         
@@ -566,7 +516,6 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            // 표준화된 API 사용
             const updateData = {
                 codeLabel: newCodeData.codeLabel,
                 koreanName: newCodeData.koreanName || newCodeData.codeLabel, // 한글명 필수
@@ -609,7 +558,6 @@ const CommonCodeManagement = () => {
         }
     };
 
-    // 폼 취소
     const handleCancelForm = () => {
         setShowAddForm(false);
         setEditingCode(null);
@@ -622,13 +570,11 @@ const CommonCodeManagement = () => {
         });
     };
 
-    // 초기 로드
     useEffect(() => {
         loadMetadata();
         loadCodeGroups();
     }, [loadMetadata, loadCodeGroups]);
 
-    // 1단계: 코드그룹 선택 화면
     const renderGroupSelection = () => (
         <div className="group-selection">
             <div className="step-header">
@@ -731,7 +677,6 @@ const CommonCodeManagement = () => {
         </div>
     );
 
-    // 2단계: 코드 관리 화면
     const renderCodeManagement = () => (
         <div className="code-management">
             <div className="mg-v2-header-bar">
@@ -783,6 +728,7 @@ const CommonCodeManagement = () => {
                                     value={ newCodeData.codeValue }
                                     onChange={ (e) => setNewCodeData({...newCodeData, codeValue: e.target.value })}
                                     className="form-control"
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     placeholder="예: ACTIVE, INACTIVE"
                                     required
                                     className="mg-v2-form-input"
@@ -985,8 +931,6 @@ const CommonCodeManagement = () => {
         <SimpleLayout>
             <div className="improved-common-code-management">
             <div className="page-header">
-                    <h1>📋 공통코드 관리</h1>
-                    <p>시스템에서 사용되는 공통코드를 직관적으로 관리합니다.</p>
             </div>
 
                 <div className="step-indicator">

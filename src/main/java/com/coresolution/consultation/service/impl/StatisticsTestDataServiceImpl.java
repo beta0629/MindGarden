@@ -28,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 통계 시스템 테스트용 데이터 생성 서비스 구현체
  * 
  * @author MindGarden
@@ -51,7 +50,6 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
     
     @Override
     public Map<String, Object> createTestSchedules(LocalDate targetDate, String branchCode, int scheduleCount) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📅 테스트 스케줄 데이터 생성 시작: date={}, tenantId={}, count={}", 
                  targetDate, tenantId, scheduleCount);
@@ -60,9 +58,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
         List<Long> createdScheduleIds = new ArrayList<>();
         
         try {
-            // 테넌트 전체 상담사들 조회
             List<User> consultants = userRepository.findByTenantIdAndRole(tenantId, UserRole.CONSULTANT);
-            // isActive = true 필터링 (Java 스트림)
             consultants = consultants.stream()
                 .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                 .collect(java.util.stream.Collectors.toList());
@@ -73,15 +69,12 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 return result;
             }
             
-            // 테넌트 전체 내담자들 조회 (없으면 상담사를 내담자로 사용)
             List<User> clients = userRepository.findByTenantIdAndRole(tenantId, UserRole.CLIENT);
-            // isActive = true 필터링 (Java 스트림)
             clients = clients.stream()
                 .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
                 .collect(java.util.stream.Collectors.toList());
             
             if (clients.isEmpty()) {
-                // 테스트용으로 상담사를 내담자로 사용
                 clients = consultants;
             }
             
@@ -89,14 +82,12 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 User consultant = consultants.get(random.nextInt(consultants.size()));
                 User client = clients.get(random.nextInt(clients.size()));
                 
-                // 스케줄 시간 생성 (9시~18시 사이)
                 LocalTime startTime = LocalTime.of(9 + random.nextInt(8), random.nextInt(60));
                 LocalTime endTime = startTime.plusHours(1);
                 
                 Schedule schedule = new Schedule();
                 schedule.setConsultantId(consultant.getId());
                 schedule.setClientId(client.getId());
-                // branchCode는 레거시 호환을 위해 유지 (필드가 있으면 설정)
                 if (branchCode != null && !branchCode.trim().isEmpty()) {
                     schedule.setBranchCode(branchCode);
                 }
@@ -105,6 +96,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 schedule.setEndTime(endTime);
                 schedule.setTitle("테스트 상담 " + (i + 1));
                 schedule.setDescription("통계 테스트용 상담 세션");
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 schedule.setStatus(ScheduleStatus.CONFIRMED);
                 schedule.setConsultationType("INDIVIDUAL");
                 schedule.setConsultationMethod("FACE_TO_FACE");
@@ -137,7 +129,6 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
     
     @Override
     public Map<String, Object> createCompletedConsultations(LocalDate targetDate, String branchCode, int completedCount) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("✅ 완료된 상담 데이터 생성 시작: date={}, tenantId={}, count={}", 
                  targetDate, tenantId, completedCount);
@@ -145,9 +136,9 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 해당 날짜의 CONFIRMED 스케줄들 조회 (테넌트 기반)
             List<Schedule> confirmedSchedules = scheduleRepository.findByTenantIdAndDate(tenantId, targetDate)
                 .stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> s.getStatus() == ScheduleStatus.CONFIRMED)
                 .collect(java.util.stream.Collectors.toList());
             
@@ -162,6 +153,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             
             for (int i = 0; i < actualCompleted; i++) {
                 Schedule schedule = confirmedSchedules.get(i);
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 schedule.setStatus(ScheduleStatus.COMPLETED);
                 schedule.setUpdatedAt(LocalDateTime.now());
                 
@@ -194,9 +186,9 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
         List<Long> createdTransactionIds = new ArrayList<>();
         
         try {
-            // 해당 날짜/지점의 완료된 스케줄들 조회
             List<Schedule> completedSchedules = scheduleRepository.findByDateAndBranchCode(targetDate, branchCode)
                 .stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> s.getStatus() == ScheduleStatus.COMPLETED)
                 .collect(java.util.stream.Collectors.toList());
             
@@ -211,11 +203,9 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             for (int i = 0; i < actualTransactions; i++) {
                 Schedule schedule = completedSchedules.get(i);
                 
-                // 상담료 거래 생성 (50,000 ~ 100,000원 사이)
                 BigDecimal amount = BigDecimal.valueOf(50000 + random.nextInt(50001));
                 
                 FinancialTransaction transaction = new FinancialTransaction();
-                // branchCode는 레거시 호환을 위해 유지 (필드가 있으면 설정)
                 if (branchCode != null && !branchCode.trim().isEmpty()) {
                     transaction.setBranchCode(branchCode);
                 }
@@ -224,6 +214,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 transaction.setRelatedEntityType("CONSULTATION_INCOME");
                 transaction.setRelatedEntityId(schedule.getId());
                 transaction.setDescription("테스트 상담료 결제 - 스케줄 " + schedule.getId() + " (Client: " + schedule.getClientId() + ", Consultant: " + schedule.getConsultantId() + ")");
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 transaction.setStatus(FinancialTransaction.TransactionStatus.COMPLETED);
                 transaction.setIsDeleted(false);
                 transaction.setTransactionDate(targetDate);
@@ -259,9 +250,9 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
         List<Long> createdRatingIds = new ArrayList<>();
         
         try {
-            // 해당 날짜/지점의 완료된 스케줄들 조회
             List<Schedule> completedSchedules = scheduleRepository.findByDateAndBranchCode(targetDate, branchCode)
                 .stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> s.getStatus() == ScheduleStatus.COMPLETED)
                 .collect(java.util.stream.Collectors.toList());
             
@@ -276,17 +267,16 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             for (int i = 0; i < actualRatings; i++) {
                 Schedule schedule = completedSchedules.get(i);
                 
-                // 이미 평점이 있는지 확인
                 String tenantId = TenantContextHolder.getRequiredTenantId();
                 boolean hasRating = consultantRatingRepository.findByTenantId(tenantId).stream()
                     .anyMatch(r -> r.getSchedule().getId().equals(schedule.getId()) && 
+                                  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                                   r.getStatus() == ConsultantRating.RatingStatus.ACTIVE);
                 
                 if (hasRating) {
                     continue;
                 }
                 
-                // 상담사와 내담자 조회
                 User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
                 User client = userRepository.findById(schedule.getClientId()).orElse(null);
                 
@@ -294,7 +284,6 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                     continue;
                 }
                 
-                // 평점 생성 (3~5점 사이, 평균 4점 정도)
                 int heartScore = 3 + random.nextInt(3); // 3, 4, 5
                 if (random.nextDouble() < 0.7) { // 70% 확률로 4~5점
                     heartScore = 4 + random.nextInt(2);
@@ -309,6 +298,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 rating.setHeartScore(heartScore);
                 rating.setComment(comment);
                 rating.setIsAnonymous(random.nextBoolean());
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 rating.setStatus(ConsultantRating.RatingStatus.ACTIVE);
                 rating.setRatedAt(LocalDateTime.now());
                 
@@ -339,16 +329,12 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 1. 스케줄 생성 (10개)
             Map<String, Object> scheduleResult = createTestSchedules(targetDate, branchCode, 10);
             
-            // 2. 상담 완료 처리 (7개)
             Map<String, Object> completedResult = createCompletedConsultations(targetDate, branchCode, 7);
             
-            // 3. 재무 거래 생성 (완료된 상담에 대해)
             Map<String, Object> transactionResult = createTestFinancialTransactions(targetDate, branchCode, 7);
             
-            // 4. 평점 생성 (완료된 상담의 80%)
             Map<String, Object> ratingResult = createTestRatings(targetDate, branchCode, 5);
             
             result.put("success", true);
@@ -382,7 +368,6 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             int deletedTransactions = 0;
             int deletedRatings = 0;
             
-            // 해당 날짜의 테스트 스케줄들 조회 및 삭제
             List<Schedule> testSchedules;
             if (branchCode != null) {
                 testSchedules = scheduleRepository.findByDateAndBranchCode(targetDate, branchCode);
@@ -392,7 +377,6 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             
             for (Schedule schedule : testSchedules) {
                 if (schedule.getTitle() != null && schedule.getTitle().contains("테스트")) {
-                    // 관련 평점 삭제
                     String tenantId = TenantContextHolder.getRequiredTenantId();
                     List<ConsultantRating> ratings = consultantRatingRepository.findByTenantId(tenantId).stream()
                         .filter(r -> r.getSchedule().getId().equals(schedule.getId()))
@@ -402,7 +386,6 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                         deletedRatings++;
                     }
                     
-                    // 관련 재무 거래 삭제
                     List<FinancialTransaction> transactions = financialTransactionRepository.findByTenantId(tenantId).stream()
                         .filter(t -> t.getRelatedEntityId() != null && t.getRelatedEntityId().equals(schedule.getId()))
                         .collect(java.util.stream.Collectors.toList());
@@ -413,7 +396,6 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                         }
                     }
                     
-                    // 스케줄 삭제
                     scheduleRepository.delete(schedule);
                     deletedSchedules++;
                 }
@@ -439,20 +421,17 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
     
     @Override
     public Map<String, Object> createDiverseTestScenarios(LocalDate targetDate, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("🎭 다양한 시나리오 테스트 데이터 생성 시작: date={}, tenantId={}", targetDate, tenantId);
         
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 1. 정상 완료 시나리오 (60%)
             createTestSchedules(targetDate, branchCode, 6);
             createCompletedConsultations(targetDate, branchCode, 6);
             createTestFinancialTransactions(targetDate, branchCode, 6);
             createTestRatings(targetDate, branchCode, 5);
             
-            // 2. 취소 시나리오 (20%)
             Map<String, Object> cancelledResult = createTestSchedules(targetDate, branchCode, 2);
             @SuppressWarnings("unchecked")
             List<Long> cancelledIds = (List<Long>) cancelledResult.get("scheduleIds");
@@ -460,6 +439,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 for (Long scheduleId : cancelledIds) {
                     Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
                     if (schedule != null) {
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         schedule.setStatus(ScheduleStatus.CANCELLED);
                         schedule.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(schedule);
@@ -467,7 +447,6 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 }
             }
             
-            // 3. 노쇼 시나리오 (20%)
             Map<String, Object> noShowResult = createTestSchedules(targetDate, branchCode, 2);
             @SuppressWarnings("unchecked")
             List<Long> noShowIds = (List<Long>) noShowResult.get("scheduleIds");
@@ -475,6 +454,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 for (Long scheduleId : noShowIds) {
                     Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
                     if (schedule != null) {
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         schedule.setStatus(ScheduleStatus.CANCELLED); // NO_SHOW 대신 CANCELLED 사용
                         schedule.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(schedule);

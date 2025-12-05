@@ -6,14 +6,11 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { getUserStatusColor, getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { getCurrentUser } from '../../utils/session';
-// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
-// getBranchNameByCode import 제거됨 - 브랜치 코드 제거 정책
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import { MGConfirmModal } from '../common/MGModal';
 
 const ConsultantComprehensiveManagement = () => {
-    // 상태 관리
     const [consultants, setConsultants] = useState([]);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [mappings, setMappings] = useState([]);
@@ -29,6 +26,7 @@ const ConsultantComprehensiveManagement = () => {
         name: '',
         email: '',
         phone: '',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: 'ACTIVE',
         specialty: [],
         password: ''
@@ -36,26 +34,20 @@ const ConsultantComprehensiveManagement = () => {
     const [specialtyCodes, setSpecialtyCodes] = useState([]);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-    // 데이터 로드 함수들
     const loadConsultants = useCallback(async() => {
         try {
             console.log('🔄 상담사 목록 로딩 시작...');
             
-            // 브랜치 코드 제거 정책에 따라 지점코드 사용 제거됨
             
-            // 통합 API 사용 (캐시 적용)
             const consultantsList = await getAllConsultantsWithStats();
             console.log('📊 통합 API 응답:', consultantsList);
             
             if (consultantsList && consultantsList.length > 0) {
                 console.log('🔍 첫 번째 아이템 구조:', consultantsList[0]);
                 
-                // 응답 데이터 변환: Map.of() 구조 파싱
                 const consultants = consultantsList.map(item => {
-                    // item 구조: { consultant: Consultant엔티티, currentClients: number, ... }
                     const consultantEntity = item.consultant || {};
                     
-                    // Consultant 엔티티에서 필요한 필드 추출
                     return {
                         id: consultantEntity.id,
                         name: consultantEntity.name,
@@ -63,7 +55,6 @@ const ConsultantComprehensiveManagement = () => {
                         phone: consultantEntity.phone,
                         role: consultantEntity.role,
                         isActive: consultantEntity.isActive,
-                        // branchCode 제거됨 - 브랜치 코드 제거 정책
                         specialty: consultantEntity.specialty, // Consultant 엔티티의 specialty
                         specialtyDetails: consultantEntity.specialtyDetails, // Consultant 엔티티의 specialtyDetails
                         specialization: consultantEntity.specialization, // User 엔티티의 specialization
@@ -73,7 +64,6 @@ const ConsultantComprehensiveManagement = () => {
                         totalConsultations: consultantEntity.totalConsultations,
                         createdAt: consultantEntity.createdAt,
                         updatedAt: consultantEntity.updatedAt,
-                        // 통계 정보 추가
                         currentClients: item.currentClients || 0,
                         totalClients: item.totalClients || 0,
                         statistics: item.statistics || {}
@@ -83,7 +73,6 @@ const ConsultantComprehensiveManagement = () => {
                 setConsultants(consultants);
                 console.log('✅ 상담사 목록 설정 완료 (통합 API):', consultants.length, '명');
                 
-                // 첫 번째 상담사 데이터 확인
                 if (consultants.length > 0) {
                     console.log('🔍 변환된 첫 번째 상담사:', consultants[0]);
                 }
@@ -124,7 +113,6 @@ const ConsultantComprehensiveManagement = () => {
     const loadSpecialtyCodes = useCallback(async() => {
         try {
             console.log('🔍 전문분야 코드 로딩 시작 (테넌트 코드 전용)...');
-            // 테넌트 코드 전용 API 사용 (독립성 보장)
             const { getTenantCodes } = await import('../../utils/commonCodeApi');
             const codes = await getTenantCodes('SPECIALTY');
             console.log('📋 전문분야 코드 응답 (테넌트별):', codes);
@@ -142,13 +130,11 @@ const ConsultantComprehensiveManagement = () => {
         }
     }, []);
 
-    // 모든 데이터 로드
     const loadAllData = useCallback(async() => {
         setLoading(true);
         try {
             console.log('🚀 전체 데이터 로딩 시작...');
             
-            // Promise.allSettled를 사용하여 일부 API가 실패해도 계속 진행
             const results = await Promise.allSettled([
                 loadConsultants(),
                 loadMappings(),
@@ -171,12 +157,10 @@ const ConsultantComprehensiveManagement = () => {
         }
     }, [loadConsultants, loadMappings, loadSchedules, loadSpecialtyCodes]);
 
-    // 초기 로드
     useEffect(() => {
         loadAllData();
     }, [loadAllData]);
 
-    // 강제 새로고침 이벤트 리스너
     useEffect(() => {
         const handleForceRefresh = (event) => {
             if (event.detail === 'consultant-management') {
@@ -189,7 +173,6 @@ const ConsultantComprehensiveManagement = () => {
         return() => window.removeEventListener('forceRefresh', handleForceRefresh);
     }, [loadAllData]);
 
-    // 모바일 감지
     useEffect(() => {
         const checkMobile = () => {
             setIsMobile(window.innerWidth <= 768);
@@ -200,12 +183,10 @@ const ConsultantComprehensiveManagement = () => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // 필터링된 상담사 목록
     const getFilteredConsultants = useMemo(() => { console.log('🔍 상담사 필터링 시작:', { searchTerm, filterStatus, consultants: consultants.length });
         
         let filtered = consultants;
 
-        // 검색어 필터링
         if (searchTerm.trim()) {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(consultant => 
@@ -215,20 +196,18 @@ const ConsultantComprehensiveManagement = () => {
             );
         }
 
-        // 상태 필터링
         if (filterStatus && filterStatus !== 'ALL' && filterStatus !== 'all') {
             filtered = filtered.filter(consultant => consultant.status === filterStatus);
         }
 
-        // 지점 필터링 제거됨 - 브랜치 코드 제거 정책
 
         console.log('✅ 필터링 결과:', filtered.length, '명');
         return filtered;
     }, [consultants, searchTerm, filterStatus]);
 
-    // 통계 계산
     const getOverallStats = useCallback(() => {
         const totalConsultants = consultants.length;
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         const activeMappings = mappings.filter(m => m.status === 'ACTIVE').length;
         const totalSchedules = schedules.length;
         const todaySchedules = schedules.filter(s => {
@@ -245,7 +224,6 @@ const ConsultantComprehensiveManagement = () => {
         };
     }, [consultants, mappings, schedules]);
 
-    // 상담사 선택 핸들러
     const handleConsultantSelect = useCallback((consultant) => {
         console.log('👤 상담사 선택:', consultant);
         setSelectedConsultant(consultant);
@@ -253,19 +231,15 @@ const ConsultantComprehensiveManagement = () => {
         setShowModal(true);
     }, []);
 
-    // 모달 관련 핸들러들
     const handleOpenModal = useCallback((type, consultant = null) => {
         setModalType(type);
         if (consultant) {
             setSelectedConsultant(consultant);
             if (type === 'edit') {
-                // 전문분야 배열 변환
                 let specialties = [];
                 if (consultant.specialization) {
-                    // 쉼표로 구분된 문자열을 배열로 변환
                     specialties = consultant.specialization.split(',').map(s => s.trim());
                 } else if (consultant.specialty) {
-                    // 단일 값이면 배열로 변환
                     specialties = [consultant.specialty];
                 }
                 
@@ -273,6 +247,7 @@ const ConsultantComprehensiveManagement = () => {
                     name: consultant.name || '',
                     email: consultant.email || '',
                     phone: consultant.phone || '',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     status: consultant.status || 'ACTIVE',
                     specialty: specialties,
                     password: ''
@@ -283,6 +258,7 @@ const ConsultantComprehensiveManagement = () => {
                 name: '',
                 email: '',
                 phone: '',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 status: 'ACTIVE',
                 specialty: [],
                 password: ''
@@ -299,6 +275,7 @@ const ConsultantComprehensiveManagement = () => {
             name: '',
             email: '',
             phone: '',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: 'ACTIVE',
             specialty: [],
             password: ''
@@ -319,13 +296,11 @@ const ConsultantComprehensiveManagement = () => {
         }));
     }, []);
 
-    // 커스텀 다중 선택 컴포넌트
     const CustomMultiSelect = ({ options, value, onChange, placeholder }) => {
         const [isOpen, setIsOpen] = useState(false);
         const [searchTerm, setSearchTerm] = useState('');
         const dropdownRef = useRef(null);
 
-        // 드롭다운 외부 클릭 시 닫기
         useEffect(() => {
             const handleClickOutside = (event) => {
                 if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -354,7 +329,6 @@ const ConsultantComprehensiveManagement = () => {
                 ? value.filter(v => v !== optionValue)
                 : [...value, optionValue];
             onChange(newValue);
-            // 드롭다운을 열어둔 상태로 유지
             setIsOpen(true);
         };
 
@@ -412,19 +386,16 @@ const ConsultantComprehensiveManagement = () => {
     };
 
 
-    // CRUD 작업들
     const createConsultant = useCallback(async (data) => {
         try {
             const response = await apiPost('/api/admin/consultants', data);
             if (response.success) {
                 await loadConsultants();
-                // 공통 알림 사용
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: '상담사가 성공적으로 등록되었습니다.', type: 'success' }
                 }));
                 return { success: true };
             } else {
-                // 공통 알림 사용
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: response.message || '상담사 등록에 실패했습니다.', type: 'error' }
                 }));
@@ -432,7 +403,6 @@ const ConsultantComprehensiveManagement = () => {
             }
         } catch (error) {
             console.error('상담사 등록 오류:', error);
-            // 공통 알림 사용
             window.dispatchEvent(new CustomEvent('showNotification', {
                 detail: { message: '상담사 등록 중 오류가 발생했습니다.', type: 'error' }
             }));
@@ -445,13 +415,11 @@ const ConsultantComprehensiveManagement = () => {
             const response = await apiPut(`/api/admin/consultants/${id}`, data);
             if (response.success) {
                 await loadConsultants();
-                // 공통 알림 사용
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: '상담사 정보가 성공적으로 수정되었습니다.', type: 'success' }
                 }));
                 return { success: true };
             } else {
-                // 공통 알림 사용
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: response.message || '상담사 수정에 실패했습니다.', type: 'error' }
                 }));
@@ -459,7 +427,6 @@ const ConsultantComprehensiveManagement = () => {
             }
         } catch (error) {
             console.error('상담사 수정 오류:', error);
-            // 공통 알림 사용
             window.dispatchEvent(new CustomEvent('showNotification', {
                 detail: { message: '상담사 수정 중 오류가 발생했습니다.', type: 'error' }
             }));
@@ -472,13 +439,11 @@ const ConsultantComprehensiveManagement = () => {
             const response = await apiDelete(`/api/admin/consultants/${id}`);
             if (response.success) {
                 await loadConsultants();
-                // 공통 알림 사용
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: '상담사가 성공적으로 삭제되었습니다.', type: 'success' }
                 }));
                 return { success: true };
             } else {
-                // 공통 알림 사용
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: response.message || '상담사 삭제에 실패했습니다.', type: 'error' }
                 }));
@@ -486,7 +451,6 @@ const ConsultantComprehensiveManagement = () => {
             }
         } catch (error) {
             console.error('상담사 삭제 오류:', error);
-            // 공통 알림 사용
             window.dispatchEvent(new CustomEvent('showNotification', {
                 detail: { message: '상담사 삭제 중 오류가 발생했습니다.', type: 'error' }
             }));
@@ -494,7 +458,6 @@ const ConsultantComprehensiveManagement = () => {
         }
     }, [loadConsultants]);
 
-    // 모달 제출 핸들러
     const handleModalSubmit = useCallback(async (e) => {
         e.preventDefault();
         
@@ -514,7 +477,6 @@ const ConsultantComprehensiveManagement = () => {
             }
         } catch (error) {
             console.error('모달 제출 오류:', error);
-            // 공통 알림 사용
             window.dispatchEvent(new CustomEvent('showNotification', {
                 detail: { message: '작업 중 오류가 발생했습니다.', type: 'error' }
             }));
@@ -612,8 +574,11 @@ const ConsultantComprehensiveManagement = () => {
                                     className="mg-v2-form-select"
                                 >
                                     <option value="all">전체</option>
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     <option value="ACTIVE">활성</option>
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     <option value="INACTIVE">비활성</option>
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     <option value="SUSPENDED">일시정지</option>
                                 </select>
                             </div>
@@ -749,8 +714,11 @@ const ConsultantComprehensiveManagement = () => {
                                     className="mg-v2-form-select"
                                 >
                                     <option value="all">전체</option>
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     <option value="ACTIVE">활성</option>
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     <option value="INACTIVE">비활성</option>
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     <option value="SUSPENDED">일시정지</option>
                                 </select>
                         </div>

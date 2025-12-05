@@ -7,7 +7,6 @@ import mermaid from 'mermaid';
 import { Download } from 'lucide-react';
 import './ErdDetailPage.css';
 
-/**
  * 테넌트 포털 ERD 상세 페이지
  * Mermaid.js를 사용하여 ERD 다이어그램을 시각화
  * 
@@ -51,7 +50,6 @@ const ErdDetailPage = () => {
     }
   }, [erd, activeTab]);
 
-  /**
    * ERD 상세 정보 로드
    */
   const loadErdDetail = async () => {
@@ -64,7 +62,6 @@ const ErdDetailPage = () => {
       const erdDetail = await getErdDetail(tenantId, diagramId);
       setErd(erdDetail);
 
-      // 변경 이력도 함께 로드
       try {
         const historyList = await getErdHistory(tenantId, diagramId);
         setHistory(historyList);
@@ -80,7 +77,6 @@ const ErdDetailPage = () => {
     }
   };
 
-  /**
    * Mermaid 다이어그램 렌더링
    */
   const renderMermaid = async () => {
@@ -91,63 +87,40 @@ const ErdDetailPage = () => {
     try {
       setMermaidError(null);
 
-      // Mermaid 초기화
       mermaid.initialize({
         startOnLoad: false,
         theme: 'default',
         themeVariables: {
           primaryColor: 'var(--mg-primary-500)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           primaryTextColor: '#333',
           primaryBorderColor: 'var(--mg-primary-500)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
           lineColor: '#666',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f0f0 -> var(--mg-custom-f0f0f0)
           secondaryColor: '#f0f0f0',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           tertiaryColor: '#fff',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           background: '#fff',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           mainBkg: '#fff',
           secondBkg: 'var(--mg-gray-100)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           textColor: '#333',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           edgeLabelBackground: '#fff',
           clusterBkg: 'var(--mg-gray-100)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ccc -> var(--mg-custom-ccc)
           clusterBorder: '#ccc',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
           defaultLinkColor: '#666',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           titleColor: '#333',
           actorBorder: 'var(--mg-primary-500)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
           actorBkg: '#e3f2fd',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           actorTextColor: '#333',
           actorLineColor: 'var(--mg-primary-500)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           signalColor: '#333',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           signalTextColor: '#333',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           labelBoxBkgColor: '#fff',
           labelBoxBorderColor: 'var(--mg-primary-500)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           labelTextColor: '#333',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           loopTextColor: '#333',
           noteBorderColor: 'var(--mg-primary-500)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
           noteBkgColor: '#fff3cd',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           noteTextColor: '#333',
           activationBorderColor: 'var(--mg-primary-500)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
           activationBkgColor: '#e3f2fd',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           sequenceNumberColor: '#fff',
         },
         flowchart: {
@@ -162,33 +135,26 @@ const ErdDetailPage = () => {
           minEntityHeight: 75,
           entityPadding: 15,
           stroke: 'var(--mg-primary-500)',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           fill: '#fff',
           fontSize: 14,
         },
         securityLevel: 'loose',
       });
 
-      // 기존 내용 제거
       mermaidRef.current.innerHTML = '';
 
-      // 고유 ID 생성
       const id = `mermaid-${diagramId}-${Date.now()}`;
 
-      // Mermaid 렌더링
       const { svg } = await mermaid.render(id, erd.mermaidCode);
       mermaidRef.current.innerHTML = svg;
 
-      // SVG 스타일 조정
       const svgElement = mermaidRef.current.querySelector('svg');
       if (svgElement) {
         svgElement.style.maxWidth = '100%';
         svgElement.style.height = 'auto';
         
-        // 인터랙티브 기능 추가
         setupInteractiveFeatures(svgElement);
         
-        // 확대/축소 및 팬 기능 추가 (약간의 지연 후 실행)
         setTimeout(() => {
           setupZoomAndPan(svgElement);
         }, 100);
@@ -199,7 +165,6 @@ const ErdDetailPage = () => {
     }
   };
 
-  /**
    * ERD 타입 한글 변환
    */
   const getDiagramTypeLabel = (type) => {
@@ -212,43 +177,36 @@ const ErdDetailPage = () => {
     return typeMap[type] || type;
   };
 
-  /**
    * 변경 타입 한글 변환
    */
   const getChangeTypeLabel = (type) => {
     const typeMap = {
       'CREATED': '생성',
       'UPDATED': '수정',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'DELETED': '삭제'
     };
     return typeMap[type] || type;
   };
 
-  /**
    * 인터랙티브 기능 설정 (테이블 클릭, 관계선 하이라이트)
    */
   const setupInteractiveFeatures = (svgElement) => {
     if (!svgElement) return;
 
-    // 모든 테이블 노드 찾기 (Mermaid ERD의 테이블은 <g> 요소로 렌더링됨)
     const tables = svgElement.querySelectorAll('g.node, g[class*="node"]');
     const paths = svgElement.querySelectorAll('path, line, polyline'); // 관계선
 
-    // 테이블 클릭 이벤트
     tables.forEach((table, index) => {
-      // 테이블 이름 추출 (텍스트 요소에서)
       const textElement = table.querySelector('text');
       const tableName = textElement ? textElement.textContent.trim() : `Table ${index + 1}`;
       
-      // 클릭 가능하도록 스타일 추가
       table.style.cursor = 'pointer';
       table.style.transition = 'all 0.2s';
 
-      // 클릭 이벤트
       table.addEventListener('click', (e) => {
         e.stopPropagation();
         
-        // 이전 선택 제거
         tables.forEach(t => {
           t.style.opacity = '1';
           t.style.transform = 'scale(1)';
@@ -260,21 +218,17 @@ const ErdDetailPage = () => {
           p.style.stroke = '';
         });
 
-        // 현재 테이블 하이라이트
         table.style.opacity = '1';
         table.style.transform = 'scale(1.05)';
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 123, 255, 0.3) -> var(--mg-custom-color)
         table.style.filter = 'drop-shadow(0 4px 8px rgba(0, 123, 255, 0.3))';
         
         setSelectedTable(tableName);
         setSelectedRelation(null);
         setHoveredElement(null);
 
-        // 관련 관계선 하이라이트
         highlightRelatedRelations(svgElement, table, paths);
       });
 
-      // 호버 이벤트
       table.addEventListener('mouseenter', (e) => {
         if (selectedTable === null) {
           table.style.opacity = '0.9';
@@ -292,7 +246,6 @@ const ErdDetailPage = () => {
       });
     });
 
-    // 관계선 클릭 이벤트
     paths.forEach((path, index) => {
       path.style.cursor = 'pointer';
       path.style.transition = 'all 0.2s';
@@ -300,13 +253,11 @@ const ErdDetailPage = () => {
       path.addEventListener('click', (e) => {
         e.stopPropagation();
         
-        // 모든 관계선 초기화
         paths.forEach(p => {
           p.style.opacity = '0.3';
           p.style.strokeWidth = '1';
         });
 
-        // 현재 관계선 하이라이트
         path.style.opacity = '1';
         path.style.strokeWidth = '3';
         path.style.stroke = 'var(--mg-primary-500)';
@@ -314,7 +265,6 @@ const ErdDetailPage = () => {
         setSelectedRelation(`Relation ${index + 1}`);
         setSelectedTable(null);
 
-        // 관련 테이블 하이라이트
         highlightRelatedTables(svgElement, path, tables);
       });
 
@@ -333,7 +283,6 @@ const ErdDetailPage = () => {
       });
     });
 
-    // SVG 외부 클릭 시 선택 해제
     svgElement.addEventListener('click', (e) => {
       if (e.target === svgElement || e.target.tagName === 'svg') {
         resetSelection(tables, paths);
@@ -341,17 +290,14 @@ const ErdDetailPage = () => {
     });
   };
 
-  /**
    * 관련 관계선 하이라이트
    */
   const highlightRelatedRelations = (svgElement, selectedTable, paths) => {
-    // 선택된 테이블과 연결된 관계선 찾기
     const tableBounds = selectedTable.getBBox();
     
     paths.forEach(path => {
       const pathBounds = path.getBBox();
       
-      // 간단한 교차 검사 (실제로는 더 정교한 알고리즘 필요)
       const isRelated = checkPathTableConnection(path, selectedTable);
       
       if (isRelated) {
@@ -364,11 +310,9 @@ const ErdDetailPage = () => {
     });
   };
 
-  /**
    * 관련 테이블 하이라이트
    */
   const highlightRelatedTables = (svgElement, selectedPath, tables) => {
-    // 선택된 관계선과 연결된 테이블 찾기
     tables.forEach(table => {
       const isRelated = checkPathTableConnection(selectedPath, table);
       
@@ -381,7 +325,6 @@ const ErdDetailPage = () => {
     });
   };
 
-  /**
    * 관계선과 테이블의 연결 여부 확인
    */
   const checkPathTableConnection = (path, table) => {
@@ -389,7 +332,6 @@ const ErdDetailPage = () => {
       const pathBounds = path.getBBox();
       const tableBounds = table.getBBox();
       
-      // 간단한 경계 박스 교차 검사
       return !(
         pathBounds.x + pathBounds.width < tableBounds.x ||
         pathBounds.x > tableBounds.x + tableBounds.width ||
@@ -397,12 +339,10 @@ const ErdDetailPage = () => {
         pathBounds.y > tableBounds.y + tableBounds.height
       );
     } catch (e) {
-      // getBBox() 실패 시 기본값
       return false;
     }
   };
 
-  /**
    * 선택 초기화
    */
   const resetSelection = (tables, paths) => {
@@ -423,7 +363,6 @@ const ErdDetailPage = () => {
     setHoveredElement(null);
   };
 
-  /**
    * 확대/축소 및 팬 기능 설정
    */
   const setupZoomAndPan = (svgElement) => {
@@ -432,7 +371,6 @@ const ErdDetailPage = () => {
     const wrapper = mermaidRef.current?.querySelector('.mermaid-wrapper') || mermaidRef.current;
     if (!wrapper) return;
 
-    // SVG를 감싸는 컨테이너 생성
     let container = wrapper.querySelector('.mermaid-svg-container');
     if (!container) {
       container = document.createElement('div');
@@ -444,13 +382,11 @@ const ErdDetailPage = () => {
       container.style.justifyContent = 'center';
       container.style.alignItems = 'center';
       
-      // SVG를 컨테이너로 이동
       const parent = svgElement.parentNode;
       container.appendChild(svgElement);
       wrapper.appendChild(container);
     }
 
-    // 마우스 휠로 확대/축소
     const handleWheel = (e) => {
       e.preventDefault();
       
@@ -461,7 +397,6 @@ const ErdDetailPage = () => {
 
     wrapper.addEventListener('wheel', handleWheel, { passive: false });
 
-    // 마우스 드래그로 팬
     const handleMouseDown = (e) => {
       if (e.button === 0 && !e.target.closest('.zoom-button, .filter-toggle-button, .filter-panel')) {
         setIsPanning(true);
@@ -488,21 +423,18 @@ const ErdDetailPage = () => {
     wrapper.addEventListener('mouseleave', handleMouseUp);
   };
 
-  /**
    * 확대
    */
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(3, prev + 0.1));
   };
 
-  /**
    * 축소
    */
   const handleZoomOut = () => {
     setZoomLevel(prev => Math.max(0.5, prev - 0.1));
   };
 
-  /**
    * 확대/축소 리셋
    */
   const handleZoomReset = () => {
@@ -510,7 +442,6 @@ const ErdDetailPage = () => {
     setPanPosition({ x: 0, y: 0 });
   };
 
-  /**
    * 필터링 적용
    */
   const applyFilters = () => {
@@ -526,12 +457,10 @@ const ErdDetailPage = () => {
       
       let shouldShow = true;
 
-      // 테이블 이름 필터
       if (tableFilter && !tableName.toLowerCase().includes(tableFilter.toLowerCase())) {
         shouldShow = false;
       }
 
-      // 선택된 항목만 표시
       if (showOnlySelected && selectedTable !== tableName && selectedRelation === null) {
         shouldShow = false;
       }
@@ -544,7 +473,6 @@ const ErdDetailPage = () => {
       }
     });
 
-    // 관계선 필터링 (관련 테이블이 보이지 않으면 관계선도 숨김)
     paths.forEach((path) => {
       const isRelatedToVisibleTable = Array.from(tables).some(table => {
         if (table.style.display === 'none') return false;
@@ -559,7 +487,6 @@ const ErdDetailPage = () => {
     });
   };
 
-  // 확대/축소 및 팬 위치 변경 시 적용
   useEffect(() => {
     const svgElement = mermaidRef.current?.querySelector('svg');
     if (svgElement) {
@@ -572,7 +499,6 @@ const ErdDetailPage = () => {
     }
   }, [zoomLevel, panPosition]);
 
-  // 필터 변경 시 적용
   useEffect(() => {
     if (erd && erd.mermaidCode && activeTab === 'diagram') {
       applyFilters();

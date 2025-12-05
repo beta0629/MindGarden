@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 
@@ -12,7 +11,6 @@ const ErpPurchaseRequestPanel = ({ user }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // ERP 구매 요청 데이터 로드
   useEffect(() => {
     const loadPurchaseData = async () => {
       if (!user?.id) return;
@@ -21,7 +19,6 @@ const ErpPurchaseRequestPanel = ({ user }) => {
         setIsLoading(true);
         console.log('🛒 ERP 구매 요청 데이터 로드 시작 - 사용자 ID:', user.id);
         
-        // 상담사의 구매 요청 목록 조회
         const response = await apiGet(`/api/erp/purchase-requests/requester/${user.id}`);
         
         console.log('🛒 구매 요청 응답:', response);
@@ -29,12 +26,13 @@ const ErpPurchaseRequestPanel = ({ user }) => {
         if (response?.success && response?.data) {
           const requests = response.data;
           
-          // 상태별 카운트 계산
           const pendingCount = requests.filter(req => 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             req.status === 'PENDING' || req.status === 'SUBMITTED'
           ).length;
           
           const approvedCount = requests.filter(req => 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             req.status === 'APPROVED' || req.status === 'COMPLETED'
           ).length;
           

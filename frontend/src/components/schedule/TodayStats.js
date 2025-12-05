@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet } from '../../utils/ajax';
 import './TodayStats.css';
 
-/**
  * 오늘의 통계 컴포넌트
  * - 실제 스케줄 데이터를 기반으로 오늘의 통계 계산
  * - 총 상담, 완료, 진행중, 취소 수치 표시
@@ -22,7 +20,6 @@ const TodayStats = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    /**
      * 오늘의 통계 데이터 로드
      */
     const loadTodayStats = async () => {
@@ -30,25 +27,24 @@ const TodayStats = () => {
             setLoading(true);
             console.log('📊 오늘의 통계 로드 시작');
             
-            // 오늘 날짜
             const today = new Date().toISOString().split('T')[0];
             
-            // 관리자 권한으로 모든 스케줄 조회
             const response = await apiGet(`/api/schedules?userId=0&userRole=ADMIN`);
             
             if (response && response.success && Array.isArray(response.data)) {
-                // 오늘의 스케줄 필터링
                 const todaySchedules = response.data.filter(schedule => 
                     schedule.date === today
                 );
                 
                 console.log('📅 오늘의 스케줄:', todaySchedules);
                 
-                // 통계 계산 (영어 상태값으로 필터링)
                 const statsData = {
                     total: todaySchedules.length,
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     completed: todaySchedules.filter(s => s.status === 'COMPLETED' || s.status === '완료됨').length,
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     inProgress: todaySchedules.filter(s => s.status === 'IN_PROGRESS' || s.status === '진행중').length,
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     cancelled: todaySchedules.filter(s => s.status === 'CANCELLED' || s.status === '취소됨').length
                 };
                 
@@ -68,7 +64,6 @@ const TodayStats = () => {
     useEffect(() => {
         loadTodayStats();
         
-        // 30초마다 자동 새로고침
         const interval = setInterval(() => {
             loadTodayStats();
         }, 30000);

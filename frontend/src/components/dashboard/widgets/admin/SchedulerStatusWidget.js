@@ -1,4 +1,3 @@
-/**
  * Scheduler Status Widget - 표준화된 위젯
  * 스케줄러 실행 현황 및 성공/실패 통계 모니터링
  * 
@@ -17,17 +16,14 @@ import { WIDGET_CONSTANTS } from '../../../../constants/widgetConstants';
 import { formatDate } from '../../../../utils/formatUtils';
 
 const SchedulerStatusWidget = ({ widget, user }) => {
-  // 관리자만 표시
   if (!RoleUtils.isAdmin(user) && !RoleUtils.hasRole(user, 'HQ_MASTER')) {
     return null;
   }
 
   const navigate = useNavigate();
 
-  // 테넌트 ID 추출
   const tenantId = user?.tenantId || null;
 
-  // 스케줄러 상태 데이터 소스 설정 (테넌트별)
   const getDataSourceConfig = () => {
     const tenantParam = tenantId ? `?tenantId=${tenantId}` : '';
     
@@ -55,7 +51,6 @@ const SchedulerStatusWidget = ({ widget, user }) => {
     getDataSourceConfig()
   );
 
-  // 위젯 액션 핸들러
   const handleAction = (action) => {
     switch (action) {
       case 'view-all':
@@ -72,18 +67,17 @@ const SchedulerStatusWidget = ({ widget, user }) => {
     }
   };
 
-  // 상태별 CSS 클래스
   const getStatusClass = (status) => {
     const classes = {
       SUCCESS: 'mg-badge--success',
       FAILED: 'mg-badge--error',
       RUNNING: 'mg-badge--info',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       PENDING: 'mg-badge--secondary'
     };
     return classes[status] || 'mg-badge--secondary';
   };
 
-  // 상태별 아이콘
   const getStatusIcon = (status) => {
     switch (status) {
       case 'SUCCESS':
@@ -97,15 +91,12 @@ const SchedulerStatusWidget = ({ widget, user }) => {
     }
   };
 
-  // 위젯 컨텐츠 렌더링
   const renderContent = () => {
     const { executions = [], summary = {} } = data || {};
 
-    // 최근 실행 내역 (표준화 원칙: 최대 10개)
     const maxItems = WIDGET_CONSTANTS.DASHBOARD_LIMITS.MAX_ITEMS;
     const recentExecutions = executions.slice(0, maxItems);
 
-    // 성공률 계산
     const totalExecutions = summary.totalExecutions || 0;
     const successCount = summary.successCount || 0;
     const failureCount = summary.failureCount || 0;

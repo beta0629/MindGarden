@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
@@ -63,7 +62,6 @@ const ClientSessionManagement = () => {
     setIsMenuOpen(false);
     switch (action) {
       case 'dashboard':
-        // 동적 대시보드 라우팅
         const authResponse = {
           user: user,
           currentTenantRole: sessionManager.getCurrentTenantRole()
@@ -283,7 +281,9 @@ const ClientSessionManagement = () => {
                     <i className="bi bi-person package-card-icon"></i>
                     <span className="package-card-title">상담사: {mapping.consultant?.consultantName || '미지정'}</span>
                   </div>
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                   <span className={`package-card-status ${mapping.status === 'ACTIVE' ? 'active' : 'inactive'}`}>
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     {mapping.status === 'ACTIVE' ? '활성' : '비활성'}
                   </span>
                 </div>

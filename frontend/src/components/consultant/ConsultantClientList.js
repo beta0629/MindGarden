@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useSession } from '../../contexts/SessionContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../../utils/ajax';
-// import './ConsultantClientList.css';
 import SimpleLayout from '../layout/SimpleLayout';
 import ClientDetailModal from './ClientDetailModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -23,28 +22,39 @@ const ConsultantClientList = () => {
   const [loadingCodes, setLoadingCodes] = useState(false);
   const isModalOpeningRef = useRef(false);
 
-  // 기본 아이콘 반환 함수
   const getDefaultIcon = (status) => {
     const iconMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'ACTIVE': '🟢',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'INACTIVE': '🔴',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': '⏳',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': '✅',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'SUSPENDED': '⏸️',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'DELETED': '🗑️',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'APPROVED': '✅',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'REJECTED': '❌',
       'PAYMENT_CONFIRMED': '💳',
       'PAYMENT_PENDING': '⏳',
       'PAYMENT_REJECTED': '❌',
       'TERMINATED': '🔚',
       'REQUESTED': '📝',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'BOOKED': '📅',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'IN_PROGRESS': '🔄',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CANCELLED': '❌',
       'NO_SHOW': '🚫',
       'RESCHEDULED': '🔄',
       'AVAILABLE': '✅',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CONFIRMED': '✅',
       'WAITING': '⏳',
       'EXPIRED': '⏰',
@@ -54,28 +64,39 @@ const ConsultantClientList = () => {
     return iconMap[status] || '❓';
   };
 
-  // 기본 색상 반환 함수 (디자인 시스템 변수 사용)
   const getDefaultColor = (status) => {
     const colorMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'ACTIVE': 'var(--color-success, var(--mg-success-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'INACTIVE': 'var(--color-secondary, var(--mg-secondary-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': 'var(--color-warning, var(--mg-warning-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': 'var(--color-success, var(--mg-success-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'SUSPENDED': 'var(--color-danger, var(--mg-error-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'DELETED': 'var(--color-secondary, var(--mg-secondary-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'APPROVED': 'var(--color-success, var(--mg-success-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'REJECTED': 'var(--color-danger, var(--mg-error-500))',
       'PAYMENT_CONFIRMED': 'var(--color-success, var(--mg-success-500))',
       'PAYMENT_PENDING': 'var(--color-warning, var(--mg-warning-500))',
       'PAYMENT_REJECTED': 'var(--color-danger, var(--mg-error-500))',
       'TERMINATED': 'var(--color-secondary, var(--mg-secondary-500))',
       'REQUESTED': 'var(--color-primary, var(--mg-primary-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'BOOKED': 'var(--ios-purple, var(--mg-purple-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'IN_PROGRESS': 'var(--color-warning, var(--mg-warning-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CANCELLED': 'var(--color-danger, var(--mg-error-500))',
       'NO_SHOW': 'var(--color-danger, var(--mg-error-500))',
       'RESCHEDULED': 'var(--ios-purple, var(--mg-purple-500))',
       'AVAILABLE': 'var(--color-success, var(--mg-success-500))',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CONFIRMED': 'var(--color-success, var(--mg-success-500))',
       'WAITING': 'var(--color-warning, var(--mg-warning-500))',
       'EXPIRED': 'var(--color-secondary, var(--mg-secondary-500))',
@@ -93,7 +114,6 @@ const ConsultantClientList = () => {
       console.log('👤 상담사 ID로 연계된 내담자 목록 로드:', user.id);
       console.log('👤 사용자 정보 전체:', user);
 
-      // 상담사와 연계된 내담자 목록 가져오기
       const response = await apiGet(`/api/admin/mappings/consultant/${user.id}/clients`);
       
       console.log('📡 API 응답 전체:', response);
@@ -102,7 +122,6 @@ const ConsultantClientList = () => {
         console.log('✅ 내담자 목록 로드 성공:', response.data);
         console.log('📊 내담자 수:', response.count);
         
-        // API 응답에서 내담자 정보 추출 및 최신순 정렬
         const clientData = response.data || [];
         const sortedData = clientData.sort((a, b) => {
           const dateA = new Date(a.assignedAt || a.client.createdAt || 0);
@@ -111,11 +130,9 @@ const ConsultantClientList = () => {
         });
         
         const clientList = sortedData.map((item, index) => {
-          // API 응답 구조에 맞게 내담자 정보 변환
           if (item.client) {
-            // 테스트를 위해 다양한 상태 시뮬레이션 (실제 API에서 상태를 받으면 제거)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             const testStatuses = ['ACTIVE', 'INACTIVE', 'PENDING', 'COMPLETED', 'SUSPENDED'];
-            // 더 균등한 분배를 위해 인덱스 기반 할당
             const simulatedStatus = testStatuses[index % testStatuses.length];
             
             console.log(`🔄 상태 시뮬레이션 - 인덱스: ${index}, ID: ${item.client.id}, 할당된 상태: ${simulatedStatus}`);
@@ -155,7 +172,6 @@ const ConsultantClientList = () => {
     }
   }, [user?.id]);
 
-  // 사용자 상태 코드 로드
   const loadUserStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
@@ -178,15 +194,16 @@ const ConsultantClientList = () => {
       }
     } catch (error) {
       console.error('❌ 사용자 상태 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       const defaultOptions = [
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'ACTIVE', label: '활성', icon: '🟢', color: 'var(--mg-success-500)', description: '활성 사용자' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'INACTIVE', label: '비활성', icon: '🔴', color: '#6b7280', description: '비활성 사용자' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'PENDING', label: '대기중', icon: '⏳', color: 'var(--mg-warning-500)', description: '대기 중인 사용자' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'COMPLETED', label: '완료', icon: '✅', color: '#059669', description: '완료된 사용자' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'SUSPENDED', label: '일시정지', icon: '⏸️', color: '#dc2626', description: '일시정지된 사용자' }
       ];
       console.log('🔄 기본값 설정:', defaultOptions);
@@ -196,7 +213,6 @@ const ConsultantClientList = () => {
     }
   }, []);
 
-  // 데이터 로드
   useEffect(() => {
     if (isLoggedIn && user?.id) {
       loadClients();
@@ -204,7 +220,6 @@ const ConsultantClientList = () => {
     }
   }, [isLoggedIn, user?.id, loadClients]);
 
-  // URL에서 클라이언트 ID가 있을 때 해당 클라이언트 모달 열기
   useEffect(() => {
     if (clientIdFromUrl && clients.length > 0 && !isModalOpeningRef.current) {
       const client = clients.find(c => c.clientId === parseInt(clientIdFromUrl));
@@ -212,26 +227,22 @@ const ConsultantClientList = () => {
         isModalOpeningRef.current = true;
         setSelectedClient(client);
         setShowClientModal(true);
-        // 모달 열기 완료 후 플래그 리셋
         setTimeout(() => {
           isModalOpeningRef.current = false;
         }, 100);
       }
     } else if (!clientIdFromUrl && showClientModal) {
-      // URL에 클라이언트 ID가 없으면 모달 닫기
       setShowClientModal(false);
       setSelectedClient(null);
     }
   }, [clientIdFromUrl, clients, showClientModal]);
 
-  // 검색 및 필터링
   const filteredClients = useMemo(() => {
     const filtered = clients.filter(client => {
       const matchesSearch = client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            client.phone?.includes(searchTerm);
       
-      // 상태 필터링 개선 - 모든 상태 코드 지원
       let matchesStatus = true;
       if (filterStatus !== 'ALL') {
         matchesStatus = client.status === filterStatus;
@@ -240,7 +251,6 @@ const ConsultantClientList = () => {
       return matchesSearch && matchesStatus;
     });
 
-    // 디버깅을 위한 로그
     console.log(`📊 필터링 결과 - 전체: ${clients.length}명, 필터링 후: ${filtered.length}명, 선택된 필터: ${filterStatus}`);
     console.log(`📊 전체 내담자 상태 분포:`, clients.map(c => ({ name: c.name, status: c.status })));
     console.log(`📊 필터링된 내담자:`, filtered.map(c => ({ name: c.name, status: c.status })));
@@ -248,32 +258,25 @@ const ConsultantClientList = () => {
     return filtered;
   }, [searchTerm, filterStatus]); // clients 의존성 제거 (무한루프 방지)
 
-  // 내담자 상세 정보 보기
   const handleViewClient = (client) => {
     setSelectedClient(client);
     setShowClientModal(true);
-    // URL 업데이트
     navigate(`/consultant/client/${client.clientId}`);
   };
 
-  // 내담자 상세 정보 모달 닫기
   const handleCloseModal = () => {
     setShowClientModal(false);
     setSelectedClient(null);
-    // URL을 클라이언트 목록으로 되돌리기 (replace로 히스토리 교체)
     navigate('/consultant/clients', { replace: true });
   };
 
-  // 내담자 정보 저장
   const handleSaveClient = async (updatedData) => {
     try {
       console.log('💾 내담자 정보 저장:', updatedData);
       
-      // 내담자 정보 업데이트 API 호출
       const response = await apiPost(`/api/users/${selectedClient.id}/profile`, updatedData);
       
       if (response && response.success !== false) {
-        // 성공 시 로컬 상태 업데이트
         setClients(prevClients => 
           prevClients.map(client => 
             client.id === selectedClient.id ? { ...client, ...updatedData } : client
@@ -353,10 +356,15 @@ const ConsultantClientList = () => {
             disabled={loadingCodes}
           >
             <option value="ALL">전체 상태</option>
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             <option value="ACTIVE">🟢 활성</option>
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             <option value="INACTIVE">🔴 비활성</option>
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             <option value="PENDING">⏳ 대기중</option>
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             <option value="COMPLETED">✅ 완료</option>
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             <option value="SUSPENDED">⏸️ 일시정지</option>
           </select>
         </div>
@@ -414,11 +422,9 @@ const ConsultantClientList = () => {
           ) : (
             <div className="client-grid">
               {filteredClients.map((client) => {
-                // 상태별 표시 정보 가져오기
                 const statusInfo = userStatusOptions.find(option => option.value === client.status) || {
                   label: client.status || '알 수 없음',
                   icon: '❓',
-                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                   color: '#6b7280'
                 };
 
@@ -439,10 +445,15 @@ const ConsultantClientList = () => {
                           }}
                         />
                       </div>
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                       <span className={`mg-v2-status-badge mg-v2-status-badge--${client.status === 'ACTIVE' ? 'active' : 
+                                                          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                           client.status === 'INACTIVE' ? 'inactive' :
+                                                          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                           client.status === 'PENDING' ? 'pending' :
+                                                          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                           client.status === 'COMPLETED' ? 'completed' :
+                                                          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                           client.status === 'SUSPENDED' ? 'suspended' : 'default'}`}>
                         {statusInfo.icon} {statusInfo.label}
                       </span>

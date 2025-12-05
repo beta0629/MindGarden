@@ -1,4 +1,3 @@
-/**
  * 온보딩 관련 상수
  * 하드코딩 금지 원칙에 따라 모든 상수를 여기에 정의
  * 백엔드 공통 코드에서 동적으로 가져와야 하는 값들은 여기에 기본값만 정의
@@ -8,42 +7,33 @@
  * @since 2025-11-20
  */
 
-// 공통 코드 그룹 코드 (백엔드에서 동적으로 가져옴)
 export const CODE_GROUPS = {
   RISK_LEVEL: 'RISK_LEVEL', // 위험도 코드 그룹
   ONBOARDING_STATUS: 'ONBOARDING_STATUS' // 온보딩 상태 코드 그룹
 };
 
-// 기본값 (백엔드에서 가져올 수 없을 때 사용)
 export const DEFAULT_RISK_LEVEL = 'LOW';
 
-// 기본 색상 (백엔드에서 가져올 수 없을 때 사용)
 export const DEFAULT_COLORS = {
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   PENDING: 'var(--mg-warning-500)',
   IN_REVIEW: 'var(--mg-primary-500)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   APPROVED: 'var(--mg-success-500)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   REJECTED: 'var(--mg-error-500)',
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9e9e9e -> var(--mg-gray-400)
   ON_HOLD: '#9e9e9e',
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2e7d32 -> var(--mg-custom-2e7d32)
   LOW: '#2e7d32',
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e65100 -> var(--mg-custom-e65100)
   MEDIUM: '#e65100',
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #c62828 -> var(--mg-custom-c62828)
   HIGH: '#c62828'
 };
 
-// 기본 배경 색상
 export const DEFAULT_BG_COLORS = {
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e8f5e9 -> var(--mg-custom-e8f5e9)
   LOW: '#e8f5e9',
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3e0 -> var(--mg-custom-fff3e0)
   MEDIUM: '#fff3e0',
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ffebee -> var(--mg-custom-ffebee)
   HIGH: '#ffebee'
 };
 
-// 폼 필드명
 export const FORM_FIELDS = {
   TENANT_NAME: 'tenantName',
   BUSINESS_TYPE: 'businessType',
@@ -52,20 +42,17 @@ export const FORM_FIELDS = {
   CHECKLIST_JSON: 'checklistJson'
 };
 
-// 플레이스홀더
 export const PLACEHOLDERS = {
   TENANT_NAME: '회사명을 입력하세요',
   CONTACT_PHONE: '010-1234-5678',
   BUSINESS_TYPE: '업종을 선택하세요'
 };
 
-// 도움말 텍스트
 export const HELP_TEXTS = {
   CONTACT_PHONE: '선택 사항입니다. 승인 후 연락을 위해 사용됩니다.',
   RISK_LEVEL: '기본값은 낮음(LOW)입니다.'
 };
 
-// 메시지
 export const MESSAGES = {
   SUBMIT_SUCCESS: '온보딩 요청이 성공적으로 제출되었습니다.',
   SUBMIT_ERROR: '온보딩 요청 처리 중 오류가 발생했습니다.',
@@ -82,7 +69,6 @@ export const MESSAGES = {
   ALL: '전체'
 };
 
-// API 응답 키
 export const API_RESPONSE_KEYS = {
   SUCCESS: 'success',
   DATA: 'data',
@@ -90,11 +76,9 @@ export const API_RESPONSE_KEYS = {
   MESSAGE: 'message'
 };
 
-// 로컬 스토리지 키
 export const STORAGE_KEYS = {
   USER: 'user'
 };
 
-// 기본 사용자 이메일 (fallback)
 export const DEFAULT_USER_EMAIL = 'anonymous@example.com';
 

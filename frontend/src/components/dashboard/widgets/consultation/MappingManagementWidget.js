@@ -1,4 +1,3 @@
-/**
  * Mapping Management Widget - 표준화된 위젯
  * 상담소 특화 매칭 관리 위젯
  * 
@@ -16,14 +15,12 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './MappingManagementWidget.css';
 
 const MappingManagementWidget = ({ widget, user }) => {
-  // 권한 확인: 관리자와 상담사만 접근 가능
   if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
     return null;
   }
 
   const navigate = useNavigate();
 
-  // 데이터 소스 설정
   const getDataSourceConfig = () => {
     return {
       type: 'multi-api',
@@ -47,7 +44,6 @@ const MappingManagementWidget = ({ widget, user }) => {
     };
   };
 
-  // Transform 함수: API 응답 데이터를 위젯 형태로 변환
   const transform = (rawData) => {
     if (!rawData) return { mappings: [], stats: null, hasData: false };
 
@@ -65,7 +61,6 @@ const MappingManagementWidget = ({ widget, user }) => {
     };
   };
 
-  // 위젯 설정에 데이터 소스 동적 설정
   const widgetWithDataSource = {
     ...widget,
     config: {
@@ -75,7 +70,6 @@ const MappingManagementWidget = ({ widget, user }) => {
     }
   };
 
-  // 표준화된 위젯 훅 사용
   const {
     data,
     loading,
@@ -87,28 +81,34 @@ const MappingManagementWidget = ({ widget, user }) => {
     cache: true
   });
 
-  // 매핑 상태별 스타일 클래스
   const getStatusClass = (status) => {
     const statusMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'ACTIVE': 'status-active',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': 'status-pending', 
       'TERMINATED': 'status-terminated',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': 'status-completed',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CANCELLED': 'status-cancelled'
     };
     return statusMap[status] || 'status-unknown';
   };
 
-  // 매핑 상태별 아이콘
   const getStatusIcon = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
         return <CheckCircle className="status-icon" />;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return <Clock className="status-icon" />;
       case 'TERMINATED':
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'CANCELLED':
         return <XCircle className="status-icon" />;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return <CheckCircle className="status-icon" />;
       default:
@@ -116,34 +116,33 @@ const MappingManagementWidget = ({ widget, user }) => {
     }
   };
 
-  // 매핑 상태 한글명
   const getStatusLabel = (status) => {
     const statusLabels = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'ACTIVE': '활성',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': '대기',
       'TERMINATED': '종료',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': '완료',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CANCELLED': '취소'
     };
     return statusLabels[status] || '미지정';
   };
 
-  // 매핑 상세보기
   const handleViewMapping = (mappingId) => {
     navigate(`/admin/mappings/${mappingId}`);
   };
 
-  // 새 매핑 생성
   const handleCreateMapping = () => {
     navigate('/admin/mappings/new');
   };
 
-  // 매핑 관리 페이지로 이동
   const handleViewAll = () => {
     navigate('/admin/mappings');
   };
 
-  // 렌더링 내용
   const renderContent = () => {
     if (!hasData) {
       return (
@@ -297,7 +296,6 @@ const MappingManagementWidget = ({ widget, user }) => {
     );
   };
 
-  // 헤더 설정
   const headerConfig = {
     icon: <Link2 className="widget-header-icon" />,
     subtitle: '상담사-내담자 매칭 관리',

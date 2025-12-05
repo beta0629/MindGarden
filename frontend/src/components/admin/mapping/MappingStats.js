@@ -5,7 +5,6 @@ import {
     getStatusIcon
 } from '../../../utils/codeHelper';
 
-/**
  * 매칭 통계 컴포넌트 (동적 처리 지원)
  * - 매칭 상태별 통계 표시
  * - 시각적 통계 카드
@@ -19,9 +18,9 @@ import {
 const MappingStats = ({ mappings = [], onStatCardClick }) => {
     const [statCards, setStatCards] = useState([]);
     const [loading, setLoading] = useState(true);
-    // 통계 계산
     const stats = {
         pending: mappings.filter(m => m.status === 'PENDING_PAYMENT').length,
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         active: mappings.filter(m => m.status === 'ACTIVE').length,
         total: mappings.length,
         paymentConfirmed: mappings.filter(m => m.status === 'PAYMENT_CONFIRMED').length,
@@ -29,13 +28,11 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
         sessionsExhausted: mappings.filter(m => m.status === 'SESSIONS_EXHAUSTED').length
     };
 
-    // 동적 통계 카드 데이터 로드
     useEffect(() => {
         const loadStatCards = async () => {
             try {
                 setLoading(true);
                 
-                // 동적으로 색상, 아이콘, 라벨 조회 (async 함수들을 await로 처리)
                 const [
                     pendingData,
                     activeData,
@@ -44,7 +41,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     terminatedData,
                     sessionsExhaustedData
                 ] = await Promise.all([
-                    // PENDING_PAYMENT
                     Promise.all([
                         getMappingStatusKoreanName('PENDING_PAYMENT'),
                         getStatusColor('PENDING_PAYMENT', 'MAPPING_STATUS'),
@@ -60,12 +56,15 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         status: 'PENDING_PAYMENT'
                     })),
                     
-                    // ACTIVE
                     Promise.all([
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         getMappingStatusKoreanName('ACTIVE'),
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         getStatusColor('ACTIVE', 'MAPPING_STATUS'),
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         getStatusIcon('ACTIVE', 'MAPPING_STATUS')
                     ]).then(([label, color, icon]) => ({
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         id: 'ACTIVE',
                         icon: icon,
                         label: label,
@@ -73,10 +72,10 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         color: color,
                         bgColor: color + '20',
                         action: 'view',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         status: 'ACTIVE'
                     })),
                     
-                    // PAYMENT_CONFIRMED
                     Promise.all([
                         getMappingStatusKoreanName('PAYMENT_CONFIRMED'),
                         getStatusColor('PAYMENT_CONFIRMED', 'MAPPING_STATUS'),
@@ -92,7 +91,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         status: 'PAYMENT_CONFIRMED'
                     })),
                     
-                    // TOTAL (특별 처리)
                     Promise.resolve({
                         id: 'TOTAL',
                         icon: '📊',
@@ -104,7 +102,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         status: 'TOTAL'
                     }),
                     
-                    // TERMINATED
                     Promise.all([
                         getMappingStatusKoreanName('TERMINATED'),
                         getStatusColor('TERMINATED', 'MAPPING_STATUS'),
@@ -120,7 +117,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         status: 'TERMINATED'
                     })),
                     
-                    // SESSIONS_EXHAUSTED
                     Promise.all([
                         getMappingStatusKoreanName('SESSIONS_EXHAUSTED'),
                         getStatusColor('SESSIONS_EXHAUSTED', 'MAPPING_STATUS'),
@@ -150,7 +146,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 console.log('✅ 매칭 통계 카드 동적 로드 완료:', cardData);
             } catch (error) {
                 console.error('매칭 통계 카드 로드 실패:', error);
-                // 오류 시 기본값 설정
                 setStatCards([
                     {
                         id: 'PENDING_PAYMENT',
@@ -162,6 +157,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         action: 'payment'
                     },
                     {
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         id: 'ACTIVE',
                         icon: '✅',
                         label: '활성 매칭',

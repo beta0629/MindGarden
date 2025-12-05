@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 급여관리 서비스 구현체
  * 
  * @author MindGarden
@@ -44,13 +43,10 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public List<ConsultantSalaryProfile> getAllSalaryProfiles(String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📋 급여 프로필 목록 조회: tenantId={}", tenantId);
         
-        // 테넌트 전체 급여 프로필 조회
         List<ConsultantSalaryProfile> allProfiles = consultantSalaryProfileRepository.findByIsActiveTrue();
-        // 테넌트 기반 필터링 (필요시 추가)
         return allProfiles;
     }
     
@@ -87,11 +83,9 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public List<User> getConsultantsForSalary(String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("👥 급여용 상담사 목록 조회: tenantId={}", tenantId);
         
-        // 테넌트 전체 상담사 조회
         return userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
     }
     
@@ -99,7 +93,6 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     public List<Map<String, Object>> getConsultantSalarySummary(Long consultantId, String period) {
         log.info("📊 상담사 급여 요약 조회: ConsultantID={}, Period={}", consultantId, period);
         
-        // 기간 계산
         LocalDate endDate = LocalDate.now();
         LocalDate startDate;
         
@@ -138,11 +131,9 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public List<SalaryCalculation> getSalaryCalculations(String branchCode, LocalDate startDate, LocalDate endDate) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📋 급여 계산 목록 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
-        // 테넌트 전체 급여 계산 조회 (branchCode 필터링 제거)
         return salaryCalculationRepository.findByStatusAndCalculationPeriodStartBetween(
                 SalaryCalculation.SalaryStatus.CALCULATED, startDate, endDate);
     }
@@ -152,8 +143,6 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         log.info("🧮 급여 계산: ConsultantID={}, ProfileID={}, Period={} ~ {}", 
                 consultantId, profileId, periodStart, periodEnd);
         
-        // 급여 계산 로직은 PL/SQL 프로시저로 처리됨
-        // 현재는 PL/SQL 서비스를 통해 처리됨
         
         throw new UnsupportedOperationException("급여 계산은 PL/SQL 서비스를 통해 처리됩니다.");
     }
@@ -169,6 +158,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
             throw new RuntimeException("승인 가능한 상태가 아닙니다: " + calculation.getStatus());
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         calculation.setStatus(SalaryCalculation.SalaryStatus.APPROVED);
         return salaryCalculationRepository.save(calculation);
     }
@@ -180,6 +170,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         SalaryCalculation calculation = salaryCalculationRepository.findById(calculationId)
                 .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + calculationId));
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (calculation.getStatus() != SalaryCalculation.SalaryStatus.APPROVED) {
             throw new RuntimeException("지급 가능한 상태가 아닙니다: " + calculation.getStatus());
         }
@@ -190,7 +181,6 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public Map<String, Object> getSalaryStatistics(String branchCode, LocalDate startDate, LocalDate endDate) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📊 급여 통계 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
@@ -223,7 +213,6 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public List<Map<String, Object>> getTopPerformers(String branchCode, LocalDate startDate, LocalDate endDate, int limit) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("🏆 상위 성과자 조회: tenantId={}, Period={} ~ {}, Limit={}", 
                 tenantId, startDate, endDate, limit);
@@ -247,7 +236,6 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public BigDecimal calculateTotalSalaryCost(String branchCode, LocalDate startDate, LocalDate endDate) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("💰 총 급여 비용 계산: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
@@ -258,34 +246,26 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
     
-    /**
      * 상담사별 급여 계산 내역 조회 (프론트엔드 호환성)
      */
     @Override
     public List<SalaryCalculation> getSalaryCalculations(Long consultantId, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         log.info("💰 상담사별 급여 계산 조회: ConsultantId={}", consultantId);
         
-        // 테넌트 기반으로 조회 (branchCode 필터링 제거)
-        // findByConsultantId 메서드가 없으면 다른 방법 사용
         return salaryCalculationRepository.findAll().stream()
             .filter(calc -> calc.getConsultant().getId().equals(consultantId))
             .collect(Collectors.toList());
     }
     
-    /**
      * 세금 상세 내역 조회 (프론트엔드 호환성)
      */
     @Override
     public Map<String, Object> getTaxDetails(Long calculationId, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         log.info("💰 세금 상세 조회: CalculationId={}", calculationId);
         
-        // 급여 계산 정보 조회
         SalaryCalculation calculation = salaryCalculationRepository.findById(calculationId)
             .orElseThrow(() -> new RuntimeException("급여 계산 정보를 찾을 수 없습니다: " + calculationId));
         
-        // 세금 계산 조회 (branchCode 필터링 제거)
         List<Map<String, Object>> taxCalculations = salaryTaxCalculationRepository
             .findByCalculationIdOrderByCreatedAtDesc(calculationId).stream()
             .map(tax -> {
@@ -308,16 +288,13 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         return result;
     }
     
-    /**
      * 세금 통계 조회 (프론트엔드 호환성)
      */
     @Override
     public Map<String, Object> getTaxStatistics(String period, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("💰 세금 통계 조회: Period={}, tenantId={}", period, tenantId);
         
-        // 기간 파싱 (예: "2025-01")
         String[] periodParts = period.split("-");
         if (periodParts.length != 2) {
             throw new RuntimeException("잘못된 기간 형식입니다: " + period);
@@ -329,10 +306,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
         
-        // 해당 기간의 급여 계산 조회 (branchCode 필터링 제거)
         List<SalaryCalculation> calculations = getSalaryCalculations(null, startDate, endDate); // branchCode는 레거시 호환용
         
-        // 통계 계산
         BigDecimal totalGrossSalary = calculations.stream()
             .map(SalaryCalculation::getGrossSalary)
             .reduce(BigDecimal.ZERO, BigDecimal::add);

@@ -1,9 +1,7 @@
-// // import React from 'react';
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 import UnifiedModal from '../../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { FaTimes } from 'react-icons/fa';
 
-/**
  * 내담자 모달 컴포넌트
  */
 const ClientModal = ({
@@ -64,13 +62,13 @@ const ClientModal = ({
     );
 
     const renderFormContent = () => {
-        // formData의 모든 필드에 기본값 설정 (undefined 방지)
         const safeFormData = {
             username: formData.username || '',
             name: formData.name || '',
             email: formData.email || '',
             password: formData.password || '',
             phone: formData.phone || '',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: formData.status || 'ACTIVE',
             grade: formData.grade || 'BRONZE',
             notes: formData.notes || ''
@@ -162,8 +160,11 @@ const ClientModal = ({
                             ))
                         ) : (
                             <>
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                 <option value="ACTIVE">활성</option>
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                 <option value="INACTIVE">비활성</option>
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                 <option value="PENDING">대기</option>
                             </>
                         )}

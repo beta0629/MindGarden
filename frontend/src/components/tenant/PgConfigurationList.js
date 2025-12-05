@@ -19,12 +19,10 @@ import {
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import { showNotification } from '../../utils/notification';
-// import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationList.css';
 
-/**
  * PG 설정 목록 페이지
  * 테넌트 포털에서 PG 설정 목록을 조회하고 관리하는 페이지
  * 
@@ -36,27 +34,22 @@ const PgConfigurationList = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   
-  // 상태 관리
   const [configurations, setConfigurations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  // 필터 및 검색
   const [filters, setFilters] = useState({
     status: '',
     approvalStatus: '',
     search: ''
   });
   
-  // 모달 상태
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState(null);
   const [testingConnection, setTestingConnection] = useState(null);
   
-  // 테넌트 ID (세션에서 가져오기)
   const tenantId = user?.tenantId || user?.tenant_id;
   
-  // PG 설정 목록 로드
   const loadConfigurations = useCallback(async () => {
     if (!tenantId) return;
     
@@ -70,7 +63,6 @@ const PgConfigurationList = () => {
       
       const configs = await getPgConfigurations(tenantId, params);
       
-      // 검색 필터 적용
       let filteredConfigs = configs;
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
@@ -97,7 +89,6 @@ const PgConfigurationList = () => {
     }
   }, [sessionLoading, isLoggedIn, user, tenantId, loadConfigurations]);
   
-  // PG 설정 삭제
   const handleDelete = async () => {
     if (!selectedConfig || !tenantId) return;
     
@@ -116,7 +107,6 @@ const PgConfigurationList = () => {
     }
   };
   
-  // 연결 테스트
   const handleTestConnection = async (configId) => {
     if (!tenantId) return;
     
@@ -130,7 +120,6 @@ const PgConfigurationList = () => {
         showNotification(`연결 테스트 실패: ${result.message}`, 'error');
       }
       
-      // 목록 새로고침
       loadConfigurations();
     } catch (err) {
       console.error('연결 테스트 실패:', err);
@@ -140,16 +129,21 @@ const PgConfigurationList = () => {
     }
   };
   
-  // 상태 배지 렌더링
   const renderStatusBadge = (status) => {
     const statusConfig = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       PENDING: { label: '대기 중', icon: Clock, color: 'warning' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       APPROVED: { label: '승인됨', icon: CheckCircle, color: 'success' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       REJECTED: { label: '거부됨', icon: XCircle, color: 'danger' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       ACTIVE: { label: '활성화', icon: Power, color: 'success' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       INACTIVE: { label: '비활성화', icon: PowerOff, color: 'secondary' }
     };
     
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const config = statusConfig[status] || statusConfig.PENDING;
     const Icon = config.icon;
     
@@ -161,14 +155,17 @@ const PgConfigurationList = () => {
     );
   };
   
-  // 승인 상태 배지 렌더링
   const renderApprovalBadge = (approvalStatus) => {
     const statusConfig = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       PENDING: { label: '승인 대기', icon: Clock, color: 'warning' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       APPROVED: { label: '승인됨', icon: CheckCircle, color: 'success' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       REJECTED: { label: '거부됨', icon: XCircle, color: 'danger' }
     };
     
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const config = statusConfig[approvalStatus] || statusConfig.PENDING;
     const Icon = config.icon;
     
@@ -253,10 +250,15 @@ const PgConfigurationList = () => {
               aria-label="상태 필터"
             >
               <option value="">전체 상태</option>
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="PENDING">대기 중</option>
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="APPROVED">승인됨</option>
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="REJECTED">거부됨</option>
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="ACTIVE">활성화</option>
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="INACTIVE">비활성화</option>
             </select>
             
@@ -267,8 +269,11 @@ const PgConfigurationList = () => {
               aria-label="승인 상태 필터"
             >
               <option value="">전체 승인 상태</option>
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="PENDING">승인 대기</option>
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="APPROVED">승인됨</option>
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
               <option value="REJECTED">거부됨</option>
             </select>
             
@@ -375,6 +380,7 @@ const PgConfigurationList = () => {
                       상세보기
                     </button>
                     
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     {config.status === 'APPROVED' && (
                       <button className="mg-button"
                         variant="secondary"
@@ -388,6 +394,7 @@ const PgConfigurationList = () => {
                       </button>
                     )}
                     
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     {config.approvalStatus === 'PENDING' && (
                       <>
                         <button className="mg-button"
@@ -413,6 +420,7 @@ const PgConfigurationList = () => {
                     )}
                   </div>
                   
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                   {config.approvalStatus === 'PENDING' && (
                     <div className="pending-notice">
                       <Clock size={14} />
@@ -420,6 +428,7 @@ const PgConfigurationList = () => {
                     </div>
                   )}
                   
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                   {config.approvalStatus === 'REJECTED' && config.rejectionReason && (
                     <div className="rejected-notice">
                       <XCircle size={14} />

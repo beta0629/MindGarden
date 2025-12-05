@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { Users, Calendar, TrendingUp } from 'lucide-react';
 import '../../styles/unified-design-tokens.css';
 
-/**
  * 상담사용 내담자 섹션 컴포넌트
  * 디자인 시스템 v2.0 적용
  */
@@ -88,16 +86,22 @@ const ConsultantClientSection = ({ userId }) => {
 
   const getStatusClass = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
         return 'mg-v2-badge-success';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return 'mg-v2-badge-warning';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'INACTIVE':
         return 'mg-v2-badge-secondary';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return 'mg-v2-badge-info';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'SUSPENDED':
         return 'mg-v2-badge-danger';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'DELETED':
         return 'mg-v2-badge-secondary';
       default:
@@ -107,16 +111,22 @@ const ConsultantClientSection = ({ userId }) => {
 
   const getStatusText = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
         return '활성';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return '대기';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'INACTIVE':
         return '비활성';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return '완료';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'SUSPENDED':
         return '일시정지';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'DELETED':
         return '삭제';
       default:

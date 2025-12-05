@@ -5,7 +5,6 @@ import {
 } from '../../../constants/mapping';
 import './MappingActions.css';
 
-/**
  * 매핑 액션 컴포넌트
  * - 매핑 관련 액션 버튼들
  * - 승인, 거부, 수정, 삭제 등
@@ -53,6 +52,7 @@ const MappingActions = ({
                         onClick: () => onReject?.(mapping.id)
                     }
                 ];
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             case 'ACTIVE':
                 return [
                     { 
@@ -71,6 +71,7 @@ const MappingActions = ({
                         onClick: () => onSuspend?.(mapping.id)
                     }
                 ];
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             case 'SUSPENDED':
                 return [
                     { 

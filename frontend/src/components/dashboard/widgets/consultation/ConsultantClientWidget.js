@@ -1,4 +1,3 @@
-/**
  * Consultant Client Widget - 표준화된 위젯
  * 상담사 내담자 위젯
  * 
@@ -54,9 +53,13 @@ const ConsultantClientWidget = ({ widget, user }) => {
 
   const getStatusClass = (status) => {
     const statusMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'ACTIVE': 'status-active',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'INACTIVE': 'status-inactive',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': 'status-pending',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': 'status-completed'
     };
     return statusMap[status] || 'status-unknown';
@@ -93,8 +96,11 @@ const ConsultantClientWidget = ({ widget, user }) => {
                 <div className="client-name">{client.name}</div>
                 <div className="client-details">
                   <div className={`client-status ${getStatusClass(client.status)}`}>
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     {client.status === 'ACTIVE' ? '활성' : 
+                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                      client.status === 'PENDING' ? '대기' : 
+                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                      client.status === 'COMPLETED' ? '완료' : '비활성'}
                   </div>
                   {client.lastSessionAt && (

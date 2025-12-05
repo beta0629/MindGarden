@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate } from 'react-router-dom';
 import { 
   Heart, 
@@ -23,7 +22,6 @@ import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './ClientPersonalizedMessages.css';
 
-/**
  * 내담자 상태에 따른 맞춤형 메시지 컴포넌트
  * 매핑 상태, 상담 진행 상황, 결제 상태 등을 기반으로 동적 메시지 생성
  */
@@ -33,7 +31,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
   const [isConsultationGuideModalOpen, setIsConsultationGuideModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // 아이콘 매핑
   const iconMap = {
     'heart': Heart,
     'user-plus': UserPlus,
@@ -48,7 +45,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
     'book': Book
   };
 
-  // 카드 클릭 핸들러
   const handleCardClick = (action) => {
     if (isLoading) return;
     
@@ -121,7 +117,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
     }
   };
   
-  // 내담자 상태 분석
   const analyzeClientStatus = () => {
     const status = {
       hasMapping: false,
@@ -137,6 +132,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
     if (clientStatus?.mappingStatus) {
       status.hasMapping = true;
       status.mappingStatus = clientStatus.mappingStatus;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       status.hasActiveMapping = clientStatus.mappingStatus === 'ACTIVE';
     }
 
@@ -148,6 +144,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       status.hasCompletedConsultations = true;
     }
 
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     if (clientStatus?.paymentStatus === 'PENDING') {
       status.hasPendingPayments = true;
     }
@@ -166,11 +163,9 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
     return status;
   };
 
-  // 상태별 맞춤형 메시지 생성
   const generatePersonalizedMessages = (status) => {
     const messages = [];
 
-    // 1. 상태별 주요 메시지
     if (status.isNewClient) {
       messages.push({
         id: 'welcome',
@@ -189,6 +184,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         colorClass: 'primary',
         action: 'mindfulness-guide'
       });
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     } else if (status.mappingStatus === 'PENDING') {
       messages.push({
         id: 'pending-mapping',
@@ -237,7 +233,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       });
     }
 
-    // 2. 결제 관련 메시지
     if (status.hasPendingPayments) {
       messages.push({
         id: 'payment-pending',
@@ -258,7 +253,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       });
     }
 
-    // 3. 상담사 목록 또는 활동 메시지
     const isProduction = process.env.NODE_ENV === 'production' || window.location.hostname === 'm-garden.co.kr';
     
     if (isProduction) {
@@ -321,7 +315,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       }
     }
 
-    // 4. 추가 유용한 카드들
     messages.push({
       id: 'payment-history',
       icon: 'credit-card',
@@ -340,7 +333,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       action: 'consultation-guide'
     });
 
-    // 5. 날씨 정보
     messages.push({
       id: 'weather',
       isWeatherCard: true,
@@ -350,7 +342,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
     return messages;
   };
 
-  // 일일 팁 생성
   const getDailyTip = () => {
     const tips = [
       '작은 변화가 큰 변화를 만듭니다',
@@ -372,7 +363,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
   return (
     <div className="client-personalized-messages">
       {personalizedMessages.map((message) => {
-        // 날씨 카드는 별도 컴포넌트로 렌더링
         if (message.isWeatherCard) {
           return (
             <div key={message.id}>

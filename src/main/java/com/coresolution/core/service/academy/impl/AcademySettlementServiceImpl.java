@@ -21,7 +21,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
  * 학원 정산 서비스 구현체
  * 학원 시스템의 수강료/강사/본사 정산 관리 비즈니스 로직 구현
  * 
@@ -42,11 +41,9 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
     private final ClassEnrollmentRepository enrollmentRepository;
     private final TenantAccessControlService accessControlService;
     
-    // 기본 정산 비율 (설정 가능하도록 확장 가능)
     private static final BigDecimal DEFAULT_COMMISSION_RATE = new BigDecimal("10.0"); // 10%
     private static final BigDecimal DEFAULT_ROYALTY_RATE = new BigDecimal("5.0"); // 5%
     
-    // ==================== 정산 관리 ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -61,14 +58,12 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
             settlements = settlementRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         }
         
-        // 기간 필터링
         if (settlementPeriod != null && !settlementPeriod.isEmpty()) {
             settlements = settlements.stream()
                 .filter(s -> settlementPeriod.equals(s.getSettlementPeriod()))
                 .collect(Collectors.toList());
         }
         
-        // 상태 필터링
         if (status != null) {
             settlements = settlements.stream()
                 .filter(s -> convertSettlementStatus(s.getStatus()) == status)
@@ -99,7 +94,6 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
     public SettlementResponse calculateSettlement(String tenantId, SettlementCalculateRequest request, String calculatedBy) {
         accessControlService.validateTenantAccess(tenantId);
         
-        // 기존 정산 확인
         Optional<AcademySettlement> existing = settlementRepository.findByTenantIdAndBranchIdAndSettlementPeriodAndIsDeletedFalse(
             tenantId, request.getBranchId(), request.getSettlementPeriod());
         
@@ -110,28 +104,23 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         log.info("정산 계산 시작: tenantId={}, branchId={}, period={}", 
             tenantId, request.getBranchId(), request.getSettlementPeriod());
         
-        // 1. 매출 계산 (결제 완료된 금액)
         SettlementCalculationResult calculationResult = calculateRevenue(
             tenantId, request.getBranchId(), request.getPeriodStart(), request.getPeriodEnd());
         
-        // 2. 강사 정산 계산
         BigDecimal teacherSettlement = calculateTeacherSettlement(
             tenantId, request.getBranchId(), request.getPeriodStart(), request.getPeriodEnd(), 
             calculationResult.getTotalRevenue());
         
-        // 3. 본사 로열티 계산
         BigDecimal royaltyRate = request.getRoyaltyRate() != null ? 
             request.getRoyaltyRate() : DEFAULT_ROYALTY_RATE;
         BigDecimal hqRoyalty = calculationResult.getNetRevenue()
             .multiply(royaltyRate)
             .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         
-        // 4. 순 정산 금액 계산
         BigDecimal netSettlement = calculationResult.getNetRevenue()
             .subtract(teacherSettlement)
             .subtract(hqRoyalty);
         
-        // 5. 정산 엔티티 생성
         AcademySettlement settlement = AcademySettlement.builder()
             .settlementId(UUID.randomUUID().toString())
             .branchId(request.getBranchId())
@@ -157,7 +146,6 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         
         AcademySettlement saved = settlementRepository.save(settlement);
         
-        // 6. 정산 항목 생성
         createSettlementItems(saved, calculationResult);
         
         log.info("정산 계산 완료: settlementId={}, netSettlement={}", saved.getSettlementId(), saved.getNetSettlement());
@@ -180,6 +168,7 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
             throw new RuntimeException("계산 완료된 정산만 승인할 수 있습니다.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         settlement.setStatus(AcademySettlement.SettlementStatus.APPROVED);
         settlement.setApprovedAt(LocalDateTime.now());
         settlement.setApprovedBy(approvedBy);
@@ -202,6 +191,7 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (settlement.getStatus() != AcademySettlement.SettlementStatus.APPROVED) {
             throw new RuntimeException("승인된 정산만 지급 완료 처리할 수 있습니다.");
         }
@@ -232,6 +222,7 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
             throw new RuntimeException("이미 지급 완료된 정산은 취소할 수 없습니다.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         settlement.setStatus(AcademySettlement.SettlementStatus.CANCELLED);
         settlement.setUpdatedAt(LocalDateTime.now());
         
@@ -241,7 +232,6 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         return toSettlementResponse(saved);
     }
     
-    // ==================== 정산 항목 관리 ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -277,7 +267,6 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         return toSettlementItemResponse(item);
     }
     
-    // ==================== 배치 작업 ====================
     
     @Override
     public int calculateMonthlySettlements(String tenantId, String settlementPeriod) {
@@ -285,11 +274,9 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         
         log.info("월별 정산 자동 계산 시작: tenantId={}, period={}", tenantId, settlementPeriod);
         
-        // 기간 계산
         LocalDate periodStart = LocalDate.parse(settlementPeriod + "01", DateTimeFormatter.ofPattern("yyyyMMdd"));
         LocalDate periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth());
         
-        // 모든 지점에 대해 정산 계산
         List<ClassEnrollment> enrollments = enrollmentRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         List<Long> branchIds = enrollments.stream()
             .map(ClassEnrollment::getBranchId)
@@ -300,7 +287,6 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         
         for (Long branchId : branchIds) {
             try {
-                // 기존 정산 확인
                 Optional<AcademySettlement> existing = settlementRepository.findByTenantIdAndBranchIdAndSettlementPeriodAndIsDeletedFalse(
                     tenantId, branchId, settlementPeriod);
                 
@@ -328,14 +314,12 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         return totalCalculated;
     }
     
-    // ==================== 내부 헬퍼 메서드 ====================
     
-    /**
      * 매출 계산
      */
     private SettlementCalculationResult calculateRevenue(String tenantId, Long branchId, LocalDate periodStart, LocalDate periodEnd) {
-        // 결제 완료된 결제 내역 조회
         List<AcademyTuitionPayment> payments = paymentRepository.findByTenantIdAndIsDeletedFalse(tenantId).stream()
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             .filter(p -> p.getStatus() == AcademyTuitionPayment.PaymentStatus.COMPLETED)
             .filter(p -> branchId == null || branchId.equals(p.getBranchId()))
             .filter(p -> p.getPaidAt() != null && 
@@ -362,24 +346,17 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
             .build();
     }
     
-    /**
      * 강사 정산 계산
      */
     private BigDecimal calculateTeacherSettlement(String tenantId, Long branchId, LocalDate periodStart, LocalDate periodEnd, BigDecimal totalRevenue) {
-        // TODO: 강사별 정산 계산 로직 구현
-        // 현재는 간단하게 총 매출의 50%로 계산 (실제로는 강사별 수업 횟수, 수강료 비율 등 고려 필요)
         return totalRevenue.multiply(new BigDecimal("0.5")).setScale(2, RoundingMode.HALF_UP);
     }
     
-    /**
      * 정산 항목 생성
      */
     private void createSettlementItems(AcademySettlement settlement, SettlementCalculationResult calculationResult) {
-        // TODO: 강사별, 반별, 강좌별 정산 항목 생성
-        // 현재는 기본 항목만 생성
     }
     
-    /**
      * AcademySettlement를 SettlementResponse로 변환
      */
     private SettlementResponse toSettlementResponse(AcademySettlement settlement) {
@@ -413,7 +390,6 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
             .build();
     }
     
-    /**
      * AcademySettlementItem을 SettlementItemResponse로 변환
      */
     private SettlementItemResponse toSettlementItemResponse(AcademySettlementItem item) {
@@ -439,7 +415,6 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
             .build();
     }
     
-    /**
      * SettlementStatus 변환
      */
     private SettlementResponse.SettlementStatus convertSettlementStatus(AcademySettlement.SettlementStatus status) {
@@ -449,7 +424,6 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         return SettlementResponse.SettlementStatus.valueOf(status.name());
     }
     
-    /**
      * ItemType 변환
      */
     private SettlementItemResponse.ItemType convertItemType(AcademySettlementItem.ItemType itemType) {
@@ -459,7 +433,6 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         return SettlementItemResponse.ItemType.valueOf(itemType.name());
     }
     
-    /**
      * 정산 계산 결과 내부 클래스
      */
     @lombok.Data

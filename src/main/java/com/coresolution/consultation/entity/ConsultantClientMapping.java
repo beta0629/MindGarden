@@ -17,7 +17,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
  * 상담사-내담자 매핑 엔티티
  * 
  * @author MindGarden
@@ -61,6 +60,7 @@ public class ConsultantClientMapping extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", length = 50, nullable = false)
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @Column(name = "total_sessions", nullable = false)
@@ -123,7 +123,6 @@ public class ConsultantClientMapping extends BaseEntity {
     @Column(name = "terminated_at")
     private LocalDateTime terminatedAt;
 
-    /**
      * @Deprecated - 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지
      * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
      * 새로운 코드에서는 사용하지 마세요. 테넌트 ID만 사용하세요.
@@ -131,7 +130,6 @@ public class ConsultantClientMapping extends BaseEntity {
     @Column(name = "branch_code", length = 20)
     private String branchCode;
     
-    // 할인 관련 필드
     @Column(name = "discount_code", length = 50)
     private String discountCode; // 할인 코드
     
@@ -147,7 +145,6 @@ public class ConsultantClientMapping extends BaseEntity {
     @Column(name = "discount_applied_at")
     private LocalDateTime discountAppliedAt; // 할인 적용일
 
-    /**
      * 매핑 상태 enum
      */
     public enum MappingStatus {
@@ -162,7 +159,6 @@ public class ConsultantClientMapping extends BaseEntity {
         SESSIONS_EXHAUSTED      // 회기 소진
     }
 
-    /**
      * 결제 상태 enum
      */
     public enum PaymentStatus {
@@ -175,10 +171,10 @@ public class ConsultantClientMapping extends BaseEntity {
         REFUNDED                    // 환불됨
     }
 
-    /**
      * 결제 확인 처리 (미수금 상태)
      */
     public void confirmPayment(String paymentMethod, String paymentReference) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.paymentStatus = PaymentStatus.CONFIRMED;
         this.paymentMethod = paymentMethod;
         this.paymentReference = paymentReference;
@@ -186,36 +182,37 @@ public class ConsultantClientMapping extends BaseEntity {
         this.status = MappingStatus.PAYMENT_CONFIRMED;
     }
     
-    /**
      * 입금 확인 처리 (현금 수입)
      */
     public void confirmDeposit(String depositReference) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (this.paymentStatus != PaymentStatus.CONFIRMED && this.paymentStatus != PaymentStatus.PAY) {
             throw new IllegalStateException("결제 확인이 완료되지 않았습니다. 현재 상태: " + this.paymentStatus);
         }
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.paymentStatus = PaymentStatus.APPROVED;  // APPROVED 상태로 변경 (입금 확인됨)
         this.paymentReference = this.paymentReference + " (입금: " + depositReference + ")";
         this.depositConfirmed = true;  // 입금 확인 플래그 설정
         this.status = MappingStatus.DEPOSIT_PENDING;  // DEPOSIT_PENDING 상태로 변경 (관리자 승인 대기)
     }
 
-    /**
      * 관리자 승인 (입금 확인 후 활성화)
      */
     public void approveByAdmin(String adminName) {
         if (this.status != MappingStatus.DEPOSIT_PENDING) {
             throw new IllegalStateException("입금 확인이 완료되지 않았습니다. 현재 상태: " + this.status);
         }
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (this.paymentStatus != PaymentStatus.APPROVED) {
             throw new IllegalStateException("결제 승인이 완료되지 않았습니다.");
         }
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = MappingStatus.ACTIVE;  // 최종 승인 후 활성화
         this.adminApprovalDate = LocalDateTime.now();
         this.approvedBy = adminName;
         this.startDate = LocalDateTime.now();
     }
 
-    /**
      * 회기 사용
      */
     public void useSession() {
@@ -225,14 +222,12 @@ public class ConsultantClientMapping extends BaseEntity {
         this.remainingSessions--;
         this.usedSessions++;
         
-        // 모든 회기 소진 시 자동 종료
         if (this.remainingSessions <= 0) {
             this.status = MappingStatus.SESSIONS_EXHAUSTED;
             this.endDate = LocalDateTime.now();
         }
     }
 
-    /**
      * 회기 추가 (연장)
      */
     public void addSessions(Integer additionalSessions, String packageName, Long packagePrice) {
@@ -241,41 +236,41 @@ public class ConsultantClientMapping extends BaseEntity {
         this.packageName = packageName;
         this.packagePrice = packagePrice;
         
-        // 상태를 다시 활성으로 변경
         if (this.status == MappingStatus.SESSIONS_EXHAUSTED) {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             this.status = MappingStatus.ACTIVE;
             this.endDate = null;
         }
     }
 
-    /**
      * 매핑 활성화
      */
     public void activate() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (this.paymentStatus != PaymentStatus.APPROVED) {
             throw new IllegalStateException("관리자 승인이 필요합니다.");
         }
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = MappingStatus.ACTIVE;
         this.startDate = LocalDateTime.now();
     }
 
-    /**
      * 매핑 비활성화
      */
     public void deactivate() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = MappingStatus.INACTIVE;
         this.endDate = LocalDateTime.now();
     }
 
-    /**
      * 매핑 중단
      */
     public void suspend(String reason) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = MappingStatus.SUSPENDED;
         this.notes = reason;
     }
 
-    /**
      * 매핑 종료
      */
     public void terminate(String reason, String terminatedBy) {
@@ -286,7 +281,6 @@ public class ConsultantClientMapping extends BaseEntity {
         this.endDate = LocalDateTime.now();
     }
 
-    /**
      * 상담사 변경 (이전)
      */
     public void transferToNewConsultant(String reason, String transferredBy) {
@@ -297,21 +291,19 @@ public class ConsultantClientMapping extends BaseEntity {
         this.endDate = LocalDateTime.now();
     }
 
-    /**
      * 스케줄 작성 가능 여부 확인
      */
     public boolean canCreateSchedule() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return this.status == MappingStatus.ACTIVE && this.remainingSessions > 0;
     }
 
-    /**
      * 남은 회기 수 확인
      */
     public Integer getRemainingSessions() {
         return Math.max(0, this.remainingSessions);
     }
 
-    /**
      * 진행률 계산 (백분율)
      */
     public Double getProgressPercentage() {
@@ -328,6 +320,7 @@ public class ConsultantClientMapping extends BaseEntity {
             this.status = MappingStatus.PENDING_PAYMENT;
         }
         if (this.paymentStatus == null) {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             this.paymentStatus = PaymentStatus.PENDING;
         }
     }

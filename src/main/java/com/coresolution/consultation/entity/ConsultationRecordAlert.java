@@ -20,7 +20,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
  * 상담일지 미작성 알림 엔티티
  * 상담일지 미작성 시 자동 알림 생성
  * 
@@ -88,6 +87,7 @@ public class ConsultationRecordAlert {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
     private AlertStatus status = AlertStatus.PENDING;
 
     @Column(name = "message", columnDefinition = "TEXT")
@@ -105,7 +105,6 @@ public class ConsultationRecordAlert {
     @Builder.Default
     private Boolean isDeleted = false;
 
-    // 알림 타입 enum
     public enum AlertType {
         MISSING_RECORD("상담일지 미작성"),
         OVERDUE_RECORD("상담일지 지연"),
@@ -122,7 +121,6 @@ public class ConsultationRecordAlert {
         }
     }
 
-    // 알림 상태 enum
     public enum AlertStatus {
         PENDING("대기"),
         SENT("발송완료"),
@@ -141,37 +139,31 @@ public class ConsultationRecordAlert {
         }
     }
 
-    // 알림 발송 처리
     public void markAsSent() {
         this.status = AlertStatus.SENT;
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 알림 읽음 처리
     public void markAsRead() {
         this.status = AlertStatus.READ;
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 알림 무시 처리
     public void markAsDismissed() {
         this.status = AlertStatus.DISMISSED;
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 알림 해결 처리
     public void markAsResolved() {
         this.status = AlertStatus.RESOLVED;
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 논리적 삭제 처리
     public void markAsDeleted() {
         this.isDeleted = true;
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 중요도 점수 반환 (정렬용)
     public int getPriorityScore() {
         switch (alertType) {
             case MISSING_RECORD:

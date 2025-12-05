@@ -9,7 +9,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-/**
  * 온보딩 요청 엔티티
  * 
  * @author CoreSolution
@@ -62,6 +61,7 @@ public class OnboardingRequest {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
     private OnboardingStatus status = OnboardingStatus.PENDING;
     
     @Enumerated(EnumType.STRING)

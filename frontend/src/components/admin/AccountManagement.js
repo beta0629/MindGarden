@@ -27,7 +27,6 @@ const AccountManagement = () => {
     bankName: '',
     accountNumber: '',
     accountHolder: '',
-    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchId: null,
     isPrimary: false,
     isActive: true,
@@ -42,6 +41,7 @@ const AccountManagement = () => {
   const loadAccounts = async() => {
     try {
       setLoading(true);
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       const response = await fetch(ACCOUNT_API_ENDPOINTS.ACTIVE);
       if (response.ok) {
         const data = await response.json();
@@ -107,7 +107,6 @@ const AccountManagement = () => {
       bankName: account.bankName,
       accountNumber: account.accountNumber,
       accountHolder: account.accountHolder,
-      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       branchId: account.branchId,
       isPrimary: account.isPrimary,
       isActive: account.isActive,
@@ -131,6 +130,7 @@ const AccountManagement = () => {
 
       if (response.ok) {
         await loadAccounts();
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         notificationManager.show(ACCOUNT_MESSAGES.SUCCESS.DELETED, 'success');
       } else {
         notificationManager.show(ACCOUNT_MESSAGES.ERROR.DELETE_FAILED, 'error');
@@ -193,7 +193,6 @@ const AccountManagement = () => {
       bankName: '',
       accountNumber: '',
       accountHolder: '',
-      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       branchId: null,
       isPrimary: false,
       isActive: true,

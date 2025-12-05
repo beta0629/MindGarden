@@ -1,7 +1,6 @@
 import React from 'react';
 import PrintComponent from './PrintComponent';
 
-/**
  * 급여 계산서 프린트 컴포넌트
  * 
  * @param {Object} props - 컴포넌트 props
@@ -26,13 +25,11 @@ const SalaryPrintComponent = ({
     return <div>급여 데이터가 없습니다.</div>;
   }
 
-  // 금액 포맷팅 함수
   const formatCurrency = (amount) => {
     if (!amount) return '0원';
     return new Intl.NumberFormat('ko-KR').format(amount) + '원';
   };
 
-  // 세금 계산 (총급여 - 실지급액)
   const taxAmount = (salaryData.totalSalary || 0) - (salaryData.totalSalary - (salaryData.taxAmount || 0));
   const netSalary = (salaryData.totalSalary || 0) - (salaryData.taxAmount || 0);
 
@@ -46,7 +43,6 @@ const SalaryPrintComponent = ({
             marginBottom: '30px',
             padding: '20px',
             backgroundColor: 'var(--mg-gray-100)',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
             border: '2px solid #333'
           },
           '.salary-info': {
@@ -61,17 +57,14 @@ const SalaryPrintComponent = ({
             marginBottom: '20px'
           },
           '.salary-table th': {
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
             backgroundColor: '#e9ecef',
             fontWeight: 'bold',
             padding: '12px 8px',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
             border: '1px solid #333',
             textAlign: 'center'
           },
           '.salary-table td': {
             padding: '10px 8px',
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
             border: '1px solid #333',
             textAlign: 'right'
           },
@@ -81,16 +74,13 @@ const SalaryPrintComponent = ({
             backgroundColor: 'var(--mg-gray-100)'
           },
           '.total-row': {
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e8f5e8 -> var(--mg-custom-e8f5e8)
             backgroundColor: '#e8f5e8',
             fontWeight: 'bold'
           },
           '.tax-row': {
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
             backgroundColor: '#fff3cd'
           },
           '.net-row': {
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
             backgroundColor: '#d4edda',
             fontWeight: 'bold',
             fontSize: 'var(--font-size-base)'
@@ -170,6 +160,7 @@ const SalaryPrintComponent = ({
               </tr>
               <tr>
                 <td className="label">계산 상태</td>
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 <td>{salaryData.status || 'PENDING'}</td>
                 <td className="salary-table-desc">급여 계산 상태</td>
               </tr>

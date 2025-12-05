@@ -23,7 +23,6 @@ import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
 import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
 import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 import ErpReportModal from '../erp/ErpReportModal';
-// 새로 추가된 모달 컴포넌트들
 import AdminDashboardMonitoring from './AdminDashboard/AdminDashboardMonitoring';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS } from '../../constants/css-variables';
@@ -40,7 +39,6 @@ import './AdminDashboard.new.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
 
-// 라우트 경로 상수
 const ADMIN_ROUTES = {
     SCHEDULES: '/admin/schedules',
     SESSIONS: '/admin/sessions',
@@ -77,21 +75,15 @@ const AdminDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
     const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
 
-    // 이름에서 아바타용 초성을 추출하는 함수
     const getAvatarInitial = (name) => {
         if (!name) return '?';
         
-        // 한글인 경우 초성 추출
         if (/[가-힣]/.test(name)) {
-            // 이름을 공백으로 분리하여 각 부분의 첫 글자를 가져옴
             const parts = name.trim().split(/\s+/);
             if (parts.length > 1) {
-                // 성과 이름이 분리된 경우 (예: "김 선희")
                 return parts[0].charAt(0) + parts[1].charAt(0);
             } else {
-                // 성명이 붙어있는 경우 (예: "김선희", "김김선희")
                 const chars = name.split('');
-                // 첫 글자가 성인지 확인하고, 연속된 같은 글자가 있는지 확인
                 let result = chars[0];
                 for (let i = 1; i < chars.length; i++) {
                     if (chars[i] === chars[0]) {
@@ -104,7 +96,6 @@ const AdminDashboard = ({ user: propUser }) => {
             }
         }
         
-        // 영문인 경우 첫 글자
         return name.charAt(0).toUpperCase();
     };
     const [userPermissions, setUserPermissions] = useState([]);
@@ -147,7 +138,6 @@ const AdminDashboard = ({ user: propUser }) => {
         oldestHours: 0
     });
     
-    // 새로 추가된 모달 상태들
     const [showErpReport, setShowErpReport] = useState(false);
     const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
     const [showSpecialtyManagement, setShowSpecialtyManagement] = useState(false);
@@ -200,7 +190,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, []); // 사용자 객체 의존성 제거
 
-    // 세션 체크 및 권한 확인
     useEffect(() => {
         if (isInitialized.current) return;
         
@@ -278,13 +267,12 @@ const AdminDashboard = ({ user: propUser }) => {
 
             if (mappingsRes.ok) {
                 const mappingsData = await mappingsRes.json();
-                // ApiResponse 래퍼 처리
                 const mappings = (mappingsData && typeof mappingsData === 'object' && 'success' in mappingsData && 'data' in mappingsData)
                     ? mappingsData.data
                     : mappingsData;
                 totalMappings = mappingsData.count || mappings?.count || 0;
-                // mappings.data가 배열인지 확인
                 const mappingsList = Array.isArray(mappings?.data) ? mappings.data : (Array.isArray(mappings) ? mappings : []);
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 activeMappings = mappingsList.filter(m => m.status === 'ACTIVE').length;
             }
 
@@ -372,7 +360,6 @@ const AdminDashboard = ({ user: propUser }) => {
                 console.log('🔍 API 응답 데이터:', data);
                 
                 if (data.success && data.data) {
-                    // data.data가 배열인지 확인
                     const pendingList = Array.isArray(data.data) ? data.data : [];
                     const count = pendingList.length;
                     const totalAmount = pendingList.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
@@ -413,7 +400,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, []);
 
-    // 스케줄 자동 완료 처리
     const handleAutoCompleteSchedules = async () => {
         try {
             const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete');
@@ -432,7 +418,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 스케줄 자동 완료 처리 및 상담일지 미작성 알림
     const handleAutoCompleteWithReminder = async () => {
         try {
             const response = await csrfTokenManager.post('/api/v1/admin/schedules/auto-complete-with-reminder');
@@ -451,10 +436,8 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 중복 매칭 통합 처리
     const handleMergeDuplicateMappings = async () => {
         try {
-            // 먼저 중복 매칭 조회
             const checkResponse = await fetch('/api/v1/admin/duplicate-mappings');
             if (!checkResponse.ok) {
                 showToast('중복 매칭 조회에 실패했습니다.', 'danger');
@@ -467,7 +450,6 @@ const AdminDashboard = ({ user: propUser }) => {
                 return;
             }
             
-            // 사용자 확인
             const confirmMessage = `중복된 매칭이 ${checkResult.count}개 발견되었습니다. 통합하시겠습니까?`;
             const confirmed = await new Promise((resolve) => {
       notificationManager.confirm(confirmMessage, resolve);
@@ -476,7 +458,6 @@ const AdminDashboard = ({ user: propUser }) => {
         return;
     }
             
-            // 중복 매칭 통합 실행
             const response = await csrfTokenManager.post('/api/v1/admin/merge-duplicate-mappings');
 
             if (response.ok) {
@@ -517,7 +498,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 시스템 상태 체크
     const checkSystemStatus = async () => {
         setLoading(true);
         try {
@@ -553,13 +533,11 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 로그 보기
     const viewLogs = async () => {
         try {
             const response = await fetch('/api/admin/logs/recent');
             if (response.ok) {
                 const logs = await response.json();
-                // 로그를 새 창에서 표시
                 const logWindow = window.open('', '_blank');
                 logWindow.document.write(`
                     <html>
@@ -580,14 +558,12 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 캐시 초기화
     const clearCache = async () => {
         try {
             const response = await csrfTokenManager.post('/api/admin/cache/clear');
 
             if (response.ok) {
                 showToast('캐시가 성공적으로 초기화되었습니다.', 'success');
-                // 통계도 새로고침
                 loadStats();
             } else {
                 showToast('캐시 초기화에 실패했습니다.', 'danger');
@@ -598,7 +574,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 백업 생성
     const createBackup = async () => {
         try {
             const response = await csrfTokenManager.post('/api/admin/backup/create');
@@ -615,7 +590,6 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 로딩 상태 처리
     if (sessionLoading) {
         return (
             <div className="admin-dashboard">
@@ -708,6 +682,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         icon={<CheckCircle />}
                         value={stats.activeMappings}
                         label="활성 매칭"
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         onClick={() => navigate(`${ADMIN_ROUTES.MAPPING_MANAGEMENT}?status=ACTIVE`)}
                     />
                 </div>
@@ -1066,8 +1041,6 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className="mg-management-icon">
                             <FaCog />
                         </div>
-                        <h3>공통코드 관리</h3>
-                        <p className="mg-management-description">시스템 공통코드, 상태별 색상/아이콘을 관리합니다</p>
                     </div>
                     
                     <div className="mg-management-card" onClick={() => navigate(ADMIN_ROUTES.SYSTEM_NOTIFICATIONS)}>

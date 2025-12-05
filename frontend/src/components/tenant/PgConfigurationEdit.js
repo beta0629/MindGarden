@@ -7,7 +7,6 @@ import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import PgConfigurationForm from './PgConfigurationForm';
 
-/**
  * PG 설정 수정 페이지
  * 
  * @author CoreSolution
@@ -78,7 +77,7 @@ const PgConfigurationEdit = () => {
     );
   }
   
-  // 승인 대기 상태가 아니면 수정 불가
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   if (config.approvalStatus !== 'PENDING') {
     showNotification('승인 대기 상태인 설정만 수정할 수 있습니다.', 'error');
     navigate(`/tenant/pg-configurations/${configId}`);

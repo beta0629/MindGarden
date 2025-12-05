@@ -16,7 +16,6 @@ import { sessionManager } from '../../utils/sessionManager';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import './BranchManagement.css';
 
-/**
  * 지점 관리 컴포넌트
  * 
  * @author MindGarden
@@ -27,20 +26,17 @@ const BranchManagement = () => {
     const navigate = useNavigate();
     const { user, hasPermission } = useSession();
     
-    // === 권한 체크 ===
     useEffect(() => {
         if (!user) {
             navigate('/login');
             return;
         }
         
-        // 동적 권한 시스템으로 지점 관리 권한 확인
         const checkBranchManagementPermission = async () => {
             const hasPermissionResult = await hasPermission('MANAGE_BRANCH');
             
             if (!hasPermissionResult) {
                 showAlert('접근 권한이 없습니다.', 'error');
-                // 동적 대시보드 라우팅
                 const authResponse = {
                   user: user,
                   currentTenantRole: sessionManager.getCurrentTenantRole()
@@ -53,7 +49,6 @@ const BranchManagement = () => {
         checkBranchManagementPermission();
     }, [user, navigate]);
     
-    // 권한이 없는 경우 로딩 표시
     if (!user || (user.role !== 'HQ_ADMIN' && user.role !== 'SUPER_HQ_ADMIN')) {
         return (
             <SimpleLayout title="지점 관리" loading={true} loadingText="권한을 확인하는 중...">
@@ -62,7 +57,6 @@ const BranchManagement = () => {
         );
     }
     
-    // === 상태 관리 ===
     const [branches, setBranches] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -78,12 +72,14 @@ const BranchManagement = () => {
     const [sortBy, setSortBy] = useState('branchName');
     const [sortDirection, setSortDirection] = useState('asc');
 
-    // === 상수 정의 ===
     const BRANCH_STATUS = {
         PLANNING: '계획중',
         PREPARING: '준비중',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         ACTIVE: '운영중',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         SUSPENDED: '일시정지',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         CLOSED: '폐점'
     };
 
@@ -96,14 +92,11 @@ const BranchManagement = () => {
 
     const PAGE_SIZE = 10;
 
-    // === 초기 로딩 ===
     useEffect(() => {
         loadBranches();
     }, [currentPage, sortBy, sortDirection, filterStatus, filterType]);
 
-    // === API 호출 함수들 ===
     
-    /**
      * 지점 목록 조회
      */
     const loadBranches = async () => {
@@ -113,7 +106,6 @@ const BranchManagement = () => {
 
             let url = `${API_ENDPOINTS.BRANCHES}?page=${currentPage}&size=${PAGE_SIZE}&sort=${sortBy},${sortDirection}`;
             
-            // 필터 조건 추가
             if (filterStatus !== 'ALL') {
                 url += `&status=${filterStatus}`;
             }
@@ -148,7 +140,6 @@ const BranchManagement = () => {
         }
     };
 
-    /**
      * 지점 생성
      */
     const createBranch = async (branchData) => {
@@ -173,7 +164,6 @@ const BranchManagement = () => {
         }
     };
 
-    /**
      * 지점 수정
      */
     const updateBranch = async (branchId, branchData) => {
@@ -205,7 +195,6 @@ const BranchManagement = () => {
         }
     };
 
-    /**
      * 지점 삭제
      */
     const deleteBranch = async (branchId) => {
@@ -240,7 +229,6 @@ const BranchManagement = () => {
         }
     };
 
-    /**
      * 지점 상태 변경
      */
     const changeBranchStatus = async (branchId, newStatus) => {
@@ -268,7 +256,6 @@ const BranchManagement = () => {
         }
     };
 
-    // === 이벤트 핸들러 ===
 
     const handleSearch = () => {
         setCurrentPage(0);
@@ -307,7 +294,6 @@ const BranchManagement = () => {
         changeBranchStatus(branch.id, status);
     };
 
-    // === 렌더링 ===
 
     return (
         <div className="branch-management">
@@ -522,12 +508,10 @@ const BranchManagement = () => {
     );
 };
 
-/**
  * 지점 생성 모달 컴포넌트
  */
 const BranchCreateModal = ({ isOpen, onClose, onSubmit }) => {
     const [formData, setFormData] = useState({
-        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchCode: '',
         branchName: '',
         branchType: 'FRANCHISE',
@@ -553,7 +537,6 @@ const BranchCreateModal = ({ isOpen, onClose, onSubmit }) => {
             [name]: value
         }));
         
-        // 에러 초기화
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -566,7 +549,6 @@ const BranchCreateModal = ({ isOpen, onClose, onSubmit }) => {
         const newErrors = {};
         
         if (!formData.branchCode.trim()) {
-            // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
             newErrors.branchCode = '지점 코드는 필수입니다.';
         }
         if (!formData.branchName.trim()) {
@@ -802,7 +784,6 @@ const BranchCreateModal = ({ isOpen, onClose, onSubmit }) => {
     );
 };
 
-/**
  * 지점 수정 모달 컴포넌트 (생성 모달과 유사하지만 기존 데이터로 초기화)
  */
 const BranchEditModal = ({ isOpen, branch, onClose, onSubmit }) => {
@@ -1078,15 +1059,17 @@ const BranchEditModal = ({ isOpen, branch, onClose, onSubmit }) => {
     );
 };
 
-/**
  * 지점 상세 정보 모달 컴포넌트
  */
 const BranchDetailModal = ({ isOpen, branch, onClose }) => {
     const BRANCH_STATUS = {
         PLANNING: '계획중',
         PREPARING: '준비중',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         ACTIVE: '운영중',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         SUSPENDED: '일시정지',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         CLOSED: '폐점'
     };
 

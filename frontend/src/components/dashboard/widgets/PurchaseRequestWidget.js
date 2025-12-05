@@ -1,4 +1,3 @@
-/**
  * Purchase Request Widget
  * 구매 요청 목록을 표시하는 범용 위젯
  * ErpPurchaseRequestPanel을 기반으로 범용화
@@ -11,7 +10,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../utils/ajax';
-// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import './Widget.css';
 
 const PurchaseRequestWidget = ({ widget, user }) => {
@@ -58,10 +56,12 @@ const PurchaseRequestWidget = ({ widget, user }) => {
         const requestsList = Array.isArray(response.data) ? response.data : [];
         
         const pendingCount = requestsList.filter(req => 
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           req.status === 'PENDING' || req.status === 'SUBMITTED'
         ).length;
         
         const approvedCount = requestsList.filter(req => 
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           req.status === 'APPROVED' || req.status === 'COMPLETED'
         ).length;
         

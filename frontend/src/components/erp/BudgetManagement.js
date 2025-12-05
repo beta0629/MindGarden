@@ -6,7 +6,6 @@ import SimpleLayout from '../layout/SimpleLayout';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
-/**
  * ERP 예산 관리 페이지
  * 예산 계획 및 관리
  */
@@ -21,7 +20,6 @@ const BudgetManagement = () => {
   const [editingBudget, setEditingBudget] = useState(null);
   const [hasDataError, setHasDataError] = useState(false);
 
-  // 새 예산 폼 상태
   const [newBudget, setNewBudget] = useState({
     name: '',
     category: '',
@@ -32,7 +30,6 @@ const BudgetManagement = () => {
     department: ''
   });
 
-  // 데이터 로드
   useEffect(() => {
     if (!sessionLoading) {
       loadData();
@@ -69,7 +66,6 @@ const BudgetManagement = () => {
 
   const loadBudgets = async () => {
     try {
-      // 인증이 필요한 경우 빈 배열로 설정 (데이터 없음 상태)
       if (!isLoggedIn || !user?.id) {
         setBudgets([]);
         return;
@@ -79,12 +75,10 @@ const BudgetManagement = () => {
       if (response.success) {
         setBudgets(response.data || []);
       } else {
-        // API 응답은 성공했지만 데이터가 없는 경우
         setBudgets([]);
       }
     } catch (err) {
       console.error('예산 로드 실패:', err);
-      // API 호출 실패 시 빈 배열로 설정 (데이터 없음 상태)
       setBudgets([]);
     }
   };
@@ -93,7 +87,6 @@ const BudgetManagement = () => {
     try {
       console.log('예산 카테고리 로드 시작 - 로그인 상태:', isLoggedIn, '사용자:', user?.id);
       
-      // 기본 카테고리 정의
       const defaultCategories = [
         { id: 607, codeValue: 'OPERATING', codeLabel: '운영비', codeDescription: '일반적인 운영 비용', sortOrder: 1 },
         { id: 608, codeValue: 'MARKETING', codeLabel: '마케팅', codeDescription: '마케팅 및 홍보 비용', sortOrder: 2 },
@@ -105,7 +98,6 @@ const BudgetManagement = () => {
         { id: 614, codeValue: 'OTHER', codeLabel: '기타', codeDescription: '기타 비용', sortOrder: 8 }
       ];
 
-      // 인증이 필요한 경우 기본 카테고리 사용
       if (!isLoggedIn || !user?.id) {
         console.log('로그인 없이 기본 카테고리 사용');
         setBudgetCategories(defaultCategories);
@@ -132,7 +124,6 @@ const BudgetManagement = () => {
       }
     } catch (err) {
       console.error('예산 카테고리 로드 전체 실패:', err);
-      // 전체 실패 시에도 기본 카테고리 사용
       const defaultCategories = [
         { id: 607, codeValue: 'OPERATING', codeLabel: '운영비', codeDescription: '일반적인 운영 비용', sortOrder: 1 },
         { id: 608, codeValue: 'MARKETING', codeLabel: '마케팅', codeDescription: '마케팅 및 홍보 비용', sortOrder: 2 },
@@ -150,7 +141,6 @@ const BudgetManagement = () => {
 
   const loadBudgetReports = async () => {
     try {
-      // 예산 보고서 데이터 로드 (향후 구현)
       console.log('예산 보고서 데이터 로드');
     } catch (err) {
       console.error('예산 보고서 로드 실패:', err);
@@ -239,9 +229,13 @@ const BudgetManagement = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE': return 'success';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING': return 'warning';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED': return 'info';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'CANCELLED': return 'danger';
       default: return 'secondary';
     }
@@ -437,6 +431,7 @@ const BudgetManagement = () => {
                                   <div className="erp-budget-title">
                                     <h3>{budget.name}</h3>
                                     <span className={`erp-budget-status ${getStatusColor(budget.status)}`}>
+                                      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                       {budget.status === 'ACTIVE' ? '활성' : budget.status}
                                     </span>
                                   </div>
@@ -670,7 +665,6 @@ const BudgetManagement = () => {
                       {budgets.length > 0 ? (
                         <div className="erp-grid">
                           {(() => {
-                            // 카테고리별로 그룹화
                             const categoryStats = {};
                             budgets.forEach(budget => {
                               const category = budget.category || '기타';

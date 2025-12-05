@@ -1,4 +1,3 @@
-/**
  * Session Management Widget - 표준화된 위젯
  * 상담소 특화 회기 관리 위젯
  * 
@@ -16,14 +15,12 @@ import { RoleUtils, USER_ROLES } from '../../../../constants/roles';
 import './SessionManagementWidget.css';
 
 const SessionManagementWidget = ({ widget, user }) => {
-  // 권한 확인: 관리자와 상담사만 접근 가능
   if (!RoleUtils.isAdmin(user) && !RoleUtils.isConsultant(user) && !RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
     return null;
   }
 
   const navigate = useNavigate();
 
-  // 데이터 소스 설정
   const getDataSourceConfig = () => {
     const baseEndpoints = {
       sessions: {
@@ -32,7 +29,6 @@ const SessionManagementWidget = ({ widget, user }) => {
         params: { 
           limit: widget.config?.maxItems || 10,
           status: 'all',
-          // 상담사인 경우 자신의 세션만 조회
           ...(RoleUtils.isConsultant(user) && !RoleUtils.isAdmin(user) && { consultantId: user.id })
         }
       },
@@ -45,7 +41,6 @@ const SessionManagementWidget = ({ widget, user }) => {
       }
     };
 
-    // 회기 연장 요청은 설정에 따라 추가
     if (widget.config?.showExtensionRequests !== false) {
       baseEndpoints.extensionRequests = {
         url: '/api/sessions/extension-requests',
@@ -66,7 +61,6 @@ const SessionManagementWidget = ({ widget, user }) => {
     };
   };
 
-  // Transform 함수: API 응답 데이터를 위젯 형태로 변환
   const transform = (rawData) => {
     if (!rawData) return { sessions: [], stats: null, extensionRequests: [], hasData: false };
 
@@ -86,7 +80,6 @@ const SessionManagementWidget = ({ widget, user }) => {
     };
   };
 
-  // 위젯 설정에 데이터 소스 동적 설정
   const widgetWithDataSource = {
     ...widget,
     config: {
@@ -96,7 +89,6 @@ const SessionManagementWidget = ({ widget, user }) => {
     }
   };
 
-  // 표준화된 위젯 훅 사용
   const {
     data,
     loading,
@@ -108,29 +100,35 @@ const SessionManagementWidget = ({ widget, user }) => {
     cache: true
   });
 
-  // 세션 상태별 스타일 클래스
   const getStatusClass = (status) => {
     const statusMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': 'status-completed',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': 'status-pending', 
       'UPCOMING': 'status-upcoming',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CANCELLED': 'status-cancelled',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'IN_PROGRESS': 'status-in-progress'
     };
     return statusMap[status] || 'status-unknown';
   };
 
-  // 세션 상태별 아이콘
   const getStatusIcon = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return <CheckCircle className="status-icon" />;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return <Clock className="status-icon" />;
       case 'UPCOMING':
         return <Calendar className="status-icon" />;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'CANCELLED':
         return <XCircle className="status-icon" />;
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'IN_PROGRESS':
         return <Users className="status-icon" />;
       default:
@@ -138,39 +136,37 @@ const SessionManagementWidget = ({ widget, user }) => {
     }
   };
 
-  // 세션 상태 한글명
   const getStatusLabel = (status) => {
     const statusLabels = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': '완료',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': '대기',
       'UPCOMING': '예정',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CANCELLED': '취소',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'IN_PROGRESS': '진행중'
     };
     return statusLabels[status] || '미지정';
   };
 
-  // 세션 상세보기
   const handleViewSession = (sessionId) => {
     navigate(`/sessions/${sessionId}`);
   };
 
-  // 새 세션 생성
   const handleCreateSession = () => {
     navigate('/sessions/new');
   };
 
-  // 세션 관리 페이지로 이동
   const handleViewAll = () => {
     navigate('/sessions');
   };
 
-  // 연장 요청 처리
   const handleExtensionRequest = (requestId) => {
     navigate(`/sessions/extension-requests/${requestId}`);
   };
 
-  // 날짜 포맷팅
   const formatDateTime = (dateTimeString) => {
     if (!dateTimeString) return '-';
     const date = new Date(dateTimeString);
@@ -183,7 +179,6 @@ const SessionManagementWidget = ({ widget, user }) => {
     });
   };
 
-  // 렌더링 내용
   const renderContent = () => {
     if (!hasData) {
       return (
@@ -383,7 +378,6 @@ const SessionManagementWidget = ({ widget, user }) => {
     );
   };
 
-  // 헤더 설정
   const headerConfig = {
     icon: <Calendar className="widget-header-icon" />,
     subtitle: '상담 세션 관리',

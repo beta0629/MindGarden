@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { apiGet, apiPost } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../hooks/useSession';
 import { getPackageOptions } from '../../utils/commonCodeUtils';
 import { API_BASE_URL } from '../../constants/api';
-// import csrfTokenManager from '../../utils/csrfTokenManager';
 import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import { 
@@ -21,7 +19,6 @@ import {
 } from '../../constants/mapping';
 import './MappingCreationModal.css';
 
-/**
  * 매칭 생성 모달 컴포넌트
  * - 상담사와 내담자 간의 매칭 생성
  * - 결제 정보 입력
@@ -47,7 +44,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
     const [loading, setLoading] = useState(false);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     
-    // 화면 크기 감지
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
@@ -57,7 +53,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         return() => window.removeEventListener('resize', handleResize);
     }, []);
     
-    // 모달 크기 결정 (공통 헤더 고려)
     const getModalSize = () => {
         if (windowWidth <= 480) return 'medium'; // 모바일에서는 medium
         if (windowWidth <= 768) return 'medium'; // 태블릿에서는 medium
@@ -65,7 +60,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         return 'large'; // 큰 화면에서는 large
     };
     
-    // 결제 정보
     const [paymentInfo, setPaymentInfo] = useState({
         totalSessions: DEFAULT_MAPPING_CONFIG.TOTAL_SESSIONS,
         packageName: DEFAULT_MAPPING_CONFIG.PACKAGE_NAME,
@@ -77,7 +71,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         notes: ''
     });
 
-    // 참조번호 생성 함수
     const generateReferenceNumber = (method = 'BANK_TRANSFER') => {
         const now = new Date();
         const timestamp = `${now.getFullYear()}${ (now.getMonth() + 1).toString().padStart(2, '0') }${ now.getDate().toString().padStart(2, '0') }_${ now.getHours().toString().padStart(2, '0') }${ now.getMinutes().toString().padStart(2, '0') }${ now.getSeconds().toString().padStart(2, '0') }`;
@@ -89,16 +82,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         }
     };
 
-    // 코드 옵션 상태
     const [packageOptions, setPackageOptions] = useState(PACKAGE_OPTIONS);
     const [paymentMethodOptions, setPaymentMethodOptions] = useState(PAYMENT_METHOD_OPTIONS);
     const [responsibilityOptions, setResponsibilityOptions] = useState(RESPONSIBILITY_OPTIONS);
     const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
 
-    // 모달이 열릴 때 마지막 사용 패키지와 지불방법 자동 설정
     useEffect(() => {
         if (isOpen) {
-            // 로컬 스토리지에서 마지막 사용 값 불러오기
             const lastUsedPackage = localStorage.getItem('lastUsedPackage');
             const lastUsedPaymentMethod = localStorage.getItem('lastUsedPaymentMethod');
             
@@ -107,7 +97,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                 paymentMethod: lastUsedPaymentMethod
             });
             
-            // 마지막 사용 패키지가 있으면 자동 설정
             if (lastUsedPackage) {
                 const savedPackageData = JSON.parse(lastUsedPackage);
                 const foundPackage = packageOptions.find(pkg => pkg.label === savedPackageData.packageName || pkg.value === savedPackageData.packageName);
@@ -123,7 +112,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                 }
             }
             
-            // 마지막 사용 지불방법이 있으면 자동 설정
             if (lastUsedPaymentMethod) {
                 const paymentMethodExists = paymentMethodOptions.find(method => method.value === lastUsedPaymentMethod);
                 if (paymentMethodExists) {
@@ -135,7 +123,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                     console.log('✅ 마지막 사용 지불방법 자동 설정:', lastUsedPaymentMethod);
                 }
             } else if (!paymentInfo.paymentReference) {
-                // 저장된 값이 없으면 기본값으로 참조번호 생성
                 const initialReference = generateReferenceNumber(paymentInfo.paymentMethod);
                 setPaymentInfo(prev => ({
                     ...prev,
@@ -145,11 +132,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         }
     }, [isOpen, packageOptions, paymentMethodOptions]);
 
-    // 패키지 코드 로드 (테넌트 코드 전용 - 독립성 보장)
     const loadPackageCodes = useCallback(async() => {
         try {
             setLoadingPackageCodes(true);
-            // 테넌트 코드 전용 API 사용 (코어 코드 폴백 없음)
             const { getTenantCodes } = await import('../../utils/commonCodeApi');
             const response = await getTenantCodes('CONSULTATION_PACKAGE');
             if (response && response.length > 0) {
@@ -157,7 +142,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                     let sessions = 20; // 기본값
                     let price = 0;
                     
-                    // 코드 값에 따라 세션 수와 가격 설정
                     if (code.codeValue === 'BASIC') {
                         sessions = 20;
                         price = 200000;
@@ -172,16 +156,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                         price = 1000000;
                     } else if (code.codeValue.startsWith('SINGLE_')) {
                         sessions = 1; // 단회기는 1회기
-                        // SINGLE_30000 -> 30000
                         const priceStr = code.codeValue.replace('SINGLE_', '');
                         price = parseInt(priceStr, 10);
-                        // NaN 체크
                         if (isNaN(price)) {
                             console.warn(`단회기 가격 파싱 실패: ${code.codeValue} -> ${ priceStr }`);
                             price = 30000; // 기본값
                         }
                     } else {
-                        // extraData에서 세션 수 가져오기
                         if (code.extraData) {
                             try {
                                 const extraData = JSON.parse(code.extraData);
@@ -193,7 +174,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                         price = code.codeDescription ? parseFloat(code.codeDescription) : 0;
                     }
                     
-                    // 패키지별 라벨 생성
                     let label;
                     if (code.codeValue === 'BASIC') {
                         label = '기본 패키지';
@@ -204,7 +184,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                     } else if (code.codeValue === 'VIP') {
                         label = 'VIP 패키지';
                     } else if (code.codeValue.startsWith('SINGLE_')) {
-                        // SINGLE_ 패키지는 코드값 그대로 사용 (SINGLE_30000, SINGLE_35000 등)
                         label = code.codeValue;
                     } else {
                         label = code.codeLabel;
@@ -224,13 +203,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
             }
         } catch (error) {
             console.error('패키지 코드 로드 실패:', error);
-            // 실패 시 기본값 사용
         } finally {
             setLoadingPackageCodes(false);
         }
     }, []);
 
-    // 데이터 로드
     useEffect(() => {
         if (isOpen) {
             loadConsultants();
@@ -241,7 +218,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         }
     }, [isOpen, loadPackageCodes]);
 
-    // 상담사 검색 필터링
     useEffect(() => {
         if (consultantSearchTerm.trim() === '') {
             setFilteredConsultants(consultants);
@@ -254,11 +230,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         }
     }, [consultants, consultantSearchTerm]);
 
-    // 내담자 필터링 및 정렬
     useEffect(() => {
         let filtered = clients;
 
-        // 검색어 필터링
         if (clientSearchTerm.trim()) {
             filtered = filtered.filter(client => 
                 client.name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
@@ -266,10 +240,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
             );
         }
 
-        // 상태 필터링
         if (clientFilterStatus !== 'ALL') {
             filtered = filtered.filter(client => {
-                // 내담자의 매칭 상태 확인
                 const hasMapping = mappings.some(mapping => 
                     mapping.clientId === client.id && mapping.status === clientFilterStatus
                 );
@@ -282,7 +254,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
             });
         }
 
-        // 정렬
         filtered = filtered.sort((a, b) => {
             switch (clientSortBy) {
                 case 'name':
@@ -303,12 +274,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         try {
             console.log('🔄 상담사 목록 로딩 시작 (통합 API)...');
             
-            // 통합 API 사용 (전문분야 포함)
             const consultantsList = await getAllConsultantsWithStats();
             console.log('📊 통합 API 응답:', consultantsList);
             
             if (consultantsList && consultantsList.length > 0) {
-                // 응답 데이터 변환: Map.of() 구조 파싱
                 const consultantsData = consultantsList.map(item => {
                     const consultantEntity = item.consultant || {};
                     return {
@@ -318,7 +287,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                         phone: consultantEntity.phone,
                         role: consultantEntity.role,
                         isActive: consultantEntity.isActive,
-                        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                         branchCode: consultantEntity.branchCode,
                         specialty: consultantEntity.specialty,
                         specialtyDetails: consultantEntity.specialtyDetails,
@@ -349,13 +317,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
             if (response.success) {
                 setClients(response.data || []);
             } else {
-                // API 실패 시 테스트 데이터 사용
                 console.log('통합 내담자 API 실패, 테스트 데이터 사용');
                 setClients(getTestClients());
             }
         } catch (error) {
             console.error('내담자 목록 로드 실패:', error);
-            // 오류 시 테스트 데이터 사용
             console.log('내담자 로드 오류, 테스트 데이터 사용');
             setClients(getTestClients());
         }
@@ -372,14 +338,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         }
     };
 
-    // 코드 옵션 로드
     const loadCodeOptions = async() => {
         try {
-            // 패키지 타입 코드 로드 (공통 코드 유틸리티 사용)
             const packageOpts = await getPackageOptions();
             setPackageOptions(packageOpts);
 
-            // 결제 방법 코드 로드 (테넌트 코드 전용 - 독립성 보장)
             const { getTenantCodes } = await import('../../utils/commonCodeApi');
             const paymentCodes = await getTenantCodes('PAYMENT_METHOD');
             if (paymentCodes && paymentCodes.length > 0) {
@@ -390,7 +353,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                 setPaymentMethodOptions(paymentOpts);
             }
 
-            // 담당 업무 코드 로드 (테넌트 코드 전용 - 독립성 보장)
             const responsibilityCodes = await getTenantCodes('RESPONSIBILITY');
             if (responsibilityCodes && responsibilityCodes.length > 0) {
                 const responsibilityOpts = responsibilityCodes.map(code => ({
@@ -401,11 +363,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
             }
         } catch (error) {
             console.error('코드 옵션 로드 오류:', error);
-            // 기본 옵션 사용 (이미 설정됨)
         }
     };
 
-    // 테스트용 상담사 데이터
     const getTestConsultants = () => {
         return [
             { id: 1, name: '김상담', email: 'consultant1@mindgarden.com', role: 'CONSULTANT' },
@@ -414,7 +374,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         ];
     };
 
-    // 테스트용 내담자 데이터
     const getTestClients = () => {
         return [
             { id: 1, name: '이내담', email: 'client1@mindgarden.com', role: 'CLIENT' },
@@ -441,6 +400,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                 notes: paymentInfo.notes,
                 responsibility: paymentInfo.responsibility,
                 specialConsiderations: paymentInfo.specialConsiderations,
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 paymentStatus: 'PENDING',
                 totalSessions: paymentInfo.totalSessions,
                 remainingSessions: paymentInfo.totalSessions,
@@ -454,18 +414,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
 
             console.log('매칭 생성 데이터:', mappingData);
 
-            // 실제 매칭 생성 API 사용
             try {
-                // 환경별 API 호출 방식 결정
                 const isProduction = process.env.NODE_ENV === 'production' || 
                                    window.location.hostname !== 'localhost';
                 
                 let response;
                 if (isProduction) {
-                    // 운영 환경: CSRF 토큰 사용
                     response = await csrfTokenManager.post(`${API_BASE_URL}/api/admin/mappings`, mappingData);
                 } else {
-                    // 개발 환경: 일반 fetch 사용 (CSRF 비활성화)
                     response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
                         method: 'POST',
                         headers: {
@@ -479,7 +435,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                     const result = await response.json();
                     console.log('✅ 매칭 생성 성공:', result);
                     
-                    // 마지막 사용 패키지와 지불방법 저장
                     if (paymentInfo.packageName) {
                         const packageData = {
                             packageName: paymentInfo.packageName,
@@ -495,7 +450,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                         console.log('💾 마지막 사용 지불방법 저장:', paymentInfo.paymentMethod);
                     }
                     
-                    // 상세한 완료 메시지 생성
                     const consultantName = selectedConsultant?.name || '상담사';
                     const clientName = selectedClient?.name || '내담자';
                     const packageName = paymentInfo.packageName || '패키지';
@@ -503,6 +457,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                     notificationManager.success(
                         `🎉 매칭이 완료되었습니다!\n📋 상담사: ${consultantName}\n` +
                         `👤 내담자: ${ clientName }\n📦 패키지: ${ packageName }\n` +
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         `✅ 상태: ${ getMappingStatusKoreanNameSync(result.data?.status || 'ACTIVE') }`
                     );
                     
@@ -522,7 +477,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                 }
             } catch (apiError) {
                 console.error('API 호출 실패:', apiError);
-                // API 실패 시 시뮬레이션으로 성공 처리
                 console.log('API 실패, 시뮬레이션으로 성공 처리');
                 notificationManager.success('매칭이 성공적으로 생성되었습니다! (시뮬레이션)');
                 setStep(4);
@@ -557,7 +511,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
         onClose();
     };
 
-    // 모달 액션 버튼들
     const renderActions = () => (
         <>
             {step > 1 && step < 4 && (
@@ -747,7 +700,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                                         >
                                             <option value="ALL">전체</option>
                                             <option value="NO_MAPPING">매칭 없음</option>
+                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                             <option value="ACTIVE">활성</option>
+                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                             <option value="INACTIVE">비활성</option>
                                             <option value="TERMINATED">종료됨</option>
                                         </select>
@@ -856,7 +811,6 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const 
                                                     packagePrice: selectedPackage.price
                                                 });
                                                 
-                                                // 자동 매칭 성공 알림
                                                 notificationManager.success(
                                                     `패키지가 선택되었습니다! 세션 수: ${ selectedPackage.sessions }회기, 가격: ${ selectedPackage.price.toLocaleString() }원`
                                                 );

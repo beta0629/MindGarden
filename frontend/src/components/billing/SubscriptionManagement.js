@@ -1,4 +1,3 @@
-/**
  * 구독 관리 컴포넌트
  * 
  * 구독 생성, 조회, 활성화, 취소 기능을 제공합니다.
@@ -39,7 +38,6 @@ import {
 } from '../../constants/billing';
 import './SubscriptionManagement.css';
 
-/**
  * 구독 관리 컴포넌트
  * 
  * @param {Object} props
@@ -56,10 +54,8 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
   const [subscriptionStatusCodes, setSubscriptionStatusCodes] = useState([]);
   const [billingCycleCodes, setBillingCycleCodes] = useState([]);
 
-  // 테넌트 ID 결정
   const tenantId = propTenantId || sessionInfo?.tenantId || user?.tenantId;
 
-  // 구독 목록 로드
   useEffect(() => {
     if (tenantId) {
       loadSubscriptions();
@@ -69,7 +65,6 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   }, [tenantId]);
 
-  /**
    * 공통 코드 로드
    */
   const loadCommonCodes = async () => {
@@ -85,7 +80,6 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   };
 
-  /**
    * 구독 목록 로드
    */
   const loadSubscriptions = async () => {
@@ -103,7 +97,6 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   };
 
-  /**
    * 결제 수단 목록 로드
    */
   const loadPaymentMethods = async () => {
@@ -114,11 +107,9 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
       setPaymentMethods(methods);
     } catch (err) {
       console.error('결제 수단 목록 로드 실패:', err);
-      // 조용히 실패 (에러 표시 안 함)
     }
   };
 
-  /**
    * 요금제 목록 로드
    */
   const loadPricingPlans = async () => {
@@ -127,11 +118,9 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
       setPricingPlans(plans);
     } catch (err) {
       console.error('요금제 목록 로드 실패:', err);
-      // 조용히 실패 (에러 표시 안 함)
     }
   };
 
-  /**
    * 구독 생성
    */
   const handleCreateSubscription = async (planId, paymentMethodId) => {
@@ -161,7 +150,6 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   };
 
-  /**
    * 구독 활성화
    */
   const handleActivateSubscription = async (subscriptionId) => {
@@ -179,7 +167,6 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   };
 
-  /**
    * 구독 취소
    */
   const handleCancelSubscription = async (subscriptionId) => {
@@ -378,6 +365,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
                       {BILLING_MESSAGES.SUBSCRIPTION.ACTIVATE}
                     </button>
                   )}
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                   {subscription.status === SUBSCRIPTION_CONSTANTS.STATUS.ACTIVE && (
                     <button className="mg-button"
                       variant="danger"
@@ -398,7 +386,6 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
   );
 };
 
-/**
  * 구독 상태 배지 컴포넌트 (공통 코드 기반)
  */
 const SubscriptionStatusBadge = ({ status, statusCodes }) => {
@@ -420,12 +407,10 @@ const SubscriptionStatusBadge = ({ status, statusCodes }) => {
           setStatusLabel(status);
         }
       } else {
-        // 공통 코드가 로드되지 않은 경우, 동적으로 조회
         const label = await getCodeLabel(COMMON_CODE_GROUPS.SUBSCRIPTION_STATUS, status);
         setStatusLabel(label);
       }
 
-      // 상태별 CSS 클래스 설정
       const normalizedStatus = status?.toLowerCase() || '';
       if (normalizedStatus.includes('active')) {
         setStatusClass(BILLING_CSS.SUBSCRIPTION_MANAGEMENT.STATUS_ACTIVE);
@@ -441,9 +426,11 @@ const SubscriptionStatusBadge = ({ status, statusCodes }) => {
 
   return (
     <span className={`${BILLING_CSS.SUBSCRIPTION_MANAGEMENT.STATUS} ${statusClass}`}>
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       {status === SUBSCRIPTION_CONSTANTS.STATUS.ACTIVE && (
         <CheckCircle size={ICON_SIZES.SMALL} />
       )}
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       {status === SUBSCRIPTION_CONSTANTS.STATUS.CANCELLED && (
         <XCircle size={ICON_SIZES.SMALL} />
       )}
@@ -452,7 +439,6 @@ const SubscriptionStatusBadge = ({ status, statusCodes }) => {
   );
 };
 
-/**
  * 결제 주기 라벨 컴포넌트 (공통 코드 기반)
  */
 const BillingCycleLabel = ({ cycle, cycleCodes }) => {
@@ -473,7 +459,6 @@ const BillingCycleLabel = ({ cycle, cycleCodes }) => {
           setCycleLabel(cycle);
         }
       } else {
-        // 공통 코드가 로드되지 않은 경우, 동적으로 조회
         const label = await getCodeLabel(COMMON_CODE_GROUPS.BILLING_CYCLE, cycle);
         setCycleLabel(label);
       }

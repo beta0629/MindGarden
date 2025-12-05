@@ -9,14 +9,12 @@ import SimpleLayout from '../layout/SimpleLayout';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
-/**
  * 개선된 ERP 세무 관리 페이지
  * 세금 계산, 신고, 납부 관리
  */
 const ImprovedTaxManagement = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   
-  // sessionManager로 직접 확인
   const sessionUser = sessionManager.getUser();
   const sessionIsLoggedIn = sessionManager.isLoggedIn();
   const [activeTab, setActiveTab] = useState('overview');
@@ -27,18 +25,17 @@ const ImprovedTaxManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTax, setEditingTax] = useState(null);
 
-  // 새 세금 항목 폼 상태
   const [newTaxItem, setNewTaxItem] = useState({
     name: '',
     category: '',
     amount: '',
     taxRate: '',
     dueDate: '',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     status: 'PENDING',
     description: ''
   });
 
-  // 데이터 로드 (sessionManager 사용)
   useEffect(() => {
     if (sessionIsLoggedIn && sessionUser?.id) {
       console.log('✅ ImprovedTaxManagement 데이터 로드 시작');
@@ -77,7 +74,6 @@ const ImprovedTaxManagement = () => {
 
   const loadTaxOverview = async () => {
     try {
-      // 세금 개요 데이터 로드 (향후 구현)
       console.log('세금 개요 데이터 로드');
     } catch (err) {
       console.error('세금 개요 로드 실패:', err);
@@ -101,7 +97,6 @@ const ImprovedTaxManagement = () => {
 
   const loadTaxReports = async () => {
     try {
-      // 세금 보고서 데이터 로드 (향후 구현)
       console.log('세금 보고서 데이터 로드');
     } catch (err) {
       console.error('세금 보고서 로드 실패:', err);
@@ -135,6 +130,7 @@ const ImprovedTaxManagement = () => {
           amount: '',
           taxRate: '',
           dueDate: '',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           status: 'PENDING',
           description: ''
         });
@@ -204,6 +200,7 @@ const ImprovedTaxManagement = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING': return 'warning';
       case 'CALCULATED': return 'info';
       case 'PAID': return 'success';
@@ -214,6 +211,7 @@ const ImprovedTaxManagement = () => {
 
   const getStatusLabel = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING': return '대기';
       case 'CALCULATED': return '계산완료';
       case 'PAID': return '납부완료';
@@ -222,7 +220,6 @@ const ImprovedTaxManagement = () => {
     }
   };
 
-  // 로그인 체크
   if (!sessionIsLoggedIn || !sessionUser) {
     return (
       <SimpleLayout title="세무 관리">

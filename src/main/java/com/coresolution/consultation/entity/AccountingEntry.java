@@ -23,7 +23,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
  * 회계 분개 엔티티
  * 대차대조표 작성을 위한 회계 거래 분개
  * 
@@ -51,21 +50,18 @@ public class AccountingEntry {
     @Column(name = "tenant_id", length = 100)
     private String tenantId;
     
-    /**
      * 분개 일자
      */
     @NotNull(message = "분개 일자는 필수입니다.")
     @Column(name = "entry_date", nullable = false)
     private java.time.LocalDate entryDate;
     
-    /**
      * 분개 유형 (차변/대변)
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "entry_type", nullable = false, length = 10)
     private EntryType entryType;
     
-    /**
      * 계정 코드
      */
     @NotNull(message = "계정 코드는 필수입니다.")
@@ -73,7 +69,6 @@ public class AccountingEntry {
     @Column(name = "account_code", nullable = false, length = 20)
     private String accountCode;
     
-    /**
      * 계정명
      */
     @NotNull(message = "계정명은 필수입니다.")
@@ -81,7 +76,6 @@ public class AccountingEntry {
     @Column(name = "account_name", nullable = false, length = 100)
     private String accountName;
     
-    /**
      * 금액
      */
     @NotNull(message = "금액은 필수입니다.")
@@ -89,82 +83,71 @@ public class AccountingEntry {
     @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
     
-    /**
      * 적요
      */
     @Size(max = 500, message = "적요는 500자 이하여야 합니다.")
     @Column(name = "description", length = 500)
     private String description;
     
-    /**
      * 관련 거래 ID (급여, 구매, 결제 등)
      */
     @Column(name = "related_transaction_id")
     private Long relatedTransactionId;
     
-    /**
      * 관련 거래 타입
      */
     @Size(max = 50, message = "관련 거래 타입은 50자 이하여야 합니다.")
     @Column(name = "related_transaction_type", length = 50)
     private String relatedTransactionType;
     
-    /**
      * 대차대조표 분류
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "balance_sheet_category", nullable = false, length = 20)
     private BalanceSheetCategory balanceSheetCategory;
     
-    /**
      * 세부 분류
      */
     @Size(max = 50, message = "세부 분류는 50자 이하여야 합니다.")
     @Column(name = "subcategory", length = 50)
     private String subcategory;
     
-    /**
      * 승인 상태
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_status", nullable = false, length = 20)
     @Builder.Default
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
     private ApprovalStatus approvalStatus = ApprovalStatus.PENDING;
     
-    /**
      * 승인자 ID
      */
     @Column(name = "approver_id")
     private Long approverId;
     
-    /**
      * 승인 시간
      */
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
     
-    /**
      * 승인 코멘트
      */
     @Size(max = 500, message = "승인 코멘트는 500자 이하여야 합니다.")
     @Column(name = "approval_comment", length = 500)
     private String approvalComment;
     
-    /**
      * 삭제 여부
      */
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
     private Boolean isDeleted = false;
     
-    /**
      * 생성 시간
      */
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    /**
      * 수정 시간
      */
     @UpdateTimestamp
@@ -174,6 +157,7 @@ public class AccountingEntry {
     @PrePersist
     protected void onCreate() {
         if (approvalStatus == null) {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             approvalStatus = ApprovalStatus.PENDING;
         }
         if (isDeleted == null) {
@@ -181,7 +165,6 @@ public class AccountingEntry {
         }
     }
     
-    /**
      * 분개 유형 열거형
      */
     public enum EntryType {
@@ -199,7 +182,6 @@ public class AccountingEntry {
         }
     }
     
-    /**
      * 대차대조표 분류 열거형
      */
     public enum BalanceSheetCategory {
@@ -222,7 +204,6 @@ public class AccountingEntry {
         }
     }
     
-    /**
      * 승인 상태 열거형
      */
     public enum ApprovalStatus {
@@ -242,57 +223,54 @@ public class AccountingEntry {
         }
     }
     
-    // 비즈니스 메서드
     
-    /**
      * 승인 처리
      */
     public void approve(Long approverId, String comment) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.approvalStatus = ApprovalStatus.APPROVED;
         this.approverId = approverId;
         this.approvedAt = LocalDateTime.now();
         this.approvalComment = comment;
     }
     
-    /**
      * 거부 처리
      */
     public void reject(Long approverId, String comment) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.approvalStatus = ApprovalStatus.REJECTED;
         this.approverId = approverId;
         this.approvedAt = LocalDateTime.now();
         this.approvalComment = comment;
     }
     
-    /**
      * 취소 처리
      */
     public void cancel() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.approvalStatus = ApprovalStatus.CANCELLED;
     }
     
-    /**
      * 승인 가능한 상태인지 확인
      */
     public boolean isApprovable() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return ApprovalStatus.PENDING.equals(approvalStatus);
     }
     
-    /**
      * 승인된 상태인지 확인
      */
     public boolean isApproved() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return ApprovalStatus.APPROVED.equals(approvalStatus);
     }
     
-    /**
      * 차변인지 확인
      */
     public boolean isDebit() {
         return EntryType.DEBIT.equals(entryType);
     }
     
-    /**
      * 대변인지 확인
      */
     public boolean isCredit() {

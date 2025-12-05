@@ -1,89 +1,70 @@
-/**
  * CSS 변수 및 디자인 시스템 상수 (동적 처리)
  * 
  * @deprecated 하드코딩된 색상 값들은 getDynamicCSSVariables() 함수 사용 권장
  * @see getDynamicCSSVariables() in cssThemeHelper.js
  */
-// import { getDynamicCSSVariables } from '../utils/cssThemeHelper';
 
-// 하드코딩된 CSS 변수 (fallback용)
 export const CSS_VARIABLES = {
-  // 색상 시스템 (동적 처리로 변경됨)
   COLORS: {
-    // Primary Colors (fallback)
     PRIMARY: 'var(--mg-primary-500)',
     PRIMARY_DARK: 'var(--cs-purple-600)',
     PRIMARY_GRADIENT: 'linear-gradient(135deg, var(--mg-primary-500) 0%, var(--cs-purple-600) 100%)',
     
-    // Secondary Colors (fallback)
     SECONDARY: 'var(--mg-secondary-500)',
     SECONDARY_LIGHT: 'var(--cs-gray-200)',
     
-    // Success Colors (fallback)
     SUCCESS: 'var(--mg-success-500)',
     SUCCESS_LIGHT: 'var(--cs-success-100)',
     SUCCESS_DARK: '#00a085',
     SUCCESS_GRADIENT: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
     
-    // Danger Colors (fallback)
     DANGER: 'var(--mg-error-500)',
     DANGER_LIGHT: '#f8d7da',
     DANGER_DARK: '#ee5a24',
     DANGER_GRADIENT: 'linear-gradient(135deg, var(--mg-error-500) 0%, #ee5a24 100%)',
     
-    // Info Colors (fallback)
     INFO: 'var(--mg-info-500)',
     INFO_LIGHT: '#d1ecf1',
     INFO_DARK: '#0984e3',
     INFO_GRADIENT: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
     
-    // Warning Colors (fallback)
     WARNING: 'var(--mg-warning-500)',
     WARNING_LIGHT: '#fff3cd',
     WARNING_DARK: '#f5576c',
     WARNING_GRADIENT: 'linear-gradient(135deg, var(--mg-warning-500) 0%, #f5576c 100%)',
     
-    // Consultant Colors (fallback)
     CONSULTANT: 'var(--mg-consultant-primary)',
     CONSULTANT_DARK: 'var(--mg-consultant-dark)',
     CONSULTANT_GRADIENT: 'linear-gradient(135deg, var(--mg-consultant-primary) 0%, var(--mg-consultant-dark) 100%)',
     
-    // Client Colors (fallback)
     CLIENT: 'var(--mg-success-500)',
     CLIENT_DARK: '#00a085',
     CLIENT_GRADIENT: 'linear-gradient(135deg, var(--mg-success-500) 0%, #00a085 100%)',
     
-    // Finance Colors (fallback)
     FINANCE: 'var(--mg-finance-primary)',
     FINANCE_DARK: 'var(--mg-finance-dark)',
     FINANCE_GRADIENT: 'linear-gradient(135deg, var(--mg-finance-primary) 0%, var(--mg-finance-dark) 100%)',
     
-    // Revenue Colors
     REVENUE: '#27ae60',
     REVENUE_DARK: '#229954',
     REVENUE_GRADIENT: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
     
-    // Expense Colors
     EXPENSE: '#e74c3c',
     EXPENSE_DARK: '#c0392b',
     EXPENSE_GRADIENT: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
     
-    // Payment Colors
     PAYMENT: '#9b59b6',
     PAYMENT_DARK: '#8e44ad',
     PAYMENT_GRADIENT: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
     
-    // Report Colors
     REPORT: '#34495e',
     REPORT_DARK: '#2c3e50',
     REPORT_GRADIENT: 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)',
     
-    // Settings Colors
     SETTINGS: '#95a5a6',
     SETTINGS_DARK: '#7f8c8d',
     SETTINGS_GRADIENT: 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)',
     
-    // Neutral Colors
     WHITE: 'var(--mg-white)',
     BLACK: '#2c3e50',
     GRAY_LIGHT: 'var(--mg-gray-100)',
@@ -95,7 +76,6 @@ export const CSS_VARIABLES = {
     TEXT_MUTED: 'var(--mg-secondary-500)'
   },
   
-  // 간격 시스템
   SPACING: {
     XS: '4px',
     SM: '8px',
@@ -107,7 +87,6 @@ export const CSS_VARIABLES = {
     HUGE: '48px'
   },
   
-  // 폰트 크기
   FONT_SIZES: {
     XS: '0.75rem',
     SM: '0.875rem',
@@ -120,7 +99,6 @@ export const CSS_VARIABLES = {
     GIANT: '2rem'
   },
   
-  // 폰트 두께
   FONT_WEIGHTS: {
     LIGHT: '300',
     NORMAL: '400',
@@ -129,7 +107,6 @@ export const CSS_VARIABLES = {
     BOLD: '700'
   },
   
-  // 보더 반경
   BORDER_RADIUS: {
     SM: '6px',
     MD: '8px',
@@ -138,7 +115,6 @@ export const CSS_VARIABLES = {
     ROUND: '50%'
   },
   
-  // 그림자
   SHADOWS: {
     SM: '0 2px 4px var(--mg-shadow-light)',
     MD: '0 4px 12px var(--mg-shadow-light)',
@@ -148,14 +124,12 @@ export const CSS_VARIABLES = {
     MODAL: '0 10px 30px rgba(0, 0, 0, 0.2)'
   },
   
-  // 전환 효과
   TRANSITIONS: {
     FAST: '0.2s ease',
     NORMAL: '0.3s ease',
     SLOW: '0.5s ease'
   },
   
-  // Z-Index
   Z_INDEX: {
     DROPDOWN: 1000,
     STICKY: 1020,
@@ -167,7 +141,6 @@ export const CSS_VARIABLES = {
     TOAST: 9999
   },
   
-  // 브레이크포인트
   BREAKPOINTS: {
     XS: '480px',
     SM: '576px',
@@ -178,9 +151,7 @@ export const CSS_VARIABLES = {
   }
 };
 
-// 컴포넌트별 CSS 클래스 상수
 export const COMPONENT_CSS = {
-  // 관리자 대시보드
   ADMIN_DASHBOARD: {
     CONTAINER: 'admin-dashboard-content',
     SECTION: 'dashboard-section',
@@ -201,7 +172,6 @@ export const COMPONENT_CSS = {
     TOAST_BODY: 'toast-body'
   },
 
-  // 스케줄 모달
   SCHEDULE_MODAL: {
     OVERLAY: 'schedule-modal-overlay',
     MODAL: 'schedule-modal',
@@ -230,7 +200,6 @@ export const COMPONENT_CSS = {
     CONSULTANT_SPECIALTY: 'consultant-specialty'
   },
   
-  // 오늘의 통계
   TODAY_STATS: {
     CONTAINER: 'today-stats-container',
     HEADER: 'today-stats-header',
@@ -244,7 +213,6 @@ export const COMPONENT_CSS = {
     LAST_UPDATE: 'today-stats-last-update'
   },
   
-  // 웰컴 섹션
   WELCOME_SECTION: {
     CONTAINER: 'welcome-section',
     CARD: 'welcome-card',
@@ -264,9 +232,7 @@ export const COMPONENT_CSS = {
   }
 };
 
-// 아이콘 상수
 export const ICONS = {
-  // Bootstrap Icons
   BI: {
     SPEEDOMETER: 'bi-speedometer2',
     GEAR: 'bi-gear',
@@ -297,7 +263,6 @@ export const ICONS = {
     GEAR_FILL: 'bi-gear-fill'
   },
   
-  // Font Awesome Icons
   FA: {
     USERS: 'FaUsers',
     USER_TIE: 'FaUserTie',
@@ -316,7 +281,6 @@ export const ICONS = {
   }
 };
 
-// 그라데이션 상수
 export const GRADIENTS = {
   PRIMARY: 'linear-gradient(135deg, var(--mg-primary-500) 0%, #764ba2 100%)',
   SUCCESS: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
@@ -333,30 +297,24 @@ export const GRADIENTS = {
   SETTINGS: 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)'
 };
 
-// 스케줄 모달 상수
 export const SCHEDULE_MODAL_CONSTANTS = {
-  // 모달 크기
   MODAL_WIDTH: '1200px',
   MODAL_MAX_HEIGHT: '98vh',
   MODAL_MIN_HEIGHT: '500px',
   
-  // 단계별 높이
   STEP_HEADER_HEIGHT: '80px',
   FILTER_SECTION_HEIGHT: '200px',
   CONSULTANT_GRID_HEIGHT: '350px',
   
-  // 애니메이션
   ANIMATION_DURATION: '0.3s',
   ANIMATION_EASING: 'ease',
   
-  // 색상
   PRIMARY_COLOR: 'var(--mg-primary-500)',
   SUCCESS_COLOR: 'var(--mg-success-500)',
   WARNING_COLOR: 'var(--mg-warning-500)',
   DANGER_COLOR: 'var(--mg-error-500)',
   INFO_COLOR: 'var(--mg-info-500)',
   
-  // 가용성 상태
   AVAILABILITY: {
     AVAILABLE: 'available',
     BUSY: 'busy',
@@ -364,7 +322,6 @@ export const SCHEDULE_MODAL_CONSTANTS = {
     ALL: 'all'
   },
   
-  // 전문분야 옵션
   SPECIALTIES: [
     { value: '', label: '전체' },
     { value: '우울증', label: '우울증' },
@@ -377,7 +334,6 @@ export const SCHEDULE_MODAL_CONSTANTS = {
     { value: '자폐스펙트럼', label: '자폐스펙트럼' }
   ],
   
-  // 가용성 필터 옵션
   AVAILABILITY_OPTIONS: [
     { value: 'all', label: '전체', color: 'var(--mg-secondary-500)' },
     { value: 'available', label: '여유', color: 'var(--mg-success-500)' },
@@ -385,7 +341,6 @@ export const SCHEDULE_MODAL_CONSTANTS = {
     { value: 'unavailable', label: '휴무', color: 'var(--mg-error-500)' }
   ],
   
-  // 상담사 카드 설정
   CONSULTANT_CARD: {
     MIN_HEIGHT: '120px',
     BORDER_RADIUS: '12px',
@@ -393,7 +348,6 @@ export const SCHEDULE_MODAL_CONSTANTS = {
     MARGIN_BOTTOM: '12px'
   },
   
-  // 필터 설정
   FILTER: {
     SEARCH_PLACEHOLDER: '상담사 이름, 직책, 전문분야로 검색...',
     RESET_BUTTON_TEXT: '초기화',
@@ -401,9 +355,7 @@ export const SCHEDULE_MODAL_CONSTANTS = {
   }
 };
 
-// 태블릿 로그인 상수
 export const TABLET_LOGIN_CONSTANTS = {
-  // SMS 인증 설정
   SMS: {
     PHONE_LENGTH: 11,
     CODE_LENGTH: 6,
@@ -411,20 +363,17 @@ export const TABLET_LOGIN_CONSTANTS = {
     RESEND_DELAY: 60 // 1분
   },
   
-  // 폼 유효성 검사
   VALIDATION: {
     EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     PHONE_REGEX: /^01[0-9]{8,9}$/,
     PASSWORD_MIN_LENGTH: 6
   },
   
-  // 로그인 모드
   LOGIN_MODES: {
     EMAIL: 'email',
     SMS: 'sms'
   },
   
-  // API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용)
   API_ENDPOINTS: {
     LOGIN: '/api/v1/auth/login',
     SMS_SEND: '/api/v1/auth/sms/send',
@@ -433,7 +382,6 @@ export const TABLET_LOGIN_CONSTANTS = {
     OAUTH_CALLBACK: '/api/v1/auth/oauth2/callback'
   },
   
-  // 메시지
   MESSAGES: {
     LOGIN_SUCCESS: '로그인되었습니다.',
     LOGIN_FAILED: '아이디 또는 비밀번호 틀림',
@@ -450,7 +398,6 @@ export const TABLET_LOGIN_CONSTANTS = {
     RESEND: '재전송'
   },
   
-  // 소셜 로그인
   SOCIAL: {
     PROVIDERS: {
       KAKAO: 'kakao',
@@ -470,7 +417,6 @@ export const TABLET_LOGIN_CONSTANTS = {
     }
   },
   
-  // UI 설정
   UI: {
     ANIMATION_DURATION: 300,
     LOADING_DELAY: 1000,
@@ -478,9 +424,7 @@ export const TABLET_LOGIN_CONSTANTS = {
   }
 };
 
-// 재무 대시보드 상수
 export const FINANCE_DASHBOARD_CONSTANTS = {
-  // API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용)
   API_ENDPOINTS: {
     DASHBOARD: '/api/v1/super-admin/finance/dashboard',
     STATISTICS: '/api/v1/super-admin/finance/statistics',
@@ -489,7 +433,6 @@ export const FINANCE_DASHBOARD_CONSTANTS = {
     EXPENSES: '/api/v1/super-admin/finance/expenses'
   },
   
-  // 통계 타입
   STAT_TYPES: {
     REVENUE: 'revenue',
     EXPENSE: 'expense',
@@ -497,21 +440,24 @@ export const FINANCE_DASHBOARD_CONSTANTS = {
     PAYMENT: 'payment'
   },
   
-  // 결제 상태
   PAYMENT_STATUS: {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: 'pending',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     COMPLETED: 'completed',
     FAILED: 'failed',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CANCELLED: 'cancelled'
   },
   
-  // 차트 설정
   CHART: {
     COLORS: {
       REVENUE: 'var(--mg-success-500)',
       EXPENSE: 'var(--mg-error-500)',
       PROFIT: 'var(--mg-primary-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       PENDING: 'var(--mg-warning-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       COMPLETED: 'var(--mg-success-500)',
       FAILED: 'var(--mg-error-500)'
     },
@@ -521,7 +467,6 @@ export const FINANCE_DASHBOARD_CONSTANTS = {
     ]
   },
   
-  // 메시지
   MESSAGES: {
     LOADING: '재무 데이터를 불러오는 중...',
     LOAD_SUCCESS: '재무 데이터를 성공적으로 불러왔습니다.',
@@ -530,7 +475,6 @@ export const FINANCE_DASHBOARD_CONSTANTS = {
     REFRESH_ERROR: '데이터 새로고침에 실패했습니다.'
   },
   
-  // 포맷팅
   FORMAT: {
     CURRENCY: {
       STYLE: 'currency',
@@ -543,31 +487,28 @@ export const FINANCE_DASHBOARD_CONSTANTS = {
     }
   },
   
-  // 새로고침 간격 (밀리초)
   REFRESH_INTERVAL: 30000, // 30초
   
-  // 로딩 지연 시간 (밀리초)
   LOADING_DELAY: 500
 };
 
-// 결제 확인 모달 상수
 export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
-  // API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용)
   API_ENDPOINTS: {
     CONFIRM_PAYMENT: '/api/v1/admin/mapping/payment/confirm',
     CANCEL_PAYMENT: '/api/v1/admin/mapping/payment/cancel',
     GET_PAYMENT_DETAILS: '/api/v1/admin/mapping/payment/details'
   },
   
-  // 결제 상태
   PAYMENT_STATUS: {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: 'pending',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CONFIRMED: 'confirmed',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CANCELLED: 'cancelled',
     FAILED: 'failed'
   },
   
-  // 결제 방법
   PAYMENT_METHODS: {
     CARD: 'card',
     BANK_TRANSFER: 'bank_transfer',
@@ -575,7 +516,6 @@ export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
     OTHER: 'other'
   },
   
-  // 메시지
   MESSAGES: {
     LOADING: '결제 정보를 불러오는 중...',
     CONFIRM_SUCCESS: '결제가 성공적으로 확인되었습니다.',
@@ -587,7 +527,6 @@ export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
     REQUIRED_FIELDS: '필수 입력 항목을 모두 입력해주세요.'
   },
   
-  // 포맷팅
   FORMAT: {
     CURRENCY: {
       STYLE: 'currency',
@@ -596,14 +535,12 @@ export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
     }
   },
   
-  // 유효성 검사
   VALIDATION: {
     MIN_AMOUNT: 1000,
     MAX_AMOUNT: 10000000,
     MAX_NOTE_LENGTH: 500
   },
   
-  // UI 설정
   UI: {
     MODAL_WIDTH: '800px',
     MODAL_MAX_HEIGHT: '90vh',
@@ -611,31 +548,29 @@ export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
   }
 };
 
-// 클라이언트 선택기 상수
 export const CLIENT_SELECTOR_CONSTANTS = {
-  // API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용)
   API_ENDPOINTS: {
     CHECK_MAPPING: '/api/v1/schedules/client/mapping/check',
     GET_CLIENT_MAPPINGS: '/api/v1/schedules/client/mappings',
     GET_CLIENT_HISTORY: '/api/v1/schedules/client/history'
   },
   
-  // 매핑 상태
   MAPPING_STATUS: {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     ACTIVE: 'ACTIVE',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: 'PENDING',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     INACTIVE: 'INACTIVE',
     EXPIRED: 'EXPIRED'
   },
   
-  // 세션 상태
   SESSION_STATUS: {
     AVAILABLE: 'available',
     LOW: 'low',
     NONE: 'none'
   },
   
-  // 메시지
   MESSAGES: {
     MAPPING_CHECK_SUCCESS: '매핑 정보를 확인했습니다.',
     MAPPING_CHECK_ERROR: '매핑 정보 확인에 실패했습니다.',
@@ -645,22 +580,18 @@ export const CLIENT_SELECTOR_CONSTANTS = {
     LOADING_HISTORY: '상담 이력을 불러오는 중...'
   },
   
-  // 유효성 검사
   VALIDATION: {
     MIN_SESSIONS: 1,
     MAX_SESSIONS: 100
   },
   
-  // UI 설정
   UI: {
     LOADING_DELAY: 500,
     ANIMATION_DURATION: 300
   }
 };
 
-// 홈페이지 상수
 export const HOMEPAGE_CONSTANTS = {
-  // 메뉴 항목
   MENU_ITEMS: {
     HOME: 'home',
     LOGIN: 'login',
@@ -670,7 +601,6 @@ export const HOMEPAGE_CONSTANTS = {
     CONTACT: 'contact'
   },
   
-  // 프로필 메뉴 항목
   PROFILE_MENU_ITEMS: {
     DASHBOARD: 'dashboard',
     PROFILE: 'profile',
@@ -678,7 +608,6 @@ export const HOMEPAGE_CONSTANTS = {
     LOGOUT: 'logout'
   },
   
-  // 메시지
   MESSAGES: {
     MENU_OPENED: '메뉴가 열렸습니다.',
     MENU_CLOSED: '메뉴가 닫혔습니다.',
@@ -688,7 +617,6 @@ export const HOMEPAGE_CONSTANTS = {
     LOGOUT_ERROR: '로그아웃 중 오류가 발생했습니다.'
   },
   
-  // UI 설정
   UI: {
     ANIMATION_DURATION: 300,
     MENU_WIDTH: '300px',
@@ -696,24 +624,20 @@ export const HOMEPAGE_CONSTANTS = {
   }
 };
 
-/**
  * 동적 CSS 변수 조회 함수
  * @param {string} themeName 테마명 (기본값: 'default')
  * @returns {Promise<Object>} 동적 CSS 변수 객체
  */
 export const getDynamicCSSVariablesAsync = () => Promise.resolve(CSS_VARIABLES);
 
-/**
  * 동적 CSS 변수 조회 함수 (동기식 fallback)
  * @param {string} themeName 테마명 (기본값: 'default')
  * @returns {Object} CSS 변수 객체 (fallback 포함)
  */
 export const getCSSVariablesSync = (themeName = 'default') => {
-  // 동적 조회 실패 시 fallback으로 하드코딩된 값 사용
   return CSS_VARIABLES;
 };
 
-/**
  * 특정 색상 값을 동적으로 조회하는 함수
  * @param {string} colorKey 색상 키 (예: 'PRIMARY', 'SUCCESS')
  * @param {string} themeName 테마명 (기본값: 'default')
@@ -723,7 +647,6 @@ export const getDynamicColor = async (colorKey, themeName = 'default') => {
   return CSS_VARIABLES.COLORS[colorKey] || '#6b7280';
 };
 
-/**
  * 특정 색상 값을 동적으로 조회하는 함수 (동기식 fallback)
  * @param {string} colorKey 색상 키
  * @returns {string} 색상 값 (fallback 포함)

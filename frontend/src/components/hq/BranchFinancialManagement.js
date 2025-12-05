@@ -12,7 +12,6 @@ import { showNotification } from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import './BranchFinancialManagement.css';
 
-/**
  * 지점별 재무관리 필터 카드 컴포넌트
  */
 const BranchFilterCard = ({
@@ -39,7 +38,6 @@ const BranchFilterCard = ({
                             className="mg-v2-form-select"
                             value={selectedBranch?.branchCode || ''}
                             onChange={(e) => {
-                                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                                 const branch = branches.find(b => b.branchCode === e.target.value);
                                 onBranchChange(branch);
                             }}
@@ -118,7 +116,6 @@ const BranchFilterCard = ({
     );
 };
 
-/**
  * 재무 요약 카드 컴포넌트
  */
 const FinancialSummaryCard = ({ title, value, icon: Icon, color = 'primary', trend = null }) => {
@@ -149,7 +146,6 @@ const FinancialSummaryCard = ({ title, value, icon: Icon, color = 'primary', tre
     );
 };
 
-/**
  * 거래 내역 테이블 컴포넌트
  */
 const TransactionTable = ({ transactions, loading }) => {
@@ -205,7 +201,9 @@ const TransactionTable = ({ transactions, loading }) => {
                                     <span className={`mg-badge mg-badge--${transaction.category === 'REVENUE' ? 'success' : 'warning'}`}>
                                         {transaction.category === 'REVENUE' ? '수입' : '지출'}
                                     </span>
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     <span className={`mg-badge mg-badge--${transaction.status === 'CONFIRMED' ? 'success' : 'secondary'}`}>
+                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                         {transaction.status === 'CONFIRMED' ? '확정' : '대기'}
                                     </span>
                                 </div>
@@ -235,7 +233,6 @@ const TransactionTable = ({ transactions, loading }) => {
     );
 };
 
-/**
  * 지점별 재무관리 메인 컴포넌트
  */
 const BranchFinancialManagement = () => {
@@ -251,7 +248,6 @@ const BranchFinancialManagement = () => {
         transactionType: ''
     });
 
-    // 지점 목록 로드
     const loadBranches = useCallback(async () => {
         try {
             const response = await apiGet('/api/v1/hq/branch-management/branches');
@@ -267,14 +263,12 @@ const BranchFinancialManagement = () => {
         }
     }, []);
 
-    // 재무 데이터 로드
     const loadFinancialData = useCallback(async () => {
         if (!selectedBranch) return;
 
         setLoading(true);
         try {
             const params = new URLSearchParams({
-                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: selectedBranch.branchCode,
                 startDate: filters.startDate,
                 endDate: filters.endDate
@@ -298,24 +292,20 @@ const BranchFinancialManagement = () => {
         }
     }, [selectedBranch, filters]);
 
-    // 필터 변경 핸들러
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
     };
 
-    // 필터 적용 핸들러
     const handleApplyFilters = () => {
         loadFinancialData();
     };
 
-    // 컴포넌트 마운트 시 지점 목록 로드
     useEffect(() => {
         if (isLoggedIn && user) {
             loadBranches();
         }
     }, [isLoggedIn, user, loadBranches]);
 
-    // 선택된 지점이 변경되면 재무 데이터 로드
     useEffect(() => {
         if (selectedBranch) {
             loadFinancialData();

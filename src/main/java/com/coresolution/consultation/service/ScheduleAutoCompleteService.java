@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 스케줄 자동 완료 처리 서비스
  * 정기적으로 시간이 지난 확정된 스케줄을 자동으로 완료 처리
  * 
@@ -32,7 +31,6 @@ public class ScheduleAutoCompleteService {
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
     
-    /**
      * 매 10분마다 시간이 지난 스케줄을 자동 완료 처리 및 상담일지 미작성 알림
      * cron: 초 분 시 일 월 요일
      */
@@ -54,12 +52,11 @@ public class ScheduleAutoCompleteService {
             int completedCount = 0;
             int reminderSentCount = 0;
             
-            // 1. 오늘 날짜의 시간이 지난 스케줄 조회
             List<Schedule> todayExpiredSchedules = scheduleRepository.findExpiredConfirmedSchedules(tenantId, today, currentTime);
             for (Schedule schedule : todayExpiredSchedules) {
                 try {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     if (ScheduleStatus.BOOKED.equals(schedule.getStatus()) || ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
-                        // PL/SQL을 통한 스케줄 자동 완료 처리 (상담일지 검증 포함)
                         var result = plSqlScheduleValidationService.processScheduleAutoCompletion(
                             schedule.getId(), 
                             schedule.getConsultantId(), 
@@ -70,7 +67,6 @@ public class ScheduleAutoCompleteService {
                         if ((Boolean) result.get("completed")) {
                             completedCount++;
                             
-                            // 🚀 실시간 통계 업데이트 추가
                             realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
                             
                             log.info("✅ PL/SQL 스케줄 자동 완료 및 통계 업데이트: ID={}, 제목={}, 시간={}", 
@@ -79,7 +75,6 @@ public class ScheduleAutoCompleteService {
                             log.warn("⚠️ PL/SQL 상담일지 미작성으로 스케줄 완료 처리 건너뜀: ID={}, 제목={}, 시간={}, 메시지={}", 
                                 schedule.getId(), schedule.getTitle(), schedule.getStartTime(), result.get("message"));
                             
-                            // PL/SQL을 통한 상담일지 미작성 알림 생성
                             var reminderResult = plSqlScheduleValidationService.createConsultationRecordReminder(
                                 schedule.getId(), 
                                 schedule.getConsultantId(), 
@@ -99,21 +94,21 @@ public class ScheduleAutoCompleteService {
                 }
             }
             
-            // 2. 지난 날짜의 예약된/확정된 스케줄 조회
             List<Schedule> pastBookedSchedules = scheduleRepository.findByDateBeforeAndStatus(
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 tenantId, today, ScheduleStatus.BOOKED);
             List<Schedule> pastConfirmedSchedules = scheduleRepository.findByDateBeforeAndStatus(
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 tenantId, today, ScheduleStatus.CONFIRMED);
             
-            // 지난 날짜의 스케줄들도 PL/SQL 기반으로 처리
             List<Schedule> allPastSchedules = new ArrayList<>();
             allPastSchedules.addAll(pastBookedSchedules);
             allPastSchedules.addAll(pastConfirmedSchedules);
             
             for (Schedule schedule : allPastSchedules) {
                 try {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     if (ScheduleStatus.BOOKED.equals(schedule.getStatus()) || ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
-                        // PL/SQL을 통한 스케줄 자동 완료 처리 (상담일지 검증 포함)
                         var result = plSqlScheduleValidationService.processScheduleAutoCompletion(
                             schedule.getId(), 
                             schedule.getConsultantId(), 
@@ -124,7 +119,6 @@ public class ScheduleAutoCompleteService {
                         if ((Boolean) result.get("completed")) {
                             completedCount++;
                             
-                            // 🚀 실시간 통계 업데이트 추가
                             realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
                             
                             log.info("✅ PL/SQL 지난 스케줄 자동 완료 및 통계 업데이트: ID={}, 제목={}, 날짜={}", 
@@ -133,7 +127,6 @@ public class ScheduleAutoCompleteService {
                             log.warn("⚠️ PL/SQL 지난 스케줄 상담일지 미작성으로 완료 처리 건너뜀: ID={}, 제목={}, 날짜={}, 메시지={}", 
                                 schedule.getId(), schedule.getTitle(), schedule.getDate(), result.get("message"));
                             
-                            // PL/SQL을 통한 상담일지 미작성 알림 생성
                             var reminderResult = plSqlScheduleValidationService.createConsultationRecordReminder(
                                 schedule.getId(), 
                                 schedule.getConsultantId(), 
@@ -160,7 +153,6 @@ public class ScheduleAutoCompleteService {
         }
     }
     
-    /**
      * 매일 자정에 하루 종료된 스케줄들을 정리
      */
     @Scheduled(cron = "0 0 0 * * *")

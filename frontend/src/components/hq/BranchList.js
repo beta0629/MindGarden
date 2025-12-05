@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { 
     Container, Row, Col, Card, Button, Badge, 
     InputGroup, FormControl, FormSelect, Alert
@@ -10,11 +9,9 @@ import {
 } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
-// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 import { normalizeBranchList, getBranchNameByCode } from '../../utils/branchUtils';
 import './BranchList.css';
 
-/**
  * 지점 목록 컴포넌트
  * - 지점 목록 조회 및 표시
  * - 지점 상태 필터링 및 검색
@@ -30,14 +27,12 @@ const BranchList = ({
     onAddBranch,
     onEditBranch 
 }) => {
-    // 상태 관리
     const [loading, setLoading] = useState(false);
     const [branches, setBranches] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [sortBy, setSortBy] = useState('name');
 
-    // 지점 목록 로드
     const loadBranches = useCallback(async () => {
         setLoading(true);
         try {
@@ -51,12 +46,10 @@ const BranchList = ({
         }
     }, []);
 
-    // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadBranches();
     }, [loadBranches]);
 
-    // 필터링된 지점 목록
     const filteredBranches = branches.filter(branch => {
         const matchesSearch = !searchTerm || 
             branch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,7 +57,9 @@ const BranchList = ({
             branch.address?.toLowerCase().includes(searchTerm.toLowerCase());
         
         const matchesStatus = statusFilter === 'ALL' || 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             (statusFilter === 'ACTIVE' && branch.isActive) ||
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             (statusFilter === 'INACTIVE' && !branch.isActive);
         
         return matchesSearch && matchesStatus;
@@ -83,12 +78,10 @@ const BranchList = ({
         }
     });
 
-    // 지점 선택 핸들러
     const handleBranchSelect = (branch) => {
         onBranchSelect(branch);
     };
 
-    // 필터 초기화
     const resetFilters = () => {
         setSearchTerm('');
         setStatusFilter('ALL');
@@ -143,7 +136,9 @@ const BranchList = ({
                                 onChange={(e) => setStatusFilter(e.target.value)}
                             >
                                 <option value="ALL">모든 상태</option>
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                 <option value="ACTIVE">활성</option>
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                 <option value="INACTIVE">비활성</option>
                             </FormSelect>
                         </Col>

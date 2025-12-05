@@ -34,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 온보딩 서비스 구현체
  * 온보딩 요청 CRUD 및 승인 프로세스 처리
  * OnboardingApprovalService와 통합하여 PL/SQL 프로시저 호출
@@ -69,6 +68,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Transactional(readOnly = true)
     public List<OnboardingRequest> findPending() {
         log.debug("대기 중인 온보딩 요청 목록 조회");
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return repository.findByStatusOrderByCreatedAtDesc(OnboardingStatus.PENDING);
     }
     
@@ -95,7 +95,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         log.info("온보딩 요청 생성: tenantId={}, tenantName={}, requestedBy={}", 
             tenantId, tenantName, requestedBy);
         
-        // 기본 위험도 조회 (공통 코드에서 동적으로 가져옴)
         RiskLevel defaultRiskLevel = getDefaultRiskLevel();
         RiskLevel finalRiskLevel = riskLevel != null ? riskLevel : defaultRiskLevel;
         
@@ -106,6 +105,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             .riskLevel(finalRiskLevel)
             .checklistJson(checklistJson)
             .businessType(businessType)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             .status(OnboardingStatus.PENDING)
             .isDeleted(false)  // BaseEntity의 기본값이 Builder에서 적용되지 않으므로 명시적으로 설정
             .version(0L)  // BaseEntity의 기본값이 Builder에서 적용되지 않으므로 명시적으로 설정
@@ -115,13 +115,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         
         log.info("온보딩 요청 생성 완료: id={}, tenantId={}", saved.getId(), tenantId);
         
-        // 자동 승인 체크
-        // 주의: 자동 승인은 별도로 처리하여 원래 트랜잭션에 영향을 주지 않도록 함
-        // 자동 승인 실패가 전체 온보딩 요청 생성을 막지 않도록 함
         if (autoApprovalService.canAutoApprove(saved)) {
             log.info("자동 승인 조건 만족: requestId={}, 자동 승인은 별도로 처리됩니다", saved.getId());
-            // 자동 승인은 별도로 처리 (현재는 수동 승인 필요)
-            // TODO: 자동 승인을 별도 스케줄러나 이벤트로 처리하도록 개선
         } else {
             AutoApprovalService.AutoApprovalResult result = autoApprovalService.checkAutoApprovalConditions(saved);
             log.debug("자동 승인 조건 불만족: requestId={}, reason={}", 
@@ -131,7 +126,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         return saved;
     }
     
-    /**
      * 별도 트랜잭션에서 decide 메서드 실행
      * 자동 승인 실패 시에도 원래 트랜잭션이 롤백되지 않도록 함
      * 
@@ -145,18 +139,14 @@ public class OnboardingServiceImpl implements OnboardingService {
             String actorId,
             String note) {
         try {
-            // decideInternal을 호출하여 트랜잭션 전파 문제를 피함
             return decideInternal(requestId, status, actorId, note);
         } catch (Exception e) {
             log.error("별도 트랜잭션에서 decide 실행 중 오류 발생: requestId={}, error={}, 원래 트랜잭션에 영향 없음", 
                 requestId, e.getMessage(), e);
-            // 예외를 다시 던지지 않고 null을 반환하여 원래 트랜잭션에 영향을 주지 않음
-            // 호출하는 쪽에서 null 체크를 해야 함
             return null;
         }
     }
     
-    /**
      * decide 메서드의 실제 로직 (트랜잭션 없음)
      * decide와 decideInNewTransaction에서 공통으로 사용
      */
@@ -174,37 +164,30 @@ public class OnboardingServiceImpl implements OnboardingService {
                 OnboardingConstants.formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)
             ));
         
-        // 상태 업데이트
         request.setStatus(status);
         request.setDecidedBy(actorId);
         request.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
         request.setDecisionNote(note);
         
-        // 승인 시 PL/SQL 프로시저를 통해 테넌트 생성 및 ERD 생성 등 자동 처리
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (status == OnboardingStatus.APPROVED) {
-            // 멀티 테넌트 지원: 같은 이메일로 여러 테넌트 생성 가능
-            // 이메일 중복 체크 제거 (멀티 테넌트 지원)
             log.info("테넌트 생성 진행: requestedBy={}, tenantName={}", 
                 request.getRequestedBy(), request.getTenantName());
             
-            // tenant_id가 없으면 자동 생성 또는 삭제된 테넌트 복구
             String tenantIdValue = request.getTenantId();
             if (tenantIdValue == null || tenantIdValue.trim().isEmpty()) {
-                // 같은 이메일로 삭제된 테넌트가 있는지 확인
                 String email = request.getRequestedBy();
                 if (email != null && !email.trim().isEmpty()) {
                     List<Tenant> deletedTenants = tenantRepository.findDeletedByContactEmailIgnoreCase(email.trim().toLowerCase());
                     if (!deletedTenants.isEmpty()) {
-                        // 삭제된 테넌트가 있으면 가장 최근에 삭제된 테넌트 복구
                         Tenant deletedTenant = deletedTenants.get(0);
                         tenantIdValue = deletedTenant.getTenantId();
                         
-                        // 테넌트 복구 및 정보 업데이트
                         deletedTenant.setIsDeleted(false);
                         deletedTenant.setDeletedAt(null);
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         deletedTenant.setStatus(Tenant.TenantStatus.PENDING); // 승인 후 ACTIVE로 변경될 예정
                         
-                        // 온보딩 요청 정보로 테넌트 정보 업데이트
                         if (request.getTenantName() != null && !request.getTenantName().trim().isEmpty()) {
                             deletedTenant.setName(request.getTenantName());
                         }
@@ -222,9 +205,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     }
                 }
                 
-                // 삭제된 테넌트가 없으면 새로운 tenant_id 생성
                 if (tenantIdValue == null || tenantIdValue.trim().isEmpty()) {
-                    // checklistJson에서 주소 정보 추출하여 지역 코드 생성
                     String regionCode = extractRegionCodeFromRequest(request);
                     
                     tenantIdValue = tenantIdGenerator.generateTenantId(
@@ -239,16 +220,13 @@ public class OnboardingServiceImpl implements OnboardingService {
                 request.setTenantId(tenantIdValue);
             }
             
-            // final 변수로 복사 (람다 내에서 사용하기 위해)
             final String tenantId = request.getTenantId() != null ? request.getTenantId() : tenantIdValue;
             
             log.info("온보딩 승인 처리 시작: requestId={}, tenantId={}, businessType={}", 
                 requestId, tenantId, request.getBusinessType());
             
-            // 기본 업종 조회 (공통 코드에서 동적으로 가져옴)
             String businessType = getDefaultBusinessType(request.getBusinessType());
             
-            // 사전 검증 수행
             OnboardingPreValidationService.ValidationResult validationResult = 
                 preValidationService.validateBeforeApproval(requestId);
             
@@ -266,7 +244,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                 log.warn("온보딩 승인 전 사전 검증 경고: {}", warnings);
             }
             
-            // 시스템 메타데이터 검증
             OnboardingPreValidationService.ValidationResult metadataResult = 
                 preValidationService.validateSystemMetadata(businessType);
             
@@ -279,7 +256,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                 return repository.save(request);
             }
             
-            // checklistJson에서 adminPassword 및 dashboardTemplates 추출
             String contactEmail = request.getRequestedBy();  // 기본값: requestedBy
             String adminPasswordHash = null;
             Map<String, String> dashboardTemplates = null;
@@ -293,14 +269,12 @@ public class OnboardingServiceImpl implements OnboardingService {
                     
                     String adminPassword = (String) checklist.get("adminPassword");
                     if (adminPassword != null && !adminPassword.trim().isEmpty()) {
-                        // BCrypt로 해시
                         adminPasswordHash = passwordEncoder.encode(adminPassword);
                         log.info("관리자 비밀번호 해시 완료: requestId={}", requestId);
                     } else {
                         log.warn("checklistJson에 adminPassword가 없음: requestId={}", requestId);
                     }
                     
-                    // dashboardTemplates 추출 (역할명 -> 템플릿 ID 매핑)
                     @SuppressWarnings("unchecked")
                     Map<String, String> templates = (Map<String, String>) checklist.get("dashboardTemplates");
                     if (templates != null && !templates.isEmpty()) {
@@ -310,7 +284,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                         log.debug("checklistJson에 dashboardTemplates가 없음 (기본 템플릿 사용): requestId={}", requestId);
                     }
                     
-                    // dashboardWidgets 추출 (역할명 -> 위젯 목록 매핑)
                     @SuppressWarnings("unchecked")
                     Map<String, java.util.List<String>> widgets = (Map<String, java.util.List<String>>) checklist.get("dashboardWidgets");
                     if (widgets != null && !widgets.isEmpty()) {
@@ -330,7 +303,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             final String finalAdminPasswordHash = adminPasswordHash;
             final Map<String, String> finalDashboardTemplates = dashboardTemplates;
             
-            // dashboardWidgets 추출 및 final 변수로 복사
             Map<String, java.util.List<String>> dashboardWidgets = null;
             if (request.getChecklistJson() != null && !request.getChecklistJson().isEmpty()) {
                 try {
@@ -351,7 +323,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
             final Map<String, java.util.List<String>> finalDashboardWidgets = dashboardWidgets;
             
-            // 에러 핸들링 및 자동 재시도로 프로시저 실행
             OnboardingErrorHandlingService.ExecutionResult executionResult = 
                 errorHandlingService.executeWithRetry(
                     () -> {
@@ -377,7 +348,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             String message;
             
             if (executionResult.isSuccess()) {
-                // 재시도 성공 시 실제 프로시저 결과 조회
                 approvalResult = approvalService.processOnboardingApproval(
                     requestId,
                     tenantId,
@@ -391,7 +361,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                 success = (Boolean) approvalResult.get("success");
                 message = (String) approvalResult.get("message");
             } else {
-                // 재시도 실패
                 success = false;
                 message = executionResult.getErrorMessage();
                 approvalResult = new java.util.HashMap<>();
@@ -401,12 +370,10 @@ public class OnboardingServiceImpl implements OnboardingService {
                     requestId, executionResult.getAttemptCount(), message);
             }
             
-            // 온보딩 승인 성공 시 기본 대시보드 생성 (에러 핸들링 및 자동 재시도)
             if (success != null && success) {
                 OnboardingErrorHandlingService.ExecutionResult dashboardResult = 
                     errorHandlingService.executeWithRetry(
                         () -> {
-                            // 기본 업종 조회 (공통 코드에서 동적으로 가져옴)
                             String dashboardBusinessType = getDefaultBusinessType(request.getBusinessType());
                             List<com.coresolution.core.dto.TenantDashboardResponse> dashboards = 
                                 tenantDashboardService.createDefaultDashboards(tenantId, dashboardBusinessType, actorId, finalDashboardTemplates, finalDashboardWidgets);
@@ -422,7 +389,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                 if (!dashboardResult.isSuccess()) {
                     log.error("기본 대시보드 생성 재시도 실패: tenantId={}, attempts={}, error={}", 
                         tenantId, dashboardResult.getAttemptCount(), dashboardResult.getErrorMessage());
-                    // 대시보드 생성 실패는 온보딩 프로세스를 중단하지 않음 (경고만)
                 }
             }
             
@@ -434,30 +400,23 @@ public class OnboardingServiceImpl implements OnboardingService {
                     requestId, tenantId, errorMessage);
                 log.error("온보딩 승인 프로세스 실패 상세: success={}, message={}, approvalResult={}", 
                     success, message, approvalResult);
-                // 승인 프로세스 실패 시 상태를 ON_HOLD로 변경
                 request.setStatus(OnboardingStatus.ON_HOLD);
                 request.setDecisionNote(note != null ? note + "\n[시스템 오류] " + errorMessage : "[시스템 오류] " + errorMessage);
             } else {
                 log.info("온보딩 승인 프로세스 완료: {}", message);
                 
-                // 온보딩 승인 후 구독의 tenant_id 업데이트
-                // 테넌트가 생성되었으므로 checklistJson에서 subscriptionId를 찾아서 업데이트
                 try {
                     updateSubscriptionTenantId(request);
                 } catch (Exception e) {
                     log.warn("구독 tenant_id 업데이트 실패 (계속 진행): {}", e.getMessage());
-                    // 구독 업데이트 실패해도 온보딩 프로세스는 계속 진행
                 }
                 
-            // 온보딩 승인 성공 후 추가 작업 (메인 트랜잭션 내에서 직접 실행)
-            // 프로시저가 역할을 생성한 후, 같은 트랜잭션 내에서 공통코드 삽입
             try {
                 log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
                 initializeTenantAfterOnboarding(tenantId, request.getBusinessType(), actorId);
             } catch (Exception e) {
                 log.error("온보딩 후 테넌트 초기화 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
                     tenantId, e.getMessage(), e);
-                // 초기화 실패해도 온보딩 프로세스는 계속 진행
             }
             }
         }
@@ -475,7 +434,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             OnboardingStatus status,
             String actorId,
             String note) {
-        // decideInternal을 호출하여 실제 로직 실행
         return decideInternal(requestId, status, actorId, note);
     }
     
@@ -525,7 +483,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                 OnboardingConstants.formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)
             ));
         
-        // ON_HOLD 상태인 경우에만 재시도 가능
         if (request.getStatus() != OnboardingStatus.ON_HOLD) {
             throw new IllegalStateException(
                 OnboardingConstants.formatError(
@@ -535,7 +492,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             );
         }
         
-        // 재시도 메모 추가
         String retryNote = (note != null && !note.trim().isEmpty()) 
             ? note 
             : "프로시저 실패로 인한 재시도";
@@ -546,7 +502,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             retryNote = "[재시도] " + retryNote;
         }
         
-        // 다시 APPROVED 상태로 변경하고 프로시저 재실행
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return decide(requestId, OnboardingStatus.APPROVED, actorId, retryNote);
     }
     
@@ -571,18 +527,6 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Override
     @Transactional(readOnly = true)
     public OnboardingService.EmailDuplicateCheckResult checkEmailDuplicate(String email) {
-        // 온보딩 요청 단계에서 이메일 중복 확인
-        // 
-        // 핵심 원칙:
-        // - tenant_id가 unique이므로, 같은 이메일로 여러 테넌트를 만들 수 있음
-        // - 각 테넌트는 고유한 tenant_id를 가지므로 중복이 발생할 수 없음
-        // - 따라서 contact_email 중복 체크는 불필요함
-        // - 대기 중인 온보딩 요청 확인 (같은 이메일로 동시에 여러 요청하는 것 방지)
-        // 
-        // 멀티 테넌트 지원:
-        // - 같은 이메일로 여러 테넌트에 User 계정을 가질 수 있음
-        // - 이미 입점사에 일반 계정이 있어도 새로운 테넌트를 온보딩할 수 있음
-        // - 로그인 시 멀티 테넌트 사용자 감지 및 테넌트 선택 화면 표시
         log.info("이메일 중복 확인 (온보딩 요청 단계): email={}", email);
         
         if (email == null || email.trim().isEmpty()) {
@@ -594,19 +538,16 @@ public class OnboardingServiceImpl implements OnboardingService {
         
         String normalizedEmail = email.trim().toLowerCase();
         
-        // 대기 중인 온보딩 요청 확인 (PENDING, IN_REVIEW, ON_HOLD 상태 포함)
-        // 같은 이메일로 이미 온보딩 요청이 진행 중이면 중복
-        // (tenant_id가 unique이므로 contact_email 중복 체크 불필요)
         List<OnboardingRequest> pendingRequests = repository.findPendingByRequestedByIgnoreCase(normalizedEmail);
         log.info("대기 중인 온보딩 요청 확인: pendingCount={}, email={}", pendingRequests.size(), normalizedEmail);
         
         if (!pendingRequests.isEmpty()) {
-            // 가장 최근 요청의 상태 확인
             OnboardingRequest latestRequest = pendingRequests.get(0);
             OnboardingStatus status = latestRequest.getStatus();
             
             String statusMessage;
             String statusName;
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             if (status == OnboardingStatus.PENDING) {
                 statusMessage = "승인 대기 중입니다.";
                 statusName = "PENDING";
@@ -636,7 +577,6 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
     
     
-    /**
      * 테넌트 생성 시점에만 중복 체크 (온보딩 승인 시 호출)
      * 
      * 멀티 테넌트 지원 원칙:
@@ -654,12 +594,10 @@ public class OnboardingServiceImpl implements OnboardingService {
         return false; // 멀티 테넌트 지원으로 항상 false 반환
     }
     
-    /**
      * 관리자 계정 생성은 이제 PL/SQL 프로시저에서 처리됩니다.
      * ProcessOnboardingApproval 프로시저가 CreateTenantAdminAccount를 호출하여 관리자 계정을 생성합니다.
      */
     
-    /**
      * 온보딩 승인 후 구독의 tenant_id 업데이트
      * checklistJson에서 subscriptionId를 찾아서 생성된 tenant_id로 업데이트
      */
@@ -670,7 +608,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
         
         try {
-            // checklistJson 파싱
             Map<String, Object> checklist = objectMapper.readValue(
                 request.getChecklistJson(), 
                 new TypeReference<Map<String, Object>>() {}
@@ -682,7 +619,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                 return;
             }
             
-            // 생성된 tenant_id 가져오기 (승인 프로세스에서 생성됨)
             String tenantId = request.getTenantId();
             if (tenantId == null || tenantId.isEmpty()) {
                 log.warn("tenant_id가 없어 구독 업데이트 불가: requestId={}, subscriptionId={}", 
@@ -690,7 +626,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                 return;
             }
             
-            // 구독 조회 및 tenant_id 업데이트
             subscriptionRepository.findBySubscriptionId(subscriptionId)
                 .ifPresentOrElse(
                     subscription -> {
@@ -713,7 +648,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
     
-    /**
      * 기본 업종 조회 (공통 코드에서 동적으로 가져옴)
      * businessType이 null이거나 비어있으면 공통 코드에서 기본 업종을 조회
      * 공통 코드 조회 실패 시 상수에 정의된 기본값 사용
@@ -723,18 +657,15 @@ public class OnboardingServiceImpl implements OnboardingService {
      */
     @Transactional(readOnly = true)
     private String getDefaultBusinessType(String businessType) {
-        // businessType이 있으면 그대로 사용
         if (businessType != null && !businessType.trim().isEmpty()) {
             return businessType.trim();
         }
         
-        // 공통 코드에서 기본 업종 조회 시도
         try {
             List<CommonCode> businessTypes = commonCodeService
                 .getActiveCommonCodesByGroup(OnboardingConstants.CODE_GROUP_BUSINESS_TYPE);
             
             if (businessTypes != null && !businessTypes.isEmpty()) {
-                // 기본 업종 찾기 (DEFAULT 값이 있으면 사용, 없으면 첫 번째)
                 Optional<CommonCode> defaultType = businessTypes.stream()
                     .filter(code -> OnboardingConstants.CODE_VALUE_DEFAULT_BUSINESS_TYPE
                         .equals(code.getCodeValue()))
@@ -744,7 +675,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                     log.debug("공통 코드에서 기본 업종 조회 성공: {}", defaultType.get().getCodeValue());
                     return defaultType.get().getCodeValue();
                 } else {
-                    // DEFAULT가 없으면 첫 번째 활성 코드 사용
                     log.debug("공통 코드에서 첫 번째 업종 사용: {}", businessTypes.get(0).getCodeValue());
                     return businessTypes.get(0).getCodeValue();
                 }
@@ -753,12 +683,10 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("공통 코드에서 업종 조회 실패, 기본값 사용: {}", e.getMessage());
         }
         
-        // 공통 코드 조회 실패 시 상수에 정의된 기본값 사용
         log.debug("기본 업종 사용 (상수): {}", OnboardingConstants.CODE_VALUE_DEFAULT_BUSINESS_TYPE);
         return OnboardingConstants.CODE_VALUE_DEFAULT_BUSINESS_TYPE;
     }
     
-    /**
      * 기본 위험도 조회 (공통 코드에서 동적으로 가져옴)
      * 공통 코드 조회 실패 시 상수에 정의된 기본값 사용
      * 
@@ -766,13 +694,11 @@ public class OnboardingServiceImpl implements OnboardingService {
      */
     @Transactional(readOnly = true)
     private RiskLevel getDefaultRiskLevel() {
-        // 공통 코드에서 기본 위험도 조회 시도
         try {
             List<CommonCode> riskLevels = commonCodeService
                 .getActiveCommonCodesByGroup(OnboardingConstants.CODE_GROUP_RISK_LEVEL);
             
             if (riskLevels != null && !riskLevels.isEmpty()) {
-                // 기본 위험도 찾기 (LOW 값이 있으면 사용, 없으면 첫 번째)
                 Optional<CommonCode> lowRisk = riskLevels.stream()
                     .filter(code -> OnboardingConstants.CODE_VALUE_LOW
                         .equals(code.getCodeValue()))
@@ -788,7 +714,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                             lowRisk.get().getCodeValue());
                     }
                 } else {
-                    // LOW가 없으면 첫 번째 활성 코드 사용
                     try {
                         RiskLevel riskLevel = RiskLevel.valueOf(riskLevels.get(0).getCodeValue());
                         log.debug("공통 코드에서 첫 번째 위험도 사용: {}", riskLevel);
@@ -803,12 +728,10 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("공통 코드에서 위험도 조회 실패, 기본값 사용: {}", e.getMessage());
         }
         
-        // 공통 코드 조회 실패 시 상수에 정의된 기본값 사용
         log.debug("기본 위험도 사용 (상수): {}", RiskLevel.LOW);
         return RiskLevel.LOW;
     }
     
-    /**
      * 온보딩 요청에서 지역 코드 추출
      * checklistJson에서 주소 정보를 추출하여 지역 코드 생성
      * 
@@ -821,28 +744,23 @@ public class OnboardingServiceImpl implements OnboardingService {
                 return null;
             }
             
-            // checklistJson 파싱
             Map<String, Object> checklist = objectMapper.readValue(
                 request.getChecklistJson(), 
                 new TypeReference<Map<String, Object>>() {}
             );
             
-            // 주소 정보 추출 (address, postalCode 등)
             String address = (String) checklist.get("address");
             String postalCode = (String) checklist.get("postalCode");
             String region = (String) checklist.get("region"); // 직접 지역 코드가 있는 경우
             
-            // 직접 지역 코드가 있으면 사용
             if (region != null && !region.trim().isEmpty()) {
                 return region.trim();
             }
             
-            // 주소에서 지역 추출
             if (address != null && !address.trim().isEmpty()) {
                 return extractRegionFromAddress(address);
             }
             
-            // 우편번호에서 지역 추출 (한국 우편번호 기준)
             if (postalCode != null && !postalCode.trim().isEmpty()) {
                 return extractRegionFromPostalCode(postalCode);
             }
@@ -856,7 +774,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
     
-    /**
      * 주소에서 지역 코드 추출
      * 
      * @param address 주소 문자열
@@ -869,7 +786,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         
         String normalizedAddress = address.trim().toLowerCase();
         
-        // 한국 지역
         if (normalizedAddress.contains("서울") || normalizedAddress.contains("seoul")) {
             return "seoul";
         } else if (normalizedAddress.contains("부산") || normalizedAddress.contains("busan")) {
@@ -906,7 +822,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             return "jeju";
         }
         
-        // 해외 지역 (주요 도시)
         else if (normalizedAddress.contains("tokyo") || normalizedAddress.contains("도쿄")) {
             return "tokyo";
         } else if (normalizedAddress.contains("osaka") || normalizedAddress.contains("오사카")) {
@@ -933,7 +848,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             return "melbourne";
         }
         
-        // 국가 코드 추출 (해외 지역)
         else if (normalizedAddress.contains("japan") || normalizedAddress.contains("일본")) {
             return "japan";
         } else if (normalizedAddress.contains("usa") || normalizedAddress.contains("united states") || normalizedAddress.contains("미국")) {
@@ -951,7 +865,6 @@ public class OnboardingServiceImpl implements OnboardingService {
         return null;
     }
     
-    /**
      * 우편번호에서 지역 코드 추출 (한국 우편번호 기준)
      * 
      * @param postalCode 우편번호
@@ -962,81 +875,62 @@ public class OnboardingServiceImpl implements OnboardingService {
             return null;
         }
         
-        // 한국 우편번호는 5자리 숫자 (예: 06000 = 서울)
         String code = postalCode.trim().replaceAll("[^0-9]", "");
         if (code.length() < 2) {
             return null;
         }
         
-        // 우편번호 앞 2자리로 지역 판단
         String prefix = code.substring(0, 2);
         int prefixNum = Integer.parseInt(prefix);
         
-        // 서울: 01-09, 10-13
         if (prefixNum >= 1 && prefixNum <= 13) {
             return "seoul";
         }
-        // 부산: 48-49
         else if (prefixNum >= 48 && prefixNum <= 49) {
             return "busan";
         }
-        // 대구: 42-43
         else if (prefixNum >= 42 && prefixNum <= 43) {
             return "daegu";
         }
-        // 인천: 22-23
         else if (prefixNum >= 22 && prefixNum <= 23) {
             return "incheon";
         }
-        // 광주: 61-62
         else if (prefixNum >= 61 && prefixNum <= 62) {
             return "gwangju";
         }
-        // 대전: 30-34
         else if (prefixNum >= 30 && prefixNum <= 34) {
             return "daejeon";
         }
-        // 울산: 44-45
         else if (prefixNum >= 44 && prefixNum <= 45) {
             return "ulsan";
         }
-        // 세종: 30
         else if (prefixNum == 30) {
             return "sejong";
         }
-        // 경기: 10-20, 40-47
         else if ((prefixNum >= 10 && prefixNum <= 20) || (prefixNum >= 40 && prefixNum <= 47)) {
             return "gyeonggi";
         }
-        // 강원: 24-25
         else if (prefixNum >= 24 && prefixNum <= 25) {
             return "gangwon";
         }
-        // 충북: 28-29
         else if (prefixNum >= 28 && prefixNum <= 29) {
             return "chungbuk";
         }
-        // 충남: 31-32
         else if (prefixNum >= 31 && prefixNum <= 32) {
             return "chungnam";
         }
-        // 전북: 54-56
         else if (prefixNum >= 54 && prefixNum <= 56) {
             return "jeonbuk";
         }
-        // 전남: 57-59
         else if (prefixNum >= 57 && prefixNum <= 59) {
             return "jeonnam";
         }
-        // 경북: 36-39
         else if (prefixNum >= 36 && prefixNum <= 39) {
             return "gyeongbuk";
         }
-        // 경남: 50-53
         else if (prefixNum >= 50 && prefixNum <= 53) {
             return "gyeongnam";
         }
-        // 제주: 63-64
         else if (prefixNum >= 63 && prefixNum <= 64) {
             return "jeju";
         }
@@ -1044,9 +938,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         return null;
     }
     
-    /**
      * 온보딩 승인 후 테넌트 초기화 작업
-     * - 테넌트 공통코드 자동 삽입
      * - 역할별 권한 그룹 자동 할당
      * 
      * 방어 코드: 모든 단계에서 오류가 발생해도 온보딩 프로세스는 계속 진행되도록 처리
@@ -1063,47 +955,35 @@ public class OnboardingServiceImpl implements OnboardingService {
         
         log.info("🔄 온보딩 후 테넌트 초기화 시작: tenantId={}, businessType={}", tenantId, businessType);
         
-        // 1. 테넌트 공통코드 자동 삽입
         try {
             insertDefaultTenantCommonCodes(tenantId, actorId);
         } catch (Exception e) {
-            log.error("❌ 테넌트 공통코드 삽입 실패 (계속 진행): tenantId={}, error={}", tenantId, e.getMessage(), e);
-            // 실패해도 계속 진행
         }
         
-        // 2. 권한 그룹 자동 할당은 프로시저 내에서 처리됨
-        // ApplyDefaultRoleTemplates 프로시저에서 관리자 역할에 대해 자동으로 권한 그룹 할당
         log.info("ℹ️ 권한 그룹 할당은 프로시저에서 처리됨: tenantId={}", tenantId);
         
         log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
     }
     
-    /**
-     * 기본 테넌트 공통코드 삽입
      * 프로시저가 실패한 경우를 대비한 Java 코드에서 직접 삽입
      * 
      * @param tenantId 테넌트 ID
      * @param createdBy 생성자 ID
      */
     private void insertDefaultTenantCommonCodes(String tenantId, String createdBy) {
-        log.info("📋 테넌트 공통코드 삽입 시작: tenantId={}", tenantId);
         
-        // 이미 공통코드가 있는지 확인
         try {
             List<CommonCode> existingCodes = commonCodeRepository.findByTenantId(tenantId);
             if (existingCodes != null && !existingCodes.isEmpty()) {
-                log.info("⏭️ 테넌트 공통코드가 이미 존재합니다. 건너뜁니다: tenantId={}, count={}", 
                     tenantId, existingCodes.size());
                 return;
             }
         } catch (Exception e) {
-            log.warn("⚠️ 기존 공통코드 확인 실패 (계속 진행): tenantId={}, error={}", tenantId, e.getMessage());
         }
         
         int insertedCount = 0;
         String createdByValue = createdBy != null ? createdBy : "SYSTEM_ONBOARDING";
         
-        // 기본 상담 패키지 코드 (샘플)
         try {
             insertCommonCodeIfNotExists(tenantId, "CONSULTATION_PACKAGE", "INDIVIDUAL", 
                 "개인상담", "개인상담", "1:1 개인 심리상담", 
@@ -1131,7 +1011,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("⚠️ 상담 패키지 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
-        // 기본 결제 방법 코드
         try {
             insertCommonCodeIfNotExists(tenantId, "PAYMENT_METHOD", "CASH", 
                 "현금", "현금", "현금 결제", null, 1, createdByValue);
@@ -1156,7 +1035,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("⚠️ 결제 방법 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
-        // 기본 전문 분야 코드
         try {
             insertCommonCodeIfNotExists(tenantId, "SPECIALTY", "DEPRESSION", 
                 "우울증", "우울증", "우울증 상담", null, 1, createdByValue);
@@ -1181,7 +1059,6 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("⚠️ 전문 분야 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
-        // 기본 상담 유형 코드
         try {
             insertCommonCodeIfNotExists(tenantId, "CONSULTATION_TYPE", "FACE_TO_FACE", 
                 "대면상담", "대면상담", "대면 상담", null, 1, createdByValue);
@@ -1206,27 +1083,21 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("⚠️ 상담 유형 코드 삽입 실패 (건너뜀): {}", e.getMessage());
         }
         
-        log.info("✅ 테넌트 공통코드 삽입 완료: tenantId={}, insertedCount={}", tenantId, insertedCount);
     }
     
-    /**
-     * 공통코드 삽입 (중복 체크 포함)
      */
     private void insertCommonCodeIfNotExists(String tenantId, String codeGroup, String codeValue,
                                             String koreanName, String codeLabel, String description,
                                             String extraData, Integer sortOrder, String createdBy) {
         try {
-            // 중복 체크
             Optional<CommonCode> existing = commonCodeRepository.findTenantCodeByGroupAndValue(
                 tenantId, codeGroup, codeValue);
             
             if (existing.isPresent()) {
-                log.debug("⏭️ 공통코드 이미 존재: tenantId={}, group={}, value={}", 
                     tenantId, codeGroup, codeValue);
                 return;
             }
             
-            // 공통코드 생성
             CommonCode code = CommonCode.builder()
                 .codeGroup(codeGroup)
                 .codeValue(codeValue)
@@ -1241,11 +1112,9 @@ public class OnboardingServiceImpl implements OnboardingService {
             code.setTenantId(tenantId);
             
             commonCodeRepository.save(code);
-            log.debug("✅ 공통코드 삽입 완료: tenantId={}, group={}, value={}", 
                 tenantId, codeGroup, codeValue);
                 
         } catch (Exception e) {
-            log.error("❌ 공통코드 삽입 실패: tenantId={}, group={}, value={}, error={}", 
                 tenantId, codeGroup, codeValue, e.getMessage());
             throw e; // 상위로 전파하여 개별 처리
         }

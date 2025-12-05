@@ -35,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 회계 거래 서비스 구현체
  * 
  * @author MindGarden
@@ -62,7 +61,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         log.info("💼 회계 거래 생성: 유형={}, 금액={}, 카테고리={}", 
                 request.getTransactionType(), request.getAmount(), request.getCategory());
         
-        // 권한 확인 (시스템 자동 처리가 아닌 경우에만)
         if (currentUser != null) {
             if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
                 !UserRole.ADMIN.equals(currentUser.getRole()) && 
@@ -90,17 +88,15 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 .taxAmount(request.getTaxAmount() != null ? request.getTaxAmount() : BigDecimal.ZERO)
                 .amountBeforeTax(request.getAmountBeforeTax() != null ? request.getAmountBeforeTax() : request.getAmount())
                 .remarks(request.getRemarks())
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(FinancialTransaction.TransactionStatus.PENDING)
                 .build();
         
         FinancialTransaction savedTransaction = financialTransactionRepository.save(transaction);
         
-        // 🚀 실시간 통계 업데이트 추가
         try {
-            // 거래 유형에 따른 통계 업데이트
             String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
             if (incomeType.equals(request.getTransactionType()) && savedTransaction.getBranchCode() != null) {
-                // 수입 거래시 재무 통계 업데이트 (상담료 수입 등)
                 realTimeStatisticsService.updateFinancialStatisticsOnPayment(
                     savedTransaction.getBranchCode(),
                     savedTransaction.getAmount().longValue(),
@@ -114,9 +110,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 if (expenseType.equals(request.getTransactionType()) && 
                     (refundType.equals(savedTransaction.getSubcategory()) ||
                      partialRefundType.equals(savedTransaction.getSubcategory()))) {
-                    // 환불 거래시 환불 통계 업데이트
                     if (savedTransaction.getRelatedEntityId() != null && savedTransaction.getBranchCode() != null) {
-                        // 관련 상담사 ID를 추출하여 환불 통계 업데이트 (추후 매핑 테이블 조회 로직 추가 가능)
                         realTimeStatisticsService.updateStatisticsOnRefund(
                             null, // 상담사 ID (추후 매핑에서 조회)
                             savedTransaction.getBranchCode(),
@@ -140,7 +134,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public FinancialTransactionResponse updateTransaction(Long id, FinancialTransactionRequest request, User currentUser) {
         log.info("💼 회계 거래 수정: ID={}", id);
         
-        // 권한 확인
         if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
             !UserRole.ADMIN.equals(currentUser.getRole()) && 
             !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole())) {
@@ -150,12 +143,10 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         FinancialTransaction transaction = financialTransactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("거래를 찾을 수 없습니다: " + id));
         
-        // 승인된 거래는 수정 불가
         if (transaction.isApproved()) {
             throw new RuntimeException("승인된 거래는 수정할 수 없습니다.");
         }
         
-        // 거래 정보 업데이트
         transaction.setTransactionType(FinancialTransaction.TransactionType.valueOf(request.getTransactionType()));
         transaction.setCategory(request.getCategory());
         transaction.setSubcategory(request.getSubcategory());
@@ -185,7 +176,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         FinancialTransaction transaction = financialTransactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("거래를 찾을 수 없습니다: " + id));
         
-        // 승인된 거래는 삭제 불가 (논리 삭제)
         transaction.setIsDeleted(true);
         financialTransactionRepository.save(transaction);
         
@@ -241,6 +231,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Transactional(readOnly = true)
     public List<FinancialTransactionResponse> getPendingTransactions() {
         List<FinancialTransaction> transactions = financialTransactionRepository
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .findByStatusAndIsDeletedFalseOrderByCreatedAtDesc(FinancialTransaction.TransactionStatus.PENDING);
         
         return transactions.stream()
@@ -252,7 +243,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public FinancialTransactionResponse approveTransaction(Long id, String comment, User approver) {
         log.info("✅ 회계 거래 승인: ID={}, 승인자={}", id, approver.getEmail());
         
-        // 수퍼어드민만 승인 가능
         if (!UserRole.HQ_MASTER.equals(approver.getRole())) {
             throw new RuntimeException("거래 승인 권한이 없습니다.");
         }
@@ -275,7 +265,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public FinancialTransactionResponse rejectTransaction(Long id, String comment, User approver) {
         log.info("❌ 회계 거래 거부: ID={}, 거부자={}", id, approver.getEmail());
         
-        // 수퍼어드민만 거부 가능
         if (!UserRole.HQ_MASTER.equals(approver.getRole())) {
             throw new RuntimeException("거래 거부 권한이 없습니다.");
         }
@@ -305,38 +294,29 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             return new FinancialDashboardResponse();
         }
         
-        // 기본 통계
         BigDecimal totalIncome = getTotalIncome(startDate, endDate);
         BigDecimal totalExpense = getTotalExpense(startDate, endDate);
         BigDecimal netProfit = totalIncome.subtract(totalExpense);
         
-        // 승인 대기 건수
         Long pendingCount = financialTransactionRepository.countPendingApprovals(tenantId);
         
-        // 월별 데이터
         List<FinancialDashboardResponse.MonthlyFinancialData> monthlyData = getMonthlyFinancialData(startDate, endDate);
         
-        // 카테고리별 데이터
         List<FinancialDashboardResponse.CategoryFinancialData> incomeByCategory = getIncomeByCategory(startDate, endDate);
         List<FinancialDashboardResponse.CategoryFinancialData> expenseByCategory = getExpenseByCategory(startDate, endDate);
         
-        // 최근 거래 내역
         List<FinancialTransactionResponse> recentTransactions = financialTransactionRepository
                 .findRecentTransactions(tenantId, Pageable.ofSize(10))
                 .stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
         
-        // 급여 관련 데이터
         FinancialDashboardResponse.SalaryFinancialData salaryData = getSalaryFinancialData();
         
-        // ERP 관련 데이터
         FinancialDashboardResponse.ErpFinancialData erpData = getErpFinancialData();
         
-        // 결제 관련 데이터
         FinancialDashboardResponse.PaymentFinancialData paymentData = getPaymentFinancialData();
         
-        // 총 세금 계산
         BigDecimal totalTaxAmount = getTotalTaxAmount(startDate, endDate);
         
         return FinancialDashboardResponse.builder()
@@ -383,7 +363,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         return getTotalIncome(startDate, endDate).subtract(getTotalExpense(startDate, endDate));
     }
     
-    /**
      * 총 세금 계산
      * 
      * @param startDate 시작일
@@ -395,22 +374,18 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         try {
             log.info("💰 총 세금 계산 시작: {} ~ {}", startDate, endDate);
             
-            // 세금 관련 거래 조회 (공통 코드에서 카테고리명 조회)
             String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
             List<FinancialTransaction> taxTransactions = financialTransactionRepository
                     .findByCategoryAndIsDeletedFalse(taxCategory);
             
-            // 기간 필터링
             List<FinancialTransaction> filteredTaxTransactions = taxTransactions.stream()
                     .filter(t -> !t.getTransactionDate().isBefore(startDate) && !t.getTransactionDate().isAfter(endDate))
                     .collect(Collectors.toList());
             
-            // 총 세금 금액 계산
             BigDecimal totalTaxAmount = filteredTaxTransactions.stream()
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 부가세 별도 계산 (공통 코드에서 결제 카테고리명 조회)
             String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
             List<FinancialTransaction> paymentTransactions = financialTransactionRepository
                     .findByCategoryAndIsDeletedFalse(paymentCategory);
@@ -421,7 +396,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                     .map(FinancialTransaction::getTaxAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 총 세금 = 직접 세금 + 부가세
             BigDecimal grandTotalTax = totalTaxAmount.add(totalVatAmount);
             
             log.info("✅ 총 세금 계산 완료 - 직접 세금: {}, 부가세: {}, 총 세금: {}", 
@@ -503,14 +477,12 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         return new ArrayList<>(monthlyMap.values());
     }
     
-    // 특화된 거래 생성 메서드들
     
     @Override
     public FinancialTransactionResponse createSalaryTransaction(Long salaryCalculationId, String description) {
         SalaryCalculation salary = salaryCalculationRepository.findById(salaryCalculationId)
                 .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + salaryCalculationId));
         
-        // 공통 코드에서 카테고리 조회
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
         String salaryCategory = getSafeCodeName("FINANCIAL_CATEGORY", "SALARY", "급여");
         String consultantSalarySubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTANT_SALARY", "상담사급여");
@@ -538,7 +510,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         PurchaseRequest purchase = purchaseRequestRepository.findById(purchaseRequestId)
                 .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + purchaseRequestId));
         
-        // 공통 코드에서 카테고리 조회
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
         String purchaseCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PURCHASE", "구매");
         String equipmentPurchaseSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "EQUIPMENT_PURCHASE", "비품구매");
@@ -564,11 +535,9 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다: " + paymentId));
         
-        // 부가세 계산 (결제 금액은 부가세 포함)
         com.coresolution.consultation.util.TaxCalculationUtil.TaxCalculationResult taxResult = 
             com.coresolution.consultation.util.TaxCalculationUtil.calculateTaxFromPayment(payment.getAmount());
         
-        // 공통 코드에서 카테고리 조회
         String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
         String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
         String consultationFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTATION_FEE", "상담료");
@@ -593,7 +562,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     
     @Override
     public FinancialTransactionResponse createRentTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
-        // 공통 코드에서 카테고리 조회
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
         String rentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "RENT", "임대료");
         String officeRentSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "OFFICE_RENT", "사무실임대료");
@@ -613,7 +581,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     
     @Override
     public FinancialTransactionResponse createManagementFeeTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
-        // 공통 코드에서 카테고리 조회
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
         String managementFeeCategory = getSafeCodeName("FINANCIAL_CATEGORY", "MANAGEMENT_FEE", "관리비");
         String officeManagementFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "OFFICE_MANAGEMENT_FEE", "사무실관리비");
@@ -633,7 +600,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     
     @Override
     public FinancialTransactionResponse createTaxTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
-        // 공통 코드에서 카테고리 조회
         String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
         String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
         String corporateTaxSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CORPORATE_TAX", "법인세");
@@ -651,7 +617,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         return createTransaction(request, null); // 시스템 자동 생성
     }
     
-    // 헬퍼 메서드들
     
     private FinancialTransactionResponse convertToResponse(FinancialTransaction transaction) {
         FinancialTransactionResponse.FinancialTransactionResponseBuilder builder = FinancialTransactionResponse.builder()
@@ -680,7 +645,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 .createdAt(transaction.getCreatedAt())
                 .updatedAt(transaction.getUpdatedAt());
         
-        // 매핑 정보 조회 (CONSULTANT_CLIENT_MAPPING 관련 거래인 경우)
         if ("CONSULTANT_CLIENT_MAPPING".equals(transaction.getRelatedEntityType()) 
                 || "CONSULTANT_CLIENT_MAPPING_REFUND".equals(transaction.getRelatedEntityType())) {
             if (transaction.getRelatedEntityId() != null) {
@@ -708,7 +672,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     }
     
     private List<FinancialDashboardResponse.CategoryFinancialData> convertToCategoryFinancialData(List<Object[]> results) {
-        // 총 금액 계산 (비율 계산을 위해)
         BigDecimal totalAmount = results.stream()
                 .map(row -> (BigDecimal) row[1])
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -719,7 +682,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                     BigDecimal amount = (BigDecimal) row[1];
                     Long count = ((Number) row[2]).longValue();
                     
-                    // 비율 계산
                     String percentage = calculatePercentage(amount, totalAmount);
                     
                     return FinancialDashboardResponse.CategoryFinancialData.builder()
@@ -732,7 +694,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 .collect(Collectors.toList());
     }
     
-    /**
      * 비율 계산 헬퍼 메서드
      * 
      * @param amount 개별 금액
@@ -745,12 +706,10 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         }
         
         try {
-            // 비율 계산: (개별 금액 / 총 금액) * 100
             BigDecimal percentage = amount
                     .divide(totalAmount, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
             
-            // 소수점 1자리까지 반올림
             percentage = percentage.setScale(1, RoundingMode.HALF_UP);
             
             return percentage.toString() + "%";
@@ -763,39 +722,31 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     }
     
     private FinancialDashboardResponse.SalaryFinancialData getSalaryFinancialData() {
-        // 급여 관련 통계 데이터 조회 로직 구현
         try {
-            // 급여 관련 거래 조회 (공통 코드에서 급여 카테고리명 조회)
             String salaryCategory = getSafeCodeName("FINANCIAL_CATEGORY", "SALARY", "급여");
             List<FinancialTransaction> salaryTransactions = financialTransactionRepository
                     .findByCategoryAndIsDeletedFalse(salaryCategory);
             
-            // 총 급여 지급액 계산
             BigDecimal totalSalaryPaid = salaryTransactions.stream()
                     .filter(t -> "INCOME".equals(t.getTransactionType().name()))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 총 세금 공제액 계산 (공통 코드에서 세금 카테고리명 조회)
             String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
             BigDecimal totalTaxWithheld = salaryTransactions.stream()
                     .filter(t -> taxCategory.equals(t.getCategory()))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 상담사 수 조회 (임시로 기본값 사용)
             String tenantId = TenantContextHolder.getTenantId();
             long consultantCount = tenantId != null ? 
                     userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT).size() : 0;
             
-            // 평균 급여 계산
             BigDecimal averageSalary = consultantCount > 0 ? 
                     totalSalaryPaid.divide(BigDecimal.valueOf(consultantCount), 2, RoundingMode.HALF_UP) : 
                     BigDecimal.ZERO;
             
-            // 등급별 급여 통계 (임시로 기본값 사용)
             List<FinancialDashboardResponse.SalaryByGrade> salaryByGrade = new ArrayList<>();
-            // 등급별 급여 통계는 PL/SQL 프로시저로 처리됨
             
             log.info("✅ 급여 통계 데이터 조회 완료 - 총 급여: {}, 상담사 수: {}, 평균 급여: {}", 
                     totalSalaryPaid, consultantCount, averageSalary);
@@ -811,7 +762,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         } catch (Exception e) {
             log.error("❌ 급여 통계 데이터 조회 중 오류 발생: {}", e.getMessage(), e);
             
-            // 오류 발생 시 기본값 반환
             return FinancialDashboardResponse.SalaryFinancialData.builder()
                     .totalSalaryPaid(BigDecimal.ZERO)
                     .totalTaxWithheld(BigDecimal.ZERO)
@@ -823,9 +773,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     }
     
     private FinancialDashboardResponse.ErpFinancialData getErpFinancialData() {
-        // ERP 관련 통계 데이터 조회 로직 구현
         try {
-            // ERP 관련 거래 조회 (공통 코드에서 카테고리명 조회)
             String purchaseCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PURCHASE", "구매");
             String budgetCategory = getSafeCodeName("FINANCIAL_CATEGORY", "BUDGET", "예산");
             List<FinancialTransaction> purchaseTransactions = financialTransactionRepository
@@ -833,35 +781,28 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             List<FinancialTransaction> budgetTransactions = financialTransactionRepository
                     .findByCategoryAndIsDeletedFalse(budgetCategory);
             
-            // 총 구매 금액 계산
             BigDecimal totalPurchaseAmount = purchaseTransactions.stream()
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 총 예산 계산
             String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
             BigDecimal totalBudget = budgetTransactions.stream()
                     .filter(t -> incomeType.equals(t.getTransactionType().name()))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 사용된 예산 계산
             String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
             BigDecimal usedBudget = budgetTransactions.stream()
                     .filter(t -> expenseType.equals(t.getTransactionType().name()))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 잔여 예산 계산
             BigDecimal remainingBudget = totalBudget.subtract(usedBudget);
             
-            // 대기 중인 요청 수 (실제 구현에서는 PurchaseRequest 엔티티 조회 필요)
             int pendingRequests = 0; // 구매 요청 기능은 향후 구현 예정
             
-            // 승인된 요청 수 (실제 구현에서는 PurchaseRequest 엔티티 조회 필요)
             int approvedRequests = 0; // 구매 요청 기능은 향후 구현 예정
             
-            // 카테고리별 예산 통계
             List<FinancialDashboardResponse.BudgetByCategory> budgetByCategory = budgetTransactions.stream()
                     .collect(Collectors.groupingBy(
                             FinancialTransaction::getCategory,
@@ -874,7 +815,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                         String category = entry.getKey();
                         BigDecimal categoryTotalBudget = entry.getValue();
                         
-                        // 실제 사용량 계산 - 해당 카테고리의 지출 거래 조회
                         String categoryExpenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
                         BigDecimal categoryUsedBudget = financialTransactionRepository
                                 .findByCategoryAndIsDeletedFalse(category)
@@ -910,7 +850,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         } catch (Exception e) {
             log.error("❌ ERP 통계 데이터 조회 중 오류 발생: {}", e.getMessage(), e);
             
-            // 오류 발생 시 기본값 반환
             return FinancialDashboardResponse.ErpFinancialData.builder()
                     .totalPurchaseAmount(BigDecimal.ZERO)
                     .totalBudget(BigDecimal.ZERO)
@@ -924,28 +863,25 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     }
     
     private FinancialDashboardResponse.PaymentFinancialData getPaymentFinancialData() {
-        // 결제 관련 통계 데이터 조회 로직 구현
         try {
-            // 결제 관련 거래 조회 (공통 코드에서 카테고리명 조회)
             String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
             List<FinancialTransaction> paymentTransactions = financialTransactionRepository
                     .findByCategoryAndIsDeletedFalse(paymentCategory);
             
-            // 총 결제 금액 계산
             BigDecimal totalPaymentAmount = paymentTransactions.stream()
                     .filter(t -> "INCOME".equals(t.getTransactionType().name()))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 총 결제 건수
             int totalPaymentCount = paymentTransactions.size();
             
-            // 결제 상태별 통계 (ConsultantClientMapping의 PaymentStatus 조회)
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             int pendingPayments = (int) consultantClientMappingRepository.countByPaymentStatus(ConsultantClientMapping.PaymentStatus.PENDING);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             int completedPayments = (int) consultantClientMappingRepository.countByPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             int failedPayments = (int) consultantClientMappingRepository.countByPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
             
-            // 결제 수단별 통계
             Map<String, BigDecimal> paymentByMethod = paymentTransactions.stream()
                     .collect(Collectors.groupingBy(
                             t -> t.getDescription() != null ? t.getDescription() : "UNKNOWN",
@@ -954,7 +890,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                                     BigDecimal::add)
                     ));
             
-            // 결제 제공업체별 통계
             Map<String, BigDecimal> paymentByProvider = paymentTransactions.stream()
                     .collect(Collectors.groupingBy(
                             t -> t.getCategory() != null ? t.getCategory() : "UNKNOWN",
@@ -979,7 +914,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         } catch (Exception e) {
             log.error("❌ 결제 통계 데이터 조회 중 오류 발생: {}", e.getMessage(), e);
             
-            // 오류 발생 시 기본값 반환
             return FinancialDashboardResponse.PaymentFinancialData.builder()
                     .totalPaymentAmount(BigDecimal.ZERO)
                     .totalPaymentCount(0)
@@ -995,13 +929,11 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Override
     public Map<String, Object> getBranchFinancialData(String branchCode, LocalDate startDate, LocalDate endDate, 
                                                      String category, String transactionType) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         try {
             String tenantId = TenantContextHolder.getTenantId();
             log.info("🏢 재무 데이터 조회 (테넌트 전체): tenantId={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}", 
                     tenantId, startDate, endDate, category, transactionType);
             
-            // 테넌트 전체 거래 내역 조회 (삭제되지 않은 거래만)
             List<FinancialTransaction> allTransactions = financialTransactionRepository.findByTenantIdAndIsDeletedFalse(tenantId);
             log.info("🔍 전체 거래 내역 수: {}", allTransactions.size());
             
@@ -1016,7 +948,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             log.info("🔍 필터링된 거래 내역 수: {}, 기간: {}~{}", 
                     transactions.size(), startDate, endDate);
             
-            // 수익/지출 계산
             BigDecimal totalRevenue = transactions.stream()
                     .filter(t -> FinancialTransaction.TransactionType.INCOME.equals(t.getTransactionType()))
                     .map(FinancialTransaction::getAmount)
@@ -1029,12 +960,10 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             
             BigDecimal netProfit = totalRevenue.subtract(totalExpenses);
             
-            // 거래 내역 변환
             List<Map<String, Object>> transactionList = transactions.stream()
                     .map(this::convertTransactionToMap)
                     .collect(Collectors.toList());
             
-            // 카테고리별 분석
             Map<String, BigDecimal> categoryBreakdown = transactions.stream()
                     .collect(Collectors.groupingBy(
                             t -> t.getCategory() != null ? t.getCategory() : "기타",
@@ -1043,7 +972,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                                     BigDecimal::add)
                     ));
             
-            // 월별 통계 (간단한 형태로)
             Map<String, BigDecimal> monthlyStats = transactions.stream()
                     .collect(Collectors.groupingBy(
                             t -> t.getTransactionDate().getYear() + "-" + 
@@ -1072,7 +1000,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         } catch (Exception e) {
             log.error("❌ 재무 데이터 조회 실패 (테넌트 전체): 오류={}", e.getMessage(), e);
             
-            // 오류 시 기본값 반환
             Map<String, Object> result = new HashMap<>();
             result.put("summary", Map.of(
                 "totalRevenue", 0L,
@@ -1088,7 +1015,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         }
     }
     
-    /**
      * FinancialTransaction을 Map으로 변환
      */
     private Map<String, Object> convertTransactionToMap(FinancialTransaction transaction) {
@@ -1109,36 +1035,30 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public Page<FinancialTransactionResponse> getTransactionsByBranch(String branchCode, String transactionType, 
                                                                      String category, String startDate, String endDate, 
                                                                      Pageable pageable) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         try {
             String tenantId = TenantContextHolder.getTenantId();
             log.info("🏢 재무 거래 목록 조회 (테넌트 전체): tenantId={}, 유형={}, 카테고리={}, 시작일={}, 종료일={}", 
                     tenantId, transactionType, category, startDate, endDate);
             
-            // 테넌트 전체 거래 조회 후 필터링
             List<FinancialTransaction> allTransactions = financialTransactionRepository
                     .findByTenantIdAndIsDeletedFalse(tenantId);
             
             log.info("🔍 전체 재무 거래 조회 완료: {}건", allTransactions.size());
             
-            // 필터링 적용 (branchCode 필터링 제거)
             List<FinancialTransaction> filteredTransactions = allTransactions.stream()
                     .filter(t -> {
-                        // 거래 유형 필터링
                         if (transactionType != null && !transactionType.isEmpty() && !"ALL".equals(transactionType)) {
                             return transactionType.equals(t.getTransactionType().name());
                         }
                         return true;
                     })
                     .filter(t -> {
-                        // 카테고리 필터링
                         if (category != null && !category.isEmpty() && !"ALL".equals(category)) {
                             return category.equals(t.getCategory());
                         }
                         return true;
                     })
                     .filter(t -> {
-                        // 날짜 범위 필터링
                         if (startDate != null && !startDate.isEmpty()) {
                             LocalDate start = LocalDate.parse(startDate);
                             if (t.getTransactionDate().isBefore(start)) {
@@ -1157,23 +1077,19 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             
             log.info("🔍 필터링 결과: 전체={}건, 필터링 후={}건", allTransactions.size(), filteredTransactions.size());
             
-            // 처음 몇 개 거래의 지점코드 출력 (디버깅)
             filteredTransactions.stream().limit(5).forEach(t -> 
                 log.info("📊 거래 샘플: ID={}, 지점={}, 유형={}, 금액={}", 
                     t.getId(), t.getBranchCode(), t.getTransactionType(), t.getAmount())
             );
             
-            // 페이징 처리
             int start = (int) pageable.getOffset();
             int end = Math.min((start + pageable.getPageSize()), filteredTransactions.size());
             List<FinancialTransaction> pageContent = filteredTransactions.subList(start, end);
             
-            // FinancialTransactionResponse로 변환
             List<FinancialTransactionResponse> responseContent = pageContent.stream()
                     .map(this::convertToResponse)
                     .collect(Collectors.toList());
             
-            // Page 객체 생성
             Page<FinancialTransactionResponse> result = new org.springframework.data.domain.PageImpl<>(
                     responseContent, pageable, filteredTransactions.size());
             
@@ -1188,7 +1104,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         }
     }
     
-    /**
      * 안전한 공통 코드명 조회 (오류 시 기본값 반환)
      * 
      * @param codeGroup 코드 그룹

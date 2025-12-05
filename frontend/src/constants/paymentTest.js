@@ -1,4 +1,3 @@
-/**
  * 결제 테스트 관련 상수
  * CSS 클래스, JavaScript 변수, 메시지 등을 중앙에서 관리
  * 
@@ -7,7 +6,6 @@
  * @since 2025-01-05
  */
 
-// API 엔드포인트
 export const PAYMENT_TEST_API = {
   CREATE_PAYMENT: '/api/payments',
   PAYMENT_SCENARIOS: '/api/test/payment/scenarios',
@@ -17,7 +15,6 @@ export const PAYMENT_TEST_API = {
   HEALTH: '/api/test/payment/health'
 };
 
-// HTTP 메서드 및 헤더
 export const HTTP_METHODS = {
   GET: 'GET',
   POST: 'POST',
@@ -30,7 +27,6 @@ export const HTTP_HEADERS = {
   APPLICATION_JSON: 'application/json'
 };
 
-// 테스트 데이터 기본값
 export const DEFAULT_TEST_DATA = {
   METHOD: 'CARD',
   PROVIDER: 'TOSS',
@@ -41,7 +37,6 @@ export const DEFAULT_TEST_DATA = {
   TIMEOUT_MINUTES: 30
 };
 
-// 결제 방법 옵션
 export const PAYMENT_METHODS = [
   { value: 'CARD', label: '신용카드' },
   { value: 'BANK_TRANSFER', label: '계좌이체' },
@@ -49,7 +44,6 @@ export const PAYMENT_METHODS = [
   { value: 'MOBILE', label: '모바일결제' }
 ];
 
-// 결제 대행사 옵션
 export const PAYMENT_PROVIDERS = [
   { value: 'TOSS', label: '토스페이먼츠' },
   { value: 'KAKAO', label: '카카오페이' },
@@ -58,7 +52,6 @@ export const PAYMENT_PROVIDERS = [
   { value: 'NHN_KCP', label: 'NHN KCP' }
 ];
 
-// 테스트 시나리오
 export const TEST_SCENARIOS = [
   { 
     amount: 50000, 
@@ -80,15 +73,15 @@ export const TEST_SCENARIOS = [
   }
 ];
 
-// 결제 상태 옵션
 export const PAYMENT_STATUSES = [
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   { value: 'APPROVED', label: '승인' },
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   { value: 'CANCELLED', label: '취소' },
   { value: 'REFUNDED', label: '환불' },
   { value: 'FAILED', label: '실패' }
 ];
 
-// 버튼 텍스트
 export const BUTTON_TEXT = {
   CREATE_PAYMENT: '결제 생성',
   SCENARIOS: '시나리오 테스트',
@@ -101,7 +94,6 @@ export const BUTTON_TEXT = {
   DEPOSIT_CONFIRM: '입금 확인'
 };
 
-// 폼 라벨
 export const FORM_LABELS = {
   PAYMENT_METHOD: '결제 방법',
   PAYMENT_PROVIDER: '결제 대행사',
@@ -113,7 +105,6 @@ export const FORM_LABELS = {
   TIMEOUT_MINUTES: '타임아웃 (분)'
 };
 
-// 플레이스홀더
 export const PLACEHOLDERS = {
   AMOUNT: '결제 금액을 입력하세요',
   PAYER_ID: '결제자 ID를 입력하세요',
@@ -123,7 +114,6 @@ export const PLACEHOLDERS = {
   TIMEOUT_MINUTES: '타임아웃 시간을 입력하세요'
 };
 
-// 메시지
 export const MESSAGES = {
   SUCCESS: {
     PAYMENT_CREATED: '결제가 성공적으로 생성되었습니다.',
@@ -151,7 +141,6 @@ export const MESSAGES = {
   }
 };
 
-// 페이지 제목
 export const PAGE_TITLES = {
   MAIN: '결제 시스템 테스트',
   CREATE_PAYMENT: '결제 생성 테스트',
@@ -162,7 +151,6 @@ export const PAGE_TITLES = {
   HEALTH: '헬스 체크'
 };
 
-// 결과 타입
 export const RESULT_TYPES = {
   SUCCESS: 'success',
   ERROR: 'error',
@@ -170,7 +158,6 @@ export const RESULT_TYPES = {
   WARNING: 'warning'
 };
 
-// 테스트 타입
 export const TEST_TYPES = {
   CREATE_PAYMENT: 'create_payment',
   SCENARIOS: 'scenarios',

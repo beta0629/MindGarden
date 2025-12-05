@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
  * 학원 시스템 수강 등록 관리 컨트롤러
  * 동적 권한 시스템 적용, 하드코딩 금지, 상수 사용
  * 
@@ -41,7 +40,6 @@ public class AcademyEnrollmentController extends BaseApiController {
     private final ClassEnrollmentService enrollmentService;
     private final DynamicPermissionService dynamicPermissionService;
     
-    /**
      * 수강 등록 목록 조회
      * GET /api/v1/academy/enrollments
      */
@@ -56,7 +54,6 @@ public class AcademyEnrollmentController extends BaseApiController {
         log.debug("수강 등록 목록 조회 요청: branchId={}, classId={}, consumerId={}, status={}", 
                 branchId, classId, consumerId, status);
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.ENROLLMENT_VIEW_LIST, 
@@ -77,7 +74,6 @@ public class AcademyEnrollmentController extends BaseApiController {
         return success(enrollments);
     }
     
-    /**
      * 수강 등록 상세 조회
      * GET /api/v1/academy/enrollments/{enrollmentId}
      */
@@ -88,7 +84,6 @@ public class AcademyEnrollmentController extends BaseApiController {
             HttpSession session) {
         log.debug("수강 등록 상세 조회 요청: enrollmentId={}", enrollmentId);
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.ENROLLMENT_VIEW_DETAIL, 
@@ -110,7 +105,6 @@ public class AcademyEnrollmentController extends BaseApiController {
         return success(enrollment);
     }
     
-    /**
      * 수강 등록 생성
      * POST /api/v1/academy/enrollments
      */
@@ -121,7 +115,6 @@ public class AcademyEnrollmentController extends BaseApiController {
             HttpSession session) {
         log.info("수강 등록 생성 요청: classId={}, consumerId={}", request.getClassId(), request.getConsumerId());
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.ENROLLMENT_CREATE, 
@@ -146,7 +139,6 @@ public class AcademyEnrollmentController extends BaseApiController {
         return created("수강 등록이 완료되었습니다.", enrollment);
     }
     
-    /**
      * 수강 등록 수정
      * PUT /api/v1/academy/enrollments/{enrollmentId}
      */
@@ -158,7 +150,6 @@ public class AcademyEnrollmentController extends BaseApiController {
             HttpSession session) {
         log.info("수강 등록 수정 요청: enrollmentId={}", enrollmentId);
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.ENROLLMENT_UPDATE, 
@@ -184,7 +175,6 @@ public class AcademyEnrollmentController extends BaseApiController {
         return updated("수강 등록 정보가 수정되었습니다.", enrollment);
     }
     
-    /**
      * 수강 취소
      * POST /api/v1/academy/enrollments/{enrollmentId}/cancel
      */
@@ -195,7 +185,6 @@ public class AcademyEnrollmentController extends BaseApiController {
             HttpSession session) {
         log.info("수강 취소 요청: enrollmentId={}", enrollmentId);
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.ENROLLMENT_CANCEL, 
@@ -215,13 +204,13 @@ public class AcademyEnrollmentController extends BaseApiController {
         ClassEnrollmentResponse enrollment = enrollmentService.updateEnrollmentStatus(
             tenantId, 
             enrollmentId, 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             ClassEnrollment.EnrollmentStatus.CANCELLED, 
             currentUser.getEmail()
         );
         return updated("수강이 취소되었습니다.", enrollment);
     }
     
-    /**
      * 수강생별 활성 수강 등록 조회
      * GET /api/v1/academy/enrollments/consumer/{consumerId}
      */
@@ -232,7 +221,6 @@ public class AcademyEnrollmentController extends BaseApiController {
             HttpSession session) {
         log.debug("수강생별 활성 수강 등록 조회 요청: consumerId={}", consumerId);
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.ENROLLMENT_VIEW_LIST, 

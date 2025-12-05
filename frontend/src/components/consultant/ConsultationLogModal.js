@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { FileText, XCircle, Save, CheckCircle, User, AlertTriangle, Clock, Target } from 'lucide-react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
-/**
  * 상담일지 작성 모달 컴포넌트
  * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 모달
  */
@@ -29,7 +27,6 @@ const ConsultationLogModal = ({
   const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
-  // 우선순위 코드 로드
   const loadPriorityCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
@@ -46,14 +43,11 @@ const ConsultationLogModal = ({
       }
     } catch (error) {
       console.error('우선순위 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       setPriorityOptions([
         { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
         { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
         { value: 'HIGH', label: '높음', icon: '🟠', color: '#fd7e14', description: '높은 우선순위' },
         { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
         { value: 'CRITICAL', label: '위험', icon: '🚨', color: '#6f42c1', description: '위험 우선순위' }
       ]);
     } finally {
@@ -61,7 +55,6 @@ const ConsultationLogModal = ({
     }
   }, []);
   
-  // 상담일지 폼 데이터
   const [formData, setFormData] = useState({
     sessionDate: '',
     sessionNumber: 1,
@@ -95,17 +88,14 @@ const ConsultationLogModal = ({
     followUpDueDate: ''
   });
 
-  // 위험도 옵션 (우선순위 코드 사용)
   const riskLevels = priorityOptions;
 
-  // 목표 달성도 옵션
   const goalAchievementLevels = [
     { value: 'LOW', label: '낮음', color: 'var(--mg-error-500)' },
     { value: 'MEDIUM', label: '보통', color: 'var(--mg-warning-500)' },
     { value: 'HIGH', label: '높음', color: 'var(--mg-success-500)' }
   ];
 
-  // 완료 상태 코드 로드
   const loadCompletionStatusCodes = useCallback(async () => {
     try {
       setLoadingCompletionCodes(true);
@@ -119,21 +109,27 @@ const ConsultationLogModal = ({
           description: code.codeDescription
         })));
       } else {
-        // 응답이 비어있을 때 기본값 설정
         setCompletionStatusOptions([
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '작업 대기' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-info-500)', description: '작업 진행중' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
           { value: 'CANCELLED', label: '취소', icon: '❌', color: 'var(--mg-error-500)', description: '작업 취소' }
         ]);
       }
     } catch (error) {
       console.error('완료 상태 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
       setCompletionStatusOptions([
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '작업 완료' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '작업 대기' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-info-500)', description: '작업 진행중' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         { value: 'CANCELLED', label: '취소', icon: '❌', color: 'var(--mg-error-500)', description: '작업 취소' }
       ]);
     } finally {
@@ -141,13 +137,11 @@ const ConsultationLogModal = ({
     }
   }, []);
 
-  // 데이터 로드
   useEffect(() => {
     if (isOpen && scheduleData) {
       loadData();
       loadPriorityCodes();
       loadCompletionStatusCodes();
-      // 스케줄에서 세션 정보 자동 설정
       setFormData(prev => ({
         ...prev,
         sessionNumber: scheduleData.sessionNumber || 1, // 스케줄에서 세션 번호 가져오기
@@ -157,7 +151,6 @@ const ConsultationLogModal = ({
     }
   }, [isOpen, scheduleData]);
 
-  // 안전한 날짜 변환 함수
   const safeDateToString = (dateValue) => {
     if (!dateValue) return new Date().toISOString().split('T')[0];
     
@@ -179,7 +172,6 @@ const ConsultationLogModal = ({
     try {
       setLoading(true);
       
-      // 내담자 정보 로드
       if (scheduleData.clientId) {
         const clientResponse = await apiGet(`/api/admin/users`);
         if (clientResponse.success) {
@@ -190,7 +182,6 @@ const ConsultationLogModal = ({
         }
       }
       
-      // 기존 상담일지 로드
       try {
         const recordResponse = await apiGet(`/api/schedules/consultation-records?consultantId=${user.id}&consultationId=${scheduleData.id}`);
         if (recordResponse.success && recordResponse.data.length > 0) {
@@ -198,7 +189,6 @@ const ConsultationLogModal = ({
           setConsultationRecord(record);
           setIsEditMode(true);
           
-          // 폼 데이터 설정
           setFormData({
             sessionDate: record.sessionDate || safeDateToString(scheduleData.startTime),
             sessionNumber: record.sessionNumber || 1,
@@ -232,7 +222,6 @@ const ConsultationLogModal = ({
             followUpDueDate: record.followUpDueDate || ''
           });
         } else {
-          // 새 상담일지인 경우 기본값 설정
           setFormData(prev => ({
             ...prev,
             sessionDate: safeDateToString(scheduleData.startTime),
@@ -259,7 +248,6 @@ const ConsultationLogModal = ({
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // 입력 시 해당 필드의 검증 오류 제거
     if (validationErrors[name]) {
       setValidationErrors(prev => ({
         ...prev,
@@ -268,41 +256,33 @@ const ConsultationLogModal = ({
     }
   };
 
-  // 필수값 검증 함수
   const validateForm = () => {
     const errors = {};
     
-    // 세션 시간 (분) - 필수
     if (!formData.sessionDurationMinutes || formData.sessionDurationMinutes < 1) {
       errors.sessionDurationMinutes = '세션 시간을 입력해주세요 (최소 1분)';
     }
     
-    // 내담자 상태 - 필수
     if (!formData.clientCondition || formData.clientCondition.trim() === '') {
       errors.clientCondition = '내담자 상태를 입력해주세요';
     }
     
-    // 주요 이슈 - 필수
     if (!formData.mainIssues || formData.mainIssues.trim() === '') {
       errors.mainIssues = '주요 이슈를 입력해주세요';
     }
     
-    // 개입 방법 - 필수
     if (!formData.interventionMethods || formData.interventionMethods.trim() === '') {
       errors.interventionMethods = '개입 방법을 입력해주세요';
     }
     
-    // 내담자 반응 - 필수
     if (!formData.clientResponse || formData.clientResponse.trim() === '') {
       errors.clientResponse = '내담자 반응을 입력해주세요';
     }
     
-    // 위험도 평가 - 필수
     if (!formData.riskAssessment || formData.riskAssessment === '') {
       errors.riskAssessment = '위험도 평가를 선택해주세요';
     }
     
-    // 진행 평가 - 필수
     if (!formData.progressEvaluation || formData.progressEvaluation.trim() === '') {
       errors.progressEvaluation = '진행 평가를 입력해주세요';
     }
@@ -312,7 +292,6 @@ const ConsultationLogModal = ({
   };
 
   const handleSave = async () => {
-    // 필수값 검증
     if (!validateForm()) {
       notificationManager.error('필수 항목을 모두 입력해주세요.');
       return;
@@ -321,7 +300,6 @@ const ConsultationLogModal = ({
     try {
       setSaving(true);
       
-      // consultationId 파싱 (schedule-30 형태 처리)
       const consultationId = scheduleData.id ? 
         (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-') ? 
           parseInt(scheduleData.id.replace('schedule-', '')) : 
@@ -364,7 +342,6 @@ const ConsultationLogModal = ({
   };
 
   const handleComplete = async () => {
-    // 필수값 검증
     if (!validateForm()) {
       notificationManager.error('필수 항목을 모두 입력해주세요.');
       return;
@@ -373,7 +350,6 @@ const ConsultationLogModal = ({
     try {
       setSaving(true);
       
-      // consultationId 파싱 (schedule-30 형태 처리)
       const consultationId = scheduleData.id ? 
         (typeof scheduleData.id === 'string' && scheduleData.id.startsWith('schedule-') ? 
           parseInt(scheduleData.id.replace('schedule-', '')) : 
@@ -401,7 +377,6 @@ const ConsultationLogModal = ({
       if (response.success) {
         notificationManager.show('상담일지가 완료되었습니다.', 'success');
         onSave && onSave(response.data);
-        // 상담일지 완료 후 바로 모달 닫기
         onClose();
       } else {
         throw new Error(response.message || '완료 처리에 실패했습니다.');
@@ -559,7 +534,6 @@ const ConsultationLogModal = ({
                   className="mg-v2-form-input"
                   style={{
                     backgroundColor: 'var(--mg-gray-100)',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
                     color: '#666',
                     cursor: 'not-allowed'
                   }}
@@ -602,7 +576,6 @@ const ConsultationLogModal = ({
                   disabled={true}
                   style={{
                     backgroundColor: 'var(--mg-gray-100)',
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
                     color: '#666',
                     cursor: 'not-allowed'
                   }}

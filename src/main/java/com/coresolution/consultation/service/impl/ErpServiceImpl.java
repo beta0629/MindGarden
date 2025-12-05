@@ -32,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * ERP 서비스 구현체
  * 
  * @author MindGarden
@@ -53,7 +52,6 @@ public class ErpServiceImpl implements ErpService {
     private final UserService userService;
     private final FinancialTransactionService financialTransactionService;
     
-    // ==================== Item Management ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -139,7 +137,6 @@ public class ErpServiceImpl implements ErpService {
         return true;
     }
     
-    // ==================== Purchase Request Management ====================
     
     @Override
     public PurchaseRequest createPurchaseRequest(Long requesterId, Long itemId, Integer quantity, String reason) {
@@ -160,6 +157,7 @@ public class ErpServiceImpl implements ErpService {
                 .unitPrice(item.getUnitPrice())
                 .totalAmount(totalAmount)
                 .reason(reason)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(PurchaseRequest.PurchaseRequestStatus.PENDING)
                 .build();
         
@@ -211,6 +209,7 @@ public class ErpServiceImpl implements ErpService {
         User admin = userService.findActiveById(adminId)
                 .orElseThrow(() -> new RuntimeException("관리자를 찾을 수 없습니다: " + adminId));
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.PENDING) {
             throw new RuntimeException("승인할 수 없는 상태입니다: " + request.getStatus());
         }
@@ -235,6 +234,7 @@ public class ErpServiceImpl implements ErpService {
         User admin = userService.findActiveById(adminId)
                 .orElseThrow(() -> new RuntimeException("관리자를 찾을 수 없습니다: " + adminId));
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.PENDING) {
             throw new RuntimeException("거부할 수 없는 상태입니다: " + request.getStatus());
         }
@@ -270,14 +270,12 @@ public class ErpServiceImpl implements ErpService {
         
         PurchaseRequest savedRequest = purchaseRequestRepository.save(request);
         
-        // 구매 요청 승인 시 자동으로 지출 거래 생성
         try {
             createPurchaseExpenseTransaction(savedRequest);
             log.info("💚 구매 지출 거래 자동 생성 완료: RequestID={}, Amount={}", 
                 savedRequest.getId(), savedRequest.getTotalAmount());
         } catch (Exception e) {
             log.error("구매 지출 거래 자동 생성 실패: {}", e.getMessage(), e);
-            // 거래 생성 실패해도 구매 승인은 완료
         }
         
         return true;
@@ -318,17 +316,18 @@ public class ErpServiceImpl implements ErpService {
             throw new RuntimeException("본인의 구매 요청만 취소할 수 있습니다");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.PENDING) {
             throw new RuntimeException("취소할 수 없는 상태입니다: " + request.getStatus());
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         request.setStatus(PurchaseRequest.PurchaseRequestStatus.CANCELLED);
         purchaseRequestRepository.save(request);
         
         return true;
     }
     
-    // ==================== Purchase Order Management ====================
     
     @Override
     public PurchaseOrder createPurchaseOrder(Long requestId, Long purchaserId, String supplier, String supplierContact, LocalDateTime expectedDeliveryDate, String notes) {
@@ -347,6 +346,7 @@ public class ErpServiceImpl implements ErpService {
         PurchaseOrder purchaseOrder = PurchaseOrder.builder()
                 .purchaseRequest(request)
                 .totalAmount(request.getTotalAmount())
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(PurchaseOrder.PurchaseOrderStatus.PENDING)
                 .expectedDeliveryDate(expectedDeliveryDate)
                 .supplier(supplier)
@@ -358,7 +358,7 @@ public class ErpServiceImpl implements ErpService {
         
         PurchaseOrder savedOrder = purchaseOrderRepository.save(purchaseOrder);
         
-        // 구매 요청 상태를 완료로 변경
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         request.setStatus(PurchaseRequest.PurchaseRequestStatus.COMPLETED);
         purchaseRequestRepository.save(request);
         
@@ -427,7 +427,6 @@ public class ErpServiceImpl implements ErpService {
         return true;
     }
     
-    // ==================== Budget Management ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -494,6 +493,7 @@ public class ErpServiceImpl implements ErpService {
         Budget budget = budgetRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("예산을 찾을 수 없습니다: " + id));
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         budget.setStatus(Budget.BudgetStatus.INACTIVE);
         budgetRepository.save(budget);
         
@@ -534,7 +534,6 @@ public class ErpServiceImpl implements ErpService {
         return true;
     }
     
-    // ==================== Statistics and Reports ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -720,7 +719,6 @@ public class ErpServiceImpl implements ErpService {
         return budgetRepository.findOverBudgetBudgets();
     }
     
-    // ==================== 회계 시스템 통합 ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -729,14 +727,12 @@ public class ErpServiceImpl implements ErpService {
         
         Map<String, Object> dashboardData = new HashMap<>();
         
-        // 기본 ERP 통계
         Map<String, Object> erpStats = new HashMap<>();
         erpStats.put("totalItems", itemRepository.findAllActive().size());
         erpStats.put("pendingRequests", purchaseRequestRepository.findPendingAdminApproval().size());
         erpStats.put("totalOrders", purchaseOrderRepository.findAllActive().size());
         erpStats.put("totalBudgets", budgetRepository.findAllActive().size());
         
-        // 예산 사용률 계산
         List<Budget> allBudgets = budgetRepository.findAllActive();
         BigDecimal totalBudget = allBudgets.stream()
                 .map(Budget::getTotalBudget)
@@ -758,28 +754,23 @@ public class ErpServiceImpl implements ErpService {
         
         dashboardData.put("erpStats", erpStats);
         
-        // 실제 재무 데이터 추가
         Map<String, Object> financialData = getRealTimeFinancialData();
         log.info("📊 통합 대시보드 - financialData 구조: {}", financialData);
         dashboardData.put("financialData", financialData);
         
-        // 최근 구매 요청
         List<PurchaseRequest> recentRequests = purchaseRequestRepository.findAllActive().stream()
                 .limit(5)
                 .toList();
         dashboardData.put("recentRequests", recentRequests);
         
-        // 최근 구매 주문
         List<PurchaseOrder> recentOrders = purchaseOrderRepository.findAllActive().stream()
                 .limit(5)
                 .toList();
         dashboardData.put("recentOrders", recentOrders);
         
-        // 카테고리별 예산 현황
         Map<String, Object> budgetByCategory = getBudgetStatsByCategory();
         dashboardData.put("budgetByCategory", budgetByCategory);
         
-        // 상태별 구매 요청 통계
         Map<String, Object> requestStats = getPurchaseRequestStatsByStatus();
         dashboardData.put("requestStats", requestStats);
         
@@ -788,24 +779,20 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     public Map<String, Object> getBranchFinanceDashboard(String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> dashboardData = new HashMap<>();
         
         try {
             log.info("🏢 재무 대시보드 데이터 조회: tenantId={}", tenantId);
             
-            // 테넌트 전체 재무 거래 데이터 조회
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> allTransactions = 
                 financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 10000))
                     .getContent();
             
-            // 테넌트 전체 거래 사용 (branchCode 필터링 제거)
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> branchTransactions = allTransactions;
             
             log.info("📊 거래 데이터 조회 완료: 전체={}건", allTransactions.size());
             
-            // 지점별 수입/지출 계산 (손익계산서와 동일하게 모든 상태 포함)
             BigDecimal totalIncome = branchTransactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
                 .map(com.coresolution.consultation.dto.FinancialTransactionResponse::getAmount)
@@ -818,7 +805,6 @@ public class ErpServiceImpl implements ErpService {
             
             BigDecimal netProfit = totalIncome.subtract(totalExpense);
             
-            // 카테고리별 분석
             Map<String, BigDecimal> incomeByCategory = new HashMap<>();
             Map<String, BigDecimal> expenseByCategory = new HashMap<>();
             
@@ -832,7 +818,6 @@ public class ErpServiceImpl implements ErpService {
                 }
             });
             
-            // 최근 거래 내역 (최근 10건)
             List<Map<String, Object>> recentTransactions = branchTransactions.stream()
                 .sorted((t1, t2) -> t2.getTransactionDate().compareTo(t1.getTransactionDate()))
                 .limit(10)
@@ -849,7 +834,6 @@ public class ErpServiceImpl implements ErpService {
                 })
                 .collect(java.util.stream.Collectors.toList());
             
-            // 대시보드 데이터 구성 (통합 대시보드와 동일한 구조)
             Map<String, Object> financialData = new HashMap<>();
             financialData.put("totalIncome", totalIncome);
             financialData.put("totalExpense", totalExpense);
@@ -862,7 +846,6 @@ public class ErpServiceImpl implements ErpService {
             dashboardData.put("financialData", financialData);
             dashboardData.put("recentTransactions", recentTransactions);
             
-            // ERP 통계 (테넌트 전체)
             Map<String, Object> erpStats = getBranchErpStatisticsBySession(null); // branchCode는 레거시 호환용
             dashboardData.put("erpStats", erpStats);
             
@@ -879,19 +862,16 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     public Map<String, Object> getBranchFinanceDashboard(String branchCode, LocalDate startDate, LocalDate endDate) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> dashboardData = new HashMap<>();
         
         try {
             log.info("🏢 재무 대시보드 데이터 조회: tenantId={}, 기간={}~{}", tenantId, startDate, endDate);
             
-            // 테넌트 전체 재무 거래 데이터 조회 (날짜 범위 지정)
             Map<String, Object> branchData = financialTransactionService.getBranchFinancialData(null, startDate, endDate, null, null); // branchCode는 레거시 호환용
             
             log.info("🔍 재무 데이터 조회 결과: tenantId={}, 데이터={}", tenantId, branchData);
             
-            // 대시보드 데이터 구성
             dashboardData.put("tenantId", tenantId);
             dashboardData.put("financialData", branchData);
             dashboardData.put("period", Map.of(
@@ -899,7 +879,6 @@ public class ErpServiceImpl implements ErpService {
                 "endDate", endDate.toString()
             ));
             
-            // ERP 통계 (테넌트 전체)
             Map<String, Object> erpStats = getBranchErpStatisticsBySession(null); // branchCode는 레거시 호환용
             dashboardData.put("erpStats", erpStats);
             
@@ -917,18 +896,15 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     public Map<String, Object> getBranchFinanceStatistics(String branchCode, String startDate, String endDate) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> statistics = new HashMap<>();
         
         try {
             log.info("📊 재무 통계 조회: tenantId={}, 기간={} ~ {}", tenantId, startDate, endDate);
             
-            // 날짜 범위 설정
             LocalDate start = startDate != null ? LocalDate.parse(startDate) : LocalDate.now().withDayOfMonth(1);
             LocalDate end = endDate != null ? LocalDate.parse(endDate) : LocalDate.now();
             
-            // 테넌트 전체 재무 데이터 조회 (branchCode 필터링 제거)
             Map<String, Object> branchData = financialTransactionService.getBranchFinancialData(null, start, end, null, null); // branchCode는 레거시 호환용
             
             statistics.put("tenantId", tenantId);
@@ -948,36 +924,30 @@ public class ErpServiceImpl implements ErpService {
         return statistics;
     }
     
-    /**
      * 실시간 재무 데이터 조회 (HQ 전체)
      */
     private Map<String, Object> getRealTimeFinancialData() {
         Map<String, Object> financialData = new HashMap<>();
         
         try {
-            // 실제 재무 거래 데이터에서 수입/지출 조회 (모든 지점의 모든 거래 조회)
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 10000))
                     .getContent();
             
             log.info("📊 실시간 재무 데이터 - 전체 거래 건수: {}", transactions.size());
             
-            // 수입 총계 (INCOME 타입, 손익계산서와 동일하게 모든 상태 포함)
             BigDecimal totalIncome = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
                 .map(com.coresolution.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 지출 총계 (EXPENSE 타입, 손익계산서와 동일하게 모든 상태 포함)
             BigDecimal totalExpense = transactions.stream()
                 .filter(t -> "EXPENSE".equals(t.getTransactionType()))
                 .map(com.coresolution.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 순이익 계산
             BigDecimal netProfit = totalIncome.subtract(totalExpense);
             
-            // 카테고리별 수입/지출 분석
             Map<String, BigDecimal> incomeByCategory = new HashMap<>();
             Map<String, BigDecimal> expenseByCategory = new HashMap<>();
             
@@ -1004,7 +974,6 @@ public class ErpServiceImpl implements ErpService {
             
         } catch (Exception e) {
             log.error("실시간 재무 데이터 조회 실패: {}", e.getMessage(), e);
-            // 기본값 설정
             financialData.put("totalIncome", BigDecimal.ZERO);
             financialData.put("totalExpense", BigDecimal.ZERO);
             financialData.put("netProfit", BigDecimal.ZERO);
@@ -1016,22 +985,18 @@ public class ErpServiceImpl implements ErpService {
         return financialData;
     }
     
-    /**
      * 지점별 ERP 통계 조회 (세션 기반)
      */
     private Map<String, Object> getBranchErpStatisticsBySession(String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> erpStats = new HashMap<>();
         
         try {
-            // 테넌트 전체 ERP 통계 반환 (ERP 엔티티들은 테넌트 기반으로 관리됨)
             
             erpStats.put("totalItems", itemRepository.findAllActive().size());
             erpStats.put("pendingRequests", purchaseRequestRepository.findPendingAdminApproval().size());
             erpStats.put("totalOrders", purchaseOrderRepository.findAllActive().size());
             
-            // 예산 사용률 계산
             List<Budget> allBudgets = budgetRepository.findAllActive();
             BigDecimal totalBudget = allBudgets.stream()
                     .map(Budget::getTotalBudget)
@@ -1058,7 +1023,6 @@ public class ErpServiceImpl implements ErpService {
             
         } catch (Exception e) {
             log.error("❌ ERP 통계 조회 실패: tenantId={}, 오류={}", tenantId, e.getMessage(), e);
-            // 기본값 설정
             erpStats.put("totalItems", 0);
             erpStats.put("pendingRequests", 0);
             erpStats.put("totalOrders", 0);
@@ -1078,23 +1042,19 @@ public class ErpServiceImpl implements ErpService {
         
         Map<String, Object> statistics = new HashMap<>();
         
-        // 구매 관련 지출 통계
         Map<String, Object> purchaseExpenses = new HashMap<>();
         
-        // 승인된 구매 요청의 총 금액 (지출)
         BigDecimal totalPurchaseAmount = purchaseRequestRepository.findAllActive().stream()
                 .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
                 .map(PurchaseRequest::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         purchaseExpenses.put("totalAmount", totalPurchaseAmount);
         
-        // 승인된 구매 요청 건수
         Long approvedCount = purchaseRequestRepository.findAllActive().stream()
                 .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
                 .count();
         purchaseExpenses.put("count", approvedCount);
         
-        // 카테고리별 구매 금액
         Map<String, BigDecimal> categoryAmounts = new HashMap<>();
         purchaseRequestRepository.findAllActive().stream()
                 .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
@@ -1107,10 +1067,8 @@ public class ErpServiceImpl implements ErpService {
         
         statistics.put("purchaseExpenses", purchaseExpenses);
         
-        // 예산 사용 통계
         Map<String, Object> budgetStats = new HashMap<>();
         
-        // 총 예산 대비 사용률
         List<Budget> budgets = budgetRepository.findAllActive();
         BigDecimal totalBudgetAmount = budgets.stream()
                 .map(Budget::getTotalBudget)
@@ -1133,7 +1091,6 @@ public class ErpServiceImpl implements ErpService {
         
         statistics.put("budgetStats", budgetStats);
         
-        // 월별 추이 (최근 6개월)
         Map<String, Object> monthlyTrend = new HashMap<>();
         for (int i = 5; i >= 0; i--) {
             LocalDateTime monthStart = LocalDateTime.now().minusMonths(i).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
@@ -1161,7 +1118,6 @@ public class ErpServiceImpl implements ErpService {
         
         Map<String, Object> analysis = new HashMap<>();
         
-        // 카테고리별 구매 요청 분석
         Map<String, Object> categoryAnalysis = new HashMap<>();
         Map<String, Long> categoryCounts = new HashMap<>();
         Map<String, BigDecimal> categoryAmounts = new HashMap<>();
@@ -1190,7 +1146,6 @@ public class ErpServiceImpl implements ErpService {
             categoryAnalysis.put(category, categoryData);
         }
         
-        // 비율 계산
         for (Map.Entry<String, Object> entry : categoryAnalysis.entrySet()) {
             @SuppressWarnings("unchecked")
             Map<String, Object> categoryData = (Map<String, Object>) entry.getValue();
@@ -1209,7 +1164,6 @@ public class ErpServiceImpl implements ErpService {
         analysis.put("totalAmount", totalAmount);
         analysis.put("totalCategories", categoryAnalysis.size());
         
-        // 상위 카테고리 (금액 기준)
         List<Map.Entry<String, Object>> sortedCategories = categoryAnalysis.entrySet().stream()
                 .sorted((e1, e2) -> {
                     @SuppressWarnings("unchecked")
@@ -1225,7 +1179,6 @@ public class ErpServiceImpl implements ErpService {
         
         analysis.put("topCategories", sortedCategories);
         
-        // 요청자별 분석
         Map<String, Object> requesterAnalysis = new HashMap<>();
         Map<Long, Long> requesterCounts = new HashMap<>();
         Map<Long, BigDecimal> requesterAmounts = new HashMap<>();
@@ -1243,7 +1196,6 @@ public class ErpServiceImpl implements ErpService {
             Long count = entry.getValue();
             BigDecimal amount = requesterAmounts.get(requesterId);
             
-            // 사용자 정보 조회
             Optional<User> userOpt = userService.findById(requesterId);
             String requesterName = userOpt.map(User::getName).orElse("알 수 없음");
             
@@ -1263,26 +1215,20 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getBalanceSheet(String reportDate, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("대차대조표 조회: {}, tenantId: {}", reportDate, tenantId);
         
         Map<String, Object> balanceSheet = new HashMap<>();
         
-        // 기본 정보
         balanceSheet.put("reportDate", reportDate);
         balanceSheet.put("tenantId", tenantId);
         balanceSheet.put("reportPeriod", "대차대조표");
         
-        // 자산 섹션
         Map<String, Object> assets = new HashMap<>();
         
-        // 유동자산 (현금, 예금, 매출채권 등) - 실제 데이터 기반
         Map<String, Object> currentAssets = new HashMap<>();
         
-        // 실제 재무 거래에서 자산 계산 (테넌트 전체)
         try {
-            // 테넌트 전체 데이터 조회 (branchCode 필터링 제거)
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(
                     org.springframework.data.domain.PageRequest.of(0, 1000)
@@ -1298,7 +1244,6 @@ public class ErpServiceImpl implements ErpService {
                 .map(com.coresolution.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 순현금 (수입 - 지출, 음수 방지)
             BigDecimal netCash = totalIncome.subtract(totalExpense).max(BigDecimal.ZERO);
             
             currentAssets.put("cash", netCash); // 순현금
@@ -1323,7 +1268,6 @@ public class ErpServiceImpl implements ErpService {
         currentAssets.put("total", currentAssetsTotal);
         assets.put("currentAssets", currentAssets);
         
-        // 고정자산 (실제 데이터 없으므로 0으로 설정)
         Map<String, Object> fixedAssets = new HashMap<>();
         fixedAssets.put("officeEquipment", BigDecimal.ZERO); // 사무용품
         fixedAssets.put("computerEquipment", BigDecimal.ZERO); // 컴퓨터 장비
@@ -1334,7 +1278,6 @@ public class ErpServiceImpl implements ErpService {
                 .map(amount -> (BigDecimal) amount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         
-        // 감가상각 차감 (실제 데이터 없으므로 0으로 설정)
         Map<String, Object> accumulatedDepreciation = new HashMap<>();
         accumulatedDepreciation.put("officeEquipmentDepreciation", BigDecimal.ZERO); // 사무용품 감가상각
         accumulatedDepreciation.put("computerDepreciation", BigDecimal.ZERO); // 컴퓨터 감가상각
@@ -1351,7 +1294,6 @@ public class ErpServiceImpl implements ErpService {
         fixedAssets.put("netAmount", netFixedAssets);
         assets.put("fixedAssets", fixedAssets);
         
-        // 무형자산 (실제 데이터 없으므로 0으로 설정)
         Map<String, Object> intangibleAssets = new HashMap<>();
         intangibleAssets.put("goodwill", BigDecimal.ZERO); // 영업권
         intangibleAssets.put("patents", BigDecimal.ZERO); // 특허권
@@ -1366,10 +1308,8 @@ public class ErpServiceImpl implements ErpService {
         assets.put("total", totalAssets);
         balanceSheet.put("assets", assets);
         
-        // 부채 섹션
         Map<String, Object> liabilities = new HashMap<>();
         
-        // 유동부채 (실제 데이터 없으므로 0으로 설정)
         Map<String, Object> currentLiabilities = new HashMap<>();
         currentLiabilities.put("accountsPayable", BigDecimal.ZERO); // 매입채무
         currentLiabilities.put("shortTermLoans", BigDecimal.ZERO); // 단기차입금
@@ -1383,7 +1323,6 @@ public class ErpServiceImpl implements ErpService {
         currentLiabilities.put("total", currentLiabilitiesTotal);
         liabilities.put("currentLiabilities", currentLiabilities);
         
-        // 비유동부채 (실제 데이터 없으므로 0으로 설정)
         Map<String, Object> longTermLiabilities = new HashMap<>();
         longTermLiabilities.put("longTermLoans", BigDecimal.ZERO); // 장기차입금
         longTermLiabilities.put("leaseObligations", BigDecimal.ZERO); // 임대차의무
@@ -1398,10 +1337,8 @@ public class ErpServiceImpl implements ErpService {
         liabilities.put("total", totalLiabilities);
         balanceSheet.put("liabilities", liabilities);
         
-        // 자본 섹션
         Map<String, Object> equity = new HashMap<>();
         
-        // 자본금 (실제 데이터 없으므로 0으로 설정)
         Map<String, Object> capital = new HashMap<>();
         capital.put("paidInCapital", BigDecimal.ZERO); // 납입자본금
         capital.put("additionalPaidInCapital", BigDecimal.ZERO); // 자본잉여금
@@ -1411,11 +1348,9 @@ public class ErpServiceImpl implements ErpService {
         capital.put("total", totalCapital);
         equity.put("capital", capital);
         
-        // 이익잉여금 (실제 데이터 기반)
         Map<String, Object> retainedEarnings = new HashMap<>();
         retainedEarnings.put("beginningRetainedEarnings", BigDecimal.ZERO); // 기초이익잉여금 (실제 데이터 없음)
         
-        // 당기순이익 (실제 수입 - 지출)
         try {
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 1000))
@@ -1445,7 +1380,6 @@ public class ErpServiceImpl implements ErpService {
         retainedEarnings.put("total", totalRetainedEarnings);
         equity.put("retainedEarnings", retainedEarnings);
         
-        // 기타 자본 (실제 데이터 없으므로 0으로 설정)
         Map<String, Object> otherEquity = new HashMap<>();
         otherEquity.put("reserveFunds", BigDecimal.ZERO); // 적립금
         otherEquity.put("revaluationSurplus", BigDecimal.ZERO); // 재평가잉여금
@@ -1459,7 +1393,6 @@ public class ErpServiceImpl implements ErpService {
         equity.put("total", totalEquity);
         balanceSheet.put("equity", equity);
         
-        // 합계 검증
         Map<String, Object> summary = new HashMap<>();
         summary.put("totalAssets", totalAssets);
         summary.put("totalLiabilities", totalLiabilities);
@@ -1476,7 +1409,6 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getIncomeStatement(String startDate, String endDate, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("손익계산서 조회: {} ~ {}, tenantId: {}", startDate, endDate, tenantId);
         
@@ -1486,12 +1418,9 @@ public class ErpServiceImpl implements ErpService {
         incomeStatement.put("tenantId", tenantId);
         incomeStatement.put("reportPeriod", "손익계산서");
         
-        // 수익 섹션 - 실제 결제 데이터에서 조회
         Map<String, Object> revenue = new HashMap<>();
         
-        // 실제 재무 거래에서 수익 조회 (테넌트 전체)
         try {
-            // 테넌트 전체 데이터 조회 (branchCode 필터링 제거)
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(
                     org.springframework.data.domain.PageRequest.of(0, 1000)
@@ -1522,16 +1451,13 @@ public class ErpServiceImpl implements ErpService {
         revenue.put("total", totalRevenue);
         incomeStatement.put("revenue", revenue);
         
-        // 비용 섹션 - 실제 재무 거래에서 조회 (테넌트 전체)
         Map<String, Object> expenses = new HashMap<>();
         try {
-            // 테넌트 전체 데이터 조회 (branchCode 필터링 제거)
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(
                     org.springframework.data.domain.PageRequest.of(0, 1000)
                 ).getContent();
             
-            // 카테고리별 지출 계산
             Map<String, BigDecimal> expenseByCategory = new HashMap<>();
             transactions.stream()
                 .filter(t -> "EXPENSE".equals(t.getTransactionType()))
@@ -1547,7 +1473,6 @@ public class ErpServiceImpl implements ErpService {
             expenses.put("officeExpense", expenseByCategory.getOrDefault("OFFICE_SUPPLIES", BigDecimal.ZERO));
             expenses.put("taxExpense", expenseByCategory.getOrDefault("TAX", BigDecimal.ZERO));
             
-            // 기타 비용 (급여, 임대료, 관리비, 사무용품, 세금 제외)
             BigDecimal otherExpense = expenseByCategory.entrySet().stream()
                 .filter(entry -> !Arrays.asList("SALARY", "RENT", "UTILITY", "OFFICE_SUPPLIES", "TAX").contains(entry.getKey()))
                 .map(Map.Entry::getValue)
@@ -1569,7 +1494,6 @@ public class ErpServiceImpl implements ErpService {
         expenses.put("total", totalExpenses);
         incomeStatement.put("expenses", expenses);
         
-        // 순이익 계산
         BigDecimal netIncome = totalRevenue.subtract(totalExpenses);
         incomeStatement.put("netIncome", netIncome);
         
@@ -1579,7 +1503,6 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDailyFinanceReport(String reportDate, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("일단위 재무 리포트 조회: {}, tenantId: {}", reportDate, tenantId);
         
@@ -1589,17 +1512,14 @@ public class ErpServiceImpl implements ErpService {
         dailyReport.put("reportType", "일간");
         dailyReport.put("tenantId", tenantId);
         
-        // 해당 날짜의 실제 거래 데이터 조회 (테넌트 기반)
         List<FinancialTransaction> allTransactions = financialTransactionRepository
             .findByTenantIdAndTransactionDateAndIsDeletedFalse(tenantId, targetDate);
         
-        // 테넌트 전체 거래 사용 (branchCode 필터링 제거)
         List<FinancialTransaction> dailyTransactions = allTransactions;
         
         log.info("📊 일간 리포트 - 전체 거래: {}건 (tenantId: {})", 
             allTransactions.size(), tenantId);
         
-        // 일일 수입 (실제 데이터 기반)
         Map<String, Object> dailyIncome = new HashMap<>();
         BigDecimal consultationFees = dailyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
@@ -1619,7 +1539,6 @@ public class ErpServiceImpl implements ErpService {
         dailyIncome.put("total", totalDailyIncome);
         dailyReport.put("dailyIncome", dailyIncome);
         
-        // 일일 지출 (실제 데이터 기반)
         Map<String, Object> dailyExpenses = new HashMap<>();
         BigDecimal salary = dailyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
@@ -1653,26 +1572,21 @@ public class ErpServiceImpl implements ErpService {
         dailyExpenses.put("total", totalDailyExpenses);
         dailyReport.put("dailyExpenses", dailyExpenses);
         
-        // 일일 순이익
         BigDecimal dailyNetIncome = totalDailyIncome.subtract(totalDailyExpenses);
         dailyReport.put("dailyNetIncome", dailyNetIncome);
         
-        // 일일 거래 건수 (실제 데이터 기반)
         Map<String, Object> transactionCount = new HashMap<>();
         
-        // 상담 건수 (상담료 거래 건수로 추정)
         long consultations = dailyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
             .filter(t -> "CONSULTATION".equals(t.getCategory()))
             .count();
             
-        // 구매 건수 (구매 관련 지출 거래 건수로 추정)
         long purchases = dailyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
             .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()) || "EQUIPMENT".equals(t.getCategory()))
             .count();
             
-        // 전체 결제 건수
         long payments = dailyTransactions.size();
         
         transactionCount.put("consultations", (int) consultations);
@@ -1686,11 +1600,9 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getMonthlyFinanceReport(String year, String month, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("월단위 재무 리포트 조회: {}-{}, tenantId: {}", year, month, tenantId);
         
-        // 해당 월의 시작일과 종료일 계산
         int yearInt = Integer.parseInt(year);
         int monthInt = Integer.parseInt(month);
         LocalDate startDate = LocalDate.of(yearInt, monthInt, 1);
@@ -1702,17 +1614,14 @@ public class ErpServiceImpl implements ErpService {
         monthlyReport.put("reportType", "월간");
         monthlyReport.put("tenantId", tenantId);
         
-        // 해당 월의 실제 거래 데이터 조회 (테넌트 기반)
         List<FinancialTransaction> allTransactions = financialTransactionRepository
             .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate);
         
-        // 테넌트 전체 거래 사용 (branchCode 필터링 제거)
         List<FinancialTransaction> monthlyTransactions = allTransactions;
         
         log.info("📊 월간 리포트 - 전체 거래: {}건 (tenantId: {})", 
             allTransactions.size(), tenantId);
         
-        // 월간 수입 (실제 데이터 기반)
         Map<String, Object> monthlyIncome = new HashMap<>();
         BigDecimal consultationRevenue = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
@@ -1733,7 +1642,6 @@ public class ErpServiceImpl implements ErpService {
         monthlyIncome.put("total", totalMonthlyIncome);
         monthlyReport.put("monthlyIncome", monthlyIncome);
         
-        // 월간 지출 (실제 데이터 기반)
         Map<String, Object> monthlyExpenses = new HashMap<>();
         BigDecimal salaryExpense = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
@@ -1782,26 +1690,21 @@ public class ErpServiceImpl implements ErpService {
         monthlyExpenses.put("total", totalMonthlyExpenses);
         monthlyReport.put("monthlyExpenses", monthlyExpenses);
         
-        // 월간 순이익
         BigDecimal monthlyNetIncome = totalMonthlyIncome.subtract(totalMonthlyExpenses);
         monthlyReport.put("monthlyNetIncome", monthlyNetIncome);
         
-        // 월간 통계 (실제 데이터 기반)
         Map<String, Object> monthlyStats = new HashMap<>();
         
-        // 상담 건수 (상담료 거래 건수로 추정)
         long totalConsultations = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
             .filter(t -> "CONSULTATION".equals(t.getCategory()))
             .count();
             
-        // 구매 건수 (구매 관련 지출 거래 건수로 추정)
         long totalPurchases = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
             .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()) || "EQUIPMENT".equals(t.getCategory()))
             .count();
             
-        // 전체 결제 건수
         long totalPayments = monthlyTransactions.size();
         
         int daysInMonth = endDate.getDayOfMonth();
@@ -1822,7 +1725,6 @@ public class ErpServiceImpl implements ErpService {
     public Map<String, Object> getYearlyFinanceReport(String year) {
         log.info("년단위 재무 리포트 조회: {}", year);
         
-        // 해당 년도의 시작일과 종료일 계산
         int yearInt = Integer.parseInt(year);
         LocalDate startDate = LocalDate.of(yearInt, 1, 1);
         LocalDate endDate = LocalDate.of(yearInt, 12, 31);
@@ -1831,11 +1733,9 @@ public class ErpServiceImpl implements ErpService {
         yearlyReport.put("year", year);
         yearlyReport.put("reportType", "년간");
         
-        // 해당 년도의 실제 거래 데이터 조회
         List<FinancialTransaction> yearlyTransactions = financialTransactionRepository
             .findByTransactionDateBetweenAndIsDeletedFalse(startDate, endDate);
         
-        // 연간 수입 (실제 데이터 기반)
         Map<String, Object> yearlyIncome = new HashMap<>();
         BigDecimal consultationRevenue = yearlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
@@ -1855,7 +1755,6 @@ public class ErpServiceImpl implements ErpService {
         yearlyIncome.put("total", totalYearlyIncome);
         yearlyReport.put("yearlyIncome", yearlyIncome);
         
-        // 연간 지출 (실제 데이터 기반)
         Map<String, Object> yearlyExpenses = new HashMap<>();
         BigDecimal salaryExpense = yearlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
@@ -1913,26 +1812,21 @@ public class ErpServiceImpl implements ErpService {
         yearlyExpenses.put("total", totalYearlyExpenses);
         yearlyReport.put("yearlyExpenses", yearlyExpenses);
         
-        // 연간 순이익
         BigDecimal yearlyNetIncome = totalYearlyIncome.subtract(totalYearlyExpenses);
         yearlyReport.put("yearlyNetIncome", yearlyNetIncome);
         
-        // 연간 통계 (실제 데이터 기반)
         Map<String, Object> yearlyStats = new HashMap<>();
         
-        // 상담 건수 (상담료 거래 건수로 추정)
         long totalConsultations = yearlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
             .filter(t -> "CONSULTATION".equals(t.getCategory()))
             .count();
             
-        // 구매 건수 (구매 관련 지출 거래 건수로 추정)
         long totalPurchases = yearlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
             .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()) || "EQUIPMENT".equals(t.getCategory()))
             .count();
             
-        // 전체 결제 건수
         long totalPayments = yearlyTransactions.size();
         
         yearlyStats.put("totalConsultations", (int) totalConsultations);
@@ -1944,7 +1838,6 @@ public class ErpServiceImpl implements ErpService {
             yearlyNetIncome.divide(totalYearlyIncome, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)) : BigDecimal.ZERO);
         yearlyReport.put("yearlyStats", yearlyStats);
         
-        // 월별 추이 (실제 데이터 기반)
         Map<String, Object> monthlyTrend = new HashMap<>();
         for (int i = 1; i <= 12; i++) {
             LocalDate monthStart = LocalDate.of(yearInt, i, 1);
@@ -1986,11 +1879,9 @@ public class ErpServiceImpl implements ErpService {
         trendAnalysis.put("endDate", endDate);
         trendAnalysis.put("periodType", periodType);
         
-        // 기간별 데이터 생성
         Map<String, Object> periodData = new HashMap<>();
         
         if ("DAILY".equals(periodType)) {
-            // 일별 데이터
             for (int i = 0; i < 30; i++) {
                 String dateKey = "day_" + (i + 1);
                 Map<String, Object> dayData = new HashMap<>();
@@ -2000,7 +1891,6 @@ public class ErpServiceImpl implements ErpService {
                 periodData.put(dateKey, dayData);
             }
         } else if ("MONTHLY".equals(periodType)) {
-            // 월별 데이터
             for (int i = 0; i < 12; i++) {
                 String monthKey = (i + 1) + "월";
                 Map<String, Object> monthData = new HashMap<>();
@@ -2010,7 +1900,6 @@ public class ErpServiceImpl implements ErpService {
                 periodData.put(monthKey, monthData);
             }
         } else if ("YEARLY".equals(periodType)) {
-            // 년별 데이터
             for (int i = 0; i < 3; i++) {
                 String yearKey = (2022 + i) + "년";
                 Map<String, Object> yearData = new HashMap<>();
@@ -2023,7 +1912,6 @@ public class ErpServiceImpl implements ErpService {
         
         trendAnalysis.put("periodData", periodData);
         
-        // 트렌드 분석 결과
         Map<String, Object> analysis = new HashMap<>();
         analysis.put("trendDirection", "상승"); // 상승, 하락, 안정
         analysis.put("growthRate", "12.5%"); // 성장률
@@ -2034,23 +1922,19 @@ public class ErpServiceImpl implements ErpService {
         return trendAnalysis;
     }
     
-    /**
      * 구매 요청 승인 시 자동으로 지출 거래 생성
      */
     private void createPurchaseExpenseTransaction(PurchaseRequest purchaseRequest) {
         log.info("구매 지출 거래 생성 시작: RequestID={}, Amount={}", 
             purchaseRequest.getId(), purchaseRequest.getTotalAmount());
         
-        // 구매 항목에 따른 부가세 적용 여부 확인
         String category = getPurchaseCategory(purchaseRequest.getItem().getCategory());
         boolean isVatApplicable = TaxCalculationUtil.isVatApplicable(category);
         
         TaxCalculationUtil.TaxCalculationResult taxResult;
         if (isVatApplicable) {
-            // 부가세 적용: 입력 금액은 부가세 제외 금액으로 간주
             taxResult = TaxCalculationUtil.calculateTaxForExpense(purchaseRequest.getTotalAmount());
         } else {
-            // 부가세 미적용
             taxResult = new TaxCalculationUtil.TaxCalculationResult(
                 purchaseRequest.getTotalAmount(), purchaseRequest.getTotalAmount(), BigDecimal.ZERO);
         }
@@ -2078,7 +1962,6 @@ public class ErpServiceImpl implements ErpService {
             response.getId(), purchaseRequest.getId(), purchaseRequest.getTotalAmount());
     }
     
-    /**
      * 구매 항목 카테고리에 따른 지출 카테고리 반환 (공통 코드 사용)
      */
     private String getPurchaseCategory(String itemCategory) {
@@ -2106,7 +1989,6 @@ public class ErpServiceImpl implements ErpService {
         }
     }
     
-    /**
      * 구매 항목 카테고리에 따른 세부 카테고리 반환 (공통 코드 사용)
      */
     private String getPurchaseSubcategory(String itemCategory) {
@@ -2134,17 +2016,14 @@ public class ErpServiceImpl implements ErpService {
         }
     }
     
-    // ==================== 환불 관리 구현 ====================
     
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getRefundHistory(int page, int size, String period, String status) {
         log.info("📋 ERP 환불 이력 조회: page={}, size={}, period={}, status={}", page, size, period, status);
         
-        // AdminService의 환불 이력 조회 결과를 ERP 형태로 변환
         Map<String, Object> result = new HashMap<>();
         
-        // 실제로는 AdminService에서 데이터를 가져와서 ERP 형태로 포맷팅
         result.put("refundHistory", List.of());
         result.put("pageInfo", Map.of(
             "currentPage", page,
@@ -2166,7 +2045,6 @@ public class ErpServiceImpl implements ErpService {
         
         Map<String, Object> result = new HashMap<>();
         
-        // 기본 통계 구조
         Map<String, Object> summary = new HashMap<>();
         summary.put("totalRefundCount", 0);
         summary.put("totalRefundedSessions", 0);
@@ -2215,7 +2093,6 @@ public class ErpServiceImpl implements ErpService {
         
         Map<String, Object> result = new HashMap<>();
         
-        // 회계 처리 상태
         Map<String, Object> accountingStatus = new HashMap<>();
         accountingStatus.put("processedRefunds", 15);
         accountingStatus.put("pendingRefunds", 3);
@@ -2226,7 +2103,6 @@ public class ErpServiceImpl implements ErpService {
         result.put("accountingStatus", accountingStatus);
         result.put("period", period);
         
-        // 회계 담당자별 처리 현황
         Map<String, Object> processorStats = new HashMap<>();
         processorStats.put("김회계", Map.of("processed", 8, "amount", BigDecimal.valueOf(1200000)));
         processorStats.put("이재무", Map.of("processed", 7, "amount", BigDecimal.valueOf(1300000)));

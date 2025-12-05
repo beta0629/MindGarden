@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-// import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import ReactDOM from 'react-dom';
 import { CreditCard, X, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
-/**
  * 결제 확인 모달 컴포넌트
  * - 매핑별 결제 확인/취소 기능
  * - 결제 방법 및 금액 입력
@@ -32,15 +30,17 @@ const PaymentConfirmationModal = ({
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
 
-  // Constants
   const API_ENDPOINTS = {
     CONFIRM_PAYMENT: '/api/admin/payments/confirm',
     CANCEL_PAYMENT: '/api/admin/payments/cancel'
   };
   
   const PAYMENT_STATUS = {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     PENDING: 'pending',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     COMPLETED: 'completed',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CANCELLED: 'cancelled'
   };
   
@@ -69,13 +69,13 @@ const PaymentConfirmationModal = ({
 
   useEffect(() => {
     if (isOpen && mappings.length > 0) {
-      // 초기 선택된 매핑 설정
       setSelectedMappings(mappings.filter(mapping => 
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         mapping.status === PAYMENT_STATUS.PENDING
       ));
       
-      // 총 금액 계산
       const totalAmount = mappings
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         .filter(mapping => mapping.status === PAYMENT_STATUS.PENDING)
         .reduce((sum, mapping) => sum + (mapping.amount || 0), 0);
       
@@ -84,9 +84,9 @@ const PaymentConfirmationModal = ({
         amount: totalAmount
       }));
     }
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   }, [isOpen, mappings, PAYMENT_STATUS.PENDING]);
 
-  // 결제 방법 코드 로드
   useEffect(() => {
     const loadPaymentMethodCodes = async () => {
       try {
@@ -104,20 +104,14 @@ const PaymentConfirmationModal = ({
         }
       } catch (error) {
         console.error('결제 방법 코드 로드 실패:', error);
-        // 실패 시 기본값 설정
         setPaymentMethodOptions([
           { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
           { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: 'var(--mg-success-500)', description: '은행 계좌 이체' },
           { value: 'CASH', label: '현금', icon: '💵', color: 'var(--mg-warning-500)', description: '현금 결제' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fee500 -> var(--mg-custom-fee500)
           { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: '#fee500', description: '카카오페이 간편결제' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #03c75a -> var(--mg-custom-03c75a)
           { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: '#03c75a', description: '네이버페이 간편결제' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #0064ff -> var(--mg-custom-0064ff)
           { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #0070ba -> var(--mg-custom-0070ba)
           { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
           { value: 'OTHER', label: '기타', icon: '💱', color: '#6b7280', description: '기타 결제 방법' }
         ]);
       } finally {
@@ -153,7 +147,6 @@ const PaymentConfirmationModal = ({
       [field]: value
     }));
     
-    // 에러 초기화
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -288,6 +281,7 @@ const PaymentConfirmationModal = ({
             <h3 className="mg-v2-section-title">결제 대기 중인 매핑</h3>
             <div className="mg-v2-mapping-list">
               {mappings
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 .filter(mapping => mapping.status === PAYMENT_STATUS.PENDING)
                 .map(mapping => (
                   <label 

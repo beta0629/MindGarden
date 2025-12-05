@@ -11,11 +11,9 @@ import {
 } from '../../utils/codeHelper';
 import { showError, showSuccess } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeApi';
-// import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import { Button } from '../ui/Button/Button';
 import SimpleLayout from '../layout/SimpleLayout';
 
-// 하위 컴포넌트들 import
 import ClientOverviewTab from './ClientComprehensiveManagement/ClientOverviewTab';
 import ClientConsultationTab from './ClientComprehensiveManagement/ClientConsultationTab';
 import ClientMappingTab from './ClientComprehensiveManagement/ClientMappingTab';
@@ -23,7 +21,6 @@ import ClientStatisticsTab from './ClientComprehensiveManagement/ClientStatistic
 import ClientModal from './ClientComprehensiveManagement/ClientModal';
 import ClientFilters from './ClientComprehensiveManagement/ClientFilters';
 
-/**
  * 내담자 종합관리 메인 컴포넌트
  * - 내담자 정보 종합 조회
  * - 상담 이력 관리
@@ -49,7 +46,6 @@ const ClientComprehensiveManagement = () => {
     const [userStatusOptions, setUserStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     
-    // 모달 상태
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState(''); // 'create', 'edit', 'delete'
     const [editingClient, setEditingClient] = useState(null);
@@ -57,37 +53,36 @@ const ClientComprehensiveManagement = () => {
         name: '',
         email: '',
         phone: '',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         status: 'ACTIVE',
         grade: 'BRONZE',
         notes: ''
     });
 
-    // 공통 코드 로드
     const loadCommonCodes = useCallback(async () => {
         if (loadingCodes) return;
         
         setLoadingCodes(true);
         try {
-            // 표준 API 사용: /api/v1/common-codes?codeGroup=USER_STATUS
             const [userStatusCodes, userGradeCodes] = await Promise.all([
                 getCommonCodes('USER_STATUS'),
                 getCommonCodes('USER_GRADE')
             ]);
             
-            // API 응답이 배열 형태
             setUserStatusOptions(userStatusCodes || []);
             
-            // USER_GRADE는 필요시 별도 상태로 관리할 수 있음
             console.log('공통 코드 로드 완료:', {
                 status: userStatusCodes?.length || 0,
                 grade: userGradeCodes?.length || 0
             });
         } catch (error) {
             console.error('공통 코드 로드 실패:', error);
-            // 오류 시 기본값 사용
             setUserStatusOptions([
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { codeValue: 'ACTIVE', codeLabel: '활성' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { codeValue: 'INACTIVE', codeLabel: '비활성' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { codeValue: 'PENDING', codeLabel: '대기' }
             ]);
             showError('공통 코드를 불러오는데 실패했습니다. 기본값을 사용합니다.');
@@ -96,18 +91,15 @@ const ClientComprehensiveManagement = () => {
         }
     }, [loadingCodes]);
 
-    // 내담자 목록 로드 (통합 API 사용)
     const loadClients = useCallback(async () => {
         setLoading(true);
         try {
             console.log('🔄 내담자 목록 로딩 시작 (통합 API)...');
             
-            // 통합 API 사용 (통계 포함)
             const clientsList = await getAllClientsWithStats();
             console.log('📊 통합 API 응답:', clientsList);
             
             if (clientsList && clientsList.length > 0) {
-                // 응답 데이터 변환
                 const clientsData = clientsList.map(item => {
                     const clientEntity = item.client || {};
                     return {
@@ -118,11 +110,9 @@ const ClientComprehensiveManagement = () => {
                         role: clientEntity.role,
                         status: clientEntity.status,
                         isActive: clientEntity.isActive,
-                        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                         branchCode: clientEntity.branchCode,
                         createdAt: clientEntity.createdAt,
                         updatedAt: clientEntity.updatedAt,
-                        // 통계 정보 추가
                         currentConsultants: item.currentConsultants || 0,
                         totalConsultants: item.totalConsultants || 0,
                         statistics: item.statistics || {}
@@ -144,14 +134,12 @@ const ClientComprehensiveManagement = () => {
         }
     }, []);
 
-    // 상담사 목록 로드
     const loadConsultants = useCallback(async () => {
         try {
             const response = await apiGet('/api/admin/consultants');
             console.log('📊 상담사 목록 응답:', response);
             
             if (response && response.success) {
-                // 응답 구조: { success: true, data: { consultants: [...], count: N } }
                 const consultantsList = response.data?.consultants || response.data || [];
                 setConsultants(Array.isArray(consultantsList) ? consultantsList : []);
             } else {
@@ -161,11 +149,9 @@ const ClientComprehensiveManagement = () => {
         } catch (error) {
             console.error('상담사 목록 로드 실패:', error);
             setConsultants([]);
-            // 에러가 발생해도 계속 진행 (선택적 데이터)
         }
     }, []);
 
-    // 매칭 정보 로드
     const loadMappings = useCallback(async () => {
         try {
             const response = await apiGet('/api/admin/mappings');
@@ -183,14 +169,12 @@ const ClientComprehensiveManagement = () => {
         }
     }, []);
 
-    // 상담 이력 로드
     const loadConsultations = useCallback(async () => {
         try {
             console.log('🔄 상담 이력 로드 시작...');
             const response = await apiGet('/api/admin/consultations');
             console.log('📊 상담 이력 응답:', response);
             
-            // /api/admin/consultations는 현재 빈 배열을 직접 반환하므로 배열인지 확인
             if (Array.isArray(response)) {
                 console.log('✅ 상담 이력 배열로 처리:', response.length, '건');
                 setConsultations(response);
@@ -202,7 +186,6 @@ const ClientComprehensiveManagement = () => {
                 setConsultations([]);
             }
         } catch (error) {
-            // 403 오류는 권한 문제이므로 조용히 처리
             console.error('❌ 상담 이력 로드 실패:', error);
             if (error.message && error.message.includes('권한')) {
                 console.log('⚠️ 상담 이력 조회 권한이 없습니다. 빈 배열로 처리합니다.');
@@ -211,17 +194,14 @@ const ClientComprehensiveManagement = () => {
         }
     }, []);
 
-    // 초기 데이터 로드
     useEffect(() => {
         loadCommonCodes();
         loadClients();
         loadConsultants();
         loadMappings();
         loadConsultations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // 내담자 선택 핸들러
     const handleClientSelect = useCallback((client) => {
         setModalType('view');
         setEditingClient(client);
@@ -231,6 +211,7 @@ const ClientComprehensiveManagement = () => {
             name: client.name || '',
             email: client.email || '',
             phone: client.phone || '',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: client.status || 'ACTIVE',
             grade: client.grade || 'BRONZE',
             notes: client.notes || ''
@@ -238,17 +219,14 @@ const ClientComprehensiveManagement = () => {
         setShowModal(true);
     }, []);
 
-    // 탭 변경 핸들러
     const handleTabChange = useCallback((tab) => {
         setActiveTab(tab);
     }, []);
 
-    // 메인 탭 변경 핸들러
     const handleMainTabChange = useCallback((tab) => {
         setMainTab(tab);
     }, []);
 
-    // 모달 핸들러들
     const handleCreateClient = useCallback(() => {
         setModalType('create');
         setEditingClient(null);
@@ -258,6 +236,7 @@ const ClientComprehensiveManagement = () => {
             name: '',
             email: '',
             phone: '',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: 'ACTIVE',
             grade: 'BRONZE',
             notes: ''
@@ -274,6 +253,7 @@ const ClientComprehensiveManagement = () => {
             name: client.name || '',
             email: client.email || '',
             phone: client.phone || '',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: client.status || 'ACTIVE',
             grade: client.grade || 'BRONZE',
             notes: client.notes || ''
@@ -293,7 +273,6 @@ const ClientComprehensiveManagement = () => {
         setEditingClient(null);
     }, []);
 
-    // 필터링된 내담자 목록
     const filteredClients = clients.filter(client => {
         const matchesSearch = !searchTerm || 
             client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

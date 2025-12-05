@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
  * 학원 청구 서비스 구현체
  * 학원 시스템의 수강료 청구 및 결제 관리 비즈니스 로직 구현
  * 
@@ -39,7 +38,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
     private final ClassEnrollmentRepository enrollmentRepository;
     private final TenantAccessControlService accessControlService;
     
-    // ==================== 청구 스케줄 관리 ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -96,7 +94,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         schedule.setTenantId(tenantId);
         schedule.setIsDeleted(false);
         
-        // 다음 청구일 계산
         schedule.setNextBillingDate(calculateNextBillingDate(schedule));
         
         AcademyBillingSchedule saved = billingScheduleRepository.save(schedule);
@@ -135,7 +132,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         schedule.setUpdatedBy(updatedBy);
         schedule.setUpdatedAt(LocalDateTime.now());
         
-        // 다음 청구일 재계산
         schedule.setNextBillingDate(calculateNextBillingDate(schedule));
         
         AcademyBillingSchedule saved = billingScheduleRepository.save(schedule);
@@ -181,7 +177,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         
         log.info("청구 스케줄 실행 시작: billingScheduleId={}, name={}", schedule.getBillingScheduleId(), schedule.getName());
         
-        // 청구 대상 수강 등록 조회
         List<ClassEnrollment> enrollments = findTargetEnrollments(tenantId, schedule);
         
         List<InvoiceResponse> generatedInvoices = new java.util.ArrayList<>();
@@ -189,7 +184,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         
         for (ClassEnrollment enrollment : enrollments) {
             try {
-                // 청구 금액 계산
                 BigDecimal billingAmount = calculateBillingAmount(enrollment, schedule);
                 
                 if (billingAmount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -197,7 +191,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
                     continue;
                 }
                 
-                // 청구서 생성
                 InvoiceRequest invoiceRequest = InvoiceRequest.builder()
                     .branchId(enrollment.getBranchId())
                     .enrollmentId(enrollment.getEnrollmentId())
@@ -229,7 +222,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return generatedInvoices;
     }
     
-    // ==================== 청구서 관리 ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -248,7 +240,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             invoices = invoiceRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         }
         
-        // 상태 필터링
         if (status != null) {
             invoices = invoices.stream()
                 .filter(i -> convertInvoiceStatus(i.getStatus()) == status)
@@ -279,7 +270,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
     public InvoiceResponse createInvoice(String tenantId, InvoiceRequest request, String createdBy) {
         accessControlService.validateTenantAccess(tenantId);
         
-        // 청구서 번호 중복 체크
         if (request.getInvoiceNumber() != null && !request.getInvoiceNumber().isEmpty()) {
             Optional<AcademyInvoice> existing = invoiceRepository.findByTenantIdAndInvoiceNumberAndIsDeletedFalse(
                 tenantId, request.getInvoiceNumber());
@@ -288,7 +278,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             }
         }
         
-        // 수강 등록 정보 확인
         if (request.getEnrollmentId() != null && !request.getEnrollmentId().isEmpty()) {
             ClassEnrollment enrollment = enrollmentRepository.findByEnrollmentIdAndIsDeletedFalse(request.getEnrollmentId())
                 .orElseThrow(() -> new RuntimeException("수강 등록을 찾을 수 없습니다: " + request.getEnrollmentId()));
@@ -298,7 +287,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             }
         }
         
-        // 청구서 번호 자동 생성 (없는 경우)
         String invoiceNumber = request.getInvoiceNumber();
         if (invoiceNumber == null || invoiceNumber.isEmpty()) {
             invoiceNumber = generateInvoiceNumber(tenantId, request.getBranchId());
@@ -380,7 +368,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         invoice.setSentAt(LocalDateTime.now());
         invoice.setUpdatedAt(LocalDateTime.now());
         
-        // TODO: 학부모에게 알림 발송
         
         AcademyInvoice saved = invoiceRepository.save(invoice);
         log.info("청구서 발송 완료: invoiceId={}", saved.getInvoiceId());
@@ -403,6 +390,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             throw new RuntimeException("이미 결제 완료된 청구서는 취소할 수 없습니다.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         invoice.setStatus(AcademyInvoice.InvoiceStatus.CANCELLED);
         invoice.setUpdatedAt(LocalDateTime.now());
         
@@ -419,7 +407,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         
         List<AcademyInvoice> invoices = invoiceRepository.findOverdueInvoices(tenantId, LocalDate.now());
         
-        // 지점 필터링
         if (branchId != null) {
             invoices = invoices.stream()
                 .filter(i -> branchId.equals(i.getBranchId()))
@@ -431,7 +418,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             .collect(Collectors.toList());
     }
     
-    // ==================== 결제 관리 ====================
     
     @Override
     @Transactional(readOnly = true)
@@ -476,7 +462,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
     public TuitionPaymentResponse createPayment(String tenantId, TuitionPaymentRequest request, String createdBy) {
         accessControlService.validateTenantAccess(tenantId);
         
-        // 청구서 확인
         AcademyInvoice invoice = invoiceRepository.findByInvoiceIdAndIsDeletedFalse(request.getInvoiceId())
             .orElseThrow(() -> new RuntimeException("청구서를 찾을 수 없습니다: " + request.getInvoiceId()));
         
@@ -484,7 +469,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
         
-        // 결제 금액 검증
         if (request.getAmount().compareTo(invoice.getTotalAmount().subtract(invoice.getPaidAmount() != null ? invoice.getPaidAmount() : BigDecimal.ZERO)) > 0) {
             throw new RuntimeException("결제 금액이 청구서 미결제 금액을 초과할 수 없습니다.");
         }
@@ -501,6 +485,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             .pgProvider(request.getPgProvider())
             .pgTransactionId(request.getPgTransactionId())
             .pgStatus(request.getPgStatus())
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             .status(AcademyTuitionPayment.PaymentStatus.PENDING)
             .refundAmount(BigDecimal.ZERO)
             .notes(request.getNotes())
@@ -527,17 +512,18 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (payment.getStatus() != AcademyTuitionPayment.PaymentStatus.PENDING) {
             throw new RuntimeException("대기 중인 결제만 완료 처리할 수 있습니다.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         payment.setStatus(AcademyTuitionPayment.PaymentStatus.COMPLETED);
         payment.setPaidAt(LocalDateTime.now());
         payment.setUpdatedAt(LocalDateTime.now());
         
         AcademyTuitionPayment saved = paymentRepository.save(payment);
         
-        // 청구서 결제 상태 업데이트
         updateInvoicePaymentStatus(payment.getInvoiceId());
         
         log.info("결제 완료 처리 완료: paymentId={}", saved.getPaymentId());
@@ -556,10 +542,12 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (payment.getStatus() == AcademyTuitionPayment.PaymentStatus.COMPLETED) {
             throw new RuntimeException("이미 완료된 결제는 취소할 수 없습니다. 환불을 사용하세요.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         payment.setStatus(AcademyTuitionPayment.PaymentStatus.CANCELLED);
         payment.setUpdatedAt(LocalDateTime.now());
         
@@ -580,6 +568,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (payment.getStatus() != AcademyTuitionPayment.PaymentStatus.COMPLETED) {
             throw new RuntimeException("완료된 결제만 환불할 수 있습니다.");
         }
@@ -596,7 +585,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         
         AcademyTuitionPayment saved = paymentRepository.save(payment);
         
-        // 청구서 결제 상태 업데이트
         updateInvoicePaymentStatus(payment.getInvoiceId());
         
         log.info("환불 처리 완료: paymentId={}, refundAmount={}", saved.getPaymentId(), saved.getRefundAmount());
@@ -615,11 +603,11 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             throw new RuntimeException("접근 권한이 없습니다.");
         }
         
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (payment.getStatus() != AcademyTuitionPayment.PaymentStatus.COMPLETED) {
             throw new RuntimeException("완료된 결제만 영수증을 발급할 수 있습니다.");
         }
         
-        // 영수증 번호 생성
         String receiptNumber = generateReceiptNumber(tenantId, payment.getBranchId());
         
         payment.setReceiptNumber(receiptNumber);
@@ -632,7 +620,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return toTuitionPaymentResponse(saved);
     }
     
-    // ==================== 배치 작업 ====================
     
     @Override
     public int generateMonthlyInvoices(String tenantId, LocalDate billingDate) {
@@ -640,7 +627,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         
         log.info("월별 청구서 자동 생성 시작: tenantId={}, billingDate={}", tenantId, billingDate);
         
-        // 청구 예정인 스케줄 조회
         List<AcademyBillingSchedule> schedules = billingScheduleRepository.findSchedulesDueForBilling(tenantId, billingDate);
         
         int totalGenerated = 0;
@@ -650,7 +636,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
                 List<InvoiceResponse> invoices = executeBillingSchedule(tenantId, schedule.getBillingScheduleId(), "SYSTEM");
                 totalGenerated += invoices.size();
                 
-                // 다음 청구일 업데이트
                 schedule.setLastBillingDate(billingDate);
                 schedule.setNextBillingDate(calculateNextBillingDate(schedule));
                 billingScheduleRepository.save(schedule);
@@ -678,6 +663,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         for (AcademyInvoice invoice : overdueInvoices) {
             if (invoice.getStatus() != AcademyInvoice.InvoiceStatus.OVERDUE &&
                 invoice.getStatus() != AcademyInvoice.InvoiceStatus.PAID &&
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 invoice.getStatus() != AcademyInvoice.InvoiceStatus.CANCELLED) {
                 invoice.setStatus(AcademyInvoice.InvoiceStatus.OVERDUE);
                 invoice.setUpdatedAt(LocalDateTime.now());
@@ -690,9 +676,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return updatedCount;
     }
     
-    // ==================== 내부 헬퍼 메서드 ====================
     
-    /**
      * 다음 청구일 계산
      */
     private LocalDate calculateNextBillingDate(AcademyBillingSchedule schedule) {
@@ -723,7 +707,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             }
         }
         
-        // 오프셋 적용
         if (schedule.getBillingDateOffset() != null && schedule.getBillingDateOffset() != 0) {
             nextDate = nextDate.plusDays(schedule.getBillingDateOffset());
         }
@@ -731,7 +714,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return nextDate;
     }
     
-    /**
      * AcademyBillingSchedule을 BillingScheduleResponse로 변환
      */
     private BillingScheduleResponse toBillingScheduleResponse(AcademyBillingSchedule schedule) {
@@ -757,7 +739,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             .build();
     }
     
-    /**
      * AcademyInvoice를 InvoiceResponse로 변환
      */
     private InvoiceResponse toInvoiceResponse(AcademyInvoice invoice) {
@@ -791,7 +772,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             .build();
     }
     
-    /**
      * AcademyTuitionPayment를 TuitionPaymentResponse로 변환
      */
     private TuitionPaymentResponse toTuitionPaymentResponse(AcademyTuitionPayment payment) {
@@ -823,7 +803,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             .build();
     }
     
-    /**
      * InvoiceStatus 변환
      */
     private InvoiceResponse.InvoiceStatus convertInvoiceStatus(AcademyInvoice.InvoiceStatus status) {
@@ -833,13 +812,11 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return InvoiceResponse.InvoiceStatus.valueOf(status.name());
     }
     
-    /**
      * 청구서 번호 생성
      */
     private String generateInvoiceNumber(String tenantId, Long branchId) {
         String yearMonth = LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMM"));
         
-        // 해당 월의 청구서 수 조회
         LocalDate startDate = LocalDate.now().withDayOfMonth(1);
         LocalDate endDate = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
         
@@ -852,7 +829,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         int sequence = existingInvoices.size() + 1;
         String invoiceNumber = String.format("INV-%s-%05d", yearMonth, sequence);
         
-        // 중복 체크
         while (invoiceRepository.findByTenantIdAndInvoiceNumberAndIsDeletedFalse(tenantId, invoiceNumber).isPresent()) {
             sequence++;
             invoiceNumber = String.format("INV-%s-%05d", yearMonth, sequence);
@@ -861,13 +837,11 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return invoiceNumber;
     }
     
-    /**
      * 영수증 번호 생성
      */
     private String generateReceiptNumber(String tenantId, Long branchId) {
         String yearMonth = LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMM"));
         
-        // 해당 월의 영수증 수 조회
         LocalDate startDate = LocalDate.now().withDayOfMonth(1);
         LocalDate endDate = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
         
@@ -881,7 +855,6 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return receiptNumber;
     }
     
-    /**
      * 청구 대상 수강 등록 조회
      */
     private List<ClassEnrollment> findTargetEnrollments(String tenantId, AcademyBillingSchedule schedule) {
@@ -893,18 +866,16 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             enrollments = enrollmentRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         }
         
-        // 활성 수강 등록만 필터링
         enrollments = enrollments.stream()
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             .filter(e -> e.getStatus() == ClassEnrollment.EnrollmentStatus.ACTIVE && 
                         e.getIsActive() != null && e.getIsActive())
             .collect(Collectors.toList());
         
-        // TODO: targetFiltersJson 기반 추가 필터링
         
         return enrollments;
     }
     
-    /**
      * 청구 금액 계산
      */
     private BigDecimal calculateBillingAmount(ClassEnrollment enrollment, AcademyBillingSchedule schedule) {
@@ -913,31 +884,28 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         } else if (schedule.getBillingMethod() == AcademyBillingSchedule.BillingMethod.FIXED) {
             return schedule.getFixedAmount() != null ? schedule.getFixedAmount() : BigDecimal.ZERO;
         } else if (schedule.getBillingMethod() == AcademyBillingSchedule.BillingMethod.CALCULATED) {
-            // TODO: 계산 규칙 기반 금액 계산
             return enrollment.getTuitionAmount() != null ? enrollment.getTuitionAmount() : BigDecimal.ZERO;
         }
         return BigDecimal.ZERO;
     }
     
-    /**
      * 청구서 결제 상태 업데이트
      */
     private void updateInvoicePaymentStatus(String invoiceId) {
         AcademyInvoice invoice = invoiceRepository.findByInvoiceIdAndIsDeletedFalse(invoiceId)
             .orElseThrow(() -> new RuntimeException("청구서를 찾을 수 없습니다: " + invoiceId));
         
-        // 해당 청구서의 결제 내역 조회
         List<AcademyTuitionPayment> payments = paymentRepository.findByTenantIdAndInvoiceIdAndIsDeletedFalse(
             invoice.getTenantId(), invoiceId);
         
         BigDecimal totalPaid = payments.stream()
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             .filter(p -> p.getStatus() == AcademyTuitionPayment.PaymentStatus.COMPLETED)
             .map(p -> p.getAmount().subtract(p.getRefundAmount() != null ? p.getRefundAmount() : BigDecimal.ZERO))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         invoice.setPaidAmount(totalPaid);
         
-        // 상태 업데이트
         if (totalPaid.compareTo(invoice.getTotalAmount()) >= 0) {
             invoice.setStatus(AcademyInvoice.InvoiceStatus.PAID);
             invoice.setPaidAt(LocalDateTime.now());

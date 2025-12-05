@@ -1,4 +1,3 @@
-/**
  * Payment Widget
  * 결제 세션 정보를 표시하는 범용 위젯
  * ClientPaymentSessionsSection을 기반으로 범용화
@@ -11,7 +10,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../../utils/ajax';
-// import UnifiedLoading from '../../../components/common/UnifiedLoading'; // 임시 비활성화
 import './Widget.css';
 
 const PaymentWidget = ({ widget, user }) => {
@@ -50,16 +48,13 @@ const PaymentWidget = ({ widget, user }) => {
     try {
       setLoading(true);
       
-      // 실제 API 엔드포인트: /api/admin/mappings/client?clientId={userId}
-      // ClientPaymentSessionsSection에서 사용하는 엔드포인트
       const url = dataSource.url || `/api/admin/mappings/client?clientId=${userId}`;
       const response = await apiGet(url);
       
       if (response && response.success && response.data) {
-        // 매핑 데이터에서 결제 세션 정보 추출
         const mappings = Array.isArray(response.data) ? response.data : [];
         
-        // ACTIVE 상태의 매핑만 필터링하여 결제 세션으로 변환
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         const activeMappings = mappings.filter(m => m.status === 'ACTIVE');
         const sessions = activeMappings
           .filter(mapping => mapping.paymentDate)
@@ -75,6 +70,7 @@ const PaymentWidget = ({ widget, user }) => {
             remainingSessions: mapping.remainingSessions || 0,
             paymentDate: mapping.paymentDate,
             paymentMethod: mapping.paymentMethod,
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             status: mapping.paymentStatus === 'CONFIRMED' ? 'ACTIVE' : mapping.paymentStatus,
             expiryDate: mapping.expiryDate
           }));
@@ -82,7 +78,6 @@ const PaymentWidget = ({ widget, user }) => {
         setPaymentSessions(sessions);
         calculateSummary(sessions);
       } else if (response && response.data) {
-        // 다른 응답 형식 지원
         const sessions = Array.isArray(response.data) ? response.data : [];
         setPaymentSessions(sessions.slice(0, maxItems));
         calculateSummary(sessions);
@@ -101,6 +96,7 @@ const PaymentWidget = ({ widget, user }) => {
   
   const calculateSummary = (sessions) => {
     const total = sessions.length;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const active = sessions.filter(s => s.status === 'ACTIVE' || s.status === 'VALID').length;
     const expired = sessions.filter(s => s.status === 'EXPIRED' || s.status === 'INVALID').length;
     setSummary({ total, active, expired });

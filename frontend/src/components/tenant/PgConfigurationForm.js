@@ -11,11 +11,9 @@ import {
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import { showNotification } from '../../utils/notification';
-// // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './PgConfigurationForm.css';
 
-/**
  * PG 설정 입력/수정 폼 컴포넌트
  * 
  * @author CoreSolution
@@ -31,7 +29,6 @@ const PgConfigurationForm = ({
 }) => {
   const { user } = useSession();
   
-  // 폼 상태
   const [formData, setFormData] = useState({
     pgProvider: '',
     pgName: '',
@@ -47,14 +44,12 @@ const PgConfigurationForm = ({
     notes: ''
   });
   
-  // UI 상태
   const [showApiKey, setShowApiKey] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   
-  // PG 제공자 옵션
   const pgProviders = [
     { value: 'TOSS', label: '토스페이먼츠' },
     { value: 'IAMPORT', label: '아임포트' },
@@ -64,7 +59,6 @@ const PgConfigurationForm = ({
     { value: 'STRIPE', label: '스트라이프' }
   ];
   
-  // 초기 데이터 로드
   useEffect(() => {
     if (initialData && mode === 'edit') {
       setFormData({
@@ -84,14 +78,11 @@ const PgConfigurationForm = ({
     }
   }, [initialData, mode]);
   
-  // 필드 변경 핸들러
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // 터치 상태 업데이트
     setTouched(prev => ({ ...prev, [field]: true }));
     
-    // 에러 초기화
     if (errors[field]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -101,7 +92,6 @@ const PgConfigurationForm = ({
     }
   };
   
-  // 유효성 검사
   const validate = () => {
     const newErrors = {};
     
@@ -141,7 +131,6 @@ const PgConfigurationForm = ({
     return Object.keys(newErrors).length === 0;
   };
   
-  // 폼 제출
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -166,7 +155,6 @@ const PgConfigurationForm = ({
                           'PG 설정 저장 중 오류가 발생했습니다.';
       showNotification(errorMessage, 'error');
       
-      // 필드별 에러 메시지 처리
       if (error.response?.data?.errors) {
         const fieldErrors = {};
         error.response.data.errors.forEach(err => {
@@ -183,7 +171,6 @@ const PgConfigurationForm = ({
     }
   };
   
-  // 필드 에러 표시
   const getFieldError = (field) => {
     if (errors[field] && touched[field]) {
       return errors[field];
@@ -214,6 +201,7 @@ const PgConfigurationForm = ({
             </div>
           </div>
         )}
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         {mode === 'edit' && initialData?.approvalStatus === 'PENDING' && (
           <div className="form-warning-box">
             <AlertCircle size={18} />

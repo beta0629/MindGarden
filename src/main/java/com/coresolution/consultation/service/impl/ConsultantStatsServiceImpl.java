@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 상담사 통계 정보 조회 서비스 구현
  * - 상담사 정보와 통계를 통합 조회
  * - 중앙화된 데이터 관리
@@ -49,27 +48,22 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
         
-        // 현재 테넌트 ID 가져오기
         String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new HashMap<>();
         }
         
-        // 활성 매핑 수 계산
         long currentClients = calculateCurrentClients(consultantId);
         
-        // 최근 매핑 정보 (최대 5개) - tenantId 필터링
         List<ConsultantClientMapping> recentMappings = mappingRepository
                 .findByConsultantId(tenantId, consultantId).stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .limit(5)
                 .collect(Collectors.toList());
         
-        // 통계 정보
         Map<String, Object> stats = calculateConsultantStats(consultantId);
         
-        // Map.of()는 null을 허용하지 않으므로 HashMap 사용
         Map<String, Object> result = new HashMap<>();
         result.put("consultant", consultant);
         result.put("currentClients", currentClients);
@@ -86,7 +80,6 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     public List<Map<String, Object>> getAllConsultantsWithStats() {
         log.info("📊 전체 상담사 통계 조회 (DB) - 레거시 호환");
         
-        // 삭제되지 않고 활성인 상담사만 조회
         List<Consultant> consultants = consultantRepository.findByIsDeletedFalse().stream()
                 .filter(c -> c.getIsActive() != null && c.getIsActive())
                 .collect(Collectors.toList());
@@ -94,14 +87,12 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return buildConsultantStatsList(consultants);
     }
     
-    /**
      * 테넌트별 상담사 통계 조회 (신규 추가)
      */
     @Cacheable(value = "consultantsWithStats", key = "'tenant:' + #tenantId + ':active'")
     public List<Map<String, Object>> getAllConsultantsWithStatsByTenant(String tenantId) {
         log.info("📊 테넌트별 상담사 통계 조회: tenantId={}", tenantId);
         
-        // 테넌트별 삭제되지 않고 활성인 상담사만 조회
         List<Consultant> consultants = consultantRepository.findByIsDeletedFalse().stream()
                 .filter(c -> tenantId.equals(c.getTenantId()))
                 .filter(c -> c.getIsActive() != null && c.getIsActive())
@@ -112,7 +103,6 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return buildConsultantStatsList(consultants);
     }
     
-    /**
      * 상담사 목록을 통계와 함께 Map 리스트로 변환 (공통 로직)
      */
     private List<Map<String, Object>> buildConsultantStatsList(List<Consultant> consultants) {
@@ -122,24 +112,18 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
                     long currentClients = calculateCurrentClients(consultant.getId());
                     Map<String, Object> stats = calculateConsultantStats(consultant.getId());
                     
-                    // Map.of()는 null을 허용하지 않으므로 HashMap 사용
                     Map<String, Object> result = new HashMap<>();
                     
-                    // Consultant 엔티티를 Map으로 변환 (User 엔티티도 포함)
                     Map<String, Object> consultantMap = new HashMap<>();
                     consultantMap.put("id", consultant.getId());
                     consultantMap.put("name", consultant.getName());
                     consultantMap.put("role", consultant.getRole() != null ? consultant.getRole().name() : null);
-                    // 브랜치 개념 제거: branchCode는 레거시 호환용으로만 유지 (표준화 2025-12-05)
-                    // consultantMap.put("branchCode", consultant.getBranchCode());
                     consultantMap.put("isActive", consultant.getIsActive());
                     consultantMap.put("isDeleted", consultant.getIsDeleted());
                     
-                    // Consultant의 specialty (단수)
                     consultantMap.put("specialty", consultant.getSpecialty());
                     consultantMap.put("specialtyDetails", consultant.getSpecialtyDetails());
                     
-                    // User의 specialization (복수 형태, 쉼표로 구분)
                     String specialization = consultant.getSpecialization();
                     consultantMap.put("specialization", specialization);
                     consultantMap.put("specializationDetails", getSpecializationDetailsFromDB(specialization));
@@ -161,7 +145,6 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     @Override
     @Cacheable(value = "consultantCurrentClients", key = "'consultant:' + #consultantId")
     public Long calculateCurrentClients(Long consultantId) {
-        // 현재 테넌트 ID 가져오기
         String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
@@ -172,6 +155,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
             tenantId,
             consultantId,
             Arrays.asList(
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 ConsultantClientMapping.MappingStatus.ACTIVE,
                 ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED
             )
@@ -182,18 +166,14 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     public Map<String, Object> calculateConsultantStats(Long consultantId) {
         String tenantId = TenantContextHolder.getTenantId();
         
-        // 총 상담 횟수
         long totalSessions = scheduleRepository.countByConsultantId(tenantId, consultantId);
         
-        // 완료된 상담 횟수 - ScheduleRepository에 상태별 카운트 메서드가 없으므로 전체 카운트 사용
         long completedSessions = scheduleRepository.countByConsultantId(tenantId, consultantId);
         
-        // 완료율 계산
         double completionRate = totalSessions > 0 
             ? (double) completedSessions / totalSessions * 100 
             : 0;
         
-        // 평점 정보
         Map<String, Object> ratingStats = new HashMap<>();
         try {
             Map<String, Object> stats = consultantRatingService.getConsultantRatingStats(consultantId);
@@ -220,7 +200,6 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return stats;
     }
     
-    /**
      * 캐시 무효화 (매핑 변경 시 호출)
      * 
      * @param consultantId 상담사 ID
@@ -230,7 +209,6 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         log.info("🗑️ 캐시 무효화: consultantId={}", consultantId);
     }
     
-    /**
      * 전체 캐시 무효화
      */
     @CacheEvict(value = {"consultantsWithStats", "consultantCurrentClients"}, allEntries = true)
@@ -238,7 +216,6 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         log.info("🗑️ 전체 캐시 무효화");
     }
     
-    /**
      * 데이터베이스에서 전문분야 상세 정보 조회
      */
     private List<Map<String, String>> getSpecializationDetailsFromDB(String specialization) {
@@ -246,7 +223,6 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
             return new ArrayList<>();
         }
         
-        // 전문분야 코드들을 배열로 분리
         String[] codes = specialization.split(",");
         List<Map<String, String>> details = new ArrayList<>();
         
@@ -263,7 +239,6 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return details;
     }
     
-    /**
      * 코드로 전문분야 이름 조회
      */
     private String getSpecialtyNameByCode(String code) {
@@ -271,12 +246,10 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
             return "미설정";
         }
         
-        // 이미 한글로 된 경우 그대로 반환
         if (code.matches(".*[가-힣].*")) {
             return code;
         }
         
-        // 영문 코드 매핑 (필요시 확장)
         Map<String, String> specialtyMap = new HashMap<>();
         specialtyMap.put("DEPRESSION", "우울증");
         specialtyMap.put("ANXIETY", "불안장애");
@@ -287,7 +260,6 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return specialtyMap.getOrDefault(code.toUpperCase(), code);
     }
     
-    /**
      * Mapping 엔티티를 Map으로 변환
      */
     private Map<String, Object> mappingToMap(ConsultantClientMapping mapping) {

@@ -2,7 +2,6 @@ import React from 'react';
 import { FaChartBar, FaUsers, FaHandshake, FaCalendarAlt } from 'react-icons/fa';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
 
-/**
  * 내담자 통계 분석 탭 컴포넌트
  */
 const ClientStatisticsTab = ({
@@ -10,26 +9,23 @@ const ClientStatisticsTab = ({
     consultations,
     mappings
 }) => {
-    // 통계 데이터 계산
     const totalClients = clients.length;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const activeClients = clients.filter(client => client.status === 'ACTIVE').length;
     const totalConsultations = consultations.length;
     const totalMappings = mappings.length;
     
-    // 등급별 내담자 수
     const clientsByGrade = clients.reduce((acc, client) => {
         const grade = client.grade || '미설정';
         acc[grade] = (acc[grade] || 0) + 1;
         return acc;
     }, {});
     
-    // 상태별 내담자 수
     const clientsByStatus = clients.reduce((acc, client) => {
         acc[client.status] = (acc[client.status] || 0) + 1;
         return acc;
     }, {});
     
-    // 월별 상담 수
     const consultationsByMonth = consultations.reduce((acc, consultation) => {
         const month = new Date(consultation.date).toLocaleDateString('ko-KR', { 
             year: 'numeric', 
@@ -39,7 +35,6 @@ const ClientStatisticsTab = ({
         return acc;
     }, {});
 
-    // 통계 카드 렌더링
     const renderStatCard = (title, value, icon, color = 'var(--mg-primary-500)') => (
         <div className="mg-v2-card mg-v2-stat-card">
             <div className="mg-v2-stat-icon" style={{ '--icon-color': color }}>
@@ -52,9 +47,7 @@ const ClientStatisticsTab = ({
         </div>
     );
 
-    // 차트 데이터 렌더링
     const renderChartData = (title, data, color = 'var(--mg-primary-500)') => {
-        // 데이터가 없으면 빈 상태 표시
         if (!data || Object.keys(data).length === 0) {
             return (
                 <div className="mg-v2-card mg-v2-chart-card">
@@ -68,21 +61,16 @@ const ClientStatisticsTab = ({
 
         const maxValue = Math.max(...Object.values(data));
         
-        // 라벨 변환 함수
         const getLabel = (key) => {
-            // undefined, null 체크
             if (!key || key === 'undefined' || key === 'null') {
                 return '알 수 없음';
             }
-            // 등급별 분포인 경우
             if (title.includes('등급')) {
-                // '미설정'은 그대로 표시
                 if (key === '미설정') {
                     return '미설정';
                 }
                 return getUserGradeKoreanNameSync(key) || key || '알 수 없음';
             }
-            // 상태별 분포인 경우
             if (title.includes('상태')) {
                 return getUserStatusKoreanNameSync(key) || key || '알 수 없음';
             }
@@ -131,11 +119,9 @@ const ClientStatisticsTab = ({
             {/* 상세 통계 */}
             <div className="mg-v2-detailed-stats">
                 <div className="mg-mobile-card-stack">
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
                     {renderChartData('등급별 내담자 분포', clientsByGrade, '#6f42c1')}
                     {renderChartData('상태별 내담자 분포', clientsByStatus, 'var(--mg-info-500)')}
                     {Object.keys(consultationsByMonth).length > 0 && 
-                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
                         renderChartData('월별 상담 수', consultationsByMonth, '#fd7e14')
                     }
                 </div>

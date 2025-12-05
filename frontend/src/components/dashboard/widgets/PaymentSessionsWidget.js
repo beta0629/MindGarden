@@ -1,4 +1,3 @@
-/**
  * Payment Sessions Widget - 표준화된 결제/회기 관리 위젯
  * ClientPaymentSessionsSection을 위젯으로 변환 + 실제 API 연동
  * 
@@ -19,12 +18,10 @@ import './PaymentSessionsWidget.css';
 import '../ClientPaymentSessionsSection.css';
 
 const PaymentSessionsWidget = ({ widget, user }) => {
-  // 내담자 전용 위젯 (다른 역할은 표시하지 않음)
   if (!RoleUtils.isClient(user)) {
     return null;
   }
 
-  // 데이터 소스 설정 (내담자 매핑 정보 조회)
   const getDataSourceConfig = () => ({
     type: 'api',
     cache: true,
@@ -36,7 +33,6 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     transform: (data) => transformPaymentData(data)
   });
 
-  // 위젯 설정에 데이터 소스 동적 설정
   const widgetWithDataSource = {
     ...widget,
     config: {
@@ -45,7 +41,6 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     }
   };
 
-  // 표준화된 위젯 훅 사용 (매핑 데이터)
   const {
     data: paymentData,
     loading,
@@ -59,7 +54,6 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     retryCount: 3
   });
 
-  // 매핑 데이터를 결제/회기 데이터로 변환
   const transformPaymentData = (mappingsData) => {
     if (!mappingsData || !Array.isArray(mappingsData)) {
       return {
@@ -73,14 +67,13 @@ const PaymentSessionsWidget = ({ widget, user }) => {
 
     const mappings = mappingsData;
     
-    // 총 회기수 계산 (ACTIVE 상태의 매핑만)
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     const activeMappings = mappings.filter(mapping => mapping.status === 'ACTIVE');
     const totalSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
     const usedSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
     const remainingSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.remainingSessions || 0), 0);
     const totalAmount = mappings.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
 
-    // 최근 결제 내역 (최근 5개)
     const recentPayments = mappings
       .filter(mapping => mapping.paymentDate)
       .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))
@@ -104,7 +97,6 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     };
   };
 
-  // 통화 포맷팅
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('ko-KR', {
       style: 'currency',
@@ -112,7 +104,6 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     }).format(amount);
   };
 
-  // 날짜 포맷팅
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -121,43 +112,52 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     });
   };
 
-  // 상태 클래스 가져오기
   const getStatusClass = (status) => {
     if (!status) return 'secondary';
     
     const statusMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CONFIRMED': 'warning',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'APPROVED': 'success',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': 'info',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'REJECTED': 'danger',
       'REFUNDED': 'secondary',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': 'success',
       'FAILED': 'danger',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CANCELLED': 'secondary'
     };
     
     return statusMap[status] || 'secondary';
   };
 
-  // 상태 텍스트 가져오기
   const getStatusText = (status) => {
     if (!status) return '미결제';
     
     const statusTextMap = {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CONFIRMED': '입금확인',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'APPROVED': '승인완료',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'PENDING': '대기중',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'REJECTED': '거부됨',
       'REFUNDED': '환불됨',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'COMPLETED': '완료',
       'FAILED': '실패',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       'CANCELLED': '취소'
     };
     
     return statusTextMap[status] || status || '미결제';
   };
 
-  // 기본 데이터 (API 실패 시 사용)
   const defaultPaymentData = {
     totalSessions: 0,
     usedSessions: 0,
@@ -166,7 +166,6 @@ const PaymentSessionsWidget = ({ widget, user }) => {
     recentPayments: []
   };
 
-  // 실제 데이터 또는 기본값 사용
   const currentData = paymentData || defaultPaymentData;
 
   return (

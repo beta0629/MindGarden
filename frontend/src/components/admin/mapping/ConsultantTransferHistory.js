@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ConsultantTransferHistory.css';
 
-/**
  * 상담사 변경 이력 컴포넌트
  * 
  * @param {Object} props - 컴포넌트 props
@@ -14,14 +13,12 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 이력 로드
   useEffect(() => {
     if (isOpen && clientId) {
       loadTransferHistory();
     }
   }, [isOpen, clientId]);
 
-  // 상담사 변경 이력 로드
   const loadTransferHistory = async () => {
     setLoading(true);
     setError('');
@@ -43,7 +40,6 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
     }
   };
 
-  // 날짜 포맷팅
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -56,11 +52,11 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
     });
   };
 
-  // 상태 배지 스타일
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'TERMINATED':
         return 'transfer-status-badge transfer-status-terminated';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
         return 'transfer-status-badge transfer-status-active';
       default:
@@ -68,11 +64,11 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
     }
   };
 
-  // 상태 텍스트
   const getStatusText = (status) => {
     switch (status) {
       case 'TERMINATED':
         return '종료됨';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
         return '활성';
       default:

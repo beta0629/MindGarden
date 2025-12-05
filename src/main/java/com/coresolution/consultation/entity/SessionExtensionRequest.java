@@ -23,7 +23,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
  * 회기 추가 요청 엔티티
  * 
  * @author MindGarden
@@ -105,7 +104,6 @@ public class SessionExtensionRequest {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
     
-    /**
      * 회기 추가 요청 상태
      */
     public enum ExtensionStatus {
@@ -126,10 +124,10 @@ public class SessionExtensionRequest {
         }
     }
     
-    /**
      * 입금 확인 처리
      */
     public void confirmPayment(String paymentMethod, String paymentReference) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (this.status != ExtensionStatus.PENDING) {
             throw new IllegalStateException("입금 확인할 수 없는 상태입니다: " + this.status);
         }
@@ -139,7 +137,6 @@ public class SessionExtensionRequest {
         this.paymentDate = LocalDateTime.now();
     }
     
-    /**
      * 관리자 승인
      */
     public void approveByAdmin(User admin) {
@@ -151,39 +148,39 @@ public class SessionExtensionRequest {
         this.approvedAt = LocalDateTime.now();
     }
     
-    /**
      * 거부 처리
      */
     public void reject(String reason) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (this.status == ExtensionStatus.COMPLETED || this.status == ExtensionStatus.REJECTED) {
             throw new IllegalStateException("거부할 수 없는 상태입니다: " + this.status);
         }
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = ExtensionStatus.REJECTED;
         this.rejectionReason = reason;
         this.rejectedAt = LocalDateTime.now();
     }
     
-    /**
      * 완료 처리
      */
     public void complete() {
         if (this.status != ExtensionStatus.ADMIN_APPROVED) {
             throw new IllegalStateException("완료할 수 없는 상태입니다: " + this.status);
         }
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = ExtensionStatus.COMPLETED;
     }
     
-    /**
      * 승인 가능한 상태인지 확인
      */
     public boolean isApprovable() {
         return this.status == ExtensionStatus.PAYMENT_CONFIRMED;
     }
     
-    /**
      * 거부 가능한 상태인지 확인
      */
     public boolean isRejectable() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         return this.status == ExtensionStatus.PENDING || this.status == ExtensionStatus.PAYMENT_CONFIRMED;
     }
 }

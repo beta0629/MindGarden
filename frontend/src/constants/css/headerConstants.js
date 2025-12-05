@@ -1,23 +1,18 @@
-/**
  * SimpleHeader 컴포넌트 CSS 상수
  * @description SimpleHeader 관련 모든 CSS 클래스명과 스타일 상수들을 관리
  * @author MindGarden Team
  * @version 1.0.0
  */
 
-// Header 관련 CSS 클래스 상수
 export const HEADER_CSS_CLASSES = {
-  // 메인 컨테이너
   HEADER: 'simple-header',
   HEADER_CONTENT: 'simple-header-content',
   
-  // 왼쪽 영역
   HEADER_LEFT: 'simple-header-left',
   BACK_BUTTON: 'simple-back-button',
   HEADER_LOGO: 'simple-header-logo',
   HEADER_LOGO_LINK: 'simple-header-logo-link',
   
-  // 오른쪽 영역
   HEADER_RIGHT: 'simple-header-right',
   LOADING: 'simple-loading',
   USER_INFO: 'simple-user-info',
@@ -29,16 +24,13 @@ export const HEADER_CSS_CLASSES = {
   USER_ROLE_EN: 'simple-user-role-en',
   USER_BRANCH: 'simple-user-branch',
   
-  // 버튼들
   HAMBURGER_TOGGLE: 'simple-hamburger-toggle',
   LOGIN_BUTTON: 'simple-login-button',
   LOGOUT_BUTTON: 'simple-logout-button',
   MENU_TOGGLE: 'simple-menu-toggle',
 };
 
-// Header 스타일 상수
 export const HEADER_STYLE_CONSTANTS = {
-  // 색상
   COLORS: {
     PRIMARY: 'var(--mg-consultant-dark)',
     PRIMARY_LIGHT: 'var(--cs-brand-primary-light)',
@@ -57,7 +49,6 @@ export const HEADER_STYLE_CONSTANTS = {
     BORDER_LIGHT: 'var(--cs-border-secondary)',
   },
   
-  // 크기
   SIZES: {
     HEADER_HEIGHT: '60px',
     HEADER_HEIGHT_MOBILE: '56px',
@@ -75,7 +66,6 @@ export const HEADER_STYLE_CONSTANTS = {
     GAP_MOBILE: '8px',
   },
   
-  // 폰트
   FONTS: {
     LOGO_SIZE: '1.2rem',
     LOGO_SIZE_MOBILE: '1.1rem',
@@ -99,20 +89,17 @@ export const HEADER_STYLE_CONSTANTS = {
     AVATAR_ICON_SIZE_MOBILE: '20px',
   },
   
-  // 그림자
   SHADOWS: {
     HEADER: '0 2px 4px var(--mg-shadow-light)',
     LOGOUT_BUTTON: 'var(--cs-shadow-error)',
     LOGOUT_BUTTON_HOVER: 'var(--cs-shadow-error-strong)',
   },
   
-  // Z-인덱스
   Z_INDEX: {
     HEADER: 1000,
     LOGOUT_BUTTON: 99999,
   },
   
-  // 애니메이션
   ANIMATIONS: {
     TRANSITION: '0.2s ease',
     TRANSITION_SLOW: '0.3s ease',
@@ -121,13 +108,11 @@ export const HEADER_STYLE_CONSTANTS = {
   },
 };
 
-// 반응형 브레이크포인트
 export const HEADER_BREAKPOINTS = {
   MOBILE: '768px',
   TABLET: '1024px',
 };
 
-// Header 상태별 스타일
 export const HEADER_STATES = {
   LOADING: {
     opacity: '0.7',
@@ -137,12 +122,12 @@ export const HEADER_STATES = {
     transform: 'translateY(-1px)',
     scale: '1.05',
   },
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   ACTIVE: {
     transform: 'scale(0.95)',
   },
 };
 
-// 아이콘 매핑
 export const HEADER_ICONS = {
   BACK: 'bi-arrow-left',
   LOGO: 'bi-flower1',
@@ -153,11 +138,9 @@ export const HEADER_ICONS = {
   LOGOUT: 'bi-box-arrow-right',
   CLOSE: 'bi-x',
   CHECK: 'bi-check-circle',
-  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
   BRANCH: 'bi-geo-alt',
 };
 
-// 텍스트 상수
 export const HEADER_TEXTS = {
   LOADING: '로딩 중...',
   LOGIN: '로그인',
@@ -169,7 +152,6 @@ export const HEADER_TEXTS = {
   BRAND_NAME: '마인드가든',
 };
 
-// 기본 설정
 export const HEADER_DEFAULTS = {
   SHOW_BACK_BUTTON_PATHS: ['/', '/login', '/register'],
   MAIN_DASHBOARD_PATHS: [

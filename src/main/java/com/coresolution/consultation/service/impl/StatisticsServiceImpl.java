@@ -38,7 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
  * 통계 서비스 구현체
  * PL/SQL 도입을 위한 통계 처리 서비스 구현
  * 
@@ -63,18 +62,14 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final ConsultantClientMappingRepository mappingRepository;
     private final CommonCodeService commonCodeService;
 
-    // ==================== 일별 통계 관리 ====================
 
     @Override
     public DailyStatistics updateDailyStatistics(LocalDate date, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         log.info("📊 일별 통계 업데이트 시작: date={}", date);
 
         try {
-            // 테넌트 ID 가져오기
             String tenantId = TenantContextHolder.getRequiredTenantId();
             
-            // 기존 통계 조회 또는 새로 생성 (브랜치 개념 제거)
             DailyStatistics statistics = dailyStatisticsRepository
                 .findByTenantIdAndStatDate(tenantId, date)
                 .orElse(DailyStatistics.builder()
@@ -82,45 +77,43 @@ public class StatisticsServiceImpl implements StatisticsService {
                     .tenantId(tenantId)
                     .build());
 
-            // 해당 날짜의 스케줄 조회 (테넌트 기반)
             List<Schedule> daySchedules = scheduleRepository.findByTenantIdAndDate(tenantId, date);
             log.debug("🔍 조회된 스케줄 수: {}", daySchedules.size());
 
-            // 스케줄 통계 계산
             statistics.setTotalConsultations(daySchedules.size());
             
             long completedCount = daySchedules.stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
                 .count();
             statistics.setCompletedConsultations((int) completedCount);
 
             long cancelledCount = daySchedules.stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> ScheduleStatus.CANCELLED.equals(s.getStatus()))
                 .count();
             statistics.setCancelledConsultations((int) cancelledCount);
 
-            // 수익 계산 (완료된 스케줄의 세션 비용 합계 - 메타데이터 기반)
             BigDecimal totalRevenue = daySchedules.stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
                 .map(this::getSessionFee)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             statistics.setTotalRevenue(totalRevenue);
 
-            // 평균 평점 계산 (해당 날짜에 평가받은 상담사들의 평균)
             BigDecimal avgRating = BigDecimal.ZERO;
             if (!daySchedules.isEmpty()) {
-                // 해당 날짜의 상담사들의 평점 계산
                 List<Long> consultantIds = daySchedules.stream()
                     .map(Schedule::getConsultantId)
                     .distinct()
                     .collect(Collectors.toList());
                 
                 if (!consultantIds.isEmpty()) {
-                    // 해당 날짜의 상담사들의 평균 평점 계산
                     Double totalAvgRating = consultantIds.stream()
                         .mapToDouble(consultantId -> {
                             Double rating = consultantRatingRepository.getAverageHeartScoreByConsultant(
                                 consultantId, 
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                                 com.coresolution.consultation.entity.ConsultantRating.RatingStatus.ACTIVE
                             );
                             return rating != null ? rating : 0.0;
@@ -133,21 +126,18 @@ public class StatisticsServiceImpl implements StatisticsService {
             }
             statistics.setAvgRating(avgRating);
 
-            // 상담사 수 계산
             long consultantCount = daySchedules.stream()
                 .map(Schedule::getConsultantId)
                 .distinct()
                 .count();
             statistics.setConsultantCount((int) consultantCount);
 
-            // 내담자 수 계산
             long clientCount = daySchedules.stream()
                 .map(Schedule::getClientId)
                 .distinct()
                 .count();
             statistics.setClientCount((int) clientCount);
 
-            // 업데이트 시간 설정
             if (statistics.getId() != null) {
                 statistics.setUpdatedAt(LocalDateTime.now());
             }
@@ -167,7 +157,6 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     @Transactional(readOnly = true)
     public DailyStatistics getDailyStatistics(LocalDate date, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return dailyStatisticsRepository.findByTenantIdAndStatDate(tenantId, date)
             .orElse(null);
@@ -176,7 +165,6 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     @Transactional(readOnly = true)
     public List<DailyStatistics> getDailyStatistics(LocalDate startDate, LocalDate endDate, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return dailyStatisticsRepository.findByTenantIdAndStatDateBetween(tenantId, startDate, endDate);
     }
@@ -184,7 +172,6 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getMonthlyAggregatedStatistics(String yearMonth, String branchCode) {
-        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📊 월별 집계 통계 조회: yearMonth={}, tenantId={}", yearMonth, tenantId);
 
@@ -192,7 +179,6 @@ public class StatisticsServiceImpl implements StatisticsService {
             LocalDate startDate = LocalDate.parse(yearMonth + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
-            // 테넌트 기반으로 통계 조회
             List<DailyStatistics> statisticsList = dailyStatisticsRepository.findByTenantIdAndStatDateBetween(
                 tenantId, startDate, endDate);
 
@@ -221,7 +207,6 @@ public class StatisticsServiceImpl implements StatisticsService {
                 aggregatedStats.put("totalRevenue", totalRevenue);
                 aggregatedStats.put("avgRating", avgRating);
             } else {
-                // 기본값 설정
                 aggregatedStats.put("tenantId", tenantId);
                 aggregatedStats.put("totalConsultations", 0);
                 aggregatedStats.put("completedConsultations", 0);
@@ -239,14 +224,12 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
     }
 
-    // ==================== 상담사 성과 관리 ====================
 
     @Override
     public ConsultantPerformance updateConsultantPerformance(Long consultantId, LocalDate date) {
         log.info("📊 상담사 성과 업데이트 시작: consultantId={}, date={}", consultantId, date);
 
         try {
-            // 기존 성과 조회 또는 새로 생성
             ConsultantPerformance performance = consultantPerformanceRepository
                 .findById(new com.coresolution.consultation.entity.ConsultantPerformanceId(consultantId, date))
                 .orElse(ConsultantPerformance.builder()
@@ -254,43 +237,40 @@ public class StatisticsServiceImpl implements StatisticsService {
                     .performanceDate(date)
                     .build());
 
-            // 해당 날짜의 상담사 스케줄 조회
             List<Schedule> consultantSchedules = scheduleRepository.findByConsultantIdAndDate(consultantId, date);
             
-            // 기본 스케줄 통계 계산
             performance.setTotalSchedules(consultantSchedules.size());
             
             long completedCount = consultantSchedules.stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
                 .count();
             performance.setCompletedSchedules((int) completedCount);
 
             long cancelledCount = consultantSchedules.stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> ScheduleStatus.CANCELLED.equals(s.getStatus()))
                 .count();
             performance.setCancelledSchedules((int) cancelledCount);
 
-            // NO_SHOW 상태 처리 (현재는 기본값, 향후 ScheduleStatus.NO_SHOW 추가 시 자동 적용)
             long noShowCount = consultantSchedules.stream()
                 .filter(s -> s.getStatus() != null && s.getStatus().toString().equals("NO_SHOW"))
                 .count();
             performance.setNoShowSchedules((int) noShowCount);
 
-            // 수익 계산 (메타데이터 기반 세션비)
             BigDecimal totalRevenue = consultantSchedules.stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
                 .map(this::getSessionFee)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             performance.setTotalRevenue(totalRevenue);
 
-            // 고객 관련 통계 (실제 데이터 기반 자동 계산)
             long uniqueClientCount = consultantSchedules.stream()
                 .map(Schedule::getClientId)
                 .distinct()
                 .count();
             performance.setUniqueClients((int) uniqueClientCount);
             
-            // 재방문 고객 계산 (해당 상담사를 2회 이상 이용한 고객)
             long repeatClientCount = consultantSchedules.stream()
                 .collect(Collectors.groupingBy(Schedule::getClientId, Collectors.counting()))
                 .entrySet()
@@ -299,23 +279,22 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .count();
             performance.setRepeatClients((int) repeatClientCount);
 
-            // 평점 관련 통계 (ConsultantRating 기반 실제 평점 계산)
             Double avgRating = consultantRatingRepository.getAverageHeartScoreByConsultant(
                 consultantId, 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 com.coresolution.consultation.entity.ConsultantRating.RatingStatus.ACTIVE
             );
             Long totalRatings = consultantRatingRepository.getTotalRatingCountByConsultant(
                 consultantId, 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 com.coresolution.consultation.entity.ConsultantRating.RatingStatus.ACTIVE
             );
             
             performance.setAvgRating(avgRating != null ? BigDecimal.valueOf(avgRating) : BigDecimal.ZERO);
             performance.setTotalRatings(totalRatings != null ? totalRatings.intValue() : 0);
 
-            // 성과 점수 자동 계산
             performance.calculatePerformanceScore();
 
-            // 업데이트 시간 설정
             performance.updateTimestamp();
 
             ConsultantPerformance savedPerformance = consultantPerformanceRepository.save(performance);
@@ -355,7 +334,6 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     @Transactional(readOnly = true)
     public List<ConsultantPerformance> getUnderperformingConsultants(LocalDate date, String branchCode) {
-        // 완료율 70% 미만인 상담사 조회
         return consultantPerformanceRepository.findUnderperformingConsultants(date, 70.0, branchCode);
     }
 
@@ -373,14 +351,12 @@ public class StatisticsServiceImpl implements StatisticsService {
         return trend;
     }
 
-    // ==================== 알림 관리 ====================
 
     @Override
     public PerformanceAlert createPerformanceAlert(Long consultantId, PerformanceAlert.AlertLevel level, String message) {
         log.info("🚨 성과 알림 생성: consultantId={}, level={}", consultantId, level);
 
         try {
-            // 중복 알림 방지 (최근 1시간 내 동일 레벨 알림 체크)
             LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
             Long recentAlertCount = performanceAlertRepository.countRecentSimilarAlerts(
                 consultantId, level, oneHourAgo);
@@ -390,7 +366,6 @@ public class StatisticsServiceImpl implements StatisticsService {
                 return null;
             }
 
-            // 상담사 정보 조회
             Optional<User> consultantOpt = userRepository.findById(consultantId);
             String consultantName = consultantOpt.map(User::getName).orElse("알 수 없음");
 
@@ -399,6 +374,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .consultantName(consultantName)
                 .alertLevel(level)
                 .alertMessage(message)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(PerformanceAlert.AlertStatus.PENDING)
                 .build();
 
@@ -435,14 +411,12 @@ public class StatisticsServiceImpl implements StatisticsService {
         });
     }
 
-    // ==================== 배치 처리 ====================
 
     @Override
     public void updateAllDailyStatistics(LocalDate date) {
         log.info("🔄 전체 일별 통계 배치 업데이트 시작: date={}", date);
 
         try {
-            // 모든 활성 지점 조회
             String tenantId = TenantContextHolder.getRequiredTenantId();
             List<String> branchCodes = userRepository.findByTenantId(tenantId).stream()
                 .map(User::getBranchCode)
@@ -477,7 +451,6 @@ public class StatisticsServiceImpl implements StatisticsService {
                 return;
             }
             
-            // 모든 활성 상담사 조회
             List<User> consultants = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
 
             for (User consultant : consultants) {
@@ -501,7 +474,6 @@ public class StatisticsServiceImpl implements StatisticsService {
         log.info("🔍 성과 이슈 감지 및 알림 생성 시작: date={}", date);
 
         try {
-            // 성과 저하 상담사 조회 (모든 지점)
             List<ConsultantPerformance> underperformers = consultantPerformanceRepository
                 .findUnderperformingConsultants(date, 70.0, null);
 
@@ -530,7 +502,6 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
     }
 
-    // ==================== 대시보드용 통계 ====================
 
     @Override
     @Transactional(readOnly = true)
@@ -541,26 +512,21 @@ public class StatisticsServiceImpl implements StatisticsService {
             Map<String, Object> dashboard = new HashMap<>();
             LocalDate today = LocalDate.now();
 
-            // 오늘의 통계
             DailyStatistics todayStats = getDailyStatistics(today, branchCode);
             dashboard.put("today", todayStats != null ? todayStats : new HashMap<>());
 
-            // 최근 7일 통계
             LocalDate weekAgo = today.minusDays(7);
             List<DailyStatistics> weekStats = getDailyStatistics(weekAgo, today, branchCode);
             dashboard.put("week", weekStats);
 
-            // 이번 달 통계
             String thisMonth = today.format(DateTimeFormatter.ofPattern("yyyy-MM"));
             Map<String, Object> monthlyStats = getMonthlyAggregatedStatistics(thisMonth, branchCode);
             dashboard.put("month", monthlyStats);
 
-            // 상위 성과자 (최근 30일)
             LocalDate monthAgo = today.minusDays(30);
             List<ConsultantPerformance> topPerformers = getTopPerformers(monthAgo, today, branchCode, 5);
             dashboard.put("topPerformers", topPerformers);
 
-            // 미처리 알림 수
             List<PerformanceAlert> pendingAlerts = getPendingAlerts();
             dashboard.put("pendingAlertsCount", pendingAlerts.size());
 
@@ -582,29 +548,27 @@ public class StatisticsServiceImpl implements StatisticsService {
             LocalDateTime now = LocalDateTime.now();
             LocalDate today = now.toLocalDate();
             
-            // 오늘의 실시간 지표
             DailyStatistics todayStats = getDailyStatistics(today, branchCode);
             
-            // 실시간 상담 진행 상황
             List<Schedule> todaySchedules = scheduleRepository.findByDateAndBranchCode(today, branchCode);
             long inProgressCount = todaySchedules.stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> ScheduleStatus.BOOKED.equals(s.getStatus()) || ScheduleStatus.CONFIRMED.equals(s.getStatus()))
                 .count();
             
-            // 실시간 완료율
             long completedCount = todaySchedules.stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
                 .count();
             double completionRate = todaySchedules.isEmpty() ? 0.0 : 
                 (double) completedCount / todaySchedules.size() * 100;
             
-            // 실시간 수익 (오늘 완료된 상담 기준 - 메타데이터 기반)
             BigDecimal realTimeRevenue = todaySchedules.stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
                 .map(this::getSessionFee)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 활성 상담사 수
             long activeConsultants = todaySchedules.stream()
                 .map(Schedule::getConsultantId)
                 .distinct()
@@ -637,10 +601,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         try {
             Map<String, Object> trends = new HashMap<>();
             
-            // 기간별 일별 통계 조회
             List<DailyStatistics> dailyStats = getDailyStatistics(startDate, endDate, branchCode);
             
-            // 트렌드 데이터 생성
             List<Map<String, Object>> consultationTrend = dailyStats.stream()
                 .map(stat -> {
                     Map<String, Object> dayData = new HashMap<>();
@@ -653,7 +615,6 @@ public class StatisticsServiceImpl implements StatisticsService {
                 })
                 .collect(Collectors.toList());
             
-            // 평균값 계산
             double avgConsultationsPerDay = dailyStats.stream()
                 .mapToInt(DailyStatistics::getTotalConsultations)
                 .average()
@@ -675,7 +636,6 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .average()
                 .orElse(0.0);
             
-            // 트렌드 방향 분석 (최근 7일 vs 이전 7일)
             List<DailyStatistics> recentWeek = dailyStats.stream()
                 .filter(stat -> stat.getStatDate().isAfter(endDate.minusDays(7)))
                 .collect(Collectors.toList());
@@ -723,10 +683,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         try {
             Map<String, Object> monthlyStats = new HashMap<>();
             
-            // 기간별 일별 통계 조회
             List<DailyStatistics> dailyStats = getDailyStatistics(startDate, endDate, branchCode);
             
-            // 월간 집계 계산
             int totalConsultations = dailyStats.stream()
                 .mapToInt(DailyStatistics::getTotalConsultations)
                 .sum();
@@ -762,7 +720,6 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
     }
     
-    // ==================== 관리자 통계 대시보드용 메서드 구현 ====================
     
     @Override
     public Map<String, Object> getOverallStatistics() {
@@ -775,28 +732,22 @@ public class StatisticsServiceImpl implements StatisticsService {
             
             Map<String, Object> statistics = new HashMap<>();
             
-            // 총 내담자 수
             long totalClients = userRepository.countByRole(tenantId, UserRole.CLIENT);
             statistics.put("totalClients", totalClients);
             
-            // 총 상담사 수
             long totalConsultants = userRepository.countByRole(tenantId, UserRole.CONSULTANT);
             statistics.put("totalConsultants", totalConsultants);
             
-            // 총 상담 세션 수
             long totalSessions = scheduleRepository.count();
             statistics.put("totalSessions", totalSessions);
             
-            // 활성 매칭 수 (ConsultantClientMappingRepository 사용)
             long activeMappings = 0; // TODO: ConsultantClientMappingRepository에서 조회
             statistics.put("activeMappings", activeMappings);
             
-            // 완료율 계산
             long completedSessions = 0; // TODO: ConsultationRecordRepository에서 조회
             double completionRate = totalSessions > 0 ? (double) completedSessions / totalSessions * 100 : 0;
             statistics.put("completionRate", Math.round(completionRate * 10.0) / 10.0);
             
-            // 총 수익 (원화)
             Long totalRevenue = 0L; // TODO: PaymentRepository에서 조회
             statistics.put("totalRevenue", totalRevenue != null ? totalRevenue : 0);
             
@@ -821,25 +772,21 @@ public class StatisticsServiceImpl implements StatisticsService {
             LocalDate now = LocalDate.now();
             LocalDate lastYear = now.minusYears(1);
             
-            // 내담자 증가율
             long currentClients = userRepository.countByTenantIdAndCreatedAtAfterAndRole(tenantId, lastYear.atStartOfDay(), UserRole.CLIENT);
             long lastYearClients = userRepository.countByTenantIdAndCreatedAtBeforeAndRole(tenantId, lastYear.atStartOfDay(), UserRole.CLIENT);
             double clientGrowth = lastYearClients > 0 ? (double) (currentClients - lastYearClients) / lastYearClients * 100 : 0;
             trends.put("clientGrowth", Math.round(clientGrowth * 10.0) / 10.0);
             
-            // 상담사 증가율
             long currentConsultants = userRepository.countByTenantIdAndCreatedAtAfterAndRole(tenantId, lastYear.atStartOfDay(), UserRole.CONSULTANT);
             long lastYearConsultants = userRepository.countByTenantIdAndCreatedAtBeforeAndRole(tenantId, lastYear.atStartOfDay(), UserRole.CONSULTANT);
             double consultantGrowth = lastYearConsultants > 0 ? (double) (currentConsultants - lastYearConsultants) / lastYearConsultants * 100 : 0;
             trends.put("consultantGrowth", Math.round(consultantGrowth * 10.0) / 10.0);
             
-            // 상담 세션 증가율
             long currentSessions = scheduleRepository.countByTenantIdAndCreatedAtAfter(tenantId, lastYear.atStartOfDay());
             long lastYearSessions = scheduleRepository.countByTenantIdAndCreatedAtBefore(tenantId, lastYear.atStartOfDay());
             double sessionGrowth = lastYearSessions > 0 ? (double) (currentSessions - lastYearSessions) / lastYearSessions * 100 : 0;
             trends.put("sessionGrowth", Math.round(sessionGrowth * 10.0) / 10.0);
             
-            // 수익 증가율
             Long currentRevenue = 0L; // TODO: PaymentRepository에서 조회
             Long lastYearRevenue = 0L; // TODO: PaymentRepository에서 조회
             double revenueGrowth = (lastYearRevenue != null && lastYearRevenue > 0) ? 
@@ -864,7 +811,6 @@ public class StatisticsServiceImpl implements StatisticsService {
             
             Map<String, Object> chartData = new HashMap<>();
             
-            // 최근 6개월 데이터
             List<String> labels = new ArrayList<>();
             List<Integer> clientData = new ArrayList<>();
             List<Integer> sessionData = new ArrayList<>();
@@ -879,11 +825,9 @@ public class StatisticsServiceImpl implements StatisticsService {
                 LocalDateTime monthStart = month.withDayOfMonth(1).atStartOfDay();
                 LocalDateTime monthEnd = month.withDayOfMonth(month.lengthOfMonth()).atTime(23, 59, 59);
                 
-                // 해당 월 내담자 수
                 long monthlyClients = userRepository.countByTenantIdAndCreatedAtBetweenAndRole(tenantId, monthStart, monthEnd, UserRole.CLIENT);
                 clientData.add((int) monthlyClients);
                 
-                // 해당 월 상담 세션 수
                 long monthlySessions = scheduleRepository.countByTenantIdAndCreatedAtBetween(tenantId, monthStart, monthEnd);
                 sessionData.add((int) monthlySessions);
             }
@@ -924,7 +868,6 @@ public class StatisticsServiceImpl implements StatisticsService {
             
             List<Map<String, Object>> activities = new ArrayList<>();
             
-            // 최근 내담자 등록
             List<Object[]> recentClients = userRepository.findRecentClients(5);
             for (Object[] client : recentClients) {
                 Map<String, Object> activityItem = new HashMap<>();
@@ -934,17 +877,13 @@ public class StatisticsServiceImpl implements StatisticsService {
                 activities.add(activityItem);
             }
             
-            // 최근 상담 세션 완료 (TODO: ConsultationRecordRepository에서 조회)
-            // 최근 매칭 생성 (TODO: ConsultantClientMappingRepository에서 조회)
             
-            // 시간순 정렬 (최신순)
             activities.sort((a, b) -> {
                 String timeA = (String) a.get("time");
                 String timeB = (String) b.get("time");
                 return timeB.compareTo(timeA);
             });
             
-            // 최대 10개만 반환
             if (activities.size() > 10) {
                 activities = activities.subList(0, 10);
             }
@@ -973,7 +912,6 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
     }
     
-    // 기본값 반환 메서드들
     private Map<String, Object> getDefaultOverallStatistics() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalClients", 0);
@@ -1007,14 +945,11 @@ public class StatisticsServiceImpl implements StatisticsService {
         return activity;
     }
     
-    // ==================== 세션비 조회 로직 (하드코딩 제거) ====================
     
-    /**
      * 스케줄의 세션비 조회 (메타데이터 기반)
      * 우선순위: 1. 매핑에서 회기당 단가 조회 → 2. CommonCode에서 기본값 조회 → 3. Fallback
      */
     private BigDecimal getSessionFee(Schedule schedule) {
-        // 1. 매핑에서 회기당 단가 조회
         if (schedule.getConsultantId() != null && schedule.getClientId() != null) {
             Optional<ConsultantClientMapping> mappingOpt = mappingRepository
                 .findByConsultantAndClient(
@@ -1022,6 +957,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                     userRepository.findById(schedule.getClientId()).orElse(null)
                 )
                 .stream()
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
                 .findFirst();
             
@@ -1040,11 +976,9 @@ public class StatisticsServiceImpl implements StatisticsService {
             }
         }
         
-        // 2. CommonCode에서 기본 세션비 조회
         return getDefaultSessionFeeFromCommonCode();
     }
     
-    /**
      * CommonCode에서 기본 세션비 조회
      */
     private BigDecimal getDefaultSessionFeeFromCommonCode() {
@@ -1052,7 +986,6 @@ public class StatisticsServiceImpl implements StatisticsService {
             CommonCode code = commonCodeService.getCommonCodeByGroupAndValue("SYSTEM_CONFIG", "DEFAULT_SESSION_FEE");
             if (code != null && code.getExtraData() != null) {
                 try {
-                    // extra_data JSON에서 value 추출
                     com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                     com.fasterxml.jackson.databind.JsonNode jsonNode = mapper.readTree(code.getExtraData());
                     if (jsonNode.has("value")) {
@@ -1068,7 +1001,6 @@ public class StatisticsServiceImpl implements StatisticsService {
             log.warn("⚠️ CommonCode 기본 세션비 조회 실패, Fallback 사용", e);
         }
         
-        // 3. 최종 Fallback (하드코딩 제거를 위해 경고 로그 남김)
         log.warn("⚠️ 기본 세션비를 찾을 수 없어 Fallback 값(50000) 사용. CommonCode에 SYSTEM_CONFIG.DEFAULT_SESSION_FEE를 추가하세요.");
         return BigDecimal.valueOf(50000);
     }

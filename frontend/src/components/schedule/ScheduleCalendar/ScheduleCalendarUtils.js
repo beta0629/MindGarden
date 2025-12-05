@@ -1,4 +1,3 @@
-/**
  * ScheduleCalendar 유틸리티 함수들
  * 
  * @author MindGarden
@@ -6,7 +5,6 @@
  * @since 2024-12-19
  */
 
-/**
  * 시간 포맷팅 함수
  */
 export const formatTime = (timeObj) => {
@@ -22,7 +20,6 @@ export const formatTime = (timeObj) => {
     }
 };
 
-/**
  * 상태값을 한글로 변환 (동적 로드)
  */
 export const convertStatusToKorean = (status, scheduleStatusOptions) => {
@@ -30,7 +27,6 @@ export const convertStatusToKorean = (status, scheduleStatusOptions) => {
     return statusOption ? statusOption.label : status || "알 수 없음";
 };
 
-/**
  * 상담 유형을 한글로 변환
  */
 export const convertConsultationTypeToKorean = (consultationType) => {
@@ -45,26 +41,17 @@ export const convertConsultationTypeToKorean = (consultationType) => {
     return typeMap[consultationType] || consultationType || '일반 상담';
 };
 
-/**
  * 상담사별 색상 생성
  */
 export const getConsultantColor = (consultantId) => {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
     if (!consultantId) return '#6b7280';
     
-    // 상담사 ID를 기반으로 일관된 색상 생성
     const colors = [
         'var(--mg-primary-500)', 'var(--mg-error-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-purple-500)',
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6366f1 -> var(--mg-custom-6366f1)
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ec4899 -> var(--mg-custom-ec4899)
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f97316 -> var(--mg-custom-f97316)
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #84cc16 -> var(--mg-custom-84cc16)
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #06b6d4 -> var(--mg-custom-06b6d4)
         '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1',
         '#14b8a6', '#a855f7', '#22c55e', '#eab308', 'var(--mg-error-500)'
     ];
     
-    // 간단한 해시 함수로 일관된 색상 선택
     let hash = 0;
     for (let i = 0; i < consultantId.toString().length; i++) {
         const char = consultantId.toString().charCodeAt(i);
@@ -75,23 +62,24 @@ export const getConsultantColor = (consultantId) => {
     return colors[Math.abs(hash) % colors.length];
 };
 
-/**
  * 상태별 이벤트 색상
  */
 export const getEventColor = (status) => {
     const statusColors = {
         'AVAILABLE': 'var(--mg-success-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'BOOKED': 'var(--mg-primary-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'CONFIRMED': 'var(--mg-info-500)',
         'VACATION': 'var(--mg-warning-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'COMPLETED': 'var(--mg-secondary-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'CANCELLED': 'var(--mg-error-500)'
     };
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
     return statusColors[status] || '#6b7280';
 };
 
-/**
  * 휴가 데이터를 이벤트로 변환
  */
 export const convertVacationToEvent = (vacationData, consultantId, date) => {
@@ -122,7 +110,6 @@ export const convertVacationToEvent = (vacationData, consultantId, date) => {
     };
 };
 
-/**
  * 모바일 환경 감지
  */
 export const checkIsMobile = (forceMobileMode = false) => {
@@ -133,7 +120,6 @@ export const checkIsMobile = (forceMobileMode = false) => {
     return forceMobileMode || (isSmallScreen && (isTouchDevice || isMobileUserAgent));
 };
 
-/**
  * 시간 슬롯 생성
  */
 export const generateTimeSlots = () => {
@@ -147,7 +133,6 @@ export const generateTimeSlots = () => {
     return slots;
 };
 
-/**
  * 시간 슬롯이 예약되었는지 확인
  */
 export const isTimeSlotBooked = (startTime, endTime, bookedTimes) => {

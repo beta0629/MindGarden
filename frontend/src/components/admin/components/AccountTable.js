@@ -86,6 +86,7 @@ const AccountTable = ({
                   {ACCOUNT_TABLE_COLUMNS.STATUS}
                 </span>
                 <span className={`account-card__status ${account.isActive ? 'active' : 'inactive'}`}>
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                   {account.isActive ? ACCOUNT_STATUS_LABELS.ACTIVE : ACCOUNT_STATUS_LABELS.INACTIVE}
                 </span>
               </div>

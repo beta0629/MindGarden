@@ -18,7 +18,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
  * 할인 회계 거래 엔티티
  * 
  * @author MindGarden
@@ -77,7 +76,6 @@ public class DiscountAccountingTransaction {
     @Column(name = "refund_transaction_id")
     private Long refundTransactionId;
     
-    /**
      * @Deprecated - 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지
      * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
      * 새로운 코드에서는 사용하지 마세요. 테넌트 ID만 사용하세요.
@@ -117,7 +115,6 @@ public class DiscountAccountingTransaction {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
     
-    // 비즈니스 메서드
     public void applyDiscount(String appliedBy) {
         this.status = DiscountAccountingStatus.APPLIED;
         this.appliedBy = appliedBy;
@@ -126,6 +123,7 @@ public class DiscountAccountingTransaction {
     }
     
     public void confirm() {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = DiscountAccountingStatus.CONFIRMED;
         this.confirmedAt = LocalDateTime.now();
     }
@@ -148,6 +146,7 @@ public class DiscountAccountingTransaction {
     }
     
     public void cancel(String cancellationReason, String cancelledBy) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         this.status = DiscountAccountingStatus.CANCELLED;
         this.cancellationReason = cancellationReason;
         this.cancelledAt = LocalDateTime.now();

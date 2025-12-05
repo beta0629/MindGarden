@@ -14,7 +14,6 @@ import SessionExtensionModal from './mapping/SessionExtensionModal';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/unified-design-tokens.css';
 
-/**
  * 회기 관리 컴포넌트 - 완전 재설계
  * - 단일 페이지 레이아웃
  * - 원클릭 회기 추가
@@ -25,46 +24,36 @@ import '../../styles/unified-design-tokens.css';
  * @since 2024-12-19
  */
 const SessionManagement = () => {
-    // 데이터 상태
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState([]);
     const [consultants, setConsultants] = useState([]);
     const [mappings, setMappings] = useState([]);
     
-    // 검색/필터 상태
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('ALL');
     
-    // 코드 옵션 상태
     const [mappingStatusOptions, setMappingStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     
-    // 모달 상태
     const [showSessionExtensionModal, setShowSessionExtensionModal] = useState(false);
     const [selectedMapping, setSelectedMapping] = useState(null);
     
-    // 추가 회기 추가 방법들
     const [activeTab, setActiveTab] = useState('quick'); // 'quick', 'search', 'mapping'
     
-    // 회기 추가 요청 상태
     const [sessionExtensionRequests, setSessionExtensionRequests] = useState([]);
     
-    // 결제 확인 모달 상태
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('CASH');
     const [paymentReference, setPaymentReference] = useState('');
     
-    // 버튼 로딩 상태
     const [confirmingPayment, setConfirmingPayment] = useState(false);
     const [rejectingRequest, setRejectingRequest] = useState(false);
 
-    // 데이터 로드
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
             
-            // API 응답 구조에 맞게 수정
             const [clientsRes, consultantsRes, mappingsRes, requestsRes] = await Promise.all([
                 apiGet('/api/admin/clients/with-mapping-info'),
                 apiGet('/api/admin/consultants'),
@@ -72,7 +61,6 @@ const SessionManagement = () => {
                 apiGet('/api/admin/session-extensions/requests')
             ]);
             
-            // 응답 데이터 추출
             const clientsData = clientsRes?.data || clientsRes || [];
             const consultantsData = consultantsRes?.data || consultantsRes || [];
             const mappingsData = mappingsRes?.data || mappingsRes || [];
@@ -90,7 +78,6 @@ const SessionManagement = () => {
                 requests: requestsData.length
             });
             
-            // 회기 추가 요청 데이터 상세 로그
             if (requestsData.length > 0) {
                 console.log('🔍 회기 추가 요청 데이터 상세:', requestsData[0]);
                 console.log('🔍 매핑 정보:', requestsData[0].mapping);
@@ -102,7 +89,6 @@ const SessionManagement = () => {
             console.error('❌ 데이터 로드 실패:', error);
             notificationManager.error('데이터를 불러오는데 실패했습니다.');
             
-            // 빈 배열로 초기화
             setClients([]);
             setConsultants([]);
             setMappings([]);
@@ -112,7 +98,6 @@ const SessionManagement = () => {
         }
     }, []);
 
-    // 매핑 상태 코드 로드
     const loadMappingStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
@@ -130,7 +115,9 @@ const SessionManagement = () => {
         } catch (error) {
             console.error('매핑 상태 코드 로드 실패:', error);
             setMappingStatusOptions([
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'ACTIVE', label: '활성', icon: '✅', color: 'var(--success-600)' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'INACTIVE', label: '비활성', icon: '❌', color: 'var(--danger-600)' }
             ]);
         } finally {
@@ -138,11 +125,9 @@ const SessionManagement = () => {
         }
     }, []);
 
-    // 필터링된 매핑 목록
     const getFilteredMappings = useCallback(() => {
         let filtered = mappings;
         
-        // 검색어 필터링
         if (searchTerm) {
             filtered = filtered.filter(mapping => 
                 (mapping.clientName && mapping.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -151,7 +136,6 @@ const SessionManagement = () => {
             );
         }
 
-        // 상태별 필터링
         if (filterStatus !== 'ALL') {
             filtered = filtered.filter(mapping => mapping.status === filterStatus);
         }
@@ -159,8 +143,8 @@ const SessionManagement = () => {
         return filtered;
     }, [mappings, searchTerm, filterStatus]);
 
-    // 최근 활성 매핑 (빠른 회기 추가용)
     const getRecentActiveMappings = useCallback(() => {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         const activeMappings = mappings.filter(mapping => mapping.status === 'ACTIVE');
         const recentMappings = activeMappings
             .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
@@ -176,27 +160,27 @@ const SessionManagement = () => {
         return recentMappings;
     }, [mappings]);
 
-    // 빠른 회기 추가
     const handleQuickAdd = (mapping) => {
         console.log('🚀 빠른 회기 추가 클릭:', mapping);
         setSelectedMapping(mapping);
         setShowSessionExtensionModal(true);
     };
 
-    // 최근 회기 추가 요청 목록 (최대 10개)
     const getRecentSessionExtensionRequests = useCallback(() => {
         return sessionExtensionRequests
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 10);
     }, [sessionExtensionRequests]);
 
-    // 상태 표시 함수
     const getStatusDisplay = (status) => {
         const statusMap = {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'PENDING': { color: 'var(--warning-600)' },
             'PAYMENT_CONFIRMED': { color: 'var(--info-600)' },
             'ADMIN_APPROVED': { color: 'var(--success-600)' },
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'COMPLETED': { color: 'var(--success-600)' },
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             'REJECTED': { color: 'var(--danger-600)' }
         };
         const config = statusMap[status] || { color: 'var(--gray-600)' };
@@ -204,7 +188,6 @@ const SessionManagement = () => {
         return { text, ...config };
     };
 
-    // 입금 확인 처리
     const handlePaymentConfirm = async (requestId) => {
         try {
             setConfirmingPayment(true);
@@ -214,7 +197,6 @@ const SessionManagement = () => {
             });
             notificationManager.success('입금이 확인되었습니다. 회기수가 업데이트되었습니다.');
             
-            // 즉시 데이터 새로고침 (회기수 업데이트 확인)
             setTimeout(async () => {
                 console.log('🔄 입금 확인 후 데이터 새로고침 시작...');
                 await loadData();
@@ -229,7 +211,6 @@ const SessionManagement = () => {
         }
     };
 
-    // 관리자 승인 처리
     const handleAdminApprove = async (requestId) => {
         try {
             setConfirmingPayment(true); // 재사용
@@ -247,7 +228,6 @@ const SessionManagement = () => {
         }
     };
 
-    // 요청 거부 처리
     const handleRejectRequest = async (requestId) => {
         try {
             setRejectingRequest(true);
@@ -265,13 +245,11 @@ const SessionManagement = () => {
         }
     };
 
-    // 회기 추가 요청 완료 처리
     const handleSessionExtensionRequested = async (mappingId) => {
         console.log('✅ 회기 추가 요청 완료:', mappingId);
         setShowSessionExtensionModal(false);
         setSelectedMapping(null);
         
-        // 즉시 데이터 새로고침 (약간의 지연 후)
         setTimeout(async () => {
             console.log('🔄 회기 추가 후 데이터 새로고침 시작...');
             await loadData();
@@ -279,7 +257,6 @@ const SessionManagement = () => {
         }, 1000); // 1초 후 새로고침
     };
 
-    // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadData();
         loadMappingStatusCodes();
@@ -318,6 +295,7 @@ const SessionManagement = () => {
                     />
                     <StatCard
                         icon={<CheckCircle />}
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         value={mappings.filter(m => m.status === 'ACTIVE').length}
                         label="활성 매핑"
                     />
@@ -439,7 +417,6 @@ const SessionManagement = () => {
                                         variant="primary" 
                                         size="medium"
                                         onClick={() => {
-                                            // 검색 로직
                                             console.log('검색 실행');
                                         }}
                                         preventDoubleClick={true}
@@ -455,6 +432,7 @@ const SessionManagement = () => {
                                         client.name && client.name.toLowerCase().includes(searchTerm.toLowerCase())
                                     ).slice(0, 10).map(client => {
                                         const clientMappings = mappings.filter(m => 
+                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                             m.clientId === client.id && m.status === 'ACTIVE'
                                         );
                                         
@@ -514,8 +492,10 @@ const SessionManagement = () => {
                                             onChange={(e) => setFilterStatus(e.target.value)}
                                         >
                                             <option value="ALL">모든 상태</option>
+                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                             <option value="ACTIVE">활성</option>
                                             <option value="PAYMENT_CONFIRMED">결제확인</option>
+                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                             <option value="COMPLETED">완료</option>
                                         </select>
                                     </div>
@@ -542,7 +522,9 @@ const SessionManagement = () => {
                                                         variant="primary"
                                                         size="small"
                                                         onClick={() => handleQuickAdd(mapping)}
+                                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                         disabled={mapping.status !== 'ACTIVE'}
+                                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                                         title={mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : ''}
                                                     >
                                                         <Plus size={14} />
@@ -605,6 +587,7 @@ const SessionManagement = () => {
                                         </div>
                                     )}
                                     
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                                     {request.status === 'PENDING' && (
                                         <div className="mg-v2-request-actions">
                                             <button className="mg-button" 

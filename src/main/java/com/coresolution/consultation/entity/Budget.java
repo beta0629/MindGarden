@@ -22,7 +22,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
  * ERP 예산 엔티티
  * 부서별, 카테고리별 예산을 관리
  * 
@@ -71,13 +70,12 @@ public class Budget extends BaseEntity {
     @Column(nullable = false)
     private BudgetStatus status;
     
-    // @Column(nullable = false, updatable = false)
     
-    // @Column(nullable = false)
     
     @PrePersist
     protected void onCreate() {
         if (status == null) {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             status = BudgetStatus.ACTIVE;
         }
         if (usedBudget == null) {

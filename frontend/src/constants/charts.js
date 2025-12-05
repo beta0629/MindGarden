@@ -1,4 +1,3 @@
-/**
  * 차트 및 그래프 관련 상수
  * 
  * @author MindGarden
@@ -6,7 +5,6 @@
  * @since 2025-09-05
  */
 
-// ==================== 차트 타입 ====================
 export const CHART_TYPES = {
   BAR: 'bar',
   LINE: 'line',
@@ -18,7 +16,6 @@ export const CHART_TYPES = {
   POLAR_AREA: 'polarArea'
 };
 
-// ==================== 차트 색상 팔레트 ====================
 export const CHART_COLORS = {
   PRIMARY: 'var(--mg-primary-500)',
   SUCCESS: 'var(--mg-success-500)',
@@ -27,13 +24,11 @@ export const CHART_COLORS = {
   INFO: 'var(--mg-info-500)',
   SECONDARY: 'var(--mg-secondary-500)',
   LIGHT: 'var(--mg-gray-100)',
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #343a40 -> var(--mg-custom-343a40)
   DARK: '#343a40',
   WHITE: 'var(--mg-white)',
   BLACK: 'var(--mg-black)'
 };
 
-// ==================== 차트 색상 그라데이션 ====================
 export const CHART_GRADIENTS = {
   PRIMARY: ['var(--mg-primary-500)', '#0056b3'],
   SUCCESS: ['var(--mg-success-500)', '#1e7e34'],
@@ -43,7 +38,6 @@ export const CHART_GRADIENTS = {
   SECONDARY: ['var(--mg-secondary-500)', '#545b62']
 };
 
-// ==================== 차트 높이 ====================
 export const CHART_HEIGHTS = {
   SMALL: '200px',
   MEDIUM: '300px',
@@ -51,7 +45,6 @@ export const CHART_HEIGHTS = {
   XL: '500px'
 };
 
-// ==================== 차트 옵션 ====================
 export const CHART_OPTIONS = {
   RESPONSIVE: true,
   MAINTAIN_ASPECT_RATIO: false,
@@ -71,11 +64,9 @@ export const CHART_OPTIONS = {
       ENABLED: true,
       MODE: 'index',
       INTERSECT: false,
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.8) -> var(--mg-custom-color)
       BACKGROUND_COLOR: 'rgba(0, 0, 0, 0.8)',
       TITLE_COLOR: 'var(--mg-white)',
       BODY_COLOR: 'var(--mg-white)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.1) -> var(--mg-custom-color)
       BORDER_COLOR: 'rgba(255, 255, 255, 0.1)',
       BORDER_WIDTH: 1
     }
@@ -108,7 +99,6 @@ export const CHART_OPTIONS = {
   }
 };
 
-// ==================== 원형/도넛 차트 옵션 ====================
 export const PIE_CHART_OPTIONS = {
   RESPONSIVE: true,
   MAINTAIN_ASPECT_RATIO: true,
@@ -129,11 +119,9 @@ export const PIE_CHART_OPTIONS = {
     },
     TOOLTIP: {
       ENABLED: true,
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.8) -> var(--mg-custom-color)
       BACKGROUND_COLOR: 'rgba(0, 0, 0, 0.8)',
       TITLE_COLOR: 'var(--mg-white)',
       BODY_COLOR: 'var(--mg-white)',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.1) -> var(--mg-custom-color)
       BORDER_COLOR: 'rgba(255, 255, 255, 0.1)',
       BORDER_WIDTH: 1,
       CALLBACKS: {
@@ -163,7 +151,6 @@ export const PIE_CHART_OPTIONS = {
   }
 };
 
-// ==================== 차트 데이터 타입 ====================
 export const CHART_DATA_TYPES = {
   STATUS: 'schedule_status',
   MONTHLY_TREND: 'monthly_trend',
@@ -173,13 +160,17 @@ export const CHART_DATA_TYPES = {
   REVENUE_ANALYSIS: 'revenue_analysis'
 };
 
-// ==================== 차트 라벨 ====================
 export const CHART_LABELS = {
   STATUS: {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     BOOKED: '예약됨',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CONFIRMED: '확정됨',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     COMPLETED: '완료됨',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CANCELLED: '취소됨',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     IN_PROGRESS: '진행중'
   },
   MONTHS: [
@@ -192,7 +183,6 @@ export const CHART_LABELS = {
   HOURS: Array.from({ length: 24 }, (_, i) => `${i}시`)
 };
 
-// ==================== 필터 옵션 ====================
 export const FILTER_OPTIONS = {
   DATE_RANGE: {
     TODAY: 'today',
@@ -215,7 +205,6 @@ export const FILTER_OPTIONS = {
   }
 };
 
-// ==================== 필터 라벨 ====================
 export const FILTER_LABELS = {
   DATE_RANGE: {
     [FILTER_OPTIONS.DATE_RANGE.TODAY]: '오늘',
@@ -238,7 +227,6 @@ export const FILTER_LABELS = {
   }
 };
 
-// ==================== 테이블 컬럼 ====================
 export const TABLE_COLUMNS = {
   SCHEDULE: [
     { key: 'id', label: 'ID', width: '80px' },
@@ -269,7 +257,6 @@ export const TABLE_COLUMNS = {
   ]
 };
 
-// ==================== 정렬 옵션 ====================
 export const SORT_OPTIONS = {
   DATE_ASC: 'date_asc',
   DATE_DESC: 'date_desc',
@@ -281,7 +268,6 @@ export const SORT_OPTIONS = {
   CREATED_DESC: 'created_desc'
 };
 
-// ==================== 정렬 라벨 ====================
 export const SORT_LABELS = {
   [SORT_OPTIONS.DATE_ASC]: '날짜 오름차순',
   [SORT_OPTIONS.DATE_DESC]: '날짜 내림차순',
@@ -293,14 +279,12 @@ export const SORT_LABELS = {
   [SORT_OPTIONS.CREATED_DESC]: '생성일 내림차순'
 };
 
-// ==================== 페이지네이션 ====================
 export const PAGINATION = {
   DEFAULT_PAGE_SIZE: 10,
   PAGE_SIZE_OPTIONS: [5, 10, 20, 50, 100],
   MAX_VISIBLE_PAGES: 5
 };
 
-// ==================== API 엔드포인트 (표준화 2025-12-05: /api/v1/ 경로 적용) ====================
 export const CHART_API = {
   STATISTICS: '/api/v1/admin/schedules/statistics',
   TRENDS: '/api/v1/schedules/trends',
@@ -309,14 +293,12 @@ export const CHART_API = {
   REVENUE_STATS: '/api/v1/revenue/statistics'
 };
 
-// ==================== 차트 애니메이션 ====================
 export const CHART_ANIMATION = {
   DURATION: 1000,
   EASING: 'easeInOutQuart',
   DELAY: 0
 };
 
-// ==================== 차트 이벤트 ====================
 export const CHART_EVENTS = {
   CLICK: 'click',
   HOVER: 'hover',
@@ -324,14 +306,12 @@ export const CHART_EVENTS = {
   DATA_POINT_CLICK: 'dataPointClick'
 };
 
-// ==================== 차트 반응형 브레이크포인트 ====================
 export const CHART_BREAKPOINTS = {
   MOBILE: 768,
   TABLET: 1024,
   DESKTOP: 1200
 };
 
-// ==================== 차트 기본 설정 ====================
 export const CHART_DEFAULTS = {
   TYPE: CHART_TYPES.BAR,
   HEIGHT: CHART_HEIGHTS.MEDIUM,
@@ -349,9 +329,7 @@ export const CHART_DEFAULTS = {
   POINT_HOVER_RADIUS: 6
 };
 
-// ==================== 상세 통계 카드 상수 ====================
 export const DETAILED_STATS = {
-  // 카드 타입
   CARD_TYPES: {
     CLIENT_STATUS: 'client_status',
     CONSULTANT_STATUS: 'consultant_status',
@@ -361,7 +339,6 @@ export const DETAILED_STATS = {
     TODAY_STATUS: 'today_status'
   },
   
-  // 아이콘
   ICONS: {
     CLIENT_STATUS: 'fas fa-users',
     CONSULTANT_STATUS: 'fas fa-id-card',
@@ -371,7 +348,6 @@ export const DETAILED_STATS = {
     TODAY_STATUS: 'fas fa-calendar-day'
   },
   
-  // 제목
   TITLES: {
     CLIENT_STATUS: '내담자 현황',
     CONSULTANT_STATUS: '상담사 현황',
@@ -381,7 +357,6 @@ export const DETAILED_STATS = {
     TODAY_STATUS: '오늘 현황'
   },
   
-  // 라벨
   LABELS: {
     THIS_MONTH_CLIENTS: '이번 달 내담자',
     THIS_MONTH_CONSULTANTS: '이번 달 상담사',
@@ -391,15 +366,17 @@ export const DETAILED_STATS = {
     TODAY_CONSULTATIONS: '오늘 상담',
     LAST_MONTH: '지난 달',
     TOTAL_CONSULTATIONS: '총 상담',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     COMPLETED: '완료',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CANCELLED: '취소',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     BOOKED: '예약',
     GROWTH_RATE: '증감률',
     CHANGE: '명',
     PERCENTAGE: '%'
   },
   
-  // 설명
   DESCRIPTIONS: {
     CLIENT_CHANGE: '지난 달 대비 내담자 변화',
     CONSULTANT_CHANGE: '지난 달 대비 상담사 변화',
@@ -409,14 +386,12 @@ export const DETAILED_STATS = {
     TODAY_DESC: '오늘 기준 상담 현황'
   },
   
-  // 증감 타입
   CHANGE_TYPES: {
     POSITIVE: 'positive',
     NEGATIVE: 'negative',
     NEUTRAL: 'neutral'
   },
   
-  // 증감 아이콘
   CHANGE_ICONS: {
     POSITIVE: '↗',
     NEGATIVE: '↘',
@@ -424,7 +399,6 @@ export const DETAILED_STATS = {
   }
 };
 
-// ==================== 상세 통계 그리드 설정 ====================
 export const DETAILED_STATS_GRID = {
   GRID_COLUMNS: {
     MOBILE: 1,
@@ -436,7 +410,6 @@ export const DETAILED_STATS_GRID = {
   MARGIN: '2rem 0'
 };
 
-// ==================== 상세 통계 애니메이션 ====================
 export const DETAILED_STATS_ANIMATION = {
   FADE_IN_DURATION: 300,
   STAGGER_DELAY: 100,
@@ -445,9 +418,7 @@ export const DETAILED_STATS_ANIMATION = {
   HOVER_EASING: 'ease'
 };
 
-// ==================== 기본 통계 카드 상수 ====================
 export const STATS_CARD = {
-  // 카드 타입
   CARD_TYPES: {
     TOTAL_SCHEDULES: 'total_schedules',
     BOOKED_SCHEDULES: 'booked_schedules',
@@ -457,7 +428,6 @@ export const STATS_CARD = {
     IN_PROGRESS_SCHEDULES: 'in_progress_schedules'
   },
   
-  // 아이콘
   ICONS: {
     TOTAL_SCHEDULES: 'fas fa-calendar-check',
     BOOKED_SCHEDULES: 'fas fa-calendar-plus',
@@ -467,7 +437,6 @@ export const STATS_CARD = {
     IN_PROGRESS_SCHEDULES: 'fas fa-clock'
   },
   
-  // 제목
   TITLES: {
     TOTAL_SCHEDULES: '총 상담 수',
     BOOKED_SCHEDULES: '예약된 상담',
@@ -477,7 +446,6 @@ export const STATS_CARD = {
     IN_PROGRESS_SCHEDULES: '진행중인 상담'
   },
   
-  // 라벨
   LABELS: {
     TOTAL_SCHEDULES: '전체 상담',
     BOOKED_SCHEDULES: '예약 대기',
@@ -488,7 +456,6 @@ export const STATS_CARD = {
     CHANGE: '건'
   },
   
-  // 색상
   COLORS: {
     PRIMARY: 'primary',
     SUCCESS: 'success',
@@ -498,14 +465,12 @@ export const STATS_CARD = {
     DEFAULT: 'default'
   },
   
-  // 증감 타입
   CHANGE_TYPES: {
     POSITIVE: 'positive',
     NEGATIVE: 'negative',
     NEUTRAL: 'neutral'
   },
   
-  // 증감 아이콘
   CHANGE_ICONS: {
     POSITIVE: '↗',
     NEGATIVE: '↘',
@@ -513,7 +478,6 @@ export const STATS_CARD = {
   }
 };
 
-// ==================== 통계 카드 그리드 설정 ====================
 export const STATS_CARD_GRID = {
   GRID_COLUMNS: {
     MOBILE: 1,
@@ -525,7 +489,6 @@ export const STATS_CARD_GRID = {
   MARGIN: '2rem 0'
 };
 
-// ==================== 통계 카드 애니메이션 ====================
 export const STATS_CARD_ANIMATION = {
   FADE_IN_DURATION: 300,
   STAGGER_DELAY: 100,

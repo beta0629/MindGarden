@@ -1,4 +1,3 @@
-/**
  * 결제 및 구독 관련 상수 정의
  * 
  * @author CoreSolution
@@ -6,12 +5,8 @@
  * @since 2025-11-20
  */
 
-// ============================================
-// CSS 클래스 상수
-// ============================================
 
 export const BILLING_CSS = {
-  // 결제 수단 등록
   PAYMENT_METHOD_REGISTRATION: {
     CONTAINER: 'payment-method-registration',
     HEADER: 'payment-method-registration__header',
@@ -24,7 +19,6 @@ export const BILLING_CSS = {
     FOOTER: 'payment-method-registration__footer',
   },
 
-  // 결제 콜백
   BILLING_CALLBACK: {
     CONTAINER: 'billing-callback',
     LOADING: 'billing-callback__loading',
@@ -39,7 +33,6 @@ export const BILLING_CSS = {
     ACTIONS: 'billing-callback__actions',
   },
 
-  // 구독 관리
   SUBSCRIPTION_MANAGEMENT: {
     CONTAINER: 'subscription-management',
     HEADER: 'subscription-management__header',
@@ -70,9 +63,6 @@ export const BILLING_CSS = {
   },
 };
 
-// ============================================
-// 아이콘 크기 상수
-// ============================================
 
 export const ICON_SIZES = {
   SMALL: 16,
@@ -82,40 +72,33 @@ export const ICON_SIZES = {
   XXLARGE: 64,
 };
 
-// ============================================
-// 구독 관련 상수
-// ============================================
 
-/**
  * @deprecated 공통 코드에서 동적으로 조회하세요. getSubscriptionStatusCodes() 사용
  * 하위 호환성을 위해 유지되지만, 공통 코드 조회를 우선 사용하세요.
  */
 export const SUBSCRIPTION_CONSTANTS = {
-  // 구독 상태 (공통 코드에서 조회 권장)
   STATUS: {
     DRAFT: 'DRAFT',
     PENDING_ACTIVATION: 'PENDING_ACTIVATION',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     ACTIVE: 'ACTIVE',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     SUSPENDED: 'SUSPENDED',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     CANCELLED: 'CANCELLED',
     TERMINATED: 'TERMINATED',
   },
 
-  // 결제 주기 (공통 코드에서 조회 권장)
   BILLING_CYCLE: {
     MONTHLY: 'MONTHLY',
     QUARTERLY: 'QUARTERLY',
     YEARLY: 'YEARLY',
   },
 
-  // 기본값
   DEFAULT_BILLING_CYCLE: 'MONTHLY',
   DEFAULT_AUTO_RENEWAL: true,
 };
 
-// ============================================
-// 공통 코드 그룹 상수
-// ============================================
 
 export const COMMON_CODE_GROUPS = {
   SUBSCRIPTION_STATUS: 'SUBSCRIPTION_STATUS',
@@ -123,9 +106,6 @@ export const COMMON_CODE_GROUPS = {
   PG_PROVIDER: 'PG_PROVIDER',
 };
 
-// ============================================
-// 통화 관련 상수
-// ============================================
 
 export const CURRENCY_CONSTANTS = {
   DEFAULT: 'KRW',
@@ -136,12 +116,8 @@ export const CURRENCY_CONSTANTS = {
   },
 };
 
-// ============================================
-// 메시지 상수
-// ============================================
 
 export const BILLING_MESSAGES = {
-  // 결제 수단 등록
   REGISTRATION: {
     TITLE: '결제 수단 등록',
     DESCRIPTION: '정기 결제를 위한 결제 수단을 등록하세요.',
@@ -157,7 +133,6 @@ export const BILLING_MESSAGES = {
     ERROR_REGISTRATION_FAILED: '결제 수단 등록 중 오류가 발생했습니다.',
   },
 
-  // 콜백
   CALLBACK: {
     PROCESSING: '결제 수단 등록 처리 중...',
     PROCESSING_DESCRIPTION: '잠시만 기다려주세요.',
@@ -176,7 +151,6 @@ export const BILLING_MESSAGES = {
     RETRY: '다시 시도',
   },
 
-  // 구독 관리
   SUBSCRIPTION: {
     TITLE: '구독 관리',
     PAYMENT_METHODS_TITLE: '등록된 결제 수단',
@@ -197,7 +171,6 @@ export const BILLING_MESSAGES = {
     STATUS_UNKNOWN: 'UNKNOWN',
   },
 
-  // 성공/실패 메시지
   SUCCESS: {
     PAYMENT_METHOD_REGISTERED: '결제 수단이 성공적으로 등록되었습니다.',
     SUBSCRIPTION_CREATED: '구독이 생성되었습니다.',
@@ -217,9 +190,6 @@ export const BILLING_MESSAGES = {
   },
 };
 
-// ============================================
-// API 엔드포인트 상수
-// ============================================
 
 export const BILLING_API = {
   PAYMENT_METHODS: {
@@ -239,9 +209,6 @@ export const BILLING_API = {
   },
 };
 
-// ============================================
-// 라우트 경로 상수
-// ============================================
 
 export const BILLING_ROUTES = {
   CALLBACK: '/billing/callback',
@@ -250,9 +217,6 @@ export const BILLING_ROUTES = {
   DASHBOARD: '/dashboard',
 };
 
-// ============================================
-// URL 파라미터 상수
-// ============================================
 
 export const CALLBACK_PARAMS = {
   STATUS: 'status',
@@ -263,9 +227,6 @@ export const CALLBACK_PARAMS = {
   ERROR_MESSAGE: 'errorMessage',
 };
 
-// ============================================
-// 콜백 상태 상수
-// ============================================
 
 export const CALLBACK_STATUS = {
   SUCCESS: 'success',
@@ -273,9 +234,6 @@ export const CALLBACK_STATUS = {
   PROCESSING: 'processing',
 };
 
-// ============================================
-// PG 제공자 이름 매핑
-// ============================================
 
 export const PG_PROVIDER_NAMES = {
   TOSS: '토스페이먼츠',

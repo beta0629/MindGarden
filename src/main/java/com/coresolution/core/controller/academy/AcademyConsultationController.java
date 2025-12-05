@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
  * 학원 시스템 상담 예약 컨트롤러
  * 신규생 상담 및 등록 프로세스 지원
  * 
@@ -52,7 +51,6 @@ public class AcademyConsultationController extends BaseApiController {
     private final ConsultationRecordService consultationRecordService;
     private final ClassEnrollmentService enrollmentService;
     
-    /**
      * 학원 상담 예약 생성
      * POST /api/v1/academy/consultations
      */
@@ -63,7 +61,6 @@ public class AcademyConsultationController extends BaseApiController {
             HttpSession session) {
         log.info("학원 상담 예약 생성 요청: clientId={}, branchId={}", request.getClientId(), request.getBranchId());
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.CONSULTATION_CREATE, 
@@ -80,7 +77,6 @@ public class AcademyConsultationController extends BaseApiController {
             throw new IllegalArgumentException("테넌트 정보가 없습니다.");
         }
         
-        // Consultation 엔티티 생성
         Consultation consultation = new Consultation();
         consultation.setClientId(request.getClientId());
         consultation.setConsultantId(request.getConsultantId());
@@ -97,10 +93,8 @@ public class AcademyConsultationController extends BaseApiController {
         }
         consultation.setTenantId(tenantId);
         
-        // 상담 예약 생성
         Consultation createdConsultation = consultationService.createConsultationRequest(consultation);
         
-        // 스케줄 생성 (있는 경우)
         if (request.getConsultantId() != null && request.getConsultationDate() != null 
             && request.getStartTime() != null && request.getEndTime() != null) {
             try {
@@ -125,7 +119,6 @@ public class AcademyConsultationController extends BaseApiController {
         return created("상담 예약이 생성되었습니다.", response);
     }
     
-    /**
      * 학원 상담 예약 목록 조회
      * GET /api/v1/academy/consultations
      */
@@ -140,7 +133,6 @@ public class AcademyConsultationController extends BaseApiController {
         log.debug("학원 상담 예약 목록 조회: clientId={}, consultantId={}, status={}, branchId={}", 
             clientId, consultantId, status, branchId);
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.CONSULTATION_VIEW_LIST, 
@@ -155,7 +147,6 @@ public class AcademyConsultationController extends BaseApiController {
             throw new IllegalArgumentException("테넌트 정보가 없습니다.");
         }
         
-        // 상담 목록 조회
         List<Consultation> consultations;
         if (clientId != null) {
             consultations = consultationService.findByClientId(clientId);
@@ -164,11 +155,9 @@ public class AcademyConsultationController extends BaseApiController {
         } else if (status != null) {
             consultations = consultationService.findByStatus(status);
         } else {
-            // 전체 조회는 활성 상태만 조회
             consultations = consultationService.findAllActive();
         }
         
-        // 테넌트 필터링 및 응답 변환
         List<AcademyConsultationResponse> responses = consultations.stream()
             .filter(c -> tenantId.equals(c.getTenantId()))
             .map(this::toResponse)
@@ -177,7 +166,6 @@ public class AcademyConsultationController extends BaseApiController {
         return success(responses);
     }
     
-    /**
      * 학원 상담 예약 상세 조회
      * GET /api/v1/academy/consultations/{consultationId}
      */
@@ -188,7 +176,6 @@ public class AcademyConsultationController extends BaseApiController {
             HttpSession session) {
         log.debug("학원 상담 예약 상세 조회: consultationId={}", consultationId);
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.CONSULTATION_VIEW_DETAIL, 
@@ -213,7 +200,6 @@ public class AcademyConsultationController extends BaseApiController {
         return success(response);
     }
     
-    /**
      * 학원 상담 예약 확정
      * POST /api/v1/academy/consultations/{consultationId}/confirm
      */
@@ -225,7 +211,6 @@ public class AcademyConsultationController extends BaseApiController {
             HttpSession session) {
         log.info("학원 상담 예약 확정: consultationId={}, consultantId={}", consultationId, consultantId);
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.CONSULTATION_CONFIRM, 
@@ -256,7 +241,6 @@ public class AcademyConsultationController extends BaseApiController {
         return success("상담 예약이 확정되었습니다.", response);
     }
     
-    /**
      * 학원 상담 예약 취소
      * POST /api/v1/academy/consultations/{consultationId}/cancel
      */
@@ -268,7 +252,6 @@ public class AcademyConsultationController extends BaseApiController {
             HttpSession session) {
         log.info("학원 상담 예약 취소: consultationId={}, reason={}", consultationId, reason);
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.CONSULTATION_CANCEL, 
@@ -298,7 +281,6 @@ public class AcademyConsultationController extends BaseApiController {
         return success("상담 예약이 취소되었습니다.", response);
     }
     
-    /**
      * 학원 상담 완료 및 수강 등록 연계
      * POST /api/v1/academy/consultations/{consultationId}/complete
      */
@@ -311,7 +293,6 @@ public class AcademyConsultationController extends BaseApiController {
         log.info("학원 상담 완료 요청: consultationId={}, createRecord={}, createEnrollment={}", 
             consultationId, request.getCreateRecord(), request.getCreateEnrollment());
         
-        // 동적 권한 체크
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(
             session, 
             AcademyPermissionConstants.CONSULTATION_CONFIRM, 
@@ -334,7 +315,6 @@ public class AcademyConsultationController extends BaseApiController {
             throw new IllegalArgumentException("접근 권한이 없습니다.");
         }
         
-        // 상담 완료 처리
         String notes = request.getNotes() != null ? request.getNotes() : "";
         int rating = request.getRating() != null ? request.getRating() : 5;
         Consultation completedConsultation = consultationService.completeConsultation(
@@ -344,7 +324,6 @@ public class AcademyConsultationController extends BaseApiController {
         Map<String, Object> result = new java.util.HashMap<>();
         result.put("consultation", toResponse(completedConsultation));
         
-        // 상담 기록 생성 (요청된 경우)
         if (Boolean.TRUE.equals(request.getCreateRecord())) {
             try {
                 Map<String, Object> recordData = new java.util.HashMap<>();
@@ -364,7 +343,6 @@ public class AcademyConsultationController extends BaseApiController {
             }
         }
         
-        // 수강 등록 생성 (요청된 경우)
         if (Boolean.TRUE.equals(request.getCreateEnrollment()) && request.getEnrollmentInfo() != null) {
             try {
                 AcademyConsultationCompleteRequest.EnrollmentFromConsultationRequest enrollmentInfo = 
@@ -380,7 +358,9 @@ public class AcademyConsultationController extends BaseApiController {
                     .tuitionAmount(enrollmentInfo.getTuitionAmount())
                     .notes(enrollmentInfo.getNotes() != null ? enrollmentInfo.getNotes() : 
                         "상담 완료 후 자동 등록: " + notes)
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     .status(com.coresolution.core.domain.academy.ClassEnrollment.EnrollmentStatus.ACTIVE)
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     .paymentStatus(com.coresolution.core.domain.academy.ClassEnrollment.PaymentStatus.PENDING)
                     .build();
                 
@@ -400,7 +380,6 @@ public class AcademyConsultationController extends BaseApiController {
         return success("상담이 완료되었습니다.", result);
     }
     
-    /**
      * Consultation 엔티티를 AcademyConsultationResponse로 변환
      */
     private AcademyConsultationResponse toResponse(Consultation consultation) {

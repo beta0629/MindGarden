@@ -9,12 +9,10 @@ import './ConsultantClientWidget.css';
 const ConsultantClientWidget = ({ widget, user }) => {
   const navigate = useNavigate();
 
-  // 상담사 전용 위젯 (다른 역할은 표시하지 않음)
   if (!RoleUtils.isConsultant(user)) {
     return null;
   }
 
-  // 데이터 소스 설정 (상담사 전용)
   const getDataSourceConfig = () => ({
     type: 'api',
     cache: true,
@@ -27,7 +25,6 @@ const ConsultantClientWidget = ({ widget, user }) => {
     }
   });
 
-  // 위젯 설정에 데이터 소스 동적 설정
   const widgetWithDataSource = {
     ...widget,
     config: {
@@ -36,7 +33,6 @@ const ConsultantClientWidget = ({ widget, user }) => {
     }
   };
 
-  // 표준화된 위젯 훅 사용 (내담자 데이터)
   const {
     data: mappings,
     loading,
@@ -50,7 +46,6 @@ const ConsultantClientWidget = ({ widget, user }) => {
     retryCount: 3
   });
 
-  // 매핑 데이터를 내담자 데이터로 변환
   const transformMappingData = (mappings) => {
     if (!mappings || !Array.isArray(mappings)) {
       return [];
@@ -101,32 +96,34 @@ const ConsultantClientWidget = ({ widget, user }) => {
     return Array.from(clientMap.values());
   };
 
-  // 변환된 내담자 데이터
   const clients = transformMappingData(mappings);
 
-  // 내담자 클릭 핸들러
   const handleClientClick = (clientId) => {
     navigate(`/consultant/client/${clientId}`);
   };
 
-  // 전체보기 핸들러
   const handleViewAllClients = () => {
     navigate('/consultant/clients');
   };
 
-  // 상태별 CSS 클래스
   const getStatusClass = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
         return 'status-active';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return 'status-pending';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'INACTIVE':
         return 'status-inactive';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return 'status-completed';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'SUSPENDED':
         return 'status-suspended';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'DELETED':
         return 'status-deleted';
       default:
@@ -134,19 +131,24 @@ const ConsultantClientWidget = ({ widget, user }) => {
     }
   };
 
-  // 상태별 텍스트
   const getStatusText = (status) => {
     switch (status) {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'ACTIVE':
         return '활성';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'PENDING':
         return '대기';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'INACTIVE':
         return '비활성';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'COMPLETED':
         return '완료';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'SUSPENDED':
         return '일시정지';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
       case 'DELETED':
         return '삭제';
       default:
@@ -154,7 +156,6 @@ const ConsultantClientWidget = ({ widget, user }) => {
     }
   };
 
-  // 위젯 헤더 설정
   const headerConfig = {
     title: (
       <div className="consultant-client-header">
@@ -172,7 +173,6 @@ const ConsultantClientWidget = ({ widget, user }) => {
     )
   };
 
-  // 위젯 콘텐츠
   const renderContent = () => {
     if (isEmpty || clients.length === 0) {
       return (

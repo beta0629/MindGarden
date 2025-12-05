@@ -12,7 +12,6 @@ import { getStatusLabel } from '../../utils/colorUtils';
 import FinancialCalendarView from './FinancialCalendarView';
 import './ErpCommon.css';
 
-/**
  * ERP 재무 관리 페이지
  * 재무 거래 및 회계 관리
  */
@@ -29,7 +28,6 @@ const FinancialManagement = () => {
     size: 20
   });
   
-  // 필터 상태 추가
   const [filters, setFilters] = useState({
     transactionType: 'ALL', // ALL, INCOME, EXPENSE
     category: 'ALL', // ALL, CONSULTATION, SALARY, etc.
@@ -40,11 +38,9 @@ const FinancialManagement = () => {
     searchText: '' // 상담사명, 내담자명, 설명 검색
   });
   
-  // 선택된 거래 상세 정보 모달
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   
-  // 컨펌 모달 상태
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: '',
@@ -53,25 +49,21 @@ const FinancialManagement = () => {
     onConfirm: null
   });
   
-  // 대시보드 통계 상태
   const [dashboardStats, setDashboardStats] = useState({
     totalIncome: 0,
     totalExpense: 0,
     netProfit: 0,
     transactionCount: 0,
-    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchCode: '',
     branchName: ''
   });
 
-  // 데이터 로드
   useEffect(() => {
     if (!sessionLoading && isLoggedIn && user?.id) {
       loadData();
     }
   }, [sessionLoading, isLoggedIn, user?.id, activeTab, pagination.currentPage]);
 
-  // 필터 변경 시 데이터 다시 로드
   useEffect(() => {
     if (!sessionLoading && isLoggedIn && user?.id && activeTab === 'transactions') {
       const timeoutId = setTimeout(() => {
@@ -108,13 +100,11 @@ const FinancialManagement = () => {
 
   const loadTransactions = async () => {
     try {
-      // 필터 파라미터 구성
       const params = new URLSearchParams({
         page: pagination.currentPage,
         size: pagination.size
       });
       
-      // 필터 적용
       if (filters.transactionType !== 'ALL') {
         params.append('transactionType', filters.transactionType);
       }
@@ -128,7 +118,6 @@ const FinancialManagement = () => {
         params.append('search', filters.searchText);
       }
       
-      // ERP 중앙화: 지점코드가 있으면 해당 지점만, 없으면 전체 데이터 조회
       if (user?.branchCode) {
         params.append('branchCode', user.branchCode);
         console.log('📍 지점 관리자 - 자기 지점 데이터 조회:', user.branchCode);
@@ -142,12 +131,10 @@ const FinancialManagement = () => {
       console.log('📡 API URL:', `/api/admin/financial-transactions?${params.toString()}`);
       
       if (response.success) {
-        // 클라이언트 사이드 필터링 (서버 사이드 필터링이 완전하지 않은 경우 백업)
         let filteredTransactions = response.data || [];
         console.log('📊 조회된 거래 데이터:', filteredTransactions.length, '건');
         console.log('📊 첫 번째 거래 샘플:', filteredTransactions[0]);
         
-        // 검색 텍스트 필터링
         if (filters.searchText) {
           const searchLower = filters.searchText.toLowerCase();
           filteredTransactions = filteredTransactions.filter(transaction => 
@@ -164,12 +151,10 @@ const FinancialManagement = () => {
           totalElements: response.totalCount || 0
         }));
         
-        // 대시보드 통계 계산 (이번 달 기준)
         await calculateDashboardStats(filteredTransactions);
       } else {
         setError(response.message || '재무 거래 목록을 불러올 수 없습니다.');
         
-        // 재로그인 필요한 경우 로그인 화면으로 이동
         if (response.redirectToLogin) {
           console.error('🔒 세션 만료 - 로그인 화면으로 이동');
           window.location.href = '/login';
@@ -179,7 +164,6 @@ const FinancialManagement = () => {
     } catch (err) {
       console.error('재무 거래 로드 실패:', err);
       
-      // 401 오류인 경우 로그인 화면으로 이동
       if (err.response?.status === 401 || err.status === 401) {
         console.error('🔒 인증 오류 - 로그인 화면으로 이동');
         window.location.href = '/login';
@@ -190,18 +174,18 @@ const FinancialManagement = () => {
     }
   };
 
-  // 대시보드 통계 계산 함수
   const calculateDashboardStats = async (transactionData) => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
     
-    // 이번 달 거래만 필터링
     const thisMonthTransactions = transactionData.filter(transaction => {
       const transactionDate = new Date(transaction.transactionDate);
       return transactionDate.getFullYear() === currentYear && 
              transactionDate.getMonth() + 1 === currentMonth &&
+             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
              transaction.status !== 'REJECTED' && 
+             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
              transaction.status !== 'CANCELLED';
     });
     
@@ -213,7 +197,6 @@ const FinancialManagement = () => {
       .filter(t => t.transactionType === 'EXPENSE')
       .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     
-    // 지점명을 비동기로 가져오기
     const branchName = await getBranchName(user?.branchCode);
     
     setDashboardStats({
@@ -221,7 +204,6 @@ const FinancialManagement = () => {
       totalExpense,
       netProfit: totalIncome - totalExpense,
       transactionCount: thisMonthTransactions.length,
-      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       branchCode: user?.branchCode || '',
       branchName: branchName
     });
@@ -236,7 +218,6 @@ const FinancialManagement = () => {
 
   const loadDashboard = async () => {
     try {
-      // 대시보드 데이터 로드 (향후 구현)
       console.log('대시보드 데이터 로드');
     } catch (err) {
       console.error('대시보드 로드 실패:', err);
@@ -244,7 +225,6 @@ const FinancialManagement = () => {
     }
   };
 
-  // 거래 삭제 핸들러
   const handleDeleteTransaction = async (transaction) => {
     setConfirmModal({
       isOpen: true,
@@ -274,15 +254,12 @@ const FinancialManagement = () => {
     });
   };
   
-  // 거래 상세 보기 핸들러
   const handleViewTransaction = (transaction) => {
     setSelectedTransaction(transaction);
     setShowDetailModal(true);
   };
   
-  // 거래 수정 핸들러
   const handleEditTransaction = (transaction) => {
-    // TODO: 거래 수정 모달 열기
     notificationManager.info('거래 수정 기능은 준비중입니다.');
   };
 
@@ -303,7 +280,6 @@ const FinancialManagement = () => {
     return new Date(dateString).toLocaleDateString('ko-KR');
   };
 
-  // 지점명 가져오기 (공통코드에서 동적으로)
   const getBranchName = async (branchCode) => {
     if (!branchCode) return '';
     try {
@@ -869,12 +845,10 @@ const FinancialManagement = () => {
   );
 };
 
-// 거래 상세 정보 모달 컴포넌트
 const TransactionDetailModal = ({ transaction, onClose }) => {
   const [mappingDetail, setMappingDetail] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 통화 포맷팅 함수 (컴포넌트 내부)
   const formatCurrency = (amount) => {
     if (!amount) return '0원';
     return new Intl.NumberFormat('ko-KR').format(amount) + '원';
@@ -941,11 +915,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 padding: '2px 8px',
                 borderRadius: '12px',
                 fontSize: 'var(--font-size-xs)',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
                 backgroundColor: transaction.transactionType === 'INCOME' ? '#d4edda' : '#f8d7da',
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #155724 -> var(--mg-custom-155724)
                 color: transaction.transactionType === 'INCOME' ? '#155724' : '#721c24'
               }}>
                 {transaction.transactionType === 'INCOME' ? '💰 수입' : '💸 지출'}
@@ -981,7 +951,6 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
         {/* 매핑 연동 정보 */}
         {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
           <div style={{
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
             backgroundColor: '#e3f2fd',
             padding: '16px',
             borderRadius: '8px',
@@ -1045,11 +1014,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                       padding: '2px 8px',
                       borderRadius: '12px',
                       fontSize: 'var(--font-size-xs)',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
                       backgroundColor: mappingDetail.isConsistent ? '#d4edda' : '#f8d7da',
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
-                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #155724 -> var(--mg-custom-155724)
                       color: mappingDetail.isConsistent ? '#155724' : '#721c24'
                     }}>
                       {mappingDetail.isConsistent ? '✅ 정상' : '⚠️ 불일치'}
@@ -1070,7 +1035,6 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                         <div key={index} style={{
                           fontSize: 'var(--font-size-xs)',
                           padding: '4px 8px',
-                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f1f3f4 -> var(--mg-custom-f1f3f4)
                           backgroundColor: '#f1f3f4',
                           borderRadius: '4px',
                           marginBottom: '4px'
@@ -1084,7 +1048,6 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 )}
               </div>
             ) : (
-              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
               <div style={{ textAlign: 'center', color: '#666' }}>
                 매핑 정보를 불러올 수 없습니다.
               </div>
@@ -1095,7 +1058,6 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
         {/* 기타 연동 정보 */}
         {transaction.relatedEntityType && transaction.relatedEntityType !== 'CONSULTANT_CLIENT_MAPPING' && (
           <div style={{
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
             backgroundColor: '#fff3cd',
             padding: '16px',
             borderRadius: '8px',
@@ -1124,7 +1086,6 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           justifyContent: 'flex-end',
           gap: '10px',
           paddingTop: '15px',
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dee2e6 -> var(--mg-custom-dee2e6)
           borderTop: '1px solid #dee2e6'
         }}>
           <button

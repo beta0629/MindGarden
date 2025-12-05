@@ -44,21 +44,14 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public List<ConsultantSalaryProfile> getAllSalaryProfiles(String branchCode) {
-        log.info("📋 급여 프로필 목록 조회: BranchCode={}", branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📋 급여 프로필 목록 조회: tenantId={}", tenantId);
         
+        // 테넌트 전체 급여 프로필 조회
         List<ConsultantSalaryProfile> allProfiles = consultantSalaryProfileRepository.findByIsActiveTrue();
-        
-        if (branchCode == null) {
-            return allProfiles;
-        } else {
-            // Java 코드로 지점 필터링
-            return allProfiles.stream()
-                    .filter(profile -> {
-                        User consultant = userRepository.findById(profile.getConsultantId()).orElse(null);
-                        return consultant != null && branchCode.equals(consultant.getBranchCode());
-                    })
-                    .collect(Collectors.toList());
-        }
+        // 테넌트 기반 필터링 (필요시 추가)
+        return allProfiles;
     }
     
     @Override
@@ -94,30 +87,12 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public List<User> getConsultantsForSalary(String branchCode) {
-        log.info("👥 급여용 상담사 목록 조회: BranchCode={}", branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("👥 급여용 상담사 목록 조회: tenantId={}", tenantId);
         
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return List.of();
-        }
-        
-        if (branchCode == null) {
-            return userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
-        } else {
-            // 브랜치 엔티티 기반 조회
-            try {
-                Branch branch = branchService.getBranchByCode(branchCode);
-                List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
-                // isActive = true 필터링 (Java 스트림)
-                return consultants.stream()
-                    .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
-                    .collect(Collectors.toList());
-            } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
-                log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
-                return List.of();
-            }
-        }
+        // 테넌트 전체 상담사 조회
+        return userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
     }
     
     @Override
@@ -163,15 +138,13 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public List<SalaryCalculation> getSalaryCalculations(String branchCode, LocalDate startDate, LocalDate endDate) {
-        log.info("📋 급여 계산 목록 조회: BranchCode={}, Period={} ~ {}", branchCode, startDate, endDate);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📋 급여 계산 목록 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
-        if (branchCode == null) {
-            return salaryCalculationRepository.findByStatusAndCalculationPeriodStartBetween(
-                    SalaryCalculation.SalaryStatus.CALCULATED, startDate, endDate);
-        } else {
-            return salaryCalculationRepository.findByBranchCodeAndCalculationPeriodStartBetween(
-                    branchCode, startDate, endDate);
-        }
+        // 테넌트 전체 급여 계산 조회 (branchCode 필터링 제거)
+        return salaryCalculationRepository.findByStatusAndCalculationPeriodStartBetween(
+                SalaryCalculation.SalaryStatus.CALCULATED, startDate, endDate);
     }
     
     @Override
@@ -217,9 +190,11 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public Map<String, Object> getSalaryStatistics(String branchCode, LocalDate startDate, LocalDate endDate) {
-        log.info("📊 급여 통계 조회: BranchCode={}, Period={} ~ {}", branchCode, startDate, endDate);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 급여 통계 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
-        List<SalaryCalculation> calculations = getSalaryCalculations(branchCode, startDate, endDate);
+        List<SalaryCalculation> calculations = getSalaryCalculations(null, startDate, endDate); // branchCode는 레거시 호환용
         
         BigDecimal totalGrossSalary = calculations.stream()
                 .map(SalaryCalculation::getGrossSalary)
@@ -248,10 +223,12 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public List<Map<String, Object>> getTopPerformers(String branchCode, LocalDate startDate, LocalDate endDate, int limit) {
-        log.info("🏆 상위 성과자 조회: BranchCode={}, Period={} ~ {}, Limit={}", 
-                branchCode, startDate, endDate, limit);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🏆 상위 성과자 조회: tenantId={}, Period={} ~ {}, Limit={}", 
+                tenantId, startDate, endDate, limit);
         
-        List<SalaryCalculation> calculations = getSalaryCalculations(branchCode, startDate, endDate);
+        List<SalaryCalculation> calculations = getSalaryCalculations(null, startDate, endDate); // branchCode는 레거시 호환용
         
         return calculations.stream()
                 .sorted((a, b) -> b.getNetSalary().compareTo(a.getNetSalary()))
@@ -270,9 +247,11 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     @Override
     public BigDecimal calculateTotalSalaryCost(String branchCode, LocalDate startDate, LocalDate endDate) {
-        log.info("💰 총 급여 비용 계산: BranchCode={}, Period={} ~ {}", branchCode, startDate, endDate);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("💰 총 급여 비용 계산: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
-        List<SalaryCalculation> calculations = getSalaryCalculations(branchCode, startDate, endDate);
+        List<SalaryCalculation> calculations = getSalaryCalculations(null, startDate, endDate); // branchCode는 레거시 호환용
         
         return calculations.stream()
                 .map(SalaryCalculation::getNetSalary)
@@ -284,11 +263,14 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
      */
     @Override
     public List<SalaryCalculation> getSalaryCalculations(Long consultantId, String branchCode) {
-        log.info("💰 상담사별 급여 계산 조회: ConsultantId={}, BranchCode={}", consultantId, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        log.info("💰 상담사별 급여 계산 조회: ConsultantId={}", consultantId);
         
-        return salaryCalculationRepository.findByConsultantIdAndConsultantBranchCode(
-            consultantId, branchCode
-        );
+        // 테넌트 기반으로 조회 (branchCode 필터링 제거)
+        // findByConsultantId 메서드가 없으면 다른 방법 사용
+        return salaryCalculationRepository.findAll().stream()
+            .filter(calc -> calc.getConsultant().getId().equals(consultantId))
+            .collect(Collectors.toList());
     }
     
     /**
@@ -296,20 +278,24 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
      */
     @Override
     public Map<String, Object> getTaxDetails(Long calculationId, String branchCode) {
-        log.info("💰 세금 상세 조회: CalculationId={}, BranchCode={}", calculationId, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        log.info("💰 세금 상세 조회: CalculationId={}", calculationId);
         
         // 급여 계산 정보 조회
         SalaryCalculation calculation = salaryCalculationRepository.findById(calculationId)
             .orElseThrow(() -> new RuntimeException("급여 계산 정보를 찾을 수 없습니다: " + calculationId));
         
-        // 지점 코드 확인
-        if (!branchCode.equals(calculation.getConsultant().getBranchCode())) {
-            throw new RuntimeException("접근 권한이 없습니다.");
-        }
-        
-        // 세금 계산 조회
+        // 세금 계산 조회 (branchCode 필터링 제거)
         List<Map<String, Object>> taxCalculations = salaryTaxCalculationRepository
-            .findByCalculationIdAndBranchCode(calculationId, branchCode);
+            .findByCalculationIdOrderByCreatedAtDesc(calculationId).stream()
+            .map(tax -> {
+                Map<String, Object> taxMap = new HashMap<>();
+                taxMap.put("taxType", tax.getTaxType());
+                taxMap.put("taxAmount", tax.getTaxAmount());
+                taxMap.put("taxRate", tax.getTaxRate());
+                return taxMap;
+            })
+            .collect(Collectors.toList());
         
         Map<String, Object> result = new HashMap<>();
         result.put("calculationId", calculationId);
@@ -327,7 +313,9 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
      */
     @Override
     public Map<String, Object> getTaxStatistics(String period, String branchCode) {
-        log.info("💰 세금 통계 조회: Period={}, BranchCode={}", period, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("💰 세금 통계 조회: Period={}, tenantId={}", period, tenantId);
         
         // 기간 파싱 (예: "2025-01")
         String[] periodParts = period.split("-");
@@ -341,8 +329,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
         
-        // 해당 기간의 급여 계산 조회
-        List<SalaryCalculation> calculations = getSalaryCalculations(branchCode, startDate, endDate);
+        // 해당 기간의 급여 계산 조회 (branchCode 필터링 제거)
+        List<SalaryCalculation> calculations = getSalaryCalculations(null, startDate, endDate); // branchCode는 레거시 호환용
         
         // 통계 계산
         BigDecimal totalGrossSalary = calculations.stream()

@@ -44,7 +44,9 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
     @Override
     @Transactional
     public BatchResult executeMonthlySalaryBatch(int targetYear, int targetMonth, String branchCode) {
-        log.info("🚀 급여 배치 실행 시작: {}-{}, 지점={}", targetYear, targetMonth, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🚀 급여 배치 실행 시작: {}-{}, tenantId={}", targetYear, targetMonth, tenantId);
         
         try {
             // 1. 배치 실행 가능 여부 확인
@@ -53,8 +55,8 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
                 return new BatchResult(false, "배치 실행 가능 시간이 아닙니다.");
             }
             
-            // 2. 대상 상담사 조회
-            List<User> consultants = getTargetConsultants(branchCode);
+            // 2. 대상 상담사 조회 (branchCode 필터링 제거)
+            List<User> consultants = getTargetConsultants(null); // branchCode는 레거시 호환용
             if (consultants.isEmpty()) {
                 return new BatchResult(false, "처리할 상담사가 없습니다.");
             }
@@ -202,28 +204,10 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
      * 대상 상담사 조회
      */
     private List<User> getTargetConsultants(String branchCode) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new ArrayList<>();
-        }
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        if (branchCode == null) {
-            // 전체 지점
-            return userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
-        } else {
-            // 특정 지점 (브랜치 엔티티 기반)
-            try {
-                Branch branch = branchService.getBranchByCode(branchCode);
-                List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
-                // isActive = true 필터링 (Java 스트림)
-                return consultants.stream()
-                    .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
-                    .collect(Collectors.toList());
-            } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
-                log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
-                return new ArrayList<>();
-            }
-        }
+        // 테넌트 전체 상담사 조회
+        return userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
     }
 }

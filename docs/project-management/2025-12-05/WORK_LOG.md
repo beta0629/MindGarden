@@ -2551,7 +2551,7 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
    - JavaScript 파일에서 역할 문자열 하드코딩 제거
    - 권한 시스템 API 활용
 
-**작업 진행률**: 약 85% (Backend Controller/Service 주요 파일 완료, Frontend 시작)
+**작업 진행률**: 약 90% (Backend 완료, Frontend 주요 파일 수정 중)
 
 **수정된 파일 총계**:
 - Controller 레이어: 10개 파일
@@ -2565,6 +2565,17 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
   - StoredProcedureServiceImpl, WorkflowAutomationServiceImpl
   - PermissionInitializationServiceImpl, PaymentServiceImpl, HealingContentServiceImpl
   - DynamicPermissionServiceImpl, DynamicAdminPermissionService, ConsultantMotivationServiceImpl
+
+#### 3. Frontend 레이어 (진행 중)
+
+**roleHelper.js**
+- 하드코딩된 역할 비교를 `USER_ROLES` 상수 활용으로 변경
+
+**UserManagement.js**
+- 역할 비교 및 옵션 값에 `USER_ROLES` 상수 사용
+
+**App.js**
+- `requiredRole` prop에 `USER_ROLES.ADMIN` 사용
 
 **최종 업데이트**: 2025-12-05
 

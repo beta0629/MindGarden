@@ -2,11 +2,10 @@ package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.core.domain.CommonCode;
-import com.coresolution.core.service.CommonCodeService;
+import com.coresolution.consultation.service.CommonCodeService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -14,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
@@ -33,10 +31,11 @@ class RoleStandardizationTest {
     void testIsAdminRoleFromCommonCode_Admin() {
         // Given: 공통코드에 ADMIN 역할이 있고 isAdmin=true인 경우
         List<CommonCode> roleCodes = new ArrayList<>();
-        CommonCode adminCode = new CommonCode();
-        adminCode.setCodeGroup("ROLE");
-        adminCode.setCodeValue("ADMIN");
-        adminCode.setExtraData("{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true}");
+        CommonCode adminCode = CommonCode.builder()
+            .codeGroup("ROLE")
+            .codeValue("ADMIN")
+            .extraData("{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true}")
+            .build();
         roleCodes.add(adminCode);
 
         when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(roleCodes);
@@ -53,10 +52,11 @@ class RoleStandardizationTest {
     void testIsAdminRoleFromCommonCode_Principal() {
         // Given: 공통코드에 PRINCIPAL 역할이 있고 isAdmin=true인 경우
         List<CommonCode> roleCodes = new ArrayList<>();
-        CommonCode principalCode = new CommonCode();
-        principalCode.setCodeGroup("ROLE");
-        principalCode.setCodeValue("PRINCIPAL");
-        principalCode.setExtraData("{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true}");
+        CommonCode principalCode = CommonCode.builder()
+            .codeGroup("ROLE")
+            .codeValue("PRINCIPAL")
+            .extraData("{\"isAdmin\": true, \"roleType\": \"ADMIN\", \"isDefault\": true}")
+            .build();
         roleCodes.add(principalCode);
 
         when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(roleCodes);
@@ -73,10 +73,11 @@ class RoleStandardizationTest {
     void testIsAdminRoleFromCommonCode_Consultant() {
         // Given: 공통코드에 CONSULTANT 역할이 있고 isAdmin=false인 경우
         List<CommonCode> roleCodes = new ArrayList<>();
-        CommonCode consultantCode = new CommonCode();
-        consultantCode.setCodeGroup("ROLE");
-        consultantCode.setCodeValue("CONSULTANT");
-        consultantCode.setExtraData("{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true}");
+        CommonCode consultantCode = CommonCode.builder()
+            .codeGroup("ROLE")
+            .codeValue("CONSULTANT")
+            .extraData("{\"isAdmin\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true}")
+            .build();
         roleCodes.add(consultantCode);
 
         when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(roleCodes);
@@ -116,10 +117,11 @@ class RoleStandardizationTest {
     void testIsStaffRoleFromCommonCode_Staff() {
         // Given: 공통코드에 STAFF 역할이 있고 isStaff=true인 경우
         List<CommonCode> roleCodes = new ArrayList<>();
-        CommonCode staffCode = new CommonCode();
-        staffCode.setCodeGroup("ROLE");
-        staffCode.setCodeValue("STAFF");
-        staffCode.setExtraData("{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true}");
+        CommonCode staffCode = CommonCode.builder()
+            .codeGroup("ROLE")
+            .codeValue("STAFF")
+            .extraData("{\"isAdmin\": false, \"isStaff\": true, \"roleType\": \"STAFF\", \"isDefault\": true}")
+            .build();
         roleCodes.add(staffCode);
 
         when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(roleCodes);
@@ -136,10 +138,11 @@ class RoleStandardizationTest {
     void testIsStaffRoleFromCommonCode_Consultant() {
         // Given: 공통코드에 CONSULTANT 역할이 있고 isStaff=false인 경우
         List<CommonCode> roleCodes = new ArrayList<>();
-        CommonCode consultantCode = new CommonCode();
-        consultantCode.setCodeGroup("ROLE");
-        consultantCode.setCodeValue("CONSULTANT");
-        consultantCode.setExtraData("{\"isAdmin\": false, \"isStaff\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true}");
+        CommonCode consultantCode = CommonCode.builder()
+            .codeGroup("ROLE")
+            .codeValue("CONSULTANT")
+            .extraData("{\"isAdmin\": false, \"isStaff\": false, \"roleType\": \"CONSULTANT\", \"isDefault\": true}")
+            .build();
         roleCodes.add(consultantCode);
 
         when(commonCodeService.getActiveCommonCodesByGroup("ROLE")).thenReturn(roleCodes);

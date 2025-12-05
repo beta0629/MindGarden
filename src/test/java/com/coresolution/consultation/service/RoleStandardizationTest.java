@@ -1,7 +1,7 @@
 package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.core.domain.CommonCode;
+import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.service.CommonCodeService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

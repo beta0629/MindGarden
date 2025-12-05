@@ -917,30 +917,32 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     public Map<String, Object> getBranchFinanceStatistics(String branchCode, String startDate, String endDate) {
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> statistics = new HashMap<>();
         
         try {
-            log.info("📊 지점별 재무 통계 조회: 지점={}, 기간={} ~ {}", branchCode, startDate, endDate);
+            log.info("📊 재무 통계 조회: tenantId={}, 기간={} ~ {}", tenantId, startDate, endDate);
             
             // 날짜 범위 설정
             LocalDate start = startDate != null ? LocalDate.parse(startDate) : LocalDate.now().withDayOfMonth(1);
             LocalDate end = endDate != null ? LocalDate.parse(endDate) : LocalDate.now();
             
-            // 지점별 재무 데이터 조회
-            Map<String, Object> branchData = financialTransactionService.getBranchFinancialData(branchCode, start, end, null, null);
+            // 테넌트 전체 재무 데이터 조회 (branchCode 필터링 제거)
+            Map<String, Object> branchData = financialTransactionService.getBranchFinancialData(null, start, end, null, null); // branchCode는 레거시 호환용
             
-            statistics.put("branchCode", branchCode);
+            statistics.put("tenantId", tenantId);
             statistics.put("period", Map.of(
                 "startDate", start.toString(),
                 "endDate", end.toString()
             ));
             statistics.putAll(branchData);
             
-            log.info("✅ 지점별 재무 통계 조회 완료: 지점={}", branchCode);
+            log.info("✅ 재무 통계 조회 완료: tenantId={}", tenantId);
             
         } catch (Exception e) {
-            log.error("❌ 지점별 재무 통계 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
-            throw new RuntimeException("지점별 재무 통계 조회에 실패했습니다: " + e.getMessage());
+            log.error("❌ 재무 통계 조회 실패: tenantId={}, 오류={}", tenantId, e.getMessage(), e);
+            throw new RuntimeException("재무 통계 조회에 실패했습니다: " + e.getMessage());
         }
         
         return statistics;
@@ -1261,13 +1263,15 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getBalanceSheet(String reportDate, String branchCode) {
-        log.info("대차대조표 조회: {}, 브랜치: {}", reportDate, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("대차대조표 조회: {}, tenantId: {}", reportDate, tenantId);
         
         Map<String, Object> balanceSheet = new HashMap<>();
         
         // 기본 정보
         balanceSheet.put("reportDate", reportDate);
-        balanceSheet.put("branchCode", branchCode);
+        balanceSheet.put("tenantId", tenantId);
         balanceSheet.put("reportPeriod", "대차대조표");
         
         // 자산 섹션
@@ -1276,21 +1280,13 @@ public class ErpServiceImpl implements ErpService {
         // 유동자산 (현금, 예금, 매출채권 등) - 실제 데이터 기반
         Map<String, Object> currentAssets = new HashMap<>();
         
-        // 실제 재무 거래에서 자산 계산
+        // 실제 재무 거래에서 자산 계산 (테넌트 전체)
         try {
-            List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions;
-            if (branchCode != null && !branchCode.isEmpty()) {
-                // 특정 브랜치 데이터만 조회
-                transactions = financialTransactionService.getTransactionsByBranch(
-                    branchCode, null, null, null, null, 
+            // 테넌트 전체 데이터 조회 (branchCode 필터링 제거)
+            List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
+                financialTransactionService.getTransactions(
                     org.springframework.data.domain.PageRequest.of(0, 1000)
                 ).getContent();
-            } else {
-                // 전체 데이터 조회
-                transactions = financialTransactionService.getTransactions(
-                    org.springframework.data.domain.PageRequest.of(0, 1000)
-                ).getContent();
-            }
             
             BigDecimal totalIncome = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))

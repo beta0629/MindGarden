@@ -2264,5 +2264,98 @@ if (user.getBranchCode() != null && branchRepository != null) {
 
 ---
 
+---
+
+## Priority 1.2: API 경로 표준화 작업 완료 ✅
+
+### 2025-12-05 (오후)
+
+#### 작업 개요
+모든 REST API 컨트롤러에서 레거시 경로(`/api/...`)를 제거하고 `/api/v1/` 경로만 유지하도록 표준화했습니다.
+
+**참조 문서**:
+- [API 설계 표준](../../standards/API_DESIGN_STANDARD.md)
+- [API 경로 표준화 계획](./API_STANDARDIZATION_PLAN.md)
+
+---
+
+#### 완료된 작업
+
+**Phase 1: 핵심 컨트롤러 (15개) ✅**
+1. ✅ AuthController
+2. ✅ AdminController
+3. ✅ UserController
+4. ✅ OAuth2ConfigController
+5. ✅ CssThemeController
+6. ✅ ConsultationMessageController
+7. ✅ WellnessAdminController
+8. ✅ TestDataController
+9. ✅ SystemNotificationController
+10. ✅ SuperAdminController
+11. ✅ SystemHealthController
+12. ✅ SocialAuthController
+13. ✅ SimpleAdminController
+14. ✅ SessionSyncController
+15. ✅ PersonalDataRequestController
+
+**Phase 2: 나머지 컨트롤러 (55개 이상) ✅**
+- PasskeyController, MultiTenantController, ErpController
+- ConsultationMenuController, ComplianceController, ConsultantRatingController
+- CommonCodeController, BackupStatusController, BusinessTimeController
+- DatabaseFixController, OAuth2Controller, DiscountController
+- ClientSocialAccountController, AmountManagementController, SystemMonitoringController
+- ScheduleController, WorkflowAutomationController, UserProfileController
+- UserAddressController, SystemToolsController, SystemConfigController
+- StatisticsManagementController, StatisticsController
+- PhoneMigrationController, AdminUserController
+- SmsAuthController, SessionExtensionController, SalaryManagementController
+- SalaryConfigController, SalaryBatchController, PlSqlMappingSyncController
+- PrivacyConsentController, PlSqlDiscountAccountingController, PlSqlAccountingController
+- PersonalDataDestructionController, PermissionManagementController
+- PaymentController, PaymentTestController, PasswordResetController
+- PasswordManagementController, MotivationController, LocalTestController
+- HealingContentController, HQErpController, HQBranchController
+- DiscountAccountingController, ConsultationRecordAlertController
+- ConsultantRecordsController, ConsultantAvailabilityController
+- ClientSettingsController, ClientProfileController
+- BranchManagementController, BranchController, ActivityController
+- AccountController, AccountIntegrationController
+
+**총 수정 컨트롤러**: 70개 이상
+
+---
+
+#### 주요 변경사항
+
+**변경 전**:
+```java
+@RequestMapping({"/api/v1/auth", "/api/auth"}) // v1 경로 추가, 레거시 경로 유지
+```
+
+**변경 후**:
+```java
+@RequestMapping("/api/v1/auth") // 표준화 2025-12-05: 레거시 경로 제거
+```
+
+**표준화 원칙 준수**:
+- ✅ 모든 REST API는 `/api/v1/` 접두사 필수
+- ✅ 레거시 경로 완전 제거
+- ✅ 일관성 확보
+
+---
+
+#### 다음 단계
+
+**Phase 2: 프론트엔드 API 호출 경로 수정** (예정)
+- 프론트엔드 API 호출 파일 검색
+- 레거시 경로(`/api/...`)를 `/api/v1/...`로 변경
+- API 유틸리티 파일 수정
+
+**예상 기간**: 2일
+
+---
+
+**완료일**: 2025-12-05
+
 **최종 업데이트**: 2025-12-05
 

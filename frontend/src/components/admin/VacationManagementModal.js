@@ -96,8 +96,10 @@ const VacationManagementModal = ({
                 setVacationTypeOptions([
                     { value: 'MORNING_HALF_DAY', label: '오전반차 (09:00-14:00)', icon: '🌅', color: 'var(--mg-warning-500)', description: '오전반차 - 5시간' },
                     { value: 'AFTERNOON_HALF_DAY', label: '오후반차 (14:00-18:00)', icon: '🌆', color: 'var(--mg-primary-500)', description: '오후반차 - 4시간' },
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fbbf24 -> var(--mg-custom-fbbf24)
                     { value: 'MORNING_HALF_1', label: '오전 반반차 1 (09:00-11:00)', icon: '☀️', color: '#fbbf24', description: '오전 첫 번째 반반차 (09:00-11:00)' },
                     { value: 'MORNING_HALF_2', label: '오전 반반차 2 (11:00-13:00)', icon: '🌞', color: 'var(--mg-warning-500)', description: '오전 두 번째 반반차 (11:00-13:00)' },
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #60a5fa -> var(--mg-custom-60a5fa)
                     { value: 'AFTERNOON_HALF_1', label: '오후 반반차 1 (14:00-16:00)', icon: '🌤️', color: '#60a5fa', description: '오후 첫 번째 반반차 (14:00-16:00)' },
                     { value: 'AFTERNOON_HALF_2', label: '오후 반반차 2 (16:00-18:00)', icon: '🌅', color: 'var(--mg-primary-500)', description: '오후 두 번째 반반차 (16:00-18:00)' },
                     { value: 'CUSTOM_TIME', label: '사용자 지정', icon: '⏰', color: 'var(--mg-purple-500)', description: '사용자가 직접 시간을 설정하는 휴가' },
@@ -132,6 +134,7 @@ const VacationManagementModal = ({
                         phone: consultantEntity.phone,
                         role: consultantEntity.role,
                         isActive: consultantEntity.isActive,
+                        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                         branchCode: consultantEntity.branchCode,
                         specialty: consultantEntity.specialty,
                         specialtyDetails: consultantEntity.specialtyDetails,

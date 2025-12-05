@@ -80,6 +80,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         return {
                             value: code.codeValue,
                             label: code.codeLabel,
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                             color: '#6b7280',
                             icon: '📋',
                             description: code.codeDescription
@@ -99,8 +100,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 { value: 'BOOKED', label: '예약됨', icon: '📅', color: 'var(--mg-primary-500)', description: '예약된 일정' },
                 { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: 'var(--mg-purple-500)', description: '확정된 일정' },
                 { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-warning-500)', description: '진행 중인 일정' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
                 { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: '#059669', description: '완료된 일정' },
                 { value: 'CANCELLED', label: '취소됨', icon: '❌', color: 'var(--mg-error-500)', description: '취소된 일정' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                 { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#6b7280', description: '차단된 시간' }
             ]);
         } finally {
@@ -288,6 +291,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌇 오후 휴무';
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FF5722 -> var(--mg-custom-FF5722)
                 backgroundColor = '#FF5722';
                 allDay = false;
                 break;
@@ -308,6 +312,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T16:00:00+09:00');
                 title = '🌆 오후 반반차 1';
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FF7043 -> var(--mg-custom-FF7043)
                 backgroundColor = '#FF7043';
                 allDay = false;
                 break;
@@ -315,6 +320,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 startDate.setHours(16, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌆 오후 반반차 2';
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FF7043 -> var(--mg-custom-FF7043)
                 backgroundColor = '#FF7043';
                 allDay = false;
                 break;
@@ -323,11 +329,13 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
                     endDate = new Date(date + 'T' + endTime + '+09:00');
                     title = '⏰ 사용자 정의 휴무';
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9C27B0 -> var(--mg-custom-9C27B0)
                     backgroundColor = '#9C27B0';
                     allDay = false;
                 } else {
                     endDate = new Date(date + 'T23:59:59+09:00');
                     title = '⏰ 사용자 정의 휴무';
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9C27B0 -> var(--mg-custom-9C27B0)
                     backgroundColor = '#9C27B0';
                 }
                 break;
@@ -364,6 +372,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             allDay: allDay,
             backgroundColor: backgroundColor,
             borderColor: backgroundColor,
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
             textColor: '#fff',
             className: 'vacation-event',
             extendedProps: {
@@ -389,10 +398,15 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             'var(--mg-warning-500)', // 주황색
             'var(--mg-error-500)', // 빨간색
             'var(--mg-purple-500)', // 보라색
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #06b6d4 -> var(--mg-custom-06b6d4)
             '#06b6d4', // 청록색
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #84cc16 -> var(--mg-custom-84cc16)
             '#84cc16', // 라임색
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f97316 -> var(--mg-custom-f97316)
             '#f97316', // 오렌지색
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ec4899 -> var(--mg-custom-ec4899)
             '#ec4899', // 핑크색
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6366f1 -> var(--mg-custom-6366f1)
             '#6366f1'  // 인디고색
         ];
         
@@ -754,6 +768,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 ))
                             ) : (
                                 <div key="loading-status" className="legend-item">
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
                                     <span className="legend-color" style={{ backgroundColor: '#e5e7eb' }}></span>
                                     <span>로딩 중</span>
                                 </div>
@@ -859,6 +874,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
                             <h3 style={{ margin: '0 0 8px 0', color: '#2c3e50' }}>
                                 📅 {selectedDate ? selectedDate.toLocaleDateString('ko-KR', {
                                     year: 'numeric',
@@ -877,6 +893,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '16px',
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                     border: '2px solid #e9ecef',
                                     borderRadius: '8px',
                                     background: 'white',
@@ -887,9 +904,11 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 }}
                                 onMouseOver={(e) => {
                                     e.target.style.borderColor = 'var(--mg-primary-500)';
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8f9ff -> var(--mg-custom-f8f9ff)
                                     e.target.style.background = '#f8f9ff';
                                 }}
                                 onMouseOut={(e) => {
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                     e.target.style.borderColor = '#e9ecef';
                                     e.target.style.background = 'white';
                                 }}
@@ -908,6 +927,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         padding: '16px',
+                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                         border: '2px solid #e9ecef',
                                         borderRadius: '8px',
                                         background: 'white',
@@ -918,9 +938,11 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     }}
                                     onMouseOver={(e) => {
                                         e.target.style.borderColor = 'var(--mg-warning-500)';
+                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fffbf0 -> var(--mg-custom-fffbf0)
                                         e.target.style.background = '#fffbf0';
                                     }}
                                     onMouseOut={(e) => {
+                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                         e.target.style.borderColor = '#e9ecef';
                                         e.target.style.background = 'white';
                                     }}
@@ -947,6 +969,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     transition: 'all 0.3s ease'
                                 }}
                                 onMouseOver={(e) => {
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #5a6268 -> var(--mg-custom-5a6268)
                                     e.target.style.background = '#5a6268';
                                     e.target.style.transform = 'translateY(-1px)';
                                 }}
@@ -986,6 +1009,7 @@ export default ScheduleCalendar;
 const styles = `
 .schedule-calendar {
     padding: 20px;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8fafc -> var(--mg-custom-f8fafc)
     background: #f8fafc;
     min-height: 100vh;
 }
@@ -1017,16 +1041,19 @@ const styles = `
 }
 
 .refresh-button:hover {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2563eb -> var(--mg-custom-2563eb)
     background: #2563eb;
     transform: translateY(-1px);
 }
 
 .refresh-button:active {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d4ed8 -> var(--mg-custom-1d4ed8)
     background: #1d4ed8;
     transform: translateY(0);
 }
 
 .calendar-header h2 {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1e293b -> var(--mg-custom-1e293b)
     color: #1e293b;
     margin: 0;
     font-size: 24px;
@@ -1048,6 +1075,7 @@ const styles = `
 .legend-title {
     font-size: 14px;
     font-weight: 600;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #475569 -> var(--mg-custom-475569)
     color: #475569;
     margin-bottom: 5px;
 }
@@ -1068,6 +1096,7 @@ const styles = `
     align-items: center;
     gap: 6px;
     font-size: 13px;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #64748b -> var(--mg-custom-64748b)
     color: #64748b;
 }
 
@@ -1078,9 +1107,11 @@ const styles = `
     flex-shrink: 0;
 }
 
+// ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
 .legend-color.available { background-color: #e5e7eb; }
 .legend-color.booked { background-color: var(--mg-primary-500); }
 .legend-color.in-progress { background-color: var(--mg-success-500); }
+// ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
 .legend-color.completed { background-color: #6b7280; }
 .legend-color.cancelled { background-color: var(--mg-error-500); }
 .legend-color.blocked { background-color: var(--mg-warning-500); }
@@ -1091,6 +1122,7 @@ const styles = `
     left: 0;
     right: 0;
     bottom: 0;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.8) -> var(--mg-custom-color)
     background: rgba(255, 255, 255, 0.8);
     display: flex;
     align-items: center;
@@ -1110,13 +1142,16 @@ const styles = `
 
 .fc-toolbar {
     padding: 20px;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8fafc -> var(--mg-custom-f8fafc)
     background: #f8fafc;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e2e8f0 -> var(--mg-custom-e2e8f0)
     border-bottom: 1px solid #e2e8f0;
 }
 
 .fc-toolbar-title {
     font-size: 20px;
     font-weight: 600;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1e293b -> var(--mg-custom-1e293b)
     color: #1e293b;
 }
 
@@ -1132,18 +1167,22 @@ const styles = `
 }
 
 .fc-button:hover {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2563eb -> var(--mg-custom-2563eb)
     background: #2563eb;
     transform: translateY(-1px);
 }
 
 .fc-button:active {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d4ed8 -> var(--mg-custom-1d4ed8)
     background: #1d4ed8;
     transform: translateY(0);
 }
 
 .fc-button-primary:not(:disabled):active,
 .fc-button-primary:not(:disabled).fc-button-active {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d4ed8 -> var(--mg-custom-1d4ed8)
     background: #1d4ed8;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d4ed8 -> var(--mg-custom-1d4ed8)
     border-color: #1d4ed8;
 }
 
@@ -1173,19 +1212,23 @@ const styles = `
 
 .fc-timegrid-slot-label {
     font-size: 12px;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #64748b -> var(--mg-custom-64748b)
     color: #64748b;
 }
 
 .fc-daygrid-day-number {
     font-weight: 500;
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
     color: #374151;
 }
 
 .fc-day-today {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef3c7 -> var(--mg-custom-fef3c7)
     background-color: #fef3c7;
 }
 
 .fc-day-today .fc-daygrid-day-number {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d97706 -> var(--mg-custom-d97706)
     color: #d97706;
     font-weight: 600;
 }

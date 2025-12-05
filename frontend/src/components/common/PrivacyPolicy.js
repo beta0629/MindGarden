@@ -94,12 +94,15 @@ const PrivacyPolicy = () => {
             회사는 개인정보를 제1조(개인정보의 처리목적)에서 명시한 범위 내에서만 처리하며, 정보주체의 동의, 법률의 특별한 규정 등 개인정보보호법 제17조에 해당하는 경우에만 개인정보를 제3자에게 제공합니다.
           </p>
           <div style={{
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
             background: '#fff3cd',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ffeaa7 -> var(--mg-custom-ffeaa7)
             border: '1px solid #ffeaa7',
             borderRadius: '8px',
             padding: '15px',
             marginBottom: '15px'
           }}>
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #856404 -> var(--mg-custom-856404)
             <p className="mg-v2-text-sm mg-v2-m-0" style={{ color: '#856404' }}>
               <strong>주의:</strong> 상담 서비스 제공을 위해 상담사에게 필요한 최소한의 정보만 제공되며, 
               이는 상담 서비스의 질적 향상을 위한 목적으로만 사용됩니다.
@@ -183,7 +186,9 @@ const PrivacyPolicy = () => {
         </div>
 
         <div style={{
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e8f4fd -> var(--mg-custom-e8f4fd)
           background: '#e8f4fd',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #bee5eb -> var(--mg-custom-bee5eb)
           border: '1px solid #bee5eb',
           borderRadius: '8px',
           padding: '20px',

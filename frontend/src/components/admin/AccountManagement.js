@@ -27,6 +27,7 @@ const AccountManagement = () => {
     bankName: '',
     accountNumber: '',
     accountHolder: '',
+    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchId: null,
     isPrimary: false,
     isActive: true,
@@ -106,6 +107,7 @@ const AccountManagement = () => {
       bankName: account.bankName,
       accountNumber: account.accountNumber,
       accountHolder: account.accountHolder,
+      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       branchId: account.branchId,
       isPrimary: account.isPrimary,
       isActive: account.isActive,
@@ -191,6 +193,7 @@ const AccountManagement = () => {
       bankName: '',
       accountNumber: '',
       accountHolder: '',
+      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       branchId: null,
       isPrimary: false,
       isActive: true,

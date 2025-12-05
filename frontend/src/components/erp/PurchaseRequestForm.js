@@ -200,9 +200,12 @@ const PurchaseRequestForm = () => {
                       border: isItemSelected(item) ? '2px solid var(--mg-primary-500)' : '1px solid #e9ecef',
                       borderRadius: '12px',
                       cursor: 'pointer',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8f9ff -> var(--mg-custom-f8f9ff)
                       backgroundColor: isItemSelected(item) ? '#f8f9ff' : '#fff',
                       transition: 'all 0.3s ease',
                       boxShadow: isItemSelected(item) 
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 123, 255, 0.15) -> var(--mg-custom-color)
                         ? '0 4px 12px rgba(0, 123, 255, 0.15)' 
                         : '0 2px 4px var(--mg-shadow-light)',
                       transform: isItemSelected(item) ? 'translateY(-2px)' : 'none',
@@ -247,6 +250,7 @@ const PurchaseRequestForm = () => {
                       fontWeight: '700', 
                       fontSize: 'var(--font-size-base)',
                       marginBottom: '8px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #212529 -> var(--mg-custom-212529)
                       color: '#212529',
                       lineHeight: '1.3'
                     }}>
@@ -299,6 +303,7 @@ const PurchaseRequestForm = () => {
                   display: 'block', 
                   marginBottom: '16px', 
                   fontWeight: '600',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
                   color: '#333',
                   fontSize: 'var(--font-size-base)'
                 }}>
@@ -319,6 +324,7 @@ const PurchaseRequestForm = () => {
                       padding: '16px',
                       backgroundColor: 'var(--mg-gray-100)',
                       borderRadius: '8px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                       border: '1px solid #e9ecef'
                     }}>
                       <div style={{ flex: 1 }}>
@@ -336,8 +342,10 @@ const PurchaseRequestForm = () => {
                           style={{
                             width: '32px',
                             height: '32px',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
                             border: '1px solid #ddd',
                             borderRadius: '4px',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
                             backgroundColor: '#fff',
                             cursor: 'pointer',
                             display: 'flex',
@@ -357,6 +365,7 @@ const PurchaseRequestForm = () => {
                           style={{
                             width: '60px',
                             padding: '6px 8px',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
                             border: '1px solid #ddd',
                             borderRadius: '4px',
                             textAlign: 'center',
@@ -369,8 +378,10 @@ const PurchaseRequestForm = () => {
                           style={{
                             width: '32px',
                             height: '32px',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
                             border: '1px solid #ddd',
                             borderRadius: '4px',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
                             backgroundColor: '#fff',
                             cursor: 'pointer',
                             display: 'flex',
@@ -402,6 +413,7 @@ const PurchaseRequestForm = () => {
                 style={{
                   width: '100%',
                   padding: '12px',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
                   border: '1px solid #ddd',
                   borderRadius: '4px',
                   fontSize: 'var(--font-size-sm)',
@@ -417,8 +429,10 @@ const PurchaseRequestForm = () => {
                 padding: '16px', 
                 backgroundColor: 'var(--mg-gray-100)', 
                 borderRadius: '8px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                 border: '1px solid #e9ecef'
               }}>
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
                 <h4 style={{ margin: '0 0 12px 0', color: '#333' }}>
                   선택된 아이템 요약 ({selectedItems.length}개)
                 </h4>
@@ -432,8 +446,10 @@ const PurchaseRequestForm = () => {
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '8px 12px',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
                         backgroundColor: '#fff',
                         borderRadius: '6px',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                         border: '1px solid #e9ecef'
                       }}>
                         <div>
@@ -448,6 +464,7 @@ const PurchaseRequestForm = () => {
                   <div style={{
                     marginTop: '8px',
                     padding: '8px 12px',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
                     backgroundColor: '#e3f2fd',
                     borderRadius: '6px',
                     textAlign: 'right',
@@ -469,8 +486,11 @@ const PurchaseRequestForm = () => {
               <div style={{ 
                 marginBottom: '16px', 
                 padding: '12px', 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
                 backgroundColor: '#f8d7da', 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
                 color: '#721c24',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f5c6cb -> var(--mg-custom-f5c6cb)
                 border: '1px solid #f5c6cb',
                 borderRadius: '4px'
               }}>
@@ -506,6 +526,7 @@ const PurchaseRequestForm = () => {
           <h3 style={{ margin: '0 0 16px 0', color: 'var(--mg-success-500)' }}>
             구매 요청이 성공적으로 제출되었습니다!
           </h3>
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
           <p style={{ color: '#666', marginBottom: '24px' }}>
             관리자 승인 후 구매가 진행됩니다.
           </p>

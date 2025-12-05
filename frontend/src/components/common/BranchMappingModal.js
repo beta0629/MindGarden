@@ -88,6 +88,7 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
 
     try {
       const data = await apiPost('/api/auth/map-branch', {
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchCode: selectedBranchCode
       });
 

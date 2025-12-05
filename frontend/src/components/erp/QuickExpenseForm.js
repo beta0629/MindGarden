@@ -42,17 +42,27 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   // 빠른 지출 항목 생성 (공통 코드 기반)
   const getQuickExpenses = () => {
     const quickExpenseConfigs = [
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e74c3c -> var(--mg-custom-e74c3c)
       { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY', icon: '💰', color: '#e74c3c' },
       { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT', icon: '🏢', color: 'var(--mg-finance-dark)' },
       { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY', icon: '⚡', color: 'var(--mg-finance-primary)' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #3498db -> var(--mg-custom-3498db)
       { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'WATER', icon: '💧', color: '#3498db' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e74c3c -> var(--mg-custom-e74c3c)
       { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'GAS', icon: '🔥', color: '#e74c3c' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9b59b6 -> var(--mg-custom-9b59b6)
       { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'INTERNET', icon: '🌐', color: '#9b59b6' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9b59b6 -> var(--mg-custom-9b59b6)
       { categoryCode: 'TAX', subcategoryCode: 'INCOME_TAX', icon: '📋', color: '#9b59b6' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #8e44ad -> var(--mg-custom-8e44ad)
       { categoryCode: 'TAX', subcategoryCode: 'CORPORATE_TAX', icon: '📊', color: '#8e44ad' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #3498db -> var(--mg-custom-3498db)
       { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'STATIONERY', icon: '📝', color: '#3498db' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
       { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'EQUIPMENT', icon: '🖥️', color: '#2c3e50' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1abc9c -> var(--mg-custom-1abc9c)
       { categoryCode: 'MARKETING', subcategoryCode: 'ONLINE_ADS', icon: '📢', color: '#1abc9c' },
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #27ae60 -> var(--mg-custom-27ae60)
       { categoryCode: 'MARKETING', subcategoryCode: 'PROMOTION', icon: '📈', color: '#27ae60' }
     ];
 
@@ -170,12 +180,14 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                   onMouseOver={(e) => {
                     if (!loading) {
                       e.target.style.transform = 'translateY(-2px)';
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.2) -> var(--mg-custom-color)
                       e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (!loading) {
                       e.target.style.transform = 'translateY(0)';
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
                       e.target.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
                     }
                   }}

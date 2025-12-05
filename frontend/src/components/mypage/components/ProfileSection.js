@@ -37,7 +37,9 @@ const ProfileSection = ({
         // 실패 시 기본값 설정
         setGenderOptions([
           { value: 'MALE', label: '남성', icon: '♂️', color: 'var(--mg-primary-500)' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ec4899 -> var(--mg-custom-ec4899)
           { value: 'FEMALE', label: '여성', icon: '♀️', color: '#ec4899' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
           { value: 'OTHER', label: '기타', icon: '⚧', color: '#6b7280' }
         ]);
       } finally {

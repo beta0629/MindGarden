@@ -49,8 +49,10 @@ const ConsultationRecordScreen = () => {
       setPriorityOptions([
         { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
         { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
         { value: 'HIGH', label: '높음', icon: '🟠', color: '#fd7e14', description: '높은 우선순위' },
         { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
         { value: 'CRITICAL', label: '위험', icon: '🚨', color: '#6f42c1', description: '위험 우선순위' }
       ]);
     } finally {
@@ -111,16 +113,20 @@ const ConsultationRecordScreen = () => {
       padding: '20px'
     },
     header: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '1px solid #e9ecef'
     },
     headerTitle: {
       fontSize: 'var(--font-size-xxl)',
       fontWeight: '700',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
       color: '#2c3e50',
       marginBottom: '8px',
       display: 'flex',
@@ -133,16 +139,20 @@ const ConsultationRecordScreen = () => {
       marginBottom: '20px'
     },
     clientInfoCard: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '1px solid #e9ecef'
     },
     clientInfoTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
       color: '#2c3e50',
       marginBottom: '16px',
       display: 'flex',
@@ -168,19 +178,24 @@ const ConsultationRecordScreen = () => {
     },
     clientInfoValue: {
       fontSize: 'var(--font-size-base)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
       color: '#2c3e50',
       fontWeight: '500'
     },
     formCard: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff',
       borderRadius: '12px',
       padding: '24px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '1px solid #e9ecef'
     },
     formTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
       color: '#2c3e50',
       marginBottom: '20px',
       display: 'flex',
@@ -200,19 +215,23 @@ const ConsultationRecordScreen = () => {
     formLabel: {
       fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
       color: '#495057',
       marginBottom: '4px'
     },
     formInput: {
       padding: '12px 16px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '2px solid #e9ecef',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
       transition: 'all 0.2s ease',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff'
     },
     formTextarea: {
       padding: '12px 16px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '2px solid #e9ecef',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
@@ -220,19 +239,23 @@ const ConsultationRecordScreen = () => {
       resize: 'vertical',
       fontFamily: 'inherit',
       transition: 'all 0.2s ease',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff'
     },
     formSelect: {
       padding: '12px 16px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       border: '2px solid #e9ecef',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       backgroundColor: '#fff',
       cursor: 'pointer',
       transition: 'all 0.2s ease'
     },
     formInputFocus: {
       borderColor: 'var(--mg-primary-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,123,255,0.1) -> var(--mg-custom-color)
       boxShadow: '0 0 0 3px rgba(0,123,255,0.1)'
     },
     buttonGroup: {
@@ -241,6 +264,7 @@ const ConsultationRecordScreen = () => {
       justifyContent: 'flex-end',
       marginTop: '24px',
       paddingTop: '20px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       borderTop: '1px solid #e9ecef'
     },
     button: {
@@ -257,14 +281,17 @@ const ConsultationRecordScreen = () => {
     },
     primaryButton: {
       backgroundColor: 'var(--mg-primary-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       color: '#fff'
     },
     secondaryButton: {
       backgroundColor: 'var(--mg-secondary-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       color: '#fff'
     },
     dangerButton: {
       backgroundColor: 'var(--mg-error-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
       color: '#fff'
     },
     statusBadge: {
@@ -278,6 +305,7 @@ const ConsultationRecordScreen = () => {
     progressBar: {
       width: '100%',
       height: '8px',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
       backgroundColor: '#e9ecef',
       borderRadius: '4px',
       overflow: 'hidden',
@@ -294,6 +322,7 @@ const ConsultationRecordScreen = () => {
       left: 0,
       right: 0,
       bottom: 0,
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.5) -> var(--mg-custom-color)
       backgroundColor: 'rgba(0,0,0,0.5)',
       display: 'flex',
       alignItems: 'center',
@@ -571,6 +600,7 @@ const ConsultationRecordScreen = () => {
               <span style={{
                 ...styles.statusBadge,
                 backgroundColor: client.status === 'ACTIVE' ? 'var(--mg-success-500)' : 'var(--mg-secondary-500)',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
                 color: '#fff'
               }}>
                 {getUserStatusKoreanNameSync(client.status)}

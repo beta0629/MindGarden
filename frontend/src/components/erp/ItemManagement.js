@@ -64,8 +64,11 @@ const ItemManagement = () => {
         { value: 'ELECTRONICS', label: '전자제품', icon: '💻', color: 'var(--mg-purple-500)', description: '전자기기 및 IT 장비' },
         { value: 'FURNITURE', label: '가구', icon: '🪑', color: 'var(--mg-warning-500)', description: '사무용 가구 및 인테리어' },
         { value: 'BOOKS', label: '도서', icon: '📚', color: 'var(--mg-error-500)', description: '도서 및 참고자료' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f97316 -> var(--mg-custom-f97316)
         { value: 'MEDICAL_SUPPLIES', label: '의료용품', icon: '🏥', color: '#f97316', description: '의료 및 건강 관련 용품' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #06b6d4 -> var(--mg-custom-06b6d4)
         { value: 'CLEANING_SUPPLIES', label: '청소용품', icon: '🧽', color: '#06b6d4', description: '청소 및 위생용품' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
         { value: 'OTHER', label: '기타', icon: '📦', color: '#6b7280', description: '기타 아이템' }
       ]);
     } finally {
@@ -269,6 +272,7 @@ const ItemManagement = () => {
         {/* 성공/오류 메시지 */}
         {success && (
           <div className="item-management-success">
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #74c0fc -> var(--mg-custom-74c0fc)
             border: '1px solid #74c0fc',
             borderRadius: '4px'
           }}>
@@ -279,8 +283,11 @@ const ItemManagement = () => {
         {error && (
           <div className="item-management-success">
             padding: '12px', 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
             backgroundColor: '#f8d7da', 
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
             color: '#721c24',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f5c6cb -> var(--mg-custom-f5c6cb)
             border: '1px solid #f5c6cb',
             borderRadius: '4px'
           }}>
@@ -376,6 +383,7 @@ const ItemManagement = () => {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
                   border: '1px solid #ddd',
                   borderRadius: '4px',
                   resize: 'vertical'
@@ -508,6 +516,7 @@ const ItemManagement = () => {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
                   border: '1px solid #ddd',
                   borderRadius: '4px',
                   resize: 'vertical'

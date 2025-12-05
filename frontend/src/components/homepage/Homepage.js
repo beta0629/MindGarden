@@ -292,6 +292,7 @@ const TabletHomepage = () => {
                 right: '-20%',
                 width: '300px',
                 height: '300px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.1) -> var(--mg-custom-color)
                 background: 'rgba(255, 255, 255, 0.1)',
                 borderRadius: '50%',
                 filter: 'blur(100px)'
@@ -302,6 +303,7 @@ const TabletHomepage = () => {
                 left: '-10%',
                 width: '200px',
                 height: '200px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.08) -> var(--mg-custom-color)
                 background: 'rgba(255, 255, 255, 0.08)',
                 borderRadius: '50%',
                 filter: 'blur(80px)'
@@ -315,11 +317,14 @@ const TabletHomepage = () => {
                   borderRadius: '50px',
                   marginBottom: '24px',
                   backdropFilter: 'blur(10px)',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.3) -> var(--mg-custom-color)
                   border: '1px solid rgba(255, 255, 255, 0.3)'
                 }}>
                   <span style={{
                     fontSize: 'var(--font-size-sm)',
                     fontWeight: '600',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: color: 'rgb -> var(--mg-custom-color)
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.95) -> var(--mg-custom-color)
                     color: 'rgba(255, 255, 255, 0.95)',
                     fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
                   }}>

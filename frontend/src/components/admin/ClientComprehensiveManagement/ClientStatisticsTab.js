@@ -131,9 +131,11 @@ const ClientStatisticsTab = ({
             {/* 상세 통계 */}
             <div className="mg-v2-detailed-stats">
                 <div className="mg-mobile-card-stack">
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
                     {renderChartData('등급별 내담자 분포', clientsByGrade, '#6f42c1')}
                     {renderChartData('상태별 내담자 분포', clientsByStatus, 'var(--mg-info-500)')}
                     {Object.keys(consultationsByMonth).length > 0 && 
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
                         renderChartData('월별 상담 수', consultationsByMonth, '#fd7e14')
                     }
                 </div>

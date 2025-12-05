@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fa';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
+// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 import { normalizeBranchList, getBranchNameByCode } from '../../utils/branchUtils';
 import SimpleLayout from '../layout/SimpleLayout';
 import BranchRegistrationModal from './BranchRegistrationModal';
@@ -275,6 +276,8 @@ const BranchManagement = () => {
                                                                 justifyContent: 'space-between',
                                                                 alignItems: 'center',
                                                                 textAlign: 'left',
+                                                                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
+                                                                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,123,255,0.15) -> var(--mg-custom-color)
                                                                 boxShadow: selectedBranch?.id === branch.id ? '0 2px 8px rgba(0,123,255,0.15)' : '0 1px 3px rgba(0,0,0,0.1)',
                                                                 minHeight: '60px',
                                                                 maxHeight: '80px'
@@ -288,6 +291,7 @@ const BranchManagement = () => {
                                                             onMouseLeave={(e) => {
                                                                 if (selectedBranch?.id !== branch.id) {
                                                                     e.target.style.background = 'var(--mg-white)';
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                     e.target.style.borderLeftColor = '#e9ecef';
                                                                 }
                                                             }}
@@ -349,18 +353,22 @@ const BranchManagement = () => {
                                         <Row style={{ marginBottom: '24px' }}>
                                             <Col>
                                                 <Card style={{
+                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                     border: '1px solid #e9ecef',
                                                     borderRadius: '12px',
+                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
                                                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                                                     overflow: 'hidden'
                                                 }}>
                                                     <Card.Header style={{
                                                         background: 'var(--mg-gray-100)',
+                                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                         borderBottom: '1px solid #e9ecef',
                                                         padding: '16px 20px'
                                                     }}>
                                                         <h5 style={{
                                                             margin: 0,
+                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                                             color: '#495057',
                                                             fontSize: 'var(--font-size-base)',
                                                             fontWeight: '600',
@@ -379,6 +387,7 @@ const BranchManagement = () => {
                                                                     padding: '16px 8px',
                                                                     background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
@@ -404,6 +413,7 @@ const BranchManagement = () => {
                                                                     padding: '16px 8px',
                                                                     background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
@@ -429,6 +439,7 @@ const BranchManagement = () => {
                                                                     padding: '16px 8px',
                                                                     background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
@@ -454,6 +465,7 @@ const BranchManagement = () => {
                                                                     padding: '16px 8px',
                                                                     background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
@@ -479,6 +491,7 @@ const BranchManagement = () => {
                                                                     padding: '16px 8px',
                                                                     background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
@@ -504,6 +517,7 @@ const BranchManagement = () => {
                                                                     padding: '16px 8px',
                                                                     background: 'var(--mg-gray-100)',
                                                                     borderRadius: '8px',
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
@@ -531,13 +545,16 @@ const BranchManagement = () => {
                                         
                                         {/* 사용자 목록 */}
                                         <Card style={{
+                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                             border: '1px solid #e9ecef',
                                             borderRadius: '12px',
+                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
                                             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                                             overflow: 'hidden'
                                         }}>
                                             <Card.Header style={{
                                                 background: 'var(--mg-gray-100)',
+                                                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                 borderBottom: '1px solid #e9ecef',
                                                 padding: '16px 20px'
                                             }}>
@@ -545,12 +562,14 @@ const BranchManagement = () => {
                                                     <Col>
                                                         <h5 style={{
                                                             margin: 0,
+                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                                             color: '#495057',
                                                             fontSize: 'var(--font-size-base)',
                                                             fontWeight: '600',
                                                             display: 'flex',
                                                             alignItems: 'center'
                                                         }}>
+                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
                                                             <FaUsers style={{ marginRight: '8px', color: '#6f42c1' }} />
                                                             {selectedBranch.name} 사용자 목록
                                                         </h5>
@@ -596,6 +615,7 @@ const BranchManagement = () => {
                                                     padding: '16px',
                                                     background: 'var(--mg-gray-100)',
                                                     borderRadius: '8px',
+                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                     border: '1px solid #e9ecef'
                                                 }}>
                                                     <Row>
@@ -603,6 +623,7 @@ const BranchManagement = () => {
                                                             <InputGroup size="sm">
                                                                 <InputGroup.Text style={{
                                                                     background: 'var(--mg-white)',
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ced4da -> var(--mg-custom-ced4da)
                                                                     border: '1px solid #ced4da',
                                                                     borderRight: 'none',
                                                                     borderRadius: '6px 0 0 6px'
@@ -614,6 +635,7 @@ const BranchManagement = () => {
                                                                     value={searchTerm}
                                                                     onChange={(e) => setSearchTerm(e.target.value)}
                                                                     style={{
+                                                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ced4da -> var(--mg-custom-ced4da)
                                                                         border: '1px solid #ced4da',
                                                                         borderRadius: '0 6px 6px 0',
                                                                         fontSize: 'var(--font-size-sm)'
@@ -627,6 +649,7 @@ const BranchManagement = () => {
                                                                 value={selectedRole}
                                                                 onChange={(e) => setSelectedRole(e.target.value)}
                                                                 style={{
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ced4da -> var(--mg-custom-ced4da)
                                                                     border: '1px solid #ced4da',
                                                                     borderRadius: '6px',
                                                                     fontSize: 'var(--font-size-sm)'
@@ -647,6 +670,7 @@ const BranchManagement = () => {
                                                                 onChange={(e) => setIncludeInactive(e.target.checked)}
                                                                 style={{
                                                                     fontSize: 'var(--font-size-sm)',
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                                                     color: '#495057'
                                                                 }}
                                                             />
@@ -679,8 +703,11 @@ const BranchManagement = () => {
                                                     <Alert variant="info" style={{
                                                         marginBottom: '16px',
                                                         borderRadius: '8px',
+                                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #b8daff -> var(--mg-custom-b8daff)
                                                         border: '1px solid #b8daff',
+                                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1ecf1 -> var(--mg-custom-d1ecf1)
                                                         background: '#d1ecf1',
+                                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #0c5460 -> var(--mg-custom-0c5460)
                                                         color: '#0c5460'
                                                     }}>
                                                         <strong>{selectedUsers.length}명</strong>의 사용자가 선택되었습니다. 
@@ -689,6 +716,7 @@ const BranchManagement = () => {
                                                 )}
                                                 
                                                 <div style={{
+                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                     border: '1px solid #e9ecef',
                                                     borderRadius: '8px',
                                                     overflow: 'hidden'
@@ -709,6 +737,7 @@ const BranchManagement = () => {
                                                             padding: '40px 20px',
                                                             color: 'var(--mg-secondary-500)'
                                                         }}>
+                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dee2e6 -> var(--mg-custom-dee2e6)
                                                             <FaUsers style={{ fontSize: '2rem', marginBottom: '12px', color: '#dee2e6' }} />
                                                             <p style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)' }}>이 지점에는 사용자가 없습니다.</p>
                                                             <small>다른 지점을 선택하거나 필터를 조정해보세요.</small>
@@ -721,6 +750,7 @@ const BranchManagement = () => {
                                                                     top: 0,
                                                                     background: 'var(--mg-white)',
                                                                     zIndex: 10,
+                                                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                     borderBottom: '2px solid #e9ecef'
                                                                 }}>
                                                                     <tr>
@@ -728,8 +758,10 @@ const BranchManagement = () => {
                                                                             padding: '12px 16px',
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                                                             color: '#495057',
                                                                             background: 'var(--mg-gray-100)',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>
                                                                             <FormCheck
@@ -742,40 +774,50 @@ const BranchManagement = () => {
                                                                             padding: '12px 16px',
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                                                             color: '#495057',
                                                                             background: 'var(--mg-gray-100)',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>사용자</th>
                                                                         <th style={{
                                                                             padding: '12px 16px',
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                                                             color: '#495057',
                                                                             background: 'var(--mg-gray-100)',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>역할</th>
                                                                         <th style={{
                                                                             padding: '12px 16px',
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                                                             color: '#495057',
                                                                             background: 'var(--mg-gray-100)',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>지점</th>
                                                                         <th style={{
                                                                             padding: '12px 16px',
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                                                             color: '#495057',
                                                                             background: 'var(--mg-gray-100)',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>상태</th>
                                                                         <th style={{
                                                                             padding: '12px 16px',
                                                                             fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                                                             color: '#495057',
                                                                             background: 'var(--mg-gray-100)',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}>등록일</th>
                                                                     </tr>
@@ -786,6 +828,7 @@ const BranchManagement = () => {
                                                                         key={user.id} 
                                                                         style={{
                                                                             background: !user.isActive ? 'var(--mg-gray-100)' : 'var(--mg-white)',
+                                                                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                                                             borderBottom: '1px solid #e9ecef'
                                                                         }}
                                                                     >
@@ -808,6 +851,7 @@ const BranchManagement = () => {
                                                                                     <div style={{
                                                                                         fontWeight: '600',
                                                                                         fontSize: 'var(--font-size-sm)',
+                                                                                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                                                                         color: '#495057',
                                                                                         marginBottom: '2px'
                                                                                     }}>
@@ -880,24 +924,29 @@ const BranchManagement = () => {
                         <span><FaExchangeAlt className="me-2" />지점 이동</span>
                     }>
                         <Card style={{
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                             border: '1px solid #e9ecef',
                             borderRadius: '12px',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
                             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                             overflow: 'hidden'
                         }}>
                             <Card.Header style={{
                                 background: 'var(--mg-gray-100)',
+                                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                                 borderBottom: '1px solid #e9ecef',
                                 padding: '16px 20px'
                             }}>
                                 <h5 style={{
                                     margin: 0,
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
                                     color: '#495057',
                                     fontSize: 'var(--font-size-base)',
                                     fontWeight: '600',
                                     display: 'flex',
                                     alignItems: 'center'
                                 }}>
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
                                     <FaExchangeAlt style={{ marginRight: '8px', color: '#6f42c1' }} />
                                     사용자 지점 이동 관리
                                 </h5>
@@ -906,8 +955,11 @@ const BranchManagement = () => {
                                 <Alert variant="info" style={{
                                     marginBottom: '24px',
                                     borderRadius: '8px',
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #b8daff -> var(--mg-custom-b8daff)
                                     border: '1px solid #b8daff',
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1ecf1 -> var(--mg-custom-d1ecf1)
                                     background: '#d1ecf1',
+                                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #0c5460 -> var(--mg-custom-0c5460)
                                     color: '#0c5460'
                                 }}>
                                     <strong>지점 이동 기능 사용법</strong><br />
@@ -921,8 +973,11 @@ const BranchManagement = () => {
                                         <Col md={6}>
                                             <Alert variant="success" style={{
                                                 borderRadius: '8px',
+                                                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #c3e6cb -> var(--mg-custom-c3e6cb)
                                                 border: '1px solid #c3e6cb',
+                                                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
                                                 background: '#d4edda',
+                                                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #155724 -> var(--mg-custom-155724)
                                                 color: '#155724'
                                             }}>
                                                 <h6 style={{

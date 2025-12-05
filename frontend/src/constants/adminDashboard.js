@@ -172,18 +172,26 @@ export const COLORS = {
   SUCCESS: 'var(--mg-success-500)',
   WARNING: 'var(--mg-warning-500)',
   DANGER: 'var(--mg-error-500)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #5ac8fa -> var(--mg-custom-5ac8fa)
   INFO: '#5ac8fa',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f2f2f7 -> var(--mg-custom-f2f2f7)
   LIGHT: '#f2f2f7',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1c1c1e -> var(--mg-custom-1c1c1e)
   DARK: '#1c1c1e',
   
   // 텍스트 색상
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1d1d1f -> var(--mg-custom-1d1d1f)
   TEXT_PRIMARY: '#1d1d1f',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #86868b -> var(--mg-custom-86868b)
   TEXT_SECONDARY: '#86868b',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #c7c7cc -> var(--mg-custom-c7c7cc)
   TEXT_TERTIARY: '#c7c7cc',
   
   // 배경 색상
   BG_PRIMARY: 'var(--mg-white)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f2f2f7 -> var(--mg-custom-f2f2f7)
   BG_SECONDARY: '#f2f2f7',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e5ea -> var(--mg-custom-e5e5ea)
   BG_TERTIARY: '#e5e5ea'
 };
 

@@ -185,6 +185,7 @@ const BranchForm = ({
         
         setCodeChecking(true);
         try {
+            // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
             const response = await fetch(`/api/branches/validate/branch-code?branchCode=${encodeURIComponent(code)}`, {
                 method: 'GET',
                 headers: {
@@ -302,6 +303,7 @@ const BranchForm = ({
         setLoading(true);
         try {
             const submitData = {
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: formData.code.trim(),
                 branchName: formData.name.trim(),
                 branchType: formData.type || 'FRANCHISE',

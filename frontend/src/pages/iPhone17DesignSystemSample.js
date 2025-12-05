@@ -19,6 +19,7 @@ const IPhone17DesignSystemSample = () => {
   const themes = [
     { id: 'default', name: '기본', color: 'var(--mg-primary-500)' },
     { id: 'warm', name: '따뜻한', color: 'var(--mg-warning-500)' },
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #00C7BE -> var(--mg-custom-00C7BE)
     { id: 'cool', name: '시원한', color: '#00C7BE' },
     { id: 'elegant', name: '우아한', color: 'var(--mg-purple-500)' },
     { id: 'vibrant', name: '활기찬', color: 'var(--mg-error-500)' }

@@ -220,8 +220,10 @@ const MappingManagement = () => {
                     'PAYMENT_CONFIRMED': { label: '입금확인', color: 'var(--mg-info-500)', icon: '💰' },
                     'ACTIVE': { label: '활성', color: 'var(--mg-success-500)', icon: '✅' },
                     'TERMINATED': { label: '종료', color: 'var(--mg-error-500)', icon: '❌' },
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
                     'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6f42c1', icon: '🔚' },
                     'INACTIVE': { label: '비활성', color: 'var(--mg-secondary-500)', icon: '⚪' },
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
                     'SUSPENDED': { label: '일시정지', color: '#fd7e14', icon: '⏸️' },
                     'CANCELLED': { label: '취소', color: 'var(--mg-error-500)', icon: '🚫' }
                 });
@@ -234,8 +236,10 @@ const MappingManagement = () => {
                 'PAYMENT_CONFIRMED': { label: '입금확인', color: 'var(--mg-info-500)', icon: '💰' },
                 'ACTIVE': { label: '활성', color: 'var(--mg-success-500)', icon: '✅' },
                 'TERMINATED': { label: '종료', color: 'var(--mg-error-500)', icon: '❌' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
                 'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6f42c1', icon: '🔚' },
                 'INACTIVE': { label: '비활성', color: 'var(--mg-secondary-500)', icon: '⚪' },
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
                 'SUSPENDED': { label: '일시정지', color: '#fd7e14', icon: '⏸️' },
                 'CANCELLED': { label: '취소', color: 'var(--mg-error-500)', icon: '🚫' }
             });

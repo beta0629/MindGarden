@@ -67,6 +67,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
             const params = new URLSearchParams({
                 startDate: dateRange.startDate,
                 endDate: dateRange.endDate,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: branchCode || ''
             });
 
@@ -97,6 +98,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
             const response = await apiPost('/api/statistics/recalculate', {
                 startDate: dateRange.startDate,
                 endDate: dateRange.endDate,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: branchCode || ''
             });
             

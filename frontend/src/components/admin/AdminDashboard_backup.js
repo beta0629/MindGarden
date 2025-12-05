@@ -1331,6 +1331,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         <div style={{
                             fontSize: '20px',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
                             color: '#666'
                         }}>
                             {isPermissionSectionExpanded ? '▲' : '▼'}
@@ -1341,6 +1342,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div style={{
                             padding: '20px',
                             backgroundColor: 'white',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
                             border: '1px solid #e9ecef',
                             borderTop: 'none',
                             borderRadius: '0 0 8px 8px'

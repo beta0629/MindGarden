@@ -37,6 +37,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                         phone: consultantEntity.phone,
                         role: consultantEntity.role,
                         isActive: consultantEntity.isActive,
+                        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                         branchCode: consultantEntity.branchCode,
                         specialty: consultantEntity.specialty,
                         specialtyDetails: consultantEntity.specialtyDetails,

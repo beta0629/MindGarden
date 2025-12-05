@@ -74,8 +74,11 @@ const PaymentManagement = () => {
           { value: 'PROCESSING', label: '처리중', icon: '🔄', color: 'var(--mg-primary-500)', description: '결제 처리 중' },
           { value: 'APPROVED', label: '승인됨', icon: '✅', color: 'var(--mg-success-500)', description: '결제 승인 완료' },
           { value: 'FAILED', label: '실패', icon: '❌', color: 'var(--mg-error-500)', description: '결제 실패' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
           { value: 'CANCELLED', label: '취소됨', icon: '🚫', color: '#6b7280', description: '결제 취소' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f97316 -> var(--mg-custom-f97316)
           { value: 'REFUNDED', label: '환불됨', icon: '↩️', color: '#f97316', description: '결제 환불' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
           { value: 'EXPIRED', label: '만료됨', icon: '⏰', color: '#374151', description: '결제 만료' },
           { value: 'PARTIAL_REFUND', label: '부분환불', icon: '↩️', color: 'var(--mg-warning-500)', description: '부분 환불' }
         ]);
@@ -105,10 +108,15 @@ const PaymentManagement = () => {
       console.error('결제 게이트웨이 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setPaymentGatewayOptions([
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #0064FF -> var(--mg-custom-0064FF)
         { value: 'TOSS', label: '토스페이먼츠', icon: '💙', color: '#0064FF', description: '토스페이먼츠 결제' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #34495E -> var(--mg-custom-34495E)
         { value: 'IAMPORT', label: '아임포트', icon: '🏦', color: '#34495E', description: '아임포트 결제' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FEE500 -> var(--mg-custom-FEE500)
         { value: 'KAKAO', label: '카카오페이', icon: '💛', color: '#FEE500', description: '카카오페이 결제' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #03C75A -> var(--mg-custom-03C75A)
         { value: 'NAVER', label: '네이버페이', icon: '💚', color: '#03C75A', description: '네이버페이 결제' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #0070BA -> var(--mg-custom-0070BA)
         { value: 'PAYPAL', label: '페이팔', icon: '💳', color: '#0070BA', description: '페이팔 결제' }
       ]);
     } finally {

@@ -75,6 +75,7 @@ const PaymentTest = () => {
       provider: testData.provider,
       payerId: testData.payerId,
       recipientId: DEFAULT_TEST_DATA.RECIPIENT_ID,
+      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       branchId: DEFAULT_TEST_DATA.BRANCH_ID,
       description: `테스트 결제 - ${testData.method} ${testData.provider}`,
       timeoutMinutes: DEFAULT_TEST_DATA.TIMEOUT_MINUTES,

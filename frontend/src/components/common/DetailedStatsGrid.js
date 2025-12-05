@@ -53,6 +53,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #7B68EE -> var(--mg-custom-7B68EE)
             backgroundColor: '#7B68EE',
             display: 'flex',
             alignItems: 'center',
@@ -66,11 +67,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>내담자 현황</h3>
         </div>
         <div className="detailed-stats-card-value">
           fontWeight: '700',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #7B68EE -> var(--mg-custom-7B68EE)
           color: '#7B68EE',
           marginBottom: '8px'
         }}>
@@ -116,6 +119,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #7B68EE -> var(--mg-custom-7B68EE)
             backgroundColor: '#7B68EE',
             display: 'flex',
             alignItems: 'center',
@@ -129,11 +133,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>상담사 현황</h3>
         </div>
         <div className="detailed-stats-card-value">
           fontWeight: '700',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #7B68EE -> var(--mg-custom-7B68EE)
           color: '#7B68EE',
           marginBottom: '8px'
         }}>
@@ -192,6 +198,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>완료율</h3>
         </div>
@@ -221,10 +228,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
 
       {/* 취소율 */}
       <div style={{
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFE0DB -> var(--mg-custom-FFE0DB)
         backgroundColor: '#FFE0DB',
         borderRadius: '12px',
         padding: '24px',
         boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFCDD2 -> var(--mg-custom-FFCDD2)
         border: '1px solid #FFCDD2',
         transition: 'all 0.3s ease'
       }}>
@@ -248,6 +257,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>취소율</h3>
         </div>
@@ -277,10 +287,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
 
       {/* 주간 현황 */}
       <div style={{
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFE8D1 -> var(--mg-custom-FFE8D1)
         backgroundColor: '#FFE8D1',
         borderRadius: '12px',
         padding: '24px',
         boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFCCBC -> var(--mg-custom-FFCCBC)
         border: '1px solid #FFCCBC',
         transition: 'all 0.3s ease'
       }}>
@@ -304,6 +316,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>주간 현황</h3>
         </div>
@@ -333,10 +346,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
 
       {/* 오늘 현황 */}
       <div style={{
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #E3F2FD -> var(--mg-custom-E3F2FD)
         backgroundColor: '#E3F2FD',
         borderRadius: '12px',
         padding: '24px',
         boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #BBDEFB -> var(--mg-custom-BBDEFB)
         border: '1px solid #BBDEFB',
         transition: 'all 0.3s ease'
       }}>
@@ -360,6 +375,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             color: '#495057'
           }}>오늘 현황</h3>
         </div>

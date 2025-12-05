@@ -97,35 +97,57 @@ const ErdDetailPage = () => {
         theme: 'default',
         themeVariables: {
           primaryColor: 'var(--mg-primary-500)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           primaryTextColor: '#333',
           primaryBorderColor: 'var(--mg-primary-500)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
           lineColor: '#666',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f0f0 -> var(--mg-custom-f0f0f0)
           secondaryColor: '#f0f0f0',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           tertiaryColor: '#fff',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           background: '#fff',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           mainBkg: '#fff',
           secondBkg: 'var(--mg-gray-100)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           textColor: '#333',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           edgeLabelBackground: '#fff',
           clusterBkg: 'var(--mg-gray-100)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ccc -> var(--mg-custom-ccc)
           clusterBorder: '#ccc',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
           defaultLinkColor: '#666',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           titleColor: '#333',
           actorBorder: 'var(--mg-primary-500)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
           actorBkg: '#e3f2fd',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           actorTextColor: '#333',
           actorLineColor: 'var(--mg-primary-500)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           signalColor: '#333',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           signalTextColor: '#333',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           labelBoxBkgColor: '#fff',
           labelBoxBorderColor: 'var(--mg-primary-500)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           labelTextColor: '#333',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           loopTextColor: '#333',
           noteBorderColor: 'var(--mg-primary-500)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
           noteBkgColor: '#fff3cd',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
           noteTextColor: '#333',
           activationBorderColor: 'var(--mg-primary-500)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
           activationBkgColor: '#e3f2fd',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           sequenceNumberColor: '#fff',
         },
         flowchart: {
@@ -140,6 +162,7 @@ const ErdDetailPage = () => {
           minEntityHeight: 75,
           entityPadding: 15,
           stroke: 'var(--mg-primary-500)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
           fill: '#fff',
           fontSize: 14,
         },
@@ -240,6 +263,7 @@ const ErdDetailPage = () => {
         // 현재 테이블 하이라이트
         table.style.opacity = '1';
         table.style.transform = 'scale(1.05)';
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 123, 255, 0.3) -> var(--mg-custom-color)
         table.style.filter = 'drop-shadow(0 4px 8px rgba(0, 123, 255, 0.3))';
         
         setSelectedTable(tableName);

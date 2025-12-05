@@ -155,6 +155,7 @@ const DashboardWidgetEditor = ({
           <span className="widget-section-badge" style={{
             marginLeft: '8px',
             padding: '2px 8px',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
             backgroundColor: '#e3f2fd',
             color: 'var(--mg-secondary-600)',
             borderRadius: '12px',
@@ -214,7 +215,9 @@ const DashboardWidgetEditor = ({
             <span className="widget-section-badge" style={{
               marginLeft: '8px',
               padding: '2px 8px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3e0 -> var(--mg-custom-fff3e0)
               backgroundColor: '#fff3e0',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e65100 -> var(--mg-custom-e65100)
               color: '#e65100',
               borderRadius: '12px',
               fontSize: '0.85em',
@@ -247,6 +250,7 @@ const DashboardWidgetEditor = ({
                 title={getWidgetTypeName(widgetType)}
                 style={{
                   borderColor: 'var(--mg-warning-500)',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff8f0 -> var(--mg-custom-fff8f0)
                   backgroundColor: '#fff8f0',
                   cursor: 'grab',
                   position: 'relative'
@@ -316,14 +320,17 @@ const DashboardWidgetEditor = ({
                     title="위젯 설정"
                     style={{
                       padding: '6px 12px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ddd -> var(--mg-custom-ddd)
                       border: '1px solid #ddd',
                       borderRadius: '4px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
                       backgroundColor: '#fff',
                       cursor: 'pointer',
                       fontSize: '12px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
                       color: '#666'
                     }}
                   >
@@ -338,6 +345,7 @@ const DashboardWidgetEditor = ({
                       padding: '6px 12px',
                       border: '1px solid var(--mg-error-500)',
                       borderRadius: '4px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff -> var(--mg-custom-fff)
                       backgroundColor: '#fff',
                       cursor: 'pointer',
                       fontSize: '12px',

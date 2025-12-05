@@ -232,6 +232,7 @@ export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
  */
 export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
     if (!codeValue) {
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
         return { color: '#6b7280', icon: '📋' };
     }
     
@@ -241,6 +242,7 @@ export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
             const code = response.find(c => c.codeValue === codeValue);
             if (code) {
                 return {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                     color: code.colorCode || '#6b7280',
                     icon: code.icon || '📋'
                 };
@@ -822,6 +824,7 @@ export const getFormattedAvailability = (consultant) => {
         color = 'var(--mg-error-500)';
     } else if (!consultant?.available) {
         text = '상담 불가';
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
         color = '#6b7280';
     } else if (consultant?.busy) {
         text = '상담 중';

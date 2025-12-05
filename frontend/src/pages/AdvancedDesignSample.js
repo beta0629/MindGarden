@@ -58,14 +58,19 @@ const GlassStatCard = ({ title, value, trend, icon, iconColor, sparklineData }) 
   const getSparklineColor = (iconColor) => {
     switch (iconColor) {
       case 'blue':
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b8dbd -> var(--mg-custom-6b8dbd)
         return '#6b8dbd';
       case 'purple':
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #8b7cb8 -> var(--mg-custom-8b7cb8)
         return '#8b7cb8';
       case 'amber':
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #c4a484 -> var(--mg-custom-c4a484)
         return '#c4a484';
       case 'pink':
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4a5b8 -> var(--mg-custom-d4a5b8)
         return '#d4a5b8';
       default:
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b8dbd -> var(--mg-custom-6b8dbd)
         return '#6b8dbd';
     }
   };
@@ -179,7 +184,9 @@ const AdvancedDesignSample = () => {
     datasets: [{
       label: '사용자 수',
       data: [65, 59, 80, 81, 56, 55],
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgb(102, 126, 234) -> var(--mg-custom-color)
       borderColor: 'rgb(102, 126, 234)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(102, 126, 234, 0.1) -> var(--mg-custom-color)
       backgroundColor: 'rgba(102, 126, 234, 0.1)',
       tension: 0.4
     }]
@@ -279,6 +286,8 @@ const AdvancedDesignSample = () => {
       title: '보안 암호화',
       description: '최고 수준의 암호화로 모든 대화 내용을 안전하게 보호합니다.',
       icon: '🔒',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #00f2fe -> var(--mg-custom-00f2fe)
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #4facfe -> var(--mg-custom-4facfe)
       gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
       stats: { sessions: '3.2K', satisfaction: '99%' }
     },
@@ -286,6 +295,8 @@ const AdvancedDesignSample = () => {
       title: '개인화 추천',
       description: '사용자 패턴을 학습하여 가장 적합한 상담 프로그램을 추천합니다.',
       icon: '🎯',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #38f9d7 -> var(--mg-custom-38f9d7)
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #43e97b -> var(--mg-custom-43e97b)
       gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
       stats: { sessions: '2.1K', satisfaction: '97%' }
     }
@@ -573,6 +584,7 @@ const AdvancedDesignSample = () => {
               
               {/* 로딩바 데모 */}
               <div style={{ padding: '20px', background: 'var(--mg-gray-100)', borderRadius: '8px', width: '100%', maxWidth: '800px' }}>
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1a202c -> var(--mg-custom-1a202c)
                 <h4 style={{ margin: '0 0 16px 0', color: '#1a202c' }}>로딩바 데모</h4>
                 <MGFlex gap="medium" wrap justify="center">
                   <MGLoading variant="spinner" size="small" text="스피너" />
@@ -583,7 +595,9 @@ const AdvancedDesignSample = () => {
               </div>
               
               {/* 모달 테스트 버튼들 */}
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
               <div style={{ padding: '20px', background: '#f0f9ff', borderRadius: '8px', width: '100%', maxWidth: '800px' }}>
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1a202c -> var(--mg-custom-1a202c)
                 <h4 style={{ margin: '0 0 16px 0', color: '#1a202c' }}>모달 테스트</h4>
                 <MGFlex gap="medium" wrap justify="center">
                   <button className="mg-button" variant="primary" onClick={() => setShowConfirmModal(true)}>
@@ -875,7 +889,9 @@ const AdvancedDesignSample = () => {
                       datasets: [{
                         label: '상담 수',
                         data: [12, 19, 3, 5, 2, 3],
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(54, 162, 235, 0.6) -> var(--mg-custom-color)
                         backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(54, 162, 235, 1) -> var(--mg-custom-color)
                         borderColor: 'rgba(54, 162, 235, 1)',
                         borderWidth: 1
                       }]
@@ -892,8 +908,11 @@ const AdvancedDesignSample = () => {
                       datasets: [{
                         data: [10, 45, 100],
                         backgroundColor: [
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 99, 132, 0.8) -> var(--mg-custom-color)
                           'rgba(255, 99, 132, 0.8)',
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(54, 162, 235, 0.8) -> var(--mg-custom-color)
                           'rgba(54, 162, 235, 0.8)',
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 205, 86, 0.8) -> var(--mg-custom-color)
                           'rgba(255, 205, 86, 0.8)'
                         ]
                       }]
@@ -992,9 +1011,11 @@ const AdvancedDesignSample = () => {
       >
         <MGModalBody>
           <div style={{ padding: '20px 0' }}>
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1a202c -> var(--mg-custom-1a202c)
             <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#1a202c' }}>
               모달 컴포넌트 데모
             </h3>
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #4a5568 -> var(--mg-custom-4a5568)
             <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#4a5568', lineHeight: '1.6' }}>
               이것은 다양한 기능을 보여주는 데모 모달입니다.
             </p>
@@ -1002,11 +1023,15 @@ const AdvancedDesignSample = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
               <div style={{ 
                 padding: '16px', 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e2e8f0 -> var(--mg-custom-e2e8f0)
                 border: '1px solid #e2e8f0', 
                 borderRadius: '8px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8fafc -> var(--mg-custom-f8fafc)
                 backgroundColor: '#f8fafc'
               }}>
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1a202c -> var(--mg-custom-1a202c)
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600', color: '#1a202c' }}>기능 1</h4>
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #4a5568 -> var(--mg-custom-4a5568)
                 <p style={{ margin: '0', fontSize: '12px', color: '#4a5568' }}>
                   모달 내에서도 모든 컴포넌트를 사용할 수 있습니다.
                 </p>
@@ -1014,11 +1039,15 @@ const AdvancedDesignSample = () => {
               
               <div style={{ 
                 padding: '16px', 
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e2e8f0 -> var(--mg-custom-e2e8f0)
                 border: '1px solid #e2e8f0', 
                 borderRadius: '8px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8fafc -> var(--mg-custom-f8fafc)
                 backgroundColor: '#f8fafc'
               }}>
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1a202c -> var(--mg-custom-1a202c)
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600', color: '#1a202c' }}>기능 2</h4>
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #4a5568 -> var(--mg-custom-4a5568)
                 <p style={{ margin: '0', fontSize: '12px', color: '#4a5568' }}>
                   반응형 레이아웃도 완벽하게 지원합니다.
                 </p>
@@ -1029,6 +1058,7 @@ const AdvancedDesignSample = () => {
               <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--mg-primary-500)', borderRadius: '50%', animation: 'bounce 1.4s ease-in-out infinite both' }}></div>
               <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--mg-primary-500)', borderRadius: '50%', animation: 'bounce 1.4s ease-in-out infinite both', animationDelay: '-0.32s' }}></div>
               <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--mg-primary-500)', borderRadius: '50%', animation: 'bounce 1.4s ease-in-out infinite both', animationDelay: '-0.16s' }}></div>
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #718096 -> var(--mg-custom-718096)
               <span style={{ fontSize: '12px', color: '#718096', marginLeft: '8px' }}>로딩 중...</span>
             </div>
           </div>

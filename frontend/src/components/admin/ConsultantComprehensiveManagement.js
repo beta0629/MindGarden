@@ -6,6 +6,7 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { getUserStatusColor, getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { getCurrentUser } from '../../utils/session';
+// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 // getBranchNameByCode import 제거됨 - 브랜치 코드 제거 정책
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';

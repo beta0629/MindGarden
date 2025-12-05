@@ -46,6 +46,7 @@ const SalaryPrintComponent = ({
             marginBottom: '30px',
             padding: '20px',
             backgroundColor: 'var(--mg-gray-100)',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
             border: '2px solid #333'
           },
           '.salary-info': {
@@ -60,14 +61,17 @@ const SalaryPrintComponent = ({
             marginBottom: '20px'
           },
           '.salary-table th': {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
             backgroundColor: '#e9ecef',
             fontWeight: 'bold',
             padding: '12px 8px',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
             border: '1px solid #333',
             textAlign: 'center'
           },
           '.salary-table td': {
             padding: '10px 8px',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
             border: '1px solid #333',
             textAlign: 'right'
           },
@@ -77,13 +81,16 @@ const SalaryPrintComponent = ({
             backgroundColor: 'var(--mg-gray-100)'
           },
           '.total-row': {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e8f5e8 -> var(--mg-custom-e8f5e8)
             backgroundColor: '#e8f5e8',
             fontWeight: 'bold'
           },
           '.tax-row': {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
             backgroundColor: '#fff3cd'
           },
           '.net-row': {
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
             backgroundColor: '#d4edda',
             fontWeight: 'bold',
             fontSize: 'var(--font-size-base)'

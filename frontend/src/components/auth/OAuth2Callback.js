@@ -40,8 +40,10 @@ const OAuth2Callback = () => {
         const requiresAccountIntegration = searchParams.get('requiresAccountIntegration');
         const profileImageUrl = searchParams.get('profileImageUrl');
         const providerUserId = searchParams.get('providerUserId'); // 추가: SNS 사용자 ID
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         const branchId = searchParams.get('branchId');
         const branchName = searchParams.get('branchName');
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         const branchCode = searchParams.get('branchCode');
         const needsBranchMapping = searchParams.get('needsBranchMapping');
         const error = searchParams.get('error');
@@ -171,8 +173,10 @@ const OAuth2Callback = () => {
             role: role,
             profileImageUrl: profileImageUrl,
             provider: provider,
+            // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
             branchId: branchId ? parseInt(branchId) : null,
             branchName: branchName,
+            // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
             branchCode: branchCode,
             needsBranchMapping: needsBranchMapping === 'true'
           };

@@ -265,6 +265,7 @@ const ResponsiveDataTable = () => {
         background: 'var(--mood-card-bg)',
         borderRadius: '16px',
         boxShadow: 'var(--mood-shadow)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.04) -> var(--mg-custom-color)
         border: '1px solid rgba(0, 0, 0, 0.04)',
         marginBottom: '12px',
         overflow: 'hidden',
@@ -474,6 +475,7 @@ const ResponsiveDataTable = () => {
                   onClick={() => handleSort(column.key)}
                   onMouseEnter={(e) => {
                     if (column.key !== 'avatar' && column.key !== 'status') {
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.1) -> var(--mg-custom-color)
                       e.target.style.background = 'rgba(0, 122, 255, 0.1)';
                     }
                   }}
@@ -498,13 +500,16 @@ const ResponsiveDataTable = () => {
               <tr 
                 key={row.id}
                 style={{
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.06) -> var(--mg-custom-color)
                   borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
                   transition: 'all 0.2s ease',
                   animation: `fadeInUp 0.4s ease-out ${0.9 + index * 0.05}s both`,
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.05) -> var(--mg-custom-color)
                   background: selectedRows.includes(row.id) ? 'rgba(0, 122, 255, 0.05)' : 'transparent'
                 }}
                 onMouseEnter={(e) => {
                   if (!selectedRows.includes(row.id)) {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.02) -> var(--mg-custom-color)
                     e.target.style.background = 'rgba(0, 0, 0, 0.02)';
                   }
                 }}

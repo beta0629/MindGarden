@@ -28,10 +28,13 @@ export const VACATION_TYPE_ICONS = {
 
 export const VACATION_TYPE_COLORS = {
   [VACATION_TYPES.MORNING]: 'var(--mg-warning-500)',      // 오렌지
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FF5722 -> var(--mg-custom-FF5722)
   [VACATION_TYPES.AFTERNOON]: '#FF5722',    // 딥오렌지
   [VACATION_TYPES.ALL_DAY]: 'var(--mg-error-500)',      // 빨간색
   [VACATION_TYPES.MORNING_HALF]: 'var(--mg-warning-500)', // 앰버
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FF7043 -> var(--mg-custom-FF7043)
   [VACATION_TYPES.AFTERNOON_HALF]: '#FF7043', // 딥오렌지
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9C27B0 -> var(--mg-custom-9C27B0)
   [VACATION_TYPES.CUSTOM_TIME]: '#9C27B0'   // 퍼플
 };
 

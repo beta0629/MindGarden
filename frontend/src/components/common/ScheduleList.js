@@ -73,11 +73,13 @@ const ScheduleList = ({
       console.error('필터 옵션 로드 실패:', error);
       // 실패 시 기본값 설정
       setFilterOptions([
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
         { value: 'ALL', label: '전체', icon: '📋', color: '#6b7280', description: '모든 일정' },
         { value: 'TODAY', label: '오늘', icon: '📅', color: 'var(--mg-primary-500)', description: '오늘 일정' },
         { value: 'THIS_WEEK', label: '이번 주', icon: '📅', color: 'var(--mg-success-500)', description: '이번 주 일정' },
         { value: 'THIS_MONTH', label: '이번 달', icon: '📅', color: 'var(--mg-warning-500)', description: '이번 달 일정' },
         { value: 'UPCOMING', label: '예정된 일정', icon: '⏰', color: 'var(--mg-purple-500)', description: '예정된 일정' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
         { value: 'COMPLETED', label: '완료된 일정', icon: '✅', color: '#059669', description: '완료된 일정' }
       ]);
     } finally {
@@ -108,6 +110,7 @@ const ScheduleList = ({
         { value: 'TITLE_ASC', label: '제목 오름차순', icon: '🔤', color: 'var(--mg-success-500)', description: '제목 오름차순 정렬' },
         { value: 'TITLE_DESC', label: '제목 내림차순', icon: '🔤', color: 'var(--mg-warning-500)', description: '제목 내림차순 정렬' },
         { value: 'STATUS_ASC', label: '상태 오름차순', icon: '🔄', color: 'var(--mg-purple-500)', description: '상태 오름차순 정렬' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #06b6d4 -> var(--mg-custom-06b6d4)
         { value: 'STATUS_DESC', label: '상태 내림차순', icon: '🔄', color: '#06b6d4', description: '상태 내림차순 정렬' }
       ]);
     } finally {

@@ -10,6 +10,7 @@ import {
 } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
+// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 import { normalizeBranchList, getBranchNameByCode } from '../../utils/branchUtils';
 import './BranchList.css';
 

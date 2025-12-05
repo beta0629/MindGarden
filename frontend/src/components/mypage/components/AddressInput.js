@@ -48,6 +48,7 @@ const AddressInput = ({
           { value: 'OFFICE', label: '사무실', icon: '🏛️', color: 'var(--mg-purple-500)', description: '사무실 주소' },
           { value: 'BRANCH', label: '지점', icon: '🏪', color: 'var(--mg-warning-500)', description: '지점 주소' },
           { value: 'EMERGENCY', label: '비상연락처', icon: '🚨', color: 'var(--mg-error-500)', description: '비상연락처 주소' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
           { value: 'OTHER', label: '기타', icon: '📍', color: '#6b7280', description: '기타 주소' }
         ]);
       } finally {

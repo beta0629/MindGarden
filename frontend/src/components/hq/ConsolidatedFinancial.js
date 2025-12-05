@@ -114,6 +114,7 @@ const ConsolidatedFinancial = () => {
                 const profit = revenue - expenses;
                 
                 return {
+                    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                     branchCode: branch.branchCode,
                     branchName: branchName,
                     revenue: revenue,
@@ -217,7 +218,9 @@ const ConsolidatedFinancial = () => {
             {
                 label: '수익',
                 data: consolidatedData.monthlyTrend.map(item => item.revenue),
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(40, 167, 69, 0.2) -> var(--mg-custom-color)
                 backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(40, 167, 69, 1) -> var(--mg-custom-color)
                 borderColor: 'rgba(40, 167, 69, 1)',
                 borderWidth: 2,
                 fill: true
@@ -225,7 +228,9 @@ const ConsolidatedFinancial = () => {
             {
                 label: '지출',
                 data: consolidatedData.monthlyTrend.map(item => item.expense),
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(220, 53, 69, 0.2) -> var(--mg-custom-color)
                 backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(220, 53, 69, 1) -> var(--mg-custom-color)
                 borderColor: 'rgba(220, 53, 69, 1)',
                 borderWidth: 2,
                 fill: true

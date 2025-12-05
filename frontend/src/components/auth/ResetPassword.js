@@ -269,6 +269,7 @@ const ResetPassword = () => {
                   <div style={{
                     width: '64px',
                     height: '64px',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #48bb78 -> var(--mg-custom-48bb78)
                     backgroundColor: '#48bb78',
                     borderRadius: '16px',
                     display: 'flex',
@@ -284,6 +285,7 @@ const ResetPassword = () => {
                   <h1 style={{
                     fontSize: 'var(--font-size-xxl)',
                     fontWeight: '700',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2d3748 -> var(--mg-custom-2d3748)
                     color: '#2d3748',
                     marginBottom: '16px'
                   }}>
@@ -292,6 +294,7 @@ const ResetPassword = () => {
                   
                   <p style={{
                     fontSize: 'var(--font-size-base)',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #718096 -> var(--mg-custom-718096)
                     color: '#718096',
                     lineHeight: '1.6',
                     marginBottom: '32px'
@@ -318,6 +321,7 @@ const ResetPassword = () => {
                     }}
                     onMouseEnter={(e) => {
                       e.target.style.transform = 'translateY(-2px)';
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(102, 126, 234, 0.3) -> var(--mg-custom-color)
                       e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.3)';
                     }}
                     onMouseLeave={(e) => {

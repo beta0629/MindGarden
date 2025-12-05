@@ -28,6 +28,7 @@ const BranchLogin = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchCode: ''
   });
   const [branches, setBranches] = useState([]);
@@ -86,6 +87,7 @@ const BranchLogin = () => {
       const loginData = {
         email: formData.email,
         password: formData.password,
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchCode: loginType === 'BRANCH' ? formData.branchCode : null,
         loginType: loginType
       };
@@ -141,6 +143,7 @@ const BranchLogin = () => {
     setLoginType(type);
     setFormData(prev => ({
       ...prev,
+      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       branchCode: ''
     }));
   };

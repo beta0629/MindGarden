@@ -30,6 +30,7 @@ const ConsultantRecords = () => {
         
         // 전체 옵션을 맨 앞에 추가
         const allOptions = [
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
           { value: 'ALL', label: '전체', icon: '📋', color: '#6b7280', description: '모든 상담기록' },
           ...consultationStatuses.map(code => ({
             value: code.codeValue,
@@ -46,6 +47,7 @@ const ConsultantRecords = () => {
       console.error('상태 코드 로드 실패:', error);
       // 실패 시 기본값 설정 (상담기록에 맞는 상태)
       setStatusOptions([
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
         { value: 'ALL', label: '전체', icon: '📋', color: '#6b7280', description: '모든 상담기록' },
         { value: 'COMPLETED', label: '완료', icon: '✅', color: 'var(--mg-success-500)', description: '완료된 상담기록' },
         { value: 'PENDING', label: '대기', icon: '⏳', color: 'var(--mg-warning-500)', description: '대기 중인 상담기록' }

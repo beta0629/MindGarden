@@ -97,6 +97,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
                         phone: consultantEntity.phone || '',
                         role: consultantEntity.role || 'CONSULTANT',
                         isActive: consultantEntity.isActive !== undefined ? consultantEntity.isActive : true,
+                        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                         branchCode: consultantEntity.branchCode || '',
                         specialty: rawSpecialty, // 원본 저장
                         specialtyDisplay: specialtyDisplay, // 동적으로 조회한 한글명

@@ -48,24 +48,32 @@ export const defaultTheme = {
       success: 'var(--mg-success-500)',
       successBg: 'var(--cs-success-100)',
       warning: 'var(--mg-warning-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef3c7 -> var(--mg-custom-fef3c7)
       warningBg: '#fef3c7',
       error: 'var(--mg-error-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fee2e2 -> var(--mg-custom-fee2e2)
       errorBg: '#fee2e2',
       info: 'var(--mg-primary-500)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dbeafe -> var(--mg-custom-dbeafe)
       infoBg: '#dbeafe',
     },
     
     // Interactive States
     interactive: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.05) -> var(--mg-custom-color)
       hover: 'rgba(0, 0, 0, 0.05)',
       active: 'var(--mg-shadow-light)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #E5E5E7 -> var(--mg-custom-E5E5E7)
       disabled: '#E5E5E7',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9CA3AF -> var(--mg-custom-9CA3AF)
       disabledText: '#9CA3AF',
     },
     
     // Glass Effect
     glass: {
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.6) -> var(--mg-custom-color)
       background: 'rgba(255, 255, 255, 0.6)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.5) -> var(--mg-custom-color)
       border: 'rgba(255, 255, 255, 0.5)',
       blur: '20px',
     },
@@ -125,11 +133,14 @@ export const defaultTheme = {
   
   shadows: {
     none: 'none',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.05) -> var(--mg-custom-color)
     sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
     md: '0 4px 6px var(--mg-shadow-light)',
     lg: '0 10px 15px var(--mg-shadow-light)',
     xl: '0 20px 25px var(--mg-shadow-medium)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.25) -> var(--mg-custom-color)
     '2xl': '0 25px 50px rgba(0, 0, 0, 0.25)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.06) -> var(--mg-custom-color)
     inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)',
   },
   

@@ -527,6 +527,7 @@ const BranchManagement = () => {
  */
 const BranchCreateModal = ({ isOpen, onClose, onSubmit }) => {
     const [formData, setFormData] = useState({
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchCode: '',
         branchName: '',
         branchType: 'FRANCHISE',
@@ -565,6 +566,7 @@ const BranchCreateModal = ({ isOpen, onClose, onSubmit }) => {
         const newErrors = {};
         
         if (!formData.branchCode.trim()) {
+            // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
             newErrors.branchCode = '지점 코드는 필수입니다.';
         }
         if (!formData.branchName.trim()) {

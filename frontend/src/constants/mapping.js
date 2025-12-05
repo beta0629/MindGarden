@@ -37,20 +37,28 @@ export const MAPPING_STATUS_COLORS = {
     [MAPPING_STATUS.PAYMENT_CONFIRMED]: 'var(--mg-info-500)',
     [MAPPING_STATUS.ACTIVE]: 'var(--mg-success-500)',
     [MAPPING_STATUS.INACTIVE]: 'var(--mg-secondary-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
     [MAPPING_STATUS.SUSPENDED]: '#fd7e14',
     [MAPPING_STATUS.TERMINATED]: 'var(--mg-error-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#6f42c1'
 };
 
 // 매칭 상태 배경색 (동적 처리로 변경 - 색상 기반 자동 생성)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_BG_COLORS = {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
     [MAPPING_STATUS.PENDING_PAYMENT]: '#fff3cd',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1ecf1 -> var(--mg-custom-d1ecf1)
     [MAPPING_STATUS.PAYMENT_CONFIRMED]: '#d1ecf1',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
     [MAPPING_STATUS.ACTIVE]: '#d4edda',
     [MAPPING_STATUS.INACTIVE]: 'var(--mg-gray-100)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ffeaa7 -> var(--mg-custom-ffeaa7)
     [MAPPING_STATUS.SUSPENDED]: '#ffeaa7',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
     [MAPPING_STATUS.TERMINATED]: '#f8d7da',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e2e3f1 -> var(--mg-custom-e2e3f1)
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#e2e3f1'
 };
 
@@ -156,19 +164,27 @@ export const MAPPING_STAT_COLORS = {
     PENDING: 'var(--mg-warning-500)',
     ACTIVE: 'var(--mg-success-500)',
     PAYMENT_CONFIRMED: 'var(--mg-info-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
     TOTAL: '#6f42c1',
     TERMINATED: 'var(--mg-error-500)',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
     SESSIONS_EXHAUSTED: '#fd7e14'
 };
 
 // 매칭 통계 배경색 (동적 처리로 변경 - 색상 기반 자동 생성)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_BG_COLORS = {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
     PENDING: '#fff3cd',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
     ACTIVE: '#d4edda',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d1ecf1 -> var(--mg-custom-d1ecf1)
     PAYMENT_CONFIRMED: '#d1ecf1',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e2e3f1 -> var(--mg-custom-e2e3f1)
     TOTAL: '#e2e3f1',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
     TERMINATED: '#f8d7da',
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ffeaa7 -> var(--mg-custom-ffeaa7)
     SESSIONS_EXHAUSTED: '#ffeaa7'
 };
 

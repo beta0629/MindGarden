@@ -46,12 +46,16 @@ const PremiumDesignSample = () => {
       title: '개인화 추천',
       description: '사용자의 패턴을 학습하여 가장 적합한 상담 프로그램을 추천합니다.',
       icon: '🎯',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #00f2fe -> var(--mg-custom-00f2fe)
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #4facfe -> var(--mg-custom-4facfe)
       color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
     },
     {
       title: '보안 보장',
       description: '최고 수준의 암호화로 모든 대화 내용을 안전하게 보호합니다.',
       icon: '🔒',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #38f9d7 -> var(--mg-custom-38f9d7)
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #43e97b -> var(--mg-custom-43e97b)
       color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
     }
   ];

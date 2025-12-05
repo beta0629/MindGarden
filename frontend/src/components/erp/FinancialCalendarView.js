@@ -188,6 +188,7 @@ const FinancialCalendarView = () => {
               key={day}
               onClick={() => handleDateClick(day)}
               style={{
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
                 backgroundColor: isToday ? '#fff3cd' : 'white',
                 minHeight: '100px',
                 padding: '8px',
@@ -202,6 +203,8 @@ const FinancialCalendarView = () => {
               <div style={{
                 fontSize: 'var(--font-size-sm)',
                 fontWeight: isToday ? 'bold' : 'normal',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #333 -> var(--mg-custom-333)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #856404 -> var(--mg-custom-856404)
                 color: isToday ? '#856404' : '#333',
                 marginBottom: '4px'
               }}>
@@ -216,7 +219,9 @@ const FinancialCalendarView = () => {
                     <div style={{
                       fontSize: 'var(--font-size-xs)',
                       padding: '2px 4px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
                       backgroundColor: '#d4edda',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #155724 -> var(--mg-custom-155724)
                       color: '#155724',
                       borderRadius: '4px',
                       textAlign: 'center'
@@ -230,7 +235,9 @@ const FinancialCalendarView = () => {
                     <div style={{
                       fontSize: 'var(--font-size-xs)',
                       padding: '2px 4px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
                       backgroundColor: '#f8d7da',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
                       color: '#721c24',
                       borderRadius: '4px',
                       textAlign: 'center'
@@ -279,6 +286,7 @@ const FinancialCalendarView = () => {
           backgroundColor: 'white',
           borderRadius: '8px',
           border: '2px solid var(--mg-primary-500)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.1) -> var(--mg-custom-color)
           boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         }}>
           <div style={{
@@ -313,6 +321,7 @@ const FinancialCalendarView = () => {
           }}>
             <div style={{
               padding: '12px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
               backgroundColor: '#d4edda',
               borderRadius: '8px',
               textAlign: 'center'
@@ -325,6 +334,7 @@ const FinancialCalendarView = () => {
             
             <div style={{
               padding: '12px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
               backgroundColor: '#f8d7da',
               borderRadius: '8px',
               textAlign: 'center'
@@ -337,6 +347,7 @@ const FinancialCalendarView = () => {
             
             <div style={{
               padding: '12px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #cce7ff -> var(--mg-custom-cce7ff)
               backgroundColor: '#cce7ff',
               borderRadius: '8px',
               textAlign: 'center'
@@ -350,6 +361,7 @@ const FinancialCalendarView = () => {
 
           {/* 거래 목록 */}
           <div>
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
             <h4 style={{ marginBottom: '12px', color: '#495057' }}>
               📋 거래 내역 ({dayDetail.transactions.length}건)
             </h4>
@@ -375,7 +387,11 @@ const FinancialCalendarView = () => {
                           fontSize: 'var(--font-size-xs)',
                           padding: '2px 6px',
                           borderRadius: '10px',
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
                           backgroundColor: transaction.transactionType === 'INCOME' ? '#d4edda' : '#f8d7da',
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #155724 -> var(--mg-custom-155724)
                           color: transaction.transactionType === 'INCOME' ? '#155724' : '#721c24'
                         }}>
                           #{transaction.id}
@@ -386,6 +402,7 @@ const FinancialCalendarView = () => {
                           <span style={{
                             fontSize: 'var(--font-size-xs)',
                             padding: '2px 6px',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
                             backgroundColor: '#e3f2fd',
                             color: 'var(--mg-secondary-600)',
                             borderRadius: '10px',
@@ -438,6 +455,7 @@ const FinancialCalendarView = () => {
         backgroundColor: 'var(--mg-gray-100)',
         borderRadius: '8px'
       }}>
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
         <h3 style={{ marginBottom: '15px', color: '#495057' }}>
           📊 {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월 통계
         </h3>
@@ -456,6 +474,7 @@ const FinancialCalendarView = () => {
             }}>
               <div style={{
                 padding: '15px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
                 backgroundColor: '#d4edda',
                 borderRadius: '8px',
                 textAlign: 'center'
@@ -468,6 +487,7 @@ const FinancialCalendarView = () => {
               
               <div style={{
                 padding: '15px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
                 backgroundColor: '#f8d7da',
                 borderRadius: '8px',
                 textAlign: 'center'
@@ -480,6 +500,8 @@ const FinancialCalendarView = () => {
               
               <div style={{
                 padding: '15px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ffe6e6 -> var(--mg-custom-ffe6e6)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #cce7ff -> var(--mg-custom-cce7ff)
                 backgroundColor: monthlyProfit >= 0 ? '#cce7ff' : '#ffe6e6',
                 borderRadius: '8px',
                 textAlign: 'center'
@@ -487,12 +509,16 @@ const FinancialCalendarView = () => {
                 <div style={{
                   fontSize: 'var(--font-size-xl)',
                   fontWeight: 'bold',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #004085 -> var(--mg-custom-004085)
                   color: monthlyProfit >= 0 ? '#004085' : '#721c24'
                 }}>
                   {formatCurrency(monthlyProfit)}원
                 </div>
                 <div style={{
                   fontSize: 'var(--font-size-sm)',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #004085 -> var(--mg-custom-004085)
                   color: monthlyProfit >= 0 ? '#004085' : '#721c24'
                 }}>
                   💎 월 순이익
@@ -501,6 +527,7 @@ const FinancialCalendarView = () => {
               
               <div style={{
                 padding: '15px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e2e3e5 -> var(--mg-custom-e2e3e5)
                 backgroundColor: '#e2e3e5',
                 borderRadius: '8px',
                 textAlign: 'center'
@@ -522,6 +549,7 @@ const FinancialCalendarView = () => {
           left: 0,
           right: 0,
           bottom: 0,
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0,0,0,0.5) -> var(--mg-custom-color)
           backgroundColor: 'rgba(0,0,0,0.5)',
           display: 'flex',
           justifyContent: 'center',

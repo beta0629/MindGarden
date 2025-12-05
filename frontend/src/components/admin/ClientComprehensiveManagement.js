@@ -118,6 +118,7 @@ const ClientComprehensiveManagement = () => {
                         role: clientEntity.role,
                         status: clientEntity.status,
                         isActive: clientEntity.isActive,
+                        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                         branchCode: clientEntity.branchCode,
                         createdAt: clientEntity.createdAt,
                         updatedAt: clientEntity.updatedAt,

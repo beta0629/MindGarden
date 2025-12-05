@@ -82,6 +82,7 @@ const StatsCardGrid = ({
         backgroundColor: 'var(--mg-white)',
         borderRadius: '12px',
         boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
         border: '1px solid #e9ecef',
         marginBottom: '24px'
       }}>
@@ -112,10 +113,12 @@ const StatsCardGrid = ({
     }}>
       {/* 총 상담 수 */}
       <div style={{
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #E8E0FF -> var(--mg-custom-E8E0FF)
         backgroundColor: '#E8E0FF',
         borderRadius: '12px',
         padding: '24px',
         boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D1C4E9 -> var(--mg-custom-D1C4E9)
         border: '1px solid #D1C4E9',
         display: 'flex',
         alignItems: 'center',
@@ -126,6 +129,7 @@ const StatsCardGrid = ({
           width: '60px',
           height: '60px',
           borderRadius: '12px',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #7B68EE -> var(--mg-custom-7B68EE)
           backgroundColor: '#7B68EE',
           display: 'flex',
           alignItems: 'center',
@@ -150,10 +154,12 @@ const StatsCardGrid = ({
 
       {/* 예약된 상담 */}
       <div style={{
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFE8D1 -> var(--mg-custom-FFE8D1)
         backgroundColor: '#FFE8D1',
         borderRadius: '12px',
         padding: '24px',
         boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFCCBC -> var(--mg-custom-FFCCBC)
         border: '1px solid #FFCCBC',
         display: 'flex',
         alignItems: 'center',
@@ -188,10 +194,12 @@ const StatsCardGrid = ({
 
       {/* 완료된 상담 */}
       <div style={{
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #D4F1E0 -> var(--mg-custom-D4F1E0)
         backgroundColor: '#D4F1E0',
         borderRadius: '12px',
         padding: '24px',
         boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #C8E6C9 -> var(--mg-custom-C8E6C9)
         border: '1px solid #C8E6C9',
         display: 'flex',
         alignItems: 'center',
@@ -226,10 +234,12 @@ const StatsCardGrid = ({
 
       {/* 취소된 상담 */}
       <div style={{
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFE0DB -> var(--mg-custom-FFE0DB)
         backgroundColor: '#FFE0DB',
         borderRadius: '12px',
         padding: '24px',
         boxShadow: '0 2px 8px var(--mg-shadow-light)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FFCDD2 -> var(--mg-custom-FFCDD2)
         border: '1px solid #FFCDD2',
         display: 'flex',
         alignItems: 'center',

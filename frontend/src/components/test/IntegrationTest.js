@@ -206,6 +206,7 @@ const IntegrationTest = () => {
             margin: 0,
             fontSize: 'var(--font-size-xxl)',
             fontWeight: '700',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
             color: '#1f2937',
             display: 'flex',
             alignItems: 'center',
@@ -226,6 +227,7 @@ const IntegrationTest = () => {
               onClick={clearResults}
               style={{
                 padding: '12px 24px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                 backgroundColor: '#6b7280',
                 color: 'white',
                 border: 'none',
@@ -239,10 +241,12 @@ const IntegrationTest = () => {
                 gap: '8px'
               }}
               onMouseOver={(e) => {
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #4b5563 -> var(--mg-custom-4b5563)
                 e.target.style.backgroundColor = '#4b5563';
                 e.target.style.transform = 'translateY(-1px)';
               }}
               onMouseOut={(e) => {
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                 e.target.style.backgroundColor = '#6b7280';
                 e.target.style.transform = 'translateY(0)';
               }}
@@ -260,12 +264,14 @@ const IntegrationTest = () => {
           backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: '0 2px 8px var(--mg-shadow-light)',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
           border: '1px solid #e5e7eb'
         }}>
           <h3 style={{
             margin: '0 0 20px 0',
             fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
             color: '#1f2937',
             display: 'flex',
             alignItems: 'center',
@@ -300,6 +306,7 @@ const IntegrationTest = () => {
               }}
               onMouseOver={(e) => {
                 if (!loading) {
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2563eb -> var(--mg-custom-2563eb)
                   e.target.style.backgroundColor = '#2563eb';
                   e.target.style.transform = 'translateY(-1px)';
                 }
@@ -335,6 +342,7 @@ const IntegrationTest = () => {
               }}
               onMouseOver={(e) => {
                 if (!loading) {
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
                   e.target.style.backgroundColor = '#059669';
                   e.target.style.transform = 'translateY(-1px)';
                 }
@@ -354,6 +362,7 @@ const IntegrationTest = () => {
               disabled={loading}
               style={{
                 padding: '16px 24px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                 backgroundColor: '#6b7280',
                 color: 'white',
                 border: 'none',
@@ -370,12 +379,14 @@ const IntegrationTest = () => {
               }}
               onMouseOver={(e) => {
                 if (!loading) {
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #4b5563 -> var(--mg-custom-4b5563)
                   e.target.style.backgroundColor = '#4b5563';
                   e.target.style.transform = 'translateY(-1px)';
                 }
               }}
               onMouseOut={(e) => {
                 if (!loading) {
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                   e.target.style.backgroundColor = '#6b7280';
                   e.target.style.transform = 'translateY(0)';
                 }
@@ -405,6 +416,7 @@ const IntegrationTest = () => {
               }}
               onMouseOver={(e) => {
                 if (!loading) {
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
                   e.target.style.backgroundColor = '#dc2626';
                   e.target.style.transform = 'translateY(-1px)';
                 }
@@ -433,12 +445,14 @@ const IntegrationTest = () => {
             backgroundColor: 'white',
             borderRadius: '12px',
             boxShadow: '0 2px 8px var(--mg-shadow-light)',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
             border: '1px solid #e5e7eb',
             marginBottom: '32px'
           }}>
             <div style={{
               width: '40px',
               height: '40px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
               border: '4px solid #e5e7eb',
               borderTop: '4px solid var(--mg-primary-500)',
               borderRadius: '50%',
@@ -449,6 +463,7 @@ const IntegrationTest = () => {
               margin: 0,
               fontSize: 'var(--font-size-base)',
               fontWeight: '500',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
               color: '#6b7280'
             }}>{MESSAGES.LOADING.RUNNING_TEST}</p>
           </div>
@@ -462,12 +477,14 @@ const IntegrationTest = () => {
             backgroundColor: 'white',
             borderRadius: '12px',
             boxShadow: '0 2px 8px var(--mg-shadow-light)',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
             border: '1px solid #e5e7eb'
           }}>
             <h3 style={{
               margin: '0 0 20px 0',
               fontSize: 'var(--font-size-xl)',
               fontWeight: '600',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
               color: '#1f2937',
               display: 'flex',
               alignItems: 'center',
@@ -478,6 +495,8 @@ const IntegrationTest = () => {
             </h3>
             <div style={{
               padding: '20px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
               backgroundColor: testResults.success ? '#f0f9ff' : '#fef2f2',
               border: `2px solid ${testResults.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
@@ -493,6 +512,7 @@ const IntegrationTest = () => {
                   margin: 0,
                   fontSize: 'var(--font-size-lg)',
                   fontWeight: '600',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
                   color: '#1f2937'
                 }}>{testResults.testName}</h4>
                 <span style={{
@@ -513,15 +533,19 @@ const IntegrationTest = () => {
                 marginBottom: '20px'
               }}>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                   <strong style={{ color: '#374151' }}>시작 시간:</strong> {formatDateTime(testResults.startTime)}
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                   <strong style={{ color: '#374151' }}>종료 시간:</strong> {formatDateTime(testResults.endTime)}
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                   <strong style={{ color: '#374151' }}>실행 시간:</strong> {testResults.executionTimeMs}ms
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280', gridColumn: '1 / -1' }}>
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                   <strong style={{ color: '#374151' }}>메시지:</strong> {testResults.message || testResults.errorMessage}
                 </p>
               </div>
@@ -532,12 +556,14 @@ const IntegrationTest = () => {
                   padding: '16px',
                   backgroundColor: 'white',
                   borderRadius: '8px',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
                   border: '1px solid #e5e7eb'
                 }}>
                   <h5 style={{
                     margin: '0 0 16px 0',
                     fontSize: 'var(--font-size-base)',
                     fontWeight: '600',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
                     color: '#1f2937'
                   }}>개별 테스트 결과:</h5>
                   <div style={{
@@ -548,6 +574,8 @@ const IntegrationTest = () => {
                     {testResults.testResults.map((result, index) => (
                       <div key={index} style={{
                         padding: '12px',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
                         backgroundColor: result.success ? '#f0f9ff' : '#fef2f2',
                         border: `1px solid ${result.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
                         borderRadius: '6px',
@@ -562,6 +590,7 @@ const IntegrationTest = () => {
                           <span style={{
                             fontSize: 'var(--font-size-sm)',
                             fontWeight: '600',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
                             color: '#1f2937'
                           }}>{result.testName}</span>
                           <span style={{
@@ -579,10 +608,12 @@ const IntegrationTest = () => {
                           <p style={{
                             margin: '0 0 4px 0',
                             fontSize: 'var(--font-size-sm)',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                             color: '#6b7280'
                           }}>{result.details}</p>
                           <small style={{
                             fontSize: 'var(--font-size-xs)',
+                            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9ca3af -> var(--mg-custom-9ca3af)
                             color: '#9ca3af'
                           }}>{formatDateTime(result.timestamp)}</small>
                         </div>
@@ -603,12 +634,14 @@ const IntegrationTest = () => {
             backgroundColor: 'white',
             borderRadius: '12px',
             boxShadow: '0 2px 8px var(--mg-shadow-light)',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
             border: '1px solid #e5e7eb'
           }}>
             <h3 style={{
               margin: '0 0 20px 0',
               fontSize: 'var(--font-size-xl)',
               fontWeight: '600',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
               color: '#1f2937',
               display: 'flex',
               alignItems: 'center',
@@ -619,6 +652,8 @@ const IntegrationTest = () => {
             </h3>
             <div style={{
               padding: '20px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
               backgroundColor: healthStatus.overallStatus === 'HEALTHY' ? '#f0f9ff' : '#fef2f2',
               border: `2px solid ${healthStatus.overallStatus === 'HEALTHY' ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
@@ -634,6 +669,7 @@ const IntegrationTest = () => {
                   margin: 0,
                   fontSize: 'var(--font-size-lg)',
                   fontWeight: '600',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
                   color: '#1f2937'
                 }}>시스템 상태</h4>
                 <span style={{
@@ -654,12 +690,15 @@ const IntegrationTest = () => {
                 marginBottom: '20px'
               }}>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                   <strong style={{ color: '#374151' }}>확인 시간:</strong> {formatDateTime(healthStatus.timestamp)}
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                   <strong style={{ color: '#374151' }}>사용자 수:</strong> {healthStatus.userCount}
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280', gridColumn: '1 / -1' }}>
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                   <strong style={{ color: '#374151' }}>메시지:</strong> {healthStatus.message}
                 </p>
               </div>
@@ -669,12 +708,14 @@ const IntegrationTest = () => {
                 padding: '16px',
                 backgroundColor: 'white',
                 borderRadius: '8px',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
                 border: '1px solid #e5e7eb'
               }}>
                 <h5 style={{
                   margin: '0 0 16px 0',
                   fontSize: 'var(--font-size-base)',
                   fontWeight: '600',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
                   color: '#1f2937'
                 }}>서비스 상태:</h5>
                 <div style={{
@@ -698,11 +739,13 @@ const IntegrationTest = () => {
                       padding: '12px',
                       backgroundColor: 'var(--mg-gray-100)',
                       borderRadius: '6px',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
                       border: '1px solid #e5e7eb'
                     }}>
                       <span style={{
                         fontSize: 'var(--font-size-sm)',
                         fontWeight: '500',
+                        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                         color: '#374151'
                       }}>{service.name}:</span>
                       <span style={{
@@ -731,12 +774,14 @@ const IntegrationTest = () => {
             backgroundColor: 'white',
             borderRadius: '12px',
             boxShadow: '0 2px 8px var(--mg-shadow-light)',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
             border: '1px solid #e5e7eb'
           }}>
             <h3 style={{
               margin: '0 0 20px 0',
               fontSize: 'var(--font-size-xl)',
               fontWeight: '600',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
               color: '#1f2937',
               display: 'flex',
               alignItems: 'center',
@@ -747,6 +792,8 @@ const IntegrationTest = () => {
             </h3>
             <div style={{
               padding: '20px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
               backgroundColor: performanceResults.success ? '#f0f9ff' : '#fef2f2',
               border: `2px solid ${performanceResults.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
@@ -762,6 +809,7 @@ const IntegrationTest = () => {
                   margin: 0,
                   fontSize: 'var(--font-size-lg)',
                   fontWeight: '600',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
                   color: '#1f2937'
                 }}>성능 측정 결과</h4>
                 <span style={{
@@ -784,12 +832,15 @@ const IntegrationTest = () => {
                     marginBottom: '20px'
                   }}>
                     <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                       <strong style={{ color: '#374151' }}>평균 응답 시간:</strong> {performanceResults.averageResponseTime?.toFixed(2)}ms
                     </p>
                     <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                       <strong style={{ color: '#374151' }}>최대 응답 시간:</strong> {performanceResults.maxResponseTime}ms
                     </p>
                     <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                       <strong style={{ color: '#374151' }}>최소 응답 시간:</strong> {performanceResults.minResponseTime}ms
                     </p>
                   </div>
@@ -798,12 +849,14 @@ const IntegrationTest = () => {
                     padding: '16px',
                     backgroundColor: 'white',
                     borderRadius: '8px',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
                     border: '1px solid #e5e7eb'
                   }}>
                     <h5 style={{
                       margin: '0 0 12px 0',
                       fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
                       color: '#1f2937'
                     }}>개별 응답 시간:</h5>
                     <div style={{
@@ -816,8 +869,10 @@ const IntegrationTest = () => {
                           padding: '8px 12px',
                           backgroundColor: 'var(--mg-gray-100)',
                           borderRadius: '6px',
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
                           border: '1px solid #e5e7eb',
                           fontSize: 'var(--font-size-sm)',
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                           color: '#374151',
                           textAlign: 'center'
                         }}>
@@ -830,6 +885,7 @@ const IntegrationTest = () => {
               ) : (
                 <div>
                   <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                     <strong style={{ color: '#374151' }}>오류:</strong> {performanceResults.error}
                   </p>
                 </div>
@@ -846,12 +902,14 @@ const IntegrationTest = () => {
             backgroundColor: 'white',
             borderRadius: '12px',
             boxShadow: '0 2px 8px var(--mg-shadow-light)',
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
             border: '1px solid #e5e7eb'
           }}>
             <h3 style={{
               margin: '0 0 20px 0',
               fontSize: 'var(--font-size-xl)',
               fontWeight: '600',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
               color: '#1f2937',
               display: 'flex',
               alignItems: 'center',
@@ -862,6 +920,8 @@ const IntegrationTest = () => {
             </h3>
             <div style={{
               padding: '20px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fef2f2 -> var(--mg-custom-fef2f2)
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f0f9ff -> var(--mg-custom-f0f9ff)
               backgroundColor: securityResults.success ? '#f0f9ff' : '#fef2f2',
               border: `2px solid ${securityResults.success ? 'var(--mg-primary-500)' : 'var(--mg-error-500)'}`,
               borderRadius: '8px',
@@ -877,6 +937,7 @@ const IntegrationTest = () => {
                   margin: 0,
                   fontSize: 'var(--font-size-lg)',
                   fontWeight: '600',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #1f2937 -> var(--mg-custom-1f2937)
                   color: '#1f2937'
                 }}>보안 검증 결과</h4>
                 <span style={{
@@ -903,6 +964,7 @@ const IntegrationTest = () => {
                     padding: '12px',
                     backgroundColor: 'white',
                     borderRadius: '6px',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
                     border: '1px solid #e5e7eb'
                   }}>
                     <span style={{ fontSize: 'var(--font-size-sm)', color: '#374151', fontWeight: '500' }}>
@@ -926,6 +988,7 @@ const IntegrationTest = () => {
                     padding: '12px',
                     backgroundColor: 'white',
                     borderRadius: '6px',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
                     border: '1px solid #e5e7eb'
                   }}>
                     <span style={{ fontSize: 'var(--font-size-sm)', color: '#374151', fontWeight: '500' }}>
@@ -949,6 +1012,7 @@ const IntegrationTest = () => {
                     padding: '12px',
                     backgroundColor: 'white',
                     borderRadius: '6px',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e5e7eb -> var(--mg-custom-e5e7eb)
                     border: '1px solid #e5e7eb',
                     gridColumn: '1 / -1'
                   }}>
@@ -970,6 +1034,7 @@ const IntegrationTest = () => {
               ) : (
                 <div>
                   <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #374151 -> var(--mg-custom-374151)
                     <strong style={{ color: '#374151' }}>오류:</strong> {securityResults.error}
                   </p>
                 </div>

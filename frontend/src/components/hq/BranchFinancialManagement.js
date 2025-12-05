@@ -39,6 +39,7 @@ const BranchFilterCard = ({
                             className="mg-v2-form-select"
                             value={selectedBranch?.branchCode || ''}
                             onChange={(e) => {
+                                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                                 const branch = branches.find(b => b.branchCode === e.target.value);
                                 onBranchChange(branch);
                             }}
@@ -273,6 +274,7 @@ const BranchFinancialManagement = () => {
         setLoading(true);
         try {
             const params = new URLSearchParams({
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: selectedBranch.branchCode,
                 startDate: filters.startDate,
                 endDate: filters.endDate

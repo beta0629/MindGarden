@@ -200,10 +200,12 @@ const ComplexDashboardSample = () => {
           
           onMouseEnter={(e) => {
             e.target.style.transform = 'translateY(-4px)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.12) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.12)';
           }}
           onMouseLeave={(e) => {
             e.target.style.transform = 'translateY(0)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.08) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
           }}
         >
@@ -234,10 +236,12 @@ const ComplexDashboardSample = () => {
           
           onMouseEnter={(e) => {
             e.target.style.transform = 'translateY(-4px)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.12) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.12)';
           }}
           onMouseLeave={(e) => {
             e.target.style.transform = 'translateY(0)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.08) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
           }}
         >
@@ -268,10 +272,12 @@ const ComplexDashboardSample = () => {
           
           onMouseEnter={(e) => {
             e.target.style.transform = 'translateY(-4px)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.12) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.12)';
           }}
           onMouseLeave={(e) => {
             e.target.style.transform = 'translateY(0)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.08) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
           }}
         >
@@ -303,10 +309,12 @@ const ComplexDashboardSample = () => {
           
           onMouseEnter={(e) => {
             e.target.style.transform = 'translateY(-2px)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.12) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.12)';
           }}
           onMouseLeave={(e) => {
             e.target.style.transform = 'translateY(0)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.08) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
           }}
         >
@@ -348,11 +356,13 @@ const ComplexDashboardSample = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '12px 0',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.06) -> var(--mg-custom-color)
                     borderBottom: index < 2 ? '1px solid rgba(0, 0, 0, 0.06)' : 'none',
                     animation: `slideInRight 0.5s ease-out ${1.2 + index * 0.1}s both`,
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.04) -> var(--mg-custom-color)
                     e.target.style.background = 'rgba(0, 122, 255, 0.04)';
                     e.target.style.paddingLeft = '8px';
                     e.target.style.borderRadius = '8px';
@@ -387,10 +397,12 @@ const ComplexDashboardSample = () => {
           
           onMouseEnter={(e) => {
             e.target.style.transform = 'translateY(-2px)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.12) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.12)';
           }}
           onMouseLeave={(e) => {
             e.target.style.transform = 'translateY(0)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.08) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
           }}
         >
@@ -431,11 +443,13 @@ const ComplexDashboardSample = () => {
                     alignItems: 'center',
                     gap: '12px',
                     padding: '12px 0',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.06) -> var(--mg-custom-color)
                     borderBottom: index < 1 ? '1px solid rgba(0, 0, 0, 0.06)' : 'none',
                     animation: `bounceIn 0.6s ease-out ${1.3 + index * 0.2}s both`,
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 122, 255, 0.04) -> var(--mg-custom-color)
                     e.target.style.background = 'rgba(0, 122, 255, 0.04)';
                     e.target.style.paddingLeft = '8px';
                     e.target.style.borderRadius = '8px';
@@ -482,10 +496,12 @@ const ComplexDashboardSample = () => {
           
           onMouseEnter={(e) => {
             e.target.style.transform = 'translateY(-2px)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.12) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.12)';
           }}
           onMouseLeave={(e) => {
             e.target.style.transform = 'translateY(0)';
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.08) -> var(--mg-custom-color)
             e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
           }}
         >

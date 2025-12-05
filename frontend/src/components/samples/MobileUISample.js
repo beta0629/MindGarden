@@ -206,6 +206,7 @@ const MobileUISample = () => {
                 borderRadius: '16px',
                 padding: '24px',
                 boxShadow: 'var(--mood-shadow)',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.04) -> var(--mg-custom-color)
                 border: '1px solid rgba(0, 0, 0, 0.04)',
                 cursor: 'pointer',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -217,6 +218,7 @@ const MobileUISample = () => {
               onMouseEnter={(e) => {
                 if (selectedCard !== card.id) {
                   e.target.style.transform = 'translateY(-4px)';
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.12) -> var(--mg-custom-color)
                   e.target.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.12)';
                 }
               }}
@@ -292,6 +294,7 @@ const MobileUISample = () => {
                         key={featureIndex}
                         style={{
                           padding: '8px 12px',
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(142, 142, 147, 0.12) -> var(--mg-custom-color)
                           background: 'rgba(142, 142, 147, 0.12)',
                           borderRadius: '8px',
                           fontSize: '12px',
@@ -392,6 +395,7 @@ const MobileUISample = () => {
                   transition: 'all 0.2s ease',
                   animation: `bounceIn 0.4s ease-out ${1.5 + index * 0.1}s both`,
                   background: button.type === 'primary' ? 'var(--mood-accent)' :
+                             // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(142, 142, 147, 0.12) -> var(--mg-custom-color)
                              button.type === 'secondary' ? 'rgba(142, 142, 147, 0.12)' :
                              button.type === 'destructive' ? 'var(--mg-error-500)' : 'transparent',
                   color: button.type === 'primary' ? 'white' :

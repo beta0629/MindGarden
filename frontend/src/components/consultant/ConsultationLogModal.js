@@ -50,8 +50,10 @@ const ConsultationLogModal = ({
       setPriorityOptions([
         { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
         { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fd7e14 -> var(--mg-custom-fd7e14)
         { value: 'HIGH', label: '높음', icon: '🟠', color: '#fd7e14', description: '높은 우선순위' },
         { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6f42c1 -> var(--mg-custom-6f42c1)
         { value: 'CRITICAL', label: '위험', icon: '🚨', color: '#6f42c1', description: '위험 우선순위' }
       ]);
     } finally {
@@ -557,6 +559,7 @@ const ConsultationLogModal = ({
                   className="mg-v2-form-input"
                   style={{
                     backgroundColor: 'var(--mg-gray-100)',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
                     color: '#666',
                     cursor: 'not-allowed'
                   }}
@@ -599,6 +602,7 @@ const ConsultationLogModal = ({
                   disabled={true}
                   style={{
                     backgroundColor: 'var(--mg-gray-100)',
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
                     color: '#666',
                     cursor: 'not-allowed'
                   }}

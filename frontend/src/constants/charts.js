@@ -27,6 +27,7 @@ export const CHART_COLORS = {
   INFO: 'var(--mg-info-500)',
   SECONDARY: 'var(--mg-secondary-500)',
   LIGHT: 'var(--mg-gray-100)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #343a40 -> var(--mg-custom-343a40)
   DARK: '#343a40',
   WHITE: 'var(--mg-white)',
   BLACK: 'var(--mg-black)'
@@ -70,9 +71,11 @@ export const CHART_OPTIONS = {
       ENABLED: true,
       MODE: 'index',
       INTERSECT: false,
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.8) -> var(--mg-custom-color)
       BACKGROUND_COLOR: 'rgba(0, 0, 0, 0.8)',
       TITLE_COLOR: 'var(--mg-white)',
       BODY_COLOR: 'var(--mg-white)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.1) -> var(--mg-custom-color)
       BORDER_COLOR: 'rgba(255, 255, 255, 0.1)',
       BORDER_WIDTH: 1
     }
@@ -126,9 +129,11 @@ export const PIE_CHART_OPTIONS = {
     },
     TOOLTIP: {
       ENABLED: true,
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.8) -> var(--mg-custom-color)
       BACKGROUND_COLOR: 'rgba(0, 0, 0, 0.8)',
       TITLE_COLOR: 'var(--mg-white)',
       BODY_COLOR: 'var(--mg-white)',
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(255, 255, 255, 0.1) -> var(--mg-custom-color)
       BORDER_COLOR: 'rgba(255, 255, 255, 0.1)',
       BORDER_WIDTH: 1,
       CALLBACKS: {

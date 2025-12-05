@@ -50,6 +50,7 @@ const CommonCodeFilters = ({
             console.error('활성 상태 코드 로드 실패:', error);
             // 실패 시 기본값 설정
             setActiveStatusOptions([
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                 { value: '', label: '전체 상태', icon: '📋', color: '#6b7280', description: '모든 상태' },
                 { value: 'true', label: '활성', icon: '✅', color: 'var(--mg-success-500)', description: '활성 상태' },
                 { value: 'false', label: '비활성', icon: '❌', color: 'var(--mg-error-500)', description: '비활성 상태' }

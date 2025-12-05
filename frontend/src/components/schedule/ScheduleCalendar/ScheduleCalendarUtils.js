@@ -49,11 +49,17 @@ export const convertConsultationTypeToKorean = (consultationType) => {
  * 상담사별 색상 생성
  */
 export const getConsultantColor = (consultantId) => {
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
     if (!consultantId) return '#6b7280';
     
     // 상담사 ID를 기반으로 일관된 색상 생성
     const colors = [
         'var(--mg-primary-500)', 'var(--mg-error-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-purple-500)',
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6366f1 -> var(--mg-custom-6366f1)
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ec4899 -> var(--mg-custom-ec4899)
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f97316 -> var(--mg-custom-f97316)
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #84cc16 -> var(--mg-custom-84cc16)
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #06b6d4 -> var(--mg-custom-06b6d4)
         '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1',
         '#14b8a6', '#a855f7', '#22c55e', '#eab308', 'var(--mg-error-500)'
     ];
@@ -81,6 +87,7 @@ export const getEventColor = (status) => {
         'COMPLETED': 'var(--mg-secondary-500)',
         'CANCELLED': 'var(--mg-error-500)'
     };
+    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
     return statusColors[status] || '#6b7280';
 };
 

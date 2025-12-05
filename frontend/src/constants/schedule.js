@@ -32,6 +32,7 @@ export const STATUS_COLORS = {
   [STATUS.BOOKED]: 'var(--mg-primary-500)',       // 파란색
   [STATUS.CONFIRMED]: 'var(--mg-info-500)',    // 청록색
   [STATUS.VACATION]: 'var(--mg-warning-500)',     // 노란색
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #b8b8b8 -> var(--mg-custom-b8b8b8)
   [STATUS.COMPLETED]: '#b8b8b8',    // 연한 회색 (완료된 상태)
   [STATUS.CANCELLED]: 'var(--mg-error-500)'     // 빨간색
 };

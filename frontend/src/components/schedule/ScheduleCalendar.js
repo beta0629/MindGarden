@@ -129,7 +129,9 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.log('🔍 사용자 정보 확인:', {
                 currentUser,
                 currentUserRole,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchId: currentUser?.branchId,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: currentUser?.branchCode
             });
             
@@ -141,6 +143,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 currentUserRole,
                 isBranchSuperAdmin: currentUserRole === 'BRANCH_SUPER_ADMIN',
                 hasBranchId: !!currentUser?.branchId,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchId: currentUser?.branchId
             });
             
@@ -152,6 +155,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     role: currentUserRole,
                     isBranchSuperAdmin: currentUserRole === 'BRANCH_SUPER_ADMIN',
                     hasBranchId: !!currentUser?.branchId,
+                    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                     branchId: currentUser?.branchId
                 });
             }

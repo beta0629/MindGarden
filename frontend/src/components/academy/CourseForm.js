@@ -16,6 +16,7 @@ import './Academy.css';
 
 const CourseForm = ({ course, branchId, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
+    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchId: branchId || null,
     name: '',
     nameKo: '',
@@ -44,6 +45,7 @@ const CourseForm = ({ course, branchId, onSave, onCancel }) => {
   useEffect(() => {
     if (course) {
       setFormData({
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchId: course.branchId || branchId || null,
         name: course.name || '',
         nameKo: course.nameKo || '',

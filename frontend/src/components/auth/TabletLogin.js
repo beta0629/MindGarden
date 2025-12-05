@@ -741,6 +741,7 @@ const TabletLogin = () => {
                   onClick={() => navigate('/forgot-password')}
                   className="tablet-login-forgot-password-btn"
                   onMouseEnter={(e) => {
+                    // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #5a67d8 -> var(--mg-custom-5a67d8)
                     e.target.style.color = '#5a67d8';
                   }}
                   onMouseLeave={(e) => {
@@ -902,6 +903,7 @@ const TabletLogin = () => {
               color: 'var(--mg-gray-800)',
               padding: '28px 56px',
               borderRadius: '12px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.08) -> var(--mg-custom-color)
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
               zIndex: 10001,
               fontSize: 'var(--font-size-md)',
@@ -911,6 +913,7 @@ const TabletLogin = () => {
               maxWidth: '85vw',
               textAlign: 'center',
               cursor: 'pointer',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e9ecef -> var(--mg-custom-e9ecef)
               border: '1px solid #e9ecef',
               animation: 'loginNotificationSlideIn 0.4s ease-out'
             }}
@@ -923,6 +926,7 @@ const TabletLogin = () => {
               fontSize: 'var(--font-size-base)',
               fontWeight: '500',
               marginBottom: '8px',
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #495057 -> var(--mg-custom-495057)
               color: '#495057',
               lineHeight: '1.5',
               letterSpacing: '0.2px'

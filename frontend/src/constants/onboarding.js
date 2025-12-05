@@ -23,16 +23,23 @@ export const DEFAULT_COLORS = {
   IN_REVIEW: 'var(--mg-primary-500)',
   APPROVED: 'var(--mg-success-500)',
   REJECTED: 'var(--mg-error-500)',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #9e9e9e -> var(--mg-gray-400)
   ON_HOLD: '#9e9e9e',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2e7d32 -> var(--mg-custom-2e7d32)
   LOW: '#2e7d32',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e65100 -> var(--mg-custom-e65100)
   MEDIUM: '#e65100',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #c62828 -> var(--mg-custom-c62828)
   HIGH: '#c62828'
 };
 
 // 기본 배경 색상
 export const DEFAULT_BG_COLORS = {
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e8f5e9 -> var(--mg-custom-e8f5e9)
   LOW: '#e8f5e9',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3e0 -> var(--mg-custom-fff3e0)
   MEDIUM: '#fff3e0',
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ffebee -> var(--mg-custom-ffebee)
   HIGH: '#ffebee'
 };
 

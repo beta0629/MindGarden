@@ -59,6 +59,7 @@ const FinancialManagement = () => {
     totalExpense: 0,
     netProfit: 0,
     transactionCount: 0,
+    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchCode: '',
     branchName: ''
   });
@@ -220,6 +221,7 @@ const FinancialManagement = () => {
       totalExpense,
       netProfit: totalIncome - totalExpense,
       transactionCount: thisMonthTransactions.length,
+      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       branchCode: user?.branchCode || '',
       branchName: branchName
     });
@@ -939,7 +941,11 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 padding: '2px 8px',
                 borderRadius: '12px',
                 fontSize: 'var(--font-size-xs)',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
                 backgroundColor: transaction.transactionType === 'INCOME' ? '#d4edda' : '#f8d7da',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #155724 -> var(--mg-custom-155724)
                 color: transaction.transactionType === 'INCOME' ? '#155724' : '#721c24'
               }}>
                 {transaction.transactionType === 'INCOME' ? '💰 수입' : '💸 지출'}
@@ -975,6 +981,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
         {/* 매핑 연동 정보 */}
         {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
           <div style={{
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #e3f2fd -> var(--mg-custom-e3f2fd)
             backgroundColor: '#e3f2fd',
             padding: '16px',
             borderRadius: '8px',
@@ -1038,7 +1045,11 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                       padding: '2px 8px',
                       borderRadius: '12px',
                       fontSize: 'var(--font-size-xs)',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f8d7da -> var(--mg-custom-f8d7da)
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #d4edda -> var(--mg-custom-d4edda)
                       backgroundColor: mappingDetail.isConsistent ? '#d4edda' : '#f8d7da',
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #721c24 -> var(--mg-custom-721c24)
+                      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #155724 -> var(--mg-custom-155724)
                       color: mappingDetail.isConsistent ? '#155724' : '#721c24'
                     }}>
                       {mappingDetail.isConsistent ? '✅ 정상' : '⚠️ 불일치'}
@@ -1059,6 +1070,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                         <div key={index} style={{
                           fontSize: 'var(--font-size-xs)',
                           padding: '4px 8px',
+                          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #f1f3f4 -> var(--mg-custom-f1f3f4)
                           backgroundColor: '#f1f3f4',
                           borderRadius: '4px',
                           marginBottom: '4px'
@@ -1072,6 +1084,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 )}
               </div>
             ) : (
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #666 -> var(--mg-custom-666)
               <div style={{ textAlign: 'center', color: '#666' }}>
                 매핑 정보를 불러올 수 없습니다.
               </div>
@@ -1082,6 +1095,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
         {/* 기타 연동 정보 */}
         {transaction.relatedEntityType && transaction.relatedEntityType !== 'CONSULTANT_CLIENT_MAPPING' && (
           <div style={{
+            // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #fff3cd -> var(--mg-custom-fff3cd)
             backgroundColor: '#fff3cd',
             padding: '16px',
             borderRadius: '8px',
@@ -1110,6 +1124,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           justifyContent: 'flex-end',
           gap: '10px',
           paddingTop: '15px',
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dee2e6 -> var(--mg-custom-dee2e6)
           borderTop: '1px solid #dee2e6'
         }}>
           <button

@@ -153,6 +153,7 @@ export const HEADER_ICONS = {
   LOGOUT: 'bi-box-arrow-right',
   CLOSE: 'bi-x',
   CHECK: 'bi-check-circle',
+  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
   BRANCH: 'bi-geo-alt',
 };
 

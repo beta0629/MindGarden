@@ -20,6 +20,7 @@ const BranchRegistrationModal = ({ show, onHide, onBranchAdded }) => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         branchName: '',
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchCode: '',
         branchType: 'FRANCHISE',
         address: '',
@@ -91,8 +92,10 @@ const validateForm = () => {
     }
 
     if (!formData.branchCode.trim()) {
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         newErrors.branchCode = '지점코드를 입력해주세요.';
     } else if (!/^[A-Z0-9_]+$/.test(formData.branchCode)) {
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         newErrors.branchCode = '지점코드는 영문 대문자, 숫자, 언더스코어만 사용 가능합니다.';
     }
 
@@ -139,6 +142,7 @@ const handleSubmit = async (e) => {
     try {
         const response = await apiPost('/api/hq/branches', {
             branchName: formData.branchName,
+            // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
             branchCode: formData.branchCode,
             branchType: formData.branchType,
             address: formData.address,
@@ -171,6 +175,7 @@ const handleSubmit = async (e) => {
 const handleClose = () => {
     setFormData({
         branchName: '',
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchCode: '',
         branchType: 'FRANCHISE',
         address: '',

@@ -21,6 +21,7 @@ const SocialSignupModal = ({
     password: '',
     confirmPassword: '',
     phone: '',
+    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchCode: ''
   });
   const [errors, setErrors] = useState({});
@@ -107,6 +108,7 @@ const SocialSignupModal = ({
         password: '',
         confirmPassword: '',
         phone: '',
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchCode: ''
       }));
       
@@ -216,6 +218,7 @@ const SocialSignupModal = ({
 
     // 지점 선택 검사 (항상 필요)
     if (!formData.branchCode) {
+      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       newErrors.branchCode = '지점을 선택해주세요.';
     }
 
@@ -266,6 +269,7 @@ const SocialSignupModal = ({
         password: formData.password,
         phone: formData.phone,
         providerProfileImage: socialUser.profileImageUrl,
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchCode: formData.branchCode,
         // 개인정보 동의 정보 추가
         privacyConsent: privacyConsents.privacy,
@@ -367,6 +371,8 @@ const SocialSignupModal = ({
             <div className="social-provider">
               <span className="provider-icon">
                 <i className={`bi bi-${socialUser?.provider === 'KAKAO' ? 'chat-dots-fill' : 'chat-square-fill'}`} 
+                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #03C75A -> var(--mg-custom-03C75A)
+                   // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #FEE500 -> var(--mg-custom-FEE500)
                    data-provider-color={socialUser?.provider === 'KAKAO' ? '#FEE500' : '#03C75A'}></i>
               </span>
               <span className="provider-name">

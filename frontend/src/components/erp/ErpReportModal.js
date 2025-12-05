@@ -60,6 +60,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             const params = new URLSearchParams({
                 type: reportType,
                 period: period,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: branchCode || ''
             });
 
@@ -93,6 +94,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
             const params = new URLSearchParams({
                 type: reportType,
                 period: period,
+                // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                 branchCode: branchCode || '',
                 format: 'excel'
             });

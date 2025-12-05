@@ -16,6 +16,7 @@ import './Academy.css';
 
 const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
+    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchId: branchId || null,
     classId: classId || '',
     consumerId: consumerId || null,
@@ -45,6 +46,7 @@ const EnrollmentForm = ({ enrollment, branchId, classId, consumerId, onSave, onC
   useEffect(() => {
     if (enrollment) {
       setFormData({
+        // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchId: enrollment.branchId || branchId || null,
         classId: enrollment.classId || classId || '',
         consumerId: enrollment.consumerId || consumerId || null,

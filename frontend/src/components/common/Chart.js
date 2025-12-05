@@ -98,6 +98,7 @@ const Chart = ({
             size: 16,
             weight: 'bold'
           },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #2c3e50 -> var(--mg-custom-2c3e50)
           color: '#2c3e50'
         }
       },

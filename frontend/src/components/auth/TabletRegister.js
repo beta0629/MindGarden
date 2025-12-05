@@ -17,6 +17,7 @@ const TabletRegister = () => {
     phone: '',
     gender: '',
     birthDate: '',
+    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     branchCode: '',
     agreeTerms: false,
     agreePrivacy: false
@@ -46,6 +47,7 @@ const TabletRegister = () => {
           setBranches(response.branches);
           setErrors(prev => ({
             ...prev,
+            // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
             branchCode: ''
           }));
         } else {
@@ -56,6 +58,7 @@ const TabletRegister = () => {
         setBranches([]);
         setErrors(prev => ({
           ...prev,
+          // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
           branchCode: '지점 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
         }));
       } finally {
@@ -86,7 +89,9 @@ const TabletRegister = () => {
         // 실패 시 기본값 설정
         setGenderOptions([
           { value: 'MALE', label: '남성', icon: '♂️', color: 'var(--mg-primary-500)' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #ec4899 -> var(--mg-custom-ec4899)
           { value: 'FEMALE', label: '여성', icon: '♀️', color: '#ec4899' },
+          // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
           { value: 'OTHER', label: '기타', icon: '⚧', color: '#6b7280' }
         ]);
       } finally {
@@ -163,6 +168,7 @@ const TabletRegister = () => {
     }
 
     if (!formData.branchCode) {
+      // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
       newErrors.branchCode = '지점을 선택해주세요.';
     }
 

@@ -45,7 +45,9 @@ const ClientCardShowcase = () => {
     switch (status) {
       case '진행중': return 'var(--mg-success-500)';
       case '예약됨': return 'var(--mg-primary-500)';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
       case '완료': return '#6b7280';
+      // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
       default: return '#6b7280';
     }
   };

@@ -249,6 +249,7 @@ export const getDynamicCSSVariables = async (themeName = 'default') => {
         return {
             COLORS: {
                 PRIMARY: 'var(--mg-primary-500)',
+                // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #764ba2 -> var(--mg-custom-764ba2)
                 PRIMARY_DARK: '#764ba2',
                 PRIMARY_GRADIENT: 'linear-gradient(135deg, var(--mg-primary-500) 0%, var(--mg-primary-700) 100%)',
                 SECONDARY: 'var(--mg-secondary-500)',

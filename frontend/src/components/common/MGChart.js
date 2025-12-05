@@ -50,6 +50,7 @@ const MGChart = ({
               }
             },
             tooltip: {
+              // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: rgba(0, 0, 0, 0.8) -> var(--mg-custom-color)
               backgroundColor: 'rgba(0, 0, 0, 0.8)',
               titleColor: 'var(--mg-white)',
               bodyColor: 'var(--mg-white)',

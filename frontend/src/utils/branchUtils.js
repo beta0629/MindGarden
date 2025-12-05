@@ -18,6 +18,7 @@
  * @param {string} branchCode - 지점 코드
  * @returns {string} 한글 지점명
  */
+// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 export const getBranchNameByCode = (branchCode) => {
     const branchNameMap = {
         'MAIN001': '본점',
@@ -40,6 +41,7 @@ export const getBranchNameByCode = (branchCode) => {
  * @param {Object} branch - 지점 객체
  * @returns {Object} 변환된 지점 객체
  */
+// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 export const normalizeBranchData = (branch) => {
     return {
         ...branch,
@@ -63,7 +65,9 @@ export const normalizeBranchData = (branch) => {
  * @param {Array} branches - 지점 목록
  * @returns {Array} 정규화된 지점 목록
  */
+// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 export const normalizeBranchList = (branches) => {
+    // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
     return branches.map(branch => normalizeBranchData(branch));
 };
 
@@ -74,6 +78,7 @@ export const normalizeBranchList = (branches) => {
  * @param {string} branchCode - 지점 코드
  * @returns {boolean} 유효성 여부
  */
+// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 export const isValidBranchCode = (branchCode) => {
     const validCodes = ['MAIN001', 'HQ', 'GANGNAM', 'HONGDAE', 'JAMSIL', 'SINCHON', 'SONGDO'];
     return validCodes.includes(branchCode);
@@ -86,6 +91,7 @@ export const isValidBranchCode = (branchCode) => {
  * @param {string} branchType - 지점 타입
  * @returns {string} 한글 지점 타입
  */
+// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 export const getBranchTypeName = (branchType) => {
     const typeMap = {
         'MAIN': '본사',
@@ -104,6 +110,7 @@ export const getBranchTypeName = (branchType) => {
  * @param {string} branchStatus - 지점 상태
  * @returns {string} 한글 지점 상태
  */
+// ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
 export const getBranchStatusName = (branchStatus) => {
     const statusMap = {
         'PLANNING': '계획',

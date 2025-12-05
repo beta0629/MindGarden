@@ -141,12 +141,14 @@ const AcademyDashboard = () => {
               {showForm ? (
                 <CourseForm
                   course={selectedItem}
+                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                   branchId={selectedBranchId}
                   onSave={handleCourseSave}
                   onCancel={handleCourseCancel}
                 />
               ) : (
                 <CourseList
+                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                   branchId={selectedBranchId}
                   onCreateCourse={handleCreateCourse}
                   onEditCourse={handleEditCourse}
@@ -161,6 +163,7 @@ const AcademyDashboard = () => {
               {showForm ? (
                 <ClassForm
                   classItem={selectedItem}
+                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                   branchId={selectedBranchId}
                   courseId={selectedCourseId}
                   onSave={handleClassSave}
@@ -168,6 +171,7 @@ const AcademyDashboard = () => {
                 />
               ) : (
                 <ClassList
+                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                   branchId={selectedBranchId}
                   courseId={selectedCourseId}
                   onCreateClass={handleCreateClass}
@@ -183,6 +187,7 @@ const AcademyDashboard = () => {
               {showForm ? (
                 <EnrollmentForm
                   enrollment={selectedItem}
+                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                   branchId={selectedBranchId}
                   classId={null}
                   onSave={handleEnrollmentSave}
@@ -190,6 +195,7 @@ const AcademyDashboard = () => {
                 />
               ) : (
                 <EnrollmentList
+                  // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
                   branchId={selectedBranchId}
                   classId={null}
                   onCreateEnrollment={handleCreateEnrollment}

@@ -181,9 +181,12 @@ const ConsultantClientList = () => {
       // 실패 시 기본값 설정
       const defaultOptions = [
         { value: 'ACTIVE', label: '활성', icon: '🟢', color: 'var(--mg-success-500)', description: '활성 사용자' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
         { value: 'INACTIVE', label: '비활성', icon: '🔴', color: '#6b7280', description: '비활성 사용자' },
         { value: 'PENDING', label: '대기중', icon: '⏳', color: 'var(--mg-warning-500)', description: '대기 중인 사용자' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #059669 -> var(--mg-custom-059669)
         { value: 'COMPLETED', label: '완료', icon: '✅', color: '#059669', description: '완료된 사용자' },
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #dc2626 -> var(--mg-custom-dc2626)
         { value: 'SUSPENDED', label: '일시정지', icon: '⏸️', color: '#dc2626', description: '일시정지된 사용자' }
       ];
       console.log('🔄 기본값 설정:', defaultOptions);
@@ -415,6 +418,7 @@ const ConsultantClientList = () => {
                 const statusInfo = userStatusOptions.find(option => option.value === client.status) || {
                   label: client.status || '알 수 없음',
                   icon: '❓',
+                  // ⚠️ 표준화 2025-12-05: 하드코딩된 색상값을 CSS 변수로 변경 필요: #6b7280 -> var(--mg-custom-6b7280)
                   color: '#6b7280'
                 };
 

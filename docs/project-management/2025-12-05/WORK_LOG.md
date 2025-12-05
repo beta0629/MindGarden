@@ -2189,14 +2189,27 @@ if (user.getBranchCode() != null && branchRepository != null) {
   - `getDailyStatistics` 메서드에서 테넌트 기반 조회로 변경
   - `getMonthlyAggregatedStatistics` 메서드에서 테넌트 기반 집계로 변경
   - `DailyStatisticsRepository`에 `findByTenantIdAndStatDate`, `findByTenantIdAndStatDateBetween` 메서드 추가
+- [x] UserServiceImpl: branchCode 사용 제거
+  - `getUserStatisticsByBranchCode` 메서드에서 branchCode 파라미터 무시하고 테넌트 전체 통계 반환
+  - `registerUser` 메서드에서 branchCode 처리 로직을 레거시 호환으로 변경 (예외 던지지 않음)
+  - `findByBranchCode` 메서드에서 branchCode 파라미터 무시하고 테넌트 전체 사용자 반환
+- [x] ConsultantRatingServiceImpl: branchCode 사용 제거
+  - `getAdminRatingStatisticsByBranch` 메서드에서 테넌트 전체 상담사 조회로 변경
+  - `getConsultantRankingByBranch` 메서드에서 테넌트 전체 상담사 랭킹 조회로 변경
+- [x] FinancialTransactionServiceImpl: branchCode 사용 제거
+  - `getBranchFinancialData` 메서드에서 branchCode 필터링 제거, 테넌트 전체 거래 조회
+  - `getTransactionsByBranch` 메서드에서 branchCode 필터링 제거, 테넌트 전체 거래 조회
 
 **작업 계획**:
 1. ✅ AdminServiceImpl: branchCode 사용 제거 (완료)
 2. ✅ ScheduleServiceImpl: branchCode 사용 제거 (완료)
 3. ✅ StatisticsServiceImpl: branchCode 사용 제거 (완료)
-4. ⏳ 다른 Service 파일들 순차적 처리
+4. ✅ UserServiceImpl: branchCode 사용 제거 (완료)
+5. ✅ ConsultantRatingServiceImpl: branchCode 사용 제거 (완료)
+6. ✅ FinancialTransactionServiceImpl: branchCode 사용 제거 (완료)
+7. ⏳ 다른 Service 파일들 순차적 처리
 
-**진행률**: 20% (3/15 핵심 서비스 완료)
+**진행률**: 40% (6/15 핵심 서비스 완료)
 
 ---
 

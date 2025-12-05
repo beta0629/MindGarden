@@ -2513,6 +2513,15 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
 - 역할 비교 로직도 enum 활용으로 변경
 - UserRole import 추가
 
+**ConsultationMessageServiceImpl.java**
+- `"CONSULTANT"`, `"CLIENT"` 하드코딩 제거
+- `UserRole.CONSULTANT.name()`, `UserRole.CLIENT.name()` 사용
+- 발신자/수신자 ID 설정 로직 개선
+
+**SystemNotificationServiceImpl.java**
+- `"CONSULTANT"`, `"CLIENT"`, `"ROLE_CONSULTANT"`, `"ROLE_CLIENT"` 하드코딩 제거
+- `UserRole.fromString()` 활용하여 enum 비교로 변경
+
 ### 주요 변경 패턴
 
 1. **역할 비교**
@@ -2542,7 +2551,11 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
    - JavaScript 파일에서 역할 문자열 하드코딩 제거
    - 권한 시스템 API 활용
 
-**작업 진행률**: 약 50% (Backend Controller/Service 주요 파일 완료)
+**작업 진행률**: 약 60% (Backend Controller/Service 주요 파일 완료)
+
+**수정된 파일 총계**:
+- Controller 레이어: 9개 파일
+- Service 레이어: 5개 파일 (ClientStatsServiceImpl, AdminServiceImpl, ScheduleServiceImpl, ConsultationMessageServiceImpl, SystemNotificationServiceImpl)
 
 **최종 업데이트**: 2025-12-05
 

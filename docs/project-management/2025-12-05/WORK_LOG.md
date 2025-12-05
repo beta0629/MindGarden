@@ -2199,6 +2199,14 @@ if (user.getBranchCode() != null && branchRepository != null) {
 - [x] FinancialTransactionServiceImpl: branchCode 사용 제거
   - `getBranchFinancialData` 메서드에서 branchCode 필터링 제거, 테넌트 전체 거래 조회
   - `getTransactionsByBranch` 메서드에서 branchCode 필터링 제거, 테넌트 전체 거래 조회
+- [x] RealTimeStatisticsServiceImpl: branchCode 사용 제거
+  - `updateStatisticsOnScheduleCompletion`에서 tenantId 사용
+  - `updateDailyStatistics` 메서드에서 branchCode 파라미터 무시, tenantId 사용
+  - `updateStatisticsOnMappingChange`, `updateFinancialStatisticsOnPayment`, `updateStatisticsOnRefund`에서 branchCode 파라미터 무시
+  - `createNewDailyStatistics`에서 tenantId 사용
+- [x] StatisticsTestDataServiceImpl: branchCode 사용 제거
+  - 모든 테스트 데이터 생성 메서드에서 branchCode 파라미터 무시, tenantId 사용
+  - `createTestSchedules`, `createCompletedConsultations`, `createTestFinancialTransactions`, `createTestRatings` 등 수정
 
 **작업 계획**:
 1. ✅ AdminServiceImpl: branchCode 사용 제거 (완료)
@@ -2207,9 +2215,11 @@ if (user.getBranchCode() != null && branchRepository != null) {
 4. ✅ UserServiceImpl: branchCode 사용 제거 (완료)
 5. ✅ ConsultantRatingServiceImpl: branchCode 사용 제거 (완료)
 6. ✅ FinancialTransactionServiceImpl: branchCode 사용 제거 (완료)
-7. ⏳ 다른 Service 파일들 순차적 처리
+7. ✅ RealTimeStatisticsServiceImpl: branchCode 사용 제거 (완료)
+8. ✅ StatisticsTestDataServiceImpl: branchCode 사용 제거 (완료)
+9. ⏳ 다른 Service 파일들 순차적 처리
 
-**진행률**: 40% (6/15 핵심 서비스 완료)
+**진행률**: 53% (8/15 핵심 서비스 완료)
 
 ---
 

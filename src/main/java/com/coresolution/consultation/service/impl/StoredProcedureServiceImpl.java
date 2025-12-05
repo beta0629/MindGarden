@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.CallableStatementCallback;
@@ -305,32 +306,27 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
             boolean canUpdate = false;
             String reason = "";
             
-            // 역할별 권한 체크
-            switch (userRole) {
-                case "HQ_MASTER":
-                case "SUPER_HQ_ADMIN":
-                case "HQ_ADMIN":
-                case "ADMIN":
-                    canUpdate = true;
-                    reason = "본사 관리자 권한으로 수정 가능합니다";
-                    break;
-                case "BRANCH_SUPER_ADMIN":
-                case "BRANCH_ADMIN":
-                    canUpdate = true;
-                    reason = "지점 관리자 권한으로 수정 가능합니다";
-                    break;
-                case "CONSULTANT":
-                    canUpdate = true;
-                    reason = "상담사 권한으로 수정 가능합니다";
-                    break;
-                case "CLIENT":
-                    canUpdate = true;
-                    reason = "내담자 권한으로 수정 가능합니다";
-                    break;
-                default:
-                    canUpdate = false;
-                    reason = "매핑을 수정할 권한이 없습니다";
-                    break;
+            // 역할별 권한 체크 (표준화 2025-12-05: enum 활용)
+            UserRole role = UserRole.fromString(userRole);
+            if (role == null) {
+                canUpdate = false;
+                reason = "매핑을 수정할 권한이 없습니다";
+            } else if (role == UserRole.HQ_MASTER || role == UserRole.SUPER_HQ_ADMIN || 
+                       role == UserRole.HQ_ADMIN || role == UserRole.ADMIN) {
+                canUpdate = true;
+                reason = "본사 관리자 권한으로 수정 가능합니다";
+            } else if (role == UserRole.BRANCH_SUPER_ADMIN || role == UserRole.BRANCH_ADMIN) {
+                canUpdate = true;
+                reason = "지점 관리자 권한으로 수정 가능합니다";
+            } else if (role == UserRole.CONSULTANT) {
+                canUpdate = true;
+                reason = "상담사 권한으로 수정 가능합니다";
+            } else if (role == UserRole.CLIENT) {
+                canUpdate = true;
+                reason = "내담자 권한으로 수정 가능합니다";
+            } else {
+                canUpdate = false;
+                reason = "매핑을 수정할 권한이 없습니다";
             }
             
             result.put("canUpdate", canUpdate);

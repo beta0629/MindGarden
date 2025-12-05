@@ -152,9 +152,9 @@ public class SystemNotificationController extends BaseApiController {
                     List<String> targetRoles = new ArrayList<>();
                     if ("ALL".equals(notification.getTargetType())) {
                         targetRoles.add("ALL");
-                    } else if ("CONSULTANT".equals(notification.getTargetType())) {
+                    } else if (UserRole.CONSULTANT.name().equals(notification.getTargetType())) {
                         targetRoles.add(UserRole.CONSULTANT.name());
-                    } else if ("CLIENT".equals(notification.getTargetType())) {
+                    } else if (UserRole.CLIENT.name().equals(notification.getTargetType())) {
                         targetRoles.add(UserRole.CLIENT.name());
                     }
                     data.put("targetRoles", targetRoles);

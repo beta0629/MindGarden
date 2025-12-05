@@ -537,9 +537,9 @@ public class ScheduleController extends BaseApiController {
         
         log.info("👤 내담자별 스케줄 조회: 내담자 {}, 요청자 역할 {}", clientId, userRole);
         
-        // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
-            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        // 관리자 권한 확인 (표준화 2025-12-05: enum 활용)
+        UserRole role = UserRole.fromString(userRole);
+        if (role == null || !role.isAdmin()) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }

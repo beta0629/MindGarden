@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultantPerformance;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
@@ -138,7 +139,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                     schedule.getConsultantId(), 
                     schedule.getClientId(), 
                     null, // consultationId
-                    getRoleCodeFromCommonCode("CONSULTANT"), 
+                    getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()), 
                     "미완료 상담 알림", 
                     alertMessage,
                     getMessageTypeFromCommonCode("INCOMPLETE_CONSULTATION"),
@@ -177,8 +178,8 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             LocalDate today = LocalDate.now();
             
             // 상담사 조회
-            // 공통코드에서 상담사 역할 코드 조회
-            String consultantRoleCode = getRoleCodeFromCommonCode("CONSULTANT");
+            // 공통코드에서 상담사 역할 코드 조회 (표준화 2025-12-05: enum 활용)
+            String consultantRoleCode = getRoleCodeFromCommonCode(UserRole.CONSULTANT.name());
             List<User> consultants = userRepository.findByRoleAndIsDeletedFalse(tenantId, consultantRoleCode);
             
             for (User consultant : consultants) {
@@ -202,7 +203,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                         consultant.getId(), 
                         null, 
                         null, // consultationId
-                        getRoleCodeFromCommonCode("CONSULTANT"), 
+                        getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()), 
                         "일일 성과 요약", 
                         summaryMessage,
                         getMessageTypeFromCommonCode("DAILY_SUMMARY"),
@@ -261,10 +262,10 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             );
             
             // 관리자들에게 월간 리포트 발송
-            // 공통코드에서 관리자 역할 코드들 조회
-            String adminRoleCode = getRoleCodeFromCommonCode("ADMIN");
-            String branchSuperAdminRoleCode = getRoleCodeFromCommonCode("BRANCH_SUPER_ADMIN");
-            String hqMasterRoleCode = getRoleCodeFromCommonCode("HQ_MASTER");
+            // 공통코드에서 관리자 역할 코드들 조회 (표준화 2025-12-05: enum 활용)
+            String adminRoleCode = getRoleCodeFromCommonCode(UserRole.ADMIN.name());
+            String branchSuperAdminRoleCode = getRoleCodeFromCommonCode(UserRole.BRANCH_SUPER_ADMIN.name());
+            String hqMasterRoleCode = getRoleCodeFromCommonCode(UserRole.HQ_MASTER.name());
             List<String> roleList = List.of(adminRoleCode, branchSuperAdminRoleCode, hqMasterRoleCode);
             List<User> admins = userRepository.findByRoleInAndIsDeletedFalse(tenantId, roleList);
             

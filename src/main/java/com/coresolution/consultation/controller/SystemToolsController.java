@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping({"/api/v1/admin/system-tools", "/api/admin"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/admin/system-tools") // 표준화 2025-12-05: 레거시 경로 제거
 public class SystemToolsController {
 
     @Autowired

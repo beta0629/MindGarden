@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2025-01-27
  */
 @RestController
-@RequestMapping({"/api/v1/admin/business-time", "/api/admin/business-time"})
+@RequestMapping("/api/v1/admin/business-time") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 @Slf4j
 public class BusinessTimeController {

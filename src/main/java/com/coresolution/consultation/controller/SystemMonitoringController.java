@@ -20,7 +20,7 @@ import java.util.Map;
  * @since 2025-01-XX
  */
 @RestController
-@RequestMapping({"/api/v1/admin/monitoring", "/api/admin/monitoring"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/admin/monitoring") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'OPS')")
 public class SystemMonitoringController {

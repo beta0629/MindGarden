@@ -19,7 +19,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping({"/api/v1/auth/passkey", "/api/auth/passkey"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/auth/passkey") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class PasskeyController {

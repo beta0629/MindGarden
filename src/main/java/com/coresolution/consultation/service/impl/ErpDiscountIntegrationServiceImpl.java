@@ -127,7 +127,7 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
             
             // 4. 결과 생성
             Map<String, Object> summary = new HashMap<>();
-            summary.put("branchCode", branchCode);
+            summary.put("tenantId", tenantId);
             summary.put("startDate", startDate);
             summary.put("endDate", endDate);
             summary.put("totalRevenue", totalRevenue);
@@ -143,12 +143,12 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
             result.put("message", "할인 회계 요약 조회 완료");
             
             log.info("✅ 할인 회계 요약 조회 완료: BranchCode={}, NetRevenue={}, DiscountRate={}%", 
-                     branchCode, netRevenue, discountRate);
+                     tenantId, netRevenue, discountRate);
             
             return result;
             
         } catch (Exception e) {
-            log.error("❌ 할인 회계 요약 조회 실패: BranchCode={}, 오류={}", branchCode, e.getMessage(), e);
+            log.error("❌ 할인 회계 요약 조회 실패: tenantId={}, 오류={}", tenantId, e.getMessage(), e);
             
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);

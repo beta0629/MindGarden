@@ -2551,11 +2551,20 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
    - JavaScript 파일에서 역할 문자열 하드코딩 제거
    - 권한 시스템 API 활용
 
-**작업 진행률**: 약 60% (Backend Controller/Service 주요 파일 완료)
+**작업 진행률**: 약 85% (Backend Controller/Service 주요 파일 완료, Frontend 시작)
 
 **수정된 파일 총계**:
-- Controller 레이어: 9개 파일
-- Service 레이어: 5개 파일 (ClientStatsServiceImpl, AdminServiceImpl, ScheduleServiceImpl, ConsultationMessageServiceImpl, SystemNotificationServiceImpl)
+- Controller 레이어: 10개 파일
+  - PermissionManagementController, ScheduleController, SalaryBatchController, SalaryConfigController
+  - SystemNotificationController, AdminController, AuthController, CssThemeController
+  - HQBranchController, BranchManagementController
+- Service 레이어: 13개 파일
+  - ClientStatsServiceImpl, AdminServiceImpl, ScheduleServiceImpl
+  - ConsultationMessageServiceImpl, SystemNotificationServiceImpl
+  - ConsultationServiceImpl, ConsultationRecordServiceImpl, SessionUtils
+  - StoredProcedureServiceImpl, WorkflowAutomationServiceImpl
+  - PermissionInitializationServiceImpl, PaymentServiceImpl, HealingContentServiceImpl
+  - DynamicPermissionServiceImpl, DynamicAdminPermissionService, ConsultantMotivationServiceImpl
 
 **최종 업데이트**: 2025-12-05
 

@@ -156,8 +156,10 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
         LocalDate periodStart = LocalDate.of(targetYear, targetMonth, 1);
         LocalDate periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth());
         
+        // 테넌트 기반으로 조회 (branchCode 필터링 제거)
         List<SalaryCalculation> existingCalculations = salaryCalculationRepository
-                .findByBranchCodeAndCalculationPeriodStartBetween(null, periodStart, periodEnd);
+                .findByStatusAndCalculationPeriodStartBetween(
+                    SalaryCalculation.SalaryStatus.CALCULATED, periodStart, periodEnd);
         
         int processedConsultants = existingCalculations.size();
         int totalConsultants = consultants.size();

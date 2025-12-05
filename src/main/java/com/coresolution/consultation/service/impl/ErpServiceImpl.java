@@ -788,23 +788,22 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     public Map<String, Object> getBranchFinanceDashboard(String branchCode) {
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> dashboardData = new HashMap<>();
         
         try {
-            log.info("🏢 지점별 재무 대시보드 데이터 조회: 지점={}", branchCode);
+            log.info("🏢 재무 대시보드 데이터 조회: tenantId={}", tenantId);
             
-            // 지점별 재무 거래 데이터 조회
+            // 테넌트 전체 재무 거래 데이터 조회
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> allTransactions = 
                 financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 10000))
                     .getContent();
             
-            // 지점코드로 필터링
-            List<com.coresolution.consultation.dto.FinancialTransactionResponse> branchTransactions = 
-                allTransactions.stream()
-                    .filter(t -> branchCode.equals(t.getBranchCode()))
-                    .collect(java.util.stream.Collectors.toList());
+            // 테넌트 전체 거래 사용 (branchCode 필터링 제거)
+            List<com.coresolution.consultation.dto.FinancialTransactionResponse> branchTransactions = allTransactions;
             
-            log.info("📊 지점 거래 데이터 필터링 완료: 전체={}, 지점={}건", allTransactions.size(), branchTransactions.size());
+            log.info("📊 거래 데이터 조회 완료: 전체={}건", allTransactions.size());
             
             // 지점별 수입/지출 계산 (손익계산서와 동일하게 모든 상태 포함)
             BigDecimal totalIncome = branchTransactions.stream()
@@ -859,20 +858,20 @@ public class ErpServiceImpl implements ErpService {
             financialData.put("expenseByCategory", expenseByCategory);
             financialData.put("transactionCount", branchTransactions.size());
             
-            dashboardData.put("branchCode", branchCode);
+            dashboardData.put("tenantId", tenantId);
             dashboardData.put("financialData", financialData);
             dashboardData.put("recentTransactions", recentTransactions);
             
-            // ERP 통계 (지점별 동적 조회 - 세션 기반)
-            Map<String, Object> erpStats = getBranchErpStatisticsBySession(branchCode);
+            // ERP 통계 (테넌트 전체)
+            Map<String, Object> erpStats = getBranchErpStatisticsBySession(null); // branchCode는 레거시 호환용
             dashboardData.put("erpStats", erpStats);
             
-            log.info("✅ 지점별 재무 대시보드 데이터 구성 완료: 지점={}, 수입={}, 지출={}", 
-                    branchCode, totalIncome, totalExpense);
+            log.info("✅ 재무 대시보드 데이터 구성 완료: tenantId={}, 수입={}, 지출={}", 
+                    tenantId, totalIncome, totalExpense);
             
         } catch (Exception e) {
-            log.error("❌ 지점별 재무 대시보드 데이터 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
-            throw new RuntimeException("지점별 재무 대시보드 데이터 조회에 실패했습니다: " + e.getMessage());
+            log.error("❌ 재무 대시보드 데이터 조회 실패: tenantId={}, 오류={}", tenantId, e.getMessage(), e);
+            throw new RuntimeException("재무 대시보드 데이터 조회에 실패했습니다: " + e.getMessage());
         }
         
         return dashboardData;
@@ -880,35 +879,37 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     public Map<String, Object> getBranchFinanceDashboard(String branchCode, LocalDate startDate, LocalDate endDate) {
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> dashboardData = new HashMap<>();
         
         try {
-            log.info("🏢 지점별 재무 대시보드 데이터 조회: 지점={}, 기간={}~{}", branchCode, startDate, endDate);
+            log.info("🏢 재무 대시보드 데이터 조회: tenantId={}, 기간={}~{}", tenantId, startDate, endDate);
             
-            // 지점별 재무 거래 데이터 조회 (날짜 범위 지정)
-            Map<String, Object> branchData = financialTransactionService.getBranchFinancialData(branchCode, startDate, endDate, null, null);
+            // 테넌트 전체 재무 거래 데이터 조회 (날짜 범위 지정)
+            Map<String, Object> branchData = financialTransactionService.getBranchFinancialData(null, startDate, endDate, null, null); // branchCode는 레거시 호환용
             
-            log.info("🔍 지점별 재무 데이터 조회 결과: 지점={}, 데이터={}", branchCode, branchData);
+            log.info("🔍 재무 데이터 조회 결과: tenantId={}, 데이터={}", tenantId, branchData);
             
             // 대시보드 데이터 구성
-            dashboardData.put("branchCode", branchCode);
+            dashboardData.put("tenantId", tenantId);
             dashboardData.put("financialData", branchData);
             dashboardData.put("period", Map.of(
                 "startDate", startDate.toString(),
                 "endDate", endDate.toString()
             ));
             
-            // ERP 통계 (지점별 동적 조회 - 세션 기반)
-            Map<String, Object> erpStats = getBranchErpStatisticsBySession(branchCode);
+            // ERP 통계 (테넌트 전체)
+            Map<String, Object> erpStats = getBranchErpStatisticsBySession(null); // branchCode는 레거시 호환용
             dashboardData.put("erpStats", erpStats);
             
-            log.info("✅ 지점별 재무 대시보드 데이터 구성 완료: 지점={}, 기간={}~{}", 
-                    branchCode, startDate, endDate);
+            log.info("✅ 재무 대시보드 데이터 구성 완료: tenantId={}, 기간={}~{}", 
+                    tenantId, startDate, endDate);
             
         } catch (Exception e) {
-            log.error("❌ 지점별 재무 대시보드 데이터 조회 실패: 지점={}, 기간={}~{}, 오류={}", 
-                    branchCode, startDate, endDate, e.getMessage(), e);
-            throw new RuntimeException("지점별 재무 대시보드 데이터 조회에 실패했습니다: " + e.getMessage());
+            log.error("❌ 재무 대시보드 데이터 조회 실패: tenantId={}, 기간={}~{}, 오류={}", 
+                    tenantId, startDate, endDate, e.getMessage(), e);
+            throw new RuntimeException("재무 대시보드 데이터 조회에 실패했습니다: " + e.getMessage());
         }
         
         return dashboardData;
@@ -1017,11 +1018,12 @@ public class ErpServiceImpl implements ErpService {
      * 지점별 ERP 통계 조회 (세션 기반)
      */
     private Map<String, Object> getBranchErpStatisticsBySession(String branchCode) {
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         Map<String, Object> erpStats = new HashMap<>();
         
         try {
-            // 현재는 ERP 엔티티들이 지점코드를 가지지 않으므로 전체 통계 반환
-            // 향후 지점별 ERP 관리가 필요하면 엔티티에 branchCode 필드 추가 필요
+            // 테넌트 전체 ERP 통계 반환 (ERP 엔티티들은 테넌트 기반으로 관리됨)
             
             erpStats.put("totalItems", itemRepository.findAllActive().size());
             erpStats.put("pendingRequests", purchaseRequestRepository.findPendingAdminApproval().size());
@@ -1048,12 +1050,12 @@ public class ErpServiceImpl implements ErpService {
             erpStats.put("budgetUsed", totalUsed);
             erpStats.put("budgetTotal", totalBudget);
             
-            log.info("📊 지점별 ERP 통계 조회 완료: 지점={}, 아이템={}, 요청={}, 주문={}, 예산={}", 
-                    branchCode, erpStats.get("totalItems"), erpStats.get("pendingRequests"), 
+            log.info("📊 ERP 통계 조회 완료: tenantId={}, 아이템={}, 요청={}, 주문={}, 예산={}", 
+                    tenantId, erpStats.get("totalItems"), erpStats.get("pendingRequests"), 
                     erpStats.get("totalOrders"), erpStats.get("totalBudgets"));
             
         } catch (Exception e) {
-            log.error("❌ 지점별 ERP 통계 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
+            log.error("❌ ERP 통계 조회 실패: tenantId={}, 오류={}", tenantId, e.getMessage(), e);
             // 기본값 설정
             erpStats.put("totalItems", 0);
             erpStats.put("pendingRequests", 0);
@@ -1478,32 +1480,26 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getIncomeStatement(String startDate, String endDate, String branchCode) {
-        log.info("손익계산서 조회: {} ~ {}, 브랜치: {}", startDate, endDate, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("손익계산서 조회: {} ~ {}, tenantId: {}", startDate, endDate, tenantId);
         
         Map<String, Object> incomeStatement = new HashMap<>();
         incomeStatement.put("startDate", startDate);
         incomeStatement.put("endDate", endDate);
-        incomeStatement.put("branchCode", branchCode);
+        incomeStatement.put("tenantId", tenantId);
         incomeStatement.put("reportPeriod", "손익계산서");
         
         // 수익 섹션 - 실제 결제 데이터에서 조회
         Map<String, Object> revenue = new HashMap<>();
         
-        // 실제 재무 거래에서 수익 조회
+        // 실제 재무 거래에서 수익 조회 (테넌트 전체)
         try {
-            List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions;
-            if (branchCode != null && !branchCode.isEmpty()) {
-                // 특정 브랜치 데이터만 조회
-                transactions = financialTransactionService.getTransactionsByBranch(
-                    branchCode, null, null, startDate, endDate, 
+            // 테넌트 전체 데이터 조회 (branchCode 필터링 제거)
+            List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
+                financialTransactionService.getTransactions(
                     org.springframework.data.domain.PageRequest.of(0, 1000)
                 ).getContent();
-            } else {
-                // 전체 데이터 조회
-                transactions = financialTransactionService.getTransactions(
-                    org.springframework.data.domain.PageRequest.of(0, 1000)
-                ).getContent();
-            }
             
             BigDecimal consultationRevenue = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
@@ -1530,22 +1526,14 @@ public class ErpServiceImpl implements ErpService {
         revenue.put("total", totalRevenue);
         incomeStatement.put("revenue", revenue);
         
-        // 비용 섹션 - 실제 재무 거래에서 조회
+        // 비용 섹션 - 실제 재무 거래에서 조회 (테넌트 전체)
         Map<String, Object> expenses = new HashMap<>();
         try {
-            List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions;
-            if (branchCode != null && !branchCode.isEmpty()) {
-                // 특정 브랜치 데이터만 조회
-                transactions = financialTransactionService.getTransactionsByBranch(
-                    branchCode, null, null, startDate, endDate, 
+            // 테넌트 전체 데이터 조회 (branchCode 필터링 제거)
+            List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
+                financialTransactionService.getTransactions(
                     org.springframework.data.domain.PageRequest.of(0, 1000)
                 ).getContent();
-            } else {
-                // 전체 데이터 조회
-                transactions = financialTransactionService.getTransactions(
-                    org.springframework.data.domain.PageRequest.of(0, 1000)
-                ).getContent();
-            }
             
             // 카테고리별 지출 계산
             Map<String, BigDecimal> expenseByCategory = new HashMap<>();
@@ -1595,25 +1583,25 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDailyFinanceReport(String reportDate, String branchCode) {
-        log.info("일단위 재무 리포트 조회: {}, 지점: {}", reportDate, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("일단위 재무 리포트 조회: {}, tenantId: {}", reportDate, tenantId);
         
         LocalDate targetDate = LocalDate.parse(reportDate);
         Map<String, Object> dailyReport = new HashMap<>();
         dailyReport.put("reportDate", reportDate);
         dailyReport.put("reportType", "일간");
-        dailyReport.put("branchCode", branchCode);
+        dailyReport.put("tenantId", tenantId);
         
-        // 해당 날짜의 실제 거래 데이터 조회 (지점코드 필터링 적용)
+        // 해당 날짜의 실제 거래 데이터 조회 (테넌트 기반)
         List<FinancialTransaction> allTransactions = financialTransactionRepository
-            .findByTransactionDateAndIsDeletedFalse(targetDate);
+            .findByTenantIdAndTransactionDateAndIsDeletedFalse(tenantId, targetDate);
         
-        // 지점코드 필터링 적용
-        List<FinancialTransaction> dailyTransactions = allTransactions.stream()
-            .filter(t -> branchCode == null || branchCode.equals(t.getBranchCode()))
-            .collect(java.util.stream.Collectors.toList());
+        // 테넌트 전체 거래 사용 (branchCode 필터링 제거)
+        List<FinancialTransaction> dailyTransactions = allTransactions;
         
-        log.info("📊 일간 리포트 - 전체 거래: {}건, 필터링 후: {}건 (지점: {})", 
-            allTransactions.size(), dailyTransactions.size(), branchCode);
+        log.info("📊 일간 리포트 - 전체 거래: {}건 (tenantId: {})", 
+            allTransactions.size(), tenantId);
         
         // 일일 수입 (실제 데이터 기반)
         Map<String, Object> dailyIncome = new HashMap<>();
@@ -1702,7 +1690,9 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getMonthlyFinanceReport(String year, String month, String branchCode) {
-        log.info("월단위 재무 리포트 조회: {}-{}, 지점: {}", year, month, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("월단위 재무 리포트 조회: {}-{}, tenantId: {}", year, month, tenantId);
         
         // 해당 월의 시작일과 종료일 계산
         int yearInt = Integer.parseInt(year);
@@ -1714,19 +1704,17 @@ public class ErpServiceImpl implements ErpService {
         monthlyReport.put("year", year);
         monthlyReport.put("month", month);
         monthlyReport.put("reportType", "월간");
-        monthlyReport.put("branchCode", branchCode);
+        monthlyReport.put("tenantId", tenantId);
         
-        // 해당 월의 실제 거래 데이터 조회 (지점코드 필터링 적용)
+        // 해당 월의 실제 거래 데이터 조회 (테넌트 기반)
         List<FinancialTransaction> allTransactions = financialTransactionRepository
-            .findByTransactionDateBetweenAndIsDeletedFalse(startDate, endDate);
+            .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate);
         
-        // 지점코드 필터링 적용
-        List<FinancialTransaction> monthlyTransactions = allTransactions.stream()
-            .filter(t -> branchCode == null || branchCode.equals(t.getBranchCode()))
-            .collect(java.util.stream.Collectors.toList());
+        // 테넌트 전체 거래 사용 (branchCode 필터링 제거)
+        List<FinancialTransaction> monthlyTransactions = allTransactions;
         
-        log.info("📊 월간 리포트 - 전체 거래: {}건, 필터링 후: {}건 (지점: {})", 
-            allTransactions.size(), monthlyTransactions.size(), branchCode);
+        log.info("📊 월간 리포트 - 전체 거래: {}건 (tenantId: {})", 
+            allTransactions.size(), tenantId);
         
         // 월간 수입 (실제 데이터 기반)
         Map<String, Object> monthlyIncome = new HashMap<>();

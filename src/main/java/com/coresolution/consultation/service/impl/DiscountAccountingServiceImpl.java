@@ -413,24 +413,28 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
     
     @Override
     public Map<String, Object> getRefundableDiscounts(String branchCode) {
-        log.info("💰 환불 가능한 할인 조회: BranchCode={}", branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("💰 환불 가능한 할인 조회: tenantId={}", tenantId);
         
         Map<String, Object> result = new HashMap<>();
         result.put("success", false);
         result.put("message", "환불 가능한 할인 조회는 PL/SQL을 통해 구현됩니다");
-        result.put("branchCode", branchCode);
+        result.put("tenantId", tenantId);
         
         return result;
     }
     
     @Override
     public Map<String, Object> getDiscountRefundStatistics(String branchCode, String startDate, String endDate) {
-        log.info("📊 할인 환불 통계 조회: BranchCode={}, Period={} ~ {}", branchCode, startDate, endDate);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 할인 환불 통계 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         
         Map<String, Object> result = new HashMap<>();
         result.put("success", false);
         result.put("message", "할인 환불 통계 조회는 PL/SQL을 통해 구현됩니다");
-        result.put("branchCode", branchCode);
+        result.put("tenantId", tenantId);
         
         return result;
     }

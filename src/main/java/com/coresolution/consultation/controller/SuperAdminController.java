@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping({"/api/v1/super-admin", "/api/super-admin"})
+@RequestMapping("/api/v1/super-admin") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class SuperAdminController extends BaseApiController {
     

@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2024-12-19
  */
 @RestController
-@RequestMapping({"/api/v1/admin/css-themes", "/api/admin/css-themes"}) // v1 경로 추가, 레거시 경로 유지
+@RequestMapping("/api/v1/admin/css-themes") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 @Slf4j
 public class CssThemeController extends BaseApiController {

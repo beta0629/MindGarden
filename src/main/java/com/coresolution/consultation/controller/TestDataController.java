@@ -47,7 +47,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping({"/api/v1/test", "/api/test"})
+@RequestMapping("/api/v1/test") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class TestDataController {

@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping({"/api/v1/personal-data-request", "/api/personal-data-request"})
+@RequestMapping("/api/v1/personal-data-request") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class PersonalDataRequestController {
     

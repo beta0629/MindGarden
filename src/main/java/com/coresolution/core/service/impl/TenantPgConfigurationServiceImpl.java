@@ -29,10 +29,15 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+ /**
  * 테넌트 PG 설정 서비스 구현체
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-01-XX
  */
 @Slf4j
@@ -472,6 +477,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
     }
     
     
+     /**
      * PG 설정 요청 검증
      */
     private void validateConfigurationRequest(TenantPgConfigurationRequest request) {
@@ -521,6 +527,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
     }
     
+     /**
      * URL 형식 검증
      */
     private boolean isValidUrl(String url) {
@@ -532,6 +539,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
     }
     
+     /**
      * PG 연결 테스트 수행
      */
     private ConnectionTestResponse performConnectionTest(TenantPgConfiguration configuration) {
@@ -639,8 +647,11 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
     }
     
+     /**
      * 연결 테스트 결과 저장
+     /**
      * 
+     /**
      * <p>연결 테스트 결과를 PG 설정에 저장하고, 변경 이력에도 기록합니다.</p>
      */
     private void saveConnectionTestResult(TenantPgConfiguration configuration, ConnectionTestResponse response) {
@@ -680,6 +691,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
     }
     
+     /**
      * 엔티티를 응답 DTO로 변환
      */
     private TenantPgConfigurationResponse toResponse(TenantPgConfiguration configuration) {
@@ -712,6 +724,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .build();
     }
     
+     /**
      * 변경 이력을 응답 DTO로 변환
      */
     private TenantPgConfigurationHistoryResponse toHistoryResponse(TenantPgConfigurationHistory history) {
@@ -728,7 +741,9 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .build();
     }
     
+     /**
      * 현재 사용자 ID 가져오기
+     /**
      * SecurityContext에서 인증된 사용자 정보를 가져옵니다.
      */
     private String getCurrentUserId() {
@@ -747,6 +762,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         return "system";
     }
     
+     /**
      * 승인 요청 검증
      */
     private void validateApprovalRequest(TenantPgConfiguration configuration, PgConfigurationApproveRequest request) {
@@ -777,6 +793,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
     }
     
+     /**
      * 거부 요청 검증
      */
     private void validateRejectionRequest(TenantPgConfiguration configuration, PgConfigurationRejectRequest request) {
@@ -798,6 +815,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
     }
     
+     /**
      * 승인 알림 발송
      */
     private void sendApprovalNotification(TenantPgConfiguration configuration, String approvalNote) {
@@ -844,6 +862,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
     }
     
+     /**
      * 거부 알림 발송
      */
     private void sendRejectionNotification(TenantPgConfiguration configuration, String rejectionReason) {

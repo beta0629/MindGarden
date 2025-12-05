@@ -21,13 +21,21 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+ /**
  * 학원 시스템 수강 등록 관리 컨트롤러
+ /**
  * 동적 권한 시스템 적용, 하드코딩 금지, 상수 사용
+ /**
  * 
+ /**
  * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 2.0.0
+ /**
  * @since 2025-11-19
  */
 @Slf4j
@@ -40,7 +48,9 @@ public class AcademyEnrollmentController extends BaseApiController {
     private final ClassEnrollmentService enrollmentService;
     private final DynamicPermissionService dynamicPermissionService;
     
+     /**
      * 수강 등록 목록 조회
+     /**
      * GET /api/v1/academy/enrollments
      */
     @GetMapping
@@ -74,7 +84,9 @@ public class AcademyEnrollmentController extends BaseApiController {
         return success(enrollments);
     }
     
+     /**
      * 수강 등록 상세 조회
+     /**
      * GET /api/v1/academy/enrollments/{enrollmentId}
      */
     @GetMapping("/{enrollmentId}")
@@ -105,7 +117,9 @@ public class AcademyEnrollmentController extends BaseApiController {
         return success(enrollment);
     }
     
+     /**
      * 수강 등록 생성
+     /**
      * POST /api/v1/academy/enrollments
      */
     @PostMapping
@@ -139,7 +153,9 @@ public class AcademyEnrollmentController extends BaseApiController {
         return created("수강 등록이 완료되었습니다.", enrollment);
     }
     
+     /**
      * 수강 등록 수정
+     /**
      * PUT /api/v1/academy/enrollments/{enrollmentId}
      */
     @PutMapping("/{enrollmentId}")
@@ -175,7 +191,9 @@ public class AcademyEnrollmentController extends BaseApiController {
         return updated("수강 등록 정보가 수정되었습니다.", enrollment);
     }
     
+     /**
      * 수강 취소
+     /**
      * POST /api/v1/academy/enrollments/{enrollmentId}/cancel
      */
     @PostMapping("/{enrollmentId}/cancel")
@@ -211,7 +229,9 @@ public class AcademyEnrollmentController extends BaseApiController {
         return updated("수강이 취소되었습니다.", enrollment);
     }
     
+     /**
      * 수강생별 활성 수강 등록 조회
+     /**
      * GET /api/v1/academy/enrollments/consumer/{consumerId}
      */
     @GetMapping("/consumer/{consumerId}")

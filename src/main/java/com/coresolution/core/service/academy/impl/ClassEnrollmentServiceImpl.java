@@ -17,11 +17,17 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+ /**
  * 수강 등록 서비스 구현체
+ /**
  * 학원 시스템의 수강 등록 관리 비즈니스 로직 구현
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-11-19
  */
 @Slf4j

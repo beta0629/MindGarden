@@ -12,10 +12,15 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+ /**
  * 통계 자동화 스케줄러 서비스 구현체
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-09-24
  */
 @Slf4j
@@ -26,7 +31,9 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
     private final PlSqlStatisticsService plSqlStatisticsService;
     private final ErpSyncLogRepository erpSyncLogRepository;
     
+     /**
      * 일별 통계 자동 업데이트 스케줄러
+     /**
      * 매일 자정 1분 후 실행 (cron: 0 1 0 * * *)
      */
     @Override
@@ -76,7 +83,9 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         }
     }
     
+     /**
      * 상담사 성과 자동 업데이트 스케줄러
+     /**
      * 매일 자정 3분 후 실행 (cron: 0 3 0 * * *)
      */
     @Override
@@ -126,7 +135,9 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         }
     }
     
+     /**
      * 성과 모니터링 자동 실행 스케줄러
+     /**
      * 매일 자정 5분 후 실행 (cron: 0 5 0 * * *)
      */
     @Override
@@ -226,12 +237,14 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         }
     }
     
+     /**
      * 특정 날짜의 지점 수 조회 (통계용)
      */
     private int getBranchCount(LocalDate date) {
         return 1;
     }
     
+     /**
      * 특정 날짜의 상담사 수 조회 (통계용)
      */
     private int getConsultantCount(LocalDate date) {

@@ -19,10 +19,15 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
+ /**
  * 구독 요금제 변경 서비스 구현체
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-01-XX
  */
 @Slf4j
@@ -34,8 +39,11 @@ public class SubscriptionPlanChangeServiceImpl implements SubscriptionPlanChange
     private final TenantSubscriptionRepository subscriptionRepository;
     private final PricingPlanRepository pricingPlanRepository;
     
+     /**
      * PG 결제 대행사 서비스 (선택적 주입)
+     /**
      * 실제 PG 결제/환불 API 호출에 사용
+     /**
      * Note: 테넌트별 PG 설정이 필요하므로 추후 TenantPgConfigurationService와 통합 필요
      */
     @Autowired(required = false)

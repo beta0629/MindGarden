@@ -188,13 +188,9 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         createRolePermissions(UserRole.PRINCIPAL.name(), adminPermissions); // 원장은 ADMIN과 동일 권한
         createRolePermissions(UserRole.OWNER.name(), hqMasterPermissions); // 사장은 모든 권한
         
-        // 레거시 역할 권한 설정 (하위 호환성 유지, 사용 금지)
-        // 표준화 2025-12-05: 레거시 역할은 더 이상 사용하지 않지만, 하위 호환성을 위해 권한은 유지
-        createRolePermissions(UserRole.BRANCH_SUPER_ADMIN.name(), branchSuperAdminPermissions);
-        createRolePermissions(UserRole.BRANCH_ADMIN.name(), branchAdminPermissions);
-        createRolePermissions(UserRole.HQ_ADMIN.name(), hqAdminPermissions);
-        createRolePermissions(UserRole.SUPER_HQ_ADMIN.name(), superHqAdminPermissions);
-        createRolePermissions(UserRole.HQ_MASTER.name(), hqMasterPermissions);
+        // 표준화 2025-12-05: 레거시 역할 제거
+        // 레거시 역할은 더 이상 사용하지 않으므로 권한 설정도 제거
+        // 하위 호환성이 필요한 경우 ADMIN 역할에 통합된 권한이 적용됨
         
         // 일반 역할 권한 설정
         createRolePermissions(UserRole.CONSULTANT.name(), consultantPermissions);

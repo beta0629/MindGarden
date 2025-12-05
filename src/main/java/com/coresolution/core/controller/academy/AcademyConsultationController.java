@@ -29,13 +29,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+ /**
  * 학원 시스템 상담 예약 컨트롤러
+ /**
  * 신규생 상담 및 등록 프로세스 지원
+ /**
  * 
+ /**
  * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-11-24
  */
 @Slf4j
@@ -51,7 +59,9 @@ public class AcademyConsultationController extends BaseApiController {
     private final ConsultationRecordService consultationRecordService;
     private final ClassEnrollmentService enrollmentService;
     
+     /**
      * 학원 상담 예약 생성
+     /**
      * POST /api/v1/academy/consultations
      */
     @PostMapping
@@ -119,7 +129,9 @@ public class AcademyConsultationController extends BaseApiController {
         return created("상담 예약이 생성되었습니다.", response);
     }
     
+     /**
      * 학원 상담 예약 목록 조회
+     /**
      * GET /api/v1/academy/consultations
      */
     @GetMapping
@@ -166,7 +178,9 @@ public class AcademyConsultationController extends BaseApiController {
         return success(responses);
     }
     
+     /**
      * 학원 상담 예약 상세 조회
+     /**
      * GET /api/v1/academy/consultations/{consultationId}
      */
     @GetMapping("/{consultationId}")
@@ -200,7 +214,9 @@ public class AcademyConsultationController extends BaseApiController {
         return success(response);
     }
     
+     /**
      * 학원 상담 예약 확정
+     /**
      * POST /api/v1/academy/consultations/{consultationId}/confirm
      */
     @PostMapping("/{consultationId}/confirm")
@@ -241,7 +257,9 @@ public class AcademyConsultationController extends BaseApiController {
         return success("상담 예약이 확정되었습니다.", response);
     }
     
+     /**
      * 학원 상담 예약 취소
+     /**
      * POST /api/v1/academy/consultations/{consultationId}/cancel
      */
     @PostMapping("/{consultationId}/cancel")
@@ -281,7 +299,9 @@ public class AcademyConsultationController extends BaseApiController {
         return success("상담 예약이 취소되었습니다.", response);
     }
     
+     /**
      * 학원 상담 완료 및 수강 등록 연계
+     /**
      * POST /api/v1/academy/consultations/{consultationId}/complete
      */
     @PostMapping("/{consultationId}/complete")
@@ -380,6 +400,7 @@ public class AcademyConsultationController extends BaseApiController {
         return success("상담이 완료되었습니다.", result);
     }
     
+     /**
      * Consultation 엔티티를 AcademyConsultationResponse로 변환
      */
     private AcademyConsultationResponse toResponse(Consultation consultation) {

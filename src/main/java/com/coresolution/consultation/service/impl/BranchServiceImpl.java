@@ -30,11 +30,17 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import java.time.LocalDateTime;
 
+ /**
  * 지점 서비스 구현체
+ /**
  * BaseTenantEntityServiceImpl을 상속하여 테넌트 필터링 및 접근 제어 지원
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 2.0.0
+ /**
  * @since 2025-09-12
  */
 @Slf4j

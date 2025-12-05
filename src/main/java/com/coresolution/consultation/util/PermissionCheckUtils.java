@@ -168,25 +168,20 @@ public class PermissionCheckUtils {
         authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
         
         // 추가 권한 설정
+        // 표준화 2025-12-05: 레거시 역할 제거, 표준 역할만 사용
+        if (user.getRole() == null) {
+            return authorities;
+        }
+        
         switch (user.getRole()) {
-            case HQ_MASTER:
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_HQ_ADMIN"));
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_BRANCH_SUPER_ADMIN"));
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_CONSULTANT"));
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_CLIENT"));
-                break;
-            case SUPER_HQ_ADMIN:
-            case HQ_ADMIN:
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_HQ_ADMIN"));
-                break;
-            case BRANCH_SUPER_ADMIN:
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_BRANCH_SUPER_ADMIN"));
-                break;
             case ADMIN:
-            case BRANCH_MANAGER:
+            case TENANT_ADMIN:
+            case PRINCIPAL:
+            case OWNER:
+                // 표준 관리자 역할
+                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
+                break;
+            case STAFF:
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
                 break;
             case CONSULTANT:

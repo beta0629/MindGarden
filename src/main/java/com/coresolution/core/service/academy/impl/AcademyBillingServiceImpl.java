@@ -1,6 +1,4 @@
 package com.coresolution.core.service.academy.impl;
-import com.coresolution.core.context.TenantContextHolder;
-
 import com.coresolution.core.domain.academy.*;
 import com.coresolution.core.dto.academy.*;
 import com.coresolution.core.repository.academy.*;
@@ -19,6 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
  * 학원 청구 서비스 구현체
  * 학원 시스템의 수강료 청구 및 결제 관리 비즈니스 로직 구현
  * 
@@ -677,6 +676,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
     }
     
     
+    /**
      * 다음 청구일 계산
      */
     private LocalDate calculateNextBillingDate(AcademyBillingSchedule schedule) {
@@ -714,6 +714,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return nextDate;
     }
     
+    /**
      * AcademyBillingSchedule을 BillingScheduleResponse로 변환
      */
     private BillingScheduleResponse toBillingScheduleResponse(AcademyBillingSchedule schedule) {
@@ -739,6 +740,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             .build();
     }
     
+    /**
      * AcademyInvoice를 InvoiceResponse로 변환
      */
     private InvoiceResponse toInvoiceResponse(AcademyInvoice invoice) {
@@ -772,6 +774,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             .build();
     }
     
+    /**
      * AcademyTuitionPayment를 TuitionPaymentResponse로 변환
      */
     private TuitionPaymentResponse toTuitionPaymentResponse(AcademyTuitionPayment payment) {
@@ -802,7 +805,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
             .updatedAt(payment.getUpdatedAt())
             .build();
     }
-    
+    /*
      * InvoiceStatus 변환
      */
     private InvoiceResponse.InvoiceStatus convertInvoiceStatus(AcademyInvoice.InvoiceStatus status) {
@@ -812,6 +815,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return InvoiceResponse.InvoiceStatus.valueOf(status.name());
     }
     
+    /**
      * 청구서 번호 생성
      */
     private String generateInvoiceNumber(String tenantId, Long branchId) {
@@ -837,6 +841,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return invoiceNumber;
     }
     
+    /**
      * 영수증 번호 생성
      */
     private String generateReceiptNumber(String tenantId, Long branchId) {
@@ -855,6 +860,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return receiptNumber;
     }
     
+    /**
      * 청구 대상 수강 등록 조회
      */
     private List<ClassEnrollment> findTargetEnrollments(String tenantId, AcademyBillingSchedule schedule) {
@@ -876,6 +882,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return enrollments;
     }
     
+    /**
      * 청구 금액 계산
      */
     private BigDecimal calculateBillingAmount(ClassEnrollment enrollment, AcademyBillingSchedule schedule) {
@@ -889,6 +896,7 @@ public class AcademyBillingServiceImpl implements AcademyBillingService {
         return BigDecimal.ZERO;
     }
     
+    /**
      * 청구서 결제 상태 업데이트
      */
     private void updateInvoicePaymentStatus(String invoiceId) {

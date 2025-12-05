@@ -30,10 +30,15 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+ /**
  * 상담사 평가 서비스 구현
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-09-17
  */
 @Slf4j
@@ -592,6 +597,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         }
     }
     
+     /**
      * 지점별 상담사 랭킹 조회
      */
     private List<Map<String, Object>> getConsultantRankingByBranch(String branchCode, Pageable pageable) {
@@ -666,6 +672,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         }
     }
 
+     /**
      * 상담 유형을 한글 표시명으로 변환
      */
     private String getConsultationTypeDisplayName(String consultationType) {

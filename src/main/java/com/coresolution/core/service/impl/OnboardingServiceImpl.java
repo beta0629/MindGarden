@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
  * 온보딩 서비스 구현체
  * 온보딩 요청 CRUD 및 승인 프로세스 처리
  * OnboardingApprovalService와 통합하여 PL/SQL 프로시저 호출
@@ -126,6 +127,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         return saved;
     }
     
+    /**
      * 별도 트랜잭션에서 decide 메서드 실행
      * 자동 승인 실패 시에도 원래 트랜잭션이 롤백되지 않도록 함
      * 
@@ -147,6 +149,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
     
+    /**
      * decide 메서드의 실제 로직 (트랜잭션 없음)
      * decide와 decideInNewTransaction에서 공통으로 사용
      */
@@ -411,13 +414,13 @@ public class OnboardingServiceImpl implements OnboardingService {
                     log.warn("구독 tenant_id 업데이트 실패 (계속 진행): {}", e.getMessage());
                 }
                 
-            try {
-                log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
-                initializeTenantAfterOnboarding(tenantId, request.getBusinessType(), actorId);
-            } catch (Exception e) {
-                log.error("온보딩 후 테넌트 초기화 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
-                    tenantId, e.getMessage(), e);
-            }
+                try {
+                    log.info("🔄 테넌트 초기화 작업 시작: tenantId={}", tenantId);
+                    initializeTenantAfterOnboarding(tenantId, request.getBusinessType(), actorId);
+                } catch (Exception e) {
+                    log.error("온보딩 후 테넌트 초기화 실패 (온보딩 프로세스는 계속 진행): tenantId={}, error={}", 
+                        tenantId, e.getMessage(), e);
+                }
             }
         }
         
@@ -577,6 +580,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
     
     
+    /**
      * 테넌트 생성 시점에만 중복 체크 (온보딩 승인 시 호출)
      * 
      * 멀티 테넌트 지원 원칙:
@@ -594,10 +598,12 @@ public class OnboardingServiceImpl implements OnboardingService {
         return false; // 멀티 테넌트 지원으로 항상 false 반환
     }
     
+    /**
      * 관리자 계정 생성은 이제 PL/SQL 프로시저에서 처리됩니다.
      * ProcessOnboardingApproval 프로시저가 CreateTenantAdminAccount를 호출하여 관리자 계정을 생성합니다.
      */
     
+    /**
      * 온보딩 승인 후 구독의 tenant_id 업데이트
      * checklistJson에서 subscriptionId를 찾아서 생성된 tenant_id로 업데이트
      */
@@ -648,6 +654,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
     
+    /**
      * 기본 업종 조회 (공통 코드에서 동적으로 가져옴)
      * businessType이 null이거나 비어있으면 공통 코드에서 기본 업종을 조회
      * 공통 코드 조회 실패 시 상수에 정의된 기본값 사용
@@ -687,6 +694,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         return OnboardingConstants.CODE_VALUE_DEFAULT_BUSINESS_TYPE;
     }
     
+    /**
      * 기본 위험도 조회 (공통 코드에서 동적으로 가져옴)
      * 공통 코드 조회 실패 시 상수에 정의된 기본값 사용
      * 
@@ -732,6 +740,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         return RiskLevel.LOW;
     }
     
+    /**
      * 온보딩 요청에서 지역 코드 추출
      * checklistJson에서 주소 정보를 추출하여 지역 코드 생성
      * 
@@ -774,6 +783,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
     
+    /**
      * 주소에서 지역 코드 추출
      * 
      * @param address 주소 문자열
@@ -865,6 +875,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         return null;
     }
     
+    /**
      * 우편번호에서 지역 코드 추출 (한국 우편번호 기준)
      * 
      * @param postalCode 우편번호
@@ -938,6 +949,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         return null;
     }
     
+    /**
      * 온보딩 승인 후 테넌트 초기화 작업
      * - 역할별 권한 그룹 자동 할당
      * 
@@ -972,6 +984,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         log.info("✅ 온보딩 후 테넌트 초기화 완료: tenantId={}", tenantId);
     }
     
+    /**
      * 프로시저가 실패한 경우를 대비한 Java 코드에서 직접 삽입
      * 
      * @param tenantId 테넌트 ID
@@ -982,10 +995,11 @@ public class OnboardingServiceImpl implements OnboardingService {
         try {
             List<CommonCode> existingCodes = commonCodeRepository.findByTenantId(tenantId);
             if (existingCodes != null && !existingCodes.isEmpty()) {
-                    tenantId, existingCodes.size());
+                log.info("기본 공통코드가 이미 존재함: tenantId={}, count={}", tenantId, existingCodes.size());
                 return;
             }
         } catch (Exception e) {
+            log.warn("기본 공통코드 확인 중 오류 발생 (계속 진행): {}", e.getMessage());
         }
         
         int insertedCount = 0;
@@ -1092,6 +1106,8 @@ public class OnboardingServiceImpl implements OnboardingService {
         
     }
     
+    /**
+     * 공통코드 삽입 (중복 체크)
      */
     private void insertCommonCodeIfNotExists(String tenantId, String codeGroup, String codeValue,
                                             String koreanName, String codeLabel, String description,
@@ -1101,7 +1117,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 tenantId, codeGroup, codeValue);
             
             if (existing.isPresent()) {
-                    tenantId, codeGroup, codeValue);
+                log.debug("공통코드가 이미 존재함: tenantId={}, codeGroup={}, codeValue={}", tenantId, codeGroup, codeValue);
                 return;
             }
             
@@ -1119,10 +1135,10 @@ public class OnboardingServiceImpl implements OnboardingService {
             code.setTenantId(tenantId);
             
             commonCodeRepository.save(code);
-                tenantId, codeGroup, codeValue);
+            log.debug("공통코드 삽입 완료: tenantId={}, codeGroup={}, codeValue={}", tenantId, codeGroup, codeValue);
                 
         } catch (Exception e) {
-                tenantId, codeGroup, codeValue, e.getMessage());
+            log.error("공통코드 삽입 실패: tenantId={}, codeGroup={}, codeValue={}, error={}", tenantId, codeGroup, codeValue, e.getMessage());
             throw e; // 상위로 전파하여 개별 처리
         }
     }

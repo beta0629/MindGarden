@@ -245,7 +245,11 @@ public class ConsultationController extends BaseApiController {
         
         // 어드민 권한 체크
         String userRole = (String) request.getAttribute("userRole");
-        if (!UserRole.ADMIN.name().equals(userRole) && !UserRole.HQ_MASTER.name().equals(userRole)) {
+        // 표준화 2025-12-05: HQ_MASTER → ADMIN으로 통합
+        if (!UserRole.ADMIN.name().equals(userRole) && 
+            !UserRole.TENANT_ADMIN.name().equals(userRole) && 
+            !UserRole.PRINCIPAL.name().equals(userRole) && 
+            !UserRole.OWNER.name().equals(userRole)) {
             throw new AccessDeniedException("상담 완료는 어드민만 가능합니다.");
         }
         

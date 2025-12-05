@@ -21,11 +21,17 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+ /**
  * 학원 정산 서비스 구현체
+ /**
  * 학원 시스템의 수강료/강사/본사 정산 관리 비즈니스 로직 구현
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-11-24
  */
 @Slf4j
@@ -315,6 +321,7 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
     }
     
     
+     /**
      * 매출 계산
      */
     private SettlementCalculationResult calculateRevenue(String tenantId, Long branchId, LocalDate periodStart, LocalDate periodEnd) {
@@ -346,17 +353,20 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
             .build();
     }
     
+     /**
      * 강사 정산 계산
      */
     private BigDecimal calculateTeacherSettlement(String tenantId, Long branchId, LocalDate periodStart, LocalDate periodEnd, BigDecimal totalRevenue) {
         return totalRevenue.multiply(new BigDecimal("0.5")).setScale(2, RoundingMode.HALF_UP);
     }
     
+     /**
      * 정산 항목 생성
      */
     private void createSettlementItems(AcademySettlement settlement, SettlementCalculationResult calculationResult) {
     }
     
+     /**
      * AcademySettlement를 SettlementResponse로 변환
      */
     private SettlementResponse toSettlementResponse(AcademySettlement settlement) {
@@ -390,6 +400,7 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
             .build();
     }
     
+     /**
      * AcademySettlementItem을 SettlementItemResponse로 변환
      */
     private SettlementItemResponse toSettlementItemResponse(AcademySettlementItem item) {
@@ -415,6 +426,7 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
             .build();
     }
     
+     /**
      * SettlementStatus 변환
      */
     private SettlementResponse.SettlementStatus convertSettlementStatus(AcademySettlement.SettlementStatus status) {
@@ -424,6 +436,7 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         return SettlementResponse.SettlementStatus.valueOf(status.name());
     }
     
+     /**
      * ItemType 변환
      */
     private SettlementItemResponse.ItemType convertItemType(AcademySettlementItem.ItemType itemType) {
@@ -433,6 +446,7 @@ public class AcademySettlementServiceImpl implements AcademySettlementService {
         return SettlementItemResponse.ItemType.valueOf(itemType.name());
     }
     
+     /**
      * 정산 계산 결과 내부 클래스
      */
     @lombok.Data

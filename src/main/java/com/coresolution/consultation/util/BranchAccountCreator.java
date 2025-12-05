@@ -86,7 +86,7 @@ public class BranchAccountCreator {
         admin.setUsername(username);
         admin.setPassword(passwordEncoder.encode("admin123"));
         admin.setName(name);
-        admin.setRole(UserRole.BRANCH_SUPER_ADMIN);
+        admin.setRole(UserRole.ADMIN); // 표준화 2025-12-05: BRANCH_SUPER_ADMIN → ADMIN으로 통합
         admin.setPhone("010-1234-5678");
         admin.setBranchCode(branchCode);
         admin.setActive(true);

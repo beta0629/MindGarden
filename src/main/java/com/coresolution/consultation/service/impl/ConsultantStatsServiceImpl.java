@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
  * 상담사 통계 정보 조회 서비스 구현
  * - 상담사 정보와 통계를 통합 조회
  * - 중앙화된 데이터 관리
@@ -87,6 +88,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return buildConsultantStatsList(consultants);
     }
     
+    /**
      * 테넌트별 상담사 통계 조회 (신규 추가)
      */
     @Cacheable(value = "consultantsWithStats", key = "'tenant:' + #tenantId + ':active'")
@@ -103,6 +105,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return buildConsultantStatsList(consultants);
     }
     
+    /**
      * 상담사 목록을 통계와 함께 Map 리스트로 변환 (공통 로직)
      */
     private List<Map<String, Object>> buildConsultantStatsList(List<Consultant> consultants) {
@@ -200,6 +203,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return stats;
     }
     
+    /**
      * 캐시 무효화 (매핑 변경 시 호출)
      * 
      * @param consultantId 상담사 ID
@@ -209,6 +213,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         log.info("🗑️ 캐시 무효화: consultantId={}", consultantId);
     }
     
+    /**
      * 전체 캐시 무효화
      */
     @CacheEvict(value = {"consultantsWithStats", "consultantCurrentClients"}, allEntries = true)
@@ -216,6 +221,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         log.info("🗑️ 전체 캐시 무효화");
     }
     
+    /**
      * 데이터베이스에서 전문분야 상세 정보 조회
      */
     private List<Map<String, String>> getSpecializationDetailsFromDB(String specialization) {
@@ -239,6 +245,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return details;
     }
     
+    /**
      * 코드로 전문분야 이름 조회
      */
     private String getSpecialtyNameByCode(String code) {
@@ -260,6 +267,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
         return specialtyMap.getOrDefault(code.toUpperCase(), code);
     }
     
+    /**
      * Mapping 엔티티를 Map으로 변환
      */
     private Map<String, Object> mappingToMap(ConsultantClientMapping mapping) {

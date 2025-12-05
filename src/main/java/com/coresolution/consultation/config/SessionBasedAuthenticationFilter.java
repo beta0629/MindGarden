@@ -370,26 +370,12 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         // 기본 역할 권한 추가
         authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
         
-        // 추가 권한 설정
+        // 추가 권한 설정 (표준화 2025-12-05: 표준 역할만 사용)
         switch (user.getRole()) {
-            case HQ_MASTER:
-                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                authorities.add(new SimpleGrantedAuthority("ROLE_HQ_ADMIN"));
-                authorities.add(new SimpleGrantedAuthority("ROLE_BRANCH_SUPER_ADMIN"));
-                authorities.add(new SimpleGrantedAuthority("ROLE_CONSULTANT"));
-                authorities.add(new SimpleGrantedAuthority("ROLE_CLIENT"));
-                break;
-            case SUPER_HQ_ADMIN:
-            case HQ_ADMIN:
-                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                authorities.add(new SimpleGrantedAuthority("ROLE_HQ_ADMIN"));
-                break;
-            case BRANCH_SUPER_ADMIN:
-                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                authorities.add(new SimpleGrantedAuthority("ROLE_BRANCH_SUPER_ADMIN"));
-                break;
             case ADMIN:
-            case BRANCH_MANAGER:
+            case TENANT_ADMIN:
+            case PRINCIPAL:
+            case OWNER:
                 authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
                 break;
             case CONSULTANT:
@@ -397,6 +383,12 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 break;
             case CLIENT:
                 authorities.add(new SimpleGrantedAuthority("ROLE_CLIENT"));
+                break;
+            case STAFF:
+                authorities.add(new SimpleGrantedAuthority("ROLE_STAFF"));
+                break;
+            case PARENT:
+                authorities.add(new SimpleGrantedAuthority("ROLE_PARENT"));
                 break;
             default:
                 log.warn("⚠️ 알 수 없는 사용자 역할: {}", user.getRole());

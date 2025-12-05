@@ -12,10 +12,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.dto.ClientRegistrationDto;
-import com.coresolution.consultation.dto.ConsultantClientMappingDto;
+import com.coresolution.consultation.dto.ClientRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
-import com.coresolution.consultation.dto.ConsultantRegistrationDto;
+import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -84,7 +84,9 @@ public class AdminController extends BaseApiController {
     private final StatusCodeHelper statusCodeHelper;
 
     /**
+     /**
      * 상담사 통계 정보 조회 (캐시 사용)
+     /**
      * GET /api/admin/consultants/with-stats/{id}
      */
     @GetMapping("/consultants/with-stats/{id}")
@@ -97,7 +99,9 @@ public class AdminController extends BaseApiController {
     }
     
     /**
+     /**
      * 전체 상담사 통계 정보 조회 (테넌트별 필터링)
+     /**
      * GET /api/admin/consultants/with-stats
      */
     @GetMapping("/consultants/with-stats")
@@ -129,7 +133,9 @@ public class AdminController extends BaseApiController {
     }
     
     /**
+     /**
      * 내담자 통계 정보 조회 (캐시 사용)
+     /**
      * GET /api/admin/clients/with-stats/{id}
      */
     @GetMapping("/clients/with-stats/{id}")
@@ -142,7 +148,9 @@ public class AdminController extends BaseApiController {
     }
     
     /**
+     /**
      * 전체 내담자 통계 정보 조회 (캐시 사용 + 지점별 필터링)
+     /**
      * GET /api/admin/clients/with-stats
      */
     @GetMapping("/clients/with-stats")
@@ -174,6 +182,7 @@ public class AdminController extends BaseApiController {
     }
     
     /**
+     /**
      * 회기관리 통계 조회
      */
     @GetMapping("/sessions/statistics")
@@ -191,6 +200,7 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     /**
      * 회기관리 목록 조회
      */
     @GetMapping("/sessions")
@@ -212,6 +222,7 @@ public class AdminController extends BaseApiController {
     }
     
     /**
+     /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
      */
     @GetMapping("/consultants")
@@ -241,6 +252,7 @@ public class AdminController extends BaseApiController {
     }
     
     /**
+     /**
      * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
      */
     @GetMapping("/consultants/with-vacation")
@@ -262,6 +274,7 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     /**
      * 상담사별 휴가 통계 조회
      */
     @GetMapping("/vacation-statistics")
@@ -284,6 +297,7 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     /**
      * 내담자 목록 조회
      */
     @GetMapping("/clients")
@@ -310,6 +324,7 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     /**
      * 통합 내담자 데이터 조회 (매칭 정보, 결제 상태, 남은 세션 등 포함)
      */
     @GetMapping("/clients/with-mapping-info")
@@ -342,6 +357,7 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     /**
      * 상담사별 매칭된 내담자 목록 조회 (스케줄 등록용)
      */
     @GetMapping("/mappings/consultant/{consultantId}/clients")
@@ -432,6 +448,7 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     /**
      * 내담자별 매칭 조회
      */
     @GetMapping("/mappings/client")
@@ -478,7 +495,9 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     /**
      * 매칭 통계 정보 조회 (위젯용)
+     /**
      * GET /api/admin/mappings/stats
      */
     @GetMapping("/mappings/stats")
@@ -526,7 +545,9 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     /**
      * 오늘의 통계 조회 (위젯용)
+     /**
      * GET /api/admin/today-stats
      */
     @GetMapping("/today-stats")
@@ -581,7 +602,9 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     /**
      * 입금 대기 통계 조회 (위젯용)
+     /**
      * GET /api/admin/pending-deposit-stats
      */
     @GetMapping("/pending-deposit-stats")
@@ -635,7 +658,9 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     /**
      * 오늘의 스케줄 조회 (관리자용)
+     /**
      * GET /api/admin/schedules/today
      */
     @GetMapping("/schedules/today")
@@ -672,7 +697,9 @@ public class AdminController extends BaseApiController {
         }
     }
 
+     /**
      * 재무 요약 조회
+     /**
      * GET /api/admin/finance/summary
      */
     @GetMapping("/finance/summary")
@@ -699,6 +726,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+     /**
      * 매칭 목록 조회 (중앙화 - 모든 매칭 조회)
      */
     @GetMapping("/mappings")
@@ -777,6 +805,7 @@ public class AdminController extends BaseApiController {
     }
 
     
+     /**
      * 매칭 정보 수정 (ERP 연동)
      */
     @PostMapping("/mappings/{mappingId}/update")
@@ -821,6 +850,7 @@ public class AdminController extends BaseApiController {
     }
 
 
+     /**
      * 입금 대기 중인 매칭 목록 조회
      */
     @GetMapping("/mappings/pending-payment")
@@ -835,6 +865,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+     /**
      * 입금 확인된 매칭 목록 조회
      */
     @GetMapping("/mappings/payment-confirmed")
@@ -849,6 +880,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+     /**
      * 입금 확인 대기 중인 매칭 목록 조회
      */
     @GetMapping("/mappings/pending-deposit")
@@ -900,6 +932,7 @@ public class AdminController extends BaseApiController {
         return success("입금 확인 대기 매칭 조회 완료", data);
     }
 
+     /**
      * 활성 매칭 목록 조회 (승인 완료)
      */
     @GetMapping("/mappings/active")
@@ -980,6 +1013,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+     /**
      * 회기 소진된 매칭 목록 조회
      */
     @GetMapping("/mappings/sessions-exhausted")
@@ -994,6 +1028,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+     /**
      * 개별 매칭 조회
      */
     @GetMapping("/mappings/{mappingId}")
@@ -1039,6 +1074,7 @@ public class AdminController extends BaseApiController {
         return success(mappingData);
     }
 
+     /**
      * 결제 확인 (미수금 상태)
      */
     @PostMapping("/mappings/{mappingId}/confirm-payment")
@@ -1091,6 +1127,7 @@ public class AdminController extends BaseApiController {
         return success("입금이 확인되었습니다. 이제 관리자 승인을 기다려주세요.", mappingData);
     }
 
+     /**
      * 관리자 승인
      */
     @PostMapping("/mappings/{mappingId}/approve")
@@ -1138,6 +1175,7 @@ public class AdminController extends BaseApiController {
         return success("매칭이 승인되었습니다. 이제 스케줄을 작성할 수 있습니다.", mappingData);
     }
 
+     /**
      * 관리자 거부
      */
     @PostMapping("/mappings/{mappingId}/reject")
@@ -1153,6 +1191,7 @@ public class AdminController extends BaseApiController {
         return success("매칭이 거부되었습니다.", mapping);
     }
 
+     /**
      * 회기 사용 처리
      */
     @PostMapping("/mappings/{mappingId}/use-session")
@@ -1164,6 +1203,7 @@ public class AdminController extends BaseApiController {
         return success("회기가 사용되었습니다.", mapping);
     }
 
+     /**
      * 회기 추가 (연장)
      */
     @PostMapping("/mappings/{mappingId}/extend-sessions")
@@ -1182,11 +1222,12 @@ public class AdminController extends BaseApiController {
         return success("회기가 추가되었습니다.", mapping);
     }
 
+     /**
      * 상담사 등록
      */
     @PostMapping("/consultants")
-    public ResponseEntity<ApiResponse<User>> registerConsultant(@RequestBody ConsultantRegistrationDto dto, HttpSession session) {
-        log.info("🔧 상담사 등록: {}", dto.getUsername());
+    public ResponseEntity<ApiResponse<User>> registerConsultant(@RequestBody ConsultantRegistrationRequest request, HttpSession session) {
+        log.info("🔧 상담사 등록: {}", request.getUsername());
         
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CONSULTANT_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
@@ -1199,28 +1240,30 @@ public class AdminController extends BaseApiController {
             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
-                (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
-                dto.setBranchCode(currentUser.getBranchCode());
-                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", dto.getBranchCode());
+                (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty())) {
+                request.setBranchCode(currentUser.getBranchCode());
+                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
             }
         }
         
-        if (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty()) {
+        /* 주석 처리됨 - 지점코드 검증 로직
+        if (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty()) {
             log.error("❌ 지점코드가 없습니다. 상담사 등록을 거부합니다.");
             throw new IllegalArgumentException("지점코드는 필수입니다. 관리자에게 문의하세요.");
         }
         */
         
-        User consultant = adminService.registerConsultant(dto);
+        User consultant = adminService.registerConsultant(request);
         return created("상담사가 성공적으로 등록되었습니다", consultant);
     }
 
+     /**
      * 내담자 등록
      */
     @PostMapping("/clients")
-    public ResponseEntity<ApiResponse<Client>> registerClient(@RequestBody ClientRegistrationDto dto, HttpSession session) {
-        log.info("🔧 내담자 등록: {}", dto.getName());
-        log.info("🔧 요청 데이터: branchCode={}", dto.getBranchCode());
+    public ResponseEntity<ApiResponse<Client>> registerClient(@RequestBody ClientRegistrationRequest request, HttpSession session) {
+        log.info("🔧 내담자 등록: {}", request.getName());
+        log.info("🔧 요청 데이터: branchCode={}", request.getBranchCode());
         
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CLIENT_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
@@ -1235,31 +1278,33 @@ public class AdminController extends BaseApiController {
             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
-                (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
-                dto.setBranchCode(currentUser.getBranchCode());
-                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", dto.getBranchCode());
+                (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty())) {
+                request.setBranchCode(currentUser.getBranchCode());
+                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
             }
         }
         
-        if (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty()) {
+        /* 주석 처리됨 - 지점코드 검증 로직
+        if (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty()) {
             log.error("❌ 지점코드가 없습니다. 등록을 거부합니다.");
             throw new IllegalArgumentException("지점코드는 필수입니다. 관리자에게 문의하세요.");
         }
         */
         
-        Client client = adminService.registerClient(dto);
+        Client client = adminService.registerClient(request);
         log.info("✅ 내담자 등록 완료: id={}, name={}, branchCode={}", 
-            client.getId(), client.getName(), dto.getBranchCode());
+            client.getId(), client.getName(), request.getBranchCode());
         
         return created("내담자가 성공적으로 등록되었습니다", client);
     }
 
 
+     /**
      * 매칭 생성
      */
     @PostMapping("/mappings")
-    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> createMapping(@RequestBody ConsultantClientMappingDto dto, HttpSession session) {
-        log.info("🔧 매칭 생성 시작: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
+    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> createMapping(@RequestBody ConsultantClientMappingCreateRequest request, HttpSession session) {
+        log.info("🔧 매칭 생성 시작: 상담사={}, 내담자={}", request.getConsultantId(), request.getClientId());
         
         User currentUser = SessionUtils.getCurrentUser(session);
         log.info("🔧 SessionUtils.getCurrentUser() 결과: {}", currentUser);
@@ -1277,7 +1322,7 @@ public class AdminController extends BaseApiController {
         String currentBranchCode = currentUser.getBranchCode();
         log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);
         
-        ConsultantClientMapping mapping = adminService.createMapping(dto);
+        ConsultantClientMapping mapping = adminService.createMapping(request);
         
         log.info("🔧 생성된 매칭 지점코드: {}", mapping.getBranchCode());
         
@@ -1286,10 +1331,11 @@ public class AdminController extends BaseApiController {
         return created("매칭이 성공적으로 생성되었습니다", response);
     }
 
+     /**
      * 상담사 정보 수정
      */
     @PutMapping("/consultants/{id}")
-    public ResponseEntity<ApiResponse<User>> updateConsultant(@PathVariable Long id, @RequestBody ConsultantRegistrationDto dto, HttpSession session) {
+    public ResponseEntity<ApiResponse<User>> updateConsultant(@PathVariable Long id, @RequestBody ConsultantRegistrationRequest request, HttpSession session) {
         log.info("🔧 상담사 정보 수정: ID={}", id);
         
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -1297,16 +1343,17 @@ public class AdminController extends BaseApiController {
             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
-                (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
-                dto.setBranchCode(currentUser.getBranchCode());
-                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", dto.getBranchCode());
+                (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty())) {
+                request.setBranchCode(currentUser.getBranchCode());
+                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
             }
         }
         
-        User consultant = adminService.updateConsultant(id, dto);
+        User consultant = adminService.updateConsultant(id, request);
         return updated("상담사 정보가 성공적으로 수정되었습니다", consultant);
     }
 
+     /**
      * 상담사 등급 업데이트
      */
     @PutMapping("/consultants/{id}/grade")
@@ -1324,10 +1371,11 @@ public class AdminController extends BaseApiController {
         return updated("상담사 등급이 성공적으로 업데이트되었습니다", data);
     }
 
+     /**
      * 내담자 정보 수정
      */
     @PutMapping("/clients/{id}")
-    public ResponseEntity<ApiResponse<Client>> updateClient(@PathVariable Long id, @RequestBody ClientRegistrationDto dto, HttpSession session) {
+    public ResponseEntity<ApiResponse<Client>> updateClient(@PathVariable Long id, @RequestBody ClientRegistrationRequest request, HttpSession session) {
         log.info("🔧 내담자 정보 수정: ID={}", id);
         
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -1335,20 +1383,21 @@ public class AdminController extends BaseApiController {
             log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
             
             if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
-                (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
-                dto.setBranchCode(currentUser.getBranchCode());
-                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", dto.getBranchCode());
+                (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty())) {
+                request.setBranchCode(currentUser.getBranchCode());
+                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
             }
         }
         
-        Client client = adminService.updateClient(id, dto);
+        Client client = adminService.updateClient(id, request);
         return updated("내담자 정보가 성공적으로 수정되었습니다", client);
     }
 
+     /**
      * 매칭 정보 수정
      */
     @PutMapping("/mappings/{id}")
-    public ResponseEntity<ApiResponse<ConsultantClientMapping>> updateMapping(@PathVariable Long id, @RequestBody ConsultantClientMappingDto dto, HttpSession session) {
+    public ResponseEntity<ApiResponse<ConsultantClientMapping>> updateMapping(@PathVariable Long id, @RequestBody ConsultantClientMappingCreateRequest request, HttpSession session) {
         log.info("🔧 매칭 정보 수정: ID={}", id);
         
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
@@ -1360,10 +1409,11 @@ public class AdminController extends BaseApiController {
         User currentUser = SessionUtils.getCurrentUser(session);
         String updatedBy = currentUser != null ? currentUser.getName() : "System";
         
-        ConsultantClientMapping mapping = adminService.updateMapping(id, dto, updatedBy);
+        ConsultantClientMapping mapping = adminService.updateMapping(id, request, updatedBy);
         return updated("매칭 정보가 성공적으로 수정되었습니다", mapping);
     }
 
+     /**
      * 상담사 삭제 (비활성화)
      */
     @DeleteMapping("/consultants/{id}")
@@ -1373,6 +1423,7 @@ public class AdminController extends BaseApiController {
         return deleted("상담사가 성공적으로 삭제되었습니다");
     }
 
+     /**
      * 상담사 삭제 (다른 상담사로 이전 포함)
      */
     @PostMapping("/consultants/{id}/delete-with-transfer")
@@ -1388,6 +1439,7 @@ public class AdminController extends BaseApiController {
         return deleted("상담사가 성공적으로 이전 처리되어 삭제되었습니다");
     }
 
+     /**
      * 상담사 삭제 가능 여부 확인
      */
     @GetMapping("/consultants/{id}/deletion-status")
@@ -1398,6 +1450,7 @@ public class AdminController extends BaseApiController {
         return success(status);
     }
 
+     /**
      * 내담자 삭제 (비활성화)
      */
     @DeleteMapping("/clients/{id}")
@@ -1407,6 +1460,7 @@ public class AdminController extends BaseApiController {
         return deleted("내담자가 성공적으로 삭제되었습니다");
     }
 
+     /**
      * 내담자 삭제 가능 여부 확인
      */
     @GetMapping("/clients/{id}/deletion-status")
@@ -1417,6 +1471,7 @@ public class AdminController extends BaseApiController {
         return success(status);
     }
 
+     /**
      * 매칭 삭제 (비활성화)
      */
     @DeleteMapping("/mappings/{id}")
@@ -1439,6 +1494,7 @@ public class AdminController extends BaseApiController {
         return deleted("매칭이 성공적으로 삭제되었습니다");
     }
 
+     /**
      * 매칭 강제 종료 (전체 환불 처리)
      */
     @PostMapping("/mappings/{id}/terminate")
@@ -1449,6 +1505,7 @@ public class AdminController extends BaseApiController {
         return success("매칭이 성공적으로 종료되었습니다");
     }
 
+     /**
      * 매칭 부분 환불 처리 (지정된 회기수만 환불)
      */
     @PostMapping("/mappings/{id}/partial-refund")
@@ -1473,6 +1530,7 @@ public class AdminController extends BaseApiController {
         return success(String.format("%d회기 부분 환불이 성공적으로 처리되었습니다", refundSessions));
     }
 
+     /**
      * 환불 통계 조회
      */
     @GetMapping("/refund-statistics")
@@ -1488,6 +1546,7 @@ public class AdminController extends BaseApiController {
         return success(statistics);
     }
 
+     /**
      * 환불 이력 조회
      */
     @GetMapping("/refund-history")
@@ -1508,6 +1567,7 @@ public class AdminController extends BaseApiController {
         return success(result);
     }
 
+     /**
      * ERP 동기화 상태 확인
      */
     @GetMapping("/erp-sync-status")
@@ -1519,6 +1579,7 @@ public class AdminController extends BaseApiController {
     }
 
 
+     /**
      * 상담사 변경 처리
      */
     @PostMapping("/mappings/transfer")
@@ -1558,6 +1619,7 @@ public class AdminController extends BaseApiController {
         return success("상담사가 성공적으로 변경되었습니다.", mappingData);
     }
 
+     /**
      * 내담자별 상담사 변경 이력 조회
      */
     @GetMapping("/clients/{clientId}/transfer-history")
@@ -1595,6 +1657,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+     /**
      * 입금 확인 (현금 수입)
      */
     @PostMapping("/mappings/{mappingId}/confirm-deposit")
@@ -1659,6 +1722,7 @@ public class AdminController extends BaseApiController {
         return success("입금이 성공적으로 확인되었습니다.", mappingData);
     }
 
+     /**
      * 매칭 결제 확인
      */
     @PostMapping("/mapping/payment/confirm")
@@ -1699,6 +1763,7 @@ public class AdminController extends BaseApiController {
         return success("결제가 성공적으로 확인되었습니다.", data);
     }
     
+     /**
      * 매칭 결제 취소
      */
     @PostMapping("/mapping/payment/cancel")
@@ -1736,6 +1801,7 @@ public class AdminController extends BaseApiController {
         return success("결제가 성공적으로 취소되었습니다.", data);
     }
 
+     /**
      * 상담사별 상담 완료 건수 통계 조회
      */
     @GetMapping("/statistics/consultation-completion")
@@ -1770,6 +1836,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+     /**
      * 상담사별 스케줄 조회 (필터링)
      */
     @GetMapping("/schedules")
@@ -1826,6 +1893,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
 
+     /**
      * 스케줄 자동 완료 처리 (수동 실행)
      */
     @PostMapping("/schedules/auto-complete")
@@ -1837,6 +1905,7 @@ public class AdminController extends BaseApiController {
         return success("스케줄 자동 완료 처리가 실행되었습니다.");
     }
 
+     /**
      * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행)
      */
     @PostMapping("/schedules/auto-complete-with-reminder")
@@ -1848,6 +1917,7 @@ public class AdminController extends BaseApiController {
         return success(result);
     }
 
+     /**
      * 스케줄 상태별 통계 조회
      */
     @GetMapping("/schedules/statistics")
@@ -1883,6 +1953,7 @@ public class AdminController extends BaseApiController {
         return success(statistics);
     }
     
+     /**
      * 사용자 목록 조회
      */
     @GetMapping("/users")
@@ -1931,6 +2002,7 @@ public class AdminController extends BaseApiController {
         return success(data);
     }
     
+     /**
      * 사용자 역할 변경
      */
     @PutMapping("/users/{userId}/role")
@@ -1970,6 +2042,7 @@ public class AdminController extends BaseApiController {
         return updated("사용자 역할이 성공적으로 변경되었습니다.", data);
     }
     
+     /**
      * 사용자 상세 정보 조회
      */
     @GetMapping("/users/{id}")
@@ -2002,6 +2075,7 @@ public class AdminController extends BaseApiController {
         return success(userData);
     }
     
+     /**
      * 사용자 소셜 계정 정보 조회
      */
     @GetMapping("/users/{id}/social-accounts")
@@ -2020,6 +2094,7 @@ public class AdminController extends BaseApiController {
         return success(socialAccounts);
     }
     
+     /**
      * 사용자 역할 정보 조회 (동적 표시명) - 기존 호환성
      */
     @GetMapping("/user-roles")
@@ -2027,6 +2102,7 @@ public class AdminController extends BaseApiController {
         return getUserRoles();
     }
     
+     /**
      * 사용자 역할 정보 조회 (동적 표시명)
      */
     @GetMapping("/users/roles")
@@ -2048,6 +2124,7 @@ public class AdminController extends BaseApiController {
         return success(roleInfo);
     }
     
+     /**
      * 역할별 영문 표시명 매칭
      */
     private String getEnglishDisplayName(UserRole role) {
@@ -2058,21 +2135,13 @@ public class AdminController extends BaseApiController {
                 return "Consultant";
             case ADMIN:
                 return "Admin";
-            case BRANCH_SUPER_ADMIN:
-                return "Branch Super Admin";
-            case HQ_ADMIN:
-                return "HQ Admin";
-            case SUPER_HQ_ADMIN:
-                return "Super HQ Admin";
-            case HQ_MASTER:
-                return "HQ Master";
-            case BRANCH_MANAGER:
-                return "Branch Manager";
+            // Deprecated roles removed - use ADMIN instead
             default:
                 return role.name();
         }
     }
     
+     /**
      * 메뉴 목록 조회 (사용자 역할별)
      */
     @GetMapping("/menus")
@@ -2110,6 +2179,7 @@ public class AdminController extends BaseApiController {
         }
     }
     
+     /**
      * 재무 거래 목록 조회 (테넌트별 필터링 적용)
      */
     @GetMapping("/financial-transactions")
@@ -2165,6 +2235,7 @@ public class AdminController extends BaseApiController {
         }
     }
     
+     /**
      * 예산 목록 조회
      */
     @GetMapping("/budgets")
@@ -2206,6 +2277,7 @@ public class AdminController extends BaseApiController {
         }
     }
     
+     /**
      * 세금 계산 목록 조회
      */
     @GetMapping("/tax/calculations")
@@ -2254,6 +2326,7 @@ public class AdminController extends BaseApiController {
         }
     }
     
+     /**
      * 세금 계산 항목 생성
      */
     @PostMapping("/tax/calculations")
@@ -2297,6 +2370,7 @@ public class AdminController extends BaseApiController {
     }
 
 
+     /**
      * 관리자용 상담일지 목록 조회
      */
     @GetMapping("/consultation-records")
@@ -2349,6 +2423,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+     /**
      * 관리자용 상담일지 상세 조회
      */
     @GetMapping("/consultation-records/{recordId}")
@@ -2394,6 +2469,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+     /**
      * 관리자용 상담일지 수정
      */
     @PutMapping("/consultation-records/{recordId}")
@@ -2437,6 +2513,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+     /**
      * 관리자용 상담일지 삭제
      */
     @DeleteMapping("/consultation-records/{recordId}")
@@ -2476,7 +2553,10 @@ public class AdminController extends BaseApiController {
                 "message", "상담일지 삭제에 실패했습니다: " + e.getMessage()
             ));
         }
-    }\1/**\n\1 * 중복 매칭 조회
+    }
+    
+    /**
+     * 중복 매칭 조회
      */
     @GetMapping("/duplicate-mappings")
     public ResponseEntity<ApiResponse<Map<String, Object>>> findDuplicateMappings(HttpSession session) {
@@ -2501,6 +2581,7 @@ public class AdminController extends BaseApiController {
     }
     
     /**
+     /**
      * 중복 매칭 통합
      */
     @PostMapping("/merge-duplicate-mappings")
@@ -2521,6 +2602,7 @@ public class AdminController extends BaseApiController {
         return success(result);
     }
 
+     /**
      * 관리자용 상담사 평가 통계 조회
      */
     @GetMapping("/consultant-rating-stats")
@@ -2549,6 +2631,7 @@ public class AdminController extends BaseApiController {
     }
 
 
+     /**
      * 상담사 전문분야 업데이트
      */
     @PutMapping("/consultants/{consultantId}/specialty")
@@ -2602,6 +2685,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+     /**
      * 전문분야 통계 조회 (통합 상담사 데이터 사용, 지점별 필터링 + 삭제 제외)
      */
     @GetMapping("/statistics/specialty")
@@ -2676,6 +2760,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+     /**
      * 반복 지출 목록 조회
      */
     @GetMapping("/recurring-expenses")
@@ -2714,6 +2799,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+     /**
      * 반복 지출 통계 조회
      */
     @GetMapping("/statistics/recurring-expenses")
@@ -2756,6 +2842,7 @@ public class AdminController extends BaseApiController {
         }
     }
 
+     /**
      * 지출 카테고리 목록 조회
      */
     @GetMapping("/expense-categories")
@@ -2794,6 +2881,7 @@ public class AdminController extends BaseApiController {
         }
     }
     
+     /**
      * 운영 환경 여부 확인
      */
     private boolean isProductionEnvironment() {
@@ -2804,6 +2892,7 @@ public class AdminController extends BaseApiController {
                "production".equals(activeProfile) || "production".equals(envProfile);
     }
 
+     /**
      * 상담 이력 조회
      */
     @GetMapping("/consultations")
@@ -2881,10 +2970,15 @@ public class AdminController extends BaseApiController {
     }
     
     /**
+     /**
      * 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
+     /**
      * 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
+     /**
      * 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음
+     /**
      * @param role 사용자 역할
+     /**
      * @return 관리자 역할 여부
      */
     private boolean isAdminRoleFromCommonCode(UserRole role) {
@@ -2919,9 +3013,13 @@ public class AdminController extends BaseApiController {
     }
     
     /**
+     /**
      * 공통코드에서 사무원 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
+     /**
      * BRANCH_MANAGER → STAFF로 통합
+     /**
      * @param role 사용자 역할
+     /**
      * @return 사무원 역할 여부
      */
     private boolean isStaffRoleFromCommonCode(UserRole role) {

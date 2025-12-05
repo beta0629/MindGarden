@@ -19,11 +19,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ /**
  * 지점별 권한 관리 서비스 구현체
+ /**
  * 기존 동적 권한 시스템을 지점별로 확장
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-09-16
  */
 @Slf4j
@@ -98,7 +104,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
         return false;
     }
     
-    @Override
+    // 인터페이스에 없는 메서드 (레거시 호환용)
     public Map<String, List<String>> getRolePermissions(String tenantId) {
         if (tenantId == null || tenantId.trim().isEmpty()) {
             log.warn("tenantId가 없어서 권한 조회 불가");
@@ -132,7 +138,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
         }
     }
     
-    @Override
+    // 인터페이스에 없는 메서드 (레거시 호환용)
     public Map<String, List<String>> getBranchPermissions(String tenantId) {
         if (tenantId == null || tenantId.trim().isEmpty()) {
             log.warn("tenantId가 없어서 권한 조회 불가");
@@ -164,7 +170,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
         }
     }
     
-    @Override
+    // 인터페이스에 없는 메서드 (레거시 호환용)
     public List<Map<String, Object>> getMenuPermissions(String tenantId) {
         if (tenantId == null || tenantId.trim().isEmpty()) {
             log.warn("tenantId가 없어서 메뉴 권한 조회 불가");
@@ -200,6 +206,75 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
             log.error("메뉴 권한 조회 실패: {}", e.getMessage(), e);
             return new ArrayList<>();
         }
+    }
+    
+    @Override
+    public boolean canManageBranchConsultants(User user, Long branchId) {
+        return canManageBranch(user, branchId);
+    }
+    
+    @Override
+    public boolean canManageBranchClients(User user, Long branchId) {
+        return canManageBranch(user, branchId);
+    }
+    
+    @Override
+    public boolean canManageBranchSchedules(User user, Long branchId) {
+        return canManageBranch(user, branchId);
+    }
+    
+    @Override
+    public boolean canViewBranchStatistics(User user, Long branchId) {
+        return canAccessBranchData(user, branchId);
+    }
+    
+    @Override
+    public List<String> getBranchPermissions(User user, Long branchId) {
+        if (user == null || branchId == null) {
+            return new ArrayList<>();
+        }
+        
+        List<String> permissions = new ArrayList<>();
+        
+        if (canManageBranch(user, branchId)) {
+            permissions.add("MANAGE_BRANCH");
+        }
+        if (canManageBranchConsultants(user, branchId)) {
+            permissions.add("MANAGE_CONSULTANTS");
+        }
+        if (canManageBranchClients(user, branchId)) {
+            permissions.add("MANAGE_CLIENTS");
+        }
+        if (canManageBranchSchedules(user, branchId)) {
+            permissions.add("MANAGE_SCHEDULES");
+        }
+        if (canViewBranchStatistics(user, branchId)) {
+            permissions.add("VIEW_STATISTICS");
+        }
+        
+        return permissions;
+    }
+    
+    @Override
+    public Map<String, Object> getBranchPermissionMatrix(Long branchId) {
+        Map<String, Object> matrix = new HashMap<>();
+        matrix.put("branchId", branchId);
+        matrix.put("permissions", new HashMap<>());
+        return matrix;
+    }
+    
+    @Override
+    public List<Map<String, Object>> getBranchMenuPermissions(User user, Long branchId) {
+        if (user == null || branchId == null) {
+            return new ArrayList<>();
+        }
+        
+        String tenantId = user.getTenantId();
+        if (tenantId == null) {
+            return new ArrayList<>();
+        }
+        
+        return getMenuPermissions(tenantId);
     }
     
     /**
@@ -282,6 +357,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
      * 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
      * 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
      * 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음
+     * 
      * @param role 사용자 역할
      * @return 관리자 역할 여부
      */
@@ -319,6 +395,7 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
     /**
      * 공통코드에서 사무원 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
      * BRANCH_MANAGER → STAFF로 통합
+     * 
      * @param role 사용자 역할
      * @return 사무원 역할 여부
      */

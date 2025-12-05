@@ -17,11 +17,17 @@ import lombok.experimental.SuperBuilder;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+ /**
  * 수강 등록 엔티티
+ /**
  * 학원 시스템의 수강 등록 정보를 관리하는 엔티티
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-11-18
  */
 @Entity
@@ -46,6 +52,7 @@ import java.time.LocalDate;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ClassEnrollment extends BaseEntity {
     
+     /**
      * 수강 상태 열거형
      */
     public enum EnrollmentStatus {
@@ -67,6 +74,7 @@ public class ClassEnrollment extends BaseEntity {
         }
     }
     
+     /**
      * 결제 상태 열거형
      */
     public enum PaymentStatus {
@@ -88,6 +96,7 @@ public class ClassEnrollment extends BaseEntity {
     }
     
     
+     /**
      * 수강 등록 UUID (고유 식별자)
      */
     @NotBlank(message = "수강 등록 ID는 필수입니다")
@@ -95,12 +104,14 @@ public class ClassEnrollment extends BaseEntity {
     @Column(name = "enrollment_id", nullable = false, unique = true, length = 36, updatable = false)
     private String enrollmentId;
     
+     /**
      * 지점 ID
      */
     @NotNull(message = "지점 ID는 필수입니다")
     @Column(name = "branch_id", nullable = false)
     private Long branchId;
     
+     /**
      * 반 ID
      */
     @NotBlank(message = "반 ID는 필수입니다")
@@ -108,41 +119,48 @@ public class ClassEnrollment extends BaseEntity {
     @Column(name = "class_id", nullable = false, length = 36)
     private String classId;
     
+     /**
      * 수강생 ID
      */
     @Column(name = "consumer_id")
     private Long consumerId;
     
     
+     /**
      * 등록일
      */
     @NotNull(message = "등록일은 필수입니다")
     @Column(name = "enrollment_date", nullable = false)
     private LocalDate enrollmentDate;
     
+     /**
      * 수강 시작일
      */
     @Column(name = "start_date")
     private LocalDate startDate;
     
+     /**
      * 수강 종료일
      */
     @Column(name = "end_date")
     private LocalDate endDate;
     
     
+     /**
      * 수강료 플랜 ID
      */
     @Size(max = 36, message = "수강료 플랜 ID는 36자 이하여야 합니다")
     @Column(name = "tuition_plan_id", length = 36)
     private String tuitionPlanId;
     
+     /**
      * 수강료 금액
      */
     @Column(name = "tuition_amount", precision = 15, scale = 2)
     @Builder.Default
     private BigDecimal tuitionAmount = BigDecimal.ZERO;
     
+     /**
      * 결제 상태
      */
     @NotNull(message = "결제 상태는 필수입니다")
@@ -153,6 +171,7 @@ public class ClassEnrollment extends BaseEntity {
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
     
     
+     /**
      * 수강 상태
      */
     @NotNull(message = "수강 상태는 필수입니다")
@@ -162,6 +181,7 @@ public class ClassEnrollment extends BaseEntity {
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
     private EnrollmentStatus status = EnrollmentStatus.ACTIVE;
     
+     /**
      * 활성화 여부
      */
     @Column(name = "is_active", nullable = false)
@@ -169,27 +189,32 @@ public class ClassEnrollment extends BaseEntity {
     private Boolean isActive = true;
     
     
+     /**
      * 비고
      */
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
     
+     /**
      * 수강별 설정 (JSON)
      */
     @Column(name = "settings_json", columnDefinition = "JSON")
     private String settingsJson;
     
+     /**
      * 생성자
      */
     @Column(name = "created_by", length = 100)
     private String createdBy;
     
+     /**
      * 수정자
      */
     @Column(name = "updated_by", length = 100)
     private String updatedBy;
     
     
+     /**
      * 반 (Many-to-One)
      */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -198,6 +223,7 @@ public class ClassEnrollment extends BaseEntity {
     private Class classEntity;
     
     
+     /**
      * 수강이 활성 상태인지 확인
      */
     public boolean isActiveEnrollment() {
@@ -205,12 +231,14 @@ public class ClassEnrollment extends BaseEntity {
         return isActive != null && isActive && !isDeleted() && EnrollmentStatus.ACTIVE.equals(status);
     }
     
+     /**
      * 결제가 완료되었는지 확인
      */
     public boolean isPaid() {
         return PaymentStatus.PAID.equals(paymentStatus);
     }
     
+     /**
      * 결제가 대기 중인지 확인
      */
     public boolean isPaymentPending() {
@@ -218,6 +246,7 @@ public class ClassEnrollment extends BaseEntity {
         return PaymentStatus.PENDING.equals(paymentStatus);
     }
     
+     /**
      * 수강 기간이 유효한지 확인
      */
     public boolean isValidPeriod() {
@@ -228,6 +257,7 @@ public class ClassEnrollment extends BaseEntity {
         return !today.isBefore(startDate) && !today.isAfter(endDate);
     }
     
+     /**
      * 수강 기간이 만료되었는지 확인
      */
     public boolean isExpired() {

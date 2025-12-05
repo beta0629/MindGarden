@@ -108,25 +108,23 @@ public class UserRoleQueryService {
             return null;
         }
         
+        // 표준화 2025-12-05: 레거시 역할 제거, 표준 역할만 사용
+        if (userRole == null) {
+            return "알 수 없음";
+        }
+        
         switch (userRole) {
             case ADMIN:
+            case TENANT_ADMIN:
+            case PRINCIPAL:
+            case OWNER:
                 return "관리자";
-            case BRANCH_SUPER_ADMIN:
-                return "지점 수퍼 관리자";
-            case BRANCH_ADMIN:
-                return "지점 관리자";
-            case BRANCH_MANAGER:
-                return "지점장";
-            case HQ_ADMIN:
-                return "본사 관리자";
-            case SUPER_HQ_ADMIN:
-                return "본사 고급 관리자";
-            case HQ_MASTER:
-                return "본사 총관리자";
-            case HQ_SUPER_ADMIN:
-                return "본사 최고관리자";
             case CONSULTANT:
                 return "상담사";
+            case STAFF:
+                return "사무원";
+            case PARENT:
+                return "학부모";
             case CLIENT:
                 return "내담자";
             default:

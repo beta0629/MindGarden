@@ -28,13 +28,21 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+ /**
  * 온보딩 API 컨트롤러
+ /**
  * 온보딩 요청 CRUD 및 승인 프로세스 API
+ /**
  * 
+ /**
  * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 2.0.0
+ /**
  * @since 2025-01-XX
  */
 @Slf4j
@@ -47,13 +55,21 @@ public class OnboardingController extends BaseApiController {
     private final OnboardingService onboardingService;
     private final UserRepository userRepository;
     
+     /**
      * 온보딩 접근 권한 확인
+     /**
      * 온보딩은 새로운 테넌트를 등록하는 것이므로, 이미 테넌트에 속한 사용자는 접근할 수 없음
+     /**
      * 
+     /**
      * 멀티 테넌트 사용자 지원: 같은 이메일로 여러 테넌트에 계정이 있을 수 있으므로,
+     /**
      * 모든 User를 조회하여 하나라도 tenant_id가 있으면 접근 거부
+     /**
      * 
+     /**
      * @param session HTTP 세션 (선택적 - 인증되지 않은 사용자도 접근 가능)
+     /**
      * @throws AccessDeniedException 이미 테넌트에 속한 사용자인 경우
      */
     private void validateOnboardingAccess(HttpSession session) {
@@ -99,7 +115,9 @@ public class OnboardingController extends BaseApiController {
         log.debug("온보딩 접근 허용: 새로운 테넌트 등록 가능 - email={}", normalizedEmail);
     }
     
+     /**
      * 대기 중인 온보딩 요청 목록 조회
+     /**
      * GET /api/onboarding/requests/pending
      */
     @GetMapping("/requests/pending")
@@ -110,7 +128,9 @@ public class OnboardingController extends BaseApiController {
         return success(requests);
     }
     
+     /**
      * 온보딩 요청 상세 조회
+     /**
      * GET /api/onboarding/requests/{id}
      */
     @GetMapping("/requests/{id}")
@@ -124,10 +144,15 @@ public class OnboardingController extends BaseApiController {
         return success(request);
     }
     
+     /**
      * 온보딩 요청 생성
+     /**
      * POST /api/onboarding/requests
+     /**
      * 새로운 테넌트를 등록하려는 사용자만 접근 가능
+     /**
      * (이미 테넌트에 속한 사용자는 접근 불가)
+     /**
      * (승인/관리는 Trinity 직원만 가능)
      */
     @PostMapping("/requests")
@@ -201,9 +226,13 @@ public class OnboardingController extends BaseApiController {
         }
     }
     
+     /**
      * 온보딩 요청 조회 (이메일로 조회)
+     /**
      * GET /api/v1/onboarding/requests/public?email={email}
+     /**
      * 새로운 테넌트를 등록하려는 사용자만 접근 가능
+     /**
      * (이미 테넌트에 속한 사용자는 접근 불가)
      */
     @GetMapping("/requests/public")
@@ -219,9 +248,13 @@ public class OnboardingController extends BaseApiController {
         return success(requests);
     }
     
+     /**
      * 이메일 중복 확인
+     /**
      * GET /api/v1/onboarding/email-check?email={email}
+     /**
      * 새로운 테넌트를 등록하려는 사용자만 접근 가능
+     /**
      * (이미 테넌트에 속한 사용자는 접근 불가)
      */
     @GetMapping("/email-check")
@@ -247,9 +280,13 @@ public class OnboardingController extends BaseApiController {
         return success(response);
     }
     
+     /**
      * 온보딩 요청 상세 조회 (ID + 이메일로 본인 확인)
+     /**
      * GET /api/v1/onboarding/requests/public/{id}?email={email}
+     /**
      * 새로운 테넌트를 등록하려는 사용자만 접근 가능
+     /**
      * (이미 테넌트에 속한 사용자는 접근 불가)
      */
     @GetMapping("/requests/public/{id}")
@@ -265,9 +302,13 @@ public class OnboardingController extends BaseApiController {
         return success(request);
     }
     
+     /**
      * 온보딩 요청 결정 (승인/거부)
+     /**
      * POST /api/onboarding/requests/{id}/decision
+     /**
      * 승인 시 PL/SQL 프로시저를 통해 테넌트 생성 및 ERD 생성 등 자동 처리
+     /**
      * 관리자 또는 OPS 역할만 접근 가능
      */
     @PostMapping("/requests/{id}/decision")
@@ -291,7 +332,9 @@ public class OnboardingController extends BaseApiController {
         return updated("온보딩 요청이 " + (payload.status() == OnboardingStatus.APPROVED ? "승인" : "거부") + "되었습니다.", updated);
     }
     
+     /**
      * 상태별 온보딩 요청 목록 조회
+     /**
      * GET /api/onboarding/requests?status={status}
      */
     @GetMapping("/requests")
@@ -310,7 +353,9 @@ public class OnboardingController extends BaseApiController {
         return success(requests);
     }
     
+     /**
      * 상태별 온보딩 요청 개수 조회
+     /**
      * GET /api/onboarding/requests/count?status={status}
      */
     @GetMapping("/requests/count")
@@ -329,10 +374,15 @@ public class OnboardingController extends BaseApiController {
         return success(count);
     }
     
+     /**
      * 온보딩 승인 프로세스 재시도
+     /**
      * POST /api/v1/onboarding/requests/{id}/retry
+     /**
      * ON_HOLD 상태인 경우에만 재시도 가능
+     /**
      * 프로시저 실패로 보류된 온보딩 요청을 다시 승인 프로세스 실행
+     /**
      * 관리자 또는 OPS 역할만 접근 가능
      */
     @PostMapping("/requests/{id}/retry")

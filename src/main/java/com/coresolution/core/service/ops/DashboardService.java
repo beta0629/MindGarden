@@ -13,11 +13,17 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.Map;
 
+ /**
  * Ops 포털 대시보드 서비스
+ /**
  * 운영 포털 대시보드 메트릭 조회
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-01-XX
  */
 @Slf4j
@@ -30,8 +36,11 @@ public class DashboardService {
     private final PricingPlanRepository pricingPlanRepository;
     private final FeatureFlagRepository featureFlagRepository;
     
+     /**
      * 대시보드 메트릭 조회
+     /**
      * 
+     /**
      * @return 대시보드 메트릭 (대기 중인 온보딩, 활성 요금제, 활성 애드온, 활성 Feature Flag, 감사 이벤트)
      */
     public Map<String, Object> getMetrics() {

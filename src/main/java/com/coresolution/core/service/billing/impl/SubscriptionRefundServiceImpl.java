@@ -20,10 +20,15 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
+ /**
  * 구독 환불 처리 서비스 구현체
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-01-XX
  */
 @Slf4j
@@ -35,17 +40,24 @@ public class SubscriptionRefundServiceImpl implements SubscriptionRefundService 
     private final TenantSubscriptionRepository subscriptionRepository;
     private final PricingPlanRepository pricingPlanRepository;
     
+     /**
      * PG 결제 대행사 서비스 (선택적 주입)
+     /**
      * 실제 PG 환불 API 호출에 사용
+     /**
      * Note: 테넌트별 PG 설정이 필요하므로 추후 TenantPgConfigurationService와 통합 필요
      */
     @Autowired(required = false)
     @Qualifier("tossPaymentService")
     private PaymentGatewayService paymentGatewayService;
     
+     /**
      * 청약 철회 기간 (일)
+     /**
      * application.yml의 subscription.refund.cooling-off-period-days 값 사용
+     /**
      * 기본값: 15일 (전자상거래법 제17조: 법정 최소 7일)
+     /**
      * 참고: docs/mgsb/SUBSCRIPTION_REFUND_POLICY.md
      */
     @Value("${subscription.refund.cooling-off-period-days:15}")

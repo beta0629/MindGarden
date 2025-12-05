@@ -42,21 +42,25 @@ public class DashboardRedirectUtil {
             return "/client/dashboard";
         }
         
+        // 표준화 2025-12-05: 표준 역할만 사용 (TENANT_ROLE_SYSTEM_STANDARD.md 준수)
+        if (userRole == null) {
+            return "/client/dashboard";
+        }
+        
+        // 관리자 역할 체크 (표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER)
+        if (userRole.isAdmin()) {
+            return "/admin/dashboard";
+        }
+        
         switch (userRole) {
             case CLIENT:
                 return "/client/dashboard";
             case CONSULTANT:
                 return "/consultant/dashboard";
-            case ADMIN:
-                return "/admin/dashboard";
-            case BRANCH_SUPER_ADMIN:
-                return "/super_admin/dashboard";  // 지점 수퍼 관리자는 수퍼 어드민 대시보드로
-            case HQ_ADMIN:
-                return "/erp/dashboard";  // 본사 관리자는 ERP 대시보드로
-            case SUPER_HQ_ADMIN:
-                return "/super_admin/dashboard";  // 본사 고급 관리자는 수퍼 어드민 대시보드로
-            case HQ_MASTER:
-                return "/hq_master/dashboard";  // 본사 총관리자는 HQ 마스터 대시보드로
+            case STAFF:
+                return "/staff/dashboard";
+            case PARENT:
+                return "/parent/dashboard";
             default:
                 return "/client/dashboard";
         }
@@ -73,21 +77,25 @@ public class DashboardRedirectUtil {
             return "기본 대시보드";
         }
         
+        // 표준화 2025-12-05: 표준 역할만 사용 (TENANT_ROLE_SYSTEM_STANDARD.md 준수)
+        if (userRole == null) {
+            return "기본 대시보드";
+        }
+        
+        // 관리자 역할 체크
+        if (userRole.isAdmin()) {
+            return "관리자 대시보드";
+        }
+        
         switch (userRole) {
             case CLIENT:
                 return "내담자 대시보드";
             case CONSULTANT:
                 return "상담사 대시보드";
-            case ADMIN:
-                return "지점 관리자 대시보드";
-            case BRANCH_SUPER_ADMIN:
-                return "지점 수퍼 관리자 대시보드";
-            case HQ_ADMIN:
-                return "본사 관리자 대시보드 (ERP)";
-            case SUPER_HQ_ADMIN:
-                return "본사 고급 관리자 대시보드";
-            case HQ_MASTER:
-                return "본사 총관리자 대시보드";
+            case STAFF:
+                return "사무원 대시보드";
+            case PARENT:
+                return "학부모 대시보드";
             default:
                 return "기본 대시보드";
         }

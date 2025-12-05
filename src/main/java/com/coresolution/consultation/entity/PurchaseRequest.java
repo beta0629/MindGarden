@@ -23,6 +23,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
  * ERP 구매 요청 엔티티
  * 상담사가 비품 구매를 요청할 때 사용
  * 
@@ -106,6 +107,7 @@ public class PurchaseRequest extends BaseEntity {
         }
     }
     
+     /**
      * 구매 요청 상태 열거형
      */
     public enum PurchaseRequestStatus {

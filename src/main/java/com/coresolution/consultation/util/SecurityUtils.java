@@ -130,13 +130,20 @@ public class SecurityUtils implements ApplicationContextAware {
      * @deprecated 역할 기반 권한 체크는 하드코딩된 역할을 사용합니다. 
      *             동적 권한 시스템을 사용하려면 {@link PermissionCheckUtils#checkPermission}을 사용하세요.
      */
+    /**
+     * @Deprecated - 🚨 레거시 메서드: 본사 개념 제거
+     * 표준화 2025-12-05: 본사 개념이 제거되었으므로 더 이상 사용하지 마세요.
+     * 대신 isAdmin() 또는 PermissionCheckUtils를 사용하세요.
+     */
     @Deprecated
     public static boolean isHQUser(HttpSession session) {
-        return hasAnyRole(session, UserRole.HQ_MASTER, UserRole.SUPER_HQ_ADMIN, UserRole.HQ_ADMIN);
+        // 하위 호환성: 표준 관리자 역할로 매핑
+        return isAdmin(session);
     }
     
     /**
      * 관리자 권한 확인
+     * 표준화 2025-12-05: 표준 관리자 역할만 체크 (ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER)
      * 
      * @param session HTTP 세션
      * @return 관리자 여부
@@ -145,20 +152,23 @@ public class SecurityUtils implements ApplicationContextAware {
      */
     @Deprecated
     public static boolean isAdmin(HttpSession session) {
-        return hasAnyRole(session, UserRole.ADMIN, UserRole.BRANCH_SUPER_ADMIN, UserRole.HQ_MASTER, UserRole.SUPER_HQ_ADMIN);
+        // 표준화 2025-12-05: 표준 관리자 역할만 체크
+        User user = SessionUtils.getCurrentUser(session);
+        if (user == null || user.getRole() == null) {
+            return false;
+        }
+        return user.getRole().isAdmin();
     }
     
     /**
-     * 지점 관리자 권한 확인
-     * 
-     * @param session HTTP 세션
-     * @return 지점 관리자 여부
-     * @deprecated 역할 기반 권한 체크는 하드코딩된 역할을 사용합니다. 
-     *             동적 권한 시스템을 사용하려면 {@link PermissionCheckUtils#checkPermission}을 사용하세요.
+     * @Deprecated - 🚨 레거시 메서드: 브랜치 개념 제거
+     * 표준화 2025-12-05: 브랜치 개념이 제거되었으므로 더 이상 사용하지 마세요.
+     * 대신 isAdmin() 또는 PermissionCheckUtils를 사용하세요.
      */
     @Deprecated
     public static boolean isBranchAdmin(HttpSession session) {
-        return hasAnyRole(session, UserRole.BRANCH_SUPER_ADMIN, UserRole.ADMIN);
+        // 하위 호환성: 표준 관리자 역할로 매핑
+        return isAdmin(session);
     }
     
     /**
@@ -248,13 +258,20 @@ public class SecurityUtils implements ApplicationContextAware {
      * @deprecated 역할 기반 권한 체크는 하드코딩된 역할을 사용합니다. 
      *             동적 권한 시스템을 사용하려면 {@link PermissionCheckUtils#checkPermission}을 사용하세요.
      */
+    /**
+     * @Deprecated - 🚨 레거시 메서드: 본사 개념 제거
+     * 표준화 2025-12-05: 본사 개념이 제거되었으므로 더 이상 사용하지 마세요.
+     * 대신 checkAdminPermission() 또는 PermissionCheckUtils.checkPermission()을 사용하세요.
+     */
     @Deprecated
     public static ResponseEntity<Map<String, Object>> checkHQPermission(HttpSession session) {
-        return checkPermission(session, UserRole.HQ_MASTER, UserRole.SUPER_HQ_ADMIN, UserRole.HQ_ADMIN);
+        // 하위 호환성: 표준 관리자 역할로 매핑
+        return checkAdminPermission(session);
     }
     
     /**
      * 관리자 권한 체크
+     * 표준화 2025-12-05: 표준 관리자 역할만 체크 (ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER)
      * 
      * @param session HTTP 세션
      * @return 권한 있으면 null, 없으면 FORBIDDEN 응답
@@ -263,20 +280,19 @@ public class SecurityUtils implements ApplicationContextAware {
      */
     @Deprecated
     public static ResponseEntity<Map<String, Object>> checkAdminPermission(HttpSession session) {
-        return checkPermission(session, UserRole.ADMIN, UserRole.BRANCH_SUPER_ADMIN, UserRole.HQ_MASTER, UserRole.SUPER_HQ_ADMIN);
+        // 표준화 2025-12-05: 표준 관리자 역할만 체크
+        return checkPermission(session, UserRole.ADMIN, UserRole.TENANT_ADMIN, UserRole.PRINCIPAL, UserRole.OWNER);
     }
     
     /**
-     * 지점 관리자 권한 체크
-     * 
-     * @param session HTTP 세션
-     * @return 권한 있으면 null, 없으면 FORBIDDEN 응답
-     * @deprecated 역할 기반 권한 체크는 하드코딩된 역할을 사용합니다. 
-     *             동적 권한 시스템을 사용하려면 {@link PermissionCheckUtils#checkPermission}을 사용하세요.
+     * @Deprecated - 🚨 레거시 메서드: 브랜치 개념 제거
+     * 표준화 2025-12-05: 브랜치 개념이 제거되었으므로 더 이상 사용하지 마세요.
+     * 대신 checkAdminPermission() 또는 PermissionCheckUtils.checkPermission()을 사용하세요.
      */
     @Deprecated
     public static ResponseEntity<Map<String, Object>> checkBranchAdminPermission(HttpSession session) {
-        return checkPermission(session, UserRole.BRANCH_SUPER_ADMIN, UserRole.ADMIN);
+        // 하위 호환성: 표준 관리자 역할로 매핑
+        return checkAdminPermission(session);
     }
     
     /**
@@ -527,136 +543,4 @@ public class SecurityUtils implements ApplicationContextAware {
         
         return null;
     }
-
-/**
-
- * 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
-
- * 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
-
- * 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음
-
- * @param role 사용자 역할
-
- * @return 관리자 역할 여부
-
- */
-
-private boolean isAdminRoleFromCommonCode(UserRole role) {
-
-    if (role == null) {
-
-        return false;
-
-    }
-
-    try {
-
-        // 공통코드에서 관리자 역할 목록 조회 (codeGroup='ROLE', extraData에 isAdmin=true)
-
-        List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
-
-        if (roleCodes == null || roleCodes.isEmpty()) {
-
-            // 폴백: 표준 관리자 역할만 체크 (브랜치/HQ 개념 제거)
-
-            return role == UserRole.ADMIN || 
-
-                   role == UserRole.TENANT_ADMIN || 
-
-                   role == UserRole.PRINCIPAL || 
-
-                   role == UserRole.OWNER;
-
-        }
-
-        // 공통코드에서 관리자 역할인지 확인
-
-        String roleName = role.name();
-
-        return roleCodes.stream()
-
-            .anyMatch(code -> code.getCodeValue().equals(roleName) && 
-
-                          (code.getExtraData() != null && 
-
-                           (code.getExtraData().contains("\"isAdmin\":true") || 
-
-                            code.getExtraData().contains("\"roleType\":\"ADMIN\""))));
-
-    } catch (Exception e) {
-
-        log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
-
-        // 폴백: 표준 관리자 역할만 체크
-
-        return role == UserRole.ADMIN || 
-
-               role == UserRole.TENANT_ADMIN || 
-
-               role == UserRole.PRINCIPAL || 
-
-               role == UserRole.OWNER;
-
-    }
-
-}
-
-
-/**
-
- * 공통코드에서 사무원 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
-
- * BRANCH_MANAGER → STAFF로 통합
-
- * @param role 사용자 역할
-
- * @return 사무원 역할 여부
-
- */
-
-private boolean isStaffRoleFromCommonCode(UserRole role) {
-
-    if (role == null) {
-
-        return false;
-
-    }
-
-    try {
-
-        // 공통코드에서 사무원 역할 목록 조회
-
-        List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
-
-        if (roleCodes == null || roleCodes.isEmpty()) {
-
-            return role == UserRole.STAFF;
-
-        }
-
-        // 공통코드에서 사무원 역할인지 확인
-
-        String roleName = role.name();
-
-        return roleCodes.stream()
-
-            .anyMatch(code -> code.getCodeValue().equals(roleName) && 
-
-                          (code.getExtraData() != null && 
-
-                           (code.getExtraData().contains("\"isStaff\":true") || 
-
-                            code.getExtraData().contains("\"roleType\":\"STAFF\""))));
-
-    } catch (Exception e) {
-
-        log.warn("공통코드에서 사무원 역할 조회 실패, 폴백 사용: {}", role, e);
-
-        return role == UserRole.STAFF;
-
-    }
-
-}
-
 }

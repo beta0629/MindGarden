@@ -1,6 +1,6 @@
 package com.coresolution.consultation.controller;
 
-import com.coresolution.consultation.dto.ConsultantRegistrationDto;
+import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.core.controller.BaseApiController;
@@ -31,7 +31,7 @@ public class SimpleAdminController extends BaseApiController {
     }
 
     @PostMapping("/consultants")
-    public ResponseEntity<ApiResponse<User>> registerConsultant(@RequestBody ConsultantRegistrationDto request) {
+    public ResponseEntity<ApiResponse<User>> registerConsultant(@RequestBody ConsultantRegistrationRequest request) {
         log.info("🔧 상담사 등록 시도: {}", request.getUsername());
         User consultant = adminService.registerConsultant(request);
         log.info("✅ 상담사 등록 성공: {}", consultant.getUsername());

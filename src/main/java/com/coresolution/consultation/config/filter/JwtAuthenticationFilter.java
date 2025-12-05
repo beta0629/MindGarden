@@ -165,23 +165,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         
         // 사용자 역할에 따른 권한 매핑 (SessionBasedAuthenticationFilter와 동일한 로직)
+        // 표준화 2025-12-05: 레거시 역할 제거, 표준 역할만 사용
+        if (user.getRole() == null) {
+            return authorities;
+        }
+        
         switch (user.getRole()) {
-            case HQ_MASTER:
-                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN));
-                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_OPS));
-                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_HQ_ADMIN));
-                break;
-            case SUPER_HQ_ADMIN:
-            case HQ_ADMIN:
-                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN));
-                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_OPS));
-                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_HQ_ADMIN));
-                break;
-            case BRANCH_SUPER_ADMIN:
-                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN));
-                break;
             case ADMIN:
-            case BRANCH_MANAGER:
+            case TENANT_ADMIN:
+            case PRINCIPAL:
+            case OWNER:
+                // 표준 관리자 역할
+                authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN));
+                break;
+            case STAFF:
                 authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN));
                 authorities.add(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_OPS));
                 break;

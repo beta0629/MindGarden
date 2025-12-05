@@ -22,6 +22,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.service.BranchService;
+import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
@@ -1386,9 +1387,9 @@ public class AuthController extends BaseApiController {
             User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             
-            // 본사 관리자 역할인지 확인
-            if (!user.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거) {
-                throw new IllegalArgumentException("본사 로그인은 본사 관리자만 가능합니다.");
+            // 표준화 2025-12-05: 브랜치/HQ 개념 제거, 표준 관리자 역할만 체크
+            if (user.getRole() == null || !isAdminRoleFromCommonCode(user.getRole())) {
+                throw new IllegalArgumentException("관리자 로그인은 관리자만 가능합니다.");
             }
             
             // 사용자 정보 세션에 저장

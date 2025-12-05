@@ -139,8 +139,15 @@ public interface AlertRepository extends BaseRepository<Alert, Long> {
     long countByPriority(String priority);
     
     /**
-     * 상태별 알림 조회 (활성 상태만)
+     * 상태별 알림 조회 (tenantId 필터링 필수)
      */
+    @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.status = :status AND a.isDeleted = false ORDER BY a.createdAt DESC")
+    List<Alert> findByTenantIdAndStatus(@Param("tenantId") String tenantId, @Param("status") String status);
+    
+    /**
+     * @Deprecated - 🚨 보안 위험: 모든 테넌트 알림 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT a FROM Alert a WHERE a.status = ?1 AND a.isDeleted = false ORDER BY a.createdAt DESC")
     List<Alert> findByStatus(String status);
     

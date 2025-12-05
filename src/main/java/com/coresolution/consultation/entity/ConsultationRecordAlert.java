@@ -20,11 +20,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+ /**
  * 상담일지 미작성 알림 엔티티
+ /**
  * 상담일지 미작성 시 자동 알림 생성
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-01-24
  */
 @Entity

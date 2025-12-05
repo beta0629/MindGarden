@@ -55,7 +55,8 @@ public class UserRoleConverter implements AttributeConverter<UserRole, String> {
                 case "HQ_MASTER":
                 case "SUPERADMIN":
                 case "ROOT":
-                    return UserRole.HQ_MASTER;
+                    // 표준화 2025-12-05: HQ_MASTER → ADMIN으로 통합 (하위 호환성 유지)
+                    return UserRole.ADMIN;
                 default:
                     // 알 수 없는 역할은 기본값으로
                     System.err.println("알 수 없는 역할: " + dbData + " -> CLIENT로 변환");

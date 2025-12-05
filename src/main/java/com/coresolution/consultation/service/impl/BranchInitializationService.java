@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
  * Branch 테이블 초기 데이터 생성 서비스
  * 애플리케이션 시작 시 MAIN001 본점 데이터를 자동 생성
  * 
@@ -32,6 +33,7 @@ public class BranchInitializationService implements CommandLineRunner {
         initializeMainBranch();
     }
     
+    /**
      * MAIN001 본점 데이터 초기화
      */
     private void initializeMainBranch() {

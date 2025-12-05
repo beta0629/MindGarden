@@ -78,8 +78,15 @@ public interface ConsultationRepository extends BaseRepository<Consultation, Lon
     int countByConsultantIdAndStatusAndCreatedAtBetween(Long consultantId, String status, LocalDateTime startDateTime, LocalDateTime endDateTime);
     
     /**
-     * 상태별 상담 조회 (활성 상태만)
+     * 상태별 상담 조회 (tenantId 필터링 필수)
      */
+    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.status = :status AND c.isDeleted = false ORDER BY c.consultationDate DESC")
+    List<Consultation> findByTenantIdAndStatus(@Param("tenantId") String tenantId, @Param("status") String status);
+    
+    /**
+     * @Deprecated - 🚨 보안 위험: 모든 테넌트 상담 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT c FROM Consultation c WHERE c.status = ?1 AND c.isDeleted = false ORDER BY c.consultationDate DESC")
     List<Consultation> findByStatus(String status);
     

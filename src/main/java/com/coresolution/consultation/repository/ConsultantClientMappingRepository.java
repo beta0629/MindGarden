@@ -14,32 +14,20 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     // 테넌트별 모든 매칭 조회 (tenantId 필터링)
     List<ConsultantClientMapping> findByTenantId(String tenantId);
     
-    // 상담사별 매칭 조회
-    List<ConsultantClientMapping> findByConsultant(User consultant);
+    // 상담사별 매칭 조회 (tenantId 필터링 필수)
+    List<ConsultantClientMapping> findByTenantIdAndConsultant(String tenantId, User consultant);
     
-    // 내담자별 매칭 조회 (tenantId 필터링)
+    // 내담자별 매칭 조회 (tenantId 필터링 필수)
     List<ConsultantClientMapping> findByTenantIdAndClient(String tenantId, User client);
     
-    // @Deprecated - 🚨 위험: tenantId 필터링 없이 매칭 접근!
-    @Deprecated
-    List<ConsultantClientMapping> findByClient(User client);
-    
-    // 활성 상태의 매칭만 조회 (tenantId 필터링)
+    // 활성 상태의 매칭만 조회 (tenantId 필터링 필수)
     List<ConsultantClientMapping> findByTenantIdAndStatus(String tenantId, ConsultantClientMapping.MappingStatus status);
     
-    // @Deprecated - 🚨 위험: tenantId 필터링 없이 매칭 접근!
-    @Deprecated
-    List<ConsultantClientMapping> findByStatus(ConsultantClientMapping.MappingStatus status);
-    
-    // 상담사와 내담자로 특정 매칭 조회 (tenantId 필터링)
+    // 상담사와 내담자로 특정 매칭 조회 (tenantId 필터링 필수)
     List<ConsultantClientMapping> findByTenantIdAndConsultantAndClient(String tenantId, User consultant, User client);
     
-    // @Deprecated - 🚨 위험: tenantId 필터링 없이 매칭 접근!
-    @Deprecated
-    List<ConsultantClientMapping> findByConsultantAndClient(User consultant, User client);
-    
-    // 상담사와 내담자로 활성 상태의 매칭 존재 여부 확인
-    boolean existsByConsultantAndClientAndStatus(User consultant, User client, ConsultantClientMapping.MappingStatus status);
+    // 상담사와 내담자로 활성 상태의 매칭 존재 여부 확인 (tenantId 필터링 필수)
+    boolean existsByTenantIdAndConsultantAndClientAndStatus(String tenantId, User consultant, User client, ConsultantClientMapping.MappingStatus status);
     
     // 상담사별 활성 매칭 수 조회 (tenantId 필터링)
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant = :consultant AND m.status = 'ACTIVE'")
@@ -55,23 +43,13 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
                                                  @Param("startDate") java.time.LocalDate startDate, 
                                                  @Param("endDate") java.time.LocalDate endDate);
     
-    // 테넌트별 모든 매칭을 관련 엔티티와 함께 조회 (테넌트 필터링)
+    // 테넌트별 모든 매칭을 관련 엔티티와 함께 조회 (tenantId 필터링 필수)
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId ORDER BY m.updatedAt DESC, m.createdAt DESC")
     List<ConsultantClientMapping> findAllWithDetailsByTenantId(@Param("tenantId") String tenantId);
     
-    // @Deprecated - 🚨 극도로 위험: 모든 테넌트 매칭 정보 노출!
-    @Deprecated
-    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client ORDER BY m.updatedAt DESC, m.createdAt DESC")
-    List<ConsultantClientMapping> findAllWithDetails();
-    
-    // 테넌트별 활성 매칭을 관련 엔티티와 함께 조회 (테넌트 필터링)
+    // 테넌트별 활성 매칭을 관련 엔티티와 함께 조회 (tenantId 필터링 필수)
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.status = 'ACTIVE'")
     List<ConsultantClientMapping> findActiveMappingsWithDetailsByTenantId(@Param("tenantId") String tenantId);
-    
-    // @Deprecated - 🚨 극도로 위험: 모든 테넌트 활성 매칭 노출!
-    @Deprecated
-    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.status = 'ACTIVE'")
-    List<ConsultantClientMapping> findActiveMappingsWithDetails();
     
     // 상담사 ID로 매칭 조회 (특정 상태 제외, tenantId 필터링)
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status != :status")
@@ -97,23 +75,13 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     @Query("SELECT m FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId")
     List<ConsultantClientMapping> findByConsultantId(@Param("tenantId") String tenantId, @Param("consultantId") Long consultantId);
     
-    // 테넌트별 결제 상태별 매칭 수 조회 (테넌트 필터링)
+    // 테넌트별 결제 상태별 매칭 수 조회 (tenantId 필터링 필수)
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.paymentStatus = :paymentStatus")
     long countByTenantIdAndPaymentStatus(@Param("tenantId") String tenantId, @Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
     
-    // @Deprecated - 🚨 보안 위험: 모든 테넌트 결제 통계 노출!
-    @Deprecated
-    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.paymentStatus = :paymentStatus")
-    long countByPaymentStatus(@Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
-    
-    // 테넌트별 결제 상태별 매칭 조회 (테넌트 필터링)
+    // 테넌트별 결제 상태별 매칭 조회 (tenantId 필터링 필수)
     @Query("SELECT m FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.paymentStatus = :paymentStatus")
     List<ConsultantClientMapping> findByTenantIdAndPaymentStatus(@Param("tenantId") String tenantId, @Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
-    
-    // @Deprecated - 🚨 보안 위험: 모든 테넌트 결제 데이터 노출!
-    @Deprecated
-    @Query("SELECT m FROM ConsultantClientMapping m WHERE m.paymentStatus = :paymentStatus")
-    List<ConsultantClientMapping> findByPaymentStatus(@Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
     
     // 상담사 ID와 상태 목록으로 매칭 수 조회 (tenantId 필터링)
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.consultant.id = :consultantId AND m.status IN :statuses")

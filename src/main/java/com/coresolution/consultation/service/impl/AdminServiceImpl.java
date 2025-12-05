@@ -15,9 +15,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.dto.ClientRegistrationDto;
-import com.coresolution.consultation.dto.ConsultantClientMappingDto;
-import com.coresolution.consultation.dto.ConsultantRegistrationDto;
+import com.coresolution.consultation.dto.ClientRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
+import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
 import com.coresolution.consultation.entity.Branch;
@@ -46,7 +46,7 @@ import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
-import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.domain.UserRoleAssignment;
 import com.coresolution.core.domain.TenantRole;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
@@ -67,7 +67,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AdminServiceImpl implements AdminService {
+public class AdminServiceImpl extends BaseTenantAwareService implements AdminService {
 
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
@@ -94,33 +94,31 @@ public class AdminServiceImpl implements AdminService {
     private final StatusCodeHelper statusCodeHelper;
 
     @Override
-    public User registerConsultant(ConsultantRegistrationDto dto) {
-        String encryptedName = encryptionUtil.safeEncrypt(dto.getName());
+    public User registerConsultant(ConsultantRegistrationRequest request) {
+        String encryptedName = encryptionUtil.safeEncrypt(request.getName());
         String encryptedPhone = null;
-        if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
-            encryptedPhone = encryptionUtil.safeEncrypt(dto.getPhone());
-            log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(dto.getPhone()));
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
+            log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(request.getPhone()));
         }
-        String encryptedEmail = encryptionUtil.safeEncrypt(dto.getEmail());
+        String encryptedEmail = encryptionUtil.safeEncrypt(request.getEmail());
         log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
         
-        Branch branch = null;
-        
-        String tenantId = TenantContextHolder.getTenantId();
-        Optional<User> existingConsultant = userRepository.findByTenantIdAndUsernameAndIsActive(tenantId, dto.getUsername(), false);
+        String tenantId = getTenantIdOrNull();
+        Optional<User> existingConsultant = userRepository.findByTenantIdAndUsernameAndIsActive(tenantId, request.getUsername(), false);
         
         if (existingConsultant.isPresent()) {
             User consultant = existingConsultant.get();
             consultant.setEmail(encryptedEmail);
-            consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
+            consultant.setPassword(passwordEncoder.encode(request.getPassword()));
             consultant.setName(encryptedName);
             consultant.setPhone(encryptedPhone);
             consultant.setIsActive(true); // 활성화
-            consultant.setSpecialization(dto.getSpecialization());
+            consultant.setSpecialization(request.getSpecialization());
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
             
             if (consultant instanceof Consultant) {
-                ((Consultant) consultant).setCertification(dto.getQualifications());
+                ((Consultant) consultant).setCertification(request.getQualifications());
             }
             
             User savedConsultant = userRepository.save(consultant);
@@ -130,17 +128,17 @@ public class AdminServiceImpl implements AdminService {
             return savedConsultant;
         } else {
             Consultant consultant = new Consultant();
-            consultant.setUsername(dto.getUsername());
+            consultant.setUsername(request.getUsername());
             consultant.setEmail(encryptedEmail);
-            consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
+            consultant.setPassword(passwordEncoder.encode(request.getPassword()));
             consultant.setName(encryptedName);
             consultant.setPhone(encryptedPhone);
             consultant.setRole(UserRole.CONSULTANT);
             consultant.setIsActive(true);
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
             
-            consultant.setSpecialty(dto.getSpecialization());
-            consultant.setCertification(dto.getQualifications());
+            consultant.setSpecialty(request.getSpecialization());
+            consultant.setCertification(request.getQualifications());
             
             User savedConsultant = userRepository.save(consultant);
             
@@ -151,34 +149,32 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public Client registerClient(ClientRegistrationDto dto) {
-        String encryptedName = encryptionUtil.safeEncrypt(dto.getName());
+    public Client registerClient(ClientRegistrationRequest request) {
+        String encryptedName = encryptionUtil.safeEncrypt(request.getName());
         String encryptedPhone = null;
-        if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
-            encryptedPhone = encryptionUtil.safeEncrypt(dto.getPhone());
-            log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(dto.getPhone()));
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            encryptedPhone = encryptionUtil.safeEncrypt(request.getPhone());
+            log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(request.getPhone()));
         }
-        String encryptedEmail = encryptionUtil.safeEncrypt(dto.getEmail());
+        String encryptedEmail = encryptionUtil.safeEncrypt(request.getEmail());
         log.info("🔐 관리자 내담자 등록 시 이름, 이메일 암호화 완료");
         
-        Branch branch = null;
-        
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.warn("⚠️ TenantContext에 tenantId가 없습니다. 세션에서 조회 시도...");
             throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
         }
         
         User clientUser = User.builder()
-                .username(dto.getUsername())
+                .username(request.getUsername())
                 .email(encryptedEmail)
-                .password(passwordEncoder.encode(dto.getPassword()))
+                .password(passwordEncoder.encode(request.getPassword()))
                 .name(encryptedName)
                 .phone(encryptedPhone)
                 .role(UserRole.CLIENT)
                 .isActive(true)
-                .branch(branch) // 지점 할당
-                .branchCode(dto.getBranchCode()) // 지점코드 저장
+                .branch(null) // 브랜치 개념 제거됨 (표준화 2025-12-05)
+                .branchCode(request.getBranchCode()) // 지점코드 저장
                 .build();
         
         clientUser.setTenantId(tenantId);
@@ -197,13 +193,13 @@ public class AdminServiceImpl implements AdminService {
         client.setIsDeleted(!savedUser.getIsActive());
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
-        client.setBranchCode(dto.getBranchCode()); // 지점코드 저장
+        client.setBranchCode(request.getBranchCode()); // 지점코드 저장
         
         return client;
     }
 
     @Override
-    public ConsultantClientMapping createMapping(ConsultantClientMappingDto dto) {
+    public ConsultantClientMapping createMapping(ConsultantClientMappingCreateRequest dto) {
         User consultant = userRepository.findById(dto.getConsultantId())
                 .orElseThrow(() -> new RuntimeException("Consultant not found"));
         
@@ -212,16 +208,18 @@ public class AdminServiceImpl implements AdminService {
 
         String branchCode = null;
         branchCode = consultant.getBranchCode();
-        if (branchCode == null || branchCode.trim().isEmpty()) {
-            branchCode = clientUser.getBranchCode();
-        }
-        if (branchCode == null || branchCode.trim().isEmpty()) {
-            branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
-        }
-        */
+        // 표준화 2025-12-05: 브랜치 코드는 더 이상 사용하지 않음
+        // if (branchCode == null || branchCode.trim().isEmpty()) {
+        //     branchCode = clientUser.getBranchCode();
+        // }
+        // if (branchCode == null || branchCode.trim().isEmpty()) {
+        //     branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
+        // }
         
+        // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속으로 자동 처리)
+        String tenantId = getTenantId();
         List<ConsultantClientMapping> existingMappings = mappingRepository
-            .findByConsultantAndClient(consultant, clientUser);
+            .findByTenantIdAndConsultantAndClient(tenantId, consultant, clientUser);
         
         if (!existingMappings.isEmpty()) {
             log.info("🔍 기존 매칭 발견, 자동 종료 처리: 상담사={}, 내담자={}, 기존 매칭 수={}", 
@@ -304,6 +302,8 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.save(mapping);
     }
 
+    /**
+     /**
      * 입금 확인 처리
      */
     @Override
@@ -344,6 +344,7 @@ public class AdminServiceImpl implements AdminService {
         return savedMapping;
     }
     
+     /**
      * 상담료 수입 거래 자동 생성 (중앙화된 금액 관리 사용)
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -419,6 +420,7 @@ public class AdminServiceImpl implements AdminService {
             mapping.getId(), accurateAmount);
     }
     
+     /**
      * 추가 회기 수입 거래 자동 생성 (추가 매칭용)
      */
     private void createAdditionalSessionIncomeTransaction(ConsultantClientMapping mapping, Long additionalPaymentAmount) {
@@ -469,6 +471,7 @@ public class AdminServiceImpl implements AdminService {
             mapping.getId(), transactionAmount, additionalSessions);
     }
     
+     /**
      * Notes에서 추가 회기수 추출
      */
     private int extractAdditionalSessionsFromNotes(String notes) {
@@ -494,6 +497,7 @@ public class AdminServiceImpl implements AdminService {
         return 10; // 기본값
     }
     
+     /**
      * 상담료 환불 거래 자동 생성
      */
     private void createConsultationRefundTransaction(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
@@ -525,6 +529,7 @@ public class AdminServiceImpl implements AdminService {
             mapping.getId(), refundAmount);
     }
     
+     /**
      * 부분 환불 상담료 거래 자동 생성 (중앙화된 금액 관리 사용)
      */
     private void createPartialConsultationRefundTransaction(ConsultantClientMapping mapping, int refundSessions, long refundAmount, String reason) {
@@ -595,6 +600,7 @@ public class AdminServiceImpl implements AdminService {
             mapping.getId(), refundSessions, refundAmount);
     }
 
+     /**
      * 결제 확인 처리 (미수금 상태)
      */
     @Override
@@ -628,6 +634,7 @@ public class AdminServiceImpl implements AdminService {
         return savedMapping;
     }
     
+     /**
      * 미수금(매출채권) 거래 생성
      */
     private void createReceivablesTransaction(ConsultantClientMapping mapping) {
@@ -671,6 +678,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 입금 확인 처리 (현금 수입)
      */
     @Override
@@ -712,6 +720,7 @@ public class AdminServiceImpl implements AdminService {
         return savedMapping;
     }
 
+     /**
      * 관리자 승인
      */
     @Override
@@ -738,6 +747,7 @@ public class AdminServiceImpl implements AdminService {
         return savedMapping;
     }
 
+     /**
      * 관리자 거부
      */
     @Override
@@ -753,6 +763,8 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.save(mapping);
     }
 
+    /**
+     /**
      * 회기 사용 처리
      */
     @Override
@@ -765,7 +777,10 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.save(mapping);
     }
 
+    /**
+     /**
      * 회기 추가 (연장) - 기존 메서드 (즉시 처리)
+     /**
      * @deprecated 워크플로우를 통한 회기 추가를 권장합니다.
      */
     @Override
@@ -781,6 +796,7 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.save(mapping);
     }
     
+     /**
      * 회기 추가 요청 생성 (워크플로우 방식)
      */
     public ConsultantClientMapping createSessionExtensionRequest(Long mappingId, Long requesterId, 
@@ -801,33 +817,36 @@ public class AdminServiceImpl implements AdminService {
         return mapping;
     }
 
+     /**
      * 입금 대기 중인 매칭 목록 조회
      */
     @Override
     public List<ConsultantClientMapping> getPendingPaymentMappings() {
         String pendingPaymentStatus = getMappingStatusCode("PENDING_PAYMENT");
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(pendingPaymentStatus))
                 .collect(Collectors.toList());
     }
 
+     /**
      * 입금 확인된 매칭 목록 조회
      */
     @Override
     public List<ConsultantClientMapping> getPaymentConfirmedMappings() {
         String paymentConfirmedStatus = getMappingStatusCode("PAYMENT_CONFIRMED");
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(paymentConfirmedStatus))
                 .collect(Collectors.toList());
     }
 
+     /**
      * 입금 확인 대기 중인 매칭 목록 조회 (결제 확인 완료, 입금 확인 대기)
      */
     @Override
     public List<ConsultantClientMapping> getPendingDepositMappings() {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getPaymentStatus() != null && 
                                  mapping.getPaymentStatus().name().equals("CONFIRMED") &&
@@ -836,19 +855,23 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toList());
     }
 
+     /**
      * 활성 매칭 목록 조회 (승인 완료)
      */
     @Override
     public List<ConsultantClientMapping> getActiveMappings() {
-        return mappingRepository.findActiveMappingsWithDetails();
+        // 표준화 2025-12-05: tenantId 필터링 필수
+        String tenantId = getTenantId();
+        return mappingRepository.findActiveMappingsWithDetailsByTenantId(tenantId);
     }
 
+     /**
      * 회기 소진된 매칭 목록 조회
      */
     @Override
     public List<ConsultantClientMapping> getSessionsExhaustedMappings() {
         String sessionsExhaustedStatus = getMappingStatusCode("SESSIONS_EXHAUSTED");
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(sessionsExhaustedStatus))
                 .collect(Collectors.toList());
@@ -862,7 +885,8 @@ public class AdminServiceImpl implements AdminService {
             long totalMappings = mappingRepository.count();
             statistics.put("totalMappings", totalMappings);
             
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             long activeMappings = mappingRepository.findByTenantId(tenantId).stream()
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
@@ -904,7 +928,8 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<Map<String, Object>> getSessions() {
         try {
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             List<ConsultantClientMapping> mappings = mappingRepository.findByTenantId(tenantId);
             
             return mappings.stream()
@@ -930,7 +955,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<User> getAllConsultants() {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         List<Consultant> consultantEntities = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         List<User> consultants = consultantEntities.stream()
                 .map(consultant -> (User) consultant)
@@ -954,7 +979,9 @@ public class AdminServiceImpl implements AdminService {
     
     @Override
     public List<Map<String, Object>> getAllConsultantsWithSpecialty() {
-        List<Consultant> consultants = consultantRepository.findActiveConsultants();
+        // 표준화 2025-12-05: tenantId 필터링 필수
+        String tenantId = getTenantId();
+        List<Consultant> consultants = consultantRepository.findActiveConsultantsByTenantId(tenantId);
         
         Map<String, Map<String, String>> gradeStyles = new HashMap<>();
         try {
@@ -1000,11 +1027,11 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("gradeIcon", style.get("icon"));
                 consultantData.put("grade", grade);
                 
-                String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+                String currentTenantId = getTenantIdOrNull();
                 
-                long actualCurrentClients = tenantId != null ? 
+                long actualCurrentClients = currentTenantId != null ? 
                     mappingRepository.countByConsultantIdAndStatusIn(
-                        tenantId,
+                        currentTenantId,
                         consultant.getId(), 
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                         List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
@@ -1044,13 +1071,16 @@ public class AdminServiceImpl implements AdminService {
             .collect(Collectors.toList());
     }
     
+     /**
      * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
      */
     @Override
     public List<Map<String, Object>> getAllConsultantsWithVacationInfo(String date) {
         log.info("휴무 정보를 포함한 상담사 목록 조회: date={}", date);
         
-        List<Consultant> consultants = consultantRepository.findActiveConsultants();
+        // 표준화 2025-12-05: tenantId 필터링 필수
+        String tenantId = getTenantId();
+        List<Consultant> consultants = consultantRepository.findActiveConsultantsByTenantId(tenantId);
         
         Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
         
@@ -1149,6 +1179,7 @@ public class AdminServiceImpl implements AdminService {
             .collect(Collectors.toList());
     }
     
+     /**
      * 데이터베이스에서 전문분야 상세 정보 조회
      */
     private List<Map<String, String>> getSpecializationDetailsFromDB(String specialization) {
@@ -1172,6 +1203,7 @@ public class AdminServiceImpl implements AdminService {
         return details;
     }
     
+     /**
      * 코드로 전문분야 이름 조회 (한글 통일)
      */
     private String getSpecialtyNameByCode(String code) {
@@ -1206,6 +1238,7 @@ public class AdminServiceImpl implements AdminService {
         return specialtyMap.getOrDefault(code, code);
     }
     
+     /**
      * 사용자 개인정보 복호화
      */
     private User decryptUserPersonalData(User user) {
@@ -1245,7 +1278,9 @@ public class AdminServiceImpl implements AdminService {
         return user;
     }
     
+     /**
      * 데이터가 암호화된 데이터인지 확인
+     /**
      * Base64 패턴과 길이로 판단
      */
     private boolean isEncryptedData(String data) {
@@ -1268,7 +1303,9 @@ public class AdminServiceImpl implements AdminService {
         return true;
     }
 
+     /**
      * 전화번호 하이픈 포맷팅
+     /**
      * 01012345678 -> 010-1234-5678
      */
     private String formatPhoneNumber(String phone) {
@@ -1297,7 +1334,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<Client> getAllClients() {
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
@@ -1361,15 +1398,13 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔍 통합 내담자 데이터 조회 시작");
             
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null) {
-                log.error("❌ tenantId가 설정되지 않았습니다");
-                return new ArrayList<>();
-            }
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CLIENT);
             log.info("🔍 내담자 수: {}", clientUsers.size());
             
-            List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetails();
+            // 표준화 2025-12-05: tenantId 필터링 필수
+            List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetailsByTenantId(tenantId);
             log.info("🔍 매칭 수: {}", allMappings.size());
             
             List<Map<String, Object>> result = new ArrayList<>();
@@ -1461,7 +1496,9 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<ConsultantClientMapping> getAllMappings() {
         try {
-            return mappingRepository.findAllWithDetails();
+            // 표준화 2025-12-05: tenantId 필터링 필수
+            String tenantId = getTenantId();
+            return mappingRepository.findAllWithDetailsByTenantId(tenantId);
         } catch (Exception e) {
             System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();
@@ -1469,23 +1506,23 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public User updateConsultant(Long id, ConsultantRegistrationDto dto) {
+    public User updateConsultant(Long id, ConsultantRegistrationRequest request) {
         User consultant = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Consultant not found"));
         
-        consultant.setName(encryptionUtil.safeEncrypt(dto.getName()));
-        consultant.setEmail(encryptionUtil.safeEncrypt(dto.getEmail()));
-        if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
-            consultant.setPhone(encryptionUtil.safeEncrypt(dto.getPhone()));
+        consultant.setName(encryptionUtil.safeEncrypt(request.getName()));
+        consultant.setEmail(encryptionUtil.safeEncrypt(request.getEmail()));
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            consultant.setPhone(encryptionUtil.safeEncrypt(request.getPhone()));
         }
         
-        if (dto.getSpecialization() != null) {
-            consultant.setSpecialization(dto.getSpecialization());
+        if (request.getSpecialization() != null) {
+            consultant.setSpecialization(request.getSpecialization());
         }
         
-        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
             log.info("🔧 상담사 비밀번호 변경: ID={}", id);
-            consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
+            consultant.setPassword(passwordEncoder.encode(request.getPassword()));
             consultant.setUpdatedAt(LocalDateTime.now());
             consultant.setVersion(consultant.getVersion() + 1);
         }
@@ -1507,14 +1544,14 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public Client updateClient(Long id, ClientRegistrationDto dto) {
+    public Client updateClient(Long id, ClientRegistrationRequest request) {
         User clientUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
         
-        clientUser.setName(encryptionUtil.safeEncrypt(dto.getName()));
-        clientUser.setEmail(encryptionUtil.safeEncrypt(dto.getEmail()));
-        if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
-            clientUser.setPhone(encryptionUtil.safeEncrypt(dto.getPhone()));
+        clientUser.setName(encryptionUtil.safeEncrypt(request.getName()));
+        clientUser.setEmail(encryptionUtil.safeEncrypt(request.getEmail()));
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            clientUser.setPhone(encryptionUtil.safeEncrypt(request.getPhone()));
         }
         
         User savedUser = userRepository.save(clientUser);
@@ -1535,7 +1572,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingDto dto, String updatedBy) {
+    public ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingCreateRequest dto, String updatedBy) {
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
@@ -1681,7 +1718,7 @@ public class AdminServiceImpl implements AdminService {
     public void deleteConsultantWithTransfer(Long consultantId, Long transferToConsultantId, String reason) {
         log.info("🔄 상담사 삭제 및 이전 처리 시작: 삭제 상담사 ID={}, 이전 대상 상담사 ID={}", 
                 consultantId, transferToConsultantId);
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         
         User consultantToDelete = userRepository.findById(consultantId)
                 .orElseThrow(() -> new RuntimeException("삭제할 상담사를 찾을 수 없습니다."));
@@ -1818,7 +1855,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Map<String, Object> checkConsultantDeletionStatus(Long consultantId) {
         log.info("🔍 상담사 삭제 가능 여부 확인: ID={}", consultantId);
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         
         User consultant = userRepository.findById(consultantId)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
@@ -1915,7 +1952,7 @@ public class AdminServiceImpl implements AdminService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteClient(Long id) {
         log.info("🗑️ 내담자 삭제 처리 시작: ID={}", id);
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         
         User client = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
@@ -2017,7 +2054,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public Map<String, Object> checkClientDeletionStatus(Long clientId) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         log.info("🔍 내담자 삭제 가능 여부 확인: ID={}", clientId);
         
         User client = userRepository.findById(clientId)
@@ -2134,7 +2171,7 @@ public class AdminServiceImpl implements AdminService {
     @Transactional(rollbackFor = Exception.class)
     public void terminateMapping(Long id, String reason) {
         log.info("🔧 매칭 강제 종료 처리 시작: ID={}, 사유={}", id, reason);
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다."));
@@ -2384,7 +2421,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Map<String, Object> getRefundStatistics(String period, String branchCode) {
         log.info("📊 환불 통계 조회 시작: period={}, branchCode={}", period, branchCode);
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         
         initializeRefundCommonCodes();
         
@@ -2677,7 +2714,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Map<String, Object> getRefundHistory(int page, int size, String period, String status) {
         log.info("📋 환불 이력 조회: page={}, size={}, period={}, status={}", page, size, period, status);
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
@@ -2827,7 +2864,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Map<String, Object> getRefundHistory(int page, int size, String period, String status, String branchCode) {
         log.info("📋 환불 이력 조회 (지점별): page={}, size={}, period={}, status={}, branchCode={}", page, size, period, status, branchCode);
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
@@ -2965,6 +3002,7 @@ public class AdminServiceImpl implements AdminService {
         return result;
     }
     
+     /**
      * 환불 설명에서 환불 회기수 추출
      */
     private int extractRefundSessionsFromDescription(String description) {
@@ -2984,6 +3022,7 @@ public class AdminServiceImpl implements AdminService {
         return 0;
     }
     
+     /**
      * 환불 설명에서 환불 사유 추출
      */
     private String extractRefundReasonFromDescription(String description) {
@@ -3015,7 +3054,8 @@ public class AdminServiceImpl implements AdminService {
             result.put("erpSystemAvailable", erpAvailable);
             
             LocalDateTime yesterday = LocalDateTime.now().minusHours(24);
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             List<ConsultantClientMapping> recentRefunds = mappingRepository.findByTenantId(tenantId).stream()
                     .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED)
                     .filter(mapping -> mapping.getTerminatedAt() != null)
@@ -3055,6 +3095,7 @@ public class AdminServiceImpl implements AdminService {
         return result;
     }
 
+     /**
      * ERP 시스템 연결 상태 확인
      */
     private boolean checkErpConnection() {
@@ -3071,6 +3112,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
+     /**
      * 환불 통계 기간에 따른 시작 날짜 계산 (공통 코드 기반)
      */
     private LocalDateTime getRefundPeriodStartDate(String period) {
@@ -3106,6 +3148,7 @@ public class AdminServiceImpl implements AdminService {
         return LocalDate.now().minusMonths(1).atStartOfDay();
     }
 
+     /**
      * 환불 사유 표준화 (공통 코드 기반)
      */
     private String standardizeRefundReason(String rawReason) {
@@ -3157,6 +3200,7 @@ public class AdminServiceImpl implements AdminService {
         return "기타";
     }
 
+     /**
      * ERP 시스템에 환불 데이터 전송
      */
     private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
@@ -3202,6 +3246,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
+     /**
      * ERP 시스템으로 실제 데이터 전송
      */
     private boolean sendToErpSystem(String url, Map<String, Object> data, Map<String, String> headers) {
@@ -3226,12 +3271,14 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
+     /**
      * ERP 환불 API URL 가져오기
      */
     private String getErpRefundApiUrl() {
         return System.getProperty("erp.refund.api.url", "http://erp.company.com/api/refund");
     }
 
+     /**
      * ERP 인증 헤더 생성
      */
     private Map<String, String> getErpHeaders() {
@@ -3242,14 +3289,15 @@ public class AdminServiceImpl implements AdminService {
         return headers;
     }
 
+     /**
      * 현재 사용자의 지점 코드 가져오기
      */
     private String getCurrentUserBranchCode() {
         return "MAIN001"; // 임시 기본값
     }
 
-     * 환불 관련 공통 코드 초기화 (없으면 자동 생성)
-     */
+    /**
+     * 매핑 상태 코드 조회
      */
     private String getMappingStatusCode(String statusName) {
         String codeValue = statusCodeHelper.getStatusCodeValue("MAPPING_STATUS", statusName);
@@ -3259,6 +3307,8 @@ public class AdminServiceImpl implements AdminService {
         return statusName;
     }
 
+    /**
+     * 결제 상태 코드 조회
      */
     private String getPaymentStatusCode(String statusName) {
         String codeValue = statusCodeHelper.getStatusCodeValue("PAYMENT_STATUS", statusName);
@@ -3268,6 +3318,8 @@ public class AdminServiceImpl implements AdminService {
         return statusName;
     }
 
+    /**
+     * 스케줄 상태 코드 조회
      */
     private String getScheduleStatusCode(String statusName) {
         String codeValue = statusCodeHelper.getStatusCodeValue("SCHEDULE_STATUS", statusName);
@@ -3327,6 +3379,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
+     /**
      * 공통 코드 생성 헬퍼 메서드
      */
     private void createCommonCode(String codeGroup, String codeValue, String codeLabel, String extraData, int sortOrder) {
@@ -3510,7 +3563,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<ConsultantClientMapping> getTransferHistory(Long clientId) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         User client = userRepository.findById(clientId)
                 .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
         
@@ -3525,7 +3578,8 @@ public class AdminServiceImpl implements AdminService {
     public List<Map<String, Object>> getSchedulesByConsultantId(Long consultantId) {
         try {
             log.info("🔍 상담사별 스케줄 조회: consultantId={}", consultantId);
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             
             userRepository.findById(consultantId)
                     .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
@@ -3579,7 +3633,8 @@ public class AdminServiceImpl implements AdminService {
     public List<Map<String, Object>> getConsultationCompletionStatistics(String period) {
         try {
             log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             
             List<Consultant> consultantEntities = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
             List<User> consultants = consultantEntities.stream()
@@ -3648,11 +3703,8 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("📊 지점별 상담 완료 건수 통계 조회: period={}, branchCode={}", period, branchCode);
             
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null) {
-                log.error("❌ tenantId가 설정되지 않았습니다");
-                return new ArrayList<>();
-            }
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             
             if (branchCode == null || branchCode.trim().isEmpty()) {
                 return new ArrayList<>();
@@ -3734,7 +3786,8 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔍 모든 스케줄 조회");
             
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             List<Schedule> schedules = scheduleRepository.findByTenantId(tenantId);
             
             List<Map<String, Object>> scheduleMaps = schedules.stream()
@@ -3814,7 +3867,8 @@ public class AdminServiceImpl implements AdminService {
             log.info("📊 스케줄 상태별 통계 조회 시작");
             
             log.debug("🔍 모든 스케줄 조회 중...");
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             List<Schedule> allSchedules = scheduleRepository.findByTenantId(tenantId);
             log.info("📋 조회된 스케줄 수: {}", allSchedules.size());
             
@@ -3880,7 +3934,8 @@ public class AdminServiceImpl implements AdminService {
             log.info("📊 스케줄 상태별 통계 조회 시작 (지점별): branchCode={}", branchCode);
             
             log.debug("🔍 지점별 스케줄 조회 중...");
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             List<Schedule> allSchedules = scheduleRepository.findByTenantId(tenantId);
             List<Schedule> branchSchedules = allSchedules.stream()
                     .filter(schedule -> branchCode.equals(schedule.getBranchCode()))
@@ -3949,7 +4004,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 시작");
             
-            String tenantId = TenantContextHolder.getTenantId();
+            String tenantId = getTenantIdOrNull();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 Map<String, Object> errorResult = new HashMap<>();
@@ -4011,6 +4066,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 상담일지 작성 여부 확인
      */
     private boolean checkConsultationRecord(Schedule schedule) {
@@ -4022,6 +4078,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 상담일지 작성 독려 메시지 발송
      */
     private void sendConsultationReminderMessage(Schedule schedule) {
@@ -4048,10 +4105,12 @@ public class AdminServiceImpl implements AdminService {
                 schedule.getClientId() // 실제로는 내담자 이름을 조회해야 함
             );
             
+            // 표준화 2025-12-05: sendMessage 메서드 시그니처에 맞게 수정 (senderType 추가)
             consultationMessageService.sendMessage(
                 schedule.getConsultantId(),
                 schedule.getClientId(),
                 null, // consultationId는 null
+                UserRole.ADMIN.name(), // senderType: 관리자가 발신
                 title,
                 content,
                 "REMINDER", // 메시지 타입
@@ -4068,6 +4127,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 상담사별 완료된 스케줄 건수 조회 (기간별)
      */
     private int getCompletedScheduleCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
@@ -4082,11 +4142,12 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 상담사별 총 스케줄 건수 조회
      */
     private long getTotalScheduleCount(Long consultantId) {
         try {
-            String tenantId = TenantContextHolder.getTenantId();
+            String tenantId = getTenantIdOrNull();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return 0;
@@ -4098,6 +4159,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 전화번호 마스킹
      */
     private String maskPhone(String phone) {
@@ -4117,11 +4179,8 @@ public class AdminServiceImpl implements AdminService {
     public List<User> getUsers(boolean includeInactive, String role, String branchCode) {
         log.info("🔍 사용자 목록 조회: includeInactive={}, role={}, branchCode={}", includeInactive, role, branchCode);
         try {
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null) {
-                log.error("❌ tenantId가 설정되지 않았습니다");
-                return new ArrayList<>();
-            }
+            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            String tenantId = getTenantId();
             
             List<User> users;
             
@@ -4209,9 +4268,11 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔄 중복 매칭 통합 시작");
             
+            // 표준화 2025-12-05: tenantId 필터링 필수
+            String tenantId = getTenantId();
             List<ConsultantClientMapping> allMappings = mappingRepository
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                .findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+                .findByTenantIdAndStatus(tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
             
             Map<String, List<ConsultantClientMapping>> groupedMappings = allMappings.stream()
                 .collect(Collectors.groupingBy(mapping -> 
@@ -4288,9 +4349,11 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔍 중복 매칭 조회 시작");
             
+            // 표준화 2025-12-05: tenantId 필터링 필수
+            String tenantId = getTenantId();
             List<ConsultantClientMapping> allMappings = mappingRepository
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                .findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+                .findByTenantIdAndStatus(tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
             
             Map<String, List<ConsultantClientMapping>> groupedMappings = allMappings.stream()
                 .collect(Collectors.groupingBy(mapping -> 
@@ -4344,7 +4407,7 @@ public class AdminServiceImpl implements AdminService {
             
             log.info("📅 휴가 통계 조회 기간: {} ~ {} (period={})", startDate, endDate, period);
             
-            String tenantId = TenantContextHolder.getTenantId();
+            String tenantId = getTenantIdOrNull();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new HashMap<>();
@@ -4425,7 +4488,7 @@ public class AdminServiceImpl implements AdminService {
             
             log.info("📅 휴가 통계 조회 기간: {} ~ {} (period={})", startDate, endDate, period);
             
-            String tenantId = TenantContextHolder.getTenantId();
+            String tenantId = getTenantIdOrNull();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new HashMap<>();
@@ -4503,6 +4566,7 @@ public class AdminServiceImpl implements AdminService {
         return result;
     }
     
+     /**
      * 휴가 기간 시작일 계산
      */
     private LocalDate getVacationPeriodStartDate(String period) {
@@ -4525,6 +4589,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 상담사의 특정 기간 휴가 일수 조회 (가중치 적용)
      */
     private double getConsultantVacationCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
@@ -4549,6 +4614,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 휴가 유형별 가중치 반환
      */
     private double getVacationWeight(String vacationType) {
@@ -4581,6 +4647,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 휴가 유형별 개수 조회
      */
     private Map<String, Integer> getVacationCountByType(Long consultantId, LocalDate startDate, LocalDate endDate) {
@@ -4623,6 +4690,7 @@ public class AdminServiceImpl implements AdminService {
         return vacationByType;
     }
     
+     /**
      * 휴가 유형별 일수 조회 (가중치 적용)
      */
     private Map<String, Double> getVacationDaysByType(Long consultantId, LocalDate startDate, LocalDate endDate) {
@@ -4676,6 +4744,7 @@ public class AdminServiceImpl implements AdminService {
         return vacationDaysByType;
     }
     
+     /**
      * 최근 휴가 일자 조회
      */
     private LocalDate getLastVacationDate(Long consultantId) {
@@ -4706,6 +4775,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 휴가 유형을 카테고리로 매칭 (한글명도 처리)
      */
     private String mapVacationTypeToCategory(String vacationType) {
@@ -4749,10 +4819,15 @@ public class AdminServiceImpl implements AdminService {
         return "연차";
     }
     
+     /**
      * UserRoleAssignment 자동 생성
+     /**
      * 
+     /**
      * @param user 사용자
+     /**
      * @param tenantId 테넌트 ID
+     /**
      * @param userRole 사용자 역할
      */
     private void createUserRoleAssignment(User user, String tenantId, UserRole userRole) {
@@ -4804,7 +4879,9 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * UserRole을 TenantRole name_en으로 매핑
+     /**
      * 실제 TenantRole name_en과 일치시켜야 함
      */
     private String mapUserRoleToTenantRoleNameEn(UserRole userRole) {
@@ -4827,6 +4904,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
     
+     /**
      * 매칭의 notes에서 가장 최근 추가된 패키지 정보 추출
      */
     private Map<String, Object> getLastAddedPackageInfo(ConsultantClientMapping mapping) {
@@ -4907,7 +4985,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantEmail(String consultantEmail) {
         log.info("🔍 상담사 이메일로 매칭 조회 - 이메일: {}", consultantEmail);
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         
         Optional<User> consultantOpt = userRepository.findByTenantIdAndEmail(tenantId, consultantEmail);
         if (consultantOpt.isEmpty()) {

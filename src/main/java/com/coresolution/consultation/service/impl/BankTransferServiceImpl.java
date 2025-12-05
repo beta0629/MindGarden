@@ -16,10 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+ /**
  * 계좌이체 입금 확인 서비스 구현체
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-01-05
  */
 @Slf4j

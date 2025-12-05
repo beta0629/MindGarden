@@ -17,10 +17,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+ /**
  * 상담사-내담자 매핑 엔티티
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2024-12-19
  */
 @Entity
@@ -123,8 +128,11 @@ public class ConsultantClientMapping extends BaseEntity {
     @Column(name = "terminated_at")
     private LocalDateTime terminatedAt;
 
+     /**
      * @Deprecated - 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지
+     /**
      * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
+     /**
      * 새로운 코드에서는 사용하지 마세요. 테넌트 ID만 사용하세요.
      */
     @Column(name = "branch_code", length = 20)
@@ -145,6 +153,7 @@ public class ConsultantClientMapping extends BaseEntity {
     @Column(name = "discount_applied_at")
     private LocalDateTime discountAppliedAt; // 할인 적용일
 
+     /**
      * 매핑 상태 enum
      */
     public enum MappingStatus {
@@ -159,6 +168,7 @@ public class ConsultantClientMapping extends BaseEntity {
         SESSIONS_EXHAUSTED      // 회기 소진
     }
 
+     /**
      * 결제 상태 enum
      */
     public enum PaymentStatus {
@@ -171,6 +181,7 @@ public class ConsultantClientMapping extends BaseEntity {
         REFUNDED                    // 환불됨
     }
 
+     /**
      * 결제 확인 처리 (미수금 상태)
      */
     public void confirmPayment(String paymentMethod, String paymentReference) {
@@ -182,6 +193,7 @@ public class ConsultantClientMapping extends BaseEntity {
         this.status = MappingStatus.PAYMENT_CONFIRMED;
     }
     
+     /**
      * 입금 확인 처리 (현금 수입)
      */
     public void confirmDeposit(String depositReference) {
@@ -196,6 +208,7 @@ public class ConsultantClientMapping extends BaseEntity {
         this.status = MappingStatus.DEPOSIT_PENDING;  // DEPOSIT_PENDING 상태로 변경 (관리자 승인 대기)
     }
 
+     /**
      * 관리자 승인 (입금 확인 후 활성화)
      */
     public void approveByAdmin(String adminName) {
@@ -213,6 +226,7 @@ public class ConsultantClientMapping extends BaseEntity {
         this.startDate = LocalDateTime.now();
     }
 
+     /**
      * 회기 사용
      */
     public void useSession() {
@@ -228,6 +242,7 @@ public class ConsultantClientMapping extends BaseEntity {
         }
     }
 
+     /**
      * 회기 추가 (연장)
      */
     public void addSessions(Integer additionalSessions, String packageName, Long packagePrice) {
@@ -243,6 +258,7 @@ public class ConsultantClientMapping extends BaseEntity {
         }
     }
 
+     /**
      * 매핑 활성화
      */
     public void activate() {
@@ -255,6 +271,7 @@ public class ConsultantClientMapping extends BaseEntity {
         this.startDate = LocalDateTime.now();
     }
 
+     /**
      * 매핑 비활성화
      */
     public void deactivate() {
@@ -263,6 +280,7 @@ public class ConsultantClientMapping extends BaseEntity {
         this.endDate = LocalDateTime.now();
     }
 
+     /**
      * 매핑 중단
      */
     public void suspend(String reason) {
@@ -271,6 +289,7 @@ public class ConsultantClientMapping extends BaseEntity {
         this.notes = reason;
     }
 
+     /**
      * 매핑 종료
      */
     public void terminate(String reason, String terminatedBy) {
@@ -281,6 +300,7 @@ public class ConsultantClientMapping extends BaseEntity {
         this.endDate = LocalDateTime.now();
     }
 
+     /**
      * 상담사 변경 (이전)
      */
     public void transferToNewConsultant(String reason, String transferredBy) {
@@ -291,6 +311,7 @@ public class ConsultantClientMapping extends BaseEntity {
         this.endDate = LocalDateTime.now();
     }
 
+     /**
      * 스케줄 작성 가능 여부 확인
      */
     public boolean canCreateSchedule() {
@@ -298,12 +319,14 @@ public class ConsultantClientMapping extends BaseEntity {
         return this.status == MappingStatus.ACTIVE && this.remainingSessions > 0;
     }
 
+     /**
      * 남은 회기 수 확인
      */
     public Integer getRemainingSessions() {
         return Math.max(0, this.remainingSessions);
     }
 
+     /**
      * 진행률 계산 (백분율)
      */
     public Double getProgressPercentage() {

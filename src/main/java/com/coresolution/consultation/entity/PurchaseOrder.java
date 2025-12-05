@@ -23,11 +23,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+ /**
  * ERP 구매 주문 엔티티
+ /**
  * 승인된 구매 요청을 바탕으로 실제 주문을 생성
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2024-12-19
  */
 @Entity
@@ -109,6 +115,7 @@ public class PurchaseOrder {
         return "PO-" + System.currentTimeMillis();
     }
     
+     /**
      * 구매 주문 상태 열거형
      */
     public enum PurchaseOrderStatus {

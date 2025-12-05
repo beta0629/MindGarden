@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.SystemNotification;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
@@ -156,6 +157,10 @@ public class SystemNotificationController extends BaseApiController {
                         targetRoles.add(UserRole.CONSULTANT.name());
                     } else if (UserRole.CLIENT.name().equals(notification.getTargetType())) {
                         targetRoles.add(UserRole.CLIENT.name());
+                    } else if (UserRole.ADMIN.name().equals(notification.getTargetType())) {
+                        targetRoles.add(UserRole.ADMIN.name());
+                    } else if (UserRole.STAFF.name().equals(notification.getTargetType())) {
+                        targetRoles.add(UserRole.STAFF.name());
                     }
                     data.put("targetRoles", targetRoles);
                     

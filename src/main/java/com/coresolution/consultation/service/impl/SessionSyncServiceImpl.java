@@ -10,22 +10,28 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.SessionExtensionRequestRepository;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+ /**
  * 회기 동기화 서비스 구현체
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2024-12-19
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class SessionSyncServiceImpl implements SessionSyncService {
+public class SessionSyncServiceImpl extends BaseTenantAwareService implements SessionSyncService {
     
     private final ConsultantClientMappingRepository mappingRepository;
     private final SessionExtensionRequestRepository requestRepository;
@@ -132,7 +138,7 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         int remainingSessions = 0;
         
         try {
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            String tenantId = getTenantId();
             List<ConsultantClientMapping> allMappings = mappingRepository.findByTenantId(tenantId);
             totalMappings = allMappings.size();
             
@@ -178,7 +184,7 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         log.info("🔧 회기 수 불일치 자동 수정 시작");
         
         try {
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            String tenantId = getTenantId();
             List<ConsultantClientMapping> allMappings = mappingRepository.findByTenantId(tenantId);
             int fixedCount = 0;
             
@@ -228,9 +234,11 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         try {
             long totalMappings = mappingRepository.count();
             
+            // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속)
+            String tenantId = getTenantId();
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            long activeMappings = mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE).size();
-            long exhaustedMappings = mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED).size();
+            long activeMappings = mappingRepository.findByTenantIdAndStatus(tenantId, ConsultantClientMapping.MappingStatus.ACTIVE).size();
+            long exhaustedMappings = mappingRepository.findByTenantIdAndStatus(tenantId, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED).size();
             
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             long pendingRequests = requestRepository.findByStatusOrderByCreatedAtDesc(SessionExtensionRequest.ExtensionStatus.PENDING).size();
@@ -253,6 +261,7 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         return status;
     }
     
+     /**
      * 매핑 상태 검증
      */
     private void validateMappingStatus(ConsultantClientMapping mapping) {
@@ -268,6 +277,7 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         }
     }
     
+     /**
      * 회기 수 검증
      */
     private void validateSessionCounts(ConsultantClientMapping mapping) {
@@ -288,6 +298,7 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         }
     }
     
+     /**
      * 회기 사용 후 검증 (단회기 패키지 고려)
      */
     private void validateSessionCountsForUsage(ConsultantClientMapping mapping) {
@@ -318,6 +329,7 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         log.info("✅ 회기 사용 후 검증 완료: mappingId={}", mapping.getId());
     }
     
+     /**
      * 관련된 모든 매핑 동기화
      */
     private void syncRelatedMappings(ConsultantClientMapping mapping) {

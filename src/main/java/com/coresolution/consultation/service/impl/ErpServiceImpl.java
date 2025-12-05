@@ -27,22 +27,29 @@ import com.coresolution.consultation.service.FinancialTransactionService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ /**
  * ERP 서비스 구현체
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2024-12-19
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ErpServiceImpl implements ErpService {
+public class ErpServiceImpl extends BaseTenantAwareService implements ErpService {
     
     private final ItemRepository itemRepository;
     private final PurchaseRequestRepository purchaseRequestRepository;
@@ -263,7 +270,8 @@ public class ErpServiceImpl implements ErpService {
             throw new RuntimeException("승인할 수 없는 상태입니다: " + request.getStatus());
         }
         
-        request.setStatus(PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED);
+        // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
+        request.setStatus(PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED);
         request.setSuperAdminApprover(superAdmin);
         request.setSuperAdminApprovedAt(LocalDateTime.now());
         request.setSuperAdminComment(comment);
@@ -295,7 +303,8 @@ public class ErpServiceImpl implements ErpService {
             throw new RuntimeException("거부할 수 없는 상태입니다: " + request.getStatus());
         }
         
-        request.setStatus(PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_REJECTED);
+        // 표준화 2025-12-05: HQ_MASTER_REJECTED → ADMIN_REJECTED로 통합
+        request.setStatus(PurchaseRequest.PurchaseRequestStatus.ADMIN_REJECTED);
         request.setSuperAdminApprover(superAdmin);
         request.setSuperAdminApprovedAt(LocalDateTime.now());
         request.setSuperAdminComment(comment);
@@ -339,7 +348,8 @@ public class ErpServiceImpl implements ErpService {
         User purchaser = userService.findActiveById(purchaserId)
                 .orElseThrow(() -> new RuntimeException("구매자를 찾을 수 없습니다: " + purchaserId));
         
-        if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED) {
+        // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
+        if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED) {
             throw new RuntimeException("승인된 구매 요청만 주문할 수 있습니다: " + request.getStatus());
         }
         
@@ -397,7 +407,10 @@ public class ErpServiceImpl implements ErpService {
     @Transactional(readOnly = true)
     public List<PurchaseOrder> getPurchaseOrdersByStatus(PurchaseOrder.PurchaseOrderStatus status) {
         log.info("상태별 주문 목록 조회: status={}", status);
-        return purchaseOrderRepository.findByStatus(status);
+
+    // 표준화 2025-12-05: tenantId 필터링 필수
+    String tenantId = getTenantId();
+        return purchaseOrderRepository.findByTenantIdAndStatus(tenantId, status);
     }
     
     @Override
@@ -779,7 +792,7 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     public Map<String, Object> getBranchFinanceDashboard(String branchCode) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         Map<String, Object> dashboardData = new HashMap<>();
         
         try {
@@ -862,7 +875,7 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     public Map<String, Object> getBranchFinanceDashboard(String branchCode, LocalDate startDate, LocalDate endDate) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         Map<String, Object> dashboardData = new HashMap<>();
         
         try {
@@ -896,7 +909,7 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     public Map<String, Object> getBranchFinanceStatistics(String branchCode, String startDate, String endDate) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         Map<String, Object> statistics = new HashMap<>();
         
         try {
@@ -924,6 +937,7 @@ public class ErpServiceImpl implements ErpService {
         return statistics;
     }
     
+     /**
      * 실시간 재무 데이터 조회 (HQ 전체)
      */
     private Map<String, Object> getRealTimeFinancialData() {
@@ -985,10 +999,11 @@ public class ErpServiceImpl implements ErpService {
         return financialData;
     }
     
+     /**
      * 지점별 ERP 통계 조회 (세션 기반)
      */
     private Map<String, Object> getBranchErpStatisticsBySession(String branchCode) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         Map<String, Object> erpStats = new HashMap<>();
         
         try {
@@ -1045,19 +1060,22 @@ public class ErpServiceImpl implements ErpService {
         Map<String, Object> purchaseExpenses = new HashMap<>();
         
         BigDecimal totalPurchaseAmount = purchaseRequestRepository.findAllActive().stream()
-                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
+                // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
+                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED)
                 .map(PurchaseRequest::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         purchaseExpenses.put("totalAmount", totalPurchaseAmount);
         
         Long approvedCount = purchaseRequestRepository.findAllActive().stream()
-                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
+                // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
+                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED)
                 .count();
         purchaseExpenses.put("count", approvedCount);
         
         Map<String, BigDecimal> categoryAmounts = new HashMap<>();
         purchaseRequestRepository.findAllActive().stream()
-                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
+                // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
+                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED)
                 .forEach(req -> {
                     String category = req.getItem().getCategory();
                     BigDecimal amount = req.getTotalAmount();
@@ -1098,7 +1116,8 @@ public class ErpServiceImpl implements ErpService {
             
             String monthKey = monthStart.getYear() + "-" + String.format("%02d", monthStart.getMonthValue());
             BigDecimal monthAmount = purchaseRequestRepository.findAllActive().stream()
-                    .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
+                    // 표준화 2025-12-05: HQ_MASTER_APPROVED → ADMIN_APPROVED로 통합
+                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.ADMIN_APPROVED)
                     .filter(req -> req.getCreatedAt().isAfter(monthStart) && req.getCreatedAt().isBefore(monthEnd))
                     .map(PurchaseRequest::getTotalAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -1215,7 +1234,7 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getBalanceSheet(String reportDate, String branchCode) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         log.info("대차대조표 조회: {}, tenantId: {}", reportDate, tenantId);
         
         Map<String, Object> balanceSheet = new HashMap<>();
@@ -1409,7 +1428,7 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getIncomeStatement(String startDate, String endDate, String branchCode) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         log.info("손익계산서 조회: {} ~ {}, tenantId: {}", startDate, endDate, tenantId);
         
         Map<String, Object> incomeStatement = new HashMap<>();
@@ -1503,7 +1522,7 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDailyFinanceReport(String reportDate, String branchCode) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         log.info("일단위 재무 리포트 조회: {}, tenantId: {}", reportDate, tenantId);
         
         LocalDate targetDate = LocalDate.parse(reportDate);
@@ -1600,7 +1619,7 @@ public class ErpServiceImpl implements ErpService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getMonthlyFinanceReport(String year, String month, String branchCode) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String tenantId = getTenantId();
         log.info("월단위 재무 리포트 조회: {}-{}, tenantId: {}", year, month, tenantId);
         
         int yearInt = Integer.parseInt(year);
@@ -1922,6 +1941,7 @@ public class ErpServiceImpl implements ErpService {
         return trendAnalysis;
     }
     
+     /**
      * 구매 요청 승인 시 자동으로 지출 거래 생성
      */
     private void createPurchaseExpenseTransaction(PurchaseRequest purchaseRequest) {
@@ -1962,6 +1982,7 @@ public class ErpServiceImpl implements ErpService {
             response.getId(), purchaseRequest.getId(), purchaseRequest.getTotalAmount());
     }
     
+     /**
      * 구매 항목 카테고리에 따른 지출 카테고리 반환 (공통 코드 사용)
      */
     private String getPurchaseCategory(String itemCategory) {
@@ -1989,6 +2010,7 @@ public class ErpServiceImpl implements ErpService {
         }
     }
     
+     /**
      * 구매 항목 카테고리에 따른 세부 카테고리 반환 (공통 코드 사용)
      */
     private String getPurchaseSubcategory(String itemCategory) {

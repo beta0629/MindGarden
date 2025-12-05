@@ -15,11 +15,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+ /**
  * ERP 동기화 로그 엔티티
+ /**
  * ERP 시스템과의 데이터 동기화 이력 관리
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-09-24
  */
 @Entity

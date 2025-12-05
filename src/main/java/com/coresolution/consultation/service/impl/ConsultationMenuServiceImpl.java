@@ -253,18 +253,18 @@ public class ConsultationMenuServiceImpl implements com.coresolution.consultatio
     private List<String> getMenuGroupsByRole(UserRole userRole) {
         List<String> menuGroups = new ArrayList<>();
         
+        // 표준화 2025-12-05: 레거시 역할 제거, 표준 역할만 사용
+        if (userRole == null) {
+            return menuGroups;
+        }
+        
         switch (userRole) {
-            case HQ_ADMIN:
-            case SUPER_HQ_ADMIN:
-                menuGroups.add("HQ_ADMIN_MENU");
-                break;
-            case HQ_MASTER:
-                // HQ_MASTER는 모든 메뉴에 접근 가능 (최고 관리자)
-                menuGroups.add("HQ_ADMIN_MENU");
+            case ADMIN:
+            case TENANT_ADMIN:
+            case PRINCIPAL:
+            case OWNER:
+                // 표준 관리자 역할
                 menuGroups.add("ADMIN_MENU");
-                menuGroups.add("BRANCH_SUPER_ADMIN_MENU");
-                menuGroups.add("CONSULTANT_MENU");
-                menuGroups.add("CLIENT_MENU");
                 break;
             case CONSULTANT:
                 menuGroups.add("CONSULTANT_MENU");
@@ -272,20 +272,11 @@ public class ConsultationMenuServiceImpl implements com.coresolution.consultatio
             case CLIENT:
                 menuGroups.add("CLIENT_MENU");
                 break;
-            case BRANCH_SUPER_ADMIN:
-                menuGroups.add("ADMIN_MENU");
-                menuGroups.add("BRANCH_SUPER_ADMIN_MENU"); // ERP 메뉴 접근 가능
+            case STAFF:
+                menuGroups.add("STAFF_MENU");
                 break;
-            case BRANCH_ADMIN:
-                menuGroups.add("ADMIN_MENU");
-                // ERP 메뉴 접근 불가 (BRANCH_SUPER_ADMIN_MENU 제외)
-                break;
-            case ADMIN:
-                menuGroups.add("ADMIN_MENU");
-                // ERP 메뉴 접근 불가 (BRANCH_SUPER_ADMIN_MENU 제외)
-                break;
-            case BRANCH_MANAGER:
-                menuGroups.add("ADMIN_MENU");
+            case PARENT:
+                menuGroups.add("PARENT_MENU");
                 break;
             default:
                 log.warn("⚠️ 지원되지 않는 역할: {}", userRole);

@@ -7,6 +7,7 @@ import com.coresolution.consultation.entity.Alert;
 import com.coresolution.consultation.repository.AlertRepository;
 import com.coresolution.consultation.service.AlertService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
 import org.springframework.stereotype.Service;
@@ -310,7 +311,9 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
     
     @Override
     public List<Alert> findByStatus(String status) {
-        return alertRepository.findByStatus(status);
+        // 표준화 2025-12-05: tenantId 필터링 필수
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findByTenantIdAndStatus(tenantId, status);
     }
     
     @Override

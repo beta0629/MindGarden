@@ -171,16 +171,11 @@ public class SecurityAlertServiceImpl implements SecurityAlertService {
                 return;
             }
             
-            List<User> hqAdmins = userRepository.findByRole(tenantId, UserRole.HQ_ADMIN)
+            // 표준화 2025-12-05: HQ_ADMIN, HQ_MASTER → ADMIN으로 통합
+            List<User> hqAdmins = userRepository.findByRole(tenantId, UserRole.ADMIN)
                 .stream()
                 .filter(user -> user.getIsActive() != null && user.getIsActive())
                 .collect(Collectors.toList());
-            
-            // HQ_MASTER도 포함
-            hqAdmins.addAll(userRepository.findByRole(tenantId, UserRole.HQ_MASTER)
-                .stream()
-                .filter(user -> user.getIsActive() != null && user.getIsActive())
-                .collect(Collectors.toList()));
             
             for (User admin : hqAdmins) {
                 Alert adminAlert = new Alert();

@@ -26,8 +26,15 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
     Optional<PurchaseOrder> findByOrderNumber(@Param("orderNumber") String orderNumber);
     
     /**
-     * 상태별 구매 주문 목록 조회
+     * 상태별 구매 주문 목록 조회 (tenantId 필터링 필수)
      */
+    @Query("SELECT po FROM PurchaseOrder po WHERE po.tenantId = :tenantId AND po.status = :status ORDER BY po.createdAt DESC")
+    List<PurchaseOrder> findByTenantIdAndStatus(@Param("tenantId") String tenantId, @Param("status") PurchaseOrder.PurchaseOrderStatus status);
+    
+    /**
+     * @Deprecated - 🚨 보안 위험: 모든 테넌트 주문 정보 노출!
+     */
+    @Deprecated
     @Query("SELECT po FROM PurchaseOrder po WHERE po.status = :status ORDER BY po.createdAt DESC")
     List<PurchaseOrder> findByStatus(@Param("status") PurchaseOrder.PurchaseOrderStatus status);
     

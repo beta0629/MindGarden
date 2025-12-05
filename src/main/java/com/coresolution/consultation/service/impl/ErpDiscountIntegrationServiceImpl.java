@@ -1,8 +1,10 @@
 package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -94,12 +96,16 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
             LocalDate end = LocalDate.parse(endDate);
             
             // 1. 할인 거래 조회 (테넌트 기반, branchCode 필터링 제거)
-            var discountTransactions = financialTransactionRepository
+            // 할인은 EXPENSE 타입으로 저장되며, 카테고리로 구분됨
+            List<FinancialTransaction> discountTransactions = financialTransactionRepository
                 .findByTenantIdAndTransactionTypeAndTransactionDateBetweenAndIsDeletedFalse(
-                    tenantId, FinancialTransaction.TransactionType.DISCOUNT, start, end);
+                    tenantId, FinancialTransaction.TransactionType.EXPENSE, start, end)
+                .stream()
+                .filter(t -> t.getCategory() != null && t.getCategory().contains("할인"))
+                .collect(Collectors.toList());
             
             // 2. 매출 거래 조회 (테넌트 기반, branchCode 필터링 제거)
-            var revenueTransactions = financialTransactionRepository
+            List<FinancialTransaction> revenueTransactions = financialTransactionRepository
                 .findByTenantIdAndTransactionTypeAndTransactionDateBetweenAndIsDeletedFalse(
                     tenantId, FinancialTransaction.TransactionType.INCOME, start, end);
             
@@ -159,11 +165,15 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
         
         try {
             // 1. 매출 거래와 할인 거래 매칭 검증 (테넌트 기반, branchCode 필터링 제거)
-            var revenueTransactions = financialTransactionRepository
+            List<FinancialTransaction> revenueTransactions = financialTransactionRepository
                 .findByTenantIdAndTransactionTypeAndIsDeletedFalse(tenantId, FinancialTransaction.TransactionType.INCOME);
             
-            var discountTransactions = financialTransactionRepository
-                .findByTenantIdAndTransactionTypeAndIsDeletedFalse(tenantId, FinancialTransaction.TransactionType.DISCOUNT);
+            // 할인은 EXPENSE 타입으로 저장되며, 카테고리로 구분됨
+            List<FinancialTransaction> discountTransactions = financialTransactionRepository
+                .findByTenantIdAndTransactionTypeAndIsDeletedFalse(tenantId, FinancialTransaction.TransactionType.EXPENSE)
+                .stream()
+                .filter(t -> t.getCategory() != null && t.getCategory().contains("할인"))
+                .collect(Collectors.toList());
             
             // 2. 무결성 검증
             Map<String, Object> integrityCheck = new HashMap<>();
@@ -210,6 +220,7 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
     // ==================== Private Helper Methods ====================
     
     /**
+     /**
      * ERP 동기화 데이터 생성
      */
     private Map<String, Object> createErpSyncData(DiscountAccountingService.DiscountAccountingResult accountingResult) {
@@ -229,6 +240,7 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
     }
     
     /**
+     /**
      * ERP 시스템으로 전송 (실제 구현에서는 ERP API 호출)
      */
     private boolean sendToErpSystem(Map<String, Object> erpData) {

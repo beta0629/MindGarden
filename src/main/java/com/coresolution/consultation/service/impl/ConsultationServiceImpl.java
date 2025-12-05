@@ -27,6 +27,7 @@ import com.coresolution.consultation.repository.ReviewRepository;
 import com.coresolution.consultation.service.ConsultationService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.util.StatusCodeHelper;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
@@ -38,6 +39,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
  * ConsultationService 구현체
  * API 설계 문서에 명시된 상담 관리 비즈니스 로직 구현
  * 테넌트 접근 제어 통합
@@ -194,6 +196,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         }
     }
     
+     /**
      * Consultation 필드 복사 (부분 업데이트용)
      */
     private void copyConsultationFields(Consultation source, Consultation target) {
@@ -421,7 +424,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public List<Consultation> findByStatus(String status) {
-        return consultationRepository.findByStatus(status);
+        // 표준화 2025-12-05: tenantId 필터링 필수
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRepository.findByTenantIdAndStatus(tenantId, status);
     }
     
     @Override
@@ -2380,6 +2385,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         return consultationRepository.findById(id);
     }
     
+     /**
      * 상담 완료 시 스케줄 상태 동기화
      */
     private void syncScheduleStatus(Long consultationId) {

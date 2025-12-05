@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
 import com.coresolution.consultation.dto.FinancialTransactionResponse;
 import com.coresolution.consultation.dto.ItemCreateRequest;
@@ -1867,12 +1866,9 @@ public class ErpController extends BaseApiController {
             @RequestParam(required = false) String endDate,
             HttpSession session) {
         try {
-            // 비용처리 권한 확인 (어드민, 지점 수퍼 관리자, HQ 마스터 허용)
+            // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                !UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+            if (currentUser == null || !currentUser.getRole().isAdmin()) {
                 log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
@@ -1917,12 +1913,9 @@ public class ErpController extends BaseApiController {
             @RequestParam(required = false) String transactionDate,
             HttpSession session) {
         try {
-            // 비용처리 권한 확인 (어드민, 지점 수퍼 관리자, HQ 마스터 허용)
+            // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                !UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+            if (currentUser == null || !currentUser.getRole().isAdmin()) {
                 log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
@@ -1983,12 +1976,9 @@ public class ErpController extends BaseApiController {
             @RequestParam(required = false) String transactionDate,
             HttpSession session) {
         try {
-            // 비용처리 권한 확인 (어드민, 지점 수퍼 관리자, HQ 마스터 허용)
+            // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.ADMIN.equals(currentUser.getRole()) &&
-                !UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+            if (currentUser == null || !currentUser.getRole().isAdmin()) {
                 log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));

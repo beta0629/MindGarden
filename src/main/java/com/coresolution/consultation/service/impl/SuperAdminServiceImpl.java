@@ -72,7 +72,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
                 .name(encryptedName)
                 .nickname(encryptedNickname)
                 .phone(encryptedPhone)
-                .role(UserRole.HQ_MASTER)
+                .role(UserRole.ADMIN) // 표준화 2025-12-05: HQ_MASTER → ADMIN으로 통합
                 .branchCode(branchCode)
                 .isActive(true)
                 .isEmailVerified(true) // 수퍼어드민은 이메일 인증 생략
@@ -111,7 +111,8 @@ public class SuperAdminServiceImpl implements SuperAdminService {
                 return ResponseEntity.badRequest().body("tenantId가 설정되지 않았습니다");
             }
             
-            List<User> superAdmins = userRepository.findByRole(tenantId, UserRole.HQ_MASTER)
+            // 표준화 2025-12-05: HQ_MASTER → ADMIN으로 통합
+            List<User> superAdmins = userRepository.findByRole(tenantId, UserRole.ADMIN)
                 .stream()
                 .filter(user -> !user.isDeleted())
                 .collect(Collectors.toList());

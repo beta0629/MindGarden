@@ -382,10 +382,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
 
     // ==================== 날짜별 스케줄 조회 ====================
     
-    /**
-     * 특정 날짜의 모든 스케줄 조회 (tenantId 필터링)
-     */
-    List<Schedule> findByTenantIdAndDate(String tenantId, LocalDate date);
+    // findByTenantIdAndDate 메서드는 위에 이미 정의되어 있음 (116번째 줄)
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!

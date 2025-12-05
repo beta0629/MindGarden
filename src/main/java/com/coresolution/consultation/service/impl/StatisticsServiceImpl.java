@@ -38,11 +38,17 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+ /**
  * 통계 서비스 구현체
+ /**
  * PL/SQL 도입을 위한 통계 처리 서비스 구현
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-09-24
  */
 @Slf4j
@@ -946,13 +952,23 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
     
     
+     /**
      * 스케줄의 세션비 조회 (메타데이터 기반)
+     /**
      * 우선순위: 1. 매핑에서 회기당 단가 조회 → 2. CommonCode에서 기본값 조회 → 3. Fallback
      */
     private BigDecimal getSessionFee(Schedule schedule) {
         if (schedule.getConsultantId() != null && schedule.getClientId() != null) {
+            // 표준화 2025-12-05: tenantId 필터링 필수
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                log.warn("⚠️ tenantId가 설정되지 않아 매핑 조회를 건너뜁니다");
+                return null;
+            }
+            
             Optional<ConsultantClientMapping> mappingOpt = mappingRepository
-                .findByConsultantAndClient(
+                .findByTenantIdAndConsultantAndClient(
+                    tenantId,
                     userRepository.findById(schedule.getConsultantId()).orElse(null),
                     userRepository.findById(schedule.getClientId()).orElse(null)
                 )
@@ -979,6 +995,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         return getDefaultSessionFeeFromCommonCode();
     }
     
+     /**
      * CommonCode에서 기본 세션비 조회
      */
     private BigDecimal getDefaultSessionFeeFromCommonCode() {

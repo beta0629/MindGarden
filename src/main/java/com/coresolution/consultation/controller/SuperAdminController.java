@@ -127,7 +127,8 @@ public class SuperAdminController extends BaseApiController {
     public ResponseEntity<?> getSuperAdminList(HttpSession session) {
         // 현재 사용자가 수퍼어드민인지 확인
         User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null || (!currentUser.getRole().equals(UserRole.HQ_MASTER.getValue()) && !currentUser.getRole().equals(UserRole.HQ_MASTER.getValue()))) {
+        // 표준화 2025-12-05: HQ_MASTER → ADMIN으로 통합
+        if (currentUser == null || currentUser.getRole() == null || !currentUser.getRole().isAdmin()) {
             throw new RuntimeException("수퍼어드민 권한이 필요합니다.");
         }
         

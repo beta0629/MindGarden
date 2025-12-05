@@ -13,9 +13,8 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.AdminConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.dto.ScheduleCreateDto;
-import com.coresolution.consultation.dto.ScheduleDto;
-import com.coresolution.consultation.dto.ScheduleResponseDto;
+import com.coresolution.consultation.dto.ScheduleCreateRequest;
+import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
@@ -41,13 +40,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ /**
  * 스케줄 관리 컨트롤러
  * 권한 기반으로 상담사는 자신의 일정만, 관리자는 모든 일정을 조회/관리할 수 있습니다.
  * 
@@ -67,7 +67,8 @@ public class ScheduleController extends BaseApiController {
     private final ConsultantAvailabilityService consultantAvailabilityService;
     private final DynamicPermissionService dynamicPermissionService;
 
-
+    /**
+     /**
      * 권한 기반 전체 스케줄 조회 (상담사 이름 포함)
      * 상담사: 자신의 일정만, 관리자: 모든 일정
      */
@@ -83,7 +84,7 @@ public class ScheduleController extends BaseApiController {
             throw new IllegalArgumentException("필수 파라미터가 누락되었습니다.");
         }
         
-        List<ScheduleDto> schedules = scheduleService.findSchedulesWithNamesByUserRole(userId, userRole);
+        List<ScheduleResponse> schedules = scheduleService.findSchedulesWithNamesByUserRole(userId, userRole);
         log.info("✅ 스케줄 조회 완료: {}개", schedules.size());
         
         Map<String, Object> data = new HashMap<>();
@@ -93,11 +94,13 @@ public class ScheduleController extends BaseApiController {
         return success("스케줄 조회 성공", data);
     }
 
+    /**
+     /**
      * 권한 기반 페이지네이션 스케줄 조회 (상담사 이름 포함)
      * 상담사: 자신의 일정만, 관리자: 모든 일정
      */
     @GetMapping("/paged")
-    public ResponseEntity<ApiResponse<Page<ScheduleDto>>> getSchedulesByUserRolePaged(
+    public ResponseEntity<ApiResponse<Page<ScheduleResponse>>> getSchedulesByUserRolePaged(
             @RequestParam Long userId,
             @RequestParam String userRole,
             @RequestParam(required = false) String status,
@@ -106,11 +109,13 @@ public class ScheduleController extends BaseApiController {
         
         log.info("🔐 권한 기반 페이지네이션 스케줄 조회 요청: 사용자 {}, 역할 {}, 페이지 {}", userId, userRole, pageable.getPageNumber());
         
-        Page<ScheduleDto> schedules = scheduleService.findSchedulesWithNamesByUserRolePaged(userId, userRole, pageable);
+        Page<ScheduleResponse> schedules = scheduleService.findSchedulesWithNamesByUserRolePaged(userId, userRole, pageable);
         log.info("✅ 페이지네이션 스케줄 조회 완료: {}개 (총 {}개)", schedules.getNumberOfElements(), schedules.getTotalElements());
         return success(schedules);
     }
     
+    /**
+     /**
      * 권한 기반 특정 날짜 스케줄 조회
      */
     @GetMapping("/date/{date}")
@@ -126,6 +131,8 @@ public class ScheduleController extends BaseApiController {
         return success(schedules);
     }
 
+    /**
+     /**
      * 권한 기반 날짜 범위 스케줄 조회
      */
     @GetMapping("/date-range")
@@ -142,7 +149,8 @@ public class ScheduleController extends BaseApiController {
         return success(schedules);
     }
 
-
+    /**
+     /**
      * 특정 상담사의 특정 날짜 스케줄 조회
      * GET /api/schedules/consultant/{consultantId}/date?date=2025-09-02
      */
@@ -167,11 +175,13 @@ public class ScheduleController extends BaseApiController {
         return success(schedules);
     }
 
+    /**
+     /**
      * 상담사 자신의 전체 스케줄 조회 (상담사 전용)
      * GET /api/schedules/consultant/{consultantId}/my-schedules
      */
     @GetMapping("/consultant/{consultantId}/my-schedules")
-    public ResponseEntity<ApiResponse<List<ScheduleResponseDto>>> getMySchedules(
+    public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getMySchedules(
             @PathVariable Long consultantId,
             @RequestParam(required = false) String userRole) {
         
@@ -187,10 +197,10 @@ public class ScheduleController extends BaseApiController {
         
         List<Schedule> schedules = scheduleService.findByConsultantId(consultantId);
         
-        List<ScheduleResponseDto> responseDtos = schedules.stream()
+        List<ScheduleResponse> responseDtos = schedules.stream()
                 .map(schedule -> {
                     String koreanConsultationType = commonCodeService.getCodeName("CONSULTATION_TYPE", schedule.getConsultationType());
-                    return ScheduleResponseDto.from(schedule, koreanConsultationType);
+                    return ScheduleResponse.from(schedule, koreanConsultationType);
                 })
                 .collect(java.util.stream.Collectors.toList());
         
@@ -198,7 +208,8 @@ public class ScheduleController extends BaseApiController {
         return success(responseDtos);
     }
 
-
+    /**
+     /**
      * 현재 사용자 권한 확인 (디버깅용)
      * GET /api/schedules/debug/user-role
      */
@@ -225,7 +236,8 @@ public class ScheduleController extends BaseApiController {
         return success(debugInfo);
     }
 
-    
+    /**
+     /**
      * 상담사별 스케줄 조회
      * GET /api/schedules/consultant/{consultantId}
      */
@@ -247,11 +259,11 @@ public class ScheduleController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("다른 상담사의 스케줄을 조회할 권한이 없습니다.");
         }
         
-        List<ScheduleDto> schedules;
+        List<ScheduleResponse> schedules;
         if (startDate != null && endDate != null) {
             List<Schedule> scheduleList = scheduleService.findSchedulesByUserRoleAndDateBetween(consultantId, UserRole.CONSULTANT.name(), startDate, endDate);
             schedules = scheduleList.stream()
-                .map(schedule -> convertToScheduleDto(schedule))
+                .map(schedule -> convertToScheduleResponse(schedule))
                 .collect(java.util.stream.Collectors.toList());
         } else {
             schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, UserRole.CONSULTANT.name());
@@ -264,17 +276,19 @@ public class ScheduleController extends BaseApiController {
         return success("스케줄 조회 성공", data);
     }
     
+    /**
+     /**
      * 상담사 스케줄 생성
      * POST /api/schedules/consultant
      */
     @PostMapping("/consultant")
     public ResponseEntity<ApiResponse<Map<String, Object>>> createConsultantSchedule(
-            @RequestBody ScheduleCreateDto scheduleDto, HttpSession session) {
+            @RequestBody ScheduleCreateRequest request, HttpSession session) {
         
         log.info("📅 상담사 스케줄 생성 요청: 상담사 {}, 내담자 {}, 날짜 {}, 시간 {} - {}, 상담유형 {}", 
-                scheduleDto.getConsultantId(), scheduleDto.getClientId(), 
-                scheduleDto.getDate(), scheduleDto.getStartTime(), scheduleDto.getEndTime(),
-                scheduleDto.getConsultationType());
+                request.getConsultantId(), request.getClientId(), 
+                request.getDate(), request.getStartTime(), request.getEndTime(),
+                request.getConsultationType());
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
@@ -290,12 +304,12 @@ public class ScheduleController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("스케줄 등록 권한이 없습니다.");
         }
         
-        LocalDate date = LocalDate.parse(scheduleDto.getDate());
-        LocalTime startTime = LocalTime.parse(scheduleDto.getStartTime());
-        LocalTime endTime = LocalTime.parse(scheduleDto.getEndTime());
+        LocalDate date = LocalDate.parse(request.getDate());
+        LocalTime startTime = LocalTime.parse(request.getStartTime());
+        LocalTime endTime = LocalTime.parse(request.getEndTime());
         
         boolean isOnVacation = consultantAvailabilityService.isConsultantOnVacation(
-            scheduleDto.getConsultantId(), 
+            request.getConsultantId(), 
             date, 
             startTime, 
             endTime
@@ -303,7 +317,7 @@ public class ScheduleController extends BaseApiController {
         
         if (isOnVacation) {
             log.warn("🚫 휴무 상태에서 스케줄 등록 시도: 상담사 {}, 날짜 {}, 시간 {} - {}", 
-                scheduleDto.getConsultantId(), date, startTime, endTime);
+                request.getConsultantId(), date, startTime, endTime);
             
             String vacationMessage = getVacationConflictMessage();
             throw new IllegalArgumentException(vacationMessage);
@@ -313,14 +327,14 @@ public class ScheduleController extends BaseApiController {
         log.info("🔧 스케줄 생성 지점코드: {}", branchCode);
         
         Schedule schedule = scheduleService.createConsultantSchedule(
-            scheduleDto.getConsultantId(),
-            scheduleDto.getClientId(),
+            request.getConsultantId(),
+            request.getClientId(),
             date,
             startTime,
             endTime,
-            scheduleDto.getTitle(),
-            scheduleDto.getDescription(),
-            scheduleDto.getConsultationType(),
+            request.getTitle(),
+            request.getDescription(),
+            request.getConsultationType(),
             branchCode
         );
         
@@ -330,7 +344,8 @@ public class ScheduleController extends BaseApiController {
         return created("스케줄이 성공적으로 생성되었습니다.", data);
     }
 
-
+    /**
+     /**
      * 스케줄 수정
      * PUT /api/schedules/{id}
      */
@@ -417,7 +432,8 @@ public class ScheduleController extends BaseApiController {
         return updated("스케줄이 성공적으로 수정되었습니다.", data);
     }
 
-
+    /**
+     /**
      * 관리자용 전체 스케줄 통계 조회
      */
     @GetMapping("/admin/statistics")
@@ -443,6 +459,8 @@ public class ScheduleController extends BaseApiController {
         return success(statistics);
     }
 
+    /**
+     /**
      * 오늘의 스케줄 통계 조회
      */
     @GetMapping("/today/statistics")
@@ -483,6 +501,7 @@ public class ScheduleController extends BaseApiController {
 
 
 
+     /**
      * 내담자별 스케줄 조회 (관리자만 접근 가능)
      */
     @GetMapping("/client/{clientId}")
@@ -503,7 +522,8 @@ public class ScheduleController extends BaseApiController {
         return success(schedules);
     }
 
-
+    /**
+     /**
      * 예약 확정 (관리자 전용)
      * 내담자 입금 확인 후 관리자가 예약을 확정합니다.
      */
@@ -535,6 +555,7 @@ public class ScheduleController extends BaseApiController {
     }
 
 
+     /**
      * 시간이 지난 확정된 스케줄을 자동으로 완료 처리
      * 관리자만 호출 가능
      */
@@ -555,7 +576,8 @@ public class ScheduleController extends BaseApiController {
         return success("시간이 지난 스케줄이 자동으로 완료 처리되었습니다.", null);
     }
 
-
+    /**
+     /**
      * 스케줄 상태를 한글로 변환
      */
     @GetMapping("/status-korean")
@@ -571,6 +593,8 @@ public class ScheduleController extends BaseApiController {
         return success(data);
     }
 
+    /**
+     /**
      * 스케줄 타입을 한글로 변환
      */
     @GetMapping("/type-korean")
@@ -586,6 +610,8 @@ public class ScheduleController extends BaseApiController {
         return success(data);
     }
 
+    /**
+     /**
      * 상담 유형을 한글로 변환
      */
     @GetMapping("/consultation-type-korean")
@@ -601,6 +627,8 @@ public class ScheduleController extends BaseApiController {
         return success(data);
     }
     
+    /**
+     /**
      * 내담자-상담사 매칭 확인
      */
     @PostMapping("/client/mapping/check")
@@ -667,6 +695,7 @@ public class ScheduleController extends BaseApiController {
     }
     
     
+     /**
      * 상담일지 목록 조회
      * GET /api/schedules/consultation-records?consultantId=41&consultationId=schedule-30
      */
@@ -701,6 +730,8 @@ public class ScheduleController extends BaseApiController {
         return success(data);
     }
     
+    /**
+     /**
      * 상담일지 작성
      * POST /api/schedules/consultation-records
      */
@@ -717,6 +748,8 @@ public class ScheduleController extends BaseApiController {
         return created("상담일지가 성공적으로 작성되었습니다.", savedRecord);
     }
     
+    /**
+     /**
      * 상담일지 수정
      * PUT /api/schedules/consultation-records/{recordId}
      */
@@ -733,7 +766,8 @@ public class ScheduleController extends BaseApiController {
         return updated("상담일지가 성공적으로 수정되었습니다.", updatedRecord);
     }
 
-    
+    /**
+     /**
      * 휴가 충돌 메시지 조회 (데이터베이스 코드 사용)
      */
     private String getVacationConflictMessage() {
@@ -749,6 +783,8 @@ public class ScheduleController extends BaseApiController {
         return "해당 시간대에 상담사가 휴무 상태입니다. 다른 시간을 선택해주세요.";
     }
     
+    /**
+     /**
      * 상담사 스케줄 수정
      * PUT /api/schedules/consultant/{consultantId}/{scheduleId}
      */
@@ -776,6 +812,7 @@ public class ScheduleController extends BaseApiController {
         return updated("스케줄이 성공적으로 수정되었습니다.", updatedSchedule);
     }
     
+     /**
      * 상담사 스케줄 삭제
      * DELETE /api/schedules/consultant/{consultantId}/{scheduleId}
      */
@@ -801,6 +838,7 @@ public class ScheduleController extends BaseApiController {
         return deleted("스케줄이 성공적으로 삭제되었습니다.");
     }
     
+    /**
      * Map을 Schedule 엔티티로 변환하는 헬퍼 메서드
      */
     private Schedule convertMapToSchedule(Map<String, Object> data) {
@@ -833,6 +871,7 @@ public class ScheduleController extends BaseApiController {
         return schedule;
     }
     
+     /**
      * 관리자용 스케줄 조회 (필터링)
      * GET /api/schedules/admin
      */
@@ -888,13 +927,13 @@ public class ScheduleController extends BaseApiController {
                 .collect(Collectors.toList());
         }
         
-        List<ScheduleDto> scheduleDtos = schedules.stream()
-            .map(this::convertToScheduleDto)
+        List<ScheduleResponse> scheduleResponses = schedules.stream()
+            .map(this::convertToScheduleResponse)
             .collect(Collectors.toList());
         
         Map<String, Object> data = new HashMap<>();
-        data.put("schedules", scheduleDtos);
-        data.put("count", scheduleDtos.size());
+        data.put("schedules", scheduleResponses);
+        data.put("count", scheduleResponses.size());
         data.put("consultantId", consultantId != null ? consultantId : "");
         data.put("status", status != null ? status : "");
         data.put("startDate", startDate != null ? startDate : "");
@@ -904,6 +943,7 @@ public class ScheduleController extends BaseApiController {
     }
 
 
+     /**
      * 특정 날짜의 예약된 시간대 조회 (드래그 앤 드롭용)
      */
     @GetMapping("/available-times/{date}")
@@ -937,6 +977,8 @@ public class ScheduleController extends BaseApiController {
         return success("사용 가능한 시간 조회 성공", data);
     }
 
+    /**
+     * 관리자 권한 확인 (공통코드 기반)
      */
     private boolean isAdminUser(User user) {
         try {
@@ -954,6 +996,7 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
+     /**
      * 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
      * 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
      * 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음
@@ -992,6 +1035,7 @@ public class ScheduleController extends BaseApiController {
     }
     
     /**
+     /**
      * 공통코드에서 사무원 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
      * BRANCH_MANAGER → STAFF로 통합
      * @param role 사용자 역할
@@ -1021,6 +1065,7 @@ public class ScheduleController extends BaseApiController {
     }
 
     /**
+     /**
      * 유효한 스케줄 상태인지 확인
      */
     private boolean isValidScheduleStatus(String status) {
@@ -1042,10 +1087,11 @@ public class ScheduleController extends BaseApiController {
         }
     }
 
-     * Schedule 엔티티를 ScheduleDto로 변환하는 헬퍼 메서드
+    /**
+     * Schedule 엔티티를 ScheduleResponse로 변환하는 헬퍼 메서드
      */
-    private ScheduleDto convertToScheduleDto(Schedule schedule) {
-        return ScheduleDto.builder()
+    private ScheduleResponse convertToScheduleResponse(Schedule schedule) {
+        return ScheduleResponse.builder()
             .id(schedule.getId())
             .consultantId(schedule.getConsultantId())
             .clientId(schedule.getClientId())

@@ -21,8 +21,7 @@ import com.coresolution.consultation.service.FinancialTransactionService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
 import com.coresolution.consultation.service.StatisticsService;
-import com.coresolution.consultation.dto.ConsultantClientMappingDto;
-import com.coresolution.consultation.util.CommonCodeConstants;
+import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
@@ -33,11 +32,17 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Optional;
 
+ /**
  * 결제 서비스 구현체
+ /**
  * BaseTenantEntityServiceImpl을 상속하여 테넌트 필터링 및 접근 제어 지원
+ /**
  * 
+ /**
  * @author CoreSolution
+ /**
  * @version 2.0.0
+ /**
  * @since 2025-01-05
  */
 @Slf4j
@@ -217,7 +222,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     
                     if (payment.getPayerId() != null && payment.getRecipientId() != null) {
                         try {
-                            ConsultantClientMappingDto mappingDto = ConsultantClientMappingDto.builder()
+                            ConsultantClientMappingCreateRequest mappingRequest = ConsultantClientMappingCreateRequest.builder()
                                 .consultantId(payment.getRecipientId())
                                 .clientId(payment.getPayerId())
                                 .startDate(java.time.LocalDate.now())
@@ -234,7 +239,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                                 .notes("결제 완료로 인한 자동 매핑 생성 - PaymentID: " + payment.getId())
                                 .build();
                             
-                            adminService.createMapping(mappingDto);
+                            adminService.createMapping(mappingRequest);
                             log.info("🔗 결제 완료 후 자동 매핑 생성: 상담사={}, 내담자={}, PaymentID={}", 
                                 payment.getRecipientId(), payment.getPayerId(), payment.getId());
                         } catch (Exception e) {
@@ -663,6 +668,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         return "sha256=" + Integer.toHexString(data.hashCode());
     }
     
+     /**
      * 결제 방법에 따른 수입 카테고리 분류
      */
     private String getPaymentCategory(Payment payment) {
@@ -680,6 +686,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         }
     }
     
+     /**
      * 결제 방법에 따른 수입 세부 카테고리 분류
      */
     private String getPaymentSubcategory(Payment payment) {
@@ -721,19 +728,25 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 .build();
     }
     
+    /**
+     * 공통코드에서 역할 코드 조회
      */
     private String getRoleCodeFromCommonCode(String roleName) {
         try {
-            String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.USER_ROLE_GROUP, roleName);
+            String codeValue = commonCodeService.getCodeValue("ROLE", roleName);
+            return codeValue != null ? codeValue : roleName;
         } catch (Exception e) {
             return roleName;
         }
     }
     
+    /**
+     * 공통코드에서 메시지 타입 코드 조회
      */
     private String getMessageTypeFromCommonCode(String messageTypeName) {
         try {
-            String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.MESSAGE_TYPE_GROUP, messageTypeName);
+            String codeValue = commonCodeService.getCodeValue("MESSAGE_TYPE", messageTypeName);
+            return codeValue != null ? codeValue : messageTypeName;
         } catch (Exception e) {
             return messageTypeName;
         }

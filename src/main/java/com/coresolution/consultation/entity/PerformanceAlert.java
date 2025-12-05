@@ -19,11 +19,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+ /**
  * 성과 알림 엔티티
+ /**
  * 상담사 성과 저하 시 자동 알림 생성
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-09-24
  */
 @Entity

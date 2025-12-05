@@ -6,7 +6,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.ConsultationType;
-import com.coresolution.consultation.dto.ScheduleDto;
+import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.Schedule;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -199,12 +199,12 @@ public interface ScheduleService {
     /**
      * 권한 기반 스케줄 조회 (상담사 이름 포함)
      */
-    List<ScheduleDto> findSchedulesWithNamesByUserRole(Long userId, String userRole);
+    List<ScheduleResponse> findSchedulesWithNamesByUserRole(Long userId, String userRole);
     
     /**
      * 권한 기반 페이지네이션 스케줄 조회 (상담사 이름 포함)
      */
-    Page<ScheduleDto> findSchedulesWithNamesByUserRolePaged(Long userId, String userRole, Pageable pageable);
+    Page<ScheduleResponse> findSchedulesWithNamesByUserRolePaged(Long userId, String userRole, Pageable pageable);
     
     // ==================== 지점별 스케줄 관리 ====================
     

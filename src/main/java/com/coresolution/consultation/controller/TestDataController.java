@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.AdminConstants;
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.dto.ClientRegistrationDto;
-import com.coresolution.consultation.dto.ConsultantClientMappingDto;
-import com.coresolution.consultation.dto.ConsultantRegistrationDto;
+import com.coresolution.consultation.dto.ClientRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
+import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
@@ -32,16 +32,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+ /**
  * 테스트용 데이터 생성 컨트롤러
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2024-12-19
  */
 @Slf4j
@@ -64,7 +68,9 @@ public class TestDataController {
     @Value("${spring.profiles.active:prod}")
     private String activeProfile;
 
+     /**
      * 테스트용 데이터 생성 (상담사, 내담자, 매핑)
+     /**
      * 개발 모드에서만 동작
      */
     @PostMapping("/create-test-data")
@@ -95,7 +101,7 @@ public class TestDataController {
             result.put("admin", savedAdmin);
             log.info("✅ 어드민 생성 완료: {}", savedAdmin.getEmail());
 
-            ConsultantRegistrationDto consultantDto = ConsultantRegistrationDto.builder()
+            ConsultantRegistrationRequest consultantDto = ConsultantRegistrationRequest.builder()
                     .username("consultant1@mindgarden.com")
                     .password("password123")
                     .name("김상담")
@@ -114,7 +120,7 @@ public class TestDataController {
             result.put("consultant", consultant);
             log.info("✅ 상담사 생성 완료: {}", consultant.getEmail());
 
-            ClientRegistrationDto clientDto = ClientRegistrationDto.builder()
+            ClientRegistrationRequest clientDto = ClientRegistrationRequest.builder()
                     .username("client1@example.com")
                     .password("client123")
                     .name("이내담")
@@ -136,7 +142,7 @@ public class TestDataController {
             result.put("client", client);
             log.info("✅ 내담자 생성 완료: {}", client.getName());
 
-            ConsultantClientMappingDto mappingDto = ConsultantClientMappingDto.builder()
+            ConsultantClientMappingCreateRequest mappingRequest = ConsultantClientMappingCreateRequest.builder()
                     .consultantId(consultant.getId())
                     .clientId(client.getId())
                     .startDate(LocalDate.now())
@@ -147,7 +153,7 @@ public class TestDataController {
                     .assignedBy("1") // 관리자 ID
                     .build();
 
-            ConsultantClientMapping mapping = adminService.createMapping(mappingDto);
+            ConsultantClientMapping mapping = adminService.createMapping(mappingRequest);
             result.put("mapping", mapping);
             log.info("✅ 매핑 생성 완료: ID={}", mapping.getId());
 
@@ -165,11 +171,13 @@ public class TestDataController {
         }
     }
 
+     /**
      * 추가 상담사 등록 (개발 모드에서만 동작)
+     /**
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-consultant")
-    public ResponseEntity<?> createConsultant(@RequestBody ConsultantRegistrationDto request) {
+    public ResponseEntity<?> createConsultant(@RequestBody ConsultantRegistrationRequest request) {
         if (!isDev && !"local".equals(activeProfile)) {
             log.warn("🚫 운영 환경에서 테스트 상담사 등록 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
@@ -189,11 +197,13 @@ public class TestDataController {
         }
     }
 
+     /**
      * 추가 내담자 등록 (개발 모드에서만 동작)
+     /**
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-client")
-    public ResponseEntity<?> createClient(@RequestBody ClientRegistrationDto request) {
+    public ResponseEntity<?> createClient(@RequestBody ClientRegistrationRequest request) {
         if (!isDev && !"local".equals(activeProfile)) {
             log.warn("🚫 운영 환경에서 테스트 내담자 등록 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
@@ -213,11 +223,13 @@ public class TestDataController {
         }
     }
 
+     /**
      * 추가 매핑 생성 (개발 모드에서만 동작)
+     /**
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-mapping")
-    public ResponseEntity<?> createMapping(@RequestBody ConsultantClientMappingDto request) {
+    public ResponseEntity<?> createMapping(@RequestBody ConsultantClientMappingCreateRequest request) {
         if (!isDev && !"local".equals(activeProfile)) {
             log.warn("🚫 운영 환경에서 테스트 매핑 생성 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
@@ -238,7 +250,9 @@ public class TestDataController {
         }
     }
 
+     /**
      * 생성된 데이터 조회 (개발 모드에서만 동작)
+     /**
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @GetMapping("/data")
@@ -268,7 +282,9 @@ public class TestDataController {
         }
     }
     
+     /**
      * 사용자 역할 데이터 마이그레이션 (ROLE_ 접두사 제거)
+     /**
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/migrate-user-roles")
@@ -298,7 +314,9 @@ public class TestDataController {
         }
     }
 
+     /**
      * 간단한 내담자 생성
+     /**
      * POST /api/test/client
      */
     @PostMapping("/client")
@@ -326,7 +344,7 @@ public class TestDataController {
                 ));
             }
 
-            ClientRegistrationDto clientDto = ClientRegistrationDto.builder()
+            ClientRegistrationRequest clientDto = ClientRegistrationRequest.builder()
                     .username("client@test.com")
                     .password("password123")
                     .name("정내담")
@@ -364,7 +382,9 @@ public class TestDataController {
         }
     }
 
+     /**
      * 테스트용 매핑 생성 (상담사-내담자 매핑)
+     /**
      * POST /api/test/mapping
      */
     @PostMapping("/mapping")
@@ -466,6 +486,7 @@ public class TestDataController {
         }
     }
 
+     /**
      * 테스트용 상담사 생성
      */
     @PostMapping("/consultant")
@@ -479,14 +500,15 @@ public class TestDataController {
             String name = (String) request.get("name");
             String phone = (String) request.get("phone");
             
-            ConsultantRegistrationDto dto = new ConsultantRegistrationDto();
-            dto.setUsername(username);
-            dto.setEmail(email);
-            dto.setPassword(password);
-            dto.setName(name);
-            dto.setPhone(phone);
+            ConsultantRegistrationRequest consultantRequest = ConsultantRegistrationRequest.builder()
+                    .username(username)
+                    .email(email)
+                    .password(password)
+                    .name(name)
+                    .phone(phone)
+                    .build();
             
-            User consultant = adminService.registerConsultant(dto);
+            User consultant = adminService.registerConsultant(consultantRequest);
             
             log.info("✅ 테스트용 상담사 생성 완료: ID={}, 이름={}", consultant.getId(), consultant.getName());
             
@@ -508,7 +530,9 @@ public class TestDataController {
         }
     }
     
+     /**
      * 테스트용 상담 데이터 생성
+     /**
      * POST /api/test/consultation
      */
     @PostMapping("/consultation")
@@ -601,7 +625,9 @@ public class TestDataController {
         }
     }
 
+     /**
      * 테스트 사용자 삭제
+     /**
      * POST /api/test/delete-user
      */
     @PostMapping("/delete-user")
@@ -651,7 +677,9 @@ public class TestDataController {
         }
     }
     
+     /**
      * 테스트 사용자 비밀번호 재설정
+     /**
      * POST /api/test/reset-password
      */
     @PostMapping("/reset-password")

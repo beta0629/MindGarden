@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+/**
  * 상담 일정 엔티티
  * 
  * @author MindGarden
@@ -126,6 +127,7 @@ public class Schedule extends BaseEntity {
     @Column(name = "last_modified_by")
     private Long lastModifiedBy; // 마지막 수정자 ID
 
+    /**
      * @Deprecated - 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지
      * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
      * 새로운 코드에서는 사용하지 마세요. 테넌트 ID만 사용하세요.
@@ -152,6 +154,7 @@ public class Schedule extends BaseEntity {
         this.isReminderSent = false;
     }
     
+    /**
      * 일정 예약
      */
     public void book(Long consultationId, Long clientId) {
@@ -161,6 +164,7 @@ public class Schedule extends BaseEntity {
         this.clientId = clientId;
     }
     
+    /**
      * 일정 차단 (상담 불가)
      */
     public void block(String reason) {
@@ -168,6 +172,7 @@ public class Schedule extends BaseEntity {
         this.description = reason;
     }
     
+    /**
      * 휴식 시간 설정
      */
     public void setBreak(String title, String description) {
@@ -177,6 +182,7 @@ public class Schedule extends BaseEntity {
         this.description = description;
     }
     
+    /**
      * 일정 시간 계산
      */
     public void calculateDuration() {
@@ -186,12 +192,14 @@ public class Schedule extends BaseEntity {
         }
     }
     
+    /**
      * 일정 가능 여부 확인
      */
     public boolean isAvailable() {
         return ScheduleStatus.AVAILABLE.equals(status);
     }
     
+    /**
      * 일정 예약 여부 확인
      */
     public boolean isBooked() {
@@ -199,18 +207,21 @@ public class Schedule extends BaseEntity {
         return ScheduleStatus.BOOKED.equals(status);
     }
     
+    /**
      * 일정 차단 여부 확인
      */
     public boolean isBlocked() {
         return ScheduleStatus.VACATION.equals(status);
     }
     
+    /**
      * 휴식 시간 여부 확인
      */
     public boolean isBreak() {
         return ScheduleStatus.VACATION.equals(status) && "BREAK".equals(scheduleType);
     }
     
+    /**
      * 반복 일정 설정
      */
     public void setRecurring(String pattern, Integer interval, LocalDate endDate) {
@@ -220,6 +231,7 @@ public class Schedule extends BaseEntity {
         this.recurrenceEndDate = endDate;
     }
     
+    /**
      * 알림 설정
      */
     public void setReminder(LocalDateTime reminderTime) {
@@ -227,6 +239,7 @@ public class Schedule extends BaseEntity {
         this.isReminderSent = false;
     }
     
+    /**
      * 알림 발송 완료
      */
     public void markReminderSent() {

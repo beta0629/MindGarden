@@ -17,10 +17,15 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+ /**
  * 할인 회계 처리 서비스 구현체
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-09-24
  */
 @Slf4j
@@ -304,6 +309,7 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
     }
     
     
+     /**
      * 매출 거래 생성
      */
     private FinancialTransaction createRevenueTransaction(
@@ -329,6 +335,7 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         return financialTransactionRepository.save(transaction);
     }
     
+     /**
      * 할인 거래 생성
      */
     private FinancialTransaction createDiscountTransaction(

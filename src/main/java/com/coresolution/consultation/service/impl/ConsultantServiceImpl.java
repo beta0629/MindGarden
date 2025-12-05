@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
+/**
  * ConsultantService 구현체
  * API 설계 문서에 명시된 상담사 관리 비즈니스 로직 구현
  * BaseTenantEntityServiceImpl을 상속하여 테넌트 필터링 및 접근 제어 지원
@@ -71,6 +72,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         }
     }
     
+    /**
      * 전화번호 마스킹 처리
      */
     private String maskPhone(String phone) {

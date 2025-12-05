@@ -20,12 +20,19 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+ /**
  * 내담자 통계 정보 조회 서비스 구현
+ /**
  * - 내담자 정보와 통계를 통합 조회
+ /**
  * - 중앙화된 데이터 관리
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-01-20
  */
 @Slf4j
@@ -79,6 +86,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return buildClientStatsList(clientUsers);
     }
     
+     /**
      * 테넌트별 내담자 통계 조회 (신규 추가)
      */
     @Cacheable(value = "clientsWithStats", key = "'tenant:' + #tenantId")
@@ -93,6 +101,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return buildClientStatsList(clientUsers);
     }
     
+     /**
      * 내담자 목록을 통계와 함께 Map 리스트로 변환 (공통 로직)
      */
     private List<Map<String, Object>> buildClientStatsList(List<com.coresolution.consultation.entity.User> clientUsers) {
@@ -160,6 +169,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return stats;
     }
     
+     /**
      * User를 Client로 변환 (개인정보 복호화 포함)
      */
     private Client convertToClient(com.coresolution.consultation.entity.User user) {
@@ -195,6 +205,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return client;
     }
     
+     /**
      * Client 엔티티를 Map으로 변환
      */
     private Map<String, Object> convertClientToMap(Client client) {
@@ -214,8 +225,11 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         return clientMap;
     }
     
+     /**
      * 캐시 무효화 (매핑 변경 시 호출)
+     /**
      * 
+     /**
      * @param clientId 내담자 ID
      */
     @CacheEvict(value = {"clientsWithStats", "clientCurrentConsultants"}, key = "'client:' + #clientId")
@@ -223,6 +237,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
         log.info("🗑️ 캐시 무효화: clientId={}", clientId);
     }
     
+     /**
      * 전체 캐시 무효화
      */
     @CacheEvict(value = {"clientsWithStats", "clientCurrentConsultants"}, allEntries = true)

@@ -22,11 +22,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+ /**
  * ERP 예산 엔티티
+ /**
  * 부서별, 카테고리별 예산을 관리
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2024-12-19
  */
 @Entity

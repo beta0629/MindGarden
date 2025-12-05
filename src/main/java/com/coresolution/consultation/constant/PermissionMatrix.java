@@ -94,46 +94,12 @@ public class PermissionMatrix {
             "ADMIN_MENU"
         ));
         
-        // BRANCH_SUPER_ADMIN (지점 수퍼 관리자)
-        ROLE_MENU_GROUPS.put(UserRole.BRANCH_SUPER_ADMIN, Arrays.asList(
-            "COMMON_MENU",
-            "ADMIN_MENU",
-            "BRANCH_SUPER_ADMIN_MENU"
-        ));
+        // 표준화 2025-12-05: 레거시 역할 제거, 표준 역할만 사용
+        // 레거시 역할은 더 이상 사용하지 않으므로 매핑 제거
+        // 하위 호환성이 필요한 경우 ADMIN 역할에 통합된 권한이 적용됨
         
-        // HQ_ADMIN (본사 관리자)
-        ROLE_MENU_GROUPS.put(UserRole.HQ_ADMIN, Arrays.asList(
-            "COMMON_MENU",
-            "HQ_ADMIN_MENU"
-        ));
-        
-        // SUPER_HQ_ADMIN (본사 고급 관리자)
-        ROLE_MENU_GROUPS.put(UserRole.SUPER_HQ_ADMIN, Arrays.asList(
-            "COMMON_MENU",
-            "HQ_ADMIN_MENU"
-        ));
-        
-        // HQ_MASTER (본사 총관리자) - 모든 메뉴 접근 가능
-        ROLE_MENU_GROUPS.put(UserRole.HQ_MASTER, Arrays.asList(
-            "COMMON_MENU",
-            "ADMIN_MENU",
-            "HQ_ADMIN_MENU",
-            "BRANCH_SUPER_ADMIN_MENU",
-            "CONSULTANT_MENU",
-            "CLIENT_MENU"
-        ));
-        
-        // BRANCH_MANAGER (지점장) - 기존 호환성
-        ROLE_MENU_GROUPS.put(UserRole.BRANCH_MANAGER, Arrays.asList(
-            "COMMON_MENU",
-            "ADMIN_MENU"
-        ));
-        
-        // HQ_SUPER_ADMIN (본사 최고관리자) - 기존 호환성
-        ROLE_MENU_GROUPS.put(UserRole.HQ_SUPER_ADMIN, Arrays.asList(
-            "COMMON_MENU",
-            "HQ_ADMIN_MENU"
-        ));
+        // 표준화 2025-12-05: 레거시 역할 제거
+        // HQ_SUPER_ADMIN은 더 이상 사용하지 않음
     }
     
     /**
@@ -184,88 +150,15 @@ public class PermissionMatrix {
             "/api/sms-auth/**"
         ));
         
-        // BRANCH_SUPER_ADMIN (지점 수퍼 관리자)
-        ROLE_API_PATTERNS.put(UserRole.BRANCH_SUPER_ADMIN, Arrays.asList(
-            "/api/auth/**",
-            "/api/menu/**",
-            "/api/user/**",
-            "/api/users/**",
-            "/api/admin/**",
-            "/api/consultation-messages/**",
-            "/api/erp/**",
-            "/api/payments/**",
-            "/api/accounts/**",
-            "/api/schedules/**",
-            "/api/ratings/**",
-            "/api/motivation/**",
-            "/api/branches/**",
-            "/api/sms-auth/**"
-        ));
+        // 표준화 2025-12-05: BRANCH_SUPER_ADMIN → ADMIN으로 통합
+        // BRANCH_SUPER_ADMIN의 권한은 이미 ADMIN에 포함됨
         
-        // HQ_ADMIN (본사 관리자)
-        ROLE_API_PATTERNS.put(UserRole.HQ_ADMIN, Arrays.asList(
-            "/api/auth/**",
-            "/api/menu/**",
-            "/api/user/**",
-            "/api/users/**",
-            "/api/hq/**",
-            "/api/consultation-messages/**",
-            "/api/schedules/**",
-            "/api/ratings/**",
-            "/api/motivation/**",
-            "/api/branches/**",
-            "/api/sms-auth/**"
-        ));
+        // 표준화 2025-12-05: HQ_ADMIN → ADMIN으로 통합
+        // HQ_ADMIN의 권한은 이미 ADMIN에 포함됨
         
-        // SUPER_HQ_ADMIN (본사 고급 관리자)
-        ROLE_API_PATTERNS.put(UserRole.SUPER_HQ_ADMIN, Arrays.asList(
-            "/api/auth/**",
-            "/api/menu/**",
-            "/api/user/**",
-            "/api/users/**",
-            "/api/admin/**",
-            "/api/hq/**",
-            "/api/consultation-messages/**",
-            "/api/schedules/**",
-            "/api/ratings/**",
-            "/api/motivation/**",
-            "/api/branches/**",
-            "/api/sms-auth/**"
-        ));
-        
-        // HQ_MASTER (본사 총관리자) - 모든 API 접근 가능
-        ROLE_API_PATTERNS.put(UserRole.HQ_MASTER, Arrays.asList(
-            "/api/**"
-        ));
-        
-        // BRANCH_MANAGER (지점장) - 기존 호환성
-        ROLE_API_PATTERNS.put(UserRole.BRANCH_MANAGER, Arrays.asList(
-            "/api/auth/**",
-            "/api/menu/**",
-            "/api/user/**",
-            "/api/users/**",
-            "/api/admin/**",
-            "/api/schedules/**",
-            "/api/ratings/**",
-            "/api/motivation/**",
-            "/api/branches/**",
-            "/api/sms-auth/**"
-        ));
-        
-        // HQ_SUPER_ADMIN (본사 최고관리자) - 기존 호환성
-        ROLE_API_PATTERNS.put(UserRole.HQ_SUPER_ADMIN, Arrays.asList(
-            "/api/auth/**",
-            "/api/menu/**",
-            "/api/user/**",
-            "/api/users/**",
-            "/api/admin/**",
-            "/api/hq/**",
-            "/api/schedules/**",
-            "/api/ratings/**",
-            "/api/motivation/**",
-            "/api/branches/**",
-            "/api/sms-auth/**"
-        ));
+        // 표준화 2025-12-05: 레거시 역할 제거
+        // 레거시 역할은 더 이상 사용하지 않으므로 매핑 제거
+        // 하위 호환성이 필요한 경우 ADMIN 역할에 통합된 권한이 적용됨
     }
     
     /**
@@ -309,88 +202,18 @@ public class PermissionMatrix {
             "MANAGE_BRANCH_SETTINGS"
         ));
         
-        // BRANCH_SUPER_ADMIN (지점 수퍼 관리자)
-        ROLE_FEATURES.put(UserRole.BRANCH_SUPER_ADMIN, Arrays.asList(
-            "VIEW_OWN_PROFILE",
-            "EDIT_OWN_PROFILE",
-            "VIEW_ALL_CONSULTATIONS",
-            "MANAGE_USERS",
-            "MANAGE_CONSULTANTS",
-            "MANAGE_CLIENTS",
-            "VIEW_STATISTICS",
-            "MANAGE_SCHEDULES",
-            "VIEW_RATINGS",
-            "MANAGE_BRANCH_SETTINGS",
-            "MANAGE_ERP",
-            "MANAGE_PAYMENTS",
-            "MANAGE_ACCOUNTS",
-            "APPROVE_PURCHASE_REQUESTS"
-        ));
+        // 표준화 2025-12-05: BRANCH_SUPER_ADMIN → ADMIN으로 통합
+        // BRANCH_SUPER_ADMIN의 권한은 이미 ADMIN에 포함됨
         
-        // HQ_ADMIN (본사 관리자)
-        ROLE_FEATURES.put(UserRole.HQ_ADMIN, Arrays.asList(
-            "VIEW_OWN_PROFILE",
-            "EDIT_OWN_PROFILE",
-            "VIEW_ALL_CONSULTATIONS",
-            "MANAGE_ALL_USERS",
-            "MANAGE_ALL_CONSULTANTS",
-            "MANAGE_ALL_CLIENTS",
-            "VIEW_ALL_STATISTICS",
-            "MANAGE_ALL_SCHEDULES",
-            "VIEW_ALL_RATINGS",
-            "MANAGE_ALL_BRANCHES",
-            "MANAGE_SYSTEM_SETTINGS"
-        ));
+        // 표준화 2025-12-05: HQ_ADMIN → ADMIN으로 통합
+        // HQ_ADMIN의 권한은 이미 ADMIN에 포함됨
         
-        // SUPER_HQ_ADMIN (본사 고급 관리자)
-        ROLE_FEATURES.put(UserRole.SUPER_HQ_ADMIN, Arrays.asList(
-            "VIEW_OWN_PROFILE",
-            "EDIT_OWN_PROFILE",
-            "VIEW_ALL_CONSULTATIONS",
-            "MANAGE_ALL_USERS",
-            "MANAGE_ALL_CONSULTANTS",
-            "MANAGE_ALL_CLIENTS",
-            "VIEW_ALL_STATISTICS",
-            "MANAGE_ALL_SCHEDULES",
-            "VIEW_ALL_RATINGS",
-            "MANAGE_ALL_BRANCHES",
-            "MANAGE_SYSTEM_SETTINGS",
-            "MANAGE_ADMIN_USERS"
-        ));
+        // 표준화 2025-12-05: 레거시 역할 제거, 표준 역할만 사용
+        // 레거시 역할은 더 이상 사용하지 않으므로 매핑 제거
+        // 하위 호환성이 필요한 경우 ADMIN 역할에 통합된 권한이 적용됨
         
-        // HQ_MASTER (본사 총관리자) - 모든 기능 접근 가능
-        ROLE_FEATURES.put(UserRole.HQ_MASTER, Arrays.asList(
-            "ALL_FEATURES"
-        ));
-        
-        // BRANCH_MANAGER (지점장) - 기존 호환성
-        ROLE_FEATURES.put(UserRole.BRANCH_MANAGER, Arrays.asList(
-            "VIEW_OWN_PROFILE",
-            "EDIT_OWN_PROFILE",
-            "VIEW_ALL_CONSULTATIONS",
-            "MANAGE_USERS",
-            "MANAGE_CONSULTANTS",
-            "MANAGE_CLIENTS",
-            "VIEW_STATISTICS",
-            "MANAGE_SCHEDULES",
-            "VIEW_RATINGS",
-            "MANAGE_BRANCH_SETTINGS"
-        ));
-        
-        // HQ_SUPER_ADMIN (본사 최고관리자) - 기존 호환성
-        ROLE_FEATURES.put(UserRole.HQ_SUPER_ADMIN, Arrays.asList(
-            "VIEW_OWN_PROFILE",
-            "EDIT_OWN_PROFILE",
-            "VIEW_ALL_CONSULTATIONS",
-            "MANAGE_ALL_USERS",
-            "MANAGE_ALL_CONSULTANTS",
-            "MANAGE_ALL_CLIENTS",
-            "VIEW_ALL_STATISTICS",
-            "MANAGE_ALL_SCHEDULES",
-            "VIEW_ALL_RATINGS",
-            "MANAGE_ALL_BRANCHES",
-            "MANAGE_SYSTEM_SETTINGS"
-        ));
+        // 표준 관리자 역할 (ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER) - 모든 기능 접근 가능
+        // ROLE_FEATURES.put는 이미 위에서 ADMIN에 대해 정의됨
     }
     
     /**
@@ -469,7 +292,8 @@ public class PermissionMatrix {
         List<String> allowedFeatures = ROLE_FEATURES.get(role);
         if (allowedFeatures == null) return false;
         
-        // HQ_MASTER는 모든 기능 접근 가능
+        // 표준화 2025-12-05: 레거시 역할 제거
+        // 표준 관리자 역할은 모든 기능 접근 가능
         if (allowedFeatures.contains("ALL_FEATURES")) {
             return true;
         }

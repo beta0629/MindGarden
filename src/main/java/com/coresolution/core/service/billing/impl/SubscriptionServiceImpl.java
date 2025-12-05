@@ -1,5 +1,4 @@
 package com.coresolution.core.service.billing.impl;
-import com.coresolution.core.context.TenantContextHolder;
 
 import com.coresolution.core.controller.dto.billing.SubscriptionCreateRequest;
 import com.coresolution.core.controller.dto.billing.SubscriptionResponse;
@@ -22,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
  * 구독 서비스 구현
  * 
  * @author CoreSolution
@@ -40,6 +40,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionRefundService refundService;
     private final SubscriptionPlanChangeService planChangeService;
     
+    /**
      * PG 결제 대행사 서비스 (선택적 주입)
      * 실제 PG 결제 API 호출에 사용
      * Note: 테넌트별 PG 설정이 필요하므로 추후 TenantPgConfigurationService와 통합 필요

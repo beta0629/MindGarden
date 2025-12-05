@@ -2,9 +2,9 @@ package com.coresolution.consultation.service;
 
 import java.util.List;
 import java.util.Map;
-import com.coresolution.consultation.dto.ClientRegistrationDto;
-import com.coresolution.consultation.dto.ConsultantClientMappingDto;
-import com.coresolution.consultation.dto.ConsultantRegistrationDto;
+import com.coresolution.consultation.dto.ClientRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
+import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -22,17 +22,17 @@ public interface AdminService {
     /**
      * 상담사 등록
      */
-    User registerConsultant(ConsultantRegistrationDto request);
+    User registerConsultant(ConsultantRegistrationRequest request);
 
     /**
      * 내담자 등록
      */
-    Client registerClient(ClientRegistrationDto request);
+    Client registerClient(ClientRegistrationRequest request);
 
     /**
      * 상담사-내담자 매칭 생성
      */
-    ConsultantClientMapping createMapping(ConsultantClientMappingDto request);
+    ConsultantClientMapping createMapping(ConsultantClientMappingCreateRequest request);
 
     /**
      * 모든 상담사 조회
@@ -67,7 +67,7 @@ public interface AdminService {
     /**
      * 상담사 정보 수정
      */
-    User updateConsultant(Long id, ConsultantRegistrationDto request);
+    User updateConsultant(Long id, ConsultantRegistrationRequest request);
 
     /**
      * 상담사 등급 업데이트
@@ -77,12 +77,12 @@ public interface AdminService {
     /**
      * 내담자 정보 수정
      */
-    Client updateClient(Long id, ClientRegistrationDto request);
+    Client updateClient(Long id, ClientRegistrationRequest request);
 
     /**
      * 매칭 정보 수정
      */
-    ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingDto request, String updatedBy);
+    ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
 
     /**
      * 상담사 삭제

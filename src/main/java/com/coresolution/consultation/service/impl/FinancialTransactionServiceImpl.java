@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.FinancialTransactionService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,17 +36,22 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+ /**
  * 회계 거래 서비스 구현체
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2025-01-11
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class FinancialTransactionServiceImpl implements FinancialTransactionService {
+public class FinancialTransactionServiceImpl extends BaseTenantAwareService implements FinancialTransactionService {
     
     private final FinancialTransactionRepository financialTransactionRepository;
     private final SalaryCalculationRepository salaryCalculationRepository;
@@ -62,9 +68,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 request.getTransactionType(), request.getAmount(), request.getCategory());
         
         if (currentUser != null) {
-            if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole())) {
+            if (!currentUser.getRole().isAdmin()) {
                 throw new RuntimeException("회계 거래 생성 권한이 없습니다.");
             }
             log.info("💼 사용자 권한 확인 완료: {}", currentUser.getRole());
@@ -134,9 +138,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public FinancialTransactionResponse updateTransaction(Long id, FinancialTransactionRequest request, User currentUser) {
         log.info("💼 회계 거래 수정: ID={}", id);
         
-        if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-            !UserRole.ADMIN.equals(currentUser.getRole()) && 
-            !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole())) {
+        if (!currentUser.getRole().isAdmin()) {
             throw new RuntimeException("회계 거래 수정 권한이 없습니다.");
         }
         
@@ -243,7 +245,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public FinancialTransactionResponse approveTransaction(Long id, String comment, User approver) {
         log.info("✅ 회계 거래 승인: ID={}, 승인자={}", id, approver.getEmail());
         
-        if (!UserRole.HQ_MASTER.equals(approver.getRole())) {
+        if (!approver.getRole().isAdmin()) {
             throw new RuntimeException("거래 승인 권한이 없습니다.");
         }
         
@@ -265,7 +267,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public FinancialTransactionResponse rejectTransaction(Long id, String comment, User approver) {
         log.info("❌ 회계 거래 거부: ID={}, 거부자={}", id, approver.getEmail());
         
-        if (!UserRole.HQ_MASTER.equals(approver.getRole())) {
+        if (!approver.getRole().isAdmin()) {
             throw new RuntimeException("거래 거부 권한이 없습니다.");
         }
         
@@ -288,7 +290,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public FinancialDashboardResponse getFinancialDashboard(LocalDate startDate, LocalDate endDate) {
         log.info("📊 재무 대시보드 데이터 조회: {} ~ {}", startDate, endDate);
         
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new FinancialDashboardResponse();
@@ -338,7 +340,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getTotalIncome(LocalDate startDate, LocalDate endDate) {
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return BigDecimal.ZERO;
@@ -349,7 +351,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Override
     @Transactional(readOnly = true)
     public BigDecimal getTotalExpense(LocalDate startDate, LocalDate endDate) {
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return BigDecimal.ZERO;
@@ -363,10 +365,15 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         return getTotalIncome(startDate, endDate).subtract(getTotalExpense(startDate, endDate));
     }
     
+     /**
      * 총 세금 계산
+     /**
      * 
+     /**
      * @param startDate 시작일
+     /**
      * @param endDate 종료일
+     /**
      * @return 총 세금 금액
      */
     @Transactional(readOnly = true)
@@ -412,7 +419,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Override
     @Transactional(readOnly = true)
     public List<FinancialDashboardResponse.CategoryFinancialData> getIncomeByCategory(LocalDate startDate, LocalDate endDate) {
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
@@ -424,7 +431,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Override
     @Transactional(readOnly = true)
     public List<FinancialDashboardResponse.CategoryFinancialData> getExpenseByCategory(LocalDate startDate, LocalDate endDate) {
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
@@ -436,7 +443,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Override
     @Transactional(readOnly = true)
     public List<FinancialDashboardResponse.MonthlyFinancialData> getMonthlyFinancialData(LocalDate startDate, LocalDate endDate) {
-        String tenantId = TenantContextHolder.getTenantId();
+        String tenantId = getTenantIdOrNull();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
@@ -694,10 +701,15 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 .collect(Collectors.toList());
     }
     
+     /**
      * 비율 계산 헬퍼 메서드
+     /**
      * 
+     /**
      * @param amount 개별 금액
+     /**
      * @param totalAmount 총 금액
+     /**
      * @return 비율 문자열 (예: "25.5%")
      */
     private String calculatePercentage(BigDecimal amount, BigDecimal totalAmount) {
@@ -738,7 +750,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            String tenantId = TenantContextHolder.getTenantId();
+            String tenantId = getTenantIdOrNull();
             long consultantCount = tenantId != null ? 
                     userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT).size() : 0;
             
@@ -875,12 +887,14 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             
             int totalPaymentCount = paymentTransactions.size();
             
+            // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속)
+            String tenantId = getTenantId();
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            int pendingPayments = (int) consultantClientMappingRepository.countByPaymentStatus(ConsultantClientMapping.PaymentStatus.PENDING);
+            int pendingPayments = (int) consultantClientMappingRepository.countByTenantIdAndPaymentStatus(tenantId, ConsultantClientMapping.PaymentStatus.PENDING);
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            int completedPayments = (int) consultantClientMappingRepository.countByPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+            int completedPayments = (int) consultantClientMappingRepository.countByTenantIdAndPaymentStatus(tenantId, ConsultantClientMapping.PaymentStatus.APPROVED);
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            int failedPayments = (int) consultantClientMappingRepository.countByPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
+            int failedPayments = (int) consultantClientMappingRepository.countByTenantIdAndPaymentStatus(tenantId, ConsultantClientMapping.PaymentStatus.REJECTED);
             
             Map<String, BigDecimal> paymentByMethod = paymentTransactions.stream()
                     .collect(Collectors.groupingBy(
@@ -930,7 +944,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public Map<String, Object> getBranchFinancialData(String branchCode, LocalDate startDate, LocalDate endDate, 
                                                      String category, String transactionType) {
         try {
-            String tenantId = TenantContextHolder.getTenantId();
+            String tenantId = getTenantIdOrNull();
             log.info("🏢 재무 데이터 조회 (테넌트 전체): tenantId={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}", 
                     tenantId, startDate, endDate, category, transactionType);
             
@@ -1015,6 +1029,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         }
     }
     
+     /**
      * FinancialTransaction을 Map으로 변환
      */
     private Map<String, Object> convertTransactionToMap(FinancialTransaction transaction) {
@@ -1036,7 +1051,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                                                                      String category, String startDate, String endDate, 
                                                                      Pageable pageable) {
         try {
-            String tenantId = TenantContextHolder.getTenantId();
+            String tenantId = getTenantIdOrNull();
             log.info("🏢 재무 거래 목록 조회 (테넌트 전체): tenantId={}, 유형={}, 카테고리={}, 시작일={}, 종료일={}", 
                     tenantId, transactionType, category, startDate, endDate);
             
@@ -1104,11 +1119,17 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         }
     }
     
+     /**
      * 안전한 공통 코드명 조회 (오류 시 기본값 반환)
+     /**
      * 
+     /**
      * @param codeGroup 코드 그룹
+     /**
      * @param codeValue 코드 값
+     /**
      * @param defaultValue 기본값
+     /**
      * @return 코드명 또는 기본값
      */
     private String getSafeCodeName(String codeGroup, String codeValue, String defaultValue) {

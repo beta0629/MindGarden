@@ -90,32 +90,38 @@ public class AdminRoleUtilsMetaAdapter {
     }
     
     // 폴백 메서드 (기존 AdminRoleUtils 로직)
+    /**
+     * 표준화 2025-12-05: 레거시 역할 제거, 표준 관리자 역할만 체크
+     */
     private boolean fallbackIsAdmin(User user) {
+        if (user == null || user.getRole() == null) {
+            return false;
+        }
         UserRole role = user.getRole();
-        return role == UserRole.ADMIN ||
-               role == UserRole.BRANCH_ADMIN ||
-               role == UserRole.BRANCH_SUPER_ADMIN ||
-               role == UserRole.BRANCH_MANAGER ||
-               role == UserRole.HQ_ADMIN ||
-               role == UserRole.SUPER_HQ_ADMIN ||
-               role == UserRole.HQ_MASTER ||
-               role == UserRole.HQ_SUPER_ADMIN;
+        // 표준 관리자 역할만 체크
+        return role.isAdmin();
     }
     
+    /**
+     * 표준화 2025-12-05: 레거시 역할 제거, 표준 관리자 역할만 체크
+     */
     private boolean fallbackIsHqAdmin(User user) {
-        UserRole role = user.getRole();
-        return role == UserRole.HQ_ADMIN ||
-               role == UserRole.SUPER_HQ_ADMIN ||
-               role == UserRole.HQ_MASTER ||
-               role == UserRole.HQ_SUPER_ADMIN;
+        if (user == null || user.getRole() == null) {
+            return false;
+        }
+        // 표준 관리자 역할만 체크
+        return user.getRole().isAdmin();
     }
     
+    /**
+     * 표준화 2025-12-05: 레거시 역할 제거, 표준 관리자 역할만 체크
+     */
     private boolean fallbackIsBranchAdmin(User user) {
-        UserRole role = user.getRole();
-        return role == UserRole.BRANCH_ADMIN ||
-               role == UserRole.BRANCH_SUPER_ADMIN ||
-               role == UserRole.BRANCH_MANAGER ||
-               role == UserRole.ADMIN;
+        if (user == null || user.getRole() == null) {
+            return false;
+        }
+        // 표준 관리자 역할 또는 STAFF 역할 체크
+        return user.getRole().isAdmin() || user.getRole() == UserRole.STAFF;
     }
 }
 

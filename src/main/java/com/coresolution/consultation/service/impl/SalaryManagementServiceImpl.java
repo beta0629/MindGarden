@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
@@ -15,7 +14,6 @@ import com.coresolution.consultation.repository.ConsultantSalaryProfileRepositor
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.SalaryTaxCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
@@ -40,7 +38,6 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final SalaryTaxCalculationRepository salaryTaxCalculationRepository;
     private final UserRepository userRepository;
-    private final BranchService branchService;
     
     @Override
     public List<ConsultantSalaryProfile> getAllSalaryProfiles() {
@@ -87,7 +84,16 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("👥 급여용 상담사 목록 조회: tenantId={}", tenantId);
         
-        return userRepository.findByRoleAndIsActiveTrue(tenantId, UserRole.CONSULTANT);
+        // 표준화 2025-12-05: UserRole enum 사용 (TENANT_ROLE_SYSTEM_STANDARD.md 준수)
+        // CONSULTANT 역할의 활성 사용자만 조회
+        return userRepository.findByTenantId(tenantId).stream()
+            .filter(user -> {
+                if (user.getRole() == null) return false;
+                // UserRole.isConsultant() 메서드 사용
+                return user.getRole().isConsultant();
+            })
+            .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
+            .collect(Collectors.toList());
     }
     
     @Override

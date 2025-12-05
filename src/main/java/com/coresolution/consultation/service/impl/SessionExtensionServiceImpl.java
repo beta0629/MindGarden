@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
  * 회기 추가 요청 서비스 구현체
  * 
  * @author MindGarden
@@ -366,6 +367,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         return statistics;
     }
     
+    /**
      * ERP 시스템에 회기 추가 결제 정보 전송 (매칭 시스템과 동일한 방식)
      */
     private void sendSessionExtensionToErp(SessionExtensionRequest request, String paymentMethod, String paymentReference) {
@@ -413,6 +415,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         }
     }
     
+    /**
      * ERP 시스템으로 실제 데이터 전송 (매칭 시스템과 동일한 방식)
      */
     private boolean sendToErpSystem(String url, Map<String, Object> data, Map<String, String> headers) {
@@ -437,12 +440,14 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         }
     }
     
+    /**
      * ERP 회기 추가 API URL 가져오기 (매칭 시스템과 동일한 방식)
      */
     private String getErpSessionExtensionApiUrl() {
         return System.getProperty("erp.session.extension.api.url", "http://erp.company.com/api/session-extension");
     }
     
+    /**
      * ERP 인증 헤더 생성 (매칭 시스템과 동일한 방식)
      */
     private Map<String, String> getErpHeaders() {
@@ -454,6 +459,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         return headers;
     }
 
+    /**
      * 입금 확인 이메일 발송
      */
     private void sendPaymentConfirmationEmail(SessionExtensionRequest request) {

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
  * 스케줄 자동 완료 처리 서비스
  * 정기적으로 시간이 지난 확정된 스케줄을 자동으로 완료 처리
  * 
@@ -31,6 +32,7 @@ public class ScheduleAutoCompleteService {
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final PlSqlScheduleValidationService plSqlScheduleValidationService;
     
+    /**
      * 매 10분마다 시간이 지난 스케줄을 자동 완료 처리 및 상담일지 미작성 알림
      * cron: 초 분 시 일 월 요일
      */
@@ -153,6 +155,7 @@ public class ScheduleAutoCompleteService {
         }
     }
     
+    /**
      * 매일 자정에 하루 종료된 스케줄들을 정리
      */
     @Scheduled(cron = "0 0 0 * * *")

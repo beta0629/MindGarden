@@ -19,7 +19,6 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.WorkflowAutomationService;
-import com.coresolution.consultation.util.CommonCodeConstants;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -263,10 +262,9 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             
             // 관리자들에게 월간 리포트 발송
             // 공통코드에서 관리자 역할 코드들 조회 (표준화 2025-12-05: enum 활용)
+            // 표준화 2025-12-05: 레거시 역할 제거, 표준 관리자 역할만 사용
             String adminRoleCode = getRoleCodeFromCommonCode(UserRole.ADMIN.name());
-            String branchSuperAdminRoleCode = getRoleCodeFromCommonCode(UserRole.BRANCH_SUPER_ADMIN.name());
-            String hqMasterRoleCode = getRoleCodeFromCommonCode(UserRole.HQ_MASTER.name());
-            List<String> roleList = List.of(adminRoleCode, branchSuperAdminRoleCode, hqMasterRoleCode);
+            List<String> roleList = List.of(adminRoleCode);
             List<User> admins = userRepository.findByRoleInAndIsDeletedFalse(tenantId, roleList);
             
             for (User admin : admins) {
@@ -318,9 +316,14 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     /**
      * 공통코드에서 역할 코드 조회
      */
+    /**
+     * 공통코드에서 역할 코드 조회
+     * 표준화 2025-12-05: 하드코딩된 상수 클래스 제거, 공통코드 시스템 직접 사용
+     */
     private String getRoleCodeFromCommonCode(String roleName) {
         try {
-            String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.USER_ROLE_GROUP, roleName);
+            // 표준화 2025-12-05: 하드코딩된 상수 대신 공통코드 그룹명 직접 사용
+            String codeValue = commonCodeService.getCodeValue("ROLE", roleName);
             return codeValue != null ? codeValue : roleName; // 공통코드에 없으면 원본 반환
         } catch (Exception e) {
             log.warn("공통코드에서 역할 코드 조회 실패: {}, 기본값 사용", roleName, e);
@@ -330,10 +333,12 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     
     /**
      * 공통코드에서 메시지 타입 코드 조회
+     * 표준화 2025-12-05: 하드코딩된 상수 클래스 제거
      */
     private String getMessageTypeFromCommonCode(String messageTypeName) {
         try {
-            String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.MESSAGE_TYPE_GROUP, messageTypeName);
+            // 표준화 2025-12-05: 하드코딩된 상수 대신 공통코드 그룹명 직접 사용
+            String codeValue = commonCodeService.getCodeValue("MESSAGE_TYPE", messageTypeName);
             if (codeValue != null) {
                 return codeValue;
             }
@@ -364,7 +369,8 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
         List<String> statusCodes = new ArrayList<>();
         for (String statusName : statusNames) {
             try {
-                String statusCode = commonCodeService.getCodeValue(CommonCodeConstants.CONSULTATION_STATUS_GROUP, statusName);
+                // 표준화 2025-12-05: 하드코딩된 상수 대신 공통코드 그룹명 직접 사용
+                String statusCode = commonCodeService.getCodeValue("CONSULTATION_STATUS", statusName);
                 if (statusCode == null) statusCode = statusName;
                 statusCodes.add(statusCode);
             } catch (Exception e) {

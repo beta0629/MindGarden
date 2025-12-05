@@ -23,10 +23,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+ /**
  * 회기 추가 요청 엔티티
+ /**
  * 
+ /**
  * @author MindGarden
+ /**
  * @version 1.0.0
+ /**
  * @since 2024-12-19
  */
 @Entity
@@ -104,6 +109,7 @@ public class SessionExtensionRequest {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
     
+     /**
      * 회기 추가 요청 상태
      */
     public enum ExtensionStatus {
@@ -124,6 +130,7 @@ public class SessionExtensionRequest {
         }
     }
     
+     /**
      * 입금 확인 처리
      */
     public void confirmPayment(String paymentMethod, String paymentReference) {
@@ -137,6 +144,7 @@ public class SessionExtensionRequest {
         this.paymentDate = LocalDateTime.now();
     }
     
+     /**
      * 관리자 승인
      */
     public void approveByAdmin(User admin) {
@@ -148,6 +156,7 @@ public class SessionExtensionRequest {
         this.approvedAt = LocalDateTime.now();
     }
     
+     /**
      * 거부 처리
      */
     public void reject(String reason) {
@@ -161,6 +170,7 @@ public class SessionExtensionRequest {
         this.rejectedAt = LocalDateTime.now();
     }
     
+     /**
      * 완료 처리
      */
     public void complete() {
@@ -171,12 +181,14 @@ public class SessionExtensionRequest {
         this.status = ExtensionStatus.COMPLETED;
     }
     
+     /**
      * 승인 가능한 상태인지 확인
      */
     public boolean isApprovable() {
         return this.status == ExtensionStatus.PAYMENT_CONFIRMED;
     }
     
+     /**
      * 거부 가능한 상태인지 확인
      */
     public boolean isRejectable() {

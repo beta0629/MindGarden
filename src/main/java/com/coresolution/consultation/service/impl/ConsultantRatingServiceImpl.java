@@ -621,23 +621,13 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 return new ArrayList<>();
             }
             
-            // 해당 지점의 상담사들 조회 (브랜치 엔티티 기반)
-            List<User> branchConsultants;
-            if (branchCode == null || branchCode.trim().isEmpty()) {
-                branchConsultants = new ArrayList<>();
-            } else {
-                try {
-                    Branch branch = branchService.getBranchByCode(branchCode);
-                    List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
-                    // isActive = true 필터링 (Java 스트림)
-                    branchConsultants = consultants.stream()
-                        .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
-                        .collect(Collectors.toList());
-                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
-                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
-                    branchConsultants = new ArrayList<>();
-                }
-            }
+            // 테넌트 전체 상담사들 조회
+            List<User> consultants = userRepository.findByTenantIdAndRole(tenantId, UserRole.CONSULTANT);
+            // isActive = true 필터링 (Java 스트림)
+            List<User> branchConsultants = consultants.stream()
+                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                .collect(Collectors.toList());
+            
             final List<User> finalBranchConsultants = new ArrayList<>(branchConsultants); // 람다에서 사용하기 위한 final 변수
             List<Long> consultantIds = finalBranchConsultants.stream()
                 .map(User::getId)
@@ -647,7 +637,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 return new ArrayList<>();
             }
             
-            // 해당 지점 상담사들의 평가만 조회하여 랭킹 계산
+            // 테넌트 전체 상담사들의 평가만 조회하여 랭킹 계산
             List<ConsultantRating> branchRatings = ratingRepository.findByTenantId(tenantId).stream()
                 .filter(rating -> consultantIds.contains(rating.getConsultant().getId()))
                 .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)

@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.constant.ScheduleConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ScheduleDto;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -146,7 +147,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 schedule.getClientId(), 
                 schedule.getConsultantId(), 
                 null, // consultationId
-                getRoleCodeFromCommonCode("CLIENT"), 
+                getRoleCodeFromCommonCode(UserRole.CLIENT.name()), 
                 "예약 확인", 
                 clientMessage,
                 getMessageTypeFromCommonCode("APPOINTMENT_CONFIRMATION"),
@@ -167,7 +168,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 schedule.getConsultantId(), 
                 schedule.getClientId(), 
                 null, // consultationId
-                getRoleCodeFromCommonCode("CONSULTANT"), 
+                getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()), 
                 "새 예약", 
                 consultantMessage,
                 getMessageTypeFromCommonCode("NEW_APPOINTMENT"),
@@ -565,7 +566,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 schedule.getConsultantId(), 
                 schedule.getClientId(), 
                 null, // consultationId
-                getRoleCodeFromCommonCode("CONSULTANT"), 
+                getRoleCodeFromCommonCode(UserRole.CONSULTANT.name()), 
                 "상담 완료", 
                 message,
                 getMessageTypeFromCommonCode("COMPLETION"),
@@ -579,7 +580,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 schedule.getClientId(), 
                 schedule.getConsultantId(), 
                 null, // consultationId
-                getRoleCodeFromCommonCode("CLIENT"), 
+                getRoleCodeFromCommonCode(UserRole.CLIENT.name()), 
                 "평가 요청", 
                 ratingMessage,
                 getMessageTypeFromCommonCode("RATING_REQUEST"),
@@ -1256,7 +1257,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
             schedules = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId);
-        } else if (getRoleCodeFromCommonCode("CLIENT").equals(userRole)) {
+        } else if (getRoleCodeFromCommonCode(UserRole.CLIENT.name()).equals(userRole)) {
             // 내담자: 자신의 스케줄만 조회
             log.info("👤 내담자 권한으로 자신의 스케줄만 조회: {}", userId);
             schedules = scheduleRepository.findByTenantIdAndClientId(tenantId, userId);
@@ -1299,7 +1300,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
             schedulePage = scheduleRepository.findByTenantIdAndConsultantId(tenantId, userId, pageable);
-        } else if (getRoleCodeFromCommonCode("CLIENT").equals(userRole)) {
+        } else if (getRoleCodeFromCommonCode(UserRole.CLIENT.name()).equals(userRole)) {
             // 내담자: 자신의 스케줄만 조회
             log.info("👤 내담자 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
             schedulePage = scheduleRepository.findByTenantIdAndClientId(tenantId, userId, pageable);

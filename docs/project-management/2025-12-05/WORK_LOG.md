@@ -2499,13 +2499,19 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
 - 관리자 역할 목록을 enum 배열로 변경
 - `List.of("HQ_ADMIN", "SUPER_HQ_ADMIN", "ADMIN")` → `UserRole.getAdminRoles()` 활용
 
-#### 2. Service 레이어 (2개 파일)
+#### 2. Service 레이어 (3개 파일)
 
 **ClientStatsServiceImpl.java**
 - `"CLIENT"` 하드코딩을 `UserRole.CLIENT.name()`으로 변경
 
 **AdminServiceImpl.java**
 - 발신자 타입 `"ADMIN"`을 `UserRole.ADMIN.name()`으로 변경
+
+**ScheduleServiceImpl.java**
+- `getRoleCodeFromCommonCode("CLIENT")`, `getRoleCodeFromCommonCode("CONSULTANT")` 하드코딩 제거
+- `UserRole.CLIENT.name()`, `UserRole.CONSULTANT.name()` 사용
+- 역할 비교 로직도 enum 활용으로 변경
+- UserRole import 추가
 
 ### 주요 변경 패턴
 

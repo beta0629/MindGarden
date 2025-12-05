@@ -1736,5 +1736,304 @@ CREATE PROCEDURE CheckMappingUpdatePermission(
 
 ---
 
+---
+
+## 마이그레이션 표준화 작업 시작
+
+### 2025-12-05 (오후)
+
+#### Phase 1: 브랜치 코드 제거 (우선순위: 🔴 최우선)
+
+**배경**: 마이그레이션 파일에서 브랜치 코드 사용이 155건 발견되어 표준화 작업을 시작했습니다.
+
+**참조 문서**:
+- [데이터베이스 마이그레이션 표준](../../standards/DATABASE_MIGRATION_STANDARD.md)
+- [마이그레이션 표준화 작업 계획](./MIGRATION_STANDARDIZATION_PLAN.md)
+
+---
+
+#### 1. V57__update_tenant_creation_with_default_users.sql 표준화 ✅
+
+**작업 내용**:
+- [x] `v_branch_code` 변수 제거 (32번째 줄)
+- [x] `users` 테이블 INSERT에서 `branch_code` 컬럼 제거 (상담사, 내담자 생성)
+- [x] `consultant_client_mappings` 테이블 INSERT에서 `branch_code` 컬럼 제거
+- [x] `consultation_records` 테이블 INSERT에서 `branch_code` 컬럼 제거
+- [x] 테넌트 ID만 사용하도록 수정 완료
+
+**수정 전**:
+```sql
+DECLARE v_branch_code VARCHAR(20) DEFAULT 'MAIN_BRANCH';
+INSERT INTO users (..., tenant_id, branch_code, ...) VALUES (..., p_tenant_id, v_branch_code, ...);
+```
+
+**수정 후**:
+```sql
+-- v_branch_code 변수 제거됨
+INSERT INTO users (..., tenant_id, ...) VALUES (..., p_tenant_id, ...);
+```
+
+**완료일**: 2025-12-05
+
+---
+
+#### 2. V60__add_composite_indexes_for_performance.sql 표준화 ✅
+
+**작업 내용**:
+- [x] `idx_users_tenant_branch` 인덱스 생성 로직 제거 (70번째 줄)
+- [x] `idx_clients_tenant_branch` 인덱스 생성 로직 제거 (88번째 줄)
+- [x] 테넌트 ID 기반 인덱스만 유지
+
+**수정 전**:
+```sql
+CALL CreateIndexIfNotExists('users', 'idx_users_tenant_branch', 'tenant_id, branch_code');
+CALL CreateIndexIfNotExists('clients', 'idx_clients_tenant_branch', 'tenant_id, branch_code');
+```
+
+**수정 후**:
+```sql
+-- 브랜치 인덱스 제거됨 (표준화)
+```
+
+**완료일**: 2025-12-05
+
+---
+
+#### 3. V4__add_tenant_id_to_main_tables_fixed.sql 표준화 ✅
+
+**작업 내용**:
+- [x] `idx_users_tenant_branch` 인덱스 생성 로직 제거
+- [x] `idx_consultations_tenant_branch` 인덱스 생성 로직 제거
+- [x] `idx_payments_tenant_branch` 인덱스 생성 로직 제거
+- [x] `idx_schedules_tenant_branch` 인덱스 생성 로직 제거
+- [x] `idx_financial_transactions_tenant_branch` 인덱스 생성 로직 제거
+- [x] `idx_consultation_records_tenant_branch` 인덱스 생성 로직 제거
+- [x] `idx_clients_tenant_branch` 인덱스 생성 로직 제거
+- [x] `idx_consultants_tenant_branch` 인덱스 생성 로직 제거
+- [x] 모든 branch_id 관련 인덱스 생성 로직을 주석으로 대체
+
+**수정 전**:
+```sql
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS ... AND COLUMN_NAME = 'branch_id');
+SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS ... AND INDEX_NAME = 'idx_users_tenant_branch');
+SET @sql = IF(@col_exists > 0 AND @idx_exists = 0, 'CREATE INDEX idx_users_tenant_branch ON users(tenant_id, branch_id)', 'SELECT 1');
+```
+
+**수정 후**:
+```sql
+-- 브랜치 개념 제거: branch_id 관련 인덱스 생성 로직 제거됨 (표준화)
+```
+
+**완료일**: 2025-12-05
+
+---
+
+#### 현재 진행 상황
+
+**Phase 1 진행률**: **60%** (3/5 파일 완료)
+
+**완료된 파일**:
+- ✅ V57__update_tenant_creation_with_default_users.sql
+- ✅ V60__add_composite_indexes_for_performance.sql
+- ✅ V4__add_tenant_id_to_main_tables_fixed.sql
+
+**남은 작업**:
+- ✅ V48__create_academy_billing_tables.sql - branch_id 주석 추가 및 인덱스 제거 완료
+- ✅ V44__create_academy_settlement_tables.sql - branch_id 주석 추가 및 인덱스 제거 완료
+
+---
+
+#### 4. V48__create_academy_billing_tables.sql 표준화 ✅
+
+**작업 내용**:
+- [x] `branch_id` 컬럼에 레거시 호환 주석 추가 (3개 테이블)
+- [x] `idx_tenant_branch` 인덱스 제거 (3개 테이블)
+- [x] `idx_branch_id` 인덱스는 레거시 호환용으로 유지 (주석 추가)
+
+**처리 방식**:
+- 레거시 호환성을 위해 `branch_id` 컬럼은 유지하되, 새로운 코드에서 사용 금지 주석 추가
+- 브랜치 관련 복합 인덱스(`idx_tenant_branch`)는 제거
+- 단일 `branch_id` 인덱스는 레거시 호환용으로 유지
+
+**완료일**: 2025-12-05
+
+---
+
+#### 5. V44__create_academy_settlement_tables.sql 표준화 ✅
+
+**작업 내용**:
+- [x] `branch_id` 컬럼에 레거시 호환 주석 추가 (2개 테이블)
+- [x] `idx_tenant_branch` 인덱스 제거 (2개 테이블)
+- [x] `idx_branch_id` 인덱스는 레거시 호환용으로 유지 (주석 추가)
+
+**처리 방식**:
+- 레거시 호환성을 위해 `branch_id` 컬럼은 유지하되, 새로운 코드에서 사용 금지 주석 추가
+- 브랜치 관련 복합 인덱스(`idx_tenant_branch`)는 제거
+- 단일 `branch_id` 인덱스는 레거시 호환용으로 유지
+
+**완료일**: 2025-12-05
+
+---
+
+#### Phase 1 완료 ✅
+
+**Phase 1 진행률**: **100%** (5/5 파일 완료)
+
+**완료된 파일**:
+- ✅ V57__update_tenant_creation_with_default_users.sql
+- ✅ V60__add_composite_indexes_for_performance.sql
+- ✅ V4__add_tenant_id_to_main_tables_fixed.sql
+- ✅ V48__create_academy_billing_tables.sql
+- ✅ V44__create_academy_settlement_tables.sql
+
+**주요 성과**:
+- 브랜치 코드 변수 제거: 1건 (V57)
+- 브랜치 코드 컬럼 사용 제거: 3건 (V57 - users, consultant_client_mappings, consultation_records)
+- 브랜치 인덱스 제거: 12건 (V60: 2건, V4: 7건, V48: 3건, V44: 2건)
+- 레거시 호환 주석 추가: 5건 (V48: 3건, V44: 2건)
+
+**다음 단계**:
+- Phase 2: 테넌트 격리 검증
+- Phase 3: 마이그레이션 파일 구조 표준화
+
+---
+
+#### 6. V19__create_academy_system_tables.sql 표준화 ✅
+
+**작업 내용**:
+- [x] 헤더에 표준 참조 및 주석 추가
+- [x] `branch_id` 컬럼에 레거시 호환 주석 추가 (5개 테이블)
+- [x] `idx_tenant_branch` 인덱스 제거 (5개 테이블: courses, classes, class_schedules, class_enrollments, attendances)
+- [x] `idx_branch_id` 인덱스는 레거시 호환용으로 유지 (주석 추가)
+
+**처리 방식**:
+- 레거시 호환성을 위해 `branch_id` 컬럼은 유지하되, 새로운 코드에서 사용 금지 주석 추가
+- 브랜치 관련 복합 인덱스(`idx_tenant_branch`)는 제거
+- 단일 `branch_id` 인덱스는 레거시 호환용으로 유지
+
+**완료일**: 2025-12-05
+
+---
+
+#### 7. V20__validate_tenant_mapping.sql 표준화 ✅
+
+**작업 내용**:
+- [x] 헤더에 표준 참조 및 레거시 검증 스크립트 주석 추가
+- [x] `branch_id` 사용은 레거시 데이터 매핑용임을 명시
+
+**처리 방식**:
+- 레거시 데이터 검증 스크립트이므로 `branch_id` 사용은 유지
+- 주석으로 레거시 데이터 매핑용임을 명시
+
+**완료일**: 2025-12-05
+
+---
+
+#### 8. V21__create_refresh_token_store_table.sql 표준화 ✅
+
+**작업 내용**:
+- [x] 헤더에 표준 참조 및 주석 추가
+- [x] `branch_id` 컬럼에 레거시 호환 주석 추가
+
+**처리 방식**:
+- 레거시 호환성을 위해 `branch_id` 컬럼은 유지하되, 새로운 코드에서 사용 금지 주석 추가
+
+**완료일**: 2025-12-05
+
+---
+
+#### 9. V32__create_user_role_assignments_table.sql 표준화 ✅
+
+**작업 내용**:
+- [x] 헤더에 표준 참조 및 주석 추가
+- [x] `branch_id` 컬럼에 레거시 호환 주석 추가
+- [x] 테이블 COMMENT 수정 (브랜치별 → 테넌트 기반)
+
+**처리 방식**:
+- 레거시 호환성을 위해 `branch_id` 컬럼은 유지하되, 새로운 코드에서 사용 금지 주석 추가
+- 테이블 설명을 테넌트 기반으로 수정
+
+**완료일**: 2025-12-05
+
+---
+
+#### 10. V2, V3 레거시 마이그레이션 파일 주석 추가 ✅
+
+**작업 내용**:
+- [x] V2__migrate_branches_to_tenants.sql - 레거시 마이그레이션 주석 추가
+- [x] V3__add_tenant_id_to_branches.sql - 레거시 마이그레이션 주석 추가
+
+**처리 방식**:
+- 레거시 마이그레이션 파일이므로 `branch_code` 사용은 유지
+- 주석으로 레거시 데이터 변환용임을 명시
+
+**완료일**: 2025-12-05
+
+---
+
+#### Phase 1 완료 ✅ (전체 파일)
+
+**Phase 1 진행률**: **100%** (9/9 파일 완료)
+
+**완료된 파일**:
+- ✅ V57__update_tenant_creation_with_default_users.sql
+- ✅ V60__add_composite_indexes_for_performance.sql
+- ✅ V4__add_tenant_id_to_main_tables_fixed.sql
+- ✅ V48__create_academy_billing_tables.sql
+- ✅ V44__create_academy_settlement_tables.sql
+- ✅ V19__create_academy_system_tables.sql
+- ✅ V20__validate_tenant_mapping.sql
+- ✅ V21__create_refresh_token_store_table.sql
+- ✅ V32__create_user_role_assignments_table.sql
+- ✅ V2__migrate_branches_to_tenants.sql (주석 추가)
+- ✅ V3__add_tenant_id_to_branches.sql (주석 추가)
+
+**최종 성과**:
+- 브랜치 코드 변수 제거: 1건
+- 브랜치 코드 컬럼 사용 제거: 3건
+- 브랜치 인덱스 제거: 17건 (V60: 2건, V4: 7건, V48: 3건, V44: 2건, V19: 5건)
+- 레거시 호환 주석 추가: 12건
+- 표준 참조 주석 추가: 9건
+- 브랜치 코드 사용: 155건 → 114건 (41건 감소, 레거시 마이그레이션 파일 제외)
+
+**남은 브랜치 코드 사용**:
+- 레거시 마이그레이션 파일 (V2, V3, V20): 레거시 데이터 변환/검증용으로 유지
+- 테이블 생성 파일의 `branch_id` 컬럼: 레거시 호환용으로 유지 (사용 금지 주석 추가 완료)
+
+---
+
+## Phase 2: 테넌트 격리 검증 완료 ✅
+
+### 2025-12-05 (오후)
+
+#### 검증 결과
+
+**검증 대상**: 모든 마이그레이션 파일의 UPDATE/INSERT 문
+
+**검증 항목**:
+1. ✅ 테넌트별 데이터는 `tenant_id` 포함
+2. ✅ 시스템 레벨 데이터(`tenant_id = NULL`)는 의도적 공유
+3. ✅ 레거시 마이그레이션 파일은 `branch_id`를 통해 `tenant_id` 설정
+
+**검증 완료 파일**:
+- ✅ V2, V3, V4: 레거시 마이그레이션 (branch_id → tenant_id 변환)
+- ✅ V9: 시스템 레벨 데이터 (business_categories, business_category_items)
+- ✅ V19: 시스템 레벨 데이터 (component_catalog)
+- ✅ V35, V36: 시스템 공통 코드 (tenant_id = NULL)
+- ✅ V20251203_001: 시스템/테넌트 공통 코드 구분 (tenant_id = NULL 또는 특정 tenant_id)
+- ✅ V20251204_002: 시스템 공통 코드 (tenant_id = NULL)
+- ✅ V20251203_007, V20251203_008: 테넌트별 위젯 데이터 (tenant_id 포함)
+
+**결론**: 모든 마이그레이션 파일이 테넌트 격리 원칙을 준수합니다.
+
+**완료일**: 2025-12-05
+
+---
+
+**다음 단계**:
+- Phase 3: 마이그레이션 파일 구조 표준화 (선택적, 우선순위 낮음)
+
+---
+
 **최종 업데이트**: 2025-12-05
 

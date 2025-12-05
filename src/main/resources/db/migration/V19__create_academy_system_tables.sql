@@ -1,9 +1,11 @@
 -- ============================================
 -- 학원 시스템 테이블 생성 (컴포넌트 기반)
 -- ============================================
--- 목적: 학원 시스템 핵심 테이블 생성 (테넌트/브랜치 기반 멀티테넌시)
+-- 목적: 학원 시스템 핵심 테이블 생성 (테넌트 기반 멀티테넌시)
 -- 작성일: 2025-11-18
+-- 표준: DATABASE_MIGRATION_STANDARD.md 준수
 -- 참고: 컴포넌트 카탈로그에 'ACADEMY' 컴포넌트가 등록되어 있어야 함
+-- 주의: branch_id는 레거시 호환용 (새로운 코드에서는 사용 금지 - 표준화 2025-12-05)
 -- ============================================
 
 -- ============================================
@@ -13,7 +15,7 @@ CREATE TABLE IF NOT EXISTS courses (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     course_id VARCHAR(36) UNIQUE NOT NULL COMMENT '강좌 UUID',
     tenant_id VARCHAR(36) NOT NULL COMMENT '테넌트 UUID',
-    branch_id BIGINT COMMENT '지점 ID (NULL이면 전체 지점 공통)',
+    branch_id BIGINT COMMENT '지점 ID (레거시 호환용, NULL 허용, 새로운 코드에서는 사용 금지 - 표준화 2025-12-05)',
     
     -- 강좌 정보
     name VARCHAR(255) NOT NULL COMMENT '강좌명',
@@ -60,8 +62,8 @@ CREATE TABLE IF NOT EXISTS courses (
     -- 인덱스
     INDEX idx_course_id (course_id),
     INDEX idx_tenant_id (tenant_id),
-    INDEX idx_branch_id (branch_id),
-    INDEX idx_tenant_branch (tenant_id, branch_id),
+    INDEX idx_branch_id (branch_id),  -- 레거시 호환용 (표준화 2025-12-05)
+    -- 브랜치 개념 제거: idx_tenant_branch 인덱스 제거됨 (표준화 2025-12-05)
     INDEX idx_category (category),
     INDEX idx_subject (subject),
     INDEX idx_is_active (is_active),
@@ -89,7 +91,7 @@ CREATE TABLE IF NOT EXISTS classes (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     class_id VARCHAR(36) UNIQUE NOT NULL COMMENT '반 UUID',
     tenant_id VARCHAR(36) NOT NULL COMMENT '테넌트 UUID',
-    branch_id BIGINT NOT NULL COMMENT '지점 ID',
+    branch_id BIGINT NOT NULL COMMENT '지점 ID (레거시 호환용, 새로운 코드에서는 사용 금지 - 표준화 2025-12-05)',
     course_id VARCHAR(36) NOT NULL COMMENT '강좌 ID',
     
     -- 반 정보
@@ -132,9 +134,9 @@ CREATE TABLE IF NOT EXISTS classes (
     -- 인덱스
     INDEX idx_class_id (class_id),
     INDEX idx_tenant_id (tenant_id),
-    INDEX idx_branch_id (branch_id),
+    INDEX idx_branch_id (branch_id),  -- 레거시 호환용 (표준화 2025-12-05)
     INDEX idx_course_id (course_id),
-    INDEX idx_tenant_branch (tenant_id, branch_id),
+    -- 브랜치 개념 제거: idx_tenant_branch 인덱스 제거됨 (표준화 2025-12-05)
     INDEX idx_teacher_id (teacher_id),
     INDEX idx_status (status),
     INDEX idx_is_active (is_active),
@@ -199,9 +201,9 @@ CREATE TABLE IF NOT EXISTS class_schedules (
     -- 인덱스
     INDEX idx_schedule_id (schedule_id),
     INDEX idx_tenant_id (tenant_id),
-    INDEX idx_branch_id (branch_id),
+    INDEX idx_branch_id (branch_id),  -- 레거시 호환용 (표준화 2025-12-05)
     INDEX idx_class_id (class_id),
-    INDEX idx_tenant_branch (tenant_id, branch_id),
+    -- 브랜치 개념 제거: idx_tenant_branch 인덱스 제거됨 (표준화 2025-12-05)
     INDEX idx_day_of_week (day_of_week),
     INDEX idx_session_date (session_date),
     INDEX idx_is_regular (is_regular),
@@ -234,7 +236,7 @@ CREATE TABLE IF NOT EXISTS class_enrollments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     enrollment_id VARCHAR(36) UNIQUE NOT NULL COMMENT '수강 등록 UUID',
     tenant_id VARCHAR(36) NOT NULL COMMENT '테넌트 UUID',
-    branch_id BIGINT NOT NULL COMMENT '지점 ID',
+    branch_id BIGINT NOT NULL COMMENT '지점 ID (레거시 호환용, 새로운 코드에서는 사용 금지 - 표준화 2025-12-05)',
     class_id VARCHAR(36) NOT NULL COMMENT '반 ID',
     consumer_id BIGINT COMMENT '수강생 ID (consumer_account.consumer_id 또는 user.id)',
     
@@ -269,10 +271,10 @@ CREATE TABLE IF NOT EXISTS class_enrollments (
     -- 인덱스
     INDEX idx_enrollment_id (enrollment_id),
     INDEX idx_tenant_id (tenant_id),
-    INDEX idx_branch_id (branch_id),
+    INDEX idx_branch_id (branch_id),  -- 레거시 호환용 (표준화 2025-12-05)
     INDEX idx_class_id (class_id),
     INDEX idx_consumer_id (consumer_id),
-    INDEX idx_tenant_branch (tenant_id, branch_id),
+    -- 브랜치 개념 제거: idx_tenant_branch 인덱스 제거됨 (표준화 2025-12-05)
     INDEX idx_status (status),
     INDEX idx_payment_status (payment_status),
     INDEX idx_enrollment_date (enrollment_date),
@@ -306,7 +308,7 @@ CREATE TABLE IF NOT EXISTS attendances (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     attendance_id VARCHAR(36) UNIQUE NOT NULL COMMENT '출결 UUID',
     tenant_id VARCHAR(36) NOT NULL COMMENT '테넌트 UUID',
-    branch_id BIGINT NOT NULL COMMENT '지점 ID',
+    branch_id BIGINT NOT NULL COMMENT '지점 ID (레거시 호환용, 새로운 코드에서는 사용 금지 - 표준화 2025-12-05)',
     enrollment_id VARCHAR(36) NOT NULL COMMENT '수강 등록 ID',
     schedule_id VARCHAR(36) COMMENT '시간표 ID (정기 수업인 경우)',
     
@@ -337,10 +339,10 @@ CREATE TABLE IF NOT EXISTS attendances (
     -- 인덱스
     INDEX idx_attendance_id (attendance_id),
     INDEX idx_tenant_id (tenant_id),
-    INDEX idx_branch_id (branch_id),
+    INDEX idx_branch_id (branch_id),  -- 레거시 호환용 (표준화 2025-12-05)
     INDEX idx_enrollment_id (enrollment_id),
     INDEX idx_schedule_id (schedule_id),
-    INDEX idx_tenant_branch (tenant_id, branch_id),
+    -- 브랜치 개념 제거: idx_tenant_branch 인덱스 제거됨 (표준화 2025-12-05)
     INDEX idx_attendance_date (attendance_date),
     INDEX idx_status (status),
     INDEX idx_recorded_at (recorded_at),

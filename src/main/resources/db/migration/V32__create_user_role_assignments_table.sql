@@ -1,6 +1,10 @@
 -- ============================================================
 -- V32: 사용자 역할 할당 테이블 생성
--- 브랜치별 권한 지원을 위한 사용자-역할 매핑 테이블
+-- ============================================================
+-- 목적: 사용자-역할 매핑 테이블 생성
+-- 작성일: 2025-11-XX
+-- 표준: DATABASE_MIGRATION_STANDARD.md 준수
+-- 주의: branch_id는 레거시 호환용 (새로운 코드에서는 사용 금지 - 표준화 2025-12-05)
 -- ============================================================
 
 -- user_role_assignments 테이블 생성
@@ -10,7 +14,7 @@ CREATE TABLE IF NOT EXISTS user_role_assignments (
     user_id BIGINT NOT NULL COMMENT '사용자 ID',
     tenant_id VARCHAR(36) NOT NULL COMMENT '테넌트 ID',
     tenant_role_id VARCHAR(36) NOT NULL COMMENT '테넌트 역할 ID',
-    branch_id BIGINT NULL COMMENT '브랜치 ID (NULL = 전체 브랜치)',
+    branch_id BIGINT NULL COMMENT '브랜치 ID (레거시 호환용, NULL 허용, 새로운 코드에서는 사용 금지 - 표준화 2025-12-05)',
     effective_from DATE NOT NULL DEFAULT (CURRENT_DATE) COMMENT '역할 시작일',
     effective_to DATE NULL COMMENT '역할 종료일 (NULL = 무기한)',
     is_active BOOLEAN NOT NULL DEFAULT TRUE COMMENT '활성 여부',
@@ -44,5 +48,5 @@ CREATE TABLE IF NOT EXISTS user_role_assignments (
     -- 같은 사용자, 테넌트, 역할, 브랜치 조합은 중복 불가
     UNIQUE KEY uk_user_role_tenant_branch (user_id, tenant_id, tenant_role_id, branch_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='사용자 역할 할당 테이블 (브랜치별 권한 지원)';
+COMMENT='사용자 역할 할당 테이블 (테넌트 기반 권한 관리)';
 

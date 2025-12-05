@@ -29,7 +29,6 @@ BEGIN
     DECLARE v_client3_id BIGINT DEFAULT 0;
     DECLARE v_client4_id BIGINT DEFAULT 0;
     DECLARE v_client5_id BIGINT DEFAULT 0;
-    DECLARE v_branch_code VARCHAR(20) DEFAULT 'MAIN_BRANCH';
     DECLARE v_password_hash VARCHAR(100) DEFAULT '$2a$10$dummyHashForSampleUsers';
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -52,26 +51,26 @@ BEGIN
         
         -- 1. 샘플 상담사 생성
         INSERT INTO users (
-            email, name, nickname, password, role, tenant_id, branch_code,
+            email, name, nickname, password, role, tenant_id,
             social_provider, created_at, updated_at, is_active, username, 
             is_email_verified, is_social_account, is_deleted, version,
             created_by, updated_by
         ) VALUES 
         -- 상담사 1
         (CONCAT('consultant1@', SUBSTRING(p_tenant_id, 1, 20), '.sample'), 
-         '김상담', '김상담사', v_password_hash, 'CONSULTANT', p_tenant_id, v_branch_code,
+         '김상담', '김상담사', v_password_hash, 'CONSULTANT', p_tenant_id,
          'LOCAL', NOW(), NOW(), TRUE, CONCAT('consultant1_', SUBSTRING(p_tenant_id, -8)), 
          TRUE, FALSE, FALSE, 0, p_created_by, p_created_by),
          
         -- 상담사 2  
         (CONCAT('consultant2@', SUBSTRING(p_tenant_id, 1, 20), '.sample'), 
-         '이상담', '이상담사', v_password_hash, 'CONSULTANT', p_tenant_id, v_branch_code,
+         '이상담', '이상담사', v_password_hash, 'CONSULTANT', p_tenant_id,
          'LOCAL', NOW(), NOW(), TRUE, CONCAT('consultant2_', SUBSTRING(p_tenant_id, -8)), 
          TRUE, FALSE, FALSE, 0, p_created_by, p_created_by),
          
         -- 상담사 3
         (CONCAT('consultant3@', SUBSTRING(p_tenant_id, 1, 20), '.sample'), 
-         '박상담', '박상담사', v_password_hash, 'CONSULTANT', p_tenant_id, v_branch_code,
+         '박상담', '박상담사', v_password_hash, 'CONSULTANT', p_tenant_id,
          'LOCAL', NOW(), NOW(), TRUE, CONCAT('consultant3_', SUBSTRING(p_tenant_id, -8)), 
          TRUE, FALSE, FALSE, 0, p_created_by, p_created_by);
          
@@ -90,38 +89,38 @@ BEGIN
         
         -- 2. 샘플 내담자 생성
         INSERT INTO users (
-            email, name, nickname, password, role, tenant_id, branch_code,
+            email, name, nickname, password, role, tenant_id,
             social_provider, created_at, updated_at, is_active, username, 
             is_email_verified, is_social_account, is_deleted, version,
             created_by, updated_by
         ) VALUES 
         -- 내담자 1
         (CONCAT('client1@', SUBSTRING(p_tenant_id, 1, 20), '.sample'), 
-         '김내담', '김내담자', v_password_hash, 'CLIENT', p_tenant_id, v_branch_code,
+         '김내담', '김내담자', v_password_hash, 'CLIENT', p_tenant_id,
          'LOCAL', NOW(), NOW(), TRUE, CONCAT('client1_', SUBSTRING(p_tenant_id, -8)), 
          TRUE, FALSE, FALSE, 0, p_created_by, p_created_by),
          
         -- 내담자 2
         (CONCAT('client2@', SUBSTRING(p_tenant_id, 1, 20), '.sample'), 
-         '이내담', '이내담자', v_password_hash, 'CLIENT', p_tenant_id, v_branch_code,
+         '이내담', '이내담자', v_password_hash, 'CLIENT', p_tenant_id,
          'LOCAL', NOW(), NOW(), TRUE, CONCAT('client2_', SUBSTRING(p_tenant_id, -8)), 
          TRUE, FALSE, FALSE, 0, p_created_by, p_created_by),
          
         -- 내담자 3
         (CONCAT('client3@', SUBSTRING(p_tenant_id, 1, 20), '.sample'), 
-         '박내담', '박내담자', v_password_hash, 'CLIENT', p_tenant_id, v_branch_code,
+         '박내담', '박내담자', v_password_hash, 'CLIENT', p_tenant_id,
          'LOCAL', NOW(), NOW(), TRUE, CONCAT('client3_', SUBSTRING(p_tenant_id, -8)), 
          TRUE, FALSE, FALSE, 0, p_created_by, p_created_by),
          
         -- 내담자 4
         (CONCAT('client4@', SUBSTRING(p_tenant_id, 1, 20), '.sample'), 
-         '최내담', '최내담자', v_password_hash, 'CLIENT', p_tenant_id, v_branch_code,
+         '최내담', '최내담자', v_password_hash, 'CLIENT', p_tenant_id,
          'LOCAL', NOW(), NOW(), TRUE, CONCAT('client4_', SUBSTRING(p_tenant_id, -8)), 
          TRUE, FALSE, FALSE, 0, p_created_by, p_created_by),
          
         -- 내담자 5
         (CONCAT('client5@', SUBSTRING(p_tenant_id, 1, 20), '.sample'), 
-         '정내담', '정내담자', v_password_hash, 'CLIENT', p_tenant_id, v_branch_code,
+         '정내담', '정내담자', v_password_hash, 'CLIENT', p_tenant_id,
          'LOCAL', NOW(), NOW(), TRUE, CONCAT('client5_', SUBSTRING(p_tenant_id, -8)), 
          TRUE, FALSE, FALSE, 0, p_created_by, p_created_by);
          
@@ -148,66 +147,66 @@ BEGIN
         
         -- 3. 기본 매칭 관계 생성 (각 상담사당 2-3명의 내담자)
         INSERT INTO consultant_client_mappings (
-            consultant_id, client_id, tenant_id, branch_code, 
+            consultant_id, client_id, tenant_id, 
             status, start_date, created_at, updated_at, is_deleted, version,
             payment_status, remaining_sessions, total_sessions, used_sessions
         ) VALUES 
         -- 상담사1 - 내담자1,2
-        (v_consultant1_id, v_client1_id, p_tenant_id, v_branch_code, 
+        (v_consultant1_id, v_client1_id, p_tenant_id, 
          'ACTIVE', NOW(), NOW(), NOW(), FALSE, 0, 'CONFIRMED', 8, 10, 2),
-        (v_consultant1_id, v_client2_id, p_tenant_id, v_branch_code, 
+        (v_consultant1_id, v_client2_id, p_tenant_id, 
          'ACTIVE', NOW(), NOW(), NOW(), FALSE, 0, 'CONFIRMED', 9, 10, 1),
          
         -- 상담사2 - 내담자3,4  
-        (v_consultant2_id, v_client3_id, p_tenant_id, v_branch_code, 
+        (v_consultant2_id, v_client3_id, p_tenant_id, 
          'ACTIVE', NOW(), NOW(), NOW(), FALSE, 0, 'CONFIRMED', 7, 10, 3),
-        (v_consultant2_id, v_client4_id, p_tenant_id, v_branch_code, 
+        (v_consultant2_id, v_client4_id, p_tenant_id, 
          'ACTIVE', NOW(), NOW(), NOW(), FALSE, 0, 'CONFIRMED', 10, 10, 0),
          
         -- 상담사3 - 내담자5
-        (v_consultant3_id, v_client5_id, p_tenant_id, v_branch_code, 
+        (v_consultant3_id, v_client5_id, p_tenant_id, 
          'ACTIVE', NOW(), NOW(), NOW(), FALSE, 0, 'CONFIRMED', 6, 10, 4);
         
         -- 4. 샘플 상담 기록 생성 (최근 활동 시뮬레이션)
         INSERT INTO consultation_records (
-            consultant_id, client_id, tenant_id, branch_code,
+            consultant_id, client_id, tenant_id,
             consultation_date, consultation_type, duration_minutes,
             status, notes, created_at, updated_at
         ) VALUES 
         -- 최근 1주일 내 상담 기록들
-        (v_consultant1_id, v_client1_id, p_tenant_id, v_branch_code,
+        (v_consultant1_id, v_client1_id, p_tenant_id,
          DATE_SUB(NOW(), INTERVAL 2 DAY), 'INDIVIDUAL', 60,
          'COMPLETED', '초기 상담 - 상황 파악 및 목표 설정', NOW(), NOW()),
          
-        (v_consultant1_id, v_client1_id, p_tenant_id, v_branch_code,
+        (v_consultant1_id, v_client1_id, p_tenant_id,
          DATE_SUB(NOW(), INTERVAL 5 DAY), 'INDIVIDUAL', 50,
          'COMPLETED', '2회차 상담 - 감정 조절 기법 연습', NOW(), NOW()),
          
-        (v_consultant2_id, v_client3_id, p_tenant_id, v_branch_code,
+        (v_consultant2_id, v_client3_id, p_tenant_id,
          DATE_SUB(NOW(), INTERVAL 1 DAY), 'INDIVIDUAL', 45,
          'COMPLETED', '진행 상담 - 스트레스 관리 방법 논의', NOW(), NOW()),
          
-        (v_consultant2_id, v_client3_id, p_tenant_id, v_branch_code,
+        (v_consultant2_id, v_client3_id, p_tenant_id,
          DATE_SUB(NOW(), INTERVAL 3 DAY), 'INDIVIDUAL', 55,
          'COMPLETED', '2회차 상담 - 대인관계 개선 전략', NOW(), NOW()),
          
-        (v_consultant2_id, v_client3_id, p_tenant_id, v_branch_code,
+        (v_consultant2_id, v_client3_id, p_tenant_id,
          DATE_SUB(NOW(), INTERVAL 7 DAY), 'INDIVIDUAL', 60,
          'COMPLETED', '초기 상담 - 문제 상황 분석', NOW(), NOW()),
          
-        (v_consultant3_id, v_client5_id, p_tenant_id, v_branch_code,
+        (v_consultant3_id, v_client5_id, p_tenant_id,
          DATE_SUB(NOW(), INTERVAL 1 DAY), 'FAMILY', 90,
          'COMPLETED', '가족 상담 - 의사소통 패턴 개선', NOW(), NOW()),
          
-        (v_consultant3_id, v_client5_id, p_tenant_id, v_branch_code,
+        (v_consultant3_id, v_client5_id, p_tenant_id,
          DATE_SUB(NOW(), INTERVAL 4 DAY), 'FAMILY', 75,
          'COMPLETED', '가족 상담 - 갈등 해결 방법 모색', NOW(), NOW()),
          
-        (v_consultant3_id, v_client5_id, p_tenant_id, v_branch_code,
+        (v_consultant3_id, v_client5_id, p_tenant_id,
          DATE_SUB(NOW(), INTERVAL 6 DAY), 'FAMILY', 80,
          'COMPLETED', '가족 상담 - 현재 상황 점검', NOW(), NOW()),
          
-        (v_consultant3_id, v_client5_id, p_tenant_id, v_branch_code,
+        (v_consultant3_id, v_client5_id, p_tenant_id,
          DATE_SUB(NOW(), INTERVAL 10 DAY), 'INDIVIDUAL', 60,
          'COMPLETED', '개별 상담 - 초기 면담', NOW(), NOW());
         

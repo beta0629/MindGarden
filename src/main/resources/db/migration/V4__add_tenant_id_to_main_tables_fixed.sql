@@ -71,12 +71,7 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'branch_id');
-SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_users_tenant_branch');
-SET @sql = IF(@col_exists > 0 AND @idx_exists = 0, 'CREATE INDEX idx_users_tenant_branch ON users(tenant_id, branch_id)', 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- 브랜치 개념 제거: branch_id 관련 인덱스 생성 로직 제거됨 (표준화)
 
 -- ============================================
 -- 2. consultations 테이블
@@ -92,12 +87,7 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'consultations' AND COLUMN_NAME = 'branch_id');
-SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'consultations' AND INDEX_NAME = 'idx_consultations_tenant_branch');
-SET @sql = IF(@col_exists > 0 AND @idx_exists = 0, 'CREATE INDEX idx_consultations_tenant_branch ON consultations(tenant_id, branch_id)', 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- 브랜치 개념 제거: branch_id 관련 인덱스 생성 로직 제거됨 (표준화)
 
 -- ============================================
 -- 3. payments 테이블
@@ -113,12 +103,7 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'payments' AND COLUMN_NAME = 'branch_id');
-SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'payments' AND INDEX_NAME = 'idx_payments_tenant_branch');
-SET @sql = IF(@col_exists > 0 AND @idx_exists = 0, 'CREATE INDEX idx_payments_tenant_branch ON payments(tenant_id, branch_id)', 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- 브랜치 개념 제거: branch_id 관련 인덱스 생성 로직 제거됨 (표준화)
 
 -- ============================================
 -- 4. schedules 테이블
@@ -134,12 +119,7 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'schedules' AND COLUMN_NAME = 'branch_id');
-SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'schedules' AND INDEX_NAME = 'idx_schedules_tenant_branch');
-SET @sql = IF(@col_exists > 0 AND @idx_exists = 0, 'CREATE INDEX idx_schedules_tenant_branch ON schedules(tenant_id, branch_id)', 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- 브랜치 개념 제거: branch_id 관련 인덱스 생성 로직 제거됨 (표준화)
 
 -- ============================================
 -- 5. financial_transactions 테이블
@@ -155,12 +135,7 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'financial_transactions' AND COLUMN_NAME = 'branch_id');
-SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'financial_transactions' AND INDEX_NAME = 'idx_financial_transactions_tenant_branch');
-SET @sql = IF(@col_exists > 0 AND @idx_exists = 0, 'CREATE INDEX idx_financial_transactions_tenant_branch ON financial_transactions(tenant_id, branch_id)', 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- 브랜치 개념 제거: branch_id 관련 인덱스 생성 로직 제거됨 (표준화)
 
 -- ============================================
 -- 6. consultation_records 테이블
@@ -176,12 +151,7 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'consultation_records' AND COLUMN_NAME = 'branch_id');
-SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'consultation_records' AND INDEX_NAME = 'idx_consultation_records_tenant_branch');
-SET @sql = IF(@col_exists > 0 AND @idx_exists = 0, 'CREATE INDEX idx_consultation_records_tenant_branch ON consultation_records(tenant_id, branch_id)', 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- 브랜치 개념 제거: branch_id 관련 인덱스 생성 로직 제거됨 (표준화)
 
 -- ============================================
 -- 7. clients 테이블
@@ -197,12 +167,7 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'branch_id');
-SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND INDEX_NAME = 'idx_clients_tenant_branch');
-SET @sql = IF(@col_exists > 0 AND @idx_exists = 0, 'CREATE INDEX idx_clients_tenant_branch ON clients(tenant_id, branch_id)', 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- 브랜치 개념 제거: branch_id 관련 인덱스 생성 로직 제거됨 (표준화)
 
 -- ============================================
 -- 8. consultants 테이블
@@ -218,12 +183,7 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'consultants' AND COLUMN_NAME = 'branch_id');
-SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'consultants' AND INDEX_NAME = 'idx_consultants_tenant_branch');
-SET @sql = IF(@col_exists > 0 AND @idx_exists = 0, 'CREATE INDEX idx_consultants_tenant_branch ON consultants(tenant_id, branch_id)', 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- 브랜치 개념 제거: branch_id 관련 인덱스 생성 로직 제거됨 (표준화)
 
 -- ============================================
 -- 9. 기존 데이터에 tenant_id 설정

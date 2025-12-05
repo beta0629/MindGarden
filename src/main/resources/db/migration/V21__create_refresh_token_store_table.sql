@@ -1,13 +1,18 @@
+-- ============================================
 -- Phase 3: Refresh Token 저장소 테이블 생성
--- Refresh Token을 데이터베이스에 저장하여 관리
--- 테넌트별, 기기별 Refresh Token 관리 지원
+-- ============================================
+-- 목적: Refresh Token을 데이터베이스에 저장하여 관리
+-- 작성일: 2025-11-XX
+-- 표준: DATABASE_MIGRATION_STANDARD.md 준수
+-- 주의: branch_id는 레거시 호환용 (새로운 코드에서는 사용 금지 - 표준화 2025-12-05)
+-- ============================================
 
 CREATE TABLE IF NOT EXISTS refresh_token_store (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     token_id VARCHAR(36) UNIQUE NOT NULL COMMENT 'Refresh Token 고유 ID (UUID)',
     user_id BIGINT NOT NULL COMMENT '사용자 ID',
     tenant_id VARCHAR(36) COMMENT '테넌트 ID',
-    branch_id BIGINT COMMENT '지점 ID',
+    branch_id BIGINT COMMENT '지점 ID (레거시 호환용, 새로운 코드에서는 사용 금지 - 표준화 2025-12-05)',
     device_id VARCHAR(100) COMMENT '기기 ID (모바일 앱 등)',
     ip_address VARCHAR(45) COMMENT 'IP 주소',
     user_agent TEXT COMMENT 'User-Agent',

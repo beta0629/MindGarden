@@ -67,7 +67,6 @@ CALL CreateIndexIfNotExists('consultation_records', 'idx_consultation_tenant_cli
 CALL CreateIndexIfNotExists('users', 'idx_users_tenant_role', 'tenant_id, role');
 CALL CreateIndexIfNotExists('users', 'idx_users_tenant_active', 'tenant_id, is_active, is_deleted');
 CALL CreateIndexIfNotExists('users', 'idx_users_tenant_role_active', 'tenant_id, role, is_active');
-CALL CreateIndexIfNotExists('users', 'idx_users_tenant_branch', 'tenant_id, branch_code');
 CALL CreateIndexIfNotExists('users', 'idx_users_tenant_email', 'tenant_id, email');
 
 -- ============================================================================
@@ -85,7 +84,6 @@ CALL CreateIndexIfNotExists('consultant_client_mappings', 'idx_mapping_tenant_cr
 -- ============================================================================
 
 CALL CreateIndexIfNotExists('clients', 'idx_clients_tenant_active_created', 'tenant_id, is_deleted, created_at');
-CALL CreateIndexIfNotExists('clients', 'idx_clients_tenant_branch', 'tenant_id, branch_code');
 
 -- ============================================================================
 -- 7. consultants 테이블

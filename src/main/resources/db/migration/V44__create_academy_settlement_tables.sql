@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS academy_settlements (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     settlement_id VARCHAR(36) UNIQUE NOT NULL COMMENT '정산 UUID',
     tenant_id VARCHAR(36) NOT NULL COMMENT '테넌트 UUID',
-    branch_id BIGINT COMMENT '지점 ID (NULL이면 전체 지점)',
+    branch_id BIGINT COMMENT '지점 ID (레거시 호환용, NULL 허용, 새로운 코드에서는 사용 금지 - 표준화 2025-12-05)',
     
     -- 정산 기간
     settlement_period VARCHAR(10) NOT NULL COMMENT '정산 기간 (YYYYMM)',
@@ -60,8 +60,8 @@ CREATE TABLE IF NOT EXISTS academy_settlements (
     -- 인덱스
     INDEX idx_settlement_id (settlement_id),
     INDEX idx_tenant_id (tenant_id),
-    INDEX idx_branch_id (branch_id),
-    INDEX idx_tenant_branch (tenant_id, branch_id),
+    INDEX idx_branch_id (branch_id),  -- 레거시 호환용 (표준화 2025-12-05)
+    -- 브랜치 개념 제거: idx_tenant_branch 인덱스 제거됨 (표준화 2025-12-05)
     INDEX idx_settlement_period (settlement_period),
     INDEX idx_settlement_date (settlement_date),
     INDEX idx_status (status),
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS academy_settlement_items (
     settlement_item_id VARCHAR(36) UNIQUE NOT NULL COMMENT '정산 항목 UUID',
     settlement_id VARCHAR(36) NOT NULL COMMENT '정산 ID',
     tenant_id VARCHAR(36) NOT NULL COMMENT '테넌트 UUID',
-    branch_id BIGINT COMMENT '지점 ID',
+    branch_id BIGINT COMMENT '지점 ID (레거시 호환용, 새로운 코드에서는 사용 금지 - 표준화 2025-12-05)',
     
     -- 정산 대상
     item_type VARCHAR(50) NOT NULL COMMENT '항목 유형: TEACHER, CLASS, COURSE, ENROLLMENT',
@@ -128,10 +128,10 @@ CREATE TABLE IF NOT EXISTS academy_settlement_items (
     INDEX idx_settlement_item_id (settlement_item_id),
     INDEX idx_settlement_id (settlement_id),
     INDEX idx_tenant_id (tenant_id),
-    INDEX idx_branch_id (branch_id),
+    INDEX idx_branch_id (branch_id),  -- 레거시 호환용 (표준화 2025-12-05)
     INDEX idx_item_type (item_type),
     INDEX idx_item_id (item_id),
-    INDEX idx_tenant_branch (tenant_id, branch_id),
+    -- 브랜치 개념 제거: idx_tenant_branch 인덱스 제거됨 (표준화 2025-12-05)
     INDEX idx_is_deleted (is_deleted),
     
     -- 외래키

@@ -328,7 +328,9 @@ public class HealingContentServiceImpl implements HealingContentService {
      * 힐링 컨텐츠 전용 프롬프트 생성
      */
     private String buildHealingPrompt(String userRole, String category) {
-        String roleText = "CLIENT".equals(userRole) ? "내담자" : "상담사";
+        // 표준화 2025-12-05: enum 활용
+        UserRole role = UserRole.fromString(userRole);
+        String roleText = (role == UserRole.CLIENT) ? "내담자" : "상담사";
         String categoryText = getCategoryText(category);
         
         return String.format(

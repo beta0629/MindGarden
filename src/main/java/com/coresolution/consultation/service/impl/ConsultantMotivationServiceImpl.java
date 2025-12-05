@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import java.util.Optional;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.DailyHumor;
 import com.coresolution.consultation.entity.WarmWords;
 import com.coresolution.consultation.repository.DailyHumorRepository;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Service;
 public class ConsultantMotivationServiceImpl implements ConsultantMotivationService {
     
     private static final String DEFAULT_HUMOR_CATEGORY = "GENERAL";
-    private static final String DEFAULT_CONSULTANT_ROLE = "CLIENT";
+    private static final String DEFAULT_CONSULTANT_ROLE = UserRole.CLIENT.name(); // 표준화 2025-12-05: enum 활용
     
     @Autowired
     private DailyHumorRepository dailyHumorRepository;

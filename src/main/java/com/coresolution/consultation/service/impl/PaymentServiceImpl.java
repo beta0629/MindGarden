@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.PaymentConstants;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
 import com.coresolution.consultation.dto.PaymentWebhookRequest;
@@ -289,7 +290,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                             payment.getPayerId(), 
                             payment.getRecipientId(), 
                             null, // consultationId
-                            getRoleCodeFromCommonCode("CLIENT"), 
+                            getRoleCodeFromCommonCode(UserRole.CLIENT.name()), 
                             "결제 완료", 
                             paymentMessage,
                             getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),

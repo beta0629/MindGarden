@@ -5,6 +5,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.RolePermission;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -54,7 +55,7 @@ public class DynamicAdminPermissionService {
             
             // 2. 기존 ADMIN 역할 권한 확인
             List<RolePermission> existingPermissions = rolePermissionRepository
-                .findByRoleNameAndIsActiveTrue("ADMIN");
+                .findByRoleNameAndIsActiveTrue(UserRole.ADMIN.name());
             
             log.info("📋 기존 ADMIN 권한: {}개", existingPermissions.size());
             
@@ -73,7 +74,7 @@ public class DynamicAdminPermissionService {
                     
                     if (autoGrant) {
                         RolePermission rolePermission = new RolePermission();
-                        rolePermission.setRoleName("ADMIN");
+                        rolePermission.setRoleName(UserRole.ADMIN.name());
                         rolePermission.setPermissionCode(permissionValue);
                         rolePermission.setIsActive(true);
                         rolePermission.setCreatedAt(LocalDateTime.now());
@@ -191,7 +192,7 @@ public class DynamicAdminPermissionService {
         initializeAdminPermissionsFromCommonCode();
         
         // 2. 권한 업데이트
-        updateRolePermissionsFromCommonCode("ADMIN");
+        updateRolePermissionsFromCommonCode(UserRole.ADMIN.name());
         
         log.info("✅ ADMIN 사용자 권한 보장 완료");
     }

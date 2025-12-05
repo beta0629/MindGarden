@@ -563,9 +563,9 @@ public class ScheduleController extends BaseApiController {
         
         log.info("✅ 예약 확정 요청: ID {}, 관리자 역할 {}", id, userRole);
         
-        // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
-            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        // 관리자 권한 확인 (표준화 2025-12-05: enum 활용)
+        UserRole role = UserRole.fromString(userRole);
+        if (role == null || !role.isAdmin()) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
@@ -594,8 +594,9 @@ public class ScheduleController extends BaseApiController {
             @RequestParam String userRole) {
         log.info("🔄 자동 완료 처리 요청: 사용자 역할 {}", userRole);
         
-        if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
-            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        // 관리자 권한 확인 (표준화 2025-12-05: enum 활용)
+        UserRole role = UserRole.fromString(userRole);
+        if (role == null || !role.isAdmin()) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }

@@ -34,14 +34,17 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
         log.info("🔍 PL/SQL 상담일지 작성 여부 확인: 스케줄 ID={}, 상담사 ID={}, 날짜={}", 
                 scheduleId, consultantId, sessionDate);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("ValidateConsultationRecordBeforeCompletion");
             
             Map<String, Object> params = new HashMap<>();
-            params.put("p_schedule_id", scheduleId);
             params.put("p_consultant_id", consultantId);
             params.put("p_session_date", sessionDate);
+            params.put("p_tenant_id", tenantId);
             
             Map<String, Object> result = jdbcCall.execute(params);
             
@@ -71,6 +74,10 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
         log.info("📤 PL/SQL 상담일지 미작성 알림 생성: 스케줄 ID={}, 상담사 ID={}, 제목={}", 
                 scheduleId, consultantId, title);
         
+        // 테넌트 ID 및 생성자 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String createdBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
+        
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("CreateConsultationRecordReminder");
@@ -82,6 +89,8 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
             params.put("p_session_date", sessionDate);
             params.put("p_session_time", "00:00:00");
             params.put("p_title", title);
+            params.put("p_tenant_id", tenantId);
+            params.put("p_created_by", createdBy);
             
             Map<String, Object> result = jdbcCall.execute(params);
             
@@ -110,6 +119,10 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
         log.info("🔄 PL/SQL 스케줄 자동 완료 처리: 스케줄 ID={}, 강제완료={}", 
                 scheduleId, forceComplete);
         
+        // 테넌트 ID 및 처리자 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String processedBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
+        
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("ProcessScheduleAutoCompletion");
@@ -119,6 +132,8 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
             params.put("p_consultant_id", consultantId);
             params.put("p_session_date", sessionDate);
             params.put("p_force_complete", forceComplete ? 1 : 0);
+            params.put("p_tenant_id", tenantId);
+            params.put("p_processed_by", processedBy);
             
             Map<String, Object> result = jdbcCall.execute(params);
             
@@ -145,12 +160,17 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
         
         log.info("🔄 PL/SQL 일괄 스케줄 완료 처리: 지점 코드={}", branchCode);
         
+        // 테넌트 ID 및 처리자 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String processedBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
+        
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("ProcessBatchScheduleCompletion");
             
             Map<String, Object> params = new HashMap<>();
-            params.put("p_branch_code", branchCode);
+            params.put("p_tenant_id", tenantId);
+            params.put("p_processed_by", processedBy);
             
             Map<String, Object> result = jdbcCall.execute(params);
             

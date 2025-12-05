@@ -1,5 +1,8 @@
 package com.coresolution.consultation.service.impl;
 
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.service.PlSqlFinancialService;
 import com.coresolution.core.context.TenantContextHolder;
+import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,28 +78,37 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     public Map<String, Object> getBranchFinancialBreakdown(LocalDate startDate, LocalDate endDate) {
         log.info("🏢 지점별 재무 상세 조회: {} ~ {}", startDate, endDate);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
-            String sql = "CALL GetBranchFinancialBreakdown(?, ?)";
-            
-            List<Map<String, Object>> branchData = jdbcTemplate.query(sql, 
-                new Object[]{startDate, endDate},
-                (rs, rowNum) -> {
-                    Map<String, Object> branch = new HashMap<>();
-                    branch.put("branchCode", rs.getString("branch_code"));
-                    branch.put("branchName", rs.getString("branch_name"));
-                    branch.put("revenue", rs.getLong("revenue"));
-                    branch.put("expenses", rs.getLong("expenses"));
-                    branch.put("netProfit", rs.getLong("net_profit"));
-                    branch.put("transactionCount", rs.getInt("transaction_count"));
-                    return branch;
-                });
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("branchData", branchData);
-            result.put("period", Map.of("startDate", startDate, "endDate", endDate));
-            
-            log.info("✅ 지점별 재무 상세 조회 완료: {} 지점", branchData.size());
-            return result;
+            // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
+            return jdbcTemplate.execute(
+                (Connection connection) -> connection.prepareCall("{CALL GetBranchFinancialBreakdown(?, ?, ?, @p_success, @p_message, @p_breakdown_data)}"),
+                (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
+                    callableStatement.setString(1, tenantId);
+                    callableStatement.setDate(2, java.sql.Date.valueOf(startDate));
+                    callableStatement.setDate(3, java.sql.Date.valueOf(endDate));
+                    callableStatement.registerOutParameter(4, Types.BOOLEAN); // p_success
+                    callableStatement.registerOutParameter(5, Types.VARCHAR); // p_message
+                    callableStatement.registerOutParameter(6, Types.LONGVARCHAR); // p_breakdown_data (JSON)
+                    
+                    callableStatement.execute();
+                    
+                    Boolean success = callableStatement.getBoolean(4);
+                    String message = callableStatement.getString(5);
+                    String breakdownDataJson = callableStatement.getString(6);
+                    
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("success", success);
+                    result.put("message", message);
+                    result.put("breakdownData", breakdownDataJson); // JSON 문자열
+                    result.put("period", Map.of("startDate", startDate, "endDate", endDate));
+                    
+                    log.info("✅ 지점별 재무 상세 조회 완료: success={}", success);
+                    return result;
+                }
+            );
             
         } catch (Exception e) {
             log.error("❌ 지점별 재무 상세 조회 실패: {}", e.getMessage(), e);
@@ -108,27 +121,37 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     public Map<String, Object> getMonthlyFinancialTrend(LocalDate startDate, LocalDate endDate) {
         log.info("📈 월별 재무 추이 분석: {} ~ {}", startDate, endDate);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
-            String sql = "CALL GetMonthlyFinancialTrend(?, ?)";
-            
-            List<Map<String, Object>> trendData = jdbcTemplate.query(sql,
-                new Object[]{startDate, endDate},
-                (rs, rowNum) -> {
-                    Map<String, Object> month = new HashMap<>();
-                    month.put("month", rs.getString("month"));
-                    month.put("monthlyRevenue", rs.getLong("monthly_revenue"));
-                    month.put("monthlyExpenses", rs.getLong("monthly_expenses"));
-                    month.put("monthlyProfit", rs.getLong("monthly_profit"));
-                    month.put("transactionCount", rs.getInt("transaction_count"));
-                    return month;
-                });
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("trendData", trendData);
-            result.put("period", Map.of("startDate", startDate, "endDate", endDate));
-            
-            log.info("✅ 월별 재무 추이 분석 완료: {} 개월", trendData.size());
-            return result;
+            // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
+            return jdbcTemplate.execute(
+                (Connection connection) -> connection.prepareCall("{CALL GetMonthlyFinancialTrend(?, ?, ?, @p_success, @p_message, @p_trend_data)}"),
+                (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
+                    callableStatement.setString(1, tenantId);
+                    callableStatement.setDate(2, java.sql.Date.valueOf(startDate));
+                    callableStatement.setDate(3, java.sql.Date.valueOf(endDate));
+                    callableStatement.registerOutParameter(4, Types.BOOLEAN); // p_success
+                    callableStatement.registerOutParameter(5, Types.VARCHAR); // p_message
+                    callableStatement.registerOutParameter(6, Types.LONGVARCHAR); // p_trend_data (JSON)
+                    
+                    callableStatement.execute();
+                    
+                    Boolean success = callableStatement.getBoolean(4);
+                    String message = callableStatement.getString(5);
+                    String trendDataJson = callableStatement.getString(6);
+                    
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("success", success);
+                    result.put("message", message);
+                    result.put("trendData", trendDataJson); // JSON 문자열
+                    result.put("period", Map.of("startDate", startDate, "endDate", endDate));
+                    
+                    log.info("✅ 월별 재무 추이 분석 완료: success={}", success);
+                    return result;
+                }
+            );
             
         } catch (Exception e) {
             log.error("❌ 월별 재무 추이 분석 실패: {}", e.getMessage(), e);
@@ -141,27 +164,37 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     public Map<String, Object> getCategoryFinancialBreakdown(LocalDate startDate, LocalDate endDate) {
         log.info("📊 카테고리별 재무 분석: {} ~ {}", startDate, endDate);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
-            String sql = "CALL GetCategoryFinancialBreakdown(?, ?)";
-            
-            List<Map<String, Object>> categoryData = jdbcTemplate.query(sql,
-                new Object[]{startDate, endDate},
-                (rs, rowNum) -> {
-                    Map<String, Object> category = new HashMap<>();
-                    category.put("category", rs.getString("category"));
-                    category.put("transactionType", rs.getString("transaction_type"));
-                    category.put("transactionCount", rs.getInt("transaction_count"));
-                    category.put("totalAmount", rs.getLong("total_amount"));
-                    category.put("averageAmount", rs.getBigDecimal("average_amount"));
-                    return category;
-                });
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("categoryData", categoryData);
-            result.put("period", Map.of("startDate", startDate, "endDate", endDate));
-            
-            log.info("✅ 카테고리별 재무 분석 완료: {} 카테고리", categoryData.size());
-            return result;
+            // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
+            return jdbcTemplate.execute(
+                (Connection connection) -> connection.prepareCall("{CALL GetCategoryFinancialBreakdown(?, ?, ?, @p_success, @p_message, @p_breakdown_data)}"),
+                (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
+                    callableStatement.setString(1, tenantId);
+                    callableStatement.setDate(2, java.sql.Date.valueOf(startDate));
+                    callableStatement.setDate(3, java.sql.Date.valueOf(endDate));
+                    callableStatement.registerOutParameter(4, Types.BOOLEAN); // p_success
+                    callableStatement.registerOutParameter(5, Types.VARCHAR); // p_message
+                    callableStatement.registerOutParameter(6, Types.LONGVARCHAR); // p_breakdown_data (JSON)
+                    
+                    callableStatement.execute();
+                    
+                    Boolean success = callableStatement.getBoolean(4);
+                    String message = callableStatement.getString(5);
+                    String breakdownDataJson = callableStatement.getString(6);
+                    
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("success", success);
+                    result.put("message", message);
+                    result.put("categoryData", breakdownDataJson); // JSON 문자열
+                    result.put("period", Map.of("startDate", startDate, "endDate", endDate));
+                    
+                    log.info("✅ 카테고리별 재무 분석 완료: success={}", success);
+                    return result;
+                }
+            );
             
         } catch (Exception e) {
             log.error("❌ 카테고리별 재무 분석 실패: {}", e.getMessage(), e);
@@ -232,31 +265,38 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     public Map<String, Object> generateQuarterlyFinancialReport(int year, int quarter, String branchCode) {
         log.info("📊 분기별 재무 보고서 생성: {}-Q{}, 지점={}", year, quarter, branchCode);
         
+        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
-            String sql = "CALL GenerateQuarterlyFinancialReport(?, ?, ?)";
-            
-            List<Map<String, Object>> reportData = jdbcTemplate.query(sql,
-                new Object[]{year, quarter, branchCode},
-                (rs, rowNum) -> {
-                    Map<String, Object> report = new HashMap<>();
-                    report.put("reportYear", rs.getInt("report_year"));
-                    report.put("reportQuarter", rs.getInt("report_quarter"));
-                    report.put("branchCode", rs.getString("branch_code"));
-                    report.put("totalRevenue", rs.getLong("total_revenue"));
-                    report.put("totalExpenses", rs.getLong("total_expenses"));
-                    report.put("netProfit", rs.getLong("net_profit"));
-                    report.put("totalTransactions", rs.getInt("total_transactions"));
-                    report.put("activeMonths", rs.getInt("active_months"));
-                    return report;
-                });
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("reportData", reportData);
-            result.put("reportType", "quarterly");
-            result.put("period", String.format("%d-Q%d", year, quarter));
-            
-            log.info("✅ 분기별 재무 보고서 생성 완료: {} 건", reportData.size());
-            return result;
+            // 표준화된 프로시저는 JSON을 반환하므로 CallableStatement 사용
+            return jdbcTemplate.execute(
+                (Connection connection) -> connection.prepareCall("{CALL GenerateQuarterlyFinancialReport(?, ?, ?, @p_success, @p_message, @p_report_data)}"),
+                (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
+                    callableStatement.setInt(1, year);
+                    callableStatement.setInt(2, quarter);
+                    callableStatement.setString(3, tenantId);
+                    callableStatement.registerOutParameter(4, Types.BOOLEAN); // p_success
+                    callableStatement.registerOutParameter(5, Types.VARCHAR); // p_message
+                    callableStatement.registerOutParameter(6, Types.LONGVARCHAR); // p_report_data (JSON)
+                    
+                    callableStatement.execute();
+                    
+                    Boolean success = callableStatement.getBoolean(4);
+                    String message = callableStatement.getString(5);
+                    String reportDataJson = callableStatement.getString(6);
+                    
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("success", success);
+                    result.put("message", message);
+                    result.put("reportData", reportDataJson); // JSON 문자열
+                    result.put("reportType", "quarterly");
+                    result.put("period", String.format("%d-Q%d", year, quarter));
+                    
+                    log.info("✅ 분기별 재무 보고서 생성 완료: success={}", success);
+                    return result;
+                }
+            );
             
         } catch (Exception e) {
             log.error("❌ 분기별 재무 보고서 생성 실패: {}", e.getMessage(), e);
@@ -327,30 +367,46 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     public Map<String, Object> calculateFinancialKPIs(LocalDate startDate, LocalDate endDate, String branchCode) {
         log.info("📊 재무 성과 지표 계산: {} ~ {}, 지점={}", startDate, endDate, branchCode);
         
+        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
-            String sql = "CALL CalculateFinancialKPIs(?, ?, ?)";
-            
-            List<Map<String, Object>> kpiData = jdbcTemplate.query(sql,
-                new Object[]{startDate, endDate, branchCode},
-                (rs, rowNum) -> {
-                    Map<String, Object> kpi = new HashMap<>();
-                    kpi.put("totalRevenue", rs.getLong("total_revenue"));
-                    kpi.put("totalExpenses", rs.getLong("total_expenses"));
-                    kpi.put("netProfit", rs.getLong("net_profit"));
-                    kpi.put("totalTransactions", rs.getInt("total_transactions"));
-                    kpi.put("profitMargin", rs.getBigDecimal("profit_margin"));
-                    kpi.put("avgTransactionValue", rs.getBigDecimal("avg_transaction_value"));
-                    kpi.put("periodStart", rs.getDate("period_start"));
-                    kpi.put("periodEnd", rs.getDate("period_end"));
-                    return kpi;
-                });
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("kpiData", kpiData);
-            result.put("period", Map.of("startDate", startDate, "endDate", endDate));
-            
-            log.info("✅ 재무 성과 지표 계산 완료: {} 건", kpiData.size());
-            return result;
+            // 표준화된 프로시저는 OUT 파라미터로 결과를 반환하므로 CallableStatement 사용
+            return jdbcTemplate.execute(
+                (Connection connection) -> connection.prepareCall("{CALL CalculateFinancialKPIs(?, ?, ?, @p_success, @p_message, @p_total_revenue, @p_total_expenses, @p_net_profit, @p_total_transactions, @p_profit_margin, @p_avg_transaction_value)}"),
+                (CallableStatementCallback<Map<String, Object>>) callableStatement -> {
+                    callableStatement.setString(1, tenantId);
+                    callableStatement.setDate(2, java.sql.Date.valueOf(startDate));
+                    callableStatement.setDate(3, java.sql.Date.valueOf(endDate));
+                    callableStatement.registerOutParameter(4, Types.BOOLEAN); // p_success
+                    callableStatement.registerOutParameter(5, Types.VARCHAR); // p_message
+                    callableStatement.registerOutParameter(6, Types.DECIMAL); // p_total_revenue
+                    callableStatement.registerOutParameter(7, Types.DECIMAL); // p_total_expenses
+                    callableStatement.registerOutParameter(8, Types.DECIMAL); // p_net_profit
+                    callableStatement.registerOutParameter(9, Types.INTEGER); // p_total_transactions
+                    callableStatement.registerOutParameter(10, Types.DECIMAL); // p_profit_margin
+                    callableStatement.registerOutParameter(11, Types.DECIMAL); // p_avg_transaction_value
+                    
+                    callableStatement.execute();
+                    
+                    Boolean success = callableStatement.getBoolean(4);
+                    String message = callableStatement.getString(5);
+                    
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("success", success);
+                    result.put("message", message);
+                    result.put("totalRevenue", callableStatement.getBigDecimal(6));
+                    result.put("totalExpenses", callableStatement.getBigDecimal(7));
+                    result.put("netProfit", callableStatement.getBigDecimal(8));
+                    result.put("totalTransactions", callableStatement.getInt(9));
+                    result.put("profitMargin", callableStatement.getBigDecimal(10));
+                    result.put("avgTransactionValue", callableStatement.getBigDecimal(11));
+                    result.put("period", Map.of("startDate", startDate, "endDate", endDate));
+                    
+                    log.info("✅ 재무 성과 지표 계산 완료: success={}", success);
+                    return result;
+                }
+            );
             
         } catch (Exception e) {
             log.error("❌ 재무 성과 지표 계산 실패: {}", e.getMessage(), e);

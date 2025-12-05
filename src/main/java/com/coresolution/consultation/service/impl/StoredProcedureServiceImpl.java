@@ -112,23 +112,31 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
         log.info("🕐 PL/SQL 프로시저 호출: CheckTimeConflict - 상담사: {}, 날짜: {}, 시간: {} - {}", 
                 consultantId, date, startTime, endTime);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
+            // 실제 DB에 배포된 프로시저 시그니처 확인 필요
+            // 표준화된 프로시저: 8개 파라미터 (tenant_id 포함)
+            // 기존 프로시저: 7개 파라미터 (tenant_id 없음)
+            // 우선 표준화된 프로시저 시그니처로 시도
             return jdbcTemplate.execute(
-                connection -> connection.prepareCall("{CALL CheckTimeConflict(?, ?, ?, ?, ?, ?, ?)}"),
+                connection -> connection.prepareCall("{CALL CheckTimeConflict(?, ?, ?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) cs -> {
                     cs.setLong(1, consultantId);
                     cs.setString(2, date);
                     cs.setString(3, startTime);
                     cs.setString(4, endTime);
                     cs.setObject(5, excludeScheduleId, Types.BIGINT);
-                    cs.registerOutParameter(6, Types.BOOLEAN); // p_has_conflict
-                    cs.registerOutParameter(7, Types.VARCHAR); // p_conflict_reason
+                    cs.setString(6, tenantId); // p_tenant_id 추가
+                    cs.registerOutParameter(7, Types.BOOLEAN); // p_has_conflict
+                    cs.registerOutParameter(8, Types.VARCHAR); // p_conflict_reason
                     
                     cs.execute();
                     
                     Map<String, Object> result = new HashMap<>();
-                    result.put("hasConflict", cs.getBoolean(6));
-                    result.put("conflictReason", cs.getString(7));
+                    result.put("hasConflict", cs.getBoolean(7));
+                    result.put("conflictReason", cs.getString(8));
                     result.put("consultantId", consultantId);
                     result.put("date", date);
                     result.put("startTime", startTime);
@@ -141,9 +149,41 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
                 }
             );
         } catch (Exception e) {
-            log.error("❌ 시간 충돌 검사 실패: 상담사={}, 날짜={}, 시간={}-{}", 
-                    consultantId, date, startTime, endTime, e);
-            throw new RuntimeException("시간 충돌 검사에 실패했습니다: " + e.getMessage(), e);
+            // 표준화된 프로시저가 배포되지 않은 경우 기존 프로시저로 폴백
+            log.warn("⚠️ 표준화된 프로시저 호출 실패, 기존 프로시저로 재시도: {}", e.getMessage());
+            try {
+                return jdbcTemplate.execute(
+                    connection -> connection.prepareCall("{CALL CheckTimeConflict(?, ?, ?, ?, ?, ?, ?)}"),
+                    (CallableStatementCallback<Map<String, Object>>) cs -> {
+                        cs.setLong(1, consultantId);
+                        cs.setString(2, date);
+                        cs.setString(3, startTime);
+                        cs.setString(4, endTime);
+                        cs.setObject(5, excludeScheduleId, Types.BIGINT);
+                        cs.registerOutParameter(6, Types.BOOLEAN); // p_has_conflict
+                        cs.registerOutParameter(7, Types.VARCHAR); // p_conflict_reason
+                        
+                        cs.execute();
+                        
+                        Map<String, Object> result = new HashMap<>();
+                        result.put("hasConflict", cs.getBoolean(6));
+                        result.put("conflictReason", cs.getString(7));
+                        result.put("consultantId", consultantId);
+                        result.put("date", date);
+                        result.put("startTime", startTime);
+                        result.put("endTime", endTime);
+                        
+                        log.info("✅ 시간 충돌 검사 완료 (기존 프로시저): 충돌={}, 사유={}", 
+                                result.get("hasConflict"), result.get("conflictReason"));
+                        
+                        return result;
+                    }
+                );
+            } catch (Exception e2) {
+                log.error("❌ 시간 충돌 검사 실패: 상담사={}, 날짜={}, 시간={}-{}", 
+                        consultantId, date, startTime, endTime, e2);
+                throw new RuntimeException("시간 충돌 검사에 실패했습니다: " + e2.getMessage(), e2);
+            }
         }
     }
     
@@ -212,23 +252,27 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
         log.info("🔄 매핑 정보 수정 프로시저 호출: mappingId={}, packageName={}, price={}, sessions={}, updatedBy={}", 
                 mappingId, newPackageName, newPackagePrice, newTotalSessions, updatedBy);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             return jdbcTemplate.execute(
-                connection -> connection.prepareCall("{CALL UpdateMappingInfo(?, ?, ?, ?, ?, ?, ?)}"),
+                connection -> connection.prepareCall("{CALL UpdateMappingInfo(?, ?, ?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) cs -> {
                     cs.setLong(1, mappingId);
                     cs.setString(2, newPackageName);
                     cs.setDouble(3, newPackagePrice);
                     cs.setInt(4, newTotalSessions);
-                    cs.setString(5, updatedBy);
-                    cs.registerOutParameter(6, Types.BOOLEAN); // p_success
-                    cs.registerOutParameter(7, Types.VARCHAR); // p_message
+                    cs.setString(5, tenantId); // p_tenant_id 추가
+                    cs.setString(6, updatedBy);
+                    cs.registerOutParameter(7, Types.BOOLEAN); // p_success
+                    cs.registerOutParameter(8, Types.VARCHAR); // p_message
                     
                     cs.execute();
                     
                     Map<String, Object> result = new HashMap<>();
-                    result.put("success", cs.getBoolean(6));
-                    result.put("message", cs.getString(7));
+                    result.put("success", cs.getBoolean(7));
+                    result.put("message", cs.getString(8));
                     result.put("mappingId", mappingId);
                     result.put("newPackageName", newPackageName);
                     result.put("newPackagePrice", newPackagePrice);

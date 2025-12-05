@@ -41,28 +41,29 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
         log.info("💰 PL/SQL 할인 적용: MappingID={}, DiscountCode={}, OriginalAmount={}, FinalAmount={}", 
                  mappingId, discountCode, originalAmount, finalAmount);
         
+        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             ApplyDiscountAccountingProcedure procedure = new ApplyDiscountAccountingProcedure(jdbcTemplate);
             
             Map<String, Object> result = procedure.execute(
                 mappingId, discountCode, originalAmount, discountAmount, 
-                finalAmount, branchCode, appliedBy
+                finalAmount, tenantId, appliedBy
             );
             
-            Integer resultCode = (Integer) result.get("result_code");
-            String resultMessage = (String) result.get("result_message");
+            Boolean success = (Boolean) result.get("p_success");
+            String message = (String) result.get("p_message");
             
             Map<String, Object> response = new HashMap<>();
-            response.put("success", resultCode == 0);
-            response.put("resultCode", resultCode);
-            response.put("message", resultMessage);
+            response.put("success", success != null && success);
+            response.put("message", message);
             response.put("mappingId", mappingId);
             
-            if (resultCode == 0) {
-                log.info("✅ PL/SQL 할인 적용 완료: MappingID={}, Message={}", mappingId, resultMessage);
+            if (success != null && success) {
+                log.info("✅ PL/SQL 할인 적용 완료: MappingID={}, Message={}", mappingId, message);
             } else {
-                log.warn("⚠️ PL/SQL 할인 적용 실패: MappingID={}, Code={}, Message={}", 
-                         mappingId, resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 할인 적용 실패: MappingID={}, Message={}", mappingId, message);
             }
             
             return response;
@@ -89,28 +90,29 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
         log.info("💰 PL/SQL 할인 환불 처리: MappingID={}, RefundAmount={}, Reason={}", 
                  mappingId, refundAmount, refundReason);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             ProcessDiscountRefundProcedure procedure = new ProcessDiscountRefundProcedure(jdbcTemplate);
             
             Map<String, Object> result = procedure.execute(
-                mappingId, refundAmount, refundReason, processedBy
+                mappingId, refundAmount, refundReason, tenantId, processedBy
             );
             
-            Integer resultCode = (Integer) result.get("result_code");
-            String resultMessage = (String) result.get("result_message");
+            Boolean success = (Boolean) result.get("p_success");
+            String message = (String) result.get("p_message");
             
             Map<String, Object> response = new HashMap<>();
-            response.put("success", resultCode == 0);
-            response.put("resultCode", resultCode);
-            response.put("message", resultMessage);
+            response.put("success", success != null && success);
+            response.put("message", message);
             response.put("mappingId", mappingId);
             response.put("refundAmount", refundAmount);
             
-            if (resultCode == 0) {
-                log.info("✅ PL/SQL 할인 환불 처리 완료: MappingID={}, Message={}", mappingId, resultMessage);
+            if (success != null && success) {
+                log.info("✅ PL/SQL 할인 환불 처리 완료: MappingID={}, Message={}", mappingId, message);
             } else {
-                log.warn("⚠️ PL/SQL 할인 환불 처리 실패: MappingID={}, Code={}, Message={}", 
-                         mappingId, resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 할인 환불 처리 실패: MappingID={}, Message={}", mappingId, message);
             }
             
             return response;
@@ -137,28 +139,29 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
         log.info("🔄 PL/SQL 할인 상태 업데이트: MappingID={}, NewStatus={}, UpdatedBy={}", 
                  mappingId, newStatus, updatedBy);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             UpdateDiscountStatusProcedure procedure = new UpdateDiscountStatusProcedure(jdbcTemplate);
             
             Map<String, Object> result = procedure.execute(
-                mappingId, newStatus, updatedBy, reason
+                mappingId, newStatus, tenantId, updatedBy, reason
             );
             
-            Integer resultCode = (Integer) result.get("result_code");
-            String resultMessage = (String) result.get("result_message");
+            Boolean success = (Boolean) result.get("p_success");
+            String message = (String) result.get("p_message");
             
             Map<String, Object> response = new HashMap<>();
-            response.put("success", resultCode == 0);
-            response.put("resultCode", resultCode);
-            response.put("message", resultMessage);
+            response.put("success", success != null && success);
+            response.put("message", message);
             response.put("mappingId", mappingId);
             response.put("newStatus", newStatus);
             
-            if (resultCode == 0) {
-                log.info("✅ PL/SQL 할인 상태 업데이트 완료: MappingID={}, Message={}", mappingId, resultMessage);
+            if (success != null && success) {
+                log.info("✅ PL/SQL 할인 상태 업데이트 완료: MappingID={}, Message={}", mappingId, message);
             } else {
-                log.warn("⚠️ PL/SQL 할인 상태 업데이트 실패: MappingID={}, Code={}, Message={}", 
-                         mappingId, resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 할인 상태 업데이트 실패: MappingID={}, Message={}", mappingId, message);
             }
             
             return response;
@@ -183,34 +186,38 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
         
         log.info("📊 PL/SQL 할인 통계 조회: BranchCode={}, Period={} ~ {}", branchCode, startDate, endDate);
         
+        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             GetDiscountStatisticsProcedure procedure = new GetDiscountStatisticsProcedure(jdbcTemplate);
             
-            Map<String, Object> result = procedure.execute(branchCode, startDate, endDate);
+            Map<String, Object> result = procedure.execute(tenantId, startDate, endDate);
             
             Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("branchCode", branchCode);
+            Boolean success = (Boolean) result.get("p_success");
+            String message = (String) result.get("p_message");
+            
+            response.put("success", success != null && success);
+            response.put("message", message);
             response.put("startDate", startDate);
             response.put("endDate", endDate);
-            response.put("totalDiscounts", result.get("total_discounts"));
-            response.put("totalRefunds", result.get("total_refunds"));
-            response.put("netDiscounts", result.get("net_discounts"));
-            response.put("discountCount", result.get("discount_count"));
-            response.put("refundCount", result.get("refund_count"));
+            response.put("totalDiscounts", result.get("p_total_discounts"));
+            response.put("totalRefunds", result.get("p_total_refunds"));
+            response.put("netDiscounts", result.get("p_net_discounts"));
+            response.put("discountCount", result.get("p_discount_count"));
+            response.put("refundCount", result.get("p_refund_count"));
             
-            log.info("✅ PL/SQL 할인 통계 조회 완료: BranchCode={}, NetDiscounts={}", 
-                     branchCode, result.get("net_discounts"));
+            log.info("✅ PL/SQL 할인 통계 조회 완료: NetDiscounts={}", result.get("p_net_discounts"));
             
             return response;
             
         } catch (Exception e) {
-            log.error("❌ PL/SQL 할인 통계 조회 실패: BranchCode={}, 오류={}", branchCode, e.getMessage(), e);
+            log.error("❌ PL/SQL 할인 통계 조회 실패: 오류={}", e.getMessage(), e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "PL/SQL 할인 통계 조회 실패: " + e.getMessage());
-            response.put("branchCode", branchCode);
             
             return response;
         }
@@ -284,22 +291,22 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
             declareParameter(new SqlParameter("p_original_amount", java.sql.Types.DECIMAL));
             declareParameter(new SqlParameter("p_discount_amount", java.sql.Types.DECIMAL));
             declareParameter(new SqlParameter("p_final_amount", java.sql.Types.DECIMAL));
-            declareParameter(new SqlParameter("p_branch_code", java.sql.Types.VARCHAR));
+            declareParameter(new SqlParameter("p_tenant_id", java.sql.Types.VARCHAR));
             declareParameter(new SqlParameter("p_applied_by", java.sql.Types.VARCHAR));
-            declareParameter(new SqlOutParameter("p_result_code", java.sql.Types.INTEGER));
-            declareParameter(new SqlOutParameter("p_result_message", java.sql.Types.VARCHAR));
+            declareParameter(new SqlOutParameter("p_success", java.sql.Types.BOOLEAN));
+            declareParameter(new SqlOutParameter("p_message", java.sql.Types.VARCHAR));
             compile();
         }
         
         public Map<String, Object> execute(Long mappingId, String discountCode, BigDecimal originalAmount, 
-                                         BigDecimal discountAmount, BigDecimal finalAmount, String branchCode, String appliedBy) {
+                                         BigDecimal discountAmount, BigDecimal finalAmount, String tenantId, String appliedBy) {
             Map<String, Object> params = new HashMap<>();
             params.put("p_mapping_id", mappingId);
             params.put("p_discount_code", discountCode);
             params.put("p_original_amount", originalAmount);
             params.put("p_discount_amount", discountAmount);
             params.put("p_final_amount", finalAmount);
-            params.put("p_branch_code", branchCode);
+            params.put("p_tenant_id", tenantId);
             params.put("p_applied_by", appliedBy);
             return execute(params);
         }
@@ -314,17 +321,19 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
             declareParameter(new SqlParameter("p_mapping_id", java.sql.Types.BIGINT));
             declareParameter(new SqlParameter("p_refund_amount", java.sql.Types.DECIMAL));
             declareParameter(new SqlParameter("p_refund_reason", java.sql.Types.VARCHAR));
+            declareParameter(new SqlParameter("p_tenant_id", java.sql.Types.VARCHAR));
             declareParameter(new SqlParameter("p_processed_by", java.sql.Types.VARCHAR));
-            declareParameter(new SqlOutParameter("p_result_code", java.sql.Types.INTEGER));
-            declareParameter(new SqlOutParameter("p_result_message", java.sql.Types.VARCHAR));
+            declareParameter(new SqlOutParameter("p_success", java.sql.Types.BOOLEAN));
+            declareParameter(new SqlOutParameter("p_message", java.sql.Types.VARCHAR));
             compile();
         }
         
-        public Map<String, Object> execute(Long mappingId, BigDecimal refundAmount, String refundReason, String processedBy) {
+        public Map<String, Object> execute(Long mappingId, BigDecimal refundAmount, String refundReason, String tenantId, String processedBy) {
             Map<String, Object> params = new HashMap<>();
             params.put("p_mapping_id", mappingId);
             params.put("p_refund_amount", refundAmount);
             params.put("p_refund_reason", refundReason);
+            params.put("p_tenant_id", tenantId);
             params.put("p_processed_by", processedBy);
             return execute(params);
         }
@@ -338,17 +347,19 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
             super(jdbcTemplate, "UpdateDiscountStatus");
             declareParameter(new SqlParameter("p_mapping_id", java.sql.Types.BIGINT));
             declareParameter(new SqlParameter("p_new_status", java.sql.Types.VARCHAR));
+            declareParameter(new SqlParameter("p_tenant_id", java.sql.Types.VARCHAR));
             declareParameter(new SqlParameter("p_updated_by", java.sql.Types.VARCHAR));
             declareParameter(new SqlParameter("p_reason", java.sql.Types.VARCHAR));
-            declareParameter(new SqlOutParameter("p_result_code", java.sql.Types.INTEGER));
-            declareParameter(new SqlOutParameter("p_result_message", java.sql.Types.VARCHAR));
+            declareParameter(new SqlOutParameter("p_success", java.sql.Types.BOOLEAN));
+            declareParameter(new SqlOutParameter("p_message", java.sql.Types.VARCHAR));
             compile();
         }
         
-        public Map<String, Object> execute(Long mappingId, String newStatus, String updatedBy, String reason) {
+        public Map<String, Object> execute(Long mappingId, String newStatus, String tenantId, String updatedBy, String reason) {
             Map<String, Object> params = new HashMap<>();
             params.put("p_mapping_id", mappingId);
             params.put("p_new_status", newStatus);
+            params.put("p_tenant_id", tenantId);
             params.put("p_updated_by", updatedBy);
             params.put("p_reason", reason);
             return execute(params);
@@ -361,9 +372,11 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
     private static class GetDiscountStatisticsProcedure extends StoredProcedure {
         public GetDiscountStatisticsProcedure(JdbcTemplate jdbcTemplate) {
             super(jdbcTemplate, "GetDiscountStatistics");
-            declareParameter(new SqlParameter("p_branch_code", java.sql.Types.VARCHAR));
+            declareParameter(new SqlParameter("p_tenant_id", java.sql.Types.VARCHAR));
             declareParameter(new SqlParameter("p_start_date", java.sql.Types.DATE));
             declareParameter(new SqlParameter("p_end_date", java.sql.Types.DATE));
+            declareParameter(new SqlOutParameter("p_success", java.sql.Types.BOOLEAN));
+            declareParameter(new SqlOutParameter("p_message", java.sql.Types.VARCHAR));
             declareParameter(new SqlOutParameter("p_total_discounts", java.sql.Types.DECIMAL));
             declareParameter(new SqlOutParameter("p_total_refunds", java.sql.Types.DECIMAL));
             declareParameter(new SqlOutParameter("p_net_discounts", java.sql.Types.DECIMAL));
@@ -372,9 +385,9 @@ public class PlSqlDiscountAccountingServiceImpl implements PlSqlDiscountAccounti
             compile();
         }
         
-        public Map<String, Object> execute(String branchCode, String startDate, String endDate) {
+        public Map<String, Object> execute(String tenantId, String startDate, String endDate) {
             Map<String, Object> params = new HashMap<>();
-            params.put("p_branch_code", branchCode);
+            params.put("p_tenant_id", tenantId);
             params.put("p_start_date", java.sql.Date.valueOf(LocalDate.parse(startDate)));
             params.put("p_end_date", java.sql.Date.valueOf(LocalDate.parse(endDate)));
             return execute(params);

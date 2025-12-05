@@ -14,57 +14,77 @@ CREATE PROCEDURE UpdateMappingInfo(
     IN p_new_package_name VARCHAR(255),
     IN p_new_package_price DECIMAL(15,2),
     IN p_new_total_sessions INT,
+    IN p_tenant_id VARCHAR(100),
     IN p_updated_by VARCHAR(100),
     OUT p_success BOOLEAN,
     OUT p_message VARCHAR(500)
 )
 BEGIN
+    DECLARE v_error_message VARCHAR(500);
     DECLARE v_old_package_price DECIMAL(15,2) DEFAULT 0;
     DECLARE v_old_total_sessions INT DEFAULT 0;
     DECLARE v_consultant_id BIGINT DEFAULT 0;
     DECLARE v_client_id BIGINT DEFAULT 0;
-    DECLARE v_branch_code VARCHAR(50) DEFAULT '';
     DECLARE v_payment_amount DECIMAL(15,2) DEFAULT 0;
     DECLARE v_price_difference DECIMAL(15,2) DEFAULT 0;
     DECLARE v_session_difference INT DEFAULT 0;
+    DECLARE v_mapping_count INT DEFAULT 0;
+    
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
+        GET DIAGNOSTICS CONDITION 1
+            v_error_message = MESSAGE_TEXT;
         SET p_success = FALSE;
-        SET p_message = '매핑 정보 수정 중 오류가 발생했습니다.';
+        SET p_message = CONCAT('매핑 정보 수정 중 오류 발생: ', v_error_message);
     END;
 
     START TRANSACTION;
 
-    -- 1. 기존 매핑 정보 조회
+    -- 1. 입력값 검증
+    IF p_tenant_id IS NULL OR p_tenant_id = '' THEN
+        SET p_success = FALSE;
+        SET p_message = '테넌트 ID는 필수입니다.';
+        ROLLBACK;
+        LEAVE;
+    END IF;
+
+    -- 2. 기존 매핑 정보 조회 (테넌트 격리)
     SELECT 
         package_price,
         total_sessions,
         consultant_id,
         client_id,
-        branch_code,
         payment_amount
     INTO 
         v_old_package_price,
         v_old_total_sessions,
         v_consultant_id,
         v_client_id,
-        v_branch_code,
         v_payment_amount
     FROM consultant_client_mappings 
-    WHERE id = p_mapping_id;
+    WHERE id = p_mapping_id 
+      AND tenant_id = p_tenant_id 
+      AND is_deleted = FALSE;
+    
+    -- 3. 매핑 존재 여부 확인
+    SELECT COUNT(*) INTO v_mapping_count
+    FROM consultant_client_mappings
+    WHERE id = p_mapping_id 
+      AND tenant_id = p_tenant_id 
+      AND is_deleted = FALSE;
 
-    -- 2. 매핑이 존재하는지 확인
-    IF v_consultant_id = 0 THEN
+    IF v_mapping_count = 0 THEN
         SET p_success = FALSE;
         SET p_message = '매핑을 찾을 수 없습니다.';
         ROLLBACK;
+        LEAVE;
     ELSE
         -- 3. 가격 및 세션 차이 계산
         SET v_price_difference = p_new_package_price - v_old_package_price;
         SET v_session_difference = p_new_total_sessions - v_old_total_sessions;
 
-        -- 4. 매핑 정보 업데이트
+        -- 4. 매핑 정보 업데이트 (테넌트 격리)
         UPDATE consultant_client_mappings 
         SET 
             package_name = p_new_package_name,
@@ -73,8 +93,11 @@ BEGIN
             remaining_sessions = remaining_sessions + v_session_difference,
             payment_amount = p_new_package_price,
             updated_at = NOW(),
+            updated_by = p_updated_by,
             version = version + 1
-        WHERE id = p_mapping_id;
+        WHERE id = p_mapping_id 
+          AND tenant_id = p_tenant_id 
+          AND is_deleted = FALSE;
 
         -- 5. 매핑 변경 이력 기록
         INSERT INTO mapping_change_history (
@@ -95,16 +118,18 @@ BEGIN
             p_updated_by
         );
 
-        -- 6. ERP 재무 거래 데이터 동기화
+        -- 6. ERP 재무 거래 데이터 동기화 (테넌트 격리)
         -- 6-1. 기존 INCOME 거래 삭제 (논리 삭제 - 여러 개일 수 있으므로 모두 처리)
         UPDATE financial_transactions 
         SET 
             is_deleted = TRUE,
             description = CONCAT('패키지 수정으로 인한 삭제 - ', description),
-            updated_at = NOW()
+            updated_at = NOW(),
+            updated_by = p_updated_by
         WHERE 
             related_entity_type = 'CONSULTANT_CLIENT_MAPPING' 
             AND related_entity_id = p_mapping_id
+            AND tenant_id = p_tenant_id
             AND transaction_type = 'INCOME'
             AND category = 'CONSULTATION'
             AND is_deleted = FALSE;
@@ -118,13 +143,14 @@ BEGIN
             description,
             related_entity_id,
             related_entity_type,
-            branch_code,
+            tenant_id,
             transaction_date,
             status,
             is_deleted,
             tax_included,
             created_at,
-            updated_at
+            updated_at,
+            created_by
         ) VALUES (
             'INCOME',
             'CONSULTATION',
@@ -133,17 +159,18 @@ BEGIN
             CONCAT('상담료 입금 확인 - ', p_new_package_name, ' (', p_new_package_price, '원) - 패키지 수정: ', v_old_package_price, '원 → ', p_new_package_price, '원'),
             p_mapping_id,
             'CONSULTANT_CLIENT_MAPPING',
-            v_branch_code,
+            p_tenant_id,
             NOW(),
             'COMPLETED',
             FALSE,
             FALSE,
             NOW(),
-            NOW()
+            NOW(),
+            p_updated_by
         );
 
         -- 7. 통계 데이터 갱신
-        CALL UpdateMappingStatistics(p_mapping_id, v_consultant_id, v_client_id, v_branch_code);
+        CALL UpdateMappingStatistics(p_mapping_id, v_consultant_id, v_client_id, p_tenant_id);
 
         COMMIT;
         SET p_success = TRUE;
@@ -156,23 +183,34 @@ CREATE PROCEDURE UpdateMappingStatistics(
     IN p_mapping_id BIGINT,
     IN p_consultant_id BIGINT,
     IN p_client_id BIGINT,
-    IN p_branch_code VARCHAR(50)
+    IN p_tenant_id VARCHAR(100)
 )
 BEGIN
+    DECLARE v_error_message VARCHAR(500);
     DECLARE v_package_price DECIMAL(15,2) DEFAULT 0;
     DECLARE v_total_sessions INT DEFAULT 0;
     DECLARE v_used_sessions INT DEFAULT 0;
     DECLARE v_remaining_sessions INT DEFAULT 0;
     
-    -- 매핑 정보 조회
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1
+            v_error_message = MESSAGE_TEXT;
+        -- 통계 업데이트 실패는 로그만 남기고 롤백하지 않음 (호출한 프로시저의 트랜잭션에 영향 없음)
+    END;
+    
+    -- 매핑 정보 조회 (테넌트 격리)
     SELECT package_price, total_sessions, used_sessions, remaining_sessions
     INTO v_package_price, v_total_sessions, v_used_sessions, v_remaining_sessions
     FROM consultant_client_mappings 
-    WHERE id = p_mapping_id;
+    WHERE id = p_mapping_id 
+      AND tenant_id = p_tenant_id 
+      AND is_deleted = FALSE;
 
-    -- 상담사별 통계 업데이트 (테이블이 있다면)
+    -- 상담사별 통계 업데이트 (테이블이 있다면, 테넌트 격리)
     INSERT IGNORE INTO consultant_statistics (
         consultant_id,
+        tenant_id,
         total_revenue,
         total_sessions,
         used_sessions,
@@ -180,28 +218,7 @@ BEGIN
         last_updated
     ) VALUES (
         p_consultant_id,
-        v_package_price,
-        v_total_sessions,
-        v_used_sessions,
-        v_remaining_sessions,
-        NOW()
-    ) ON DUPLICATE KEY UPDATE
-        total_revenue = total_revenue + v_package_price,
-        total_sessions = total_sessions + v_total_sessions,
-        used_sessions = used_sessions + v_used_sessions,
-        remaining_sessions = remaining_sessions + v_remaining_sessions,
-        last_updated = NOW();
-
-    -- 지점별 통계 업데이트 (테이블이 있다면)
-    INSERT IGNORE INTO branch_statistics (
-        branch_code,
-        total_revenue,
-        total_sessions,
-        used_sessions,
-        remaining_sessions,
-        last_updated
-    ) VALUES (
-        p_branch_code,
+        p_tenant_id,
         v_package_price,
         v_total_sessions,
         v_used_sessions,
@@ -219,25 +236,52 @@ END //
 CREATE PROCEDURE CheckMappingUpdatePermission(
     IN p_mapping_id BIGINT,
     IN p_user_id BIGINT,
+    IN p_tenant_id VARCHAR(100),
     IN p_user_role VARCHAR(50),
     OUT p_can_update BOOLEAN,
     OUT p_reason VARCHAR(500)
 )
 BEGIN
+    DECLARE v_error_message VARCHAR(500);
     DECLARE v_mapping_status VARCHAR(50) DEFAULT '';
     DECLARE v_payment_status VARCHAR(50) DEFAULT '';
     DECLARE v_used_sessions INT DEFAULT 0;
+    DECLARE v_mapping_count INT DEFAULT 0;
     
-    -- 매핑 상태 조회
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1
+            v_error_message = MESSAGE_TEXT;
+        SET p_can_update = FALSE;
+        SET p_reason = CONCAT('권한 확인 중 오류 발생: ', v_error_message);
+    END;
+    
+    -- 입력값 검증
+    IF p_tenant_id IS NULL OR p_tenant_id = '' THEN
+        SET p_can_update = FALSE;
+        SET p_reason = '테넌트 ID는 필수입니다.';
+        LEAVE;
+    END IF;
+    
+    -- 매핑 상태 조회 (테넌트 격리)
     SELECT status, payment_status, used_sessions
     INTO v_mapping_status, v_payment_status, v_used_sessions
     FROM consultant_client_mappings 
-    WHERE id = p_mapping_id;
+    WHERE id = p_mapping_id 
+      AND tenant_id = p_tenant_id 
+      AND is_deleted = FALSE;
+    
+    -- 매핑 존재 여부 확인
+    SELECT COUNT(*) INTO v_mapping_count
+    FROM consultant_client_mappings
+    WHERE id = p_mapping_id 
+      AND tenant_id = p_tenant_id 
+      AND is_deleted = FALSE;
 
     SET p_can_update = FALSE;
     
     -- 권한 확인 로직
-    IF v_mapping_status IS NULL THEN
+    IF v_mapping_count = 0 THEN
         SET p_reason = '매핑을 찾을 수 없습니다.';
     ELSEIF v_mapping_status = 'CANCELLED' THEN
         SET p_reason = '취소된 매핑은 수정할 수 없습니다.';
@@ -278,11 +322,5 @@ CREATE TABLE IF NOT EXISTS consultant_statistics (
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS branch_statistics (
-    branch_code VARCHAR(50) PRIMARY KEY,
-    total_revenue DECIMAL(15,2) DEFAULT 0,
-    total_sessions INT DEFAULT 0,
-    used_sessions INT DEFAULT 0,
-    remaining_sessions INT DEFAULT 0,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+-- branch_statistics 테이블은 테넌트 기반 시스템으로 전환되어 더 이상 사용하지 않음
+-- 통계는 tenant_id 기반으로 관리됨

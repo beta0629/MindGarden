@@ -37,6 +37,9 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
         log.info("💰 PL/SQL 통합 급여 계산 시작: ConsultantID={}, Period={} ~ {}", 
                 consultantId, periodStart, periodEnd);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         Map<String, Object> result = new HashMap<>();
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
@@ -52,28 +55,29 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             stmt.setLong(1, consultantId);
             stmt.setDate(2, java.sql.Date.valueOf(periodStart));
             stmt.setDate(3, java.sql.Date.valueOf(periodEnd));
-            stmt.setString(4, triggeredBy);
+            stmt.setString(4, tenantId); // p_tenant_id 추가
+            stmt.setString(5, triggeredBy);
             
             // OUT 파라미터 등록
-            stmt.registerOutParameter(5, java.sql.Types.BIGINT);    // calculation_id
-            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);   // gross_salary
-            stmt.registerOutParameter(7, java.sql.Types.DECIMAL);   // net_salary
-            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);   // tax_amount
-            stmt.registerOutParameter(9, java.sql.Types.BIGINT);    // erp_sync_id
-            stmt.registerOutParameter(10, java.sql.Types.BOOLEAN);  // success
-            stmt.registerOutParameter(11, java.sql.Types.VARCHAR);  // message
+            stmt.registerOutParameter(6, java.sql.Types.BIGINT);    // calculation_id
+            stmt.registerOutParameter(7, java.sql.Types.DECIMAL);   // gross_salary
+            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);   // net_salary
+            stmt.registerOutParameter(9, java.sql.Types.DECIMAL);   // tax_amount
+            stmt.registerOutParameter(10, java.sql.Types.BIGINT);    // erp_sync_id
+            stmt.registerOutParameter(11, java.sql.Types.BOOLEAN);  // success
+            stmt.registerOutParameter(12, java.sql.Types.VARCHAR);  // message
             
             // 프로시저 실행
             stmt.execute();
             
             // 결과 추출
-            result.put("calculationId", stmt.getLong(5));
-            result.put("grossSalary", stmt.getBigDecimal(6));
-            result.put("netSalary", stmt.getBigDecimal(7));
-            result.put("taxAmount", stmt.getBigDecimal(8));
-            result.put("erpSyncId", stmt.getLong(9));
-            result.put("success", stmt.getBoolean(10));
-            result.put("message", stmt.getString(11));
+            result.put("calculationId", stmt.getLong(6));
+            result.put("grossSalary", stmt.getBigDecimal(7));
+            result.put("netSalary", stmt.getBigDecimal(8));
+            result.put("taxAmount", stmt.getBigDecimal(9));
+            result.put("erpSyncId", stmt.getLong(10));
+            result.put("success", stmt.getBoolean(11));
+            result.put("message", stmt.getString(12));
             
             log.info("✅ PL/SQL 통합 급여 계산 완료: CalculationID={}, GrossSalary={}, NetSalary={}", 
                     result.get("calculationId"), result.get("grossSalary"), result.get("netSalary"));
@@ -170,39 +174,42 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
         log.info("📊 PL/SQL 통합 급여 통계 조회: BranchCode={}, Period={} ~ {}", 
                 branchCode, startDate, endDate);
         
+        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         Map<String, Object> result = new HashMap<>();
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL GetIntegratedSalaryStatistics(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL GetIntegratedSalaryStatistics(?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // IN 파라미터 설정
-            stmt.setString(1, branchCode);
+            stmt.setString(1, tenantId); // p_tenant_id (첫 번째 파라미터)
             stmt.setDate(2, java.sql.Date.valueOf(startDate));
             stmt.setDate(3, java.sql.Date.valueOf(endDate));
             
             // OUT 파라미터 등록
-            stmt.registerOutParameter(4, java.sql.Types.INTEGER);   // total_calculations
-            stmt.registerOutParameter(5, java.sql.Types.DECIMAL);   // total_gross_salary
-            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);   // total_net_salary
-            stmt.registerOutParameter(7, java.sql.Types.DECIMAL);   // total_tax_amount
-            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);   // average_salary
-            stmt.registerOutParameter(9, java.sql.Types.DECIMAL);   // erp_sync_success_rate
-            stmt.registerOutParameter(10, java.sql.Types.BOOLEAN);  // success
-            stmt.registerOutParameter(11, java.sql.Types.VARCHAR);  // message
+            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);   // success
+            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);   // message
+            stmt.registerOutParameter(6, java.sql.Types.INTEGER);   // total_calculations
+            stmt.registerOutParameter(7, java.sql.Types.DECIMAL);   // total_gross_salary
+            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);   // total_net_salary
+            stmt.registerOutParameter(9, java.sql.Types.DECIMAL);   // total_tax_amount
+            stmt.registerOutParameter(10, java.sql.Types.DECIMAL);   // average_salary
+            stmt.registerOutParameter(11, java.sql.Types.DECIMAL);   // erp_sync_success_rate
             
             // 프로시저 실행
             stmt.execute();
             
             // 결과 추출
-            result.put("totalCalculations", stmt.getInt(4));
-            result.put("totalGrossSalary", stmt.getBigDecimal(5));
-            result.put("totalNetSalary", stmt.getBigDecimal(6));
-            result.put("totalTaxAmount", stmt.getBigDecimal(7));
-            result.put("averageSalary", stmt.getBigDecimal(8));
-            result.put("erpSyncSuccessRate", stmt.getBigDecimal(9));
-            result.put("success", stmt.getBoolean(10));
-            result.put("message", stmt.getString(11));
+            result.put("success", stmt.getBoolean(4));
+            result.put("message", stmt.getString(5));
+            result.put("totalCalculations", stmt.getInt(6));
+            result.put("totalGrossSalary", stmt.getBigDecimal(7));
+            result.put("totalNetSalary", stmt.getBigDecimal(8));
+            result.put("totalTaxAmount", stmt.getBigDecimal(9));
+            result.put("averageSalary", stmt.getBigDecimal(10));
+            result.put("erpSyncSuccessRate", stmt.getBigDecimal(11));
             
             log.info("✅ PL/SQL 통합 급여 통계 조회 완료: TotalCalculations={}, TotalNetSalary={}", 
                     result.get("totalCalculations"), result.get("totalNetSalary"));

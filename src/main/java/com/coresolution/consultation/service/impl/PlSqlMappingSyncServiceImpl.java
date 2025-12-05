@@ -44,34 +44,37 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
         log.info("🔄 PL/SQL 회기 사용 처리: ConsultantID={}, ClientID={}, ScheduleID={}, Type={}", 
                  consultantId, clientId, scheduleId, sessionType);
         
+        // 테넌트 ID 및 사용자 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String usedBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
+        
         try {
             // UTF-8 인코딩 설정
             setUtf8Encoding();
             
             Map<String, Object> result = new HashMap<>();
             
-            // PL/SQL 프로시저 호출
+            // PL/SQL 프로시저 호출 (표준화된 파라미터 순서)
             jdbcTemplate.update(
-                "CALL UseSessionForMapping(?, ?, ?, ?, @result_code, @result_message)",
-                consultantId, clientId, scheduleId, sessionType
+                "CALL UseSessionForMapping(?, ?, ?, ?, ?, ?, @p_success, @p_message)",
+                consultantId, clientId, scheduleId, sessionType, tenantId, usedBy
             );
             
             // 결과 조회
-            Integer resultCode = jdbcTemplate.queryForObject("SELECT @result_code", Integer.class);
-            String resultMessage = jdbcTemplate.queryForObject("SELECT @result_message", String.class);
+            Boolean success = jdbcTemplate.queryForObject("SELECT @p_success", Boolean.class);
+            String message = jdbcTemplate.queryForObject("SELECT @p_message", String.class);
             
-            result.put("success", resultCode == 0);
-            result.put("resultCode", resultCode);
-            result.put("message", resultMessage);
+            result.put("success", success != null && success);
+            result.put("message", message);
             result.put("consultantId", consultantId);
             result.put("clientId", clientId);
             result.put("scheduleId", scheduleId);
             result.put("sessionType", sessionType);
             
-            if (resultCode == 0) {
-                log.info("✅ PL/SQL 회기 사용 처리 완료: {}", resultMessage);
+            if (success != null && success) {
+                log.info("✅ PL/SQL 회기 사용 처리 완료: {}", message);
             } else {
-                log.warn("⚠️ PL/SQL 회기 사용 처리 실패: Code={}, Message={}", resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 회기 사용 처리 실패: Message={}", message);
             }
             
             return result;
@@ -94,31 +97,34 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
         log.info("🔄 PL/SQL 회기 추가 처리: MappingID={}, AdditionalSessions={}, PackageName={}", 
                  mappingId, additionalSessions, packageName);
         
+        // 테넌트 ID 및 생성자 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String createdBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
+        
         try {
             Map<String, Object> result = new HashMap<>();
             
-            // PL/SQL 프로시저 호출
+            // PL/SQL 프로시저 호출 (표준화된 파라미터 순서)
             jdbcTemplate.update(
-                "CALL AddSessionsToMapping(?, ?, ?, ?, ?, @result_code, @result_message)",
-                mappingId, additionalSessions, packageName, packagePrice, extensionReason
+                "CALL AddSessionsToMapping(?, ?, ?, ?, ?, ?, ?, @p_success, @p_message)",
+                mappingId, additionalSessions, packageName, packagePrice, extensionReason, tenantId, createdBy
             );
             
             // 결과 조회
-            Integer resultCode = jdbcTemplate.queryForObject("SELECT @result_code", Integer.class);
-            String resultMessage = jdbcTemplate.queryForObject("SELECT @result_message", String.class);
+            Boolean success = jdbcTemplate.queryForObject("SELECT @p_success", Boolean.class);
+            String message = jdbcTemplate.queryForObject("SELECT @p_message", String.class);
             
-            result.put("success", resultCode == 0);
-            result.put("resultCode", resultCode);
-            result.put("message", resultMessage);
+            result.put("success", success != null && success);
+            result.put("message", message);
             result.put("mappingId", mappingId);
             result.put("additionalSessions", additionalSessions);
             result.put("packageName", packageName);
             result.put("packagePrice", packagePrice);
             
-            if (resultCode == 0) {
-                log.info("✅ PL/SQL 회기 추가 처리 완료: {}", resultMessage);
+            if (success != null && success) {
+                log.info("✅ PL/SQL 회기 추가 처리 완료: {}", message);
             } else {
-                log.warn("⚠️ PL/SQL 회기 추가 처리 실패: Code={}, Message={}", resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 회기 추가 처리 실패: Message={}", message);
             }
             
             return result;
@@ -140,30 +146,32 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
     public Map<String, Object> validateMappingIntegrity(Long mappingId) {
         log.info("🔍 PL/SQL 매핑 무결성 검증: MappingID={}", mappingId);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             Map<String, Object> result = new HashMap<>();
             
-            // PL/SQL 프로시저 호출
+            // PL/SQL 프로시저 호출 (표준화된 파라미터 순서)
             jdbcTemplate.update(
-                "CALL ValidateMappingIntegrity(?, @result_code, @result_message, @validation_results)",
-                mappingId
+                "CALL ValidateMappingIntegrity(?, ?, @p_success, @p_message, @p_validation_results)",
+                mappingId, tenantId
             );
             
             // 결과 조회
-            Integer resultCode = jdbcTemplate.queryForObject("SELECT @result_code", Integer.class);
-            String resultMessage = jdbcTemplate.queryForObject("SELECT @result_message", String.class);
-            String validationResultsJson = jdbcTemplate.queryForObject("SELECT @validation_results", String.class);
+            Boolean success = jdbcTemplate.queryForObject("SELECT @p_success", Boolean.class);
+            String message = jdbcTemplate.queryForObject("SELECT @p_message", String.class);
+            String validationResultsJson = jdbcTemplate.queryForObject("SELECT @p_validation_results", String.class);
             
-            result.put("success", resultCode == 0);
-            result.put("resultCode", resultCode);
-            result.put("message", resultMessage);
+            result.put("success", success != null && success);
+            result.put("message", message);
             result.put("mappingId", mappingId);
             result.put("validationResults", validationResultsJson);
             
-            if (resultCode == 0) {
-                log.info("✅ PL/SQL 매핑 무결성 검증 완료: {}", resultMessage);
+            if (success != null && success) {
+                log.info("✅ PL/SQL 매핑 무결성 검증 완료: {}", message);
             } else {
-                log.warn("⚠️ PL/SQL 매핑 무결성 검증 실패: Code={}, Message={}", resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 매핑 무결성 검증 실패: Message={}", message);
             }
             
             return result;
@@ -184,28 +192,32 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
     public Map<String, Object> syncAllMappings() {
         log.info("🔄 PL/SQL 전체 매핑 동기화 시작");
         
+        // 테넌트 ID 및 동기화자 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String syncedBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
+        
         try {
             Map<String, Object> result = new HashMap<>();
             
-            // PL/SQL 프로시저 호출
+            // PL/SQL 프로시저 호출 (표준화된 파라미터 순서)
             jdbcTemplate.update(
-                "CALL SyncAllMappings(@result_code, @result_message, @sync_results)"
+                "CALL SyncAllMappings(?, ?, @p_success, @p_message, @p_sync_results)",
+                tenantId, syncedBy
             );
             
             // 결과 조회
-            Integer resultCode = jdbcTemplate.queryForObject("SELECT @result_code", Integer.class);
-            String resultMessage = jdbcTemplate.queryForObject("SELECT @result_message", String.class);
-            String syncResultsJson = jdbcTemplate.queryForObject("SELECT @sync_results", String.class);
+            Boolean success = jdbcTemplate.queryForObject("SELECT @p_success", Boolean.class);
+            String message = jdbcTemplate.queryForObject("SELECT @p_message", String.class);
+            String syncResultsJson = jdbcTemplate.queryForObject("SELECT @p_sync_results", String.class);
             
-            result.put("success", resultCode == 0);
-            result.put("resultCode", resultCode);
-            result.put("message", resultMessage);
+            result.put("success", success != null && success);
+            result.put("message", message);
             result.put("syncResults", syncResultsJson);
             
-            if (resultCode == 0) {
-                log.info("✅ PL/SQL 전체 매핑 동기화 완료: {}", resultMessage);
+            if (success != null && success) {
+                log.info("✅ PL/SQL 전체 매핑 동기화 완료: {}", message);
             } else {
-                log.warn("⚠️ PL/SQL 전체 매핑 동기화 실패: Code={}, Message={}", resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 전체 매핑 동기화 실패: Message={}", message);
             }
             
             return result;
@@ -228,32 +240,34 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
         log.info("💰 PL/SQL 환불 처리: MappingID={}, RefundAmount={}, RefundSessions={}", 
                  mappingId, refundAmount, refundSessions);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             Map<String, Object> result = new HashMap<>();
             
-            // PL/SQL 프로시저 호출
+            // PL/SQL 프로시저 호출 (표준화된 파라미터 순서)
             jdbcTemplate.update(
-                "CALL ProcessRefundWithSessionAdjustment(?, ?, ?, ?, ?, @result_code, @result_message)",
-                mappingId, refundAmount, refundSessions, refundReason, processedBy
+                "CALL ProcessRefundWithSessionAdjustment(?, ?, ?, ?, ?, ?, @p_success, @p_message)",
+                mappingId, refundAmount, refundSessions, refundReason, tenantId, processedBy
             );
             
             // 결과 조회
-            Integer resultCode = jdbcTemplate.queryForObject("SELECT @result_code", Integer.class);
-            String resultMessage = jdbcTemplate.queryForObject("SELECT @result_message", String.class);
+            Boolean success = jdbcTemplate.queryForObject("SELECT @p_success", Boolean.class);
+            String message = jdbcTemplate.queryForObject("SELECT @p_message", String.class);
             
-            result.put("success", resultCode == 0);
-            result.put("resultCode", resultCode);
-            result.put("message", resultMessage);
+            result.put("success", success != null && success);
+            result.put("message", message);
             result.put("mappingId", mappingId);
             result.put("refundAmount", refundAmount);
             result.put("refundSessions", refundSessions);
             result.put("refundReason", refundReason);
             result.put("processedBy", processedBy);
             
-            if (resultCode == 0) {
-                log.info("✅ PL/SQL 환불 처리 완료: {}", resultMessage);
+            if (success != null && success) {
+                log.info("✅ PL/SQL 환불 처리 완료: {}", message);
             } else {
-                log.warn("⚠️ PL/SQL 환불 처리 실패: Code={}, Message={}", resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 환불 처리 실패: Message={}", message);
             }
             
             return result;
@@ -276,32 +290,34 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
         log.info("💰 PL/SQL 부분 환불 처리: MappingID={}, RefundAmount={}, RefundSessions={}", 
                  mappingId, refundAmount, refundSessions);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             Map<String, Object> result = new HashMap<>();
             
-            // PL/SQL 프로시저 호출
+            // PL/SQL 프로시저 호출 (표준화된 파라미터 순서)
             jdbcTemplate.update(
-                "CALL ProcessPartialRefund(?, ?, ?, ?, ?, @result_code, @result_message)",
-                mappingId, refundAmount, refundSessions, refundReason, processedBy
+                "CALL ProcessPartialRefund(?, ?, ?, ?, ?, ?, @p_success, @p_message)",
+                mappingId, refundAmount, refundSessions, refundReason, tenantId, processedBy
             );
             
             // 결과 조회
-            Integer resultCode = jdbcTemplate.queryForObject("SELECT @result_code", Integer.class);
-            String resultMessage = jdbcTemplate.queryForObject("SELECT @result_message", String.class);
+            Boolean success = jdbcTemplate.queryForObject("SELECT @p_success", Boolean.class);
+            String message = jdbcTemplate.queryForObject("SELECT @p_message", String.class);
             
-            result.put("success", resultCode == 0);
-            result.put("resultCode", resultCode);
-            result.put("message", resultMessage);
+            result.put("success", success != null && success);
+            result.put("message", message);
             result.put("mappingId", mappingId);
             result.put("refundAmount", refundAmount);
             result.put("refundSessions", refundSessions);
             result.put("refundReason", refundReason);
             result.put("processedBy", processedBy);
             
-            if (resultCode == 0) {
-                log.info("✅ PL/SQL 부분 환불 처리 완료: {}", resultMessage);
+            if (success != null && success) {
+                log.info("✅ PL/SQL 부분 환불 처리 완료: {}", message);
             } else {
-                log.warn("⚠️ PL/SQL 부분 환불 처리 실패: Code={}, Message={}", resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 부분 환불 처리 실패: Message={}", message);
             }
             
             return result;
@@ -323,32 +339,34 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
     public Map<String, Object> getRefundableSessions(Long mappingId) {
         log.info("🔍 PL/SQL 환불 가능 회기 조회: MappingID={}", mappingId);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             Map<String, Object> result = new HashMap<>();
             
-            // PL/SQL 프로시저 호출
+            // PL/SQL 프로시저 호출 (표준화된 파라미터 순서)
             jdbcTemplate.update(
-                "CALL GetRefundableSessions(?, @result_code, @result_message, @refundable_sessions, @max_refund_amount)",
-                mappingId
+                "CALL GetRefundableSessions(?, ?, @p_success, @p_message, @p_refundable_sessions, @p_max_refund_amount)",
+                mappingId, tenantId
             );
             
             // 결과 조회
-            Integer resultCode = jdbcTemplate.queryForObject("SELECT @result_code", Integer.class);
-            String resultMessage = jdbcTemplate.queryForObject("SELECT @result_message", String.class);
-            Integer refundableSessions = jdbcTemplate.queryForObject("SELECT @refundable_sessions", Integer.class);
-            Long maxRefundAmount = jdbcTemplate.queryForObject("SELECT @max_refund_amount", Long.class);
+            Boolean success = jdbcTemplate.queryForObject("SELECT @p_success", Boolean.class);
+            String message = jdbcTemplate.queryForObject("SELECT @p_message", String.class);
+            Integer refundableSessions = jdbcTemplate.queryForObject("SELECT @p_refundable_sessions", Integer.class);
+            Long maxRefundAmount = jdbcTemplate.queryForObject("SELECT @p_max_refund_amount", Long.class);
             
-            result.put("success", resultCode == 0);
-            result.put("resultCode", resultCode);
-            result.put("message", resultMessage);
+            result.put("success", success != null && success);
+            result.put("message", message);
             result.put("mappingId", mappingId);
             result.put("refundableSessions", refundableSessions);
             result.put("maxRefundAmount", maxRefundAmount);
             
-            if (resultCode == 0) {
+            if (success != null && success) {
                 log.info("✅ PL/SQL 환불 가능 회기 조회 완료: {}회기, 최대 환불 금액: {}", refundableSessions, maxRefundAmount);
             } else {
-                log.warn("⚠️ PL/SQL 환불 가능 회기 조회 실패: Code={}, Message={}", resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 환불 가능 회기 조회 실패: Message={}", message);
             }
             
             return result;
@@ -370,32 +388,37 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
     public Map<String, Object> getRefundStatistics(String branchCode, String startDate, String endDate) {
         log.info("📊 PL/SQL 환불 통계 조회: BranchCode={}, Period={} ~ {}", branchCode, startDate, endDate);
         
+        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             Map<String, Object> result = new HashMap<>();
             
-            // PL/SQL 프로시저 호출
+            // 날짜 문자열을 LocalDate로 변환
+            java.time.LocalDate startLocalDate = java.time.LocalDate.parse(startDate);
+            java.time.LocalDate endLocalDate = java.time.LocalDate.parse(endDate);
+            
+            // PL/SQL 프로시저 호출 (표준화된 파라미터 순서)
             jdbcTemplate.update(
-                "CALL GetRefundStatistics(?, ?, ?, @result_code, @result_message, @statistics)",
-                branchCode, startDate, endDate
+                "CALL GetRefundStatistics(?, ?, ?, @p_success, @p_message, @p_statistics)",
+                tenantId, startLocalDate, endLocalDate
             );
             
             // 결과 조회
-            Integer resultCode = jdbcTemplate.queryForObject("SELECT @result_code", Integer.class);
-            String resultMessage = jdbcTemplate.queryForObject("SELECT @result_message", String.class);
-            String statisticsJson = jdbcTemplate.queryForObject("SELECT @statistics", String.class);
+            Boolean success = jdbcTemplate.queryForObject("SELECT @p_success", Boolean.class);
+            String message = jdbcTemplate.queryForObject("SELECT @p_message", String.class);
+            String statisticsJson = jdbcTemplate.queryForObject("SELECT @p_statistics", String.class);
             
-            result.put("success", resultCode == 0);
-            result.put("resultCode", resultCode);
-            result.put("message", resultMessage);
-            result.put("branchCode", branchCode);
+            result.put("success", success != null && success);
+            result.put("message", message);
             result.put("startDate", startDate);
             result.put("endDate", endDate);
             result.put("statistics", statisticsJson);
             
-            if (resultCode == 0) {
-                log.info("✅ PL/SQL 환불 통계 조회 완료: {}", resultMessage);
+            if (success != null && success) {
+                log.info("✅ PL/SQL 환불 통계 조회 완료: {}", message);
             } else {
-                log.warn("⚠️ PL/SQL 환불 통계 조회 실패: Code={}, Message={}", resultCode, resultMessage);
+                log.warn("⚠️ PL/SQL 환불 통계 조회 실패: Message={}", message);
             }
             
             return result;

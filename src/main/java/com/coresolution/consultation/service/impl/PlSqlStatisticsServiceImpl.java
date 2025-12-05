@@ -36,6 +36,10 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
     public String updateDailyStatistics(String branchCode, LocalDate statDate) {
         log.info("📊 일별 통계 PL/SQL 프로시저 호출: branchCode={}, statDate={}", branchCode, statDate);
         
+        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String updatedBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
+        
         try {
             // UTF-8 인코딩 설정 (MySQL만 지원, H2는 건너뛰기)
             try {
@@ -53,18 +57,25 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
                 .withProcedureName("UpdateDailyStatistics")
                 .declareParameters(
-                    new SqlParameter("p_branch_code", Types.VARCHAR),
-                    new SqlParameter("p_stat_date", Types.DATE)
+                    new SqlParameter("p_tenant_id", Types.VARCHAR),
+                    new SqlParameter("p_stat_date", Types.DATE),
+                    new SqlParameter("p_updated_by", Types.VARCHAR),
+                    new SqlParameter("p_success", Types.BOOLEAN),
+                    new SqlParameter("p_message", Types.VARCHAR)
                 );
             
             Map<String, Object> params = new HashMap<>();
-            params.put("p_branch_code", branchCode);
+            params.put("p_tenant_id", tenantId);
             params.put("p_stat_date", java.sql.Date.valueOf(statDate));
+            params.put("p_updated_by", updatedBy);
             
-            jdbcCall.execute(params);
+            Map<String, Object> result = jdbcCall.execute(params);
             
-            log.info("✅ 일별 통계 PL/SQL 프로시저 실행 완료: branchCode={}, statDate={}", branchCode, statDate);
-            return "SUCCESS: Daily statistics updated for branch " + branchCode + " on " + statDate;
+            Boolean success = (Boolean) result.get("p_success");
+            String message = (String) result.get("p_message");
+            
+            log.info("✅ 일별 통계 PL/SQL 프로시저 실행 완료: tenantId={}, statDate={}, success={}", tenantId, statDate, success);
+            return success ? "SUCCESS: " + message : "ERROR: " + message;
             
         } catch (Exception e) {
             log.error("❌ 일별 통계 PL/SQL 프로시저 실행 실패: branchCode={}, statDate={}, 오류={}", 
@@ -122,23 +133,36 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
         log.info("📈 상담사 성과 PL/SQL 프로시저 호출: consultantId={}, performanceDate={}", 
                  consultantId, performanceDate);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String updatedBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
+        
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
                 .withProcedureName("UpdateConsultantPerformance")
                 .declareParameters(
                     new SqlParameter("p_consultant_id", Types.BIGINT),
-                    new SqlParameter("p_performance_date", Types.DATE)
+                    new SqlParameter("p_performance_date", Types.DATE),
+                    new SqlParameter("p_tenant_id", Types.VARCHAR),
+                    new SqlParameter("p_updated_by", Types.VARCHAR),
+                    new SqlParameter("p_success", Types.BOOLEAN),
+                    new SqlParameter("p_message", Types.VARCHAR)
                 );
             
             Map<String, Object> params = new HashMap<>();
             params.put("p_consultant_id", consultantId);
             params.put("p_performance_date", java.sql.Date.valueOf(performanceDate));
+            params.put("p_tenant_id", tenantId);
+            params.put("p_updated_by", updatedBy);
             
-            jdbcCall.execute(params);
+            Map<String, Object> result = jdbcCall.execute(params);
             
-            log.info("✅ 상담사 성과 PL/SQL 프로시저 실행 완료: consultantId={}, performanceDate={}", 
-                     consultantId, performanceDate);
-            return "SUCCESS: Consultant performance updated for " + consultantId + " on " + performanceDate;
+            Boolean success = (Boolean) result.get("p_success");
+            String message = (String) result.get("p_message");
+            
+            log.info("✅ 상담사 성과 PL/SQL 프로시저 실행 완료: consultantId={}, performanceDate={}, success={}", 
+                     consultantId, performanceDate, success);
+            return success ? "SUCCESS: " + message : "ERROR: " + message;
             
         } catch (Exception e) {
             log.error("❌ 상담사 성과 PL/SQL 프로시저 실행 실패: consultantId={}, performanceDate={}, 오류={}", 
@@ -177,29 +201,35 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
     public int performDailyPerformanceMonitoring(LocalDate monitoringDate) {
         log.info("🔔 일일 성과 모니터링 PL/SQL 프로시저 호출: monitoringDate={}", monitoringDate);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String processedBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
+        
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
                 .withProcedureName("DailyPerformanceMonitoring")
                 .declareParameters(
-                    new SqlParameter("p_monitoring_date", Types.DATE)
+                    new SqlParameter("p_tenant_id", Types.VARCHAR),
+                    new SqlParameter("p_monitoring_date", Types.DATE),
+                    new SqlParameter("p_processed_by", Types.VARCHAR),
+                    new SqlParameter("p_success", Types.BOOLEAN),
+                    new SqlParameter("p_message", Types.VARCHAR),
+                    new SqlParameter("p_alert_count", Types.INTEGER)
                 );
             
             Map<String, Object> params = new HashMap<>();
+            params.put("p_tenant_id", tenantId);
             params.put("p_monitoring_date", java.sql.Date.valueOf(monitoringDate));
+            params.put("p_processed_by", processedBy);
             
-            jdbcCall.execute(params);
+            Map<String, Object> result = jdbcCall.execute(params);
             
-            // 생성된 알림 개수 조회 (성과 알림 테이블에서 오늘 생성된 알림 개수)
-            String countQuery = """
-                SELECT COUNT(*) FROM performance_alerts 
-                WHERE DATE(created_at) = ? AND status = 'PENDING'
-                """;
+            Integer alertCount = (Integer) result.get("p_alert_count");
+            Boolean success = (Boolean) result.get("p_success");
+            String message = (String) result.get("p_message");
             
-            Integer alertCount = jdbcTemplate.queryForObject(countQuery, Integer.class, 
-                java.sql.Date.valueOf(monitoringDate));
-            
-            log.info("✅ 일일 성과 모니터링 PL/SQL 프로시저 실행 완료: monitoringDate={}, 생성된 알림={}개", 
-                     monitoringDate, alertCount);
+            log.info("✅ 일일 성과 모니터링 PL/SQL 프로시저 실행 완료: monitoringDate={}, 생성된 알림={}개, success={}", 
+                     monitoringDate, alertCount, success);
             
             return alertCount != null ? alertCount : 0;
             

@@ -151,6 +151,9 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
     public Map<String, Object> getConsultationRecordMissingStatistics(String branchCode, LocalDate startDate, LocalDate endDate) {
         log.info("📊 상담일지 미작성 통계 조회: 지점={}, 기간={}~{}", branchCode, startDate, endDate);
         
+        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         try {
             // UTF-8 인코딩 설정
             jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
@@ -158,10 +161,11 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("GetConsultationRecordMissingStatistics");
             
+            // 표준화된 프로시저는 p_tenant_id와 p_check_date만 받음 (단일 날짜)
+            // startDate와 endDate가 있으면 startDate를 사용
             MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("p_branch_code", branchCode)
-                .addValue("p_start_date", startDate)
-                .addValue("p_end_date", endDate);
+                .addValue("p_tenant_id", tenantId)
+                .addValue("p_check_date", startDate != null ? startDate : endDate);
             
             Map<String, Object> result = jdbcCall.execute(params);
             

@@ -34,6 +34,9 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
     public Map<String, Object> validateIntegratedAmount(Long mappingId, BigDecimal inputAmount) {
         log.info("🔍 PL/SQL 통합 금액 검증 시작: MappingID={}, InputAmount={}", mappingId, inputAmount);
         
+        // 테넌트 ID 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         Map<String, Object> result = new HashMap<>();
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
@@ -46,30 +49,31 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
             // IN 파라미터 설정
             stmt.setLong(1, mappingId);
             stmt.setBigDecimal(2, inputAmount);
+            stmt.setString(3, tenantId); // p_tenant_id 추가
             
             // OUT 파라미터 등록
-            stmt.registerOutParameter(3, java.sql.Types.BOOLEAN);    // is_valid
-            stmt.registerOutParameter(4, java.sql.Types.VARCHAR);    // validation_message
-            stmt.registerOutParameter(5, java.sql.Types.DECIMAL);    // recommended_amount
-            stmt.registerOutParameter(6, java.sql.Types.LONGVARCHAR); // amount_breakdown (JSON)
-            stmt.registerOutParameter(7, java.sql.Types.DECIMAL);    // consistency_score
-            stmt.registerOutParameter(8, java.sql.Types.BOOLEAN);    // success
-            stmt.registerOutParameter(9, java.sql.Types.VARCHAR);    // message
+            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);    // is_valid
+            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);    // validation_message
+            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);    // recommended_amount
+            stmt.registerOutParameter(7, java.sql.Types.LONGVARCHAR); // amount_breakdown (JSON)
+            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);    // consistency_score
+            stmt.registerOutParameter(9, java.sql.Types.BOOLEAN);    // success
+            stmt.registerOutParameter(10, java.sql.Types.VARCHAR);    // message
             
             // 프로시저 실행
             stmt.execute();
             
             // 결과 추출
-            result.put("isValid", stmt.getBoolean(3));
-            result.put("validationMessage", stmt.getString(4));
-            result.put("recommendedAmount", stmt.getBigDecimal(5));
-            result.put("amountBreakdown", stmt.getString(6));
-            result.put("consistencyScore", stmt.getBigDecimal(7));
-            result.put("success", stmt.getBoolean(8));
-            result.put("message", stmt.getString(9));
+            result.put("isValid", stmt.getBoolean(4));
+            result.put("validationMessage", stmt.getString(5));
+            result.put("recommendedAmount", stmt.getBigDecimal(6));
+            result.put("amountBreakdown", stmt.getString(7));
+            result.put("consistencyScore", stmt.getBigDecimal(8));
+            result.put("success", stmt.getBoolean(9));
+            result.put("message", stmt.getString(10));
             
             log.info("✅ PL/SQL 통합 금액 검증 완료: Success={}, Valid={}, Score={}", 
-                stmt.getBoolean(8), stmt.getBoolean(3), stmt.getBigDecimal(7));
+                stmt.getBoolean(9), stmt.getBoolean(4), stmt.getBigDecimal(8));
             
         } catch (Exception e) {
             log.error("❌ PL/SQL 통합 금액 검증 실패: MappingID={}", mappingId, e);
@@ -85,47 +89,44 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
         log.info("🏭 PL/SQL 전사 통합 재무 현황 조회: StartDate={}, EndDate={}, BranchCodes={}", 
             startDate, endDate, branchCodes);
         
+        // 테넌트 ID 가져오기 (branchCodes 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         Map<String, Object> result = new HashMap<>();
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL GetConsolidatedFinancialData(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL GetConsolidatedFinancialData(?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // UTF-8 인코딩 설정
             setUtf8Encoding(connection);
             
             // IN 파라미터 설정
-            stmt.setDate(1, java.sql.Date.valueOf(startDate));
-            stmt.setDate(2, java.sql.Date.valueOf(endDate));
-            stmt.setString(3, branchCodes);
+            stmt.setString(1, tenantId); // p_tenant_id (첫 번째 파라미터)
+            stmt.setDate(2, java.sql.Date.valueOf(startDate));
+            stmt.setDate(3, java.sql.Date.valueOf(endDate));
             
-            // OUT 파라미터 등록 (순서: 4, 5, 6, 7, 8, 9, 10, 11, 12)
-            stmt.registerOutParameter(4, java.sql.Types.DECIMAL);    // total_revenue
-            stmt.registerOutParameter(5, java.sql.Types.DECIMAL);    // total_expenses
-            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);    // net_profit
-            stmt.registerOutParameter(7, java.sql.Types.INTEGER);    // total_transactions
-            stmt.registerOutParameter(8, java.sql.Types.INTEGER);    // branch_count
-            stmt.registerOutParameter(9, java.sql.Types.LONGVARCHAR); // financial_summary (JSON)
-            stmt.registerOutParameter(10, java.sql.Types.LONGVARCHAR); // branch_breakdown (JSON)
-            stmt.registerOutParameter(11, java.sql.Types.BOOLEAN);   // success
-            stmt.registerOutParameter(12, java.sql.Types.VARCHAR);   // message
+            // OUT 파라미터 등록
+            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);   // success
+            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);   // message
+            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);    // total_revenue
+            stmt.registerOutParameter(7, java.sql.Types.DECIMAL);    // total_expenses
+            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);    // net_profit
+            stmt.registerOutParameter(9, java.sql.Types.INTEGER);    // total_transactions
             
             // 프로시저 실행
             stmt.execute();
             
-            // 결과 추출 (인덱스 4-11)
-            result.put("totalRevenue", stmt.getBigDecimal(4));
-            result.put("totalExpenses", stmt.getBigDecimal(5));
-            result.put("netProfit", stmt.getBigDecimal(6));
-            result.put("totalTransactions", stmt.getInt(7));
-            result.put("branchCount", stmt.getInt(8));
-            result.put("financialSummary", stmt.getString(9));
-            result.put("branchBreakdown", stmt.getString(10));
-            result.put("success", stmt.getBoolean(11));
-            result.put("message", stmt.getString(12));
+            // 결과 추출
+            result.put("success", stmt.getBoolean(4));
+            result.put("message", stmt.getString(5));
+            result.put("totalRevenue", stmt.getBigDecimal(6));
+            result.put("totalExpenses", stmt.getBigDecimal(7));
+            result.put("netProfit", stmt.getBigDecimal(8));
+            result.put("totalTransactions", stmt.getInt(9));
             
             log.info("✅ PL/SQL 전사 통합 재무 현황 조회 완료: Success={}, Revenue={}, Profit={}", 
-                stmt.getBoolean(11), stmt.getBigDecimal(4), stmt.getBigDecimal(6));
+                stmt.getBoolean(4), stmt.getBigDecimal(6), stmt.getBigDecimal(8));
             
         } catch (Exception e) {
             log.error("❌ PL/SQL 전사 통합 재무 현황 조회 실패: StartDate={}, EndDate={}", startDate, endDate, e);
@@ -148,11 +149,15 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
         log.info("💰 PL/SQL 할인 회계 처리 시작: MappingID={}, DiscountCode={}, Original={}, Final={}", 
             mappingId, discountCode, originalAmount, finalAmount);
         
+        // 테넌트 ID 및 생성자 가져오기
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String createdBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
+        
         Map<String, Object> result = new HashMap<>();
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL ProcessDiscountAccounting(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL ProcessDiscountAccounting(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // UTF-8 인코딩 설정
             setUtf8Encoding(connection);
@@ -164,26 +169,28 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
             stmt.setBigDecimal(4, discountAmount);
             stmt.setBigDecimal(5, finalAmount);
             stmt.setString(6, discountType);
+            stmt.setString(7, tenantId); // p_tenant_id 추가
+            stmt.setString(8, createdBy); // p_created_by 추가
             
             // OUT 파라미터 등록
-            stmt.registerOutParameter(7, java.sql.Types.BIGINT);     // accounting_id
-            stmt.registerOutParameter(8, java.sql.Types.VARCHAR);    // erp_transaction_id
-            stmt.registerOutParameter(9, java.sql.Types.LONGVARCHAR); // accounting_summary (JSON)
-            stmt.registerOutParameter(10, java.sql.Types.BOOLEAN);   // success
-            stmt.registerOutParameter(11, java.sql.Types.VARCHAR);   // message
+            stmt.registerOutParameter(9, java.sql.Types.BOOLEAN);   // success
+            stmt.registerOutParameter(10, java.sql.Types.VARCHAR);   // message
+            stmt.registerOutParameter(11, java.sql.Types.BIGINT);     // accounting_id
+            stmt.registerOutParameter(12, java.sql.Types.VARCHAR);    // erp_transaction_id
+            stmt.registerOutParameter(13, java.sql.Types.LONGVARCHAR); // accounting_summary (JSON)
             
             // 프로시저 실행
             stmt.execute();
             
             // 결과 추출
-            result.put("accountingId", stmt.getLong(7));
-            result.put("erpTransactionId", stmt.getString(8));
-            result.put("accountingSummary", stmt.getString(9));
-            result.put("success", stmt.getBoolean(10));
-            result.put("message", stmt.getString(11));
+            result.put("success", stmt.getBoolean(9));
+            result.put("message", stmt.getString(10));
+            result.put("accountingId", stmt.getLong(11));
+            result.put("erpTransactionId", stmt.getString(12));
+            result.put("accountingSummary", stmt.getString(13));
             
             log.info("✅ PL/SQL 할인 회계 처리 완료: Success={}, AccountingID={}, ERPTransactionID={}", 
-                stmt.getBoolean(10), stmt.getLong(7), stmt.getString(8));
+                stmt.getBoolean(9), stmt.getLong(11), stmt.getString(12));
             
         } catch (Exception e) {
             log.error("❌ PL/SQL 할인 회계 처리 실패: MappingID={}, DiscountCode={}", mappingId, discountCode, e);
@@ -204,6 +211,9 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
         log.info("📊 PL/SQL 재무 보고서 생성: Type={}, Start={}, End={}, Branch={}", 
             reportType, periodStart, periodEnd, branchCode);
         
+        // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        
         Map<String, Object> result = new HashMap<>();
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
@@ -217,7 +227,7 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
             stmt.setString(1, reportType);
             stmt.setDate(2, java.sql.Date.valueOf(periodStart));
             stmt.setDate(3, java.sql.Date.valueOf(periodEnd));
-            stmt.setString(4, branchCode);
+            stmt.setString(4, tenantId); // p_tenant_id 추가
             
             // OUT 파라미터 등록
             stmt.registerOutParameter(5, java.sql.Types.LONGVARCHAR); // report_data (JSON)

@@ -6,6 +6,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.JwtService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -47,8 +48,9 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
             ClientRepository clientRepository,
             UserSocialAccountRepository userSocialAccountRepository,
             JwtService jwtService,
-            com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService) {
-        super(userRepository, clientRepository, userSocialAccountRepository, jwtService, dynamicPermissionService);
+            com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService,
+            PersonalDataEncryptionUtil encryptionUtil) {
+        super(userRepository, clientRepository, userSocialAccountRepository, jwtService, dynamicPermissionService, encryptionUtil);
         this.restTemplate = restTemplate;
         
         // 초기화 시 로깅으로 값 확인

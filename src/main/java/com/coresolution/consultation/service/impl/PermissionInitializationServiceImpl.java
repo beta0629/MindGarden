@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.Permission;
 import com.coresolution.consultation.entity.RolePermission;
@@ -180,15 +181,15 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "ACCESS_CONSULTATION_RECORDS"
         );
         
-        // 권한 매핑 생성
-        createRolePermissions("BRANCH_SUPER_ADMIN", branchSuperAdminPermissions);
-        createRolePermissions("ADMIN", adminPermissions);
-        createRolePermissions("BRANCH_ADMIN", branchAdminPermissions);
-        createRolePermissions("HQ_ADMIN", hqAdminPermissions);
-        createRolePermissions("SUPER_HQ_ADMIN", superHqAdminPermissions);
-        createRolePermissions("HQ_MASTER", hqMasterPermissions);
-        createRolePermissions("CONSULTANT", consultantPermissions);
-        createRolePermissions("CLIENT", clientPermissions);
+        // 권한 매핑 생성 (표준화 2025-12-05: enum 활용)
+        createRolePermissions(UserRole.BRANCH_SUPER_ADMIN.name(), branchSuperAdminPermissions);
+        createRolePermissions(UserRole.ADMIN.name(), adminPermissions);
+        createRolePermissions(UserRole.BRANCH_ADMIN.name(), branchAdminPermissions);
+        createRolePermissions(UserRole.HQ_ADMIN.name(), hqAdminPermissions);
+        createRolePermissions(UserRole.SUPER_HQ_ADMIN.name(), superHqAdminPermissions);
+        createRolePermissions(UserRole.HQ_MASTER.name(), hqMasterPermissions);
+        createRolePermissions(UserRole.CONSULTANT.name(), consultantPermissions);
+        createRolePermissions(UserRole.CLIENT.name(), clientPermissions);
         
         log.info("기본 역할별 권한 매핑 초기화 완료");
     }

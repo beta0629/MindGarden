@@ -274,7 +274,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                     admin.getId(), 
                     null, 
                     null, // consultationId
-                    getRoleCodeFromCommonCode("ADMIN"), 
+                    getRoleCodeFromCommonCode(UserRole.ADMIN.name()), 
                     "월간 성과 리포트", 
                     reportMessage,
                     getMessageTypeFromCommonCode("MONTHLY_REPORT"),
@@ -388,7 +388,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                 schedule.getClientId(), 
                 schedule.getConsultantId(), 
                 null, // consultationId
-                getRoleCodeFromCommonCode("CLIENT"), 
+                getRoleCodeFromCommonCode(UserRole.CLIENT.name()), 
                 title, 
                 message + String.format("\n\n📅 일시: %s %s-%s", 
                     schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),

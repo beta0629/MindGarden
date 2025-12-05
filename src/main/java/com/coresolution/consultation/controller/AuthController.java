@@ -55,9 +55,9 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/v1/auth") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
-public class AuthController
+public class AuthController extends BaseApiController {
+    
     private final CommonCodeService commonCodeService;
- extends BaseApiController {
     
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserRepository userRepository;
@@ -1096,7 +1096,7 @@ public class AuthController
                 }
             } else if (request.getLoginType() == BranchLoginRequest.LoginType.HEADQUARTERS) {
                 // 본사 로그인인 경우, 본사 관리자 역할인지 확인
-                if (!user.getRole().isAdminRoleFromCommonCode() // 표준화 2025-12-05: 브랜치/HQ 개념 제거) {
+                if (!isAdminRoleFromCommonCode(user.getRole())) {
                     throw new IllegalArgumentException("본사 로그인은 본사 관리자만 가능합니다.");
                 }
             }

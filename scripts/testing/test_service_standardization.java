@@ -14,6 +14,7 @@ import com.coresolution.consultation.entity.FinancialTransaction;
 import com.coresolution.consultation.entity.User;
 
 import java.util.List;
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

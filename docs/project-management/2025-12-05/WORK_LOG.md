@@ -2935,5 +2935,43 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
 
 ---
 
-**최종 업데이트**: 2025-12-05 19:00
+### [2025-12-05 20:00] 표준화 작업 후 테스트 계획 수립
+
+#### 작업 내용
+1. **종합 테스트 계획 문서 작성**
+   - `TESTING_PLAN.md` 문서 작성
+   - 5개 Phase별 테스트 계획 수립
+   - 예상 오류 및 대응 방안 정리
+
+2. **테스트 스크립트 작성**
+   - 프로시저 표준화 테스트 SQL 스크립트 (`test_procedure_standardization.sql`)
+   - Service 계층 표준화 테스트 Java 코드 (`test_service_standardization.java`)
+   - API 경로 표준화 테스트 JavaScript 스크립트 (`test_api_standardization.js`)
+
+3. **테스트 범위 정의**
+   - 프로시저 표준화 테스트 (46개 프로시저)
+   - Service 계층 테스트 (15개 서비스)
+   - API 경로 표준화 테스트 (70+ API)
+   - 역할 시스템 테스트 (19개 파일)
+   - 프론트엔드 테스트 (250+ 파일)
+
+4. **테스트 실행 계획**
+   - Phase 1: 프로시저 테스트 (1주)
+   - Phase 2: Service 계층 테스트 (1주)
+   - Phase 3: API 테스트 (3일)
+   - Phase 4: 역할 시스템 테스트 (2일)
+   - Phase 5: 프론트엔드 테스트 (2일)
+
+#### 수정된 파일
+- `docs/project-management/2025-12-05/TESTING_PLAN.md` (신규)
+- `scripts/testing/test_procedure_standardization.sql` (신규)
+- `scripts/testing/test_service_standardization.java` (신규)
+- `scripts/testing/test_api_standardization.js` (신규)
+
+#### 커밋
+- `test: 표준화 작업 후 테스트 계획 및 스크립트 작성`
+
+---
+
+**최종 업데이트**: 2025-12-05 20:00
 

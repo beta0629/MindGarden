@@ -2688,13 +2688,45 @@ BRANCHES: '/api/v1/branches' // 표준화 2025-12-05
     - `isAdminRole()`: `ScheduleConstants` 상수 대신 `UserRole.fromString()` 및 `isAdmin()` 사용
     - `isConsultantRole()`: `ScheduleConstants` 상수 대신 `UserRole.fromString()` 및 `isConsultant()` 사용
 
+16. **AuthController 수정**
+    - 파일: `MindGarden/src/main/java/com/coresolution/consultation/controller/AuthController.java`
+    - 변경 내용: 레거시 역할 주석 업데이트
+    - 표준 관리자 역할만 사용한다는 주석 추가
+
+17. **BranchManagementController 수정**
+    - 파일: `MindGarden/src/main/java/com/coresolution/consultation/controller/BranchManagementController.java`
+    - 변경 내용: 주석 처리된 레거시 역할 주석 업데이트 및 `UserRole` import 추가
+    - 표준 관리자 역할만 사용한다는 주석 추가
+
+18. **BranchDataFilterServiceImpl 수정**
+    - 파일: `MindGarden/src/main/java/com/coresolution/consultation/service/impl/BranchDataFilterServiceImpl.java`
+    - 변경 내용: `isHeadquartersAdmin` 메서드를 표준 역할로 변경 및 Deprecated 처리
+    - 이전: 레거시 역할 체크 로직
+    - 이후: `user.getRole().isAdmin()` 사용
+
+19. **PurchaseRequest 수정**
+    - 파일: `MindGarden/src/main/java/com/coresolution/consultation/entity/PurchaseRequest.java`
+    - 변경 내용: 레거시 상태값에 주석 추가
+    - `HQ_MASTER_APPROVED`, `HQ_MASTER_REJECTED` 상태값에 레거시 표시 주석 추가
+
+### 완료된 작업 요약
+
+**총 19개 파일 수정 완료:**
+- Controller 계층: 8개 파일
+- Service 계층: 6개 파일
+- Entity/Util 계층: 2개 파일
+- 주석 업데이트: 3개 파일
+
+**주요 변경 사항:**
+- 모든 레거시 역할 체크를 표준 관리자 역할(`ADMIN`, `TENANT_ADMIN`, `PRINCIPAL`, `OWNER`)로 변경
+- `UserRole.isAdmin()` 메서드 활용
+- 레거시 역할 사용 부분 Deprecated 처리
+- 표준화 문서 준수
+
 ### 남은 작업
 
-- 기타 Controller/Service 파일: 레거시 역할 사용 부분 표준 역할로 변경 필요
-  - `AuthController`: 레거시 역할 매핑 주석 확인 필요
-  - `BranchManagementController`: 주석 처리된 레거시 역할 확인 필요
-  - 기타 Service 파일들
 - 레거시 역할 enum 정의: 하위 호환성을 위해 유지하되, 실제 코드에서는 사용하지 않도록 주석 추가 필요
+- 기타 미확인 파일들: 추가 검토 필요
 
 ### 참조 문서
 

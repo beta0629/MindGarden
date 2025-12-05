@@ -2035,5 +2035,121 @@ SET @sql = IF(@col_exists > 0 AND @idx_exists = 0, 'CREATE INDEX idx_users_tenan
 
 ---
 
+---
+
+## Priority 1.1: 브랜치 코드 제거 작업 시작
+
+### 2025-12-05 (오후)
+
+#### 1. TenantContextFilter 표준화 ✅
+
+**작업 내용**:
+- [x] `extractTenantId` 메서드에서 `branchCode`를 통한 tenant_id 조회 로직 제거 (126-142줄)
+- [x] `extractBusinessType` 메서드에서 `branchCode`를 통한 business_type 조회 로직 제거 (229-249줄)
+- [x] `BranchRepository` 의존성 제거
+- [x] 브랜치 관련 import 제거
+
+**수정 전**:
+```java
+// 2-2. User의 branchCode를 통해 Branch의 tenant_id 조회 (폴백)
+if (user.getBranchCode() != null && branchRepository != null) {
+    Branch branch = branchRepository.findByBranchCodeAndIsDeletedFalse(user.getBranchCode())
+        .orElse(null);
+    if (branch != null && branch.getTenantId() != null) {
+        return branch.getTenantId();
+    }
+}
+```
+
+**수정 후**:
+```java
+// 브랜치 개념 제거: User의 branchCode를 통한 tenant_id 조회 로직 제거됨 (표준화 2025-12-05)
+// User 엔티티에 tenantId가 직접 있으므로 branchCode를 통한 조회는 불필요
+```
+
+**완료일**: 2025-12-05
+
+---
+
+#### 2. TenantContext 표준화 ✅
+
+**작업 내용**:
+- [x] `setBranchId()` 메서드에 `@Deprecated` 추가
+- [x] `getBranchId()` 메서드에 `@Deprecated` 추가
+- [x] `hasBranchId()` 메서드에 `@Deprecated` 추가
+- [x] `set(String tenantId, String branchId)` 메서드에 `@Deprecated` 추가
+- [x] `set(String tenantId, String branchId, String businessType)` 메서드에 `@Deprecated` 추가
+- [x] 모든 Deprecated 메서드에 레거시 호환 주석 추가
+
+**처리 방식**:
+- 레거시 호환성을 위해 메서드는 유지하되 `@Deprecated` 표시
+- 새로운 코드에서 사용하지 않도록 주석 추가
+- `branchId` ThreadLocal은 유지 (레거시 호환)
+
+**완료일**: 2025-12-05
+
+---
+
+#### 3. TenantContextHolder 표준화 ✅
+
+**작업 내용**:
+- [x] `getRequiredBranchId()` 메서드에 `@Deprecated` 추가
+- [x] `getBranchId()` 메서드에 `@Deprecated` 추가
+- [x] `isBranchContextSet()` 메서드에 `@Deprecated` 추가
+- [x] `setBranchId()` 메서드에 `@Deprecated` 추가
+- [x] `logContext()` 메서드에서 BranchId 로깅 제거
+- [x] 모든 Deprecated 메서드에 레거시 호환 주석 추가
+
+**처리 방식**:
+- 레거시 호환성을 위해 메서드는 유지하되 `@Deprecated` 표시
+- 새로운 코드에서 사용하지 않도록 주석 추가
+
+**완료일**: 2025-12-05
+
+---
+
+#### 현재 진행 상황
+
+**Priority 1.1 진행률**: **20%** (3/15 작업 완료)
+
+**완료된 작업**:
+- ✅ TenantContextFilter에서 브랜치 추출 로직 제거
+- ✅ TenantContext에서 branchId 메서드 Deprecated 처리
+- ✅ TenantContextHolder에서 branchId 메서드 Deprecated 처리
+
+---
+
+#### 4. UserRepository 표준화 진행 중 ⏳
+
+**작업 내용**:
+- [x] `findByRoleAndBranchCodeAndIsActive` 메서드에 `@Deprecated` 추가 및 대체 메서드 추가
+- [x] `findByBranchCode` 메서드에 `@Deprecated` 추가
+- [x] `findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername` 메서드에 `@Deprecated` 추가 및 대체 메서드 추가
+- [x] `getUserStatisticsByBranchCode` 메서드에 `@Deprecated` 추가 및 대체 메서드 추가
+- [x] `countByBranchIdAndIsDeletedFalse` 메서드에 `@Deprecated` 추가
+- [x] `countByBranchIdAndIsActiveTrueAndIsDeletedFalse` 메서드에 `@Deprecated` 추가
+- [x] `countByBranchIdAndRoleAndIsDeletedFalse` 메서드에 `@Deprecated` 추가
+- [x] `findAllByTenantIdAndBranchId` 메서드들에 `@Deprecated` 추가
+
+**처리 방식**:
+- 레거시 호환성을 위해 메서드는 유지하되 `@Deprecated` 표시
+- 새로운 메서드 추가 (브랜치 개념 제거)
+- 모든 Deprecated 메서드에 레거시 호환 주석 추가
+
+**진행률**: 약 30% (UserRepository 일부 완료)
+
+**완료일**: 2025-12-05 (진행 중)
+
+---
+
+**남은 작업**:
+- ⏳ UserRepository 나머지 브랜치 관련 메서드 Deprecated 처리
+- ⏳ 다른 Repository 파일들 브랜치 관련 메서드 검토 및 Deprecated 처리
+- ⏳ Entity에서 branchId 필드 검토 (레거시 호환)
+- ⏳ Service 계층에서 branchCode 사용 제거
+- ⏳ Frontend 브랜치 코드 제거
+
+---
+
 **최종 업데이트**: 2025-12-05
 

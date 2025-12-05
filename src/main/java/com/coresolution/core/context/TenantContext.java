@@ -37,7 +37,9 @@ public class TenantContext {
      * 현재 요청의 지점 ID 설정
      * 
      * @param branchId 지점 ID
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      */
+    @Deprecated
     public static void setBranchId(String branchId) {
         TenantContext.branchId.set(branchId);
     }
@@ -46,7 +48,9 @@ public class TenantContext {
      * 현재 요청의 지점 ID 조회
      * 
      * @return 지점 ID (없으면 null)
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      */
+    @Deprecated
     public static String getBranchId() {
         return branchId.get();
     }
@@ -64,7 +68,9 @@ public class TenantContext {
      * 지점 ID 존재 여부 확인
      * 
      * @return 지점 ID가 설정되어 있으면 true
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      */
+    @Deprecated
     public static boolean hasBranchId() {
         return branchId.get() != null;
     }
@@ -136,7 +142,10 @@ public class TenantContext {
      * 
      * @param tenantId 테넌트 UUID
      * @param branchId 지점 ID
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #setTenantId(String)}와 {@link #setBusinessType(String)}를 사용하세요.
      */
+    @Deprecated
     public static void set(String tenantId, String branchId) {
         setTenantId(tenantId);
         setBranchId(branchId);
@@ -148,7 +157,10 @@ public class TenantContext {
      * @param tenantId 테넌트 UUID
      * @param branchId 지점 ID
      * @param businessType 비즈니스 타입
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #setTenantId(String)}와 {@link #setBusinessType(String)}를 사용하세요.
      */
+    @Deprecated
     public static void set(String tenantId, String branchId, String businessType) {
         setTenantId(tenantId);
         setBranchId(branchId);

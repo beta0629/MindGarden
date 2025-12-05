@@ -1,9 +1,7 @@
 package com.coresolution.core.filter;
 
 import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.User;
-import com.coresolution.consultation.repository.BranchRepository;
 import com.coresolution.consultation.utils.SessionUtils;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -12,7 +10,6 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -37,8 +34,7 @@ import java.io.IOException;
 @Order(1) // SessionBasedAuthenticationFilter 이전에 실행
 public class TenantContextFilter implements Filter {
     
-    @Autowired(required = false)
-    private BranchRepository branchRepository;
+    // 브랜치 개념 제거: BranchRepository 의존성 제거됨 (표준화 2025-12-05)
     
     /**
      * HTTP 헤더에서 tenant_id 추출 키
@@ -123,23 +119,8 @@ public class TenantContextFilter implements Filter {
                     return user.getTenantId();
                 }
                 
-                // 2-2. User의 branchCode를 통해 Branch의 tenant_id 조회 (폴백)
-                if (user.getBranchCode() != null && branchRepository != null) {
-                    try {
-                        Branch branch = branchRepository.findByBranchCodeAndIsDeletedFalse(user.getBranchCode())
-                            .orElse(null);
-                        
-                        if (branch != null && branch.getTenantId() != null) {
-                            // Branch 엔티티에서 tenant_id 조회
-                            // 세션에 tenant_id 저장 (다음 요청에서 빠르게 조회)
-                            session.setAttribute(SESSION_TENANT_ID, branch.getTenantId());
-                            log.debug("Tenant ID extracted from user branch: {}", branch.getTenantId());
-                            return branch.getTenantId();
-                        }
-                    } catch (Exception e) {
-                        log.warn("Failed to extract tenant ID from user branch: {}", e.getMessage());
-                    }
-                }
+                // 브랜치 개념 제거: User의 branchCode를 통한 tenant_id 조회 로직 제거됨 (표준화 2025-12-05)
+                // User 엔티티에 tenantId가 직접 있으므로 branchCode를 통한 조회는 불필요
             }
             
             // 3. 세션에 저장된 tenant_id 사용 (우선순위 3)
@@ -226,27 +207,9 @@ public class TenantContextFilter implements Filter {
         if (session != null) {
             User user = SessionUtils.getCurrentUser(session);
             if (user != null) {
-                // User의 branchCode를 통해 Branch의 tenant_id를 조회하고, 
-                // 그 tenant_id로 Tenant의 businessType 조회
-                if (user.getBranchCode() != null && branchRepository != null) {
-                    try {
-                        Branch branch = branchRepository.findByBranchCodeAndIsDeletedFalse(user.getBranchCode())
-                            .orElse(null);
-                        
-                        if (branch != null && branch.getTenantId() != null) {
-                            // Branch에서 tenantId를 가져와서 Tenant 조회
-                            // TODO: TenantRepository 추가 필요
-                            // 임시로 세션에서 조회
-                            Object sessionBusinessType = session.getAttribute("businessType");
-                            if (sessionBusinessType != null) {
-                                log.debug("Business type extracted from session: {}", sessionBusinessType);
-                                return sessionBusinessType.toString();
-                            }
-                        }
-                    } catch (Exception e) {
-                        log.warn("Failed to extract business type from user branch: {}", e.getMessage());
-                    }
-                }
+                // 브랜치 개념 제거: User의 branchCode를 통한 business_type 조회 로직 제거됨 (표준화 2025-12-05)
+                // User 엔티티에 tenantId가 직접 있으므로, 필요시 TenantRepository를 통해 businessType 조회 가능
+                // 현재는 세션에서 조회하는 방식 사용
             }
             
             // 3. 세션에 저장된 business_type 사용 (우선순위 3)

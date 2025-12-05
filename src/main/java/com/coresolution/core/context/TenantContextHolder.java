@@ -41,7 +41,9 @@ public class TenantContextHolder {
      * 
      * @return 지점 ID
      * @throws IllegalStateException 지점 ID가 설정되지 않은 경우
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      */
+    @Deprecated
     public static String getRequiredBranchId() {
         String branchId = TenantContext.getBranchId();
         if (branchId == null || branchId.isEmpty()) {
@@ -54,7 +56,9 @@ public class TenantContextHolder {
      * 현재 요청의 지점 ID 조회 (안전한 방식)
      * 
      * @return 지점 ID (없으면 null)
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      */
+    @Deprecated
     public static String getBranchId() {
         return TenantContext.getBranchId();
     }
@@ -72,7 +76,9 @@ public class TenantContextHolder {
      * 지점 컨텍스트가 설정되어 있는지 확인
      * 
      * @return 지점 ID가 설정되어 있으면 true
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      */
+    @Deprecated
     public static boolean isBranchContextSet() {
         return TenantContext.hasBranchId();
     }
@@ -95,7 +101,9 @@ public class TenantContextHolder {
      * 지점 컨텍스트 설정
      * 
      * @param branchId 지점 ID
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      */
+    @Deprecated
     public static void setBranchId(String branchId) {
         if (branchId != null && !branchId.isEmpty()) {
             TenantContext.setBranchId(branchId);
@@ -164,10 +172,10 @@ public class TenantContextHolder {
      */
     public static void logContext() {
         if (log.isDebugEnabled()) {
-            log.debug("Tenant Context - TenantId: {}, BranchId: {}, BusinessType: {}", 
+            log.debug("Tenant Context - TenantId: {}, BusinessType: {}", 
                 TenantContext.getTenantId(), 
-                TenantContext.getBranchId(),
                 TenantContext.getBusinessType());
+            // 브랜치 개념 제거: BranchId 로깅 제거됨 (표준화 2025-12-05)
         }
     }
 }

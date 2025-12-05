@@ -338,8 +338,26 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * 역할 + 지점별 사용자 조회 (tenantId 필터링)
      */
+    /**
+     * 역할과 활성 상태로 사용자 조회 (테넌트 필터링)
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findByTenantIdAndRoleAndIsActive(String, UserRole, Boolean)}를 사용하세요.
+     */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.branchCode = :branchCode AND (:isActive IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
     List<User> findByRoleAndBranchCodeAndIsActive(@Param("tenantId") String tenantId, @Param("role") UserRole role, @Param("branchCode") String branchCode, @Param("isActive") Boolean isActive);
+    
+    /**
+     * 역할과 활성 상태로 사용자 조회 (테넌트 필터링, 브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @param role 사용자 역할
+     * @param isActive 활성 상태 (null이면 전체)
+     * @return 사용자 목록
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND (:isActive IS NULL OR u.isActive = :isActive) AND u.isDeleted = false")
+    List<User> findByTenantIdAndRoleAndIsActive(@Param("tenantId") String tenantId, @Param("role") UserRole role, @Param("isActive") Boolean isActive);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
@@ -725,8 +743,30 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Object[] getUserStatisticsDeprecated();
     
     /**
-     * 지점코드별 사용자 통계 정보 조회 (tenantId 필터링)
+     * 테넌트별 사용자 통계 정보 조회 (브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @return 사용자 통계 정보 배열
      */
+    @Query("SELECT " +
+           "COUNT(u) as totalUsers, " +
+           "COUNT(CASE WHEN u.role = 'CLIENT' THEN 1 END) as clientCount, " +
+           "COUNT(CASE WHEN u.role = 'CONSULTANT' THEN 1 END) as consultantCount, " +
+           "COUNT(CASE WHEN u.role = 'ADMIN' THEN 1 END) as adminCount, " +
+           "COUNT(CASE WHEN u.isActive = true THEN 1 END) as activeCount, " +
+           "COUNT(CASE WHEN u.isEmailVerified = true THEN 1 END) as verifiedCount, " +
+           "AVG(u.experiencePoints) as avgExperiencePoints, " +
+           "AVG(u.totalConsultations) as avgConsultations " +
+           "FROM User u WHERE u.tenantId = :tenantId AND u.isDeleted = false")
+    Object[] getUserStatisticsByTenantId(@Param("tenantId") String tenantId);
+    
+    /**
+     * 지점코드별 사용자 통계 정보 조회 (tenantId 필터링)
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #getUserStatisticsByTenantId(String)}를 사용하세요.
+     */
+    @Deprecated
     @Query("SELECT " +
            "COUNT(u) as totalUsers, " +
            "COUNT(CASE WHEN u.role = 'CLIENT' THEN 1 END) as clientCount, " +
@@ -893,9 +933,23 @@ public interface UserRepository extends BaseRepository<User, Long> {
     
     /**
      * 지점 코드와 역할로 사용자 조회 (tenantId 필터링)
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findByTenantIdAndRole(String, UserRole)}를 사용하세요.
      */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND u.role = :role AND u.isDeleted = false ORDER BY u.username")
     List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode, @Param("role") UserRole role);
+    
+    /**
+     * 테넌트 ID와 역할로 사용자 조회 (브랜치 개념 제거)
+     * 
+     * @param tenantId 테넌트 UUID
+     * @param role 사용자 역할
+     * @return 사용자 목록
+     */
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.role = :role AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByTenantIdAndRole(@Param("tenantId") String tenantId, @Param("role") UserRole role);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 사용자 정보 노출!
@@ -1000,6 +1054,13 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * 지점별 활성 사용자 수 조회 (tenantId 필터링)
      */
+    /**
+     * 지점 ID별 활성 사용자 수 조회 (테넌트 필터링)
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 테넌트별 활성 사용자 수를 조회하는 메서드를 사용하세요.
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isActive = true AND u.isDeleted = false")
     long countByBranchIdAndIsActiveTrueAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
@@ -1013,6 +1074,13 @@ public interface UserRepository extends BaseRepository<User, Long> {
     /**
      * 지점별 역할별 사용자 수 조회 (tenantId 필터링)
      */
+    /**
+     * 지점 ID별 역할별 사용자 수 조회 (테넌트 필터링)
+     * 
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 테넌트별 역할별 사용자 수를 조회하는 메서드를 사용하세요.
+     */
+    @Deprecated
     @Query("SELECT COUNT(u) FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.role = :role AND u.isDeleted = false")
     long countByBranchIdAndRoleAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, @Param("role") UserRole role);
     
@@ -1097,7 +1165,10 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * @param tenantId 테넌트 UUID
      * @param branchId 지점 ID (User의 경우 branch.id)
      * @return 활성 사용자 목록
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findAllByTenantId(String)}를 사용하세요.
      */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isDeleted = false")
     List<User> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);
     
@@ -1109,7 +1180,10 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * @param branchId 지점 ID (User의 경우 branch.id)
      * @param pageable 페이징 정보
      * @return 활성 사용자 페이지
+     * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
+     *             대신 {@link #findAllByTenantId(String, Pageable)}를 사용하세요.
      */
+    @Deprecated
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isDeleted = false")
     Page<User> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);
 }

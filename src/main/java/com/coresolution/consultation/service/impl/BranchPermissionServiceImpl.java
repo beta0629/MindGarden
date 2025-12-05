@@ -99,154 +99,107 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
     }
     
     @Override
-    public boolean canManageBranchConsultants(User user, Long branchId) {
-        if (user == null || branchId == null) {
-            return false;
+    public Map<String, List<String>> getRolePermissions(String tenantId) {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            log.warn("tenantId가 없어서 권한 조회 불가");
+            return new HashMap<>();
         }
         
-        // 지점 관리 권한이 있어야 상담사 관리 가능
-        if (!canManageBranch(user, branchId)) {
-            return false;
-        }
-        
-        // 기존 동적 권한 시스템 활용
-        return dynamicPermissionService.hasPermission(user, "MANAGE_CONSULTANTS");
-    }
-    
-    @Override
-    public boolean canManageBranchClients(User user, Long branchId) {
-        if (user == null || branchId == null) {
-            return false;
-        }
-        
-        // 지점 관리 권한이 있어야 내담자 관리 가능
-        if (!canManageBranch(user, branchId)) {
-            return false;
-        }
-        
-        // 기존 동적 권한 시스템 활용
-        return dynamicPermissionService.hasPermission(user, "MANAGE_CLIENTS");
-    }
-    
-    @Override
-    public boolean canManageBranchSchedules(User user, Long branchId) {
-        if (user == null || branchId == null) {
-            return false;
-        }
-        
-        // 지점 관리 권한이 있어야 스케줄 관리 가능
-        if (!canManageBranch(user, branchId)) {
-            return false;
-        }
-        
-        // 기존 동적 권한 시스템 활용
-        return dynamicPermissionService.hasPermission(user, "MANAGE_SCHEDULES");
-    }
-    
-    @Override
-    public boolean canViewBranchStatistics(User user, Long branchId) {
-        if (user == null || branchId == null) {
-            return false;
-        }
-        
-        // 지점 데이터 접근 권한이 있어야 통계 조회 가능
-        if (!canAccessBranchData(user, branchId)) {
-            return false;
-        }
-        
-        // 기존 동적 권한 시스템 활용
-        return dynamicPermissionService.hasPermission(user, "VIEW_STATISTICS");
-    }
-    
-    @Override
-    public List<String> getBranchPermissions(User user, Long branchId) {
-        List<String> permissions = new ArrayList<>();
-        
-        if (user == null || branchId == null) {
-            return permissions;
-        }
-        
-        // 기존 동적 권한 시스템에서 권한 목록 조회
-        List<CommonCode> rolePermissions = commonCodeService.getActiveCommonCodesByGroup(ROLE_PERMISSION_GROUP);
-        
-        for (CommonCode permission : rolePermissions) {
-            String permissionCode = permission.getCodeValue();
-            if (permissionCode.startsWith(user.getRole().name() + "-")) {
-                String actualPermission = permissionCode.substring(user.getRole().name().length() + 1);
+        try {
+            // 공통코드에서 역할별 권한 조회
+            List<CommonCode> rolePermissions = commonCodeService.getActiveCommonCodesByGroup(ROLE_PERMISSION_GROUP);
+            
+            Map<String, List<String>> result = new HashMap<>();
+            
+            for (CommonCode permission : rolePermissions) {
+                String permissionCode = permission.getCodeValue();
+                String roleName = permission.getCodeLabel(); // 예: "ADMIN", "CONSULTANT"
                 
-                // 지점별 권한 확인
-                if (isBranchRelatedPermission(actualPermission)) {
-                    if (checkBranchPermission(user, branchId, actualPermission)) {
-                        permissions.add(actualPermission);
-                    }
+                // extraData에서 권한 목록 파싱
+                String extraData = permission.getExtraData();
+                if (extraData != null && !extraData.trim().isEmpty()) {
+                    // JSON 파싱 로직 (간단한 예시)
+                    // 실제로는 JSON 파서 사용 권장
+                    List<String> permissions = parsePermissionsFromExtraData(extraData);
+                    result.put(roleName, permissions);
                 }
             }
+            
+            return result;
+        } catch (Exception e) {
+            log.error("역할별 권한 조회 실패: {}", e.getMessage(), e);
+            return new HashMap<>();
         }
-        
-        log.debug("지점별 권한 목록 조회: 사용자={}, 지점={}, 권한수={}", 
-                user.getUsername(), branchId, permissions.size());
-        
-        return permissions;
     }
     
     @Override
-    public Map<String, Object> getBranchPermissionMatrix(Long branchId) {
-        Map<String, Object> matrix = new HashMap<>();
+    public Map<String, List<String>> getBranchPermissions(String tenantId) {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            log.warn("tenantId가 없어서 권한 조회 불가");
+            return new HashMap<>();
+        }
         
-        // 모든 역할별 지점 권한 매트릭스 조회
-        List<CommonCode> branchPermissions = commonCodeService.getActiveCommonCodesByGroup(BRANCH_PERMISSION_GROUP);
-        
-        Map<String, List<String>> rolePermissions = new HashMap<>();
-        
-        for (CommonCode permission : branchPermissions) {
-            String codeValue = permission.getCodeValue();
-            if (codeValue.contains("-")) {
-                String[] parts = codeValue.split("-", 2);
-                String role = parts[0];
-                String permissionName = parts[1];
+        try {
+            // 공통코드에서 지점별 권한 조회
+            List<CommonCode> branchPermissions = commonCodeService.getActiveCommonCodesByGroup(BRANCH_PERMISSION_GROUP);
+            
+            Map<String, List<String>> rolePermissions = new HashMap<>();
+            
+            for (CommonCode permission : branchPermissions) {
+                String permissionCode = permission.getCodeValue();
+                String roleName = permission.getCodeLabel();
                 
-                rolePermissions.computeIfAbsent(role, k -> new ArrayList<>()).add(permissionName);
+                // extraData에서 권한 목록 파싱
+                String extraData = permission.getExtraData();
+                if (extraData != null && !extraData.trim().isEmpty()) {
+                    List<String> permissions = parsePermissionsFromExtraData(extraData);
+                    rolePermissions.put(roleName, permissions);
+                }
             }
+            
+            return rolePermissions;
+        } catch (Exception e) {
+            log.error("지점별 권한 조회 실패: {}", e.getMessage(), e);
+            return new HashMap<>();
         }
-        
-        matrix.put("branchId", branchId);
-        matrix.put("rolePermissions", rolePermissions);
-        matrix.put("totalRoles", rolePermissions.size());
-        
-        log.debug("지점별 권한 매트릭스 조회 완료: 지점={}", branchId);
-        
-        return matrix;
     }
     
     @Override
-    public List<Map<String, Object>> getBranchMenuPermissions(User user, Long branchId) {
-        List<Map<String, Object>> menuPermissions = new ArrayList<>();
-        
-        if (user == null || branchId == null) {
-            return menuPermissions;
+    public List<Map<String, Object>> getMenuPermissions(String tenantId) {
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            log.warn("tenantId가 없어서 메뉴 권한 조회 불가");
+            return new ArrayList<>();
         }
         
-        // 기존 동적 메뉴 시스템 활용
-        List<CommonCode> menus = commonCodeService.getActiveCommonCodesByGroup(MENU_GROUP);
-        
-        for (CommonCode menu : menus) {
-            Map<String, Object> menuInfo = new HashMap<>();
-            menuInfo.put("menuId", menu.getId());
-            menuInfo.put("menuCode", menu.getCodeValue());
-            menuInfo.put("menuName", menu.getCodeLabel());
-            menuInfo.put("menuDescription", menu.getCodeDescription());
+        try {
+            // 공통코드에서 메뉴 권한 조회
+            List<CommonCode> menus = commonCodeService.getActiveCommonCodesByGroup(MENU_GROUP);
             
-            // 지점별 메뉴 접근 권한 확인
-            boolean hasAccess = checkBranchMenuAccess(user, branchId, menu.getCodeValue());
-            menuInfo.put("hasAccess", hasAccess);
+            List<Map<String, Object>> menuList = new ArrayList<>();
             
-            menuPermissions.add(menuInfo);
+            for (CommonCode menu : menus) {
+                Map<String, Object> menuInfo = new HashMap<>();
+                menuInfo.put("code", menu.getCodeValue());
+                menuInfo.put("label", menu.getCodeLabel());
+                menuInfo.put("description", menu.getCodeDescription());
+                menuInfo.put("icon", menu.getIcon());
+                menuInfo.put("sortOrder", menu.getSortOrder());
+                
+                // extraData에서 추가 정보 파싱
+                String extraData = menu.getExtraData();
+                if (extraData != null && !extraData.trim().isEmpty()) {
+                    // JSON 파싱 로직
+                    menuInfo.put("extraData", extraData);
+                }
+                
+                menuList.add(menuInfo);
+            }
+            
+            return menuList;
+        } catch (Exception e) {
+            log.error("메뉴 권한 조회 실패: {}", e.getMessage(), e);
+            return new ArrayList<>();
         }
-        
-        log.debug("지점별 메뉴 권한 조회 완료: 사용자={}, 지점={}, 메뉴수={}", 
-                user.getUsername(), branchId, menuPermissions.size());
-        
-        return menuPermissions;
     }
     
     /**
@@ -277,34 +230,118 @@ public class BranchPermissionServiceImpl implements BranchPermissionService {
      * 지점 관련 권한인지 확인
      */
     private boolean isBranchRelatedPermission(String permission) {
-        return permission.startsWith("BRANCH_") || 
-               permission.startsWith("MANAGE_") || 
-               permission.startsWith("VIEW_");
-    }
-    
-    /**
-     * 지점별 권한 확인
-     */
-    private boolean checkBranchPermission(User user, Long branchId, String permission) {
-        // 기본 권한 확인
-        if (!dynamicPermissionService.hasPermission(user, permission)) {
+        if (permission == null || permission.trim().isEmpty()) {
             return false;
         }
         
-        // 지점별 접근 권한 확인
-        return canAccessBranchData(user, branchId);
+        // 지점 관련 권한 코드 목록
+        List<String> branchPermissions = List.of(
+            "BRANCH_VIEW",
+            "BRANCH_MANAGE",
+            "BRANCH_DATA_ACCESS",
+            "BRANCH_STATISTICS"
+        );
+        
+        return branchPermissions.contains(permission.toUpperCase());
     }
     
     /**
-     * 지점별 메뉴 접근 권한 확인
+     * extraData에서 권한 목록 파싱
      */
-    private boolean checkBranchMenuAccess(User user, Long branchId, String menuCode) {
-        // 기본 메뉴 접근 권한 확인
-        if (!dynamicPermissionService.hasPermission(user, "ACCESS_" + menuCode)) {
-            return false;
+    private List<String> parsePermissionsFromExtraData(String extraData) {
+        List<String> permissions = new ArrayList<>();
+        
+        try {
+            // 간단한 JSON 파싱 (실제로는 JSON 라이브러리 사용 권장)
+            if (extraData.contains("\"permissions\"")) {
+                // JSON 파싱 로직
+                // 예: {"permissions": ["PERMISSION1", "PERMISSION2"]}
+                String permissionsStr = extraData.substring(
+                    extraData.indexOf("[") + 1,
+                    extraData.indexOf("]")
+                );
+                
+                String[] permissionArray = permissionsStr.split(",");
+                for (String permission : permissionArray) {
+                    String cleaned = permission.trim()
+                        .replace("\"", "")
+                        .replace("'", "");
+                    if (!cleaned.isEmpty()) {
+                        permissions.add(cleaned);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("권한 파싱 실패: {}", extraData, e);
         }
         
-        // 지점별 접근 권한 확인
-        return canAccessBranchData(user, branchId);
+        return permissions;
+    }
+    
+    /**
+     * 공통코드에서 관리자 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
+     * 표준 관리자 역할: ADMIN, TENANT_ADMIN, PRINCIPAL, OWNER
+     * 레거시 역할(HQ_*, BRANCH_*)은 더 이상 사용하지 않음
+     * @param role 사용자 역할
+     * @return 관리자 역할 여부
+     */
+    private boolean isAdminRoleFromCommonCode(UserRole role) {
+        if (role == null) {
+            return false;
+        }
+        try {
+            // 공통코드에서 관리자 역할 목록 조회 (codeGroup='ROLE', extraData에 isAdmin=true)
+            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
+            if (roleCodes == null || roleCodes.isEmpty()) {
+                // 폴백: 표준 관리자 역할만 체크 (브랜치/HQ 개념 제거)
+                return role == UserRole.ADMIN || 
+                       role == UserRole.TENANT_ADMIN || 
+                       role == UserRole.PRINCIPAL || 
+                       role == UserRole.OWNER;
+            }
+            // 공통코드에서 관리자 역할인지 확인
+            String roleName = role.name();
+            return roleCodes.stream()
+                .anyMatch(code -> code.getCodeValue().equals(roleName) && 
+                              (code.getExtraData() != null && 
+                               (code.getExtraData().contains("\"isAdmin\":true") || 
+                                code.getExtraData().contains("\"roleType\":\"ADMIN\""))));
+        } catch (Exception e) {
+            log.warn("공통코드에서 관리자 역할 조회 실패, 폴백 사용: {}", role, e);
+            // 폴백: 표준 관리자 역할만 체크
+            return role == UserRole.ADMIN || 
+                   role == UserRole.TENANT_ADMIN || 
+                   role == UserRole.PRINCIPAL || 
+                   role == UserRole.OWNER;
+        }
+    }
+    
+    /**
+     * 공통코드에서 사무원 역할인지 확인 (표준화 2025-12-05: 브랜치/HQ 개념 제거, 동적 역할 조회)
+     * BRANCH_MANAGER → STAFF로 통합
+     * @param role 사용자 역할
+     * @return 사무원 역할 여부
+     */
+    private boolean isStaffRoleFromCommonCode(UserRole role) {
+        if (role == null) {
+            return false;
+        }
+        try {
+            // 공통코드에서 사무원 역할 목록 조회
+            List<CommonCode> roleCodes = commonCodeService.getActiveCommonCodesByGroup("ROLE");
+            if (roleCodes == null || roleCodes.isEmpty()) {
+                return role == UserRole.STAFF;
+            }
+            // 공통코드에서 사무원 역할인지 확인
+            String roleName = role.name();
+            return roleCodes.stream()
+                .anyMatch(code -> code.getCodeValue().equals(roleName) && 
+                              (code.getExtraData() != null && 
+                               (code.getExtraData().contains("\"isStaff\":true") || 
+                                code.getExtraData().contains("\"roleType\":\"STAFF\""))));
+        } catch (Exception e) {
+            log.warn("공통코드에서 사무원 역할 조회 실패, 폴백 사용: {}", role, e);
+            return role == UserRole.STAFF;
+        }
     }
 }

@@ -102,6 +102,7 @@ on:
 - `deploy-frontend-dev.yml` - 프론트엔드 배포
 - `deploy-ops-dev.yml` - Ops 프론트엔드 배포
 - `deploy-trinity-dev.yml` - Trinity 프론트엔드 배포
+- `deploy-procedures-dev.yml` - 표준화된 프로시저 배포 (개발)
 
 ### 3. 운영 서버 배포
 
@@ -118,13 +119,14 @@ on:
 2. **Java 17 + Node.js 18 환경 구성**
 3. **백엔드 빌드** (Maven, `-DskipTests`)
 4. **프론트엔드 빌드** (React)
-5. **SSH 연결 테스트**
-6. **서비스 중지**
-7. **백업 생성**
-8. **파일 업로드** (JAR, 정적 파일)
-9. **서비스 재시작**
-10. **헬스체크**
-11. **메모리 정리**
+5. **프로시저 배포** (표준화된 프로시저 변경 시, `deploy-procedures-prod.yml` 수동 실행)
+6. **SSH 연결 테스트**
+7. **서비스 중지**
+8. **백업 생성**
+9. **파일 업로드** (JAR, 정적 파일)
+10. **서비스 재시작**
+11. **헬스체크**
+12. **메모리 정리**
 
 ---
 
@@ -135,6 +137,7 @@ on:
 - [ ] 테스트 통과
 - [ ] 환경 변수 확인
 - [ ] 데이터베이스 마이그레이션 확인
+- [ ] **프로시저 배포 확인** (표준화된 프로시저 변경 시)
 - [ ] 백업 계획 수립
 
 ### 배포 중 확인
@@ -479,6 +482,85 @@ git push origin main
 
 ---
 
+## 📦 프로시저 배포
+
+### 1. 표준화된 프로시저 배포
+
+#### 배포 파일 생성
+표준화된 프로시저는 DELIMITER 없이 재작성된 배포용 파일을 사용합니다.
+
+```bash
+# 배포용 파일 생성
+bash database/schema/procedures_standardized/create_deployment_files.sh
+```
+
+생성된 파일 위치: `database/schema/procedures_standardized/deployment/*_deploy.sql`
+
+#### 개발 환경 배포
+```bash
+# 자동 배포 (develop 브랜치 push 시)
+git push origin develop
+# → .github/workflows/deploy-procedures-dev.yml 자동 실행
+
+# 수동 배포
+bash scripts/automation/deployment/deploy-standardized-procedures.sh dev
+```
+
+#### 운영 환경 배포
+```bash
+# GitHub Actions에서 수동 실행
+# 1. GitHub 웹 인터페이스 접속
+# 2. Actions → "📦 표준화된 프로시저 배포 (운영)" 선택
+# 3. "Run workflow" 클릭 → main 브랜치 선택 → 실행
+```
+
+또는:
+```bash
+# 로컬에서 실행 (운영 환경 DB 정보 필요)
+export PROD_SERVER_HOST=beta74.cafe24.com
+export PROD_SERVER_USER=beta74
+export PROD_DB_HOST=beta74.cafe24.com
+export PROD_DB_USER=mindgarden_prod
+export PROD_DB_PASSWORD=<운영 DB 비밀번호>
+export PROD_DB_NAME=core_solution
+
+bash scripts/automation/deployment/deploy-standardized-procedures.sh prod
+```
+
+### 2. 배포 확인
+
+```bash
+# 배포된 프로시저 확인
+mysql -h <DB_HOST> -u <DB_USER> -p<DB_PASSWORD> <DB_NAME> -e "
+SELECT ROUTINE_NAME, CREATED, LAST_ALTERED 
+FROM information_schema.ROUTINES 
+WHERE ROUTINE_SCHEMA = '<DB_NAME>' 
+  AND ROUTINE_TYPE = 'PROCEDURE' 
+  AND ROUTINE_NAME LIKE '%standardized%'
+ORDER BY ROUTINE_NAME;
+"
+```
+
+### 3. 프로시저 배포 체크리스트
+
+#### 배포 전
+- [ ] 표준화된 프로시저 파일 검토 완료
+- [ ] 배포용 파일 생성 (`create_deployment_files.sh` 실행)
+- [ ] 테스트 환경에서 배포 테스트 완료
+- [ ] DB 백업 계획 수립
+
+#### 배포 중
+- [ ] 배포용 파일 업로드 성공 확인
+- [ ] 프로시저 생성 성공 확인
+- [ ] 프로시저 파라미터 확인
+
+#### 배포 후
+- [ ] 프로시저 실행 테스트
+- [ ] 애플리케이션 연동 테스트
+- [ ] 에러 로그 확인
+
+---
+
 ## 📞 문의
 
 배포 표준 관련 문의:
@@ -486,5 +568,5 @@ git push origin main
 - 백엔드 팀
 - 아키텍처 팀
 
-**최종 업데이트**: 2025-12-03
+**최종 업데이트**: 2025-12-05
 

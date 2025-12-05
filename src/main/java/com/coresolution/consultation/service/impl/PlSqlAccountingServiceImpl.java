@@ -41,7 +41,7 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL ValidateIntegratedAmount(?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL ValidateIntegratedAmount(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // UTF-8 인코딩 설정
             setUtf8Encoding(connection);
@@ -51,19 +51,19 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
             stmt.setBigDecimal(2, inputAmount);
             stmt.setString(3, tenantId); // p_tenant_id 추가
             
-            // OUT 파라미터 등록
-            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);    // is_valid
-            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);    // validation_message
-            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);    // recommended_amount
-            stmt.registerOutParameter(7, java.sql.Types.LONGVARCHAR); // amount_breakdown (JSON)
-            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);    // consistency_score
-            stmt.registerOutParameter(9, java.sql.Types.BOOLEAN);    // success
-            stmt.registerOutParameter(10, java.sql.Types.VARCHAR);    // message
+            // OUT 파라미터 등록 (총 9개 파라미터: 3 IN + 6 OUT)
+            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);    // p_is_valid
+            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);    // p_validation_message
+            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);    // p_recommended_amount
+            stmt.registerOutParameter(7, java.sql.Types.LONGVARCHAR); // p_amount_breakdown (JSON)
+            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);    // p_consistency_score
+            stmt.registerOutParameter(9, java.sql.Types.BOOLEAN);    // p_success
+            stmt.registerOutParameter(10, java.sql.Types.VARCHAR);    // p_message
             
             // 프로시저 실행
             stmt.execute();
             
-            // 결과 추출
+            // 결과 추출 (OUT 파라미터는 4-10번, 총 10개 파라미터: 3 IN + 7 OUT)
             result.put("isValid", stmt.getBoolean(4));
             result.put("validationMessage", stmt.getString(5));
             result.put("recommendedAmount", stmt.getBigDecimal(6));
@@ -106,18 +106,18 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
             stmt.setDate(2, java.sql.Date.valueOf(startDate));
             stmt.setDate(3, java.sql.Date.valueOf(endDate));
             
-            // OUT 파라미터 등록
-            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);   // success
-            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);   // message
-            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);    // total_revenue
-            stmt.registerOutParameter(7, java.sql.Types.DECIMAL);    // total_expenses
-            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);    // net_profit
-            stmt.registerOutParameter(9, java.sql.Types.INTEGER);    // total_transactions
+            // OUT 파라미터 등록 (프로시저는 총 9개 파라미터: 3 IN + 6 OUT)
+            stmt.registerOutParameter(4, java.sql.Types.BOOLEAN);   // p_success
+            stmt.registerOutParameter(5, java.sql.Types.VARCHAR);   // p_message
+            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);    // p_total_revenue
+            stmt.registerOutParameter(7, java.sql.Types.DECIMAL);    // p_total_expenses
+            stmt.registerOutParameter(8, java.sql.Types.DECIMAL);    // p_net_profit
+            stmt.registerOutParameter(9, java.sql.Types.INTEGER);    // p_total_transactions
             
             // 프로시저 실행
             stmt.execute();
             
-            // 결과 추출
+            // 결과 추출 (OUT 파라미터는 4-9번, 총 9개 파라미터: 3 IN + 6 OUT)
             result.put("success", stmt.getBoolean(4));
             result.put("message", stmt.getString(5));
             result.put("totalRevenue", stmt.getBigDecimal(6));

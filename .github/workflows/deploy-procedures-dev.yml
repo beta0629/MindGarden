@@ -1,0 +1,36 @@
+name: 📦 표준화된 프로시저 배포 (개발)
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'database/schema/procedures_standardized/**'
+      - 'scripts/automation/deployment/deploy-standardized-procedures.sh'
+  workflow_dispatch:
+
+jobs:
+  deploy-procedures:
+    name: 🚀 프로시저 배포
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+      
+    - name: 🔧 배포용 프로시저 파일 생성
+      run: |
+        chmod +x database/schema/procedures_standardized/create_deployment_files.sh
+        bash database/schema/procedures_standardized/create_deployment_files.sh
+      
+    - name: 📤 프로시저 배포
+      env:
+        DEV_SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
+        DEV_SERVER_USER: ${{ secrets.DEV_SERVER_USER }}
+        DEV_DB_HOST: ${{ secrets.DEV_DB_HOST }}
+        DEV_DB_USER: ${{ secrets.DEV_DB_USER }}
+        DEV_DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+        DEV_DB_NAME: ${{ secrets.DEV_DB_NAME }}
+      run: |
+        chmod +x scripts/automation/deployment/deploy-standardized-procedures.sh
+        bash scripts/automation/deployment/deploy-standardized-procedures.sh dev
+

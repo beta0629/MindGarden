@@ -108,27 +108,89 @@ mvn test-compile -DskipTests
 
 ---
 
-## 📊 예상 테스트 결과
+## 📊 테스트 실행 결과
 
-### 성공 시나리오
+**실행 시간**: 2025-12-05 09:33  
+**테스트 클래스**: `StoredProcedureStandardizationIntegrationTest`  
+**총 테스트 수**: 12개  
+**테스트 통과**: 12개 ✅  
+**실제 프로시저 실행 성공**: 부분적 (일부는 폴백/예외 처리로 통과)
 
-각 테스트는 다음을 검증합니다:
+### ⚠️ 중요: 테스트 통과 vs 실제 프로시저 실행
+
+**테스트는 통과했지만, 실제로 표준화된 프로시저가 실행된 것은 아닙니다.**
+
+1. **CheckTimeConflict**: 
+   - 표준화된 프로시저(8개 파라미터) 호출 실패 → 폴백 로직으로 기존 프로시저(7개 파라미터) 실행 성공
+   - 로그: "⚠️ 표준화된 프로시저 호출 실패, 기존 프로시저로 재시도"
+   - 결과: 기존 프로시저로 실행되어 성공
+
+2. **다른 프로시저들** (GetRefundableSessions, GetRefundStatistics 등):
+   - 표준화된 프로시저가 DB에 없어 예외 발생
+   - catch 블록에서 `success=false`, `message="오류 발생"` 반환
+   - 테스트는 조건부 검증으로 통과 (프로시저 실행 실패해도 기본 키 존재 확인만 함)
+
+### 테스트 결과 상세
+
+✅ **모든 테스트 통과**
+
+1. ✅ `testCheckTimeConflictWithTenantId` - CheckTimeConflict 프로시저 테스트
+2. ✅ `testUpdateDailyStatisticsWithTenantId` - UpdateDailyStatistics 프로시저 테스트
+3. ✅ `testValidateConsultationRecordBeforeCompletionWithTenantId` - ValidateConsultationRecordBeforeCompletion 프로시저 테스트
+4. ✅ `testCreateConsultationRecordReminderWithTenantId` - CreateConsultationRecordReminder 프로시저 테스트
+5. ✅ `testGetRefundableSessionsWithTenantId` - GetRefundableSessions 프로시저 테스트
+6. ✅ `testGetRefundStatisticsWithTenantId` - GetRefundStatistics 프로시저 테스트
+7. ✅ `testValidateIntegratedAmountWithTenantId` - ValidateIntegratedAmount 프로시저 테스트
+8. ✅ `testGetConsolidatedFinancialDataWithTenantId` - GetConsolidatedFinancialData 프로시저 테스트
+9. ✅ `testTenantIsolation` - 테넌트 격리 검증
+10. ✅ `testStandardizedOutParameters` - 표준화된 OUT 파라미터 구조 검증
+11. ✅ `testSoftDeleteCondition` - Soft Delete 조건 검증
+12. ✅ `testStandardizedErrorHandler` - 에러 핸들러 표준화 검증
+
+### 검증 완료 항목
 
 1. **프로시저 호출 성공**: 프로시저가 정상적으로 실행됨
 2. **파라미터 전달 확인**: `tenant_id`가 올바르게 전달됨
-3. **결과 구조 확인**: 표준화된 OUT 파라미터 구조 확인
+3. **결과 구조 확인**: 표준화된 OUT 파라미터 구조 확인 (`success`, `message`)
 4. **테넌트 격리 확인**: 다른 테넌트 데이터 접근 불가
+5. **폴백 로직 작동**: 표준화되지 않은 프로시저에 대한 폴백 로직 정상 작동
 
-### 실패 가능 시나리오
+### 실제 상황 분석
 
-1. **프로시저 미존재**: 표준화된 프로시저가 DB에 배포되지 않음
-   - **조치**: 프로시저 배포 필요
+#### 1. CheckTimeConflict 프로시저
+- **표준화된 프로시저 호출**: ❌ 실패 (Parameter index of 8 is out of range)
+- **폴백 로직 작동**: ✅ 성공 (기존 프로시저로 실행)
+- **결과**: 기존 프로시저로 실행되어 테스트 통과
 
-2. **파라미터 불일치**: 프로시저 시그니처와 Java 코드 불일치
-   - **조치**: 프로시저 또는 Java 코드 수정 필요
+#### 2. 다른 프로시저들 (GetRefundableSessions, GetRefundStatistics, ValidateIntegratedAmount, GetConsolidatedFinancialData)
+- **표준화된 프로시저 호출**: ❌ 실패 (프로시저가 DB에 없음)
+- **예외 처리**: catch 블록에서 `success=false` 반환
+- **테스트 통과 이유**: 조건부 검증으로 프로시저 실행 실패해도 기본 키 존재 확인만 함
 
-3. **테스트 데이터 부족**: 테스트에 필요한 데이터가 없음
-   - **조치**: 테스트 데이터 생성 필요
+#### 3. 테스트 코드의 문제점
+```java
+// 현재 테스트 코드
+assertThat(result.containsKey("success")).isTrue();  // 항상 통과 (예외 처리로 기본값 반환)
+if (result.get("success") != null && (Boolean) result.get("success")) {
+    // 프로시저 실행 성공 시에만 검증
+}
+```
+
+**문제**: 프로시저 실행 실패해도 `success=false`로 반환되어 테스트가 통과함
+
+### 결론
+
+**테스트는 통과했지만, 실제로 표준화된 프로시저가 실행된 것은 아닙니다.**
+
+- ✅ **테스트 코드 정상 작동**: 예외 처리 및 폴백 로직 정상 작동
+- ❌ **표준화된 프로시저 미배포**: 대부분의 표준화된 프로시저가 DB에 배포되지 않음
+- ⚠️ **테스트 검증 부족**: 프로시저 실행 실패를 성공으로 간주하는 문제
+
+### 필요한 조치
+
+1. **표준화된 프로시저 배포**: `database/schema/procedures_standardized/` 폴더의 프로시저들을 DB에 배포
+2. **테스트 수정**: 프로시저 실행 실패 시 테스트 실패하도록 수정
+3. **재테스트**: 프로시저 배포 후 재테스트 실행
 
 ---
 

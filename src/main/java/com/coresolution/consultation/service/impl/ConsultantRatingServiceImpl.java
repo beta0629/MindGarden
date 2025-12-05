@@ -540,33 +540,23 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 return new HashMap<>();
             }
             
-            log.info("💖 관리자 평가 통계 조회 시작 (지점별): branchCode={}", branchCode);
+            log.info("💖 관리자 평가 통계 조회 시작 (테넌트 전체): tenantId={}", tenantId);
 
             Map<String, Object> stats = new HashMap<>();
 
-            // 해당 지점의 상담사들 조회 (브랜치 엔티티 기반)
-            List<User> branchConsultants;
-            if (branchCode == null || branchCode.trim().isEmpty()) {
-                branchConsultants = new ArrayList<>();
-            } else {
-                try {
-                    Branch branch = branchService.getBranchByCode(branchCode);
-                    List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(tenantId, branch, UserRole.CONSULTANT);
-                    // isActive = true 필터링 (Java 스트림)
-                    branchConsultants = consultants.stream()
-                        .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
-                        .collect(Collectors.toList());
-                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
-                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
-                    branchConsultants = new ArrayList<>();
-                }
-            }
+            // 테넌트 전체 상담사들 조회
+            List<User> consultants = userRepository.findByTenantIdAndRole(tenantId, UserRole.CONSULTANT);
+            // isActive = true 필터링 (Java 스트림)
+            List<User> branchConsultants = consultants.stream()
+                .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
+                .collect(Collectors.toList());
+            
             final List<User> finalBranchConsultants = new ArrayList<>(branchConsultants); // 람다에서 사용하기 위한 final 변수
             List<Long> consultantIds = finalBranchConsultants.stream()
                 .map(User::getId)
                 .collect(Collectors.toList());
             
-            log.info("🏢 지점 상담사 수: {} (지점코드: {})", consultantIds.size(), branchCode);
+            log.info("🏢 테넌트 상담사 수: {}", consultantIds.size());
 
             // 해당 지점 상담사들의 평가만 조회
             List<ConsultantRating> branchRatings = ratingRepository.findByTenantId(tenantId).stream()
@@ -585,8 +575,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 .orElse(0.0);
             stats.put("averageScore", Math.round(averageScore * 10.0) / 10.0);
 
-            // 지점 상담사 랭킹 (TOP 10)
-            List<Map<String, Object>> topConsultants = getConsultantRankingByBranch(branchCode, PageRequest.of(0, 10));
+            // 상담사 랭킹 (TOP 10) - 테넌트 전체
+            List<Map<String, Object>> topConsultants = getConsultantRankingByBranch(null, PageRequest.of(0, 10));
             stats.put("topConsultants", topConsultants);
 
             // 최근 7일 평가 동향
@@ -607,9 +597,9 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 recentTrends.add(dayTrend);
             }
             stats.put("recentTrends", recentTrends);
-            stats.put("branchCode", branchCode);
+            stats.put("tenantId", tenantId);
 
-            log.info("✅ 관리자 평가 통계 조회 완료 (지점별): 총평가={}, 평균점수={}, 상담사수={}", 
+            log.info("✅ 관리자 평가 통계 조회 완료 (테넌트 전체): 총평가={}, 평균점수={}, 상담사수={}", 
                 totalRatings, averageScore, topConsultants.size());
 
             return stats;
@@ -706,7 +696,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             return ranking;
             
         } catch (Exception e) {
-            log.error("❌ 지점별 상담사 랭킹 조회 실패: branchCode={}", branchCode, e);
+            log.error("❌ 상담사 랭킹 조회 실패 (테넌트 전체)", e);
             return new ArrayList<>();
         }
     }

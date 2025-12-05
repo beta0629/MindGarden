@@ -658,11 +658,9 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public Object[] getUserStatisticsByBranchCode(String branchCode) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (branchCode == null || branchCode.trim().isEmpty()) {
-            return getUserStatistics(); // 지점코드가 없으면 전체 통계 반환
-        }
-        return userRepository.getUserStatisticsByBranchCode(tenantId, branchCode);
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        // 테넌트 전체 통계 반환
+        return getUserStatistics();
     }
     
     @Override
@@ -691,22 +689,23 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public User registerUser(User user) {
-        // 지점코드가 있는 경우 지점 정보 설정
+        // 브랜치 개념 제거: branchCode는 레거시 호환용으로 유지되지만, 내부적으로는 테넌트 기반으로 동작 (표준화 2025-12-05)
+        // 지점코드가 있는 경우 지점 정보 설정 (레거시 호환)
         if (user.getBranchCode() != null && !user.getBranchCode().trim().isEmpty()) {
             try {
-                // 지점 코드로 지점 조회
+                // 지점 코드로 지점 조회 (레거시 호환)
                 var branch = branchService.getBranchByCode(user.getBranchCode());
                 if (branch != null) {
                     user.setBranch(branch);
-                    log.info("사용자 등록 시 지점 할당: userId={}, branchCode={}, branchName={}", 
+                    log.info("사용자 등록 시 지점 할당 (레거시 호환): userId={}, branchCode={}, branchName={}", 
                         user.getId(), user.getBranchCode(), branch.getBranchName());
                 } else {
                     log.warn("존재하지 않는 지점 코드로 사용자 등록 시도: branchCode={}", user.getBranchCode());
-                    throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + user.getBranchCode());
+                    // 레거시 호환을 위해 예외를 던지지 않고 경고만 로깅
                 }
             } catch (Exception e) {
-                log.error("지점 코드 처리 중 오류: branchCode={}, error={}", user.getBranchCode(), e.getMessage());
-                throw new IllegalArgumentException("지점 코드 처리 중 오류가 발생했습니다: " + e.getMessage());
+                log.warn("지점 코드 처리 중 오류 (레거시 호환): branchCode={}, error={}", user.getBranchCode(), e.getMessage());
+                // 레거시 호환을 위해 예외를 던지지 않고 경고만 로깅
             }
         }
         
@@ -818,26 +817,15 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public List<User> findByBranchCode(String branchCode) {
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
+        // 테넌트 전체 사용자 반환
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
             return new ArrayList<>();
         }
         
-        // 브랜치 코드가 null이면 빈 리스트 반환
-        if (branchCode == null || branchCode.trim().isEmpty()) {
-            return new ArrayList<>();
-        }
-        
-        try {
-            // 브랜치 코드로 브랜치 엔티티 조회
-            Branch branch = branchService.getBranchByCode(branchCode);
-            // 표준 메서드 사용 (브랜치 엔티티 기반)
-            return userRepository.findByBranchAndIsDeletedFalseOrderByUsername(tenantId, branch);
-        } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
-            log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
-            return new ArrayList<>();
-        }
+        return userRepository.findByTenantId(tenantId);
     }
     
     @Override

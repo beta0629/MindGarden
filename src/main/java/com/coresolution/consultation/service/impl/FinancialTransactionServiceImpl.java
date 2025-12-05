@@ -995,26 +995,26 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Override
     public Map<String, Object> getBranchFinancialData(String branchCode, LocalDate startDate, LocalDate endDate, 
                                                      String category, String transactionType) {
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         try {
-            log.info("🏢 지점별 재무 데이터 조회: 지점={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}", 
-                    branchCode, startDate, endDate, category, transactionType);
-            
-            // 지점별 거래 내역 조회 (삭제되지 않은 거래만)
             String tenantId = TenantContextHolder.getTenantId();
+            log.info("🏢 재무 데이터 조회 (테넌트 전체): tenantId={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}", 
+                    tenantId, startDate, endDate, category, transactionType);
+            
+            // 테넌트 전체 거래 내역 조회 (삭제되지 않은 거래만)
             List<FinancialTransaction> allTransactions = financialTransactionRepository.findByTenantIdAndIsDeletedFalse(tenantId);
             log.info("🔍 전체 거래 내역 수: {}", allTransactions.size());
             
             List<FinancialTransaction> transactions = allTransactions
                     .stream()
-                    .filter(t -> branchCode.equals(t.getBranchCode()))
                     .filter(t -> !startDate.isAfter(t.getTransactionDate()) && !endDate.isBefore(t.getTransactionDate()))
                     .filter(t -> category == null || category.isEmpty() || category.equals(t.getCategory()))
                     .filter(t -> transactionType == null || transactionType.isEmpty() || 
                             transactionType.equals(t.getTransactionType().name()))
                     .collect(Collectors.toList());
             
-            log.info("🔍 필터링된 거래 내역 수: {}, 지점: {}, 기간: {}~{}", 
-                    transactions.size(), branchCode, startDate, endDate);
+            log.info("🔍 필터링된 거래 내역 수: {}, 기간: {}~{}", 
+                    transactions.size(), startDate, endDate);
             
             // 수익/지출 계산
             BigDecimal totalRevenue = transactions.stream()
@@ -1064,13 +1064,13 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             result.put("categoryBreakdown", categoryBreakdown);
             result.put("monthlyStats", monthlyStats);
             
-            log.info("✅ 지점별 재무 데이터 조회 완료: 지점={}, 수익={}, 지출={}, 순이익={}", 
-                    branchCode, totalRevenue, totalExpenses, netProfit);
+            log.info("✅ 재무 데이터 조회 완료 (테넌트 전체): 수익={}, 지출={}, 순이익={}", 
+                    totalRevenue, totalExpenses, netProfit);
             
             return result;
             
         } catch (Exception e) {
-            log.error("❌ 지점별 재무 데이터 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
+            log.error("❌ 재무 데이터 조회 실패 (테넌트 전체): 오류={}", e.getMessage(), e);
             
             // 오류 시 기본값 반환
             Map<String, Object> result = new HashMap<>();
@@ -1109,33 +1109,20 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     public Page<FinancialTransactionResponse> getTransactionsByBranch(String branchCode, String transactionType, 
                                                                      String category, String startDate, String endDate, 
                                                                      Pageable pageable) {
+        // 브랜치 개념 제거: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음 (표준화 2025-12-05)
         try {
-            log.info("🏢 지점별 재무 거래 목록 조회: 지점={}, 유형={}, 카테고리={}, 시작일={}, 종료일={}", 
-                    branchCode, transactionType, category, startDate, endDate);
+            String tenantId = TenantContextHolder.getTenantId();
+            log.info("🏢 재무 거래 목록 조회 (테넌트 전체): tenantId={}, 유형={}, 카테고리={}, 시작일={}, 종료일={}", 
+                    tenantId, transactionType, category, startDate, endDate);
             
-            // 모든 거래 조회 후 필터링
-            Page<FinancialTransaction> allTransactions = financialTransactionRepository
-                    .findByIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(
-                        org.springframework.data.domain.PageRequest.of(0, 10000)); // 더 많은 데이터 가져오기
+            // 테넌트 전체 거래 조회 후 필터링
+            List<FinancialTransaction> allTransactions = financialTransactionRepository
+                    .findByTenantIdAndIsDeletedFalse(tenantId);
             
-            log.info("🔍 전체 재무 거래 조회 완료: {}건", allTransactions.getTotalElements());
+            log.info("🔍 전체 재무 거래 조회 완료: {}건", allTransactions.size());
             
-            // 지점별 필터링 적용
-            List<FinancialTransaction> filteredTransactions = allTransactions.getContent().stream()
-                    .filter(t -> {
-                        // 지점코드 필터링 디버깅
-                        if (branchCode != null && !branchCode.isEmpty()) {
-                            boolean matches = branchCode.equals(t.getBranchCode());
-                            if (!matches) {
-                                log.info("🔍 지점코드 불일치: 요청={}, 거래={} (거래ID={})", branchCode, t.getBranchCode(), t.getId());
-                            } else {
-                                log.info("✅ 지점코드 일치: 요청={}, 거래={} (거래ID={})", branchCode, t.getBranchCode(), t.getId());
-                            }
-                            return matches;
-                        }
-                        log.info("🔍 지점코드 필터링 없음 - 모든 거래 포함");
-                        return true;
-                    })
+            // 필터링 적용 (branchCode 필터링 제거)
+            List<FinancialTransaction> filteredTransactions = allTransactions.stream()
                     .filter(t -> {
                         // 거래 유형 필터링
                         if (transactionType != null && !transactionType.isEmpty() && !"ALL".equals(transactionType)) {
@@ -1168,7 +1155,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                     })
                     .collect(Collectors.toList());
             
-            log.info("🔍 필터링 결과: 전체={}건, 지점 필터링 후={}건", allTransactions.getTotalElements(), filteredTransactions.size());
+            log.info("🔍 필터링 결과: 전체={}건, 필터링 후={}건", allTransactions.size(), filteredTransactions.size());
             
             // 처음 몇 개 거래의 지점코드 출력 (디버깅)
             filteredTransactions.stream().limit(5).forEach(t -> 
@@ -1190,14 +1177,14 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             Page<FinancialTransactionResponse> result = new org.springframework.data.domain.PageImpl<>(
                     responseContent, pageable, filteredTransactions.size());
             
-            log.info("✅ 지점별 재무 거래 조회 완료: 지점={}, 전체={}, 필터링후={}건", 
-                    branchCode, allTransactions.getTotalElements(), filteredTransactions.size());
+            log.info("✅ 재무 거래 조회 완료 (테넌트 전체): 전체={}, 필터링후={}건", 
+                    allTransactions.size(), filteredTransactions.size());
             
             return result;
             
         } catch (Exception e) {
-            log.error("❌ 지점별 재무 거래 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
-            throw new RuntimeException("지점별 재무 거래 조회에 실패했습니다: " + e.getMessage());
+            log.error("❌ 재무 거래 조회 실패 (테넌트 전체): 오류={}", e.getMessage(), e);
+            throw new RuntimeException("재무 거래 조회에 실패했습니다: " + e.getMessage());
         }
     }
     

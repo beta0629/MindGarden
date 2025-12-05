@@ -271,7 +271,8 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
         
         log.info("📨 메시지 검색 - 사용자 ID: {}, 유형: {}, 키워드: {}", userId, userType, keyword);
         
-        if ("CONSULTANT".equals(userType)) {
+        // 표준화 2025-12-05: enum 활용
+        if (UserRole.CONSULTANT.name().equals(userType)) {
             return consultationMessageRepository.findByConsultantIdAndTitleContainingOrContentContainingAndMessageTypeAndIsImportantAndIsUrgent(
                 userId, keyword, keyword, isImportant, isUrgent, pageable);
         } else {

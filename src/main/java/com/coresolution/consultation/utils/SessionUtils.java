@@ -229,11 +229,10 @@ public class SessionUtils implements ApplicationContextAware {
         if (role == null) {
             return false;
         }
-        String roleName = role.name();
-        // 표준 관리자 역할만 (브랜치/본사 레거시 역할 제외)
-        return "ADMIN".equals(roleName) || 
-               "TENANT_ADMIN".equals(roleName) ||
-               "PRINCIPAL".equals(roleName) ||
-               "OWNER".equals(roleName);
+        // 표준 관리자 역할만 (브랜치/본사 레거시 역할 제외) (표준화 2025-12-05: enum 활용)
+        return role == UserRole.ADMIN || 
+               role == UserRole.TENANT_ADMIN ||
+               role == UserRole.PRINCIPAL ||
+               role == UserRole.OWNER;
     }
 }

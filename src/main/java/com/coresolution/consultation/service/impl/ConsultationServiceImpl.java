@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.Consultant;
@@ -919,7 +920,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             Note noteEntity = Note.builder()
                     .consultationId(consultationId)
                     .authorId(authorId)
-                    .authorType("CONSULTANT") // 기본값
+                    .authorType(UserRole.CONSULTANT.name()) // 기본값 (표준화 2025-12-05: enum 활용)
                     .noteText(note)
                     .noteType("CONSULTATION") // 기본값
                     .isPrivate(false)

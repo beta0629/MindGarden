@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultationRepository;
@@ -357,7 +358,8 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             return Page.empty(pageable);
         }
         
-        if ("CONSULTANT".equals(userType)) {
+        // 표준화 2025-12-05: enum 활용
+        if (UserRole.CONSULTANT.name().equals(userType)) {
             return consultationRecordRepository.searchByKeywordAndConsultantId(tenantId, keyword, userId, pageable);
         } else {
             return consultationRecordRepository.searchByKeywordAndClientId(tenantId, keyword, userId, pageable);
@@ -409,7 +411,8 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         }
         
         Pageable pageable = Pageable.ofSize(limit);
-        if ("CONSULTANT".equals(userType)) {
+        // 표준화 2025-12-05: enum 활용
+        if (UserRole.CONSULTANT.name().equals(userType)) {
             return consultationRecordRepository.findRecentByConsultantId(tenantId, userId, pageable);
         } else {
             return consultationRecordRepository.findRecentByClientId(tenantId, userId, pageable);
@@ -426,7 +429,8 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     public List<ConsultationRecord> getConsultationRecordsByDate(Long userId, String userType, LocalDate sessionDate) {
         log.info("📝 특정 날짜의 상담일지 조회 - 사용자 ID: {}, 유형: {}, 날짜: {}", userId, userType, sessionDate);
         
-        if ("CONSULTANT".equals(userType)) {
+        // 표준화 2025-12-05: enum 활용
+        if (UserRole.CONSULTANT.name().equals(userType)) {
             return consultationRecordRepository.findByConsultantIdAndSessionDateAndIsDeletedFalse(userId, sessionDate);
         } else {
             return consultationRecordRepository.findByClientIdAndSessionDateAndIsDeletedFalse(userId, sessionDate);

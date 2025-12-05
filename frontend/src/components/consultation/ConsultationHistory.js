@@ -6,6 +6,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { DASHBOARD_API } from '../../constants/api';
+import { USER_ROLES } from '../../constants/roles';
 import SimpleLayout from '../layout/SimpleLayout';
 import notificationManager from '../../utils/notification';
 import './ConsultationHistory.css';
@@ -72,21 +73,21 @@ const ConsultationHistory = () => {
 
       console.log('📊 상담 내역 로드 시작 - 사용자 ID:', user.id, '역할:', user.role);
 
-      // 사용자 역할에 따라 다른 API 호출
+      // 사용자 역할에 따라 다른 API 호출 (표준화 2025-12-05: 상수 활용)
       let response;
-      if (user.role === 'CLIENT') {
+      if (user.role === USER_ROLES.CLIENT) {
         response = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
           userId: user.id,
-          userRole: 'CLIENT'
+          userRole: USER_ROLES.CLIENT
         });
-      } else if (user.role === 'CONSULTANT') {
+      } else if (user.role === USER_ROLES.CONSULTANT) {
         response = await apiGet(DASHBOARD_API.CONSULTANT_SCHEDULES, {
           userId: user.id,
-          userRole: 'CONSULTANT'
+          userRole: USER_ROLES.CONSULTANT
         });
-      } else if (user.role === 'ADMIN' || user.role === 'BRANCH_SUPER_ADMIN') {
+      } else if (user.role === USER_ROLES.ADMIN || user.role === USER_ROLES.BRANCH_SUPER_ADMIN) {
         response = await apiGet(DASHBOARD_API.ADMIN_STATS, {
-          userRole: 'ADMIN'
+          userRole: USER_ROLES.ADMIN
         });
       }
 

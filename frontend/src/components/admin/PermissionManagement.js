@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import '../../styles/unified-design-tokens.css';
+import { USER_ROLES } from '../../constants/roles';
 
 const PERMISSION_CATEGORIES = {
     '대시보드 및 보고서': [
@@ -234,8 +235,8 @@ const PermissionManagement = () => {
                 if (userInfo && userInfo.role) {
                     setCurrentUserRole(userInfo.role);
                     // 사용자 역할에 따라 기본 선택 역할 설정
-                    if (userInfo.role === 'HQ_MASTER') {
-                        setSelectedRole('BRANCH_SUPER_ADMIN'); // HQ 마스터는 모든 역할 관리 가능
+                    if (userInfo.role === USER_ROLES.HQ_MASTER) {
+                        setSelectedRole(USER_ROLES.BRANCH_SUPER_ADMIN); // HQ 마스터는 모든 역할 관리 가능
                     } else {
                         setSelectedRole(userInfo.role); // 다른 역할은 자신의 역할만 관리 가능
                     }

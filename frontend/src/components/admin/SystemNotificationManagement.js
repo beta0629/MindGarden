@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import { USER_ROLES } from '../../constants/roles';
 import { Bell, Plus, Edit, Trash2, Send, Archive } from 'lucide-react';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -296,8 +297,8 @@ const SystemNotificationManagement = () => {
             >
               <option value="">전체 대상</option>
               <option value="ALL">전체 사용자</option>
-              <option value="CONSULTANT">상담사만</option>
-              <option value="CLIENT">내담자만</option>
+              <option value={USER_ROLES.CONSULTANT}>상담사만</option>
+              <option value={USER_ROLES.CLIENT}>내담자만</option>
             </select>
             <select
               value={filterStatus}
@@ -441,8 +442,8 @@ const SystemNotificationManagement = () => {
                 className="mg-v2-select"
               >
                 <option value="ALL">전체 사용자</option>
-                <option value="CONSULTANT">상담사만</option>
-                <option value="CLIENT">내담자만</option>
+                <option value={USER_ROLES.CONSULTANT}>상담사만</option>
+                <option value={USER_ROLES.CLIENT}>내담자만</option>
               </select>
             </div>
 

@@ -316,12 +316,12 @@ const UserManagement = ({ onUpdate }) => {
                                         
                                         <div className="user-mgmt-actions">
                                             {/* 내담자→상담사 빠른 변경 버튼 */}
-                                            {user.role === 'CLIENT' && (
+                                            {user.role === USER_ROLES.CLIENT && (
                                                 <button 
                                                     className="mg-v2-button mg-v2-button-success mg-v2-button-sm"
                                                     onClick={() => {
                                                         setSelectedUser(user);
-                                                        setForm({ newRole: 'CONSULTANT' });
+                                                        setForm({ newRole: USER_ROLES.CONSULTANT });
                                                         setShowRoleModal(true);
                                                     }}
                                                     title="내담자를 상담사로 변경"
@@ -382,7 +382,7 @@ const UserManagement = ({ onUpdate }) => {
                                     </div>
                                     
                                     {/* 내담자→상담사 변경 시 특별 안내 */}
-                                    {selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' && (
+                                    {selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT && (
                                         <div className="user-mgmt-info-box">
                                             <h6 className="user-mgmt-info-title">상담사 역할 변경 안내</h6>
                                             <ul className="user-mgmt-info-list">
@@ -426,7 +426,7 @@ const UserManagement = ({ onUpdate }) => {
                                             disabled={form.newRole === selectedUser.role}
                                             className="mg-v2-button mg-v2-button-primary"
                                         >
-                                            {selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' 
+                                            {selectedUser.role === USER_ROLES.CLIENT && form.newRole === USER_ROLES.CONSULTANT 
                                                 ? '상담사로 변경' 
                                                 : '역할 변경'}
                                         </button>

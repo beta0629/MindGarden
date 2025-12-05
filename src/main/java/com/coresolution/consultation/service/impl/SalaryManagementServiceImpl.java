@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
  * 급여관리 서비스 구현체
  * 
  * @author MindGarden
@@ -258,6 +259,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
             .collect(Collectors.toList());
     }
     
+    /**
      * 세금 상세 내역 조회 (프론트엔드 호환성)
      */
     @Override
@@ -290,6 +292,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         return result;
     }
     
+    /**
      * 세금 통계 조회 (프론트엔드 호환성)
      */
     @Override

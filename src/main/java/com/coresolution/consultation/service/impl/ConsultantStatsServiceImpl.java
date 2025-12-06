@@ -97,8 +97,8 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     public List<Map<String, Object>> getAllConsultantsWithStatsByTenant(String tenantId) {
         log.info("📊 테넌트별 상담사 통계 조회: tenantId={}", tenantId);
         
-        List<Consultant> consultants = consultantRepository.findByIsDeletedFalse().stream()
-                .filter(c -> tenantId.equals(c.getTenantId()))
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId).stream()
                 .filter(c -> c.getIsActive() != null && c.getIsActive())
                 .collect(Collectors.toList());
         

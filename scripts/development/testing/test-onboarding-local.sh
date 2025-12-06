@@ -1,7 +1,8 @@
 #!/bin/bash
-# 온보딩 테스트 - 서버가 준비되면 실행
+# 온보딩 테스트 - 로컬 서버용
+# 서버가 준비되면 자동으로 실행
 
-BASE_URL="http://beta0629.cafe24.com:8080"
+BASE_URL="http://localhost:8080"
 TIMESTAMP=$(date +%s)
 TENANT_ID="test-tenant-${TIMESTAMP}"
 TENANT_NAME="테스트테넌트${TIMESTAMP}"
@@ -9,19 +10,31 @@ EMAIL="test${TIMESTAMP}@test.com"
 ADMIN_PASSWORD="Test1234!@#"
 
 echo "=========================================="
-echo "🧪 온보딩 테스트"
+echo "🧪 온보딩 테스트 (로컬)"
 echo "=========================================="
 echo "테넌트 ID: $TENANT_ID"
 echo "이메일: $EMAIL"
 echo ""
 
-# 서버 연결 확인
+# 서버 연결 확인 (최대 60초 대기)
 echo "서버 연결 확인 중..."
-if ! timeout 5 curl -s "${BASE_URL}/actuator/health" > /dev/null 2>&1; then
+MAX_WAIT=60
+WAIT_COUNT=0
+while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+    if curl -s "${BASE_URL}/actuator/health" > /dev/null 2>&1; then
+        echo "✅ 서버 연결 확인"
+        break
+    fi
+    echo "   서버 대기 중... ($WAIT_COUNT/$MAX_WAIT 초)"
+    sleep 2
+    WAIT_COUNT=$((WAIT_COUNT + 2))
+done
+
+if [ $WAIT_COUNT -ge $MAX_WAIT ]; then
     echo "⚠️ 서버에 연결할 수 없습니다. 서버가 아직 시작 중일 수 있습니다."
     echo ""
     echo "수동 테스트 방법:"
-    echo "1. 브라우저에서 http://beta0629.cafe24.com:8080 접속 확인"
+    echo "1. 브라우저에서 http://localhost:8080 접속 확인"
     echo "2. 온보딩 요청 생성:"
     echo "   POST ${BASE_URL}/api/v1/onboarding/requests"
     echo "   Body: {"
@@ -32,18 +45,9 @@ if ! timeout 5 curl -s "${BASE_URL}/actuator/health" > /dev/null 2>&1; then
     echo "     \"checklistJson\": \"{\\\"adminPassword\\\":\\\"${ADMIN_PASSWORD}\\\"}\""
     echo "   }"
     echo ""
-    echo "3. 온보딩 승인:"
-    echo "   POST ${BASE_URL}/api/v1/onboarding/requests/{REQUEST_ID}/decision"
-    echo "   Body: {"
-    echo "     \"status\": \"APPROVED\","
-    echo "     \"actorId\": \"superadmin@mindgarden.com\","
-    echo "     \"note\": \"테스트 승인\""
-    echo "   }"
-    echo ""
     exit 1
 fi
 
-echo "✅ 서버 연결 확인"
 echo ""
 
 # 온보딩 요청 생성
@@ -70,6 +74,7 @@ REQUEST_ID=$(echo "$REQUEST_RESPONSE" | grep -oE '"id":"[0-9a-f]{8}-[0-9a-f]{4}-
 
 if [ -z "$REQUEST_ID" ] || [ "$REQUEST_ID" = "null" ]; then
     echo "❌ 온보딩 요청 생성 실패"
+    echo "응답: $REQUEST_RESPONSE"
     exit 1
 fi
 
@@ -110,5 +115,6 @@ else
     echo ""
     echo "❌ 온보딩 승인 실패"
     echo "$APPROVE_RESPONSE"
+    exit 1
 fi
 

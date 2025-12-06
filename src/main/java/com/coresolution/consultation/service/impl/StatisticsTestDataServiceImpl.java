@@ -28,15 +28,11 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
- /**
+/**
  * 통계 시스템 테스트용 데이터 생성 서비스 구현체
- /**
  * 
- /**
  * @author MindGarden
- /**
  * @version 1.0.0
- /**
  * @since 2025-09-24
  */
 @Slf4j
@@ -288,7 +284,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             for (int i = 0; i < actualRatings; i++) {
                 Schedule schedule = completedSchedules.get(i);
                 
-                String tenantId = TenantContextHolder.getRequiredTenantId();
+                // 표준화 2025-12-06: tenantId는 이미 273번째 줄에서 선언됨
                 boolean hasRating = consultantRatingRepository.findByTenantId(tenantId).stream()
                     .anyMatch(r -> r.getSchedule().getId().equals(schedule.getId()) && 
                                   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -389,16 +385,13 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             int deletedTransactions = 0;
             int deletedRatings = 0;
             
-            List<Schedule> testSchedules;
-            if (branchCode != null) {
-                testSchedules = scheduleRepository.findByDateAndBranchCode(targetDate, branchCode);
-            } else {
-                testSchedules = scheduleRepository.findByDate(targetDate);
-            }
+            // 표준화 2025-12-06: deprecated 메서드 대체 - branchCode는 더 이상 사용하지 않음
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<Schedule> testSchedules = scheduleRepository.findByTenantIdAndDate(tenantId, targetDate);
             
             for (Schedule schedule : testSchedules) {
                 if (schedule.getTitle() != null && schedule.getTitle().contains("테스트")) {
-                    String tenantId = TenantContextHolder.getRequiredTenantId();
+                    // 표준화 2025-12-06: tenantId는 이미 위에서 선언됨
                     List<ConsultantRating> ratings = consultantRatingRepository.findByTenantId(tenantId).stream()
                         .filter(r -> r.getSchedule().getId().equals(schedule.getId()))
                         .collect(java.util.stream.Collectors.toList());

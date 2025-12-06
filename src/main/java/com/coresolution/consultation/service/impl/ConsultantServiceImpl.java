@@ -266,22 +266,14 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public org.springframework.data.domain.Page<Consultant> findAllActive(Pageable pageable) {
-        String tenantId = TenantContextHolder.getTenantId();
         // 표준화 2025-12-06: deprecated 메서드 대체
-        String currentTenantId = TenantContextHolder.getTenantId();
-        if (currentTenantId != null) {
-            return consultantRepository.findAllByTenantId(currentTenantId, pageable);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null) {
+            return consultantRepository.findAllByTenantId(tenantId, pageable);
         }
         // tenantId가 없으면 빈 페이지 반환 (보안상 위험하지만 레거시 호환)
         log.warn("⚠️ tenantId가 없어 상담사 조회를 건너뜁니다.");
         return org.springframework.data.domain.Page.empty();
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), activeConsultants.size());
-        return new org.springframework.data.domain.PageImpl<>(
-            activeConsultants.subList(start, end), 
-            pageable, 
-            activeConsultants.size()
-        );
     }
     
     @Override
@@ -295,7 +287,9 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public List<Consultant> findRecentlyUpdatedActive(int limit) {
-        return consultantRepository.findByIsDeletedFalse().stream()
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId).stream()
                 .sorted((a, b) -> b.getUpdatedAt().compareTo(a.getUpdatedAt()))
                 .limit(limit)
                 .collect(java.util.stream.Collectors.toList());
@@ -303,14 +297,18 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public List<Consultant> findByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
-        return consultantRepository.findByIsDeletedFalse().stream()
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId).stream()
                 .filter(c -> c.getCreatedAt().isAfter(startDate) && c.getCreatedAt().isBefore(endDate))
                 .collect(java.util.stream.Collectors.toList());
     }
     
     @Override
     public List<Consultant> findByUpdatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate) {
-        return consultantRepository.findByIsDeletedFalse().stream()
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId).stream()
                 .filter(c -> c.getUpdatedAt().isAfter(startDate) && c.getUpdatedAt().isBefore(endDate))
                 .collect(java.util.stream.Collectors.toList());
     }
@@ -324,7 +322,9 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     @Override
     public List<Consultant> findBySpecialty(String specialty) {
         log.info("전문분야별 상담사 조회: {}", specialty);
-        return consultantRepository.findBySpecialtyContainingIgnoreCaseAndIsDeletedFalse(specialty);
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndSpecialtyContainingIgnoreCaseAndIsDeletedFalse(tenantId, specialty);
     }
     
     @Override
@@ -333,7 +333,9 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         if (experience < ConsultantConstants.MIN_EXPERIENCE || experience > ConsultantConstants.MAX_EXPERIENCE) {
             throw new IllegalArgumentException(ConsultantConstants.ERROR_INVALID_EXPERIENCE);
         }
-        return consultantRepository.findByExperienceGreaterThanEqualAndIsDeletedFalse(experience);
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndExperienceGreaterThanEqualAndIsDeletedFalse(tenantId, experience);
     }
     
     @Override
@@ -342,13 +344,17 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         if (rating < ConsultantConstants.MIN_RATING || rating > ConsultantConstants.MAX_RATING) {
             throw new IllegalArgumentException(ConsultantConstants.ERROR_INVALID_RATING);
         }
-        return consultantRepository.findByAverageRatingGreaterThanEqualAndIsDeletedFalse(rating);
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndAverageRatingGreaterThanEqualAndIsDeletedFalse(tenantId, rating);
     }
     
     @Override
     public List<Consultant> findAvailableConsultants() {
         log.info("사용 가능한 상담사 조회");
-        return consultantRepository.findByIsAvailableTrueAndIsDeletedFalse();
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findByTenantIdAndIsAvailableTrueAndIsDeletedFalse(tenantId);
     }
     
     @Override
@@ -357,7 +363,9 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
         log.info("복합 조건 상담사 조회: specialty={}, minExperience={}, minRating={}, available={}", 
                 specialty, minExperience, minRating, available);
         
-        List<Consultant> consultants = consultantRepository.findByIsDeletedFalse();
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         
         consultants.forEach(consultant -> {
             if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {

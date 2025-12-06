@@ -4157,11 +4157,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private int getCompletedScheduleCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
         try {
             String tenantId = getTenantIdOrNull();
-            List<Schedule> completedSchedules = tenantId != null
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String currentTenantId = TenantContextHolder.getTenantId();
+            if (currentTenantId == null) {
+                currentTenantId = tenantId; // 파라미터에서 가져온 tenantId 사용
+            }
+            List<Schedule> completedSchedules = currentTenantId != null
                 ? scheduleRepository.findByTenantIdAndConsultantIdAndStatusAndDateBetween(
-                    tenantId, consultantId, ScheduleStatus.COMPLETED, startDate, endDate)
-                : scheduleRepository.findByConsultantIdAndStatusAndDateBetween(
-                    consultantId, ScheduleStatus.COMPLETED, startDate, endDate); // 레거시 호환
+                    currentTenantId, consultantId, ScheduleStatus.COMPLETED, startDate, endDate)
+                : new ArrayList<>(); // tenantId가 없으면 빈 리스트 반환
             return completedSchedules.size();
         } catch (Exception e) {
             log.warn("상담사 {} 완료 스케줄 건수 조회 실패: {}", consultantId, e.getMessage());

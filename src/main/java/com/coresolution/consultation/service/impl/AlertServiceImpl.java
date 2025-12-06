@@ -7,7 +7,6 @@ import com.coresolution.consultation.entity.Alert;
 import com.coresolution.consultation.repository.AlertRepository;
 import com.coresolution.consultation.service.AlertService;
 import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
 import org.springframework.stereotype.Service;
@@ -46,11 +45,8 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
     
     @Override
     protected List<Alert> findEntitiesByTenantAndBranch(String tenantId, Long branchId) {
-        if (branchId != null) {
-            return alertRepository.findAllByTenantIdAndBranchId(tenantId, branchId);
-        } else {
-            return alertRepository.findAllByTenantId(tenantId);
-        }
+        // 표준화 2025-12-06: deprecated 메서드 대체 - branchId는 더 이상 사용하지 않음
+        return alertRepository.findAllByTenantId(tenantId);
     }
     
     // ==================== BaseService 구현 메서드 (BaseTenantEntityService 위임) ====================

@@ -201,7 +201,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         
         payment.setStatus(status);
         
-        String tenantId = TenantContextHolder.getTenantId();
+        // 표준화 2025-12-06: tenantId는 이미 192번째 줄에서 선언됨
         if (tenantId != null && payment.getTenantId() != null) {
             payment = update(tenantId, payment);
         } else {

@@ -30,15 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
- /**
+/**
  * 상담사 평가 서비스 구현
- /**
  * 
- /**
  * @author MindGarden
- /**
  * @version 1.0.0
- /**
  * @since 2025-09-17
  */
 @Slf4j
@@ -205,17 +201,18 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         try {
             log.info("💖 평가 가능한 스케줄 조회: 내담자={}", clientId);
 
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             log.info("💖 COMPLETED 스케줄 조회 시작: clientId={}, status={}", clientId, ScheduleStatus.COMPLETED);
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            List<Schedule> completedSchedules = scheduleRepository.findByClientIdAndStatus(clientId, ScheduleStatus.COMPLETED);
+            List<Schedule> completedSchedules = scheduleRepository.findByTenantIdAndClientIdAndStatus(tenantId, clientId, ScheduleStatus.COMPLETED);
             log.info("💖 조회된 COMPLETED 스케줄 개수: {}", completedSchedules.size());
 
             List<Map<String, Object>> ratableSchedules = new ArrayList<>();
 
             for (Schedule schedule : completedSchedules) {
-                // 표준화 2025-12-06: deprecated 메서드 대체
-                String tenantId = TenantContextHolder.getRequiredTenantId();
+                // 표준화 2025-12-06: tenantId는 이미 위에서 선언됨
                 boolean alreadyRated = ratingRepository.existsByTenantIdAndScheduleIdAndClientIdAndStatus(
                     tenantId, schedule.getId(), clientId, ConsultantRating.RatingStatus.ACTIVE);
 
@@ -292,8 +289,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             
             stats.put("heartScoreDistribution", heartScoreDistribution);
 
-            // 표준화 2025-12-06: deprecated 메서드 대체
-            String tenantId = TenantContextHolder.getRequiredTenantId();
+            // 표준화 2025-12-06: tenantId는 이미 270번째 줄에서 선언됨
             List<ConsultantRating> recentRatings = ratingRepository.findTop10ByTenantIdAndConsultantIdAndStatusOrderByRatedAtDesc(
                 tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE, PageRequest.of(0, 10));
             

@@ -154,6 +154,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                     // CORS preflight 요청 허용
                     .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                    // 공개 엔드포인트: 온보딩 API (새로운 테넌트 등록)
+                    .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
                         "/api/v1/ops/plans/active",           // 활성화된 요금제 목록 (공개)

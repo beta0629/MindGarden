@@ -1334,6 +1334,7 @@ public class ErpController extends BaseApiController {
     
     /**
      * 데이터 확인용 API (임시)
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
      */
     @GetMapping("/debug/transactions")
     public ResponseEntity<Map<String, Object>> debugTransactions(
@@ -1341,19 +1342,17 @@ public class ErpController extends BaseApiController {
             HttpServletRequest request) {
         
         try {
-            log.info("🔍 데이터 확인 API 호출: branchCode={}", branchCode);
+            log.info("🔍 데이터 확인 API 호출: branchCode={} (무시됨)", branchCode);
             
-            // 모든 거래 조회
+            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
+            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            
+            // 모든 거래 조회 (tenantId 기반)
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> allTransactions = 
                 financialTransactionService.getTransactions(PageRequest.of(0, 100)).getContent();
             
-            // 지점별 필터링
+            // 표준화 2025-12-06: branchCode 필터링 제거
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> filteredTransactions = allTransactions;
-            if (branchCode != null && !branchCode.isEmpty()) {
-                filteredTransactions = allTransactions.stream()
-                    .filter(t -> branchCode.equals(t.getBranchCode()))
-                    .collect(java.util.stream.Collectors.toList());
-            }
             
             // 카테고리별 집계
             Map<String, BigDecimal> categoryBreakdown = filteredTransactions.stream()
@@ -1367,12 +1366,12 @@ public class ErpController extends BaseApiController {
             Map<String, Object> result = new HashMap<>();
             result.put("totalTransactions", allTransactions.size());
             result.put("filteredTransactions", filteredTransactions.size());
-            result.put("branchCode", branchCode);
+            result.put("tenantId", tenantId);
             result.put("categoryBreakdown", categoryBreakdown);
             result.put("sampleTransactions", filteredTransactions.stream().limit(5).collect(java.util.stream.Collectors.toList()));
             
-            log.info("🔍 데이터 확인 결과: 전체={}, 필터링={}, 카테고리={}", 
-                allTransactions.size(), filteredTransactions.size(), categoryBreakdown.size());
+            log.info("🔍 데이터 확인 결과: 전체={}, 필터링={}, 카테고리={}, tenantId={}", 
+                allTransactions.size(), filteredTransactions.size(), categoryBreakdown.size(), tenantId);
             
             return ResponseEntity.ok(result);
             

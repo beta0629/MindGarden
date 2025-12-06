@@ -332,22 +332,16 @@ public class AdminController extends BaseApiController {
         log.info("🔍 통합 내담자 데이터 조회");
         
         User currentUser = SessionUtils.getCurrentUser(session);
-        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
-        log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        log.info("🔍 현재 사용자 tenantId: {}", tenantId);
         
         List<Map<String, Object>> allClientsWithMappingInfo = adminService.getAllClientsWithMappingInfo();
         
-        List<Map<String, Object>> clientsWithMappingInfo = allClientsWithMappingInfo.stream()
-            .filter(client -> {
-                if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
-                    return true; // 지점코드가 없으면 모든 내담자 조회
-                }
-                String clientBranchCode = (String) client.get("branchCode");
-                return currentBranchCode.equals(clientBranchCode);
-            })
-            .collect(java.util.stream.Collectors.toList());
+        // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
+        List<Map<String, Object>> clientsWithMappingInfo = allClientsWithMappingInfo;
         
-        log.info("🔍 통합 내담자 데이터 조회 완료 - 전체: {}, 필터링 후: {}", allClientsWithMappingInfo.size(), clientsWithMappingInfo.size());
+        log.info("🔍 통합 내담자 데이터 조회 완료 - 전체: {}, tenantId: {}", allClientsWithMappingInfo.size(), tenantId);
         
         Map<String, Object> data = new HashMap<>();
         data.put("clients", clientsWithMappingInfo);
@@ -1236,14 +1230,9 @@ public class AdminController extends BaseApiController {
         
         User currentUser = SessionUtils.getCurrentUser(session);
         
+        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         if (currentUser != null) {
-            log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
-            
-            if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
-                (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty())) {
-                request.setBranchCode(currentUser.getBranchCode());
-                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
-            }
+            log.info("🔧 현재 사용자 정보: userId={}, tenantId={}", currentUser.getId(), currentUser.getTenantId());
         }
         
         /* 주석 처리됨 - 지점코드 검증 로직
@@ -1263,7 +1252,6 @@ public class AdminController extends BaseApiController {
     @PostMapping("/clients")
     public ResponseEntity<ApiResponse<Client>> registerClient(@RequestBody ClientRegistrationRequest request, HttpSession session) {
         log.info("🔧 내담자 등록: {}", request.getName());
-        log.info("🔧 요청 데이터: branchCode={}", request.getBranchCode());
         
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CLIENT_MANAGE", dynamicPermissionService);
         if (permissionResponse != null) {
@@ -1274,14 +1262,9 @@ public class AdminController extends BaseApiController {
         
         log.info("🔧 세션 사용자: {}", currentUser.getName());
         
+        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         if (currentUser != null) {
-            log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
-            
-            if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
-                (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty())) {
-                request.setBranchCode(currentUser.getBranchCode());
-                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
-            }
+            log.info("🔧 현재 사용자 정보: userId={}, tenantId={}", currentUser.getId(), currentUser.getTenantId());
         }
         
         /* 주석 처리됨 - 지점코드 검증 로직

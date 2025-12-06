@@ -73,7 +73,7 @@ public class BranchCodeInitService {
             log.warn("⚠️ Deprecated: branchCode 설정은 더 이상 사용하지 않음. tenantId 기반으로만 동작합니다.");
             
             // 4. 본사 역할의 모든 사용자 확인 (branchCode 설정 제거)
-            String tenantId = TenantContextHolder.getTenantId();
+            // tenantId는 이미 위에서 선언됨
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return;

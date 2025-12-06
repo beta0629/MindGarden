@@ -197,8 +197,11 @@ public class AuthController extends BaseApiController {
         }
         userInfo.put("branchName", branchName);
         
-        // 소셜 계정 정보 조회하여 이미지 타입 구분
-        List<UserSocialAccount> socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId());
+        // 소셜 계정 정보 조회하여 이미지 타입 구분 (테넌트별)
+        String tenantId = user.getTenantId();
+        List<UserSocialAccount> socialAccounts = tenantId != null
+            ? userSocialAccountRepository.findByTenantIdAndUserIdAndIsDeletedFalse(tenantId, user.getId())
+            : userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId()); // 레거시 호환
         
         // 프로필 이미지 우선순위: 사용자 업로드 > 소셜 > 기본 아이콘
         String profileImageUrl = null;

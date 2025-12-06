@@ -2087,7 +2087,11 @@ public class AdminController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
         
-        var socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(id);
+        // 테넌트별 소셜 계정 조회
+        String tenantId = SessionUtils.getTenantId(session);
+        var socialAccounts = tenantId != null
+            ? userSocialAccountRepository.findByTenantIdAndUserIdAndIsDeletedFalse(tenantId, id)
+            : userSocialAccountRepository.findByUserIdAndIsDeletedFalse(id); // 레거시 호환
         
         log.info("✅ 사용자 소셜 계정 정보 조회 완료: ID={}, count={}", id, socialAccounts.size());
         

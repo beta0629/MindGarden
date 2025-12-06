@@ -40,7 +40,9 @@ public class BankTransferServiceImpl implements BankTransferService {
     public BankTransferResponse createVirtualAccount(BankTransferRequest request) {
         log.info("가상계좌 생성 요청: {}", request.getPaymentId());
         
-        Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(request.getPaymentId())
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, request.getPaymentId())
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
         
         String virtualAccountNumber = generateVirtualAccountNumber();
@@ -70,7 +72,9 @@ public class BankTransferServiceImpl implements BankTransferService {
         log.info("입금 확인 (수동): {}, 금액: {}, 입금자: {}", paymentId, amount, depositorName);
         
         try {
-            Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                     .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
             
             if (payment.getAmount().longValue() != amount) {
@@ -98,7 +102,9 @@ public class BankTransferServiceImpl implements BankTransferService {
         log.info("입금 확인 (자동): {}", paymentId);
         
         try {
-            Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                     .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
             
             boolean isDeposited = checkBankDeposit(payment);

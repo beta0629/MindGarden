@@ -75,8 +75,9 @@ public class BranchAccountCreator {
         String username = branchCode.toLowerCase() + "_admin_" + timestamp;
         String name = branchName + " 관리자";
         
-        // 기존 계정 확인
-        if (userRepository.findByEmail(email).isPresent()) {
+        // 기존 계정 확인 (표준화 2025-12-06: deprecated 메서드 대체)
+        // 테스트/초기화용 유틸리티이므로 멀티 테넌트 사용자 지원을 위해 findAllByEmail 사용
+        if (!userRepository.findAllByEmail(email).isEmpty()) {
             System.out.println("  - 지점 관리자 계정 이미 존재: " + email);
             return;
         }
@@ -109,8 +110,9 @@ public class BranchAccountCreator {
         String username = "consultant_" + branchCode.toLowerCase() + "_" + timestamp;
         String name = branchName + " 테스트상담사";
         
-        // 기존 계정 확인
-        if (userRepository.findByEmail(email).isPresent()) {
+        // 기존 계정 확인 (표준화 2025-12-06: deprecated 메서드 대체)
+        // 테스트/초기화용 유틸리티이므로 멀티 테넌트 사용자 지원을 위해 findAllByEmail 사용
+        if (!userRepository.findAllByEmail(email).isEmpty()) {
             System.out.println("  - 테스트 상담사 계정 이미 존재: " + email);
             return;
         }
@@ -173,8 +175,9 @@ public class BranchAccountCreator {
         String username = "client_" + branchCode.toLowerCase() + "_" + timestamp;
         String name = branchName + " 테스트내담자";
         
-        // 기존 계정 확인
-        if (userRepository.findByEmail(email).isPresent()) {
+        // 기존 계정 확인 (표준화 2025-12-06: deprecated 메서드 대체)
+        // 테스트/초기화용 유틸리티이므로 멀티 테넌트 사용자 지원을 위해 findAllByEmail 사용
+        if (!userRepository.findAllByEmail(email).isEmpty()) {
             System.out.println("  - 테스트 내담자 계정 이미 존재: " + email);
             return;
         }

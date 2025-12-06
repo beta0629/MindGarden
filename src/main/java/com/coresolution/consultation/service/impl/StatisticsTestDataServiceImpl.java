@@ -205,7 +205,9 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
         List<Long> createdTransactionIds = new ArrayList<>();
         
         try {
-            List<Schedule> completedSchedules = scheduleRepository.findByDateAndBranchCode(targetDate, branchCode)
+            // 표준화 2025-12-06: deprecated 메서드 대체 - branchCode는 더 이상 사용하지 않음
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<Schedule> completedSchedules = scheduleRepository.findByTenantIdAndDate(tenantId, targetDate)
                 .stream()
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> s.getStatus() == ScheduleStatus.COMPLETED)
@@ -267,7 +269,9 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
         List<Long> createdRatingIds = new ArrayList<>();
         
         try {
-            List<Schedule> completedSchedules = scheduleRepository.findByDateAndBranchCode(targetDate, branchCode)
+            // 표준화 2025-12-06: deprecated 메서드 대체 - branchCode는 더 이상 사용하지 않음
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<Schedule> completedSchedules = scheduleRepository.findByTenantIdAndDate(tenantId, targetDate)
                 .stream()
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> s.getStatus() == ScheduleStatus.COMPLETED)

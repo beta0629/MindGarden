@@ -702,12 +702,6 @@ public class UserServiceImpl implements UserService {
                 user.getId(), user.getBranch().getId(), user.getBranch().getBranchName());
         } else {
             log.debug("사용자 등록 시 지점 정보 없음: userId={}", user.getId());
-                    // 레거시 호환을 위해 예외를 던지지 않고 경고만 로깅
-                }
-            } catch (Exception e) {
-                log.warn("지점 코드 처리 중 오류 (레거시 호환): branchCode={}, error={}", user.getBranchCode(), e.getMessage());
-                // 레거시 호환을 위해 예외를 던지지 않고 경고만 로깅
-            }
         }
         
         return save(user);

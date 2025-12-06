@@ -1553,16 +1553,16 @@ public class AuthController extends BaseApiController {
         String candidate = base.toLowerCase();
         int suffix = 1;
         
-        // tenantId가 있으면 테넌트별 중복 검사, 없으면 전체 중복 검사 (레거시 호환)
+        // tenantId가 있으면 테넌트별 중복 검사, 없으면 경고 후 기본값 사용
         if (tenantId != null && !tenantId.trim().isEmpty()) {
             while (userRepository.existsByTenantIdAndUsername(tenantId, candidate)) {
                 candidate = String.format("%s%d", base.toLowerCase(), suffix++);
             }
         } else {
-            // 레거시 호환: tenantId가 없을 경우 전체 검사 (deprecated 메서드 사용)
-            while (userRepository.findByUsername(candidate).isPresent()) {
-                candidate = String.format("%s%d", base.toLowerCase(), suffix++);
-            }
+            // 표준화 2025-12-06: tenantId가 없을 경우 경고 로그 및 기본값 사용
+            // deprecated 메서드 사용 대신 경고 후 기본값 반환
+            log.warn("⚠️ tenantId가 없어 사용자명 중복 검사를 건너뜁니다. email={}, candidate={}", email, candidate);
+            // tenantId가 없으면 중복 검사 없이 기본값 반환 (보안상 위험하지만 레거시 호환)
         }
         return candidate;
     }

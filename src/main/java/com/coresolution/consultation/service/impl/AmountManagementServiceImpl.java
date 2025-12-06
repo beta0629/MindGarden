@@ -206,9 +206,10 @@ public class AmountManagementServiceImpl implements AmountManagementService {
         amountBreakdown.put("packagePrice", mapping.getPackagePrice());
         amountBreakdown.put("paymentAmount", mapping.getPaymentAmount());
         
-        // 관련 ERP 거래들의 금액 합계
+        // 관련 ERP 거래들의 금액 합계 (표준화 2025-12-06: deprecated 메서드 대체)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         List<FinancialTransaction> relatedTransactions = financialTransactionRepository
-            .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(mappingId, "CONSULTANT_CLIENT_MAPPING");
+            .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING");
         
         BigDecimal totalErpAmount = relatedTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)

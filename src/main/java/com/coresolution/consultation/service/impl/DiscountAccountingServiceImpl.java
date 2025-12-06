@@ -104,9 +104,11 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
             ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             List<FinancialTransaction> revenueTransactions = financialTransactionRepository
-                .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
-                    mappingId, "CONSULTANT_CLIENT_MAPPING"
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                    tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
                 );
             FinancialTransaction revenueTransaction = revenueTransactions.stream()
                 .filter(ft -> ft.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
@@ -120,8 +122,8 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
             }
             
             List<FinancialTransaction> discountTransactions = financialTransactionRepository
-                .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
-                    mappingId, "CONSULTANT_CLIENT_MAPPING"
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                    tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
                 );
             FinancialTransaction discountTransaction = discountTransactions.stream()
                 .filter(ft -> ft.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
@@ -214,9 +216,11 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
             ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             List<FinancialTransaction> revenueTransactions = financialTransactionRepository
-                .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
-                    mappingId, "CONSULTANT_CLIENT_MAPPING"
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                    tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
                 );
             FinancialTransaction revenueTransaction = revenueTransactions.stream()
                 .filter(ft -> ft.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
@@ -224,8 +228,8 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
                 .orElse(null);
             
             List<FinancialTransaction> discountTransactions = financialTransactionRepository
-                .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
-                    mappingId, "CONSULTANT_CLIENT_MAPPING"
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                    tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
                 );
             FinancialTransaction discountTransaction = discountTransactions.stream()
                 .filter(ft -> ft.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
@@ -267,9 +271,11 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
             ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             List<FinancialTransaction> revenueTransactions = financialTransactionRepository
-                .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
-                    mappingId, "CONSULTANT_CLIENT_MAPPING"
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                    tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
                 );
             FinancialTransaction revenueTransaction = revenueTransactions.stream()
                 .filter(ft -> ft.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
@@ -277,8 +283,8 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
                 .orElse(null);
             
             List<FinancialTransaction> discountTransactions = financialTransactionRepository
-                .findByRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
-                    mappingId, "CONSULTANT_CLIENT_MAPPING"
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                    tenantId, mappingId, "CONSULTANT_CLIENT_MAPPING"
                 );
             FinancialTransaction discountTransaction = discountTransactions.stream()
                 .filter(ft -> ft.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)

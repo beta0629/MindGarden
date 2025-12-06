@@ -139,7 +139,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     public PaymentResponse getPayment(String paymentId) {
         log.info("결제 조회: {}", paymentId);
         
-        Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
         
         return buildPaymentResponse(payment, null);
@@ -189,7 +191,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     public PaymentResponse updatePaymentStatus(String paymentId, Payment.PaymentStatus status) {
         log.info("결제 상태 업데이트: {} -> {}", paymentId, status);
         
-        Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
         
         if (payment.getTenantId() != null) {
@@ -323,7 +327,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     public PaymentResponse cancelPayment(String paymentId, String reason) {
         log.info("결제 취소: {}, 사유: {}", paymentId, reason);
         
-        Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -347,7 +353,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     public PaymentResponse refundPayment(String paymentId, BigDecimal amount, String reason) {
         log.info("결제 환불: {}, 금액: {}, 사유: {}", paymentId, amount, reason);
         
-        Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -380,7 +388,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 return false;
             }
             
-            Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(webhookRequest.getPaymentId())
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, webhookRequest.getPaymentId())
                     .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
             
             Payment.PaymentStatus newStatus = Payment.PaymentStatus.valueOf(webhookRequest.getStatus());
@@ -404,7 +414,9 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     public boolean verifyPayment(String paymentId, BigDecimal amount) {
         log.info("결제 검증: {}, 금액: {}", paymentId, amount);
         
-        Payment payment = paymentRepository.findByPaymentIdAndIsDeletedFalse(paymentId)
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
         
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용

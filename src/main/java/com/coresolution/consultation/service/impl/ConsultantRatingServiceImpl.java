@@ -524,8 +524,9 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getAdminRatingStatisticsByBranch(String branchCode) {
+        String tenantId = null;
         try {
-            String tenantId = TenantContextHolder.getTenantId();
+            tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
                 return new HashMap<>();

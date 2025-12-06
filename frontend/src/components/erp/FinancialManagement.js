@@ -915,8 +915,8 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 padding: '2px 8px',
                 borderRadius: '12px',
                 fontSize: 'var(--font-size-xs)',
-                backgroundColor: transaction.transactionType === 'INCOME' ? '#d4edda' : '#f8d7da',
-                color: transaction.transactionType === 'INCOME' ? '#155724' : '#721c24'
+                backgroundColor: transaction.transactionType === 'INCOME' ? 'var(--mg-success-100, rgba(40, 167, 69, 0.1))' : 'var(--mg-error-100, rgba(220, 53, 69, 0.1))',
+                color: transaction.transactionType === 'INCOME' ? 'var(--mg-success-700, #155724)' : 'var(--mg-error-700, #721c24)'
               }}>
                 {transaction.transactionType === 'INCOME' ? '💰 수입' : '💸 지출'}
               </span>
@@ -951,7 +951,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
         {/* 매핑 연동 정보 */}
         {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
           <div style={{
-            backgroundColor: '#e3f2fd',
+            backgroundColor: 'var(--mg-info-100, rgba(23, 162, 184, 0.1))',
             padding: '16px',
             borderRadius: '8px',
             marginBottom: '20px',
@@ -1014,8 +1014,8 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                       padding: '2px 8px',
                       borderRadius: '12px',
                       fontSize: 'var(--font-size-xs)',
-                      backgroundColor: mappingDetail.isConsistent ? '#d4edda' : '#f8d7da',
-                      color: mappingDetail.isConsistent ? '#155724' : '#721c24'
+                      backgroundColor: mappingDetail.isConsistent ? 'var(--mg-success-100, rgba(40, 167, 69, 0.1))' : 'var(--mg-error-100, rgba(220, 53, 69, 0.1))',
+                      color: mappingDetail.isConsistent ? 'var(--mg-success-700, #155724)' : 'var(--mg-error-700, #721c24)'
                     }}>
                       {mappingDetail.isConsistent ? '✅ 정상' : '⚠️ 불일치'}
                     </span>
@@ -1035,7 +1035,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                         <div key={index} style={{
                           fontSize: 'var(--font-size-xs)',
                           padding: '4px 8px',
-                          backgroundColor: '#f1f3f4',
+                          backgroundColor: 'var(--mg-gray-100, #f1f3f4)',
                           borderRadius: '4px',
                           marginBottom: '4px'
                         }}>
@@ -1048,7 +1048,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 )}
               </div>
             ) : (
-              <div style={{ textAlign: 'center', color: '#666' }}>
+              <div style={{ textAlign: 'center', color: 'var(--mg-gray-500, #666)' }}>
                 매핑 정보를 불러올 수 없습니다.
               </div>
             )}
@@ -1058,13 +1058,13 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
         {/* 기타 연동 정보 */}
         {transaction.relatedEntityType && transaction.relatedEntityType !== 'CONSULTANT_CLIENT_MAPPING' && (
           <div style={{
-            backgroundColor: '#fff3cd',
+            backgroundColor: 'var(--mg-warning-100, rgba(255, 193, 7, 0.1))',
             padding: '16px',
             borderRadius: '8px',
             marginBottom: '20px',
             border: '2px solid var(--mg-warning-500)'
           }}>
-            <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: '#856404' }}>
+            <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: 'var(--mg-warning-700, #856404)' }}>
               🔗 연동 정보
             </h3>
             

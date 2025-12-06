@@ -45,9 +45,9 @@ const ConsultationRecordScreen = () => {
       setPriorityOptions([
         { value: 'LOW', label: '낮음', icon: '🟢', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
         { value: 'MEDIUM', label: '보통', icon: '🟡', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
-        { value: 'HIGH', label: '높음', icon: '🟠', color: '#fd7e14', description: '높은 우선순위' },
+        { value: 'HIGH', label: '높음', icon: '🟠', color: 'var(--mg-warning-500, #fd7e14)', description: '높은 우선순위' },
         { value: 'URGENT', label: '긴급', icon: '🔴', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
-        { value: 'CRITICAL', label: '위험', icon: '🚨', color: '#6f42c1', description: '위험 우선순위' }
+        { value: 'CRITICAL', label: '위험', icon: '🚨', color: 'var(--mg-purple-500, #6f42c1)', description: '위험 우선순위' }
       ]);
     } finally {
       setLoadingCodes(false);
@@ -103,17 +103,17 @@ const ConsultationRecordScreen = () => {
       padding: '20px'
     },
     header: {
-      backgroundColor: '#fff',
+      backgroundColor: 'var(--mg-white, #fff)',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: '1px solid #e9ecef'
+      border: '1px solid var(--mg-gray-200, #e9ecef)'
     },
     headerTitle: {
       fontSize: 'var(--font-size-xxl)',
       fontWeight: '700',
-      color: '#2c3e50',
+      color: 'var(--mg-gray-800, #2c3e50)',
       marginBottom: '8px',
       display: 'flex',
       alignItems: 'center',
@@ -125,17 +125,17 @@ const ConsultationRecordScreen = () => {
       marginBottom: '20px'
     },
     clientInfoCard: {
-      backgroundColor: '#fff',
+      backgroundColor: 'var(--mg-white, #fff)',
       borderRadius: '12px',
       padding: '24px',
       marginBottom: '20px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: '1px solid #e9ecef'
+      border: '1px solid var(--mg-gray-200, #e9ecef)'
     },
     clientInfoTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
-      color: '#2c3e50',
+      color: 'var(--mg-gray-800, #2c3e50)',
       marginBottom: '16px',
       display: 'flex',
       alignItems: 'center',
@@ -160,20 +160,20 @@ const ConsultationRecordScreen = () => {
     },
     clientInfoValue: {
       fontSize: 'var(--font-size-base)',
-      color: '#2c3e50',
+      color: 'var(--mg-gray-800, #2c3e50)',
       fontWeight: '500'
     },
     formCard: {
-      backgroundColor: '#fff',
+      backgroundColor: 'var(--mg-white, #fff)',
       borderRadius: '12px',
       padding: '24px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: '1px solid #e9ecef'
+      border: '1px solid var(--mg-gray-200, #e9ecef)'
     },
     formTitle: {
       fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
-      color: '#2c3e50',
+      color: 'var(--mg-gray-800, #2c3e50)',
       marginBottom: '20px',
       display: 'flex',
       alignItems: 'center',
@@ -219,7 +219,7 @@ const ConsultationRecordScreen = () => {
       border: '2px solid #e9ecef',
       borderRadius: '8px',
       fontSize: 'var(--font-size-sm)',
-      backgroundColor: '#fff',
+      backgroundColor: 'var(--mg-white, #fff)',
       cursor: 'pointer',
       transition: 'all 0.2s ease'
     },

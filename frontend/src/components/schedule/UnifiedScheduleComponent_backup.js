@@ -72,7 +72,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         return {
                             value: code.codeValue,
                             label: code.codeLabel,
-                            color: '#6b7280',
+                            color: 'var(--mg-gray-500, #6b7280)',
                             icon: '📋',
                             description: code.codeDescription
                         };
@@ -94,10 +94,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: 'var(--mg-warning-500)', description: '진행 중인 일정' },
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: '#059669', description: '완료된 일정' },
+                { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: 'var(--mg-success-600, #059669)', description: '완료된 일정' },
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 { value: 'CANCELLED', label: '취소됨', icon: '❌', color: 'var(--mg-error-500)', description: '취소된 일정' },
-                { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#6b7280', description: '차단된 시간' }
+                { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: 'var(--mg-gray-500, #6b7280)', description: '차단된 시간' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -269,7 +269,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌇 오후 휴무';
-                backgroundColor = '#FF5722';
+                backgroundColor = 'var(--mg-error-600, #FF5722)';
                 allDay = false;
                 break;
             case 'MORNING_HALF_1':
@@ -289,14 +289,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T16:00:00+09:00');
                 title = '🌆 오후 반반차 1';
-                backgroundColor = '#FF7043';
+                backgroundColor = 'var(--mg-warning-500, #FF7043)';
                 allDay = false;
                 break;
             case 'AFTERNOON_HALF_2':
                 startDate.setHours(16, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌆 오후 반반차 2';
-                backgroundColor = '#FF7043';
+                backgroundColor = 'var(--mg-warning-500, #FF7043)';
                 allDay = false;
                 break;
             case 'CUSTOM_TIME':
@@ -304,12 +304,12 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
                     endDate = new Date(date + 'T' + endTime + '+09:00');
                     title = '⏰ 사용자 정의 휴무';
-                    backgroundColor = '#9C27B0';
+                    backgroundColor = 'var(--mg-purple-500, #9C27B0)';
                     allDay = false;
                 } else {
                     endDate = new Date(date + 'T23:59:59+09:00');
                     title = '⏰ 사용자 정의 휴무';
-                    backgroundColor = '#9C27B0';
+                    backgroundColor = 'var(--mg-purple-500, #9C27B0)';
                 }
                 break;
             case 'ALL_DAY':
@@ -365,11 +365,11 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             'var(--mg-warning-500)', // 주황색
             'var(--mg-error-500)', // 빨간색
             'var(--mg-purple-500)', // 보라색
-            '#06b6d4', // 청록색
-            '#84cc16', // 라임색
-            '#f97316', // 오렌지색
-            '#ec4899', // 핑크색
-            '#6366f1'  // 인디고색
+            'var(--mg-info-500, #06b6d4)', // 청록색
+            'var(--mg-success-500, #84cc16)', // 라임색
+            'var(--mg-warning-500, #f97316)', // 오렌지색
+            'var(--mg-pink-500, #ec4899)', // 핑크색
+            'var(--mg-indigo-500, #6366f1)'  // 인디고색
         ];
         
         const colorIndex = consultantId % colors.length;
@@ -710,7 +710,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 ))
                             ) : (
                                 <div key="loading-status" className="legend-item">
-                                    <span className="legend-color" style={{ backgroundColor: '#e5e7eb' }}></span>
+                                    <span className="legend-color" style={{ backgroundColor: 'var(--mg-gray-200, #e5e7eb)' }}></span>
                                     <span>로딩 중</span>
                                 </div>
                             )}
@@ -815,7 +815,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                            <h3 style={{ margin: '0 0 8px 0', color: '#2c3e50' }}>
+                            <h3 style={{ margin: '0 0 8px 0', color: 'var(--mg-gray-800, #2c3e50)' }}>
                                 📅 {selectedDate ? selectedDate.toLocaleDateString('ko-KR', {
                                     year: 'numeric',
                                     month: 'long',
@@ -833,7 +833,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     padding: '16px',
-                                    border: '2px solid #e9ecef',
+                                    border: '2px solid var(--mg-gray-200, #e9ecef)',
                                     borderRadius: '8px',
                                     background: 'white',
                                     cursor: 'pointer',
@@ -843,10 +843,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 }}
                                 onMouseOver={(e) => {
                                     e.target.style.borderColor = 'var(--mg-primary-500)';
-                                    e.target.style.background = '#f8f9ff';
+                                    e.target.style.background = 'var(--mg-primary-50, #f8f9ff)';
                                 }}
                                 onMouseOut={(e) => {
-                                    e.target.style.borderColor = '#e9ecef';
+                                    e.target.style.borderColor = 'var(--mg-gray-200, #e9ecef)';
                                     e.target.style.background = 'white';
                                 }}
                             >
@@ -864,7 +864,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         padding: '16px',
-                                        border: '2px solid #e9ecef',
+                                        border: '2px solid var(--mg-gray-200, #e9ecef)',
                                         borderRadius: '8px',
                                         background: 'white',
                                         cursor: 'pointer',
@@ -874,10 +874,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     }}
                                     onMouseOver={(e) => {
                                         e.target.style.borderColor = 'var(--mg-warning-500)';
-                                        e.target.style.background = '#fffbf0';
+                                        e.target.style.background = 'var(--mg-warning-50, #fffbf0)';
                                     }}
                                     onMouseOut={(e) => {
-                                        e.target.style.borderColor = '#e9ecef';
+                                        e.target.style.borderColor = 'var(--mg-gray-200, #e9ecef)';
                                         e.target.style.background = 'white';
                                     }}
                                 >
@@ -903,7 +903,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     transition: 'all 0.3s ease'
                                 }}
                                 onMouseOver={(e) => {
-                                    e.target.style.background = '#5a6268';
+                                    e.target.style.background = 'var(--mg-gray-600, #5a6268)';
                                     e.target.style.transform = 'translateY(-1px)';
                                 }}
                                 onMouseOut={(e) => {
@@ -977,7 +977,7 @@ const styles = `
 }
 
 .refresh-button:active {
-    background: #1d4ed8;
+    background: var(--mg-primary-700, #1d4ed8);
     transform: translateY(0);
 }
 
@@ -1003,7 +1003,7 @@ const styles = `
 .legend-title {
     font-size: 14px;
     font-weight: 600;
-    color: #475569;
+    color: var(--mg-gray-600, #475569);
     margin-bottom: 5px;
 }
 
@@ -1033,10 +1033,10 @@ const styles = `
     flex-shrink: 0;
 }
 
-.legend-color.available { background-color: #e5e7eb; }
+.legend-color.available { background-color: var(--mg-gray-200, #e5e7eb); }
 .legend-color.booked { background-color: var(--mg-primary-500); }
 .legend-color.in-progress { background-color: var(--mg-success-500); }
-.legend-color.completed { background-color: #6b7280; }
+.legend-color.completed { background-color: var(--mg-gray-500, #6b7280); }
 .legend-color.cancelled { background-color: var(--mg-error-500); }
 .legend-color.blocked { background-color: var(--mg-warning-500); }
 
@@ -1090,13 +1090,13 @@ const styles = `
 }
 
 .fc-button:active {
-    background: #1d4ed8;
+    background: var(--mg-primary-700, #1d4ed8);
     transform: translateY(0);
 }
 
 .fc-button-primary:not(:disabled):active,
 .fc-button-primary:not(:disabled).fc-button-active {
-    background: #1d4ed8;
+    background: var(--mg-primary-700, #1d4ed8);
     border-color: #1d4ed8;
 }
 

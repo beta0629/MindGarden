@@ -26,7 +26,6 @@ import com.coresolution.consultation.service.ErpService;
 import com.coresolution.consultation.service.FinancialTransactionService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.TaxCalculationUtil;
-import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

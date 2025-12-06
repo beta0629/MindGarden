@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.SalaryScheduleService;
-import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

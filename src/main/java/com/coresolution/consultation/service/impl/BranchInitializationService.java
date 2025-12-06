@@ -1,7 +1,5 @@
 package com.coresolution.consultation.service.impl;
 
-
-import com.coresolution.core.context.TenantContextHolder;
 import java.time.LocalTime;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.repository.BranchRepository;

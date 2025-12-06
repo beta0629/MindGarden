@@ -159,8 +159,7 @@ public class SuperAdminBypassTest {
     public void testSuperAdminRoles() {
         // Given: 슈퍼 어드민 역할들
         UserRole[] superAdminRoles = {
-            UserRole.ADMIN // 표준화 2025-12-05: HQ_MASTER → ADMIN으로 통합,
-            UserRole.ADMIN // 표준화 2025-12-05: SUPER_HQ_ADMIN → ADMIN으로 통합
+            UserRole.ADMIN // 표준화 2025-12-05: HQ_MASTER, SUPER_HQ_ADMIN → ADMIN으로 통합
         };
         
         // When & Then: 각 역할이 슈퍼 어드민인지 확인
@@ -175,7 +174,6 @@ public class SuperAdminBypassTest {
         
         // 일반 역할은 슈퍼 어드민이 아니어야 함
         UserRole[] normalRoles = {
-            UserRole.ADMIN // 표준화 2025-12-05: BRANCH_ADMIN → ADMIN으로 통합,
             UserRole.CONSULTANT,
             UserRole.CLIENT
         };
@@ -239,8 +237,8 @@ public class SuperAdminBypassTest {
      * 슈퍼 어드민 역할 확인 헬퍼 메서드
      */
     private boolean isSuperAdminRole(UserRole role) {
-        return role == UserRole.ADMIN // 표준화 2025-12-05: HQ_MASTER → ADMIN으로 통합 || 
-               role == UserRole.ADMIN // 표준화 2025-12-05: SUPER_HQ_ADMIN → ADMIN으로 통합;
+        // 표준화 2025-12-05: HQ_MASTER, SUPER_HQ_ADMIN → ADMIN으로 통합
+        return role == UserRole.ADMIN;
     }
 }
 

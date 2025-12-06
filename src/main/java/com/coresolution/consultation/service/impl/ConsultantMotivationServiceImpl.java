@@ -7,7 +7,6 @@ import com.coresolution.consultation.entity.WarmWords;
 import com.coresolution.consultation.repository.DailyHumorRepository;
 import com.coresolution.consultation.repository.WarmWordsRepository;
 import com.coresolution.consultation.service.ConsultantMotivationService;
-import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

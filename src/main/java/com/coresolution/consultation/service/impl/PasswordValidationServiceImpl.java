@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.service.PasswordConfigService;
 import com.coresolution.consultation.service.PasswordValidationService;
-import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

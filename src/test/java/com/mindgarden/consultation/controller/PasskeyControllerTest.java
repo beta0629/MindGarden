@@ -1,4 +1,4 @@
-package com.coresolution.consultation.controller;
+package com.mindgarden.consultation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.service.PasskeyService;

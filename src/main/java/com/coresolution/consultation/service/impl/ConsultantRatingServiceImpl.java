@@ -72,8 +72,10 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 throw new RuntimeException("본인의 상담만 평가할 수 있습니다.");
             }
 
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            if (ratingRepository.existsByScheduleIdAndClientIdAndStatus(scheduleId, clientId, ConsultantRating.RatingStatus.ACTIVE)) {
+            if (ratingRepository.existsByTenantIdAndScheduleIdAndClientIdAndStatus(tenantId, scheduleId, clientId, ConsultantRating.RatingStatus.ACTIVE)) {
                 throw new RuntimeException("이미 평가한 상담입니다.");
             }
 
@@ -190,8 +192,10 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
     @Override
     @Transactional(readOnly = true)
     public ConsultantRating getRatingBySchedule(Long scheduleId) {
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        return ratingRepository.findByScheduleIdAndStatus(scheduleId, ConsultantRating.RatingStatus.ACTIVE)
+        return ratingRepository.findByTenantIdAndScheduleIdAndStatus(tenantId, scheduleId, ConsultantRating.RatingStatus.ACTIVE)
             .orElse(null);
     }
 
@@ -210,9 +214,10 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             List<Map<String, Object>> ratableSchedules = new ArrayList<>();
 
             for (Schedule schedule : completedSchedules) {
-                boolean alreadyRated = ratingRepository.existsByScheduleIdAndClientIdAndStatus(
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                    schedule.getId(), clientId, ConsultantRating.RatingStatus.ACTIVE);
+                // 표준화 2025-12-06: deprecated 메서드 대체
+                String tenantId = TenantContextHolder.getRequiredTenantId();
+                boolean alreadyRated = ratingRepository.existsByTenantIdAndScheduleIdAndClientIdAndStatus(
+                    tenantId, schedule.getId(), clientId, ConsultantRating.RatingStatus.ACTIVE);
 
                 if (!alreadyRated) {
                     try {
@@ -261,16 +266,18 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
 
             Map<String, Object> stats = new HashMap<>();
 
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            Double averageScore = ratingRepository.getAverageHeartScoreByConsultant(consultantId, ConsultantRating.RatingStatus.ACTIVE);
+            Double averageScore = ratingRepository.getAverageHeartScoreByTenantIdAndConsultant(tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE);
             stats.put("averageHeartScore", averageScore != null ? Math.round(averageScore * 10.0) / 10.0 : 0.0);
 
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            Long totalCount = ratingRepository.getTotalRatingCountByConsultant(consultantId, ConsultantRating.RatingStatus.ACTIVE);
+            Long totalCount = ratingRepository.getTotalRatingCountByTenantIdAndConsultant(tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE);
             stats.put("totalRatingCount", totalCount != null ? totalCount : 0L);
 
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            List<Object[]> distribution = ratingRepository.getHeartScoreDistributionByConsultant(consultantId, ConsultantRating.RatingStatus.ACTIVE);
+            List<Object[]> distribution = ratingRepository.getHeartScoreDistributionByTenantIdAndConsultant(tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE);
             Map<Integer, Long> heartScoreDistribution = new HashMap<>();
             
             for (int i = 1; i <= 5; i++) {
@@ -285,9 +292,10 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             
             stats.put("heartScoreDistribution", heartScoreDistribution);
 
-            List<ConsultantRating> recentRatings = ratingRepository.findTop10ByConsultantIdAndStatusOrderByRatedAtDesc(
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                consultantId, ConsultantRating.RatingStatus.ACTIVE);
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<ConsultantRating> recentRatings = ratingRepository.findTop10ByTenantIdAndConsultantIdAndStatusOrderByRatedAtDesc(
+                tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE, PageRequest.of(0, 10));
             
             List<Map<String, Object>> recentRatingsList = recentRatings.stream().map(rating -> {
                 Map<String, Object> ratingInfo = new HashMap<>();
@@ -329,15 +337,19 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
     @Override
     @Transactional(readOnly = true)
     public Page<ConsultantRating> getConsultantRatings(Long consultantId, Pageable pageable) {
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        return ratingRepository.findByConsultantIdAndStatusOrderByRatedAtDesc(consultantId, ConsultantRating.RatingStatus.ACTIVE, pageable);
+        return ratingRepository.findByTenantIdAndConsultantIdAndStatusOrderByRatedAtDesc(tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ConsultantRating> getClientRatings(Long clientId, Pageable pageable) {
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        return ratingRepository.findByClientIdAndStatusOrderByRatedAtDesc(clientId, ConsultantRating.RatingStatus.ACTIVE, pageable);
+        return ratingRepository.findByTenantIdAndClientIdAndStatusOrderByRatedAtDesc(tenantId, clientId, ConsultantRating.RatingStatus.ACTIVE, pageable);
     }
 
     @Override
@@ -346,8 +358,10 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         try {
             log.info("💖 상담사 랭킹 조회 시작");
 
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            List<Object[]> rankings = ratingRepository.getConsultantRankingByAverageScore(ConsultantRating.RatingStatus.ACTIVE, pageable);
+            List<Object[]> rankings = ratingRepository.getConsultantRankingByAverageScoreAndTenantId(tenantId, ConsultantRating.RatingStatus.ACTIVE, pageable);
 
             List<Map<String, Object>> rankingList = new ArrayList<>();
             int rank = 1;
@@ -384,9 +398,10 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         try {
             log.info("💖 기간별 평가 통계 조회: 상담사={}, 기간={} ~ {}", consultantId, startDate, endDate);
 
-            List<ConsultantRating> ratings = ratingRepository.findByConsultantAndDateRange(
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                consultantId, ConsultantRating.RatingStatus.ACTIVE, startDate, endDate);
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<ConsultantRating> ratings = ratingRepository.findByTenantIdAndConsultantAndDateRange(
+                tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE, startDate, endDate);
 
             Map<String, Object> stats = new HashMap<>();
             stats.put("period", Map.of("start", startDate, "end", endDate));
@@ -426,9 +441,10 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         try {
             log.info("💖 인기 평가 태그 조회: 상담사={}", consultantId);
 
-            List<ConsultantRating> ratings = ratingRepository.findByConsultantIdAndStatusOrderByRatedAtDesc(
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                consultantId, ConsultantRating.RatingStatus.ACTIVE, Pageable.unpaged()).getContent();
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            List<ConsultantRating> ratings = ratingRepository.findByTenantIdAndConsultantIdAndStatusOrderByRatedAtDesc(
+                tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE, Pageable.unpaged()).getContent();
 
             Map<String, Long> tagCount = new HashMap<>();
 

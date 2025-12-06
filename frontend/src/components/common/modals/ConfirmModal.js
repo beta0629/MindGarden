@@ -4,6 +4,7 @@ import '../../styles/main.css';
 
 /**
  * 확인 모달 컴포넌트
+/**
  * 사용자 확인이 필요한 작업에 사용
  */
 const ConfirmModal = ({ 

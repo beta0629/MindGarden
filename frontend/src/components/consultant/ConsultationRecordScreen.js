@@ -6,7 +6,9 @@ import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
 
+/**
  * 상담일지 작성 화면
+/**
  * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 종합 화면
  */
 const ConsultationRecordScreen = () => {

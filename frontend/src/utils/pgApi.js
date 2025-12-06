@@ -2,10 +2,15 @@ import { apiGet, apiPost, apiPut, apiDelete } from './ajax';
 
 /**
  * PG 설정 관련 API 호출 유틸리티
+/**
  * 테넌트 포털용 PG 설정 관리 API
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 
@@ -22,8 +27,11 @@ const PG_API = {
 
 /**
  * PG 설정 목록 조회
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @param {Object} params - 쿼리 파라미터 (status, approvalStatus)
+/**
  * @returns {Promise<Array>} PG 설정 목록
  */
 export const getPgConfigurations = async (tenantId, params = {}) => {
@@ -38,8 +46,11 @@ export const getPgConfigurations = async (tenantId, params = {}) => {
 
 /**
  * PG 설정 상세 조회
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @param {string} configId - PG 설정 ID
+/**
  * @returns {Promise<Object>} PG 설정 상세 정보
  */
 export const getPgConfigurationDetail = async (tenantId, configId) => {
@@ -54,8 +65,11 @@ export const getPgConfigurationDetail = async (tenantId, configId) => {
 
 /**
  * PG 설정 생성
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @param {Object} request - PG 설정 생성 요청
+/**
  * @returns {Promise<Object>} 생성된 PG 설정 정보
  */
 export const createPgConfiguration = async (tenantId, request) => {
@@ -70,9 +84,13 @@ export const createPgConfiguration = async (tenantId, request) => {
 
 /**
  * PG 설정 수정
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @param {string} configId - PG 설정 ID
+/**
  * @param {Object} request - PG 설정 수정 요청
+/**
  * @returns {Promise<Object>} 수정된 PG 설정 정보
  */
 export const updatePgConfiguration = async (tenantId, configId, request) => {
@@ -87,8 +105,11 @@ export const updatePgConfiguration = async (tenantId, configId, request) => {
 
 /**
  * PG 설정 삭제
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @param {string} configId - PG 설정 ID
+/**
  * @returns {Promise<void>}
  */
 export const deletePgConfiguration = async (tenantId, configId) => {
@@ -102,8 +123,11 @@ export const deletePgConfiguration = async (tenantId, configId) => {
 
 /**
  * PG 연결 테스트
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @param {string} configId - PG 설정 ID
+/**
  * @returns {Promise<Object>} 연결 테스트 결과
  */
 export const testPgConnection = async (tenantId, configId) => {
@@ -118,8 +142,11 @@ export const testPgConnection = async (tenantId, configId) => {
 
 /**
  * PG 설정 키 복호화 (테넌트용)
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @param {string} configId - PG 설정 ID
+/**
  * @returns {Promise<Object>} 복호화된 키 정보
  */
 export const decryptPgKeys = async (tenantId, configId) => {

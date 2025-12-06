@@ -1,22 +1,36 @@
 /**
  * 포맷 유틸리티 함수
+/**
  * ERP 및 재무 관련 컴포넌트에서 공통으로 사용하는 포맷팅 함수
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 
 /**
  * 통화 포맷팅 (한국 원화)
+/**
  * @param {number|string} amount - 포맷팅할 금액
+/**
  * @param {Object} options - 포맷팅 옵션
+/**
  * @param {boolean} options.showCurrency - 통화 기호 표시 여부 (기본: true)
+/**
  * @param {string} options.currency - 통화 코드 (기본: 'KRW')
+/**
  * @returns {string} 포맷팅된 통화 문자열
+/**
  * 
+/**
  * @example
+/**
  * formatCurrency(1234567) // "₩1,234,567"
+/**
  * formatCurrency(1234567, { showCurrency: false }) // "1,234,567"
  */
 export const formatCurrency = (amount, options = {}) => {
@@ -48,14 +62,23 @@ export const formatCurrency = (amount, options = {}) => {
 /**
  * 날짜 포맷팅
  * @param {string|Date} dateString - 포맷팅할 날짜
+/**
  * @param {Object} options - 포맷팅 옵션
+/**
  * @param {string} options.format - 포맷 타입 ('date'|'datetime'|'time'|'relative')
+/**
  * @param {string} options.locale - 로케일 (기본: 'ko-KR')
+/**
  * @returns {string} 포맷팅된 날짜 문자열
+/**
  * 
+/**
  * @example
+/**
  * formatDate('2025-11-22T10:30:00') // "2025. 11. 22."
+/**
  * formatDate('2025-11-22T10:30:00', { format: 'datetime' }) // "2025. 11. 22. 오후 10:30"
+/**
  * formatDate('2025-11-22T10:30:00', { format: 'relative' }) // "방금 전" 또는 "2시간 전"
  */
 export const formatDate = (dateString, options = {}) => {
@@ -107,7 +130,9 @@ export const formatDate = (dateString, options = {}) => {
 
 /**
  * 상대적 날짜 포맷팅 (방금 전, 2시간 전 등)
+/**
  * @param {Date} date - 날짜 객체
+/**
  * @returns {string} 상대적 날짜 문자열
  */
 const formatRelativeDate = (date) => {
@@ -140,10 +165,15 @@ const formatRelativeDate = (date) => {
 
 /**
  * 숫자 포맷팅 (천 단위 구분)
+/**
  * @param {number|string} number - 포맷팅할 숫자
+/**
  * @returns {string} 포맷팅된 숫자 문자열
+/**
  * 
+/**
  * @example
+/**
  * formatNumber(1234567) // "1,234,567"
  */
 export const formatNumber = (number) => {
@@ -162,12 +192,19 @@ export const formatNumber = (number) => {
 
 /**
  * 퍼센트 포맷팅
+/**
  * @param {number|string} value - 포맷팅할 값
+/**
  * @param {number} decimals - 소수점 자릿수 (기본: 1)
+/**
  * @returns {string} 포맷팅된 퍼센트 문자열
+/**
  * 
+/**
  * @example
+/**
  * formatPercent(0.1234) // "12.3%"
+/**
  * formatPercent(0.1234, 2) // "12.34%"
  */
 export const formatPercent = (value, decimals = 1) => {
@@ -186,11 +223,17 @@ export const formatPercent = (value, decimals = 1) => {
 
 /**
  * 파일 크기 포맷팅
+/**
  * @param {number|string} bytes - 바이트 크기
+/**
  * @returns {string} 포맷팅된 파일 크기 문자열
+/**
  * 
+/**
  * @example
+/**
  * formatFileSize(1024) // "1 KB"
+/**
  * formatFileSize(1048576) // "1 MB"
  */
 export const formatFileSize = (bytes) => {

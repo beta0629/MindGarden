@@ -11,12 +11,19 @@ import './SchedulePage.css';
 
 /**
  * 스케줄 관리 메인 페이지
+/**
  * - 역할별 스케줄 관리
+/**
  * - 권한에 따른 기능 제한
+/**
  * - 통합 스케줄 뷰
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const SchedulePage = ({ user: propUser }) => {
@@ -48,14 +55,14 @@ const SchedulePage = ({ user: propUser }) => {
 
 
 
-    /**
+/**
      * 권한 확인 (동적 권한 시스템 사용)
      */
     const hasSchedulePermission = () => {
         return hasPermission('REGISTER_SCHEDULER') || userRole === 'CONSULTANT';
     };
 
-    /**
+/**
      * 관리자 권한 확인 (동적 권한 시스템 사용)
      */
     const isAdmin = () => {

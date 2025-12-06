@@ -1,9 +1,14 @@
 /**
  * 브랜딩 관리 페이지
+/**
  * SimpleLayout으로 감싸진 브랜딩 관리 컴포넌트
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-26
  */
 

@@ -66,7 +66,7 @@ const SocialSignupModal = ({
         setBranches(data.success ? (data.data || []) : []);
       } else {
         // 일반 회원가입 모드
-        const response = await fetch('/api/auth/branches', {
+        const response = await fetch('/api/v1/auth/branches', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'

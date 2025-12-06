@@ -1,8 +1,12 @@
 /**
  * MindGarden 디자인 시스템 v2.0 - Stat Card Component
+/**
  * 
+/**
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
+/**
  * @reference /docs/design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md (Stat Cards 섹션)
+/**
  * @reference /design-system (StatsDashboard)
  */
 
@@ -20,14 +24,23 @@ import React from 'react';
  * @param {string} [props.className=''] - 추가 CSS 클래스
  * @param {Function} [props.onClick] - 클릭 핸들러 (표준화 원칙: 모든 카드에 링크 필수)
  * 
+/**
  * @example
+/**
  * <StatCard
+/**
  *   icon={<Users />}
+/**
  *   value={2543}
+/**
  *   label="총 사용자"
+/**
  *   change="+12.5%"
+/**
  *   changeType="positive"
+/**
  *   onClick={() => navigate('/admin/users')}
+/**
  * />
  */
 const StatCard = ({

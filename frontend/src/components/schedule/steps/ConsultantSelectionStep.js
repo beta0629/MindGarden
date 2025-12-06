@@ -8,12 +8,19 @@ import './ConsultantSelectionStep.css';
 
 /**
  * 새로운 디자인의 상담사 선택 단계 컴포넌트
+/**
  * - CSS 클래스 상수 사용
+/**
  * - JavaScript 상수 사용
+/**
  * - 현대적인 디자인 적용
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-01-05
  */
 const ConsultantSelectionStepNew = ({ 
@@ -31,7 +38,7 @@ const ConsultantSelectionStepNew = ({
         search: ''
     });
 
-    /**
+/**
      * 상담사 목록 로드
      */
     const loadConsultants = useCallback(async () => {
@@ -55,7 +62,7 @@ const ConsultantSelectionStepNew = ({
             console.log('🗓️ API 호출 날짜:', dateStr);
             
             // 휴무 정보를 포함한 상담사 목록 조회
-            const response = await fetch(`/api/admin/consultants/with-vacation?date=${dateStr}`, {
+            const response = await fetch(`/api/v1/admin/consultants/with-vacation?date=${dateStr}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -202,7 +209,7 @@ const ConsultantSelectionStepNew = ({
     }, [selectedDate]);
 
 
-    /**
+/**
      * 필터 적용
      */
     const applyFilters = useCallback(() => {
@@ -260,7 +267,7 @@ const ConsultantSelectionStepNew = ({
         applyFilters();
     }, [applyFilters]);
 
-    /**
+/**
      * 상담사 선택 핸들러
      */
     const handleConsultantSelect = (consultant) => {
@@ -272,14 +279,14 @@ const ConsultantSelectionStepNew = ({
         onConsultantSelect(consultant);
     };
 
-    /**
+/**
      * 필터 변경 핸들러
      */
     const handleFilterChange = (newFilters) => {
         setFilters(prev => ({ ...prev, ...newFilters }));
     };
 
-    /**
+/**
      * 필터 초기화
      */
     const handleResetFilters = () => {

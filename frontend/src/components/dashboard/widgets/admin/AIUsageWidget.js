@@ -1,9 +1,14 @@
 /**
  * AI Usage Widget - 표준화된 위젯
+/**
  * AI 사용량 및 비용 추적 모니터링
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0 (표준화)
+/**
  * @since 2025-12-02
  */
 

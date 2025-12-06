@@ -1,15 +1,25 @@
 import React from 'react';
 import { User, Calendar, Clock, TrendingUp, MessageCircle, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 
+/**
  * 공통 내담자 카드 컴포넌트
+/**
  * - 디자인 시스템 v2.0 적용
+/**
  * - 글라스모피즘 효과
+/**
  * - 반응형 지원
+/**
  * - 선택 상태 관리
+/**
  * - 진행률 표시
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-10-15
  */
 const ClientCard = ({ 
@@ -22,6 +32,7 @@ const ClientCard = ({
     showProgress = true,
     className = ''
 }) => {
+/**
      * 상태에 따른 클래스명 반환
      */
     const getStatusClass = () => {
@@ -34,6 +45,7 @@ const ClientCard = ({
         return 'default';
     };
 
+/**
      * 상태에 따른 텍스트 반환
      */
     const getStatusText = () => {
@@ -47,6 +59,7 @@ const ClientCard = ({
         }
     };
 
+/**
      * 상태에 따른 아이콘 반환
      */
     const getStatusIcon = () => {
@@ -60,6 +73,7 @@ const ClientCard = ({
         }
     };
 
+/**
      * 이니셜 반환
      */
     const getInitial = () => {
@@ -69,6 +83,7 @@ const ClientCard = ({
         return '?';
     };
 
+/**
      * 클릭 핸들러
      */
     const handleClick = () => {
@@ -77,6 +92,7 @@ const ClientCard = ({
         }
     };
 
+/**
      * 진행률 계산
      */
     const getProgressPercentage = () => {
@@ -89,6 +105,7 @@ const ClientCard = ({
         return 0;
     };
 
+/**
      * 세션 정보 반환
      */
     const getSessionInfo = () => {

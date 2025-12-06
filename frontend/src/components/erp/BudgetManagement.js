@@ -6,6 +6,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
+/**
  * ERP 예산 관리 페이지
  * 예산 계획 및 관리
  */

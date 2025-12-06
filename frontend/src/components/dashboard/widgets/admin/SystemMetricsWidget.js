@@ -1,9 +1,14 @@
 /**
  * System Metrics Widget - 표준화된 위젯
+/**
  * 시스템 메트릭 실시간 모니터링 (CPU, 메모리, JVM)
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0 (표준화)
+/**
  * @since 2025-12-02
  */
 

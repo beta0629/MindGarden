@@ -2,14 +2,23 @@
  * 관리자 레이아웃 컨테이너 (Container Component)
  * 
  * 비즈니스 로직 담당:
+/**
  * - API 호출
+/**
  * - 상태 관리
+/**
  * - 이벤트 핸들러
+/**
  * 
+/**
  * UI 렌더링은 AdminMenuSidebarUI에 위임
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-12-03
  */
 
@@ -25,14 +34,14 @@ const AdminLayout = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    /**
+/**
      * 초기 로드: 관리자 메뉴 조회
      */
     useEffect(() => {
         fetchAdminMenus();
     }, []);
 
-    /**
+/**
      * 현재 경로 변경 시 메뉴 자동 확장
      */
     useEffect(() => {
@@ -42,7 +51,7 @@ const AdminLayout = () => {
         }
     }, [location.pathname, adminMenus]);
 
-    /**
+/**
      * 관리자 메뉴 조회
      */
     const fetchAdminMenus = async () => {
@@ -70,7 +79,7 @@ const AdminLayout = () => {
         }
     };
 
-    /**
+/**
      * 현재 경로에 해당하는 메뉴 자동 확장 (재귀)
      */
     const findExpandedMenus = (menus, path, parentCodes = []) => {
@@ -98,7 +107,7 @@ const AdminLayout = () => {
         return expanded;
     };
 
-    /**
+/**
      * 메뉴 확장/축소 토글
      */
     const handleToggleMenu = (menuCode) => {
@@ -109,7 +118,7 @@ const AdminLayout = () => {
         );
     };
 
-    /**
+/**
      * 메뉴 클릭 핸들러
      */
     const handleMenuClick = (menu) => {

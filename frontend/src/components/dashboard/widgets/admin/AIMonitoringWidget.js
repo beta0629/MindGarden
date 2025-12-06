@@ -1,10 +1,16 @@
 /**
  * AI Monitoring Widget - 표준화된 위젯
+/**
  * AI 기반 이상 탐지 및 보안 위협 모니터링
+/**
  * 하이브리드 AI 시스템 (통계 + AI 분석) 현황 표시
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0 (표준화)
+/**
  * @since 2025-12-02
  */
 

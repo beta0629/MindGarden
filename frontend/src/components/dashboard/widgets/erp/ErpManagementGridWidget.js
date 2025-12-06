@@ -1,9 +1,14 @@
 /**
  * ERP Management Grid Widget - 표준화된 위젯
+/**
  * ERP 관리 빠른 액션 그리드 (재무관리, 구매관리, 예산관리 등)
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 

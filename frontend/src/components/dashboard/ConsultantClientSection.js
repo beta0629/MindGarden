@@ -4,7 +4,9 @@ import { apiGet } from '../../utils/ajax';
 import { Users, Calendar, TrendingUp } from 'lucide-react';
 import '../../styles/unified-design-tokens.css';
 
+/**
  * 상담사용 내담자 섹션 컴포넌트
+/**
  * 디자인 시스템 v2.0 적용
  */
 const ConsultantClientSection = ({ userId }) => {

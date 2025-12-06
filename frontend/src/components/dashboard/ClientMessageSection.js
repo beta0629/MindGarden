@@ -20,8 +20,11 @@ import './ClientMessageSection.css';
 
 /**
  * 내담자 메시지 확인 섹션
+/**
  * - 상담사가 보낸 메시지
+/**
  * - 시스템 공지 (전체 공지 + 내담자 대상 공지)
+/**
  * 디자인 시스템 적용 버전
  */
 const ClientMessageSection = ({ userId }) => {
@@ -80,7 +83,7 @@ const ClientMessageSection = ({ userId }) => {
       setLoading(true);
       
       // 1. 상담사 메시지 로드
-      const messagesResponse = await apiGet(`/api/consultation-messages/client/${userId}`, {
+      const messagesResponse = await apiGet(`/api/v1/consultation-messages/client/${userId}`, {
         page: 0,
         size: 10,
         sort: 'createdAt,desc'
@@ -107,7 +110,7 @@ const ClientMessageSection = ({ userId }) => {
       }
 
       // 2. 시스템 공지 로드 (전체 공지만 표시 - 중복 제거)
-      const notificationsResponse = await apiGet('/api/system-notifications/active');
+      const notificationsResponse = await apiGet('/api/v1/system-notifications/active');
       
       let systemNotifications = [];
       if (notificationsResponse.success) {
@@ -164,7 +167,7 @@ const ClientMessageSection = ({ userId }) => {
     try {
       if (message.messageSource === 'SYSTEM') {
         // 시스템 공지 상세 조회
-        const response = await apiGet(`/api/system-notifications/${message.systemNotificationId}`);
+        const response = await apiGet(`/api/v1/system-notifications/${message.systemNotificationId}`);
         if (response.success) {
           setSelectedMessage({
             ...response.data,
@@ -176,7 +179,7 @@ const ClientMessageSection = ({ userId }) => {
         }
       } else {
         // 일반 메시지 상세 조회
-        const response = await apiGet(`/api/consultation-messages/${message.id}`);
+        const response = await apiGet(`/api/v1/consultation-messages/${message.id}`);
         if (response.success) {
           setSelectedMessage({
             ...response.data,

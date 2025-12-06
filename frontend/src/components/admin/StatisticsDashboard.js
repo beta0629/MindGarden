@@ -14,13 +14,21 @@ import './StatisticsDashboard.css';
 
 /**
  * 통계 대시보드 컴포넌트
+/**
  * - 전체 시스템 통계
+/**
  * - 사용자별 통계
+/**
  * - 성과 분석
+/**
  * - 트렌드 차트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-21
  */
 const StatisticsDashboard = ({ userRole = 'ADMIN', userId }) => {

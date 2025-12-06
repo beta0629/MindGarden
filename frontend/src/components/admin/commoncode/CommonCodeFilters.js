@@ -3,11 +3,17 @@ import './CommonCodeFilters.css';
 
 /**
  * 공통코드 필터 컴포넌트
+/**
  * - 코드 그룹, 상태, 검색어로 필터링
+/**
  * - 새 코드 추가 버튼 포함
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const CommonCodeFilters = ({ 

@@ -212,13 +212,16 @@ function AppContent() {
   //   };
   // }, []); // 의존성 배열을 빈 배열로 설정
 
-  // 동적 테마 시스템 초기화 (API 호출 비활성화로 무한루프 방지)
+  // 동적 테마 시스템 초기화 (로그인 후에만 CSS 테마 로드)
   useEffect(() => {
+    // 로그인 전에는 CSS 테마 로드를 건너뛰고 기본 테마만 설정
+    const shouldLoadColors = !!user; // 로그인된 경우에만 색상 로드
+    
     initializeDynamicThemeSystem({
       theme: 'ios', // iOS 스타일 기본 테마
       enableThemeWatcher: true, // 테마 변경 감지 활성화
       enableDeviceWatcher: true, // 디바이스 변경 감지 활성화
-      loadConsultantColors: true, // 상담사 색상 로드 활성화 (오류 확인용)
+      loadConsultantColors: shouldLoadColors, // 로그인 후에만 상담사 색상 로드
       autoDetectTheme: false, // 시스템 테마 자동 감지 비활성화 (iOS 라이트 모드 고정)
       zIndexOffsets: {
         // 테마별 z-index 오프셋 커스터마이징
@@ -227,7 +230,7 @@ function AppContent() {
         highContrast: 1000
       }
     });
-  }, []);
+  }, [user]); // user 상태에 따라 재실행
 
   // 통합 레이아웃 시스템 초기화
   useEffect(() => {

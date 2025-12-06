@@ -1,9 +1,14 @@
 /**
  * Admin Dashboard Monitoring Section
+/**
  * 관리자 대시보드 모니터링 섹션 (AI, 스케줄러, 보안, 시스템)
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-12-02
  */
 
@@ -18,8 +23,11 @@ import AIUsageWidget from '../../dashboard/widgets/admin/AIUsageWidget';
 
 /**
  * 관리자 대시보드 모니터링 섹션
+/**
  * 
+/**
  * @param {Object} props
+/**
  * @param {Object} props.user - 사용자 정보
  */
 const AdminDashboardMonitoring = ({ user }) => {

@@ -46,9 +46,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public FilterRegistrationBean<SecurityFilter> securityFilterRegistration(SecurityFilter securityFilter) {
         FilterRegistrationBean<SecurityFilter> registration = new FilterRegistrationBean<>();
         registration.setFilter(securityFilter);
-        registration.addUrlPatterns("/api/*");
+        registration.addUrlPatterns("/api/*", "/api/**", "/api/v1/*", "/api/v1/**");
         registration.setName("securityFilter");
-        registration.setOrder(1); // 높은 우선순위로 설정
+        registration.setOrder(2); // CORS 필터 다음
         return registration;
     }
 }

@@ -246,26 +246,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     @Override
     public Schedule findById(Long id) {
-        return scheduleRepository.findById(id)
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return scheduleRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("스케줄을 찾을 수 없습니다: " + id));
     }
 
     @Override
     public List<Schedule> findAll() {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return findAllByTenant(tenantId, null);
-        }
-        return scheduleRepository.findAllActiveByCurrentTenant();
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return findAllByTenant(tenantId, null);
     }
 
     @Override
     public org.springframework.data.domain.Page<Schedule> findAll(org.springframework.data.domain.Pageable pageable) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return scheduleRepository.findAllByTenantId(tenantId, pageable);
-        }
-        return scheduleRepository.findAll(pageable);
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return scheduleRepository.findAllByTenantId(tenantId, pageable);
     }
 
 
@@ -388,22 +386,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public List<Schedule> findByConsultantId(Long consultantId) {
         autoCompleteExpiredSchedules();
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new ArrayList<>();
-        }
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
     }
 
     @Override
     public List<Schedule> findByConsultantIdAndDate(Long consultantId, LocalDate date) {
         autoCompleteExpiredSchedules();
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new ArrayList<>();
-        }
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndConsultantIdAndDate(tenantId, consultantId, date);
     }
 
@@ -422,33 +414,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public List<Schedule> findByClientId(Long clientId) {
         autoCompleteExpiredSchedules();
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new ArrayList<>();
-        }
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndClientId(tenantId, clientId);
     }
 
     @Override
     public List<Schedule> findByClientIdAndDate(Long clientId, LocalDate date) {
         autoCompleteExpiredSchedules();
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new ArrayList<>();
-        }
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndClientIdAndDate(tenantId, clientId, date);
     }
 
     @Override
     public List<Schedule> findByClientIdAndDateBetween(Long clientId, LocalDate startDate, LocalDate endDate) {
         autoCompleteExpiredSchedules();
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            log.error("❌ tenantId가 설정되지 않았습니다");
-            return new ArrayList<>();
-        }
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndClientIdAndDateBetween(tenantId, clientId, startDate, endDate);
     }
 

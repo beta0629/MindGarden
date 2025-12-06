@@ -4,14 +4,23 @@
  * 목적: 위젯 관리 비즈니스 로직 처리
  * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
  * 패턴: Container Component (비즈니스 로직 담당)
+/**
  * 
+/**
  * ✅ 표준화:
+/**
  * - 상태 관리 (useState, useEffect)
+/**
  * - API 호출 로직
+/**
  * - 이벤트 핸들러
+/**
  * - Presentation 컴포넌트에 데이터 전달
+/**
  * 
+/**
  * @author CoreSolution Team
+/**
  * @since 2025-12-02
  */
 
@@ -37,7 +46,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
   // 데이터 로딩
   // ========================================
   
-  /**
+/**
    * 그룹화된 위젯 조회
    */
   useEffect(() => {
@@ -46,7 +55,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
     }
   }, [tenantId, businessType, roleCode]);
   
-  /**
+/**
    * 독립 위젯 조회 (추가 가능한 위젯)
    */
   useEffect(() => {
@@ -55,7 +64,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
     }
   }, [businessType]);
   
-  /**
+/**
    * 그룹화된 위젯 조회 API
    */
   const fetchGroupedWidgets = async () => {
@@ -88,7 +97,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
     }
   };
   
-  /**
+/**
    * 독립 위젯 조회 API (추가 가능한 위젯)
    */
   const fetchAvailableWidgets = async () => {
@@ -117,7 +126,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
   // 이벤트 핸들러
   // ========================================
   
-  /**
+/**
    * 위젯 추가 핸들러
    */
   const handleAddWidget = async (widgetType) => {
@@ -155,7 +164,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
     }
   };
   
-  /**
+/**
    * 위젯 삭제 핸들러
    */
   const handleDeleteWidget = async (widgetId) => {
@@ -193,7 +202,7 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
     }
   };
   
-  /**
+/**
    * 위젯 설정 핸들러
    */
   const handleConfigureWidget = (widgetId) => {
@@ -201,14 +210,14 @@ const DashboardWidgetManagerContainer = ({ dashboard, user, onWidgetChange }) =>
     notificationManager.info('위젯 설정 기능은 추후 구현 예정입니다');
   };
   
-  /**
+/**
    * 위젯 추가 모달 열기
    */
   const handleShowAddModal = () => {
     setShowAddModal(true);
   };
   
-  /**
+/**
    * 위젯 추가 모달 닫기
    */
   const handleCloseAddModal = () => {

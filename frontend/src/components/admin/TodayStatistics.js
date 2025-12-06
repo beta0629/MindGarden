@@ -5,12 +5,19 @@ import './TodayStatistics.css';
 
 /**
  * 오늘의 통계 컨테이너 컴포넌트
+/**
  * - 비즈니스 로직만 담당
+/**
  * - 상태 관리, 데이터 로드
+/**
  * - Presentational 컴포넌트에 데이터와 핸들러 전달
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0 (Presentational/Container 분리)
+/**
  * @since 2024-12-19
  */
 const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {

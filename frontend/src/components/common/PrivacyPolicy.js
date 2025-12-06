@@ -4,9 +4,13 @@ import './PrivacyPolicy.css';
 
 /**
  * 개인정보 처리방침 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const PrivacyPolicy = () => {

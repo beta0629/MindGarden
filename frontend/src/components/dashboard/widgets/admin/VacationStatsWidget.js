@@ -9,9 +9,13 @@ import { MG_DESIGN_TOKENS } from '../../../../constants/designTokens';
 
 /**
  * 휴가 통계를 보여주는 위젯
+/**
  * 
+/**
  * @param {Object} widget - 위젯 설정 정보
+/**
  * @param {Object} user - 현재 사용자 정보
+/**
  * @returns {JSX.Element}
  */
 const VacationStatsWidget = ({ widget, user }) => {

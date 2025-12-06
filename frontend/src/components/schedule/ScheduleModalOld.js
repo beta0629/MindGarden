@@ -12,12 +12,19 @@ import './ScheduleModal.css';
 
 /**
  * 스케줄 생성 모달 컴포넌트
+/**
  * - 상담사 선택 (드래그 앤 드롭)
+/**
  * - 내담자 선택 (드래그 앤 드롭)
+/**
  * - 시간 슬롯 관리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleModal = ({ 
@@ -96,7 +103,7 @@ const ScheduleModal = ({
 
 
 
-    /**
+/**
      * 상담 유형별 기본 시간 반환
      */
     const getConsultationDuration = (type) => {
@@ -110,7 +117,7 @@ const ScheduleModal = ({
         }
     };
 
-    /**
+/**
      * 상담 유형을 한글로 변환
      */
     const convertConsultationTypeToKorean = (consultationType) => {
@@ -124,7 +131,7 @@ const ScheduleModal = ({
         return typeMap[consultationType] || consultationType || "알 수 없음";
     };
 
-    /**
+/**
      * 상담사 드래그 앤 드롭 핸들러
      */
     const handleConsultantDrop = (consultant) => {
@@ -133,7 +140,7 @@ const ScheduleModal = ({
         setStep(2); // 내담자 선택 단계로
     };
 
-    /**
+/**
      * 내담자 드래그 앤 드롭 핸들러
      */
     const handleClientDrop = (client) => {
@@ -142,7 +149,7 @@ const ScheduleModal = ({
         setStep(3); // 시간 선택 단계로
     };
 
-    /**
+/**
      * 시간 슬롯 선택 핸들러
      */
     const handleTimeSlotSelect = (timeSlot) => {
@@ -151,7 +158,7 @@ const ScheduleModal = ({
         setStep(4); // 세부사항 입력 단계로
     };
 
-    /**
+/**
      * 스케줄 생성
      */
     const handleCreateSchedule = async () => {
@@ -210,7 +217,7 @@ const ScheduleModal = ({
         }
     };
 
-    /**
+/**
      * 이전 단계로
      */
     const handlePrevStep = () => {
@@ -222,7 +229,7 @@ const ScheduleModal = ({
         }
     };
 
-    /**
+/**
      * 모달 리셋
      */
     const resetModal = () => {
@@ -235,7 +242,7 @@ const ScheduleModal = ({
         setConsultationType('INDIVIDUAL');
     };
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {

@@ -1,14 +1,18 @@
 /**
  * 대시보드 생성/수정 모달 컴포넌트
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import notificationManager from '../../utils/notification';
 import { apiGet } from '../../utils/ajax';
@@ -81,9 +85,9 @@ const DashboardFormModal = ({ isOpen, onClose, dashboard, onSave }) => {
       }
 
       // 테넌트 정보 로드 (businessType 포함)
-      // 방법 1: /api/auth/tenant/current 사용
+      // 방법 1: /api/v1/auth/tenant/current 사용
       try {
-        const tenantResponse = await apiGet(`/api/auth/tenant/current`);
+        const tenantResponse = await apiGet(`/api/v1/auth/tenant/current`);
         // apiGet은 ApiResponse 래퍼를 처리하여 data를 반환
         // 응답 구조: { tenant: { tenantId, name, businessType, status } }
         if (tenantResponse) {

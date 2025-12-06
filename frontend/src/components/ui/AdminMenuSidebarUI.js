@@ -3,14 +3,23 @@
  * 
  * 순수 UI 컴포넌트 - 비즈니스 로직 없음
  * Props를 통해 데이터와 이벤트 핸들러를 받아 렌더링만 수행
+/**
  * 
+/**
  * 표준화 준수:
+/**
  * - BEM 네이밍 (mg-{component}-{element}--{modifier})
+/**
  * - CSS 변수 사용 (--mg-* 접두사)
+/**
  * - 하드코딩 금지
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-12-03
  */
 
@@ -25,7 +34,7 @@ const AdminMenuSidebarUI = ({
     onToggleMenu,
     onMenuClick
 }) => {
-    /**
+/**
      * 메뉴 렌더링 (재귀)
      */
     const renderMenu = (menu) => {

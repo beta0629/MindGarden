@@ -5,9 +5,13 @@ import { RotateCcw, Settings, Package, ShoppingCart, CheckCircle, FileText, Refr
 
 /**
  * AdminDashboard 액션 버튼 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const AdminDashboardActions = ({

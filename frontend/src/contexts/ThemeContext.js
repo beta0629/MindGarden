@@ -1,9 +1,14 @@
 /**
  * MindGarden Theme Provider
+/**
  * 
+/**
  * CSS Variables 기반 동적 테마 전환을 지원하는 Context Provider
+/**
  * 
+/**
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase CONSTANTS.NOTIFICATION_CONSTANTS.PRIORITY_LOW.CONSTANTS.NOTIFICATION_CONSTANTS.PRIORITY_LOW)
+/**
  * @reference /docs/design-system-v2/DESIGN_SYSTEM_ARCHITECTURE.md (Theme System)
  */
 
@@ -15,8 +20,11 @@ const ThemeContext = createContext();
 
 /**
  * Theme Context Hook
+/**
  * 
+/**
  * @returns {Object} theme, themeName, switchTheme
+/**
  * @throws {Error} useTheme must be used within ThemeProvider
  */
 export const useTheme = () => {
@@ -29,15 +37,18 @@ export const useTheme = () => {
 
 /**
  * Theme Provider Component
+/**
  * 
+/**
  * @param {Object} props
+/**
  * @param {React.ReactNode} props.children - Child components
  */
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(defaultTheme);
   const [themeName, setThemeName] = useState('default');
 
-  /**
+/**
    * CSS Variables를 document.documentElement에 적용
    */
   const applyThemeVariables = useCallback((themeConfig) => {
@@ -129,9 +140,11 @@ export const ThemeProvider = ({ children }) => {
     });
   }, []);
 
-  /**
+/**
    * 테마 전환 함수
+/**
    * 
+/**
    * @param {string} newThemeName - 새로운 테마 이름
    */
   const switchTheme = useCallback((newThemeName) => {

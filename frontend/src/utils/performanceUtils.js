@@ -1,15 +1,20 @@
 /**
  * 성능 모니터링 비즈니스 로직 유틸리티
+/**
  * UI와 분리된 순수한 비즈니스 로직 관리
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-26
  */
 
 // ===== 성능 지표 계산 함수 =====
 export const PerformanceCalculator = {
-  /**
+/**
    * 캐시 히트율 계산
    */
   calculateCacheHitRate: (cacheStats) => {
@@ -31,7 +36,7 @@ export const PerformanceCalculator = {
     return totalRequests > 0 ? (totalHits / totalRequests) * 100 : 0;
   },
 
-  /**
+/**
    * 전체 캐시 크기 계산
    */
   calculateTotalCacheSize: (cacheStats) => {
@@ -42,7 +47,7 @@ export const PerformanceCalculator = {
     }, 0);
   },
 
-  /**
+/**
    * 성능 트렌드 분석
    */
   analyzeTrend: (currentValue, previousValue, threshold = 5) => {
@@ -55,7 +60,7 @@ export const PerformanceCalculator = {
     return 'stable';
   },
 
-  /**
+/**
    * 성능 등급 계산
    */
   calculatePerformanceGrade: (value, type) => {
@@ -87,7 +92,7 @@ export const PerformanceCalculator = {
 
 // ===== 데이터 변환 함수 =====
 export const DataTransformer = {
-  /**
+/**
    * API 응답을 성능 데이터로 변환
    */
   transformCacheStatsToPerformanceData: (apiResponse) => {
@@ -114,7 +119,7 @@ export const DataTransformer = {
     }
   },
 
-  /**
+/**
    * 성능 데이터를 차트 데이터로 변환
    */
   transformToChartData: (performanceHistory, metric) => {
@@ -127,7 +132,7 @@ export const DataTransformer = {
     }));
   },
 
-  /**
+/**
    * 메트릭 데이터 정규화
    */
   normalizeMetricValue: (value, type) => {
@@ -150,7 +155,7 @@ export const DataTransformer = {
 
 // ===== 성능 모니터링 상태 관리 =====
 export const PerformanceMonitor = {
-  /**
+/**
    * 성능 임계값 검사
    */
   checkThresholds: (metrics, thresholds) => {
@@ -182,7 +187,7 @@ export const PerformanceMonitor = {
     return alerts;
   },
 
-  /**
+/**
    * 성능 히스토리 관리
    */
   updatePerformanceHistory: (history, newData, maxLength = 50) => {
@@ -199,7 +204,7 @@ export const PerformanceMonitor = {
     return updatedHistory;
   },
 
-  /**
+/**
    * 성능 요약 생성
    */
   generatePerformanceSummary: (metrics) => {
@@ -256,7 +261,7 @@ export const PerformanceMonitor = {
 
 // ===== 유틸리티 함수 =====
 export const PerformanceUtils = {
-  /**
+/**
    * 바이트를 읽기 쉬운 형태로 변환
    */
   formatBytes: (bytes, decimals = 2) => {
@@ -271,7 +276,7 @@ export const PerformanceUtils = {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   },
 
-  /**
+/**
    * 밀리초를 읽기 쉬운 형태로 변환
    */
   formatDuration: (milliseconds) => {
@@ -280,7 +285,7 @@ export const PerformanceUtils = {
     return `${Math.floor(milliseconds / 60000)}m ${Math.floor((milliseconds % 60000) / 1000)}s`;
   },
 
-  /**
+/**
    * 숫자를 읽기 쉬운 형태로 변환
    */
   formatNumber: (number, decimals = 0) => {
@@ -295,7 +300,7 @@ export const PerformanceUtils = {
     return number.toFixed(decimals);
   },
 
-  /**
+/**
    * 퍼센티지 포맷팅
    */
   formatPercentage: (value, decimals = 1) => {

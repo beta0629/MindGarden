@@ -2,6 +2,7 @@ import MGButton from '../../../components/common/MGButton'; // 임시 비활성�
 import UnifiedModal from '../../../components/common/modals/UnifiedModal'; // 임시 비활성화
 import { FaTimes } from 'react-icons/fa';
 
+/**
  * 내담자 모달 컴포넌트
  */
 const ClientModal = ({

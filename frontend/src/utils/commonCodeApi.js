@@ -1,9 +1,14 @@
 /**
  * 공통코드 표준화된 API 유틸리티
+/**
  * 표준화된 RESTful API 사용
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 
@@ -13,6 +18,7 @@ const API_BASE = '/api/v1/common-codes';
 
 /**
  * 테넌트별 독립 코드 그룹 목록
+/**
  * 이 코드 그룹들은 테넌트별로 완전히 독립적으로 관리되어야 함
  */
 const TENANT_ISOLATED_CODE_GROUPS = [
@@ -56,8 +62,11 @@ const CORE_CODE_GROUPS = [
 
 /**
  * 공통코드 목록 조회
+/**
  * @param {string} codeGroup - 코드 그룹 (선택)
+/**
  * @param {boolean} forceTenant - 테넌트 코드만 조회 (기본값: 자동 판단)
+/**
  * @returns {Promise<Array>} 공통코드 목록
  */
 export const getCommonCodes = async (codeGroup = null, forceTenant = null) => {
@@ -100,7 +109,9 @@ export const getCommonCodes = async (codeGroup = null, forceTenant = null) => {
 
 /**
  * 테넌트 코드 전용 조회 (독립성 보장)
+/**
  * @param {string} codeGroup - 코드 그룹
+/**
  * @returns {Promise<Array>} 테넌트별 코드 목록 (코어 코드 폴백 없음)
  */
 export const getTenantCodes = async (codeGroup = null) => {
@@ -127,7 +138,9 @@ export const getTenantCodes = async (codeGroup = null) => {
 
 /**
  * 공통코드 상세 조회
+/**
  * @param {number} id - 공통코드 ID
+/**
  * @returns {Promise<Object|null>} 공통코드 상세 정보
  */
 export const getCommonCodeById = async (id) => {
@@ -147,7 +160,9 @@ export const getCommonCodeById = async (id) => {
 
 /**
  * 공통코드 생성
+/**
  * @param {Object} codeData - 공통코드 데이터
+/**
  * @returns {Promise<Object|null>} 생성된 공통코드
  */
 export const createCommonCode = async (codeData) => {
@@ -167,8 +182,11 @@ export const createCommonCode = async (codeData) => {
 
 /**
  * 공통코드 수정
+/**
  * @param {number} id - 공통코드 ID
+/**
  * @param {Object} codeData - 수정할 공통코드 데이터
+/**
  * @returns {Promise<Object|null>} 수정된 공통코드
  */
 export const updateCommonCode = async (id, codeData) => {
@@ -188,7 +206,9 @@ export const updateCommonCode = async (id, codeData) => {
 
 /**
  * 공통코드 삭제
+/**
  * @param {number} id - 공통코드 ID
+/**
  * @returns {Promise<boolean>} 삭제 성공 여부
  */
 export const deleteCommonCode = async (id) => {
@@ -208,7 +228,9 @@ export const deleteCommonCode = async (id) => {
 
 /**
  * 공통코드 상태 토글
+/**
  * @param {number} id - 공통코드 ID
+/**
  * @returns {Promise<Object|null>} 수정된 공통코드
  */
 export const toggleCommonCodeStatus = async (id) => {
@@ -228,7 +250,9 @@ export const toggleCommonCodeStatus = async (id) => {
 
 /**
  * 공통코드 일괄 생성
+/**
  * @param {Array<Object>} codesData - 공통코드 데이터 배열
+/**
  * @returns {Promise<Array>} 생성된 공통코드 목록
  */
 export const createCommonCodesBatch = async (codesData) => {
@@ -248,6 +272,7 @@ export const createCommonCodesBatch = async (codesData) => {
 
 /**
  * 코드 그룹 목록 조회 (하위 호환성)
+/**
  * @returns {Promise<Array>} 코드 그룹 목록
  */
 export const getCodeGroups = async () => {
@@ -277,7 +302,9 @@ export const getCodeGroups = async () => {
 
 /**
  * 코어 코드 조회 (HQ 관리자 전용)
+/**
  * @param {string} codeGroup - 코드 그룹
+/**
  * @returns {Promise<Array>} 코어 코드 목록
  */
 export const getCoreCodesAPI = async (codeGroup) => {

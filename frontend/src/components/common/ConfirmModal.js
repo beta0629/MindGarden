@@ -5,6 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 
 /**
  * 확인 모달 컴포넌트
+/**
  * 알럿창 대신 사용할 커스텀 모달
  */
 const ConfirmModal = ({ 

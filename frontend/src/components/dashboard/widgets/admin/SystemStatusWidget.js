@@ -1,9 +1,14 @@
 /**
  * System Status Widget - 표준화된 위젯
+/**
  * 실시간 시스템 상태 모니터링 (서버, 데이터베이스, 외부 서비스)
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 

@@ -7,14 +7,23 @@ import './FormInput.css';
  * 
  * @param {Object} props
  * @param {string} props.type - 입력 타입
+/**
  * @param {string} props.name - 입력 필드명
+/**
  * @param {string} props.value - 입력 값
+/**
  * @param {function} props.onChange - 변경 핸들러
+/**
  * @param {string} props.placeholder - 플레이스홀더
+/**
  * @param {string} props.label - 라벨
+/**
  * @param {boolean} props.required - 필수 여부
+/**
  * @param {boolean} props.disabled - 비활성화 여부
+/**
  * @param {string} props.error - 에러 메시지
+/**
  * @param {React.ReactNode} props.rightElement - 우측 요소 (예: 비밀번호 토글)
  */
 const FormInput = ({

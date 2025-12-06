@@ -3,6 +3,7 @@ import './MGPagination.css';
 
 /**
  * MindGarden 페이징 컴포넌트
+/**
  * 데이터 페이징을 위한 통합 컴포넌트
  */
 const MGPagination = ({

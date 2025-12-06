@@ -1,9 +1,14 @@
 /**
  * Recent Activities Widget - 표준화된 최근 활동 위젯
+/**
  * RecentActivities 컴포넌트를 위젯으로 변환 + 실제 API 연동
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 
@@ -52,7 +57,7 @@ const RecentActivitiesWidget = ({ widget, user }) => {
       case 'HQ_MASTER':
         return {
           ...baseConfig,
-          url: '/api/schedules/admin/statistics',
+          url: '/api/v1/schedules/admin/statistics',
           transform: (data) => transformAdminActivities(data)
         };
       default:

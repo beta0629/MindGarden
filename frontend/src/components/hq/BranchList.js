@@ -12,13 +12,21 @@ import { showNotification } from '../../utils/notification';
 import { normalizeBranchList, getBranchNameByCode } from '../../utils/branchUtils';
 import './BranchList.css';
 
+/**
  * 지점 목록 컴포넌트
+/**
  * - 지점 목록 조회 및 표시
+/**
  * - 지점 상태 필터링 및 검색
+/**
  * - 지점 선택 및 상세보기
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const BranchList = ({ 

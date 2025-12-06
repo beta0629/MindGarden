@@ -11,14 +11,23 @@ import './NotificationBadge.css';
  * 헤더에서 알림 개수를 표시하는 공통 컴포넌트
  * 
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {string} props.variant - 배지 스타일 (default, primary, success, warning, danger)
+/**
  * @param {string} props.size - 배지 크기 (small, medium, large)
+/**
  * @param {boolean} props.showZero - COLOR_CONSTANTS.ALPHA_TRANSPARENT일 때도 표시할지 여부
+/**
  * @param {string} props.className - 추가 CSS 클래스
+/**
  * @param {function} props.onClick - 클릭 핸들러
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version DEFAULT_VALUES.CURRENT_PAGE.COLOR_CONSTANTS.ALPHA_TRANSPARENT.COLOR_CONSTANTS.ALPHA_TRANSPARENT
+/**
  * @since 2025-01-23
  */
 const NotificationBadge = ({variant = 'default',

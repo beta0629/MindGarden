@@ -1,14 +1,23 @@
 /**
  * 통합 로그인 컴포넌트
  * Phase 3: 통합 로그인 시스템 프론트엔드
+/**
  * 
+/**
  * 모든 업종 통합 로그인 페이지
+/**
  * - ID/PW 로그인
+/**
  * - 소셜 로그인 (Kakao/Naver/Google/Apple)
+/**
  * - 테넌트 자동 감지 및 라우팅
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 
@@ -103,7 +112,7 @@ const UnifiedLogin = () => {
   // OAuth2 설정 가져오기
   const getOAuth2Config = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/config/oauth2`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/config/oauth2`);
       if (response.ok) {
         const config = await response.json();
         setOauth2Config(config);
@@ -139,7 +148,7 @@ const UnifiedLogin = () => {
       // SessionContext의 checkSession을 우회하여 직접 API 호출 (무한 루프 방지)
       await new Promise(resolve => setTimeout(resolve, LOGIN_SESSION_CHECK_DELAY));
       
-      const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
         credentials: 'include',
         method: 'GET',
         headers: {
@@ -172,7 +181,7 @@ const UnifiedLogin = () => {
   // 멀티 테넌트 사용자 확인 및 리다이렉트
   const checkMultiTenantAndRedirect = async (user) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/tenant/check-multi`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/check-multi`, {
         credentials: 'include'
       });
       
@@ -233,7 +242,7 @@ const UnifiedLogin = () => {
   // 접근 가능한 테넌트 목록 로드
   const loadAccessibleTenants = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/tenant/accessible`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/accessible`, {
         credentials: 'include'
       });
       
@@ -295,7 +304,7 @@ const UnifiedLogin = () => {
           message: (result.data?.message || result.message || loginData.message) || '다른 기기에서 로그인되어 있습니다. 계속하시겠습니까?',
           onConfirm: async () => {
             try {
-              const confirmResult = await csrfTokenManager.post('/api/auth/confirm-duplicate-login', {
+              const confirmResult = await csrfTokenManager.post('/api/v1/auth/confirm-duplicate-login', {
                 email: formData.email,
                 password: formData.password
               });
@@ -349,10 +358,25 @@ const UnifiedLogin = () => {
       }
       
       if (result.success && loginData.user) {
+        // tenantId 확인 로그
+        console.log('🔍 로그인 응답 user 객체:', loginData.user);
+        console.log('🔍 로그인 응답 user.tenantId:', loginData.user.tenantId);
+        console.log('🔍 로그인 응답 userResponse:', loginData.userResponse);
+        console.log('🔍 로그인 응답 userResponse?.tenantId:', loginData.userResponse?.tenantId);
+        
+        // userResponse에 tenantId가 있으면 user에도 설정
+        if (loginData.userResponse && loginData.userResponse.tenantId && !loginData.user.tenantId) {
+          console.log('✅ userResponse에서 tenantId 복사:', loginData.userResponse.tenantId);
+          loginData.user.tenantId = loginData.userResponse.tenantId;
+        }
+        
         // sessionManager에 사용자 정보 설정 (세션 기반이므로 토큰 없음)
         sessionManager.setUser(loginData.user, {
           sessionId: loginData.sessionId
         });
+        
+        // 로그인 직후 플래그 설정 (세션 체크 시 리다이렉트 방지)
+        sessionStorage.setItem('justLoggedIn', 'true');
         
         showTooltip('로그인에 성공했습니다.', 'success');
         

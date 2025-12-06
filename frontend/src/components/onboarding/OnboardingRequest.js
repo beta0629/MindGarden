@@ -21,10 +21,15 @@ import './OnboardingRequest.css';
 
 /**
  * 온보딩 요청 페이지
+/**
  * 테넌트 온보딩 요청을 생성하는 컴포넌트
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-20
  */
 const OnboardingRequest = () => {

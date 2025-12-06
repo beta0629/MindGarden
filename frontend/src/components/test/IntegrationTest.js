@@ -16,10 +16,15 @@ import './IntegrationTest.css';
 
 /**
  * 통합 테스트 컴포넌트
+/**
  * 전체 시스템의 통합 동작을 검증하는 테스트 도구
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-05
  */
 const IntegrationTest = () => {

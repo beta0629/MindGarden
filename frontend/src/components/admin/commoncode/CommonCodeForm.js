@@ -4,11 +4,17 @@ import './CommonCodeForm.css';
 
 /**
  * 공통코드 폼 컴포넌트
+/**
  * - 공통코드 생성/수정을 위한 모달 폼
+/**
  * - 유효성 검사 및 에러 처리 포함
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {

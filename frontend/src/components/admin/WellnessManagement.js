@@ -24,11 +24,17 @@ import './WellnessManagement.css';
 
 /**
  * 웰니스 알림 관리 페이지
+/**
  * - 관리자 전용 (BRANCH_ADMIN 이상)
+/**
  * - 템플릿 관리, 테스트 발송, AI 비용 통계
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-21
  */
 const WellnessManagement = () => {
@@ -178,7 +184,7 @@ const WellnessManagement = () => {
 
 
 
-    /**
+/**
      * 테스트 발송
      */
     const handleTestSend = async () => {
@@ -209,14 +215,14 @@ const WellnessManagement = () => {
         });
     };
 
-    /**
+/**
      * 데이터 새로고침
      */
     const handleRefresh = () => {
         window.location.reload();
     };
 
-    /**
+/**
      * 환율 새로고침
      */
     const handleExchangeRateRefresh = async () => {
@@ -239,7 +245,7 @@ const WellnessManagement = () => {
         }
     };
 
-    /**
+/**
      * 월 변경
      */
     const handleMonthChange = (direction) => {
@@ -259,7 +265,7 @@ const WellnessManagement = () => {
         });
     };
 
-    /**
+/**
      * 카테고리 한글 변환
      */
     const getCategoryName = (category) => {
@@ -273,7 +279,7 @@ const WellnessManagement = () => {
         return categories[category] || category;
     };
 
-    /**
+/**
      * 요일 한글 변환
      */
     const getDayName = (dayOfWeek) => {
@@ -282,7 +288,7 @@ const WellnessManagement = () => {
         return days[dayOfWeek] + '요일';
     };
 
-    /**
+/**
      * 계절 한글 변환
      */
     const getSeasonName = (season) => {

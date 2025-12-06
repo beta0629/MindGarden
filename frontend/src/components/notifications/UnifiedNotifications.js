@@ -9,6 +9,7 @@ import '../../styles/unified-design-tokens.css';
 
 /**
  * 통합 알림 페이지
+/**
  * 시스템 공지와 일반 메시지를 탭으로 구분하여 표시
  */
 const UnifiedNotifications = () => {
@@ -30,7 +31,7 @@ const UnifiedNotifications = () => {
 
     try {
       setLoading(true);
-      const response = await apiGet('/api/system-notifications?page=0&size=50');
+      const response = await apiGet('/api/v1/system-notifications?page=0&size=50');
 
       if (response.success) {
         setSystemNotifications(response.data || []);
@@ -69,16 +70,16 @@ const UnifiedNotifications = () => {
       );
       
       if (userRole === 'CONSULTANT' || userRole === 'ROLE_CONSULTANT') {
-        endpoint = `/api/consultation-messages/consultant/${user.id}?page=0&size=50`;
+        endpoint = `/api/v1/consultation-messages/consultant/${user.id}?page=0&size=50`;
       } else if (userRole === 'CLIENT' || userRole === 'ROLE_CLIENT') {
-        endpoint = `/api/consultation-messages/client/${user.id}?page=0&size=50`;
+        endpoint = `/api/v1/consultation-messages/client/${user.id}?page=0&size=50`;
       } else if (isAdmin) {
         // 관리자는 전체 메시지
-        endpoint = '/api/consultation-messages/all';
+        endpoint = '/api/v1/consultation-messages/all';
       } else {
         // 기본값: 내담자 API 호출
         console.warn('⚠️ 알 수 없는 역할, 내담자 API 사용:', user.role);
-        endpoint = `/api/consultation-messages/client/${user.id}?page=0&size=50`;
+        endpoint = `/api/v1/consultation-messages/client/${user.id}?page=0&size=50`;
       }
 
       console.log('🌐 API 호출:', endpoint);
@@ -109,7 +110,7 @@ const UnifiedNotifications = () => {
   const handleSystemNotificationClick = async (notification) => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
-      const response = await apiGet(`/api/system-notifications/${notification.id}`);
+      const response = await apiGet(`/api/v1/system-notifications/${notification.id}`);
       
       if (response.success) {
         setSelectedItem({ type: 'system', data: response.data });
@@ -128,7 +129,7 @@ const UnifiedNotifications = () => {
   const handleMessageClick = async (message) => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
-      const response = await apiGet(`/api/consultation-messages/${message.id}`);
+      const response = await apiGet(`/api/v1/consultation-messages/${message.id}`);
       
       if (response.success) {
         setSelectedItem({ type: 'message', data: response.data });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import { useNavigate } from 'react-router-dom';
 import { Link2, Plus } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -24,13 +24,21 @@ import MappingEditModal from './MappingEditModal';
 import '../../styles/unified-design-tokens.css';
 import './MappingManagement.css';
 
+/**
  * 매칭 관리 페이지 컴포넌트
+/**
  * - 매칭 목록 조회 및 관리
+/**
  * - 매칭 상태 변경 (승인, 거부 등)
+/**
  * - 매칭 생성, 수정, 삭제
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const MappingManagement = () => {

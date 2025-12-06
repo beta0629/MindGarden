@@ -1,9 +1,14 @@
 /**
  * Security Audit Widget - 표준화된 위젯
+/**
  * 보안 감사 로그 및 사용자 활동 모니터링
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0 (표준화)
+/**
  * @since 2025-12-02
  */
 

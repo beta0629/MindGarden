@@ -14,10 +14,15 @@ import './BranchLogin.css';
 
 /**
  * 본사 로그인 컴포넌트
+/**
  * URL: /login/headquarters
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-12
  */
 const HeadquartersLogin = () => {
@@ -42,7 +47,7 @@ const HeadquartersLogin = () => {
 
   // === API 호출 함수들 ===
   
-  /**
+/**
    * 본사 정보 조회
    */
   const loadHeadquartersInfo = async () => {
@@ -73,7 +78,7 @@ const HeadquartersLogin = () => {
     }
   };
 
-  /**
+/**
    * 본사 로그인
    */
   const handleHeadquartersLogin = async (e) => {

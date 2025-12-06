@@ -13,12 +13,19 @@ import './BranchUserTransfer.css';
 
 /**
  * 지점 간 사용자 이동 컴포넌트
+/**
  * - 사용자 선택 및 대상 지점 선택
+/**
  * - 이동 사유 입력
+/**
  * - 일괄 이동 처리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const BranchUserTransfer = ({ 

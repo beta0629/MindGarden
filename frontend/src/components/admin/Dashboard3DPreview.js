@@ -1,10 +1,16 @@
 /**
  * 대시보드 3D 미리보기 컴포넌트
+/**
  * 
+/**
  * CSS transform을 사용한 입체감 있는 미리보기
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-25
  */
 

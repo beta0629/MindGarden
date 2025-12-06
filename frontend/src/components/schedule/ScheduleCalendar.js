@@ -24,10 +24,12 @@ import {
     isTimeSlotBooked
 } from './ScheduleCalendar/ScheduleCalendarUtils';
 
+/**
  * FullCalendar 기반 스케줄 관리 컴포넌트 (리팩토링됨)
  * 
  * @author MindGarden
  * @version 2.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleCalendar = ({ userRole, userId }) => {
@@ -122,7 +124,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 branchCode: currentUser?.branchCode
             });
             
-            let apiEndpoint = '/api/admin/consultants';
+            let apiEndpoint = '/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0];
             
             console.log('🔍 조건 확인:', {
                 currentUserRole,
@@ -131,17 +133,18 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 branchId: currentUser?.branchId
             });
             
-            if (currentUserRole === 'BRANCH_SUPER_ADMIN' && currentUser?.branchId) {
-                apiEndpoint = `/api/admin/consultants/by-branch/${currentUser.branchId}`;
-                console.log('🏢 지점 어드민 - 지점별 상담사 조회:', currentUser.branchId);
-            } else {
+            // 브랜치 개념 제거됨 (표준화 2025-12-05)
+            // if (currentUserRole === 'BRANCH_SUPER_ADMIN' && currentUser?.branchId) {
+            //     apiEndpoint = `/api/v1/admin/consultants/by-branch/${currentUser.branchId}`;
+            //     console.log('🏢 지점 어드민 - 지점별 상담사 조회:', currentUser.branchId);
+            // } else {
                 console.log('🏢 전체 상담사 조회 - 이유:', {
                     role: currentUserRole,
                     isBranchSuperAdmin: currentUserRole === 'BRANCH_SUPER_ADMIN',
                     hasBranchId: !!currentUser?.branchId,
                     branchId: currentUser?.branchId
                 });
-            }
+            // }
             
             console.log('📡 API 엔드포인트:', apiEndpoint);
             const response = await apiGet(apiEndpoint);
@@ -159,6 +162,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, [currentUserRole, currentUser?.branchId]);
 
+/**
      * 스케줄 데이터 로드
      */
     const loadSchedules = useCallback(async () => {
@@ -169,7 +173,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             let url = `/api/schedules?userId=${currentUserId}&userRole=${currentUserRole}`;
             
             if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN' || currentUserRole === 'HQ_MASTER' || currentUserRole === 'SUPER_HQ_ADMIN') {
-                url = '/api/schedules/admin';
+                url = '/api/v1/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);
@@ -237,7 +241,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
                     const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
                     
-                    const vacationResponse = await fetch(`/api/consultant/vacations`, {
+                    const vacationResponse = await fetch(`/api/v1/consultants/availability/vacations`, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include'

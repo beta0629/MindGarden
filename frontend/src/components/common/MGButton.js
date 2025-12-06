@@ -19,14 +19,23 @@ import './MGButton.css';
  * @param {number} props.clickDelay - 클릭 후 대기 시간 (ms)
  * @param {Function} props.onClick - 클릭 핸들러
  * @param {string} props.className - 추가 CSS 클래스
+/**
  * @param {string} props.type - 버튼 타입 (button, submit, reset)
+/**
  * @param {React.ReactNode} props.children - 버튼 내용
+/**
  * @param {Object} props.style - 인라인 스타일
+/**
  * @param {string} props.title - 툴팁 텍스트
+/**
  * @param {boolean} props.fullWidth - 전체 너비 사용 여부
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-22
  */
 const MGButton = ({

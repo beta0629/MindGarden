@@ -4,9 +4,13 @@ import { X, Plus, Calendar } from 'lucide-react';
 
 /**
  * 모바일 달력 확대 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleCalendarMobileZoom = ({ 

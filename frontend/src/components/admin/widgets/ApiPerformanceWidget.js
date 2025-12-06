@@ -9,6 +9,7 @@ import '../../../styles/unified-design-tokens.css';
 
 /**
  * API 성능 모니터링 위젯
+/**
  * 실시간 API 응답 시간 및 성능 지표 표시
  */
 const ApiPerformanceWidget = ({ 

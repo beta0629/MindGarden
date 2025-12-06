@@ -19,14 +19,23 @@ import '../../styles/main.css'; // Ensure main.css is imported for mg-loading st
  * @param {string} props.type - 로딩 타입 (inline, fullscreen, page, button)
  * @param {boolean} props.showText - 텍스트 표시 여부
  * @param {string} props.className - 추가 CSS 클래스
+/**
  * @param {boolean} props.centered - 중앙 정렬 여부
+/**
  * @param {string} props.logoType - 로고 타입 (text, image, custom)
+/**
  * @param {string} props.logoImage - 커스텀 로고 이미지 URL 또는 HTML
+/**
  * @param {string} props.logoAlt - 로고 alt 텍스트
+/**
  * @param {boolean} props.logoRotate - 로고 회전 애니메이션 여부
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.1.0
+/**
  * @since 2025-01-02
  */
 const UnifiedLoading = ({ 

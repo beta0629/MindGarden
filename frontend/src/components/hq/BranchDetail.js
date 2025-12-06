@@ -17,13 +17,21 @@ import './BranchDetail.css';
 
 /**
  * 지점 상세 정보 및 관리 컴포넌트
+/**
  * - 지점 기본 정보 표시
+/**
  * - 지점 통계 및 현황
+/**
  * - 지점 사용자 관리
+/**
  * - 지점 설정 관리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const BranchDetail = ({ 

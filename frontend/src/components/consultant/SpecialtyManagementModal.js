@@ -10,12 +10,19 @@ import { getSpecialtyKoreanName } from '../../utils/codeHelper';
 
 /**
  * 상담사 전문분야 관리 모달 컴포넌트
+/**
  * - 상담사별 전문분야 설정
+/**
  * - 전문분야별 필터링
+/**
  * - 전문분야 통계
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-30
  */
 const SpecialtyManagementModal = ({ isOpen, onClose }) => {
@@ -37,7 +44,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         }
     }, [isOpen]);
 
-    /**
+/**
      * 상담사 목록 로드 (통합 API 사용, 지점별 + 삭제 제외)
      */
     const loadConsultants = async () => {
@@ -134,7 +141,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 전문분야 목록 로드
      */
     const loadSpecialties = async () => {
@@ -150,7 +157,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 전문분야 통계 로드 (Deprecated - calculateStatistics로 대체됨)
      */
     // const loadStatistics = async () => {
@@ -164,7 +171,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
     //     }
     // };
 
-    /**
+/**
      * 통계 자동 계산
      */
     const calculateStatistics = (consultantsList) => {
@@ -190,7 +197,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         });
     };
 
-    /**
+/**
      * 상담사 선택
      */
     const handleConsultantSelect = (consultant) => {
@@ -200,7 +207,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         setNewSpecialty(specialtyValue);
     };
 
-    /**
+/**
      * 전문분야 추가/수정
      */
     const handleSaveSpecialty = async () => {
@@ -241,7 +248,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 전문분야 추가 (공통 코드)
      */
     const handleAddSpecialty = async () => {
@@ -278,7 +285,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 필터링된 상담사 목록
      */
     const filteredConsultants = consultants.filter(consultant => {
@@ -286,7 +293,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         return consultant.specialty && consultant.specialty.includes(filterSpecialty);
     });
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {

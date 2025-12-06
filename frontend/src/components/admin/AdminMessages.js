@@ -13,6 +13,7 @@ import '../../styles/unified-design-tokens.css';
 
 /**
  * 관리자 메시지 관리 페이지
+/**
  * 모든 상담사-내담자 메시지를 조회하고 관리할 수 있는 화면
  */
 const AdminMessages = () => {
@@ -49,7 +50,7 @@ const AdminMessages = () => {
       console.log('👤 현재 사용자:', { email: user?.email, role: user?.role, id: user?.id });
       
       // 관리자는 모든 메시지 조회
-      console.log('🌐 API 호출: /api/consultation-messages/all');
+      console.log('🌐 API 호출: /api/v1/consultation-messages/all');
       const response = await apiGet('/api/v1/consultation-messages/all');
       console.log('📨 API 응답:', response);
       
@@ -129,8 +130,8 @@ const AdminMessages = () => {
     console.log('🖱️ 메시지 클릭:', message.id, message.title, message.isRead);
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
-      console.log('📞 API 호출:', `/api/consultation-messages/${message.id}`);
-      const response = await apiGet(`/api/consultation-messages/${message.id}`);
+      console.log('📞 API 호출:', `/api/v1/consultation-messages/${message.id}`);
+      const response = await apiGet(`/api/v1/consultation-messages/${message.id}`);
       console.log('✅ API 응답:', response);
       
       if (response.success) {

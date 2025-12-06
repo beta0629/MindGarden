@@ -8,13 +8,21 @@ import ConsultantCard from '../ui/Card/ConsultantCard';
 
 /**
  * 공통 상담사 카드 컴포넌트
+/**
  * - 디자인 시스템 v2.0 적용
+/**
  * - 글라스모피즘 효과
+/**
  * - 반응형 지원
+/**
  * - 선택 상태 관리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-10-15
  */
 const ConsultantCard = ({ 
@@ -30,7 +38,7 @@ const ConsultantCard = ({
     
     // 평점 정보 계산
     const ratingInfo = getConsultantRatingInfo(consultant);
-    /**
+/**
      * 가용성 상태에 따른 클래스명 반환
      */
     const getAvailabilityClass = () => {
@@ -44,7 +52,7 @@ const ConsultantCard = ({
         return 'available';
     };
 
-    /**
+/**
      * 가용성 상태에 따른 텍스트 반환
      */
     const getAvailabilityText = () => {
@@ -57,7 +65,7 @@ const ConsultantCard = ({
         }
     };
 
-    /**
+/**
      * 가용성 상태에 따른 색상 반환 (CSS 변수 사용)
      */
     const getAvailabilityColor = () => {
@@ -71,7 +79,7 @@ const ConsultantCard = ({
     };
 
 
-    /**
+/**
      * 이니셜 반환
      */
     const getInitial = () => {
@@ -81,7 +89,7 @@ const ConsultantCard = ({
         return '?';
     };
 
-    /**
+/**
      * 클릭 핸들러
      */
     const handleClick = () => {
@@ -90,7 +98,7 @@ const ConsultantCard = ({
         }
     };
 
-    /**
+/**
      * 가용성 정보 반환
      */
     const getAvailabilityInfo = () => {

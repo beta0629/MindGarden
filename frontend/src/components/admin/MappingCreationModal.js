@@ -19,13 +19,21 @@ import {
 } from '../../constants/mapping';
 import './MappingCreationModal.css';
 
+/**
  * 매칭 생성 모달 컴포넌트
+/**
  * - 상담사와 내담자 간의 매칭 생성
+/**
  * - 결제 정보 입력
+/**
  * - 관리자 승인 대기
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => { const { user } = useSession();

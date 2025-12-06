@@ -4,14 +4,23 @@
  * 목적: 위젯 관리 UI 렌더링 (순수 UI)
  * 표준: DESIGN_CENTRALIZATION_STANDARD.md 준수
  * 패턴: Presentational Component (비즈니스 로직 없음)
+/**
  * 
+/**
  * ✅ 표준화:
+/**
  * - CSS 변수 사용 (하드코딩 금지)
+/**
  * - BEM 네이밍 규칙
+/**
  * - Props를 통한 데이터 전달만 수행
+/**
  * - 상태 관리 없음 (Container에서 처리)
+/**
  * 
+/**
  * @author CoreSolution Team
+/**
  * @since 2025-12-02
  */
 

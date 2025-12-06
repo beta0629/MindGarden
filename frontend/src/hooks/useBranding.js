@@ -1,9 +1,14 @@
 /**
  * 브랜딩 정보 관리 Hook
+/**
  * 테넌트별 브랜딩 정보를 로드하고 관리하는 커스텀 Hook
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-26
  */
 
@@ -13,10 +18,15 @@ import { sessionManager } from '../utils/sessionManager';
 
 /**
  * 브랜딩 정보 Hook
+/**
  * 
+/**
  * @param {Object} options - 옵션
+/**
  * @param {boolean} options.autoLoad - 자동 로드 여부 (기본값: true)
+/**
  * @param {boolean} options.useCache - 캐시 사용 여부 (기본값: true)
+/**
  * @returns {Object} 브랜딩 상태 및 함수들
  */
 export const useBranding = (options = {}) => {
@@ -31,7 +41,7 @@ export const useBranding = (options = {}) => {
     logoAlt: 'MindGarden'
   });
 
-  /**
+/**
    * 브랜딩 정보 로드
    */
   const loadBrandingInfo = useCallback(async (forceReload = false) => {
@@ -90,7 +100,7 @@ export const useBranding = (options = {}) => {
     }
   }, [useCache]);
 
-  /**
+/**
    * 브랜딩 정보 새로고침
    */
   const refreshBranding = useCallback(() => {
@@ -98,7 +108,7 @@ export const useBranding = (options = {}) => {
     return loadBrandingInfo(true);
   }, [loadBrandingInfo]);
 
-  /**
+/**
    * 브랜딩 정보 업데이트 후 새로고침
    */
   const updateAndRefresh = useCallback(async (updateFn) => {

@@ -47,7 +47,7 @@ const SystemNotifications = () => {
 
     try {
       setLoading(true);
-      const response = await apiGet(`/api/system-notifications?page=${page}&size=20`);
+      const response = await apiGet(`/api/v1/system-notifications?page=${page}&size=20`);
 
       if (response.success) {
         setNotifications(response.data || []);
@@ -65,7 +65,7 @@ const SystemNotifications = () => {
   const handleNotificationClick = async (notification) => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
-      const response = await apiGet(`/api/system-notifications/${notification.id}`);
+      const response = await apiGet(`/api/v1/system-notifications/${notification.id}`);
       
       if (response.success) {
         setSelectedNotification(response.data);

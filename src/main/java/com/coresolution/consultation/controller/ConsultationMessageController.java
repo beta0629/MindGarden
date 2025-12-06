@@ -224,20 +224,23 @@ public class ConsultationMessageController extends BaseApiController {
         log.info("🔍 자신의 메시지 체크 - 사용자 ID: {}, 요청한 내담자 ID: {}, 일치 여부: {}, 역할: {}", 
             currentUser.getId(), clientId, currentUser.getId().equals(clientId), currentUser.getRole());
         
-        // 2. API 접근 권한이 있는 경우 허용 (관리자/상담사)
+        // 2. 관리자 역할 체크 (관리자는 모든 메시지 조회 가능)
+        boolean isAdmin = currentUser.getRole() != null && currentUser.getRole().isAdmin();
+        
+        // 3. API 접근 권한이 있는 경우 허용 (상담사 등)
         String apiPath = "/api/consultation-messages/client/" + clientId;
         boolean hasApiAccess = dynamicPermissionService.hasApiAccess(currentUser, apiPath);
         
-        log.info("🔍 API 접근 권한 체크 - API 경로: {}, 권한 여부: {}", apiPath, hasApiAccess);
+        log.info("🔍 권한 체크 - 자신의 메시지: {}, 관리자: {}, API 권한: {}", isOwnMessage, isAdmin, hasApiAccess);
         
-        if (!isOwnMessage && !hasApiAccess) {
-            log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}, 요청한 내담자 ID: {}, 자신의 메시지: {}, API 권한: {}", 
-                currentUser.getId(), currentUser.getRole(), clientId, isOwnMessage, hasApiAccess);
+        if (!isOwnMessage && !isAdmin && !hasApiAccess) {
+            log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}, 요청한 내담자 ID: {}, 자신의 메시지: {}, 관리자: {}, API 권한: {}", 
+                currentUser.getId(), currentUser.getRole(), clientId, isOwnMessage, isAdmin, hasApiAccess);
             throw new RuntimeException("접근 권한이 없습니다.");
         }
         
-        log.info("✅ 권한 확인 완료 - 사용자 ID: {}, 역할: {}, 요청한 내담자 ID: {}, 자신의 메시지: {}, API 권한: {}", 
-            currentUser.getId(), currentUser.getRole(), clientId, isOwnMessage, hasApiAccess);
+        log.info("✅ 권한 확인 완료 - 사용자 ID: {}, 역할: {}, 요청한 내담자 ID: {}, 자신의 메시지: {}, 관리자: {}, API 권한: {}", 
+            currentUser.getId(), currentUser.getRole(), clientId, isOwnMessage, isAdmin, hasApiAccess);
         
         Page<ConsultationMessage> messages = consultationMessageService.getClientMessages(
             clientId, consultantId, status, isRead, isImportant, isUrgent, pageable);

@@ -1,19 +1,30 @@
 /**
  * 유효성 검증 유틸리티 함수
+/**
  * 폼 입력값 검증을 위한 공통 함수들
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-29
  */
 
 /**
  * 이메일 주소 유효성 검증
+/**
  * @param {string} email - 검증할 이메일 주소
+/**
  * @returns {boolean} 유효한 이메일이면 true, 그렇지 않으면 false
+/**
  * 
+/**
  * @example
+/**
  * validateEmail('user@example.com') // true
+/**
  * validateEmail('invalid-email') // false
  */
 export const validateEmail = (email) => {
@@ -29,14 +40,23 @@ export const validateEmail = (email) => {
 
 /**
  * 전화번호 유효성 검증 (한국 형식)
+/**
  * @param {string} phone - 검증할 전화번호
+/**
  * @returns {boolean} 유효한 전화번호면 true, 그렇지 않으면 false
+/**
  * 
+/**
  * @example
+/**
  * validatePhone('010-1234-5678') // true
+/**
  * validatePhone('010 1234 5678') // true
+/**
  * validatePhone('01012345678') // true
+/**
  * validatePhone('02-123-4567') // true
+/**
  * validatePhone('1234') // false
  */
 export const validatePhone = (phone) => {
@@ -55,10 +75,15 @@ export const validatePhone = (phone) => {
 
 /**
  * 이름 유효성 검증 (한글, 영문)
+/**
  * @param {string} name - 검증할 이름
+/**
  * @param {Object} options - 검증 옵션
+/**
  * @param {number} options.minLength - 최소 길이 (기본: 2)
+/**
  * @param {number} options.maxLength - 최대 길이 (기본: 50)
+/**
  * @returns {boolean} 유효한 이름이면 true, 그렇지 않으면 false
  */
 export const validateName = (name, options = {}) => {
@@ -83,13 +108,21 @@ export const validateName = (name, options = {}) => {
 
 /**
  * 비밀번호 유효성 검증
+/**
  * @param {string} password - 검증할 비밀번호
+/**
  * @param {Object} options - 검증 옵션
+/**
  * @param {number} options.minLength - 최소 길이 (기본: 8)
+/**
  * @param {boolean} options.requireUppercase - 대문자 필수 (기본: true)
+/**
  * @param {boolean} options.requireLowercase - 소문자 필수 (기본: true)
+/**
  * @param {boolean} options.requireNumber - 숫자 필수 (기본: true)
+/**
  * @param {boolean} options.requireSpecial - 특수문자 필수 (기본: true)
+/**
  * @returns {Object} { isValid: boolean, errors: string[] }
  */
 export const validatePassword = (password, options = {}) => {
@@ -141,10 +174,15 @@ export const validatePassword = (password, options = {}) => {
 
 /**
  * 주소 유효성 검증
+/**
  * @param {string} address - 검증할 주소
+/**
  * @param {Object} options - 검증 옵션
+/**
  * @param {number} options.minLength - 최소 길이 (기본: 5)
+/**
  * @param {number} options.maxLength - 최대 길이 (기본: 100)
+/**
  * @returns {boolean} 유효한 주소면 true, 그렇지 않으면 false
  */
 export const validateAddress = (address, options = {}) => {
@@ -166,7 +204,9 @@ export const validateAddress = (address, options = {}) => {
 
 /**
  * 우편번호 유효성 검증 (한국 우편번호 5자리)
+/**
  * @param {string} postalCode - 검증할 우편번호
+/**
  * @returns {boolean} 유효한 우편번호면 true, 그렇지 않으면 false
  */
 export const validatePostalCode = (postalCode) => {
@@ -182,10 +222,15 @@ export const validatePostalCode = (postalCode) => {
 
 /**
  * 나이 유효성 검증
+/**
  * @param {number|string} age - 검증할 나이
+/**
  * @param {Object} options - 검증 옵션
+/**
  * @param {number} options.minAge - 최소 나이 (기본: 1)
+/**
  * @param {number} options.maxAge - 최대 나이 (기본: 150)
+/**
  * @returns {boolean} 유효한 나이면 true, 그렇지 않으면 false
  */
 export const validateAge = (age, options = {}) => {
@@ -202,7 +247,9 @@ export const validateAge = (age, options = {}) => {
 
 /**
  * 필수 필드 검증
+/**
  * @param {*} value - 검증할 값
+/**
  * @returns {boolean} 값이 존재하면 true, 그렇지 않으면 false
  */
 export const validateRequired = (value) => {
@@ -223,10 +270,15 @@ export const validateRequired = (value) => {
 
 /**
  * 사용자명 유효성 검증 (영문, 숫자, 언더스코어)
+/**
  * @param {string} username - 검증할 사용자명
+/**
  * @param {Object} options - 검증 옵션
+/**
  * @param {number} options.minLength - 최소 길이 (기본: 3)
+/**
  * @param {number} options.maxLength - 최대 길이 (기본: 20)
+/**
  * @returns {boolean} 유효한 사용자명이면 true, 그렇지 않으면 false
  */
 export const validateUsername = (username, options = {}) => {
@@ -253,14 +305,23 @@ export const validateUsername = (username, options = {}) => {
  * 다중 필드 검증
  * @param {Object} formData - 검증할 폼 데이터
  * @param {Object} rules - 검증 규칙
+/**
  * @returns {Object} { isValid: boolean, errors: Object }
+/**
  * 
+/**
  * @example
+/**
  * const formData = { email: 'test@example.com', name: '홍길동' };
+/**
  * const rules = {
+/**
  *   email: { required: true, type: 'email' },
+/**
  *   name: { required: true, type: 'name', minLength: 2 }
+/**
  * };
+/**
  * validateForm(formData, rules);
  */
 export const validateForm = (formData, rules) => {

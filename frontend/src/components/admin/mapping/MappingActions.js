@@ -5,12 +5,19 @@ import {
 } from '../../../constants/mapping';
 import './MappingActions.css';
 
+/**
  * 매핑 액션 컴포넌트
+/**
  * - 매핑 관련 액션 버튼들
+/**
  * - 승인, 거부, 수정, 삭제 등
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const MappingActions = ({ 

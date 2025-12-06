@@ -1,10 +1,16 @@
 /**
  * Notification Widget
+/**
  * 알림 목록을 표시하는 범용 위젯
+/**
  * SystemNotificationSection을 기반으로 범용화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 
@@ -45,8 +51,8 @@ const NotificationWidget = ({ widget, user }) => {
     try {
       setLoading(true);
       
-      // 실제 API 엔드포인트: /api/system-notifications/active
-      const url = dataSource.url || '/api/system-notifications/active';
+      // 실제 API 엔드포인트: /api/v1/system-notifications/active
+      const url = dataSource.url || '/api/v1/system-notifications/active';
       const params = { ...dataSource.params };
       
       const response = await apiGet(url, params);
@@ -78,8 +84,8 @@ const NotificationWidget = ({ widget, user }) => {
     // 읽음 처리
     if (!notification.isRead && notification.id) {
       try {
-        // 실제 API 엔드포인트: /api/system-notifications/{notificationId}/read
-        await apiGet(`/api/system-notifications/${notification.id}/read`);
+        // 실제 API 엔드포인트: /api/v1/system-notifications/{notificationId}/read
+        await apiGet(`/api/v1/system-notifications/${notification.id}/read`);
         setNotifications(prev => prev.map(n => 
           n.id === notification.id ? { ...n, isRead: true } : n
         ));

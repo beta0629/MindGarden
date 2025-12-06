@@ -54,6 +54,13 @@ public class SecurityFilter implements Filter {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         try {
+            // 0. OPTIONS 요청 (CORS preflight)은 즉시 통과
+            if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
+                log.debug("🔓 SecurityFilter: OPTIONS 요청 감지 - 즉시 통과: {}", httpRequest.getRequestURI());
+                chain.doFilter(request, response);
+                return;
+            }
+
             // 1. 보안 헤더 설정
             setSecurityHeaders(httpResponse);
 
@@ -64,17 +71,20 @@ public class SecurityFilter implements Filter {
                 return;
             }
 
-            // 3. 보안 검사 수행
+            // 3. 보안 검사 수행 (개발 환경에서는 완화)
             SecurityCheckResult securityResult = securityAuditService.performSecurityCheck(httpRequest);
 
             // 4. 위협이 감지된 경우 처리
             if (securityResult.hasThreats()) {
                 handleSecurityThreats(httpRequest, httpResponse, securityResult);
                 
-                // 차단 대상인 경우 요청 중단
-                if (securityResult.isBlocked()) {
+                // 개발 환경에서는 차단하지 않고 로그만 기록
+                if (isProductionEnvironment() && securityResult.isBlocked()) {
                     sendSecurityErrorResponse(httpResponse, securityResult);
                     return;
+                } else if (!isProductionEnvironment()) {
+                    // 개발 환경에서는 로그만 기록하고 계속 진행
+                    log.warn("⚠️ 개발 환경: 보안 위협 감지되었지만 차단하지 않음 - {}", securityResult.getThreatSummary());
                 }
             }
 

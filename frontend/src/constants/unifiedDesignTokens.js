@@ -1,11 +1,18 @@
 /**
  * MindGarden 통합 디자인 토큰 (JavaScript)
+/**
  * 
+/**
  * CSS 변수와 연동되는 JavaScript 상수들
+/**
  * 
+/**
  * 생성일: 2025-11-28T06:10:04.412Z
+/**
  * 자동 생성: scripts/create-unified-css-variables.js
+/**
  * 
+/**
  * ⚠️ 이 파일을 직접 수정하지 마세요.
  */
 

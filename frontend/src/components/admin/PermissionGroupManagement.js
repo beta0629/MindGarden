@@ -2,14 +2,23 @@
  * 권한 그룹 관리 컨테이너 (Container Component)
  * 
  * 비즈니스 로직 담당:
+/**
  * - API 호출
+/**
  * - 상태 관리
+/**
  * - 이벤트 핸들러
+/**
  * 
+/**
  * UI 렌더링은 PermissionGroupManagementUI에 위임
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-12-03
  */
 
@@ -32,7 +41,7 @@ const PermissionGroupManagement = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    /**
+/**
      * 초기 로드: 역할 목록 및 권한 그룹 조회
      */
     useEffect(() => {
@@ -40,7 +49,7 @@ const PermissionGroupManagement = () => {
         fetchPermissionGroups();
     }, []);
 
-    /**
+/**
      * 선택된 역할 변경 시 권한 조회
      */
     useEffect(() => {
@@ -49,7 +58,7 @@ const PermissionGroupManagement = () => {
         }
     }, [selectedRole]);
 
-    /**
+/**
      * 역할 목록 조회
      */
     const fetchRoles = async () => {
@@ -77,7 +86,7 @@ const PermissionGroupManagement = () => {
         }
     };
 
-    /**
+/**
      * 권한 그룹 목록 조회
      */
     const fetchPermissionGroups = async () => {
@@ -100,7 +109,7 @@ const PermissionGroupManagement = () => {
         }
     };
 
-    /**
+/**
      * 역할의 권한 조회
      */
     const fetchRolePermissions = async (roleId) => {
@@ -119,7 +128,7 @@ const PermissionGroupManagement = () => {
         }
     };
 
-    /**
+/**
      * 역할 선택
      */
     const handleRoleSelect = (role) => {
@@ -128,7 +137,7 @@ const PermissionGroupManagement = () => {
         setError(null);
     };
 
-    /**
+/**
      * 권한 그룹 부여
      */
     const handleGrantPermission = async (groupCode, accessLevel) => {
@@ -161,7 +170,7 @@ const PermissionGroupManagement = () => {
         }
     };
 
-    /**
+/**
      * 권한 그룹 회수
      */
     const handleRevokePermission = async (groupCode) => {
@@ -193,7 +202,7 @@ const PermissionGroupManagement = () => {
         }
     };
 
-    /**
+/**
      * 권한 그룹 일괄 부여
      */
     const handleBatchGrant = async (groupCodes, accessLevel) => {

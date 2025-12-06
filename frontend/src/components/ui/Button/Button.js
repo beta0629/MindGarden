@@ -1,10 +1,16 @@
 /**
  * Buttons Component
+/**
  * 
+/**
  * MindGarden 디자인 시스템 표준 컴포넌트
+/**
  * 
+/**
  * @author MindGarden Team
+/**
  * @version 2.0.0
+/**
  * @since 2025-11-28
  */
 
@@ -118,13 +124,6 @@ Button.propTypes = {
   type: PropTypes.string
 };
 
-Button.defaultProps = {
-  className: '',
-  variant: 'primary',
-  size: 'medium',
-  disabled: false,
-  loading: false,
-  type: 'button'
-};
+// defaultProps 제거 - 함수 매개변수에서 기본값 사용 (React 18+ 권장)
 
 export default Button;

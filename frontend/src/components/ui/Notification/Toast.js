@@ -1,7 +1,10 @@
 /**
  * MindGarden 디자인 시스템 v2.0 - Toast Notification Component
+/**
  * 
+/**
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
+/**
  * @reference /design-system (NotificationShowcase)
  */
 
@@ -17,14 +20,23 @@ import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
  * @param {string} props.message - 알림 메시지
  * @param {Function} [props.onClose] - 닫기 콜백
  * @param {number} [props.duration=3000] - 자동 닫힘 시간 (ms), 0이면 수동 닫기만
+/**
  * @param {string} [props.className=''] - 추가 CSS 클래스
+/**
  * 
+/**
  * @example
+/**
  * <Toast
+/**
  *   type="success"
+/**
  *   title="성공!"
+/**
  *   message="작업이 완료되었습니다."
+/**
  *   onClose={() => handleClose()}
+/**
  * />
  */
 const Toast = ({
@@ -88,9 +100,13 @@ const Toast = ({
 
 /**
  * Toast Container 컴포넌트
+/**
  * 
+/**
  * @param {Object} props
+/**
  * @param {Array} props.toasts - Toast 배열
+/**
  * @param {Function} props.onRemove - Toast 제거 콜백
  */
 export const ToastContainer = ({ toasts, onRemove }) => {

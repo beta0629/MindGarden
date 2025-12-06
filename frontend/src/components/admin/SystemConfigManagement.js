@@ -21,10 +21,15 @@ import './SystemConfigManagement.css';
 
 /**
  * 시스템 설정 관리 페이지
+/**
  * 관리자 전용 (BRANCH_ADMIN 이상)
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-21
  */
 const SystemConfigManagement = () => {

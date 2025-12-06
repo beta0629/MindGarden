@@ -10,10 +10,15 @@ import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import './ScheduleCalendar.css';
 
+/**
  * FullCalendar 기반 스케줄 관리 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleCalendar = ({ userRole, userId }) => {
@@ -120,6 +125,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, []);
 
+/**
      * 상태값을 한글로 변환 (동적 로드)
      */
     const convertStatusToKorean = (status) => {
@@ -127,6 +133,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         return statusOption ? statusOption.label : status || "알 수 없음";
     };
 
+/**
      * 스케줄 데이터 로드
      */
     const loadSchedules = useCallback(async () => {
@@ -251,6 +258,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole, selectedConsultantId]);
 
+/**
      * 휴가 데이터를 캘린더 이벤트로 변환
      */
     const convertVacationToEvent = (vacationData, consultantId, date) => {
@@ -356,6 +364,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         };
     };
 
+/**
      * 상담사별 색상 반환
      */
     const getConsultantColor = (consultantId) => {
@@ -378,6 +387,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
 
 
+/**
      * 상담 유형을 한글로 변환
      */
     const convertConsultationTypeToKorean = (consultationType) => {
@@ -391,6 +401,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         return typeMap[consultationType] || consultationType || "알 수 없음";
     };
 
+/**
      * 스케줄 상태에 따른 색상 반환
      */
     const getEventColor = (status) => {
@@ -414,6 +425,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     };
 
+/**
      * 날짜 클릭 이벤트 핸들러
      */
     const handleDateClick = (info) => {
@@ -448,6 +460,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     };
 
+/**
      * 스케줄 등록 클릭 핸들러
      */
     const handleScheduleClick = () => {
@@ -458,6 +471,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }, 100);
     };
 
+/**
      * 휴가 등록 클릭 핸들러
      */
     const handleVacationClick = () => {
@@ -468,6 +482,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }, 100);
     };
 
+/**
      * 기존 이벤트 클릭 이벤트 핸들러
      */
     const handleEventClick = (info) => {
@@ -560,6 +575,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setIsDetailModalOpen(true);
     };
 
+/**
      * 이벤트 드래그 앤 드롭 핸들러
      */
     const handleEventDrop = async (info) => {
@@ -595,6 +611,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     };
 
+/**
      * 모달 닫기
      */
     const handleModalClose = () => {
@@ -603,6 +620,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setSelectedInfo(null);
     };
 
+/**
      * 스케줄 생성 완료 후 콜백
      */
     const handleScheduleCreated = async () => {
@@ -612,6 +630,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         console.log('✅ 캘린더 새로고침 완료');
     };
 
+/**
      * 상세 모달 닫기 핸들러
      */
     const handleDetailModalClose = () => {
@@ -619,12 +638,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         setSelectedSchedule(null);
     };
 
+/**
      * 스케줄 업데이트 후 처리
      */
     const handleScheduleUpdated = () => {
         loadSchedules(); // 스케줄 목록 새로고침
     };
 
+/**
      * 강제 새로고침 함수
      */
     const forceRefresh = useCallback(async () => {

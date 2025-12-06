@@ -4,11 +4,17 @@ import './CommonCodeList.css';
 
 /**
  * 공통코드 목록 컴포넌트
+/**
  * - 공통코드 목록을 테이블 형태로 표시
+/**
  * - 편집, 삭제, 상태 토글 기능 제공
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const CommonCodeList = ({ 

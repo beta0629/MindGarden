@@ -16,10 +16,15 @@ import './ConsolidatedFinancial.css';
 
 /**
  * 통합 재무현황 컴포넌트
+/**
  * 전사 재무 데이터를 통합하여 보여주는 대시보드
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const ConsolidatedFinancial = () => {

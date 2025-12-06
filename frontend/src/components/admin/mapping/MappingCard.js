@@ -3,7 +3,9 @@ import { User, Calendar, Package, CreditCard, Clock, CheckCircle, Database } fro
 import MappingPaymentModal from './MappingPaymentModal';
 import MappingDepositModal from './MappingDepositModal';
 
+/**
  * 매칭 카드 컴포넌트 - 글래스모피즘 디자인
+/**
  * SessionManagement 디자인 시스템 기반
  */
 const MappingCard = ({ 

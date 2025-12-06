@@ -1,10 +1,16 @@
+/**
  * ScheduleCalendar 유틸리티 함수들
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
+/**
  * 시간 포맷팅 함수
  */
 export const formatTime = (timeObj) => {
@@ -20,6 +26,7 @@ export const formatTime = (timeObj) => {
     }
 };
 
+/**
  * 상태값을 한글로 변환 (동적 로드)
  */
 export const convertStatusToKorean = (status, scheduleStatusOptions) => {
@@ -27,6 +34,7 @@ export const convertStatusToKorean = (status, scheduleStatusOptions) => {
     return statusOption ? statusOption.label : status || "알 수 없음";
 };
 
+/**
  * 상담 유형을 한글로 변환
  */
 export const convertConsultationTypeToKorean = (consultationType) => {
@@ -41,6 +49,7 @@ export const convertConsultationTypeToKorean = (consultationType) => {
     return typeMap[consultationType] || consultationType || '일반 상담';
 };
 
+/**
  * 상담사별 색상 생성
  */
 export const getConsultantColor = (consultantId) => {
@@ -62,6 +71,7 @@ export const getConsultantColor = (consultantId) => {
     return colors[Math.abs(hash) % colors.length];
 };
 
+/**
  * 상태별 이벤트 색상
  */
 export const getEventColor = (status) => {
@@ -80,6 +90,7 @@ export const getEventColor = (status) => {
     return statusColors[status] || 'var(--mg-gray-500)';
 };
 
+/**
  * 휴가 데이터를 이벤트로 변환
  */
 export const convertVacationToEvent = (vacationData, consultantId, date) => {
@@ -110,6 +121,7 @@ export const convertVacationToEvent = (vacationData, consultantId, date) => {
     };
 };
 
+/**
  * 모바일 환경 감지
  */
 export const checkIsMobile = (forceMobileMode = false) => {
@@ -120,6 +132,7 @@ export const checkIsMobile = (forceMobileMode = false) => {
     return forceMobileMode || (isSmallScreen && (isTouchDevice || isMobileUserAgent));
 };
 
+/**
  * 시간 슬롯 생성
  */
 export const generateTimeSlots = () => {
@@ -133,6 +146,7 @@ export const generateTimeSlots = () => {
     return slots;
 };
 
+/**
  * 시간 슬롯이 예약되었는지 확인
  */
 export const isTimeSlotBooked = (startTime, endTime, bookedTimes) => {

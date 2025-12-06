@@ -1,7 +1,10 @@
+/**
  * 카드 타입 및 변형 상수
+/**
  * 통일된 카드 시스템을 위한 정의
  */
 
+/**
  * 카드 변형 타입
  */
 export const CARD_VARIANTS = {DEFAULT: 'default',
@@ -14,6 +17,7 @@ export const CARD_VARIANTS = {DEFAULT: 'default',
   FILLED: 'filled',
   MINIMAL: 'minimal'};
 
+/**
  * 카드 크기
  */
 export const CARD_SIZES = {SMALL: 'small',
@@ -21,6 +25,7 @@ export const CARD_SIZES = {SMALL: 'small',
   LARGE: 'large',
   EXTRA_LARGE: 'extra-large'};
 
+/**
  * 카드 타입별 정의
  */
 export const CARD_TYPES = {STAT: {name: '통계 카드',
@@ -113,6 +118,7 @@ export const CARD_TYPES = {STAT: {name: '통계 카드',
       footer: 'required'},
     cssClass: 'mg-v2-card-form'}};
 
+/**
  * 카드 레이아웃 패턴
  */
 export const CARD_LAYOUT_PATTERNS = {GRID: {name: '그리드 레이아웃',
@@ -143,6 +149,7 @@ export const CARD_LAYOUT_PATTERNS = {GRID: {name: '그리드 레이아웃',
       tablet: {columns: FORM_CONSTANTS.MIN_INPUT_LENGTH},
       desktop: {columns: BUSINESS_CONSTANTS.MAX_RETRY_ATTEMPTS}}}};
 
+/**
  * 카드 상태
  */
 export const CARD_STATES = {DEFAULT: 'default',
@@ -155,6 +162,7 @@ export const CARD_STATES = {DEFAULT: 'default',
   SUCCESS: 'success',
   WARNING: 'warning'};
 
+/**
  * 카드 애니메이션
  */
 export const CARD_ANIMATIONS = {NONE: 'none',
@@ -167,6 +175,7 @@ export const CARD_ANIMATIONS = {NONE: 'none',
   ROTATE: 'rotate',
   BOUNCE: 'bounce'};
 
+/**
  * 카드 헬퍼 함수
  */
 export const getCardType = (typeName) => {return CARD_TYPES[typeName.toUpperCase()] || CARD_TYPES.INFO;};
@@ -207,6 +216,7 @@ export const getCardLayoutPattern = (patternName) => {return CARD_LAYOUT_PATTERN
 export const getResponsiveCardLayout = (patternName, deviceType = 'mobile') => {const pattern = getCardLayoutPattern(patternName);
   return pattern.responsive[deviceType] || pattern.responsive.mobile;};
 
+/**
  * 카드 사용 예시
  */
 export const CARD_USAGE_EXAMPLES = {STAT: {description: '통계 카드 사용법',

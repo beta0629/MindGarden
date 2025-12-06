@@ -9,11 +9,17 @@ import { getCommonCodes } from '../../utils/commonCodeUtils';
 
 /**
  * 매칭 수정 모달 컴포넌트
+/**
  * - 매칭의 패키지명, 가격, 총 회기 수를 수정할 수 있음
+/**
  * - ERP 연동을 통한 자동 업데이트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
@@ -45,7 +51,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         }
     }, [isOpen]);
 
-    /**
+/**
      * 패키지 옵션 로드
      */
     const loadPackageOptions = async() => {
@@ -71,7 +77,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         }
     };
 
-    /**
+/**
      * 패키지 코드에서 회기 수 추출
      */
     const getSessionCount = (codeValue) => {
@@ -84,7 +90,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         return 20; // 기본값
     };
 
-    /**
+/**
      * 패키지 코드에서 가격 추출
      */
     const getPackagePrice = (codeValue) => {
@@ -105,7 +111,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         return 200000; // 기본값
     };
 
-    /**
+/**
      * 폼 데이터 변경 처리
      */
     const handleInputChange = (e) => { const { name, value } = e.target;
@@ -135,7 +141,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         }
     };
 
-    /**
+/**
      * 폼 유효성 검사
      */
     const validateForm = () => { const newErrors = { };
@@ -154,7 +160,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         return Object.keys(newErrors).length === 0;
     };
 
-    /**
+/**
      * 매칭 수정 처리
      */
     const handleSubmit = async (e) => {
@@ -202,7 +208,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         }
     };
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {

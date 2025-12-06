@@ -24,14 +24,23 @@ import '../../styles/main.css'; // Ensure main.css is imported for mg-notificati
  * @param {number} props.duration - 표시 시간 (ms)
  * @param {string} props.position - 토스트 위치 (top-right, top-center, bottom-right)
  * @param {Array} props.actions - 액션 버튼들
+/**
  * @param {boolean} props.autoClose - 자동 닫힘 여부
+/**
  * @param {function} props.onClose - 닫기 핸들러
+/**
  * @param {function} props.onAction - 액션 핸들러
+/**
  * @param {boolean} props.showCountdown - 카운트다운 표시 여부 (modal 타입)
+/**
  * @param {number} props.countdown - 카운트다운 시간 (초)
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.1.0
+/**
  * @since 2025-01-02
  */
 const UnifiedNotification = ({ 

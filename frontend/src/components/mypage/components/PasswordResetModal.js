@@ -4,9 +4,13 @@ import './PasswordResetModal.css';
 
 /**
  * 비밀번호 찾기 모달 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {

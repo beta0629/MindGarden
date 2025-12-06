@@ -33,7 +33,7 @@ const ClientMessageWidget = ({ widget, user }) => {
     type: 'api',
     cache: true,
     refreshInterval: 120000, // 2분마다 새로고침 (메시지 확인)
-    url: `/api/consultation-messages/client/${user.id}`,
+    url: `/api/v1/consultation-messages/client/${user.id}`,
     params: {
       page: 0,
       size: 10,
@@ -135,7 +135,7 @@ const ClientMessageWidget = ({ widget, user }) => {
       // 2. 시스템 공지 로드
       let systemNotifications = [];
       try {
-        const notificationsResponse = await apiGet('/api/system-notifications/active');
+        const notificationsResponse = await apiGet('/api/v1/system-notifications/active');
         if (notificationsResponse?.success) {
           systemNotifications = (notificationsResponse.data || [])
             .filter(notice => {
@@ -188,7 +188,7 @@ const ClientMessageWidget = ({ widget, user }) => {
     try {
       if (message.messageSource === 'SYSTEM') {
         // 시스템 공지 상세 조회
-        const response = await apiGet(`/api/system-notifications/${message.systemNotificationId}`);
+        const response = await apiGet(`/api/v1/system-notifications/${message.systemNotificationId}`);
         if (response?.success) {
           setSelectedMessage({
             ...response.data,
@@ -200,7 +200,7 @@ const ClientMessageWidget = ({ widget, user }) => {
         }
       } else {
         // 일반 메시지 상세 조회
-        const response = await apiGet(`/api/consultation-messages/${message.id}`);
+        const response = await apiGet(`/api/v1/consultation-messages/${message.id}`);
         if (response?.success) {
           setSelectedMessage({
             ...response.data,

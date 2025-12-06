@@ -170,7 +170,7 @@ const AdminDashboard = ({ user: propUser }) => {
         if (!user?.role) return;
         
         try {
-            const response = await fetch(`${API_BASE_URL}/api/schedules/today/statistics?userRole=${user.role}`, {
+            const response = await fetch(`${API_BASE_URL}/api/v1/schedules/today/statistics?userRole=${user.role}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
@@ -257,21 +257,24 @@ const AdminDashboard = ({ user: propUser }) => {
 
             if (consultantsRes.ok) {
                 const consultantsData = await consultantsRes.json();
-                totalConsultants = consultantsData.count || 0;
+                // ApiResponse 구조: { success: true, data: { count: ..., consultants: [...] } }
+                totalConsultants = consultantsData?.data?.count || consultantsData?.count || 0;
             }
 
             if (clientsRes.ok) {
                 const clientsData = await clientsRes.json();
-                totalClients = clientsData.count || 0;
+                // ApiResponse 구조: { success: true, data: { count: ..., clients: [...] } }
+                totalClients = clientsData?.data?.count || clientsData?.count || 0;
             }
 
             if (mappingsRes.ok) {
                 const mappingsData = await mappingsRes.json();
+                // ApiResponse 구조: { success: true, data: { count: ..., mappings: [...] } }
                 const mappings = (mappingsData && typeof mappingsData === 'object' && 'success' in mappingsData && 'data' in mappingsData)
                     ? mappingsData.data
                     : mappingsData;
-                totalMappings = mappingsData.count || mappings?.count || 0;
-                const mappingsList = Array.isArray(mappings?.data) ? mappings.data : (Array.isArray(mappings) ? mappings : []);
+                totalMappings = mappingsData?.data?.count || mappingsData?.count || mappings?.count || 0;
+                const mappingsList = Array.isArray(mappings?.mappings) ? mappings.mappings : (Array.isArray(mappings?.data) ? mappings.data : (Array.isArray(mappings) ? mappings : []));
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 activeMappings = mappingsList.filter(m => m.status === 'ACTIVE').length;
             }
@@ -633,22 +636,22 @@ const AdminDashboard = ({ user: propUser }) => {
                     icon={<Users />}
                     value={stats.totalConsultants + stats.totalClients}
                     label="총 사용자"
-                    change="+12.5%"
-                    changeType="positive"
+                    change={todayStats.totalUsersGrowthRate !== undefined ? `${todayStats.totalUsersGrowthRate > 0 ? '+' : ''}${todayStats.totalUsersGrowthRate}%` : null}
+                    changeType={todayStats.totalUsersGrowthRate > 0 ? "positive" : todayStats.totalUsersGrowthRate < 0 ? "negative" : "neutral"}
                 />
                 <StatCard
                     icon={<Calendar />}
                     value={todayStats.totalToday}
                     label="예약된 상담"
-                    change="+8.2%"
-                    changeType="positive"
+                    change={todayStats.bookedGrowthRate !== undefined ? `${todayStats.bookedGrowthRate > 0 ? '+' : ''}${todayStats.bookedGrowthRate}%` : null}
+                    changeType={todayStats.bookedGrowthRate > 0 ? "positive" : todayStats.bookedGrowthRate < 0 ? "negative" : "neutral"}
                 />
                 <StatCard
                     icon={<CheckCircle />}
                     value={todayStats.completedToday}
                     label="완료된 상담"
-                    change="+15.3%"
-                    changeType="positive"
+                    change={todayStats.completedGrowthRate !== undefined ? `${todayStats.completedGrowthRate > 0 ? '+' : ''}${todayStats.completedGrowthRate}%` : null}
+                    changeType={todayStats.completedGrowthRate > 0 ? "positive" : todayStats.completedGrowthRate < 0 ? "negative" : "neutral"}
                 />
             </div>
 
@@ -1476,7 +1479,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 const user = propUser || sessionUser;
                 const canManagePermissions = RoleUtils.isAdmin(user);
                 console.log('🔍 권한 관리 섹션 렌더링 체크:', {
-                    currentRole,
+                    currentRole: user?.role,
                     canManagePermissions,
                     userPermissions
                 });

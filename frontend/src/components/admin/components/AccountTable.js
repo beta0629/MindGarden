@@ -1,7 +1,7 @@
 import React from 'react';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGCard from '../../common/MGCard';
-import { Button } from '../../ui/Button/Button';
+import Button from '../../ui/Button/Button';
 import { 
   ACCOUNT_CSS_CLASSES 
 } from '../../../constants/css';

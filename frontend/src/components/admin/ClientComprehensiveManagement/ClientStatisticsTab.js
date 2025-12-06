@@ -2,6 +2,7 @@ import React from 'react';
 import { FaChartBar, FaUsers, FaHandshake, FaCalendarAlt } from 'react-icons/fa';
 import { getUserStatusKoreanNameSync, getUserGradeKoreanNameSync } from '../../../utils/codeHelper';
 
+/**
  * 내담자 통계 분석 탭 컴포넌트
  */
 const ClientStatisticsTab = ({

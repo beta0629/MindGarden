@@ -3,9 +3,13 @@ import { Users, Calendar, Clock } from 'lucide-react';
 
 /**
  * 스케줄 달력 범례 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleCalendarLegend = ({ 

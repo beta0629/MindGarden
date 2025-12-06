@@ -9,7 +9,7 @@ import StatCard from '../ui/Card/StatCard';
 import DashboardSection from '../layout/DashboardSection';
 import { LayoutDashboard, Package, Clock, ShoppingCart, TrendingUp, DollarSign } from 'lucide-react';
 import { WIDGET_CONSTANTS } from '../../constants/widgetConstants';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 // import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -45,7 +45,7 @@ const ErpDashboard = ({ user: propUser }) => {
       if (!currentUser || !currentUser.role) {
         try {
           console.log('🔄 세션 API 직접 호출 시도...');
-          const response = await fetch('/api/auth/current-user', {
+          const response = await fetch('/api/v1/auth/current-user', {
             credentials: 'include',
             method: 'GET'
           });

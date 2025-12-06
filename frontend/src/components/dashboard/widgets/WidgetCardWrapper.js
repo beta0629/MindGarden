@@ -1,9 +1,14 @@
 /**
  * 위젯 카드 래퍼 컴포넌트
+/**
  * 동적 카드 스타일을 적용하여 위젯을 감싸는 컴포넌트
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-25
  */
 
@@ -12,10 +17,15 @@ import './WidgetCardWrapper.css';
 
 /**
  * 카드 스타일 타입
+/**
  * - v2: MindGarden v2 디자인 시스템 카드
+/**
  * - glass: 글래스모피즘 효과 카드
+/**
  * - flat: 평면 스타일 카드
+/**
  * - bordered: 테두리 강조 카드
+/**
  * - minimal: 미니멀 스타일 카드
  */
 const CARD_STYLES = {
@@ -28,9 +38,13 @@ const CARD_STYLES = {
 
 /**
  * 카드 Variant
+/**
  * - elevated: 그림자 효과
+/**
  * - outlined: 테두리만
+/**
  * - filled: 배경 채움
+/**
  * - text: 텍스트만
  */
 const CARD_VARIANTS = {
@@ -75,10 +89,15 @@ const SHADOW_SIZES = {
 
 /**
  * 위젯 카드 래퍼
+/**
  * @param {Object} props
+/**
  * @param {Object} props.widget - 위젯 설정 객체
+/**
  * @param {Object} props.cardStyle - 카드 스타일 설정 (위젯별 또는 기본값)
+/**
  * @param {Object} props.defaultCardStyle - 대시보드 기본 카드 스타일
+/**
  * @param {React.ReactNode} props.children - 위젯 컴포넌트
  */
 const WidgetCardWrapper = ({ widget, cardStyle, defaultCardStyle, children }) => {

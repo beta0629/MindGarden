@@ -1,9 +1,14 @@
 /**
  * CSS 테마 동적 관리 유틸리티
+/**
  * 테마별 색상 설정을 동적으로 로드하고 관리하는 유틸리티
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
@@ -16,7 +21,9 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
 /**
  * 캐시된 데이터가 유효한지 확인
+/**
  * @param {string} key 캐시 키
+/**
  * @returns {boolean} 유효 여부
  */
 const isCacheValid = (key) => {
@@ -27,7 +34,9 @@ const isCacheValid = (key) => {
 
 /**
  * 캐시에서 데이터 조회
+/**
  * @param {string} key 캐시 키
+/**
  * @returns {any} 캐시된 데이터 또는 null
  */
 const getFromCache = (key) => {
@@ -40,7 +49,9 @@ const getFromCache = (key) => {
 
 /**
  * 캐시에 데이터 저장
+/**
  * @param {string} key 캐시 키
+/**
  * @param {any} data 저장할 데이터
  */
 const setToCache = (key, data) => {
@@ -51,6 +62,7 @@ const setToCache = (key, data) => {
 
 /**
  * 모든 활성화된 테마 목록 조회
+/**
  * @returns {Promise<Array>} 테마 목록
  */
 export const getAllActiveThemes = async () => {
@@ -59,7 +71,7 @@ export const getAllActiveThemes = async () => {
         const cached = getFromCache(cacheKey);
         if (cached) return cached;
 
-        const response = await apiGet('/api/admin/css-themes/themes');
+        const response = await apiGet('/api/v1/admin/css-themes/themes');
         if (response.success && response.data) {
             setToCache(cacheKey, response.data);
             return response.data;
@@ -73,6 +85,7 @@ export const getAllActiveThemes = async () => {
 
 /**
  * 기본 테마 조회
+/**
  * @returns {Promise<Object|null>} 기본 테마 정보
  */
 export const getDefaultTheme = async () => {
@@ -81,7 +94,7 @@ export const getDefaultTheme = async () => {
         const cached = getFromCache(cacheKey);
         if (cached) return cached;
 
-        const response = await apiGet('/api/admin/css-themes/themes/default');
+        const response = await apiGet('/api/v1/admin/css-themes/themes/default');
         if (response.success && response.data) {
             setToCache(cacheKey, response.data);
             return response.data;
@@ -95,7 +108,9 @@ export const getDefaultTheme = async () => {
 
 /**
  * 특정 테마의 모든 색상 설정 조회
+/**
  * @param {string} themeName 테마명
+/**
  * @returns {Promise<Object>} 색상 설정 객체 (colorKey -> colorValue)
  */
 export const getThemeColors = async (themeName) => {
@@ -104,7 +119,7 @@ export const getThemeColors = async (themeName) => {
         const cached = getFromCache(cacheKey);
         if (cached) return cached;
 
-        const response = await apiGet(`/api/admin/css-themes/themes/${themeName}/colors`);
+        const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/colors`);
         if (response.success && response.data) {
             setToCache(cacheKey, response.data);
             return response.data;
@@ -118,8 +133,11 @@ export const getThemeColors = async (themeName) => {
 
 /**
  * 특정 테마의 특정 색상 값 조회
+/**
  * @param {string} themeName 테마명
+/**
  * @param {string} colorKey 색상 키
+/**
  * @returns {Promise<string|null>} 색상 값
  */
 export const getThemeColor = async (themeName, colorKey) => {
@@ -128,7 +146,7 @@ export const getThemeColor = async (themeName, colorKey) => {
         const cached = getFromCache(cacheKey);
         if (cached) return cached;
 
-        const response = await apiGet(`/api/admin/css-themes/themes/${themeName}/colors/${colorKey}`);
+        const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/colors/${colorKey}`);
         if (response.success && response.colorValue) {
             setToCache(cacheKey, response.colorValue);
             return response.colorValue;
@@ -142,8 +160,11 @@ export const getThemeColor = async (themeName, colorKey) => {
 
 /**
  * 특정 테마의 특정 카테고리 색상들 조회
+/**
  * @param {string} themeName 테마명
+/**
  * @param {string} category 색상 카테고리
+/**
  * @returns {Promise<Array>} 색상 설정 목록
  */
 export const getThemeColorsByCategory = async (themeName, category) => {
@@ -152,7 +173,7 @@ export const getThemeColorsByCategory = async (themeName, category) => {
         const cached = getFromCache(cacheKey);
         if (cached) return cached;
 
-        const response = await apiGet(`/api/admin/css-themes/themes/${themeName}/categories/${category}`);
+        const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/categories/${category}`);
         if (response.success && response.data) {
             setToCache(cacheKey, response.data);
             return response.data;
@@ -166,12 +187,14 @@ export const getThemeColorsByCategory = async (themeName, category) => {
 
 /**
  * 테마 존재 여부 확인
+/**
  * @param {string} themeName 테마명
+/**
  * @returns {Promise<boolean>} 존재 여부
  */
 export const isThemeExists = async (themeName) => {
     try {
-        const response = await apiGet(`/api/admin/css-themes/themes/${themeName}/exists`);
+        const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/exists`);
         return response.success && response.exists;
     } catch (error) {
         console.error(`🎨 테마 존재 여부 확인 실패: ${themeName}`, error);
@@ -181,7 +204,9 @@ export const isThemeExists = async (themeName) => {
 
 /**
  * 동적 CSS 변수 객체 생성
+/**
  * @param {string} themeName 테마명 (기본값: 'default')
+/**
  * @returns {Promise<Object>} CSS 변수 객체
  */
 export const getDynamicCSSVariables = async (themeName = 'default') => {
@@ -295,6 +320,7 @@ export const clearThemeCache = () => {
 
 /**
  * 특정 테마 캐시만 초기화
+/**
  * @param {string} themeName 테마명
  */
 export const clearThemeCacheByName = (themeName) => {

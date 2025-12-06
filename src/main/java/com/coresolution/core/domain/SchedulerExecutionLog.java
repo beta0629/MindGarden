@@ -67,8 +67,8 @@ public class SchedulerExecutionLog {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
     
-    @Column(name = "processed_count")
-    private Integer processedCount; // 처리된 항목 수
+    // 주의: processed_count 컬럼은 DB에 없으므로 제거됨
+    // 처리된 항목 수는 result_data JSON 필드에 저장하거나 별도 테이블 사용
     
     // ===== 편의 메서드 =====
     

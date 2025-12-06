@@ -2,8 +2,11 @@ import { Star, Users, TrendingUp, Award } from 'lucide-react';
 
 /**
  * 상담사 평가 통계 뷰 컴포넌트 (Presentational)
+/**
  * - 순수 UI 컴포넌트
+/**
  * - 비즈니스 로직 없음
+/**
  * - props로 데이터를 받음
  */
 const ConsultantRatingStatisticsView = ({ statistics, loading }) => {

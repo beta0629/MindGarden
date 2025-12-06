@@ -4,14 +4,23 @@ import { useReactToPrint } from 'react-to-print';
 /**
  * 공통 프린트 훅
  * 
+/**
  * @param {Object} options - 프린트 옵션
+/**
  * @param {string} options.title - 프린트 제목
+/**
  * @param {Function} options.onBeforePrint - 프린트 전 콜백
+/**
  * @param {Function} options.onAfterPrint - 프린트 후 콜백
+/**
  * @param {Object} options.pageStyle - 페이지 스타일
+/**
  * @returns {Object} 프린트 관련 함수와 ref
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-11
  */
 const usePrint = (options = {}) => {

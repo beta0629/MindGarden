@@ -4,9 +4,13 @@ import './PrivacyPolicy.css';
 
 /**
  * 이용약관 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const TermsOfService = () => {

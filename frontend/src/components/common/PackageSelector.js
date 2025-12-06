@@ -3,11 +3,17 @@ import { apiGet } from '../../utils/ajax';
 
 /**
  * 공통 패키지 선택 컴포넌트
+/**
  * - 매칭 생성, 회기 추가 등에서 재사용
+/**
  * - 스샷과 동일한 UI/UX 제공
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const PackageSelector = ({ 

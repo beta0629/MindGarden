@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import { FaUser, FaEdit, FaTrash, FaPlus, FaEye, FaUsers, FaLink, FaCalendarAlt, FaClipboardList } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -88,24 +88,42 @@ const ConsultantComprehensiveManagement = () => {
 
     const loadMappings = useCallback(async() => {
         try {
-            const response = await apiGet('/api/admin/mappings');
-            if (response.success) {
+            // 세션 갱신을 통해 최신 tenantId 확보
+            if (typeof window !== 'undefined' && window.sessionManager) {
+                await window.sessionManager.checkSession(true);
+            }
+            
+            const response = await apiGet('/api/v1/admin/mappings');
+            if (response && response.success) {
                 setMappings(response.data || []);
+                console.log('✅ 매칭 데이터 로딩 완료:', response.data?.length || 0, '개');
+            } else {
+                console.warn('⚠️ 매칭 데이터 없음:', response);
+                setMappings([]);
             }
         } catch (error) {
-            console.error('매칭 로딩 오류:', error);
+            console.error('❌ 매칭 로딩 오류:', error);
             setMappings([]);
         }
     }, []);
 
     const loadSchedules = useCallback(async() => {
         try {
-            const response = await apiGet('/api/admin/schedules');
-            if (response.success) {
+            // 세션 갱신을 통해 최신 tenantId 확보
+            if (typeof window !== 'undefined' && window.sessionManager) {
+                await window.sessionManager.checkSession(true);
+            }
+            
+            const response = await apiGet('/api/v1/admin/schedules');
+            if (response && response.success) {
                 setSchedules(response.data || []);
+                console.log('✅ 스케줄 데이터 로딩 완료:', response.data?.length || 0, '개');
+            } else {
+                console.warn('⚠️ 스케줄 데이터 없음:', response);
+                setSchedules([]);
             }
         } catch (error) {
-            console.error('스케줄 로딩 오류:', error);
+            console.error('❌ 스케줄 로딩 오류:', error);
             setSchedules([]);
         }
     }, []);
@@ -135,6 +153,33 @@ const ConsultantComprehensiveManagement = () => {
         try {
             console.log('🚀 전체 데이터 로딩 시작...');
             
+            // 세션 강제 갱신하여 tenantId 확보 (API 호출 전에 완료되어야 함)
+            if (typeof window !== 'undefined' && window.sessionManager) {
+                try {
+                    console.log('🔄 세션 강제 갱신 시작...');
+                    await window.sessionManager.checkSession(true);
+                    const user = window.sessionManager.getUser();
+                    if (!user || !user.tenantId) {
+                        console.warn('⚠️ 세션 갱신 후에도 tenantId를 찾을 수 없음');
+                        // localStorage에서 백업 시도
+                        const storedUser = localStorage.getItem('userInfo');
+                        if (storedUser) {
+                            const parsedUser = JSON.parse(storedUser);
+                            if (parsedUser && parsedUser.tenantId) {
+                                console.log('✅ localStorage에서 tenantId 발견:', parsedUser.tenantId);
+                                // sessionManager에 설정
+                                window.sessionManager.setUser(parsedUser);
+                            }
+                        }
+                    } else {
+                        console.log('✅ 세션 갱신 완료, tenantId:', user.tenantId);
+                    }
+                } catch (sessionError) {
+                    console.warn('⚠️ 세션 갱신 실패:', sessionError);
+                }
+            }
+            
+            // 세션 갱신 완료 후 데이터 로드
             const results = await Promise.allSettled([
                 loadConsultants(),
                 loadMappings(),
@@ -388,8 +433,34 @@ const ConsultantComprehensiveManagement = () => {
 
     const createConsultant = useCallback(async (data) => {
         try {
-            const response = await apiPost('/api/admin/consultants', data);
-            if (response.success) {
+            // tenantId 확인 및 세션 갱신
+            let tenantId = null;
+            if (typeof window !== 'undefined' && window.sessionManager) {
+                const user = window.sessionManager.getUser();
+                if (!user || !user.tenantId || user.tenantId.includes('unknown') || user.tenantId.includes('default')) {
+                    console.warn('⚠️ tenantId가 없거나 유효하지 않음, 세션 갱신 시도...');
+                    await window.sessionManager.checkSession(true);
+                    const refreshedUser = window.sessionManager.getUser();
+                    if (!refreshedUser || !refreshedUser.tenantId || refreshedUser.tenantId.includes('unknown') || refreshedUser.tenantId.includes('default')) {
+                        window.dispatchEvent(new CustomEvent('showNotification', {
+                            detail: { message: '테넌트 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.', type: 'error' }
+                        }));
+                        return { success: false };
+                    }
+                    tenantId = refreshedUser.tenantId;
+                } else {
+                    tenantId = user.tenantId;
+                }
+            }
+            
+            // tenantId를 헤더에 명시적으로 포함
+            const options = {};
+            if (tenantId) {
+                options.headers = { 'X-Tenant-Id': tenantId };
+            }
+            
+            const response = await apiPost('/api/v1/admin/consultants', data, options);
+            if (response && (response.success !== false)) {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {
                     detail: { message: '상담사가 성공적으로 등록되었습니다.', type: 'success' }
@@ -397,7 +468,7 @@ const ConsultantComprehensiveManagement = () => {
                 return { success: true };
             } else {
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: response.message || '상담사 등록에 실패했습니다.', type: 'error' }
+                    detail: { message: (response && response.message) || '상담사 등록에 실패했습니다.', type: 'error' }
                 }));
                 return { success: false };
             }
@@ -412,7 +483,7 @@ const ConsultantComprehensiveManagement = () => {
 
     const updateConsultant = useCallback(async (id, data) => {
         try {
-            const response = await apiPut(`/api/admin/consultants/${id}`, data);
+            const response = await apiPut(`/api/v1/admin/consultants/${id}`, data);
             if (response.success) {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {
@@ -436,7 +507,7 @@ const ConsultantComprehensiveManagement = () => {
 
     const deleteConsultant = useCallback(async (id) => {
         try {
-            const response = await apiDelete(`/api/admin/consultants/${id}`);
+            const response = await apiDelete(`/api/v1/admin/consultants/${id}`);
             if (response.success) {
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('showNotification', {

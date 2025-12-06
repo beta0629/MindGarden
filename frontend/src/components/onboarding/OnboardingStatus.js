@@ -19,11 +19,17 @@ import {
 } from '../../constants/onboarding';
 import './OnboardingStatus.css';
 
+/**
  * 온보딩 상태 조회 페이지
+/**
  * 온보딩 요청 상태를 조회하는 컴포넌트
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-20
  */
 const OnboardingStatus = () => {

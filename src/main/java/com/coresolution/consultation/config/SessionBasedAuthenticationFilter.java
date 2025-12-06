@@ -10,6 +10,7 @@ import com.coresolution.consultation.entity.UserSession;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -176,6 +177,11 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                                     // SecurityContext에 직접 사용자 정보 설정
                                     Authentication authentication = createAuthentication(user);
                                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                                    // TenantContextHolder에 tenantId 설정 (표준화 2025-12-06)
+                                    if (user.getTenantId() != null && !user.getTenantId().isEmpty()) {
+                                        TenantContextHolder.setTenantId(user.getTenantId());
+                                        log.debug("✅ TenantContextHolder에 tenantId 설정: {}", user.getTenantId());
+                                    }
                                     log.info("🍎 iOS - SecurityContext에 사용자 정보 직접 설정 완료");
                                     // 세션에도 사용자 정보 저장 (다음 요청을 위해)
                                     // 하지만 session이 null이므로 저장할 수 없음
@@ -255,6 +261,11 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                                     // SecurityContext에 직접 사용자 정보 설정
                                     Authentication authentication = createAuthentication(dbUser);
                                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                                    // TenantContextHolder에 tenantId 설정 (표준화 2025-12-06)
+                                    if (dbUser.getTenantId() != null && !dbUser.getTenantId().isEmpty()) {
+                                        TenantContextHolder.setTenantId(dbUser.getTenantId());
+                                        log.debug("✅ TenantContextHolder에 tenantId 설정: {}", dbUser.getTenantId());
+                                    }
                                     log.info("🍎 iOS - SecurityContext에 사용자 정보 직접 설정 완료");
                                     // 세션에도 사용자 정보 저장 (다음 요청을 위해)
                                     SessionUtils.setCurrentUser(session, dbUser);
@@ -289,6 +300,14 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     Authentication authentication = createAuthentication(user);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     
+                    // TenantContextHolder에 tenantId 설정 (표준화 2025-12-06)
+                    if (user.getTenantId() != null && !user.getTenantId().isEmpty()) {
+                        TenantContextHolder.setTenantId(user.getTenantId());
+                        log.debug("✅ TenantContextHolder에 tenantId 설정: {}", user.getTenantId());
+                    } else {
+                        log.warn("⚠️ 사용자 tenantId가 없음: userId={}, email={}", user.getId(), user.getEmail());
+                    }
+                    
                     // 세션에 SecurityContext 저장 (명시적으로)
                     session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
                     
@@ -304,7 +323,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                         log.info("🔍 세션 만료 시간 설정: 3600초");
                     }
                     
-                    log.info("✅ 세션 기반 인증 성공: 사용자={}, 역할={}", user.getEmail(), user.getRole());
+                    log.info("✅ 세션 기반 인증 성공: 사용자={}, 역할={}, tenantId={}", user.getEmail(), user.getRole(), user.getTenantId());
                     
                     // SecurityContext 확인
                     Authentication authAfter = SecurityContextHolder.getContext().getAuthentication();

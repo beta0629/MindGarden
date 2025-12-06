@@ -10,11 +10,17 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 
 /**
  * 관리자용 휴가 관리 모달 컴포넌트
+/**
  * - 상담사별 휴가 등록/수정/삭제
+/**
  * - 휴가 유형별 세밀한 관리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-09
  */
 const VacationManagementModal = ({ 
@@ -113,7 +119,7 @@ const VacationManagementModal = ({
         loadVacationTypeCodes();
     }, []);
 
-    /**
+/**
      * 상담사 목록 로드 (활성 상담사만)
      */
     const loadConsultants = async () => {
@@ -159,7 +165,7 @@ const VacationManagementModal = ({
         }
     };
 
-    /**
+/**
      * 휴가 목록 로드
      */
     const loadVacations = async (consultantId) => {
@@ -225,7 +231,7 @@ const VacationManagementModal = ({
         return null;
     }
 
-    /**
+/**
      * 휴가 등록/수정
      */
     const handleSubmit = async (e) => {
@@ -332,7 +338,7 @@ const VacationManagementModal = ({
         }
     };
 
-    /**
+/**
      * 휴가 삭제
      */
     const handleDeleteVacation = async (vacationId, date) => {
@@ -387,14 +393,14 @@ const VacationManagementModal = ({
         }
     };
 
-    /**
+/**
      * 휴가 유형별 시간 필드 표시 여부
      */
     const shouldShowTimeFields = () => {
         return vacationData.type === 'CUSTOM_TIME';
     };
 
-    /**
+/**
      * 휴가 유형별 기본 시간 설정
      */
     const handleVacationTypeChange = (type) => {
@@ -444,7 +450,7 @@ const VacationManagementModal = ({
         }
     };
 
-    /**
+/**
      * 휴가 유형명 변환
      */
     const getVacationTypeName = (type) => {

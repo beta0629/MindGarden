@@ -2,6 +2,7 @@ import React from 'react';
 import ErpCard from '../common/ErpCard';
 import ErpButton from '../common/ErpButton';
 
+/**
  * 환불 이력 테이블 컴포넌트
  */
 const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {

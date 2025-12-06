@@ -29,11 +29,17 @@ import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 �
 import MGButton from '../../components/common/MGButton'; // 임시 비활성화
 import './PgConfigurationDetail.css';
 
+/**
  * PG 설정 상세 페이지
+/**
  * 테넌트 포털에서 PG 설정의 상세 정보를 조회하는 페이지
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 const PgConfigurationDetail = () => {

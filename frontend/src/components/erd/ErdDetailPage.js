@@ -7,11 +7,17 @@ import mermaid from 'mermaid';
 import { Download } from 'lucide-react';
 import './ErdDetailPage.css';
 
+/**
  * 테넌트 포털 ERD 상세 페이지
+/**
  * Mermaid.js를 사용하여 ERD 다이어그램을 시각화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 const ErdDetailPage = () => {
@@ -50,6 +56,7 @@ const ErdDetailPage = () => {
     }
   }, [erd, activeTab]);
 
+/**
    * ERD 상세 정보 로드
    */
   const loadErdDetail = async () => {
@@ -77,6 +84,7 @@ const ErdDetailPage = () => {
     }
   };
 
+/**
    * Mermaid 다이어그램 렌더링
    */
   const renderMermaid = async () => {
@@ -165,6 +173,7 @@ const ErdDetailPage = () => {
     }
   };
 
+/**
    * ERD 타입 한글 변환
    */
   const getDiagramTypeLabel = (type) => {
@@ -177,6 +186,7 @@ const ErdDetailPage = () => {
     return typeMap[type] || type;
   };
 
+/**
    * 변경 타입 한글 변환
    */
   const getChangeTypeLabel = (type) => {
@@ -189,6 +199,7 @@ const ErdDetailPage = () => {
     return typeMap[type] || type;
   };
 
+/**
    * 인터랙티브 기능 설정 (테이블 클릭, 관계선 하이라이트)
    */
   const setupInteractiveFeatures = (svgElement) => {
@@ -290,6 +301,7 @@ const ErdDetailPage = () => {
     });
   };
 
+/**
    * 관련 관계선 하이라이트
    */
   const highlightRelatedRelations = (svgElement, selectedTable, paths) => {
@@ -310,6 +322,7 @@ const ErdDetailPage = () => {
     });
   };
 
+/**
    * 관련 테이블 하이라이트
    */
   const highlightRelatedTables = (svgElement, selectedPath, tables) => {
@@ -325,6 +338,7 @@ const ErdDetailPage = () => {
     });
   };
 
+/**
    * 관계선과 테이블의 연결 여부 확인
    */
   const checkPathTableConnection = (path, table) => {
@@ -343,6 +357,7 @@ const ErdDetailPage = () => {
     }
   };
 
+/**
    * 선택 초기화
    */
   const resetSelection = (tables, paths) => {
@@ -363,6 +378,7 @@ const ErdDetailPage = () => {
     setHoveredElement(null);
   };
 
+/**
    * 확대/축소 및 팬 기능 설정
    */
   const setupZoomAndPan = (svgElement) => {
@@ -423,18 +439,21 @@ const ErdDetailPage = () => {
     wrapper.addEventListener('mouseleave', handleMouseUp);
   };
 
+/**
    * 확대
    */
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(3, prev + 0.1));
   };
 
+/**
    * 축소
    */
   const handleZoomOut = () => {
     setZoomLevel(prev => Math.max(0.5, prev - 0.1));
   };
 
+/**
    * 확대/축소 리셋
    */
   const handleZoomReset = () => {
@@ -442,6 +461,7 @@ const ErdDetailPage = () => {
     setPanPosition({ x: 0, y: 0 });
   };
 
+/**
    * 필터링 적용
    */
   const applyFilters = () => {

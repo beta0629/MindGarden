@@ -1,9 +1,14 @@
 /**
  * Healing Card Widget - 표준화된 힐링 카드 위젯
+/**
  * HealingCard 컴포넌트를 위젯으로 변환 + 표준화 적용
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 

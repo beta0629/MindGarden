@@ -11,6 +11,7 @@ import './ConsultantMessages.css';
 
 /**
  * 상담사 메시지 관리 페이지
+/**
  * 내담자들과의 메시지 목록을 확인하고 새 메시지를 전송할 수 있는 화면
  */
 const ConsultantMessages = () => {
@@ -50,7 +51,7 @@ const ConsultantMessages = () => {
       setLoading(true);
       console.log('📨 상담사 메시지 목록 로드:', user.id);
       
-      const response = await apiGet(`/api/consultation-messages/consultant/${user.id}`);
+      const response = await apiGet(`/api/v1/consultation-messages/consultant/${user.id}`);
       
       if (response.success) {
         console.log('✅ 메시지 목록 로드 성공:', response.data);
@@ -143,7 +144,7 @@ const ConsultantMessages = () => {
         return;
       }
 
-      const response = await apiPost('/api/consultation-messages', {
+      const response = await apiPost('/api/v1/consultation-messages', {
         ...newMessage,
         consultantId: user.id
       });

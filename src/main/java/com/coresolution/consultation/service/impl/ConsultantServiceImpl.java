@@ -266,14 +266,9 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     public org.springframework.data.domain.Page<Consultant> findAllActive(Pageable pageable) {
-        // 표준화 2025-12-06: deprecated 메서드 대체
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return consultantRepository.findAllByTenantId(tenantId, pageable);
-        }
-        // tenantId가 없으면 빈 페이지 반환 (보안상 위험하지만 레거시 호환)
-        log.warn("⚠️ tenantId가 없어 상담사 조회를 건너뜁니다.");
-        return org.springframework.data.domain.Page.empty();
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantRepository.findAllByTenantId(tenantId, pageable);
     }
     
     @Override

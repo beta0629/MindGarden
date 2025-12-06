@@ -1,9 +1,16 @@
+/**
  * 구독 관리 컴포넌트
+/**
  * 
+/**
  * 구독 생성, 조회, 활성화, 취소 기능을 제공합니다.
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0
+/**
  * @since 2025-11-20
  */
 
@@ -38,9 +45,13 @@ import {
 } from '../../constants/billing';
 import './SubscriptionManagement.css';
 
+/**
  * 구독 관리 컴포넌트
+/**
  * 
+/**
  * @param {Object} props
+/**
  * @param {string} props.tenantId - 테넌트 ID (선택적, 세션에서 가져옴)
  */
 const SubscriptionManagement = ({ tenantId: propTenantId }) => {
@@ -65,6 +76,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   }, [tenantId]);
 
+/**
    * 공통 코드 로드
    */
   const loadCommonCodes = async () => {
@@ -80,6 +92,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   };
 
+/**
    * 구독 목록 로드
    */
   const loadSubscriptions = async () => {
@@ -97,6 +110,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   };
 
+/**
    * 결제 수단 목록 로드
    */
   const loadPaymentMethods = async () => {
@@ -110,6 +124,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   };
 
+/**
    * 요금제 목록 로드
    */
   const loadPricingPlans = async () => {
@@ -121,6 +136,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   };
 
+/**
    * 구독 생성
    */
   const handleCreateSubscription = async (planId, paymentMethodId) => {
@@ -150,6 +166,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   };
 
+/**
    * 구독 활성화
    */
   const handleActivateSubscription = async (subscriptionId) => {
@@ -167,6 +184,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
     }
   };
 
+/**
    * 구독 취소
    */
   const handleCancelSubscription = async (subscriptionId) => {
@@ -386,6 +404,7 @@ const SubscriptionManagement = ({ tenantId: propTenantId }) => {
   );
 };
 
+/**
  * 구독 상태 배지 컴포넌트 (공통 코드 기반)
  */
 const SubscriptionStatusBadge = ({ status, statusCodes }) => {
@@ -439,6 +458,7 @@ const SubscriptionStatusBadge = ({ status, statusCodes }) => {
   );
 };
 
+/**
  * 결제 주기 라벨 컴포넌트 (공통 코드 기반)
  */
 const BillingCycleLabel = ({ cycle, cycleCodes }) => {

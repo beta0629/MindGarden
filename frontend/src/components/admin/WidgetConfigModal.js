@@ -1,16 +1,22 @@
 /**
  * 위젯 설정 모달 컴포넌트
+/**
  * 
+/**
  * 위젯 타입, 위치, 설정 등을 편집할 수 있는 모달
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-24
  */
 
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import { FaTimes } from 'react-icons/fa';
 import './WidgetConfigModal.css';
 

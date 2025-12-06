@@ -2,12 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
 import './TodayStats.css';
 
+/**
  * 오늘의 통계 컴포넌트
+/**
  * - 실제 스케줄 데이터를 기반으로 오늘의 통계 계산
+/**
  * - 총 상담, 완료, 진행중, 취소 수치 표시
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const TodayStats = () => {
@@ -20,6 +27,7 @@ const TodayStats = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+/**
      * 오늘의 통계 데이터 로드
      */
     const loadTodayStats = async () => {

@@ -8,7 +8,9 @@ import '../../styles/unified-design-tokens.css';
 
 /**
  * 상담일지 조회 전용 화면
+/**
  * 작성된 상담일지를 조회만 할 수 있는 화면
+/**
  * 디자인 시스템 v2.0 적용
  */
 const ConsultationRecordView = () => {

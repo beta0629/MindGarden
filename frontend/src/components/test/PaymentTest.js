@@ -22,13 +22,21 @@ import {
 } from '../../constants/paymentTest';
 import './PaymentTest.css';
 
+/**
  * 결제 테스트 컴포넌트
+/**
  * - 다양한 결제 시나리오 테스트
+/**
  * - 결제 상태 관리 테스트
+/**
  * - 통계 및 분석 테스트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-05
  */
 const PaymentTest = () => {

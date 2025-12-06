@@ -1,10 +1,12 @@
 /**
  * 디자인 시스템 헬퍼 유틸리티
+/**
  * CSS 변수와 테마 관리
  */
 
 /**
  * CSS 변수에 상담사별 색상 설정
+/**
  * @param {Array<string>} colors - 상담사별 색상 배열
  */
 export const setConsultantColors = (colors) => {
@@ -25,6 +27,7 @@ export const setConsultantColors = (colors) => {
 
 /**
  * 테마 변경
+/**
  * @param {string} theme - 'light' 또는 'dark'
  */
 export const setTheme = (theme) => {
@@ -42,7 +45,9 @@ export const setTheme = (theme) => {
 
 /**
  * CSS 변수 값 가져오기
+/**
  * @param {string} variableName - CSS 변수명 (예: '--color-primary')
+/**
  * @returns {string} CSS 변수 값
  */
 export const getCSSVariable = (variableName) => {
@@ -52,7 +57,9 @@ export const getCSSVariable = (variableName) => {
 
 /**
  * CSS 변수 값 설정하기
+/**
  * @param {string} variableName - CSS 변수명
+/**
  * @param {string} value - 설정할 값
  */
 export const setCSSVariable = (variableName, value) => {
@@ -62,7 +69,9 @@ export const setCSSVariable = (variableName, value) => {
 
 /**
  * 상담사 ID에 따른 색상 가져오기
+/**
  * @param {number} consultantId - 상담사 ID
+/**
  * @returns {string} 색상 값
  */
 export const getConsultantColor = (consultantId) => {
@@ -72,6 +81,7 @@ export const getConsultantColor = (consultantId) => {
 
 /**
  * 디자인 시스템 초기화
+/**
  * @param {Object} config - 초기화 설정
  */
 export const initializeDesignSystem = async (config = {}) => {
@@ -81,7 +91,7 @@ export const initializeDesignSystem = async (config = {}) => {
     // 상담사별 색상 로드
     if (config.loadConsultantColors !== false) {
       try {
-        const response = await fetch('/api/admin/css-themes/consultant-colors');
+        const response = await fetch('/api/v1/admin/css-themes/consultant-colors');
         const data = await response.json();
         
         if (data.success && data.colors) {
@@ -115,7 +125,9 @@ export const initializeDesignSystem = async (config = {}) => {
 
 /**
  * 반응형 브레이크포인트 확인
+/**
  * @param {string} breakpoint - 브레이크포인트명 ('sm', 'md', 'lg', 'xl', '2xl')
+/**
  * @returns {boolean} 현재 화면이 해당 브레이크포인트 이상인지
  */
 export const isBreakpoint = (breakpoint) => {
@@ -139,6 +151,7 @@ export const isBreakpoint = (breakpoint) => {
 
 /**
  * 디바이스 타입 감지
+/**
  * @returns {string} 'mobile', 'tablet', 'desktop'
  */
 export const getDeviceType = () => {
@@ -155,6 +168,7 @@ export const getDeviceType = () => {
 
 /**
  * 접근성 설정 확인
+/**
  * @returns {Object} 접근성 설정 정보
  */
 export const getAccessibilitySettings = () => {
@@ -234,11 +248,15 @@ export const ZIndexManager = {
     desktop: 0
   },
 
-  /**
+/**
    * 테마별 z-index 값 계산
+/**
    * @param {string} themeName - 테마명
+/**
    * @param {string} deviceType - 디바이스 타입
+/**
    * @param {Object} customOffsets - 커스텀 오프셋
+/**
    * @returns {Object} 계산된 z-index 값들
    */
   calculateZIndexValues(themeName = 'light', deviceType = 'desktop', customOffsets = {}) {
@@ -256,10 +274,13 @@ export const ZIndexManager = {
     return calculatedValues;
   },
 
-  /**
+/**
    * z-index 값들을 CSS 변수로 설정
+/**
    * @param {string} themeName - 테마명
+/**
    * @param {string} deviceType - 디바이스 타입
+/**
    * @param {Object} customOffsets - 커스텀 오프셋
    */
   applyZIndexValues(themeName = 'light', deviceType = 'desktop', customOffsets = {}) {
@@ -273,9 +294,11 @@ export const ZIndexManager = {
     console.log(`🎨 Z-Index 값 적용 완료 (테마: ${themeName}, 디바이스: ${deviceType})`, values);
   },
 
-  /**
+/**
    * 특정 z-index 값 가져오기
+/**
    * @param {string} key - z-index 키 (예: 'z-modal')
+/**
    * @returns {number} z-index 값
    */
   getZIndexValue(key) {
@@ -283,8 +306,9 @@ export const ZIndexManager = {
     return value ? parseInt(value, 10) : this.defaultValues[key] || 0;
   },
 
-  /**
+/**
    * 동적 z-index 업데이트 (테마 변경 시)
+/**
    * @param {string} newTheme - 새로운 테마
    */
   updateForTheme(newTheme) {
@@ -292,8 +316,9 @@ export const ZIndexManager = {
     this.applyZIndexValues(newTheme, deviceType);
   },
 
-  /**
+/**
    * 동적 z-index 업데이트 (디바이스 변경 시)
+/**
    * @param {string} newDeviceType - 새로운 디바이스 타입
    */
   updateForDevice(newDeviceType) {
@@ -304,6 +329,7 @@ export const ZIndexManager = {
 
 /**
  * 동적 테마 시스템 초기화
+/**
  * @param {Object} config - 초기화 설정
  */
 export const initializeDynamicThemeSystem = async (config = {}) => {

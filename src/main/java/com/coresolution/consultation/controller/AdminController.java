@@ -115,16 +115,18 @@ public class AdminController extends BaseApiController {
         }
         
         String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 역할: {}", currentUser.getId(), currentUser.getRole());
+            throw new IllegalArgumentException("Tenant ID is required");
+        }
+        
         log.info("🔍 현재 사용자 정보: tenantId={}, 역할={}", tenantId, currentUser.getRole());
         
-        List<Map<String, Object>> filteredStats;
-        if (tenantId != null && !tenantId.isEmpty()) {
-            filteredStats = consultantStatsService.getAllConsultantsWithStatsByTenant(tenantId);
-            log.info("📊 테넌트별 상담사 조회: tenantId={}, 조회된 수={}", tenantId, filteredStats.size());
-        } else {
-            filteredStats = consultantStatsService.getAllConsultantsWithStats();
-            log.warn("⚠️ tenantId 없음, 전체 상담사 조회: 조회된 수={}", filteredStats.size());
-        }
+        // TenantContextHolder에 tenantId 설정 (서비스에서 getRequiredTenantId() 사용을 위해)
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+        
+        List<Map<String, Object>> filteredStats = consultantStatsService.getAllConsultantsWithStatsByTenant(tenantId);
+        log.info("📊 테넌트별 상담사 조회: tenantId={}, 조회된 수={}", tenantId, filteredStats.size());
         
         Map<String, Object> data = new HashMap<>();
         data.put("consultants", filteredStats);
@@ -164,16 +166,18 @@ public class AdminController extends BaseApiController {
         }
         
         String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 역할: {}", currentUser.getId(), currentUser.getRole());
+            throw new IllegalArgumentException("Tenant ID is required");
+        }
+        
         log.info("🔍 현재 사용자 정보: tenantId={}, 역할={}", tenantId, currentUser.getRole());
         
-        List<Map<String, Object>> filteredStats;
-        if (tenantId != null && !tenantId.isEmpty()) {
-            filteredStats = clientStatsService.getAllClientsWithStatsByTenant(tenantId);
-            log.info("📊 테넌트별 내담자 조회: tenantId={}, 조회된 수={}", tenantId, filteredStats.size());
-        } else {
-            filteredStats = clientStatsService.getAllClientsWithStats();
-            log.warn("⚠️ tenantId 없음, 전체 내담자 조회: 조회된 수={}", filteredStats.size());
-        }
+        // TenantContextHolder에 tenantId 설정 (서비스에서 getRequiredTenantId() 사용을 위해)
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+        
+        List<Map<String, Object>> filteredStats = clientStatsService.getAllClientsWithStatsByTenant(tenantId);
+        log.info("📊 테넌트별 내담자 조회: tenantId={}, 조회된 수={}", tenantId, filteredStats.size());
         
         Map<String, Object> data = new HashMap<>();
         data.put("clients", filteredStats);
@@ -555,8 +559,13 @@ public class AdminController extends BaseApiController {
                 throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
             }
             
-            java.time.LocalDate today = java.time.LocalDate.now();
+            User currentUser = SessionUtils.getCurrentUser(session);
+            String tenantId = currentUser != null ? currentUser.getTenantId() : com.coresolution.core.context.TenantContextHolder.getTenantId();
             
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate weekAgo = today.minusDays(7);
+            
+            // 오늘의 통계
             List<com.coresolution.consultation.entity.Schedule> todaySchedules = scheduleService.getSchedulesByDate(today, null);
             
             long totalToday = todaySchedules.size();
@@ -573,6 +582,29 @@ public class AdminController extends BaseApiController {
                 .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS", s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
                 .count();
             
+            // 지난 주 동일 요일 통계 (증가율 계산용)
+            java.time.LocalDate lastWeekSameDay = today.minusDays(7);
+            List<com.coresolution.consultation.entity.Schedule> lastWeekSchedules = scheduleService.getSchedulesByDate(lastWeekSameDay, null);
+            
+            long lastWeekTotal = lastWeekSchedules.size();
+            long lastWeekCompleted = lastWeekSchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS", s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
+                .count();
+            long lastWeekBooked = lastWeekSchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS", s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
+                .count();
+            
+            // 증가율 계산
+            double bookedGrowthRate = lastWeekBooked > 0 ? ((double)(bookedToday - lastWeekBooked) / lastWeekBooked) * 100 : 0.0;
+            double completedGrowthRate = lastWeekCompleted > 0 ? ((double)(completedToday - lastWeekCompleted) / lastWeekCompleted) * 100 : 0.0;
+            
+            // 총 사용자 증가율 계산 (이번 주 vs 지난 주)
+            long currentWeekUsers = adminService.getAllConsultants().size() + adminService.getAllClients().size();
+            // 지난 주 사용자 수는 이번 주 기준으로 계산 (실제로는 지난 주 데이터가 필요하지만, 간단하게 현재 데이터 사용)
+            // TODO: 실제 지난 주 데이터를 조회하도록 개선 필요
+            long lastWeekUsers = currentWeekUsers; // 임시로 동일 값 사용 (실제 데이터 없음)
+            double totalUsersGrowthRate = 0.0; // 데이터가 없으면 0
+            
             Map<String, Object> stats = new java.util.HashMap<>();
             stats.put("totalToday", totalToday);
             stats.put("completedToday", completedToday);
@@ -582,8 +614,19 @@ public class AdminController extends BaseApiController {
             stats.put("date", today);
             stats.put("lastUpdated", java.time.LocalDateTime.now());
             
-            log.info("📊 오늘의 통계 조회 완료: 전체={}, 완료={}, 진행중={}, 취소={}", 
-                totalToday, completedToday, inProgressToday, cancelledToday);
+            // 증가율 추가 (데이터가 있을 때만)
+            if (lastWeekBooked > 0) {
+                stats.put("bookedGrowthRate", Math.round(bookedGrowthRate * 10.0) / 10.0);
+            }
+            if (lastWeekCompleted > 0) {
+                stats.put("completedGrowthRate", Math.round(completedGrowthRate * 10.0) / 10.0);
+            }
+            if (lastWeekUsers > 0 && currentWeekUsers != lastWeekUsers) {
+                stats.put("totalUsersGrowthRate", Math.round(totalUsersGrowthRate * 10.0) / 10.0);
+            }
+            
+            log.info("📊 오늘의 통계 조회 완료: 전체={}, 완료={}, 진행중={}, 취소={}, 예약 증가율={}%, 완료 증가율={}%", 
+                totalToday, completedToday, inProgressToday, cancelledToday, bookedGrowthRate, completedGrowthRate);
             
             return success(stats);
             
@@ -1230,11 +1273,20 @@ public class AdminController extends BaseApiController {
         }
         
         User currentUser = SessionUtils.getCurrentUser(session);
-        
-        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
-        if (currentUser != null) {
-            log.info("🔧 현재 사용자 정보: userId={}, tenantId={}", currentUser.getId(), currentUser.getTenantId());
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
+        
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 역할: {}", currentUser.getId(), currentUser.getRole());
+            throw new IllegalArgumentException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
+        }
+        
+        log.info("🔧 현재 사용자 정보: userId={}, tenantId={}", currentUser.getId(), tenantId);
+        
+        // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantIdOrNull() 사용을 위해)
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
         
         /* 주석 처리됨 - 지점코드 검증 로직
         if (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty()) {
@@ -1260,13 +1312,20 @@ public class AdminController extends BaseApiController {
         }
         
         User currentUser = SessionUtils.getCurrentUser(session);
-        
-        log.info("🔧 세션 사용자: {}", currentUser.getName());
-        
-        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
-        if (currentUser != null) {
-            log.info("🔧 현재 사용자 정보: userId={}, tenantId={}", currentUser.getId(), currentUser.getTenantId());
+        if (currentUser == null) {
+            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
+        
+        String tenantId = currentUser.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ tenantId가 필수입니다. 사용자 ID: {}, 역할: {}", currentUser.getId(), currentUser.getRole());
+            throw new IllegalArgumentException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
+        }
+        
+        log.info("🔧 세션 사용자: {}, tenantId={}", currentUser.getName(), tenantId);
+        
+        // TenantContextHolder에 tenantId 설정 (서비스에서 getTenantIdOrNull() 사용을 위해)
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
         
         /* 주석 처리됨 - 지점코드 검증 로직
         if (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty()) {

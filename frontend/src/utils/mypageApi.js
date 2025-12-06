@@ -147,7 +147,7 @@ const mypageApi = {
   getOAuth2Url: async (provider) => {
     try {
       // 계정 연동 모드로 요청 - mode=link 파라미터 추가
-      const response = await fetch(`${API_BASE_URL}/api/auth/oauth2/${provider.toLowerCase()}/authorize?mode=link`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/oauth2/${provider.toLowerCase()}/authorize?mode=link`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -183,7 +183,7 @@ const mypageApi = {
   getOAuth2LoginUrl: async (provider) => {
     try {
       // 소셜 로그인 모드로 요청 - 올바른 엔드포인트 사용
-      const response = await fetch(`${API_BASE_URL}/api/auth/oauth2/${provider.toLowerCase()}/authorize`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/oauth2/${provider.toLowerCase()}/authorize`, {
         method: 'GET',
         credentials: 'include',
         headers: {

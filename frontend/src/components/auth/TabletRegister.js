@@ -42,7 +42,7 @@ const TabletRegister = () => {
     const loadBranches = async () => {
       try {
         setIsLoadingBranches(true);
-        const response = await apiGet('/api/auth/branches');
+        const response = await apiGet('/api/v1/auth/branches');
         if (response?.branches?.length) {
           setBranches(response.branches);
           setErrors(prev => ({
@@ -104,7 +104,7 @@ const TabletRegister = () => {
 
   const getOAuth2Config = async () => {
     try {
-      const response = await fetch('/api/auth/config/oauth2');
+      const response = await fetch('/api/v1/auth/config/oauth2');
       if (response.ok) {
         const config = await response.json();
         setOauth2Config(config);
@@ -194,7 +194,7 @@ const TabletRegister = () => {
     setIsLoading(true);
 
     try {
-      const response = await csrfTokenManager.post('/api/auth/register', formData);
+      const response = await csrfTokenManager.post('/api/v1/auth/register', formData);
 
       if (response.ok) {
         const result = await response.json();
@@ -213,10 +213,14 @@ const TabletRegister = () => {
   };
 
   /*
+/**
    * 소셜 회원가입 기능은 현재 미사용 상태입니다.
+/**
    * 추후 재활성화 시 아래 구현을 복원하세요.
    *
+/**
    * const kakaoLogin = () => { ... };
+/**
    * const naverLogin = () => { ... };
    */
 

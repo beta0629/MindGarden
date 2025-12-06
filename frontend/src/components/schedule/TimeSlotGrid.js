@@ -12,12 +12,19 @@ import {
 
 /**
  * 시간 슬롯 그리드 컴포넌트
+/**
  * - 30분 단위 시간 슬롯 표시
+/**
  * - 상담 유형별 시간 할당
+/**
  * - 충돌 검사 및 가용성 표시
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const TimeSlotGrid = ({ 
@@ -58,7 +65,7 @@ const TimeSlotGrid = ({
         }
     }, [selectedTimeSlot, timeSlots]);
 
-    /**
+/**
      * 상담사 정보 로드
      */
     const loadConsultantInfo = async () => {
@@ -96,7 +103,7 @@ const TimeSlotGrid = ({
         });
     };
 
-    /**
+/**
      * 휴가 정보 로드
      */
     const loadVacationInfo = async () => {
@@ -119,7 +126,7 @@ const TimeSlotGrid = ({
 
             console.log('휴가 정보 로드:', { consultantId, dateStr });
 
-            const response = await fetch(`/api/consultant/vacations?date=${dateStr}`, {
+            const response = await fetch(`/api/v1/consultants/availability/vacations?date=${dateStr}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -155,7 +162,7 @@ const TimeSlotGrid = ({
         }
     };
 
-    /**
+/**
      * 시간 슬롯 생성
      */
     const generateTimeSlots = () => {
@@ -259,7 +266,7 @@ const TimeSlotGrid = ({
         setTimeSlots(sortedSlots);
     };
 
-    /**
+/**
      * 지난 시간인지 확인
      */
     const isTimeInPast = (timeString, selectedDate) => {
@@ -287,7 +294,7 @@ const TimeSlotGrid = ({
         return false;
     };
 
-    /**
+/**
      * 휴가 시간 확인
      */
     const checkVacationTime = (startTime, endTime) => {
@@ -359,7 +366,7 @@ const TimeSlotGrid = ({
         }
     };
 
-    /**
+/**
      * 기존 스케줄 로드
      */
     const loadExistingSchedules = async () => {
@@ -412,7 +419,7 @@ const TimeSlotGrid = ({
         }
     };
 
-    /**
+/**
      * 선택된 시간에 따른 슬롯 가용성 업데이트
      */
     const updateSlotsForSelectedTime = () => {
@@ -443,7 +450,7 @@ const TimeSlotGrid = ({
         );
     };
 
-    /**
+/**
      * 선택된 시간과의 충돌 검사
      */
     const checkTimeConflictWithSelected = (slot, selectedSlot) => {
@@ -461,7 +468,7 @@ const TimeSlotGrid = ({
         return isOverlapping || isTooClose;
     };
 
-    /**
+/**
      * 슬롯 가용성 업데이트
      */
     const updateSlotAvailability = (schedules) => {
@@ -477,7 +484,7 @@ const TimeSlotGrid = ({
         );
     };
 
-    /**
+/**
      * 시간 충돌 검사
      */
     const checkTimeConflict = (slot, schedules) => {
@@ -494,14 +501,14 @@ const TimeSlotGrid = ({
         });
     };
 
-    /**
+/**
      * 시간 겹침 여부 확인
      */
     const isTimeOverlapping = (start1, end1, start2, end2) => {
         return start1 < end2 && start2 < end1;
     };
 
-    /**
+/**
      * 시간 간격이 너무 가까운지 확인 (10분 휴식 시간)
      */
     const isTimeTooClose = (start1, end1, start2, end2) => {
@@ -522,7 +529,7 @@ const TimeSlotGrid = ({
         return false;
     };
 
-    /**
+/**
      * 분 단위 시간 차이 계산
      */
     const getMinutesDifference = (time1, time2) => {
@@ -535,7 +542,7 @@ const TimeSlotGrid = ({
         return Math.abs(minutes2 - minutes1);
     };
 
-    /**
+/**
      * 종료 시간 계산 (휴식 시간 제외)
      */
     const calculateEndTime = (startTime, durationMinutes) => {
@@ -548,7 +555,7 @@ const TimeSlotGrid = ({
         return `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
     };
 
-    /**
+/**
      * 상담사 업무 시간 내 확인
      */
     const isWithinConsultantHours = (timeString, startHour, startMinute, endHour, endMinute) => {
@@ -561,7 +568,7 @@ const TimeSlotGrid = ({
         return totalMinutes >= consultantStart && totalMinutes <= consultantEnd;
     };
 
-    /**
+/**
      * 휴식시간과 겹치는지 확인 (현재는 사용하지 않음)
      */
     const isOverlappingWithBreakTime = (startTime, endTime, breakStart, breakEnd) => {
@@ -578,7 +585,7 @@ const TimeSlotGrid = ({
         return (slotStartMinutes < breakEndMinutes && slotEndMinutes > breakStartMinutes);
     };
 
-    /**
+/**
      * 시간 슬롯 클릭 핸들러
      */
     const handleSlotClick = (slot) => {
@@ -613,7 +620,7 @@ const TimeSlotGrid = ({
         onTimeSlotSelect(slot);
     };
 
-    /**
+/**
      * 슬롯 상태에 따른 CSS 클래스
      */
     const getSlotClassName = (slot) => {
@@ -628,7 +635,7 @@ const TimeSlotGrid = ({
         return classes.join(' ');
     };
 
-    /**
+/**
      * 슬롯 상태 아이콘 (색상 원으로 대체)
      */
     const getSlotIcon = (slot) => {
@@ -640,7 +647,7 @@ const TimeSlotGrid = ({
         return { color: 'var(--mg-success-500)', text: '가' };
     };
 
-    /**
+/**
      * 시간대별 그룹핑
      */
     const groupSlotsByHour = () => {

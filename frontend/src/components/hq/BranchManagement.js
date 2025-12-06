@@ -22,10 +22,15 @@ import './BranchManagement.css';
 
 /**
  * 본사 지점 관리 컴포넌트
+/**
  * 컴포넌트화된 지점 관리 및 사용자 지점 이동 기능
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const BranchManagement = () => {

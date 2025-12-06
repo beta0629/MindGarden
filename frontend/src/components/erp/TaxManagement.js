@@ -366,7 +366,8 @@ const TaxManagement = () => {
                             )}
 
                             {loading && (
-                                <UnifiedLoading type="inline" text="로딩 중..." />
+                                <div>
+                                    <UnifiedLoading type="inline" text="로딩 중..." />
                                     <p>데이터를 불러오는 중...</p>
                                 </div>
                             )}

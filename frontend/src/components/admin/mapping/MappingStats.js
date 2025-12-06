@@ -5,14 +5,23 @@ import {
     getStatusIcon
 } from '../../../utils/codeHelper';
 
+/**
  * 매칭 통계 컴포넌트 (동적 처리 지원)
+/**
  * - 매칭 상태별 통계 표시
+/**
  * - 시각적 통계 카드
+/**
  * - 동적 색상/아이콘 조회
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2024-12-19
+/**
  * @updated 2025-09-14 - 동적 처리로 변경
  */
 const MappingStats = ({ mappings = [], onStatCardClick }) => {

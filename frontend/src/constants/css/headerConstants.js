@@ -1,6 +1,10 @@
+/**
  * SimpleHeader 컴포넌트 CSS 상수
+/**
  * @description SimpleHeader 관련 모든 CSS 클래스명과 스타일 상수들을 관리
+/**
  * @author MindGarden Team
+/**
  * @version 1.0.0
  */
 

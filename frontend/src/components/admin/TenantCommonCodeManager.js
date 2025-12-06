@@ -2,14 +2,23 @@
  * 테넌트 공통코드 관리 컨테이너 (Container Component)
  * 
  * 비즈니스 로직 담당:
+/**
  * - API 호출
+/**
  * - 상태 관리
+/**
  * - 이벤트 핸들러
+/**
  * 
+/**
  * UI 렌더링은 TenantCommonCodeManagerUI에 위임
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-12-03
  */
 
@@ -58,7 +67,7 @@ const TenantCommonCodeManager = () => {
         }
     }, [selectedGroup]);
 
-    /**
+/**
      * 코드 그룹 목록 로드
      */
     const loadCodeGroups = async () => {
@@ -79,7 +88,7 @@ const TenantCommonCodeManager = () => {
         }
     };
 
-    /**
+/**
      * 특정 그룹의 코드 목록 로드
      */
     const loadCodes = async (groupName) => {
@@ -100,7 +109,7 @@ const TenantCommonCodeManager = () => {
         }
     };
 
-    /**
+/**
      * 그룹 선택
      */
     const handleGroupSelect = (group) => {
@@ -109,7 +118,7 @@ const TenantCommonCodeManager = () => {
         setError(null);
     };
 
-    /**
+/**
      * 코드 생성 모달 열기
      */
     const handleCreateCode = () => {
@@ -128,7 +137,7 @@ const TenantCommonCodeManager = () => {
         setShowModal(true);
     };
 
-    /**
+/**
      * 코드 수정 모달 열기
      */
     const handleEditCode = (code) => {
@@ -147,7 +156,7 @@ const TenantCommonCodeManager = () => {
         setShowModal(true);
     };
 
-    /**
+/**
      * 폼 제출
      */
     const handleSubmit = async (e) => {
@@ -179,7 +188,7 @@ const TenantCommonCodeManager = () => {
         }
     };
 
-    /**
+/**
      * 코드 삭제
      */
     const handleDeleteCode = async (codeId) => {
@@ -208,7 +217,7 @@ const TenantCommonCodeManager = () => {
         }
     };
 
-    /**
+/**
      * 코드 활성화/비활성화 토글
      */
     const handleToggleActive = async (codeId, isActive) => {
@@ -229,7 +238,7 @@ const TenantCommonCodeManager = () => {
         }
     };
 
-    /**
+/**
      * 상담 패키지 빠른 생성
      */
     const handleQuickCreatePackage = () => {

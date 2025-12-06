@@ -15,12 +15,19 @@ import './BranchForm.css';
 
 /**
  * 지점 등록/수정 폼 컴포넌트
+/**
  * - 지점 정보 입력 및 수정
+/**
  * - 유효성 검사 및 에러 처리
+/**
  * - 지점장 할당 기능
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const BranchForm = ({ 

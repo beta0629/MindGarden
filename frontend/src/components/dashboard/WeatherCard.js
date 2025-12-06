@@ -5,7 +5,9 @@ import '../../styles/unified-design-tokens.css';
 
 /**
  * 날씨 정보 카드 컴포넌트
+/**
  * 실시간 날씨 정보를 표시합니다
+/**
  * 디자인 시스템 v2.0 적용
  */
 const WeatherCard = () => {

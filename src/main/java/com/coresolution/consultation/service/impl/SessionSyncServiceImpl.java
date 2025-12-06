@@ -333,7 +333,7 @@ public class SessionSyncServiceImpl extends BaseTenantAwareService implements Se
      */
     private void syncRelatedMappings(ConsultantClientMapping mapping) {
         try {
-            String tenantId = com.coresolution.core.context.TenantContext.getTenantId();
+            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.warn("⚠️ tenantId가 설정되지 않아 관련 매핑 동기화를 건너뜁니다");
                 return;

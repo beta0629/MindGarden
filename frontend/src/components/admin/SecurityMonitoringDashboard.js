@@ -12,6 +12,7 @@ import './SecurityMonitoringDashboard.css';
 
 /**
  * 보안 모니터링 대시보드 페이지
+/**
  * 종합적인 보안 상태 분석 및 모니터링
  */
 const SecurityMonitoringDashboard = () => {

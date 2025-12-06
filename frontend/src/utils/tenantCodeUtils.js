@@ -1,11 +1,18 @@
 /**
  * 테넌트 코드 관리 비즈니스 로직 유틸리티
+/**
  * - 코드 검증 로직
+/**
  * - 데이터 변환 로직
+/**
  * - 권한 체크 로직
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-26
  */
 
@@ -19,7 +26,9 @@ import {
 
 /**
  * 코드 그룹이 테넌트 코드인지 확인
+/**
  * @param {string} codeGroup - 코드 그룹명
+/**
  * @returns {boolean} 테넌트 코드 여부
  */
 export const isTenantCodeGroup = (codeGroup) => {
@@ -28,7 +37,9 @@ export const isTenantCodeGroup = (codeGroup) => {
 
 /**
  * 코드 그룹이 코어 코드인지 확인
+/**
  * @param {string} codeGroup - 코드 그룹명
+/**
  * @returns {boolean} 코어 코드 여부
  */
 export const isCoreCodeGroup = (codeGroup) => {
@@ -37,7 +48,9 @@ export const isCoreCodeGroup = (codeGroup) => {
 
 /**
  * 현재 탭에 따른 코드 그룹 목록 반환
+/**
  * @param {string} activeTab - 현재 활성 탭
+/**
  * @returns {string[]} 코드 그룹 목록
  */
 export const getCodeGroupsByTab = (activeTab) => {
@@ -46,7 +59,9 @@ export const getCodeGroupsByTab = (activeTab) => {
 
 /**
  * 폼 데이터 검증
+/**
  * @param {Object} formData - 폼 데이터
+/**
  * @returns {Object} 검증 결과 { isValid, errors }
  */
 export const validateFormData = (formData) => {
@@ -94,8 +109,11 @@ export const validateFormData = (formData) => {
 
 /**
  * 코드 검색 필터링
+/**
  * @param {Array} codes - 코드 목록
+/**
  * @param {string} searchTerm - 검색어
+/**
  * @returns {Array} 필터링된 코드 목록
  */
 export const filterCodes = (codes, searchTerm) => {
@@ -116,8 +134,11 @@ export const filterCodes = (codes, searchTerm) => {
 
 /**
  * 사용자 권한 체크
+/**
  * @param {Object} user - 사용자 정보
+/**
  * @param {string} codeGroup - 코드 그룹
+/**
  * @returns {Object} 권한 정보 { canView, canEdit, canDelete }
  */
 export const checkUserPermissions = (user, codeGroup) => {
@@ -133,9 +154,13 @@ export const checkUserPermissions = (user, codeGroup) => {
 
 /**
  * 코드 데이터 정규화
+/**
  * @param {Object} rawData - 원본 데이터
+/**
  * @param {string} codeGroup - 코드 그룹
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @returns {Object} 정규화된 코드 데이터
  */
 export const normalizeCodeData = (rawData, codeGroup, tenantId) => {
@@ -155,9 +180,13 @@ export const normalizeCodeData = (rawData, codeGroup, tenantId) => {
 
 /**
  * 코드 목록 정렬
+/**
  * @param {Array} codes - 코드 목록
+/**
  * @param {string} sortBy - 정렬 기준 ('sortOrder', 'codeValue', 'koreanName')
+/**
  * @param {string} sortOrder - 정렬 순서 ('asc', 'desc')
+/**
  * @returns {Array} 정렬된 코드 목록
  */
 export const sortCodes = (codes, sortBy = 'sortOrder', sortOrder = 'asc') => {
@@ -185,7 +214,9 @@ export const sortCodes = (codes, sortBy = 'sortOrder', sortOrder = 'asc') => {
 
 /**
  * 코드 그룹 메타데이터 변환
+/**
  * @param {Array} metadataArray - 메타데이터 배열
+/**
  * @returns {Object} 그룹명을 키로 하는 메타데이터 객체
  */
 export const transformMetadata = (metadataArray) => {
@@ -202,8 +233,11 @@ export const transformMetadata = (metadataArray) => {
 
 /**
  * 코드 그룹 표시명 생성
+/**
  * @param {string} groupName - 그룹명
+/**
  * @param {Object} metadata - 메타데이터
+/**
  * @returns {string} 표시명
  */
 export const getGroupDisplayName = (groupName, metadata = {}) => {
@@ -213,8 +247,11 @@ export const getGroupDisplayName = (groupName, metadata = {}) => {
 
 /**
  * 코드 그룹 설명 생성
+/**
  * @param {string} groupName - 그룹명
+/**
  * @param {Object} metadata - 메타데이터
+/**
  * @returns {string} 설명
  */
 export const getGroupDescription = (groupName, metadata = {}) => {
@@ -224,7 +261,9 @@ export const getGroupDescription = (groupName, metadata = {}) => {
 
 /**
  * 색상 코드 검증
+/**
  * @param {string} colorCode - 색상 코드
+/**
  * @returns {boolean} 유효한 색상 코드 여부
  */
 export const isValidColorCode = (colorCode) => {
@@ -237,7 +276,9 @@ export const isValidColorCode = (colorCode) => {
 
 /**
  * 아이콘 검증 (이모지 또는 텍스트)
+/**
  * @param {string} icon - 아이콘
+/**
  * @returns {boolean} 유효한 아이콘 여부
  */
 export const isValidIcon = (icon) => {
@@ -249,7 +290,9 @@ export const isValidIcon = (icon) => {
 
 /**
  * 코드 통계 계산
+/**
  * @param {Array} codes - 코드 목록
+/**
  * @returns {Object} 통계 정보
  */
 export const calculateCodeStats = (codes) => {
@@ -271,7 +314,9 @@ export const calculateCodeStats = (codes) => {
 
 /**
  * 에러 메시지 포맷팅
+/**
  * @param {Error} error - 에러 객체
+/**
  * @returns {string} 사용자 친화적 에러 메시지
  */
 export const formatErrorMessage = (error) => {

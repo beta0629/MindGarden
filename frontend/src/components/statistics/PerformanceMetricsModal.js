@@ -7,12 +7,19 @@ import notificationManager from '../../utils/notification';
 
 /**
  * 성과 지표 대시보드 모달 컴포넌트
+/**
  * - 실시간 성과 지표 표시
+/**
  * - 지표 재계산 기능
+/**
  * - 기간별 필터링
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-30
  */
 const PerformanceMetricsModal = ({ isOpen, onClose }) => {
@@ -43,7 +50,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         }
     }, [isOpen]);
 
-    /**
+/**
      * 지점 목록 로드
      */
     const loadBranches = async () => {
@@ -57,7 +64,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 성과 지표 로드
      */
     const loadMetrics = async () => {
@@ -88,7 +95,7 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 성과 지표 재계산
      */
     const handleRecalculate = async () => {
@@ -117,14 +124,14 @@ const PerformanceMetricsModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 필터 변경 처리
      */
     const handleFilterChange = () => {
         loadMetrics();
     };
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {

@@ -9,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -52,16 +53,72 @@ public class TenantContextFilter implements Filter {
         
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpSession session = httpRequest.getSession(false);
+        String requestURI = httpRequest.getRequestURI();
+        String method = httpRequest.getMethod();
+        
+        // 1. OPTIONS 요청 (CORS preflight)은 tenantId 검증 건너뛰기
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            log.debug("OPTIONS 요청 감지 - tenantId 검증 건너뛰기: {}", requestURI);
+            chain.doFilter(request, response);
+            return;
+        }
+        
+        // 2. 공개 API는 tenantId 검증 건너뛰기 (SecurityConfig에서 permitAll로 설정된 경로)
+        if (isPublicApi(requestURI)) {
+            log.debug("공개 API 요청 감지 - tenantId 검증 건너뛰기: {}", requestURI);
+            chain.doFilter(request, response);
+            return;
+        }
+        
+        // 요청 정보 로깅 (디버깅용)
+        log.info("🔍 TenantContextFilter 요청 처리: URI={}, Method={}, Session={}", 
+            requestURI, method, session != null ? "있음" : "없음");
+        if (session != null) {
+            User sessionUser = SessionUtils.getCurrentUser(session);
+            log.info("🔍 세션 사용자 정보: userId={}, role={}, tenantId={}", 
+                sessionUser != null ? sessionUser.getId() : "null",
+                sessionUser != null ? sessionUser.getRole() : "null",
+                sessionUser != null ? sessionUser.getTenantId() : "null");
+        }
         
         try {
             String tenantId = extractTenantId(httpRequest, session);
             String businessType = extractBusinessType(httpRequest, session);
             
-            // TenantContext에 설정
-            if (tenantId != null && !tenantId.isEmpty()) {
-                TenantContextHolder.setTenantId(tenantId);
-                log.debug("Tenant context set from filter: {}", tenantId);
+            // ⚠️ 보안: tenantId는 필수 값 (내담자, 상담사, 관리자 모두 필수)
+            // tenantId가 없으면 다른 테넌트의 데이터에 접근할 수 있어 매우 위험함
+            if (tenantId == null || tenantId.isEmpty()) {
+                String clientIP = getClientIP(httpRequest);
+                String userAgent = httpRequest.getHeader("User-Agent");
+                
+                // 세션 정보 로깅
+                if (session != null) {
+                    User user = SessionUtils.getCurrentUser(session);
+                    if (user != null) {
+                        log.error("🚨 보안 위험: Tenant ID가 없습니다! Request URI: {}, Method: {}, IP: {}, User-Agent: {}, User ID: {}, User Role: {}, User TenantId: {}", 
+                            requestURI, method, clientIP, userAgent, user.getId(), user.getRole(), user.getTenantId());
+                    } else {
+                        log.error("🚨 보안 위험: Tenant ID가 없습니다! Request URI: {}, Method: {}, IP: {}, User-Agent: {}, 세션에 사용자 정보 없음", 
+                            requestURI, method, clientIP, userAgent);
+                    }
+                } else {
+                    log.error("🚨 보안 위험: Tenant ID가 없습니다! Request URI: {}, Method: {}, IP: {}, User-Agent: {}, 세션 없음", 
+                        requestURI, method, clientIP, userAgent);
+                }
+                
+                // 보안 이벤트 기록 (필요시)
+                // securityAuditService.recordSecurityEvent(SecurityEventType.TENANT_ID_MISSING, clientIP, userAgent, ...);
+                
+                HttpServletResponse httpResponse = (HttpServletResponse) response;
+                httpResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                httpResponse.setContentType("application/json");
+                httpResponse.getWriter().write("{\"error\":\"Bad Request\",\"message\":\"Tenant ID is required for security. Please ensure you are logged in and have a valid tenant ID.\"}");
+                return;
             }
+            
+            // TenantContext에 설정
+            TenantContextHolder.setTenantId(tenantId);
+            log.debug("Tenant context set from filter: {}", tenantId);
             
             if (businessType != null && !businessType.isEmpty()) {
                 TenantContextHolder.setBusinessType(businessType);
@@ -78,6 +135,42 @@ public class TenantContextFilter implements Filter {
     }
     
     /**
+     * 공개 API 여부 확인 (SecurityConfig의 permitAll 경로와 일치)
+     * 
+     * @param requestURI 요청 URI (쿼리 파라미터 포함)
+     * @return 공개 API이면 true
+     */
+    private boolean isPublicApi(String requestURI) {
+        // 쿼리 파라미터 제거 (예: /api/v1/common-codes?codeGroup=NOTIFICATION_TYPE -> /api/v1/common-codes)
+        String path = requestURI;
+        if (path.contains("?")) {
+            path = path.substring(0, path.indexOf("?"));
+        }
+        
+        // 공개 API 경로 목록 (SecurityConfig의 permitAll 경로와 일치)
+        String[] publicPaths = {
+            "/api/v1/onboarding",
+            "/api/v1/ops/plans/active",
+            "/api/v1/ops/plans/code",
+            "/api/v1/ops/auth",
+            "/api/v1/auth",
+            "/api/v1/common-codes",
+            "/api/v1/admin/css-themes",
+            "/actuator/health",
+            "/actuator/info"
+        };
+        
+        for (String publicPath : publicPaths) {
+            if (path.equals(publicPath) || path.startsWith(publicPath + "/")) {
+                log.debug("공개 API 매칭: {} -> {}", requestURI, publicPath);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
      * tenant_id 추출
      * 
      * @param request HTTP 요청
@@ -85,14 +178,65 @@ public class TenantContextFilter implements Filter {
      * @return tenant_id (없으면 null)
      */
     private String extractTenantId(HttpServletRequest request, HttpSession session) {
-        // 1. HTTP 헤더에서 추출 (우선순위 1)
+        // ⚠️ 우선순위 변경: 세션의 User 정보를 최우선으로 확인 (보안상 더 안전)
+        // 1. 세션에서 User 정보를 통해 tenant_id 조회 (최우선순위)
+        if (session != null) {
+            User user = SessionUtils.getCurrentUser(session);
+            if (user != null) {
+                log.info("🔍 세션에서 User 정보 확인: userId={}, role={}, tenantId={}", 
+                    user.getId(), user.getRole(), user.getTenantId());
+                
+                // 1-1. User 엔티티의 tenantId 직접 확인 (최우선)
+                if (user.getTenantId() != null && !user.getTenantId().isEmpty()) {
+                    // 세션에 tenant_id 저장 (다음 요청에서 빠르게 조회)
+                    session.setAttribute(SESSION_TENANT_ID, user.getTenantId());
+                    log.info("✅ Tenant ID extracted from user entity: {}", user.getTenantId());
+                    return user.getTenantId();
+                } else {
+                    log.warn("⚠️ User 엔티티에 tenantId가 없습니다: userId={}, role={}", 
+                        user.getId(), user.getRole());
+                }
+            } else {
+                log.debug("세션에 User 정보가 없습니다.");
+            }
+            
+            // 1-2. 세션에 저장된 tenant_id 사용
+            Object sessionTenantId = session.getAttribute(SESSION_TENANT_ID);
+            if (sessionTenantId != null) {
+                log.info("✅ Tenant ID extracted from session: {}", sessionTenantId);
+                return sessionTenantId.toString();
+            }
+        } else {
+            log.debug("세션이 없습니다.");
+        }
+        
+        // 2. HTTP 헤더에서 추출 (우선순위 2)
         String tenantId = request.getHeader(TENANT_ID_HEADER);
+        log.info("🔍 Tenant ID 추출 시도: 헤더={}, 모든 헤더={}", tenantId, getHeadersAsString(request));
         if (tenantId != null && !tenantId.isEmpty()) {
-            log.debug("Tenant ID extracted from header: {}", tenantId);
+            // ⚠️ 기본값/더미 값 체크 (헤더에서 받은 경우에만)
+            if (tenantId.contains("unknown") || tenantId.contains("default")) {
+                log.warn("⚠️ 기본값/더미 tenantId 감지 (헤더): {}, 세션의 User 정보를 우선 사용", tenantId);
+                // 기본값이면 세션의 User 정보를 다시 확인
+                if (session != null) {
+                    User user = SessionUtils.getCurrentUser(session);
+                    if (user != null && user.getTenantId() != null && !user.getTenantId().isEmpty()) {
+                        // 기본값이 아닌 실제 tenantId가 있으면 사용
+                        if (!user.getTenantId().contains("unknown") && !user.getTenantId().contains("default")) {
+                            log.info("✅ 세션의 User에서 실제 tenantId 발견: {}", user.getTenantId());
+                            return user.getTenantId();
+                        }
+                    }
+                }
+                // 기본값이면 null 반환 (백엔드에서 오류 발생)
+                log.error("❌ 기본값 tenantId는 사용할 수 없습니다: {}", tenantId);
+                return null;
+            }
+            log.info("✅ Tenant ID extracted from header: {}", tenantId);
             return tenantId;
         }
         
-        // 1-1. Host 헤더에서 테넌트 서브도메인 추출 (우선순위 1-1)
+        // 3. Host 헤더에서 테넌트 서브도메인 추출 (우선순위 3)
         // 예: tenant1.dev.core-solution.co.kr → tenant1
         // 예: tenant1.core-solution.co.kr → tenant1
         String host = request.getHeader("Host");
@@ -107,32 +251,8 @@ public class TenantContextFilter implements Filter {
             }
         }
         
-        // 2. 세션에서 User 정보를 통해 tenant_id 조회 (우선순위 2)
-        if (session != null) {
-            User user = SessionUtils.getCurrentUser(session);
-            if (user != null) {
-                // 2-1. User 엔티티의 tenantId 직접 확인 (최우선)
-                if (user.getTenantId() != null && !user.getTenantId().isEmpty()) {
-                    // 세션에 tenant_id 저장 (다음 요청에서 빠르게 조회)
-                    session.setAttribute(SESSION_TENANT_ID, user.getTenantId());
-                    log.debug("Tenant ID extracted from user entity: {}", user.getTenantId());
-                    return user.getTenantId();
-                }
-                
-                // 브랜치 개념 제거: User의 branchCode를 통한 tenant_id 조회 로직 제거됨 (표준화 2025-12-05)
-                // User 엔티티에 tenantId가 직접 있으므로 branchCode를 통한 조회는 불필요
-            }
-            
-            // 3. 세션에 저장된 tenant_id 사용 (우선순위 3)
-            Object sessionTenantId = session.getAttribute(SESSION_TENANT_ID);
-            if (sessionTenantId != null) {
-                log.debug("Tenant ID extracted from session: {}", sessionTenantId);
-                return sessionTenantId.toString();
-            }
-        }
-        
         // 4. tenant_id를 찾을 수 없는 경우
-        log.trace("Tenant ID not found in request");
+        log.warn("❌ Tenant ID not found in request");
         return null;
     }
     
@@ -223,6 +343,45 @@ public class TenantContextFilter implements Filter {
         // 4. business_type를 찾을 수 없는 경우 - 기본값 CONSULTATION 사용
         log.debug("Business type not found, using default: CONSULTATION");
         return "CONSULTATION"; // 현재는 상담소만 운영 중이므로 기본값
+    }
+    
+    /**
+     * 클라이언트 IP 주소 추출
+     * 
+     * @param request HTTP 요청
+     * @return 클라이언트 IP 주소
+     */
+    private String getClientIP(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        
+        String xRealIP = request.getHeader("X-Real-IP");
+        if (xRealIP != null && !xRealIP.isEmpty()) {
+            return xRealIP;
+        }
+        
+        return request.getRemoteAddr();
+    }
+    
+    /**
+     * 디버깅용: 모든 헤더를 문자열로 반환
+     */
+    private String getHeadersAsString(HttpServletRequest request) {
+        StringBuilder sb = new StringBuilder("{");
+        java.util.Enumeration<String> headerNames = request.getHeaderNames();
+        boolean first = true;
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            if (!first) {
+                sb.append(", ");
+            }
+            sb.append(headerName).append("=").append(request.getHeader(headerName));
+            first = false;
+        }
+        sb.append("}");
+        return sb.toString();
     }
 }
 

@@ -1,9 +1,14 @@
 /**
  * 학원 시스템 - 공통 폼 필드 컴포넌트
+/**
  * 재사용 가능한 폼 필드 래퍼
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-19
  */
 
@@ -15,6 +20,7 @@ import './FormField.css';
 
 /**
  * 공통 폼 필드 컴포넌트
+/**
  * Input, Select, Textarea를 통합한 래퍼
  */
 const FormField = ({

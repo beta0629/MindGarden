@@ -6,13 +6,21 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 import '../../styles/main.css';
 import ClientSelector from '../ui/ClientSelector';
 
+/**
  * 내담자 선택 컴포넌트
+/**
  * - 결제 승인되고 세션이 남은 내담자만 표시
+/**
  * - 드래그 앤 드롭 기능 지원
+/**
  * - 세션 정보 표시
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ClientSelector = ({ 
@@ -38,6 +46,7 @@ const ClientSelector = ({
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
+/**
      * 컴포넌트 마운트 시 모든 내담자의 매핑 정보 일괄 로드
      */
     useEffect(() => {
@@ -47,6 +56,7 @@ const ClientSelector = ({
         }
     }, [clients, selectedConsultant]);
 
+/**
      * 모든 내담자의 매핑 정보를 일괄 로드
      */
     const loadAllClientMappings = useCallback(async (clientsList) => {
@@ -137,6 +147,7 @@ const ClientSelector = ({
         }
     }, [selectedConsultant]);
 
+/**
      * 개별 내담자 매핑 정보 로드 (필요시에만 사용)
      */
     const loadClientMapping = useCallback(async (client) => {
@@ -173,6 +184,7 @@ const ClientSelector = ({
         }
     }, [clientMappings, loadingMappings, selectedConsultant]);
 
+/**
      * 내담자 상담 히스토리 조회
      */
     const loadClientHistory = async (client) => {
@@ -202,6 +214,7 @@ const ClientSelector = ({
         }
     };
 
+/**
      * 내담자와 상담사 간의 매핑 확인
      */
     const getClientMappingInfo = async (client) => {
@@ -282,6 +295,7 @@ const ClientSelector = ({
         }
     };
 
+/**
      * 프로필 이미지 URL 생성
      */
     const getClientProfileImage = (client) => {
@@ -293,6 +307,7 @@ const ClientSelector = ({
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(firstChar)}&background=28a745&color=fff&size=60&font-size=0.5`;
     };
 
+/**
      * 세션 상태 배지 색상
      */
     const getSessionBadgeColor = (remainingSessions) => {
@@ -301,6 +316,7 @@ const ClientSelector = ({
         return 'success';
     };
 
+/**
      * 내담자 카드 클릭 핸들러
      */
     const handleClientClick = async (client) => {
@@ -334,6 +350,7 @@ const ClientSelector = ({
         }
     };
 
+/**
      * 드래그 시작 핸들러
      */
     const handleDragStart = (e, client) => {

@@ -1,8 +1,14 @@
+/**
  * Scheduler Status Widget - 표준화된 위젯
+/**
  * 스케줄러 실행 현황 및 성공/실패 통계 모니터링
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0 (표준화)
+/**
  * @since 2025-12-02
  */
 

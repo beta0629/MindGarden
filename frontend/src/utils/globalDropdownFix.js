@@ -1,5 +1,6 @@
 /**
  * 전역 드롭다운 고정 시스템
+/**
  * 모든 드롭다운이 스크롤과 독립적으로 동작하도록 보장
  */
 
@@ -9,6 +10,7 @@ let scrollHandler = null;
 
 /**
  * 드롭다운 요소를 강제로 고정 위치로 설정
+/**
  * @param {HTMLElement} element - 드롭다운 요소
  */
 const forceFixedPosition = (element) => {

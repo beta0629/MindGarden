@@ -207,7 +207,7 @@ const OAuth2Callback = () => {
           // 멀티 테넌트 사용자 확인
           const checkMultiTenantAndRedirect = async (userRole) => {
             try {
-              const response = await fetch(`${API_BASE_URL}/api/auth/tenant/check-multi`, {
+              const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/check-multi`, {
                 credentials: 'include'
               });
               
@@ -219,7 +219,7 @@ const OAuth2Callback = () => {
                   : responseData;
                 if (data.isMultiTenant) {
                   // 멀티 테넌트 사용자: 테넌트 목록 로드
-                  const tenantsResponse = await fetch(`${API_BASE_URL}/api/auth/tenant/accessible`, {
+                  const tenantsResponse = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/accessible`, {
                     credentials: 'include'
                   });
                   

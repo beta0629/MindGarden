@@ -7,10 +7,15 @@ import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import PgConfigurationForm from './PgConfigurationForm';
 
+/**
  * PG 설정 수정 페이지
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 const PgConfigurationEdit = () => {

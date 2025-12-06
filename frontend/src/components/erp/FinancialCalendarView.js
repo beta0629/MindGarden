@@ -4,6 +4,7 @@ import { apiGet } from '../../utils/ajax';
 
 /**
  * 재무 거래 달력 뷰 컴포넌트
+/**
  * 수입/지출을 달력 형태로 한눈에 표시
  */
 const FinancialCalendarView = () => {

@@ -4,13 +4,21 @@ import { CreditCard, X, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
+/**
  * 결제 확인 모달 컴포넌트
+/**
  * - 매핑별 결제 확인/취소 기능
+/**
  * - 결제 방법 및 금액 입력
+/**
  * - 결제 상태 관리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-05
  */
 const PaymentConfirmationModal = ({ 

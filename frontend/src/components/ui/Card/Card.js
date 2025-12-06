@@ -1,10 +1,16 @@
 /**
  * Card Component
+/**
  * 
+/**
  * MindGarden 디자인 시스템 표준 컴포넌트
+/**
  * 
+/**
  * @author MindGarden Team
+/**
  * @version 2.0.0
+/**
  * @since 2025-11-28
  */
 

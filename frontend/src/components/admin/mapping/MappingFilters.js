@@ -6,12 +6,19 @@ import './MappingFilters.css';
 
 /**
  * 매칭 필터 컴포넌트
+/**
  * - 상태별 필터링
+/**
  * - 검색 기능
+/**
  * - 필터 초기화
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const MappingFilters = ({ 

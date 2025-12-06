@@ -32,41 +32,44 @@ public class DevelopmentConfig implements WebMvcConfigurer {
     
     /**
      * 개발 환경에서 CORS 설정 완전 허용
+     * SecurityConfig의 CORS 설정과 충돌 방지를 위해 주석 처리
+     * Spring Security의 CorsFilter가 CORS를 처리하므로 여기서는 설정하지 않음
      */
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        if (isDev || isLocal || isDevelopment) {
-            registry.addMapping("/**")
-                    .allowedOriginPatterns("*")
-                    .allowedMethods("*")
-                    .allowedHeaders("*")
-                    .allowCredentials(false)
-                    .maxAge(3600);
-        }
-    }
+    // @Override
+    // public void addCorsMappings(CorsRegistry registry) {
+    //     if (isDev || isLocal || isDevelopment) {
+    //         registry.addMapping("/**")
+    //                 .allowedOrigins("http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001")
+    //                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+    //                 .allowedHeaders("*")
+    //                 .allowCredentials(true)  // SecurityConfig와 일치
+    //                 .maxAge(3600);
+    //     }
+    // }
     
     /**
      * 개발 환경 전용 CORS 설정
+     * SecurityConfig의 corsConfigurationSource가 CORS를 처리하므로 주석 처리
      */
-    @Bean("developmentCorsConfigurationSource")
-    @Profile("local")
-    public CorsConfigurationSource developmentCorsConfigurationSource() {
-        if (!isDev && !isLocal && !isDevelopment) {
-            return null;
-        }
-        
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(false);
-        configuration.setMaxAge(3600L);
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        
-        return source;
-    }
+    // @Bean("developmentCorsConfigurationSource")
+    // @Profile("local")
+    // public CorsConfigurationSource developmentCorsConfigurationSource() {
+    //     if (!isDev && !isLocal && !isDevelopment) {
+    //         return null;
+    //     }
+    //     
+    //     CorsConfiguration configuration = new CorsConfiguration();
+    //     configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"));
+    //     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+    //     configuration.setAllowedHeaders(Arrays.asList("*"));
+    //     configuration.setAllowCredentials(true);  // SecurityConfig와 일치
+    //     configuration.setMaxAge(3600L);
+    //     
+    //     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    //     source.registerCorsConfiguration("/**", configuration);
+    //     
+    //     return source;
+    // }
     
     /**
      * 개발 환경 확인 메서드

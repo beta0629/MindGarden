@@ -2,8 +2,11 @@ import { FaChartLine, FaSync } from 'react-icons/fa';
 
 /**
  * 오늘의 통계 뷰 컴포넌트 (Presentational)
+/**
  * - 순수 UI 컴포넌트
+/**
  * - 비즈니스 로직 없음
+/**
  * - props로 데이터와 핸들러를 받음
  */
 const TodayStatisticsView = ({

@@ -46,6 +46,11 @@ public class UserResponse {
     private String grade;
     
     /**
+     * 테넌트 ID (필수 - 보안상 중요)
+     */
+    private String tenantId;
+    
+    /**
      * 활성 상태
      */
     private Boolean isActive;
@@ -75,25 +80,28 @@ public class UserResponse {
         if (userDto == null) {
             return null;
         }
-        
+         
         return UserResponse.builder()
                 .id(userDto.getId())
                 .email(userDto.getEmail())
                 .name(userDto.getName())
                 .role(userDto.getRole())
                 .grade(userDto.getGrade())
+                .tenantId(null) // UserDto는 deprecated이며 tenantId 필드가 없음
                 .isActive(userDto.getIsActive())
                 .isEmailVerified(userDto.getIsEmailVerified())
                 .build();
     }
     
     /**
-     * User 엔티티에서 UserResponse로 변환
+     * User 엔티티에서 UserResponse로 변환 (표준 메서드)
+     * 
+     * DTO_NAMING_STANDARD.md 표준 준수
      * 
      * @param user User 엔티티
      * @return UserResponse
      */
-    public static UserResponse fromEntity(com.coresolution.consultation.entity.User user) {
+    public static UserResponse from(com.coresolution.consultation.entity.User user) {
         if (user == null) {
             return null;
         }
@@ -104,10 +112,41 @@ public class UserResponse {
                 .name(user.getName())
                 .role(user.getRole() != null ? user.getRole().name() : null)
                 .grade(user.getGrade())
+                .tenantId(user.getTenantId()) // 필수 - 보안상 중요 (SECURITY_STANDARD.md, SESSION_STANDARD.md)
                 .isActive(user.getIsActive())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
+    }
+    
+    /**
+     * User 엔티티에서 UserResponse로 변환 (하위 호환성)
+     * 
+     * @deprecated Use {@link #from(com.coresolution.consultation.entity.User)} instead
+     * @param user User 엔티티
+     * @return UserResponse
+     */
+    @Deprecated
+    public static UserResponse fromEntity(com.coresolution.consultation.entity.User user) {
+        return from(user);
+    }
+    
+    /**
+     * User 엔티티 List에서 UserResponse List로 변환
+     * 
+     * DTO_NAMING_STANDARD.md 표준 준수
+     * 
+     * @param users User 엔티티 목록
+     * @return UserResponse 목록
+     */
+    public static java.util.List<UserResponse> fromList(java.util.List<com.coresolution.consultation.entity.User> users) {
+        if (users == null || users.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        
+        return users.stream()
+                .map(UserResponse::from)
+                .collect(java.util.stream.Collectors.toList());
     }
 }
 

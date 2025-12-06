@@ -7,12 +7,19 @@ import notificationManager from '../../utils/notification';
 
 /**
  * 반복 지출 관리 모달 컴포넌트
+/**
  * - 반복 지출 설정 및 관리
+/**
  * - 반복 지출 내역 조회
+/**
  * - 반복 지출 통계
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-30
  */
 const RecurringExpenseModal = ({ isOpen, onClose }) => {
@@ -49,7 +56,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]); // loadExpenses, loadStatistics, loadCategories 의존성 제거하여 무한 루프 방지
 
-    /**
+/**
      * 반복 지출 목록 로드
      */
     const loadExpenses = async () => {
@@ -69,7 +76,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 반복 지출 통계 로드
      */
     const loadStatistics = async () => {
@@ -83,7 +90,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 카테고리 목록 로드
      */
     const loadCategories = async () => {
@@ -99,7 +106,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 폼 데이터 변경 처리
      */
     const handleInputChange = (field, value) => {
@@ -109,7 +116,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         }));
     };
 
-    /**
+/**
      * 폼 초기화
      */
     const resetForm = () => {
@@ -125,7 +132,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         setEditingExpense(null);
     };
 
-    /**
+/**
      * 새 반복 지출 추가
      */
     const handleAddExpense = () => {
@@ -133,7 +140,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         setShowForm(true);
     };
 
-    /**
+/**
      * 반복 지출 수정
      */
     const handleEditExpense = (expense) => {
@@ -150,7 +157,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         setShowForm(true);
     };
 
-    /**
+/**
      * 반복 지출 저장
      */
     const handleSaveExpense = async () => {
@@ -194,7 +201,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 반복 지출 삭제
      */
     const handleDeleteExpense = async (expenseId) => {
@@ -226,7 +233,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {

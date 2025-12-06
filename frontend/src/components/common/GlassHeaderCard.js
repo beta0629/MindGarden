@@ -8,12 +8,19 @@ import './GlassHeaderCard.css';
 
 /**
  * 글래스모피즘 헤더 카드 컴포넌트
+/**
  * @param {Object} props
+/**
  * @param {string} props.icon - 아이콘 (이모지 또는 클래스명)
+/**
  * @param {string} props.title - 제목
+/**
  * @param {string} props.subtitle - 부제목
+/**
  * @param {string} props.color - 아이콘 색상 (primary, success, warning, info)
+/**
  * @param {React.ReactNode} props.actions - 액션 버튼들
+/**
  * @param {string} props.className - 추가 CSS 클래스
  */
 const GlassHeaderCard = ({ 

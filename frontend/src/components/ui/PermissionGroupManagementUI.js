@@ -3,14 +3,23 @@
  * 
  * 순수 UI 컴포넌트 - 비즈니스 로직 없음
  * Props를 통해 데이터와 이벤트 핸들러를 받아 렌더링만 수행
+/**
  * 
+/**
  * 표준화 준수:
+/**
  * - BEM 네이밍 (mg-{component}-{element}--{modifier})
+/**
  * - CSS 변수 사용 (--mg-* 접두사)
+/**
  * - 하드코딩 금지
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-12-03
  */
 
@@ -30,7 +39,7 @@ const PermissionGroupManagementUI = ({
     onRevokePermission,
     onBatchGrant
 }) => {
-    /**
+/**
      * 권한 레벨 한글 변환
      */
     const getAccessLevelName = (level) => {
@@ -42,21 +51,21 @@ const PermissionGroupManagementUI = ({
         return names[level] || level;
     };
 
-    /**
+/**
      * 그룹에 권한이 있는지 확인
      */
     const hasPermission = (groupCode) => {
         return rolePermissions.has(groupCode);
     };
 
-    /**
+/**
      * 그룹의 권한 레벨 조회
      */
     const getPermissionLevel = (groupCode) => {
         return rolePermissions.get(groupCode) || null;
     };
 
-    /**
+/**
      * 권한 그룹 트리 렌더링 (재귀)
      */
     const renderGroupTree = (groups, depth = 0) => {

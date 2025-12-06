@@ -400,12 +400,9 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public List<Consultation> findByConsultantId(Long consultantId) {
-        String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && !tenantId.isEmpty()) {
-            return consultationRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
-        }
-        log.warn("⚠️ 테넌트 컨텍스트 없이 findByConsultantId() 호출됨: consultantId={}", consultantId);
-        return consultationRepository.findByConsultantId(consultantId);
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
     }
     
     @Override
@@ -428,22 +425,30 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     public List<Consultation> findByPriority(String priority) {
-        return consultationRepository.findByPriority(priority);
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRepository.findByTenantIdAndPriority(tenantId, priority);
     }
     
     @Override
     public List<Consultation> findByRiskLevel(String riskLevel) {
-        return consultationRepository.findByRiskLevel(riskLevel);
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRepository.findByTenantIdAndRiskLevel(tenantId, riskLevel);
     }
     
     @Override
     public List<Consultation> findByConsultationMethod(String consultationMethod) {
-        return consultationRepository.findByConsultationMethod(consultationMethod);
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRepository.findByTenantIdAndConsultationMethod(tenantId, consultationMethod);
     }
     
     @Override
     public List<Consultation> findByIsEmergency(Boolean isEmergency) {
-        return consultationRepository.findByIsEmergency(isEmergency);
+        // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultationRepository.findByTenantIdAndIsEmergency(tenantId, isEmergency);
     }
     
     @Override

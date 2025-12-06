@@ -79,12 +79,19 @@ const getVacationTypeKorean = (type) => {
 
 /**
  * 휴가 통계 컴포넌트
+/**
  * - 상담사별 휴가 사용 현황
+/**
  * - 휴가 유형별 통계
+/**
  * - 최근 휴가 동향
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-17
  */
 const VacationStatistics = ({ className = "" }) => {
@@ -102,7 +109,7 @@ const VacationStatistics = ({ className = "" }) => {
     const [error, setError] = useState(null);
     const [selectedPeriod, setSelectedPeriod] = useState('month');
 
-    /**
+/**
      * 휴가 통계 데이터 로드
      */
     const loadVacationStats = useCallback(async () => {
@@ -176,14 +183,14 @@ const VacationStatistics = ({ className = "" }) => {
         loadVacationStats();
     }, [loadVacationStats]);
 
-    /**
+/**
      * 기간 변경 핸들러
      */
     const handlePeriodChange = (period) => {
         setSelectedPeriod(period);
     };
 
-    /**
+/**
      * 날짜 포맷팅
      */
     const formatDate = (dateString) => {
@@ -192,7 +199,7 @@ const VacationStatistics = ({ className = "" }) => {
         return date.toLocaleDateString('ko-KR');
     };
 
-    /**
+/**
      * 휴가 유형별 색상 (디자인 시스템 변수 사용)
      */
     const getVacationTypeColor = (type) => {

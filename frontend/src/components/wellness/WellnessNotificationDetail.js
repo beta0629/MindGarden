@@ -10,9 +10,13 @@ import './WellnessNotificationDetail.css';
 
 /**
  * 웰니스 알림 상세 페이지 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-21
  */
 const WellnessNotificationDetail = () => {
@@ -45,7 +49,7 @@ const WellnessNotificationDetail = () => {
       setLoading(true);
       setError(null);
 
-      const response = await apiGet(`/api/system-notifications/${id}`);
+      const response = await apiGet(`/api/v1/system-notifications/${id}`);
       
       if (response && response.success) {
         setNotification(response.data);
@@ -90,9 +94,11 @@ const WellnessNotificationDetail = () => {
     return classes[type] || 'type-general';
   };
 
-  /**
+/**
    * AI 생성 웰니스 컨텐츠를 HTML로 렌더링
+/**
    * - HTML 태그를 그대로 렌더링
+/**
    * - 안전한 HTML 렌더링을 위해 dangerouslySetInnerHTML 사용
    */
   const formatWellnessContent = (content) => {

@@ -46,6 +46,14 @@ public class UserDto {
     private String grade;
     
     /**
+     * 테넌트 ID (필수 - 보안상 중요)
+     * 
+     * SECURITY_STANDARD.md, SESSION_STANDARD.md 참조
+     * tenantId는 모든 사용자(내담자, 상담사, 관리자)에게 필수 값입니다.
+     */
+    private String tenantId;
+    
+    /**
      * 활성 상태
      */
     private Boolean isActive;

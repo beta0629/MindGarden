@@ -1,10 +1,16 @@
 /**
  * Summary Statistics Widget
+/**
  * 통계 요약 패널을 표시하는 범용 위젯
+/**
  * SummaryPanels를 기반으로 범용화 (상담소 특화 기능 제거)
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 

@@ -82,7 +82,7 @@ export const NotificationProvider = ({ children }) => {
       
       // 캐싱 방지를 위한 타임스탬프 추가
       const timestamp = new Date().getTime();
-      const endpoint = `/api/consultation-messages/unread-count?userId=${user.id}&userType=${userType}&_t=${timestamp}`;
+      const endpoint = `/api/v1/consultation-messages/unread-count?userId=${user.id}&userType=${userType}&_t=${timestamp}`;
 
       console.log('📨 메시지 개수 API 호출:', endpoint);
       const response = await apiGet(endpoint);
@@ -114,7 +114,7 @@ export const NotificationProvider = ({ children }) => {
 
     try {
       const timestamp = new Date().getTime();
-      const endpoint = `/api/system-notifications/unread-count?_t=${timestamp}`;
+      const endpoint = `/api/v1/system-notifications/unread-count?_t=${timestamp}`;
 
       const response = await apiGet(endpoint);
       
@@ -158,8 +158,8 @@ export const NotificationProvider = ({ children }) => {
     try {
       setLoading(true);
       const endpoint = user.role === 'ROLE_CONSULTANT'
-        ? `/api/consultation-messages/consultant/${user.id}`
-        : `/api/consultation-messages/client/${user.id}`;
+        ? `/api/v1/consultation-messages/consultant/${user.id}`
+        : `/api/v1/consultation-messages/client/${user.id}`;
 
       const response = await apiGet(endpoint);
       
@@ -192,7 +192,7 @@ export const NotificationProvider = ({ children }) => {
     }
 
     try {
-      const endpoint = `/api/system-notifications?page=0&size=${CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS}`;
+      const endpoint = `/api/v1/system-notifications?page=0&size=${CONSTANTS.NOTIFICATION_CONSTANTS.MAX_NOTIFICATIONS}`;
       
       const response = await apiGet(endpoint);
       
@@ -222,7 +222,7 @@ export const NotificationProvider = ({ children }) => {
   const markMessageAsRead = async (messageId) => {
     try {
       console.log('📨 메시지 읽음 처리 시작:', messageId);
-      const response = await apiGet(`/api/consultation-messages/${messageId}/read`);
+      const response = await apiGet(`/api/v1/consultation-messages/${messageId}/read`);
       
       if (response.success) {
         console.log('✅ 메시지 읽음 처리 성공:', messageId);
@@ -242,7 +242,7 @@ export const NotificationProvider = ({ children }) => {
   const markSystemNotificationAsRead = async (notificationId) => {
     try {
       console.log('📢 공지 읽음 처리 시작:', notificationId);
-      const response = await apiGet(`/api/system-notifications/${notificationId}/read`);
+      const response = await apiGet(`/api/v1/system-notifications/${notificationId}/read`);
       
       if (response.success) {
         console.log('✅ 공지 읽음 처리 성공:', notificationId);

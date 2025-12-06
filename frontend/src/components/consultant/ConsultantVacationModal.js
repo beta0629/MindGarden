@@ -9,11 +9,17 @@ import csrfTokenManager from '../../utils/csrfTokenManager';
 
 /**
  * 상담사용 휴가 등록 모달
+/**
  * - 자신의 휴가만 등록 가능
+/**
  * - 관리자용 VacationManagementModal과 별도
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-10-27
  */
 const ConsultantVacationModal = ({ 

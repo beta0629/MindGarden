@@ -9,10 +9,15 @@ import './PendingDepositsWidget.css';
 
 /**
  * 입금 확인 대기 목록 위젯 - 표준화된 위젯
+/**
  * 관리자가 확인해야 할 입금 내역들을 표시
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 const PendingDepositsWidget = ({ widget, user }) => {

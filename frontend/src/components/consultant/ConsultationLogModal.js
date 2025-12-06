@@ -5,7 +5,9 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
+/**
  * 상담일지 작성 모달 컴포넌트
+/**
  * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 모달
  */
 const ConsultationLogModal = ({ 

@@ -8,6 +8,7 @@ import '../Widget.css';
 
 /**
  * 오늘의 통계 위젯 - 표준화된 위젯
+/**
  * 오늘의 예약, 완료, 진행중, 취소된 상담 통계를 표시
  */
 const TodayStatsWidget = ({ widget, user }) => {

@@ -1,8 +1,14 @@
+/**
  * Personalized Messages Widget - 표준화된 맞춤형 메시지 위젯
+/**
  * ClientPersonalizedMessages를 위젯으로 변환 + 실제 API 연동
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 

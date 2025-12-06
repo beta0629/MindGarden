@@ -1,9 +1,14 @@
 /**
  * 학원 시스템 - 공통 데이터 테이블 컴포넌트
+/**
  * 재사용 가능한 테이블 UI
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-19
  */
 
@@ -16,13 +21,21 @@ import './DataTable.css';
 
 /**
  * 데이터 테이블 컴포넌트
+/**
  * 
+/**
  * @param {Array} columns - 컬럼 정의 배열
+/**
  * @param {Array} data - 테이블 데이터
+/**
  * @param {boolean} loading - 로딩 상태
+/**
  * @param {string} error - 에러 메시지
+/**
  * @param {Function} onRowClick - 행 클릭 핸들러
+/**
  * @param {boolean} striped - 줄무늬 스타일
+/**
  * @param {boolean} hoverable - 호버 효과
  */
 const DataTable = ({

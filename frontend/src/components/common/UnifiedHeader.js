@@ -24,14 +24,23 @@ import '../../styles/main.css';
  * @param {object} props - 컴포넌트 props
  * @param {string} [props.title=''] - 헤더 제목 (기본값: 'CoreSolution')
  * @param {string} [props.logoType='text'] - 로고 타입 (text, image, custom)
+/**
  * @param {string} [props.logoImage=''] - 커스텀 로고 이미지 URL
+/**
  * @param {string} [props.logoAlt='CoreSolution'] - 로고 alt 텍스트
+/**
  * @param {boolean} [props.showUserMenu=true] - 사용자 메뉴 표시 여부
+/**
  * @param {boolean} [props.showHamburger=true] - 햄버거 메뉴 표시 여부
+/**
  * @param {string} [props.variant='default'] - 헤더 스타일 (default, compact, transparent)
+/**
  * @param {boolean} [props.sticky=true] - 상단 고정 여부
+/**
  * @param {string} [props.className=''] - 추가 CSS 클래스
+/**
  * @param {function} [props.onLogoClick] - 로고 클릭 핸들러
+/**
  * @param {object} [props.extraActions] - 추가 액션 버튼들
  */
 const UnifiedHeader = ({
@@ -151,7 +160,7 @@ const UnifiedHeader = ({
   // 멀티 테넌트 사용자 확인
   const checkMultiTenantUser = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/tenant/check-multi`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/check-multi`, {
         credentials: 'include'
       });
       
@@ -177,7 +186,7 @@ const UnifiedHeader = ({
   const loadAccessibleTenants = async () => {
     try {
       setIsLoadingTenants(true);
-      const response = await fetch(`${API_BASE_URL}/api/auth/tenant/accessible`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/accessible`, {
         credentials: 'include'
       });
       
@@ -204,7 +213,7 @@ const UnifiedHeader = ({
   // 테넌트 전환 핸들러
   const handleTenantSwitch = async (tenantId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/tenant/switch`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/switch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -1,7 +1,10 @@
 /**
  * 스케줄 헤더 컴포넌트 (Presentational)
+/**
  * - 순수 UI 컴포넌트
+/**
  * - 비즈니스 로직 없음
+/**
  * - props로 데이터와 핸들러를 받음
  */
 const ScheduleHeader = ({

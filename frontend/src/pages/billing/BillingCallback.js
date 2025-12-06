@@ -1,10 +1,16 @@
 /**
  * 결제 수단 등록 콜백 페이지
+/**
  * 
+/**
  * PG SDK의 requestBillingAuth() 성공/실패 콜백을 처리합니다.
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0
+/**
  * @since 2025-11-20
  */
 

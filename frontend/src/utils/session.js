@@ -1,5 +1,6 @@
 /**
  * 세션 관리 유틸리티
+/**
  * 로그인 상태, 사용자 정보, 토큰 관리
  */
 
@@ -238,12 +239,19 @@ export const forceClearSession = () => {
 
 /**
  * 역할별 대시보드 경로 매핑 (중앙 관리)
+/**
  * 
+/**
  * @deprecated 이 상수는 완전히 제거 예정입니다. 더 이상 사용하지 마세요.
+/**
  * 대신 `dashboardUtils.js`의 `getLegacyDashboardPath()` 또는 `redirectToDynamicDashboard()`를 사용하세요.
+/**
  * 
+/**
  * @see {@link ../utils/dashboardUtils.js} - 동적 대시보드 라우팅 유틸리티
+/**
  * 
+/**
  * @private 이 상수는 내부적으로만 사용되며, 외부에서는 접근하지 마세요.
  */
 const ROLE_DASHBOARD_MAP = {
@@ -260,12 +268,19 @@ const ROLE_DASHBOARD_MAP = {
 
 /**
  * 역할별 대시보드 경로 가져오기 (공통 함수)
+/**
  * 
+/**
  * @deprecated 이 함수는 하위 호환성을 위해 유지되지만, 새로운 코드에서는 사용하지 마세요.
+/**
  * 대신 `dashboardUtils.js`의 `getLegacyDashboardPath()` 또는 `redirectToDynamicDashboard()`를 사용하세요.
+/**
  * 
+/**
  * @param {string} role 역할
+/**
  * @returns {string} 대시보드 경로
+/**
  * @see {@link ../utils/dashboardUtils.js} - 동적 대시보드 라우팅 유틸리티
  */
 export const getDashboardPath = (role) => {
@@ -283,12 +298,19 @@ export const getCurrentUserDashboardPath = () => {
 
 /**
  * 공통 리다이렉션 함수 - React Router와 window.location 모두 지원
+/**
  * 
+/**
  * @deprecated 이 함수는 하위 호환성을 위해 유지되지만, 새로운 코드에서는 사용하지 마세요.
+/**
  * 대신 `dashboardUtils.js`의 `redirectToDynamicDashboard()`를 사용하세요.
+/**
  * 
+/**
  * @param {string} userRole 사용자 역할
+/**
  * @param {Function|null} navigate React Router navigate 함수 (선택)
+/**
  * @see {@link ../utils/dashboardUtils.js} - 동적 대시보드 라우팅 유틸리티
  */
 export const redirectToDashboardWithFallback = (userRole, navigate = null) => {
@@ -335,11 +357,17 @@ export const redirectToDashboardWithFallback = (userRole, navigate = null) => {
 
 /**
  * 로그인 후 대시보드로 리다이렉트 (기존 호환성 유지)
+/**
  * 
+/**
  * @deprecated 이 함수는 하위 호환성을 위해 유지되지만, 새로운 코드에서는 사용하지 마세요.
+/**
  * 대신 `dashboardUtils.js`의 `redirectToDynamicDashboard()`를 사용하세요.
+/**
  * 
+/**
  * @param {Object} userInfo 사용자 정보
+/**
  * @see {@link ../utils/dashboardUtils.js} - 동적 대시보드 라우팅 유틸리티
  */
 export const redirectToDashboard = (userInfo) => {

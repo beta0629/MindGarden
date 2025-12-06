@@ -1,5 +1,6 @@
 /**
  * 동적 권한 관리 유틸리티
+/**
  * 백엔드의 DynamicPermissionService와 연동하여 권한을 체크합니다.
  */
 
@@ -7,12 +8,13 @@ import { apiGet } from './ajax';
 
 /**
  * 사용자의 권한 목록을 가져옵니다.
+/**
  * @param {Function} setUserPermissions - 권한 목록을 설정할 상태 함수 (선택사항)
  */
 export const fetchUserPermissions = async (setUserPermissions = null) => {
     try {
         console.log('🔍 사용자 권한 목록 조회 중...');
-        const response = await apiGet('/api/permissions/my-permissions');
+        const response = await apiGet('/api/v1/permissions/my-permissions');
         
         // apiGet이 이미 ApiResponse 래퍼를 처리하므로, response는 직접 data입니다
         if (response && typeof response === 'object') {
@@ -41,8 +43,11 @@ export const fetchUserPermissions = async (setUserPermissions = null) => {
 
 /**
  * 특정 권한을 가지고 있는지 확인합니다.
+/**
  * @param {Array} userPermissions - 사용자의 권한 목록
+/**
  * @param {string} permissionCode - 확인할 권한 코드
+/**
  * @returns {boolean} 권한 보유 여부
  */
 export const hasPermission = (userPermissions, permissionCode) => {
@@ -58,8 +63,11 @@ export const hasPermission = (userPermissions, permissionCode) => {
 
 /**
  * 여러 권한 중 하나라도 가지고 있는지 확인합니다.
+/**
  * @param {Array} userPermissions - 사용자의 권한 목록
+/**
  * @param {Array} permissionCodes - 확인할 권한 코드 목록
+/**
  * @returns {boolean} 권한 보유 여부
  */
 export const hasAnyPermission = (userPermissions, permissionCodes) => {
@@ -78,8 +86,11 @@ export const hasAnyPermission = (userPermissions, permissionCodes) => {
 
 /**
  * 모든 권한을 가지고 있는지 확인합니다.
+/**
  * @param {Array} userPermissions - 사용자의 권한 목록
+/**
  * @param {Array} permissionCodes - 확인할 권한 코드 목록
+/**
  * @returns {boolean} 권한 보유 여부
  */
 export const hasAllPermissions = (userPermissions, permissionCodes) => {
@@ -98,7 +109,9 @@ export const hasAllPermissions = (userPermissions, permissionCodes) => {
 
 /**
  * 권한 체크를 위한 React Hook
+/**
  * @param {Array} userPermissions - 사용자의 권한 목록
+/**
  * @returns {Object} 권한 체크 함수들
  */
 export const usePermissions = (userPermissions) => {
@@ -111,6 +124,7 @@ export const usePermissions = (userPermissions) => {
 
 /**
  * 권한 코드 상수 정의
+/**
  * 백엔드의 PermissionInitializationService와 일치해야 합니다.
  */
 export const PERMISSIONS = {
@@ -216,6 +230,7 @@ export const PERMISSIONS = {
 
 /**
  * 권한별 역할 매핑 (백엔드와 일치)
+/**
  * 특정 권한이 필요한 기능에 접근할 수 있는 역할들을 정의합니다.
  */
 export const PERMISSION_ROLES = {

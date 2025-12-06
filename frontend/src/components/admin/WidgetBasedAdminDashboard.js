@@ -11,7 +11,9 @@ import './WidgetBasedAdminDashboard.css';
 
 /**
  * 위젯 기반 관리자 대시보드
+/**
  * - 데이터베이스에서 위젯 그룹과 위젯 정의를 동적으로 로드
+/**
  * - 하드코딩 없이 완전히 동적으로 구성
  */
 const WidgetBasedAdminDashboard = () => {

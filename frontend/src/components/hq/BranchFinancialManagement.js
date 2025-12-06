@@ -12,6 +12,7 @@ import { showNotification } from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import './BranchFinancialManagement.css';
 
+/**
  * 지점별 재무관리 필터 카드 컴포넌트
  */
 const BranchFilterCard = ({
@@ -116,6 +117,7 @@ const BranchFilterCard = ({
     );
 };
 
+/**
  * 재무 요약 카드 컴포넌트
  */
 const FinancialSummaryCard = ({ title, value, icon: Icon, color = 'primary', trend = null }) => {
@@ -146,6 +148,7 @@ const FinancialSummaryCard = ({ title, value, icon: Icon, color = 'primary', tre
     );
 };
 
+/**
  * 거래 내역 테이블 컴포넌트
  */
 const TransactionTable = ({ transactions, loading }) => {
@@ -233,6 +236,7 @@ const TransactionTable = ({ transactions, loading }) => {
     );
 };
 
+/**
  * 지점별 재무관리 메인 컴포넌트
  */
 const BranchFinancialManagement = () => {

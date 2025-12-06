@@ -1,7 +1,12 @@
+/**
  * 결제 및 구독 관련 상수 정의
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-20
  */
 
@@ -73,6 +78,7 @@ export const ICON_SIZES = {
 };
 
 
+/**
  * @deprecated 공통 코드에서 동적으로 조회하세요. getSubscriptionStatusCodes() 사용
  * 하위 호환성을 위해 유지되지만, 공통 코드 조회를 우선 사용하세요.
  */

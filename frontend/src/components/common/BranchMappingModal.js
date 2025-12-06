@@ -8,10 +8,15 @@ import { apiPost } from '../../utils/ajax';
 
 /**
  * 지점 매핑 모달 컴포넌트
+/**
  * 관리자가 지점코드가 없을 때 지점을 매핑하는 모달
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-12
  */
 const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
@@ -33,7 +38,7 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
 
   // === API 호출 함수들 ===
   
-  /**
+/**
    * 지점 목록 조회
    */
   const loadBranches = async () => {
@@ -42,8 +47,8 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
       setIsLoadingBranches(true);
       setError(null);
       
-      console.log('📡 API 호출 시작: /api/auth/branches');
-      const response = await fetch('/api/auth/branches', {
+      console.log('📡 API 호출 시작: /api/v1/auth/branches');
+      const response = await fetch('/api/v1/auth/branches', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -72,7 +77,7 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
-  /**
+/**
    * 지점 매핑 처리
    */
   const handleBranchMapping = async (e) => {
@@ -87,7 +92,7 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
     setError(null);
 
     try {
-      const data = await apiPost('/api/auth/map-branch', {
+      const data = await apiPost('/api/v1/auth/map-branch', {
         // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         branchCode: selectedBranchCode
       });

@@ -22,16 +22,20 @@ import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 // import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
 import './ErdManagement.css';
 
 /**
  * HQ 운영 포털 ERD 관리 페이지
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 const ErdManagement = () => {

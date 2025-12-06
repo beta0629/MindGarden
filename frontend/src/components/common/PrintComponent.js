@@ -6,14 +6,23 @@ import './PrintComponent.css';
  * 공통 프린트 컴포넌트
  * 
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {React.ReactNode} props.children - 프린트할 내용
+/**
  * @param {string} props.title - 프린트 제목
+/**
  * @param {Object} props.printStyle - 프린트 스타일
+/**
  * @param {Function} props.onBeforePrint - 프린트 전 콜백
+/**
  * @param {Function} props.onAfterPrint - 프린트 후 콜백
+/**
  * @param {string} props.pageStyle - 페이지 스타일
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-11
  */
 const PrintComponent = forwardRef(({ 

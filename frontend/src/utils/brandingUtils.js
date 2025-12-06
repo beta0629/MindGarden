@@ -1,9 +1,14 @@
 /**
  * 브랜딩 관련 유틸리티 함수들
+/**
  * 테넌트별 로고, 상호명 등 브랜딩 정보를 관리
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-26
  */
 
@@ -11,6 +16,7 @@ import { API_BASE_URL } from '../constants/api';
 
 /**
  * 브랜딩 정보 캐시 (메모리 캐시)
+/**
  * 페이지 새로고침 시까지 유지
  */
 let brandingCache = null;
@@ -22,8 +28,11 @@ const CACHE_DURATION = 30 * 60 * 1000; // 30분
 
 /**
  * 현재 테넌트의 브랜딩 정보 조회
+/**
  * 
+/**
  * @param {boolean} useCache - 캐시 사용 여부 (기본값: true)
+/**
  * @returns {Promise<Object>} 브랜딩 정보
  */
 export const getBrandingInfo = async (useCache = true) => {
@@ -117,15 +126,20 @@ export const getBrandingInfo = async (useCache = true) => {
 
 /**
  * 브랜딩 정보 조회 (별칭 - 기존 코드 호환성)
+/**
  * @param {boolean} useCache 
+/**
  * @returns {Promise<Object>}
  */
 export const fetchBrandingInfo = getBrandingInfo;
 
 /**
  * 기본 브랜딩 정보 생성 (Fallback)
+/**
  * 
+/**
  * @param {string} tenantName - 테넌트명 (선택사항)
+/**
  * @returns {Object} 기본 브랜딩 정보
  */
 export const createDefaultBranding = (tenantName = null) => {
@@ -147,8 +161,11 @@ export const createDefaultBranding = (tenantName = null) => {
 
 /**
  * 브랜딩 정보에서 로고 타입 결정
+/**
  * 
+/**
  * @param {Object} brandingInfo - 브랜딩 정보
+/**
  * @returns {string} 로고 타입 ('image' | 'text')
  */
 export const getLogoType = (brandingInfo) => {
@@ -166,8 +183,11 @@ export const getLogoType = (brandingInfo) => {
 
 /**
  * 브랜딩 정보에서 표시할 회사명 추출
+/**
  * 
+/**
  * @param {Object} brandingInfo - 브랜딩 정보
+/**
  * @returns {string} 표시할 회사명
  */
 export const getDisplayName = (brandingInfo) => {
@@ -187,8 +207,11 @@ export const getDisplayName = (brandingInfo) => {
 
 /**
  * 브랜딩 정보에서 로고 이미지 URL 추출
+/**
  * 
+/**
  * @param {Object} brandingInfo - 브랜딩 정보
+/**
  * @returns {string} 로고 이미지 URL
  */
 export const getLogoImageUrl = (brandingInfo) => {
@@ -201,8 +224,11 @@ export const getLogoImageUrl = (brandingInfo) => {
 
 /**
  * 브랜딩 정보에서 로고 alt 텍스트 추출
+/**
  * 
+/**
  * @param {Object} brandingInfo - 브랜딩 정보
+/**
  * @returns {string} 로고 alt 텍스트
  */
 export const getLogoAlt = (brandingInfo) => {
@@ -218,8 +244,11 @@ export const getLogoAlt = (brandingInfo) => {
 
 /**
  * 브랜딩 정보 업데이트 (로고 제외)
+/**
  * 
+/**
  * @param {Object} updateData - 업데이트할 브랜딩 정보
+/**
  * @returns {Promise<Object>} 업데이트된 브랜딩 정보
  */
 export const updateBrandingInfo = async (updateData) => {
@@ -261,8 +290,11 @@ export const updateBrandingInfo = async (updateData) => {
 
 /**
  * 로고 업로드
+/**
  * 
+/**
  * @param {File} logoFile - 로고 파일
+/**
  * @returns {Promise<Object>} 업데이트된 브랜딩 정보
  */
 export const uploadLogo = async (logoFile) => {
@@ -304,8 +336,11 @@ export const uploadLogo = async (logoFile) => {
 
 /**
  * 파비콘 업로드
+/**
  * 
+/**
  * @param {File} faviconFile - 파비콘 파일
+/**
  * @returns {Promise<Object>} 업데이트된 브랜딩 정보
  */
 export const uploadFavicon = async (faviconFile) => {
@@ -347,7 +382,9 @@ export const uploadFavicon = async (faviconFile) => {
 
 /**
  * 로고 삭제
+/**
  * 
+/**
  * @returns {Promise<Object>} 업데이트된 브랜딩 정보
  */
 export const deleteLogo = async () => {
@@ -385,7 +422,9 @@ export const deleteLogo = async () => {
 
 /**
  * 파비콘 삭제
+/**
  * 
+/**
  * @returns {Promise<Object>} 업데이트된 브랜딩 정보
  */
 export const deleteFavicon = async () => {
@@ -435,8 +474,11 @@ export const clearBrandingCache = () => {
 
 /**
  * 브랜딩 정보를 UnifiedHeader props로 변환
+/**
  * 
+/**
  * @param {Object} brandingInfo - 브랜딩 정보
+/**
  * @returns {Object} UnifiedHeader props
  */
 export const brandingToHeaderProps = (brandingInfo) => {

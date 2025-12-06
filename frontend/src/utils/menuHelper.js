@@ -2,10 +2,15 @@ import { apiGet } from './ajax';
 
 /**
  * 메뉴 관련 유틸리티 함수들
+/**
  * 동적 메뉴 로딩 및 권한 관리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-14
  */
 

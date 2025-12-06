@@ -1,8 +1,14 @@
+/**
  * Session Management Widget - 표준화된 위젯
+/**
  * 상담소 특화 회기 관리 위젯
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 

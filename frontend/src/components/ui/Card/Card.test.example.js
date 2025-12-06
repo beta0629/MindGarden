@@ -4,6 +4,7 @@ import {Card, CardHeader, CardContent, CardFooter} from './index';
 
 /**
  * Card 컴포넌트 사용 예시
+/**
  * 이 파일은 테스트/참고용입니다.
  */
 

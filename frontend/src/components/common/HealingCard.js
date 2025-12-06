@@ -4,6 +4,7 @@ import './HealingCard.css';
 
 /**
  * 오늘의 힐링 카드 컴포넌트
+/**
  * GPT로 생성된 힐링 컨텐츠를 표시
  */
 const HealingCard = ({ userRole = 'CLIENT', category = null }) => {

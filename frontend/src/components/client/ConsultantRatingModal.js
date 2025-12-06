@@ -11,13 +11,21 @@ import '../../styles/unified-design-tokens.css';
 
 /**
  * 상담사 하트 평가 모달 컴포넌트
+/**
  * - 내담자가 상담 후 상담사에게 하트 점수 부여
+/**
  * - 1-5 하트 점수 시스템
+/**
  * - 평가 태그 및 코멘트 지원
+/**
  * - 디자인 시스템 v2.0 적용
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-10-27
  */
 const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) => {

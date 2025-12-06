@@ -1,13 +1,22 @@
 /**
  * MindGarden 디자인 시스템 v2.0 - UI Components Library
+/**
  * 
+/**
  * 모든 표준화된 UI 컴포넌트를 한 곳에서 import 가능
+/**
  * 
+/**
  * @example
+/**
  * import { Button, Card, Modal, Loading } from '@/components/ui';
+/**
  * 
+/**
  * @author MindGarden Team
+/**
  * @version 2.0.0
+/**
  * @since 2025-11-28
  */
 

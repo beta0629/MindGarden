@@ -1,14 +1,21 @@
 /**
  * CSRF 토큰 관리 유틸리티
+/**
  * - CSRF 토큰 캐싱 및 자동 갱신
+/**
  * - fetch 요청에 자동으로 CSRF 토큰 포함
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-23
  */
 
 import { API_BASE_URL } from '../constants/api';
+import { getTenantId } from './apiHeaders';
 
 class CsrfTokenManager {
     constructor() {
@@ -18,7 +25,7 @@ class CsrfTokenManager {
         this.refreshPromise = null;
     }
 
-    /**
+/**
      * CSRF 토큰 가져오기 (캐시된 토큰이 있으면 사용, 없으면 새로 요청)
      */
     async getToken() {
@@ -36,7 +43,7 @@ class CsrfTokenManager {
         return await this.refreshToken();
     }
 
-    /**
+/**
      * CSRF 토큰 새로고침
      */
     async refreshToken() {
@@ -56,12 +63,12 @@ class CsrfTokenManager {
         }
     }
 
-    /**
+/**
      * 실제 토큰 요청
      */
     async _fetchToken() {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/auth/csrf-token`, {
+            const response = await fetch(`${API_BASE_URL}/api/v1/auth/csrf-token`, {
                 method: 'GET',
                 credentials: 'include'
             });
@@ -87,7 +94,7 @@ class CsrfTokenManager {
         }
     }
 
-    /**
+/**
      * fetch 요청에 CSRF 토큰을 자동으로 포함하는 래퍼 함수
      */
     async fetchWithCsrf(url, options = {}) {
@@ -107,6 +114,12 @@ class CsrfTokenManager {
             headers['X-XSRF-TOKEN'] = token;
         }
         
+        // tenantId 헤더 추가 (모든 API 호출에 적용)
+        const tenantId = getTenantId();
+        if (tenantId) {
+            headers['X-Tenant-Id'] = tenantId;
+        }
+        
         return fetch(fullUrl, {
             ...options,
             headers,
@@ -114,7 +127,7 @@ class CsrfTokenManager {
         });
     }
 
-    /**
+/**
      * POST 요청 헬퍼
      */
     async post(url, data, options = {}) {
@@ -125,7 +138,7 @@ class CsrfTokenManager {
         });
     }
 
-    /**
+/**
      * PUT 요청 헬퍼
      */
     async put(url, data, options = {}) {
@@ -136,7 +149,7 @@ class CsrfTokenManager {
         });
     }
 
-    /**
+/**
      * DELETE 요청 헬퍼
      */
     async delete(url, options = {}) {
@@ -146,7 +159,7 @@ class CsrfTokenManager {
         });
     }
 
-    /**
+/**
      * GET 요청 헬퍼 (CSRF 토큰 불필요하지만 일관성을 위해)
      */
     async get(url, options = {}) {
@@ -156,7 +169,7 @@ class CsrfTokenManager {
         });
     }
 
-    /**
+/**
      * 토큰 캐시 초기화
      */
     clearToken() {

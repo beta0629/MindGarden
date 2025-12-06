@@ -1,9 +1,14 @@
 /**
  * 공통 알림 시스템
+/**
  * Toast 알림을 위한 유틸리티
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
@@ -18,7 +23,7 @@ class NotificationManager {
         this.loadNotificationTypes();
     }
 
-    /**
+/**
      * 알림 유형 코드 로드 (캐시 적용)
      */
     async loadNotificationTypes() {
@@ -59,7 +64,7 @@ class NotificationManager {
         }
     }
 
-    /**
+/**
      * 알림 리스너 등록
      */
     addListener(callback) {
@@ -69,7 +74,7 @@ class NotificationManager {
         };
     }
 
-    /**
+/**
      * 알림 표시
      */
     show(message, type = 'success', duration = 1000) { // 기본 duration을 3초에서 1초로 단축
@@ -96,35 +101,35 @@ class NotificationManager {
         return notification.id;
     }
 
-    /**
+/**
      * 성공 알림
      */
     success(message, duration = 1000) { // 기본 duration을 3초에서 1초로 단축
         return this.show(message, 'success', duration);
     }
 
-    /**
+/**
      * 오류 알림
      */
     error(message, duration = 2000) { // 기본 duration을 5초에서 2초로 단축
         return this.show(message, 'error', duration);
     }
 
-    /**
+/**
      * 경고 알림
      */
     warning(message, duration = 1500) { // 기본 duration을 4초에서 1.5초로 단축
         return this.show(message, 'warning', duration);
     }
 
-    /**
+/**
      * 정보 알림
      */
     info(message, duration = 1000) { // 기본 duration을 3초에서 1초로 단축
         return this.show(message, 'info', duration);
     }
 
-    /**
+/**
      * API 오류 처리
      */
     handleApiError(error, defaultMessage = '오류가 발생했습니다.') {
@@ -147,7 +152,7 @@ class NotificationManager {
         return message;
     }
 
-    /**
+/**
      * API 성공 처리
      */
     handleApiSuccess(response, defaultMessage = '성공했습니다.') {
@@ -161,9 +166,11 @@ class NotificationManager {
         return message;
     }
 
-    /**
+/**
      * 확인 다이얼로그 (Promise 기반)
+/**
      * @param {string} message - 확인 메시지
+/**
      * @param {function} callback - 콜백 함수 (true/false 전달)
      */
     confirm(message, callback) {
@@ -174,9 +181,11 @@ class NotificationManager {
         return result;
     }
 
-    /**
+/**
      * 알림 다이얼로그
+/**
      * @param {string} message - 알림 메시지
+/**
      * @param {function} callback - 콜백 함수
      */
     alert(message, callback) {

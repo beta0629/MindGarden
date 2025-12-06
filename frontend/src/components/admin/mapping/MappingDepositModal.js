@@ -6,11 +6,17 @@ import csrfTokenManager from '../../../utils/csrfTokenManager';
 
 /**
  * 매칭 입금 확인 모달 컴포넌트
+/**
  * - 입금 확인 처리
+/**
  * - 입금 참조번호 입력
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-30
  */
 const MappingDepositModal = ({ 

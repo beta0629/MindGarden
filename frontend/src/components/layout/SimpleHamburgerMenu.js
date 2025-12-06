@@ -9,10 +9,15 @@ import './SimpleHamburgerMenu.css';
 
 /**
  * 동적 햄버거 메뉴 컴포넌트
+/**
  * 공통 코드 기반 권한별 메뉴 표시
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-14
  */
 const SimpleHamburgerMenu = ({ isOpen, onClose }) => {

@@ -10,14 +10,23 @@ import './AutoResponsiveWrapper.css';
 /**
  * 자동 반응형 래퍼 컴포넌트
  * 
+/**
  * 기능:
+/**
  * - 화면 크기에 따라 자동으로 레이아웃 변경
+/**
  * - 테이블 → 카드 자동 변환
+/**
  * - 모든 컴포넌트에 일관된 반응형 적용
+/**
  * 
+/**
  * 사용법:
+/**
  * <AutoResponsiveWrapper type="table">
+/**
  *   <YourComponent />
+/**
  * </AutoResponsiveWrapper>
  */
 

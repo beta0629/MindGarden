@@ -9,6 +9,7 @@ import './ClientMessageScreen.css';
 
 /**
  * 내담자 메시지 확인 화면
+/**
  * 상담사로부터 받은 메시지를 확인하고 답장할 수 있는 화면
  */
 const ClientMessageScreen = () => {
@@ -52,7 +53,7 @@ const ClientMessageScreen = () => {
       setLoading(true);
       
       // ClientMessageSection과 동일한 방식으로 API 호출
-      const response = await apiGet(`/api/consultation-messages/client/${user.id}`, {
+      const response = await apiGet(`/api/v1/consultation-messages/client/${user.id}`, {
         page: 0,
         size: 100,
         sort: 'createdAt,desc'
@@ -105,7 +106,7 @@ const ClientMessageScreen = () => {
     // 읽지 않은 메시지인 경우 읽음 처리
     if (!message.isRead) {
       try {
-        await apiPut(`/api/consultation-messages/${message.id}/read`);
+        await apiPut(`/api/v1/consultation-messages/${message.id}/read`);
         // 로컬 상태 업데이트
         setMessages(prev => prev.map(m => 
           m.id === message.id ? { ...m, isRead: true, readAt: new Date().toISOString() } : m
@@ -133,7 +134,7 @@ const ClientMessageScreen = () => {
         isUrgent: false
       };
 
-      const response = await apiPost(`/api/consultation-messages/${selectedMessage.id}/reply`, replyData);
+      const response = await apiPost(`/api/v1/consultation-messages/${selectedMessage.id}/reply`, replyData);
       
       if (response.success) {
         notificationManager.show('답장이 전송되었습니다.', 'success');

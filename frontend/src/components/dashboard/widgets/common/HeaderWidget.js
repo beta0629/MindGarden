@@ -1,10 +1,16 @@
 /**
  * Header Widget
+/**
  * SimpleHeader를 기반으로 한 범용 헤더 위젯
+/**
  * 대시보드 내에서 헤더를 표시할 수 있도록 위젯화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 

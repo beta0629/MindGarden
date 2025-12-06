@@ -1,9 +1,14 @@
 /**
  * 위젯 가시성 검증 유틸리티
+/**
  * 업종별 위젯 접근 제어 및 가시성 검증 로직
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-26
  */
 
@@ -19,7 +24,9 @@ import { sessionManager } from './sessionManager';
 
 /**
  * 업종별 허용 위젯 타입 반환 (동적)
+/**
  * @param {string} businessType - 업종 타입 (CONSULTATION, ACADEMY 등)
+/**
  * @returns {string[]} 허용된 위젯 타입 배열
  */
 export const getAllowedWidgetTypes = (businessType) => {
@@ -43,7 +50,9 @@ export const getAllowedWidgetTypes = (businessType) => {
 
 /**
  * 캐시에서 업종별 위젯 조회
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @returns {string[]|null} 캐시된 위젯 목록 또는 null
  */
 const getBusinessTypeWidgetsFromCache = (businessType) => {
@@ -71,7 +80,9 @@ const getBusinessTypeWidgetsFromCache = (businessType) => {
 
 /**
  * 레지스트리에서 업종별 허용 위젯 조회 (임시)
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @returns {string[]} 허용된 위젯 타입 배열
  */
 const getAllowedWidgetsFromRegistry = (businessType) => {
@@ -98,7 +109,9 @@ const getAllowedWidgetsFromRegistry = (businessType) => {
 
 /**
  * 업종별 위젯 캐시 저장
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @param {string[]} widgets - 위젯 목록
  */
 const cacheBusinessTypeWidgets = (businessType, widgets) => {
@@ -118,9 +131,13 @@ const cacheBusinessTypeWidgets = (businessType, widgets) => {
 
 /**
  * 위젯 가시성 검증
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @param {string} userRole - 사용자 역할 (선택적)
+/**
  * @returns {boolean} 가시성 여부
  */
 export const isWidgetVisible = (widgetType, businessType, userRole = null) => {
@@ -165,7 +182,9 @@ export const isWidgetVisible = (widgetType, businessType, userRole = null) => {
 
 /**
  * 관리자 위젯 여부 확인 (동적)
+/**
  * @param {string} widgetType - 위젯 타입 (정규화된)
+/**
  * @returns {boolean} 관리자 위젯 여부
  */
 const isAdminWidget = (widgetType) => {
@@ -176,7 +195,9 @@ const isAdminWidget = (widgetType) => {
 
 /**
  * 위젯 관리자 권한 필요 여부 확인 (동적)
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @returns {boolean} 관리자 권한 필요 여부
  */
 const checkWidgetRequiresAdmin = (widgetType) => {
@@ -187,7 +208,9 @@ const checkWidgetRequiresAdmin = (widgetType) => {
 
 /**
  * 위젯 설정 조회 (동적)
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @returns {Object|null} 위젯 설정
  */
 const getWidgetConfig = (widgetType) => {
@@ -207,7 +230,9 @@ const getWidgetConfig = (widgetType) => {
 
 /**
  * 기본 위젯 설정 (임시, 향후 API에서 조회)
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @returns {Object} 기본 위젯 설정
  */
 const getDefaultWidgetConfig = (widgetType) => {
@@ -227,7 +252,9 @@ const getDefaultWidgetConfig = (widgetType) => {
 
 /**
  * 위젯 카테고리 결정 (동적)
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @returns {string} 위젯 카테고리
  */
 const determineWidgetCategory = (widgetType) => {
@@ -248,7 +275,9 @@ const determineWidgetCategory = (widgetType) => {
 
 /**
  * 관리자 역할 검증 (동적)
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @returns {boolean} 관리자 역할 여부
  */
 const isAdminRole = (userRole) => {
@@ -304,7 +333,9 @@ const isAdminRole = (userRole) => {
 
 /**
  * 역할 관리자 권한 확인 (동적)
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @returns {boolean} 관리자 권한 여부
  */
 const checkRoleHasAdminPermission = async (userRole) => {
@@ -354,7 +385,9 @@ const checkRoleHasAdminPermission = async (userRole) => {
 
 /**
  * 공통코드에서 역할 정보 조회
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @returns {Promise<Object>} 역할 정보
  */
 const fetchRoleInfoFromCommonCode = async (userRole) => {
@@ -375,7 +408,9 @@ const fetchRoleInfoFromCommonCode = async (userRole) => {
 
 /**
  * 공통코드에서 관리자 레벨 확인
+/**
  * @param {Object} roleInfo - 역할 정보
+/**
  * @returns {Promise<boolean>} 관리자 권한 여부
  */
 const checkAdminLevelFromCommonCode = async (roleInfo) => {
@@ -398,9 +433,13 @@ const checkAdminLevelFromCommonCode = async (roleInfo) => {
 
 /**
  * 위젯 설정 필터링 (배열)
+/**
  * @param {Array} widgets - 위젯 설정 배열
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @returns {Array} 필터링된 위젯 배열
  */
 export const filterWidgetsByBusinessType = (widgets, businessType, userRole) => {
@@ -429,9 +468,13 @@ export const filterWidgetsByBusinessType = (widgets, businessType, userRole) => 
 
 /**
  * 대시보드 설정 필터링 (객체)
+/**
  * @param {Object} dashboardConfig - 대시보드 설정 객체
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @returns {Object} 필터링된 대시보드 설정
  */
 export const filterDashboardByBusinessType = (dashboardConfig, businessType, userRole) => {
@@ -458,7 +501,9 @@ export const filterDashboardByBusinessType = (dashboardConfig, businessType, use
 
 /**
  * 업종별 위젯 통계 반환
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @returns {Object} 위젯 통계 정보
  */
 export const getWidgetStatsByBusinessType = (businessType) => {
@@ -495,9 +540,13 @@ export const getWidgetStatsByBusinessType = (businessType) => {
 
 /**
  * 위젯 접근 권한 검증 (상세)
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @returns {Object} 상세 검증 결과
  */
 export const validateWidgetAccess = (widgetType, businessType, userRole) => {
@@ -575,7 +624,9 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
 
 /**
  * API에서 업종별 허용 위젯 조회 (향후 구현)
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @returns {Promise<string[]>} 허용된 위젯 타입 배열
  */
 export const fetchAllowedWidgetsByBusinessType = async (businessType) => {
@@ -596,7 +647,9 @@ export const fetchAllowedWidgetsByBusinessType = async (businessType) => {
 
 /**
  * API에서 역할 권한 조회 (향후 구현)
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @returns {Promise<string[]>} 권한 목록
  */
 export const fetchRolePermissions = async (userRole) => {
@@ -616,7 +669,9 @@ export const fetchRolePermissions = async (userRole) => {
 
 /**
  * API에서 위젯 메타데이터 조회 (향후 구현)
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @returns {Promise<Object>} 위젯 메타데이터
  */
 export const fetchWidgetMetadata = async (widgetType) => {
@@ -636,7 +691,9 @@ export const fetchWidgetMetadata = async (widgetType) => {
 
 /**
  * 역할 권한 캐시 저장
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @param {string[]} permissions - 권한 목록
  */
 const cacheRolePermissions = (userRole, permissions) => {
@@ -656,7 +713,9 @@ const cacheRolePermissions = (userRole, permissions) => {
 
 /**
  * 위젯 메타데이터 캐시 저장
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @param {Object} metadata - 위젯 메타데이터
  */
 const cacheWidgetMetadata = (widgetType, metadata) => {

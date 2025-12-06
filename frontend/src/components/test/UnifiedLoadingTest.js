@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 /**
  * UnifiedLoading 테스트 컴포넌트
+/**
  * 다양한 로딩 설정을 테스트할 수 있습니다.
  */
 const UnifiedLoadingTest = () => {

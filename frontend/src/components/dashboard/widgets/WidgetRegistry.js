@@ -1,10 +1,16 @@
 /**
  * 위젯 레지스트리
+/**
  * 위젯 타입별 컴포넌트 매핑
+/**
  * 공통 위젯과 특화 위젯을 분리하여 관리
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0
+/**
  * @since 2025-11-22
  */
 
@@ -160,8 +166,11 @@ const WIDGET_COMPONENTS = {
 
 /**
  * 위젯 컴포넌트 가져오기
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @param {string} businessType - 업종 타입 (필수, 특화 위젯 필터링용)
+/**
  * @returns {React.Component|null} 위젯 컴포넌트 또는 null
  */
 export const getWidgetComponent = (widgetType, businessType = null) => {
@@ -220,7 +229,9 @@ export const getWidgetComponent = (widgetType, businessType = null) => {
 
 /**
  * 위젯 타입이 지원되는지 확인
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @returns {boolean} 지원 여부
  */
 export const isWidgetTypeSupported = (widgetType) => {
@@ -234,7 +245,9 @@ export const isWidgetTypeSupported = (widgetType) => {
 
 /**
  * 지원되는 위젯 타입 목록 반환
+/**
  * @param {string} businessType - 업종 타입 (선택적)
+/**
  * @returns {string[]} 위젯 타입 배열
  */
 export const getSupportedWidgetTypes = (businessType = null) => {
@@ -261,6 +274,7 @@ export const getSupportedWidgetTypes = (businessType = null) => {
 
 /**
  * 공통 위젯 타입 목록 반환 (모든 업종에서 사용 가능)
+/**
  * @returns {string[]} 공통 위젯 타입 배열
  */
 export const getCommonWidgetTypes = () => {
@@ -269,6 +283,7 @@ export const getCommonWidgetTypes = () => {
 
 /**
  * 상담소 특화 위젯 타입 목록 반환
+/**
  * @returns {string[]} 상담소 특화 위젯 타입 배열
  */
 export const getConsultationWidgetTypes = () => {
@@ -277,6 +292,7 @@ export const getConsultationWidgetTypes = () => {
 
 /**
  * 학원 특화 위젯 타입 목록 반환
+/**
  * @returns {string[]} 학원 특화 위젯 타입 배열
  */
 export const getAcademyWidgetTypes = () => {
@@ -285,6 +301,7 @@ export const getAcademyWidgetTypes = () => {
 
 /**
  * ERP 특화 위젯 타입 목록 반환
+/**
  * @returns {string[]} ERP 특화 위젯 타입 배열
  */
 export const getErpWidgetTypes = () => {
@@ -293,7 +310,9 @@ export const getErpWidgetTypes = () => {
 
 /**
  * 위젯 레지스트리에 커스텀 위젯 등록
+/**
  * @param {string} widgetType - 위젯 타입
+/**
  * @param {React.Component} component - 위젯 컴포넌트
  */
 export const registerWidget = (widgetType, component) => {

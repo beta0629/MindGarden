@@ -1,9 +1,14 @@
 /**
  * ERP Statistics Grid Widget - 표준화된 위젯
+/**
  * ERP 주요 통계를 그리드 형태로 표시 (수입, 지출, 매출, 예산 등)
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 

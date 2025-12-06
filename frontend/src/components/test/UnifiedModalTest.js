@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 // import UnifiedModal from '../../components/common/modals/UnifiedModal'; // 임시 비활성화
 /**
  * UnifiedModal 테스트 컴포넌트
+/**
  * 다양한 모달 설정을 테스트할 수 있습니다.
  */
 const UnifiedModalTest = () => {

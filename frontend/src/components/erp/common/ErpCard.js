@@ -2,10 +2,15 @@ import React from 'react';
 
 /**
  * ERP 공통 카드 컴포넌트 - MindGarden 디자인 시스템 mg-v2-card 활용
+/**
  * 
+/**
  * @param {string} title - 카드 제목
+/**
  * @param {React.ReactNode} children - 카드 내용
+/**
  * @param {string} className - 추가 CSS 클래스
+/**
  * @param {boolean} glassEffect - 글라스 효과 적용 여부 (기본: false, mg-glass-card 사용)
  */
 const ErpCard = ({ title, children, className = '', glassEffect = false }) => {

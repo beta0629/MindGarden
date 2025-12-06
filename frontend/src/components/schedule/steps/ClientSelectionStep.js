@@ -5,13 +5,21 @@ import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import { API_BASE_URL } from '../../../constants/api';
 import './ClientSelectionStep.css';
 
+/**
  * 내담자 선택 단계 컴포넌트
+/**
  * - 결제 승인된 내담자만 표시
+/**
  * - 세션 정보 확인
+/**
  * - 매핑 상태 검증
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ClientSelectionStep = ({ 
@@ -27,6 +35,7 @@ const ClientSelectionStep = ({
         loadClients();
     }, [selectedConsultant]);
 
+/**
      * 내담자 목록 로드 (선택된 상담사와 매핑된 결제 승인된 내담자만)
      */
     const loadClients = async () => {
@@ -106,6 +115,7 @@ const ClientSelectionStep = ({
         }
     };
 
+/**
      * 전체 매핑에서 상담사별 필터링 (백업 방법)
      */
     const loadClientsFromAllMappings = async () => {
@@ -174,12 +184,14 @@ const ClientSelectionStep = ({
         }
     };
 
+/**
      * 내담자 선택 핸들러
      */
     const handleClientSelect = (client) => {
         onClientSelect(client);
     };
 
+/**
      * 매핑 생성 완료 핸들러
      */
     const handleMappingCreated = () => {

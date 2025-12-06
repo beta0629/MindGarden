@@ -4,6 +4,7 @@ import '../../styles/main.css';
 
 /**
  * 폼 모달 컴포넌트
+/**
  * 입력 폼이 있는 모달에 사용
  */
 const FormModal = ({ 

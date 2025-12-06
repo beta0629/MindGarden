@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGCard from '../common/MGCard';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -9,6 +9,7 @@ import './ErpCommon.css';
 
 /**
  * ERP 구매 관리 페이지
+/**
  * 비품 구매 요청 및 주문 관리
  */
 const PurchaseManagement = () => {

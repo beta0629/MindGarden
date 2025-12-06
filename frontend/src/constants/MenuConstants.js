@@ -1,9 +1,14 @@
 /**
  * 업종별 메뉴 접근 제어 상수 (동적 관리)
+/**
  * 하드코딩 금지 - API 또는 설정에서 동적으로 조회
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-26
  */
 
@@ -213,9 +218,13 @@ const DEFAULT_MENU_CONFIG = {
 
 /**
  * 업종별 허용 메뉴 반환 (동적)
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @param {Object} features - 활성화된 기능 목록
+/**
  * @returns {Promise<string[]>} 허용된 메뉴 ID 배열
  */
 export const getAllowedMenuItems = async (businessType, userRole, features = {}) => {
@@ -243,10 +252,15 @@ export const getAllowedMenuItems = async (businessType, userRole, features = {})
 
 /**
  * 메뉴 접근 권한 검증 (동적)
+/**
  * @param {string} menuItem - 메뉴 ID
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @param {Object} features - 활성화된 기능 목록
+/**
  * @returns {Promise<boolean>} 접근 권한 여부
  */
 export const hasMenuAccess = async (menuItem, businessType, userRole, features = {}) => {
@@ -256,7 +270,9 @@ export const hasMenuAccess = async (menuItem, businessType, userRole, features =
 
 /**
  * 메뉴 설정 조회 (동적)
+/**
  * @param {string} menuItem - 메뉴 ID
+/**
  * @returns {Promise<Object|null>} 메뉴 설정
  */
 export const getMenuConfig = async (menuItem) => {
@@ -284,9 +300,13 @@ export const getMenuConfig = async (menuItem) => {
 
 /**
  * 기본 설정에서 업종별 허용 메뉴 조회 (임시)
+/**
  * @param {string} businessType - 업종 타입
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @param {Object} features - 활성화된 기능 목록
+/**
  * @returns {string[]} 허용된 메뉴 ID 배열
  */
 const getAllowedMenusFromConfig = (businessType, userRole, features) => {
@@ -331,8 +351,11 @@ const getAllowedMenusFromConfig = (businessType, userRole, features) => {
 
 /**
  * 메뉴 권한 확인
+/**
  * @param {Object} menuConfig - 메뉴 설정
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @returns {boolean} 권한 여부
  */
 const checkMenuPermission = (menuConfig, userRole) => {
@@ -352,7 +375,9 @@ const checkMenuPermission = (menuConfig, userRole) => {
 
 /**
  * 관리자 역할 확인 (동적)
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @returns {boolean} 관리자 역할 여부
  */
 const isAdminRole = (userRole) => {

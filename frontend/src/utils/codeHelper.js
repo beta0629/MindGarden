@@ -1,9 +1,14 @@
 import { apiGet } from './ajax';
 
+/**
  * 하드코딩된 값들을 동적으로 처리하기 위한 헬퍼 함수들
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-14
  */
 
@@ -11,6 +16,7 @@ let groupMetadataCache = null;
 let lastCacheTime = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
+/**
  * 코드그룹 메타데이터 로드 (캐시 적용)
  */
 export const loadCodeGroupMetadata = async () => {
@@ -46,6 +52,7 @@ export const loadCodeGroupMetadata = async () => {
     return [];
 };
 
+/**
  * 코드그룹 한글명 조회 (동적)
  */
 export const getCodeGroupKoreanName = async (groupName) => {
@@ -68,6 +75,7 @@ export const getCodeGroupKoreanName = async (groupName) => {
     return groupName;
 };
 
+/**
  * 코드그룹 아이콘 조회 (동적)
  */
 export const getCodeGroupIcon = async (groupName) => {
@@ -90,6 +98,7 @@ export const getCodeGroupIcon = async (groupName) => {
     return '📁';
 };
 
+/**
  * 코드그룹 색상 조회 (동적)
  */
 export const getCodeGroupColor = async (groupName) => {
@@ -112,7 +121,9 @@ export const getCodeGroupColor = async (groupName) => {
     return 'var(--mg-primary-500)';
 };
 
+/**
  * 상태별 색상 조회 (동기 버전 - fallback 사용)
+/**
  * @deprecated - getStatusColorAsync 사용 권장
  */
 export const getStatusColorSync = (codeValue) => {
@@ -128,6 +139,7 @@ export const getStatusColorSync = (codeValue) => {
     return defaultColorMap[codeValue] || 'var(--mg-gray-500)';
 };
 
+/**
  * 상태별 아이콘 조회 (동적)
  */
 export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
@@ -209,6 +221,7 @@ export const getStatusIcon = async (codeValue, groupName = 'STATUS') => {
     return defaultIconMap[codeValue] || '📋';
 };
 
+/**
  * 상태별 색상과 아이콘을 함께 조회 (동적)
  */
 export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
@@ -237,6 +250,7 @@ export const getStatusStyle = async (codeValue, groupName = 'STATUS') => {
     };
 };
 
+/**
  * 상태별 색상 조회 (동적)
  */
 export const getStatusColor = async (codeValue, groupName) => {
@@ -314,6 +328,7 @@ export const getStatusColor = async (codeValue, groupName) => {
     return defaultColorMap[codeValue] || 'var(--mg-gray-500)';
 };
 
+/**
  * 코드그룹별 표시 옵션 조회 (색상, 아이콘 등)
  */
 export const getCodeGroupDisplayOptions = async (groupName) => {
@@ -329,6 +344,7 @@ export const getCodeGroupDisplayOptions = async (groupName) => {
     return null;
 };
 
+/**
  * 캐시 초기화 (메타데이터 변경 시 호출)
  */
 export const clearCodeGroupCache = () => {
@@ -336,6 +352,7 @@ export const clearCodeGroupCache = () => {
     lastCacheTime = 0;
 };
 
+/**
  * 동기식 코드그룹 한글명 조회 (캐시된 데이터 사용)
  */
 export const getCodeGroupKoreanNameSync = (groupName) => {
@@ -348,6 +365,7 @@ export const getCodeGroupKoreanNameSync = (groupName) => {
     return groupName;
 };
 
+/**
  * 동기식 코드그룹 아이콘 조회 (캐시된 데이터 사용)
  */
 export const getCodeGroupIconSync = (groupName) => {
@@ -360,6 +378,7 @@ export const getCodeGroupIconSync = (groupName) => {
     return '📁';
 };
 
+/**
  * 사용자 상태 한글명 조회 (동적)
  */
 export const getUserStatusKoreanName = async (status) => {
@@ -399,6 +418,7 @@ export const getUserStatusKoreanName = async (status) => {
     return defaultStatusMap[status] || status;
 };
 
+/**
  * 사용자 상태 한글명 조회 (동기 버전 - 기본값만 사용)
  */
 export const getUserStatusKoreanNameSync = (status) => {
@@ -423,6 +443,7 @@ export const getUserStatusKoreanNameSync = (status) => {
     return defaultStatusMap[status] || status;
 };
 
+/**
  * 사용자 등급 한글명 조회 (동적)
  */
 export const getUserGradeKoreanName = async (grade) => {
@@ -457,6 +478,7 @@ export const getUserGradeKoreanName = async (grade) => {
     return defaultGradeMap[grade] || grade || '브론즈';
 };
 
+/**
  * 사용자 등급 한글명 조회 (동기 버전 - 기본값만 사용)
  */
 export const getUserGradeKoreanNameSync = (grade) => {
@@ -479,6 +501,7 @@ export const getUserGradeKoreanNameSync = (grade) => {
     return defaultGradeMap[grade] || grade || '브론즈';
 };
 
+/**
  * 사용자 등급 아이콘 조회 (동적)
  */
 export const getUserGradeIcon = async (grade) => {
@@ -513,6 +536,7 @@ export const getUserGradeIcon = async (grade) => {
     return defaultGradeIconMap[grade] || '🥉';
 };
 
+/**
  * 사용자 등급 아이콘 조회 (동기 버전 - 기본값만 사용)
  */
 export const getUserGradeIconSync = (grade) => {
@@ -535,6 +559,7 @@ export const getUserGradeIconSync = (grade) => {
     return defaultGradeIconMap[grade] || '👤';
 };
 
+/**
  * 매칭 상태 한글명 조회 (동적)
  */
 export const getMappingStatusKoreanName = async (status) => {
@@ -583,6 +608,7 @@ export const getMappingStatusKoreanName = async (status) => {
     return defaultMappingStatusMap[status] || status;
 };
 
+/**
  * 매칭 상태 한글명 조회 (동기 버전 - 기본값만 사용)
  */
 export const getMappingStatusKoreanNameSync = (status) => {
@@ -606,6 +632,7 @@ export const getMappingStatusKoreanNameSync = (status) => {
     return defaultMappingStatusMap[status] || status;
 };
 
+/**
  * 전문분야 코드를 한글명으로 변환 (백엔드 로직과 동일)
  */
 export const getSpecialtyKoreanName = (code) => {
@@ -641,6 +668,7 @@ export const getSpecialtyKoreanName = (code) => {
     return specialtyMap[code] || code;
 };
 
+/**
  * 전문분야 배열을 한글명으로 변환
  */
 export const getSpecialtyKoreanNames = (codes) => {
@@ -651,6 +679,8 @@ export const getSpecialtyKoreanNames = (codes) => {
     return codes.map(code => getSpecialtyKoreanName(code.trim()));
 };
 
+/**
+ * 공통 코드에서 전문분야 조회
  */
 export const getSpecialtyFromCommonCode = async (codeValue) => {
     try {
@@ -677,10 +707,15 @@ export const getSpecialtyFromCommonCode = async (codeValue) => {
     };
 };
 
+/**
  * 텍스트 말줄임표 처리 함수
+/**
  * @param {string} text - 원본 텍스트
+/**
  * @param {number} maxLength - 최대 길이 (기본값: 50)
+/**
  * @param {string} suffix - 말줄임표 문자 (기본값: '...')
+/**
  * @returns {string} 처리된 텍스트
  */
 export const truncateText = (text, maxLength = 50, suffix = '...') => {
@@ -695,9 +730,13 @@ export const truncateText = (text, maxLength = 50, suffix = '...') => {
     return text.substring(0, maxLength - suffix.length) + suffix;
 };
 
+/**
  * 전문분야 텍스트 말줄임표 처리 (특화된 함수)
+/**
  * @param {Array} specialties - 전문분야 배열
+/**
  * @param {number} maxLength - 최대 길이 (기본값: 50)
+/**
  * @returns {string} 처리된 전문분야 텍스트
  */
 export const truncateSpecialtyText = (specialties, maxLength = 50) => {
@@ -709,11 +748,15 @@ export const truncateSpecialtyText = (specialties, maxLength = 50) => {
     return truncateText(text, maxLength);
 };
 
+/**
  * 모달 추가 정보 표시용 공통 함수들
  */
 
+/**
  * 상담사 경력 정보 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {string} 포맷된 경력 텍스트
  */
 export const getFormattedExperience = (consultant) => {
@@ -732,8 +775,11 @@ export const getFormattedExperience = (consultant) => {
     return '경력 정보 없음';
 };
 
+/**
  * 상담사 연락처 정보 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {Object} 포맷된 연락처 정보
  */
 export const getFormattedContact = (consultant) => {
@@ -743,8 +789,11 @@ export const getFormattedContact = (consultant) => {
     };
 };
 
+/**
  * 상담사 상담 횟수 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {string} 포맷된 상담 횟수
  */
 export const getFormattedConsultationCount = (consultant) => {
@@ -755,8 +804,11 @@ export const getFormattedConsultationCount = (consultant) => {
     return `${count}회`;
 };
 
+/**
  * 상담사 등록일 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {string} 포맷된 등록일
  */
 export const getFormattedRegistrationDate = (consultant) => {
@@ -772,8 +824,11 @@ export const getFormattedRegistrationDate = (consultant) => {
     return '정보 없음';
 };
 
+/**
  * 상담사 현재 상담 중 인원 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {string} 포맷된 현재 상담 중 인원
  */
 export const getFormattedCurrentClients = (consultant) => {
@@ -781,8 +836,11 @@ export const getFormattedCurrentClients = (consultant) => {
     return `${count}명`;
 };
 
+/**
  * 상담사 가용성 상태 포맷팅
+/**
  * @param {Object} consultant - 상담사 객체
+/**
  * @returns {Object} 가용성 상태 정보
  */
 export const getFormattedAvailability = (consultant) => {

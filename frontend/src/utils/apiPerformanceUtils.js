@@ -1,9 +1,14 @@
 /**
  * API 성능 모니터링 비즈니스 로직 유틸리티
+/**
  * UI와 분리된 순수한 API 성능 관련 비즈니스 로직 관리
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-26
  */
 
@@ -12,7 +17,7 @@ import { PerformanceUtils } from './performanceUtils';
 
 // ===== API 성능 데이터 처리 =====
 export const ApiPerformanceProcessor = {
-  /**
+/**
    * API 성능 통계 데이터 변환
    */
   transformApiStatsResponse: (apiResponse) => {
@@ -49,7 +54,7 @@ export const ApiPerformanceProcessor = {
     }
   },
 
-  /**
+/**
    * 느린 API 데이터 변환
    */
   transformSlowApisResponse: (apiResponse) => {
@@ -73,7 +78,7 @@ export const ApiPerformanceProcessor = {
     }
   },
 
-  /**
+/**
    * 에러 많은 API 데이터 변환
    */
   transformErrorProneApisResponse: (apiResponse) => {
@@ -100,7 +105,7 @@ export const ApiPerformanceProcessor = {
 
 // ===== API 성능 분석기 =====
 export const ApiPerformanceAnalyzer = {
-  /**
+/**
    * 응답 시간 성능 등급 계산
    */
   calculateResponseTimeGrade: (responseTime) => {
@@ -112,7 +117,7 @@ export const ApiPerformanceAnalyzer = {
     return 'poor';
   },
 
-  /**
+/**
    * 에러율 성능 등급 계산
    */
   calculateErrorRateGrade: (errorRate) => {
@@ -124,7 +129,7 @@ export const ApiPerformanceAnalyzer = {
     return 'poor';
   },
 
-  /**
+/**
    * 전체 시스템 건강도 분석
    */
   analyzeSystemHealth: (performanceData) => {
@@ -158,7 +163,7 @@ export const ApiPerformanceAnalyzer = {
     };
   },
 
-  /**
+/**
    * 성능 개선 권장사항 생성
    */
   generateRecommendations: (responseTimeGrade, errorRateGrade) => {
@@ -185,7 +190,7 @@ export const ApiPerformanceAnalyzer = {
     return recommendations;
   },
 
-  /**
+/**
    * API 엔드포인트 분석
    */
   analyzeEndpoint: (endpointStats) => {
@@ -205,12 +210,12 @@ export const ApiPerformanceAnalyzer = {
 
 // ===== API 성능 데이터 매니저 =====
 export const ApiPerformanceDataManager = {
-  /**
+/**
    * 성능 데이터 캐시 관리
    */
   cache: new Map(),
   
-  /**
+/**
    * 캐시된 데이터 조회
    */
   getCachedData: (key, maxAge = 30000) => { // 30초 캐시
@@ -221,7 +226,7 @@ export const ApiPerformanceDataManager = {
     return null;
   },
   
-  /**
+/**
    * 데이터 캐시 저장
    */
   setCachedData: (key, data) => {
@@ -231,19 +236,19 @@ export const ApiPerformanceDataManager = {
     });
   },
   
-  /**
+/**
    * 캐시 클리어
    */
   clearCache: () => {
     ApiPerformanceDataManager.cache.clear();
   },
   
-  /**
+/**
    * 성능 히스토리 관리
    */
   performanceHistory: [],
   
-  /**
+/**
    * 성능 히스토리 추가
    */
   addToHistory: (performanceData, maxLength = 100) => {
@@ -259,7 +264,7 @@ export const ApiPerformanceDataManager = {
     }
   },
   
-  /**
+/**
    * 성능 트렌드 분석
    */
   analyzeTrend: (metric, timeWindow = 10) => {
@@ -285,7 +290,7 @@ export const ApiPerformanceDataManager = {
 
 // ===== API 성능 리포트 생성기 =====
 export const ApiPerformanceReportGenerator = {
-  /**
+/**
    * 성능 보고서 데이터 생성
    */
   generateReportData: (performanceData) => {
@@ -316,7 +321,7 @@ export const ApiPerformanceReportGenerator = {
     };
   },
   
-  /**
+/**
    * JSON 보고서 다운로드
    */
   downloadJsonReport: (reportData, filename) => {
@@ -333,7 +338,7 @@ export const ApiPerformanceReportGenerator = {
     URL.revokeObjectURL(url);
   },
   
-  /**
+/**
    * CSV 보고서 다운로드
    */
   downloadCsvReport: (reportData, filename) => {

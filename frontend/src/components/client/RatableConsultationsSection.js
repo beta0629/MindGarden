@@ -16,12 +16,19 @@ import './RatableConsultationsSection.css';
 
 /**
  * 평가 가능한 상담 목록 섹션
+/**
  * - 완료된 상담 중 아직 평가하지 않은 것들 표시
+/**
  * - 하트 평가 모달 연동
+/**
  * - 디자인 시스템 적용 버전
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-01-21
  */
 const RatableConsultationsSection = () => {

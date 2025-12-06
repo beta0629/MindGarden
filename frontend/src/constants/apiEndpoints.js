@@ -1,7 +1,12 @@
+/**
  * API 엔드포인트 표준화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-28
  */
 

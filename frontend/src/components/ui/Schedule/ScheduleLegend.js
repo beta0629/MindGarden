@@ -1,8 +1,12 @@
 /**
  * 스케줄 범례 컴포넌트 (Presentational)
+/**
  * - 순수 UI 컴포넌트
+/**
  * - 비즈니스 로직 없음
+/**
  * - props로 데이터를 받음
+/**
  * - 주요 상태만 간소화하여 표시
  */
 const ScheduleLegend = ({

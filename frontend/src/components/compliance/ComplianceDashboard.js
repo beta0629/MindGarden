@@ -6,9 +6,13 @@ import './ComplianceDashboard.css';
 
 /**
  * 컴플라이언스 모니터링 대시보드
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ComplianceDashboard = () => {

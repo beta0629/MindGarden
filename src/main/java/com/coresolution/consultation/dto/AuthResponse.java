@@ -145,6 +145,7 @@ public class AuthResponse {
                 .name(userResponse.getName())
                 .role(userResponse.getRole())
                 .grade(userResponse.getGrade())
+                .tenantId(userResponse.getTenantId()) // 필수 - 보안상 중요 (SECURITY_STANDARD.md, SESSION_STANDARD.md)
                 .isActive(userResponse.getIsActive())
                 .isEmailVerified(userResponse.getIsEmailVerified())
                 .build();

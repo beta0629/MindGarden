@@ -17,12 +17,19 @@ import notificationManager from '../../utils/notification';
 
 /**
  * 스케줄 관리 컨테이너 컴포넌트
+/**
  * - 비즈니스 로직만 담당
+/**
  * - 상태 관리, 데이터 로드, 이벤트 핸들러
+/**
  * - Presentational 컴포넌트에 데이터와 핸들러 전달
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0 (Presentational/Container 분리)
+/**
  * @since 2024-12-19
  */
 const UnifiedScheduleComponent = ({ userRole, userId }) => {
@@ -243,7 +250,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
     const loadConsultants = useCallback(async () => {
         try {
             setLoadingConsultants(true);
-            const response = await apiGet('/api/admin/consultants');
+            const response = await apiGet('/api/v1/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0]);
             
             if (response && response.success) {
                 setConsultants(response.data || []);
@@ -277,7 +284,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
             }
             // 관리자는 관리자 API 사용
             else if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
-                url = '/api/schedules/admin';
+                url = '/api/v1/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);
@@ -374,7 +381,7 @@ const UnifiedScheduleComponent = ({ userRole, userId }) => {
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
                     const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
                     
-                    const vacationResponse = await fetch(`/api/consultant/vacations`, {
+                    const vacationResponse = await fetch(`/api/v1/consultants/availability/vacations`, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include'

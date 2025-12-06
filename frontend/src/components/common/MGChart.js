@@ -3,6 +3,7 @@ import './MGChart.css';
 
 /**
  * MindGarden 차트 컴포넌트
+/**
  * Chart.js를 기반으로 한 통합 차트 컴포넌트
  */
 const MGChart = ({

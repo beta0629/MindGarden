@@ -29,7 +29,9 @@ import '../../styles/dashboard-common-v3.css';
 import '../../styles/themes/client-theme.css';
 import './ClientDashboard.css';
 
+/**
  * 내담자 대시보드
+/**
  * 화사하고 산뜻한 느낌의 디자인으로 구성
  */
 const ClientDashboard = () => {

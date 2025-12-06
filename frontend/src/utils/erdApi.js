@@ -27,7 +27,9 @@ const ERD_API = {
 
 /**
  * 테넌트 ERD 목록 조회
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @returns {Promise<Array>} ERD 목록
  */
 export const getTenantErds = async (tenantId) => {
@@ -42,8 +44,11 @@ export const getTenantErds = async (tenantId) => {
 
 /**
  * ERD 상세 조회
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @param {string} diagramId - ERD 다이어그램 ID
+/**
  * @returns {Promise<Object>} ERD 상세 정보
  */
 export const getErdDetail = async (tenantId, diagramId) => {
@@ -58,8 +63,11 @@ export const getErdDetail = async (tenantId, diagramId) => {
 
 /**
  * ERD 변경 이력 조회
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @param {string} diagramId - ERD 다이어그램 ID
+/**
  * @returns {Promise<Array>} ERD 변경 이력 목록
  */
 export const getErdHistory = async (tenantId, diagramId) => {
@@ -76,7 +84,9 @@ export const getErdHistory = async (tenantId, diagramId) => {
 
 /**
  * HQ 운영 포털: 모든 ERD 목록 조회
+/**
  * @param {Object} filters - 필터 옵션 (tenantId, diagramType, isActive, search)
+/**
  * @returns {Promise<Array>} ERD 목록
  */
 export const getAllErdsForOps = async (filters = {}) => {
@@ -97,7 +107,9 @@ export const getAllErdsForOps = async (filters = {}) => {
 
 /**
  * HQ 운영 포털: ERD 상세 조회
+/**
  * @param {string} diagramId - ERD 다이어그램 ID
+/**
  * @returns {Promise<Object>} ERD 상세 정보
  */
 export const getErdDetailForOps = async (diagramId) => {
@@ -112,7 +124,9 @@ export const getErdDetailForOps = async (diagramId) => {
 
 /**
  * HQ 운영 포털: 전체 시스템 ERD 생성
+/**
  * @param {string} schemaName - 스키마 이름 (선택)
+/**
  * @returns {Promise<Object>} 생성된 ERD 정보
  */
 export const generateFullSystemErdForOps = async (schemaName = null) => {
@@ -131,8 +145,11 @@ export const generateFullSystemErdForOps = async (schemaName = null) => {
 
 /**
  * HQ 운영 포털: 테넌트 ERD 생성
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @param {string} schemaName - 스키마 이름 (선택)
+/**
  * @returns {Promise<Object>} 생성된 ERD 정보
  */
 export const generateTenantErdForOps = async (tenantId, schemaName = null) => {
@@ -151,8 +168,11 @@ export const generateTenantErdForOps = async (tenantId, schemaName = null) => {
 
 /**
  * HQ 운영 포털: 모듈 ERD 생성
+/**
  * @param {string} moduleType - 모듈 타입
+/**
  * @param {string} schemaName - 스키마 이름 (선택)
+/**
  * @returns {Promise<Object>} 생성된 ERD 정보
  */
 export const generateModuleErdForOps = async (moduleType, schemaName = null) => {
@@ -171,8 +191,11 @@ export const generateModuleErdForOps = async (moduleType, schemaName = null) => 
 
 /**
  * HQ 운영 포털: ERD 검증 실행
+/**
  * @param {string} diagramId - ERD 다이어그램 ID
+/**
  * @param {string} schemaName - 스키마 이름 (선택)
+/**
  * @returns {Promise<Object>} 검증 리포트
  */
 export const validateErdForOps = async (diagramId, schemaName = null) => {
@@ -191,7 +214,9 @@ export const validateErdForOps = async (diagramId, schemaName = null) => {
 
 /**
  * HQ 운영 포털: 테이블 목록 조회
+/**
  * @param {string} schemaName - 스키마 이름 (선택)
+/**
  * @returns {Promise<Array<string>>} 테이블 이름 목록
  */
 export const getTableNamesForOps = async (schemaName = null) => {
@@ -207,7 +232,9 @@ export const getTableNamesForOps = async (schemaName = null) => {
 
 /**
  * HQ 운영 포털: 커스텀 ERD 생성
+/**
  * @param {Object} request - 커스텀 ERD 생성 요청 (tableNames, name, description, schemaName)
+/**
  * @returns {Promise<Object>} 생성된 ERD 정보
  */
 export const generateCustomErdForOps = async (request) => {
@@ -222,9 +249,13 @@ export const generateCustomErdForOps = async (request) => {
 
 /**
  * HQ 운영 포털: ERD 버전 비교
+/**
  * @param {string} diagramId - ERD 다이어그램 ID
+/**
  * @param {number} fromVersion - 시작 버전
+/**
  * @param {number} toVersion - 종료 버전
+/**
  * @returns {Promise<string>} 버전 비교 결과
  */
 export const compareErdVersionsForOps = async (diagramId, fromVersion, toVersion) => {

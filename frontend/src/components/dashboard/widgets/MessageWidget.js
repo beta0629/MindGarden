@@ -1,10 +1,16 @@
 /**
  * Message Widget
+/**
  * 메시지 목록을 표시하는 범용 위젯
+/**
  * ClientMessageSection을 기반으로 범용화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 
@@ -48,8 +54,8 @@ const MessageWidget = ({ widget, user }) => {
     try {
       setLoading(true);
       
-      // 실제 API 엔드포인트: /api/consultation-messages/client/{userId}
-      const url = dataSource.url || `/api/consultation-messages/client/${user?.id}`;
+      // 실제 API 엔드포인트: /api/v1/consultation-messages/client/{userId}
+      const url = dataSource.url || `/api/v1/consultation-messages/client/${user?.id}`;
       const params = { 
         ...dataSource.params, 
         page: 0,

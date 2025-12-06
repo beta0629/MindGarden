@@ -14,14 +14,23 @@ import '../../../styles/main.css'; // Ensure main.css is imported for mg-modal s
  * @param {string} props.size - 모달 크기 (small, medium, large, fullscreen)
  * @param {string} props.variant - 모달 타입 (default, confirm, form, detail, alert)
  * @param {boolean} props.backdropClick - 배경 클릭으로 닫기 여부
+/**
  * @param {boolean} props.showCloseButton - 닫기 버튼 표시 여부
+/**
  * @param {number} props.zIndex - z-index 값 (중첩 모달용)
+/**
  * @param {string} props.className - 추가 CSS 클래스
+/**
  * @param {Object} props.actions - 액션 버튼들
+/**
  * @param {boolean} props.loading - 로딩 상태
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-31
  */
 const UnifiedModal = ({ 

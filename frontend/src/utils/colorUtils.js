@@ -1,11 +1,18 @@
+/**
  * 색상 유틸리티 함수
+/**
  * Phase 2: 공통 색상 유틸리티 함수 생성
+/**
  * 
+/**
  * CSS 변수를 JavaScript에서 사용하기 위한 헬퍼 함수들
  */
 
+/**
  * 상담 상태에 따른 CSS 변수 반환
+/**
  * @param {string} status - 상담 상태
+/**
  * @returns {string} CSS 변수명
  */
 export const getStatusColor = (status) => {
@@ -26,8 +33,11 @@ export const getStatusColor = (status) => {
   return statusMap[status] || 'var(--user-inactive)';
 };
 
+/**
  * 상담 상태에 따른 배경 색상 CSS 변수 반환
+/**
  * @param {string} status - 상담 상태
+/**
  * @returns {string} CSS 변수명
  */
 export const getStatusBgColor = (status) => {
@@ -47,8 +57,11 @@ export const getStatusBgColor = (status) => {
   return statusMap[status] || 'var(--cs-glass-gray-light)';
 };
 
+/**
  * 결제 상태에 따른 CSS 변수 반환
+/**
  * @param {string} status - 결제 상태
+/**
  * @returns {string} CSS 변수명
  */
 export const getPaymentColor = (status) => {
@@ -64,8 +77,11 @@ export const getPaymentColor = (status) => {
   return paymentMap[status] || 'var(--user-inactive)';
 };
 
+/**
  * 사용자 상태에 따른 CSS 변수 반환
+/**
  * @param {string} status - 사용자 상태
+/**
  * @returns {string} CSS 변수명
  */
 export const getUserStatusColor = (status) => {
@@ -83,8 +99,11 @@ export const getUserStatusColor = (status) => {
   return userMap[status] || 'var(--user-inactive)';
 };
 
+/**
  * 상담사 등급에 따른 CSS 변수 반환
+/**
  * @param {string} grade - 상담사 등급
+/**
  * @returns {string} CSS 변수명
  */
 export const getGradeColor = (grade) => {
@@ -98,8 +117,11 @@ export const getGradeColor = (grade) => {
   return gradeMap[grade] || 'var(--user-inactive)';
 };
 
+/**
  * 상담사 등급에 따른 배경 색상 CSS 변수 반환
+/**
  * @param {string} grade - 상담사 등급
+/**
  * @returns {string} CSS 변수명
  */
 export const getGradeBgColor = (grade) => {
@@ -113,8 +135,11 @@ export const getGradeBgColor = (grade) => {
   return gradeMap[grade] || 'var(--cs-glass-gray-light)';
 };
 
+/**
  * 역할에 따른 CSS 변수 반환
+/**
  * @param {string} role - 사용자 역할
+/**
  * @returns {string} CSS 변수명
  */
 export const getRoleColor = (role) => {
@@ -131,8 +156,11 @@ export const getRoleColor = (role) => {
   return roleMap[role] || 'var(--user-inactive)';
 };
 
+/**
  * 역할에 따른 배경 색상 CSS 변수 반환
+/**
  * @param {string} role - 사용자 역할
+/**
  * @returns {string} CSS 변수명
  */
 export const getRoleBgColor = (role) => {
@@ -145,8 +173,11 @@ export const getRoleBgColor = (role) => {
   return roleMap[role] || 'var(--cs-glass-gray-light)';
 };
 
+/**
  * 휴가 유형에 따른 CSS 변수 반환
+/**
  * @param {string} type - 휴가 유형
+/**
  * @returns {string} CSS 변수명
  */
 export const getVacationColor = (type) => {
@@ -162,8 +193,11 @@ export const getVacationColor = (type) => {
   return vacationMap[type] || 'var(--user-inactive)';
 };
 
+/**
  * 휴가 유형에 따른 배경 색상 CSS 변수 반환
+/**
  * @param {string} type - 휴가 유형
+/**
  * @returns {string} CSS 변수명
  */
 export const getVacationBgColor = (type) => {
@@ -176,8 +210,11 @@ export const getVacationBgColor = (type) => {
   return vacationMap[type] || 'var(--cs-glass-gray-light)';
 };
 
+/**
  * 상태에 따른 한글 라벨 반환
+/**
  * @param {string} status - 상태 코드
+/**
  * @returns {string} 한글 라벨
  */
 export const getStatusLabel = (status) => {
@@ -208,8 +245,11 @@ export const getStatusLabel = (status) => {
   return labelMap[status] || status;
 };
 
+/**
  * 등급에 따른 한글 라벨 반환
+/**
  * @param {string} grade - 등급 코드
+/**
  * @returns {string} 한글 라벨
  */
 export const getGradeLabel = (grade) => {
@@ -223,8 +263,11 @@ export const getGradeLabel = (grade) => {
   return labelMap[grade] || grade;
 };
 
+/**
  * 역할에 따른 한글 라벨 반환
+/**
  * @param {string} role - 역할 코드
+/**
  * @returns {string} 한글 라벨
  */
 export const getRoleLabel = (role) => {

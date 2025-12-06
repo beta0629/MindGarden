@@ -22,7 +22,9 @@ import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './ClientPaymentHistory.css';
 
+/**
  * 내담자 결제 내역 페이지
+/**
  * 디자인 시스템 적용 버전
  */
 const ClientPaymentHistory = () => {
@@ -42,7 +44,7 @@ const ClientPaymentHistory = () => {
       setIsLoading(true);
       setError(null);
 
-      const userResponse = await apiGet('/api/auth/current-user');
+      const userResponse = await apiGet('/api/v1/auth/current-user');
       if (!userResponse || !userResponse.id) {
         throw new Error('로그인이 필요합니다.');
       }

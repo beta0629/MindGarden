@@ -1,9 +1,14 @@
 /**
  * 업종별 라우트 접근 제어 가드 (동적 관리)
+/**
  * 하드코딩 금지 - API 또는 설정에서 동적으로 조회
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-26
  */
 
@@ -15,12 +20,19 @@ import { apiGet } from '../../utils/ajax';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 /**
  * 업종별 라우트 접근 제어 가드
+/**
  * @param {Object} props
+/**
  * @param {React.ReactNode} props.children - 보호할 컴포넌트
+/**
  * @param {string} props.requiredBusinessType - 필요한 업종 (선택적)
+/**
  * @param {string} props.requiredMenu - 필요한 메뉴 권한 (선택적)
+/**
  * @param {string[]} props.allowedBusinessTypes - 허용된 업종 목록 (선택적)
+/**
  * @param {string} props.fallbackPath - 접근 거부 시 리다이렉트 경로
+/**
  * @param {boolean} props.showLoading - 로딩 화면 표시 여부
  */
 const BusinessTypeGuard = ({ 
@@ -131,7 +143,9 @@ const BusinessTypeGuard = ({
 
 /**
  * 사용자 업종 정보 조회 (동적)
+/**
  * @param {Object} user - 사용자 정보
+/**
  * @returns {Promise<string>} 업종 타입
  */
 const getUserBusinessType = async (user) => {
@@ -162,7 +176,9 @@ const getUserBusinessType = async (user) => {
 
 /**
  * 접근 권한 검증 (동적)
+/**
  * @param {Object} params - 검증 파라미터
+/**
  * @returns {Promise<Object>} 검증 결과
  */
 const validateAccess = async ({
@@ -240,9 +256,13 @@ const validateAccess = async ({
 
 /**
  * 경로별 접근 권한 검증 (향후 확장)
+/**
  * @param {string} path - 접근 경로
+/**
  * @param {string} businessType - 업종
+/**
  * @param {string} userRole - 사용자 역할
+/**
  * @returns {Promise<Object>} 검증 결과
  */
 const validatePathAccess = async (path, businessType, userRole) => {
@@ -280,7 +300,9 @@ const validatePathAccess = async (path, businessType, userRole) => {
 
 /**
  * 접근 거부 메시지 생성
+/**
  * @param {string} reason - 거부 사유
+/**
  * @returns {string} 사용자 친화적 메시지
  */
 const getAccessDeniedMessage = (reason) => {

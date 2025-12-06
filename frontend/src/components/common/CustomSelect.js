@@ -3,12 +3,19 @@ import './CustomSelect.css';
 
 /**
  * 커스텀 드롭다운 컴포넌트
+/**
  * - 네이티브 select의 스크롤 문제 해결
+/**
  * - 완전한 CSS 제어 가능
+/**
  * - 접근성 지원
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-11
  */
 const CustomSelect = ({ 

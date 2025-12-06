@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../../contexts/SessionContext';
-import { Button } from '../../ui/Button/Button';
+import Button from '../../ui/Button/Button';
 import './WelcomeWidget.css';
 
 /**
  * 환영 위젯 컴포넌트
+/**
  * - 사용자 환영 메시지
+/**
  * - 오늘의 할 일 요약
+/**
  * - 빠른 액션 버튼
  */
 const WelcomeWidget = ({ config }) => {

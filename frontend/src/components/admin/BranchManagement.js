@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGCard from '../common/MGCard';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../constants/api';
@@ -16,10 +16,15 @@ import { sessionManager } from '../../utils/sessionManager';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import './BranchManagement.css';
 
+/**
  * 지점 관리 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-12
  */
 const BranchManagement = () => {
@@ -97,6 +102,7 @@ const BranchManagement = () => {
     }, [currentPage, sortBy, sortDirection, filterStatus, filterType]);
 
     
+/**
      * 지점 목록 조회
      */
     const loadBranches = async () => {
@@ -140,6 +146,7 @@ const BranchManagement = () => {
         }
     };
 
+/**
      * 지점 생성
      */
     const createBranch = async (branchData) => {
@@ -164,6 +171,7 @@ const BranchManagement = () => {
         }
     };
 
+/**
      * 지점 수정
      */
     const updateBranch = async (branchId, branchData) => {
@@ -195,6 +203,7 @@ const BranchManagement = () => {
         }
     };
 
+/**
      * 지점 삭제
      */
     const deleteBranch = async (branchId) => {
@@ -229,6 +238,7 @@ const BranchManagement = () => {
         }
     };
 
+/**
      * 지점 상태 변경
      */
     const changeBranchStatus = async (branchId, newStatus) => {
@@ -508,6 +518,7 @@ const BranchManagement = () => {
     );
 };
 
+/**
  * 지점 생성 모달 컴포넌트
  */
 const BranchCreateModal = ({ isOpen, onClose, onSubmit }) => {
@@ -784,6 +795,7 @@ const BranchCreateModal = ({ isOpen, onClose, onSubmit }) => {
     );
 };
 
+/**
  * 지점 수정 모달 컴포넌트 (생성 모달과 유사하지만 기존 데이터로 초기화)
  */
 const BranchEditModal = ({ isOpen, branch, onClose, onSubmit }) => {
@@ -1059,6 +1071,7 @@ const BranchEditModal = ({ isOpen, branch, onClose, onSubmit }) => {
     );
 };
 
+/**
  * 지점 상세 정보 모달 컴포넌트
  */
 const BranchDetailModal = ({ isOpen, branch, onClose }) => {

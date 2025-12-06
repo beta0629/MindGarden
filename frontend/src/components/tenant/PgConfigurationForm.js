@@ -14,10 +14,15 @@ import { showNotification } from '../../utils/notification';
 import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import './PgConfigurationForm.css';
 
+/**
  * PG 설정 입력/수정 폼 컴포넌트
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 const PgConfigurationForm = ({ 

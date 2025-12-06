@@ -4,14 +4,23 @@
  * 이 파일은 PG SDK 연동을 위한 추상화 레이어를 제공합니다.
  * 여러 PG사를 지원하며, 각 PG사별 구현체를 컴포넌트화하여 관리합니다.
  * 
+/**
  * 지원 PG사:
+/**
  * - 토스페이먼츠 (TOSS)
+/**
  * - 스트라이프 (STRIPE) - 추후 구현
+/**
  * - 아임포트 (IAMPORT) - 추후 구현
+/**
  * - 기타 PG사 - 추후 구현
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0
+/**
  * @since 2025-11-20
  */
 
@@ -48,38 +57,59 @@ const TEST_MODE = process.env.REACT_APP_PAYMENT_TEST_MODE === 'true' || false;
 
 /**
  * 카드 정보 객체
+/**
  * @typedef {Object} CardInfo
+/**
  * @property {string} cardNumber - 카드 번호 (숫자만, 공백 제거)
+/**
  * @property {string} expiryMonth - 만료 월 (MM)
+/**
  * @property {string} expiryYear - 만료 년도 (YY)
+/**
  * @property {string} cvc - CVC 코드
+/**
  * @property {string} [cardholderName] - 카드 소유자 이름
  */
 
 /**
  * PG 토큰 생성 결과
+/**
  * @typedef {Object} PaymentTokenResult
+/**
  * @property {string} token - PG에서 받은 토큰
+/**
  * @property {string} [cardBrand] - 카드 브랜드 (VISA, MASTERCARD 등)
+/**
  * @property {string} [cardLast4] - 카드 마지막 4자리
+/**
  * @property {number} [expiryMonth] - 만료 월
+/**
  * @property {number} [expiryYear] - 만료 년도
  */
 
 /**
  * PG SDK 초기화 옵션
+/**
  * @typedef {Object} PgSdkInitOptions
+/**
  * @property {string} [clientKey] - PG 클라이언트 키
+/**
  * @property {boolean} [testMode] - 테스트 모드 여부
  */
 
 /**
  * 자동결제(빌링) 등록 파라미터
+/**
  * @typedef {Object} BillingAuthParams
+/**
  * @property {string} customerKey - 고객 고유 ID (UUID)
+/**
  * @property {string} [customerName] - 고객명
+/**
  * @property {string} [customerEmail] - 고객 이메일
+/**
  * @property {string} successUrl - 성공 시 리다이렉트 URL
+/**
  * @property {string} failUrl - 실패 시 리다이렉트 URL
  */
 
@@ -89,39 +119,48 @@ const TEST_MODE = process.env.REACT_APP_PAYMENT_TEST_MODE === 'true' || false;
 
 /**
  * PG SDK 인터페이스
+/**
  * 모든 PG사 구현체는 이 인터페이스를 따라야 합니다.
  */
 class PaymentGatewaySdk {
-  /**
+/**
    * SDK 초기화
+/**
    * @param {PgSdkInitOptions} options - 초기화 옵션
+/**
    * @returns {Promise<void>}
    */
   async init(options) {
     throw new Error('init() 메서드를 구현해야 합니다.');
   }
 
-  /**
+/**
    * 카드 정보를 토큰으로 변환
+/**
    * @param {CardInfo} cardInfo - 카드 정보
+/**
    * @returns {Promise<PaymentTokenResult>}
    */
   async createToken(cardInfo) {
     throw new Error('createToken() 메서드를 구현해야 합니다.');
   }
 
-  /**
+/**
    * 토큰 검증
+/**
    * @param {string} token - 검증할 토큰
+/**
    * @returns {Promise<boolean>}
    */
   async verifyToken(token) {
     throw new Error('verifyToken() 메서드를 구현해야 합니다.');
   }
 
-  /**
+/**
    * 자동결제(빌링) 등록창 열기 (선택적)
+/**
    * @param {BillingAuthParams} params - 자동결제 등록 파라미터
+/**
    * @returns {Promise<void>}
    */
   async requestBillingAuth(params) {
@@ -135,6 +174,7 @@ class PaymentGatewaySdk {
 
 /**
  * 테스트 모드 PG SDK 구현
+/**
  * 실제 PG SDK가 없을 때 사용하는 모의 구현
  */
 class TestPaymentGatewaySdk extends PaymentGatewaySdk {
@@ -199,7 +239,9 @@ class TestPaymentGatewaySdk extends PaymentGatewaySdk {
 
 /**
  * 토스페이먼츠 SDK v2 구현
+/**
  * 
+/**
  * 참고: https://docs.tosspayments.com/sdk/v2/js
  */
 class TossPaymentGatewaySdk extends PaymentGatewaySdk {
@@ -261,8 +303,11 @@ class TossPaymentGatewaySdk extends PaymentGatewaySdk {
 
 /**
  * 스트라이프 SDK 구현
+/**
  * 
+/**
  * TODO: 실제 Stripe SDK 연동 시 구현
+/**
  * 참고: https://stripe.com/docs/js
  */
 class StripePaymentGatewaySdk extends PaymentGatewaySdk {
@@ -300,8 +345,11 @@ class StripePaymentGatewaySdk extends PaymentGatewaySdk {
 
 /**
  * 아임포트 SDK 구현
+/**
  * 
+/**
  * TODO: 실제 아임포트 SDK 연동 시 구현
+/**
  * 참고: https://developers.iamport.kr/
  */
 class IamportPaymentGatewaySdk extends PaymentGatewaySdk {
@@ -328,14 +376,17 @@ class IamportPaymentGatewaySdk extends PaymentGatewaySdk {
 
 /**
  * PG SDK 팩토리
+/**
  * 설정에 따라 적절한 SDK 인스턴스를 반환합니다.
  */
 class PaymentGatewaySdkFactory {
   static instance = null;
 
-  /**
+/**
    * PG SDK 인스턴스 가져오기
+/**
    * @param {string} provider - PG 제공자 (기본값: 설정값)
+/**
    * @returns {Promise<PaymentGatewaySdk>}
    */
   static async getInstance(provider = DEFAULT_PG_PROVIDER) {
@@ -371,7 +422,7 @@ class PaymentGatewaySdkFactory {
     return this.instance;
   }
 
-  /**
+/**
    * SDK 인스턴스 리셋 (테스트용)
    */
   static reset() {
@@ -385,8 +436,11 @@ class PaymentGatewaySdkFactory {
 
 /**
  * 카드 정보를 토큰으로 변환하는 헬퍼 함수
+/**
  * @param {CardInfo} cardInfo - 카드 정보
+/**
  * @param {string} provider - PG 제공자 (선택적)
+/**
  * @returns {Promise<PaymentTokenResult>}
  */
 export async function createPaymentToken(cardInfo, provider = DEFAULT_PG_PROVIDER) {
@@ -396,8 +450,11 @@ export async function createPaymentToken(cardInfo, provider = DEFAULT_PG_PROVIDE
 
 /**
  * 토큰 검증 헬퍼 함수
+/**
  * @param {string} token - 검증할 토큰
+/**
  * @param {string} provider - PG 제공자 (선택적)
+/**
  * @returns {Promise<boolean>}
  */
 export async function verifyPaymentToken(token, provider = DEFAULT_PG_PROVIDER) {
@@ -407,8 +464,11 @@ export async function verifyPaymentToken(token, provider = DEFAULT_PG_PROVIDER) 
 
 /**
  * 자동결제(빌링) 등록창 열기
+/**
  * @param {BillingAuthParams} params - 자동결제 등록 파라미터
+/**
  * @param {string} provider - PG 제공자 (선택적)
+/**
  * @returns {Promise<void>}
  */
 export async function requestBillingAuth(params, provider = DEFAULT_PG_PROVIDER) {
@@ -421,7 +481,9 @@ export async function requestBillingAuth(params, provider = DEFAULT_PG_PROVIDER)
 
 /**
  * PG SDK 인스턴스 가져오기
+/**
  * @param {string} provider - PG 제공자 (선택적)
+/**
  * @returns {Promise<PaymentGatewaySdk>}
  */
 export async function getPaymentGatewaySdk(provider = DEFAULT_PG_PROVIDER) {

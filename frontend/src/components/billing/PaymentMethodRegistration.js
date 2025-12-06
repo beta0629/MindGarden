@@ -1,11 +1,18 @@
 /**
  * 결제 수단 등록 컴포넌트
+/**
  * 
+/**
  * PG SDK를 사용하여 자동결제(빌링) 등록을 처리합니다.
+/**
  * 토스페이먼츠 SDK v2의 requestBillingAuth()를 사용합니다.
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0
+/**
  * @since 2025-11-20
  */
 
@@ -20,11 +27,17 @@ import './PaymentMethodRegistration.css';
 
 /**
  * 결제 수단 등록 컴포넌트
+/**
  * 
+/**
  * @param {Object} props
+/**
  * @param {Function} props.onSuccess - 등록 성공 시 콜백
+/**
  * @param {Function} props.onCancel - 취소 시 콜백
+/**
  * @param {string} props.tenantId - 테넌트 ID (선택적, 세션에서 가져옴)
+/**
  * @param {string} props.pgProvider - PG 제공자 (기본값: TOSS)
  */
 const PaymentMethodRegistration = ({
@@ -73,7 +86,7 @@ const PaymentMethodRegistration = ({
     }
   }, [pgProvider]);
 
-  /**
+/**
    * 자동결제 등록 시작
    */
   const handleRegister = async () => {

@@ -8,6 +8,7 @@ import notificationManager from '../../utils/notification';
 
 /**
  * 내담자 메시지 전송 모달 컴포넌트
+/**
  * 상담일지 작성 완료 후 내담자에게 메시지를 보낼 수 있는 모달
  */
 const MessageSendModal = ({ 
@@ -133,7 +134,7 @@ const MessageSendModal = ({
         isUrgent: formData.isUrgent
       };
 
-      const response = await apiPost('/api/consultation-messages', messageData);
+      const response = await apiPost('/api/v1/consultation-messages', messageData);
 
       if (response.success) {
         notificationManager.show('메시지가 성공적으로 전송되었습니다.', 'success');

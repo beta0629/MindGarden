@@ -8,6 +8,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 
 /**
  * 상담사 메시지 전송 화면
+/**
  * 상담일지 완료 후 내담자에게 메시지를 전송할 수 있는 화면
  */
 const ConsultantMessageScreen = () => {
@@ -386,7 +387,7 @@ const ConsultantMessageScreen = () => {
         isUrgent: messageData.isUrgent
       };
 
-      const response = await apiPost('/api/consultation-messages', messagePayload);
+      const response = await apiPost('/api/v1/consultation-messages', messagePayload);
 
       if (response.success) {
         notificationManager.show('메시지가 전송되었습니다.', 'success');

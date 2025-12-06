@@ -8,14 +8,23 @@ import { apiGet } from '../../utils/ajax';
 /**
  * 세금 내역 보기 모달 컴포넌트
  * 
+/**
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {boolean} props.isOpen - 모달 열림 상태
+/**
  * @param {Function} props.onClose - 모달 닫기 함수
+/**
  * @param {number} props.calculationId - 급여 계산 ID
+/**
  * @param {string} props.consultantName - 상담사 이름
+/**
  * @param {string} props.period - 계산 기간
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-11
  */
 const TaxDetailsModal = ({ 

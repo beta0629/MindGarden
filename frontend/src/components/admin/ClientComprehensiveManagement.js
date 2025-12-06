@@ -23,14 +23,23 @@ import ClientFilters from './ClientComprehensiveManagement/ClientFilters';
 
 /**
  * 내담자 종합관리 메인 컴포넌트
+/**
  * - 내담자 정보 종합 조회
+/**
  * - 상담 이력 관리
+/**
  * - 회기 현황 관리
+/**
  * - 상담사 매칭 관리
+/**
  * - 통계 및 분석
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ClientComprehensiveManagement = () => {

@@ -1,9 +1,14 @@
 /**
  * 메뉴 권한 검증 유틸리티
+/**
  * 동적 권한 시스템 기반 메뉴 접근 권한을 검증
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-09-29
  */
 
@@ -162,8 +167,11 @@ const MENU_PERMISSIONS = {
 
 /**
  * 현재 사용자가 메뉴 그룹에 접근할 수 있는지 확인 (동적 권한 시스템)
+/**
  * 
+/**
  * @param {string} menuGroup - 메뉴 그룹명
+/**
  * @returns {boolean} 접근 권한 여부
  */
 export const hasMenuAccess = async (menuGroup) => {
@@ -218,8 +226,11 @@ export const hasMenuAccess = async (menuGroup) => {
 
 /**
  * 현재 사용자가 특정 기능을 사용할 수 있는지 확인
+/**
  * 
+/**
  * @param {string} feature - 기능명
+/**
  * @returns {boolean} 사용 권한 여부
  */
 export const hasFeature = (feature) => {
@@ -245,7 +256,9 @@ export const hasFeature = (feature) => {
 
 /**
  * 현재 사용자의 모든 권한 정보 조회
+/**
  * 
+/**
  * @returns {object} 권한 정보
  */
 export const getUserPermissions = () => {
@@ -287,9 +300,13 @@ export const getUserPermissions = () => {
 
 /**
  * 메뉴 아이템을 필터링하여 권한이 있는 메뉴만 반환
+/**
  * 
+/**
  * @param {Array} menuItems - 메뉴 아이템 배열
+/**
  * @param {string} menuGroup - 메뉴 그룹명
+/**
  * @returns {Array} 필터링된 메뉴 아이템 배열
  */
 export const filterMenuItemsByPermission = (menuItems, menuGroup) => {
@@ -303,8 +320,11 @@ export const filterMenuItemsByPermission = (menuItems, menuGroup) => {
 
 /**
  * 메뉴 경로 유효성 검증
+/**
  * 
+/**
  * @param {string} path - 메뉴 경로
+/**
  * @returns {boolean} 유효한 경로 여부
  */
 export const validateMenuPath = (path) => {
@@ -337,9 +357,13 @@ export const validateMenuPath = (path) => {
 
 /**
  * 메뉴 권한 검증 결과 로깅
+/**
  * 
+/**
  * @param {string} action - 수행하려는 액션
+/**
  * @param {string} resource - 리소스명
+/**
  * @param {boolean} allowed - 허용 여부
  */
 export const logPermissionCheck = (action, resource, allowed) => {

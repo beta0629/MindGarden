@@ -5,11 +5,17 @@ import { UserCheck, XCircle, Users, Package, Calendar } from 'lucide-react';
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 /**
  * 상담사 변경 모달 컴포넌트
+/**
  * 
+/**
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {boolean} props.isOpen - 모달 열림 상태
+/**
  * @param {Function} props.onClose - 모달 닫기 함수
+/**
  * @param {Object} props.currentMapping - 현재 매핑 정보
+/**
  * @param {Function} props.onTransfer - 상담사 변경 처리 함수
  */
 const ConsultantTransferModal = ({ 

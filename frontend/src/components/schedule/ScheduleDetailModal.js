@@ -7,13 +7,21 @@ import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
 import '../../styles/main.css';
 
+/**
  * 스케줄 상세 정보 및 관리 모달
+/**
  * - 스케줄 정보 표시
+/**
  * - 예약 취소 기능
+/**
  * - 상태 변경 기능
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleDetailModal = ({ 
@@ -81,6 +89,7 @@ const ScheduleDetailModal = ({
         return null;
     }
 
+/**
      * 상담 유형을 한글로 변환
      */
     const convertConsultationTypeToKorean = (consultationType) => {
@@ -94,6 +103,7 @@ const ScheduleDetailModal = ({
         return typeMap[consultationType] || consultationType || "알 수 없음";
     };
 
+/**
      * 상태값을 한글로 변환 (동적 로드)
      */
     const convertStatusToKorean = (status) => {
@@ -101,6 +111,7 @@ const ScheduleDetailModal = ({
         return statusOption ? statusOption.label : status || "알 수 없음";
     };
 
+/**
      * 상태값에 따른 색상 클래스 반환
      */
     const getStatusColorClass = (status) => {
@@ -119,16 +130,20 @@ const ScheduleDetailModal = ({
         return statusMap[status] || 'secondary';
     };
 
+    /**
+     * 휴가 이벤트 여부 확인
      */
     const isVacationEvent = () => {
         const vacationStatus = scheduleStatusOptions.find(opt => 
             opt.value === 'VACATION' || opt.label?.includes('휴가')
+        );
         
         return isStatus(scheduleData.status, vacationStatus) || 
                scheduleData.consultationType === 'VACATION' ||
                scheduleData.scheduleType === 'VACATION';
     };
 
+/**
      * 휴가 유형을 표시용으로 변환
      */
     const getVacationTypeDisplay = (vacationType) => {
@@ -146,6 +161,7 @@ const ScheduleDetailModal = ({
         return typeMap[vacationType] || '🏖️ 휴가';
     };
 
+/**
      * 예약 취소 처리
      */
     const handleCancelSchedule = async () => {
@@ -156,6 +172,7 @@ const ScheduleDetailModal = ({
             const cancelledStatus = scheduleStatusOptions.find(opt => 
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                 opt.value === 'CANCELLED' || opt.label?.includes('취소')
+            );
             
             const response = await apiPut(`/api/schedules/${scheduleData.id}`, {
                 status: cancelledStatus,
@@ -178,6 +195,7 @@ const ScheduleDetailModal = ({
         }
     };
 
+/**
      * 상태 변경 처리
      */
     const handleStatusChange = async (newStatus) => {
@@ -204,6 +222,7 @@ const ScheduleDetailModal = ({
         }
     };
 
+/**
      * 상담일지 작성 처리
      */
     const handleWriteConsultationLog = () => {
@@ -218,6 +237,7 @@ const ScheduleDetailModal = ({
     };
 
 
+/**
      * 예약 변경 처리 - 드래그 앤 드롭 모드로 전환
      */
     const handleEditSchedule = () => {
@@ -237,6 +257,7 @@ const ScheduleDetailModal = ({
         notificationManager.info('드래그 앤 드롭으로 예약을 변경할 수 있습니다.');
     };
 
+/**
      * 예약 확정 처리
      */
     const handleConfirmSchedule = async () => {
@@ -270,6 +291,7 @@ const ScheduleDetailModal = ({
         }
     };
 
+/**
      * 취소 확인 모달
      */
     const renderCancelConfirm = () => (
@@ -301,6 +323,7 @@ const ScheduleDetailModal = ({
         </div>
     );
 
+/**
      * 예약 확정 확인 모달
      */
     const renderConfirmModal = () => (

@@ -3,6 +3,7 @@ import { getCommonCodes as getCommonCodesStandard } from './commonCodeApi';
 
 /**
  * 공통 코드 관련 유틸리티 함수들
+/**
  * 표준화된 API 사용 (하위 호환성 유지)
  */
 
@@ -11,10 +12,15 @@ const codeCache = new Map();
 
 /**
  * 공통 코드 그룹의 모든 코드를 가져옵니다
+/**
  * 표준화된 API 사용 (하위 호환성 유지)
+/**
  * 
+/**
  * @param {string} groupCode - 코드 그룹명
+/**
  * @param {boolean} useCache - 캐시 사용 여부 (기본값: true)
+/**
  * @returns {Promise<Array>} 공통 코드 배열
  */
 export const getCommonCodes = async (groupCode, useCache = true) => {
@@ -54,8 +60,11 @@ export const getCommonCodes = async (groupCode, useCache = true) => {
 
 /**
  * 특정 코드의 값을 가져옵니다
+/**
  * @param {string} groupCode - 코드 그룹명
+/**
  * @param {string} codeValue - 코드 값
+/**
  * @returns {Promise<string>} 코드 라벨
  */
 export const getCodeLabel = async (groupCode, codeValue) => {
@@ -71,6 +80,7 @@ export const getCodeLabel = async (groupCode, codeValue) => {
 
 /**
  * 상담사 등급별 기본 급여를 가져옵니다
+/**
  * @returns {Promise<Object>} 등급별 급여 매핑 객체
  */
 export const getGradeSalaryMap = async () => {
@@ -104,7 +114,9 @@ export const getGradeSalaryMap = async () => {
 
 /**
  * 상담사 등급을 한글로 변환합니다
+/**
  * @param {string} grade - 등급 코드
+/**
  * @returns {Promise<string>} 한글 등급명
  */
 export const getGradeKoreanName = async (grade) => {
@@ -125,6 +137,7 @@ export const getGradeKoreanName = async (grade) => {
 
 /**
  * 패키지 타입별 세션 수와 가격을 가져옵니다
+/**
  * @returns {Promise<Array>} 패키지 옵션 배열
  */
 export const getPackageOptions = async () => {
@@ -209,6 +222,7 @@ export const getPackageOptions = async () => {
 
 /**
  * 만족도 관련 데이터를 가져옵니다
+/**
  * @returns {Promise<Object>} 만족도 데이터
  */
 export const getSatisfactionData = async () => {
@@ -260,6 +274,7 @@ export const clearCodeCache = () => {
 
 /**
  * 특정 그룹의 캐시를 제거합니다
+/**
  * @param {string} groupCode - 코드 그룹명
  */
 export const clearGroupCache = (groupCode) => {

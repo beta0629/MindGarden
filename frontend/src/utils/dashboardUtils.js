@@ -1,5 +1,6 @@
 /**
  * 동적 대시보드 조회 유틸리티
+/**
  * 하드코딩된 역할 기반 라우팅 대신 백엔드에서 동적으로 대시보드 정보 조회
  */
 
@@ -8,9 +9,13 @@ import { API_BASE_URL } from '../constants/api';
 
 /**
  * 사용자의 역할에 맞는 대시보드 정보 조회
+/**
  * 
+/**
  * @param {string} tenantId 테넌트 ID
+/**
  * @param {string} tenantRoleId 역할 ID (선택)
+/**
  * @returns {Promise<Object|null>} 대시보드 정보 또는 null
  */
 export const getCurrentUserDashboard = async (tenantId, tenantRoleId = null) => {
@@ -48,8 +53,11 @@ export const getCurrentUserDashboard = async (tenantId, tenantRoleId = null) => 
 
 /**
  * 동적 대시보드 경로 생성
+/**
  * 
+/**
  * @param {Object} dashboard 대시보드 정보
+/**
  * @returns {string} 대시보드 경로
  */
 export const getDynamicDashboardPath = (dashboard) => {
@@ -76,8 +84,11 @@ export const getDynamicDashboardPath = (dashboard) => {
 
 /**
  * 대시보드 타입에 따른 컴포넌트 이름 반환
+/**
  * 
+/**
  * @param {string} dashboardType 대시보드 타입
+/**
  * @returns {string} 컴포넌트 이름
  */
 export const getDashboardComponentName = (dashboardType) => {
@@ -102,8 +113,11 @@ export const getDashboardComponentName = (dashboardType) => {
 
 /**
  * AuthResponse의 currentTenantRole 정보로 대시보드 조회
+/**
  * 
+/**
  * @param {Object} authResponse 로그인 응답
+/**
  * @returns {Promise<Object|null>} 대시보드 정보 또는 null
  */
 export const getDashboardFromAuthResponse = async (authResponse) => {
@@ -138,8 +152,11 @@ export const getDashboardFromAuthResponse = async (authResponse) => {
 
 /**
  * 레거시 역할 기반 대시보드 경로 (하위 호환성)
+/**
  * 
+/**
  * @param {string} role 역할
+/**
  * @returns {string} 대시보드 경로
  */
 export const getLegacyDashboardPath = (role) => {
@@ -163,9 +180,13 @@ export const getLegacyDashboardPath = (role) => {
 
 /**
  * 동적 대시보드 라우팅 (우선순위: 동적 조회 > 레거시)
+/**
  * 
+/**
  * @param {Object} authResponse 로그인 응답
+/**
  * @param {Function} navigate React Router navigate 함수
+/**
  * @returns {Promise<void>}
  */
 export const redirectToDynamicDashboard = async (authResponse, navigate) => {

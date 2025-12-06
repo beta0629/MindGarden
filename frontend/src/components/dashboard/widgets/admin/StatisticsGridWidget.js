@@ -1,9 +1,14 @@
 /**
  * Statistics Grid Widget - 표준화된 위젯
+/**
  * 실시간 마인드가든 관리자 주요 통계를 그리드 형태로 표시
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 3.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 

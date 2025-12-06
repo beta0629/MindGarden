@@ -1,14 +1,23 @@
 /**
  * 권한 그룹 Hook
  * 
+/**
  * 사용자의 권한 그룹을 관리하는 커스텀 Hook
+/**
  * 
+/**
  * 표준화 준수:
+/**
  * - 재사용 가능한 Hook
+/**
  * - 명확한 반환값
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-12-03
  */
 
@@ -18,7 +27,9 @@ import { useSession } from '../contexts/SessionContext';
 
 /**
  * 권한 그룹 Hook
+/**
  * 
+/**
  * @returns {Object} { permissionGroups, hasPermissionGroup, loading, error }
  */
 export const usePermissionGroups = () => {
@@ -27,7 +38,7 @@ export const usePermissionGroups = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    /**
+/**
      * 권한 그룹 조회
      */
     const fetchPermissionGroups = useCallback(async () => {
@@ -66,10 +77,13 @@ export const usePermissionGroups = () => {
         fetchPermissionGroups();
     }, [isLoggedIn, sessionLoading, fetchPermissionGroups]);
 
-    /**
+/**
      * 특정 권한 그룹 보유 여부 확인
+/**
      * 
+/**
      * @param {string} groupCode 권한 그룹 코드
+/**
      * @returns {boolean} 권한 보유 여부
      */
     const hasPermissionGroup = (groupCode) => {
@@ -77,10 +91,13 @@ export const usePermissionGroups = () => {
         return permissionGroups.includes(groupCode);
     };
 
-    /**
+/**
      * 여러 권한 그룹 중 하나라도 보유 여부 확인
+/**
      * 
+/**
      * @param {string[]} groupCodes 권한 그룹 코드 배열
+/**
      * @returns {boolean} 권한 보유 여부
      */
     const hasAnyPermissionGroup = (groupCodes) => {
@@ -88,10 +105,13 @@ export const usePermissionGroups = () => {
         return groupCodes.some(code => hasPermissionGroup(code));
     };
 
-    /**
+/**
      * 모든 권한 그룹 보유 여부 확인
+/**
      * 
+/**
      * @param {string[]} groupCodes 권한 그룹 코드 배열
+/**
      * @returns {boolean} 권한 보유 여부
      */
     const hasAllPermissionGroups = (groupCodes) => {

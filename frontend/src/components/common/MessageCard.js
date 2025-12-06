@@ -3,6 +3,7 @@ import { Mail, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 
 /**
  * 메시지 카드 공통 컴포넌트
+/**
  * 메시지 목록에서 재사용 가능한 카드 컴포넌트
  */
 const MessageCard = ({ 

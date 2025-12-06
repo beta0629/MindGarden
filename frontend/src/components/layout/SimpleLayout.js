@@ -21,7 +21,9 @@ const NOTIFICATION_ROUTES = {
 
 /**
  * 간단한 레이아웃 컴포넌트
+/**
  * 복잡한 로직 없이 기본적인 레이아웃만 제공
+/**
  * 공통 로딩 상태 지원 + 알림 기능
  */
 const SimpleLayout = ({ 

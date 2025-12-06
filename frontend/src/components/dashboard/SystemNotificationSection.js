@@ -6,6 +6,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 
 /**
  * 시스템 알림 섹션
+/**
  * 읽지 않은 메시지와 시스템 공지를 함께 표시하는 대시보드 컴포넌트
  */
 const SystemNotificationSection = () => {

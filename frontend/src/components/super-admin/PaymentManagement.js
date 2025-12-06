@@ -2,19 +2,27 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import MGCard from '../common/MGCard';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import { API_BASE_URL } from '../../constants/api';
 import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
 import notificationManager from '../../utils/notification';
 
+/**
  * 수퍼어드민 결제 관리 컴포넌트
+/**
  * - 결제 내역 조회 및 관리
+/**
  * - 결제 통계 및 분석
+/**
  * - 결제 상태 관리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-05
  */
 const PaymentManagement = () => {

@@ -5,9 +5,13 @@ import interactionPlugin from '@fullcalendar/interaction';
 
 /**
  * 스케줄 캘린더 뷰 컴포넌트 (Presentational)
+/**
  * - 순수 UI 컴포넌트
+/**
  * - FullCalendar 렌더링만 담당
+/**
  * - 비즈니스 로직 없음
+/**
  * - props로 데이터와 핸들러를 받음
  */
 const ScheduleCalendarView = ({

@@ -1,9 +1,14 @@
 /**
  * Quick Actions 위젯 설정
+/**
  * 역할별 빠른 액션 버튼 정의
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화)
+/**
  * @since 2025-11-29
  */
 
@@ -135,7 +140,9 @@ const ADMIN_ACTIONS = [
 
 /**
  * 역할별 QuickActions 설정 생성
+/**
  * @param {Object} user - 사용자 정보
+/**
  * @returns {Array} 액션 설정 배열
  */
 export const generateQuickActionsConfig = (user) => {
@@ -170,7 +177,9 @@ export const generateQuickActionsConfig = (user) => {
 
 /**
  * 기본 QuickActions 위젯 설정
+/**
  * @param {Object} user - 사용자 정보
+/**
  * @returns {Object} 위젯 설정 객체
  */
 export const createQuickActionsWidget = (user) => ({

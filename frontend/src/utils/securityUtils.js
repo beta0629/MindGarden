@@ -1,9 +1,14 @@
 /**
  * 보안 모니터링 비즈니스 로직 유틸리티
+/**
  * UI와 분리된 순수한 보안 관련 비즈니스 로직 관리
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-26
  */
 
@@ -11,7 +16,7 @@ import { WIDGET_CONSTANTS } from '../constants/widgetConstants';
 
 // ===== 보안 데이터 처리기 =====
 export const SecurityDataProcessor = {
-  /**
+/**
    * 보안 상태 API 응답 변환
    */
   transformSecurityStatusResponse: (apiResponse) => {
@@ -39,7 +44,7 @@ export const SecurityDataProcessor = {
     }
   },
 
-  /**
+/**
    * 차단된 IP 목록 응답 변환
    */
   transformBlockedIPsResponse: (apiResponse) => {
@@ -61,7 +66,7 @@ export const SecurityDataProcessor = {
     }
   },
 
-  /**
+/**
    * 보안 이벤트 통계 응답 변환
    */
   transformSecurityEventsResponse: (apiResponse) => {
@@ -95,7 +100,7 @@ export const SecurityDataProcessor = {
     }
   },
 
-  /**
+/**
    * 이벤트 타입 포맷팅
    */
   formatEventType: (eventType) => {
@@ -105,7 +110,7 @@ export const SecurityDataProcessor = {
       .replace(/\b\w/g, l => l.toUpperCase());
   },
 
-  /**
+/**
    * 이벤트 심각도 결정
    */
   getEventSeverity: (eventType) => {
@@ -122,7 +127,7 @@ export const SecurityDataProcessor = {
 
 // ===== 보안 분석기 =====
 export const SecurityAnalyzer = {
-  /**
+/**
    * 보안 점수에 따른 등급 계산
    */
   calculateSecurityGrade: (score) => {
@@ -134,7 +139,7 @@ export const SecurityAnalyzer = {
     return 'poor';
   },
 
-  /**
+/**
    * 위협 수준에 따른 색상 클래스 결정
    */
   getThreatLevelColorClass: (threatLevel) => {
@@ -149,7 +154,7 @@ export const SecurityAnalyzer = {
     }
   },
 
-  /**
+/**
    * 보안 상태에 따른 아이콘 타입 결정
    */
   getStatusIconType: (status) => {
@@ -164,7 +169,7 @@ export const SecurityAnalyzer = {
     }
   },
 
-  /**
+/**
    * 보안 상태에 따른 CSS 클래스 결정
    */
   getStatusCssClass: (status) => {
@@ -179,7 +184,7 @@ export const SecurityAnalyzer = {
     }
   },
 
-  /**
+/**
    * 전체 보안 건강도 분석
    */
   analyzeSecurityHealth: (securityData) => {
@@ -213,7 +218,7 @@ export const SecurityAnalyzer = {
     };
   },
 
-  /**
+/**
    * 위험 수준 계산
    */
   calculateRiskLevel: (securityData) => {
@@ -237,7 +242,7 @@ export const SecurityAnalyzer = {
     return 'low';
   },
 
-  /**
+/**
    * 보안 권장사항 생성
    */
   generateRecommendations: (securityData) => {
@@ -270,12 +275,12 @@ export const SecurityAnalyzer = {
 
 // ===== 보안 데이터 매니저 =====
 export const SecurityDataManager = {
-  /**
+/**
    * 보안 데이터 캐시
    */
   cache: new Map(),
   
-  /**
+/**
    * 캐시된 데이터 조회
    */
   getCachedData: (key, maxAge = 10000) => { // 10초 캐시
@@ -286,7 +291,7 @@ export const SecurityDataManager = {
     return null;
   },
   
-  /**
+/**
    * 데이터 캐시 저장
    */
   setCachedData: (key, data) => {
@@ -296,19 +301,19 @@ export const SecurityDataManager = {
     });
   },
   
-  /**
+/**
    * 캐시 클리어
    */
   clearCache: () => {
     SecurityDataManager.cache.clear();
   },
   
-  /**
+/**
    * 보안 히스토리 관리
    */
   securityHistory: [],
   
-  /**
+/**
    * 보안 히스토리 추가
    */
   addToHistory: (securityData, maxLength = 50) => {
@@ -324,7 +329,7 @@ export const SecurityDataManager = {
     }
   },
   
-  /**
+/**
    * 보안 트렌드 분석
    */
   analyzeSecurityTrend: (metric, timeWindow = 10) => {
@@ -350,7 +355,7 @@ export const SecurityDataManager = {
 
 // ===== 보안 알림 매니저 =====
 export const SecurityAlertManager = {
-  /**
+/**
    * 보안 알림 필요 여부 확인
    */
   shouldAlert: (securityData, previousData) => {
@@ -392,7 +397,7 @@ export const SecurityAlertManager = {
     return alerts;
   },
   
-  /**
+/**
    * 알림 메시지 포맷팅
    */
   formatAlertMessage: (alert) => {

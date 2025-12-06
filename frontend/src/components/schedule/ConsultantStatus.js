@@ -5,11 +5,17 @@ import './ConsultantStatus.css';
 
 /**
  * 상담사 현황 컴포넌트
+/**
  * - 실제 상담사 데이터를 기반으로 현황 표시
+/**
  * - 상담사별 상태 (여유, 바쁨, 휴무) 표시
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ConsultantStatus = () => {
@@ -17,7 +23,7 @@ const ConsultantStatus = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    /**
+/**
      * 상담사 목록 로드 (휴가 정보 포함)
      */
     const loadConsultants = async () => {
@@ -27,7 +33,7 @@ const ConsultantStatus = () => {
             
             // 오늘 날짜로 휴가 정보를 포함한 상담사 목록 조회
             const today = new Date().toISOString().split('T')[0];
-            const response = await apiGet(`/api/admin/consultants/with-vacation?date=${today}`);
+            const response = await apiGet(`/api/v1/admin/consultants/with-vacation?date=${today}`);
             
             if (response.success) {
                 const consultantData = response.data || [];
@@ -54,7 +60,7 @@ const ConsultantStatus = () => {
         }
     };
 
-    /**
+/**
      * 간단한 상담사 상태 계산 (임시 로직)
      */
     const calculateSimpleStatus = (consultant, index) => {
@@ -68,7 +74,7 @@ const ConsultantStatus = () => {
         return statusTypes[index % statusTypes.length];
     };
 
-    /**
+/**
      * 상담사 상태 계산 (실제 스케줄 데이터 기반)
      */
     const calculateConsultantStatus = async (consultant) => {
@@ -135,7 +141,7 @@ const ConsultantStatus = () => {
         }
     };
 
-    /**
+/**
      * 상태별 아이콘 반환
      */
     const getStatusIcon = (status) => {
@@ -151,7 +157,7 @@ const ConsultantStatus = () => {
         }
     };
 
-    /**
+/**
      * 상담사 프로필 이미지 URL 생성
      */
     const getProfileImageUrl = (consultant) => {

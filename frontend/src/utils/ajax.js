@@ -8,23 +8,25 @@ import {
   API_ERROR_MESSAGES
 } from '../constants/api';
 import csrfTokenManager from './csrfTokenManager';
+import { getDefaultApiHeaders } from './apiHeaders';
 
 /**
  * 공통 AJAX 유틸리티
+/**
  * API 호출을 위한 표준화된 함수들
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
-// 기본 헤더 설정
+// 기본 헤더 설정 (공통 유틸리티 사용)
 const getDefaultHeaders = () => {
-  const token = localStorage.getItem('accessToken');
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
-  };
+  return getDefaultApiHeaders();
 };
 
 // 에러 메시지 생성
@@ -49,8 +51,8 @@ const checkSessionAndRedirect = async (response) => {
   const currentPath = window.location.pathname;
   const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
   
-  // 401, 403, 500 오류 시 세션 체크
-  if (response.status === 401 || response.status === 403 || response.status >= 500) {
+  // 401, 403 오류 시에만 세션 체크 (500 오류는 서버 오류이므로 세션 체크하지 않음)
+  if (response.status === 401 || response.status === 403) {
     // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
     if (isLoginPage) {
       console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
@@ -72,6 +74,10 @@ const checkSessionAndRedirect = async (response) => {
         window.location.href = '/login';
         return true; // 리다이렉트됨
       }
+      
+      // 세션이 있으면 리다이렉트하지 않음 (권한 문제일 수 있음)
+      console.log('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
+      return false;
     } catch (sessionError) {
       console.log('🔐 세션 체크 실패 - 로그인 페이지로 리다이렉트');
       localStorage.removeItem('accessToken');
@@ -80,6 +86,13 @@ const checkSessionAndRedirect = async (response) => {
       return true; // 리다이렉트됨
     }
   }
+  
+  // 500 오류는 서버 오류이므로 세션 체크하지 않음
+  if (response.status >= 500) {
+    console.log('⚠️ 서버 오류 (500) - 세션 체크 스킵');
+    return false;
+  }
+  
   return false; // 리다이렉트되지 않음
 };
 
@@ -106,9 +119,12 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       ? (queryString ? `${endpoint}?${queryString}` : endpoint)
       : (queryString ? `${API_BASE_URL}${endpoint}?${queryString}` : `${API_BASE_URL}${endpoint}`);
     
+    const headers = { ...getDefaultHeaders(), ...options.headers };
+    console.log('📤 API GET 요청:', { url, headers: { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] } });
+    
     const response = await fetch(url, {
       method: 'GET',
-      headers: { ...getDefaultHeaders(), ...options.headers },
+      headers,
       credentials: 'include', // 세션 쿠키 포함
       ...options
     });
@@ -195,7 +211,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       }
       
       try {
-        const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+        const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
           credentials: 'include',
           method: 'GET'
         });
@@ -458,7 +474,7 @@ export const consultationAPI = {
 // 테스트 로그인 함수 (개발 환경에서만 사용)
 export const testLogin = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/test-login`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/test-login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

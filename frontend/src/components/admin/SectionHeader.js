@@ -4,11 +4,17 @@ import './SectionHeader.css';
 
 /**
  * 섹션 헤더 컴포넌트
+/**
  * - 섹션 제목, 부제목, 통계 정보를 포함
+/**
  * - 아이폰 스타일과 글래스모피즘 효과 적용
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const SectionHeader = ({ 

@@ -1,9 +1,14 @@
 /**
  * 역할 코드 공통코드 조회 유틸리티
+/**
  * 역할 코드를 공통코드에서 동적으로 조회하여 하드코딩 방지
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-12-04
  */
 
@@ -15,7 +20,9 @@ const CACHE_DURATION = 10 * 60 * 1000; // 10분 캐시
 
 /**
  * 공통코드에서 역할 코드 목록 조회
+/**
  * @param {boolean} useCache - 캐시 사용 여부 (기본값: true)
+/**
  * @returns {Promise<Array>} 역할 코드 목록
  */
 export const getRoleCodesFromCommonCode = async (useCache = true) => {
@@ -64,7 +71,9 @@ export const getRoleCodesFromCommonCode = async (useCache = true) => {
 
 /**
  * 특정 역할 코드가 존재하는지 확인
+/**
  * @param {string} roleCode - 확인할 역할 코드
+/**
  * @returns {Promise<boolean>} 존재 여부
  */
 export const hasRoleCode = async (roleCode) => {
@@ -82,7 +91,9 @@ export const hasRoleCode = async (roleCode) => {
 
 /**
  * 역할 코드의 한글명 조회
+/**
  * @param {string} roleCode - 역할 코드
+/**
  * @returns {Promise<string>} 한글명
  */
 export const getRoleKoreanName = async (roleCode) => {
@@ -101,6 +112,7 @@ export const getRoleKoreanName = async (roleCode) => {
 
 /**
  * 관리자 역할 코드 목록 조회 (공통코드 기반)
+/**
  * @returns {Promise<Array<string>>} 관리자 역할 코드 목록
  */
 export const getAdminRoleCodes = async () => {

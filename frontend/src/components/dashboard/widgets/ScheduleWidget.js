@@ -1,9 +1,14 @@
 /**
  * Schedule Widget - 표준화된 스케줄 빠른 접근 위젯
+/**
  * ScheduleQuickAccess 컴포넌트를 위젯으로 변환
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 

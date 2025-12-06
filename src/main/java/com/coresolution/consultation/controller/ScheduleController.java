@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import com.coresolution.consultation.constant.AdminConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ScheduleCreateRequest;
@@ -886,17 +885,30 @@ public class ScheduleController extends BaseApiController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             HttpSession session) {
-        log.info("📅 관리자 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}", 
+        log.info("📅 관리자 스케줄 조회 요청 시작: consultantId={}, status={}, startDate={}, endDate={}", 
                 consultantId, status, startDate, endDate);
         
         User currentUser = SessionUtils.getCurrentUser(session);
+        log.info("🔍 현재 사용자 확인: userId={}, role={}, username={}", 
+                currentUser != null ? currentUser.getId() : "null",
+                currentUser != null ? currentUser.getRole() : "null",
+                currentUser != null ? currentUser.getUsername() : "null");
+        
         if (currentUser == null) {
+            log.error("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        if (!isAdminUser(currentUser)) {
+        boolean isAdmin = isAdminUser(currentUser);
+        log.info("🔍 관리자 권한 확인 결과: userId={}, role={}, isAdmin={}", 
+                currentUser.getId(), currentUser.getRole(), isAdmin);
+        
+        if (!isAdmin) {
+            log.error("❌ 관리자 권한 없음: userId={}, role={}", currentUser.getId(), currentUser.getRole());
             throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
         }
+        
+        log.info("✅ 관리자 권한 확인 완료, 스케줄 조회 진행");
         
         List<Schedule> schedules;
         
@@ -985,16 +997,33 @@ public class ScheduleController extends BaseApiController {
      * 관리자 권한 확인 (공통코드 기반)
      */
     private boolean isAdminUser(User user) {
+        if (user == null || user.getRole() == null) {
+            log.warn("⚠️ 사용자 또는 역할이 null입니다: user={}, role={}", user, user != null ? user.getRole() : "null");
+            return false;
+        }
+        
         try {
             boolean isAdmin = isAdminRoleFromCommonCode(user.getRole());
-            log.info("🔍 관리자 권한 확인 (UserRole.isAdmin): userRole={}, isAdmin={}", 
-                user.getRole().name(), isAdmin);
-            return isAdmin;
+            log.info("🔍 관리자 권한 확인 (공통코드 기반): userId={}, userRole={}, isAdmin={}", 
+                user.getId(), user.getRole().name(), isAdmin);
+            
+            // 폴백: UserRole.isAdmin()도 확인
+            boolean isAdminByEnum = user.getRole().isAdmin();
+            log.info("🔍 관리자 권한 확인 (Enum 기반): userId={}, userRole={}, isAdminByEnum={}", 
+                user.getId(), user.getRole().name(), isAdminByEnum);
+            
+            // 둘 중 하나라도 true면 관리자로 인정
+            boolean finalResult = isAdmin || isAdminByEnum;
+            log.info("🔍 최종 관리자 권한 확인: userId={}, userRole={}, finalResult={}", 
+                user.getId(), user.getRole().name(), finalResult);
+            
+            return finalResult;
         } catch (Exception e) {
-            log.error("❌ 관리자 권한 확인 실패: error={}", e.getMessage(), e);
+            log.error("❌ 관리자 권한 확인 실패: userId={}, userRole={}, error={}", 
+                user.getId(), user.getRole(), e.getMessage(), e);
             boolean isAdmin = user.getRole() != null && user.getRole().isAdmin();
-            log.info("🔍 관리자 권한 확인 (fallback): userRole={}, isAdmin={}", 
-                user.getRole() != null ? user.getRole().name() : "null", isAdmin);
+            log.info("🔍 관리자 권한 확인 (fallback): userId={}, userRole={}, isAdmin={}", 
+                user.getId(), user.getRole() != null ? user.getRole().name() : "null", isAdmin);
             return isAdmin;
         }
     }

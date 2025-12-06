@@ -6,9 +6,13 @@ import './ErdListPage.css';
 
 /**
  * 테넌트 포털 ERD 목록 페이지
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 const ErdListPage = () => {
@@ -26,7 +30,7 @@ const ErdListPage = () => {
     }
   }, [sessionLoading, user, filter]);
 
-  /**
+/**
    * ERD 목록 로드
    */
   const loadErds = async () => {
@@ -56,7 +60,7 @@ const ErdListPage = () => {
     }
   };
 
-  /**
+/**
    * ERD 상세 페이지로 이동
    */
   const handleErdClick = (diagramId) => {
@@ -66,7 +70,7 @@ const ErdListPage = () => {
     });
   };
 
-  /**
+/**
    * ERD 타입 한글 변환
    */
   const getDiagramTypeLabel = (type) => {
@@ -79,7 +83,7 @@ const ErdListPage = () => {
     return typeMap[type] || type;
   };
 
-  /**
+/**
    * ERD 상태 뱃지 스타일
    */
   const getStatusBadgeClass = (isActive) => {

@@ -1,14 +1,23 @@
 /**
  * MindGarden 위젯 베이스 컴포넌트
  * 
+/**
  * 모든 위젯의 공통 구조와 기능을 제공
+/**
  * - 표준화된 레이아웃 (헤더, 바디, 푸터)
+/**
  * - 로딩/에러 상태 자동 처리
+/**
  * - MindGarden 디자인 시스템 적용
+/**
  * - 접근성 및 반응형 지원
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-28
  */
 
@@ -26,14 +35,23 @@ import '../../../styles/unified-design-tokens.css';
  * @param {Object} props.user - 현재 사용자 정보
  * @param {boolean} props.loading - 로딩 상태
  * @param {string} props.error - 에러 메시지
+/**
  * @param {boolean} props.isEmpty - 빈 데이터 상태
+/**
  * @param {React.ReactNode} props.children - 위젯 내용
+/**
  * @param {Function} props.onRefresh - 새로고침 콜백
+/**
  * @param {Object} props.headerActions - 헤더 액션 버튼들
+/**
  * @param {React.ReactNode} props.footer - 푸터 내용
+/**
  * @param {string} props.className - 추가 CSS 클래스
+/**
  * @param {Object} props.style - 인라인 스타일 (사용 지양)
+/**
  * @param {string} props.size - 위젯 크기 ('sm', 'md', 'lg', 'xl')
+/**
  * @param {string} props.variant - 위젯 변형 ('default', 'card', 'minimal')
  */
 const BaseWidget = ({
@@ -65,7 +83,7 @@ const BaseWidget = ({
     className
   );
 
-  /**
+/**
    * 로딩 상태 렌더링
    */
   const renderLoading = () => (
@@ -77,7 +95,7 @@ const BaseWidget = ({
     </div>
   );
 
-  /**
+/**
    * 에러 상태 렌더링
    */
   const renderError = () => (
@@ -103,7 +121,7 @@ const BaseWidget = ({
     </div>
   );
 
-  /**
+/**
    * 빈 상태 렌더링
    */
   const renderEmpty = () => (
@@ -130,7 +148,7 @@ const BaseWidget = ({
     </div>
   );
 
-  /**
+/**
    * 위젯 헤더 렌더링
    */
   const renderHeader = () => {
@@ -186,7 +204,7 @@ const BaseWidget = ({
     );
   };
 
-  /**
+/**
    * 위젯 바디 렌더링
    */
   const renderBody = () => {
@@ -213,7 +231,7 @@ const BaseWidget = ({
     );
   };
 
-  /**
+/**
    * 위젯 푸터 렌더링
    */
   const renderFooter = () => {

@@ -14,10 +14,15 @@ import './BranchLogin.css';
 
 /**
  * 지점별 로그인 컴포넌트 (URL 파라미터 방식)
+/**
  * URL: /login/branch/{branchCode}
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-12
  */
 const BranchSpecificLogin = () => {
@@ -48,7 +53,7 @@ const BranchSpecificLogin = () => {
 
   // === API 호출 함수들 ===
   
-  /**
+/**
    * 지점 정보 조회
    */
   const loadBranchInfo = async () => {
@@ -79,7 +84,7 @@ const BranchSpecificLogin = () => {
     }
   };
 
-  /**
+/**
    * 지점별 로그인
    */
   const handleBranchLogin = async (e) => {

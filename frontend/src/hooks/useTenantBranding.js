@@ -1,9 +1,14 @@
 /**
  * 테넌트별 브랜딩 CSS 변수 동적 적용 Hook
+/**
  * Trinity-CoreSolution-테넌트 구조에 최적화된 브랜딩 시스템
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-28
  */
 
@@ -13,10 +18,15 @@ import { sessionManager } from '../utils/sessionManager';
 
 /**
  * 테넌트별 브랜딩 CSS 변수 동적 적용 Hook
+/**
  * 
+/**
  * @param {Object} options - 옵션
+/**
  * @param {boolean} options.autoApply - 자동 적용 여부 (기본값: true)
+/**
  * @param {HTMLElement} options.target - 대상 요소 (기본값: document.documentElement)
+/**
  * @returns {Object} 브랜딩 상태 및 함수들
  */
 export const useTenantBranding = (options = {}) => {
@@ -25,7 +35,7 @@ export const useTenantBranding = (options = {}) => {
   // 브랜딩 정보 Hook
   const { brandingInfo, isLoading, error, refreshBranding } = useBranding();
   
-  /**
+/**
    * 테넌트별 CSS 변수 적용
    */
   const applyTenantBranding = useCallback((branding = null) => {
@@ -107,7 +117,7 @@ export const useTenantBranding = (options = {}) => {
     
   }, [brandingInfo, target]);
   
-  /**
+/**
    * 파비콘 동적 변경
    */
   const updateFavicon = useCallback((faviconUrl) => {
@@ -122,7 +132,7 @@ export const useTenantBranding = (options = {}) => {
     link.href = faviconUrl;
   }, []);
   
-  /**
+/**
    * 페이지 타이틀 업데이트
    */
   const updatePageTitle = useCallback((companyName) => {
@@ -147,7 +157,7 @@ export const useTenantBranding = (options = {}) => {
     document.title = newTitle;
   }, []);
   
-  /**
+/**
    * 브랜딩 초기화 (기본값으로 복원)
    */
   const resetBranding = useCallback(() => {

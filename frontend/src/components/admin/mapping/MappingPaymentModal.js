@@ -6,12 +6,19 @@ import { apiPost } from '../../../utils/ajax';
 import MGButton from '../../../components/common/MGButton'; // 임시 비활성화
 /**
  * 매칭 입금확인 모달 컴포넌트
+/**
  * - 결제 방법 선택 (계좌이체, 신용카드, 현금)
+/**
  * - 결제 참조번호 자동 생성 및 수정 가능
+/**
  * - 입금확인 처리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-16
  */
 const MappingPaymentModal = ({ 

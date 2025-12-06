@@ -3,12 +3,19 @@ import './StepIndicator.css';
 
 /**
  * 단계별 진행 표시기 컴포넌트
+/**
  * - 현재 단계 표시
+/**
  * - 진행률 시각화
+/**
  * - 단계별 제목 표시
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-01-05
  */
 const StepIndicator = ({ 

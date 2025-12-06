@@ -45,6 +45,10 @@ spring:
           batch_versioned_data: true
     database-platform: org.hibernate.dialect.MySQL8Dialect
   
+  # ⚠️ 포트 충돌 방지: 애플리케이션 종료 설정
+  lifecycle:
+    timeout-per-shutdown-phase: 10s  # 종료 시 최대 10초 대기 (포트 해제 시간 확보)
+  
   # Thymeleaf 설정
   thymeleaf:
     cache: false
@@ -146,6 +150,8 @@ payment:
 # 서버 설정
 server:
   port: ${SERVER_PORT:8080}
+  # ⚠️ 포트 충돌 방지: Graceful shutdown 설정
+  shutdown: graceful  # Graceful shutdown 활성화 (자동 재시작 시 포트 충돌 방지)
   servlet:
     context-path: /
     encoding:

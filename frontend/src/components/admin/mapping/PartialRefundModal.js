@@ -5,6 +5,7 @@ import notificationManager, { showNotification } from '../../../utils/notificati
 
 /**
  * 부분 환불 모달 컴포넌트
+/**
  * 지정된 회기수만 환불 처리
  */
 const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {

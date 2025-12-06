@@ -1,9 +1,16 @@
+/**
  * 테넌트 프로필/설정 페이지
+/**
  * 
+/**
  * 테넌트 상태, 구독 정보, 결제 수단을 통합 관리하는 페이지
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 
@@ -57,6 +64,7 @@ const TenantProfile = () => {
     }
   }, [tenantId, isLoggedIn, user]);
 
+/**
    * 테넌트 정보 로드
    */
   const loadTenantInfo = async () => {
@@ -64,7 +72,7 @@ const TenantProfile = () => {
 
     try {
       setLoading(true);
-      const response = await fetch('/api/auth/tenant/current', {
+      const response = await fetch('/api/v1/auth/tenant/current', {
         credentials: 'include'
       });
       
@@ -84,6 +92,7 @@ const TenantProfile = () => {
     }
   };
 
+/**
    * 구독 정보 로드
    */
   const loadSubscriptions = async () => {
@@ -97,6 +106,7 @@ const TenantProfile = () => {
     }
   };
 
+/**
    * 결제 수단 목록 로드
    */
   const loadPaymentMethods = async () => {
@@ -110,6 +120,7 @@ const TenantProfile = () => {
     }
   };
 
+/**
    * 결제 수단 삭제
    */
   const handleDeletePaymentMethod = async (paymentMethodId) => {
@@ -135,6 +146,7 @@ const TenantProfile = () => {
     }
   };
 
+/**
    * 기본 결제 수단 설정
    */
   const handleSetDefaultPaymentMethod = async (paymentMethodId) => {
@@ -156,6 +168,7 @@ const TenantProfile = () => {
     }
   };
 
+/**
    * 테넌트 상태 배지 렌더링
    */
   const renderStatusBadge = (status) => {

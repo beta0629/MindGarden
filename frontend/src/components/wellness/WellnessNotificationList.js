@@ -10,9 +10,13 @@ import './WellnessNotificationList.css';
 
 /**
  * 웰니스 알림 목록 페이지 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-21
  */
 const WellnessNotificationList = () => {
@@ -45,7 +49,7 @@ const WellnessNotificationList = () => {
       setError(null);
 
       // 활성화된 웰니스 알림 가져오기
-      const response = await apiGet('/api/system-notifications/active');
+      const response = await apiGet('/api/v1/system-notifications/active');
       
       if (response && response.success) {
         // 웰니스 타입만 필터링

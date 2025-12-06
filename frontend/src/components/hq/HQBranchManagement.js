@@ -15,13 +15,21 @@ import './HQBranchManagement.css';
 
 /**
  * HQ 권한 사용자용 지점관리 통합 화면
+/**
  * - 지점 목록 관리
+/**
  * - 지점 등록/수정
+/**
  * - 지점 상세 정보 및 관리
+/**
  * - 지점별 통계 대시보드
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const HQBranchManagement = () => {

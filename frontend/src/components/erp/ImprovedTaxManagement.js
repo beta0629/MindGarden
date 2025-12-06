@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import MGCard from '../common/MGCard';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -9,7 +9,9 @@ import SimpleLayout from '../layout/SimpleLayout';
 import './ErpCommon.css';
 import notificationManager from '../../utils/notification';
 
+/**
  * 개선된 ERP 세무 관리 페이지
+/**
  * 세금 계산, 신고, 납부 관리
  */
 const ImprovedTaxManagement = () => {
@@ -281,9 +283,7 @@ const ImprovedTaxManagement = () => {
           {/* 콘텐츠 영역 */}
           <div className="erp-content">
           {loading && (
-            <div className="tax-management-loading">
               <UnifiedLoading type="inline" text="로딩 중..." />
-            </div>
           )}
 
             {error && (

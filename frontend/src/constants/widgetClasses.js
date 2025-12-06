@@ -1,9 +1,14 @@
 /**
  * 위젯 CSS 클래스 상수
+/**
  * 모든 CSS 클래스명을 중앙에서 관리
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-28
  */
 

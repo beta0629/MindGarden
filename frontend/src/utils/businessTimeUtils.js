@@ -2,9 +2,13 @@ import { apiGet, apiPost } from './ajax';
 
 /**
  * 업무 시간 및 정책 관리 유틸리티
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-27
  */
 
@@ -15,7 +19,9 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
 /**
  * 업무 시간 설정을 조회합니다
+/**
  * @param {boolean} useCache - 캐시 사용 여부 (기본값: true)
+/**
  * @returns {Promise<Object>} 업무 시간 설정 객체
  */
 export const getBusinessTimeSettings = async (useCache = true) => {
@@ -61,7 +67,9 @@ export const getBusinessTimeSettings = async (useCache = true) => {
 
 /**
  * 업무 시간 설정을 업데이트합니다
+/**
  * @param {Object} settings - 업데이트할 설정 객체
+/**
  * @returns {Promise<boolean>} 업데이트 성공 여부
  */
 export const updateBusinessTimeSettings = async (settings) => {
@@ -88,7 +96,9 @@ export const updateBusinessTimeSettings = async (settings) => {
 
 /**
  * 특정 시간이 업무 시간인지 확인합니다
+/**
  * @param {string} time - 확인할 시간 (HH:mm 형식)
+/**
  * @returns {Promise<Object>} 시간 확인 결과
  */
 export const checkBusinessTime = async (time) => {
@@ -108,7 +118,9 @@ export const checkBusinessTime = async (time) => {
 
 /**
  * 시간 슬롯을 생성합니다
+/**
  * @param {Object} settings - 업무 시간 설정 (선택사항)
+/**
  * @returns {Array} 시간 슬롯 배열
  */
 export const generateTimeSlots = async (settings = null) => {
@@ -146,8 +158,11 @@ export const generateTimeSlots = async (settings = null) => {
 
 /**
  * 특정 시간이 점심시간인지 확인합니다
+/**
  * @param {Object} time - 확인할 시간 객체
+/**
  * @param {Object} settings - 업무 시간 설정
+/**
  * @returns {boolean} 점심시간 여부
  */
 export const isLunchTime = (time, settings) => {
@@ -159,7 +174,9 @@ export const isLunchTime = (time, settings) => {
 
 /**
  * 시간 문자열을 파싱합니다
+/**
  * @param {string} timeStr - 시간 문자열 (HH:mm)
+/**
  * @returns {Object} 시간 객체
  */
 export const parseTime = (timeStr) => {
@@ -188,7 +205,9 @@ export const parseTime = (timeStr) => {
 
 /**
  * 시간 객체를 문자열로 포맷합니다
+/**
  * @param {Object} time - 시간 객체
+/**
  * @returns {string} 시간 문자열 (HH:mm)
  */
 export const formatTime = (time) => {
@@ -206,6 +225,7 @@ export const clearBusinessTimeCache = () => {
 
 /**
  * 업무 시간 설정의 기본값을 반환합니다
+/**
  * @returns {Object} 기본 업무 시간 설정
  */
 export const getDefaultBusinessTimeSettings = () => {

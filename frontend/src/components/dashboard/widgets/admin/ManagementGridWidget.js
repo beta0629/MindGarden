@@ -1,10 +1,16 @@
 /**
  * Management Grid Widget
+/**
  * 실제 마인드가든 관리 기능들을 표시하는 위젯
+/**
  * AdminDashboard의 관리 기능 카드들을 위젯화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0
+/**
  * @since 2025-11-27
  */
 

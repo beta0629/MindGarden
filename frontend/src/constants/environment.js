@@ -1,9 +1,14 @@
 /**
  * 환경 변수 및 설정 상수
+/**
  * 하드코딩된 URL과 설정값들을 환경변수로 관리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
@@ -54,23 +59,23 @@ const ENV = {
   // OAuth2 설정 (동적 생성)
   KAKAO: {
     CLIENT_ID: process.env.REACT_APP_KAKAO_CLIENT_ID || 'cbb457cfb5f9351fd495be4af2b11a34',
-    REDIRECT_URI: process.env.REACT_APP_KAKAO_REDIRECT_URI || `${getBaseUrl()}/api/auth/kakao/callback`
+    REDIRECT_URI: process.env.REACT_APP_KAKAO_REDIRECT_URI || `${getBaseUrl()}/api/v1/auth/kakao/callback`
   },
   
   NAVER: {
     CLIENT_ID: process.env.REACT_APP_NAVER_CLIENT_ID || 'vTKNlxYKIfo1uCCXaDfk',
     CLIENT_SECRET: process.env.REACT_APP_NAVER_CLIENT_SECRET || 'V_b3omW5pu',
-    REDIRECT_URI: process.env.REACT_APP_NAVER_REDIRECT_URI || `${getBaseUrl()}/api/auth/naver/callback`
+    REDIRECT_URI: process.env.REACT_APP_NAVER_REDIRECT_URI || `${getBaseUrl()}/api/v1/auth/naver/callback`
   },
   
   GOOGLE: {
     CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID || 'your_google_client_id',
-    REDIRECT_URI: process.env.REACT_APP_GOOGLE_REDIRECT_URI || `${getBaseUrl()}/api/auth/google/callback`
+    REDIRECT_URI: process.env.REACT_APP_GOOGLE_REDIRECT_URI || `${getBaseUrl()}/api/v1/auth/google/callback`
   },
   
   FACEBOOK: {
     CLIENT_ID: process.env.REACT_APP_FACEBOOK_CLIENT_ID || 'your_facebook_client_id',
-    REDIRECT_URI: process.env.REACT_APP_FACEBOOK_REDIRECT_URI || `${getBaseUrl()}/api/auth/facebook/callback`
+    REDIRECT_URI: process.env.REACT_APP_FACEBOOK_REDIRECT_URI || `${getBaseUrl()}/api/v1/auth/facebook/callback`
   }
 };
 

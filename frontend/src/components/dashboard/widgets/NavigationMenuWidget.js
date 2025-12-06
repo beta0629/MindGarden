@@ -1,10 +1,16 @@
 /**
  * Navigation Menu Widget
+/**
  * 역할별 동적 메뉴를 표시하는 위젯
+/**
  * SimpleHamburgerMenu를 기반으로 위젯화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 

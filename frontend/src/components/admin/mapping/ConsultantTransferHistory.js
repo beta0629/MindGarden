@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import './ConsultantTransferHistory.css';
 
+/**
  * 상담사 변경 이력 컴포넌트
+/**
  * 
+/**
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {number} props.clientId - 내담자 ID
+/**
  * @param {boolean} props.isOpen - 이력 표시 상태
+/**
  * @param {Function} props.onClose - 이력 닫기 함수
  */
 const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {

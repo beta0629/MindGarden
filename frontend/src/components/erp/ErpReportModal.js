@@ -7,11 +7,17 @@ import notificationManager from '../../utils/notification';
 
 /**
  * ERP 보고서 모달 컴포넌트
+/**
  * - 월별/분기별/연별 보고서 생성
+/**
  * - 보고서 다운로드 기능
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-30
  */
 const ErpReportModal = ({ isOpen, onClose }) => {
@@ -31,7 +37,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
         }
     }, [isOpen]);
 
-    /**
+/**
      * 지점 목록 로드
      */
     const loadBranches = async () => {
@@ -45,7 +51,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 보고서 생성
      */
     const handleGenerateReport = async () => {
@@ -81,7 +87,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 보고서 다운로드
      */
     const handleDownloadReport = async () => {
@@ -125,7 +131,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
         }
     };
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {

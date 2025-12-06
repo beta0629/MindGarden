@@ -4,11 +4,17 @@ import { Calendar, XCircle, FileText, Umbrella, CheckCircle } from 'lucide-react
 
 /**
  * 날짜 액션 선택 모달 컴포넌트
+/**
  * - 스케줄 등록
+/**
  * - 휴가 등록
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-02
  */
 const DateActionModal = ({ 

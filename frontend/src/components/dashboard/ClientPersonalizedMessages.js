@@ -22,7 +22,9 @@ import notificationManager from '../../utils/notification';
 import '../../styles/unified-design-tokens.css';
 import './ClientPersonalizedMessages.css';
 
+/**
  * 내담자 상태에 따른 맞춤형 메시지 컴포넌트
+/**
  * 매핑 상태, 상담 진행 상황, 결제 상태 등을 기반으로 동적 메시지 생성
  */
 const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) => {

@@ -1,10 +1,16 @@
 /**
  * Activity List Widget
+/**
  * 최근 활동 목록을 표시하는 범용 위젯
+/**
  * RecentActivities를 기반으로 범용화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 

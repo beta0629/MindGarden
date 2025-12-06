@@ -12,7 +12,9 @@ import {
 import '../../styles/unified-design-tokens.css';
 import './ClientPaymentSessionsSection.css';
 
+/**
  * 내담자 결제 내역 및 총회기수 섹션 컴포넌트
+/**
  * 디자인 시스템 적용 버전
  */
 const ClientPaymentSessionsSection = ({ userId }) => {

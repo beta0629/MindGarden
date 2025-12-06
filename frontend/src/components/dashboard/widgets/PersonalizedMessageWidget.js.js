@@ -1,10 +1,16 @@
 /**
  * Personalized Message Widget
+/**
  * 맞춤형 메시지를 표시하는 범용 위젯
+/**
  * ClientPersonalizedMessages를 기반으로 범용화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 

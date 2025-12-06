@@ -1,14 +1,23 @@
 /**
  * MindGarden 위젯 표준 커스텀 훅
  * 
+/**
  * 모든 위젯에서 공통으로 사용되는 로직을 표준화
+/**
  * - API 호출 및 데이터 관리
+/**
  * - 로딩 및 에러 상태 관리
+/**
  * - 자동 새로고침
+/**
  * - 캐싱 및 최적화
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-28
  */
 
@@ -26,14 +35,23 @@ import { WIDGET_CONSTANTS } from '../constants/widgetConstants';
  * @param {Object} config.dataSource.params - API 파라미터
  * @param {number} config.dataSource.refreshInterval - 자동 새로고침 간격 (ms)
  * @param {Function} config.dataSource.transform - 데이터 변환 함수
+/**
  * @param {any} config.defaultValue - 기본값
+/**
  * @param {Object} user - 현재 사용자 정보
+/**
  * @param {Object} options - 추가 옵션
+/**
  * @param {boolean} options.immediate - 즉시 로드 여부 (기본: true)
+/**
  * @param {boolean} options.cache - 캐싱 사용 여부 (기본: false)
+/**
  * @param {number} options.retryCount - 재시도 횟수 (기본: 3)
+/**
  * @param {number} options.retryDelay - 재시도 지연 시간 (기본: 1000ms)
+/**
  * 
+/**
  * @returns {Object} 위젯 상태 및 메서드
  */
 export const useWidget = (config = {}, user = null, options = {}) => {
@@ -67,7 +85,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     transform
   } = dataSource;
 
-  /**
+/**
    * 캐시 키 생성
    */
   const getCacheKey = useCallback(() => {
@@ -76,7 +94,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     return key;
   }, [url, params, user?.id]);
 
-  /**
+/**
    * 캐시에서 데이터 가져오기
    */
   const getCachedData = useCallback(() => {
@@ -91,7 +109,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     return null;
   }, [cache, getCacheKey]);
 
-  /**
+/**
    * 캐시에 데이터 저장
    */
   const setCachedData = useCallback((data) => {
@@ -105,7 +123,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     });
   }, [cache, getCacheKey]);
 
-  /**
+/**
    * 데이터 변환 함수
    */
   const transformData = useCallback((rawData) => {
@@ -122,7 +140,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     return rawData;
   }, [transform]);
 
-  /**
+/**
    * API 데이터 로드
    */
   const loadData = useCallback(async (showLoading = true) => {
@@ -194,7 +212,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     config.defaultValue, retryAttempt, retryCount, retryDelay
   ]);
 
-  /**
+/**
    * 수동 새로고침
    */
   const refresh = useCallback(async () => {
@@ -210,7 +228,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     await loadData(true);
   }, [loadData, cache, getCacheKey]);
 
-  /**
+/**
    * 자동 새로고침 설정
    */
   useEffect(() => {
@@ -227,7 +245,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     }
   }, [refreshInterval, loadData]);
 
-  /**
+/**
    * 초기 데이터 로드
    */
   useEffect(() => {
@@ -243,7 +261,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     }
   }, [immediate, type, config.defaultValue, loadData]);
 
-  /**
+/**
    * 컴포넌트 언마운트 시 정리
    */
   useEffect(() => {
@@ -257,7 +275,7 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     };
   }, []);
 
-  /**
+/**
    * 데이터 포맷팅 유틸리티
    */
   const formatValue = useCallback((value, format = 'default') => {
@@ -281,17 +299,17 @@ export const useWidget = (config = {}, user = null, options = {}) => {
     }
   }, []);
 
-  /**
+/**
    * 에러 상태 확인
    */
   const hasError = Boolean(error);
   
-  /**
+/**
    * 데이터 존재 여부 확인
    */
   const hasData = data !== null && data !== undefined;
 
-  /**
+/**
    * 빈 상태 확인
    */
   const isEmpty = !hasData || (Array.isArray(data) && data.length === 0);
@@ -324,11 +342,17 @@ export const useWidget = (config = {}, user = null, options = {}) => {
 
 /**
  * 다중 위젯 데이터 관리를 위한 유틸리티
+/**
  * 
+/**
  * 주의: React Hook 규칙으로 인해 동적 개수의 Hook을 사용할 수 없으므로
+/**
  * 이 함수는 일반 함수로 구현하고, 각 위젯에서 개별적으로 useWidget을 사용하세요.
+/**
  * 
+/**
  * @param {Array} widgetResults - useWidget 결과들의 배열
+/**
  * @returns {Object} 통합된 상태 정보
  */
 export const combineWidgetResults = (widgetResults = []) => {

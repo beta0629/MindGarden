@@ -2,11 +2,17 @@ import React from 'react';
 
 /**
  * ERP 공통 헤더 컴포넌트 - MindGarden 디자인 시스템 mg-dashboard-header 활용
+/**
  * 
+/**
  * @param {string} title - 헤더 제목
+/**
  * @param {string} subtitle - 헤더 부제목
+/**
  * @param {React.ReactNode} actions - 헤더 액션 버튼들
+/**
  * @param {React.ReactNode} icon - 헤더 아이콘 (선택사항)
+/**
  * @param {string} className - 추가 CSS 클래스
  */
 const ErpHeader = ({ 

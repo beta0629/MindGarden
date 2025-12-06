@@ -7,12 +7,19 @@ import notificationManager from '../../utils/notification';
 
 /**
  * 지점 등록 모달 컴포넌트
+/**
  * - 새 지점 등록 기능
+/**
  * - 지점 정보 입력 폼
+/**
  * - 유효성 검사 및 등록 처리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-26
  */
 const BranchRegistrationModal = ({ show, onHide, onBranchAdded }) => {

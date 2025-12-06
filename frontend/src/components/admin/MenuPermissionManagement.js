@@ -2,14 +2,23 @@
  * 메뉴 권한 관리 컨테이너 (Container Component)
  * 
  * 비즈니스 로직 담당:
+/**
  * - API 호출
+/**
  * - 상태 관리
+/**
  * - 이벤트 핸들러
+/**
  * 
+/**
  * UI 렌더링은 MenuPermissionManagementUI에 위임
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-12-03
  */
 
@@ -30,14 +39,14 @@ const MenuPermissionManagement = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    /**
+/**
      * 초기 로드: 역할 목록 조회
      */
     useEffect(() => {
         fetchRoles();
     }, []);
 
-    /**
+/**
      * 선택된 역할 변경 시 메뉴 권한 조회
      */
     useEffect(() => {
@@ -46,7 +55,7 @@ const MenuPermissionManagement = () => {
         }
     }, [selectedRole]);
 
-    /**
+/**
      * 역할 목록 조회
      */
     const fetchRoles = async () => {
@@ -74,7 +83,7 @@ const MenuPermissionManagement = () => {
         }
     };
 
-    /**
+/**
      * 메뉴 권한 조회
      */
     const fetchMenuPermissions = async (roleId) => {
@@ -97,7 +106,7 @@ const MenuPermissionManagement = () => {
         }
     };
 
-    /**
+/**
      * 역할 선택
      */
     const handleRoleSelect = (role) => {
@@ -106,7 +115,7 @@ const MenuPermissionManagement = () => {
         setError(null);
     };
 
-    /**
+/**
      * 권한 변경
      */
     const handlePermissionChange = async (menuId, field, value) => {
@@ -149,7 +158,7 @@ const MenuPermissionManagement = () => {
         }
     };
 
-    /**
+/**
      * 일괄 저장
      */
     const handleBatchSave = async () => {

@@ -6,6 +6,7 @@ import './SecurityMonitoringWidget.css';
 
 /**
  * 보안 모니터링 위젯
+/**
  * 실시간 보안 상태 및 위협 탐지 현황 표시
  */
 const SecurityMonitoringWidget = ({ 

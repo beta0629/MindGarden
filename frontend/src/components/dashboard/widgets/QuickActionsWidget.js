@@ -1,10 +1,16 @@
 /**
  * Quick Actions Widget
+/**
  * 빠른 액션 버튼들을 표시하는 범용 위젯
+/**
  * QuickActions를 기반으로 범용화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 

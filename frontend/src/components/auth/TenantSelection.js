@@ -1,11 +1,18 @@
 /**
  * 테넌트 선택 컴포넌트
+/**
  * Phase 3: 멀티 테넌트 사용자 지원
+/**
  * 
+/**
  * 여러 테넌트에 접근 가능한 사용자가 테넌트를 선택하는 화면
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 
@@ -38,7 +45,7 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
     try {
       console.log('🔄 테넌트 전환 요청:', tenantId);
       
-      const response = await fetch(`${API_BASE_URL}/api/auth/tenant/switch`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/tenant/switch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -5,11 +5,17 @@ import { showNotification } from '../../utils/notification';
 
 /**
  * 상담사 신청 모달 컴포넌트
+/**
  * - 내담자가 상담사로 신청할 수 있는 UI 제공
+/**
  * - 자격 요건 확인 및 신청 정보 입력
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const ConsultantApplicationModal = ({ 
@@ -34,7 +40,7 @@ const ConsultantApplicationModal = ({
         additionalNotes: ''
     });
 
-    /**
+/**
      * 자격 요건 상세 정보 조회 (미충족 시)
      */
     const getRequirementsDetails = useCallback(async () => {
@@ -48,7 +54,7 @@ const ConsultantApplicationModal = ({
         }
     }, [userId]);
 
-    /**
+/**
      * 상담사 자격 요건 확인
      */
     const checkEligibility = useCallback(async () => {
@@ -78,7 +84,7 @@ const ConsultantApplicationModal = ({
         }
     }, [isOpen, userId, userRole, checkEligibility]);
 
-    /**
+/**
      * 폼 데이터 변경 핸들러
      */
     const handleInputChange = (e) => {
@@ -89,7 +95,7 @@ const ConsultantApplicationModal = ({
         }));
     };
 
-    /**
+/**
      * 상담사 신청 제출
      */
     const handleSubmit = async (e) => {
@@ -120,7 +126,7 @@ const ConsultantApplicationModal = ({
         }
     };
 
-    /**
+/**
      * 모달 닫기
      */
     const handleClose = () => {

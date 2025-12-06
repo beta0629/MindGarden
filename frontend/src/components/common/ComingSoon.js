@@ -5,10 +5,15 @@ import './ComingSoon.css';
 
 /**
  * 준비중 페이지 컴포넌트
+/**
  * - 아직 구현되지 않은 기능에 대한 안내 페이지
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-05
  */
 const ComingSoon = ({ title = "준비중", description = "해당 기능은 현재 개발 중입니다." }) => {

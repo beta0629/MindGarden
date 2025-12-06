@@ -1,9 +1,14 @@
 /**
  * 동적 대시보드 컴포넌트
+/**
  * 백엔드에서 조회한 대시보드 정보를 기반으로 적절한 대시보드 컴포넌트를 동적으로 로드
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 
@@ -291,7 +296,7 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
             color: 'info',
             dataSource: {
               type: 'api',
-              url: '/api/auth/current-user'
+              url: '/api/v1/auth/current-user'
             }
           }
         },
@@ -561,10 +566,15 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
 
 /**
  * 위젯 기반 대시보드 컴포넌트
+/**
  * @param {Object} props
+/**
  * @param {Object} props.dashboardConfig - 대시보드 설정 JSON
+/**
  * @param {Object} props.dashboard - 대시보드 정보
+/**
  * @param {Object} props.user - 사용자 정보
+/**
  * @param {string} props.businessType - 업종 타입 (선택적)
  */
 const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: propBusinessType = null }) => {
@@ -586,8 +596,8 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
       try {
         console.debug(`테넌트 업종 정보 조회 시작: ${user.tenantId}`);
         
-        // /api/auth/current-user 응답에서 businessType 조회
-        const currentUserInfo = await apiGet('/api/auth/current-user');
+        // /api/v1/auth/current-user 응답에서 businessType 조회
+        const currentUserInfo = await apiGet('/api/v1/auth/current-user');
         
         if (currentUserInfo?.businessType) {
           setBusinessType(currentUserInfo.businessType);
@@ -656,7 +666,7 @@ const WidgetBasedDashboard = ({ dashboardConfig, dashboard, user, businessType: 
       // API 호출로 테넌트 정보 조회
       const fetchBusinessType = async () => {
         try {
-          // /api/auth/current-user API가 이미 tenantId를 가지고 있으니
+          // /api/v1/auth/current-user API가 이미 tenantId를 가지고 있으니
           // 추가 API 호출 대신 현재 URL이나 다른 방법 사용
           
           // 임시 해결: 현재 페이지가 /admin 경로면 관리자이므로 모든 위젯 허용
@@ -962,6 +972,7 @@ const getDashboardLayoutConfig = (widgetCount) => {
 
 /**
  * 관리자용 기본 대시보드 설정 생성 (테넌트별 관리자 + 슈퍼 관리자)
+/**
  * 모든 위젯(공통 + 상담 + 학원 + ERP)을 표시
  */
 const createDefaultAdminDashboardConfig = (allAdminRoles) => {
@@ -1077,6 +1088,7 @@ const createDefaultAdminDashboardConfig = (allAdminRoles) => {
 
 /**
  * 업종별 기본 대시보드 설정 생성
+/**
  * 공통 위젯 + 업종별 위젯 + ERP 위젯을 표시
  */
 const createDefaultBusinessTypeDashboardConfig = (businessType) => {
@@ -1203,7 +1215,7 @@ const createDefaultUserDashboardConfig = (businessType, userRole) => {
           title: '알림',
           dataSource: {
             type: 'api',
-            url: '/api/system-notifications/active'
+            url: '/api/v1/system-notifications/active'
           }
         }
       }

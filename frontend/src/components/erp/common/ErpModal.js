@@ -3,14 +3,23 @@ import ReactDOM from 'react-dom';
 
 /**
  * ERP 공통 모달 컴포넌트 - MindGarden 디자인 시스템 mg-v2-modal 활용
+/**
  * ReactDOM.createPortal을 사용하여 document.body에 직접 렌더링
+/**
  * 
+/**
  * @param {boolean} isOpen - 모달 열림 상태
+/**
  * @param {function} onClose - 모달 닫기 핸들러
+/**
  * @param {string} title - 모달 제목
+/**
  * @param {React.ReactNode} children - 모달 내용
+/**
  * @param {string} size - 모달 크기 (sm, md, lg, xl)
+/**
  * @param {boolean} showCloseButton - 닫기 버튼 표시 여부
+/**
  * @param {string} className - 추가 CSS 클래스
  */
 const ErpModal = ({ 

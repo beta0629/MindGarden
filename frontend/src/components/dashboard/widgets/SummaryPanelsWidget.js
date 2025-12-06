@@ -1,9 +1,14 @@
 /**
  * Summary Panels Widget - 표준화된 요약 패널 위젯
+/**
  * SummaryPanels 컴포넌트를 위젯으로 변환 + 실제 API 연동
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 
@@ -51,7 +56,7 @@ const SummaryPanelsWidget = ({ widget, user }) => {
     } else if (RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.HQ_MASTER)) {
       return {
         ...baseConfig,
-        url: '/api/schedules/admin/statistics',
+        url: '/api/v1/schedules/admin/statistics',
         params: { ...baseConfig.params, userRole: 'ADMIN' }
       };
     }

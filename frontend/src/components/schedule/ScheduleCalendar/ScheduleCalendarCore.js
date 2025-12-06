@@ -6,9 +6,13 @@ import interactionPlugin from '@fullcalendar/interaction';
 
 /**
  * FullCalendar 래퍼 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleCalendarCore = ({

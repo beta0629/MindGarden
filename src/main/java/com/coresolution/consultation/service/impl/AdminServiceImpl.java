@@ -106,6 +106,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔐 관리자 상담사 등록 시 이름, 이메일 암호화 완료");
         
         String tenantId = getTenantIdOrNull();
+        if (tenantId == null) {
+            log.warn("⚠️ TenantContext에 tenantId가 없습니다. 세션에서 조회 시도...");
+            throw new IllegalStateException("테넌트 정보가 없습니다. 관리자에게 문의하세요.");
+        }
+        
         Optional<User> existingConsultant = userRepository.findByTenantIdAndUsernameAndIsActive(tenantId, request.getUsername(), false);
         
         if (existingConsultant.isPresent()) {

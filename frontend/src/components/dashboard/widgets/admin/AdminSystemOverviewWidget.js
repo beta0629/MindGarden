@@ -9,10 +9,15 @@ import './AdminSystemOverviewWidget.css';
 
 /**
  * 관리자 시스템 개요 위젯 - 표준화된 위젯
+/**
  * 전체 시스템 현황 요약 (상담사, 내담자, 매칭 통계)
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (위젯 표준화 업그레이드)
+/**
  * @since 2025-11-29
  */
 const AdminSystemOverviewWidget = ({ widget, user }) => {

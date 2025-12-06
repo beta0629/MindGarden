@@ -14,12 +14,19 @@ import {
 
 /**
  * 상담사 상세 정보 모달
+/**
  * - 상담사의 모든 정보를 상세히 표시
+/**
  * - 디자인 시스템 v2.0 적용
+/**
  * - 반응형 지원
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-01-15
  */
 const ConsultantDetailModal = ({ 
@@ -27,7 +34,7 @@ const ConsultantDetailModal = ({
     onClose, 
     consultant 
 }) => {
-    /**
+/**
      * 이니셜 반환
      */
     const getInitial = () => {

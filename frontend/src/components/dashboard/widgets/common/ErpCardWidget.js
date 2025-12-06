@@ -1,10 +1,16 @@
 /**
  * ERP Card Widget
+/**
  * ErpCard를 기반으로 한 범용 카드 위젯
+/**
  * 대시보드에서 카드 형태의 컨텐츠를 표시할 수 있도록 위젯화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 

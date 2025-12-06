@@ -5,9 +5,13 @@ import { Calendar, Users, RefreshCw, Smartphone, Monitor } from 'lucide-react';
 
 /**
  * 스케줄 달력 헤더 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const ScheduleCalendarHeader = ({

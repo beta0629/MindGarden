@@ -5,9 +5,13 @@ import notificationManager from '../../utils/notification';
 
 /**
  * 개인정보 수집 및 이용 동의 모달 컴포넌트
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-17
  */
 const PrivacyConsentModal = ({ 

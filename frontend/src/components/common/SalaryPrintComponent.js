@@ -1,16 +1,26 @@
 import React from 'react';
 import PrintComponent from './PrintComponent';
 
+/**
  * 급여 계산서 프린트 컴포넌트
  * 
+/**
  * @param {Object} props - 컴포넌트 props
+/**
  * @param {Object} props.salaryData - 급여 데이터
+/**
  * @param {string} props.consultantName - 상담사 이름
+/**
  * @param {string} props.period - 계산 기간
+/**
  * @param {boolean} props.includeTaxDetails - 세금 내역 포함 여부
+/**
  * @param {boolean} props.includeCalculationDetails - 계산 상세 포함 여부
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-11
  */
 const SalaryPrintComponent = ({ 

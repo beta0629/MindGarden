@@ -32,10 +32,15 @@ import './PgApprovalManagement.css';
 
 /**
  * 운영 포털 PG 설정 승인 관리 페이지
+/**
  * 운영 포털에서 PG 설정 승인/거부를 관리하는 페이지
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 const PgApprovalManagement = () => {

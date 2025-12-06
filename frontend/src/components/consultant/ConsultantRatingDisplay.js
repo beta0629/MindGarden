@@ -5,11 +5,17 @@ import { useSession } from '../../contexts/SessionContext';
 
 /**
  * 상담사용 평가 표시 컴포넌트
+/**
  * - 상담사가 받은 하트 평가 통계 및 목록 표시
+/**
  * - 평균 점수, 점수별 분포, 최근 평가 등
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-17
  */
 const ConsultantRatingDisplay = ({ consultantId }) => {

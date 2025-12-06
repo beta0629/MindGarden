@@ -2,11 +2,17 @@ import './Card.css';
 
 /**
  * CardFooter 컴포넌트 - 카드 푸터
+/**
  * 
+/**
  * @param {Object} props
+/**
  * @param {React.ReactNode} props.children - 푸터 내용
+/**
  * @param {Array} props.actions - 액션 버튼 배열 (선택)
+/**
  * @param {string} props.meta - 메타 정보 텍스트 (선택)
+/**
  * @param {string} props.className - 추가 CSS 클래스
  */
 const CardFooter = ({children, 

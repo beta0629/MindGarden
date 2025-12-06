@@ -1,6 +1,7 @@
 package com.coresolution.consultation.config;
 
 import java.util.Arrays;
+import java.util.List;
 import com.coresolution.core.filter.TenantContextFilter;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,6 +106,8 @@ public class SecurityConfig {
                 
                 // API 엔드포인트별 권한 설정
                 .authorizeHttpRequests(authz -> authz
+                    // CORS preflight 요청 허용 (모든 환경)
+                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
                     // 공개 엔드포인트: 온보딩 API (새로운 테넌트 등록)
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
@@ -114,18 +117,23 @@ public class SecurityConfig {
                         "/api/v1/ops/plans/code/**",          // plan_code로 요금제 조회 (공개)
                         "/api/v1/ops/plans/*"                 // plan_id로 요금제 조회 (공개, 단 DELETE 제외)
                     ).permitAll()
-                    .requestMatchers("/api/v1/auth/**").permitAll() // Ops Portal 인증 API는 허용
+                    .requestMatchers("/api/v1/auth/**").permitAll() // 인증 API는 허용
                     .requestMatchers("/api/common-codes/**").permitAll() // 공통코드는 허용
+                    .requestMatchers("/api/v1/common-codes/**").permitAll() // 공통코드 v1 API는 허용
                     .requestMatchers("/api/admin/css-themes/**").permitAll() // CSS 테마는 허용
+                    .requestMatchers("/api/v1/admin/css-themes/**").permitAll() // CSS 테마 v1 API는 허용
                     .requestMatchers("/register", "/tablet/register", "/auth/register").permitAll() // 회원가입 페이지는 공개
                     .requestMatchers("/api/system-notifications/**").authenticated() // 시스템 알림 API는 인증 필요
                     .requestMatchers("/api/consultation-messages/**").authenticated() // 상담 메시지 API는 인증 필요
                     .requestMatchers("/api/client/**").authenticated() // 클라이언트 API는 인증 필요
                     .requestMatchers("/api/admin/**").authenticated() // 관리자 API는 인증 필요
+                    .requestMatchers("/api/v1/admin/**").authenticated() // 관리자 API v1은 인증 필요
                     .requestMatchers("/api/erp/**").authenticated() // ERP API는 인증 필요
                     .requestMatchers("/api/schedules/**").authenticated() // 스케줄 API는 인증 필요
+                    .requestMatchers("/api/v1/schedules/**").authenticated() // 스케줄 API v1은 인증 필요
                     .requestMatchers("/api/payments/**").authenticated() // 결제 API는 인증 필요
                     .requestMatchers("/api/consultant/**").authenticated() // 상담사 API는 인증 필요
+                    .requestMatchers("/api/v1/consultants/**").authenticated() // 상담사 API v1은 인증 필요
                     // Ops Portal API는 인증 필요 (공개 엔드포인트 제외)
                     .requestMatchers("/api/v1/ops/auth/**").permitAll() // Ops Portal 인증 API는 허용
                     .requestMatchers("/api/v1/ops/**").authenticated() // 나머지 Ops Portal API는 인증 필요
@@ -161,6 +169,12 @@ public class SecurityConfig {
                     ).permitAll()
                     // Ops Portal 인증 API는 허용
                     .requestMatchers("/api/v1/ops/auth/**").permitAll()
+                    // 인증 API는 허용
+                    .requestMatchers("/api/v1/auth/**").permitAll()
+                    // 공통코드는 허용
+                    .requestMatchers("/api/v1/common-codes/**").permitAll()
+                    // CSS 테마는 허용
+                    .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
                     // 나머지 Ops Portal API는 인증 필요
                     .requestMatchers("/api/v1/ops/**").authenticated()
                     .anyRequest().permitAll() // 나머지는 허용
@@ -215,6 +229,7 @@ public class SecurityConfig {
         log.info("🔧 isLocal: {}, isDev: {}, isProd: {}", isLocal, isDev, isProd);
         
         if (isProd) {
+            log.info("🌐 CORS 설정: 운영 환경 - 프로덕션 도메인 허용");
             // 운영: 실제 운영 도메인들
             configuration.setAllowedOrigins(Arrays.asList(
                 "https://core-solution.co.kr", 
@@ -227,6 +242,7 @@ public class SecurityConfig {
                 "http://m-garden.co.kr"
             ));
         } else if (isDev) {
+            log.info("🌐 CORS 설정: 개발 환경 - 개발 도메인 + localhost 허용");
             // 개발: 실제 개발 도메인들 + localhost
             configuration.setAllowedOrigins(Arrays.asList(
                 "https://dev.core-solution.co.kr",
@@ -241,51 +257,73 @@ public class SecurityConfig {
                 "http://localhost:3001"
             ));
         } else {
-            // 로컬: 모든 Origin 허용
-            configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+            // 로컬: localhost 명시적으로 허용 (와일드카드와 credentials 충돌 방지)
+            log.info("🌐 CORS 설정: 로컬 환경 - localhost 허용");
+            List<String> allowedOrigins = Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:3001"
+            );
+            configuration.setAllowedOrigins(allowedOrigins);
+            log.info("🌐 CORS 허용 Origins: {}", allowedOrigins);
         }
         
         // 허용할 HTTP 메서드 설정
-        configuration.setAllowedMethods(Arrays.asList(
+        List<String> allowedMethods = Arrays.asList(
             "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
-        ));
+        );
+        configuration.setAllowedMethods(allowedMethods);
+        log.info("🌐 CORS 허용 Methods: {}", allowedMethods);
         
         // 허용할 헤더 설정 (보안 강화)
-        configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization",
-            "Content-Type",
-            "X-Requested-With",
-            "Accept",
-            "Origin",
-            "Access-Control-Request-Method",
-            "Access-Control-Request-Headers",
-            "Cache-Control",
-            "Pragma",
-            "X-XSRF-TOKEN",  // CSRF 토큰 헤더 추가
-            "X-CSRF-TOKEN",  // CSRF 토큰 헤더 추가 (프론트엔드에서 사용)
-            "_csrf",         // CSRF 파라미터 추가
-            "Cookie",        // 쿠키 헤더 추가
-            "Set-Cookie",    // Set-Cookie 헤더 추가
-            "X-Actor-Id",    // Ops Portal Actor ID 헤더 추가
-            "X-Actor-Role"   // Ops Portal Actor Role 헤더 추가
-        ));
+        // CORS preflight 요청을 위해 모든 헤더 허용 (개발 환경)
+        if (isLocal) {
+            configuration.setAllowedHeaders(Arrays.asList("*"));
+            log.info("🌐 CORS 허용 Headers: * (로컬 환경 - 모든 헤더 허용)");
+        } else {
+            configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers",
+                "Cache-Control",
+                "Pragma",
+                "X-XSRF-TOKEN",  // CSRF 토큰 헤더 추가
+                "X-CSRF-TOKEN",  // CSRF 토큰 헤더 추가 (프론트엔드에서 사용)
+                "_csrf",         // CSRF 파라미터 추가
+                "Cookie",        // 쿠키 헤더 추가
+                "Set-Cookie",    // Set-Cookie 헤더 추가
+                "X-Actor-Id",    // Ops Portal Actor ID 헤더 추가
+                "X-Actor-Role"   // Ops Portal Actor Role 헤더 추가
+            ));
+        }
         
         // 인증 정보 포함 허용
         configuration.setAllowCredentials(true);
+        log.info("🌐 CORS AllowCredentials: true");
         
         // 노출할 헤더 설정
-        configuration.setExposedHeaders(Arrays.asList(
+        List<String> exposedHeaders = Arrays.asList(
             "Authorization",
             "Access-Control-Allow-Origin",
             "Access-Control-Allow-Credentials",
             "Set-Cookie"  // 세션 쿠키 노출 허용
-        ));
+        );
+        configuration.setExposedHeaders(exposedHeaders);
+        log.info("🌐 CORS ExposedHeaders: {}", exposedHeaders);
         
         // Preflight 요청 캐시 시간 (초)
-        configuration.setMaxAge(isProductionEnvironment() ? 3600L : 0L);
+        long maxAge = isProductionEnvironment() ? 3600L : 0L;
+        configuration.setMaxAge(maxAge);
+        log.info("🌐 CORS MaxAge: {} 초", maxAge);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
+        log.info("✅ CORS 설정 완료: 모든 경로(/**)에 적용됨");
         
         return source;
     }

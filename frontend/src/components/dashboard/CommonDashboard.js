@@ -525,7 +525,7 @@ const CommonDashboard = ({ user: propUser }) => {
              try {
                console.log('🔄 지연된 세션 확인 시작...');
                
-               const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+               const response = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
                  credentials: 'include',
                  method: 'GET',
                  headers: {

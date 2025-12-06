@@ -100,7 +100,7 @@ const TabletLogin = () => {
     const checkExistingSession = async () => {
       try {
         // ajax.js의 checkSessionAndRedirect를 우회하여 직접 세션 체크
-        const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
           credentials: 'include',
           method: 'GET'
         });
@@ -331,7 +331,7 @@ const TabletLogin = () => {
         loginType: 'SMS_AUTH'
       };
       
-      const response = await csrfTokenManager.post('/api/auth/sms-login', loginData);
+      const response = await csrfTokenManager.post('/api/v1/auth/sms-login', loginData);
       
       const data = await response.json();
       

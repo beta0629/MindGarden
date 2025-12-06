@@ -2,10 +2,15 @@
 
 /**
  * 간단한 분위기 테마 관리 훅
+/**
  * 
+/**
  * 기능:
+/**
  * - 분위기별 색상 변경 (accent, card, shadow)
+/**
  * - 부드러운 전환 애니메이션
+/**
  * - 분위기 지속성 (localStorage)
  */
 export const useMoodTheme = () => {

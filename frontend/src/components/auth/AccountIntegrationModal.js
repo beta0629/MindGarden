@@ -7,6 +7,7 @@ import './AccountIntegrationModal.css';
 
 /**
  * 계정 통합 모달 컴포넌트
+/**
  * SNS 계정과 기존 계정을 통합하는 기능을 제공
  */
 const AccountIntegrationModal = ({ 

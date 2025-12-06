@@ -4,6 +4,7 @@ import {
   LOGIN_SESSION_CHECK_DELAY,
   PERIODIC_SESSION_CHECK_INTERVAL 
 } from '../constants/session';
+import { getDefaultApiHeaders } from './apiHeaders';
 
 class SessionManager {
     constructor() {
@@ -106,13 +107,14 @@ class SessionManager {
             // 먼저 current-user로 시도 (더 안정적)
             let userResponse;
             try {
-                userResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, { 
+                // getDefaultApiHeaders를 사용하여 tenantId 헤더 자동 포함
+                const headers = getDefaultApiHeaders();
+                
+                userResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, { 
                     credentials: 'include',
                     method: 'GET',
                     mode: 'cors',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
+                    headers
                 });
             } catch (fetchError) {
                 // 네트워크 오류나 401 오류는 정상적인 상황이므로 조용히 처리
@@ -144,6 +146,14 @@ class SessionManager {
                                    currentPath.startsWith('/reset-password') ||
                                    currentPath.startsWith('/auth/oauth2/callback');
                 
+                // 로그인 직후에는 리다이렉트하지 않음 (세션이 아직 설정되지 않았을 수 있음)
+                const isJustAfterLogin = sessionStorage.getItem('justLoggedIn') === 'true';
+                if (isJustAfterLogin) {
+                    console.log('🔍 로그인 직후 - 리다이렉트 스킵 (세션 설정 대기 중)');
+                    sessionStorage.removeItem('justLoggedIn');
+                    return false;
+                }
+                
                 if (!isPublicPage) {
                     console.log('🔍 로그인 페이지로 리다이렉트');
                     localStorage.removeItem('accessToken');
@@ -174,14 +184,13 @@ class SessionManager {
                 // 세션 정보는 선택적으로 가져오기 (페이지 이동 시에는 스킵)
                 if (!this.isPageNavigation()) {
                     try {
-                        console.log('🔍 세션 정보 요청:', `${API_BASE_URL}/api/auth/session-info`);
-                        const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/session-info`, { 
+                        console.log('🔍 세션 정보 요청:', `${API_BASE_URL}/api/v1/auth/session-info`);
+                        const sessionHeaders = getDefaultApiHeaders();
+                        const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/session-info`, { 
                             credentials: 'include',
                             method: 'GET',
                             mode: 'cors',
-                            headers: {
-                                'Accept': 'application/json'
-                            }
+                            headers: sessionHeaders
                         });
                         if (sessionResponse.ok) {
                             const sessionResponseData = await sessionResponse.json();
@@ -223,9 +232,11 @@ class SessionManager {
                 
                 // 네트워크 오류 시에도 세션 체크를 한 번 더 시도
                 try {
-                    const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+                    const errorCheckHeaders = getDefaultApiHeaders();
+                    const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
                         credentials: 'include',
-                        method: 'GET'
+                        method: 'GET',
+                        headers: errorCheckHeaders
                     });
                     
                     if (!sessionResponse.ok) {
@@ -327,7 +338,7 @@ class SessionManager {
             }
             
             // 서버에 로그아웃 요청
-            const response = await fetch(`${API_BASE_URL}/api/auth/logout`, { 
+            const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, { 
                 method: 'POST',
                 credentials: 'include',
                 headers: headers
@@ -401,7 +412,7 @@ class SessionManager {
             console.log('🧹 세션 강제 초기화 시작...');
             
             // 서버 세션 초기화
-            await fetch(`${API_BASE_URL}/api/auth/clear-session`, { 
+            await fetch(`${API_BASE_URL}/api/v1/auth/clear-session`, { 
                 method: 'POST',
                 credentials: 'include' 
             });
@@ -484,6 +495,7 @@ class SessionManager {
         
         this.notifyListeners();
         console.log('✅ sessionManager에 사용자 정보 설정:', user);
+        console.log('🔍 tenantId 확인:', user?.tenantId || '없음');
     }
     
     // Getter 메서드들

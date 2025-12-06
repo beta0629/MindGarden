@@ -1,16 +1,24 @@
 /**
  * ERD 내보내기 유틸리티
+/**
  * SVG를 PNG 또는 SVG 파일로 다운로드하는 기능 제공
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-01-XX
  */
 
 /**
  * SVG를 PNG로 변환하여 다운로드
+/**
  * @param {SVGElement|string} svg - SVG 엘리먼트 또는 SVG 문자열
+/**
  * @param {string} filename - 다운로드할 파일명 (확장자 제외)
+/**
  * @param {Object} options - 옵션 (width, height, scale)
  */
 export const exportSvgToPng = async (svg, filename = 'erd-diagram', options = {}) => {
@@ -89,7 +97,9 @@ export const exportSvgToPng = async (svg, filename = 'erd-diagram', options = {}
 
 /**
  * SVG를 SVG 파일로 다운로드
+/**
  * @param {SVGElement|string} svg - SVG 엘리먼트 또는 SVG 문자열
+/**
  * @param {string} filename - 다운로드할 파일명 (확장자 제외)
  */
 export const exportSvgToSvg = (svg, filename = 'erd-diagram') => {
@@ -128,8 +138,11 @@ export const exportSvgToSvg = (svg, filename = 'erd-diagram') => {
 
 /**
  * Mermaid 코드를 PNG로 내보내기
+/**
  * @param {string} mermaidCode - Mermaid 코드
+/**
  * @param {string} filename - 다운로드할 파일명
+/**
  * @param {Object} options - 옵션
  */
 export const exportMermaidToPng = async (mermaidCode, filename = 'erd-diagram', options = {}) => {
@@ -153,7 +166,9 @@ export const exportMermaidToPng = async (mermaidCode, filename = 'erd-diagram', 
 
 /**
  * Mermaid 코드를 SVG로 내보내기
+/**
  * @param {string} mermaidCode - Mermaid 코드
+/**
  * @param {string} filename - 다운로드할 파일명
  */
 export const exportMermaidToSvg = async (mermaidCode, filename = 'erd-diagram') => {

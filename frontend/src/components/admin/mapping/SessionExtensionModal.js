@@ -7,11 +7,17 @@ import PackageSelector from '../../common/PackageSelector';
 
 /**
  * 회기 추가 요청 모달 컴포넌트
+/**
  * - 기존 매칭의 패키지 정보를 그대로 사용
+/**
  * - 회기 수 조정 및 사유 입력
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 const SessionExtensionModal = ({ 

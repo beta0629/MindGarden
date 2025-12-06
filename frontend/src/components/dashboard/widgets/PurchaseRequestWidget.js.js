@@ -1,9 +1,16 @@
+/**
  * Purchase Request Widget
+/**
  * 구매 요청 목록을 표시하는 범용 위젯
+/**
  * ErpPurchaseRequestPanel을 기반으로 범용화
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-22
  */
 

@@ -611,6 +611,7 @@ public class AuthServiceImpl implements AuthService {
             .name(user.getName())
             .role(user.getRole().getValue())
             .grade(user.getGrade())
+            .tenantId(user.getTenantId()) // 필수 - 보안상 중요
             .isActive(user.getIsActive())
             .isEmailVerified(user.getIsEmailVerified())
             .build();
@@ -618,9 +619,11 @@ public class AuthServiceImpl implements AuthService {
     
     /**
      * User 엔티티를 UserResponse로 변환 (표준화된 DTO)
+     * 
+     * DTO_NAMING_STANDARD.md 표준 준수
      */
     private UserResponse convertToUserResponse(User user) {
-        return UserResponse.fromEntity(user);
+        return UserResponse.from(user); // 표준 메서드 사용
     }
     
     /**
@@ -633,6 +636,7 @@ public class AuthServiceImpl implements AuthService {
             .name(userResponse.getName())
             .role(userResponse.getRole())
             .grade(userResponse.getGrade())
+            .tenantId(userResponse.getTenantId()) // 필수 - 보안상 중요
             .isActive(userResponse.getIsActive())
             .isEmailVerified(userResponse.getIsEmailVerified())
             .build();

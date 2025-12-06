@@ -88,7 +88,7 @@ const SystemNotificationManagement = () => {
       params.append('page', '0');
       params.append('size', '50');
 
-      const response = await apiGet(`/api/system-notifications/admin/all?${params.toString()}`);
+      const response = await apiGet(`/api/v1/system-notifications/admin/all?${params.toString()}`);
 
       if (response.success) {
         setNotifications(response.data || []);
@@ -142,8 +142,8 @@ const SystemNotificationManagement = () => {
       }
 
       const endpoint = editingNotification
-        ? `/api/system-notifications/admin/${editingNotification.id}`
-        : '/api/system-notifications/admin';
+        ? `/api/v1/system-notifications/admin/${editingNotification.id}`
+        : '/api/v1/system-notifications/admin';
 
       const method = editingNotification ? apiPut : apiPost;
       const response = await method(endpoint, formData);
@@ -172,7 +172,7 @@ const SystemNotificationManagement = () => {
     if (!confirmed) return;
 
     try {
-      const response = await apiPost(`/api/system-notifications/admin/${id}/publish`, {});
+      const response = await apiPost(`/api/v1/system-notifications/admin/${id}/publish`, {});
 
       if (response.success) {
         notificationManager.show('공지가 게시되었습니다.', 'success');
@@ -194,7 +194,7 @@ const SystemNotificationManagement = () => {
     if (!confirmed) return;
 
     try {
-      const response = await apiPost(`/api/system-notifications/admin/${id}/archive`, {});
+      const response = await apiPost(`/api/v1/system-notifications/admin/${id}/archive`, {});
 
       if (response.success) {
         notificationManager.show('공지가 보관되었습니다.', 'success');
@@ -216,7 +216,7 @@ const SystemNotificationManagement = () => {
     if (!confirmed) return;
 
     try {
-      const response = await apiDelete(`/api/system-notifications/admin/${id}`);
+      const response = await apiDelete(`/api/v1/system-notifications/admin/${id}`);
 
       if (response.success) {
         notificationManager.show('공지가 삭제되었습니다.', 'success');

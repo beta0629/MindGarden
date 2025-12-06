@@ -3,6 +3,7 @@ import '../../styles/main.css';
 
 /**
  * 기본 모달 컴포넌트
+/**
  * 모든 모달의 베이스가 되는 공통 컴포넌트
  */
 const BaseModal = ({ 

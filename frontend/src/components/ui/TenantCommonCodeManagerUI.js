@@ -1,17 +1,24 @@
 /**
  * 테넌트 공통코드 관리 UI (Presentational Component)
+/**
  * 
+/**
  * 순수 UI 컴포넌트 - 비즈니스 로직 없음
+/**
  * Props를 통해 데이터와 이벤트 핸들러를 받아 렌더링만 수행
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2025-12-03
  */
 
 import React from 'react';
 import MGCard from '../common/MGCard';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import './TenantCommonCodeManagerUI.css';
 
 const TenantCommonCodeManagerUI = ({
@@ -36,7 +43,7 @@ const TenantCommonCodeManagerUI = ({
     onFormSubmit,
     onModalClose
 }) => {
-    /**
+/**
      * extra_data 파싱 (금액 표시용)
      */
     const parseExtraData = (extraDataStr) => {

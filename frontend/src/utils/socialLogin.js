@@ -1,9 +1,14 @@
 /**
  * 소셜 로그인 유틸리티
+/**
  * 다양한 소셜 플랫폼 로그인 처리
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2024-12-19
  */
 
@@ -29,7 +34,7 @@ let oauth2Config = null;
 export const initializeOAuth2 = async () => {
   try {
     const config = await cachedApiCall(
-      '/api/auth/config/oauth2',
+      '/api/v1/auth/config/oauth2',
       {},
       CACHE_CONFIG.OAUTH2_CONFIG.ttl
     );

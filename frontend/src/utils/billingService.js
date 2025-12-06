@@ -1,8 +1,12 @@
 /**
  * 결제 및 구독 관련 비즈니스 로직 유틸리티
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0
+/**
  * @since 2025-11-20
  */
 
@@ -27,6 +31,7 @@ export const COMMON_CODE_GROUPS = {
 
 /**
  * UUID v4 생성
+/**
  * @returns {string} UUID 문자열
  */
 export function generateUUID() {
@@ -43,9 +48,13 @@ export function generateUUID() {
 
 /**
  * 결제 수단 등록 콜백 URL 생성
+/**
  * @param {string} status - 콜백 상태 ('success' | 'fail')
+/**
  * @param {string} customerKey - 고객 고유 ID
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @returns {string} 콜백 URL
  */
 export function generateCallbackUrl(status, customerKey, tenantId) {
@@ -65,7 +74,9 @@ export function generateCallbackUrl(status, customerKey, tenantId) {
 
 /**
  * 결제 수단 목록 조회
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @returns {Promise<Array>} 결제 수단 목록
  */
 export async function getPaymentMethods(tenantId) {
@@ -83,11 +94,17 @@ export async function getPaymentMethods(tenantId) {
 
 /**
  * 결제 수단 등록 (콜백에서 사용)
+/**
  * @param {Object} params - 결제 수단 등록 파라미터
+/**
  * @param {string} params.paymentMethodToken - PG 토큰
+/**
  * @param {string} params.pgProvider - PG 제공자
+/**
  * @param {string} params.customerKey - 고객 고유 ID
+/**
  * @param {string} params.tenantId - 테넌트 ID
+/**
  * @returns {Promise<Object>} 등록된 결제 수단 정보
  */
 export async function registerPaymentMethod(params) {
@@ -109,7 +126,9 @@ export async function registerPaymentMethod(params) {
 
 /**
  * 구독 목록 조회
+/**
  * @param {string} tenantId - 테넌트 ID
+/**
  * @returns {Promise<Array>} 구독 목록
  */
 export async function getSubscriptions(tenantId) {
@@ -127,12 +146,19 @@ export async function getSubscriptions(tenantId) {
 
 /**
  * 구독 생성
+/**
  * @param {Object} params - 구독 생성 파라미터
+/**
  * @param {string} params.tenantId - 테넌트 ID
+/**
  * @param {string} params.planId - 요금제 ID
+/**
  * @param {string} params.paymentMethodId - 결제 수단 ID
+/**
  * @param {string} [params.billingCycle] - 결제 주기 (기본값: MONTHLY)
+/**
  * @param {boolean} [params.autoRenewal] - 자동 갱신 여부 (기본값: true)
+/**
  * @returns {Promise<Object>} 생성된 구독 정보
  */
 export async function createSubscription(params) {
@@ -158,7 +184,9 @@ export async function createSubscription(params) {
 
 /**
  * 구독 활성화
+/**
  * @param {string} subscriptionId - 구독 ID
+/**
  * @returns {Promise<Object>} 활성화된 구독 정보
  */
 export async function activateSubscription(subscriptionId) {
@@ -176,7 +204,9 @@ export async function activateSubscription(subscriptionId) {
 
 /**
  * 구독 취소
+/**
  * @param {string} subscriptionId - 구독 ID
+/**
  * @returns {Promise<Object>} 취소된 구독 정보
  */
 export async function cancelSubscription(subscriptionId) {
@@ -198,6 +228,7 @@ export async function cancelSubscription(subscriptionId) {
 
 /**
  * 활성화된 요금제 목록 조회
+/**
  * @returns {Promise<Array>} 요금제 목록
  */
 export async function getActivePricingPlans() {
@@ -222,6 +253,7 @@ export async function getActivePricingPlans() {
 
 /**
  * 구독 상태 코드 목록 조회
+/**
  * @returns {Promise<Array>} 구독 상태 코드 목록
  */
 export async function getSubscriptionStatusCodes() {
@@ -236,6 +268,7 @@ export async function getSubscriptionStatusCodes() {
 
 /**
  * 결제 주기 코드 목록 조회
+/**
  * @returns {Promise<Array>} 결제 주기 코드 목록
  */
 export async function getBillingCycleCodes() {
@@ -250,6 +283,7 @@ export async function getBillingCycleCodes() {
 
 /**
  * PG 제공자 코드 목록 조회
+/**
  * @returns {Promise<Array>} PG 제공자 코드 목록
  */
 export async function getPgProviderCodes() {
@@ -264,8 +298,11 @@ export async function getPgProviderCodes() {
 
 /**
  * 코드 값으로 코드 라벨 조회
+/**
  * @param {string} codeGroup - 코드 그룹
+/**
  * @param {string} codeValue - 코드 값
+/**
  * @returns {Promise<string>} 코드 라벨 (한글명 우선)
  */
 export async function getCodeLabel(codeGroup, codeValue) {
@@ -285,8 +322,11 @@ export async function getCodeLabel(codeGroup, codeValue) {
 
 /**
  * 금액 포맷팅
+/**
  * @param {number} amount - 금액
+/**
  * @param {string} [currency] - 통화 (기본값: KRW)
+/**
  * @returns {string} 포맷팅된 금액 문자열
  */
 export function formatCurrency(amount, currency = CURRENCY_CONSTANTS.DEFAULT) {
@@ -298,7 +338,9 @@ export function formatCurrency(amount, currency = CURRENCY_CONSTANTS.DEFAULT) {
 
 /**
  * 카드 마지막 4자리 포맷팅
+/**
  * @param {string} last4 - 카드 마지막 4자리
+/**
  * @returns {string} 포맷팅된 카드 번호
  */
 export function formatCardLast4(last4) {
@@ -307,8 +349,11 @@ export function formatCardLast4(last4) {
 
 /**
  * 카드 만료일 포맷팅
+/**
  * @param {number} month - 만료 월
+/**
  * @param {number} year - 만료 년도
+/**
  * @returns {string} 포맷팅된 만료일 (MM/YYYY)
  */
 export function formatCardExpiry(month, year) {
@@ -323,8 +368,11 @@ export function formatCardExpiry(month, year) {
 
 /**
  * 에러 메시지 추출
+/**
  * @param {Error|Object} error - 에러 객체
+/**
  * @param {string} defaultMessage - 기본 에러 메시지
+/**
  * @returns {string} 에러 메시지
  */
 export function getErrorMessage(error, defaultMessage) {

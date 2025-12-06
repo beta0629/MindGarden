@@ -4,13 +4,21 @@ import { CreditCard, X, Tag, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
+/**
  * 할인 적용 결제 확인 모달 컴포넌트
+/**
  * - 패키지 상품 할인 적용 입금확인
+/**
  * - 할인 코드 입력 및 적용
+/**
  * - 할인 후 최종 금액 계산
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 1.0.0
+/**
  * @since 2025-09-24
  */
 const DiscountPaymentConfirmationModal = ({ 

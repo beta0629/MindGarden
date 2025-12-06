@@ -3,6 +3,7 @@ import './MGTable.css';
 
 /**
  * MindGarden 데이터 테이블 컴포넌트
+/**
  * 페이징, 필터링, 정렬 기능을 포함한 고급 테이블
  */
 const MGTable = ({

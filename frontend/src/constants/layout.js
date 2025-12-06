@@ -1,7 +1,10 @@
+/**
  * 레이아웃 시스템 상수
+/**
  * 모든 레이아웃 관련 CSS 클래스를 중앙 관리
  */
 
+/**
  * 대시보드 레이아웃
  */
 export const DASHBOARD_LAYOUT = {CONTAINER: 'mg-v2-dashboard-layout',
@@ -11,6 +14,7 @@ export const DASHBOARD_LAYOUT = {CONTAINER: 'mg-v2-dashboard-layout',
   CONTENT: 'mg-v2-dashboard-content',
   FOOTER: 'mg-v2-dashboard-footer'};
 
+/**
  * 카드 레이아웃
  */
 export const CARD_LAYOUT = {CONTAINER: 'mg-v2-card',
@@ -20,6 +24,7 @@ export const CARD_LAYOUT = {CONTAINER: 'mg-v2-card',
   GRID: 'mg-v2-card-grid',
   LIST: 'mg-v2-card-list'};
 
+/**
  * 섹션 레이아웃
  */
 export const SECTION_LAYOUT = {CONTAINER: 'mg-v2-section',
@@ -29,6 +34,7 @@ export const SECTION_LAYOUT = {CONTAINER: 'mg-v2-section',
   TITLE: 'mg-v2-section-title',
   SUBTITLE: 'mg-v2-section-subtitle'};
 
+/**
  * 탭 레이아웃
  */
 export const TAB_LAYOUT = {CONTAINER: 'mg-v2-tabs',
@@ -37,6 +43,7 @@ export const TAB_LAYOUT = {CONTAINER: 'mg-v2-tabs',
   CONTENT: 'mg-v2-tab-content',
   PANEL: 'mg-v2-tab-panel'};
 
+/**
  * 폼 레이아웃
  */
 export const FORM_LAYOUT = {CONTAINER: 'mg-v2-form',
@@ -50,6 +57,7 @@ export const FORM_LAYOUT = {CONTAINER: 'mg-v2-form',
   ERROR: 'mg-v2-form-error',
   HELP: 'mg-v2-form-help'};
 
+/**
  * 테이블 레이아웃
  */
 export const TABLE_LAYOUT = {CONTAINER: 'mg-v2-table',
@@ -60,6 +68,7 @@ export const TABLE_LAYOUT = {CONTAINER: 'mg-v2-table',
   CELL: 'mg-v2-table-cell',
   HEADER_CELL: 'mg-v2-table-header-cell'};
 
+/**
  * 모달 레이아웃
  */
 export const MODAL_LAYOUT = {CONTAINER: 'mg-v2-modal',
@@ -70,6 +79,7 @@ export const MODAL_LAYOUT = {CONTAINER: 'mg-v2-modal',
   FOOTER: 'mg-v2-modal-footer',
   CLOSE: 'mg-v2-modal-close'};
 
+/**
  * 네비게이션 레이아웃
  */
 export const NAV_LAYOUT = {CONTAINER: 'mg-v2-nav',
@@ -80,18 +90,21 @@ export const NAV_LAYOUT = {CONTAINER: 'mg-v2-nav',
   DROPDOWN: 'mg-v2-nav-dropdown',
   TOGGLE: 'mg-v2-nav-toggle'};
 
+/**
  * 버튼 레이아웃
  */
 export const BUTTON_LAYOUT = {CONTAINER: 'mg-v2-button',
   GROUP: 'mg-v2-button-group',
   TOOLBAR: 'mg-v2-button-toolbar'};
 
+/**
  * 아이콘 레이아웃
  */
 export const ICON_LAYOUT = {CONTAINER: 'mg-v2-icon',
   WRAPPER: 'mg-v2-icon-wrapper',
   BADGE: 'mg-v2-icon-badge'};
 
+/**
  * 그리드 레이아웃
  */
 export const GRID_LAYOUT = {CONTAINER: 'mg-v2-grid',
@@ -99,6 +112,7 @@ export const GRID_LAYOUT = {CONTAINER: 'mg-v2-grid',
   ROW: 'mg-v2-grid-row',
   COL: 'mg-v2-grid-col'};
 
+/**
  * 플렉스 레이아웃
  */
 export const FLEX_LAYOUT = {CONTAINER: 'mg-v2-flex',
@@ -114,6 +128,7 @@ export const FLEX_LAYOUT = {CONTAINER: 'mg-v2-flex',
   WRAP: 'mg-v2-flex-wrap',
   NOWRAP: 'mg-v2-flex-nowrap'};
 
+/**
  * 스페이싱 레이아웃
  */
 export const SPACING_LAYOUT = {MARGIN: {XS: 'mg-v2-m-xs',
@@ -132,6 +147,7 @@ export const SPACING_LAYOUT = {MARGIN: {XS: 'mg-v2-m-xs',
     LG: 'mg-v2-gap-lg',
     XL: 'mg-v2-gap-xl'}};
 
+/**
  * 텍스트 레이아웃
  */
 export const TEXT_LAYOUT = {TITLE: {H1: 'mg-v2-h1',
@@ -152,6 +168,7 @@ export const TEXT_LAYOUT = {TITLE: {H1: 'mg-v2-h1',
     SEMIBOLD: 'mg-v2-font-semibold',
     BOLD: 'mg-v2-font-bold'}};
 
+/**
  * 상태 레이아웃
  */
 export const STATE_LAYOUT = {LOADING: 'mg-v2-loading',
@@ -165,6 +182,7 @@ export const STATE_LAYOUT = {LOADING: 'mg-v2-loading',
   HOVER: 'mg-v2-hover',
   FOCUS: 'mg-v2-focus'};
 
+/**
  * 반응형 레이아웃
  */
 export const RESPONSIVE_LAYOUT = {MOBILE_ONLY: 'mg-v2-mobile-only',
@@ -174,6 +192,7 @@ export const RESPONSIVE_LAYOUT = {MOBILE_ONLY: 'mg-v2-mobile-only',
   TABLET_UP: 'mg-v2-tablet-up',
   DESKTOP_UP: 'mg-v2-desktop-up'};
 
+/**
  * 통합 레이아웃 시스템
  */
 export const LAYOUT_SYSTEM = {DASHBOARD: DASHBOARD_LAYOUT,
@@ -193,6 +212,7 @@ export const LAYOUT_SYSTEM = {DASHBOARD: DASHBOARD_LAYOUT,
   STATE: STATE_LAYOUT,
   RESPONSIVE: RESPONSIVE_LAYOUT};
 
+/**
  * 레이아웃 헬퍼 함수
  */
 export const getLayoutClass = (category, element, variant = '') => {const layout = LAYOUT_SYSTEM[category];

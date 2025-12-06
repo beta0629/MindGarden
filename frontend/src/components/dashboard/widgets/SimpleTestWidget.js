@@ -1,9 +1,14 @@
 /**
  * Simple Test Widget
+/**
  * 가장 간단한 테스트용 위젯 (API 호출 없음)
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 1.0.0
+/**
  * @since 2025-11-28
  */
 

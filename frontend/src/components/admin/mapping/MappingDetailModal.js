@@ -4,9 +4,13 @@ import { Info, XCircle, User, CreditCard, Calendar, TrendingUp, Clock, CheckCirc
 import { apiGet } from '../../../utils/ajax';
 import { getMappingStatusKoreanNameSync, getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 
+/**
  * 매칭 상세보기 모달 컴포넌트
+/**
  * - 매칭의 모든 정보를 상세히 표시
+/**
  * - ERP 연동 상태, 금액 일관성 등 확인
+/**
  * - 거래 내역, 변경 이력 등 표시
  */
 const MappingDetailModal = ({ mapping, isOpen, onClose }) => {

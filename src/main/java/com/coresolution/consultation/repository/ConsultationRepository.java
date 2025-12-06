@@ -121,8 +121,15 @@ public interface ConsultationRepository extends BaseRepository<Consultation, Lon
     long countByConsultationDateBetween(LocalDate startDate, LocalDate endDate);
     
     /**
-     * 우선순위별 상담 조회 (활성 상태만)
+     * 테넌트별 우선순위별 상담 조회 (테넌트 필터링)
      */
+    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.priority = :priority AND c.isDeleted = false ORDER BY c.consultationDate DESC")
+    List<Consultation> findByTenantIdAndPriority(@Param("tenantId") String tenantId, @Param("priority") String priority);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 우선순위별 상담 노출!
+     */
+    @Deprecated
     @Query("SELECT c FROM Consultation c WHERE c.priority = ?1 AND c.isDeleted = false ORDER BY c.consultationDate DESC")
     List<Consultation> findByPriority(String priority);
     
@@ -133,8 +140,15 @@ public interface ConsultationRepository extends BaseRepository<Consultation, Lon
     long countByPriority(String priority);
     
     /**
-     * 위험도별 상담 조회 (활성 상태만)
+     * 테넌트별 위험도별 상담 조회 (테넌트 필터링)
      */
+    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.riskLevel = :riskLevel AND c.isDeleted = false ORDER BY c.consultationDate DESC")
+    List<Consultation> findByTenantIdAndRiskLevel(@Param("tenantId") String tenantId, @Param("riskLevel") String riskLevel);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 위험도별 상담 노출!
+     */
+    @Deprecated
     @Query("SELECT c FROM Consultation c WHERE c.riskLevel = ?1 AND c.isDeleted = false ORDER BY c.consultationDate DESC")
     List<Consultation> findByRiskLevel(String riskLevel);
     
@@ -145,8 +159,15 @@ public interface ConsultationRepository extends BaseRepository<Consultation, Lon
     long countByRiskLevel(String riskLevel);
     
     /**
-     * 상담 방법별 조회 (활성 상태만)
+     * 테넌트별 상담 방법별 조회 (테넌트 필터링)
      */
+    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.consultationMethod = :method AND c.isDeleted = false ORDER BY c.consultationDate DESC")
+    List<Consultation> findByTenantIdAndConsultationMethod(@Param("tenantId") String tenantId, @Param("method") String method);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 상담 방법별 상담 노출!
+     */
+    @Deprecated
     @Query("SELECT c FROM Consultation c WHERE c.consultationMethod = ?1 AND c.isDeleted = false ORDER BY c.consultationDate DESC")
     List<Consultation> findByConsultationMethod(String method);
     
@@ -181,8 +202,15 @@ public interface ConsultationRepository extends BaseRepository<Consultation, Lon
     long countFirstSessions();
     
     /**
-     * 긴급 상담 여부로 조회 (활성 상태만)
+     * 테넌트별 긴급 상담 여부로 조회 (테넌트 필터링)
      */
+    @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.isEmergency = :isEmergency AND c.isDeleted = false ORDER BY c.consultationDate DESC")
+    List<Consultation> findByTenantIdAndIsEmergency(@Param("tenantId") String tenantId, @Param("isEmergency") Boolean isEmergency);
+    
+    /**
+     * @Deprecated - 🚨 극도로 위험: 모든 테넌트 긴급 상담 노출!
+     */
+    @Deprecated
     @Query("SELECT c FROM Consultation c WHERE c.isEmergency = ?1 AND c.isDeleted = false ORDER BY c.consultationDate DESC")
     List<Consultation> findByIsEmergency(Boolean isEmergency);
     

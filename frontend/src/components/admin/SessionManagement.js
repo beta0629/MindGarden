@@ -14,13 +14,21 @@ import SessionExtensionModal from './mapping/SessionExtensionModal';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate, getMappingStatusKoreanNameSync } from '../../utils/codeHelper';
 import '../../styles/unified-design-tokens.css';
 
+/**
  * 회기 관리 컴포넌트 - 완전 재설계
+/**
  * - 단일 페이지 레이아웃
+/**
  * - 원클릭 회기 추가
+/**
  * - 빠른 접근성과 직관적 UI
+/**
  * 
+/**
  * @author MindGarden
+/**
  * @version 2.0.0
+/**
  * @since 2024-12-19
  */
 const SessionManagement = () => {

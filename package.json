@@ -14,7 +14,9 @@
     "widget:migrate:dry": "node scripts/migrate-widgets-to-standard.js --dry-run",
     "widget:check": "node scripts/migrate-widgets-to-standard.js --dry-run",
     "widget:lint": "cd frontend && npx eslint src/components/dashboard/widgets --config ../.eslintrc.widget-standards.js",
-    "hooks:install": "chmod +x .githooks/pre-commit-widget-standards && git config core.hooksPath .githooks"
+    "hooks:install": "chmod +x .githooks/pre-commit-widget-standards && git config core.hooksPath .githooks",
+    "check:api": "node scripts/check-api-standardization.js",
+    "check:standards": "npm run check:api"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

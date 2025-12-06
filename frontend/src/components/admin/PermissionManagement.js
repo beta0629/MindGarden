@@ -178,7 +178,7 @@ const PermissionManagement = () => {
 
     const fetchUserInfo = async () => {
         try {
-            const response = await fetch('/api/auth/current-user', {
+            const response = await fetch('/api/v1/auth/current-user', {
                 credentials: 'include'
             });
             
@@ -198,7 +198,7 @@ const PermissionManagement = () => {
     const loadAllPermissions = useCallback(async () => {
         try {
             // DB에서 모든 권한 목록 로드
-            const response = await fetch('/api/permissions/manageable', {
+            const response = await fetch('/api/v1/permissions/manageable', {
                 credentials: 'include'
             });
             
@@ -217,7 +217,7 @@ const PermissionManagement = () => {
     const loadUserPermissions = useCallback(async () => {
         try {
             // 실제 사용자 권한 로드
-            const response = await fetch('/api/permissions/my-permissions', {
+            const response = await fetch('/api/v1/permissions/my-permissions', {
                 credentials: 'include'
             });
             
@@ -254,7 +254,7 @@ const PermissionManagement = () => {
     const loadRolePermissions = useCallback(async () => {
         try {
             // 데이터베이스에서 역할 권한 로드
-            const response = await fetch(`/api/permissions/role/${selectedRole}`, {
+            const response = await fetch(`/api/v1/permissions/role/${selectedRole}`, {
                 credentials: 'include'
             });
             
@@ -312,7 +312,7 @@ const PermissionManagement = () => {
         setMessage('');
         
         try {
-            const response = await fetch('/api/permissions/role-permissions', {
+            const response = await fetch('/api/v1/permissions/role-permissions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -512,8 +512,6 @@ const PermissionManagement = () => {
                 </div>
             </div>
         </div>
-            </div>
-        </SimpleLayout>
     );
 };
 

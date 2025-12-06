@@ -1,9 +1,14 @@
 /**
  * Table Widget - 표준화된 위젯
+/**
  * 테이블을 표시하는 위젯
+/**
  * 
+/**
  * @author CoreSolution
+/**
  * @version 2.0.0 (표준화 업그레이드)
+/**
  * @since 2025-11-21
  */
 

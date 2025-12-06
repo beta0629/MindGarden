@@ -9,6 +9,7 @@ import './iPhone17DesignSystemSample.css';
 
 /**
  * iPhone 17 디자인 시스템 공통화 샘플
+/**
  * 공통화된 iPhone 17 컴포넌트들을 사용한 종합 샘플
  */
 const IPhone17DesignSystemSample = () => {

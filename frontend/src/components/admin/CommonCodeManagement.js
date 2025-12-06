@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import {
     getCommonCodes,
@@ -25,6 +25,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import SimpleLayout from '../layout/SimpleLayout';
 import './ImprovedCommonCodeManagement.css';
 
+/**
  * - 2단계 구조: 코드그룹 선택 → 코드 목록 관리
  * - 직관적인 UI/UX 제공
  * - 관리자 친화적 인터페이스

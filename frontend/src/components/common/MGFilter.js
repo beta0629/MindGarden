@@ -3,6 +3,7 @@ import './MGFilter.css';
 
 /**
  * MindGarden 필터 컴포넌트
+/**
  * 데이터 필터링을 위한 통합 컴포넌트
  */
 const MGFilter = ({

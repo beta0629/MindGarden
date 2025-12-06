@@ -174,7 +174,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .role(UserRole.CLIENT)
                 .isActive(true)
                 .branch(null) // 브랜치 개념 제거됨 (표준화 2025-12-05)
-                .branchCode(request.getBranchCode()) // 지점코드 저장
+                .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .build();
         
         clientUser.setTenantId(tenantId);
@@ -193,7 +193,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         client.setIsDeleted(!savedUser.getIsActive());
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
-        client.setBranchCode(request.getBranchCode()); // 지점코드 저장
+        client.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
         
         return client;
     }
@@ -206,15 +206,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         User clientUser = userRepository.findById(dto.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
+        // 표준화 2025-12-06: 브랜치 코드 사용 금지 - branchCode는 null로 설정
         String branchCode = null;
-        branchCode = consultant.getBranchCode();
-        // 표준화 2025-12-05: 브랜치 코드는 더 이상 사용하지 않음
-        // if (branchCode == null || branchCode.trim().isEmpty()) {
-        //     branchCode = clientUser.getBranchCode();
-        // }
-        // if (branchCode == null || branchCode.trim().isEmpty()) {
-        //     branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
-        // }
         
         // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속으로 자동 처리)
         String tenantId = getTenantId();
@@ -254,8 +247,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
         }
         
-        log.info("🆕 새로운 매칭 생성: 상담사={}, 내담자={}, 지점={}", 
-            consultant.getName(), clientUser.getName(), branchCode);
+        log.info("🆕 새로운 매칭 생성: 상담사={}, 내담자={}", 
+            consultant.getName(), clientUser.getName());
             
         ConsultantClientMapping mapping = new ConsultantClientMapping();
         mapping.setConsultant(consultant);
@@ -295,9 +288,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setNotes(dto.getNotes());
         mapping.setResponsibility(dto.getResponsibility());
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
-        mapping.setBranchCode(branchCode);
-        
-        log.info("🔧 매칭 지점코드 설정: {}", branchCode);
+        mapping.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
 
         return mappingRepository.save(mapping);
     }
@@ -390,7 +381,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
-                .branchCode(mapping.getBranchCode()) // 매칭의 지점코드 사용
+                .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(false) // 상담료는 부가세 면세
                 .build();
         
@@ -613,10 +604,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
         try {
+            // 표준화 2025-12-06: 브랜치 코드 사용 금지 - null 전달
             realTimeStatisticsService.updateStatisticsOnMappingChange(
                 savedMapping.getConsultant().getId(), 
                 savedMapping.getClient().getId(), 
-                savedMapping.getBranchCode()
+                null // 브랜치 코드 사용 금지
             );
             
             log.info("✅ 결제 확인시 실시간 통계 업데이트 완료: mappingId={}", mappingId);
@@ -663,7 +655,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
-                .branchCode(mapping.getBranchCode()) // 매칭의 지점코드 사용
+                .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(false) // 상담료는 부가세 면세
                 .build();
         
@@ -691,15 +683,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
         try {
+            // 표준화 2025-12-06: 브랜치 코드 사용 금지 - null 전달
             realTimeStatisticsService.updateStatisticsOnMappingChange(
                 savedMapping.getConsultant().getId(), 
                 savedMapping.getClient().getId(), 
-                savedMapping.getBranchCode()
+                null // 브랜치 코드 사용 금지
             );
             
             if (savedMapping.getPaymentAmount() != null) {
+                // 표준화 2025-12-06: 브랜치 코드 사용 금지 - null 전달
                 realTimeStatisticsService.updateFinancialStatisticsOnPayment(
-                    savedMapping.getBranchCode(), 
+                    null, // 브랜치 코드 사용 금지
                     savedMapping.getPaymentAmount(), 
                     LocalDate.now()
                 );
@@ -733,10 +727,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
         try {
+            // 표준화 2025-12-06: 브랜치 코드 사용 금지 - null 전달
             realTimeStatisticsService.updateStatisticsOnMappingChange(
                 savedMapping.getConsultant().getId(), 
                 savedMapping.getClient().getId(), 
-                savedMapping.getBranchCode()
+                null // 브랜치 코드 사용 금지
             );
             
             log.info("✅ 관리자 승인시 실시간 통계 업데이트 완료: mappingId={}", mappingId);
@@ -1380,7 +1375,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 
                 client.setBirthDate(user.getBirthDate());
                 client.setGender(user.getGender());
-                client.setBranchCode(user.getBranchCode()); // 지점코드 설정
+                client.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 client.setIsDeleted(user.getIsDeleted()); // isDeleted 필드 직접 사용
                 client.setCreatedAt(user.getCreatedAt());
                 client.setUpdatedAt(user.getUpdatedAt());
@@ -1643,15 +1638,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         try {
             if (savedMapping.getConsultant() != null && savedMapping.getClient() != null) {
+                // 표준화 2025-12-06: 브랜치 코드 사용 금지 - null 전달
                 realTimeStatisticsService.updateStatisticsOnMappingChange(
                     savedMapping.getConsultant().getId(), 
                     savedMapping.getClient().getId(), 
-                    savedMapping.getBranchCode()
+                    null // 브랜치 코드 사용 금지
                 );
                 
                 if (packageChanged && savedMapping.getPackagePrice() != null) {
+                    // 표준화 2025-12-06: 브랜치 코드 사용 금지 - null 전달
                     realTimeStatisticsService.updateFinancialStatisticsOnPayment(
-                        savedMapping.getBranchCode(), 
+                        null, // 브랜치 코드 사용 금지
                         savedMapping.getPackagePrice(), 
                         LocalDate.now()
                     );
@@ -1803,7 +1800,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 ConsultantClientMapping newMapping = new ConsultantClientMapping();
                 newMapping.setConsultant(transferToConsultant);
                 newMapping.setClient(mapping.getClient());
-                newMapping.setBranchCode(mapping.getBranchCode());
+                newMapping.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 newMapping.setStartDate(mapping.getStartDate()); // 기존 시작일 유지
                 newMapping.setTotalSessions(mapping.getTotalSessions());
                 newMapping.setRemainingSessions(mapping.getRemainingSessions());
@@ -2420,7 +2417,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     
     @Override
     public Map<String, Object> getRefundStatistics(String period, String branchCode) {
-        log.info("📊 환불 통계 조회 시작: period={}, branchCode={}", period, branchCode);
+        // 표준화 2025-12-06: 브랜치 코드 사용 금지 - branchCode 파라미터는 무시하고 tenantId만 사용
+        if (branchCode != null && !branchCode.trim().isEmpty()) {
+            log.warn("⚠️ 브랜치 코드는 더 이상 사용하지 않습니다. branchCode={} 파라미터는 무시됩니다.", branchCode);
+        }
+        log.info("📊 환불 통계 조회 시작: period={}", period);
         String tenantId = getTenantId();
         
         initializeRefundCommonCodes();
@@ -2431,34 +2432,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         startDate = getRefundPeriodStartDate(period);
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
-        List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
+        // 표준화 2025-12-06: 브랜치 코드 필터링 제거 - tenantId만 사용
+        List<ConsultantClientMapping> terminatedMappings = mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
                 .filter(mapping -> mapping.getTerminatedAt() != null)
                 .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
                 .collect(Collectors.toList());
         
-        List<ConsultantClientMapping> terminatedMappings = allTerminatedMappings.stream()
-                .filter(mapping -> {
-                    if (branchCode == null || branchCode.trim().isEmpty()) {
-                        return true; // 지점코드가 없으면 모든 매칭 조회
-                    }
-                    return branchCode.equals(mapping.getBranchCode());
-                })
-                .collect(Collectors.toList());
-        
-        List<com.coresolution.consultation.entity.FinancialTransaction> allPartialRefundTransactions = 
+        // 표준화 2025-12-06: 브랜치 코드 필터링 제거 - tenantId만 사용
+        List<com.coresolution.consultation.entity.FinancialTransaction> partialRefundTransactions = 
             financialTransactionRepository.findByTenantIdAndTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(tenantId, 
                 com.coresolution.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
-        
-        List<com.coresolution.consultation.entity.FinancialTransaction> partialRefundTransactions = allPartialRefundTransactions.stream()
-                .filter(transaction -> {
-                    if (branchCode == null || branchCode.trim().isEmpty()) {
-                        return true; // 지점코드가 없으면 모든 거래 조회
-                    }
-                    return branchCode.equals(transaction.getBranchCode());
-                })
-                .collect(Collectors.toList());
         
         int totalTerminatedRefundCount = terminatedMappings.size();
         int totalTerminatedRefundedSessions = terminatedMappings.stream()
@@ -4193,43 +4178,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     @Transactional(readOnly = true)
     public List<User> getUsers(boolean includeInactive, String role, String branchCode) {
-        log.info("🔍 사용자 목록 조회: includeInactive={}, role={}, branchCode={}", includeInactive, role, branchCode);
+        // 표준화 2025-12-06: 브랜치 코드 사용 금지 - branchCode 파라미터는 무시하고 tenantId만 사용
+        if (branchCode != null && !branchCode.isEmpty()) {
+            log.warn("⚠️ 브랜치 코드는 더 이상 사용하지 않습니다. branchCode={} 파라미터는 무시됩니다.", branchCode);
+        }
+        log.info("🔍 사용자 목록 조회: includeInactive={}, role={}", includeInactive, role);
         try {
-            // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
+            // 표준화 2025-12-06: BaseTenantAwareService 상속으로 getTenantId() 사용, 브랜치 코드 무시
             String tenantId = getTenantId();
             
             List<User> users;
             
             if (role != null && !role.isEmpty()) {
                 UserRole userRole = UserRole.valueOf(role);
-                if (branchCode != null && !branchCode.isEmpty()) {
-                    // 브랜치 개념 제거: 브랜치 엔티티를 조회한 후 역할로 필터링 (표준화 2025-12-05)
-                    try {
-                        Branch branch = branchService.getBranchByCode(branchCode);
-                        List<User> branchUsers = userRepository.findByBranchAndIsDeletedFalseOrderByUsername(tenantId, branch);
-                        users = branchUsers.stream()
-                            .filter(u -> u.getRole() == userRole && (includeInactive || Boolean.TRUE.equals(u.getIsActive())))
-                            .collect(Collectors.toList());
-                    } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
-                        log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
-                        users = new ArrayList<>();
-                    }
-                } else {
-                    users = userRepository.findByTenantIdAndRoleAndIsActive(tenantId, userRole, includeInactive ? null : true);
-                }
-            } else if (branchCode != null && !branchCode.isEmpty()) {
-                try {
-                    Branch branch = branchService.getBranchByCode(branchCode);
-                    users = userRepository.findByBranchAndIsDeletedFalseOrderByUsername(tenantId, branch);
-                    if (!includeInactive) {
-                        users = users.stream()
-                            .filter(u -> Boolean.TRUE.equals(u.getIsActive()))
-                            .collect(Collectors.toList());
-                    }
-                } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
-                    log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
-                    users = new ArrayList<>();
-                }
+                users = userRepository.findByTenantIdAndRoleAndIsActive(tenantId, userRole, includeInactive ? null : true);
             } else {
                 if (includeInactive) {
                     users = userRepository.findByTenantId(tenantId);

@@ -937,8 +937,9 @@ public class OAuth2Controller extends BaseApiController {
                 // 기존 사용자 확인
                 Long existingUserId = kakaoServiceImpl.findExistingUserByProviderId(socialUserInfo.getProviderUserId());
                 if (existingUserId == null) {
-                    var userOptional = userRepository.findByEmail(socialUserInfo.getEmail());
-                    existingUserId = userOptional.map(User::getId).orElse(null);
+                    // 멀티 테넌트 사용자 고려하여 조회
+                    List<User> users = userRepository.findAllByEmail(socialUserInfo.getEmail());
+                    existingUserId = users.isEmpty() ? null : users.get(0).getId();
                 }
                 
                 if (existingUserId == null) {
@@ -1384,9 +1385,9 @@ public class OAuth2Controller extends BaseApiController {
                 socialUserInfo.getProviderUserId());
             
             if (existingUserId == null) {
-                // 이메일로도 확인
-                var userOptional = userRepository.findByEmail(socialUserInfo.getEmail());
-                existingUserId = userOptional.map(User::getId).orElse(null);
+                // 이메일로도 확인 (멀티 테넌트 사용자 고려)
+                List<User> users = userRepository.findAllByEmail(socialUserInfo.getEmail());
+                existingUserId = users.isEmpty() ? null : users.get(0).getId();
             }
             
             if (existingUserId == null) {

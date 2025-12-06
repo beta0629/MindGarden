@@ -308,10 +308,11 @@ public class UserServiceImpl implements UserService {
         if (tenantId != null && !tenantId.isEmpty()) {
             return userRepository.findByTenantIdAndEmail(tenantId, email);
         }
-        // 테넌트 컨텍스트가 없는 경우 (인증 등 특수 케이스) - Deprecated 메서드 사용
-        // TODO: 향후 멀티 테넌트 사용자 지원을 위해 findAllByEmail() 사용 고려
-        log.warn("⚠️ 테넌트 컨텍스트 없이 findByEmail() 호출됨: {}", email);
-        return userRepository.findByEmail(email);
+        // 테넌트 컨텍스트가 없는 경우 (인증 등 특수 케이스) - 멀티 테넌트 사용자 고려
+        // 멀티 테넌트 사용자 지원을 위해 findAllByEmail() 사용하고 첫 번째 결과 반환
+        log.warn("⚠️ 테넌트 컨텍스트 없이 findByEmail() 호출됨: {} (멀티 테넌트 사용자 고려하여 첫 번째 결과 반환)", email);
+        List<User> users = userRepository.findAllByEmail(email);
+        return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
     }
     
     @Override

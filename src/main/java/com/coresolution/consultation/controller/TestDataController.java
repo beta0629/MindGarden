@@ -642,15 +642,16 @@ public class TestDataController {
         try {
             log.info("🗑️ 테스트 사용자 삭제: {}", email);
 
-            Optional<User> userOpt = userRepository.findByEmail(email);
-            if (userOpt.isEmpty()) {
+            // 멀티 테넌트 사용자 고려하여 조회
+            List<User> users = userRepository.findAllByEmail(email);
+            if (users.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "사용자를 찾을 수 없습니다: " + email
                 ));
             }
 
-            User user = userOpt.get();
+            User user = users.get(0);
             
             user.setIsDeleted(true);
             user.setDeletedAt(LocalDateTime.now());
@@ -694,15 +695,16 @@ public class TestDataController {
         try {
             log.info("🔑 테스트 사용자 비밀번호 재설정: {}", email);
 
-            Optional<User> userOpt = userRepository.findByEmail(email);
-            if (userOpt.isEmpty()) {
+            // 멀티 테넌트 사용자 고려하여 조회
+            List<User> users = userRepository.findAllByEmail(email);
+            if (users.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "사용자를 찾을 수 없습니다: " + email
                 ));
             }
 
-            User user = userOpt.get();
+            User user = users.get(0);
             
             user.setPassword(passwordEncoder.encode(newPassword));
             user.setUpdatedAt(LocalDateTime.now());

@@ -357,7 +357,13 @@ public class MyPageServiceImpl implements MyPageService {
     public String deleteAccount(String username) {
         log.info("🔧 계정 삭제: {}", username);
         
-        User user = userRepository.findByUsername(username)
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            throw new IllegalStateException("tenantId가 설정되지 않았습니다");
+        }
+        
+        User user = userRepository.findByTenantIdAndUsername(tenantId, username)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + username));
         
         user.setIsActive(false);

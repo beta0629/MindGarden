@@ -37,6 +37,7 @@ import com.coresolution.core.service.UserRoleQueryService;
 import com.coresolution.core.domain.UserRoleAssignment;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.domain.TenantRole;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,8 +102,9 @@ public class AuthController extends BaseApiController {
             String username = authentication.getName();
             log.info("🔍 JWT 인증 사용자 확인: username={}", username);
             
-            // 데이터베이스에서 사용자 조회
-            currentUser = userRepository.findByEmail(username).orElse(null);
+            // 데이터베이스에서 사용자 조회 (멀티 테넌트 사용자 고려)
+            List<User> users = userRepository.findAllByEmail(username);
+            currentUser = users.isEmpty() ? null : users.get(0);
             
             if (currentUser == null) {
                 // 데이터베이스에 없는 경우 (Ops Portal 전용 계정 등)
@@ -254,9 +256,19 @@ public class AuthController extends BaseApiController {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
+        // tenantId 가져오기 (회원가입 시 필요)
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            log.warn("⚠️ 회원가입 시 tenantId가 없습니다. 기본 테넌트 사용 또는 오류 처리 필요");
+            // TODO: 기본 테넌트 설정 또는 오류 처리
+        }
+        
         User user = new User();
-        user.setUsername(generateUniqueUsername(email));
+        user.setUsername(generateUniqueUsername(email, tenantId));
         user.setEmail(email);
+        if (tenantId != null) {
+            user.setTenantId(tenantId);
+        }
         user.setPassword(request.getPassword());
         user.setName(encryptionUtil.safeEncrypt(request.getName().trim()));
 
@@ -428,11 +440,12 @@ public class AuthController extends BaseApiController {
         
         if (confirmTerminate) {
             // 사용자가 기존 세션 종료를 확인한 경우
-            // 사용자 조회
-            User user = userRepository.findByEmail(email).orElse(null);
-            if (user == null) {
+            // 사용자 조회 (멀티 테넌트 사용자 고려)
+            List<User> users = userRepository.findAllByEmail(email);
+            if (users.isEmpty()) {
                 throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
             }
+            User user = users.get(0);
             
             // 기존 세션들 정리
             authService.cleanupUserSessions(user, "USER_CONFIRMED_TERMINATE");
@@ -477,11 +490,12 @@ public class AuthController extends BaseApiController {
             throw new IllegalArgumentException("이메일을 입력해주세요.");
         }
         
-        // 사용자 조회
-        User targetUser = userRepository.findByEmail(targetEmail).orElse(null);
-        if (targetUser == null) {
+        // 사용자 조회 (멀티 테넌트 사용자 고려)
+        List<User> users = userRepository.findAllByEmail(targetEmail);
+        if (users.isEmpty()) {
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }
+        User targetUser = users.get(0);
         
         // 사용자 세션 강제 종료
         authService.cleanupUserSessions(targetUser, "ADMIN_FORCE");
@@ -517,9 +531,12 @@ public class AuthController extends BaseApiController {
         log.info("🔐 authenticateWithSession 호출 완료: success={}", authResponse.isSuccess());
         
         if (authResponse.isSuccess()) {
-            // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장
-            User sessionUser = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (멀티 테넌트 사용자 고려)
+            List<User> users = userRepository.findAllByEmail(request.getEmail());
+            if (users.isEmpty()) {
+                throw new RuntimeException("사용자를 찾을 수 없습니다.");
+            }
+            User sessionUser = users.get(0);
             
             SessionUtils.setCurrentUser(session, sessionUser);
             
@@ -1086,8 +1103,12 @@ public class AuthController extends BaseApiController {
         );
         
         if (authResponse.isSuccess()) {
-            User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            // 멀티 테넌트 사용자 고려하여 조회
+            List<User> users = userRepository.findAllByEmail(request.getEmail());
+            if (users.isEmpty()) {
+                throw new RuntimeException("사용자를 찾을 수 없습니다.");
+            }
+            User user = users.get(0);
             
             // 지점 권한 검사
             if (request.getLoginType() == BranchLoginRequest.LoginType.BRANCH) {
@@ -1279,8 +1300,12 @@ public class AuthController extends BaseApiController {
         );
         
         if (authResponse.isSuccess()) {
-            User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            // 멀티 테넌트 사용자 고려하여 조회
+            List<User> users = userRepository.findAllByEmail(email);
+            if (users.isEmpty()) {
+                throw new RuntimeException("사용자를 찾을 수 없습니다.");
+            }
+            User user = users.get(0);
             
             // 사용자가 해당 지점에 소속되어 있는지 확인
             if (user.getBranch() == null || !user.getBranch().getBranchCode().equals(branchCode)) {
@@ -1384,8 +1409,12 @@ public class AuthController extends BaseApiController {
         );
         
         if (authResponse.isSuccess()) {
-            User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            // 멀티 테넌트 사용자 고려하여 조회
+            List<User> users = userRepository.findAllByEmail(email);
+            if (users.isEmpty()) {
+                throw new RuntimeException("사용자를 찾을 수 없습니다.");
+            }
+            User user = users.get(0);
             
             // 표준화 2025-12-05: 브랜치/HQ 개념 제거, 표준 관리자 역할만 체크
             if (user.getRole() == null || !isAdminRoleFromCommonCode(user.getRole())) {
@@ -1531,7 +1560,7 @@ public class AuthController extends BaseApiController {
         return userRoleName;
     }
 
-    private String generateUniqueUsername(String email) {
+    private String generateUniqueUsername(String email, String tenantId) {
         String localPart = email.split("@")[0];
         String base = localPart.replaceAll("[^a-zA-Z0-9]", "");
         if (!StringUtils.hasText(base)) {
@@ -1540,8 +1569,17 @@ public class AuthController extends BaseApiController {
 
         String candidate = base.toLowerCase();
         int suffix = 1;
-        while (userRepository.findByUsername(candidate).isPresent()) {
-            candidate = String.format("%s%d", base.toLowerCase(), suffix++);
+        
+        // tenantId가 있으면 테넌트별 중복 검사, 없으면 전체 중복 검사 (레거시 호환)
+        if (tenantId != null && !tenantId.trim().isEmpty()) {
+            while (userRepository.existsByTenantIdAndUsername(tenantId, candidate)) {
+                candidate = String.format("%s%d", base.toLowerCase(), suffix++);
+            }
+        } else {
+            // 레거시 호환: tenantId가 없을 경우 전체 검사 (deprecated 메서드 사용)
+            while (userRepository.findByUsername(candidate).isPresent()) {
+                candidate = String.format("%s%d", base.toLowerCase(), suffix++);
+            }
         }
         return candidate;
     }

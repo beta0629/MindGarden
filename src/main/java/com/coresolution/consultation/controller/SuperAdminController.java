@@ -13,6 +13,7 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,9 +73,22 @@ public class SuperAdminController extends BaseApiController {
             throw new RuntimeException("이미 존재하는 이메일입니다.");
         }
         
-        // 사용자명 중복 확인
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("이미 존재하는 사용자명입니다.");
+        // 사용자명 중복 확인 (테넌트별)
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null) {
+            // 세션에서 tenantId 가져오기 시도
+            tenantId = SessionUtils.getTenantId(session);
+        }
+        if (tenantId != null && !tenantId.isEmpty()) {
+            if (userRepository.existsByTenantIdAndUsername(tenantId, request.getUsername())) {
+                throw new RuntimeException("이미 존재하는 사용자명입니다.");
+            }
+        } else {
+            // 레거시 호환: tenantId가 없을 경우 전체 검사 (deprecated 메서드 사용)
+            log.warn("⚠️ tenantId가 없어 전체 사용자명 중복 검사 수행: username={}", request.getUsername());
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new RuntimeException("이미 존재하는 사용자명입니다.");
+            }
         }
         
         // 수퍼어드민 계정 생성 (현재 사용자의 지점코드 전달)

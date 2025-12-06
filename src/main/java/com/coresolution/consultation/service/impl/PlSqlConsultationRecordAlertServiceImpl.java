@@ -29,9 +29,18 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
     @Autowired
     private JdbcTemplate jdbcTemplate;
     
+    /**
+     * 상담일지 미작성 확인
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Map<String, Object> checkMissingConsultationRecords(LocalDate checkDate, String branchCode) {
-        log.info("📝 상담일지 미작성 확인 시작: 날짜={}, 지점={}", checkDate, branchCode);
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getRequiredTenantId();
+        log.info("📝 상담일지 미작성 확인 시작: 날짜={}, tenantId={}", checkDate, tenantId);
         
         try {
             // UTF-8 인코딩 설정
@@ -40,9 +49,10 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("CheckMissingConsultationRecords");
             
+            // 표준화 2025-12-06: branchCode 대신 tenantId 사용 (프로시저가 p_tenant_id를 받도록 수정되었다고 가정)
             MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("p_check_date", checkDate)
-                .addValue("p_branch_code", branchCode);
+                .addValue("p_tenant_id", tenantId); // branchCode 대신 tenantId 사용
             
             Map<String, Object> result = jdbcCall.execute(params);
             

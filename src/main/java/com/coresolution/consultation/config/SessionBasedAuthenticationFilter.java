@@ -412,6 +412,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                path.equals("/robots.txt") ||
                path.equals("/manifest.json") ||
                path.startsWith("/api/auth/") ||  // 모든 인증 관련 API 제외
+               path.startsWith("/api/v1/onboarding/") ||  // 온보딩 API 제외 (새로운 테넌트 등록)
                path.startsWith("/oauth2/") ||
                path.startsWith("/api/password-reset/") ||
                path.startsWith("/api/health/") ||

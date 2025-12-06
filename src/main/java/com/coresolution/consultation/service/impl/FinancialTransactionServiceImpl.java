@@ -99,10 +99,12 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         FinancialTransaction savedTransaction = financialTransactionRepository.save(transaction);
         
         try {
+            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            String tenantId = getTenantIdOrNull();
             String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
-            if (incomeType.equals(request.getTransactionType()) && savedTransaction.getBranchCode() != null) {
+            if (incomeType.equals(request.getTransactionType())) {
                 realTimeStatisticsService.updateFinancialStatisticsOnPayment(
-                    savedTransaction.getBranchCode(),
+                    null, // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                     savedTransaction.getAmount().longValue(),
                     savedTransaction.getTransactionDate()
                 );
@@ -114,10 +116,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 if (expenseType.equals(request.getTransactionType()) && 
                     (refundType.equals(savedTransaction.getSubcategory()) ||
                      partialRefundType.equals(savedTransaction.getSubcategory()))) {
-                    if (savedTransaction.getRelatedEntityId() != null && savedTransaction.getBranchCode() != null) {
+                    if (savedTransaction.getRelatedEntityId() != null) {
                         realTimeStatisticsService.updateStatisticsOnRefund(
                             null, // 상담사 ID (추후 매핑에서 조회)
-                            savedTransaction.getBranchCode(),
+                            null, // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                             savedTransaction.getAmount().longValue(),
                             savedTransaction.getTransactionDate()
                         );
@@ -159,7 +161,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         transaction.setRelatedEntityType(request.getRelatedEntityType());
         transaction.setDepartment(request.getDepartment());
         transaction.setProjectCode(request.getProjectCode());
-        transaction.setBranchCode(request.getBranchCode());
+        transaction.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         transaction.setTaxIncluded(request.getTaxIncluded() != null ? request.getTaxIncluded() : false);
         transaction.setTaxAmount(request.getTaxAmount() != null ? request.getTaxAmount() : BigDecimal.ZERO);
         transaction.setAmountBeforeTax(request.getAmountBeforeTax() != null ? request.getAmountBeforeTax() : request.getAmount());
@@ -940,9 +942,17 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         }
     }
     
+    /**
+     * 재무 데이터 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Map<String, Object> getBranchFinancialData(String branchCode, LocalDate startDate, LocalDate endDate, 
                                                      String category, String transactionType) {
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         try {
             String tenantId = getTenantIdOrNull();
             log.info("🏢 재무 데이터 조회 (테넌트 전체): tenantId={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}", 
@@ -1092,9 +1102,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             
             log.info("🔍 필터링 결과: 전체={}건, 필터링 후={}건", allTransactions.size(), filteredTransactions.size());
             
+            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
             filteredTransactions.stream().limit(5).forEach(t -> 
-                log.info("📊 거래 샘플: ID={}, 지점={}, 유형={}, 금액={}", 
-                    t.getId(), t.getBranchCode(), t.getTransactionType(), t.getAmount())
+                log.info("📊 거래 샘플: ID={}, tenantId={}, 유형={}, 금액={}", 
+                    t.getId(), tenantId, t.getTransactionType(), t.getAmount())
             );
             
             int start = (int) pageable.getOffset();

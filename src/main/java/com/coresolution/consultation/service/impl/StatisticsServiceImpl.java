@@ -357,22 +357,35 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     @Transactional(readOnly = true)
+    /**
+     * 최고 성과 상담사 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     public List<ConsultantPerformance> getTopPerformers(LocalDate startDate, LocalDate endDate, String branchCode, int limit) {
+        // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
         if (branchCode != null) {
-            return consultantPerformanceRepository.findTopPerformersByBranch(
-                startDate, endDate, branchCode, org.springframework.data.domain.PageRequest.of(0, limit))
-                .getContent();
-        } else {
-            return consultantPerformanceRepository.findTopPerformers(
-                startDate, endDate, org.springframework.data.domain.PageRequest.of(0, limit))
-                .getContent();
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return consultantPerformanceRepository.findTopPerformers(
+            startDate, endDate, org.springframework.data.domain.PageRequest.of(0, limit))
+            .getContent();
     }
 
     @Override
     @Transactional(readOnly = true)
+    /**
+     * 저성과 상담사 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     public List<ConsultantPerformance> getUnderperformingConsultants(LocalDate date, String branchCode) {
-        return consultantPerformanceRepository.findUnderperformingConsultants(date, 70.0, branchCode);
+        // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        // 표준화 2025-12-06: branchCode를 null로 전달 (Repository에서 tenantId 사용)
+        return consultantPerformanceRepository.findUnderperformingConsultants(date, 70.0, null);
     }
 
     @Override
@@ -456,21 +469,16 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            List<String> branchCodes = userRepository.findByTenantId(tenantId).stream()
-                .map(User::getBranchCode)
-                .filter(code -> code != null && !code.isEmpty())
-                .distinct()
-                .collect(Collectors.toList());
-
-            for (String branchCode : branchCodes) {
-                try {
-                    updateDailyStatistics(date, branchCode);
-                } catch (Exception e) {
-                    log.error("❌ 지점별 통계 업데이트 실패: branchCode={}", branchCode, e);
-                }
+            
+            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음, tenantId 기반으로만 통계 업데이트
+            try {
+                updateDailyStatistics(date, null); // branchCode 무시
+            } catch (Exception e) {
+                log.error("❌ 테넌트별 통계 업데이트 실패: tenantId={}, date={}", tenantId, date, e);
+                throw e;
             }
 
-            log.info("✅ 전체 일별 통계 배치 업데이트 완료: date={}, 처리된 지점 수={}", date, branchCodes.size());
+            log.info("✅ 전체 일별 통계 배치 업데이트 완료: date={}, tenantId={}", date, tenantId);
 
         } catch (Exception e) {
             log.error("❌ 전체 일별 통계 배치 업데이트 실패: date={}", date, e);

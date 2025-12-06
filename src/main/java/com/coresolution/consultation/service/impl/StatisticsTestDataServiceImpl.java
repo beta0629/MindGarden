@@ -53,8 +53,16 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
     
     private final Random random = new Random();
     
+    /**
+     * 테스트 스케줄 데이터 생성
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Map<String, Object> createTestSchedules(LocalDate targetDate, String branchCode, int scheduleCount) {
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📅 테스트 스케줄 데이터 생성 시작: date={}, tenantId={}, count={}", 
                  targetDate, tenantId, scheduleCount);
@@ -93,9 +101,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 Schedule schedule = new Schedule();
                 schedule.setConsultantId(consultant.getId());
                 schedule.setClientId(client.getId());
-                if (branchCode != null && !branchCode.trim().isEmpty()) {
-                    schedule.setBranchCode(branchCode);
-                }
+                schedule.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                 schedule.setDate(targetDate);
                 schedule.setStartTime(startTime);
                 schedule.setEndTime(endTime);
@@ -119,7 +125,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
             result.put("createdCount", scheduleCount);
             result.put("scheduleIds", createdScheduleIds);
             result.put("targetDate", targetDate.toString());
-            result.put("branchCode", branchCode);
+            result.put("tenantId", tenantId);
             
             log.info("✅ 테스트 스케줄 데이터 생성 완료: {}개 생성", scheduleCount);
             
@@ -132,8 +138,16 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
         return result;
     }
     
+    /**
+     * 완료된 상담 데이터 생성
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Map<String, Object> createCompletedConsultations(LocalDate targetDate, String branchCode, int completedCount) {
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("✅ 완료된 상담 데이터 생성 시작: date={}, tenantId={}, count={}", 
                  targetDate, tenantId, completedCount);

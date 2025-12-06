@@ -398,8 +398,16 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         return result;
     }
     
+    /**
+     * 환불 가능한 할인 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Map<String, Object> getRefundableDiscounts(String branchCode) {
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("💰 환불 가능한 할인 조회: tenantId={}", tenantId);
         
@@ -411,8 +419,16 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         return result;
     }
     
+    /**
+     * 할인 환불 통계 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Map<String, Object> getDiscountRefundStatistics(String branchCode, String startDate, String endDate) {
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📊 할인 환불 통계 조회: tenantId={}, Period={} ~ {}", tenantId, startDate, endDate);
         

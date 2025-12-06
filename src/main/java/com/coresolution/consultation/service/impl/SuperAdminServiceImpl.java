@@ -54,14 +54,8 @@ public class SuperAdminServiceImpl implements SuperAdminService {
             String encryptedPhone = request.getPhone() != null && !request.getPhone().trim().isEmpty() 
                 ? encryptionUtil.encrypt(request.getPhone()) : null;
             
-            // 지점코드 결정 (현재 사용자의 지점코드 사용, 없으면 기본값)
-            String branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
-            if (currentUser != null && currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty()) {
-                branchCode = currentUser.getBranchCode();
-                log.info("🔧 현재 사용자의 지점코드 사용: {}", branchCode);
-            } else {
-                log.info("🔧 기본 지점코드 사용: {}", branchCode);
-            }
+            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            log.warn("⚠️ Deprecated: branchCode 설정은 더 이상 사용하지 않음. tenantId 기반으로만 동작합니다.");
             
             // 수퍼어드민 사용자 생성
             User superAdmin = User.builder()
@@ -72,7 +66,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
                 .nickname(encryptedNickname)
                 .phone(encryptedPhone)
                 .role(UserRole.ADMIN) // 표준화 2025-12-05: HQ_MASTER → ADMIN으로 통합
-                .branchCode(branchCode)
+                .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                 .isActive(true)
                 .isEmailVerified(true) // 수퍼어드민은 이메일 인증 생략
                 .isSocialAccount(false)

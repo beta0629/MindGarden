@@ -592,15 +592,17 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             return stats;
 
         } catch (Exception e) {
-            log.error("❌ 관리자 평가 통계 조회 실패 (지점별): branchCode={}", branchCode, e);
+            log.error("❌ 관리자 평가 통계 조회 실패 (테넌트 전체): tenantId={}", tenantId, e);
             throw new RuntimeException("평가 통계를 불러오는데 실패했습니다.");
         }
     }
     
      /**
-     * 지점별 상담사 랭킹 조회
+     * 상담사 랭킹 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
      */
     private List<Map<String, Object>> getConsultantRankingByBranch(String branchCode, Pageable pageable) {
+        // 표준화 2025-12-06: branchCode 무시
         try {
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {

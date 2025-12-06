@@ -11,10 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Branch 테이블 초기 데이터 생성 서비스
- * 애플리케이션 시작 시 MAIN001 본점 데이터를 자동 생성
+ * 애플리케이션 시작 시 본점 데이터를 자동 생성
+ * 표준화 2025-12-06: branchCode 대신 지점명과 유형으로 관리
  * 
  * @author MindGarden
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2025-09-19
  */
 @Slf4j
@@ -32,11 +33,17 @@ public class BranchInitializationService implements CommandLineRunner {
     }
     
     /**
-     * MAIN001 본점 데이터 초기화
+     * 본점 데이터 초기화
+     * 표준화 2025-12-06: branchCode 대신 지점명과 유형으로 조회
      */
     private void initializeMainBranch() {
         try {
-            var existingBranch = branchRepository.findByBranchCodeAndIsDeletedFalse("MAIN001");
+            // 표준화 2025-12-06: branchCode 대신 지점 유형이 MAIN인 지점을 찾음
+            var existingBranches = branchRepository.findByBranchTypeAndIsDeletedFalseOrderByBranchName(Branch.BranchType.MAIN);
+            var existingBranch = existingBranches.stream()
+                .filter(b -> "본점".equals(b.getBranchName()))
+                .findFirst();
+            
             if (existingBranch.isPresent()) {
                 Branch branch = existingBranch.get();
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -45,9 +52,9 @@ public class BranchInitializationService implements CommandLineRunner {
                     branch.setBranchStatus(Branch.BranchStatus.ACTIVE);
                     branch.setBranchName("본점");
                     branchRepository.save(branch);
-                    log.info("✅ MAIN001 본점 상태를 ACTIVE로 변경: {}", branch.getBranchStatus());
+                    log.info("✅ 본점 상태를 ACTIVE로 변경: {}", branch.getBranchStatus());
                 } else {
-                    log.info("✅ MAIN001 본점이 이미 ACTIVE 상태입니다");
+                    log.info("✅ 본점이 이미 ACTIVE 상태입니다");
                 }
                 return;
             }
@@ -71,10 +78,10 @@ public class BranchInitializationService implements CommandLineRunner {
                 .build();
             
             Branch savedBranch = branchRepository.save(mainBranch);
-            log.info("✅ MAIN001 본점 생성 완료: ID={}, 지점명={}", savedBranch.getId(), savedBranch.getBranchName());
+            log.info("✅ 본점 생성 완료: ID={}, 지점명={}", savedBranch.getId(), savedBranch.getBranchName());
             
         } catch (Exception e) {
-            log.error("❌ MAIN001 본점 생성 실패", e);
+            log.error("❌ 본점 생성 실패", e);
         }
     }
 }

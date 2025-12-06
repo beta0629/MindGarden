@@ -154,7 +154,7 @@
   background-color: var(--card-bg-color, inherit);
   border-color: var(--card-border-color, inherit);
   border-width: var(--card-border-width, 0);
-  border-style: var(--card-border-width, none) ? solid : none;
+  border-style: var(--card-border-style, none);
 }
 
 /* 반응형 디자인 */

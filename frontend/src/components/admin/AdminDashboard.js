@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import notificationManager from '../../utils/notification';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';

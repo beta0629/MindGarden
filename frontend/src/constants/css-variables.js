@@ -1,3 +1,4 @@
+/**
  * CSS 변수 및 디자인 시스템 상수 (동적 처리)
  * 
  * @deprecated 하드코딩된 색상 값들은 getDynamicCSSVariables() 함수 사용 권장
@@ -624,12 +625,14 @@ export const HOMEPAGE_CONSTANTS = {
   }
 };
 
+/**
  * 동적 CSS 변수 조회 함수
  * @param {string} themeName 테마명 (기본값: 'default')
  * @returns {Promise<Object>} 동적 CSS 변수 객체
  */
 export const getDynamicCSSVariablesAsync = () => Promise.resolve(CSS_VARIABLES);
 
+/**
  * 동적 CSS 변수 조회 함수 (동기식 fallback)
  * @param {string} themeName 테마명 (기본값: 'default')
  * @returns {Object} CSS 변수 객체 (fallback 포함)
@@ -638,6 +641,7 @@ export const getCSSVariablesSync = (themeName = 'default') => {
   return CSS_VARIABLES;
 };
 
+/**
  * 특정 색상 값을 동적으로 조회하는 함수
  * @param {string} colorKey 색상 키 (예: 'PRIMARY', 'SUCCESS')
  * @param {string} themeName 테마명 (기본값: 'default')
@@ -647,6 +651,7 @@ export const getDynamicColor = async (colorKey, themeName = 'default') => {
   return CSS_VARIABLES.COLORS[colorKey] || '#6b7280';
 };
 
+/**
  * 특정 색상 값을 동적으로 조회하는 함수 (동기식 fallback)
  * @param {string} colorKey 색상 키
  * @returns {string} 색상 값 (fallback 포함)

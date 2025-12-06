@@ -11,7 +11,7 @@ import {
 } from '../../utils/codeHelper';
 import { showError, showSuccess } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeApi';
-import { Button } from '../ui/Button/Button';
+import Button from '../ui/Button/Button';
 import SimpleLayout from '../layout/SimpleLayout';
 
 import ClientOverviewTab from './ClientComprehensiveManagement/ClientOverviewTab';
@@ -21,6 +21,7 @@ import ClientStatisticsTab from './ClientComprehensiveManagement/ClientStatistic
 import ClientModal from './ClientComprehensiveManagement/ClientModal';
 import ClientFilters from './ClientComprehensiveManagement/ClientFilters';
 
+/**
  * 내담자 종합관리 메인 컴포넌트
  * - 내담자 정보 종합 조회
  * - 상담 이력 관리

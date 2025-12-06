@@ -202,18 +202,27 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         }
     }
     
+    /**
+     * 월별 재무 보고서 생성
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> generateMonthlyFinancialReport(int year, int month, String branchCode) {
-        log.info("📅 월별 재무 보고서 생성: {}-{}, 지점={}", year, month, branchCode);
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getRequiredTenantId();
+        log.info("📅 월별 재무 보고서 생성: {}-{}, tenantId={}", year, month, tenantId);
         
         try {
-            // 직접 SQL 쿼리로 수정 (INCOME 타입 사용)
+            // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
             String sql = """
                 SELECT 
                     ? AS report_year,
                     ? AS report_month,
-                    ? AS branch_code,
+                    NULL AS branch_code,
                     COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS total_revenue,
                     COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS total_expenses,
                     COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
@@ -221,19 +230,19 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                     COUNT(*) AS total_transactions,
                     COUNT(DISTINCT DATE(ft.transaction_date)) AS active_days
                 FROM financial_transactions ft
-                WHERE ft.transaction_date BETWEEN DATE(CONCAT(?, '-', LPAD(?, 2, '0'), '-01')) 
+                WHERE ft.tenant_id = ?
+                    AND ft.transaction_date BETWEEN DATE(CONCAT(?, '-', LPAD(?, 2, '0'), '-01')) 
                     AND LAST_DAY(DATE(CONCAT(?, '-', LPAD(?, 2, '0'), '-01')))
-                    AND (? IS NULL OR ft.branch_code = ?)
                     AND ft.is_deleted = FALSE
                 """;
             
             List<Map<String, Object>> reportData = jdbcTemplate.query(sql,
-                new Object[]{year, month, branchCode, year, month, year, month, branchCode, branchCode},
+                new Object[]{year, month, tenantId, year, month, year, month},
                 (rs, rowNum) -> {
                     Map<String, Object> report = new HashMap<>();
                     report.put("reportYear", rs.getInt("report_year"));
                     report.put("reportMonth", rs.getInt("report_month"));
-                    report.put("branchCode", rs.getString("branch_code"));
+                    report.put("tenantId", tenantId);
                     report.put("totalRevenue", rs.getLong("total_revenue"));
                     report.put("totalExpenses", rs.getLong("total_expenses"));
                     report.put("netProfit", rs.getLong("net_profit"));
@@ -243,7 +252,7 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                 });
             
             // 카테고리별 지출 분석 데이터 추가
-            List<Map<String, Object>> categoryAnalysis = getCategoryExpenseAnalysis(year, month, branchCode);
+            List<Map<String, Object>> categoryAnalysis = getCategoryExpenseAnalysis(year, month, null); // branchCode 무시
             
             Map<String, Object> result = new HashMap<>();
             result.put("reportData", reportData);
@@ -454,11 +463,15 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     
     /**
      * 카테고리별 지출 분석 데이터 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
      */
     private List<Map<String, Object>> getCategoryExpenseAnalysis(int year, int month, String branchCode) {
-        log.info("📊 카테고리별 지출 분석 조회: {}-{}, 지점={}", year, month, branchCode);
+        // 표준화 2025-12-06: branchCode 무시
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getRequiredTenantId();
+        log.info("📊 카테고리별 지출 분석 조회: {}-{}, tenantId={}", year, month, tenantId);
         
         try {
+            // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
             String sql = """
                 SELECT 
                     ft.category,
@@ -466,9 +479,9 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                     COUNT(CASE WHEN ft.transaction_type = 'EXPENSE' THEN 1 END) AS transaction_count,
                     COALESCE(AVG(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount END), 0) AS avg_amount
                 FROM financial_transactions ft
-                WHERE ft.transaction_date BETWEEN DATE(CONCAT(?, '-', LPAD(?, 2, '0'), '-01')) 
+                WHERE ft.tenant_id = ?
+                    AND ft.transaction_date BETWEEN DATE(CONCAT(?, '-', LPAD(?, 2, '0'), '-01')) 
                     AND LAST_DAY(DATE(CONCAT(?, '-', LPAD(?, 2, '0'), '-01')))
-                    AND (? IS NULL OR ft.branch_code = ?)
                     AND ft.is_deleted = FALSE
                     AND ft.transaction_type = 'EXPENSE'
                 GROUP BY ft.category
@@ -477,7 +490,7 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                 """;
             
             return jdbcTemplate.query(sql,
-                new Object[]{year, month, year, month, branchCode, branchCode},
+                new Object[]{tenantId, year, month, year, month},
                 (rs, rowNum) -> {
                     Map<String, Object> category = new HashMap<>();
                     category.put("category", rs.getString("category"));

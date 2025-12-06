@@ -32,12 +32,19 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
     private final DataSource dataSource;
     private final JdbcTemplate jdbcTemplate;
     
+    /**
+     * 일별 통계 업데이트
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public String updateDailyStatistics(String branchCode, LocalDate statDate) {
-        log.info("📊 일별 통계 PL/SQL 프로시저 호출: branchCode={}, statDate={}", branchCode, statDate);
-        
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
         String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 일별 통계 PL/SQL 프로시저 호출: tenantId={}, statDate={}", tenantId, statDate);
         String updatedBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
         
         try {
@@ -78,8 +85,8 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             return success ? "SUCCESS: " + message : "ERROR: " + message;
             
         } catch (Exception e) {
-            log.error("❌ 일별 통계 PL/SQL 프로시저 실행 실패: branchCode={}, statDate={}, 오류={}", 
-                     branchCode, statDate, e.getMessage(), e);
+            log.error("❌ 일별 통계 PL/SQL 프로시저 실행 실패: tenantId={}, statDate={}, 오류={}", 
+                     tenantId, statDate, e.getMessage(), e);
             return "ERROR: " + e.getMessage();
         }
     }

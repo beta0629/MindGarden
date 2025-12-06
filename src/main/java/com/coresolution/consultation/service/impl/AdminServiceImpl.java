@@ -3160,7 +3160,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         try {
-            List<CommonCode> reasonCodes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc("REFUND_REASON");
+            String tenantId = getTenantIdOrNull();
+            List<CommonCode> reasonCodes = tenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupAndIsActiveTrueOrderBySortOrderAsc(tenantId, "REFUND_REASON")
+                : commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc("REFUND_REASON"); // 레거시 호환
             
             String reason = rawReason.toLowerCase().trim();
             

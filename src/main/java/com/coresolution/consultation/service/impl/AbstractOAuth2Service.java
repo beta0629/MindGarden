@@ -237,7 +237,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                 .name(encryptionUtil.safeEncrypt(socialUserInfo.getName()))
                 .email(encryptionUtil.safeEncrypt(socialUserInfo.getEmail()))
                 .phone(socialUserInfo.getPhone() != null ? encryptionUtil.safeEncrypt(socialUserInfo.getPhone()) : null)
-                .branchCode(AdminConstants.DEFAULT_BRANCH_CODE) // 소셜 로그인 사용자는 기본 본사 지점코드 사용
+                .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                 .isDeleted(false)
                 .build();
         

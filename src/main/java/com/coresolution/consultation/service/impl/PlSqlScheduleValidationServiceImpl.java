@@ -155,13 +155,19 @@ public class PlSqlScheduleValidationServiceImpl implements PlSqlScheduleValidati
         }
     }
     
+    /**
+     * 일괄 스케줄 완료 처리
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Map<String, Object> processBatchScheduleCompletion(String branchCode) {
-        
-        log.info("🔄 PL/SQL 일괄 스케줄 완료 처리: 지점 코드={}", branchCode);
-        
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         // 테넌트 ID 및 처리자 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
         String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🔄 PL/SQL 일괄 스케줄 완료 처리: tenantId={}", tenantId);
         String processedBy = TenantContextHolder.getTenantId(); // TODO: 실제 사용자 ID로 변경 필요
         
         try {

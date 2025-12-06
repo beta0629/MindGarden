@@ -66,7 +66,8 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
             personalData.put("birthDate", user.getBirthDate());
             personalData.put("createdAt", user.getCreatedAt());
             personalData.put("updatedAt", user.getUpdatedAt());
-            personalData.put("branchCode", user.getBranchCode());
+            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            // personalData.put("branchCode", user.getBranchCode());
             
             // 개인정보 접근 로그 기록
             personalDataAccessLogRepository.save(PersonalDataAccessLog.builder()

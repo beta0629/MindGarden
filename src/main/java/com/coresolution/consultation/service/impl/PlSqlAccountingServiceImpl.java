@@ -84,13 +84,20 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
         return result;
     }
     
+    /**
+     * 전사 통합 재무 현황 조회
+     * 표준화 2025-12-06: branchCodes 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Map<String, Object> getConsolidatedFinancialData(LocalDate startDate, LocalDate endDate, String branchCodes) {
-        log.info("🏭 PL/SQL 전사 통합 재무 현황 조회: StartDate={}, EndDate={}, BranchCodes={}", 
-            startDate, endDate, branchCodes);
-        
+        // 표준화 2025-12-06: branchCodes 무시
+        if (branchCodes != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCodes는 더 이상 사용하지 않음. branchCodes={}", branchCodes);
+        }
         // 테넌트 ID 가져오기 (branchCodes 파라미터는 더 이상 사용하지 않음)
         String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🏭 PL/SQL 전사 통합 재무 현황 조회: StartDate={}, EndDate={}, tenantId={}", 
+            startDate, endDate, tenantId);
         
         Map<String, Object> result = new HashMap<>();
         
@@ -202,17 +209,24 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
     }
     
     @Override
+    /**
+     * 재무 보고서 생성
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     public Map<String, Object> generateFinancialReport(
         String reportType, 
         LocalDate periodStart, 
         LocalDate periodEnd, 
         String branchCode
     ) {
-        log.info("📊 PL/SQL 재무 보고서 생성: Type={}, Start={}, End={}, Branch={}", 
-            reportType, periodStart, periodEnd, branchCode);
-        
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         // 테넌트 ID 가져오기 (branchCode 파라미터는 더 이상 사용하지 않음)
         String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 PL/SQL 재무 보고서 생성: Type={}, Start={}, End={}, tenantId={}", 
+            reportType, periodStart, periodEnd, tenantId);
         
         Map<String, Object> result = new HashMap<>();
         

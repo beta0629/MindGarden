@@ -80,9 +80,18 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
         }
     }
     
+    /**
+     * 상담일지 미작성 알림 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Map<String, Object> getMissingConsultationRecordAlerts(String branchCode, LocalDate startDate, LocalDate endDate) {
-        log.info("📝 상담일지 미작성 알림 조회: 지점={}, 기간={}~{}", branchCode, startDate, endDate);
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getRequiredTenantId();
+        log.info("📝 상담일지 미작성 알림 조회: tenantId={}, 기간={}~{}", tenantId, startDate, endDate);
         
         try {
             // UTF-8 인코딩 설정
@@ -91,8 +100,9 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("GetMissingConsultationRecordAlerts");
             
+            // 표준화 2025-12-06: branchCode 대신 tenantId 사용 (프로시저가 p_tenant_id를 받도록 수정되었다고 가정)
             MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("p_branch_code", branchCode)
+                .addValue("p_tenant_id", tenantId) // branchCode 대신 tenantId 사용
                 .addValue("p_start_date", startDate)
                 .addValue("p_end_date", endDate);
             

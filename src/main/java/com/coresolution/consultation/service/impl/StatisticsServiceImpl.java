@@ -593,19 +593,29 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
     }
 
+    /**
+     * 실시간 성과 지표 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getRealTimePerformanceIndicators(String branchCode) {
-        log.info("📊 실시간 성과 지표 조회: branchCode={}", branchCode);
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 실시간 성과 지표 조회: tenantId={}", tenantId);
         
         try {
             Map<String, Object> indicators = new HashMap<>();
             LocalDateTime now = LocalDateTime.now();
             LocalDate today = now.toLocalDate();
             
-            DailyStatistics todayStats = getDailyStatistics(today, branchCode);
+            DailyStatistics todayStats = getDailyStatistics(today, null); // branchCode 무시
             
-            List<Schedule> todaySchedules = scheduleRepository.findByDateAndBranchCode(today, branchCode);
+            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
+            List<Schedule> todaySchedules = scheduleRepository.findByTenantIdAndDateAndIsDeletedFalse(tenantId, today);
             long inProgressCount = todaySchedules.stream()
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .filter(s -> ScheduleStatus.BOOKED.equals(s.getStatus()) || ScheduleStatus.CONFIRMED.equals(s.getStatus()))

@@ -68,17 +68,11 @@ public class BranchCodeInitService {
                 log.info("HQ 본사 코드가 이미 존재함");
             }
             
-            // 3. 본사 관리자 계정들의 지점 코드를 HQ로 업데이트
-            var hqAdminEmail = userRepository.findByEmail("super_hq_admin@mindgarden.com");
-            if (hqAdminEmail.isPresent()) {
-                var admin = hqAdminEmail.get();
-                admin.setBranchCode("HQ");
-                admin.setUpdatedAt(LocalDateTime.now());
-                userRepository.save(admin);
-                log.info("본사 관리자 계정 지점 코드 업데이트: {} -> HQ", admin.getEmail());
-            }
+            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            // 3. 본사 관리자 계정들의 지점 코드 업데이트 제거
+            log.warn("⚠️ Deprecated: branchCode 설정은 더 이상 사용하지 않음. tenantId 기반으로만 동작합니다.");
             
-            // 4. 본사 역할의 모든 사용자 업데이트
+            // 4. 본사 역할의 모든 사용자 확인 (branchCode 설정 제거)
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 log.error("❌ tenantId가 설정되지 않았습니다");
@@ -87,16 +81,8 @@ public class BranchCodeInitService {
             
             List<String> roleList = List.of("ADMIN"); // 표준화 2025-12-05: 브랜치/HQ 개념 제거
             var hqUsers = userRepository.findByRoleIn(tenantId, roleList);
-            for (var user : hqUsers) {
-                if (!"HQ".equals(user.getBranchCode())) {
-                    user.setBranchCode("HQ");
-                    user.setUpdatedAt(LocalDateTime.now());
-                    userRepository.save(user);
-                    log.info("본사 사용자 지점 코드 업데이트: {} -> HQ", user.getEmail());
-                }
-            }
             
-            log.info("HQ 본사 코드 초기화 완료. 업데이트된 사용자 수: {}", hqUsers.size() + (hqAdminEmail.isPresent() ? 1 : 0));
+            log.info("HQ 본사 코드 초기화 완료. 확인된 관리자 사용자 수: {} (branchCode는 더 이상 사용하지 않음)", hqUsers.size());
             
         } catch (Exception e) {
             log.error("HQ 본사 코드 초기화 중 오류 발생: {}", e.getMessage(), e);

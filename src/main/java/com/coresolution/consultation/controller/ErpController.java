@@ -117,26 +117,16 @@ public class ErpController extends BaseApiController {
             
             User currentUser = SessionUtils.getCurrentUser(session);
             
-            String currentBranchCode = currentUser.getBranchCode();
-            log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+            // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
+            String tenantId = TenantContextHolder.getTenantId();
+            log.info("🔍 현재 사용자 tenantId: {}", tenantId);
             
             List<Item> allItems = erpService.getAllActiveItems();
             
-            // 지점코드로 필터링 (branchCode가 null인 아이템은 모든 지점에서 사용 가능)
-            List<Item> items = allItems.stream()
-                .filter(item -> {
-                    if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
-                        return true; // 지점코드가 없으면 모든 아이템 조회
-                    }
-                    // branchCode가 null이면 모든 지점에서 사용 가능
-                    if (item.getBranchCode() == null || item.getBranchCode().trim().isEmpty()) {
-                        return true;
-                    }
-                    return currentBranchCode.equals(item.getBranchCode());
-                })
-                .collect(java.util.stream.Collectors.toList());
+            // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
+            List<Item> items = allItems;
             
-            log.info("🔍 아이템 목록 조회 완료 - 전체: {}, 필터링 후: {}", allItems.size(), items.size());
+            log.info("🔍 아이템 목록 조회 완료 - 전체: {}, tenantId: {}", allItems.size(), tenantId);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1827,13 +1817,14 @@ public class ErpController extends BaseApiController {
                     .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
             
-            // 지점코드 자동 설정
-            if (request.getBranchCode() == null || request.getBranchCode().isEmpty()) {
-                request.setBranchCode(currentUser.getBranchCode());
+            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            String tenantId = TenantContextHolder.getTenantId();
+            if (request.getBranchCode() != null) {
+                request.setBranchCode(null); // branchCode 무시
             }
             
-            log.info("수입/지출 거래 등록 요청: 사용자={}, 지점={}, 거래={}", 
-                    currentUser.getEmail(), currentUser.getBranchCode(), request);
+            log.info("수입/지출 거래 등록 요청: 사용자={}, tenantId={}, 거래={}", 
+                    currentUser.getEmail(), tenantId, request);
             
             FinancialTransactionResponse response = financialTransactionService.createTransaction(request, currentUser);
             
@@ -1873,14 +1864,15 @@ public class ErpController extends BaseApiController {
                     .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
             
-            // 지점코드 결정 (표준화 2025-12-05: 브랜치 개념 제거, tenantId만 사용)
-            String targetBranchCode = branchCode; // 레거시 호환용 (사용하지 않음)
+            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 조회
+            String tenantId = TenantContextHolder.getTenantId();
             
-            log.info("수입/지출 거래 목록 조회 요청: 지점={}", targetBranchCode);
+            log.info("수입/지출 거래 목록 조회 요청: tenantId={}, branchCode={} (무시됨)", tenantId, branchCode);
             
             // 표준화 원칙: 페이지 크기 최대 20개로 제한
+            // 표준화 2025-12-06: branchCode를 null로 전달 (Service에서 tenantId 사용)
             Page<FinancialTransactionResponse> transactionPage = financialTransactionService.getTransactionsByBranch(
-                targetBranchCode, transactionType, category, startDate, endDate,
+                null, transactionType, category, startDate, endDate,
                 PaginationUtils.createPageable(page, size)
             );
             List<FinancialTransactionResponse> transactions = transactionPage.getContent();
@@ -1889,7 +1881,7 @@ public class ErpController extends BaseApiController {
             response.put("success", true);
             response.put("message", "거래 목록을 성공적으로 조회했습니다.");
             response.put("data", transactions);
-            response.put("branchCode", targetBranchCode);
+            response.put("tenantId", tenantId);
             
             return ResponseEntity.ok(response);
             
@@ -1920,7 +1912,9 @@ public class ErpController extends BaseApiController {
                     .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
             
-            log.info("빠른 지출 등록 요청: category={}, amount={}, 지점={}", category, amount, currentUser.getBranchCode());
+            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            String tenantId = TenantContextHolder.getTenantId();
+            log.info("빠른 지출 등록 요청: category={}, amount={}, tenantId={}", category, amount, tenantId);
             
             // 부가세 적용 여부 확인 및 계산
             boolean isVatApplicable = TaxCalculationUtil.isVatApplicable(category);
@@ -1944,7 +1938,7 @@ public class ErpController extends BaseApiController {
                     .description(description != null ? description : category + " 지출")
                     .transactionDate(transactionDate != null ? java.time.LocalDate.parse(transactionDate) : java.time.LocalDate.now())
                     .taxIncluded(isVatApplicable)
-                    .branchCode(currentUser.getBranchCode()) // 지점코드 자동 설정
+                    .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                     .build();
             
             FinancialTransactionResponse response = financialTransactionService.createTransaction(request, currentUser);
@@ -1983,7 +1977,9 @@ public class ErpController extends BaseApiController {
                     .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
             
-            log.info("빠른 수입 등록 요청: category={}, amount={}, 지점={}", category, amount, currentUser.getBranchCode());
+            // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+            String tenantId = TenantContextHolder.getTenantId();
+            log.info("빠른 수입 등록 요청: category={}, amount={}, tenantId={}", category, amount, tenantId);
             
             // 수입은 항상 부가세 포함 (내담자가 결제한 금액)
             TaxCalculationUtil.TaxCalculationResult taxResult = TaxCalculationUtil.calculateTaxFromPayment(amount);
@@ -1998,7 +1994,7 @@ public class ErpController extends BaseApiController {
                     .description(description != null ? description : category + " 수입")
                     .transactionDate(transactionDate != null ? java.time.LocalDate.parse(transactionDate) : java.time.LocalDate.now())
                     .taxIncluded(true) // 수입은 항상 부가세 포함
-                    .branchCode(currentUser.getBranchCode()) // 지점코드 자동 설정
+                    .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                     .build();
             
             FinancialTransactionResponse response = financialTransactionService.createTransaction(request, currentUser);

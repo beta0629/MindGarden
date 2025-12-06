@@ -1428,7 +1428,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 clientData.put("isDeleted", decryptedUser.getIsDeleted());
                 clientData.put("createdAt", decryptedUser.getCreatedAt());
                 clientData.put("updatedAt", decryptedUser.getUpdatedAt());
-                clientData.put("branchCode", decryptedUser.getBranchCode()); // 브랜치 코드 추가
+                clientData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 
                 log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
                     decryptedUser.getId(), decryptedUser.getName(), phone);
@@ -2786,7 +2786,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     refund.put("refundAmount", refundAmount);
                     
                     refund.put("terminatedAt", mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-                    refund.put("branchCode", mapping.getBranchCode());
+                    refund.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
                     refund.put("erpStatus", "SENT");
                     refund.put("erpReference", "ERP_" + mapping.getId() + "_" + mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
                     

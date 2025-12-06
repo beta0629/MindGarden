@@ -789,8 +789,16 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         return dashboardData;
     }
     
+    /**
+     * 재무 대시보드 데이터 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Map<String, Object> getBranchFinanceDashboard(String branchCode) {
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         String tenantId = getTenantId();
         Map<String, Object> dashboardData = new HashMap<>();
         
@@ -873,7 +881,15 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     }
     
     @Override
+    /**
+     * 재무 대시보드 데이터 조회 (기간 지정)
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     public Map<String, Object> getBranchFinanceDashboard(String branchCode, LocalDate startDate, LocalDate endDate) {
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         String tenantId = getTenantId();
         Map<String, Object> dashboardData = new HashMap<>();
         
@@ -907,7 +923,15 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     }
     
     @Override
+    /**
+     * 재무 통계 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     public Map<String, Object> getBranchFinanceStatistics(String branchCode, String startDate, String endDate) {
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         String tenantId = getTenantId();
         Map<String, Object> statistics = new HashMap<>();
         

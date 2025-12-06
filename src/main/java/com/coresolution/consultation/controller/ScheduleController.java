@@ -231,7 +231,8 @@ public class ScheduleController extends BaseApiController {
         debugInfo.put("isBranchManager", isStaffRoleFromCommonCode(currentUser.getRole()));
         debugInfo.put("isHeadquartersAdmin", isAdminRoleFromCommonCode(currentUser.getRole()));
         debugInfo.put("isBranchSuperAdmin", isAdminRoleFromCommonCode(currentUser.getRole()));
-        debugInfo.put("branchCode", currentUser.getBranchCode());
+        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+        debugInfo.put("tenantId", com.coresolution.core.context.TenantContextHolder.getTenantId());
         
         return success(debugInfo);
     }
@@ -323,8 +324,9 @@ public class ScheduleController extends BaseApiController {
             throw new IllegalArgumentException(vacationMessage);
         }
         
-        String branchCode = currentUser != null ? currentUser.getBranchCode() : AdminConstants.DEFAULT_BRANCH_CODE;
-        log.info("🔧 스케줄 생성 지점코드: {}", branchCode);
+        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        log.info("🔧 스케줄 생성: tenantId={}", tenantId);
         
         Schedule schedule = scheduleService.createConsultantSchedule(
             request.getConsultantId(),
@@ -335,7 +337,7 @@ public class ScheduleController extends BaseApiController {
             request.getTitle(),
             request.getDescription(),
             request.getConsultationType(),
-            branchCode
+            null // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         );
         
         Map<String, Object> data = Map.of("scheduleId", schedule.getId());

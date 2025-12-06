@@ -549,28 +549,37 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
 
+    /**
+     * 대시보드 통계 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardStatistics(String branchCode) {
-        log.info("📊 대시보드 통계 조회: branchCode={}", branchCode);
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 대시보드 통계 조회: tenantId={}", tenantId);
 
         try {
             Map<String, Object> dashboard = new HashMap<>();
             LocalDate today = LocalDate.now();
 
-            DailyStatistics todayStats = getDailyStatistics(today, branchCode);
+            DailyStatistics todayStats = getDailyStatistics(today, null); // branchCode 무시
             dashboard.put("today", todayStats != null ? todayStats : new HashMap<>());
 
             LocalDate weekAgo = today.minusDays(7);
-            List<DailyStatistics> weekStats = getDailyStatistics(weekAgo, today, branchCode);
+            List<DailyStatistics> weekStats = getDailyStatistics(weekAgo, today, null); // branchCode 무시
             dashboard.put("week", weekStats);
 
             String thisMonth = today.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            Map<String, Object> monthlyStats = getMonthlyAggregatedStatistics(thisMonth, branchCode);
+            Map<String, Object> monthlyStats = getMonthlyAggregatedStatistics(thisMonth, null); // branchCode 무시
             dashboard.put("month", monthlyStats);
 
             LocalDate monthAgo = today.minusDays(30);
-            List<ConsultantPerformance> topPerformers = getTopPerformers(monthAgo, today, branchCode, 5);
+            List<ConsultantPerformance> topPerformers = getTopPerformers(monthAgo, today, null, 5); // branchCode 무시
             dashboard.put("topPerformers", topPerformers);
 
             List<PerformanceAlert> pendingAlerts = getPendingAlerts();
@@ -579,7 +588,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             return dashboard;
 
         } catch (Exception e) {
-            log.error("❌ 대시보드 통계 조회 실패: branchCode={}", branchCode, e);
+            log.error("❌ 대시보드 통계 조회 실패: tenantId={}", tenantId, e);
             throw new RuntimeException("대시보드 통계 조회 중 오류가 발생했습니다.", e);
         }
     }

@@ -603,6 +603,9 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
      */
     private List<Map<String, Object>> getConsultantRankingByBranch(String branchCode, Pageable pageable) {
         // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         try {
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {

@@ -4145,9 +4145,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     private int getCompletedScheduleCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
         try {
-            List<Schedule> completedSchedules = scheduleRepository.findByConsultantIdAndStatusAndDateBetween(
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                consultantId, ScheduleStatus.COMPLETED, startDate, endDate);
+            String tenantId = getTenantIdOrNull();
+            List<Schedule> completedSchedules = tenantId != null
+                ? scheduleRepository.findByTenantIdAndConsultantIdAndStatusAndDateBetween(
+                    tenantId, consultantId, ScheduleStatus.COMPLETED, startDate, endDate)
+                : scheduleRepository.findByConsultantIdAndStatusAndDateBetween(
+                    consultantId, ScheduleStatus.COMPLETED, startDate, endDate); // 레거시 호환
             return completedSchedules.size();
         } catch (Exception e) {
             log.warn("상담사 {} 완료 스케줄 건수 조회 실패: {}", consultantId, e.getMessage());
@@ -4200,9 +4203,19 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             if (role != null && !role.isEmpty()) {
                 UserRole userRole = UserRole.valueOf(role);
                 if (branchCode != null && !branchCode.isEmpty()) {
-                    users = userRepository.findByRoleAndBranchCodeAndIsActive(tenantId, userRole, branchCode, includeInactive ? null : true);
+                    // 브랜치 개념 제거: 브랜치 엔티티를 조회한 후 역할로 필터링 (표준화 2025-12-05)
+                    try {
+                        Branch branch = branchService.getBranchByCode(branchCode);
+                        List<User> branchUsers = userRepository.findByBranchAndIsDeletedFalseOrderByUsername(tenantId, branch);
+                        users = branchUsers.stream()
+                            .filter(u -> u.getRole() == userRole && (includeInactive || Boolean.TRUE.equals(u.getIsActive())))
+                            .collect(Collectors.toList());
+                    } catch (com.coresolution.consultation.exception.EntityNotFoundException e) {
+                        log.warn("브랜치를 찾을 수 없습니다: {}", branchCode);
+                        users = new ArrayList<>();
+                    }
                 } else {
-                    users = userRepository.findByRoleAndIsActive(tenantId, userRole, includeInactive ? null : true);
+                    users = userRepository.findByTenantIdAndRoleAndIsActive(tenantId, userRole, includeInactive ? null : true);
                 }
             } else if (branchCode != null && !branchCode.isEmpty()) {
                 try {

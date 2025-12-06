@@ -66,10 +66,12 @@ public class Tenant extends BaseEntity {
     
      /**
      * 테넌트 UUID (고유 식별자)
+     * 표준 형식: tenant-{지역코드}-{업종코드}-{순번} (예: tenant-seoul-consultation-001)
+     * 또는 UUID 형식 (레거시 호환)
      */
     @NotBlank(message = "테넌트 ID는 필수입니다")
-    @Size(max = 36, message = "테넌트 ID는 36자 이하여야 합니다")
-    @Column(name = "tenant_id", nullable = false, unique = true, length = 36, updatable = false)
+    @Size(max = 100, message = "테넌트 ID는 100자 이하여야 합니다")
+    @Column(name = "tenant_id", nullable = false, unique = true, length = 100, updatable = false)
     private String tenantId;
     
      /**

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -20,6 +21,7 @@ import java.util.Map;
  * @version 1.0.0
  * @since 2024-12-19
  */
+@Slf4j
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
     
@@ -29,6 +31,18 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             HttpServletResponse response,
             AuthenticationException authException) throws IOException, ServletException {
         
+        String requestPath = request.getRequestURI();
+        
+        // 온보딩 API는 인증 없이 접근 가능해야 함
+        if (requestPath != null && requestPath.startsWith("/api/v1/onboarding/")) {
+            // 온보딩 API는 인증 오류를 반환하지 않고 계속 진행
+            // SecurityConfig의 permitAll() 설정이 적용되어야 함
+            log.debug("온보딩 API 요청 - 인증 오류 무시: path={}", requestPath);
+            // 필터 체인을 계속 진행하도록 하기 위해 여기서는 아무것도 하지 않음
+            // 하지만 이미 401이 반환되기 전에 SecurityConfig에서 permitAll()이 적용되어야 함
+            return;
+        }
+        
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         
@@ -36,7 +50,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         errorResponse.put("success", false);
         errorResponse.put("message", "인증이 필요합니다. 로그인해주세요.");
         errorResponse.put("redirectToLogin", true);
-        errorResponse.put("path", request.getRequestURI());
+        errorResponse.put("path", requestPath);
         errorResponse.put("method", request.getMethod());
         errorResponse.put("timestamp", System.currentTimeMillis());
         

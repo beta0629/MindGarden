@@ -30,6 +30,7 @@ public class SecurityFilter implements Filter {
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
         "/api/health",
         "/api/actuator",
+        "/api/v1/onboarding/",  // 온보딩 API 제외 (새로운 테넌트 등록)
         "/css/",
         "/js/",
         "/images/",

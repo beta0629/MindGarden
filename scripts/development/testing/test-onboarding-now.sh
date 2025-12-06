@@ -3,7 +3,9 @@
 
 BASE_URL="http://beta0629.cafe24.com:8080"
 TIMESTAMP=$(date +%s)
-TENANT_ID="test-tenant-${TIMESTAMP}"
+# 표준 형식: tenant-{지역코드}-{업종코드}-{순번}
+# 테스트용: tenantId는 null로 보내서 자동 생성되도록 함 (표준 준수)
+TENANT_ID=""  # null로 보내서 TenantIdGenerator가 자동 생성하도록 함
 TENANT_NAME="테스트테넌트${TIMESTAMP}"
 EMAIL="test${TIMESTAMP}@test.com"
 ADMIN_PASSWORD="Test1234!@#"
@@ -11,7 +13,7 @@ ADMIN_PASSWORD="Test1234!@#"
 echo "=========================================="
 echo "🧪 온보딩 테스트"
 echo "=========================================="
-echo "테넌트 ID: $TENANT_ID"
+echo "테넌트 ID: 자동 생성 (표준 형식: tenant-{지역}-{업종}-{순번})"
 echo "이메일: $EMAIL"
 echo ""
 
@@ -25,7 +27,7 @@ if ! timeout 5 curl -s "${BASE_URL}/actuator/health" > /dev/null 2>&1; then
     echo "2. 온보딩 요청 생성:"
     echo "   POST ${BASE_URL}/api/v1/onboarding/requests"
     echo "   Body: {"
-    echo "     \"tenantId\": \"${TENANT_ID}\","
+    # tenantId는 자동 생성됨 (표준 준수)
     echo "     \"tenantName\": \"${TENANT_NAME}\","
     echo "     \"requestedBy\": \"${EMAIL}\","
     echo "     \"businessType\": \"CONSULTATION\","
@@ -48,9 +50,9 @@ echo ""
 
 # 온보딩 요청 생성
 echo "온보딩 요청 생성 중..."
+# tenantId는 null로 보내서 자동 생성되도록 함 (표준 준수)
 REQUEST_PAYLOAD=$(cat <<EOF
 {
-  "tenantId": "${TENANT_ID}",
   "tenantName": "${TENANT_NAME}",
   "requestedBy": "${EMAIL}",
   "businessType": "CONSULTATION",
@@ -101,7 +103,7 @@ if echo "$APPROVE_RESPONSE" | grep -q '"status":"APPROVED"'; then
     echo "=========================================="
     echo "✅ 테스트 완료"
     echo "=========================================="
-    echo "테넌트 ID: $TENANT_ID"
+    echo "테넌트 ID: 자동 생성됨 (표준 형식)"
     echo "이메일: $EMAIL"
     echo "비밀번호: $ADMIN_PASSWORD"
     echo ""

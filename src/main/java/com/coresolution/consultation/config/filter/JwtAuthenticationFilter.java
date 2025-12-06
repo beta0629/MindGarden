@@ -153,6 +153,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
     
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        
+        // 정적 리소스와 공개 API만 필터링하지 않음
+        return path.startsWith("/static/") ||
+               path.startsWith("/css/") ||
+               path.startsWith("/js/") ||
+               path.startsWith("/images/") ||
+               path.startsWith("/fonts/") ||
+               path.equals("/favicon.ico") ||
+               path.equals("/robots.txt") ||
+               path.equals("/manifest.json") ||
+               path.startsWith("/api/auth/") ||  // 모든 인증 관련 API 제외
+               path.startsWith("/api/v1/onboarding/") ||  // 온보딩 API 제외 (새로운 테넌트 등록)
+               path.startsWith("/oauth2/") ||
+               path.startsWith("/api/password-reset/") ||
+               path.startsWith("/api/health/") ||
+               path.equals("/error") ||
+               path.startsWith("/actuator/");
+    }
+    
     /**
      * 사용자 정보 기반으로 Spring Security 권한 생성 (SSO 로그인 지원)
      * 데이터베이스에서 조회한 사용자 역할을 기반으로 권한 부여

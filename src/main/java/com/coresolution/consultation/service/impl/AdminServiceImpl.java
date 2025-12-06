@@ -553,7 +553,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND")
-                .branchCode(mapping.getBranchCode()) // 매칭의 지점코드 사용
+                .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(false) // 환불은 부가세 면세
                 .build();
         

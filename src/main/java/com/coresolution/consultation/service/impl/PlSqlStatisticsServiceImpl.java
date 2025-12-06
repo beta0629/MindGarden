@@ -270,9 +270,18 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
         }
     }
     
+    /**
+     * 통계 일관성 검증
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public boolean validateStatisticsConsistency(String branchCode, LocalDate statDate) {
-        log.info("🔍 통계 일관성 검증 시작: branchCode={}, statDate={}", branchCode, statDate);
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🔍 통계 일관성 검증 시작: tenantId={}, statDate={}", tenantId, statDate);
         
         try {
             // 1. Java 기반 통계 계산

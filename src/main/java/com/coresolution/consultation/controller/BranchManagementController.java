@@ -94,12 +94,13 @@ public class BranchManagementController {
     }
     
     /**
-     * 지점별 사용자 통계 조회
+     * 테넌트별 사용자 통계 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
      */
     @GetMapping("/branches/{branchCode}/statistics")
     public ResponseEntity<Map<String, Object>> getBranchStatistics(@PathVariable String branchCode, HttpSession session) {
         try {
-            log.info("지점 통계 조회 요청: branchCode={}", branchCode);
+            log.info("테넌트 통계 조회 요청: branchCode={} (무시됨)", branchCode);
             
             // 권한 체크
             User currentUser = (User) session.getAttribute("user");
@@ -119,26 +120,27 @@ public class BranchManagementController {
                 ));
             }
             
-            // 지점 코드 유효성 검사
-            if (!isValidBranchCode(branchCode)) {
+            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로 조회
+            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (tenantId == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
-                errorResponse.put("message", "유효하지 않은 지점 코드입니다.");
+                errorResponse.put("message", "테넌트 정보를 찾을 수 없습니다.");
                 return ResponseEntity.badRequest().body(errorResponse);
             }
             
-            // 지점별 사용자 통계 계산 - 강제로 활성 사용자만 필터링
-            List<User> allBranchUsers = userService.findByBranchCode(branchCode);
-            List<User> activeUsers = allBranchUsers.stream()
+            // 테넌트 전체 사용자 통계 계산 - 강제로 활성 사용자만 필터링
+            List<User> allUsers = userService.findByBranchCode(null); // branchCode 무시, tenantId 기반 조회
+            List<User> activeUsers = allUsers.stream()
                     .filter(u -> !u.getIsDeleted())
                     .collect(Collectors.toList());
             
-            log.info("지점 {} 사용자 조회: 전체={}, 활성={}", branchCode, allBranchUsers.size(), activeUsers.size());
+            log.info("테넌트 {} 사용자 조회: 전체={}, 활성={}", tenantId, allUsers.size(), activeUsers.size());
             
             // 역할별 상세 카운트 로그
             Map<String, Long> roleCount = activeUsers.stream()
                     .collect(Collectors.groupingBy(u -> u.getRole().name(), Collectors.counting()));
-            log.info("지점 {} 역할별 카운트: {}", branchCode, roleCount);
+            log.info("테넌트 {} 역할별 카운트: {}", tenantId, roleCount);
             
             // 관리자 역할 목록 (표준화 2025-12-05: enum 활용)
             Set<String> adminRoles = java.util.Arrays.stream(UserRole.getAdminRoles())
@@ -146,19 +148,19 @@ public class BranchManagementController {
                     .collect(java.util.stream.Collectors.toSet());
             
             Map<String, Object> statistics = new HashMap<>();
-            statistics.put("branchCode", branchCode);
+            statistics.put("tenantId", tenantId);
             statistics.put("totalUsers", activeUsers.size());
             statistics.put("clients", activeUsers.stream().filter(u -> u.getRole() == com.coresolution.consultation.constant.UserRole.CLIENT).count());
             statistics.put("consultants", activeUsers.stream().filter(u -> u.getRole() == com.coresolution.consultation.constant.UserRole.CONSULTANT).count());
             statistics.put("admins", activeUsers.stream().filter(u -> adminRoles.contains(u.getRole().name())).count());
             statistics.put("activeUsers", activeUsers.size());
-            statistics.put("inactiveUsers", allBranchUsers.size() - activeUsers.size());
+            statistics.put("inactiveUsers", allUsers.size() - activeUsers.size());
             
-            log.info("지점 통계 조회 완료: branchCode={}, activeUsers={}", branchCode, activeUsers.size());
+            log.info("테넌트 통계 조회 완료: tenantId={}, activeUsers={}", tenantId, activeUsers.size());
             return ResponseEntity.ok(statistics);
             
         } catch (Exception e) {
-            log.error("지점 통계 조회 중 오류 발생: branchCode={}, error={}", branchCode, e.getMessage(), e);
+            log.error("테넌트 통계 조회 중 오류 발생: branchCode={}, error={}", branchCode, e.getMessage(), e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "통계 조회 중 오류가 발생했습니다: " + e.getMessage());
@@ -167,7 +169,8 @@ public class BranchManagementController {
     }
     
     /**
-     * 지점별 사용자 목록 조회
+     * 테넌트별 사용자 목록 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
      */
     @GetMapping("/branches/{branchCode}/users")
     public ResponseEntity<Map<String, Object>> getBranchUsers(
@@ -175,49 +178,50 @@ public class BranchManagementController {
             @RequestParam(value = "role", required = false) String role,
             @RequestParam(value = "includeInactive", defaultValue = "false") boolean includeInactive) {
         try {
-            log.info("지점 사용자 목록 조회 요청: branchCode={}, role={}, includeInactive={}", branchCode, role, includeInactive);
+            log.info("테넌트 사용자 목록 조회 요청: branchCode={} (무시됨), role={}, includeInactive={}", branchCode, role, includeInactive);
             
-            // 지점 코드 유효성 검사
-            if (!isValidBranchCode(branchCode)) {
+            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로 조회
+            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (tenantId == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
-                errorResponse.put("message", "유효하지 않은 지점 코드입니다.");
+                errorResponse.put("message", "테넌트 정보를 찾을 수 없습니다.");
                 return ResponseEntity.badRequest().body(errorResponse);
             }
             
-            // 지점별 사용자 조회
-            List<User> branchUsers = userService.findByBranchCode(branchCode);
+            // 테넌트 전체 사용자 조회
+            List<User> users = userService.findByBranchCode(null); // branchCode 무시, tenantId 기반 조회
             
             // 역할별 필터링
             if (role != null && !role.trim().isEmpty()) {
-                branchUsers = branchUsers.stream()
+                users = users.stream()
                     .filter(u -> u.getRole().name().equals(role))
                     .collect(Collectors.toList());
             }
             
             // 비활성 사용자 필터링
             if (!includeInactive) {
-                branchUsers = branchUsers.stream()
+                users = users.stream()
                     .filter(u -> !u.getIsDeleted())
                     .collect(Collectors.toList());
             }
             
             // 사용자 정보를 안전한 형태로 변환
-            List<Map<String, Object>> users = branchUsers.stream()
+            List<Map<String, Object>> userList = users.stream()
                 .map(this::convertUserToMap)
                 .collect(Collectors.toList());
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("branchCode", branchCode);
-            response.put("users", users);
-            response.put("totalCount", users.size());
+            response.put("tenantId", tenantId);
+            response.put("users", userList);
+            response.put("totalCount", userList.size());
             
-            log.info("지점 사용자 목록 조회 완료: branchCode={}, count={}", branchCode, users.size());
+            log.info("테넌트 사용자 목록 조회 완료: tenantId={}, count={}", tenantId, userList.size());
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("지점 사용자 목록 조회 중 오류 발생: branchCode={}, error={}", branchCode, e.getMessage(), e);
+            log.error("테넌트 사용자 목록 조회 중 오류 발생: branchCode={}, error={}", branchCode, e.getMessage(), e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "사용자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
@@ -227,8 +231,10 @@ public class BranchManagementController {
     
     /**
      * 사용자 지점 이동 (일괄 처리)
+     * 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음, 이 메서드는 Deprecated 처리
      */
     @PutMapping("/users/bulk-transfer")
+    @Deprecated
     public ResponseEntity<Map<String, Object>> bulkTransferUsers(@RequestBody Map<String, Object> request) {
         try {
             @SuppressWarnings("unchecked")
@@ -239,7 +245,7 @@ public class BranchManagementController {
             String targetBranchCode = (String) request.get("targetBranchCode");
             String reason = (String) request.get("reason");
             
-            log.info("사용자 일괄 지점 이동 요청: userIds={}, targetBranchCode={}, reason={}", 
+            log.warn("⚠️ Deprecated API 호출: 사용자 일괄 지점 이동 - branchCode는 더 이상 사용되지 않음. userIds={}, targetBranchCode={} (무시됨), reason={}", 
                     userIds, targetBranchCode, reason);
             
             if (userIds == null || userIds.isEmpty()) {
@@ -249,22 +255,16 @@ public class BranchManagementController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
             
-            if (targetBranchCode == null || targetBranchCode.trim().isEmpty()) {
+            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 동작
+            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (tenantId == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
-                errorResponse.put("message", "대상 지점을 선택해주세요.");
+                errorResponse.put("message", "테넌트 정보를 찾을 수 없습니다.");
                 return ResponseEntity.badRequest().body(errorResponse);
             }
             
-            // 지점 코드 유효성 검사
-            if (!isValidBranchCode(targetBranchCode)) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "유효하지 않은 대상 지점 코드입니다.");
-                return ResponseEntity.badRequest().body(errorResponse);
-            }
-            
-            // 사용자 일괄 이동 처리
+            // 사용자 일괄 처리 (branchCode 변경 없이, tenantId만 확인)
             int successCount = 0;
             int failCount = 0;
             StringBuilder errorMessages = new StringBuilder();
@@ -272,41 +272,48 @@ public class BranchManagementController {
             for (Long userId : userIds) {
                 try {
                     User user = userService.findActiveByIdOrThrow(userId);
-                    String oldBranchCode = user.getBranchCode();
                     
-                    user.setBranchCode(targetBranchCode);
+                    // 표준화 2025-12-06: branchCode는 변경하지 않음 (더 이상 사용하지 않음)
+                    // 사용자가 같은 tenantId에 속해 있는지만 확인
+                    if (!tenantId.equals(user.getTenantId())) {
+                        failCount++;
+                        errorMessages.append("사용자 ID ").append(userId).append(": 다른 테넌트에 속한 사용자입니다.; ");
+                        log.warn("사용자 테넌트 불일치: userId={}, userTenantId={}, currentTenantId={}", userId, user.getTenantId(), tenantId);
+                        continue;
+                    }
+                    
                     user.setUpdatedAt(java.time.LocalDateTime.now());
                     user.setVersion(user.getVersion() + 1);
                     
                     userService.getRepository().save(user);
                     successCount++;
                     
-                    log.info("사용자 지점 이동 완료: userId={}, {} -> {}", userId, oldBranchCode, targetBranchCode);
+                    log.info("사용자 처리 완료: userId={}, tenantId={}", userId, tenantId);
                     
                 } catch (Exception e) {
                     failCount++;
                     errorMessages.append("사용자 ID ").append(userId).append(": ").append(e.getMessage()).append("; ");
-                    log.error("사용자 지점 이동 실패: userId={}, error={}", userId, e.getMessage());
+                    log.error("사용자 처리 실패: userId={}, error={}", userId, e.getMessage());
                 }
             }
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", String.format("이동 완료: 성공 %d명, 실패 %d명", successCount, failCount));
+            response.put("message", String.format("처리 완료: 성공 %d명, 실패 %d명 (branchCode는 더 이상 사용되지 않음)", successCount, failCount));
             response.put("successCount", successCount);
             response.put("failCount", failCount);
             if (failCount > 0) {
                 response.put("errors", errorMessages.toString());
             }
             
-            log.info("사용자 일괄 지점 이동 완료: 성공={}, 실패={}", successCount, failCount);
+            log.info("사용자 일괄 처리 완료: 성공={}, 실패={}", successCount, failCount);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("사용자 일괄 지점 이동 중 오류 발생: error={}", e.getMessage(), e);
+            log.error("사용자 일괄 처리 중 오류 발생: error={}", e.getMessage(), e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "일괄 이동 중 오류가 발생했습니다: " + e.getMessage());
+            errorResponse.put("message", "일괄 처리 중 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
@@ -350,19 +357,12 @@ public class BranchManagementController {
     
     /**
      * 지점 코드 유효성 검사 (branches 테이블 기반)
+     * 표준화 2025-12-06: Deprecated - branchCode는 더 이상 사용하지 않음
      */
+    @Deprecated
     private boolean isValidBranchCode(String branchCode) {
-        if (branchCode == null || branchCode.trim().isEmpty()) {
-            return false;
-        }
-        
-        try {
-            List<BranchResponse> branches = branchService.getAllActiveBranches();
-            return branches.stream()
-                .anyMatch(branch -> branch.getBranchCode().equals(branchCode));
-        } catch (Exception e) {
-            log.error("지점 코드 유효성 검사 중 오류: {}", e.getMessage());
-            return false;
-        }
+        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않으므로 항상 false 반환
+        log.warn("⚠️ Deprecated 메서드 호출: isValidBranchCode - branchCode는 더 이상 사용되지 않음. branchCode={}", branchCode);
+        return false;
     }
 }

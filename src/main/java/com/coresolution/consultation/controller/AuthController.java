@@ -1469,62 +1469,42 @@ public class AuthController extends BaseApiController {
     
     /**
      * 사용자 지점 매핑 API
+     * 표준화 2025-12-06: Deprecated - branchCode는 더 이상 사용하지 않음
      */
     @PostMapping("/map-branch")
     @Transactional
+    @Deprecated
     public ResponseEntity<ApiResponse<Map<String, Object>>> mapUserToBranch(@RequestBody Map<String, String> request, HttpSession session) {
         String branchCode = request.get("branchCode");
-        if (branchCode == null || branchCode.trim().isEmpty()) {
-            throw new IllegalArgumentException("지점 코드를 입력해주세요.");
-        }
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
         }
         
-        // 지점 존재 여부 확인 (branches 테이블 기반)
-        log.info("🔍 지점 코드 유효성 검사: branchCode={}", branchCode);
-        
-        // branches 테이블에서 지점 정보 조회
-        var branches = branchService.getAllActiveBranches();
-        var branchCodeExists = branches.stream()
-            .anyMatch(branch -> branch.getBranchCode().equals(branchCode));
-        
-        if (!branchCodeExists) {
-            log.warn("❌ 존재하지 않는 지점 코드: branchCode={}", branchCode);
-            throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + branchCode);
-        }
-        
-        // 지점 정보 가져오기
-        var branchInfo = branches.stream()
-            .filter(branch -> branch.getBranchCode().equals(branchCode))
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("지점 정보를 찾을 수 없습니다."));
+        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+        log.warn("⚠️ Deprecated API 호출: mapUserToBranch - branchCode는 더 이상 사용되지 않음. branchCode={} (무시됨)", branchCode);
         
         // 사용자를 다시 조회하여 동시성 문제 방지
         User userToUpdate = userRepository.findById(currentUser.getId())
             .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         
-        // 사용자에 지점 코드만 할당 (Branch 엔티티는 사용하지 않음)
-        userToUpdate.setBranchCode(branchCode);
-        userRepository.save(userToUpdate);
+        // 표준화 2025-12-06: branchCode는 설정하지 않음 (더 이상 사용하지 않음)
+        // tenantId만 확인
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (tenantId == null || !tenantId.equals(userToUpdate.getTenantId())) {
+            throw new IllegalArgumentException("테넌트 정보가 일치하지 않습니다.");
+        }
         
         // 세션 업데이트
         SessionUtils.setCurrentUser(session, userToUpdate);
         
-        // 세션에 지점 코드 저장
-        // 참고: 브랜치 코드는 제거됨 (브랜치 개념 제거 - TENANT_ROLE_SYSTEM_STANDARD.md 참조)
-        // 브랜치 관련 세션 저장 로직 제거됨
-        
-        log.info("✅ 사용자 지점 매핑 완료: userId={}, branchCode={}, branchName={}", 
-            userToUpdate.getId(), branchCode, branchInfo.getBranchName());
+        log.info("✅ 사용자 정보 확인 완료: userId={}, tenantId={}", 
+            userToUpdate.getId(), tenantId);
         
         Map<String, Object> data = new HashMap<>();
-        data.put("message", "지점이 성공적으로 매핑되었습니다.");
-        data.put("branchId", branchInfo.getId());
-        data.put("branchName", branchInfo.getBranchName());
-        data.put("branchCode", branchCode);
+        data.put("message", "사용자 정보가 확인되었습니다. (branchCode는 더 이상 사용되지 않습니다.)");
+        data.put("tenantId", tenantId);
         
         return success(data);
     }

@@ -225,9 +225,7 @@ public class StatisticsTestDataServiceImpl implements StatisticsTestDataService 
                 BigDecimal amount = BigDecimal.valueOf(50000 + random.nextInt(50001));
                 
                 FinancialTransaction transaction = new FinancialTransaction();
-                if (branchCode != null && !branchCode.trim().isEmpty()) {
-                    transaction.setBranchCode(branchCode);
-                }
+                transaction.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                 transaction.setAmount(amount);
                 transaction.setTransactionType(FinancialTransaction.TransactionType.INCOME);
                 transaction.setRelatedEntityType("CONSULTATION_INCOME");

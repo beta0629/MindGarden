@@ -325,7 +325,7 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         transaction.setDescription(String.format("패키지 판매 - %s (원래 금액)", mapping.getPackageName()));
         transaction.setRelatedEntityId(mapping.getId());
         transaction.setRelatedEntityType("CONSULTANT_CLIENT_MAPPING");
-        transaction.setBranchCode(mapping.getBranchCode());
+        transaction.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         transaction.setTransactionDate(LocalDateTime.now().toLocalDate());
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         transaction.setStatus(FinancialTransaction.TransactionStatus.COMPLETED);
@@ -351,7 +351,7 @@ public class DiscountAccountingServiceImpl implements DiscountAccountingService 
         transaction.setDescription(String.format("패키지 할인 - %s (%s)", mapping.getPackageName(), discount.getName()));
         transaction.setRelatedEntityId(mapping.getId());
         transaction.setRelatedEntityType("CONSULTANT_CLIENT_MAPPING");
-        transaction.setBranchCode(mapping.getBranchCode());
+        transaction.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         transaction.setTransactionDate(LocalDateTime.now().toLocalDate());
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         transaction.setStatus(FinancialTransaction.TransactionStatus.COMPLETED);

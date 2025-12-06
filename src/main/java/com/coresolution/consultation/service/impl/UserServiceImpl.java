@@ -690,18 +690,18 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public User registerUser(User user) {
-        // 브랜치 개념 제거: branchCode는 레거시 호환용으로 유지되지만, 내부적으로는 테넌트 기반으로 동작 (표준화 2025-12-05)
-        // 지점코드가 있는 경우 지점 정보 설정 (레거시 호환)
+        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         if (user.getBranchCode() != null && !user.getBranchCode().trim().isEmpty()) {
-            try {
-                // 지점 코드로 지점 조회 (레거시 호환)
-                var branch = branchService.getBranchByCode(user.getBranchCode());
-                if (branch != null) {
-                    user.setBranch(branch);
-                    log.info("사용자 등록 시 지점 할당 (레거시 호환): userId={}, branchCode={}, branchName={}", 
-                        user.getId(), user.getBranchCode(), branch.getBranchName());
-                } else {
-                    log.warn("존재하지 않는 지점 코드로 사용자 등록 시도: branchCode={}", user.getBranchCode());
+            log.warn("⚠️ Deprecated: branchCode는 더 이상 사용하지 않음. branchCode={}", user.getBranchCode());
+            user.setBranchCode(null);
+        }
+        // 지점 정보는 tenantId 기반으로만 관리
+        if (user.getBranch() != null) {
+            // Branch 엔티티는 유지하되, branchCode는 무시
+            log.info("사용자 등록 시 지점 할당: userId={}, branchId={}, branchName={}", 
+                user.getId(), user.getBranch().getId(), user.getBranch().getBranchName());
+        } else {
+            log.debug("사용자 등록 시 지점 정보 없음: userId={}", user.getId());
                     // 레거시 호환을 위해 예외를 던지지 않고 경고만 로깅
                 }
             } catch (Exception e) {

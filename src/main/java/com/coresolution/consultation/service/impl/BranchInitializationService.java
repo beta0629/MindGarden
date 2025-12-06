@@ -53,7 +53,7 @@ public class BranchInitializationService implements CommandLineRunner {
             }
             
             Branch mainBranch = Branch.builder()
-                .branchCode("MAIN001")
+                .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                 .branchName("본점")
                 .branchType(Branch.BranchType.MAIN)
                 .postalCode("06234")

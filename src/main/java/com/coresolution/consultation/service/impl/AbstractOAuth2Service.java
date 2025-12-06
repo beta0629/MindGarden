@@ -250,7 +250,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         user.setEmail(client.getEmail()); // 이미 암호화됨
         user.setName(client.getName()); // 이미 암호화됨
         user.setRole(UserRole.CLIENT);
-        user.setBranchCode(AdminConstants.DEFAULT_BRANCH_CODE); // 소셜 로그인 사용자는 기본 본사 지점코드 사용
+        user.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         
         UserSocialAccount socialAccount = UserSocialAccount.builder()
             .user(user)

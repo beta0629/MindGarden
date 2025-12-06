@@ -217,8 +217,16 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     }
     
     @Override
+    /**
+     * 지점 코드로 지점 조회
+     * 표준화 2025-12-06: Deprecated - branchCode는 더 이상 사용하지 않음
+     * 대신 getBranchById() 또는 getAllActiveBranches()를 사용하세요.
+     */
+    @Deprecated
     @Transactional(readOnly = true)
     public Branch getBranchByCode(String branchCode) {
+        log.warn("⚠️ Deprecated 메서드 호출: getBranchByCode - branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        // 표준화 2025-12-06: branchCode는 레거시 호환용으로만 유지
         return branchRepository.findByBranchCodeAndIsDeletedFalse(branchCode)
                 .orElseThrow(() -> new EntityNotFoundException("지점을 찾을 수 없습니다: " + branchCode));
     }
@@ -568,15 +576,29 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     }
     
     
+    /**
+     * 지점 코드 중복 확인
+     * 표준화 2025-12-06: Deprecated - branchCode는 더 이상 사용하지 않음
+     */
+    @Deprecated
     @Override
     @Transactional(readOnly = true)
     public boolean isBranchCodeDuplicate(String branchCode) {
+        log.warn("⚠️ Deprecated 메서드 호출: isBranchCodeDuplicate - branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        // 표준화 2025-12-06: branchCode는 레거시 호환용으로만 유지
         return branchRepository.existsByBranchCodeAndIsDeletedFalse(branchCode);
     }
     
+    /**
+     * 지점 코드 중복 확인 (ID 제외)
+     * 표준화 2025-12-06: Deprecated - branchCode는 더 이상 사용하지 않음
+     */
+    @Deprecated
     @Override
     @Transactional(readOnly = true)
     public boolean isBranchCodeDuplicate(String branchCode, Long excludeBranchId) {
+        log.warn("⚠️ Deprecated 메서드 호출: isBranchCodeDuplicate - branchCode는 더 이상 사용하지 않음. branchCode={}, excludeBranchId={}", branchCode, excludeBranchId);
+        // 표준화 2025-12-06: branchCode는 레거시 호환용으로만 유지
         return branchRepository.existsByBranchCodeAndIdNotAndIsDeletedFalse(branchCode, excludeBranchId);
     }
     

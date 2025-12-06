@@ -60,7 +60,8 @@ public class StatisticsManagementController {
     }
     
     /**
-     * 일별 통계 수동 업데이트 (특정 지점)
+     * 일별 통계 수동 업데이트
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
      */
     @PostMapping("/daily-stats/update")
     public ResponseEntity<Map<String, Object>> updateDailyStats(
@@ -68,40 +69,38 @@ public class StatisticsManagementController {
             @RequestParam(required = false) String date,
             HttpSession session) {
         
-        log.info("📊 일별 통계 수동 업데이트 요청: branchCode={}, date={}", branchCode, date);
+        log.info("📊 일별 통계 수동 업데이트 요청: branchCode={} (무시됨), date={}", branchCode, date);
         
         Map<String, Object> response = new HashMap<>();
         
         try {
+            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로만 동작
+            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            if (tenantId == null) {
+                response.put("success", false);
+                response.put("message", "테넌트 정보를 찾을 수 없습니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
             // 날짜 파라미터 처리 (없으면 오늘)
             LocalDate targetDate = (date != null && !date.isEmpty()) ? 
                 LocalDate.parse(date) : LocalDate.now();
             
-            // 지점 코드 처리 (없으면 세션에서 가져오기)
-            if (branchCode == null || branchCode.isEmpty()) {
-                branchCode = (String) session.getAttribute("currentBranchCode");
-            }
-            
-            String result;
-            if (branchCode != null && !branchCode.isEmpty()) {
-                // 특정 지점 통계 업데이트
-                result = plSqlStatisticsService.updateDailyStatistics(branchCode, targetDate);
-            } else {
-                // 모든 지점 통계 업데이트
-                result = plSqlStatisticsService.updateAllBranchDailyStatistics(targetDate);
-            }
+            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로 통계 업데이트
+            // 모든 지점 통계 업데이트 (tenantId 기반)
+            String result = plSqlStatisticsService.updateAllBranchDailyStatistics(targetDate);
             
             response.put("success", true);
             response.put("message", "일별 통계 업데이트가 완료되었습니다.");
             response.put("result", result);
-            response.put("branchCode", branchCode);
+            response.put("tenantId", tenantId);
             response.put("date", targetDate.toString());
             
-            log.info("✅ 일별 통계 수동 업데이트 완료: branchCode={}, date={}", branchCode, targetDate);
+            log.info("✅ 일별 통계 수동 업데이트 완료: tenantId={}, date={}", tenantId, targetDate);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ 일별 통계 수동 업데이트 실패: branchCode={}, date={}, 오류={}", 
+            log.error("❌ 일별 통계 수동 업데이트 실패: branchCode={} (무시됨), date={}, 오류={}", 
                      branchCode, date, e.getMessage(), e);
             response.put("success", false);
             response.put("message", "통계 업데이트 중 오류가 발생했습니다: " + e.getMessage());

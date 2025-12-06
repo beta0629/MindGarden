@@ -88,7 +88,7 @@ public class TestDataController {
                     .name("시스템 관리자")
                     .phone("010-0000-0000")
                     .role(UserRole.ADMIN)
-                    .branchCode(AdminConstants.DEFAULT_BRANCH_CODE) // 기본 지점코드 설정
+                    .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                     .isActive(true)
                     .build();
             

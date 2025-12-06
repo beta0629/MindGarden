@@ -303,10 +303,19 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return savedSchedule;
     }
 
+    /**
+     * 상담사 스케줄 생성
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date, 
                                           LocalTime startTime, LocalTime endTime, String title, String description, String consultationType, String branchCode) {
-        log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}", consultantId, clientId, date, consultationType);
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
+        String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}, tenantId={}", consultantId, clientId, date, consultationType, tenantId);
         
         
         
@@ -326,7 +335,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         schedule.setStatus(ScheduleStatus.BOOKED);
         schedule.setConsultationType(consultationType); // 상담 유형 설정
-        schedule.setBranchCode(branchCode); // 지점코드 설정
+        schedule.setBranchCode(null); // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
         
         Schedule savedSchedule = scheduleRepository.save(schedule);
         

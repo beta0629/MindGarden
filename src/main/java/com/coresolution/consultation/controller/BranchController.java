@@ -430,18 +430,17 @@ public class BranchController extends BaseApiController {
     
     /**
      * 지점 코드 중복 확인
+     * 표준화 2025-12-06: Deprecated - branchCode는 더 이상 사용하지 않음
      */
+    @Deprecated
     @GetMapping("/validate/branch-code")
     public ResponseEntity<ApiResponse<Map<String, Boolean>>> validateBranchCode(
             @RequestParam("branchCode") String branchCode,
             @RequestParam(value = "excludeId", required = false) Long excludeId) {
-        log.info("지점 코드 중복 확인 요청: {}", branchCode);
+        log.warn("⚠️ Deprecated API 호출: validateBranchCode - branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         
-        boolean isDuplicate = excludeId != null 
-                ? branchService.isBranchCodeDuplicate(branchCode, excludeId)
-                : branchService.isBranchCodeDuplicate(branchCode);
-        
-        Map<String, Boolean> result = Map.of("isDuplicate", isDuplicate);
+        // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않으므로 항상 false 반환
+        Map<String, Boolean> result = Map.of("isDuplicate", false);
         return success(result);
     }
     

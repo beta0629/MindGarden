@@ -87,7 +87,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .relatedEntityType(request.getRelatedEntityType())
                 .department(request.getDepartment())
                 .projectCode(request.getProjectCode())
-                .branchCode(request.getBranchCode())
+                .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                 .taxIncluded(request.getTaxIncluded() != null ? request.getTaxIncluded() : false)
                 .taxAmount(request.getTaxAmount() != null ? request.getTaxAmount() : BigDecimal.ZERO)
                 .amountBeforeTax(request.getAmountBeforeTax() != null ? request.getAmountBeforeTax() : request.getAmount())
@@ -644,7 +644,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .relatedEntityType(transaction.getRelatedEntityType())
                 .department(transaction.getDepartment())
                 .projectCode(transaction.getProjectCode())
-                .branchCode(transaction.getBranchCode())
+                .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
                 .taxIncluded(transaction.getTaxIncluded())
                 .taxAmount(transaction.getTaxAmount())
                 .amountBeforeTax(transaction.getAmountBeforeTax())

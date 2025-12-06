@@ -106,6 +106,8 @@ public class SecurityConfig {
                 // API 엔드포인트별 권한 설정
                 .authorizeHttpRequests(authz -> authz
                     .requestMatchers("/api/auth/**").permitAll()
+                    // 공개 엔드포인트: 온보딩 API (새로운 테넌트 등록)
+                    .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
                         "/api/v1/ops/plans/active",           // 활성화된 요금제 목록 (공개)

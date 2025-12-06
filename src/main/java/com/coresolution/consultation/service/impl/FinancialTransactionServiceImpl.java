@@ -1055,11 +1055,19 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         return map;
     }
     
+    /**
+     * 재무 거래 목록 조회
+     * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
+     */
     @Override
     @Transactional(readOnly = true)
     public Page<FinancialTransactionResponse> getTransactionsByBranch(String branchCode, String transactionType, 
                                                                      String category, String startDate, String endDate, 
                                                                      Pageable pageable) {
+        // 표준화 2025-12-06: branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
         try {
             String tenantId = getTenantIdOrNull();
             log.info("🏢 재무 거래 목록 조회 (테넌트 전체): tenantId={}, 유형={}, 카테고리={}, 시작일={}, 종료일={}", 

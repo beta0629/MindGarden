@@ -1,4 +1,4 @@
-package com.coresolution.consultation.integration;
+package com.mindgarden.consultation.integration;
 
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserPasskey;

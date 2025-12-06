@@ -44,12 +44,12 @@ export const convertConsultationTypeToKorean = (consultationType) => {
  * 상담사별 색상 생성
  */
 export const getConsultantColor = (consultantId) => {
-    if (!consultantId) return '#6b7280';
+    if (!consultantId) return 'var(--mg-gray-500)';
     
     const colors = [
         'var(--mg-primary-500)', 'var(--mg-error-500)', 'var(--mg-success-500)', 'var(--mg-warning-500)', 'var(--mg-purple-500)',
-        '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1',
-        '#14b8a6', '#a855f7', '#22c55e', '#eab308', 'var(--mg-error-500)'
+        'var(--mg-info-500)', 'var(--mg-success-400)', 'var(--mg-warning-500)', 'var(--mg-pink-500)', 'var(--mg-indigo-500)',
+        'var(--mg-teal-500)', 'var(--mg-purple-500)', 'var(--mg-green-500)', 'var(--mg-yellow-500)', 'var(--mg-error-500)'
     ];
     
     let hash = 0;
@@ -77,7 +77,7 @@ export const getEventColor = (status) => {
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
         'CANCELLED': 'var(--mg-error-500)'
     };
-    return statusColors[status] || '#6b7280';
+    return statusColors[status] || 'var(--mg-gray-500)';
 };
 
  * 휴가 데이터를 이벤트로 변환

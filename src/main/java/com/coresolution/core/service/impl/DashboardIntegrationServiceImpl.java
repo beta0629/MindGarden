@@ -1,8 +1,6 @@
 package com.coresolution.core.service.impl;
-import com.coresolution.core.context.TenantContextHolder;
 
 import com.coresolution.core.service.DashboardIntegrationService;
-import com.coresolution.consultation.service.ErpService;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.entity.Schedule;

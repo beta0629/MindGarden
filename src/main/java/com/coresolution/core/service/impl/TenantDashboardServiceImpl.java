@@ -1,7 +1,6 @@
 package com.coresolution.core.service.impl;
 
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.core.context.TenantContextHolder;
 
 import java.text.MessageFormat;
 import java.util.LinkedHashMap;

@@ -74,9 +74,9 @@ const PaymentManagement = () => {
           { value: 'APPROVED', label: '승인됨', icon: '✅', color: 'var(--mg-success-500)', description: '결제 승인 완료' },
           { value: 'FAILED', label: '실패', icon: '❌', color: 'var(--mg-error-500)', description: '결제 실패' },
           // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          { value: 'CANCELLED', label: '취소됨', icon: '🚫', color: '#6b7280', description: '결제 취소' },
-          { value: 'REFUNDED', label: '환불됨', icon: '↩️', color: '#f97316', description: '결제 환불' },
-          { value: 'EXPIRED', label: '만료됨', icon: '⏰', color: '#374151', description: '결제 만료' },
+          { value: 'CANCELLED', label: '취소됨', icon: '🚫', color: 'var(--mg-gray-500)', description: '결제 취소' },
+          { value: 'REFUNDED', label: '환불됨', icon: '↩️', color: 'var(--mg-warning-500)', description: '결제 환불' },
+          { value: 'EXPIRED', label: '만료됨', icon: '⏰', color: 'var(--mg-gray-600)', description: '결제 만료' },
           { value: 'PARTIAL_REFUND', label: '부분환불', icon: '↩️', color: 'var(--mg-warning-500)', description: '부분 환불' }
         ]);
       } finally {
@@ -103,11 +103,11 @@ const PaymentManagement = () => {
     } catch (error) {
       console.error('결제 게이트웨이 코드 로드 실패:', error);
       setPaymentGatewayOptions([
-        { value: 'TOSS', label: '토스페이먼츠', icon: '💙', color: '#0064FF', description: '토스페이먼츠 결제' },
-        { value: 'IAMPORT', label: '아임포트', icon: '🏦', color: '#34495E', description: '아임포트 결제' },
-        { value: 'KAKAO', label: '카카오페이', icon: '💛', color: '#FEE500', description: '카카오페이 결제' },
-        { value: 'NAVER', label: '네이버페이', icon: '💚', color: '#03C75A', description: '네이버페이 결제' },
-        { value: 'PAYPAL', label: '페이팔', icon: '💳', color: '#0070BA', description: '페이팔 결제' }
+        { value: 'TOSS', label: '토스페이먼츠', icon: '💙', color: 'var(--mg-primary-500)', description: '토스페이먼츠 결제' },
+        { value: 'IAMPORT', label: '아임포트', icon: '🏦', color: 'var(--mg-gray-700)', description: '아임포트 결제' },
+        { value: 'KAKAO', label: '카카오페이', icon: '💛', color: 'var(--mg-yellow-500)', description: '카카오페이 결제' },
+        { value: 'NAVER', label: '네이버페이', icon: '💚', color: 'var(--mg-green-500)', description: '네이버페이 결제' },
+        { value: 'PAYPAL', label: '페이팔', icon: '💳', color: 'var(--mg-blue-500)', description: '페이팔 결제' }
       ]);
     } finally {
       setLoadingGatewayCodes(false);

@@ -2,7 +2,6 @@ package com.coresolution.core.service.academy;
 
 import com.coresolution.core.dto.academy.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 /**

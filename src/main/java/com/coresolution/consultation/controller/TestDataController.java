@@ -37,15 +37,11 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
- /**
+/**
  * 테스트용 데이터 생성 컨트롤러
- /**
  * 
- /**
  * @author MindGarden
- /**
  * @version 1.0.0
- /**
  * @since 2024-12-19
  */
 @Slf4j
@@ -68,9 +64,8 @@ public class TestDataController {
     @Value("${spring.profiles.active:prod}")
     private String activeProfile;
 
-     /**
+    /**
      * 테스트용 데이터 생성 (상담사, 내담자, 매핑)
-     /**
      * 개발 모드에서만 동작
      */
     @PostMapping("/create-test-data")
@@ -171,9 +166,8 @@ public class TestDataController {
         }
     }
 
-     /**
+    /**
      * 추가 상담사 등록 (개발 모드에서만 동작)
-     /**
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-consultant")
@@ -197,9 +191,8 @@ public class TestDataController {
         }
     }
 
-     /**
+    /**
      * 추가 내담자 등록 (개발 모드에서만 동작)
-     /**
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-client")
@@ -223,9 +216,8 @@ public class TestDataController {
         }
     }
 
-     /**
+    /**
      * 추가 매핑 생성 (개발 모드에서만 동작)
-     /**
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-mapping")
@@ -250,9 +242,8 @@ public class TestDataController {
         }
     }
 
-     /**
+    /**
      * 생성된 데이터 조회 (개발 모드에서만 동작)
-     /**
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @GetMapping("/data")
@@ -282,9 +273,8 @@ public class TestDataController {
         }
     }
     
-     /**
+    /**
      * 사용자 역할 데이터 마이그레이션 (ROLE_ 접두사 제거)
-     /**
      * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/migrate-user-roles")
@@ -314,9 +304,8 @@ public class TestDataController {
         }
     }
 
-     /**
+    /**
      * 간단한 내담자 생성
-     /**
      * POST /api/test/client
      */
     @PostMapping("/client")
@@ -382,9 +371,8 @@ public class TestDataController {
         }
     }
 
-     /**
+    /**
      * 테스트용 매핑 생성 (상담사-내담자 매핑)
-     /**
      * POST /api/test/mapping
      */
     @PostMapping("/mapping")
@@ -530,9 +518,8 @@ public class TestDataController {
         }
     }
     
-     /**
+    /**
      * 테스트용 상담 데이터 생성
-     /**
      * POST /api/test/consultation
      */
     @PostMapping("/consultation")
@@ -625,9 +612,8 @@ public class TestDataController {
         }
     }
 
-     /**
+    /**
      * 테스트 사용자 삭제
-     /**
      * POST /api/test/delete-user
      */
     @PostMapping("/delete-user")
@@ -678,9 +664,8 @@ public class TestDataController {
         }
     }
     
-     /**
+    /**
      * 테스트 사용자 비밀번호 재설정
-     /**
      * POST /api/test/reset-password
      */
     @PostMapping("/reset-password")

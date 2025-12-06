@@ -287,8 +287,11 @@ public class NotificationServiceImpl implements NotificationService {
      */
     private String buildSmsMessage(NotificationType type, String[] params) {
         try {
-            // 공통 코드에서 SMS 템플릿 조회
-            List<CommonCode> smsCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("SMS_TEMPLATE");
+            // 공통 코드에서 SMS 템플릿 조회 (테넌트별)
+            String tenantId = TenantContextHolder.getTenantId();
+            List<CommonCode> smsCodes = tenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "SMS_TEMPLATE")
+                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("SMS_TEMPLATE");
             
             for (CommonCode code : smsCodes) {
                 if (type.name().equals(code.getCodeValue())) {

@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
@@ -117,8 +118,12 @@ public class PasswordCommonCodeInitializer implements CommandLineRunner {
     private void createCommonCode(String groupCode, String codeValue, String codeLabel, 
                                 String description, Integer sortOrder, String extraData) {
         try {
-            // 이미 존재하는지 확인
-            if (commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue).isPresent()) {
+            // 이미 존재하는지 확인 (테넌트별)
+            String tenantId = TenantContextHolder.getTenantId();
+            boolean exists = tenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(tenantId, groupCode, codeValue).isPresent()
+                : commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue).isPresent();
+            if (exists) {
                 log.debug("⏭️ 공통코드 이미 존재: {}:{}", groupCode, codeValue);
                 return;
             }

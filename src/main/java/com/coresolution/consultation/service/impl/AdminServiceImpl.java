@@ -3117,7 +3117,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     private LocalDateTime getRefundPeriodStartDate(String period) {
         try {
-            List<CommonCode> periodCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_PERIOD");
+            String tenantId = getTenantIdOrNull();
+            List<CommonCode> periodCodes = tenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "REFUND_PERIOD")
+                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_PERIOD");
             
             for (CommonCode code : periodCodes) {
                 if (code.getCodeValue().equalsIgnoreCase(period)) {
@@ -3331,7 +3334,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     private void initializeRefundCommonCodes() {
         try {
-            List<CommonCode> periodCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_PERIOD");
+            String tenantId = getTenantIdOrNull();
+            List<CommonCode> periodCodes = tenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "REFUND_PERIOD")
+                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_PERIOD");
             if (periodCodes.isEmpty()) {
                 log.info("🔧 REFUND_PERIOD 공통 코드 그룹 생성 중...");
                 
@@ -3344,7 +3350,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.info("✅ REFUND_PERIOD 공통 코드 생성 완료");
             }
             
-            List<CommonCode> reasonCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_REASON");
+            List<CommonCode> reasonCodes = tenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "REFUND_REASON")
+                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_REASON");
             if (reasonCodes.isEmpty()) {
                 log.info("🔧 REFUND_REASON 공통 코드 그룹 생성 중...");
                 
@@ -3361,7 +3369,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.info("✅ REFUND_REASON 공통 코드 생성 완료");
             }
             
-            List<CommonCode> statusCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_STATUS");
+            List<CommonCode> statusCodes = tenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "REFUND_STATUS")
+                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_STATUS");
             if (statusCodes.isEmpty()) {
                 log.info("🔧 REFUND_STATUS 공통 코드 그룹 생성 중...");
                 

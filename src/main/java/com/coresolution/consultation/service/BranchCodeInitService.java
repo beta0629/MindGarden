@@ -41,8 +41,11 @@ public class BranchCodeInitService {
         try {
             log.info("HQ 본사 코드 초기화 시작");
             
-            // 1. HQ 본사 코드가 이미 있는지 확인
-            var existingHQ = commonCodeRepository.findByCodeGroupAndCodeValue("BRANCH", "HQ");
+            // 1. HQ 본사 코드가 이미 있는지 확인 (테넌트별)
+            String tenantId = TenantContextHolder.getTenantId();
+            var existingHQ = tenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(tenantId, "BRANCH", "HQ")
+                : commonCodeRepository.findByCodeGroupAndCodeValue("BRANCH", "HQ");
             
             if (existingHQ.isEmpty()) {
                 // 2. HQ 본사 코드 생성

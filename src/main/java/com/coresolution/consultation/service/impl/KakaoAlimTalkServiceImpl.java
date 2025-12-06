@@ -172,8 +172,11 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
      */
     private String buildMessageContent(String templateCode, Map<String, String> params) {
         try {
-            // 공통 코드에서 템플릿 조회
-            List<CommonCode> templateCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("ALIMTALK_TEMPLATE");
+            // 공통 코드에서 템플릿 조회 (테넌트별)
+            String tenantId = TenantContextHolder.getTenantId();
+            List<CommonCode> templateCodes = tenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "ALIMTALK_TEMPLATE")
+                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("ALIMTALK_TEMPLATE");
             
             for (CommonCode code : templateCodes) {
                 if (templateCode.equals(code.getCodeValue())) {
@@ -357,7 +360,10 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             }
             
             // ALIMTALK_CONFIG 그룹 확인 및 생성
-            List<CommonCode> configCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("ALIMTALK_CONFIG");
+            String tenantId = TenantContextHolder.getTenantId();
+            List<CommonCode> configCodes = tenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "ALIMTALK_CONFIG")
+                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("ALIMTALK_CONFIG");
             if (configCodes.isEmpty()) {
                 log.info("🔧 ALIMTALK_CONFIG 공통 코드 그룹 생성 중...");
                 

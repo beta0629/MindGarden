@@ -4,6 +4,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.BusinessTimeService;
@@ -137,8 +138,14 @@ public class BusinessTimeServiceImpl implements BusinessTimeService {
      */
     private LocalTime getTimeFromCode(String groupCode, String codeValue, LocalTime defaultValue) {
         try {
-            return commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue)
-                .map(code -> {
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getTenantId();
+            Optional<CommonCode> codeOpt = tenantId != null
+                ? commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(tenantId, groupCode, codeValue)
+                : commonCodeRepository.findCoreCodesByGroup(groupCode).stream()
+                    .filter(code -> code.getCodeValue().equals(codeValue))
+                    .findFirst();
+            return codeOpt.map(code -> {
                     String timeStr = code.getCodeLabel();
                     // "업무 시작시간 (10:00)" -> "10:00" 추출
                     if (timeStr.contains("(") && timeStr.contains(")")) {
@@ -158,8 +165,14 @@ public class BusinessTimeServiceImpl implements BusinessTimeService {
      */
     private int getIntFromCode(String groupCode, String codeValue, int defaultValue) {
         try {
-            return commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue)
-                .map(code -> {
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getTenantId();
+            Optional<CommonCode> codeOpt = tenantId != null
+                ? commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(tenantId, groupCode, codeValue)
+                : commonCodeRepository.findCoreCodesByGroup(groupCode).stream()
+                    .filter(code -> code.getCodeValue().equals(codeValue))
+                    .findFirst();
+            return codeOpt.map(code -> {
                     String intStr = code.getCodeLabel();
                     // "시간 슬롯 간격 (30분)" -> "30" 추출
                     if (intStr.contains("(") && intStr.contains(")")) {
@@ -181,8 +194,14 @@ public class BusinessTimeServiceImpl implements BusinessTimeService {
      */
     private void updateCommonCode(String groupCode, String codeValue, Object newValue) {
         try {
-            commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue)
-                .ifPresent(code -> {
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getTenantId();
+            Optional<CommonCode> codeOpt = tenantId != null
+                ? commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(tenantId, groupCode, codeValue)
+                : commonCodeRepository.findCoreCodesByGroup(groupCode).stream()
+                    .filter(code -> code.getCodeValue().equals(codeValue))
+                    .findFirst();
+            codeOpt.ifPresent(code -> {
                     String newLabel = code.getCodeLabel();
                     
                     // 시간 형식인 경우

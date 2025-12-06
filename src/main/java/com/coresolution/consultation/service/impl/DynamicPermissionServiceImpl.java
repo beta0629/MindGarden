@@ -195,11 +195,15 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
         try {
             log.info("🔍 모든 권한 조회 시작");
             
-            List<Permission> permissions = permissionRepository.findByIsActiveTrue();
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getTenantId();
+            List<Permission> permissions = tenantId != null
+                ? permissionRepository.findByTenantIdAndIsActiveTrue(tenantId)
+                : permissionRepository.findByIsActiveTrue(); // 레거시 호환 (tenantId가 null인 경우)
             log.info("🔍 데이터베이스에서 조회된 권한 수: {}", permissions != null ? permissions.size() : "null");
             
             if (permissions == null) {
-                log.error("❌ permissionRepository.findByIsActiveTrue()가 null을 반환했습니다");
+                log.error("❌ permissionRepository 조회가 null을 반환했습니다");
                 return new ArrayList<>();
             }
             

@@ -98,8 +98,18 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Transactional(readOnly = true)
     public CommonCode getCommonCodeByGroupAndValue(String codeGroup, String codeValue) {
         log.info("🔍 공통코드 그룹과 값으로 조회: {} - {}", codeGroup, codeValue);
-        return commonCodeRepository.findByCodeGroupAndCodeValue(codeGroup, codeValue)
-                .orElseThrow(() -> new RuntimeException("CommonCode not found: " + codeGroup + " - " + codeValue));
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null) {
+            return commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(tenantId, codeGroup, codeValue)
+                    .orElseThrow(() -> new RuntimeException("CommonCode not found: " + codeGroup + " - " + codeValue));
+        } else {
+            // 코어 코드 조회 (tenantId가 null인 경우)
+            return commonCodeRepository.findCoreCodesByGroup(codeGroup).stream()
+                    .filter(code -> code.getCodeValue().equals(codeValue))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("CommonCode not found: " + codeGroup + " - " + codeValue));
+        }
     }
 
     @Override

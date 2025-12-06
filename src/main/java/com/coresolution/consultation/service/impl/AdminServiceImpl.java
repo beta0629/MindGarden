@@ -48,6 +48,7 @@ import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import com.coresolution.core.domain.UserRoleAssignment;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.TenantRole;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -3103,9 +3104,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private LocalDateTime getRefundPeriodStartDate(String period) {
         try {
             String tenantId = getTenantIdOrNull();
-            List<CommonCode> periodCodes = tenantId != null 
-                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "REFUND_PERIOD")
-                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_PERIOD");
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String currentTenantId = TenantContextHolder.getTenantId();
+            if (currentTenantId == null) {
+                currentTenantId = tenantId; // 파라미터에서 가져온 tenantId 사용
+            }
+            List<CommonCode> periodCodes = currentTenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(currentTenantId, "REFUND_PERIOD")
+                : commonCodeRepository.findCoreCodesByGroup("REFUND_PERIOD"); // 코어 코드 조회
             
             for (CommonCode code : periodCodes) {
                 if (code.getCodeValue().equalsIgnoreCase(period)) {
@@ -3146,9 +3152,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         try {
             String tenantId = getTenantIdOrNull();
-            List<CommonCode> reasonCodes = tenantId != null 
-                ? commonCodeRepository.findByTenantIdAndCodeGroupAndIsActiveTrueOrderBySortOrderAsc(tenantId, "REFUND_REASON")
-                : commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc("REFUND_REASON"); // 레거시 호환
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String currentTenantId = TenantContextHolder.getTenantId();
+            if (currentTenantId == null) {
+                currentTenantId = tenantId; // 파라미터에서 가져온 tenantId 사용
+            }
+            List<CommonCode> reasonCodes = currentTenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupAndIsActiveTrueOrderBySortOrderAsc(currentTenantId, "REFUND_REASON")
+                : commonCodeRepository.findCoreCodesByGroup("REFUND_REASON"); // 코어 코드 조회
             
             String reason = rawReason.toLowerCase().trim();
             
@@ -3323,9 +3334,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private void initializeRefundCommonCodes() {
         try {
             String tenantId = getTenantIdOrNull();
-            List<CommonCode> periodCodes = tenantId != null 
-                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "REFUND_PERIOD")
-                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_PERIOD");
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String currentTenantId = TenantContextHolder.getTenantId();
+            if (currentTenantId == null) {
+                currentTenantId = tenantId; // 파라미터에서 가져온 tenantId 사용
+            }
+            List<CommonCode> periodCodes = currentTenantId != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(currentTenantId, "REFUND_PERIOD")
+                : commonCodeRepository.findCoreCodesByGroup("REFUND_PERIOD"); // 코어 코드 조회
             if (periodCodes.isEmpty()) {
                 log.info("🔧 REFUND_PERIOD 공통 코드 그룹 생성 중...");
                 
@@ -3338,9 +3354,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.info("✅ REFUND_PERIOD 공통 코드 생성 완료");
             }
             
-            List<CommonCode> reasonCodes = tenantId != null 
-                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "REFUND_REASON")
-                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_REASON");
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String currentTenantId2 = TenantContextHolder.getTenantId();
+            if (currentTenantId2 == null) {
+                currentTenantId2 = tenantId; // 파라미터에서 가져온 tenantId 사용
+            }
+            List<CommonCode> reasonCodes = currentTenantId2 != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(currentTenantId2, "REFUND_REASON")
+                : commonCodeRepository.findCoreCodesByGroup("REFUND_REASON"); // 코어 코드 조회
             if (reasonCodes.isEmpty()) {
                 log.info("🔧 REFUND_REASON 공통 코드 그룹 생성 중...");
                 
@@ -3357,9 +3378,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.info("✅ REFUND_REASON 공통 코드 생성 완료");
             }
             
-            List<CommonCode> statusCodes = tenantId != null 
-                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(tenantId, "REFUND_STATUS")
-                : commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_STATUS");
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String currentTenantId3 = TenantContextHolder.getTenantId();
+            if (currentTenantId3 == null) {
+                currentTenantId3 = tenantId; // 파라미터에서 가져온 tenantId 사용
+            }
+            List<CommonCode> statusCodes = currentTenantId3 != null 
+                ? commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(currentTenantId3, "REFUND_STATUS")
+                : commonCodeRepository.findCoreCodesByGroup("REFUND_STATUS"); // 코어 코드 조회
             if (statusCodes.isEmpty()) {
                 log.info("🔧 REFUND_STATUS 공통 코드 그룹 생성 중...");
                 

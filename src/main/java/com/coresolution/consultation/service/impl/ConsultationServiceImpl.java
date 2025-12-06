@@ -98,11 +98,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     
     @Override
     protected List<Consultation> findEntitiesByTenantAndBranch(String tenantId, Long branchId) {
-        if (branchId != null) {
-            return consultationRepository.findAllByTenantIdAndBranchId(tenantId, branchId);
-        } else {
-            return consultationRepository.findAllByTenantId(tenantId);
-        }
+        // 표준화 2025-12-06: deprecated 메서드 대체 - branchId는 더 이상 사용하지 않음
+        return consultationRepository.findAllByTenantId(tenantId);
     }
     
     

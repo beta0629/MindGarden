@@ -86,11 +86,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     
     @Override
     protected List<Payment> findEntitiesByTenantAndBranch(String tenantId, Long branchId) {
-        if (branchId != null) {
-            return paymentRepository.findAllByTenantIdAndBranchId(tenantId, branchId);
-        } else {
-            return paymentRepository.findAllByTenantId(tenantId);
-        }
+        // 표준화 2025-12-06: deprecated 메서드 대체 - branchId는 더 이상 사용하지 않음
+        return paymentRepository.findAllByTenantId(tenantId);
     }
     
     @Override

@@ -312,8 +312,13 @@ public class CodeInitializationServiceImpl implements CodeInitializationService,
     private void createCommonCode(String groupCode, String codeValue, String codeLabel, 
                                 String description, Integer sortOrder, String extraData) {
         try {
-            // 이미 존재하는지 확인
-            if (commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue).isPresent()) {
+            // 표준화 2025-12-06: deprecated 메서드 대체
+            String tenantId = TenantContextHolder.getTenantId();
+            boolean exists = tenantId != null
+                ? commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(tenantId, groupCode, codeValue).isPresent()
+                : commonCodeRepository.findCoreCodesByGroup(groupCode).stream()
+                    .anyMatch(code -> code.getCodeValue().equals(codeValue));
+            if (exists) {
                 log.debug("⏭️ 공통코드 이미 존재: {}:{}", groupCode, codeValue);
                 return;
             }

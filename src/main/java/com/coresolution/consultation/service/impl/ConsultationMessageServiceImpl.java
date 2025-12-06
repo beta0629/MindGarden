@@ -48,11 +48,8 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
     
     @Override
     protected List<ConsultationMessage> findEntitiesByTenantAndBranch(String tenantId, Long branchId) {
-        if (branchId != null) {
-            return consultationMessageRepository.findAllByTenantIdAndBranchId(tenantId, branchId);
-        } else {
-            return consultationMessageRepository.findAllByTenantId(tenantId);
-        }
+        // 표준화 2025-12-06: deprecated 메서드 대체 - branchId는 더 이상 사용하지 않음
+        return consultationMessageRepository.findAllByTenantId(tenantId);
     }
     
     // ==================== BaseService 구현 메서드 ====================

@@ -44,7 +44,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📋 급여 프로필 목록 조회: tenantId={}", tenantId);
         
-        List<ConsultantSalaryProfile> allProfiles = consultantSalaryProfileRepository.findByIsActiveTrue();
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        List<ConsultantSalaryProfile> allProfiles = consultantSalaryProfileRepository.findByTenantIdAndIsActiveTrue(tenantId);
         return allProfiles;
     }
     

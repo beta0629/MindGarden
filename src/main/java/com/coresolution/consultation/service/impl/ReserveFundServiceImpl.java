@@ -98,7 +98,9 @@ public class ReserveFundServiceImpl implements ReserveFundService {
     @Transactional(readOnly = true)
     public List<ReserveFund> getAllActiveReserveFunds() {
         log.info("모든 활성 적립금 조회");
-        return reserveFundRepository.findByIsActiveTrue();
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return reserveFundRepository.findByTenantIdAndIsActiveTrue(tenantId);
     }
     
     @Override

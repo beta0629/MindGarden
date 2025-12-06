@@ -65,11 +65,8 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     
     @Override
     protected List<Consultant> findEntitiesByTenantAndBranch(String tenantId, Long branchId) {
-        if (branchId != null) {
-            return consultantRepository.findAllByTenantIdAndBranchId(tenantId, branchId);
-        } else {
-            return consultantRepository.findAllByTenantId(tenantId);
-        }
+        // 표준화 2025-12-06: deprecated 메서드 대체 - branchId는 더 이상 사용하지 않음
+        return consultantRepository.findAllByTenantId(tenantId);
     }
     
     /**
@@ -270,10 +267,14 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     @Override
     public org.springframework.data.domain.Page<Consultant> findAllActive(Pageable pageable) {
         String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null) {
-            return consultantRepository.findAllByTenantId(tenantId, pageable);
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String currentTenantId = TenantContextHolder.getTenantId();
+        if (currentTenantId != null) {
+            return consultantRepository.findAllByTenantId(currentTenantId, pageable);
         }
-        List<Consultant> activeConsultants = consultantRepository.findByIsDeletedFalse();
+        // tenantId가 없으면 빈 페이지 반환 (보안상 위험하지만 레거시 호환)
+        log.warn("⚠️ tenantId가 없어 상담사 조회를 건너뜁니다.");
+        return org.springframework.data.domain.Page.empty();
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), activeConsultants.size());
         return new org.springframework.data.domain.PageImpl<>(

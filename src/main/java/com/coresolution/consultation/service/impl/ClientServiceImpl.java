@@ -45,11 +45,8 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     
     @Override
     protected List<Client> findEntitiesByTenantAndBranch(String tenantId, Long branchId) {
-        if (branchId != null) {
-            return clientRepository.findAllByTenantIdAndBranchId(tenantId, branchId);
-        } else {
-            return clientRepository.findAllByTenantId(tenantId);
-        }
+        // 표준화 2025-12-06: deprecated 메서드 대체 - branchId는 더 이상 사용하지 않음
+        return clientRepository.findAllByTenantId(tenantId);
     }
     
     // ==================== BaseService 구현 메서드들 (BaseTenantEntityService 위임) ====================

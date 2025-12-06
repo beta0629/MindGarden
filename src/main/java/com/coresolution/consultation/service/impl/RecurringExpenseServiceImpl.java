@@ -108,7 +108,9 @@ public class RecurringExpenseServiceImpl implements RecurringExpenseService {
     @Transactional(readOnly = true)
     public List<RecurringExpense> getAllActiveRecurringExpenses() {
         log.info("모든 활성 반복 지출 조회");
-        return recurringExpenseRepository.findByIsActiveTrue();
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return recurringExpenseRepository.findByTenantIdAndIsActiveTrue(tenantId);
     }
     
     @Override

@@ -286,12 +286,16 @@ public class AlertServiceImpl extends BaseTenantEntityServiceImpl<Alert, Long>
     
     @Override
     public List<Alert> findByUserId(Long userId) {
-        return alertRepository.findByUserId(userId);
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findByTenantIdAndUserId(tenantId, userId);
     }
     
     @Override
     public List<Alert> findUnreadByUserId(Long userId) {
-        return alertRepository.findUnreadByUserId(userId);
+        // 표준화 2025-12-06: deprecated 메서드 대체
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return alertRepository.findUnreadByTenantIdAndUserId(tenantId, userId);
     }
     
     @Override

@@ -120,9 +120,11 @@ public class PasswordCommonCodeInitializer implements CommandLineRunner {
         try {
             // 이미 존재하는지 확인 (테넌트별)
             String tenantId = TenantContextHolder.getTenantId();
+            // 표준화 2025-12-06: deprecated 메서드 대체
             boolean exists = tenantId != null 
                 ? commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(tenantId, groupCode, codeValue).isPresent()
-                : commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue).isPresent();
+                : commonCodeRepository.findCoreCodesByGroup(groupCode).stream()
+                    .anyMatch(code -> code.getCodeValue().equals(codeValue));
             if (exists) {
                 log.debug("⏭️ 공통코드 이미 존재: {}:{}", groupCode, codeValue);
                 return;

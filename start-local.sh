@@ -37,6 +37,49 @@ fi
 # 기존 프로세스 종료
 echo -e "${YELLOW}🧹 기존 프로세스 정리 중...${NC}"
 
+# 포트 8080 사용 중인 프로세스 먼저 종료 (가장 중요)
+echo -e "${BLUE}   포트 8080 정리 중 (최우선)...${NC}"
+if command -v lsof >/dev/null 2>&1; then
+    # macOS/Linux
+    PIDS_8080=$(lsof -ti:8080 2>/dev/null || true)
+    if [ ! -z "$PIDS_8080" ]; then
+        echo "$PIDS_8080" | while read pid; do
+            echo -e "${BLUE}   포트 8080 사용 프로세스 종료: PID $pid${NC}"
+            kill $pid 2>/dev/null || true
+            sleep 1
+            kill -9 $pid 2>/dev/null || true
+        done
+    fi
+elif command -v netstat >/dev/null 2>&1; then
+    # Windows (Git Bash)
+    PIDS_8080=$(netstat -ano 2>/dev/null | findstr ":8080" | findstr "LISTENING" | awk '{print $5}' | sort -u || true)
+    if [ ! -z "$PIDS_8080" ]; then
+        echo -e "${BLUE}   8080 포트 사용 중인 프로세스: $PIDS_8080${NC}"
+        for pid in $PIDS_8080; do
+            if [ ! -z "$pid" ] && [ "$pid" != "0" ]; then
+                echo -e "${BLUE}   PID $pid 종료 중...${NC}"
+                taskkill //F //PID $pid 2>/dev/null || true
+                sleep 1
+            fi
+        done
+    fi
+fi
+
+# Spring Boot 프로세스 강제 종료
+echo -e "${BLUE}   Spring Boot 프로세스 정리 중...${NC}"
+if command -v pkill >/dev/null 2>&1; then
+    pkill -f "spring-boot:run" 2>/dev/null || true
+    pkill -f "ConsultationManagementApplication" 2>/dev/null || true
+    pkill -f "mvn.*spring-boot" 2>/dev/null || true
+elif command -v taskkill >/dev/null 2>&1; then
+    # Windows
+    tasklist 2>/dev/null | grep -i "java.exe" | awk '{print $2}' | while read pid; do
+        if [ ! -z "$pid" ]; then
+            taskkill //F //PID $pid 2>/dev/null || true
+        fi
+    done
+fi
+
 # 백엔드 프로세스 종료
 if [ -f "logs/backend.pid" ]; then
     OLD_PID=$(cat logs/backend.pid)
@@ -80,22 +123,13 @@ if [ -f "logs/ops-frontend.pid" ]; then
     rm -f logs/ops-frontend.pid
 fi
 
-# 포트 사용 중인 프로세스 종료
-echo -e "${BLUE}   포트 8080, 8081, 3000, 3001 정리 중...${NC}"
+# 나머지 포트 정리 (8080은 이미 위에서 처리됨)
+echo -e "${BLUE}   나머지 포트 정리 중 (8081, 3000, 3001)...${NC}"
 if command -v lsof >/dev/null 2>&1; then
     # macOS/Linux
-    PIDS_8080=$(lsof -ti:8080 2>/dev/null || true)
     PIDS_8081=$(lsof -ti:8081 2>/dev/null || true)
     PIDS_3000=$(lsof -ti:3000 2>/dev/null || true)
     PIDS_3001=$(lsof -ti:3001 2>/dev/null || true)
-    
-    if [ ! -z "$PIDS_8080" ]; then
-        echo "$PIDS_8080" | while read pid; do
-            kill $pid 2>/dev/null || true
-            sleep 1
-            kill -9 $pid 2>/dev/null || true
-        done
-    fi
     
     if [ ! -z "$PIDS_8081" ]; then
         echo "$PIDS_8081" | while read pid; do
@@ -121,21 +155,8 @@ if command -v lsof >/dev/null 2>&1; then
         done
     fi
 elif command -v netstat >/dev/null 2>&1; then
-    # Windows (Git Bash) - 개선된 방법
-    echo -e "${BLUE}   Windows 환경 감지 - 포트 정리 중...${NC}"
-    
-    # 8080 포트 정리
-    PIDS_8080=$(netstat -ano 2>/dev/null | findstr ":8080" | findstr "LISTENING" | awk '{print $5}' | sort -u || true)
-    if [ ! -z "$PIDS_8080" ]; then
-        echo -e "${BLUE}   8080 포트 사용 중인 프로세스: $PIDS_8080${NC}"
-        for pid in $PIDS_8080; do
-            if [ ! -z "$pid" ] && [ "$pid" != "0" ]; then
-                echo -e "${BLUE}   PID $pid 종료 중...${NC}"
-                taskkill //F //PID $pid 2>/dev/null || true
-                sleep 1
-            fi
-        done
-    fi
+    # Windows (Git Bash) - 8080은 이미 위에서 처리됨
+    echo -e "${BLUE}   Windows 환경 감지 - 나머지 포트 정리 중...${NC}"
     
     # 8081 포트 정리
     PIDS_8081=$(netstat -ano 2>/dev/null | findstr ":8081" | findstr "LISTENING" | awk '{print $5}' | sort -u || true)
@@ -176,17 +197,58 @@ elif command -v netstat >/dev/null 2>&1; then
         done
     fi
     
-    # 모든 Java 프로세스 강제 종료 (Maven 포함)
-    echo -e "${BLUE}   모든 Java/Maven 프로세스 정리 중...${NC}"
-    tasklist 2>/dev/null | grep -i "java.exe" | awk '{print $2}' | while read pid; do
-        if [ ! -z "$pid" ]; then
-            taskkill //F //PID $pid 2>/dev/null || true
-        fi
-    done
 fi
+
+# 포트 정리 대기
+echo -e "${BLUE}   포트 정리 완료 대기 중...${NC}"
 sleep 3
 
+# 포트 8080 최종 확인
+if command -v lsof >/dev/null 2>&1; then
+    REMAINING_8080=$(lsof -ti:8080 2>/dev/null || true)
+    if [ ! -z "$REMAINING_8080" ]; then
+        echo -e "${RED}   ⚠️  포트 8080이 여전히 사용 중입니다. 강제 종료 시도...${NC}"
+        echo "$REMAINING_8080" | while read pid; do
+            kill -9 $pid 2>/dev/null || true
+        done
+        sleep 2
+    fi
+elif command -v netstat >/dev/null 2>&1; then
+    REMAINING_8080=$(netstat -ano 2>/dev/null | findstr ":8080" | findstr "LISTENING" | awk '{print $5}' | sort -u || true)
+    if [ ! -z "$REMAINING_8080" ]; then
+        echo -e "${RED}   ⚠️  포트 8080이 여전히 사용 중입니다. 강제 종료 시도...${NC}"
+        for pid in $REMAINING_8080; do
+            if [ ! -z "$pid" ] && [ "$pid" != "0" ]; then
+                taskkill //F //PID $pid 2>/dev/null || true
+            fi
+        done
+        sleep 2
+    fi
+fi
+
 echo -e "${GREEN}✅ 프로세스 정리 완료${NC}"
+echo ""
+
+# 포트 8080 최종 확인 (서버 시작 전)
+echo -e "${YELLOW}🔍 포트 8080 최종 확인 중...${NC}"
+if command -v lsof >/dev/null 2>&1; then
+    FINAL_CHECK_8080=$(lsof -ti:8080 2>/dev/null || true)
+    if [ ! -z "$FINAL_CHECK_8080" ]; then
+        echo -e "${RED}❌ 포트 8080이 여전히 사용 중입니다. 수동으로 종료해주세요.${NC}"
+        echo -e "${YELLOW}   사용 중인 PID: $FINAL_CHECK_8080${NC}"
+        echo -e "${YELLOW}   종료 명령: kill -9 $FINAL_CHECK_8080${NC}"
+        exit 1
+    fi
+elif command -v netstat >/dev/null 2>&1; then
+    FINAL_CHECK_8080=$(netstat -ano 2>/dev/null | findstr ":8080" | findstr "LISTENING" | awk '{print $5}' | sort -u || true)
+    if [ ! -z "$FINAL_CHECK_8080" ]; then
+        echo -e "${RED}❌ 포트 8080이 여전히 사용 중입니다. 수동으로 종료해주세요.${NC}"
+        echo -e "${YELLOW}   사용 중인 PID: $FINAL_CHECK_8080${NC}"
+        echo -e "${YELLOW}   종료 명령: taskkill //F //PID $FINAL_CHECK_8080${NC}"
+        exit 1
+    fi
+fi
+echo -e "${GREEN}   ✅ 포트 8080 사용 가능${NC}"
 echo ""
 
 # 백엔드 시작
@@ -200,21 +262,21 @@ if command -v mvn >/dev/null 2>&1; then
     echo -e "${BLUE}   Maven으로 실행${NC}"
     (
         export DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD
-        mvn spring-boot:run -Dspring.profiles.active=dev > logs/backend.log 2>&1
+        mvn spring-boot:run -Dspring.profiles.active=local > logs/backend.log 2>&1
     ) &
     BACKEND_PID=$!
 elif [ -f "./mvnw" ]; then
     echo -e "${BLUE}   Maven Wrapper로 실행${NC}"
     (
         export DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD
-        ./mvnw spring-boot:run -Dspring.profiles.active=dev > logs/backend.log 2>&1
+        ./mvnw spring-boot:run -Dspring.profiles.active=local > logs/backend.log 2>&1
     ) &
     BACKEND_PID=$!
 elif [ -f "./mvnw.cmd" ]; then
     echo -e "${BLUE}   Maven Wrapper (Windows)로 실행${NC}"
     (
         export DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD
-        cmd.exe //c "cd /d $PROJECT_ROOT && mvnw.cmd spring-boot:run -Dspring.profiles.active=dev" > logs/backend.log 2>&1
+        cmd.exe //c "cd /d $PROJECT_ROOT && mvnw.cmd spring-boot:run -Dspring.profiles.active=local" > logs/backend.log 2>&1
     ) &
     BACKEND_PID=$!
 else

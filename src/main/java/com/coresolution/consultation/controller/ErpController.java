@@ -79,6 +79,20 @@ public class ErpController extends BaseApiController {
             ));
         }
         
+        // 로컬 개발 환경에서는 관리자 역할이면 허용
+        if (environment != null && (environment.acceptsProfiles(org.springframework.core.env.Profiles.of("local")) || 
+            environment.acceptsProfiles(org.springframework.core.env.Profiles.of("dev")))) {
+            if (currentUser.getRole() != null && 
+                (currentUser.getRole().isAdmin() || 
+                 currentUser.getRole() == com.coresolution.consultation.constant.UserRole.ADMIN ||
+                 currentUser.getRole() == com.coresolution.consultation.constant.UserRole.TENANT_ADMIN ||
+                 currentUser.getRole() == com.coresolution.consultation.constant.UserRole.PRINCIPAL ||
+                 currentUser.getRole() == com.coresolution.consultation.constant.UserRole.OWNER)) {
+                log.debug("로컬 개발 모드: 관리자 역할로 ERP 접근 허용, 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
+                return null; // 권한 있음
+            }
+        }
+        
         // 표준화 원칙: 데이터베이스 기반 권한 체크 (ERP_ACCESS 권한 필요)
         if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
             log.warn("❌ ERP 접근 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
@@ -98,6 +112,7 @@ public class ErpController extends BaseApiController {
     private final DynamicPermissionService dynamicPermissionService;
     private final UserRepository userRepository;
     private final LegacyRolePermissionRepository rolePermissionRepository;
+    private final org.springframework.core.env.Environment environment;
     
     // ==================== Item Management ====================
     

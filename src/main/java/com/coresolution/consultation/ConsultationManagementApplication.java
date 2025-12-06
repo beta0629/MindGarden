@@ -2,7 +2,10 @@ package com.coresolution.consultation;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.ComponentScan;
 // import org.springframework.context.annotation.EnableAspectJAutoProxy; // 주석 처리
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -17,7 +20,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @version 1.0.0
  * @since 2024-12-19
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+    RedisAutoConfiguration.class,
+    RedisRepositoriesAutoConfiguration.class
+})
 @ComponentScan(basePackages = {
     "com.coresolution.core",
     "com.coresolution.consultation",

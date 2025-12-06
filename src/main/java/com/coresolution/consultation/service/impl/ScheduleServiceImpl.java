@@ -1239,11 +1239,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private List<ScheduleResponse> getVacationSchedules(Long userId, String userRole) {
         log.info("🏖️ 휴가 스케줄 조회: 사용자 {}, 역할 {}", userId, userRole);
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         List<Vacation> vacations;
         if (isAdminRole(userRole)) {
-            vacations = vacationRepository.findByIsDeletedFalseOrderByVacationDateAsc();
+            // 표준화 2025-12-06: 테넌트 필터링 필수
+            vacations = vacationRepository.findByTenantIdAndIsDeletedFalseOrderByVacationDateAsc(tenantId);
         } else if (isConsultantRole(userRole)) {
-            vacations = vacationRepository.findByConsultantIdAndIsDeletedFalseOrderByVacationDateAsc(userId);
+            // 표준화 2025-12-06: 테넌트 필터링 필수
+            vacations = vacationRepository.findByTenantIdAndConsultantIdAndIsDeletedFalseOrderByVacationDateAsc(tenantId, userId);
         } else {
             return new ArrayList<>();
         }

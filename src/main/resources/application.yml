@@ -107,26 +107,39 @@ jwt:
 # 개인정보 암호화 설정 (프로파일별 설정에서 기본값 제공)
 encryption:
   personal-data:
-    active-key-id: ${PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID}
-    key-versions: ${PERSONAL_DATA_ENCRYPTION_KEYS}
-    iv-versions: ${PERSONAL_DATA_ENCRYPTION_IVS}
-    key: ${PERSONAL_DATA_ENCRYPTION_KEY}
-    iv: ${PERSONAL_DATA_ENCRYPTION_IV}
+    # 활성 키 ID (환경 변수 또는 프로파일별 기본값 사용)
+    active-key-id: ${PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID:}
+    # 다중 키 버전 (환경 변수 또는 프로파일별 기본값 사용)
+    key-versions: ${PERSONAL_DATA_ENCRYPTION_KEYS:}
+    # 다중 IV 버전 (환경 변수 또는 프로파일별 기본값 사용)
+    iv-versions: ${PERSONAL_DATA_ENCRYPTION_IVS:}
+    # 레거시 단일 키/IV (하위 호환성)
+    key: ${PERSONAL_DATA_ENCRYPTION_KEY:}
+    iv: ${PERSONAL_DATA_ENCRYPTION_IV:}
     algorithm: AES-256
     transformation: AES/CBC/PKCS5Padding
 
 # 결제 시스템 설정 (프로파일별 설정에서 기본값 제공)
 payment:
   toss:
-    secret-key: ${PAYMENT_TOSS_SECRET_KEY}
-    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET}
+    # 토스페이먼츠 시크릿 키 (환경 변수 또는 프로파일별 기본값 사용)
+    secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
+    # 토스페이먼츠 웹훅 시크릿 (환경 변수 또는 프로파일별 기본값 사용)
+    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET:}
+    # 토스페이먼츠 상점 아이디 (선택사항)
+    merchant-id: ${PAYMENT_TOSS_MERCHANT_ID:}
+    # 토스페이먼츠 API 기본 URL
     base-url: ${PAYMENT_TOSS_BASE_URL:https://api.tosspayments.com}
+    # 시뮬레이션 모드
     simulation-mode: ${PAYMENT_TOSS_SIMULATION_MODE:true}
+    # 테스트 결제 URL
     test-payment-url: ${PAYMENT_TOSS_TEST_URL:https://checkout.tosspayments.com/v1/test/}
+    # 테스트 결제 키 접두사
     test-payment-key-prefix: ${PAYMENT_TOSS_TEST_KEY_PREFIX:toss_test_}
   iamport:
-    api-key: ${PAYMENT_IAMPORT_API_KEY}
-    api-secret: ${PAYMENT_IAMPORT_API_SECRET}
+    # 아임포트 API 키 (환경 변수 또는 프로파일별 기본값 사용)
+    api-key: ${PAYMENT_IAMPORT_API_KEY:}
+    api-secret: ${PAYMENT_IAMPORT_API_SECRET:}
     base-url: ${PAYMENT_IAMPORT_BASE_URL:https://api.iamport.kr}
     simulation-mode: ${PAYMENT_IAMPORT_SIMULATION_MODE:true}
 
@@ -299,9 +312,12 @@ onboarding:
 # Ops Portal 관리자 계정 설정 (프로파일별 설정에서 기본값 제공)
 ops:
   admin:
-    username: ${OPS_ADMIN_USERNAME}
-    password: ${OPS_ADMIN_PASSWORD}
-    role: ${OPS_ADMIN_ROLE:HQ_ADMIN}  # Ops Portal 관리자 역할
+    # Ops Portal 관리자 아이디 (환경 변수 또는 프로파일별 기본값 사용)
+    username: ${OPS_ADMIN_USERNAME:}
+    # Ops Portal 관리자 비밀번호 (환경 변수 또는 프로파일별 기본값 사용)
+    password: ${OPS_ADMIN_PASSWORD:}
+    # Ops Portal 관리자 역할 (환경 변수 또는 프로파일별 기본값 사용)
+    role: ${OPS_ADMIN_ROLE:HQ_ADMIN}
 
 # 환경변수 기본값 설정은 프로파일별 설정 파일에서 관리
 

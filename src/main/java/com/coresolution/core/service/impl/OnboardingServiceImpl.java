@@ -8,6 +8,7 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.core.constant.OnboardingConstants;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
@@ -377,13 +378,27 @@ public class OnboardingServiceImpl implements OnboardingService {
                 OnboardingErrorHandlingService.ExecutionResult dashboardResult = 
                     errorHandlingService.executeWithRetry(
                         () -> {
-                            String dashboardBusinessType = getDefaultBusinessType(request.getBusinessType());
-                            List<com.coresolution.core.dto.TenantDashboardResponse> dashboards = 
-                                tenantDashboardService.createDefaultDashboards(tenantId, dashboardBusinessType, actorId, finalDashboardTemplates, finalDashboardWidgets);
-                            
-                            log.info("기본 대시보드 생성 완료: tenantId={}, count={}, templates={}", 
-                                tenantId, dashboards.size(), finalDashboardTemplates);
-                            return dashboards != null && !dashboards.isEmpty();
+                            // 테넌트 컨텍스트 설정 (대시보드 생성 시 필요)
+                            String previousTenantId = TenantContextHolder.getTenantId();
+                            try {
+                                TenantContextHolder.setTenantId(tenantId);
+                                log.debug("테넌트 컨텍스트 설정: tenantId={}", tenantId);
+                                
+                                String dashboardBusinessType = getDefaultBusinessType(request.getBusinessType());
+                                List<com.coresolution.core.dto.TenantDashboardResponse> dashboards = 
+                                    tenantDashboardService.createDefaultDashboards(tenantId, dashboardBusinessType, actorId, finalDashboardTemplates, finalDashboardWidgets);
+                                
+                                log.info("기본 대시보드 생성 완료: tenantId={}, count={}, templates={}", 
+                                    tenantId, dashboards.size(), finalDashboardTemplates);
+                                return dashboards != null && !dashboards.isEmpty();
+                            } finally {
+                                // 테넌트 컨텍스트 복원
+                                if (previousTenantId != null) {
+                                    TenantContextHolder.setTenantId(previousTenantId);
+                                } else {
+                                    TenantContextHolder.clear();
+                                }
+                            }
                         },
                         10, // 최대 10회 재시도 (트랜잭션 타이밍 문제 대응)
                         500 // 0.5초 지연

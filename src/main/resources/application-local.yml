@@ -12,6 +12,17 @@ webauthn:
     timeout: 60000  # 60초
 
 spring:
+  # Redis 설정 (로컬 개발 환경에서는 비활성화)
+  data:
+    redis:
+      repositories:
+        enabled: false  # Redis Repository 비활성화
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthIndicatorAutoConfiguration
+  
   # 데이터베이스 설정 (개발 서버 DB 사용)
   datasource:
     # IPv4 우선 사용을 위해 IP 주소 직접 사용 (DNS 문제 해결)
@@ -117,8 +128,15 @@ jwt:
 # 개인정보 암호화 설정
 encryption:
   personal-data:
-    key: mindgarden_encryption_key_2025_local_dev
-    iv: mindgarden_iv_2025_local
+    # 활성 키 ID (로컬 개발용 기본값)
+    active-key-id: ${PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID:legacy}
+    # 다중 키 버전 (로컬 개발용 기본값)
+    key-versions: ${PERSONAL_DATA_ENCRYPTION_KEYS:legacy:mindgarden_encryption_key_2025_local_dev}
+    # 다중 IV 버전 (로컬 개발용 기본값)
+    iv-versions: ${PERSONAL_DATA_ENCRYPTION_IVS:legacy:mindgarden_iv_2025_local}
+    # 레거시 단일 키/IV (하위 호환성)
+    key: ${PERSONAL_DATA_ENCRYPTION_KEY:mindgarden_encryption_key_2025_local_dev}
+    iv: ${PERSONAL_DATA_ENCRYPTION_IV:mindgarden_iv_2025_local}
     algorithm: AES-256
     transformation: AES/CBC/PKCS5Padding
 
@@ -151,6 +169,29 @@ kakao:
     fallback-to-sms: true  # 알림톡 실패 시 SMS 대체 발송
     max-retry-count: 3  # 최대 재시도 횟수
     timeout-seconds: 30  # API 타임아웃 시간
+
+# 결제 시스템 설정 (로컬 개발용)
+payment:
+  toss:
+    # 토스페이먼츠 시크릿 키 (로컬 개발용 테스트 키)
+    secret-key: ${PAYMENT_TOSS_SECRET_KEY:test_sk_ORzdMaqN3w59ZLadepPbr5AkYXQG}
+    # 토스페이먼츠 웹훅 시크릿 (로컬 개발용)
+    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET:09fb9726652b997b8b7f4fe44782cd08f8cda6bb8ed8af243ebe9248d967ba2c}
+    # 토스페이먼츠 상점 아이디 (선택사항)
+    merchant-id: ${PAYMENT_TOSS_MERCHANT_ID:}
+    # 토스페이먼츠 API 기본 URL
+    base-url: ${PAYMENT_TOSS_BASE_URL:https://api.tosspayments.com}
+    # 시뮬레이션 모드 (로컬 개발용: true)
+    simulation-mode: ${PAYMENT_TOSS_SIMULATION_MODE:true}
+    # 테스트 결제 URL
+    test-payment-url: ${PAYMENT_TOSS_TEST_URL:https://checkout.tosspayments.com/v1/test/}
+    # 테스트 결제 키 접두사
+    test-payment-key-prefix: ${PAYMENT_TOSS_TEST_KEY_PREFIX:toss_test_}
+  iamport:
+    # 아임포트 API 키 (로컬 개발용)
+    api-key: ${PAYMENT_IAMPORT_API_KEY:}
+    api-secret: ${PAYMENT_IAMPORT_API_SECRET:}
+    base-url: ${PAYMENT_IAMPORT_BASE_URL:https://api.iamport.kr}
 
 # 세션 보안 설정
 server:
@@ -192,3 +233,19 @@ security:
       prevent-common-patterns: true
       prevent-consecutive-chars: true
       prevent-repeated-chars: true
+
+# Ops Portal 관리자 계정 설정 (로컬 개발용)
+ops:
+  admin:
+    # Ops Portal 관리자 아이디 (로컬 개발용 기본값)
+    username: ${OPS_ADMIN_USERNAME:superadmin@mindgarden.com}
+    # Ops Portal 관리자 비밀번호 (로컬 개발용 기본값)
+    password: ${OPS_ADMIN_PASSWORD:admin123}
+    # Ops Portal 관리자 역할 (로컬 개발용 기본값)
+    role: ${OPS_ADMIN_ROLE:HQ_ADMIN}
+
+# Actuator 설정 (로컬 개발용)
+management:
+  health:
+    redis:
+      enabled: false  # Redis Health Check 비활성화

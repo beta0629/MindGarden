@@ -34,6 +34,7 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     
     private final PermissionRepository permissionRepository;
     private final LegacyRolePermissionRepository rolePermissionRepository;
+    private final org.springframework.core.env.Environment environment;
     
     @Override
     public boolean hasPermission(User user, String permissionCode) {
@@ -384,6 +385,15 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     @Override
     public boolean canRegisterScheduler(UserRole userRole) {
         try {
+            // 관리자 및 사무원만 스케줄 등록 가능
+            if (userRole == UserRole.ADMIN || userRole == UserRole.TENANT_ADMIN || 
+                userRole == UserRole.PRINCIPAL || userRole == UserRole.OWNER ||
+                userRole == UserRole.STAFF) {
+                log.debug("관리자/사무원 역할: 스케줄러 등록 권한 허용, 역할={}", userRole);
+                return true;
+            }
+            
+            // 그 외 역할은 권한 체크
             log.debug("스케줄러 등록 권한 확인: 역할={}", userRole);
             return hasPermission(userRole.name(), "ACCESS_SCHEDULE_MANAGEMENT");
         } catch (Exception e) {

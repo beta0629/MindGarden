@@ -59,8 +59,8 @@ public class User extends BaseEntity {
     private String username;
     
     @NotBlank(message = "이메일은 필수입니다.")
-    @Email(message = "올바른 이메일 형식이 아닙니다.")
-    @Column(name = "email", nullable = false, length = 100)
+    // @Email 제거: 암호화된 이메일은 이메일 형식이 아니므로 검증 제거 (암호화 전 검증은 DTO에서 수행)
+    @Column(name = "email", nullable = false, length = 500) // 암호화된 데이터를 위해 길이 확장
     private String email;
     
     @NotBlank(message = "비밀번호는 필수입니다.")
@@ -69,7 +69,7 @@ public class User extends BaseEntity {
     private String password;
     
     @NotBlank(message = "이름은 필수입니다.")
-    @Size(min = 1, max = 50, message = "이름은 1자 이상 50자 이하여야 합니다.")
+    @Size(min = 1, max = 500, message = "이름은 1자 이상 500자 이하여야 합니다.") // 암호화된 데이터를 위해 길이 확장
     @Column(name = "name", nullable = false, length = 500) // 암호화된 데이터를 위해 길이 확장
     private String name;
     

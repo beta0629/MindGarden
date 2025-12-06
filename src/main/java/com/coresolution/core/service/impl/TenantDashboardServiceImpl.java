@@ -221,7 +221,15 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         log.info("기본 대시보드 생성: tenantId={}, businessType={}, createdBy={}, dashboardTemplates={}", 
             tenantId, businessType, createdBy, dashboardTemplates);
         
-        accessControlService.validateTenantAccess(tenantId);
+        // 테넌트 컨텍스트 설정 (온보딩 프로세스 중에는 컨텍스트가 없을 수 있음)
+        String previousTenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        try {
+            if (previousTenantId == null || !previousTenantId.equals(tenantId)) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+                log.debug("테넌트 컨텍스트 설정: tenantId={}", tenantId);
+            }
+            
+            accessControlService.validateTenantAccess(tenantId);
         
         // 업종별 기본 역할 템플릿 조회 (동적 조회 - 하드코딩 제거)
         // RoleTemplate은 시스템 메타데이터이므로 반드시 존재해야 함
@@ -374,6 +382,14 @@ public class TenantDashboardServiceImpl implements TenantDashboardService {
         
         log.info("기본 대시보드 생성 완료: tenantId={}, count={}", tenantId, createdDashboards.size());
         return createdDashboards;
+        } finally {
+            // 테넌트 컨텍스트 복원
+            if (previousTenantId != null) {
+                com.coresolution.core.context.TenantContextHolder.setTenantId(previousTenantId);
+            } else {
+                com.coresolution.core.context.TenantContextHolder.clear();
+            }
+        }
     }
     
     @Override

@@ -66,8 +66,25 @@ public interface VacationRepository extends JpaRepository<Vacation, Long> {
     
     /**
      * 삭제되지 않은 모든 휴가 목록 조회
+     * @deprecated 테넌트 필터링 없음! findByTenantIdAndIsDeletedFalseOrderByVacationDateAsc 사용하세요.
      */
+    @Deprecated
     List<Vacation> findByIsDeletedFalseOrderByVacationDateAsc();
+    
+    /**
+     * 테넌트별 삭제되지 않은 모든 휴가 목록 조회 (테넌트 필터링)
+     */
+    @Query("SELECT v FROM Vacation v WHERE v.tenantId = :tenantId AND v.isDeleted = false ORDER BY v.vacationDate ASC")
+    List<Vacation> findByTenantIdAndIsDeletedFalseOrderByVacationDateAsc(@Param("tenantId") String tenantId);
+    
+    /**
+     * 테넌트별 상담사의 삭제되지 않은 휴가 목록 조회 (테넌트 필터링)
+     */
+    @Query("SELECT v FROM Vacation v WHERE v.tenantId = :tenantId AND v.consultantId = :consultantId AND v.isDeleted = false ORDER BY v.vacationDate ASC")
+    List<Vacation> findByTenantIdAndConsultantIdAndIsDeletedFalseOrderByVacationDateAsc(
+        @Param("tenantId") String tenantId,
+        @Param("consultantId") Long consultantId
+    );
     
     /**
      * 승인된 휴가 목록 조회

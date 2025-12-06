@@ -62,6 +62,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
+@RequestMapping("/api/v1/admin")  // 표준화 2025-12-06: API 경로 표준화
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AdminController extends BaseApiController {

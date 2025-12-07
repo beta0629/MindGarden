@@ -19,6 +19,9 @@ import org.springframework.stereotype.Repository;
  * @since 2025-01-05
  */
 @Repository
+/**
+ * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+ */
 public interface PaymentRepository extends BaseRepository<Payment, Long> {
     
     /**
@@ -234,7 +237,15 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
      * 
      * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      *             대신 {@link #getTenantMonthlyPaymentStatistics(String, LocalDateTime, LocalDateTime)}를 사용하세요.
-     */
+     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     */
     @Deprecated
     @Query("SELECT p.branchId, YEAR(p.createdAt), MONTH(p.createdAt), COUNT(p), SUM(p.amount) " +
            "FROM Payment p WHERE p.status = 'APPROVED' AND p.isDeleted = false " +
@@ -298,7 +309,23 @@ public interface PaymentRepository extends BaseRepository<Payment, Long> {
      * @return 활성 결제 페이지
      * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      *             대신 {@link #findByTenantIdAndIsDeletedFalse(String, Pageable)}를 사용하세요.
-     */
+     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: branchCode 무시
+         if (branchId != null) {
+             // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+         }         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     */
     @Deprecated
     @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.branchId = :branchId AND p.isDeleted = false")
     Page<Payment> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);

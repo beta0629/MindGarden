@@ -20,6 +20,9 @@ import org.springframework.stereotype.Repository;
  * @since 2025-09-24
  */
 @Repository
+/**
+ * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+ */
 public interface ConsultantPerformanceRepository extends JpaRepository<ConsultantPerformance, ConsultantPerformanceId> {
 
     // ==================== tenantId 필터링 메서드 ====================

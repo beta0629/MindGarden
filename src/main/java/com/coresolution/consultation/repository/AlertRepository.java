@@ -432,7 +432,13 @@ public interface AlertRepository extends BaseRepository<Alert, Long> {
      * @return 활성 알림 페이지
      * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      *             대신 {@link BaseRepository#findAllByTenantId(String, Pageable)}를 사용하세요.
-     */
+     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     */
     @Deprecated
     @Query("SELECT a FROM Alert a WHERE a.tenantId = :tenantId AND a.isDeleted = false AND (:branchId IS NULL OR 1=1)")
     Page<Alert> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);

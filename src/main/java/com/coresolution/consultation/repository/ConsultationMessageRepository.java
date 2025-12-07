@@ -12,6 +12,9 @@ import org.springframework.stereotype.Repository;
  * 상담사-내담자 메시지 리포지토리
  */
 @Repository
+/**
+ * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+ */
 public interface ConsultationMessageRepository extends BaseRepository<ConsultationMessage, Long> {
     
     /**
@@ -191,7 +194,13 @@ public interface ConsultationMessageRepository extends BaseRepository<Consultati
      * @return 활성 메시지 페이지
      * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      *             대신 {@link BaseRepository#findAllByTenantId(String, Pageable)}를 사용하세요.
-     */
+     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     */
     @Deprecated
     @Query("SELECT m FROM ConsultationMessage m WHERE m.tenantId = :tenantId AND m.isDeleted = false AND (:branchId IS NULL OR 1=1)")
     Page<ConsultationMessage> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, Pageable pageable);

@@ -18,6 +18,9 @@ import org.springframework.stereotype.Repository;
  * @since 2025-09-12
  */
 @Repository
+/**
+ * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+ */
 public interface BranchRepository extends BaseRepository<Branch, Long> {
     
     // === 기본 조회 메서드 ===

@@ -765,7 +765,15 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * 
      * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      *             대신 {@link #getUserStatisticsByTenantId(String)}를 사용하세요.
-     */
+     // 표준화 2025-12-07: branchCode 무시
+     if (branchCode != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchCode는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchCode != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchCode는 더 이상 사용하지 않음");
+     }     */
     @Deprecated
     @Query("SELECT " +
            "COUNT(u) as totalUsers, " +
@@ -961,6 +969,12 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * 지점 코드별 사용자 조회 (tenantId 필터링)
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND u.isDeleted = false ORDER BY u.username")
+    /**
+     * @Deprecated - 표준화 2025-12-07: 브랜치 개념 제거됨, tenantId만 사용
+     * 레거시 호환을 위해 유지되지만 새로운 코드에서는 사용하지 마세요.
+     * 대신 {@link #findByTenantId(String)}를 사용하세요.
+     */
+    @Deprecated
     List<User> findByBranchCode(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode);
     
     /**
@@ -975,7 +989,19 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * 
      * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      *             대신 {@link #findByTenantIdAndRole(String, UserRole)}를 사용하세요.
-     */
+     // 표준화 2025-12-07: branchCode 무시
+     if (branchCode != null) {
+         // 표준화 2025-12-07: branchCode 무시
+         if (branchCode != null) {
+             // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchCode는 더 이상 사용하지 않음");
+         }         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchCode는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchCode != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchCode는 더 이상 사용하지 않음");
+     }     */
     @Deprecated
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branchCode = :branchCode AND u.role = :role AND u.isDeleted = false ORDER BY u.username")
     List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername(@Param("tenantId") String tenantId, @Param("branchCode") String branchCode, @Param("role") UserRole role);
@@ -1206,7 +1232,35 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * @return 활성 사용자 목록
      * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      *             대신 {@link #findAllByTenantId(String)}를 사용하세요.
-     */
+     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: branchCode 무시
+         if (branchId != null) {
+             // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+         }         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     */
     @Deprecated
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.branch.id = :branchId AND u.isDeleted = false")
     List<User> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId);

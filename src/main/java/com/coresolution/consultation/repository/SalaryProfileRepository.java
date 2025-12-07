@@ -9,6 +9,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
+/**
+ * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+ */
 public interface SalaryProfileRepository extends JpaRepository<SalaryProfile, Long> {
     
     List<SalaryProfile> findByIsActiveTrue();

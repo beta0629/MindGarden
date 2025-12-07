@@ -19,6 +19,9 @@ import org.springframework.stereotype.Repository;
  * @since 2024-12-19
  */
 @Repository
+/**
+ * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+ */
 public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
 
     // ==================== 상담사별 스케줄 조회 ====================

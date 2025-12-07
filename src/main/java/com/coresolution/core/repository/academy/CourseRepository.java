@@ -18,6 +18,9 @@ import java.util.Optional;
  * @since 2025-11-18
  */
 @Repository
+/**
+ * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+ */
 public interface CourseRepository extends JpaRepository<Course, Long> {
     
     /**

@@ -182,18 +182,24 @@ public class User extends BaseEntity {
     private List<UserSocialAccount> userSocialAccounts;
     
     /**
-     * 소속 지점
+     * @Deprecated - 🚨 레거시 호환: 브랜치 개념 제거됨 (2025-12-07)
+     * 브랜치 개념은 테넌트 기반으로 대체되었습니다.
+     * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
+     * 새로운 코드에서는 사용하지 마세요. tenantId만 사용하세요.
      */
+    @Deprecated
     @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @jakarta.persistence.JoinColumn(name = "branch_id")
     private Branch branch;
     
     /**
-     * @Deprecated - 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지
+     * 🚨 레거시 호환: 브랜치 코드 기반 필터링 사용 금지
      * 레거시 데이터 호환을 위해 필드 유지 (NULL 허용)
-     * 새로운 코드에서는 사용하지 마세요. branch 엔티티 필드를 사용하세요.
-     * 실제 지점 정보는 branch 필드에 저장됩니다.
+     * 새로운 코드에서는 사용하지 마세요. tenantId만 사용하세요.
+     * 
+     * 제거 예정: 2026-01-01
      */
+    @Deprecated
     @Column(name = "branch_code", length = 20)
     private String branchCode;
     

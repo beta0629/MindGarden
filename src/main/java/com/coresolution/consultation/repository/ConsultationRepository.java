@@ -17,6 +17,9 @@ import org.springframework.stereotype.Repository;
  * @since 2024-12-19
  */
 @Repository
+/**
+ * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
+ */
 public interface ConsultationRepository extends BaseRepository<Consultation, Long> {
     
     /**
@@ -419,7 +422,15 @@ public interface ConsultationRepository extends BaseRepository<Consultation, Lon
      * @return 활성 상담 페이지
      * @deprecated 브랜치 개념 제거됨 (표준화 2025-12-05). 레거시 호환용으로 유지되지만 새로운 코드에서는 사용하지 마세요.
      *             대신 {@link BaseRepository#findAllByTenantId(String, Pageable)}를 사용하세요.
-     */
+     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     // 표준화 2025-12-07: branchCode 무시
+     if (branchId != null) {
+         // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그 제거
+         // log.warn("Deprecated 파라미터: branchId는 더 이상 사용하지 않음");
+     }     */
     @Deprecated
     @Query("SELECT c FROM Consultation c WHERE c.tenantId = :tenantId AND c.isDeleted = false AND (:branchId IS NULL OR 1=1)")
     org.springframework.data.domain.Page<Consultation> findAllByTenantIdAndBranchId(@Param("tenantId") String tenantId, @Param("branchId") Long branchId, org.springframework.data.domain.Pageable pageable);

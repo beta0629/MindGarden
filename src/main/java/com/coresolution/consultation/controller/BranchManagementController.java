@@ -8,9 +8,11 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.BranchResponse;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BranchManagementController {
     
     private final UserService userService;
+    private final UserRepository userRepository;
     private final BranchService branchService;
     private final DynamicPermissionService dynamicPermissionService;
     
@@ -120,8 +123,8 @@ public class BranchManagementController {
                 ));
             }
             
-            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로 조회
-            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            // 표준화 2025-12-07: 브랜치 개념 제거됨, tenantId 기반 조회
+            String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
@@ -130,7 +133,7 @@ public class BranchManagementController {
             }
             
             // 테넌트 전체 사용자 통계 계산 - 강제로 활성 사용자만 필터링
-            List<User> allUsers = userService.findByBranchCode(null); // branchCode 무시, tenantId 기반 조회
+            List<User> allUsers = userRepository.findByTenantId(tenantId);
             List<User> activeUsers = allUsers.stream()
                     .filter(u -> !u.getIsDeleted())
                     .collect(Collectors.toList());
@@ -180,8 +183,8 @@ public class BranchManagementController {
         try {
             log.info("테넌트 사용자 목록 조회 요청: branchCode={} (무시됨), role={}, includeInactive={}", branchCode, role, includeInactive);
             
-            // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로 조회
-            String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            // 표준화 2025-12-07: 브랜치 개념 제거됨, tenantId 기반 조회
+            String tenantId = TenantContextHolder.getTenantId();
             if (tenantId == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
@@ -190,7 +193,7 @@ public class BranchManagementController {
             }
             
             // 테넌트 전체 사용자 조회
-            List<User> users = userService.findByBranchCode(null); // branchCode 무시, tenantId 기반 조회
+            List<User> users = userRepository.findByTenantId(tenantId);
             
             // 역할별 필터링
             if (role != null && !role.trim().isEmpty()) {

@@ -62,48 +62,57 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     @Override
     @Transactional(readOnly = true)
     public List<Item> getAllActiveItems() {
-        log.info("모든 활성화된 아이템 조회");
-        return itemRepository.findAllActive();
+        String tenantId = getTenantId();
+        log.info("테넌트별 활성화된 아이템 조회: tenantId={}", tenantId);
+        return itemRepository.findAllActiveByTenantId(tenantId);
     }
     
     @Override
     @Transactional(readOnly = true)
     public Optional<Item> getItemById(Long id) {
-        log.info("아이템 조회: id={}", id);
-        return itemRepository.findActiveById(id);
+        String tenantId = getTenantId();
+        log.info("테넌트별 아이템 조회: tenantId={}, id={}", tenantId, id);
+        return itemRepository.findByTenantIdAndIdAndActive(tenantId, id);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<Item> getItemsByCategory(String category) {
-        log.info("카테고리별 아이템 조회: category={}", category);
-        return itemRepository.findByCategoryAndActive(category);
+        String tenantId = getTenantId();
+        log.info("테넌트별 카테고리별 아이템 조회: tenantId={}, category={}", tenantId, category);
+        return itemRepository.findByTenantIdAndCategoryAndActive(tenantId, category);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<Item> searchItemsByName(String name) {
-        log.info("이름으로 아이템 검색: name={}", name);
-        return itemRepository.findByNameContainingAndActive(name);
+        String tenantId = getTenantId();
+        log.info("테넌트별 이름으로 아이템 검색: tenantId={}, name={}", tenantId, name);
+        return itemRepository.findByTenantIdAndNameContainingAndActive(tenantId, name);
     }
     
     @Override
     @Transactional(readOnly = true)
     public List<Item> getLowStockItems(Integer threshold) {
-        log.info("재고 부족 아이템 조회: threshold={}", threshold);
-        return itemRepository.findLowStockItems(threshold);
+        String tenantId = getTenantId();
+        log.info("테넌트별 재고 부족 아이템 조회: tenantId={}, threshold={}", tenantId, threshold);
+        return itemRepository.findLowStockItemsByTenantId(tenantId, threshold);
     }
     
     @Override
     public Item createItem(Item item) {
-        log.info("아이템 생성: name={}", item.getName());
+        String tenantId = getTenantId();
+        log.info("테넌트별 아이템 생성: tenantId={}, name={}", tenantId, item.getName());
+        // 테넌트 ID 자동 설정 (표준화 2025-12-07)
+        item.setTenantId(tenantId);
         return itemRepository.save(item);
     }
     
     @Override
     public Item updateItem(Long id, Item item) {
-        log.info("아이템 수정: id={}", id);
-        Item existingItem = itemRepository.findActiveById(id)
+        String tenantId = getTenantId();
+        log.info("테넌트별 아이템 수정: tenantId={}, id={}", tenantId, id);
+        Item existingItem = itemRepository.findByTenantIdAndIdAndActive(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("아이템을 찾을 수 없습니다: " + id));
         
         existingItem.setName(item.getName());
@@ -120,8 +129,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean deleteItem(Long id) {
-        log.info("아이템 삭제: id={}", id);
-        Item item = itemRepository.findActiveById(id)
+        String tenantId = getTenantId();
+        log.info("테넌트별 아이템 삭제: tenantId={}, id={}", tenantId, id);
+        Item item = itemRepository.findByTenantIdAndIdAndActive(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("아이템을 찾을 수 없습니다: " + id));
         
         item.setIsDeleted(true);
@@ -133,8 +143,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
     @Override
     public boolean updateItemStock(Long id, Integer quantity) {
-        log.info("아이템 재고 업데이트: id={}, quantity={}", id, quantity);
-        Item item = itemRepository.findActiveById(id)
+        String tenantId = getTenantId();
+        log.info("테넌트별 아이템 재고 업데이트: tenantId={}, id={}, quantity={}", tenantId, id, quantity);
+        Item item = itemRepository.findByTenantIdAndIdAndActive(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("아이템을 찾을 수 없습니다: " + id));
         
         item.setStockQuantity(quantity);
@@ -151,7 +162,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         User requester = userService.findActiveById(requesterId)
                 .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId));
         
-        Item item = itemRepository.findActiveById(itemId)
+        String tenantId = getTenantId();
+        Item item = itemRepository.findByTenantIdAndIdAndActive(tenantId, itemId)
                 .orElseThrow(() -> new RuntimeException("아이템을 찾을 수 없습니다: " + itemId));
         
         BigDecimal totalAmount = item.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
@@ -739,8 +751,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         
         Map<String, Object> dashboardData = new HashMap<>();
         
+        String tenantId = getTenantId();
         Map<String, Object> erpStats = new HashMap<>();
-        erpStats.put("totalItems", itemRepository.findAllActive().size());
+        erpStats.put("totalItems", itemRepository.findAllActiveByTenantId(tenantId).size());
         erpStats.put("pendingRequests", purchaseRequestRepository.findPendingAdminApproval().size());
         erpStats.put("totalOrders", purchaseOrderRepository.findAllActive().size());
         erpStats.put("totalBudgets", budgetRepository.findAllActive().size());
@@ -797,7 +810,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     public Map<String, Object> getBranchFinanceDashboard(String branchCode) {
         // 표준화 2025-12-06: branchCode 무시
         if (branchCode != null) {
-            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+            // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그에서 branchCode 제거
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음.");
         }
         String tenantId = getTenantId();
         Map<String, Object> dashboardData = new HashMap<>();
@@ -888,7 +902,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     public Map<String, Object> getBranchFinanceDashboard(String branchCode, LocalDate startDate, LocalDate endDate) {
         // 표준화 2025-12-06: branchCode 무시
         if (branchCode != null) {
-            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+            // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그에서 branchCode 제거
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음.");
         }
         String tenantId = getTenantId();
         Map<String, Object> dashboardData = new HashMap<>();
@@ -930,7 +945,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     public Map<String, Object> getBranchFinanceStatistics(String branchCode, String startDate, String endDate) {
         // 표준화 2025-12-06: branchCode 무시
         if (branchCode != null) {
-            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+            // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그에서 branchCode 제거
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음.");
         }
         String tenantId = getTenantId();
         Map<String, Object> statistics = new HashMap<>();
@@ -1024,14 +1040,20 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
     
      /**
      * 지점별 ERP 통계 조회 (세션 기반)
+     * 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
      */
     private Map<String, Object> getBranchErpStatisticsBySession(String branchCode) {
+        // 표준화 2025-12-07: branchCode 무시
+        if (branchCode != null) {
+            // 표준화 2025-12-07: 브랜치 개념 제거됨, 로그에서 branchCode 제거
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음.");
+        }
         String tenantId = getTenantId();
         Map<String, Object> erpStats = new HashMap<>();
         
         try {
             
-            erpStats.put("totalItems", itemRepository.findAllActive().size());
+            erpStats.put("totalItems", itemRepository.findAllActiveByTenantId(tenantId).size());
             erpStats.put("pendingRequests", purchaseRequestRepository.findPendingAdminApproval().size());
             erpStats.put("totalOrders", purchaseOrderRepository.findAllActive().size());
             
